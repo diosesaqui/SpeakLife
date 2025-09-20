@@ -1,0 +1,78 @@
+/* 
+  Localizable.strings
+  Dios Es Aqui
+
+  Created by Riccardo Washington on 8/31/22.
+  
+*/
+
+"CANCEL" = "Cancel";
+"DECLARATIONS" = "Declarations";
+"Read_and_repeat" = "Favorite, create your own, and Speak affirmations out loud at least 3 times but as many times as you need to a day to begin transforming your mind and life.";
+"The_power_of_declarations" = "The power comes from speaking and meditating so you believe and watch the Lord bring it to pass.";
+"Begin_transformation" = "Begin transformation";
+"Notification_settings" = "Notification Settings";
+"Setup_notifications" = "Setup your notifications to reflect when and how often you want to be notified.";
+"Start_time" = "Start time";
+"End_time" = "End time";
+"Enable_notifications" = "Turn on notifications";
+"Add a widget to your home screen" = "Add a widget to your home screen";
+"From the Home Screen, press down on an empty area until the apps wiggle." = "From the Home Screen, press down on an empty area until the apps wiggle.";
+"Then tap the + button in upper corner to add a widget." = "Then tap the + button in upper corner to add a widget.";
+
+"Got it!" = "Got it!";
+"Alerts per day" = "Alerts per day";
+"Error" = "Error";
+"OK" = "OK";
+"Are you enjoying SpeakLife?" = "Are you enjoying SpeakLife?";
+"Yes" = "Yes";
+"No" = "No";
+"Select one of the following categories to get focused inspiration." = "Select one of the following categories to get focused inspiration.";
+"Reminders" = "Reminders";
+"Manage Subscription" = "Manage Subscription";
+"Favorites" = "Favorites";
+"Create Your Own" = "Create Your Own";
+"Share SpeakLife" = "Share SpeakLife";
+"Leave us a Review" = "Leave us a Review";
+"Report Feedback" = "Report Feedback";
+"Check out SpeakLife - Daily Bible Promises app that'll transform your life!" = "Check out SpeakLife - Daily Bible Promises app that'll transform your life! \nRevamp App:";
+"Privacy Policy" = "Privacy Policy";
+"Terms and Conditions" = "Terms and Conditions";
+"You are currently a premium member" = "You are currently a premium member";
+"Affirmations that will transform your day and life!" = "Affirmations that will transform your day and life!";
+"Access to all categories" = "Access to all categories";
+"Create and schedule your own affirmations" = "Create and schedule your own affirmations";
+"Reminders to revamp your mindset!" =  "Reminders to revamp your mindset!";
+"Access to all themes and new features on the way" = "Access to all themes and new features on the way";
+"Monthly Premium" = "Monthly Premium";
+"$3.99" = "$3.99";
+"12 months Premium" = "12 months Premium";
+"$14.99" = "$14.99";
+"Lifetime Premium" = "Lifetime Premium";
+"$29.99" = "$29.99";
+"$39.99" = "$39.99";
+"$49.99" = "$49.99";
+"one time" = "one time";
+"Try Premium" = "Try Premium";
+"Unlock everything" = "Unlock everything";
+"Restore" = "Restore";
+"Only $1.25/month, with yearly option billed annually." = "Only $1.25/month, with yearly option billed annually.";
+"Set up your daily reminders to make your declaration fit your daily routine" = "Set up your daily reminders to make your declaration fit your daily routine";
+"Notifications are not enabled on this device" = "Notifications are not enabled on this device";
+"Go to Settings" = "Go to Settings";
+"Settings" = "Settings";
+"Choose Categories" = "Choose Categories";
+"Categories" = "Categories";
+"Share" = "Share";
+"Edit" = "Edit";
+"You have no declarations favorited." = "You have no declarations favorited.";
+"Write your own affirmations. These are private to you." = "Write your own affirmations. These are private to you.";
+"Save" = "Save";
+"You haven't added any of your own affirmations yet." = "You haven't added any of your own affirmations yet.";
+"Add your own" = "Add your own";
+"Add your own affirmation" = "Add your own affirmation";
+"Feedback for SpeakLife - Daily Bible Promises(iOS app)" = "Feedback for SpeakLife - Daily Bible Promises(iOS app)";
+"Pick from a selection of fonts and backgrounds to personalize your theme." = "Pick from a selection of fonts and backgrounds to personalize your theme.";
+"Select Font" = "Select Font";
+"Select Background Image" = "Select Background Image";
+"Theme" = "Theme";

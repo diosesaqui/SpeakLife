@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>instagram-stories</string>
+		<string>instagram</string>
+		<string>instagram-media</string>
+		<string>fb</string>
+		<string>fbapi</string>
+	</array>
+	<key>BGTaskSchedulerPermittedIdentifiers</key>
+	<array>
+		<string>com.speaklife.updateNotificationContent</string>
+	</array>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.Franchiz.SpeakLife</string>
+		</dict>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>speaklife</string>
+				<string>fb904572920975437</string>
+			</array>
+		</dict>
+	</array>
+	<key>FacebookAppID</key>
+	<string>904572920975437</string>
+	<key>FacebookClientToken</key>
+	<string>ca6d6cdf360624116b189dfccc35eba5</string>
+	<key>FacebookDisplayName</key>
+	<string>SpeakLife: Bible Affirmations</string>
+	<key>GADApplicationIdentifier</key>
+	<string>ca-app-pub-4361689433807539~4974376840</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
+	<key>MinimumOSVersion</key>
+	<string>16.0</string>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<true/>
+	</dict>
+	<key>SKAdNetworkItems</key>
+	<array>
+		<string>cstr6suwn9.skadnetwork</string>
+		<string>4fzdc2evr5.skadnetwork</string>
+		<string>4pfyvq9l8r.skadnetwork</string>
+		<string>2fnua5tdw4.skadnetwork</string>
+		<string>ydx93a7ass.skadnetwork</string>
+		<string>5a6flpkh64.skadnetwork</string>
+		<string>p78axxw29g.skadnetwork</string>
+		<string>v72qych5uu.skadnetwork</string>
+		<string>ludvb6z3bs.skadnetwork</string>
+		<string>cp8zw746q7.skadnetwork</string>
+		<string>c6k4g5qg8m.skadnetwork</string>
+		<string>s39g8k73mm.skadnetwork</string>
+		<string>3qy4746246.skadnetwork</string>
+		<string>3sh42y64q3.skadnetwork</string>
+		<string>f38h382jlk.skadnetwork</string>
+		<string>hs6bdukanm.skadnetwork</string>
+		<string>prcb7njmu6.skadnetwork</string>
+		<string>v4nxqhlyqp.skadnetwork</string>
+		<string>wzmmz9fp6w.skadnetwork</string>
+		<string>yclnxrl5pm.skadnetwork</string>
+		<string>t38b2kh725.skadnetwork</string>
+		<string>7ug5zh24hu.skadnetwork</string>
+		<string>y5ghdn5j9k.skadnetwork</string>
+		<string>n6fk4nfna4.skadnetwork</string>
+		<string>v9wttpbfk9.skadnetwork</string>
+		<string>n38lu8286q.skadnetwork</string>
+		<string>47vhws6wlr.skadnetwork</string>
+		<string>kbd757ywx3.skadnetwork</string>
+		<string>9t245vhmpl.skadnetwork</string>
+		<string>a2p9lx4jpn.skadnetwork</string>
+		<string>22mmun2rn5.skadnetwork</string>
+		<string>4468km3ulz.skadnetwork</string>
+		<string>2u9pt9hc89.skadnetwork</string>
+		<string>8s468mfl3y.skadnetwork</string>
+		<string>av6w8kgt66.skadnetwork</string>
+		<string>klf5c3l5u5.skadnetwork</string>
+		<string>ppxm28t8ap.skadnetwork</string>
+		<string>424m5254lk.skadnetwork</string>
+		<string>ecpz2srf59.skadnetwork</string>
+		<string>uw77j35x4d.skadnetwork</string>
+		<string>mlmmfzh3r3.skadnetwork</string>
+		<string>578prtvx9j.skadnetwork</string>
+		<string>4dzt52r2t5.skadnetwork</string>
+		<string>gta9lk7p23.skadnetwork</string>
+		<string>e5fvkxwrpn.skadnetwork</string>
+		<string>8c4e2ghe7u.skadnetwork</string>
+		<string>zq492l623r.skadnetwork</string>
+		<string>3rd42ekr43.skadnetwork</string>
+		<string>3qcr597p9d.skadnetwork</string>
+	</array>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>audio</string>
+		<string>remote-notification</string>
+		<string>fetch</string>
+		<string>processing</string>
+	</array>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>We use this to save your affirmation to your Photos</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>SpeakLife saves your streak achievements to Photos so you can easily share them on Instagram and other social media platforms.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>SpeakLife uses your microphone to convert your spoken words into text for journal entries and affirmations. This helps you capture your spiritual thoughts more naturally and efficiently.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>SpeakLife uses speech recognition to convert your spoken words into text for your spiritual journal and affirmations. This feature allows you to express your thoughts more naturally and capture inspiration as it comes.</string>
+</dict>
+</plist>

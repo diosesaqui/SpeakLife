@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="22522" systemVersion="23F79" minimumToolsVersion="Automatic" sourceLanguage="Swift" usedWithCloudKit="YES" userDefinedModelVersionIdentifier="">
+    <entity name="JournalEntry" representedClassName="JournalEntry" syncable="YES">
+        <attribute name="bibleVerseText" optional="YES" attributeType="String"/>
+        <attribute name="book" optional="YES" attributeType="String"/>
+        <attribute name="category" attributeType="String" defaultValueString="myOwn"/>
+        <attribute name="createdAt" attributeType="Date" defaultDateTimeInterval="0" usedWithCloudKit="YES"/>
+        <attribute name="id" optional="YES" attributeType="UUID" usedWithCloudKit="YES"/>
+        <attribute name="isFavorite" attributeType="Boolean" defaultValueString="NO" usedWithCloudKit="YES"/>
+        <attribute name="lastModified" attributeType="Date" defaultDateTimeInterval="0" usedWithCloudKit="YES"/>
+        <attribute name="text" attributeType="String" defaultValueString=""/>
+    </entity>
+    <entity name="AffirmationEntry" representedClassName="AffirmationEntry" syncable="YES">
+        <attribute name="bibleVerseText" optional="YES" attributeType="String"/>
+        <attribute name="book" optional="YES" attributeType="String"/>
+        <attribute name="category" attributeType="String" defaultValueString="myOwn"/>
+        <attribute name="createdAt" attributeType="Date" defaultDateTimeInterval="0" usedWithCloudKit="YES"/>
+        <attribute name="id" optional="YES" attributeType="UUID" usedWithCloudKit="YES"/>
+        <attribute name="isFavorite" attributeType="Boolean" defaultValueString="NO" usedWithCloudKit="YES"/>
+        <attribute name="lastModified" attributeType="Date" defaultDateTimeInterval="0" usedWithCloudKit="YES"/>
+        <attribute name="text" attributeType="String" defaultValueString=""/>
+    </entity>
+</model>
