@@ -94,6 +94,7 @@ final class DevotionalViewModel: ObservableObject, Sendable {
             self?.devotionalDate = devotional.date.toSimpleDate()
             self?.devotionalBooks = devotional.books
             self?.title = devotional.title
+            self?.objectWillChange.send() // Force UI update for date change
         }
     }
     

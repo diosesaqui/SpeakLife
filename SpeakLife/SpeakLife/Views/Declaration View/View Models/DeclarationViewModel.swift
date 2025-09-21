@@ -535,7 +535,8 @@ final class DeclarationViewModel: ObservableObject {
         print(contentText, category, "RWRW")
         
             guard let declaration = allDeclarations.first(where: { $0.text.hasPrefix(contentText) }) else {
-                print("Failed to find a matching declaration")
+                let declaration = Declaration(text: content)
+                self.choose(declaration)
                 return
             }
             self.choose(declaration)
