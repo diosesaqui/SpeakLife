@@ -165,7 +165,6 @@ struct OptimizedSubscriptionView: View {
     @State private var errorMessage = ""
     @State private var selectedOption: String = "annual" // "annual" or "monthly"
     var flag = true
-    
     var callback: (() -> Void)?
     
     // Benefits matching the Abide screenshot

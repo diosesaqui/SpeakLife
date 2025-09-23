@@ -54,28 +54,8 @@ struct DevotionalView: View {
                     Alert(title: Text(viewModel.errorString))
                 }
         } else {
-                ScrollView {
-                    VStack {
-                        OptimizedSubscriptionView() { //size: UIScreen.main.bounds.size) {
-                            // Handle callback - typically dismiss or navigation
-                        }
-                    }
-                    .padding(.bottom, 20) // Add spacing to avoid clipping at the bottom
-                }
-                .navigationTitle("") // Optional: hide nav title
-                .navigationBarHidden(true) // Hide bar if desired
-                .onDisappear {
-                    if !subscriptionStore.isPremium, !subscriptionStore.isInDevotionalPremium {
-                        if subscriptionStore.showDevotionalSubscription {
-                            presentDevotionalSubscriptionView = true
-                        }
-                    }
-                }
-                .sheet(isPresented: $presentDevotionalSubscriptionView) {
-                    DevotionalSubscriptionView {
-                        presentDevotionalSubscriptionView = false
-                    }
-                }
+            OptimizedSubscriptionView() {
+            }
         }
     }
     
