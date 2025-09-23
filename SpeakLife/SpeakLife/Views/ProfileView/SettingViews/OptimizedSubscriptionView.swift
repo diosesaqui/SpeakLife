@@ -173,7 +173,7 @@ struct OptimizedSubscriptionView: View {
         AbideStyleBenefit(
             icon: "leaf.fill",
             title: "Find Peace",
-            description: "Explore affirmation categories for answers to your life's circumanstances"
+            description: "Explore affirmation categories for answers to your life's circumstances"
         ),
 //        AbideStyleBenefit(
 //            icon: "moon.fill",

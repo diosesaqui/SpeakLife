@@ -304,8 +304,8 @@ struct OptimizedSubscriptionViewV1: View {
     
     var body: some View {
         ZStack {
-           // backgroundGradient
-            Constants.SLBlue
+            backgroundGradient
+           // Constants.SLBlue
             ScrollView {
                 VStack(spacing: 0) {
                     headerSection
