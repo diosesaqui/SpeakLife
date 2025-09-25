@@ -350,6 +350,9 @@ struct AudioDeclarationView: View {
                     // Update legacy system for compatibility
                     if let legacyFilter = Filter(rawValue: filterConfig.id) {
                         viewModel.selectedFilter = legacyFilter
+                    } else {
+                        // Reset legacy filter if no match found
+                        viewModel.selectedFilter = .speaklife // Default fallback
                     }
                     if filterConfig.id == "favorites" {
                         AudioAnalytics.shared.trackFavoritesCategoryViewed(
@@ -385,6 +388,7 @@ struct AudioDeclarationView: View {
                 }
             }
         }
+        .padding(.horizontal)
     }
     
     // Legacy header for backward compatibility
@@ -393,6 +397,8 @@ struct AudioDeclarationView: View {
             ForEach(viewModel.filters, id: \.self) { filter in
                 Button(action: {
                     viewModel.selectedFilter = filter
+                    // Clear dynamic filter ID when using legacy filter
+                    viewModel.selectedFilterId = filter.rawValue
                     if filter == .favorites {
                         AudioAnalytics.shared.trackFavoritesCategoryViewed(
                             favoritesCount: viewModel.favoritesManager.favoritesCount
@@ -432,82 +438,99 @@ struct AudioDeclarationView: View {
     
     func episodeRow(_ proxy: GeometryProxy) -> some View {
         Group {
-            // Use dynamic filtered content if available, otherwise fall back to legacy
-            let currentContent = !viewModel.dynamicFilters.isEmpty ? viewModel.dynamicFilteredContent : viewModel.filteredContent
-            
-            if viewModel.selectedFilterId == "favorites" && currentContent.isEmpty {
-                // Empty favorites state
-                VStack(spacing: 20) {
-                    Image(systemName: "heart.text.square")
-                        .resizable()
-                        .frame(width: 80, height: 80)
-                        .foregroundColor(.white.opacity(0.6))
-                    
-                    Text("No Audio Favorites Yet")
-                        .font(.title2)
-                        .fontWeight(.semibold)
-                        .foregroundColor(.white)
-                    
-                    Text("Tap the heart icon on any audio to add it to your favorites.")
-                        .font(.body)
-                        .foregroundColor(.white.opacity(0.7))
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, 40)
-                    
-                    Button("Browse Audio") {
-                        viewModel.selectedFilter = .speaklife
-                    }
-                    .font(.headline)
-                    .foregroundColor(.white)
-                    .padding(.horizontal, 24)
-                    .padding(.vertical, 12)
-                    .background(
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(Color.pink.opacity(0.8))
-                    )
-                    .padding(.top, 10)
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .padding(40)
+            if isSpeakLifeFilterSelected {
+                speakLifeSectionedView
+            } else if shouldShowEmptyFavoritesState {
+                emptyFavoritesView
             } else {
-                List {
-                    // Use dynamic filtered content if available, otherwise fall back to legacy
-                    ForEach(!viewModel.dynamicFilters.isEmpty ? viewModel.dynamicFilteredContent : viewModel.filteredContent) { item in
-                Button(action: {
-                        handleItemTap(item)
-                }) {
-                    VStack {
-                        UpNextCell(viewModel: viewModel, audioViewModel: audioViewModel, item: item)
-                            .frame(width: proxy.size.width * 0.9, height: proxy.size.height * 0.15)
-                        
-                        if let progress = viewModel.downloadProgress[item.id], progress > 0 {
-                            ProgressView(value: progress)
-                                .progressViewStyle(LinearProgressViewStyle())
-                                .padding(.top, 8)
-                        }
-                    }
-                    .listRowInsets(EdgeInsets()) // remove default padding
-                    .background(Color.clear)
-                    .swipeActions(edge: .leading) {
-                        Button {
-                            handleFavoriteSwipeAction(for: item)
-                        } label: {
-                            Label(
-                                viewModel.favoritesManager.isFavorite(item) ? "Unfavorite" : "Favorite",
-                                systemImage: viewModel.favoritesManager.isFavorite(item) ? "heart.slash" : "heart.fill"
-                            )
-                        }
-                        .tint(viewModel.favoritesManager.isFavorite(item) ? .gray : .pink)
-                    }
-                }
-                .disabled(viewModel.fetchingAudioIDs.contains(item.id))
-                .listRowBackground(Color.clear)
-            }
-                }
-                .scrollContentBackground(.hidden)
-                .background(.clear)
+                audioListView(proxy)
             }
         }
+    }
+    
+    // MARK: - Computed Properties for SOLID Compliance
+    
+    private var isSpeakLifeFilterSelected: Bool {
+        if !viewModel.dynamicFilters.isEmpty {
+            return viewModel.selectedFilterId.lowercased() == "speaklife"
+        } else {
+            return viewModel.selectedFilter == .speaklife
+        }
+    }
+    
+    private var shouldShowEmptyFavoritesState: Bool {
+        let currentContent = !viewModel.dynamicFilters.isEmpty ? 
+                           viewModel.dynamicFilteredContent : 
+                           viewModel.filteredContent
+        return viewModel.selectedFilterId == "favorites" && currentContent.isEmpty
+    }
+    
+    private var speakLifeSectionedView: some View {
+        SectionedAudioView(
+            audioViewModel: audioViewModel,
+            onItemTap: handleItemTap,
+            onFavoriteToggle: handleFavoriteSwipeAction
+        )
+        .environmentObject(viewModel)
+        .environmentObject(subscriptionStore)
+    }
+    
+    private var emptyFavoritesView: some View {
+        VStack(spacing: 20) {
+            Image(systemName: "heart.text.square")
+                .resizable()
+                .frame(width: 80, height: 80)
+                .foregroundColor(.white.opacity(0.6))
+            
+            Text("No Audio Favorites Yet")
+                .font(.title2)
+                .fontWeight(.semibold)
+                .foregroundColor(.white)
+            
+            Text("Tap the heart icon on any audio to add it to your favorites.")
+                .font(.body)
+                .foregroundColor(.white.opacity(0.7))
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 40)
+            
+            Button("Browse Audio") {
+                viewModel.selectedFilter = .speaklife
+            }
+            .font(.headline)
+            .foregroundColor(.white)
+            .padding(.horizontal, 24)
+            .padding(.vertical, 12)
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color.pink.opacity(0.8))
+            )
+            .padding(.top, 10)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(40)
+    }
+    
+    private func audioListView(_ proxy: GeometryProxy) -> some View {
+        List {
+            ForEach(currentFilteredContent) { item in
+                AudioListItemView(
+                    item: item,
+                    proxy: proxy,
+                    viewModel: viewModel,
+                    audioViewModel: audioViewModel,
+                    onItemTap: handleItemTap,
+                    onFavoriteSwipe: handleFavoriteSwipeAction
+                )
+            }
+        }
+        .scrollContentBackground(.hidden)
+        .background(.clear)
+    }
+    
+    private var currentFilteredContent: [AudioDeclaration] {
+        return !viewModel.dynamicFilters.isEmpty ? 
+               viewModel.dynamicFilteredContent : 
+               viewModel.filteredContent
     }
     
     @ViewBuilder

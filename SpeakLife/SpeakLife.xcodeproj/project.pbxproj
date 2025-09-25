@@ -53,6 +53,13 @@
 		4575C94A2E46F25B007C14F3 /* WidgetDataBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4575C9452E46F25B007C14F3 /* WidgetDataBridge.swift */; };
 		457CD3402E7E735A00F435EC /* OptimizedSubscriptionViewV1.swift in Sources */ = {isa = PBXBuildFile; fileRef = 457CD33F2E7E735A00F435EC /* OptimizedSubscriptionViewV1.swift */; };
 		457CD38E2E84A11000F435EC /* TikTokBusinessSDK in Frameworks */ = {isa = PBXBuildFile; productRef = 457CD38D2E84A11000F435EC /* TikTokBusinessSDK */; };
+		457CD3962E84F88200F435EC /* SectionDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 457CD3932E84F88200F435EC /* SectionDetailView.swift */; };
+		457CD3972E84F88200F435EC /* OptimizedAudioCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 457CD3922E84F88200F435EC /* OptimizedAudioCell.swift */; };
+		457CD3982E84F88200F435EC /* AudioSectionModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 457CD38F2E84F88200F435EC /* AudioSectionModel.swift */; };
+		457CD3992E84F88200F435EC /* AudioSectionViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 457CD3902E84F88200F435EC /* AudioSectionViewModel.swift */; };
+		457CD39A2E84F88200F435EC /* HorizontalAudioSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 457CD3912E84F88200F435EC /* HorizontalAudioSection.swift */; };
+		457CD39B2E84F88200F435EC /* SectionedAudioView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 457CD3942E84F88200F435EC /* SectionedAudioView.swift */; };
+		457CD39D2E8503C800F435EC /* AudioListItemView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 457CD39C2E8503C800F435EC /* AudioListItemView.swift */; };
 		457D531B2D964AAF0098A49A /* audioDevotionals.json in Resources */ = {isa = PBXBuildFile; fileRef = 457D531A2D964AA10098A49A /* audioDevotionals.json */; };
 		457DC17E2CEEA92700C666D5 /* AudioPlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 457DC17D2CEEA92700C666D5 /* AudioPlayerView.swift */; };
 		457DC1802CEEB47700C666D5 /* AudioPlayerViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 457DC17F2CEEB47700C666D5 /* AudioPlayerViewModel.swift */; };
@@ -301,6 +308,13 @@
 		4575C9442E46F25B007C14F3 /* SmartContentProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmartContentProvider.swift; sourceTree = "<group>"; };
 		4575C9452E46F25B007C14F3 /* WidgetDataBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetDataBridge.swift; sourceTree = "<group>"; };
 		457CD33F2E7E735A00F435EC /* OptimizedSubscriptionViewV1.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OptimizedSubscriptionViewV1.swift; sourceTree = "<group>"; };
+		457CD38F2E84F88200F435EC /* AudioSectionModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioSectionModel.swift; sourceTree = "<group>"; };
+		457CD3902E84F88200F435EC /* AudioSectionViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioSectionViewModel.swift; sourceTree = "<group>"; };
+		457CD3912E84F88200F435EC /* HorizontalAudioSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HorizontalAudioSection.swift; sourceTree = "<group>"; };
+		457CD3922E84F88200F435EC /* OptimizedAudioCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OptimizedAudioCell.swift; sourceTree = "<group>"; };
+		457CD3932E84F88200F435EC /* SectionDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SectionDetailView.swift; sourceTree = "<group>"; };
+		457CD3942E84F88200F435EC /* SectionedAudioView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SectionedAudioView.swift; sourceTree = "<group>"; };
+		457CD39C2E8503C800F435EC /* AudioListItemView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioListItemView.swift; sourceTree = "<group>"; };
 		457D531A2D964AA10098A49A /* audioDevotionals.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = audioDevotionals.json; sourceTree = "<group>"; };
 		457DC17D2CEEA92700C666D5 /* AudioPlayerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioPlayerView.swift; sourceTree = "<group>"; };
 		457DC17F2CEEB47700C666D5 /* AudioPlayerViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioPlayerViewModel.swift; sourceTree = "<group>"; };
@@ -576,6 +590,20 @@
 			path = Widget;
 			sourceTree = "<group>";
 		};
+		457CD3952E84F88200F435EC /* SectionedViews */ = {
+			isa = PBXGroup;
+			children = (
+				457CD39C2E8503C800F435EC /* AudioListItemView.swift */,
+				457CD38F2E84F88200F435EC /* AudioSectionModel.swift */,
+				457CD3902E84F88200F435EC /* AudioSectionViewModel.swift */,
+				457CD3912E84F88200F435EC /* HorizontalAudioSection.swift */,
+				457CD3922E84F88200F435EC /* OptimizedAudioCell.swift */,
+				457CD3932E84F88200F435EC /* SectionDetailView.swift */,
+				457CD3942E84F88200F435EC /* SectionedAudioView.swift */,
+			);
+			path = SectionedViews;
+			sourceTree = "<group>";
+		};
 		457DC17C2CEEA91000C666D5 /* AudioPlayerView */ = {
 			isa = PBXGroup;
 			children = (
@@ -588,6 +616,7 @@
 		4582A9542CE690560077F555 /* AudioDeclarationView */ = {
 			isa = PBXGroup;
 			children = (
+				457CD3952E84F88200F435EC /* SectionedViews */,
 				457DC17C2CEEA91000C666D5 /* AudioPlayerView */,
 				4582A9552CE690800077F555 /* AudioDeclarationView.swift */,
 				4597E1ED2E3FECCA009D6C66 /* AudioFavoritesView.swift */,
@@ -1470,6 +1499,7 @@
 				4501F3912D8926CA00315902 /* TestimonyViewModel.swift in Sources */,
 				7AF18C962A0CC532005A6E31 /* DevotionalView.swift in Sources */,
 				7AA870D828DACCB700134ADB /* CategoryChooserView.swift in Sources */,
+				457CD39D2E8503C800F435EC /* AudioListItemView.swift in Sources */,
 				458B6B212BA6E3EC0001BEFE /* StreakDetails.swift in Sources */,
 				7A278F9B288915DE0084BB57 /* SpeakLifeApp.swift in Sources */,
 				7AA870C528DACCB700134ADB /* QuoteLabel.swift in Sources */,
@@ -1580,6 +1610,12 @@
 				4597E2382E419CEA009D6C66 /* CoreDataAPIService.swift in Sources */,
 				4597E2392E419CEA009D6C66 /* Repository.swift in Sources */,
 				7AA8709328DACCA700134ADB /* CapsuleImageButton.swift in Sources */,
+				457CD3962E84F88200F435EC /* SectionDetailView.swift in Sources */,
+				457CD3972E84F88200F435EC /* OptimizedAudioCell.swift in Sources */,
+				457CD3982E84F88200F435EC /* AudioSectionModel.swift in Sources */,
+				457CD3992E84F88200F435EC /* AudioSectionViewModel.swift in Sources */,
+				457CD39A2E84F88200F435EC /* HorizontalAudioSection.swift in Sources */,
+				457CD39B2E84F88200F435EC /* SectionedAudioView.swift in Sources */,
 				4548075C2E3F04C100B8C71B /* StreakCompletionViews.swift in Sources */,
 				4548075A2E3F04B300B8C71B /* StreakIntegrationManager.swift in Sources */,
 				7AA870DF28DACCB700134ADB /* IntroScene.swift in Sources */,
