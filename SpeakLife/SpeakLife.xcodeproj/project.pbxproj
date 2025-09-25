@@ -60,6 +60,14 @@
 		457CD39A2E84F88200F435EC /* HorizontalAudioSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 457CD3912E84F88200F435EC /* HorizontalAudioSection.swift */; };
 		457CD39B2E84F88200F435EC /* SectionedAudioView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 457CD3942E84F88200F435EC /* SectionedAudioView.swift */; };
 		457CD39D2E8503C800F435EC /* AudioListItemView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 457CD39C2E8503C800F435EC /* AudioListItemView.swift */; };
+		457CD3A72E8508F300F435EC /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 457CD3A12E8508F300F435EC /* README.md */; };
+		457CD3A82E8508F300F435EC /* SectionableContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 457CD3A22E8508F300F435EC /* SectionableContent.swift */; };
+		457CD3A92E8508F300F435EC /* GenericContentCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 457CD39E2E8508F300F435EC /* GenericContentCell.swift */; };
+		457CD3AA2E8508F300F435EC /* GenericSectionedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 457CD3A02E8508F300F435EC /* GenericSectionedView.swift */; };
+		457CD3AB2E8508F300F435EC /* SectionProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 457CD3A42E8508F300F435EC /* SectionProvider.swift */; };
+		457CD3AC2E8508F300F435EC /* SectionedLayoutFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 457CD3A32E8508F300F435EC /* SectionedLayoutFactory.swift */; };
+		457CD3AD2E8508F300F435EC /* GenericHorizontalSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 457CD39F2E8508F300F435EC /* GenericHorizontalSection.swift */; };
+		457CD3AF2E85092200F435EC /* AudioSectionProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 457CD3AE2E85092200F435EC /* AudioSectionProvider.swift */; };
 		457D531B2D964AAF0098A49A /* audioDevotionals.json in Resources */ = {isa = PBXBuildFile; fileRef = 457D531A2D964AA10098A49A /* audioDevotionals.json */; };
 		457DC17E2CEEA92700C666D5 /* AudioPlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 457DC17D2CEEA92700C666D5 /* AudioPlayerView.swift */; };
 		457DC1802CEEB47700C666D5 /* AudioPlayerViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 457DC17F2CEEB47700C666D5 /* AudioPlayerViewModel.swift */; };
@@ -315,6 +323,14 @@
 		457CD3932E84F88200F435EC /* SectionDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SectionDetailView.swift; sourceTree = "<group>"; };
 		457CD3942E84F88200F435EC /* SectionedAudioView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SectionedAudioView.swift; sourceTree = "<group>"; };
 		457CD39C2E8503C800F435EC /* AudioListItemView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioListItemView.swift; sourceTree = "<group>"; };
+		457CD39E2E8508F300F435EC /* GenericContentCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GenericContentCell.swift; sourceTree = "<group>"; };
+		457CD39F2E8508F300F435EC /* GenericHorizontalSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GenericHorizontalSection.swift; sourceTree = "<group>"; };
+		457CD3A02E8508F300F435EC /* GenericSectionedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GenericSectionedView.swift; sourceTree = "<group>"; };
+		457CD3A12E8508F300F435EC /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		457CD3A22E8508F300F435EC /* SectionableContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SectionableContent.swift; sourceTree = "<group>"; };
+		457CD3A32E8508F300F435EC /* SectionedLayoutFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SectionedLayoutFactory.swift; sourceTree = "<group>"; };
+		457CD3A42E8508F300F435EC /* SectionProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SectionProvider.swift; sourceTree = "<group>"; };
+		457CD3AE2E85092200F435EC /* AudioSectionProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioSectionProvider.swift; sourceTree = "<group>"; };
 		457D531A2D964AA10098A49A /* audioDevotionals.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = audioDevotionals.json; sourceTree = "<group>"; };
 		457DC17D2CEEA92700C666D5 /* AudioPlayerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioPlayerView.swift; sourceTree = "<group>"; };
 		457DC17F2CEEB47700C666D5 /* AudioPlayerViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioPlayerViewModel.swift; sourceTree = "<group>"; };
@@ -598,10 +614,33 @@
 				457CD3902E84F88200F435EC /* AudioSectionViewModel.swift */,
 				457CD3912E84F88200F435EC /* HorizontalAudioSection.swift */,
 				457CD3922E84F88200F435EC /* OptimizedAudioCell.swift */,
+				457CD3AE2E85092200F435EC /* AudioSectionProvider.swift */,
 				457CD3932E84F88200F435EC /* SectionDetailView.swift */,
 				457CD3942E84F88200F435EC /* SectionedAudioView.swift */,
 			);
 			path = SectionedViews;
+			sourceTree = "<group>";
+		};
+		457CD3A52E8508F300F435EC /* SectionedLayout */ = {
+			isa = PBXGroup;
+			children = (
+				457CD39E2E8508F300F435EC /* GenericContentCell.swift */,
+				457CD39F2E8508F300F435EC /* GenericHorizontalSection.swift */,
+				457CD3A02E8508F300F435EC /* GenericSectionedView.swift */,
+				457CD3A12E8508F300F435EC /* README.md */,
+				457CD3A22E8508F300F435EC /* SectionableContent.swift */,
+				457CD3A32E8508F300F435EC /* SectionedLayoutFactory.swift */,
+				457CD3A42E8508F300F435EC /* SectionProvider.swift */,
+			);
+			path = SectionedLayout;
+			sourceTree = "<group>";
+		};
+		457CD3A62E8508F300F435EC /* Common */ = {
+			isa = PBXGroup;
+			children = (
+				457CD3A52E8508F300F435EC /* SectionedLayout */,
+			);
+			path = Common;
 			sourceTree = "<group>";
 		};
 		457DC17C2CEEA91000C666D5 /* AudioPlayerView */ = {
@@ -938,6 +977,7 @@
 				4582A9542CE690560077F555 /* AudioDeclarationView */,
 				45A4A3D42D89179C00DFCEB7 /* TestimonyView */,
 				7AA870A328DACCB700134ADB /* ProfileView */,
+				457CD3A62E8508F300F435EC /* Common */,
 				45B5A8082DD30B7D006DE6AA /* SpeakLifeQuiz */,
 				456885252B390FF4007B1EBB /* WarriorView.swift */,
 				456585F22D4F62EE002F2709 /* DevotionalSubscriptionView.swift */,
@@ -1394,6 +1434,7 @@
 				45A4A3A52D7BF62600DFCEB7 /* declarationsv7.json in Resources */,
 				45D6402B2CD218AE006F05AD /* declarationsv5.json in Resources */,
 				45A4A3D12D86B86100DFCEB7 /* washed.mp3 in Resources */,
+				457CD3A72E8508F300F435EC /* README.md in Resources */,
 				456885282B395F66007B1EBB /* declarationsv3.json in Resources */,
 				45A4A3CB2D869D2700DFCEB7 /* sethpiano.mp3 in Resources */,
 				7A278FA2288915DF0084BB57 /* Preview Assets.xcassets in Resources */,
@@ -1462,6 +1503,7 @@
 				7AF18C8F2A0CBD03005A6E31 /* Devotional.swift in Sources */,
 				456585F32D4F62EE002F2709 /* DevotionalSubscriptionView.swift in Sources */,
 				4597E25A2E41C1AC009D6C66 /* CloudKitSyncBadge.swift in Sources */,
+				457CD3AF2E85092200F435EC /* AudioSectionProvider.swift in Sources */,
 				7AA870C228DACCB700134ADB /* IntentsBarView.swift in Sources */,
 				7AA870E428DACD1A00134ADB /* AppState.swift in Sources */,
 				7AA870CB28DACCB700134ADB /* PremiumView.swift in Sources */,
@@ -1488,6 +1530,12 @@
 				7AA870E028DACCB700134ADB /* WidgetScene.swift in Sources */,
 				451AECE92E4EE7A000C1490E /* BootcampModels.swift in Sources */,
 				458BBE702D1F8A3D0035985F /* AudioFiles.swift in Sources */,
+				457CD3A82E8508F300F435EC /* SectionableContent.swift in Sources */,
+				457CD3A92E8508F300F435EC /* GenericContentCell.swift in Sources */,
+				457CD3AA2E8508F300F435EC /* GenericSectionedView.swift in Sources */,
+				457CD3AB2E8508F300F435EC /* SectionProvider.swift in Sources */,
+				457CD3AC2E8508F300F435EC /* SectionedLayoutFactory.swift in Sources */,
+				457CD3AD2E8508F300F435EC /* GenericHorizontalSection.swift in Sources */,
 				4514AF152E47031200254B74 /* AppGroupsDebugView.swift in Sources */,
 				7AA8708128DACC8300134ADB /* NotificationProcessor.swift in Sources */,
 				452D17E22D725F87000AB1D1 /* RatingView.swift in Sources */,
@@ -1827,7 +1875,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = SpeakLife/SpeakLife.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 890;
+				CURRENT_PROJECT_VERSION = 891;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_ASSET_PATHS = "\"SpeakLife/Preview Content\"";
 				DEVELOPMENT_TEAM = 652R6A63L8;
@@ -1848,7 +1896,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 3.1.38;
+				MARKETING_VERSION = 3.1.39;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Franchiz.SpeakLife;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -1869,7 +1917,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = SpeakLife/SpeakLife.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 890;
+				CURRENT_PROJECT_VERSION = 891;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_ASSET_PATHS = "\"SpeakLife/Preview Content\"";
 				DEVELOPMENT_TEAM = 652R6A63L8;
@@ -1890,7 +1938,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 3.1.38;
+				MARKETING_VERSION = 3.1.39;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Franchiz.SpeakLife;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";

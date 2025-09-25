@@ -54,20 +54,17 @@ extension AudioDeclarationViewModel {
         
         // 2. Recently Added Section (Latest episodes first)
         let sortedItems = allSpeakLife.sorted { item1, item2 in
-            // Parse episode info to sort by season and episode
-            let episode1 = SpeakLifeEpisodeInfo.parse(from: item1.subtitle, id: item1.id)
-            let episode2 = SpeakLifeEpisodeInfo.parse(from: item2.subtitle, id: item2.id)
+            // Use new season/episode fields with fallback to parsing
+            let season1 = item1.season ?? SpeakLifeEpisodeInfo.parse(from: item1.subtitle, id: item1.id)?.season ?? 0
+            let episode1 = item1.episode ?? SpeakLifeEpisodeInfo.parse(from: item1.subtitle, id: item1.id)?.episode ?? 0
+            let season2 = item2.season ?? SpeakLifeEpisodeInfo.parse(from: item2.subtitle, id: item2.id)?.season ?? 0
+            let episode2 = item2.episode ?? SpeakLifeEpisodeInfo.parse(from: item2.subtitle, id: item2.id)?.episode ?? 0
             
-            if let ep1 = episode1, let ep2 = episode2 {
-                // Sort by season descending, then episode descending (newest first)
-                if ep1.season != ep2.season {
-                    return ep1.season > ep2.season
-                }
-                return ep1.episode > ep2.episode
+            // Sort by season descending, then episode descending (newest first)
+            if season1 != season2 {
+                return season1 > season2
             }
-            
-            // Fallback to original order
-            return false
+            return episode1 > episode2
         }
         
         let recentItems = Array(sortedItems.prefix(15))
@@ -102,49 +99,54 @@ extension AudioDeclarationViewModel {
     private func createSeasonBasedSections(from audioItems: [AudioDeclaration]) -> [AudioSectionModel] {
         var seasonSections: [AudioSectionModel] = []
         
-        // Group items by season
-        var seasonGroups: [String: [AudioDeclaration]] = [:]
-        var seasonInfoMap: [String: SpeakLifeEpisodeInfo] = [:]
+        // Group items by season using the new season field with fallback to parsing
+        var seasonGroups: [Int: [AudioDeclaration]] = [:]
         
         for item in audioItems {
-            if let episodeInfo = SpeakLifeEpisodeInfo.parse(from: item.subtitle, id: item.id) {
-                let seasonKey = episodeInfo.seasonKey
-                
-                if seasonGroups[seasonKey] == nil {
-                    seasonGroups[seasonKey] = []
-                    seasonInfoMap[seasonKey] = episodeInfo
+            var seasonNumber: Int?
+            var episodeNumber: Int?
+            
+            // First try to use the new season/episode fields from JSON
+            if let season = item.season {
+                seasonNumber = season
+                episodeNumber = item.episode
+            } else {
+                // Fallback to existing parsing logic for backwards compatibility
+                if let episodeInfo = SpeakLifeEpisodeInfo.parse(from: item.subtitle, id: item.id) {
+                    seasonNumber = episodeInfo.season
+                    episodeNumber = episodeInfo.episode
                 }
-                
-                seasonGroups[seasonKey]?.append(item)
+            }
+            
+            if let season = seasonNumber {
+                if seasonGroups[season] == nil {
+                    seasonGroups[season] = []
+                }
+                seasonGroups[season]?.append(item)
             }
         }
         
         // Create sections for each season (sorted by season number descending)
-        let sortedSeasons = seasonGroups.keys.sorted { season1, season2 in
-            let s1Info = seasonInfoMap[season1]
-            let s2Info = seasonInfoMap[season2]
-            return (s1Info?.season ?? 0) > (s2Info?.season ?? 0)
-        }
+        let sortedSeasons = seasonGroups.keys.sorted { $0 > $1 }
         
-        for seasonKey in sortedSeasons {
-            guard let items = seasonGroups[seasonKey],
-                  let seasonInfo = seasonInfoMap[seasonKey] else { continue }
+        for seasonNumber in sortedSeasons {
+            guard let items = seasonGroups[seasonNumber] else { continue }
             
-            // Sort episodes within season by episode number descending (latest first)
+            // Sort episodes within season by episode number ascending (1, 2, 3...)
             let sortedEpisodes = items.sorted { item1, item2 in
-                let ep1 = SpeakLifeEpisodeInfo.parse(from: item1.subtitle, id: item1.id)
-                let ep2 = SpeakLifeEpisodeInfo.parse(from: item2.subtitle, id: item2.id)
-                return (ep1?.episode ?? 0) > (ep2?.episode ?? 0)
+                let ep1 = item1.episode ?? getEpisodeFromParsing(item1)
+                let ep2 = item2.episode ?? getEpisodeFromParsing(item2)
+                return (ep1 ?? 0) < (ep2 ?? 0)
             }
             
             seasonSections.append(AudioSectionModel(
-                id: seasonKey,
-                title: seasonInfo.displayName,
+                id: "speaklife-season-\(seasonNumber)",
+                title: "Season \(seasonNumber)",
                 subtitle: "\(items.count) episodes",
                 items: sortedEpisodes,
                 configuration: SectionConfiguration(
-                    showSeeAll: false,
-                    maxVisibleItems: 10,
+                    showSeeAll: false, 
+                    maxVisibleItems: min(items.count, 15), // Show up to 15 episodes, or all if fewer
                     itemWidth: 160,
                     itemHeight: 200,
                     horizontalSpacing: 12,
@@ -155,6 +157,11 @@ extension AudioDeclarationViewModel {
         }
         
         return seasonSections
+    }
+    
+    // Helper function for backward compatibility
+    private func getEpisodeFromParsing(_ item: AudioDeclaration) -> Int? {
+        return SpeakLifeEpisodeInfo.parse(from: item.subtitle, id: item.id)?.episode
     }
     
     private func createTopicBasedSections(from audioItems: [AudioDeclaration]) -> [AudioSectionModel] {

@@ -1,5 +1,5 @@
 //
-//  SectionedAudioView.swift
+//  GenericSectionedView.swift
 //  SpeakLife
 //
 //  Created by Claude on 12/26/24.
@@ -7,20 +7,16 @@
 
 import SwiftUI
 
-struct SectionedAudioView: View {
-    @EnvironmentObject var viewModel: AudioDeclarationViewModel
-    @EnvironmentObject var subscriptionStore: SubscriptionStore
+// MARK: - Generic Sectioned View
+
+struct GenericSectionedView<ContentType: SectionableContent, Provider: SectionProvider>: View 
+where Provider.ContentType == ContentType {
     
-    let audioViewModel: AudioPlayerViewModel
-    let onItemTap: (AudioDeclaration) -> Void
-    let onFavoriteToggle: (AudioDeclaration) -> Void
+    let sectionProvider: Provider
+    let onItemTap: (ContentType) -> Void
+    let onFavoriteTap: (ContentType) -> Void
     
     @State private var refreshing = false
-    
-    // Create section provider for current tab
-    private var sectionProvider: AudioSectionProvider {
-        AudioSectionProvider(viewModel: viewModel, tabConfig: .speakLife)
-    }
     
     var body: some View {
         GeometryReader { geometry in
@@ -30,30 +26,17 @@ struct SectionedAudioView: View {
                     VStack(spacing: 24) {
                         // Pull to refresh indicator
                         if refreshing {
-                            HStack {
-                                ProgressView()
-                                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                                    .scaleEffect(0.8)
-                                Text("Refreshing...")
-                                    .font(.caption)
-                                    .foregroundColor(.white.opacity(0.7))
-                            }
-                            .padding(.top, 8)
-                            .transition(.move(edge: .top).combined(with: .opacity))
+                            refreshIndicator
                         }
                         
                         // Sections
-                        ForEach(viewModel.speakLifeSections) { section in
-                            HorizontalAudioSection(
+                        ForEach(sectionProvider.sections) { section in
+                            GenericHorizontalSection(
                                 section: section,
-                                onItemTap: { item in
-                                    onItemTap(item)
-                                },
-                                onFavoriteTap: { item in
-                                    onFavoriteToggle(item)
-                                },
+                                onItemTap: onItemTap,
+                                onFavoriteTap: onFavoriteTap,
                                 onSeeAllTap: {
-                                    // No action - See All button is disabled
+                                    // Future: Handle see all
                                 }
                             )
                             .id(section.id)
@@ -74,24 +57,36 @@ struct SectionedAudioView: View {
                 }
                 
                 // Empty state
-                if viewModel.speakLifeSections.isEmpty {
+                if sectionProvider.sections.isEmpty {
                     emptyStateView
                 }
-                
-                // Audio bar is handled by parent view
             }
-            // All sheets and alerts are handled by parent AudioDeclarationView
         }
+    }
+    
+    // MARK: - Private Views
+    
+    private var refreshIndicator: some View {
+        HStack {
+            ProgressView()
+                .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                .scaleEffect(0.8)
+            Text("Refreshing...")
+                .font(.caption)
+                .foregroundColor(.white.opacity(0.7))
+        }
+        .padding(.top, 8)
+        .transition(.move(edge: .top).combined(with: .opacity))
     }
     
     private var emptyStateView: some View {
         VStack(spacing: 20) {
-            Image(systemName: "waveform.circle")
+            Image(systemName: "rectangle.stack.badge.play")
                 .resizable()
                 .frame(width: 80, height: 80)
                 .foregroundColor(.white.opacity(0.5))
             
-            Text("No SpeakLife Content")
+            Text("No Content Available")
                 .font(.title2)
                 .fontWeight(.bold)
                 .foregroundColor(.white)
@@ -119,22 +114,18 @@ struct SectionedAudioView: View {
         .padding(40)
     }
     
-    // Removed getSectionTitle since See All is disabled
+    // MARK: - Private Methods
     
     private func refreshContent() async {
         withAnimation {
             refreshing = true
         }
         
-        // Simulate network refresh
-        viewModel.fetchAudio(version: subscriptionStore.audioRemoteVersion)
-        
+        // Simulate refresh - actual implementation depends on provider
         try? await Task.sleep(nanoseconds: 1_500_000_000)
         
         withAnimation {
             refreshing = false
         }
     }
-    
-    // handleItemTap and handleFavoriteToggle are now passed as parameters
 }

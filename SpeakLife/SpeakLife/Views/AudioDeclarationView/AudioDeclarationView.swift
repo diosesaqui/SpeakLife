@@ -458,6 +458,23 @@ struct AudioDeclarationView: View {
         }
     }
     
+    // MARK: - Generic Sectioned Layout Support
+    
+    private var currentTabConfig: SectionedTabConfig {
+        return viewModel.currentTabConfig
+    }
+    
+    private var shouldUseSectionedLayout: Bool {
+        let sectionProvider = SectionedLayoutFactory.createSectionProvider(
+            for: currentTabConfig,
+            with: viewModel
+        )
+        return SectionedLayoutFactory.shouldUseSectionedLayout(
+            for: currentTabConfig,
+            with: sectionProvider
+        )
+    }
+    
     private var shouldShowEmptyFavoritesState: Bool {
         let currentContent = !viewModel.dynamicFilters.isEmpty ? 
                            viewModel.dynamicFilteredContent : 

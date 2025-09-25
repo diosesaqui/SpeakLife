@@ -1,20 +1,85 @@
 {
     "version": 1,
     "filterConfigs": [
-        {"id": "favorites", "displayName": "Favorites", "order": 0},
-        {"id": "speaklife", "displayName": "SpeakLife", "order": 1, "reversed": true},
-        {"id": "declarations", "displayName": "Mountain-Moving Prayers", "order": 2},
-        {"id": "fightBack", "displayName": "Fight Back", "order": 3, "reversed": true},
-        {"id": "godsHeart", "displayName": "God's Heart", "order": 4, "reversed": true},
-        {"id": "growWithJesus", "displayName": "Grow With Jesus", "order": 5},
-        {"id": "psalm91", "displayName": "Psalm 91", "order": 6, "reversed": true},
-        {"id": "divineHealth", "displayName": "Divine Health", "order": 7},
-        {"id": "magnify", "displayName": "Behold & Become", "order": 8, "reversed": true},
-        {"id": "gospel", "displayName": "Gospel", "order": 9},
-        {"id": "meditation", "displayName": "Scripture Meditation's", "order": 10},
-        {"id": "bedtimeStories", "displayName": "Bedtime Stories", "order": 11}
+        {
+            "id": "favorites",
+            "displayName": "Favorites",
+            "order": 0
+        },
+        {
+            "id": "speaklife",
+            "displayName": "SpeakLife",
+            "order": 1,
+            "reversed": true
+        },
+        {
+            "id": "declarations",
+            "displayName": "Mountain-Moving Prayers",
+            "order": 2
+        },
+        {
+            "id": "fightBack",
+            "displayName": "Fight Back",
+            "order": 3,
+            "reversed": true
+        },
+        {
+            "id": "godsHeart",
+            "displayName": "God's Heart",
+            "order": 4,
+            "reversed": true
+        },
+        {
+            "id": "growWithJesus",
+            "displayName": "Grow With Jesus",
+            "order": 5
+        },
+        {
+            "id": "psalm91",
+            "displayName": "Psalm 91",
+            "order": 6,
+            "reversed": true
+        },
+        {
+            "id": "divineHealth",
+            "displayName": "Divine Health",
+            "order": 7
+        },
+        {
+            "id": "magnify",
+            "displayName": "Behold & Become",
+            "order": 8,
+            "reversed": true
+        },
+        {
+            "id": "gospel",
+            "displayName": "Gospel",
+            "order": 9
+        },
+        {
+            "id": "meditation",
+            "displayName": "Scripture Meditation's",
+            "order": 10
+        },
+        {
+            "id": "bedtimeStories",
+            "displayName": "Bedtime Stories",
+            "order": 11
+        }
     ],
-    "filters": ["favorites", "speaklife", "declarations", "godsHeart", "growWithJesus", "psalm91", "divineHealth", "magnify", "gospel", "meditation", "bedtimeStories"],
+    "filters": [
+        "favorites",
+        "speaklife",
+        "declarations",
+        "godsHeart",
+        "growWithJesus",
+        "psalm91",
+        "divineHealth",
+        "magnify",
+        "gospel",
+        "meditation",
+        "bedtimeStories"
+    ],
     "audios": [
         {
             "id": "magnify-ep12.mp3",
@@ -297,7 +362,7 @@
         },
         {
             "id": "godsheart-ep13.mp3",
-            "title": "He Listens When You’re Desperate",
+            "title": "He Listens When You\u2019re Desperate",
             "subtitle": "God's Heart Episode 13",
             "duration": "3m",
             "imageUrl": "godsHeart",
@@ -405,7 +470,7 @@
         },
         {
             "id": "godsheart-ep1.mp3",
-            "title": "This Is God’s Heart",
+            "title": "This Is God\u2019s Heart",
             "subtitle": "God's Heart Episode 1",
             "duration": "3m",
             "imageUrl": "godsHeart",
@@ -419,7 +484,9 @@
             "duration": "3m",
             "imageUrl": "devotional",
             "isPremium": true,
-            "tag": "speaklife"
+            "tag": "speaklife",
+            "season": 3,
+            "episode": 2
         },
         {
             "id": "speaklife-s3ep1.mp3",
@@ -428,7 +495,9 @@
             "duration": "3m",
             "imageUrl": "devotional",
             "isPremium": true,
-            "tag": "speaklife"
+            "tag": "speaklife",
+            "season": 3,
+            "episode": 1
         },
         {
             "id": "speaklife-s2ep12.mp3",
@@ -437,7 +506,9 @@
             "duration": "3m",
             "imageUrl": "devotional",
             "isPremium": true,
-            "tag": "speaklife"
+            "tag": "speaklife",
+            "season": 2,
+            "episode": 12
         },
         {
             "id": "speaklife-s2ep11.mp3",
@@ -446,7 +517,9 @@
             "duration": "3m",
             "imageUrl": "devotional",
             "isPremium": true,
-            "tag": "speaklife"
+            "tag": "speaklife",
+            "season": 2,
+            "episode": 11
         },
         {
             "id": "speaklife-s2ep10.mp3",
@@ -455,7 +528,9 @@
             "duration": "3m",
             "imageUrl": "devotional",
             "isPremium": true,
-            "tag": "speaklife"
+            "tag": "speaklife",
+            "season": 2,
+            "episode": 10
         },
         {
             "id": "speaklife-s2ep9.mp3",
@@ -464,7 +539,9 @@
             "duration": "3m",
             "imageUrl": "devotional",
             "isPremium": true,
-            "tag": "speaklife"
+            "tag": "speaklife",
+            "season": 2,
+            "episode": 9
         },
         {
             "id": "speaklife-s2ep8.mp3",
@@ -473,7 +550,9 @@
             "duration": "3m",
             "imageUrl": "devotional",
             "isPremium": true,
-            "tag": "speaklife"
+            "tag": "speaklife",
+            "season": 2,
+            "episode": 8
         },
         {
             "id": "speaklife-s2ep7.mp3",
@@ -482,7 +561,9 @@
             "duration": "3m",
             "imageUrl": "devotional",
             "isPremium": true,
-            "tag": "speaklife"
+            "tag": "speaklife",
+            "season": 2,
+            "episode": 7
         },
         {
             "id": "speaklife-s2ep6.mp3",
@@ -491,7 +572,9 @@
             "duration": "3m",
             "imageUrl": "devotional",
             "isPremium": true,
-            "tag": "speaklife"
+            "tag": "speaklife",
+            "season": 2,
+            "episode": 6
         },
         {
             "id": "speaklife-s2ep5.mp3",
@@ -500,7 +583,9 @@
             "duration": "3m",
             "imageUrl": "devotional",
             "isPremium": true,
-            "tag": "speaklife"
+            "tag": "speaklife",
+            "season": 2,
+            "episode": 5
         },
         {
             "id": "speaklife-s2ep4.mp3",
@@ -509,7 +594,9 @@
             "duration": "3m",
             "imageUrl": "devotional",
             "isPremium": true,
-            "tag": "speaklife"
+            "tag": "speaklife",
+            "season": 2,
+            "episode": 4
         },
         {
             "id": "speaklife-s2ep3.mp3",
@@ -518,7 +605,9 @@
             "duration": "3m",
             "imageUrl": "devotional",
             "isPremium": true,
-            "tag": "speaklife"
+            "tag": "speaklife",
+            "season": 2,
+            "episode": 3
         },
         {
             "id": "speaklife-s2ep2.mp3",
@@ -527,7 +616,9 @@
             "duration": "3m",
             "imageUrl": "devotional",
             "isPremium": true,
-            "tag": "speaklife"
+            "tag": "speaklife",
+            "season": 2,
+            "episode": 2
         },
         {
             "id": "speaklife-s2ep1.mp3",
@@ -536,7 +627,9 @@
             "duration": "3m",
             "imageUrl": "devotional",
             "isPremium": true,
-            "tag": "speaklife"
+            "tag": "speaklife",
+            "season": 2,
+            "episode": 1
         },
         {
             "id": "speaklife-ep12.mp3",
@@ -545,7 +638,9 @@
             "duration": "3m",
             "imageUrl": "devotional",
             "isPremium": true,
-            "tag": "speaklife"
+            "tag": "speaklife",
+            "season": 1,
+            "episode": 12
         },
         {
             "id": "speaklife-ep11.mp3",
@@ -554,7 +649,9 @@
             "duration": "3m",
             "imageUrl": "devotional",
             "isPremium": true,
-            "tag": "speaklife"
+            "tag": "speaklife",
+            "season": 1,
+            "episode": 11
         },
         {
             "id": "speaklife-ep10.mp3",
@@ -563,7 +660,9 @@
             "duration": "3m",
             "imageUrl": "devotional",
             "isPremium": true,
-            "tag": "speaklife"
+            "tag": "speaklife",
+            "season": 1,
+            "episode": 10
         },
         {
             "id": "speaklife-ep9.mp3",
@@ -572,7 +671,9 @@
             "duration": "3m",
             "imageUrl": "devotional",
             "isPremium": true,
-            "tag": "speaklife"
+            "tag": "speaklife",
+            "season": 1,
+            "episode": 9
         },
         {
             "id": "speaklife-ep8.mp3",
@@ -581,7 +682,9 @@
             "duration": "3m",
             "imageUrl": "devotional",
             "isPremium": true,
-            "tag": "speaklife"
+            "tag": "speaklife",
+            "season": 1,
+            "episode": 8
         },
         {
             "id": "speaklife-ep7.mp3",
@@ -590,7 +693,9 @@
             "duration": "3m",
             "imageUrl": "devotional",
             "isPremium": true,
-            "tag": "speaklife"
+            "tag": "speaklife",
+            "season": 1,
+            "episode": 7
         },
         {
             "id": "speaklife-ep6.mp3",
@@ -599,7 +704,9 @@
             "duration": "3m",
             "imageUrl": "devotional",
             "isPremium": true,
-            "tag": "speaklife"
+            "tag": "speaklife",
+            "season": 1,
+            "episode": 6
         },
         {
             "id": "speaklife-ep5.mp3",
@@ -608,7 +715,9 @@
             "duration": "3m",
             "imageUrl": "devotional",
             "isPremium": true,
-            "tag": "speaklife"
+            "tag": "speaklife",
+            "season": 1,
+            "episode": 5
         },
         {
             "id": "speaklife-ep4.mp3",
@@ -617,7 +726,9 @@
             "duration": "3m",
             "imageUrl": "devotional",
             "isPremium": false,
-            "tag": "speaklife"
+            "tag": "speaklife",
+            "season": 1,
+            "episode": 4
         },
         {
             "id": "speaklife-ep3.mp3",
@@ -626,7 +737,9 @@
             "duration": "3m",
             "imageUrl": "devotional",
             "isPremium": true,
-            "tag": "speaklife"
+            "tag": "speaklife",
+            "season": 1,
+            "episode": 3
         },
         {
             "id": "speaklife-ep2.mp3",
@@ -635,7 +748,9 @@
             "duration": "3m",
             "imageUrl": "devotional",
             "isPremium": true,
-            "tag": "speaklife"
+            "tag": "speaklife",
+            "season": 1,
+            "episode": 2
         },
         {
             "id": "speaklife-ep1.mp3",
@@ -644,781 +759,783 @@
             "duration": "4m",
             "imageUrl": "devotional",
             "isPremium": false,
-            "tag": "speaklife"
-        },
-        {
-          "id": "divineHealth-ep1.mp3",
-          "title": "The Victory Is Already Won",
-          "subtitle": "Episode 1",
-          "duration": "4m",
-          "imageUrl": "divineHealth",
-          "isPremium": false,
-          "tag": "divineHealth"
-        },
-        {
-          "id": "divineHealth-ep2.mp3",
-          "title": "Your Position of Authority",
-          "subtitle": "Episode 2",
-          "duration": "3m",
-          "imageUrl": "divineHealth",
-          "isPremium": true,
-          "tag": "divineHealth"
-        },
-        {
-          "id": "divineHealth-ep3.mp3",
-          "title": "Guard Your Heart Like a Fortress",
-          "subtitle": "Episode 3",
-          "duration": "3m",
-          "imageUrl": "divineHealth",
-          "isPremium": true,
-          "tag": "divineHealth"
-        },
-        {
-          "id": "divineHealth-ep4.mp3",
-          "title": "Faith Comes by Hearing\u2014And Hearing Again",
-          "subtitle": "Episode 4",
-          "duration": "3m",
-          "imageUrl": "divineHealth",
-          "isPremium": true,
-          "tag": "divineHealth"
-        },
-        {
-          "id": "divineHealth-ep5.mp3",
-          "title": "Your Words Are Weapons",
-          "subtitle": "Episode 5",
-          "duration": "3m",
-          "imageUrl": "divineHealth",
-          "isPremium": true,
-          "tag": "divineHealth"
-        },
-        {
-          "id": "divineHealth-ep6.mp3",
-          "title": "The Power of Agreement",
-          "subtitle": "Episode 6",
-          "duration": "3m",
-          "imageUrl": "divineHealth",
-          "isPremium": true,
-          "tag": "divineHealth"
-        },
-        {
-          "id": "divineHealth-ep7.mp3",
-          "title": "Identity Fuels Faith",
-          "subtitle": "Episode 7",
-          "duration": "3m",
-          "imageUrl": "divineHealth",
-          "isPremium": true,
-          "tag": "divineHealth"
-        },
-        {
-          "id": "divineHealth-ep8.mp3",
-          "title": "The Power of Persistent Faith",
-          "subtitle": "Episode 8",
-          "duration": "3m",
-          "imageUrl": "divineHealth",
-          "isPremium": true,
-          "tag": "divineHealth"
-        },
-        {
-          "id": "divineHealth-ep9.mp3",
-          "title": "Resting in Gods Finished Work",
-          "subtitle": "Episode 9",
-          "duration": "3m",
-          "imageUrl": "divineHealth",
-          "isPremium": true,
-          "tag": "divineHealth"
-        },
-        {
-          "id": "divineHealth-ep10.mp3",
-          "title": "Thanksgiving as a Weapon",
-          "subtitle": "Episode 10",
-          "duration": "3m",
-          "imageUrl": "divineHealth",
-          "isPremium": true,
-          "tag": "divineHealth"
-        },
-        {
-          "id": "divineHealth-ep11.mp3",
-          "title": "The Strength of Joy",
-          "subtitle": "Episode 11",
-          "duration": "3m",
-          "imageUrl": "divineHealth",
-          "isPremium": true,
-          "tag": "divineHealth"
-        },
-        {
-          "id": "divineHealth-ep12.mp3",
-          "title": "The Trap of Offense",
-          "subtitle": "Episode 12",
-          "duration": "3m",
-          "imageUrl": "divineHealth",
-          "isPremium": true,
-          "tag": "divineHealth"
-        },
-        {
-          "id": "divineHealth-ep13.mp3",
-          "title": "Peace Is a Shield",
-          "subtitle": "Episode 13",
-          "duration": "4m",
-          "imageUrl": "divineHealth",
-          "isPremium": true,
-          "tag": "divineHealth"
-        },
-        {
-          "id": "divineHealth-ep14.mp3",
-          "title": "The Power of Laying on Hands",
-          "subtitle": "Episode 14",
-          "duration": "2m",
-          "imageUrl": "divineHealth",
-          "isPremium": true,
-          "tag": "divineHealth"
-        },
-        {
-          "id": "divineHealth-ep15.mp3",
-          "title": "The Power of a Holy Imagination",
-          "subtitle": "Episode 15",
-          "duration": "4m",
-          "imageUrl": "divineHealth",
-          "isPremium": true,
-          "tag": "divineHealth"
-        },
-        {
-          "id": "divineHealth-ep16.mp3",
-          "title": "Seed, Time, and Harvest",
-          "subtitle": "Episode 16",
-          "duration": "3m",
-          "imageUrl": "divineHealth",
-          "isPremium": true,
-          "tag": "divineHealth"
-        },
-        {
-          "id": "divineHealth-ep17.mp3",
-          "title": "Words That Water or Choke",
-          "subtitle": "Episode 17",
-          "duration": "3m",
-          "imageUrl": "divineHealth",
-          "isPremium": true,
-          "tag": "divineHealth"
-        },
-        {
-          "id": "divineHealth-ep18.mp3",
-          "title": "Lay Down Stress, Pick Up Peace",
-          "subtitle": "Episode 18",
-          "duration": "3m",
-          "imageUrl": "divineHealth",
-          "isPremium": true,
-          "tag": "divineHealth"
-        },
-        {
-          "id": "divineHealth-ep19.mp3",
-          "title": "Sleep Is Spiritual",
-          "subtitle": "Episode 19",
-          "duration": "3m",
-          "imageUrl": "divineHealth",
-          "isPremium": true,
-          "tag": "divineHealth"
-        },
-        {
-          "id": "divineHealth-ep20.mp3",
-          "title": "Nothing Missing, Nothing Broken",
-          "subtitle": "Episode 20",
-          "duration": "3m",
-          "imageUrl": "divineHealth",
-          "isPremium": true,
-          "tag": "divineHealth"
-        },
-        {
-          "id": "growJesus-ep1.mp3",
-          "title": "Jesus Wants You Close",
-          "subtitle": "Episode 1",
-          "duration": "3m",
-          "imageUrl": "growWithJesus",
-          "isPremium": true,
-          "tag": "growWithJesus"
-        },
-        {
-          "id": "growJesus-ep2.mp3",
-          "title": "Friendship with God Is Real",
-          "subtitle": "Episode 2",
-          "duration": "3m",
-          "imageUrl": "growWithJesus",
-          "isPremium": true,
-          "tag": "growWithJesus"
-        },
-        {
-          "id": "growJesus-ep3.mp3",
-          "title": "Hes Not a Religion\u2014Hes a Person",
-          "subtitle": "Episode 3",
-          "duration": "3m",
-          "imageUrl": "growWithJesus",
-          "isPremium": true,
-          "tag": "growWithJesus"
-        },
-        {
-          "id": "growJesus-ep4.mp3",
-          "title": "You Dont Have to Perform, Just Be Present",
-          "subtitle": "Episode 4",
-          "duration": "3m",
-          "imageUrl": "growWithJesus",
-          "isPremium": true,
-          "tag": "growWithJesus"
-        },
-        {
-          "id": "growJesus-ep5.mp3",
-          "title": "Talk to Him Like Youre Already Loved",
-          "subtitle": "Episode 5",
-          "duration": "3m",
-          "imageUrl": "growWithJesus",
-          "isPremium": true,
-          "tag": "growWithJesus"
-        },
-        {
-          "id": "growJesus-ep6.mp3",
-          "title": "Learning to Listen",
-          "subtitle": "Episode 6",
-          "duration": "3m",
-          "imageUrl": "growWithJesus",
-          "isPremium": true,
-          "tag": "growWithJesus"
-        },
-        {
-          "id": "growJesus-ep7.mp3",
-          "title": "Walking Means Trusting",
-          "subtitle": "Episode 7",
-          "duration": "3m",
-          "imageUrl": "growWithJesus",
-          "isPremium": true,
-          "tag": "growWithJesus"
-        },
-        {
-          "id": "growJesus-ep8.mp3",
-          "title": "Hes In Your Ordinary Moments",
-          "subtitle": "Episode 8",
-          "duration": "3m",
-          "imageUrl": "growWithJesus",
-          "isPremium": true,
-          "tag": "growWithJesus"
-        },
-        {
-          "id": "growJesus-ep9.mp3",
-          "title": "You Dont Have to Feel It to Be Close",
-          "subtitle": "Episode 9",
-          "duration": "3m",
-          "imageUrl": "growWithJesus",
-          "isPremium": true,
-          "tag": "growWithJesus"
-        },
-        {
-          "id": "growJesus-ep10.mp3",
-          "title": "Walking Means Letting Him Lead",
-          "subtitle": "Episode 10",
-          "duration": "3m",
-          "imageUrl": "growWithJesus",
-          "isPremium": true,
-          "tag": "growWithJesus"
-        },
-        {
-          "id": "growJesus-ep11.mp3",
-          "title": "What to Do When He Feels Silent",
-          "subtitle": "Episode 11",
-          "duration": "3m",
-          "imageUrl": "growWithJesus",
-          "isPremium": true,
-          "tag": "growWithJesus"
-        },
-        {
-          "id": "growJesus-ep12.mp3",
-          "title": "Hes Still With You When Youre Struggling",
-          "subtitle": "Episode 12",
-          "duration": "3m",
-          "imageUrl": "growWithJesus",
-          "isPremium": true,
-          "tag": "growWithJesus"
-        },
-        {
-          "id": "growJesus-ep13.mp3",
-          "title": "Doubt Doesnt Disqualify the Relationship",
-          "subtitle": "Episode 13",
-          "duration": "3m",
-          "imageUrl": "growWithJesus",
-          "isPremium": true,
-          "tag": "growWithJesus"
-        },
-        {
-          "id": "growJesus-ep14.mp3",
-          "title": "When You Dont Feel Worthy to Be Close",
-          "subtitle": "Episode 14",
-          "duration": "3m",
-          "imageUrl": "growWithJesus",
-          "isPremium": true,
-          "tag": "growWithJesus"
-        },
-        {
-          "id": "growJesus-ep15.mp3",
-          "title": "Theres Grace for Your Messy Process",
-          "subtitle": "Episode 15",
-          "duration": "2m",
-          "imageUrl": "growWithJesus",
-          "isPremium": true,
-          "tag": "growWithJesus"
-        },
-        {
-          "id": "growJesus-ep16.mp3",
-          "title": "He Will Reveal His Voice",
-          "subtitle": "Episode 16",
-          "duration": "2m",
-          "imageUrl": "growWithJesus",
-          "isPremium": true,
-          "tag": "growWithJesus"
-        },
-        {
-          "id": "growJesus-ep17.mp3",
-          "title": "Youll Start to Love Like He Does",
-          "subtitle": "Episode 17",
-          "duration": "2m",
-          "imageUrl": "growWithJesus",
-          "isPremium": true,
-          "tag": "growWithJesus"
-        },
-        {
-          "id": "growJesus-ep18.mp3",
-          "title": "Walking With Him Changes How You Live",
-          "subtitle": "Episode 18",
-          "duration": "2m",
-          "imageUrl": "growWithJesus",
-          "isPremium": true,
-          "tag": "growWithJesus"
-        },
-        {
-          "id": "growJesus-ep19.mp3",
-          "title": "He Walks With You All the Way Home",
-          "subtitle": "Episode 19",
-          "duration": "2m",
-          "imageUrl": "growWithJesus",
-          "isPremium": true,
-          "tag": "growWithJesus"
-        },
-        {
-          "id": "jesusBeginningMatthew.mp3",
-          "title": "The Beginning of Jesus Journey",
-          "subtitle": "Matthew 1-3",
-          "duration": "8m",
-          "imageUrl": "jesusBeginningMatthew",
-          "isPremium": true,
-          "tag": "gospel"
-        },
-        {
-          "id": "sermonMount.mp3",
-          "title": "How Jesus Showed Us the Way to Live",
-          "subtitle": "Matthew 4-7",
-          "duration": "8m",
-          "imageUrl": "sermonMount",
-          "isPremium": true,
-          "tag": "gospel"
-        },
-        {
-          "id": "jesusMiracles.mp3",
-          "title": "Miracles That Show the Heart of the Savior",
-          "subtitle": "Matthew 8-9",
-          "duration": "11m",
-          "imageUrl": "jesusMiracles",
-          "isPremium": true,
-          "tag": "gospel"
-        },
-        {
-          "id": "followJesus.mp3",
-          "title": "Jesus Instructions, Miracles, and Parables of the Kingdom",
-          "subtitle": "Matthew 10-13",
-          "duration": "11m",
-          "imageUrl": "followJesus",
-          "isPremium": true,
-          "tag": "gospel"
-        },
-        {
-          "id": "jesusTeachings.mp3",
-          "title": "Jesus Miracles, Teachings, and Encounters on the Path to Jerusalem",
-          "subtitle": "Matthew 14-20",
-          "duration": "11m",
-          "imageUrl": "jesusTeachings",
-          "isPremium": true,
-          "tag": "gospel"
-        },
-        {
-          "id": "finalTeachings.mp3",
-          "title": "The Final Teachings of the King",
-          "subtitle": "Matthew 21-25",
-          "duration": "12m",
-          "imageUrl": "finalTeachings",
-          "isPremium": true,
-          "tag": "gospel"
-        },
-        {
-          "id": "jesusVictory.mp3",
-          "title": "The Passion and Victory of the King",
-          "subtitle": "Matthew 26-28",
-          "duration": "11m",
-          "imageUrl": "jesusVictory",
-          "isPremium": true,
-          "tag": "gospel"
-        },
-        {
-          "id": "beginning.mp3",
-          "title": "In the Beginning",
-          "subtitle": "Journey into Gods Perfect Creation",
-          "duration": "9m",
-          "imageUrl": "flowingRiver",
-          "isPremium": true,
-          "tag": "bedtimeStories"
-        },
-        {
-          "id": "noah.mp3",
-          "title": "Noah and the Ark",
-          "subtitle": "Gods Promise of Protection and Hope",
-          "duration": "9m",
-          "imageUrl": "noah",
-          "isPremium": true,
-          "tag": "bedtimeStories"
-        },
-        {
-          "id": "babel.mp3",
-          "title": "The Tower of Babel",
-          "subtitle": "Gods Plan for the Nations",
-          "duration": "8m",
-          "imageUrl": "babel",
-          "isPremium": true,
-          "tag": "bedtimeStories"
-        },
-        {
-          "id": "abraham.mp3",
-          "title": "Abrahams Covenant",
-          "subtitle": "A Story of Trust in Gods Promises",
-          "duration": "8m",
-          "imageUrl": "abraham",
-          "isPremium": true,
-          "tag": "bedtimeStories"
-        },
-        {
-          "id": "sodom.mp3",
-          "title": "Sodom and Gomorrah",
-          "subtitle": "A Story of Justice, Mercy, and Gods Sovereignty",
-          "duration": "10m",
-          "imageUrl": "sodom",
-          "isPremium": true,
-          "tag": "bedtimeStories"
-        },
-        {
-          "id": "abrahamsacrifice.mp3",
-          "title": "Abraham and Isaac",
-          "subtitle": "Trusting Gods Perfect Plan",
-          "duration": "8m",
-          "imageUrl": "abrahamsacrifice",
-          "isPremium": true,
-          "tag": "bedtimeStories"
-        },
-        {
-          "id": "jacobsladder.mp3",
-          "title": "Jacobs Ladder",
-          "subtitle": "Gods Promise and Presence",
-          "duration": "8m",
-          "imageUrl": "jacobsladder",
-          "isPremium": true,
-          "tag": "bedtimeStories"
-        },
-        {
-          "id": "joseph.mp3",
-          "title": "Joseph and His Brothers",
-          "subtitle": "From Betrayal to Forgiveness",
-          "duration": "9m",
-          "imageUrl": "joseph",
-          "isPremium": true,
-          "tag": "bedtimeStories"
-        },
-        {
-          "id": "mosesburningbush.mp3",
-          "title": "Moses and the Burning Bush",
-          "subtitle": "Gods Call to Lead",
-          "duration": "9m",
-          "imageUrl": "mosesburningbush",
-          "isPremium": true,
-          "tag": "bedtimeStories"
-        },
-        {
-          "id": "tenplagues.mp3",
-          "title": "The Ten Plagues and the Exodus",
-          "subtitle": "Gods Power and Deliverance",
-          "duration": "9m",
-          "imageUrl": "tenplagues",
-          "isPremium": true,
-          "tag": "bedtimeStories"
-        },
-        {
-          "id": "redsea.mp3",
-          "title": "The Parting of the Red Sea",
-          "subtitle": "Gods Power to Make a Way",
-          "duration": "7m",
-          "imageUrl": "redsea",
-          "isPremium": true,
-          "tag": "bedtimeStories"
-        },
-        {
-          "id": "moses.mp3",
-          "title": "Bread from Heaven and Gods Covenant",
-          "subtitle": "God's Provision and the Ten Commandments",
-          "duration": "10m",
-          "imageUrl": "moses",
-          "isPremium": true,
-          "tag": "bedtimeStories"
-        },
-        {
-          "id": "david.mp3",
-          "title": "Davids Journey",
-          "subtitle": "From Shepherd to King",
-          "duration": "8m",
-          "imageUrl": "david",
-          "isPremium": true,
-          "tag": "bedtimeStories"
-        },
-        {
-          "id": "jonah.mp3",
-          "title": "Jonahs Journey of Gods Mercy",
-          "subtitle": "A Story of Obedience, Compassion, and Second Chances",
-          "duration": "8m",
-          "imageUrl": "jonah",
-          "isPremium": true,
-          "tag": "bedtimeStories"
-        },
-        {
-          "id": "ruth.mp3",
-          "title": "Ruths Journey of Loyalty and Love",
-          "subtitle": "A Story of Faithfulness, Redemption, and New Beginnings",
-          "duration": "9m",
-          "imageUrl": "ruth",
-          "isPremium": true,
-          "tag": "bedtimeStories"
-        },
-        {
-          "id": "psalm9_11.mp3",
-          "title": "Psalm 91: A Shield of Protection",
-          "subtitle": "Declaring Gods Faithful Promises of Safety and Refuge",
-          "duration": "2m",
-          "imageUrl": "pinkHueMountain",
-          "isPremium": false,
-          "tag": "declarations"
-        },
-        {
-          "id": "healed_v2.mp3",
-          "title": "Healing Declarations",
-          "subtitle": "Speaking Wholeness, Strength, and Restoration Through the Power of Faith",
-          "duration": "5m",
-          "imageUrl": "JesusHealing",
-          "isPremium": true,
-          "tag": "declarations"
-        },
-        {
-          "id": "peace_v2.mp3",
-          "title": "Peace Beyond Understanding",
-          "subtitle": "Overcoming Anxiety, Stress, and Fear Through Gods Promises",
-          "duration": "3m",
-          "imageUrl": "JesusPraying",
-          "isPremium": true,
-          "tag": "declarations"
-        },
-        {
-          "id": "gratitude_v2.mp3",
-          "title": "A Heart of Gratitude",
-          "subtitle": "Declaring Gods Goodness and Faithfulness with Thankful Praise",
-          "duration": "3m",
-          "imageUrl": "desertSky",
-          "isPremium": true,
-          "tag": "declarations"
-        },
-        {
-          "id": "warfare_v2.mp3",
-          "title": "Victory in Spiritual Warfare",
-          "subtitle": "Declaring Authority and Triumph Over All Evil Through Christ",
-          "duration": "3m",
-          "imageUrl": "heavenly",
-          "isPremium": true,
-          "tag": "declarations"
-        },
-        {
-          "id": "victorious_v2.mp3",
-          "title": "Living Victoriously in Christ",
-          "subtitle": "Declaring Bible Verses to Walk in Victory Every Day",
-          "duration": "3m",
-          "imageUrl": "sunsetMountain",
-          "isPremium": true,
-          "tag": "declarations"
-        },
-        {
-          "id": "prosperity_v2.mp3",
-          "title": "Abundance Declarations",
-          "subtitle": "Unlocking Wealth, Prosperity, and Overflow Through Faith and Affirmation",
-          "duration": "4m",
-          "imageUrl": "JesusHeaven",
-          "isPremium": true,
-          "tag": "declarations"
-        },
-        {
-          "id": "spiritualGrowth_v2.mp3",
-          "title": "A Declaration for Spiritual Growth",
-          "subtitle": "Rooted in Jesus Redemption and Growing in Gods Promises",
-          "duration": "4m",
-          "imageUrl": "spiritualGrowth",
-          "isPremium": true,
-          "tag": "declarations"
-        },
-        {
-          "id": "heartbreak_v2.mp3",
-          "title": "Healing for the Brokenhearted",
-          "subtitle": "Declaring Gods Love and Restoration Over a Wounded Heart",
-          "duration": "3m",
-          "imageUrl": "sunset3",
-          "isPremium": true,
-          "tag": "declarations"
-        },
-        {
-          "id": "identity_v2.mp3",
-          "title": "Identity in Christ",
-          "subtitle": "Living in the Power of Your God-Given Identity",
-          "duration": "4m",
-          "imageUrl": "JesusOnCross",
-          "isPremium": true,
-          "tag": "declarations"
-        },
-        {
-          "id": "godsprotection_v2.mp3",
-          "title": "Protection Promises",
-          "subtitle": "Speaking Gods Word for Safety and Peace Over Your Life",
-          "duration": "4m",
-          "imageUrl": "warriorAngel",
-          "isPremium": true,
-          "tag": "declarations"
-        },
-        {
-          "id": "longlife_v2.mp3",
-          "title": "Renewed Youth and Long Life Declaration",
-          "subtitle": "Declarations for Long Life, Strength, and Youth Restored Through Gods Promises",
-          "duration": "3m",
-          "imageUrl": "JesusRisen",
-          "isPremium": true,
-          "tag": "declarations"
-        },
-        {
-          "id": "children_v2.mp3",
-          "title": "Blessing Our Children",
-          "subtitle": "Declaring Safety, Wisdom, and Destiny Over Their Lives",
-          "duration": "3m",
-          "imageUrl": "sunsetmountains3",
-          "isPremium": true,
-          "tag": "declarations"
-        },
-        {
-          "id": "miracles_v2.mp3",
-          "title": "Breakthrough and Miracles",
-          "subtitle": "Declaring the Power of God to Transform the Impossible",
-          "duration": "3m",
-          "imageUrl": "lakeSunset",
-          "isPremium": true,
-          "tag": "declarations"
-        },
-        {
-          "id": "restoration_v2.mp3",
-          "title": "Restoring Relationships",
-          "subtitle": "Declaring Healing, Unity, and Love Over Marriages and Families",
-          "duration": "3m",
-          "imageUrl": "breathTakingSunset",
-          "isPremium": true,
-          "tag": "declarations"
-        },
-        {
-          "id": "loveMeditations.mp3",
-          "title": "The Heart of God's Love",
-          "subtitle": "Embrace God's Unfailing Love for You",
-          "duration": "8m",
-          "imageUrl": "loveMeditations",
-          "isPremium": true,
-          "tag": "meditation"
-        },
-        {
-          "id": "praiseMeditations.mp3",
-          "title": "Lifting Up His Name in Praise",
-          "subtitle": "Worship God with Joy and Reverence",
-          "duration": "8m",
-          "imageUrl": "praiseMeditations",
-          "isPremium": true,
-          "tag": "meditation"
-        },
-        {
-          "id": "identityMeditations.mp3",
-          "title": "Living in Your True Identity in Christ",
-          "subtitle": "Embrace Who You Are in Jesus",
-          "duration": "8m",
-          "imageUrl": "identityMeditations",
-          "isPremium": true,
-          "tag": "meditation"
-        },
-        {
-          "id": "protectionMeditations.mp3",
-          "title": "Under the Shelter of Gods Wings",
-          "subtitle": "Divine Protection and Peace",
-          "duration": "7m",
-          "imageUrl": "protectionMeditations",
-          "isPremium": true,
-          "tag": "meditation"
-        },
-        {
-          "id": "provisionsMeditations.mp3",
-          "title": "Trusting in Gods Abundant Provision",
-          "subtitle": "Rest in Gods Faithfulness and Sufficiency",
-          "duration": "7m",
-          "imageUrl": "provisionsMeditations",
-          "isPremium": true,
-          "tag": "meditation"
-        },
-        {
-          "id": "restMeditations.mp3",
-          "title": "Resting in Gods Peace and Strength",
-          "subtitle": "Renewal and Refreshment in His Presence",
-          "duration": "8m",
-          "imageUrl": "restMeditations",
-          "isPremium": true,
-          "tag": "meditation"
-        },
-        {
-          "id": "fearMeditations.mp3",
-          "title": "Freedom from Fear and Anxiety",
-          "subtitle": "Find Peace in Gods Promises",
-          "duration": "9m",
-          "imageUrl": "fearMeditations",
-          "isPremium": true,
-          "tag": "meditation"
-        },
-        {
-          "id": "strengthMeditations.mp3",
-          "title": "Strength for the Journey",
-          "subtitle": "Endurance and Perseverance in Gods Power",
-          "duration": "8m",
-          "imageUrl": "strengthMeditations",
-          "isPremium": true,
-          "tag": "meditation"
-        },
-        {
-          "id": "wisdomMeditations.mp3",
-          "title": "Walking in Gods Wisdom",
-          "subtitle": "Divine Guidance and Understanding",
-          "duration": "7m",
-          "imageUrl": "wisdomMeditations",
-          "isPremium": true,
-          "tag": "meditation"
-        },
-        {
-          "id": "healthMeditations.mp3",
-          "title": "Restoring Wholeness Through Gods Promises",
-          "subtitle": "A Scripture Meditation for Healing and Health",
-          "duration": "7m",
-          "imageUrl": "healthMeditations",
-          "isPremium": true,
-          "tag": "meditation"
+            "tag": "speaklife",
+            "season": 1,
+            "episode": 1
+        },
+        {
+            "id": "divineHealth-ep1.mp3",
+            "title": "The Victory Is Already Won",
+            "subtitle": "Episode 1",
+            "duration": "4m",
+            "imageUrl": "divineHealth",
+            "isPremium": false,
+            "tag": "divineHealth"
+        },
+        {
+            "id": "divineHealth-ep2.mp3",
+            "title": "Your Position of Authority",
+            "subtitle": "Episode 2",
+            "duration": "3m",
+            "imageUrl": "divineHealth",
+            "isPremium": true,
+            "tag": "divineHealth"
+        },
+        {
+            "id": "divineHealth-ep3.mp3",
+            "title": "Guard Your Heart Like a Fortress",
+            "subtitle": "Episode 3",
+            "duration": "3m",
+            "imageUrl": "divineHealth",
+            "isPremium": true,
+            "tag": "divineHealth"
+        },
+        {
+            "id": "divineHealth-ep4.mp3",
+            "title": "Faith Comes by Hearing\u2014And Hearing Again",
+            "subtitle": "Episode 4",
+            "duration": "3m",
+            "imageUrl": "divineHealth",
+            "isPremium": true,
+            "tag": "divineHealth"
+        },
+        {
+            "id": "divineHealth-ep5.mp3",
+            "title": "Your Words Are Weapons",
+            "subtitle": "Episode 5",
+            "duration": "3m",
+            "imageUrl": "divineHealth",
+            "isPremium": true,
+            "tag": "divineHealth"
+        },
+        {
+            "id": "divineHealth-ep6.mp3",
+            "title": "The Power of Agreement",
+            "subtitle": "Episode 6",
+            "duration": "3m",
+            "imageUrl": "divineHealth",
+            "isPremium": true,
+            "tag": "divineHealth"
+        },
+        {
+            "id": "divineHealth-ep7.mp3",
+            "title": "Identity Fuels Faith",
+            "subtitle": "Episode 7",
+            "duration": "3m",
+            "imageUrl": "divineHealth",
+            "isPremium": true,
+            "tag": "divineHealth"
+        },
+        {
+            "id": "divineHealth-ep8.mp3",
+            "title": "The Power of Persistent Faith",
+            "subtitle": "Episode 8",
+            "duration": "3m",
+            "imageUrl": "divineHealth",
+            "isPremium": true,
+            "tag": "divineHealth"
+        },
+        {
+            "id": "divineHealth-ep9.mp3",
+            "title": "Resting in Gods Finished Work",
+            "subtitle": "Episode 9",
+            "duration": "3m",
+            "imageUrl": "divineHealth",
+            "isPremium": true,
+            "tag": "divineHealth"
+        },
+        {
+            "id": "divineHealth-ep10.mp3",
+            "title": "Thanksgiving as a Weapon",
+            "subtitle": "Episode 10",
+            "duration": "3m",
+            "imageUrl": "divineHealth",
+            "isPremium": true,
+            "tag": "divineHealth"
+        },
+        {
+            "id": "divineHealth-ep11.mp3",
+            "title": "The Strength of Joy",
+            "subtitle": "Episode 11",
+            "duration": "3m",
+            "imageUrl": "divineHealth",
+            "isPremium": true,
+            "tag": "divineHealth"
+        },
+        {
+            "id": "divineHealth-ep12.mp3",
+            "title": "The Trap of Offense",
+            "subtitle": "Episode 12",
+            "duration": "3m",
+            "imageUrl": "divineHealth",
+            "isPremium": true,
+            "tag": "divineHealth"
+        },
+        {
+            "id": "divineHealth-ep13.mp3",
+            "title": "Peace Is a Shield",
+            "subtitle": "Episode 13",
+            "duration": "4m",
+            "imageUrl": "divineHealth",
+            "isPremium": true,
+            "tag": "divineHealth"
+        },
+        {
+            "id": "divineHealth-ep14.mp3",
+            "title": "The Power of Laying on Hands",
+            "subtitle": "Episode 14",
+            "duration": "2m",
+            "imageUrl": "divineHealth",
+            "isPremium": true,
+            "tag": "divineHealth"
+        },
+        {
+            "id": "divineHealth-ep15.mp3",
+            "title": "The Power of a Holy Imagination",
+            "subtitle": "Episode 15",
+            "duration": "4m",
+            "imageUrl": "divineHealth",
+            "isPremium": true,
+            "tag": "divineHealth"
+        },
+        {
+            "id": "divineHealth-ep16.mp3",
+            "title": "Seed, Time, and Harvest",
+            "subtitle": "Episode 16",
+            "duration": "3m",
+            "imageUrl": "divineHealth",
+            "isPremium": true,
+            "tag": "divineHealth"
+        },
+        {
+            "id": "divineHealth-ep17.mp3",
+            "title": "Words That Water or Choke",
+            "subtitle": "Episode 17",
+            "duration": "3m",
+            "imageUrl": "divineHealth",
+            "isPremium": true,
+            "tag": "divineHealth"
+        },
+        {
+            "id": "divineHealth-ep18.mp3",
+            "title": "Lay Down Stress, Pick Up Peace",
+            "subtitle": "Episode 18",
+            "duration": "3m",
+            "imageUrl": "divineHealth",
+            "isPremium": true,
+            "tag": "divineHealth"
+        },
+        {
+            "id": "divineHealth-ep19.mp3",
+            "title": "Sleep Is Spiritual",
+            "subtitle": "Episode 19",
+            "duration": "3m",
+            "imageUrl": "divineHealth",
+            "isPremium": true,
+            "tag": "divineHealth"
+        },
+        {
+            "id": "divineHealth-ep20.mp3",
+            "title": "Nothing Missing, Nothing Broken",
+            "subtitle": "Episode 20",
+            "duration": "3m",
+            "imageUrl": "divineHealth",
+            "isPremium": true,
+            "tag": "divineHealth"
+        },
+        {
+            "id": "growJesus-ep1.mp3",
+            "title": "Jesus Wants You Close",
+            "subtitle": "Episode 1",
+            "duration": "3m",
+            "imageUrl": "growWithJesus",
+            "isPremium": true,
+            "tag": "growWithJesus"
+        },
+        {
+            "id": "growJesus-ep2.mp3",
+            "title": "Friendship with God Is Real",
+            "subtitle": "Episode 2",
+            "duration": "3m",
+            "imageUrl": "growWithJesus",
+            "isPremium": true,
+            "tag": "growWithJesus"
+        },
+        {
+            "id": "growJesus-ep3.mp3",
+            "title": "Hes Not a Religion\u2014Hes a Person",
+            "subtitle": "Episode 3",
+            "duration": "3m",
+            "imageUrl": "growWithJesus",
+            "isPremium": true,
+            "tag": "growWithJesus"
+        },
+        {
+            "id": "growJesus-ep4.mp3",
+            "title": "You Dont Have to Perform, Just Be Present",
+            "subtitle": "Episode 4",
+            "duration": "3m",
+            "imageUrl": "growWithJesus",
+            "isPremium": true,
+            "tag": "growWithJesus"
+        },
+        {
+            "id": "growJesus-ep5.mp3",
+            "title": "Talk to Him Like Youre Already Loved",
+            "subtitle": "Episode 5",
+            "duration": "3m",
+            "imageUrl": "growWithJesus",
+            "isPremium": true,
+            "tag": "growWithJesus"
+        },
+        {
+            "id": "growJesus-ep6.mp3",
+            "title": "Learning to Listen",
+            "subtitle": "Episode 6",
+            "duration": "3m",
+            "imageUrl": "growWithJesus",
+            "isPremium": true,
+            "tag": "growWithJesus"
+        },
+        {
+            "id": "growJesus-ep7.mp3",
+            "title": "Walking Means Trusting",
+            "subtitle": "Episode 7",
+            "duration": "3m",
+            "imageUrl": "growWithJesus",
+            "isPremium": true,
+            "tag": "growWithJesus"
+        },
+        {
+            "id": "growJesus-ep8.mp3",
+            "title": "Hes In Your Ordinary Moments",
+            "subtitle": "Episode 8",
+            "duration": "3m",
+            "imageUrl": "growWithJesus",
+            "isPremium": true,
+            "tag": "growWithJesus"
+        },
+        {
+            "id": "growJesus-ep9.mp3",
+            "title": "You Dont Have to Feel It to Be Close",
+            "subtitle": "Episode 9",
+            "duration": "3m",
+            "imageUrl": "growWithJesus",
+            "isPremium": true,
+            "tag": "growWithJesus"
+        },
+        {
+            "id": "growJesus-ep10.mp3",
+            "title": "Walking Means Letting Him Lead",
+            "subtitle": "Episode 10",
+            "duration": "3m",
+            "imageUrl": "growWithJesus",
+            "isPremium": true,
+            "tag": "growWithJesus"
+        },
+        {
+            "id": "growJesus-ep11.mp3",
+            "title": "What to Do When He Feels Silent",
+            "subtitle": "Episode 11",
+            "duration": "3m",
+            "imageUrl": "growWithJesus",
+            "isPremium": true,
+            "tag": "growWithJesus"
+        },
+        {
+            "id": "growJesus-ep12.mp3",
+            "title": "Hes Still With You When Youre Struggling",
+            "subtitle": "Episode 12",
+            "duration": "3m",
+            "imageUrl": "growWithJesus",
+            "isPremium": true,
+            "tag": "growWithJesus"
+        },
+        {
+            "id": "growJesus-ep13.mp3",
+            "title": "Doubt Doesnt Disqualify the Relationship",
+            "subtitle": "Episode 13",
+            "duration": "3m",
+            "imageUrl": "growWithJesus",
+            "isPremium": true,
+            "tag": "growWithJesus"
+        },
+        {
+            "id": "growJesus-ep14.mp3",
+            "title": "When You Dont Feel Worthy to Be Close",
+            "subtitle": "Episode 14",
+            "duration": "3m",
+            "imageUrl": "growWithJesus",
+            "isPremium": true,
+            "tag": "growWithJesus"
+        },
+        {
+            "id": "growJesus-ep15.mp3",
+            "title": "Theres Grace for Your Messy Process",
+            "subtitle": "Episode 15",
+            "duration": "2m",
+            "imageUrl": "growWithJesus",
+            "isPremium": true,
+            "tag": "growWithJesus"
+        },
+        {
+            "id": "growJesus-ep16.mp3",
+            "title": "He Will Reveal His Voice",
+            "subtitle": "Episode 16",
+            "duration": "2m",
+            "imageUrl": "growWithJesus",
+            "isPremium": true,
+            "tag": "growWithJesus"
+        },
+        {
+            "id": "growJesus-ep17.mp3",
+            "title": "Youll Start to Love Like He Does",
+            "subtitle": "Episode 17",
+            "duration": "2m",
+            "imageUrl": "growWithJesus",
+            "isPremium": true,
+            "tag": "growWithJesus"
+        },
+        {
+            "id": "growJesus-ep18.mp3",
+            "title": "Walking With Him Changes How You Live",
+            "subtitle": "Episode 18",
+            "duration": "2m",
+            "imageUrl": "growWithJesus",
+            "isPremium": true,
+            "tag": "growWithJesus"
+        },
+        {
+            "id": "growJesus-ep19.mp3",
+            "title": "He Walks With You All the Way Home",
+            "subtitle": "Episode 19",
+            "duration": "2m",
+            "imageUrl": "growWithJesus",
+            "isPremium": true,
+            "tag": "growWithJesus"
+        },
+        {
+            "id": "jesusBeginningMatthew.mp3",
+            "title": "The Beginning of Jesus Journey",
+            "subtitle": "Matthew 1-3",
+            "duration": "8m",
+            "imageUrl": "jesusBeginningMatthew",
+            "isPremium": true,
+            "tag": "gospel"
+        },
+        {
+            "id": "sermonMount.mp3",
+            "title": "How Jesus Showed Us the Way to Live",
+            "subtitle": "Matthew 4-7",
+            "duration": "8m",
+            "imageUrl": "sermonMount",
+            "isPremium": true,
+            "tag": "gospel"
+        },
+        {
+            "id": "jesusMiracles.mp3",
+            "title": "Miracles That Show the Heart of the Savior",
+            "subtitle": "Matthew 8-9",
+            "duration": "11m",
+            "imageUrl": "jesusMiracles",
+            "isPremium": true,
+            "tag": "gospel"
+        },
+        {
+            "id": "followJesus.mp3",
+            "title": "Jesus Instructions, Miracles, and Parables of the Kingdom",
+            "subtitle": "Matthew 10-13",
+            "duration": "11m",
+            "imageUrl": "followJesus",
+            "isPremium": true,
+            "tag": "gospel"
+        },
+        {
+            "id": "jesusTeachings.mp3",
+            "title": "Jesus Miracles, Teachings, and Encounters on the Path to Jerusalem",
+            "subtitle": "Matthew 14-20",
+            "duration": "11m",
+            "imageUrl": "jesusTeachings",
+            "isPremium": true,
+            "tag": "gospel"
+        },
+        {
+            "id": "finalTeachings.mp3",
+            "title": "The Final Teachings of the King",
+            "subtitle": "Matthew 21-25",
+            "duration": "12m",
+            "imageUrl": "finalTeachings",
+            "isPremium": true,
+            "tag": "gospel"
+        },
+        {
+            "id": "jesusVictory.mp3",
+            "title": "The Passion and Victory of the King",
+            "subtitle": "Matthew 26-28",
+            "duration": "11m",
+            "imageUrl": "jesusVictory",
+            "isPremium": true,
+            "tag": "gospel"
+        },
+        {
+            "id": "beginning.mp3",
+            "title": "In the Beginning",
+            "subtitle": "Journey into Gods Perfect Creation",
+            "duration": "9m",
+            "imageUrl": "flowingRiver",
+            "isPremium": true,
+            "tag": "bedtimeStories"
+        },
+        {
+            "id": "noah.mp3",
+            "title": "Noah and the Ark",
+            "subtitle": "Gods Promise of Protection and Hope",
+            "duration": "9m",
+            "imageUrl": "noah",
+            "isPremium": true,
+            "tag": "bedtimeStories"
+        },
+        {
+            "id": "babel.mp3",
+            "title": "The Tower of Babel",
+            "subtitle": "Gods Plan for the Nations",
+            "duration": "8m",
+            "imageUrl": "babel",
+            "isPremium": true,
+            "tag": "bedtimeStories"
+        },
+        {
+            "id": "abraham.mp3",
+            "title": "Abrahams Covenant",
+            "subtitle": "A Story of Trust in Gods Promises",
+            "duration": "8m",
+            "imageUrl": "abraham",
+            "isPremium": true,
+            "tag": "bedtimeStories"
+        },
+        {
+            "id": "sodom.mp3",
+            "title": "Sodom and Gomorrah",
+            "subtitle": "A Story of Justice, Mercy, and Gods Sovereignty",
+            "duration": "10m",
+            "imageUrl": "sodom",
+            "isPremium": true,
+            "tag": "bedtimeStories"
+        },
+        {
+            "id": "abrahamsacrifice.mp3",
+            "title": "Abraham and Isaac",
+            "subtitle": "Trusting Gods Perfect Plan",
+            "duration": "8m",
+            "imageUrl": "abrahamsacrifice",
+            "isPremium": true,
+            "tag": "bedtimeStories"
+        },
+        {
+            "id": "jacobsladder.mp3",
+            "title": "Jacobs Ladder",
+            "subtitle": "Gods Promise and Presence",
+            "duration": "8m",
+            "imageUrl": "jacobsladder",
+            "isPremium": true,
+            "tag": "bedtimeStories"
+        },
+        {
+            "id": "joseph.mp3",
+            "title": "Joseph and His Brothers",
+            "subtitle": "From Betrayal to Forgiveness",
+            "duration": "9m",
+            "imageUrl": "joseph",
+            "isPremium": true,
+            "tag": "bedtimeStories"
+        },
+        {
+            "id": "mosesburningbush.mp3",
+            "title": "Moses and the Burning Bush",
+            "subtitle": "Gods Call to Lead",
+            "duration": "9m",
+            "imageUrl": "mosesburningbush",
+            "isPremium": true,
+            "tag": "bedtimeStories"
+        },
+        {
+            "id": "tenplagues.mp3",
+            "title": "The Ten Plagues and the Exodus",
+            "subtitle": "Gods Power and Deliverance",
+            "duration": "9m",
+            "imageUrl": "tenplagues",
+            "isPremium": true,
+            "tag": "bedtimeStories"
+        },
+        {
+            "id": "redsea.mp3",
+            "title": "The Parting of the Red Sea",
+            "subtitle": "Gods Power to Make a Way",
+            "duration": "7m",
+            "imageUrl": "redsea",
+            "isPremium": true,
+            "tag": "bedtimeStories"
+        },
+        {
+            "id": "moses.mp3",
+            "title": "Bread from Heaven and Gods Covenant",
+            "subtitle": "God's Provision and the Ten Commandments",
+            "duration": "10m",
+            "imageUrl": "moses",
+            "isPremium": true,
+            "tag": "bedtimeStories"
+        },
+        {
+            "id": "david.mp3",
+            "title": "Davids Journey",
+            "subtitle": "From Shepherd to King",
+            "duration": "8m",
+            "imageUrl": "david",
+            "isPremium": true,
+            "tag": "bedtimeStories"
+        },
+        {
+            "id": "jonah.mp3",
+            "title": "Jonahs Journey of Gods Mercy",
+            "subtitle": "A Story of Obedience, Compassion, and Second Chances",
+            "duration": "8m",
+            "imageUrl": "jonah",
+            "isPremium": true,
+            "tag": "bedtimeStories"
+        },
+        {
+            "id": "ruth.mp3",
+            "title": "Ruths Journey of Loyalty and Love",
+            "subtitle": "A Story of Faithfulness, Redemption, and New Beginnings",
+            "duration": "9m",
+            "imageUrl": "ruth",
+            "isPremium": true,
+            "tag": "bedtimeStories"
+        },
+        {
+            "id": "psalm9_11.mp3",
+            "title": "Psalm 91: A Shield of Protection",
+            "subtitle": "Declaring Gods Faithful Promises of Safety and Refuge",
+            "duration": "2m",
+            "imageUrl": "pinkHueMountain",
+            "isPremium": false,
+            "tag": "declarations"
+        },
+        {
+            "id": "healed_v2.mp3",
+            "title": "Healing Declarations",
+            "subtitle": "Speaking Wholeness, Strength, and Restoration Through the Power of Faith",
+            "duration": "5m",
+            "imageUrl": "JesusHealing",
+            "isPremium": true,
+            "tag": "declarations"
+        },
+        {
+            "id": "peace_v2.mp3",
+            "title": "Peace Beyond Understanding",
+            "subtitle": "Overcoming Anxiety, Stress, and Fear Through Gods Promises",
+            "duration": "3m",
+            "imageUrl": "JesusPraying",
+            "isPremium": true,
+            "tag": "declarations"
+        },
+        {
+            "id": "gratitude_v2.mp3",
+            "title": "A Heart of Gratitude",
+            "subtitle": "Declaring Gods Goodness and Faithfulness with Thankful Praise",
+            "duration": "3m",
+            "imageUrl": "desertSky",
+            "isPremium": true,
+            "tag": "declarations"
+        },
+        {
+            "id": "warfare_v2.mp3",
+            "title": "Victory in Spiritual Warfare",
+            "subtitle": "Declaring Authority and Triumph Over All Evil Through Christ",
+            "duration": "3m",
+            "imageUrl": "heavenly",
+            "isPremium": true,
+            "tag": "declarations"
+        },
+        {
+            "id": "victorious_v2.mp3",
+            "title": "Living Victoriously in Christ",
+            "subtitle": "Declaring Bible Verses to Walk in Victory Every Day",
+            "duration": "3m",
+            "imageUrl": "sunsetMountain",
+            "isPremium": true,
+            "tag": "declarations"
+        },
+        {
+            "id": "prosperity_v2.mp3",
+            "title": "Abundance Declarations",
+            "subtitle": "Unlocking Wealth, Prosperity, and Overflow Through Faith and Affirmation",
+            "duration": "4m",
+            "imageUrl": "JesusHeaven",
+            "isPremium": true,
+            "tag": "declarations"
+        },
+        {
+            "id": "spiritualGrowth_v2.mp3",
+            "title": "A Declaration for Spiritual Growth",
+            "subtitle": "Rooted in Jesus Redemption and Growing in Gods Promises",
+            "duration": "4m",
+            "imageUrl": "spiritualGrowth",
+            "isPremium": true,
+            "tag": "declarations"
+        },
+        {
+            "id": "heartbreak_v2.mp3",
+            "title": "Healing for the Brokenhearted",
+            "subtitle": "Declaring Gods Love and Restoration Over a Wounded Heart",
+            "duration": "3m",
+            "imageUrl": "sunset3",
+            "isPremium": true,
+            "tag": "declarations"
+        },
+        {
+            "id": "identity_v2.mp3",
+            "title": "Identity in Christ",
+            "subtitle": "Living in the Power of Your God-Given Identity",
+            "duration": "4m",
+            "imageUrl": "JesusOnCross",
+            "isPremium": true,
+            "tag": "declarations"
+        },
+        {
+            "id": "godsprotection_v2.mp3",
+            "title": "Protection Promises",
+            "subtitle": "Speaking Gods Word for Safety and Peace Over Your Life",
+            "duration": "4m",
+            "imageUrl": "warriorAngel",
+            "isPremium": true,
+            "tag": "declarations"
+        },
+        {
+            "id": "longlife_v2.mp3",
+            "title": "Renewed Youth and Long Life Declaration",
+            "subtitle": "Declarations for Long Life, Strength, and Youth Restored Through Gods Promises",
+            "duration": "3m",
+            "imageUrl": "JesusRisen",
+            "isPremium": true,
+            "tag": "declarations"
+        },
+        {
+            "id": "children_v2.mp3",
+            "title": "Blessing Our Children",
+            "subtitle": "Declaring Safety, Wisdom, and Destiny Over Their Lives",
+            "duration": "3m",
+            "imageUrl": "sunsetmountains3",
+            "isPremium": true,
+            "tag": "declarations"
+        },
+        {
+            "id": "miracles_v2.mp3",
+            "title": "Breakthrough and Miracles",
+            "subtitle": "Declaring the Power of God to Transform the Impossible",
+            "duration": "3m",
+            "imageUrl": "lakeSunset",
+            "isPremium": true,
+            "tag": "declarations"
+        },
+        {
+            "id": "restoration_v2.mp3",
+            "title": "Restoring Relationships",
+            "subtitle": "Declaring Healing, Unity, and Love Over Marriages and Families",
+            "duration": "3m",
+            "imageUrl": "breathTakingSunset",
+            "isPremium": true,
+            "tag": "declarations"
+        },
+        {
+            "id": "loveMeditations.mp3",
+            "title": "The Heart of God's Love",
+            "subtitle": "Embrace God's Unfailing Love for You",
+            "duration": "8m",
+            "imageUrl": "loveMeditations",
+            "isPremium": true,
+            "tag": "meditation"
+        },
+        {
+            "id": "praiseMeditations.mp3",
+            "title": "Lifting Up His Name in Praise",
+            "subtitle": "Worship God with Joy and Reverence",
+            "duration": "8m",
+            "imageUrl": "praiseMeditations",
+            "isPremium": true,
+            "tag": "meditation"
+        },
+        {
+            "id": "identityMeditations.mp3",
+            "title": "Living in Your True Identity in Christ",
+            "subtitle": "Embrace Who You Are in Jesus",
+            "duration": "8m",
+            "imageUrl": "identityMeditations",
+            "isPremium": true,
+            "tag": "meditation"
+        },
+        {
+            "id": "protectionMeditations.mp3",
+            "title": "Under the Shelter of Gods Wings",
+            "subtitle": "Divine Protection and Peace",
+            "duration": "7m",
+            "imageUrl": "protectionMeditations",
+            "isPremium": true,
+            "tag": "meditation"
+        },
+        {
+            "id": "provisionsMeditations.mp3",
+            "title": "Trusting in Gods Abundant Provision",
+            "subtitle": "Rest in Gods Faithfulness and Sufficiency",
+            "duration": "7m",
+            "imageUrl": "provisionsMeditations",
+            "isPremium": true,
+            "tag": "meditation"
+        },
+        {
+            "id": "restMeditations.mp3",
+            "title": "Resting in Gods Peace and Strength",
+            "subtitle": "Renewal and Refreshment in His Presence",
+            "duration": "8m",
+            "imageUrl": "restMeditations",
+            "isPremium": true,
+            "tag": "meditation"
+        },
+        {
+            "id": "fearMeditations.mp3",
+            "title": "Freedom from Fear and Anxiety",
+            "subtitle": "Find Peace in Gods Promises",
+            "duration": "9m",
+            "imageUrl": "fearMeditations",
+            "isPremium": true,
+            "tag": "meditation"
+        },
+        {
+            "id": "strengthMeditations.mp3",
+            "title": "Strength for the Journey",
+            "subtitle": "Endurance and Perseverance in Gods Power",
+            "duration": "8m",
+            "imageUrl": "strengthMeditations",
+            "isPremium": true,
+            "tag": "meditation"
+        },
+        {
+            "id": "wisdomMeditations.mp3",
+            "title": "Walking in Gods Wisdom",
+            "subtitle": "Divine Guidance and Understanding",
+            "duration": "7m",
+            "imageUrl": "wisdomMeditations",
+            "isPremium": true,
+            "tag": "meditation"
+        },
+        {
+            "id": "healthMeditations.mp3",
+            "title": "Restoring Wholeness Through Gods Promises",
+            "subtitle": "A Scripture Meditation for Healing and Health",
+            "duration": "7m",
+            "imageUrl": "healthMeditations",
+            "isPremium": true,
+            "tag": "meditation"
         }
     ]
 }

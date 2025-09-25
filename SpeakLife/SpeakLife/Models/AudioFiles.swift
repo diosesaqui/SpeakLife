@@ -431,133 +431,181 @@ let devotionalFiles: [AudioDeclaration] = [
 
 //// SpeakLife files
 let speaklifeFiles: [AudioDeclaration] = [
-    AudioDeclaration(
+        AudioDeclaration(
         id: "speaklife-ep1.mp3",
         title: "The Power of Speaking Life",
         subtitle: "Episode 1",
         duration: "4m",
         imageUrl: "devotional",
-        isPremium: false
+        isPremium: false,
+        tag: "speaklife",
+        season: 1,
+        episode: 1
     ),
-    AudioDeclaration(
+        AudioDeclaration(
         id: "speaklife-ep2.mp3",
         title: "You Have Creative Power in Your Mouth",
         subtitle: "Episode 2",
         duration: "3m",
         imageUrl: "devotional",
-        isPremium: false
+        isPremium: false,
+        tag: "speaklife",
+        season: 1,
+        episode: 2
     ),
-    AudioDeclaration(
+        AudioDeclaration(
         id: "speaklife-ep3.mp3",
         title: "See It Before You Say It",
         subtitle: "Episode 3",
         duration: "3m",
         imageUrl: "devotional",
-        isPremium: false
+        isPremium: false,
+        tag: "speaklife",
+        season: 1,
+        episode: 3
     ),
-    AudioDeclaration(
+        AudioDeclaration(
         id: "speaklife-ep4.mp3",
         title: "Fighting Back With Words",
         subtitle: "Episode 4",
         duration: "3m",
         imageUrl: "devotional",
-        isPremium: false
+        isPremium: false,
+        tag: "speaklife",
+        season: 1,
+        episode: 4
     ),
-    AudioDeclaration(
+        AudioDeclaration(
         id: "speaklife-ep5.mp3",
         title: "The Language of the Kingdom",
         subtitle: "Episode 5",
         duration: "3m",
         imageUrl: "devotional",
-        isPremium: false
+        isPremium: false,
+        tag: "speaklife",
+        season: 1,
+        episode: 5
     ),
-    AudioDeclaration(
+        AudioDeclaration(
         id: "speaklife-ep6.mp3",
         title: "Rewire Your Identity",
         subtitle: "Episode 6",
         duration: "3m",
         imageUrl: "devotional",
-        isPremium: false
+        isPremium: false,
+        tag: "speaklife",
+        season: 1,
+        episode: 6
     ),
-    AudioDeclaration(
+        AudioDeclaration(
         id: "speaklife-ep7.mp3",
         title: "Speak to Your Body",
         subtitle: "Episode 7",
         duration: "3m",
         imageUrl: "devotional",
-        isPremium: false
+        isPremium: false,
+        tag: "speaklife",
+        season: 1,
+        episode: 7
     ),
-    AudioDeclaration(
+        AudioDeclaration(
         id: "speaklife-ep8.mp3",
         title: "Speak Over Your Finances",
         subtitle: "Episode 8",
         duration: "3m",
         imageUrl: "devotional",
-        isPremium: true
+        isPremium: true,
+        tag: "speaklife",
+        season: 1,
+        episode: 8
     ),
-    AudioDeclaration(
+        AudioDeclaration(
         id: "speaklife-ep9.mp3",
         title: "Protect Your Peace",
         subtitle: "Episode 9",
         duration: "3m",
         imageUrl: "devotional",
-        isPremium: true
+        isPremium: true,
+        tag: "speaklife",
+        season: 1,
+        episode: 9
     ),
-    AudioDeclaration(
+        AudioDeclaration(
         id: "speaklife-ep10.mp3",
         title: "Break Generational Patterns",
         subtitle: "Episode 10",
         duration: "3m",
         imageUrl: "devotional",
-        isPremium: true
+        isPremium: true,
+        tag: "speaklife",
+        season: 1,
+        episode: 10
     ),
-    AudioDeclaration(
+        AudioDeclaration(
         id: "speaklife-ep11.mp3",
         title: "Plant Seeds With Your Mouth",
         subtitle: "Episode 11",
         duration: "3m",
         imageUrl: "devotional",
-        isPremium: true
+        isPremium: true,
+        tag: "speaklife",
+        season: 1,
+        episode: 11
     ),
-    AudioDeclaration(
+        AudioDeclaration(
         id: "speaklife-ep12.mp3",
         title: "Speak Life, Live Blessed",
         subtitle: "Episode 12",
         duration: "3m",
         imageUrl: "devotional",
-        isPremium: true
+        isPremium: true,
+        tag: "speaklife",
+        season: 1,
+        episode: 12
     ),
-    AudioDeclaration(
+        AudioDeclaration(
         id: "speaklife-s2ep1.mp3",
         title: "The Battlefield Within",
         subtitle: "S2 Episode 1",
         duration: "3m",
         imageUrl: "devotional",
-        isPremium: true
+        isPremium: true,
+        tag: "speaklife",
+        season: 2,
+        episode: 1
     ),
-    AudioDeclaration(
+        AudioDeclaration(
         id: "speaklife-s2ep2.mp3",
         title: "Thoughts That Don’t Belong to You",
         subtitle: "S2 Episode 2",
         duration: "3m",
         imageUrl: "devotional",
-        isPremium: true
+        isPremium: true,
+        tag: "speaklife",
+        season: 2,
+        episode: 2
     ),
-    AudioDeclaration(
+        AudioDeclaration(
         id: "speaklife-s2ep3.mp3",
         title: "The Power of Agreement",
         subtitle: "S2 Episode 3",
         duration: "3m",
         imageUrl: "devotional",
-        isPremium: true
+        isPremium: true,
+        tag: "speaklife",
+        season: 2,
+        episode: 3
     ),
-    AudioDeclaration(
+        AudioDeclaration(
         id: "speaklife-s2ep4.mp3",
         title: "Recognizing Strongholds",
         subtitle: "S2 Episode 4",
         duration: "3m",
         imageUrl: "devotional",
-        isPremium: true
+        isPremium: true,
+        tag: "speaklife",
+        season: 2,
+        episode: 4
     ),
 ]
 //

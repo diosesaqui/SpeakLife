@@ -372,9 +372,13 @@ struct WelcomeAudio: Codable {
     let audios: [AudioDeclaration]
 }
 
-struct AudioDeclaration: Identifiable, Equatable, Codable, Comparable {
+struct AudioDeclaration: Identifiable, Equatable, Codable, Comparable, Hashable {
     static func < (lhs: AudioDeclaration, rhs: AudioDeclaration) -> Bool {
         return lhs.id == rhs.id
+    }
+    
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
     }
     
       let id: String
@@ -384,14 +388,16 @@ struct AudioDeclaration: Identifiable, Equatable, Codable, Comparable {
       let imageUrl: String
       let isPremium: Bool
       var tag: String?
+      var season: Int? // Season number (e.g., 1, 2, 3)
+      var episode: Int? // Episode number within the season
       var isFavorite: Bool = false
       var favoriteId: String?
       var dateFavorited: Date?
     
     // Initializer for creating new instances (used in AudioFiles.swift)
     init(id: String, title: String, subtitle: String, duration: String, imageUrl: String, 
-         isPremium: Bool, tag: String? = nil, isFavorite: Bool = false, 
-         favoriteId: String? = nil, dateFavorited: Date? = nil) {
+         isPremium: Bool, tag: String? = nil, season: Int? = nil, episode: Int? = nil,
+         isFavorite: Bool = false, favoriteId: String? = nil, dateFavorited: Date? = nil) {
         self.id = id
         self.title = title
         self.subtitle = subtitle
@@ -399,6 +405,8 @@ struct AudioDeclaration: Identifiable, Equatable, Codable, Comparable {
         self.imageUrl = imageUrl
         self.isPremium = isPremium
         self.tag = tag
+        self.season = season
+        self.episode = episode
         self.isFavorite = isFavorite
         self.favoriteId = favoriteId
         self.dateFavorited = dateFavorited
@@ -406,7 +414,7 @@ struct AudioDeclaration: Identifiable, Equatable, Codable, Comparable {
     
     // Custom coding keys for the core properties
     private enum CodingKeys: String, CodingKey {
-        case id, title, subtitle, duration, imageUrl, isPremium, tag
+        case id, title, subtitle, duration, imageUrl, isPremium, tag, season, episode
         case isFavorite, favoriteId, dateFavorited
     }
     
@@ -422,6 +430,8 @@ struct AudioDeclaration: Identifiable, Equatable, Codable, Comparable {
         imageUrl = try container.decode(String.self, forKey: .imageUrl)
         isPremium = try container.decode(Bool.self, forKey: .isPremium)
         tag = try container.decodeIfPresent(String.self, forKey: .tag)
+        season = try container.decodeIfPresent(Int.self, forKey: .season)
+        episode = try container.decodeIfPresent(Int.self, forKey: .episode)
         
         // Decode favorite fields with defaults if missing
         isFavorite = try container.decodeIfPresent(Bool.self, forKey: .isFavorite) ?? false
@@ -440,6 +450,8 @@ struct AudioDeclaration: Identifiable, Equatable, Codable, Comparable {
         try container.encode(imageUrl, forKey: .imageUrl)
         try container.encode(isPremium, forKey: .isPremium)
         try container.encodeIfPresent(tag, forKey: .tag)
+        try container.encodeIfPresent(season, forKey: .season)
+        try container.encodeIfPresent(episode, forKey: .episode)
         try container.encode(isFavorite, forKey: .isFavorite)
         try container.encodeIfPresent(favoriteId, forKey: .favoriteId)
         try container.encodeIfPresent(dateFavorited, forKey: .dateFavorited)
