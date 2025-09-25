@@ -333,6 +333,9 @@ struct DeclarationContentView: View {
         }
 
         Analytics.logEvent(Event.shareTapped, parameters: ["share": declaration.text.prefix(50)])
+        
+        // Track TikTok share event
+        Event.trackTikTokShare(contentType: "affirmation")
         Selection.shared.selectionFeedback()
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 3) {

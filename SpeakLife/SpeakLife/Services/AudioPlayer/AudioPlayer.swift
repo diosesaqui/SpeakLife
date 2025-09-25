@@ -14,6 +14,7 @@ class AudioPlayerService: NSObject, AVAudioPlayerDelegate {
     private var audioFiles: [MusicResources] = []
     private var currentFileIndex = 0
     private var isPausedInBackground = false
+    private var savedPlaybackTime: TimeInterval = 0
     var isPlaying = false
     
     var currentArtist: String?
@@ -23,6 +24,8 @@ class AudioPlayerService: NSObject, AVAudioPlayerDelegate {
            super.init()
            NotificationCenter.default.addObserver(self, selector: #selector(appDidEnterBackground), name: UIApplication.didEnterBackgroundNotification, object: nil)
            NotificationCenter.default.addObserver(self, selector: #selector(appWillEnterForeground), name: UIApplication.willEnterForegroundNotification, object: nil)
+           NotificationCenter.default.addObserver(self, selector: #selector(appWillResignActive), name: UIApplication.willResignActiveNotification, object: nil)
+           NotificationCenter.default.addObserver(self, selector: #selector(appDidBecomeActive), name: UIApplication.didBecomeActiveNotification, object: nil)
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(handleInterruption),
@@ -40,28 +43,46 @@ class AudioPlayerService: NSObject, AVAudioPlayerDelegate {
     
     
     @objc private func appDidEnterBackground() {
-            // Only pause background music, not other audio
+            // Only mark for resumption when truly backgrounded, not just inactive
             if audioPlayer?.isPlaying == true {
-                DispatchQueue.main.async { [weak self] in
-                    self?.audioPlayer?.pause()
-                    self?.isPlaying = false
-                }
+                savedPlaybackTime = audioPlayer?.currentTime ?? 0
                 isPausedInBackground = true
             }
         }
 
         @objc private func appWillEnterForeground() {
-            // Don't automatically resume playback when returning to foreground
-            // User must explicitly press play
-            isPausedInBackground = false
+            // Resume playback if it was playing when backgrounded
+            if isPausedInBackground && audioPlayer != nil {
+                DispatchQueue.main.async { [weak self] in
+                    guard let self = self else { return }
+                    // Resume from saved position if audio was paused due to backgrounding
+                    if self.savedPlaybackTime > 0 {
+                        self.audioPlayer?.currentTime = self.savedPlaybackTime
+                        self.savedPlaybackTime = 0
+                    }
+                    self.audioPlayer?.play()
+                    self.isPlaying = true
+                }
+                isPausedInBackground = false
+            }
+        }
+        
+        @objc private func appWillResignActive() {
+            // App is becoming inactive (notification center, control center, etc.)
+            // Don't pause audio - let it continue playing
+        }
+        
+        @objc private func appDidBecomeActive() {
+            // App became active again from inactive state
+            // Don't need to do anything special here
         }
 
 
     func playSound(files: [MusicResources]) {
-        // Setup audio session only when actually playing
+        // Setup audio session for background playback
         do {
             let audioSession = AVAudioSession.sharedInstance()
-            try audioSession.setCategory(.ambient, mode: .default, options: [])
+            try audioSession.setCategory(.playback, mode: .default, options: [.mixWithOthers])
             try audioSession.setActive(true)
         } catch {
             // Failed to set up audio session
@@ -120,6 +141,7 @@ class AudioPlayerService: NSObject, AVAudioPlayerDelegate {
         }
         isPlaying = false
         isPausedInBackground = false
+        savedPlaybackTime = 0
         audioFiles = []
         
         // Don't deactivate audio session - other audio might be playing

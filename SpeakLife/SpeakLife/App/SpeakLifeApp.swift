@@ -65,7 +65,11 @@ struct SpeakLifeApp: App {
                     // Warm up listener metrics cache for better performance
                     ListenerMetricsService.shared.warmUpCache()
                     
-                    viewModel.requestPermission()
+                    viewModel.requestPermission() { accepted in
+                        if accepted {
+                            appDelegate.initializeTikTokSDK()
+                        }
+                    }
                     // Start background music if explicitly enabled
                     if declarationStore.backgroundMusicEnabled {
                         AudioPlayerService.shared.playSound(files: resources)
@@ -124,8 +128,8 @@ struct SpeakLifeApp: App {
         
                     }
             case .inactive:
-                // Stop background music when app becomes inactive
-                AudioPlayerService.shared.pauseMusic()
+                // Don't pause background music when app becomes inactive
+                // This allows music to continue when notification center/control center is opened
                 break
             case .background:
                 // Only pause background music when going to background

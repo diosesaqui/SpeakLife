@@ -14,17 +14,8 @@
         {"id": "meditation", "displayName": "Scripture Meditation's", "order": 10},
         {"id": "bedtimeStories", "displayName": "Bedtime Stories", "order": 11}
     ],
-    "filters": ["favorites", "speaklife", "declarations", "fightBack", "godsHeart", "growWithJesus", "psalm91", "divineHealth", "magnify", "gospel", "meditation", "bedtimeStories"],
+    "filters": ["favorites", "speaklife", "declarations", "godsHeart", "growWithJesus", "psalm91", "divineHealth", "magnify", "gospel", "meditation", "bedtimeStories"],
     "audios": [
-        {
-            "id": "praiseWinsWars-ep1.mp3",
-            "title": "Fight Back",
-            "subtitle": "Intro",
-            "duration": "6m",
-            "imageUrl": "praisewinswars",
-            "isPremium": true,
-            "tag": "fightBack"
-        },
         {
             "id": "magnify-ep12.mp3",
             "title": "Behold Him, Become Like Him",
@@ -420,6 +411,24 @@
             "imageUrl": "godsHeart",
             "isPremium": true,
             "tag": "godsHeart"
+        },
+        {
+            "id": "speaklife-s3ep2.mp3",
+            "title": "The Devil Must Flee",
+            "subtitle": "S3 Episode 2",
+            "duration": "3m",
+            "imageUrl": "devotional",
+            "isPremium": true,
+            "tag": "speaklife"
+        },
+        {
+            "id": "speaklife-s3ep1.mp3",
+            "title": "Power, Love, Sound Mind",
+            "subtitle": "S3 Episode 1",
+            "duration": "3m",
+            "imageUrl": "devotional",
+            "isPremium": true,
+            "tag": "speaklife"
         },
         {
             "id": "speaklife-s2ep12.mp3",

@@ -14,6 +14,7 @@ import FacebookCore
 import AppTrackingTransparency
 import FirebaseMessaging
 import FirebaseRemoteConfigInternal
+import TikTokBusinessSDK
 
 final class AppDelegate: NSObject, MessagingDelegate {
     
@@ -24,6 +25,27 @@ final class AppDelegate: NSObject, MessagingDelegate {
     
     override init() {
         FirebaseApp.configure()
+    }
+    
+    // Initialize TikTok SDK after ATT permission is handled
+    func initializeTikTokSDK() {
+        // Run on background queue to avoid blocking UI
+        DispatchQueue.global(qos: .background).async {
+            let config = TikTokConfig(accessToken: "TTT9Kn1rHyqZN1AMEcrMS6WBCnh7pFj2", appId: "7421777490315624455", tiktokAppId: "7421777490315624455")
+            #if DEBUG
+            config?.enableDebugMode()
+            #endif
+            
+            TikTokBusiness.initializeSdk(config) { success, error in
+                DispatchQueue.main.async {
+                    if (!success) {
+                        print("🔴 TikTok SDK initialization failed: \(error?.localizedDescription ?? "Unknown error")")
+                    } else {
+                        print("✅ TikTok SDK initialized successfully")
+                    }
+                }
+            }
+        }
     }
     
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
@@ -46,6 +68,21 @@ final class AppDelegate: NSObject, MessagingDelegate {
         
         registerBGTask()
         Analytics.logEvent(Event.SessionStarted, parameters: nil)
+        
+        // Initialize TikTok SDK after a brief delay to not interfere with landing animation
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+            self.initializeTikTokSDK()
+        }
+        
+        // Track TikTok app launch (will queue until SDK is ready)
+        Event.trackTikTokAppLaunch()
+        
+        // Track install on first launch (only called once)
+        let isFirstLaunch = UserDefaults.standard.bool(forKey: "hasLaunchedBefore")
+        if !isFirstLaunch {
+            UserDefaults.standard.set(true, forKey: "hasLaunchedBefore")
+            Event.trackTikTokAppInstall()
+        }
         
         NotificationCenter.default.addObserver(self, selector: #selector(scheduleNotificationRequest), name: UIApplication.didEnterBackgroundNotification, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(scheduleNotificationRequest), name: resyncNotification, object: nil)

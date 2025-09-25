@@ -103,7 +103,22 @@ final class SubscriptionStore: ObservableObject {
                 guard let self = self else { return }
                 // Update isPremium based on subscription state and purchased non-consumables
                 self.isInDevotionalPremium = checkIsDevotionalActive(nonConsumables: nonConsumables)
-                self.isPremium = (subscriptionStatus == .subscribed) || nonConsumables.contains( where: { $0 == self.currentOfferedLifetime })
+                // Fix: Check purchased non-consumables, not all available non-consumables
+                self.isPremium = (subscriptionStatus == .subscribed) || self.purchasedNonConsumables.contains( where: { $0.id == lifetimeID })
+                
+                #if DEBUG
+                // TEMPORARY: Override for testing fresh install behavior
+                // self.isPremium = false
+                #endif
+                
+                // DEBUG: Commented out to prevent UI freeze during landing animation
+//                 print("🔍 Subscription Debug:")
+//                 print("   - Status: \(subscriptionStatus?.rawValue ?? 0)")
+//                 print("   - Available NonConsumables: \(nonConsumables.map { $0.id })")
+//                 print("   - PURCHASED NonConsumables: \(self.purchasedNonConsumables.map { $0.id })")
+//                 print("   - LifetimeID to check: \(lifetimeID)")
+//                 print("   - NEW Lifetime check: \(self.purchasedNonConsumables.contains( where: { $0.id == lifetimeID }))")
+//                 print("   - isPremium: \(self.isPremium)")
             }
         
     }
@@ -239,7 +254,8 @@ final class SubscriptionStore: ObservableObject {
                     if product.id == devotionals {
                         currentOfferedDevotionalPremium = product
                     }
-                    newNonConsumables.append(product) // Handle non-consumables
+                    // Don't add all non-consumables - only add purchased ones in updateCustomerProductStatus
+                    newNonConsumables.append(product)
                 default:
                     print("Unknown product type")
                 }
@@ -288,6 +304,10 @@ final class SubscriptionStore: ObservableObject {
             
             AppEvents.shared.logPurchase(amount: Double(product.displayPrice) ?? Double(0), currency: "")
             Analytics.logEvent(Event.premiumSucceded, parameters: ["product": product.displayPrice])
+            
+            // Track TikTok purchase
+            let priceValue = NSDecimalNumber(decimal: product.price).doubleValue
+            Event.trackTikTokPremiumPurchase(value: priceValue, currency: "USD")
 
 
             //Always finish a transaction.
@@ -335,6 +355,7 @@ final class SubscriptionStore: ObservableObject {
             do {
                 // Check whether the transaction is verified
                 let transaction = try checkVerified(result)
+                 print("🔍 Found transaction: \(transaction.productID) - \(transaction.productType)") // Commented to prevent UI freeze
 
                 // Handle the transaction based on product type
                 switch transaction.productType {

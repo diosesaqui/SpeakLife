@@ -230,23 +230,7 @@ struct OptimizedSubscriptionView: View {
                         stickyBottomSection
                             .frame(height: geometry.size.height * 0.35)
                     }
-                    
-                    // Close button
-                    VStack {
-                        HStack {
-                            Spacer()
-                            Button(action: { dismiss() }) {
-                                Image(systemName: "xmark")
-                                    .font(.system(size: 16, weight: .medium))
-                                    .foregroundColor(.white)
-                                    .frame(width: 32, height: 32)
-                                    .background(Circle().fill(Color.black.opacity(0.3)))
-                            }
-                            .padding(.top, geometry.safeAreaInsets.top + 20)
-                            .padding(.trailing, 20)
-                        }
-                        Spacer()
-                    }
+                
                     
                     if declarationStore.isPurchasing {
                         RotatingLoadingImageView()

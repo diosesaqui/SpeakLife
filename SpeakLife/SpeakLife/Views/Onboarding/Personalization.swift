@@ -91,7 +91,7 @@ struct PersonalizationScene: View {
                 .edgesIgnoringSafeArea(.all)
         )
         .onAppear {
-            faceBookTrackingViewModel.requestPermission()
+          //  faceBookTrackingViewModel.requestPermission()
         }
         
     }

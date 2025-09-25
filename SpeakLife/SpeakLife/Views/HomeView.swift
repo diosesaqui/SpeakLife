@@ -54,13 +54,12 @@ struct HomeView: View {
 
     let data = [true, false]
     var body: some View {
-       
-            Group {
-                if isShowingLanding {
-                    LandingView()
-                } else if appState.isOnboarded {
-                        homeView
-                            .onAppear() {
+        Group {
+            if isShowingLanding {
+                LandingView()
+            } else if appState.isOnboarded {
+                homeView
+                    .onAppear() {
                                 showSubscription = subscriptionStore.showSubscription && !subscriptionStore.isPremium && !appState.firstOpen
                                 audioDeclarationViewModel.fetchAudio(version: subscriptionStore.audioRemoteVersion)
                                 declarationStore.setRemoteDeclarationVersion(version: subscriptionStore.remoteVersion)
@@ -100,7 +99,7 @@ struct HomeView: View {
                             })
                             .sheet(isPresented: $showSubscription, content: {
                                 GeometryReader { proxy in
-                                    OptimizedSubscriptionView() { //size: proxy.size) {
+                                    OptimizedSubscriptionView {
                                         showSubscription = false
                                     }
                                     .frame(height:  UIScreen.main.bounds.height * 0.9)
@@ -111,7 +110,10 @@ struct HomeView: View {
                 } else {
                     OnboardingView()
                         .onAppear {
-                            viewModel.requestPermission()
+                            viewModel.requestPermission { granted in
+                                // Handle permission result if needed
+                                print("ATT Permission granted: \(granted)")
+                            }
                         }
                 }
             }
@@ -255,19 +257,23 @@ class TrackingManager {
 
 class FacebookTrackingViewModel: ObservableObject {
     
-    func requestPermission() {
+    func requestPermission(completion: @escaping (Bool) -> Void) {
         
         if ATTrackingManager.trackingAuthorizationStatus == .notDetermined {
             TrackingManager.shared.requestTrackingPermission { status in
                 switch status {
                 case .notDetermined:
                     Settings.shared.isAdvertiserIDCollectionEnabled = false
+                    completion(false)
                 case .restricted:
                     Settings.shared.isAdvertiserIDCollectionEnabled = false
+                    completion(false)
                 case .denied:
                     Settings.shared.isAdvertiserIDCollectionEnabled = false
+                    completion(false)
                 case .authorized:
                     Settings.shared.isAdvertiserIDCollectionEnabled = true
+                    completion(true)
                 @unknown default: break
                 }
             }

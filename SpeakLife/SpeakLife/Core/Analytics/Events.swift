@@ -6,6 +6,8 @@
 //
 
 import Foundation
+import FirebaseAnalytics
+import TikTokBusinessSDK
 
 struct Event {
     static let categoryChooserTapped = "categoryChooserTapped"
@@ -49,4 +51,52 @@ struct Event {
     static let favoriteAudioReplayStarted = "favoriteAudioReplayStarted"
     static let favoriteFromPlayer = "favoriteFromPlayer"
     static let unfavoriteFromPlayer = "unfavoriteFromPlayer"
+}
+
+// MARK: - TikTok Analytics Helper
+extension Event {
+    
+    // Track key SpeakLife events for TikTok
+    static func trackTikTokAppInstall() {
+        // InstallApp is auto-tracked by SDK, but we can manually track it too
+        TikTokBusiness.trackTTEvent(.init(eventName:"LaunchAPP"))
+        Analytics.logEvent("tiktok_app_install", parameters: nil)
+    }
+    
+    static func trackTikTokAppLaunch() {
+        TikTokBusiness.trackTTEvent(.init(eventName: "LAUNCHAPP"))
+        Analytics.logEvent("tiktok_app_launch", parameters: nil)
+    }
+    
+    static func trackTikTokPremiumPurchase(value: Double, currency: String = "USD") {
+        TikTokBusiness.trackTTEvent(.init(eventName:"Purchase"))
+        Analytics.logEvent("tiktok_purchase", parameters: [
+            "value": value,
+            "currency": currency
+        ])
+    }
+    
+    static func trackTikTokContentView(contentType: String, contentId: String) {
+        TikTokBusiness.trackTTEvent(.init(eventName:"ViewContent"))
+        Analytics.logEvent("tiktok_view_content", parameters: [
+            "content_type": contentType,
+            "content_id": contentId
+        ])
+    }
+    
+    static func trackTikTokShare(contentType: String) {
+        TikTokBusiness.trackTTEvent(.init(eventName:"Share"))
+        Analytics.logEvent("tiktok_share", parameters: [
+            "content_type": contentType
+        ])
+    }
+    
+    static func trackTikTokEngagement(action: String, category: String? = nil) {
+        TikTokBusiness.trackTTEvent(.init(eventName:"UserEngagement"))
+        var params: [String: Any] = ["action": action]
+        if let category = category {
+            params["category"] = category
+        }
+        Analytics.logEvent("tiktok_engagement", parameters: params)
+    }
 }
