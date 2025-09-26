@@ -55,7 +55,7 @@ struct GenericHorizontalSection<ContentType: SectionableContent>: View {
                 edgeGradients
             }
         }
-        .padding(.vertical, 8)
+        .padding(.vertical, 4)
     }
     
     // MARK: - Private Views

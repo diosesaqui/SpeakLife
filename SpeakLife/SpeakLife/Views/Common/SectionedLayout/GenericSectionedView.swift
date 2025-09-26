@@ -23,7 +23,7 @@ where Provider.ContentType == ContentType {
             ZStack {
                 // Main content
                 ScrollView(.vertical, showsIndicators: false) {
-                    VStack(spacing: 24) {
+                    VStack(spacing: 16) {
                         // Pull to refresh indicator
                         if refreshing {
                             refreshIndicator
@@ -47,8 +47,8 @@ where Provider.ContentType == ContentType {
                         }
                         
                         // Bottom spacing for tab bar
-                        Spacer()
-                            .frame(height: geometry.size.height * 0.15)
+                        Color.clear
+                            .frame(height: 20)
                     }
                     .padding(.top, 8)
                 }

@@ -54,8 +54,12 @@ struct SpeakLifeApp: App {
                 .onAppear {
                     NotificationHandler.shared.callback = { content in
                         DispatchQueue.main.async {
-                            tabViewModel.resetToHome()
-                            declarationStore.setDeclaration(content.body, category: content.title)
+                            if let value = content.userInfo["tab"] {
+                                tabViewModel.goToAudio()
+                            } else {
+                                tabViewModel.resetToHome()
+                            }
+                                declarationStore.setDeclaration(content.body, category: content.title)
                         }
                     }
                     
@@ -63,7 +67,7 @@ struct SpeakLifeApp: App {
                     WidgetDataBridge.shared.syncAllData()
                     
                     // Warm up listener metrics cache for better performance
-                    ListenerMetricsService.shared.warmUpCache()
+                  //  ListenerMetricsService.shared.warmUpCache()
                     
                     viewModel.requestPermission() { accepted in
                         if accepted {

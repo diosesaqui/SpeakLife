@@ -127,7 +127,7 @@ extension AudioDeclarationViewModel {
         }
         
         // Create sections for each season (sorted by season number descending)
-        let sortedSeasons = seasonGroups.keys.sorted { $0 > $1 }
+        let sortedSeasons = seasonGroups.keys.sorted { $0 < $1 }
         
         for seasonNumber in sortedSeasons {
             guard let items = seasonGroups[seasonNumber] else { continue }

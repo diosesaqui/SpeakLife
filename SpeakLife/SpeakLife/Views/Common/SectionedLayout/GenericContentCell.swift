@@ -53,6 +53,7 @@ struct GenericContentCell<ContentType: SectionableContent>: View {
                 width: configuration.itemWidth,
                 height: configuration.itemHeight * 0.65
             )
+            .clipped()
             
             // Content area with fixed height
             VStack(alignment: .leading, spacing: 4) {
@@ -62,7 +63,8 @@ struct GenericContentCell<ContentType: SectionableContent>: View {
                     .foregroundColor(.white)
                     .lineLimit(2)
                     .multilineTextAlignment(.leading)
-                    .frame(height: 34, alignment: .top) // Fixed height for 2 lines
+                    .frame(width: configuration.itemWidth - 8, height: 34, alignment: .top) // Fixed width and height for 2 lines
+                    .fixedSize(horizontal: false, vertical: true)
                 
                 // Duration/controls
                 HStack(spacing: 4) {
@@ -85,6 +87,8 @@ struct GenericContentCell<ContentType: SectionableContent>: View {
             .frame(height: configuration.itemHeight * 0.35) // Fixed height for text area
         }
         .frame(width: configuration.itemWidth, height: configuration.itemHeight, alignment: .top) // Fixed total size with top alignment
+        .clipped() // Ensure content doesn't overflow
+        .fixedSize(horizontal: true, vertical: true) // Prevent size variations
     }
     
     private var compactCell: some View {
@@ -208,7 +212,7 @@ struct GenericContentCell<ContentType: SectionableContent>: View {
         ZStack(alignment: .topTrailing) {
             Image(item.imageUrl)
                 .resizable()
-                .aspectRatio(contentMode: .fill)
+                .scaledToFill()
                 .frame(width: width, height: height)
                 .clipped()
                 .contentShape(Rectangle()) // Ensure consistent hit testing
@@ -233,7 +237,8 @@ struct GenericContentCell<ContentType: SectionableContent>: View {
             }
         }
         .frame(width: width, height: height) // Strict frame constraint
-        .cornerRadius(12)
+        .clipped()
+        .clipShape(RoundedRectangle(cornerRadius: 12))
     }
     
     private var favoriteButton: some View {

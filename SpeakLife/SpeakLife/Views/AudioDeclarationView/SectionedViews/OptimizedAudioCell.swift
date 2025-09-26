@@ -87,6 +87,8 @@ struct OptimizedAudioCell: View {
                     .lineLimit(2)
                     .multilineTextAlignment(.leading)
                 
+                Spacer(minLength: 0)
+                
                 HStack(spacing: 4) {
                     Image(systemName: "play.fill")
                         .font(.system(size: 10))
@@ -99,6 +101,7 @@ struct OptimizedAudioCell: View {
             }
             .padding(.horizontal, 4)
             .padding(.vertical, 8)
+            .frame(height: 60, alignment: .top)
         }
         .frame(width: configuration.itemWidth)
         .contentShape(Rectangle())

@@ -18,53 +18,47 @@
             "order": 2
         },
         {
-            "id": "fightBack",
-            "displayName": "Fight Back",
-            "order": 3,
-            "reversed": true
-        },
-        {
             "id": "godsHeart",
             "displayName": "God's Heart",
-            "order": 4,
+            "order": 3,
             "reversed": true
         },
         {
             "id": "growWithJesus",
             "displayName": "Grow With Jesus",
-            "order": 5
+            "order": 4
         },
         {
             "id": "psalm91",
             "displayName": "Psalm 91",
-            "order": 6,
+            "order": 5,
             "reversed": true
         },
         {
             "id": "divineHealth",
             "displayName": "Divine Health",
-            "order": 7
+            "order": 6
         },
         {
             "id": "magnify",
             "displayName": "Behold & Become",
-            "order": 8,
+            "order": 7,
             "reversed": true
         },
         {
             "id": "gospel",
             "displayName": "Gospel",
-            "order": 9
+            "order": 8
         },
         {
             "id": "meditation",
             "displayName": "Scripture Meditation's",
-            "order": 10
+            "order": 9
         },
         {
             "id": "bedtimeStories",
             "displayName": "Bedtime Stories",
-            "order": 11
+            "order": 10
         }
     ],
     "filters": [
@@ -476,6 +470,28 @@
             "imageUrl": "godsHeart",
             "isPremium": true,
             "tag": "godsHeart"
+        },
+        {
+            "id": "speaklife-s3ep4.mp3",
+            "title": "Crush It Under Your Feet",
+            "subtitle": "S3 Episode 4",
+            "duration": "3m",
+            "imageUrl": "devotional",
+            "isPremium": true,
+            "tag": "speaklife",
+            "season": 3,
+            "episode": 4
+        },
+        {
+            "id": "speaklife-s3ep3.mp3",
+            "title": "The Badge of Authority",
+            "subtitle": "S3 Episode 3",
+            "duration": "3m",
+            "imageUrl": "devotional",
+            "isPremium": true,
+            "tag": "speaklife",
+            "season": 3,
+            "episode": 3
         },
         {
             "id": "speaklife-s3ep2.mp3",

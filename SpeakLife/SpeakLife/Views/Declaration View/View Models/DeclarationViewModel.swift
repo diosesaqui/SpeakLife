@@ -536,7 +536,9 @@ final class DeclarationViewModel: ObservableObject {
         
             guard let declaration = allDeclarations.first(where: { $0.text.hasPrefix(contentText) }) else {
                 let declaration = Declaration(text: content)
-                self.choose(declaration)
+                if category != "SpeakLife" {
+                    self.choose(declaration)
+                }
                 return
             }
             self.choose(declaration)

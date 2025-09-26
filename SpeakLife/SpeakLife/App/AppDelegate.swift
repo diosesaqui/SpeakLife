@@ -87,22 +87,39 @@ final class AppDelegate: NSObject, MessagingDelegate {
         NotificationCenter.default.addObserver(self, selector: #selector(scheduleNotificationRequest), name: UIApplication.didEnterBackgroundNotification, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(scheduleNotificationRequest), name: resyncNotification, object: nil)
         
-       
+        // Register FCM for onboarded users (including migration for existing users)
+        let hasMigratedFCM = UserDefaults.standard.bool(forKey: "hasMigratedToFCM")
         if appState?.isOnboarded ?? false {
             registerForPushNotifications()
+            if !hasMigratedFCM {
+                UserDefaults.standard.set(true, forKey: "hasMigratedToFCM")
+            }
         }        
         return true
     }
     
     func registerForPushNotifications() {
-        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { granted, error in
-            if granted {
+        UNUserNotificationCenter.current().getNotificationSettings { settings in
+            if settings.authorizationStatus == .authorized {
+                // Already authorized - just register for remote notifications
                 DispatchQueue.main.async {
-                    print("✅ Manually registered FCM Token")
+                    print("✅ Already authorized - registering for FCM Token")
                     UIApplication.shared.registerForRemoteNotifications()
                 }
+            } else if settings.authorizationStatus == .notDetermined {
+                // First time - request authorization
+                UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { granted, error in
+                    if granted {
+                        DispatchQueue.main.async {
+                            print("✅ Permission granted - registering for FCM Token")
+                            UIApplication.shared.registerForRemoteNotifications()
+                        }
+                    } else {
+                        print("🔴 Push notifications permission denied: \(error?.localizedDescription ?? "No error")")
+                    }
+                }
             } else {
-                print("Push notifications permission denied: \(error?.localizedDescription ?? "No error")")
+                print("🔴 Notifications not authorized: \(settings.authorizationStatus.rawValue)")
             }
         }
     }
