@@ -212,11 +212,20 @@ struct PromisesWidgetEntryView: View {
     
     @ViewBuilder
     private var widgetContent: some View {
-        if #available(iOS 17.0, *) {
-            contentView
-                .containerBackground(.clear, for: .widget)
-        } else {
-            contentView
+        switch family {
+        case .accessoryCircular:
+            circularLockScreenView
+        case .accessoryRectangular:
+            rectangularLockScreenView
+        case .accessoryInline:
+            inlineLockScreenView
+        default:
+            if #available(iOS 17.0, *) {
+                contentView
+                    .containerBackground(.clear, for: .widget)
+            } else {
+                contentView
+            }
         }
     }
     
@@ -293,6 +302,83 @@ struct PromisesWidgetEntryView: View {
             return "\(entry.promise). \(TimeBasedGreeting.current.message)"
         }
         return entry.promise
+    }
+    
+    private var circularLockScreenView: some View {
+        ZStack {
+            AccessoryWidgetBackground()
+            VStack(spacing: 2) {
+                Image(systemName: timeBasedIcon)
+                    .font(.system(size: 20, weight: .medium))
+                    .widgetAccentable()
+                Text(shortPromiseText)
+                    .font(.system(size: 11, weight: .semibold, design: .rounded))
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.7)
+                    .multilineTextAlignment(.center)
+            }
+            .padding(4)
+        }
+    }
+    
+    private var rectangularLockScreenView: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack {
+                Image(systemName: "quote.opening")
+                    .font(.system(size: 12, weight: .medium))
+                Text("Daily Promise")
+                    .font(.system(size: 12, weight: .semibold, design: .rounded))
+                    .widgetAccentable()
+            }
+            Text(mediumPromiseText)
+                .font(.system(size: 14, weight: .medium, design: .rounded))
+                .lineLimit(3)
+                .minimumScaleFactor(0.8)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+    
+    private var inlineLockScreenView: some View {
+        HStack(spacing: 4) {
+            Image(systemName: timeBasedIcon)
+            Text(inlinePromiseText)
+                .font(.system(size: 14, weight: .medium, design: .rounded))
+                .lineLimit(1)
+        }
+    }
+    
+    private var timeBasedIcon: String {
+        let hour = Calendar.current.component(.hour, from: entry.date)
+        switch hour {
+        case 5...11: return "sunrise.fill"
+        case 12...17: return "sun.max.fill"
+        case 18...20: return "sunset.fill"
+        default: return "moon.stars.fill"
+        }
+    }
+    
+    private var shortPromiseText: String {
+        let words = entry.promise.split(separator: " ")
+        if words.count <= 4 {
+            return entry.promise
+        }
+        return words.prefix(4).joined(separator: " ") + "..."
+    }
+    
+    private var mediumPromiseText: String {
+        let words = entry.promise.split(separator: " ")
+        if words.count <= 12 {
+            return entry.promise
+        }
+        return words.prefix(12).joined(separator: " ") + "..."
+    }
+    
+    private var inlinePromiseText: String {
+        let words = entry.promise.split(separator: " ")
+        if words.count <= 6 {
+            return entry.promise
+        }
+        return words.prefix(6).joined(separator: " ") + "..."
     }
 }
 
@@ -481,7 +567,7 @@ struct PromisesWidget: Widget {
         }
         .configurationDisplayName("Daily Promises")
         .description("Inspiring Bible promises that change throughout the day to encourage your faith journey.")
-        .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
+        .supportedFamilies([.systemSmall, .systemMedium, .systemLarge, .accessoryCircular, .accessoryRectangular, .accessoryInline])
         .contentMarginsDisabled() // Use full widget space
     }
 }
