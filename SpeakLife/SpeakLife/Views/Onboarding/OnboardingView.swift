@@ -46,16 +46,16 @@ struct OnboardingView: View  {
                 
                
                 IntroTipScene(
-                    title: "God’s Promises for Every Battle",
+                    title: "Walk in Unshakeable Faith & Peace",
                     bodyText: """
-                    Life brings battles — but God already gave you promises to win them.
+                    Experience God's grace that transforms anxiety into peace, fear into faith, and doubt into divine confidence.
 
-                    Every day, thousands open SpeakLife to declare His Word over fear, anxiety, and doubt.
+                    Thousands declare His promises daily — activating breakthrough, healing, and supernatural joy.
 
-                    Peace takes over. Faith rises. Purpose awakens. Breakthroughs begin.
+                    Your faith is rising. His grace is abundant. Peace is yours.
                     """,
                     subtext: "",
-                    ctaText: "Start My Breakthrough →",
+                    ctaText: "Activate My Faith →",
                     showTestimonials: false,
                     isScholarship: false,
                     size: geometry.size)
@@ -65,47 +65,12 @@ struct OnboardingView: View  {
                 .tag(Tab.transformedLife)
 
 
-
-                IntroTipScene(
-                    title: "Step Into the Victory Already Won",
-                    bodyText: """
-                    You weren’t made to live defeated. Jesus already won the battle.
-
-                    Every promise is already yours.
-
-                    Speak it. Believe it. Receive it.
-                    """,
-                    subtext: "",
-                    ctaText: "Step Into Victory ➔",
-                    showTestimonials: false,
-                    isScholarship: false,
-                    size: geometry.size)
-                {
-                    advance()
+                NotificationOnboarding(size: geometry.size) {
+                    withAnimation {
+                        askNotificationPermission()
+                    }
                 }
-                .tag(Tab.victorious)
-
-                IntroTipScene(
-                    title: "Planted to Prosper Through Every Storm",
-                    bodyText: """
-                    Life's storms come to everyone — but here's the revelation:
-                    
-                    Those planted in God's Word don't just survive, they thrive.
-                    
-                    While others are shaken, you'll stand firm. While others fear, you'll flourish.
-                    
-                    His promises are your roots. His truth is your anchor.
-                    """,
-                    subtext: "",
-                    ctaText: "Get Rooted in His Word ➔",
-                    showTestimonials: false,
-                    isScholarship: false,
-                    size: geometry.size)
-                {
-                    advance()
-                }
-                .tag(Tab.seedHarvest)
-                 
+                .tag(Tab.notification)
                 
                 ImprovementScene(size: geometry.size, viewModel: improvementViewModel) {
                     withAnimation {
@@ -114,45 +79,6 @@ struct OnboardingView: View  {
                 }
                 .tag(Tab.improvement)
                 
-                DemoExperienceView(size: geometry.size) {
-                    withAnimation {
-                        advance()
-                    }
-                }
-                .tag(Tab.demoExperience)
-//                Job lost. Health issues. World in chaos. I had 91 days of savings left.
-//                
-//                So I did one thing differently: Every morning, I spoke Psalm 91 and Prosperity verses until I believed it.
-//                
-//                Day 7: Fear broke. Day 21: Million-dollar ideas came. Day 45: Opportunities appeared from nowhere. Day 91: Total healing, new income streams, unshakeable peace.
-//                
-//                The secret? God's Word doesn't just comfort you — it literally reprograms your reality.
-//                
-//                I built SpeakLife because this revelation shouldn't be hidden. 50,000+ are already experiencing their turnaround.
-//                
-//                Your breakthrough is 5 minutes away. Same words that changed my life are waiting for you.
-                IntroTipScene(
-                    title: "From Rock Bottom to Breakthrough: My Story",
-                    bodyText: """
-                    When everything collapsed — job gone, fear everywhere, health failing with Bell's palsy — I put all my faith into God's promises.
-                    
-                    Back against the wall, only God could save me.
-                    
-                    First came peace in chaos. Then divine ideas. Then supernatural opporunities. Finally, complete healing.
-                    
-                    I didn't just bounce back — I conquered.
-                    
-                    What worked for me will work for you. Same God. Same promises. Your turn.
-                    """,
-                    subtext: "Franchiz Washington - Founder",
-                    ctaText: "Start My Turnaround Now →",
-                    showTestimonials: false,
-                    isScholarship: false,
-                    size: geometry.size)
-                {
-                    advance()
-                }
-                .tag(Tab.life)
                 
                 RatingView(size: geometry.size) {
                     advance()
@@ -162,12 +88,7 @@ struct OnboardingView: View  {
                     .tag(Tab.subscription)
                 
                 
-                NotificationOnboarding(size: geometry.size) {
-                    withAnimation {
-                        askNotificationPermission()
-                    }
-                }
-                .tag(Tab.notification)
+              
                 
                
                 
@@ -289,7 +210,7 @@ struct OnboardingView: View  {
                     Analytics.logEvent("HabitScreenDone", parameters: nil)
                 case .improvement:
                     impactMed.impactOccurred()
-                    selection = .demoExperience
+                    selection = .review
                     onboardingTab = selection.rawValue
                     
                     decodeCategories(improvementViewModel.selectedExperiences)
@@ -333,7 +254,8 @@ struct OnboardingView: View  {
                     Analytics.logEvent("BenefitScreenDone", parameters: nil)
                 case .notification:
                     impactMed.impactOccurred()
-                        dismissOnboarding()
+                    selection = .improvement
+                    onboardingTab = selection.rawValue
                     Analytics.logEvent("NotificationScreenDone", parameters: nil)
                 case .useCase:
                     selection = .unshakeableFaith
@@ -345,9 +267,7 @@ struct OnboardingView: View  {
                 case .subscription:
                     Analytics.logEvent("SubscriptionScreenDone", parameters: nil)
                     impactMed.impactOccurred()
-                    selection = .notification
-                    onboardingTab = selection.rawValue
-                    Analytics.logEvent("TransformedLifeScreenDone", parameters: nil)
+                    dismissOnboarding()
                 case .scholarship:
                     dismissOnboarding()
                 case .widgets:
@@ -370,7 +290,7 @@ struct OnboardingView: View  {
                     }
                 case .transformedLife:
                     impactMed.impactOccurred()
-                    selection = .victorious
+                    selection = .notification
                     onboardingTab = selection.rawValue
                     Analytics.logEvent("TransformedLifeScreenDone", parameters: nil)
                 case .likeJesus:

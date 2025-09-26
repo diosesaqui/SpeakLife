@@ -54,7 +54,10 @@ struct DevotionalView: View {
                     Alert(title: Text(viewModel.errorString))
                 }
         } else {
-            OptimizedSubscriptionView() {
+            GeometryReader { proxy in
+                OptimizedSubscriptionView() {
+                }
+                .frame(height: proxy.size.height * 0.99)
             }
         }
     }
