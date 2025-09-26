@@ -79,9 +79,9 @@ final class AudioPlayerViewModel: NSObject, ObservableObject {
         }
         
         // Force the player to continue if it was playing
-        if isPlaying, let player = player {
-            player.play()
-        }
+//        if isPlaying, let player = player {
+//            player.play()
+//        }
         
         // Update the Now Playing info
         updateNowPlayingInfo()
