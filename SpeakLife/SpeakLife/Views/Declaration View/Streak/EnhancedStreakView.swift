@@ -129,21 +129,16 @@ struct CompactStreakButton: View {
                             .foregroundColor(.white)
                     }
                 } else {
-                    // Sexy task count with dots indicator
-                    VStack(spacing: 4) {
-                        // Main count number
-                        Text("\(viewModel.todayChecklist.completedTasksCount)")
-                            .font(.system(size: 20, weight: .black, design: .rounded))
+                    // Checklist icon with "Today" label
+                    VStack(spacing: 2) {
+                        Image(systemName: "checklist")
+                            .font(.system(size: 18, weight: .semibold))
                             .foregroundColor(.white)
                         
-                        // Dots indicator instead of fraction
-                        HStack(spacing: 3) {
-                            ForEach(0..<viewModel.todayChecklist.tasks.count, id: \.self) { index in
-                                Circle()
-                                    .fill(index < viewModel.todayChecklist.completedTasksCount ? Color.white : Color.white.opacity(0.3))
-                                    .frame(width: 4, height: 4)
-                            }
-                        }
+                        Text("Today")
+                            .font(.system(size: 9, weight: .bold, design: .rounded))
+                            .foregroundColor(.white)
+                            .tracking(0.5)
                     }
                 }
             }

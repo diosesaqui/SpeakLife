@@ -26,6 +26,26 @@ final class EnhancedStreakViewModel: ObservableObject {
     private let streakStatsKey = "streakStats"
     private let hasAutoCompletedFirstTaskKey = "hasAutoCompletedFirstTask"
     
+    // MARK: - User Preferences
+    private func getUserTopCategories() -> [String] {
+        // Try to get categories from UserDefaults (stored by DeclarationViewModel)
+        if let categoriesData = userDefaults.data(forKey: "userSelectedCategories"),
+           let categories = try? JSONDecoder().decode([String].self, from: categoriesData) {
+            let topTwo = Array(categories.prefix(2))
+            print("📋 TASK PERSONALIZATION: Found user categories: \(topTwo)")
+            return topTwo // Top 2 categories
+        }
+        
+        // Fallback: check if there's a selected category stored
+        if let selectedCategory = userDefaults.string(forKey: "selectedCategory") {
+            print("📋 TASK PERSONALIZATION: Found fallback category: \(selectedCategory)")
+            return [selectedCategory]
+        }
+        
+        print("📋 TASK PERSONALIZATION: No user categories found, using generic tasks")
+        return []
+    }
+    
     // MARK: - Initialization
     init() {
         self.todayChecklist = Self.createTodayChecklist()
@@ -34,6 +54,9 @@ final class EnhancedStreakViewModel: ObservableObject {
         
         loadData()  // This now handles checkStreakValidity internally when needed
         checkForNewBadges()
+        
+        // Refresh tasks with user categories after loading
+        refreshTasksWithUserCategories()
         
         // Schedule evening notification for today with current progress
         scheduleEveningCheckIn()
@@ -45,6 +68,36 @@ final class EnhancedStreakViewModel: ObservableObject {
             name: UIApplication.didBecomeActiveNotification,
             object: nil
         )
+    }
+    
+    // MARK: - Task Personalization
+    func refreshTasksWithUserCategories() {
+        let userCategories = getUserTopCategories()
+        guard !userCategories.isEmpty else {
+            print("📋 TASK PERSONALIZATION: Skipping refresh - no categories")
+            return
+        }
+        
+        print("📋 TASK PERSONALIZATION: Refreshing tasks with categories: \(userCategories)")
+        
+        // Re-personalize all current tasks
+        let currentStreak = streakStats.currentStreak > 0 ? streakStats.currentStreak : 1
+        let freshTasks = TaskLibrary.getCoreTasksForStreak(currentStreak, userCategories: userCategories)
+        
+        // Preserve completion status
+        let existingCompletions = Dictionary(uniqueKeysWithValues: todayChecklist.tasks.map { ($0.id, ($0.isCompleted, $0.completedAt)) })
+        
+        todayChecklist.tasks = freshTasks.map { task in
+            var updatedTask = task
+            if let (wasCompleted, completedAt) = existingCompletions[task.id] {
+                updatedTask.isCompleted = wasCompleted
+                updatedTask.completedAt = completedAt
+            }
+            return updatedTask
+        }
+        
+        saveData()
+        print("📋 TASK PERSONALIZATION: Tasks refreshed and saved")
     }
     
     deinit {
@@ -193,8 +246,9 @@ final class EnhancedStreakViewModel: ObservableObject {
         // Update current phase
         todayChecklist.currentPhase = currentPhase
         
-        // Generate new task list for today based on current streak
-        let updatedTasks = TaskLibrary.getCoreTasksForStreak(currentStreak)
+        // Generate new task list for today based on current streak and user preferences
+        let userCategories = getUserTopCategories()
+        let updatedTasks = TaskLibrary.getCoreTasksForStreak(currentStreak, userCategories: userCategories)
         
         // Preserve completion status for existing tasks
         let existingCompletions = Dictionary(uniqueKeysWithValues: todayChecklist.tasks.map { ($0.id, $0.isCompleted) })
@@ -216,7 +270,8 @@ final class EnhancedStreakViewModel: ObservableObject {
     private func createProgressiveChecklist(for streakDay: Int) -> DailyChecklist {
         let today = Calendar.current.startOfDay(for: Date())
         let phase = ProgressionPhase.getPhase(for: streakDay)
-        let tasks = TaskLibrary.getCoreTasksForStreak(streakDay)
+        let userCategories = getUserTopCategories()
+        let tasks = TaskLibrary.getCoreTasksForStreak(streakDay, userCategories: userCategories)
         
         return DailyChecklist(
             date: today,

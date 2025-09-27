@@ -75,8 +75,8 @@ enum DifficultyLevel: Int, CaseIterable, Codable {
 // MARK: - Enhanced Daily Task Model
 struct DailyTask: Identifiable, Codable {
     let id: String
-    let title: String
-    let description: String
+    var title: String
+    var description: String
     let icon: String
     let category: TaskCategory
     let type: TaskType
@@ -347,6 +347,105 @@ struct TaskLibrary {
         )
     ]
     
+    // MARK: - Personalized Task Generation
+    static func personalizeTask(_ task: DailyTask, for userCategories: [String]) -> DailyTask {
+        // Get top 2 user categories
+        let topCategories = Array(userCategories.prefix(2))
+        
+        guard !topCategories.isEmpty else {
+            print("📋 TASK PERSONALIZATION: No categories provided for task \(task.id)")
+            return task
+        }
+        
+        print("📋 TASK PERSONALIZATION: Personalizing task \(task.id) with categories: \(topCategories)")
+        
+        // Personalize based on task type and user's top categories
+        var personalizedTask = task
+        
+        switch task.id {
+        case "listen_audio":
+            if let primaryCategory = topCategories.first {
+                personalizedTask.title = "Listen to \(formatCategoryName(primaryCategory)) Audio"
+                personalizedTask.description = "Listen to an audio affirmation from your \(formatCategoryName(primaryCategory)) category"
+            }
+            
+        case "read_devotional":
+            if topCategories.count >= 2 {
+                let cat1 = formatCategoryName(topCategories[0])
+                let cat2 = formatCategoryName(topCategories[1])
+                personalizedTask.title = "Read \(cat1) or \(cat2) Devotional"
+                personalizedTask.description = "Spend time in God's Word focusing on \(cat1) or \(cat2)"
+            } else if let primaryCategory = topCategories.first {
+                personalizedTask.title = "Read \(formatCategoryName(primaryCategory)) Devotional"
+                personalizedTask.description = "Spend time in God's Word focusing on \(formatCategoryName(primaryCategory))"
+            }
+            
+        case "speak_affirmation":
+            if let primaryCategory = topCategories.first {
+                personalizedTask.description = "Declare a \(formatCategoryName(primaryCategory)) affirmation out loud"
+            }
+            
+        case "journal_insight":
+            if let primaryCategory = topCategories.first {
+                personalizedTask.description = "Write about how God is working in your \(formatCategoryName(primaryCategory)) journey"
+            }
+            
+        case "memorize_verse":
+            if topCategories.count >= 2 {
+                let cat1 = formatCategoryName(topCategories[0])
+                let cat2 = formatCategoryName(topCategories[1])
+                personalizedTask.title = "Memorize \(cat1) or \(cat2) Verse"
+                personalizedTask.description = "Learn a verse about \(cat1) or \(cat2)"
+            } else if let primaryCategory = topCategories.first {
+                personalizedTask.title = "Memorize \(formatCategoryName(primaryCategory)) Verse"
+                personalizedTask.description = "Learn a verse about \(formatCategoryName(primaryCategory))"
+            }
+            
+        case "share_affirmation":
+            if let primaryCategory = topCategories.first {
+                personalizedTask.description = "Share a \(formatCategoryName(primaryCategory)) truth with someone today"
+            }
+            
+        default:
+            break
+        }
+        
+        return personalizedTask
+    }
+    
+    private static func formatCategoryName(_ category: String) -> String {
+        // Convert category string to readable format
+        let formatted = category
+            .replacingOccurrences(of: "_", with: " ")
+            .replacingOccurrences(of: "gods", with: "God's")
+            .capitalized
+        
+        // Handle special cases
+        switch category.lowercased() {
+        case "health": return "Health"
+        case "wealth": return "Wealth"
+        case "faith": return "Faith"
+        case "love": return "Love"
+        case "wisdom": return "Wisdom"
+        case "destiny": return "Destiny"
+        case "warfare": return "Spiritual Warfare"
+        case "anxiety": return "Peace & Anxiety"
+        case "marriage": return "Marriage"
+        case "parenting": return "Parenting"
+        case "work": return "Work & Career"
+        case "identity": return "Identity"
+        case "hope": return "Hope"
+        case "joy": return "Joy"
+        case "grace": return "Grace"
+        case "rest": return "Rest"
+        case "miracles": return "Miracles"
+        case "favor": return "God's Favor"
+        case "healing", "innerhealing": return "Healing"
+        case "protection", "godsprotection": return "God's Protection"
+        default: return formatted
+        }
+    }
+    
     // MARK: - Growth Phase Tasks (Days 8-30)
     static let growthTasks: [DailyTask] = [
         DailyTask(
@@ -521,27 +620,29 @@ struct TaskLibrary {
         return allTasks.filter { $0.minimumStreakDay <= streakDay }
     }
     
-    static func getCoreTasksForStreak(_ streakDay: Int) -> [DailyTask] {
+    static func getCoreTasksForStreak(_ streakDay: Int, userCategories: [String] = []) -> [DailyTask] {
         let phase = ProgressionPhase.getPhase(for: streakDay)
         let availableTasks = getAvailableTasks(for: streakDay)
+        
+        var tasks: [DailyTask]
         
         switch phase {
         case .foundation:
             // Always include foundation tasks, add 4th task after day 4
-            return Array(foundationTasks.filter { $0.minimumStreakDay <= streakDay }.prefix(4))
+            tasks = Array(foundationTasks.filter { $0.minimumStreakDay <= streakDay }.prefix(4))
             
         case .growth:
             // Mix foundation and growth tasks
             let foundation = Array(foundationTasks.prefix(2)) // Keep core habits
             let growth = availableTasks.filter { $0.category == .growth }
-            return foundation + Array(growth.prefix(2))
+            tasks = foundation + Array(growth.prefix(2))
             
         case .impact:
             // Mix foundation, growth, and impact tasks
             let foundation = Array(foundationTasks.prefix(1)) // Keep one core habit
             let growth = Array(growthTasks.filter { $0.minimumStreakDay <= streakDay }.prefix(1))
             let impact = availableTasks.filter { $0.category == .impact }
-            return foundation + growth + Array(impact.prefix(2))
+            tasks = foundation + growth + Array(impact.prefix(2))
             
         case .mastery:
             // Advanced combination with all categories
@@ -549,8 +650,15 @@ struct TaskLibrary {
             let growth = Array(growthTasks.filter { $0.minimumStreakDay <= streakDay }.prefix(1))
             let impact = Array(impactTasks.filter { $0.minimumStreakDay <= streakDay }.prefix(1))
             let mastery = availableTasks.filter { $0.category == .mastery }
-            return foundation + growth + impact + Array(mastery.prefix(1))
+            tasks = foundation + growth + impact + Array(mastery.prefix(1))
         }
+        
+        // Personalize tasks based on user categories
+        if !userCategories.isEmpty {
+            tasks = tasks.map { personalizeTask($0, for: userCategories) }
+        }
+        
+        return tasks
     }
     
     static func getNewlyUnlockedTasks(currentStreak: Int, previousStreak: Int) -> [DailyTask] {

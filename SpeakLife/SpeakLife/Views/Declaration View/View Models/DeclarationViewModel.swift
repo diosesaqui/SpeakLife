@@ -506,12 +506,28 @@ final class DeclarationViewModel: ObservableObject {
                 print(error)
             }
             self?.selectedCategories = selectedCategories
+            
+            // Also save to UserDefaults when fetched
+            let categoryStrings = Array(selectedCategories).map { $0.rawValue }
+            if let encoded = try? JSONEncoder().encode(categoryStrings) {
+                UserDefaults.standard.set(encoded, forKey: "userSelectedCategories")
+                print("📋 CATEGORIES: Saved \(categoryStrings.count) categories to UserDefaults: \(categoryStrings)")
+            }
+            
             completion()
         }
     }
     
     func save(_ selectedCategories: Set<DeclarationCategory>) {
         self.selectedCategories = selectedCategories
+        
+        // Save top categories to UserDefaults for personalized tasks
+        let categoryStrings = Array(selectedCategories).map { $0.rawValue }
+        if let encoded = try? JSONEncoder().encode(categoryStrings) {
+            UserDefaults.standard.set(encoded, forKey: "userSelectedCategories")
+            print("📋 CATEGORIES: Saved \(categoryStrings.count) categories to UserDefaults: \(categoryStrings)")
+        }
+        
         service.save(selectedCategories: selectedCategories) { [weak self] success in
             if success && self?.selectedCategory == .general {
                 self?.refreshGeneral(categories: selectedCategories)
