@@ -18,7 +18,7 @@ final class DevotionalViewModel: ObservableObject, Sendable {
     @Published var hasError = false
     var devotionalId: String {
         // Generate consistent ID based on date for tracking
-        return "devotional_\(devotionalDate.replacingOccurrences(of: " ", with: "_"))"
+        return "devotional_\(title+devotionalDate.replacingOccurrences(of: " ", with: "_"))"
     }
     let errorString = "Upgrade to the latest version for Today's Devotional."
     private let freeCount = 1

@@ -36,22 +36,22 @@ final class ListenerMetricsService: ObservableObject {
             "timestamp": Date().timeIntervalSince1970
         ])
         
-        // Debounce Firestore writes to reduce cost
-        let now = Date()
-        if let lastWrite = pendingWrites[contentId],
-           now.timeIntervalSince(lastWrite) < writeDebounceInterval {
-            return // Skip if written recently
-        }
-        
-        pendingWrites[contentId] = now
-        
-        // Batch writes for efficiency (update local cache immediately)
-        updateLocalCount(contentId: contentId)
-        
-        // Schedule background write
-        DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + writeDebounceInterval) {
-            self.batchWriteMetrics()
-        }
+//        // Debounce Firestore writes to reduce cost
+//        let now = Date()
+//        if let lastWrite = pendingWrites[contentId],
+//           now.timeIntervalSince(lastWrite) < writeDebounceInterval {
+//            return // Skip if written recently
+//        }
+//        
+//        pendingWrites[contentId] = now
+//        
+//        // Batch writes for efficiency (update local cache immediately)
+//        updateLocalCount(contentId: contentId)
+//        
+//        // Schedule background write
+//        DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + writeDebounceInterval) {
+//            self.batchWriteMetrics()
+//        }
     }
     
     // MARK: - Efficient Updates

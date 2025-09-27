@@ -53,18 +53,6 @@ struct UpNextCell: View {
                                 .font(.system(size: 13))
                                 .foregroundColor(.gray)
                             
-//                            if let listenerCount = listenerCount {
-//                                Text("•")
-//                                    .font(.caption)
-//                                    .foregroundColor(.gray)
-//                                Image(systemName: "headphones")
-//                                    .font(.caption)
-//                                    .foregroundColor(.gray)
-//                                Text(listenerCount)
-//                                    .font(.system(size: 13))
-//                                    .foregroundColor(.gray)
-//                            }
-                            
                             if item.isPremium, !subscriptionStore.isPremium {
                                 Image(systemName: "lock")
                                     .font(.caption)
@@ -323,11 +311,13 @@ struct AudioDeclarationView: View {
                         .presentationDetents([.large])
                         .onAppear {
                             audioViewModel.lastSelectedItem = item
-                            Analytics.logEvent(item.id, parameters: nil)
+                            Analytics.logEvent("audio_played", parameters: ["id": item.id])
                         }
                 }
             }
-
+            .onAppear() {
+                Analytics.logEvent("AudioScreenLoaded", parameters: nil)
+            }
             // Devotional Subscription Sheet
             .sheet(isPresented: $presentDevotionalSubscriptionView) {
                 DevotionalSubscriptionView {

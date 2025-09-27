@@ -78,11 +78,6 @@ final class AudioPlayerViewModel: NSObject, ObservableObject {
             // Failed to keep audio session active
         }
         
-        // Force the player to continue if it was playing
-//        if isPlaying, let player = player {
-//            player.play()
-//        }
-        
         // Update the Now Playing info
         updateNowPlayingInfo()
     }
@@ -109,77 +104,6 @@ final class AudioPlayerViewModel: NSObject, ObservableObject {
         AudioPlayerService.shared.stopMusic()
     }
 
-//    func startMonitoringPlayback() {
-////        if let token = timeObserverToken {
-////            timeObserverToken = nil
-////        }
-//        print("start monitioring RWRW")
-//        let interval = CMTime(seconds: 5.0, preferredTimescale: CMTimeScale(NSEC_PER_SEC))
-//        timeObserverToken = player?.addPeriodicTimeObserver(forInterval: interval, queue: .main) { [weak self] time in
-//            print("check RWRW")
-//            self?.checkIfShouldPrefetch(time: time)
-//           
-//        }
-//    }
-
-//    func checkIfShouldPrefetch(time: CMTime) {
-//        print(autoPlayAudio, !audioQueue.isEmpty, !hasPrefetchedNext, "RWRW yee")
-//        guard autoPlayAudio, !audioQueue.isEmpty, !hasPrefetchedNext else { return }
-//        guard let duration = player?.currentItem?.duration.seconds, duration.isFinite else { return }
-//
-//        let currentTime = time.seconds
-//        let remainingTime = duration - currentTime
-//
-//        if remainingTime <= 60 {
-//            hasPrefetchedNext = true
-//            prefetchNextAudio()
-//        }
-//    }
-
-//    func playNextInQueue() {
-//        guard !urlQueue.isEmpty else {
-//            print("Queue is empty RWRW")
-//            return
-//        }
-//
-//        let next = audioQueue.removeFirst()
-//        let nextURL = urlQueue.removeFirst()
-//
-//        print("Now playing next queued track: \(next.title) RWRW")
-//
-//        isBarVisible = false
-//        loadAudio(from: nextURL, isSameItem: false)
-//
-//        currentTrack = next.title
-//        subtitle = next.subtitle
-//        imageUrl = next.imageUrl
-//        selectedItem = next
-//
-//        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
-//            withAnimation(.easeOut(duration: 0.4)) {
-//                self.isBarVisible = true
-//            }
-//        }
-//    }
-
-//    func prefetchNextAudio() {
-//        guard let next = audioQueue.first else { return }
-//        print("prefetching next audio RWRW")
-//        audioDeclarationViewModel?.fetchAudio(for: next) { [weak self] result in
-//            DispatchQueue.main.async {
-//                guard let self = self else { return }
-//                switch result {
-//                case .success(let url):
-//                   // if !self.urlQueue.isEmpty {
-//                        self.addToQueue(url)
-//                        print("adding to queue RWRW")
-//                   // }
-//                case .failure(let error):
-//                    print("Failed to prefetch: \(error.localizedDescription)")
-//                }
-//            }
-//        }
-//    }
 
     func loadAudio(from url: URL, isSameItem: Bool) {
         hasPrefetchedNext = false
@@ -262,15 +186,17 @@ final class AudioPlayerViewModel: NSObject, ObservableObject {
             player.play()
         }
         isPlaying = true
+//        if let currentAudio = selectedItem {
+//            ListenerMetricsService.shared.trackListen(
+//                contentId: currentAudio.id,
+//                contentType: .audio
+//            )
+//            print(selectedItem, currentAudio.id, "RWRW selected item")
+//        }
         
         
         // Track listen event for metrics
-        if let currentAudio = selectedItem {
-            ListenerMetricsService.shared.trackListen(
-                contentId: currentAudio.id,
-                contentType: .audio
-            )
-        }
+      
         AudioPlayerService.shared.pauseMusic()
         updateNowPlayingInfo()
 

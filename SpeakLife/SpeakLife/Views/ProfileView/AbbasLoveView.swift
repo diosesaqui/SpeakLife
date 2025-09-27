@@ -69,6 +69,10 @@ struct AbbasLoveView: View {
     ]
     
     @EnvironmentObject var appState: AppState
+    
+    init() {
+        Analytics.logEvent("LoveLetterOpened", parameters: nil)
+    }
     var body: some View {
         GeometryReader { proxy in
             ScrollView {
@@ -132,7 +136,6 @@ struct AbbasLoveView: View {
                 }
             }
             .onAppear {
-                Analytics.logEvent(Event.devotionalTapped, parameters: nil)
                 appState.abbasLoveAdded = false
             }
         }

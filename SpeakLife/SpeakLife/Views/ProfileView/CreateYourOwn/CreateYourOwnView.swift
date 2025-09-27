@@ -9,7 +9,6 @@ import SwiftUI
 import FirebaseAnalytics
 
 
-
 struct CreateYourOwnView: View {
     @EnvironmentObject var subscriptionStore: SubscriptionStore
     @EnvironmentObject var appState: AppState

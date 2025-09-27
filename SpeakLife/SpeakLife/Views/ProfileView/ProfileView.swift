@@ -43,11 +43,6 @@ struct ProfileView: View {
     let url = URL(string:APP.Product.urlID)
     
     
-    init() {
-        Analytics.logEvent(Event.profileTapped, parameters: nil)
-        
-    }
-    
     @ViewBuilder
     private func navigationStack<Content: View>(content: Content) -> some View {
         if #available(iOS 16.0, *) {

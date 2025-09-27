@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import Firebase
 
 struct FullScreenEntryView: View {
     let contentType: ContentType
@@ -99,6 +100,7 @@ struct FullScreenEntryView: View {
             // Save confirmation overlay
             if showingSaveConfirmation {
                 SaveConfirmationView(contentType: contentType) {
+                    Analytics.logEvent(contentType.rawValue + "new_entry_saved", parameters: nil)
                     dismiss()
                 }
                 .transition(.scale.combined(with: .opacity))
@@ -116,15 +118,10 @@ struct FullScreenEntryView: View {
                 keyboardHeight = height
             }
         }
-//        .onAppear {
-//            setupVoiceInput()
-//        }
-//        .onDisappear {
-//            cleanupVoiceInput()
-//        }
-//        .onChange(of: voiceManager.transcribedText) { newText in
-//            handleVoiceTranscription(newText)
-//        }
+        .onAppear {
+            Analytics.logEvent(contentType.rawValue + ".fullscreen_entry_view_appeared", parameters: nil)
+        }
+
         .alert("Discard Changes?", isPresented: $showingDiscardAlert) {
             Button("Discard", role: .destructive) {
                 viewModel.clearDraft()
