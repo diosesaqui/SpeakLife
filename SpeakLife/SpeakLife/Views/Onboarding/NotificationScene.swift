@@ -104,7 +104,6 @@ struct NotificationOnboarding:  View {
             VStack(spacing: 12) {
                 ShimmerButton(colors: [.blue], buttonTitle: "Yes, I'm Committed to Change 💪", action: callBack)
                 .frame(width: size.width * 0.87 ,height: 50)
-               // .shadow(color: Constants.DAMidBlue, radius: 8, x: 0, y: 10)
                 
                 HStack(spacing: 4) {
                     Image(systemName: "checkmark.shield.fill")
@@ -122,11 +121,11 @@ struct NotificationOnboarding:  View {
         .frame(width: size.width, height: size.height)
         .background(
             ZStack {
-                Image(subscriptionStore.testGroup == 0 ? subscriptionStore.onboardingBGImage : onboardingBGImage2)
+                Image(subscriptionStore.onboardingBGImage)
                     .resizable()
                     .aspectRatio(contentMode: .fill)
                     .edgesIgnoringSafeArea(.all)
-                Color.black.opacity(subscriptionStore.testGroup == 0 ? 0.4 : 0.2)
+                Color.black.opacity(0.4)
                     .edgesIgnoringSafeArea(.all)
             }
         )

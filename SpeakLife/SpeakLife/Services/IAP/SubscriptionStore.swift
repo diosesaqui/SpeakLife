@@ -10,11 +10,6 @@ import Combine
 import FirebaseAnalytics
 import FacebookCore
 import SwiftUI
-
-import StoreKit
-import Combine
-
-import Firebase
 import FirebaseRemoteConfig
 
 typealias Transaction = StoreKit.Transaction
@@ -37,7 +32,6 @@ let weeklyID = "SpeakLife1Wk5"
 final class SubscriptionStore: ObservableObject {
 
     @Published var isPremium: Bool = false
-    @Published var isPremiumAllAccess: Bool = false
     @Published private(set) var subscriptions: [Product] = []
     @Published private(set) var nonConsumables: [Product] = [] // New list for non-consumables
     @Published private(set) var purchasedSubscriptions: [Product] = []
@@ -51,7 +45,6 @@ final class SubscriptionStore: ObservableObject {
     @Published var currentOfferedWeekly: Product? = nil
     @Published var currentOfferedDevotionalPremium: Product? = nil
     @Published var isInDevotionalPremium = false
-    @Published var testGroup = 0//Int.random(in: 0...1)
     @AppStorage("lastDevotionalPurchase") var lastDevotionalPurchaseDate: Date?
     
     @Published var showDevotionalSubscription = false
@@ -80,10 +73,6 @@ final class SubscriptionStore: ObservableObject {
     var cancellable: AnyCancellable?
 
     init() {
-        // Initialize the lists
-        subscriptions = []
-        nonConsumables = []
-      
         // Start a transaction listener as close to app launch as possible
         updateListenerTask = listenForTransactions()
         
@@ -106,19 +95,6 @@ final class SubscriptionStore: ObservableObject {
                 // Fix: Check purchased non-consumables, not all available non-consumables
                 self.isPremium = (subscriptionStatus == .subscribed) || self.purchasedNonConsumables.contains( where: { $0.id == lifetimeID })
                 
-                #if DEBUG
-                // TEMPORARY: Override for testing fresh install behavior
-                // self.isPremium = false
-                #endif
-                
-                // DEBUG: Commented out to prevent UI freeze during landing animation
-//                 print("🔍 Subscription Debug:")
-//                 print("   - Status: \(subscriptionStatus?.rawValue ?? 0)")
-//                 print("   - Available NonConsumables: \(nonConsumables.map { $0.id })")
-//                 print("   - PURCHASED NonConsumables: \(self.purchasedNonConsumables.map { $0.id })")
-//                 print("   - LifetimeID to check: \(lifetimeID)")
-//                 print("   - NEW Lifetime check: \(self.purchasedNonConsumables.contains( where: { $0.id == lifetimeID }))")
-//                 print("   - isPremium: \(self.isPremium)")
             }
         
     }
@@ -130,7 +106,6 @@ final class SubscriptionStore: ObservableObject {
     func fetchRemoteConfig() async {
         await withCheckedContinuation { continuation in
             remoteConfig.fetchAndActivate { _, _ in
-                // parse, update store
                 continuation.resume()
             }
         }
@@ -231,21 +206,15 @@ final class SubscriptionStore: ObservableObject {
                     newSubscriptions.append(product)
                     if product.id == discountSubscription {
                         currentOfferedDiscount = product
-                        print("discount set RWRW")
                     }
                     if product.id == monthlySubscription {
                         currentOfferedPremiumMonthly = product
-                        print("Monthly set RWRW")
                     }
-                    
                     if product.id == weeklyID {
                         currentOfferedWeekly = product
-                        print("weekly set RWRW")
                     }
-                    
                     if product.id == yearlySubscription {
                         currentOfferedPremium = product
-                        print("yearly set RWRW")
                     }
                 case .nonConsumable:
                     if product.id == lifetimeID {
@@ -254,7 +223,6 @@ final class SubscriptionStore: ObservableObject {
                     if product.id == devotionals {
                         currentOfferedDevotionalPremium = product
                     }
-                    // Don't add all non-consumables - only add purchased ones in updateCustomerProductStatus
                     newNonConsumables.append(product)
                 default:
                     print("Unknown product type")
@@ -264,22 +232,11 @@ final class SubscriptionStore: ObservableObject {
             // Sort products by price
             subscriptions = sortByPrice(newSubscriptions)
             nonConsumables = sortByPrice(newNonConsumables)
-            
-         //   setDiscountOff()
-
-// Set non-consumables
         } catch {
             print("Failed product request from the App Store server: \(error)")
         }
     }
-    
-//    func setDiscountOff() {
-//        if currentOfferedPremium?.type.rawValue == "SpeakLife1YR39" {
-//            discountOFF = "50% off"
-//        } else if currentOfferedPremium?.type.rawValue == "SpeakLife1YR49" {
-//            discountOFF = "60% off"
-//        }
-//    }
+
     
     func purchaseWithID(_ ids: [String]) async throws -> Transaction? {
         guard let id = ids.first else { return nil }
@@ -290,29 +247,24 @@ final class SubscriptionStore: ObservableObject {
     }
 
     func purchase(_ product: Product) async throws -> Transaction? {
-        //Begin purchasing the `Product` the user selects.
         let result = try await product.purchase()
 
         switch result {
         case .success(let verification):
-            //Check whether the transaction is verified. If it isn't,
-            //this function rethrows the verification error.
             let transaction = try checkVerified(verification)
-            
-            //The transaction is verified. Deliver content to the user.
             await updateCustomerProductStatus()
             
-            AppEvents.shared.logPurchase(amount: Double(product.displayPrice) ?? Double(0), currency: "")
-            Analytics.logEvent(Event.premiumSucceded, parameters: ["product": product.displayPrice])
-            
-            // Track TikTok purchase
+            // Analytics tracking
             let priceValue = NSDecimalNumber(decimal: product.price).doubleValue
+            AppEvents.shared.logPurchase(amount: priceValue, currency: "USD")
+            Analytics.logEvent(Event.premiumSucceded, parameters: [
+                "product_id": product.id,
+                "product_price": product.displayPrice,
+                "price_value": priceValue
+            ])
             Event.trackTikTokPremiumPurchase(value: priceValue, currency: "USD")
 
-
-            //Always finish a transaction.
             await transaction.finish()
-
             return transaction
         case .userCancelled, .pending:
             return nil
@@ -334,13 +286,10 @@ final class SubscriptionStore: ObservableObject {
     }
 
     func checkVerified<T>(_ result: VerificationResult<T>) throws -> T {
-        // Check whether the JWS passes StoreKit verification
         switch result {
         case .unverified:
-            print("Transaction verification failed")
             throw StoreError.failedVerification
         case .verified(let safe):
-            print("Transaction verified")
             return safe
         }
     }
@@ -353,11 +302,7 @@ final class SubscriptionStore: ObservableObject {
         // Iterate through all of the user's purchased products
         for await result in Transaction.currentEntitlements {
             do {
-                // Check whether the transaction is verified
                 let transaction = try checkVerified(result)
-                 print("🔍 Found transaction: \(transaction.productID) - \(transaction.productType)") // Commented to prevent UI freeze
-
-                // Handle the transaction based on product type
                 switch transaction.productType {
                 case .autoRenewable:
                     if let subscription = subscriptions.first(where: { $0.id == transaction.productID }) {
@@ -375,14 +320,9 @@ final class SubscriptionStore: ObservableObject {
             }
         }
 
-        // Update store properties
         self.purchasedSubscriptions = purchasedSubscriptions
         self.purchasedNonConsumables = purchasedNonConsumables
-        
         subscriptionGroupStatus = try? await subscriptions.first?.subscription?.status.first?.state
-
-        // Update isPremium flag
-        //self.isPremium = !purchasedSubscriptions.isEmpty || !purchasedNonConsumables.isEmpty
     }
     
     func products(for ids: [String]) async -> [Product]? {
@@ -518,14 +458,4 @@ extension Product {
         }
         return ""
     }
-        
-//        var discountOff: String {
-//            if id == "SpeakLife1YR39" {
-//                return "50%"
-//            } else if id == "SpeakLife1YR49" {
-//                return "60%"
-//            } else {
-//                return ""
-//            }
-  //  }
 }

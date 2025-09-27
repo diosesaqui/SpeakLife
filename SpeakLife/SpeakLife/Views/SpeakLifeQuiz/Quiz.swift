@@ -7,10 +7,22 @@
 
 import Foundation
 
+struct QuizQuestion {
+    let question: String
+    let answers: [String]
+    let correctAnswerIndex: Int
+    let explanation: String
+}
+
 struct Quiz: Identifiable {
     let id: UUID = UUID()
     let title: String
-    let questions: [(String, [String], Int, String)]
+    let questions: [QuizQuestion]
+    
+    init(title: String, questions: [(String, [String], Int, String)]) {
+        self.title = title
+        self.questions = questions.map { QuizQuestion(question: $0.0, answers: $0.1, correctAnswerIndex: $0.2, explanation: $0.3) }
+    }
 }
 
 let questions = [

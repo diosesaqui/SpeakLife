@@ -11,8 +11,7 @@ struct WhatsNewBottomSheet: View {
     @Binding var isPresented: Bool
     let version: String
     let features = [
-        "UX fixes",
-       // "NEW Audio AutoPlay"
+        "UX fixes"
     ]
 
     var body: some View {
@@ -77,86 +76,3 @@ struct WhatsNewBottomSheet: View {
            .ignoresSafeArea(edges: .bottom)
        }
 }
-
-//
-//struct EmailBottomSheet: View {
-//    @EnvironmentObject var appState: AppState
-//    @Binding var isPresented: Bool
-//    @State private var email: String = ""
-//    @State private var isOptedIn: Bool = false
-//    @State private var showConfirmation: Bool = false
-//
-//    var body: some View {
-//           VStack(spacing: 20) {
-//               // Title
-//               Text("Stay Connected")
-//                   .font(.title2)
-//                   .fontWeight(.bold)
-//
-//               // Subtitle
-//               Text("Enter your email to receive updates, encouragement, and offers.")
-//                   .font(.body)
-//                   .multilineTextAlignment(.center)
-//                   .foregroundColor(.secondary)
-//
-//               // Email Input
-//               TextField("Enter your email", text: $email)
-//                   .textFieldStyle(RoundedBorderTextFieldStyle())
-//                   .keyboardType(.emailAddress)
-//                   .autocapitalization(.none)
-//                   .padding(.horizontal)
-//
-//               // Opt-In Toggle
-//               Toggle(isOn: $isOptedIn) {
-//                   Text("I agree to receive emails and updates.")
-//                       .font(.footnote)
-//                       .foregroundColor(.secondary)
-//               }
-//               .padding(.horizontal)
-//
-//               // Submit Button
-//               Button(action: handleEmailSubmit) {
-//                   Text("Confirm & Opt-In")
-//                       .font(.headline)
-//                       .padding()
-//                       .frame(maxWidth: .infinity)
-//                       .background(isFormValid ? Color.blue : Color.gray)
-//                       .foregroundColor(.white)
-//                       .cornerRadius(10)
-//               }
-//               .disabled(!isFormValid)
-//               .padding(.horizontal)
-//
-//               // Close Button
-//               Button(action: { appState.needEmail = false }) {
-//                   Text("Cancel")
-//                       .foregroundColor(.red)
-//               }
-//           }
-//           .padding()
-//           .background(
-//               RoundedRectangle(cornerRadius: 20)
-//                   .fill(Color(.systemBackground))
-//                   .shadow(color: Color.black.opacity(0.2), radius: 10, x: 0, y: -5)
-//           )
-//           .ignoresSafeArea(edges: .bottom)
-//           .cornerRadius(20)
-//           .shadow(radius: 10)
-//           .padding(.horizontal)
-//       }
-//
-//       private var isFormValid: Bool {
-//           !email.isEmpty && isOptedIn && isValidEmail(email)
-//       }
-//
-//       private func isValidEmail(_ email: String) -> Bool {
-//           let emailRegex = ".+@.+\\..+"
-//           return NSPredicate(format: "SELF MATCHES %@", emailRegex).evaluate(with: email)
-//       }
-//
-//       private func handleEmailSubmit() {
-//           // Simulate confirmation or further handling (e.g., API call)
-//           appState.needEmail = false
-//       }
-//         
-//}

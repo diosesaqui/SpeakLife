@@ -10,13 +10,7 @@ import MessageUI
 import StoreKit
 import UIKit
 import FirebaseAnalytics
-//import GoogleMobileAds
 import Combine
-
-enum SelectedView {
-    case first, second, third
-}
-
 
 struct DeclarationView: View {
     
@@ -40,17 +34,8 @@ struct DeclarationView: View {
     @State var isShowingMailView = false
     @State var showDailyDevotion = false
     @State private var isPresentingPremiumView = false
-    @State private var isPresentingAbbaLoveView = false
-    @State private var isPresentingQuizView = false
-    @State private var isPresentingDiscountView = false
-    @State private var isPresentingBottomSheet = false
     @EnvironmentObject var timerViewModel: TimerViewModel
-    @State private var showMenu = false
-    @State private var selectedView: SelectedView?
     @State var presentDevotionalSubscriptionView = false
-   /// @State private var timeRemaining: Int = 0
-    
-    @State var isPresenting: Bool = false
     
     private var cancellables = Set<AnyCancellable>()
     
@@ -67,31 +52,15 @@ struct DeclarationView: View {
     }
     
     var body: some View {
-      //  NavigationView {
         GeometryReader { geometry in
            
             ZStack {
                 declarationContent(geometry)
-              //  if appState.showIntentBar {
-                     
                     if !appState.showScreenshotLabel {
                        
                         VStack() {
                            
                             HStack {
-
-                              //  if appState.showQuizButton {
-//                                    CapsuleImageButton(title: "lightbulb.fill") {
-//                                        presentQuiz()
-//                                        Selection.shared.selectionFeedback()
-//                                    }
-//                                    .sheet(isPresented: $isPresentingQuizView) {
-//                                        
-//                                    } content: {
-//                                        QuizHomeView()
-//                                    }
-                              //  }
-
                                 Spacer()
                                 // Enhanced Streak System with Daily Checklist
                                 EnhancedStreakView()
@@ -113,10 +82,8 @@ struct DeclarationView: View {
                                             Analytics.logEvent(Event.tryPremiumAbandoned, parameters: nil)
                                             timerViewModel.loadRemainingTime()
                                         } content: {
-                                            //ScrollView {
-                                                PremiumView()
+                                            PremiumView()
                                                 .frame(height: UIScreen.main.bounds.height * 0.95)
-                                           // }
                     
                                                 .onDisappear {
                                                     if !subscriptionStore.isPremium, !subscriptionStore.isInDevotionalPremium {
@@ -147,8 +114,6 @@ struct DeclarationView: View {
                     }
                     }
                 }
-           // .navigationBarHidden(true)
-           // }
         }
             
             .background(
@@ -169,7 +134,6 @@ struct DeclarationView: View {
                     Rectangle()
                         .fill(Color.black.opacity(themeViewModel.selectedTheme.blurEffect ? 0.25 : 0))
                         .edgesIgnoringSafeArea(.all)
-//                    
                 }
             )
             
@@ -199,9 +163,6 @@ struct DeclarationView: View {
                 premiumCount += 1
                 shareApp() 
                 timerViewModel.loadRemainingTime()
-//                if !subscriptionStore.isPremium {
-//                    viewModel.showDiscountView.toggle()
-//                }
             }
             
             .alert("Know anyone that can benefit from SpeakLife?", isPresented: $share) {
@@ -211,11 +172,6 @@ struct DeclarationView: View {
                 Button("No thanks") {
                 }
             }
-//            .sheet(isPresented: $viewModel.showDiscountView) {
-//                    OfferPageView() {
-//                        viewModel.showDiscountView.toggle()
-//                }
-//            }
             .onDisappear {
                 timerViewModel.saveRemainingTime()
             }
@@ -239,27 +195,11 @@ struct DeclarationView: View {
             }
         
     }
-    
-    private func presentTimerBottomSheet()  {
-        self.isPresentingBottomSheet = true
-    }
-    
-    
     private func premiumView()  {
         timerViewModel.saveRemainingTime()
         self.isPresentingPremiumView = true
         Analytics.logEvent(Event.tryPremiumTapped, parameters: nil)
     }
-    
-    private func abbaLoveView()  {
-        timerViewModel.saveRemainingTime()
-        self.isPresentingAbbaLoveView = true
-    }
-    
-    private func presentQuiz()  {
-        self.isPresentingQuizView = true
-    }
-    
     
     private func shareApp() {
         let currentDate = Date()

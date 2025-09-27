@@ -220,6 +220,13 @@ struct ProfileView: View {
                             .frame(width: 8)
                             .foregroundColor(Constants.DAMidBlue)
                     })
+                .simultaneousGesture(TapGesture().onEnded {
+                    Event.trackUserAction(
+                        "reminders_opened",
+                        category: "profile",
+                        metadata: ["source": "profile_menu"]
+                    )
+                })
         }
         
     }
@@ -264,6 +271,13 @@ struct ProfileView: View {
                             .frame(width: 8)
                             .foregroundColor(Constants.DAMidBlue)
                     })
+                .simultaneousGesture(TapGesture().onEnded {
+                    Event.trackUserAction(
+                        "quiz_opened",
+                        category: "profile",
+                        metadata: ["source": "profile_menu"]
+                    )
+                })
         }
         
     }
@@ -298,6 +312,13 @@ struct ProfileView: View {
                             .frame(width: 8)
                             .foregroundColor(Constants.DAMidBlue)
                     })
+                .simultaneousGesture(TapGesture().onEnded {
+                    Event.trackUserAction(
+                        "prayers_opened",
+                        category: "profile",
+                        metadata: ["source": "profile_menu"]
+                    )
+                })
         }
     }
     
@@ -359,6 +380,13 @@ struct ProfileView: View {
                             .frame(width: 8)
                             .foregroundColor(Constants.DAMidBlue)
                     })
+                .simultaneousGesture(TapGesture().onEnded {
+                    Event.trackUserAction(
+                        "love_letter_opened",
+                        category: "profile",
+                        metadata: ["source": "profile_menu"]
+                    )
+                })
         }
     }
     

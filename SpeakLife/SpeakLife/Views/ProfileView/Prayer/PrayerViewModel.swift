@@ -11,7 +11,7 @@ import SwiftUI
 
 struct SectionData: Identifiable {
     let id = UUID()
-    let title: String//DeclarationCategory
+    let title: String
     let items: [Prayer]
     var isExpanded: Bool = false
 }
@@ -19,8 +19,6 @@ struct SectionData: Identifiable {
 final class PrayerViewModel: ObservableObject {
     
     @Published var sectionData: [SectionData] = []
-    
-    @Published var hasError = false
     
     private var prayers: [Prayer] = [] {
         didSet {
@@ -35,34 +33,14 @@ final class PrayerViewModel: ObservableObject {
         buildSectionData()
     }
     
-    func fetchPrayers() async {
-        guard prayers.isEmpty else { return }
-       // let prayers = await service.fetchPrayers()
-       // self.prayers = prayers
-    }
     
-    private func buildSectionData()  {
-//        guard !prayers.isEmpty else {
-//            DispatchQueue.main.async { [weak self] in
-//                self?.hasError = true
-//            }
-//            return
-//        }
-    
-//        for category in DeclarationCategory.allCases {
-//            let prayers = prayers.filter { $0.category == category }
-//            DispatchQueue.main.async { [weak self] in
-//                if !prayers.isEmpty {
-//                    self?.sectionData.append(SectionData(title: category.categoryTitle, items: prayers))
-//                }
-//            }
-//        }
+    private func buildSectionData() {
         DispatchQueue.main.async { [weak self] in
-            self?.sectionData.insert(SectionData(title: "God's Protection", items: [Prayer(prayerText: psalm91NLT, category: .godsprotection, isPremium: false)]), at: 0)
-        }
-        
-        DispatchQueue.main.async { [weak self] in
-            self?.sectionData.insert(SectionData(title: "Salvation Prayer", items: [Prayer(prayerText: salvationPrayer, category: .godsprotection, isPremium: false)]), at: 0)
+            guard let self = self else { return }
+            self.sectionData = [
+                SectionData(title: "Salvation Prayer", items: [Prayer(prayerText: salvationPrayer, category: .godsprotection, isPremium: false)]),
+                SectionData(title: "God's Protection", items: [Prayer(prayerText: psalm91NLT, category: .godsprotection, isPremium: false)])
+            ]
         }
     }
 }

@@ -12,7 +12,7 @@ struct QuizQuestionView: View {
     @ObservedObject var progressManager: QuizProgressManager
 
     let quizTitle: String
-    let questions: [(String, [String], Int, String)]
+    let questions: [QuizQuestion]
 
     var body: some View {
         if quizCompleted {
@@ -22,7 +22,7 @@ struct QuizQuestionView: View {
             }
         } else if showExplanation {
                 if !isAnswerCorrect {
-                    QuizExplanationView(explanation: questions[questionIndex].3) {
+                    QuizExplanationView(explanation: questions[questionIndex].explanation) {
                     resetFeedback()
                 }
             }
@@ -41,7 +41,7 @@ struct QuizQuestionView: View {
                         .padding(.horizontal)
                 
 
-                Text(questions[questionIndex].0)
+                Text(questions[questionIndex].question)
                     .font(.title2.bold())
                     .multilineTextAlignment(.center)
 
@@ -50,7 +50,7 @@ struct QuizQuestionView: View {
                         withAnimation {
                             selectedIndex = index
                             showFeedback = true
-                            isAnswerCorrect = index == questions[questionIndex].2
+                            isAnswerCorrect = index == questions[questionIndex].correctAnswerIndex
                             if isAnswerCorrect {
                                 showCelebration = true
                                 DispatchQueue.main.asyncAfter(deadline: .now() + 2.2) {
@@ -62,7 +62,7 @@ struct QuizQuestionView: View {
                             }
                         }
                     }) {
-                        Text(questions[questionIndex].1[index])
+                        Text(questions[questionIndex].answers[index])
                             .padding()
                             .frame(maxWidth: .infinity)
                             .background(buttonColor(for: index))
@@ -85,7 +85,7 @@ struct QuizQuestionView: View {
     private func buttonColor(for index: Int) -> Color {
         guard let selected = selectedIndex else { return Color.gray.opacity(0.2) }
         if index == selected {
-            return selected == questions[questionIndex].2 ? Color.green : Color.red
+            return selected == questions[questionIndex].correctAnswerIndex ? Color.green : Color.red
         }
         return Color.gray.opacity(0.2)
     }

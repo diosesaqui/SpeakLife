@@ -14,7 +14,6 @@ struct PremiumView: View {
     @EnvironmentObject var subscriptionStore: SubscriptionStore
     @EnvironmentObject var appState: AppState
     let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
-    @State var presentDevotionalSubscriptionView = false
     @State private var countdown: TimeInterval = 0
         
     
@@ -24,16 +23,14 @@ struct PremiumView: View {
                 if appState.offerDiscount {
                     OfferPageView(countdown: $countdown) { }
                 } else {
-                    OptimizedSubscriptionView() { //}(size: geometry.size) {
-                        // Handle callback - typically dismiss or navigation
-                  }
+                    OptimizedSubscriptionView() { }
                 }
             } else {
                 NavigationView {
                     ZStack {
                         // 💫 Gradient Background
                         Gradients().speakLifeCYOCell
-                        .ignoresSafeArea()
+                            .ignoresSafeArea()
                         
                         VStack(spacing: 24) {
                             Text("You are currently a premium member")
@@ -86,14 +83,13 @@ struct PremiumView: View {
         if let endTime = appState.discountEndTime, Date() < endTime {
             appState.timeRemainingForDiscount = Int(endTime.timeIntervalSinceNow)
             countdown = endTime.timeIntervalSinceNow
-           } else {
-               appState.offerDiscount = false
-               appState.timeRemainingForDiscount = 0
-               countdown = 0
-               timer.upstream.connect().cancel()
-               // Stop the timer
-           }
-       }
+        } else {
+            appState.offerDiscount = false
+            appState.timeRemainingForDiscount = 0
+            countdown = 0
+            timer.upstream.connect().cancel()
+        }
+    }
     
     private func initializeTimer() {
         if let endTime = appState.discountEndTime, Date() < endTime, !subscriptionStore.isPremium {

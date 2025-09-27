@@ -3,7 +3,7 @@ import FirebaseAnalytics
 
 struct QuizStartView: View {
     let quizTitle: String
-    let questions: [(String, [String], Int, String)]
+    let questions: [QuizQuestion]
     @ObservedObject var progressManager: QuizProgressManager
 
     var body: some View {

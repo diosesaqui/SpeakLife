@@ -19,7 +19,7 @@ class QuizViewModel: ObservableObject {
         self.quiz = quiz
     }
 
-    var currentQuestion: (String, [String], Int, String) {
+    var currentQuestion: QuizQuestion {
         quiz.questions[currentQuestionIndex]
     }
 

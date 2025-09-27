@@ -211,8 +211,6 @@ struct FullScreenEntryView: View {
                     // Handle save failure
                     print("Save failed")
                 }
-            } catch {
-                print("Save error: \(error)")
             }
         }
     }
@@ -260,9 +258,6 @@ struct FullScreenEntryView: View {
             let success = await viewModel.save()
             return success
             
-        } catch {
-            print("Error saving entry: \(error)")
-            return false
         }
     }
 }

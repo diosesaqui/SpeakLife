@@ -18,5 +18,8 @@ struct WarriorView: View {
             PrayerView()
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
+        .onAppear {
+            Event.trackScreen("warrior_screen", metadata: ["content": "prayer_view"])
+        }
     }
 }

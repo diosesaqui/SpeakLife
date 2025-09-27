@@ -107,11 +107,7 @@ final class DeclarationViewModel: ObservableObject {
     
     private var allDeclarations: [Declaration] = []
     
-    var selectedCategories = Set<DeclarationCategory>() {
-        didSet {
-            print(selectedCategories, "RWRW changed")
-        }
-    }
+    var selectedCategories = Set<DeclarationCategory>()
    
     private var service: APIService
     
@@ -130,7 +126,7 @@ final class DeclarationViewModel: ObservableObject {
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            print("RWRW: DeclarationViewModel received CloudKit import notification - refreshing data")
+            // CloudKit import completed - refresh data
             self?.fetchDeclarations()
         }
         
@@ -171,7 +167,6 @@ final class DeclarationViewModel: ObservableObject {
         isFetching = true
         
         // Store current state before fetching
-        let currentDeclarationId = currentDeclaration?.id
         let currentDeclarations = declarations
         
         service.declarations() {  [weak self] declarations, error, _ in
@@ -202,10 +197,6 @@ final class DeclarationViewModel: ObservableObject {
             // Sync categorized declarations for smart widget filtering
             self.syncCategorizedDeclarationsToWidget()
             self.errorMessage = error?.localizedDescription
-            
-//            if neededSync {
-//                self.showNewAlertMessage = true
-//            }
         }
     }
     
@@ -359,7 +350,7 @@ final class DeclarationViewModel: ObservableObject {
                         self.refreshCreateOwn()
                     }
                 } catch {
-                    print("RWRW: Error creating declaration - \(error.localizedDescription)")
+                    // Error creating declaration in Core Data
                     // Remove from allDeclarations if save failed
                     await MainActor.run {
                         self.allDeclarations.removeAll(where: { $0.id == declaration.id })
@@ -381,7 +372,7 @@ final class DeclarationViewModel: ObservableObject {
     }
     
     func removeOwn(declaration: Declaration) {
-        guard let indexOf = createOwn.firstIndex(where: { $0.id == declaration.id } ) else {
+        guard let _ = createOwn.firstIndex(where: { $0.id == declaration.id } ) else {
             return
         }
         
@@ -395,9 +386,9 @@ final class DeclarationViewModel: ObservableObject {
             Task {
                 do {
                     try await coreDataService.deleteDeclaration(withId: declaration.id, contentType: declaration.contentType)
-                    print("RWRW: Declaration removed from Core Data successfully")
+                    // Declaration removed successfully
                 } catch {
-                    print("RWRW: Error removing declaration from Core Data - \(error.localizedDescription)")
+                    // Error removing declaration from Core Data
                     
                     // If Core Data delete fails, restore the item
                     await MainActor.run {
@@ -507,11 +498,10 @@ final class DeclarationViewModel: ObservableObject {
             }
             self?.selectedCategories = selectedCategories
             
-            // Also save to UserDefaults when fetched
+            // Save to UserDefaults for task personalization
             let categoryStrings = Array(selectedCategories).map { $0.rawValue }
             if let encoded = try? JSONEncoder().encode(categoryStrings) {
                 UserDefaults.standard.set(encoded, forKey: "userSelectedCategories")
-                print("📋 CATEGORIES: Saved \(categoryStrings.count) categories to UserDefaults: \(categoryStrings)")
             }
             
             completion()
@@ -521,11 +511,10 @@ final class DeclarationViewModel: ObservableObject {
     func save(_ selectedCategories: Set<DeclarationCategory>) {
         self.selectedCategories = selectedCategories
         
-        // Save top categories to UserDefaults for personalized tasks
+        // Save categories to UserDefaults for task personalization
         let categoryStrings = Array(selectedCategories).map { $0.rawValue }
         if let encoded = try? JSONEncoder().encode(categoryStrings) {
             UserDefaults.standard.set(encoded, forKey: "userSelectedCategories")
-            print("📋 CATEGORIES: Saved \(categoryStrings.count) categories to UserDefaults: \(categoryStrings)")
         }
         
         service.save(selectedCategories: selectedCategories) { [weak self] success in
@@ -548,7 +537,7 @@ final class DeclarationViewModel: ObservableObject {
         let contentData = content
        // contentData += " ~ " + category
         let contentText = prefixString(content, until: " ~").dropLast()
-        print(contentText, category, "RWRW")
+        // Finding declaration by content text
         
             guard let declaration = allDeclarations.first(where: { $0.text.hasPrefix(contentText) }) else {
                 let declaration = Declaration(text: content)

@@ -143,16 +143,6 @@ struct DeclarationContentView: View {
                 askForReview()
                 let declaration = viewModel.declarations[newIndex]
                 viewModel.setCurrent(declaration)
-//                if declaration.book != nil {
-//                    viewModel.showVerse = true
-//                }
-                
-//                if viewModel.selectedCategory == .myOwn || viewModel.selectedCategory == .favorites {
-//                    viewModel.showVerse = false
-//                } else {
-//                    viewModel.showVerse = true
-//                }
-                
             }
                 
             .frame(width: geometry.size.height, height: geometry.size.width)
@@ -166,19 +156,15 @@ struct DeclarationContentView: View {
     }
     
     func getButtonVisibility(declaration: Declaration) {
-        print("Updated buttonVisibilities previous count: \(buttonVisibilities.count) RWRW")
-        numberOfItems = 3 // Default
-            if declaration.bibleVerseText != nil {
-                numberOfItems += 1 // Add the "VERSE" button
-            }
+        numberOfItems = 3
+        if declaration.bibleVerseText != nil {
+            numberOfItems += 1
+        }
         buttonVisibilities = Array(repeating: false, count: numberOfItems)
-        print("Updated buttonVisibilities count: \(buttonVisibilities.count) RWRW")
     }
     
     func prepareShareItems() -> [UIImage] {
         guard let image = image else { return [] }
-       // ImageSaver().writeToPhotoAlbum(image: image)
-     //   let message = "Check out SpeakLife - Bible Meditation and email speaklife@diosesaqui.com for a 30-day free pass. \n\(APP.Product.urlID)"
         return [image]//, message]
     }
 
@@ -218,7 +204,6 @@ struct DeclarationContentView: View {
             for index in buttonVisibilities.indices {
                 DispatchQueue.main.asyncAfter(deadline: .now() + Double(index) * 0.1) { // Adjust the delay as needed
                     withAnimation {
-                        print("Animating button at index: \(index) RWRW")
                         buttonVisibilities[index] = true
                     }
                 }
@@ -232,7 +217,6 @@ struct DeclarationContentView: View {
                     withAnimation {
                         buttonVisibilities[totalButtons - 1 - index] = false
                     }
-                    // Call the completion handler after the last animation
                     if index == totalButtons - 1 {
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                             completion()
@@ -254,7 +238,6 @@ struct DeclarationContentView: View {
                 favoriteTapped(declaration: declaration)
 
             }),
-            // AnyView(DeclarationMenuButton(iconName: "speaker.wave.2.fill", label: "SPEAK") { speakTapped(declaration: declaration)})
         ]
         
         if declaration.bibleVerseText != nil {
@@ -300,7 +283,18 @@ struct DeclarationContentView: View {
             Spacer()
                 .frame(height: geometry.size.height * 0.44)
         }.onAppear {
-            Analytics.logEvent(Event.swipe_affirmation, parameters: nil)
+            Event.trackContent(
+                type: "declaration",
+                id: declaration.id,
+                action: "viewed",
+                metadata: [
+                    "declaration_text": declaration.text.prefix(50),
+                    "category": declaration.category.rawValue,
+                    "has_verse": declaration.bibleVerseText != nil,
+                    "is_custom": declaration.category == .myOwn,
+                    "view_mode": viewModel.showVerse ? "verse" : "affirmation"
+                ]
+            )
         }
     }
     
@@ -332,10 +326,18 @@ struct DeclarationContentView: View {
         }
         }
 
-        Analytics.logEvent(Event.shareTapped, parameters: ["share": declaration.text.prefix(50)])
-        
-        // Track TikTok share event
-        Event.trackTikTokShare(contentType: "affirmation")
+        AnalyticsService.shared.trackShare(
+            contentType: "declaration",
+            contentId: declaration.id,
+            shareMethod: "screenshot",
+            metadata: [
+                "declaration_text": declaration.text.prefix(100),
+                "category": declaration.category.rawValue,
+                "has_verse": declaration.bibleVerseText != nil,
+                "is_custom": declaration.category == .myOwn,
+                "theme": themeViewModel.selectedTheme.backgroundImageString
+            ]
+        )
         Selection.shared.selectionFeedback()
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
@@ -349,8 +351,20 @@ struct DeclarationContentView: View {
     
     private func speakTapped(declaration: Declaration) {
         Selection.shared.selectionFeedback()
+        
+        Event.trackUserAction(
+            "speech_button_tapped",
+            category: "declaration",
+            metadata: [
+                "declaration_id": declaration.id,
+                "declaration_text": declaration.text.prefix(100),
+                "category": declaration.category.rawValue,
+                "mode": viewModel.showVerse ? "verse" : "affirmation",
+                "is_custom": declaration.category == .myOwn
+            ]
+        )
+        
         affirm(declaration, isAffirmation: viewModel.showVerse)
-        Analytics.logEvent(Event.speechTapped, parameters: ["declaration": declaration.text])
         
     }
     
@@ -363,9 +377,22 @@ struct DeclarationContentView: View {
     
     private func favoriteTapped(declaration: Declaration) {
         let wasFavorite = declaration.isFavorite ?? false
+        
+        Event.trackUserAction(
+            wasFavorite ? "unfavorite_tapped" : "favorite_tapped",
+            category: "declaration",
+            metadata: [
+                "declaration_id": declaration.id,
+                "declaration_text": declaration.text.prefix(100),
+                "category": declaration.category.rawValue,
+                "is_custom": declaration.category == .myOwn,
+                "total_favorites": viewModel.favorites.count,
+                "action": wasFavorite ? "remove" : "add"
+            ]
+        )
+        
         favorite(declaration)
-        self.isFavorite = !wasFavorite // Use the inverse of the original state for animation
-        Analytics.logEvent(Event.favoriteTapped, parameters: ["declaration": declaration.text.prefix(100)])
+        self.isFavorite = !wasFavorite
         Selection.shared.selectionFeedback()
         appState.offerDiscountTry += 1
         if !subscriptionStore.isPremium, appState.offerDiscountTry % 5 == 0 {
@@ -405,9 +432,6 @@ struct DeclarationContentView: View {
                     CapsuleImageButton(title: "tray.and.arrow.up") { }
                 }
                 
-//                CapsuleImageButton(title: "tray.and.arrow.up") {
-//                    shareTapped(declaration: declaration)
-//                }
                 
                 CapsuleImageButton(title: (declaration.isFavorite ?? false) ? "heart.fill" : "heart") {
                     favoriteTapped(declaration: declaration)
@@ -499,16 +523,13 @@ class ImageSaver: NSObject {
 
     @objc private func saveCompleted(_ image: UIImage, didFinishSavingWithError error: Error?, contextInfo: UnsafeRawPointer) {
         if let error = error {
-            print("❌ Save failed: \(error.localizedDescription)")
-        } else {
-            print("✅ Saved to Photos")
+            print("Save failed: \(error.localizedDescription)")
         }
     }
 }
 
 func shareToInstagramStories(image: UIImage) {
-    // Use Photos approach for consistent behavior
-    let photos = PHPhotoLibrary.shared()
+    let _ = PHPhotoLibrary.shared()
     
     PHPhotoLibrary.requestAuthorization { status in
         DispatchQueue.main.async {
@@ -516,12 +537,11 @@ func shareToInstagramStories(image: UIImage) {
             case .authorized, .limited:
                 saveImageToPhotos(image: image)
             case .denied, .restricted:
-                print("❌ Photos access denied")
                 showPhotosPermissionAlert()
             case .notDetermined:
-                print("❌ Photos permission not determined")
+                break
             @unknown default:
-                print("❌ Unknown photos permission status")
+                break
             }
         }
     }
@@ -533,10 +553,9 @@ private func saveImageToPhotos(image: UIImage) {
     }) { success, error in
         DispatchQueue.main.async {
             if success {
-                print("✅ Image saved to Photos")
                 showImageSavedAlert()
-            } else {
-                print("❌ Failed to save image: \(error?.localizedDescription ?? "Unknown error")")
+            } else if let error = error {
+                print("Failed to save image: \(error.localizedDescription)")
             }
         }
     }

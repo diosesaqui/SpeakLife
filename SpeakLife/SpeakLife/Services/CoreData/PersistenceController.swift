@@ -87,9 +87,9 @@ final class PersistenceController {
             
             // IMPORTANT: Check if we're in production (TestFlight/App Store) or development
             #if DEBUG
-            print("RWRW: Using CloudKit DEVELOPMENT environment")
+            print("Using CloudKit DEVELOPMENT environment")
             #else
-            print("RWRW: Using CloudKit PRODUCTION environment")
+            print("Using CloudKit PRODUCTION environment")
             #endif
             
             description.cloudKitContainerOptions = options
@@ -97,7 +97,7 @@ final class PersistenceController {
         
         container.loadPersistentStores { storeDescription, error in
             if let error = error as NSError? {
-                print("RWRW: Persistent store load FAILED - \(error.localizedDescription)")
+                print("Persistent store load FAILED - \(error.localizedDescription)")
                 #if DEBUG
                 fatalError("Unresolved error \(error), \(error.userInfo)")
                 #else
@@ -105,9 +105,9 @@ final class PersistenceController {
                 print("Core Data error: \(error), \(error.userInfo)")
                 #endif
             } else {
-                print("RWRW: Persistent store loaded successfully")
-                print("RWRW: Store URL: \(storeDescription.url?.path ?? "No URL")")
-                print("RWRW: CloudKit enabled: \(storeDescription.cloudKitContainerOptions != nil)")
+                print("Persistent store loaded successfully")
+                print("Store URL: \(storeDescription.url?.path ?? "No URL")")
+                print("CloudKit enabled: \(storeDescription.cloudKitContainerOptions != nil)")
                 
                 // CRITICAL: For production builds, we need to ensure schema is initialized
                 #if !DEBUG
@@ -147,10 +147,10 @@ final class PersistenceController {
         
         do {
             try context.save()
-            print("RWRW: Context saved successfully - changes committed to CloudKit sync")
+            print("Context saved successfully - changes committed to CloudKit sync")
         } catch {
             let nsError = error as NSError
-            print("RWRW: Context save failed - \(nsError.localizedDescription)")
+            print("Context save failed - \(nsError.localizedDescription)")
             fatalError("Unresolved error \(nsError), \(nsError.userInfo)")
         }
     }
@@ -162,7 +162,7 @@ final class PersistenceController {
             object: container.persistentStoreCoordinator,
             queue: .main
         ) { notification in
-            print("RWRW: CloudKit remote change notification received - \(notification.userInfo ?? [:])")
+            print("CloudKit remote change notification received - \(notification.userInfo ?? [:])")
         }
         
         NotificationCenter.default.addObserver(
@@ -184,12 +184,12 @@ final class PersistenceController {
         @unknown default: "Unknown"
         }
         
-        print("RWRW: CloudKit \(eventType) - Started: \(event.startDate), Ended: \(event.endDate?.description ?? "In Progress")")
+        print("CloudKit \(eventType) - Started: \(event.startDate), Ended: \(event.endDate?.description ?? "In Progress")")
         
         if let error = event.error {
-            print("RWRW: CloudKit \(eventType) Error - \(error.localizedDescription)")
+            print("CloudKit \(eventType) Error - \(error.localizedDescription)")
         } else if event.endDate != nil {
-            print("RWRW: CloudKit \(eventType) Success")
+            print("CloudKit \(eventType) Success")
         }
     }
     
@@ -199,7 +199,7 @@ final class PersistenceController {
         container.accountStatus { status, error in
             DispatchQueue.main.async {
                 if let error = error {
-                    print("RWRW: CloudKit account status check FAILED - \(error.localizedDescription)")
+                    print("CloudKit account status check FAILED - \(error.localizedDescription)")
                 } else {
                     let statusString = switch status {
                     case .available: "Available"
@@ -209,10 +209,10 @@ final class PersistenceController {
                     case .temporarilyUnavailable: "Temporarily Unavailable"
                     @unknown default: "Unknown"
                     }
-                    print("RWRW: CloudKit account status: \(statusString)")
+                    print("CloudKit account status: \(statusString)")
                     
                     if status != .available {
-                        print("RWRW: ⚠️ CloudKit not available - data will not sync")
+                        print("⚠️ CloudKit not available - data will not sync")
                     }
                 }
             }
@@ -227,7 +227,7 @@ final class PersistenceController {
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            print("RWRW: App became active - requesting CloudKit sync")
+            print("App became active - requesting CloudKit sync")
             self?.requestSyncIfNeeded()
         }
         
@@ -237,7 +237,7 @@ final class PersistenceController {
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            print("RWRW: App entering background - ensuring sync completion")
+            print("App entering background - ensuring sync completion")
             self?.requestSyncIfNeeded()
         }
     }
@@ -248,9 +248,9 @@ final class PersistenceController {
         if context.hasChanges {
             do {
                 try context.save()
-                print("RWRW: Proactive sync triggered")
+                print("Proactive sync triggered")
             } catch {
-                print("RWRW: Proactive sync failed - \(error.localizedDescription)")
+                print("Proactive sync failed - \(error.localizedDescription)")
             }
         }
         
@@ -260,7 +260,7 @@ final class PersistenceController {
     
     // MARK: - Initial CloudKit Import Check
     private func checkForInitialCloudKitImport() {
-        print("RWRW: Checking for initial CloudKit import (attempt \(importAttempts + 1)/\(maxImportAttempts))...")
+        print("Checking for initial CloudKit import (attempt \(importAttempts + 1)/\(maxImportAttempts))...")
         
         // First check CloudKit account status
         let cloudKitContainer = CKContainer(identifier: "iCloud.com.franchiz.speaklife")
@@ -276,7 +276,7 @@ final class PersistenceController {
                 @unknown default: "Unknown status"
                 }
                 
-                print("RWRW: CloudKit not available, status: \(status)")
+                print("CloudKit not available, status: \(status)")
                 NotificationCenter.default.post(name: NSNotification.Name("CloudKitImportFailed"), 
                                               object: nil, 
                                               userInfo: ["reason": statusString])
@@ -293,10 +293,10 @@ final class PersistenceController {
                     let journalCount = try context.count(for: journalRequest)
                     let affirmationCount = try context.count(for: affirmationRequest)
                     
-                    print("RWRW: Local data count - Journals: \(journalCount), Affirmations: \(affirmationCount)")
+                    print("Local data count - Journals: \(journalCount), Affirmations: \(affirmationCount)")
                     
                     if journalCount == 0 && affirmationCount == 0 {
-                        print("RWRW: No local data found - forcing CloudKit import...")
+                        print("No local data found - forcing CloudKit import...")
                         
                         self.importAttempts += 1
                         
@@ -313,7 +313,7 @@ final class PersistenceController {
                             self.forceCloudKitImport()
                         }
                     } else {
-                        print("RWRW: Local data exists - no import needed")
+                        print("Local data exists - no import needed")
                         self.importAttempts = 0 // Reset attempts on success
                         
                         // Notify UI of successful data presence
@@ -322,14 +322,14 @@ final class PersistenceController {
                         }
                     }
                 } catch {
-                    print("RWRW: Error checking local data count - \(error.localizedDescription)")
+                    print("Error checking local data count - \(error.localizedDescription)")
                 }
             }
         }
     }
     
     private func forceCloudKitImport() {
-        print("RWRW: Forcing CloudKit import...")
+        print("Forcing CloudKit import...")
         
         // Strategy 1: Refresh all objects in main context
         container.viewContext.refreshAllObjects()
@@ -357,7 +357,7 @@ final class PersistenceController {
                 let journals = try backgroundContext.fetch(journalRequest)
                 let affirmations = try backgroundContext.fetch(affirmationRequest)
                 
-                print("RWRW: Background fetch results - Journals: \(journals.count), Affirmations: \(affirmations.count)")
+                print("Background fetch results - Journals: \(journals.count), Affirmations: \(affirmations.count)")
                 
                 // If we found data in background context, ensure it's in main context
                 if journals.count > 0 || affirmations.count > 0 {
@@ -380,7 +380,7 @@ final class PersistenceController {
                 }
                 
             } catch {
-                print("RWRW: Error during forced import - \(error.localizedDescription)")
+                print("Error during forced import - \(error.localizedDescription)")
             }
         }
     }
@@ -399,14 +399,14 @@ final class PersistenceController {
         operation.resultsLimit = 1
         
         operation.recordFetchedBlock = { record in
-            print("RWRW: Found CloudKit record: \(record.recordID)")
+            print("Found CloudKit record: \(record.recordID)")
         }
         
         operation.queryCompletionBlock = { cursor, error in
             if let error = error {
-                print("RWRW: CloudKit query error: \(error.localizedDescription)")
+                print("CloudKit query error: \(error.localizedDescription)")
             } else {
-                print("RWRW: CloudKit query completed")
+                print("CloudKit query completed")
             }
         }
         
@@ -414,7 +414,7 @@ final class PersistenceController {
     }
     
     private func recheckAfterImport() {
-        print("RWRW: Rechecking data after forced import...")
+        print("Rechecking data after forced import...")
         
         let context = container.viewContext
         context.perform {
@@ -425,28 +425,28 @@ final class PersistenceController {
                 let journalCount = try context.count(for: journalRequest)
                 let affirmationCount = try context.count(for: affirmationRequest)
                 
-                print("RWRW: Data count after import attempt - Journals: \(journalCount), Affirmations: \(affirmationCount)")
+                print("Data count after import attempt - Journals: \(journalCount), Affirmations: \(affirmationCount)")
                 
                 if journalCount > 0 || affirmationCount > 0 {
-                    print("RWRW: ✅ CloudKit import successful!")
+                    print("✅ CloudKit import successful!")
                     
                     // Notify UI to refresh
                     DispatchQueue.main.async {
                         NotificationCenter.default.post(name: NSNotification.Name("CloudKitImportCompleted"), object: nil)
                     }
                 } else {
-                    print("RWRW: ⚠️ No data imported - attempt \(self.importAttempts)/\(self.maxImportAttempts)")
+                    print("⚠️ No data imported - attempt \(self.importAttempts)/\(self.maxImportAttempts)")
                     
                     // Retry with progressive delays
                     if self.importAttempts < self.maxImportAttempts {
                         let delay = self.importRetryDelays[min(self.importAttempts - 1, self.importRetryDelays.count - 1)]
-                        print("RWRW: Retrying import in \(delay) seconds...")
+                        print("Retrying import in \(delay) seconds...")
                         
                         DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
                             self.checkForInitialCloudKitImport()
                         }
                     } else {
-                        print("RWRW: Max import attempts reached. User may need to check iCloud settings.")
+                        print("Max import attempts reached. User may need to check iCloud settings.")
                         
                         // Notify UI of import failure
                         DispatchQueue.main.async {
@@ -457,14 +457,14 @@ final class PersistenceController {
                     }
                 }
             } catch {
-                print("RWRW: Error rechecking data - \(error.localizedDescription)")
+                print("Error rechecking data - \(error.localizedDescription)")
             }
         }
     }
     
     // MARK: - Manual Sync Request
     func requestImmediateSync() {
-        print("RWRW: Manual sync requested")
+        print("Manual sync requested")
         
         // Save any pending changes
         if container.viewContext.hasChanges {
@@ -480,7 +480,7 @@ final class PersistenceController {
     
     // MARK: - CloudKit Schema Initialization
     private func initializeCloudKitSchema() {
-        print("RWRW: Initializing CloudKit schema for production")
+        print("Initializing CloudKit schema for production")
         
         // This forces Core Data to initialize the CloudKit schema
         // by performing a simple operation
@@ -497,13 +497,13 @@ final class PersistenceController {
                 do {
                     _ = try backgroundContext.count(for: journalRequest)
                     _ = try backgroundContext.count(for: affirmationRequest)
-                    print("RWRW: CloudKit schema check completed")
+                    print("CloudKit schema check completed")
                 } catch {
-                    print("RWRW: CloudKit schema initialization error: \(error)")
+                    print("CloudKit schema initialization error: \(error)")
                 }
             }
         } catch {
-            print("RWRW: Failed to initialize CloudKit schema: \(error)")
+            print("Failed to initialize CloudKit schema: \(error)")
         }
     }
     

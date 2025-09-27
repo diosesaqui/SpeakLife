@@ -113,6 +113,19 @@ final class AudioPlayerViewModel: NSObject, ObservableObject {
         if isSameItem { 
             // If same item and not playing, start playing
             if !isPlaying {
+                if let audio = selectedItem {
+                    AnalyticsService.shared.trackAudioPlayback(
+                        audioId: audio.id,
+                        audioTitle: audio.title,
+                        action: .resumed,
+                        metadata: [
+                            "category": audio.tag ?? "unknown",
+                            "duration": audio.duration,
+                            "is_premium": audio.isPremium,
+                            "playback_position": currentTime
+                        ]
+                    )
+                }
                 player?.play()
                 isPlaying = true
             }
@@ -166,6 +179,20 @@ final class AudioPlayerViewModel: NSObject, ObservableObject {
         endObserver = NotificationCenter.default.addObserver(forName: .AVPlayerItemDidPlayToEndTime, object: player?.currentItem, queue: .main) { [weak self] _ in
             guard let self = self else { return }
 
+            if let audio = self.selectedItem {
+                AnalyticsService.shared.trackAudioPlayback(
+                    audioId: audio.id,
+                    audioTitle: audio.title,
+                    action: .completed,
+                    metadata: [
+                        "category": audio.tag ?? "unknown",
+                        "duration": self.duration,
+                        "repeat_enabled": self.onRepeat,
+                        "playback_speed": self.playbackSpeed
+                    ]
+                )
+            }
+            
             if self.onRepeat {
                 self.player?.seek(to: .zero)
                 self.player?.play()
@@ -186,6 +213,21 @@ final class AudioPlayerViewModel: NSObject, ObservableObject {
             player.play()
         }
         isPlaying = true
+        
+        if let audio = selectedItem {
+            AnalyticsService.shared.trackAudioPlayback(
+                audioId: audio.id,
+                audioTitle: audio.title,
+                action: .started,
+                metadata: [
+                    "category": audio.tag ?? "unknown",
+                    "duration": audio.duration,
+                    "is_premium": audio.isPremium,
+                    "playback_speed": playbackSpeed,
+                    "repeat_enabled": onRepeat
+                ]
+            )
+        }
 //        if let currentAudio = selectedItem {
 //            ListenerMetricsService.shared.trackListen(
 //                contentId: currentAudio.id,
@@ -211,9 +253,33 @@ final class AudioPlayerViewModel: NSObject, ObservableObject {
 
         
         if isPlaying {
+            if let audio = selectedItem {
+                AnalyticsService.shared.trackAudioPlayback(
+                    audioId: audio.id,
+                    audioTitle: audio.title,
+                    action: .paused,
+                    metadata: [
+                        "playback_position": currentTime,
+                        "playback_progress": duration > 0 ? currentTime / duration : 0,
+                        "category": audio.tag ?? "unknown"
+                    ]
+                )
+            }
             player.pause()
             AudioPlayerService.shared.playMusic()
         } else {
+            if let audio = selectedItem {
+                AnalyticsService.shared.trackAudioPlayback(
+                    audioId: audio.id,
+                    audioTitle: audio.title,
+                    action: .resumed,
+                    metadata: [
+                        "playback_position": currentTime,
+                        "playback_progress": duration > 0 ? currentTime / duration : 0,
+                        "category": audio.tag ?? "unknown"
+                    ]
+                )
+            }
             AudioPlayerService.shared.pauseMusic()
             player.play()
         }
@@ -225,6 +291,21 @@ final class AudioPlayerViewModel: NSObject, ObservableObject {
     func seek(to time: Double) {
         guard let player = player else { return }
         let targetTime = CMTime(seconds: time, preferredTimescale: 1)
+        
+        if let audio = selectedItem {
+            AnalyticsService.shared.trackAudioPlayback(
+                audioId: audio.id,
+                audioTitle: audio.title,
+                action: .seeked,
+                metadata: [
+                    "from_position": currentTime,
+                    "to_position": time,
+                    "seek_distance": abs(time - currentTime),
+                    "category": audio.tag ?? "unknown"
+                ]
+            )
+        }
+        
         player.seek(to: targetTime)
     }
 
@@ -242,13 +323,10 @@ final class AudioPlayerViewModel: NSObject, ObservableObject {
     }
 
     func resetPlayer() {
-        print("🟣 resetPlayer START - current isPlaying: \(isPlaying)")
         // Safely remove KVO observer
         if player?.currentItem != nil {
             do {
                 player?.currentItem?.removeObserver(self, forKeyPath: "status")
-            } catch {
-                // Observer wasn't added or already removed
             }
         }
         

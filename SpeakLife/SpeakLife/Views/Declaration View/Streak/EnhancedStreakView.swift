@@ -724,9 +724,10 @@ struct StreakShareButton: View {
         return resizedImage
     }
     
+    @discardableResult
     private func trySaveToPhotosForManualShare(image: UIImage) -> Bool {
         // Request photos permission first
-        let photos = PHPhotoLibrary.shared()
+        let _ = PHPhotoLibrary.shared()
         
         PHPhotoLibrary.requestAuthorization { status in
             DispatchQueue.main.async {

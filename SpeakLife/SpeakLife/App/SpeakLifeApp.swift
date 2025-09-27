@@ -54,7 +54,7 @@ struct SpeakLifeApp: App {
                 .onAppear {
                     NotificationHandler.shared.callback = { content in
                         DispatchQueue.main.async {
-                            if let value = content.userInfo["tab"] {
+                            if let _ = content.userInfo["tab"] {
                                 tabViewModel.goToAudio()
                             } else {
                                 tabViewModel.resetToHome()
@@ -65,9 +65,6 @@ struct SpeakLifeApp: App {
                     
                     // Sync widget data on app launch
                     WidgetDataBridge.shared.syncAllData()
-                    
-                    // Warm up listener metrics cache for better performance
-                  //  ListenerMetricsService.shared.warmUpCache()
                     
                     viewModel.requestPermission() { accepted in
                         if accepted {
@@ -119,11 +116,6 @@ struct SpeakLifeApp: App {
                     NotificationManager.shared.scheduleChecklistNotifications()
                 }
                 
-                //reset for updated versions
-//                if appState.notificationEnabled, appState.resetNotifications {
-//                    resetNotifications()
-//                    appState.resetNotifications.toggle()
-//                }
                
                 // update for next four days
                 if appState.lastNotificationSetDate < appState.lastNotificationSetDate.addingTimeInterval(fourDaysInSeconds), appState.notificationEnabled {

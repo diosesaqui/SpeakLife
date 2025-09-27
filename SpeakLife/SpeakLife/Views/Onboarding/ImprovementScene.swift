@@ -55,12 +55,7 @@ struct ImprovementScene: View {
                 // CTA Button
                 ShimmerButton(colors: [.blue], buttonTitle: "Get My Breakthrough Plan →", action: callBack)
                     .frame(width: size.width * 0.87, height: 50)
-//                    .shadow(color: Constants.DAMidBlue, radius: 8, x: 0, y: 10)
                     .disabled(viewModel.selectedExperiences.isEmpty)
-                    //.background(viewModel.selectedExperiences.isEmpty ? Constants.DAMidBlue.opacity(0.3) : Constants.DADarkBlue.opacity(0.6))
-//                    .foregroundColor(.white)
-//                    .cornerRadius(30)
-                   // .shadow(color: Constants.DAMidBlue, radius: 8, x: 0, y: 10)
 
                 Spacer()
                     .frame(height: proxy.size.height * 0.05) // ✅ Ensures bottom spacing
@@ -68,11 +63,11 @@ struct ImprovementScene: View {
             .frame(width: proxy.size.width, height: proxy.size.height) // ✅ Full screen constraint
             .background(
                 ZStack {
-                    Image(subscriptionStore.testGroup == 0 ? subscriptionStore.onboardingBGImage : onboardingBGImage2)
+                    Image(subscriptionStore.onboardingBGImage)
                         .resizable()
                         .scaledToFill()
                         .edgesIgnoringSafeArea(.all)
-                    Color.black.opacity(subscriptionStore.testGroup == 0 ? 0.4 : 0.2)
+                    Color.black.opacity(0.4)
                         .edgesIgnoringSafeArea(.all)
                 }
             )

@@ -174,17 +174,6 @@ struct PricingOptionViewV1: View {
             )
     }
     
-    private var yearlySelectedGradient: LinearGradient {
-        LinearGradient(
-            gradient: Gradient(colors: [
-                Color(red: 1.0, green: 0.88, blue: 0.2),
-                Color(red: 1.0, green: 0.8, blue: 0.0),
-                Color(red: 0.9, green: 0.7, blue: 0.0)
-            ]),
-            startPoint: .topLeading,
-            endPoint: .bottomTrailing
-        )
-    }
     
     private var weeklySelectedGradient: LinearGradient {
         LinearGradient(
@@ -445,11 +434,7 @@ struct OptimizedSubscriptionViewV1: View {
         VStack(spacing: 12) {
             appIconSection
             headlineSection
-//            if subscriptionStore.showSubscriptionFirst {
-//                valuePropsSupportSection
-//            } else {
-                valuePropsSection
-         //   }
+            valuePropsSection
         }
     }
     
@@ -617,15 +602,7 @@ struct OptimizedSubscriptionViewV1: View {
     private var floatingCTASection: some View {
         VStack(spacing: 0) {
             Constants.SLBlue.opacity(0.95)
-//            LinearGradient(
-//                gradient: Gradient(colors: [
-//                    Color.clear,
-//                    Color(red: 0.2, green: 0.1, blue: 0.3).opacity(0.95)
-//                ]),
-//                startPoint: .top,
-//                endPoint: .bottom
-//            )
-            .frame(height: 20)
+                .frame(height: 20)
             
             VStack(spacing: 16) {
                 FloatingCTAButtonV1(
@@ -639,15 +616,7 @@ struct OptimizedSubscriptionViewV1: View {
             }
             .padding(.horizontal, 20)
             .padding(.vertical, 16)
-            .background(
-                Constants.SLBlue.opacity(0.95)
-//                Color(red: 0.2, green: 0.1, blue: 0.3).opacity(0.95)
-//                    .overlay(
-//                        Rectangle()
-//                            .fill(Color.white.opacity(0.05))
-//                            .blur(radius: 1)
-//                    )
-           )
+            .background(Constants.SLBlue.opacity(0.95))
         }
         .ignoresSafeArea(edges: .bottom)
     }

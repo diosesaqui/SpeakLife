@@ -46,7 +46,6 @@ struct AudioPlayerView: View {
                         .clipped()
                         .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
                         .shadow(radius: 12)
-                        //.scaleEffect(viewModel.isPlaying ? 1.0 : 0.75)
                     
                     Spacer()
                         .frame(height: proxy.size.height * 0.02)
@@ -140,26 +139,11 @@ struct AudioPlayerView: View {
                                     .font(.title)
                                     .foregroundColor(.white)
                             }
-//                            Button(action: {
-//                                viewModel.repeatTrack()
-//                            }) {
-//                                Image(systemName: "repeat")
-//                                    .font(.title)
-//                                    .foregroundColor(viewModel.onRepeat ? Constants.DAMidBlue : .white.opacity(0.8))
-//                            }
                         }
                         .padding(.top)
-                        
-                      
-                      //  .padding(.top, 10)
-                       // Spacer(minLength: 40)
                     }
                 }
                 .padding()
-                //                .padding(.horizontal)
-                //                .padding(.bottom, 30)
-                //  }
-                
             }
         }
         .onAppear {

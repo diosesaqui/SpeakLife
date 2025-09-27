@@ -211,46 +211,29 @@ struct StreakStats: Codable {
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: date)
         
-        print("🔥 STREAK DEBUG: Updating streak for date: \(today)")
-        print("🔥 STREAK DEBUG: Current streak before update: \(currentStreak)")
-        print("🔥 STREAK DEBUG: Last completed date: \(lastCompletedDate?.description ?? "None")")
-        
         if let lastDate = lastCompletedDate {
             let lastDateStart = calendar.startOfDay(for: lastDate)
             let daysDifference = calendar.dateComponents([.day], from: lastDateStart, to: today).day ?? 0
-            print("🔥 STREAK DEBUG: Days difference: \(daysDifference)")
-            print("🔥 STREAK DEBUG: Last date (start of day): \(lastDateStart)")
-            print("🔥 STREAK DEBUG: Today (start of day): \(today)")
             
             if daysDifference == 1 {
-                // Consecutive day
+                // Consecutive day - increment streak
                 currentStreak += 1
-                print("🔥 STREAK DEBUG: Consecutive day! New streak: \(currentStreak)")
             } else if daysDifference > 1 {
-                // Streak broken
+                // Streak broken - reset to 1
                 currentStreak = 1
-                print("🔥 STREAK DEBUG: Streak broken! Reset to: \(currentStreak)")
             } else if daysDifference == 0 {
-                // Same day - don't increment streak or totals (already counted)
-                print("🔥 STREAK DEBUG: Same day, no updates. Streak remains: \(currentStreak)")
-                // Early return to avoid double-counting total days
+                // Same day - already counted, don't update
                 return
-            } else {
-                // daysDifference < 0 - completion in the past relative to last completion
-                // This shouldn't normally happen, but handle it gracefully
-                print("🔥 STREAK DEBUG: Date is before last completion. Streak remains: \(currentStreak)")
             }
+            // daysDifference < 0 means completion is before last date - ignore
         } else {
             // First completion
             currentStreak = 1
-            print("🔥 STREAK DEBUG: First completion! Streak set to: \(currentStreak)")
         }
         
         longestStreak = max(longestStreak, currentStreak)
         totalDaysCompleted += 1
         lastCompletedDate = today
-        
-        print("🔥 STREAK DEBUG: Final streak: \(currentStreak), longest: \(longestStreak), total days: \(totalDaysCompleted)")
     }
     
     mutating func checkStreakValidity() {
@@ -348,18 +331,18 @@ struct TaskLibrary {
     ]
     
     // MARK: - Personalized Task Generation
+    /// Personalizes a task based on user's top selected categories
+    /// - Parameters:
+    ///   - task: The base task to personalize
+    ///   - userCategories: Array of user's selected category strings
+    /// - Returns: Personalized task with category-specific titles and descriptions
     static func personalizeTask(_ task: DailyTask, for userCategories: [String]) -> DailyTask {
-        // Get top 2 user categories
         let topCategories = Array(userCategories.prefix(2))
         
         guard !topCategories.isEmpty else {
-            print("📋 TASK PERSONALIZATION: No categories provided for task \(task.id)")
             return task
         }
         
-        print("📋 TASK PERSONALIZATION: Personalizing task \(task.id) with categories: \(topCategories)")
-        
-        // Personalize based on task type and user's top categories
         var personalizedTask = task
         
         switch task.id {

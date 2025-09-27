@@ -41,13 +41,13 @@ struct PrayerView: View {
                     .navigationBarTitle("Powerful Prayers")
                     .foregroundColor(.white)
                 }
-                .onAppear(perform: fetchPrayers)
+               // .onAppear(perform: fetchPrayers)
                 .sheet(isPresented: $isPresentingManageSubscriptionView) {
                     PremiumView()
                 }
-                .alert("Failed to load prayers", isPresented: $prayerViewModel.hasError) {
-                    Button("OK", role: .cancel) {}
-                }
+//                .alert("Failed to load prayers", isPresented: $prayerViewModel.hasError) {
+//                    Button("OK", role: .cancel) {}
+//                }
             }
             .onReceive(NotificationCenter.default.publisher(for: UIApplication.willResignActiveNotification)) { _ in
                 isPresentingManageSubscriptionView = false
@@ -99,9 +99,9 @@ struct PrayerView: View {
         }
     }
     
-    private func fetchPrayers() {
-        Task {
-            await prayerViewModel.fetchPrayers()
-        }
-    }
+//    private func fetchPrayers() {
+//        Task {
+//            await prayerViewModel.()
+//        }
+//    }
 }

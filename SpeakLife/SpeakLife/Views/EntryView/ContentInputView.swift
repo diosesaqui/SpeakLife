@@ -21,7 +21,6 @@ struct ContentInputView: View {
             // Top section with prompts
             VStack(spacing: 12) {
                 contextualPromptSection
-               // liveTranscriptionSection
                 voiceCorrectionsSection
             }
             .padding(.bottom, 20)
@@ -89,18 +88,6 @@ struct ContentInputView: View {
     }
     
     @ViewBuilder
-    private var liveTranscriptionSection: some View {
-        if voiceManager.isListening && !voiceManager.transcribedText.isEmpty {
-            LiveTranscriptionView(
-                transcribedText: voiceManager.transcribedText,
-                voiceState: voiceManager.voiceInputState
-            )
-            .padding(.horizontal, 20)
-            .transition(.move(edge: .bottom).combined(with: .opacity))
-        }
-    }
-    
-    @ViewBuilder
     private var voiceCorrectionsSection: some View {
         if voiceManager.hasContent || voiceManager.transcriptionConfidence > 0 {
             VoiceCorrectionsView(voiceManager: voiceManager, text: $text)
@@ -117,10 +104,6 @@ struct ContentInputView: View {
         .padding(.horizontal, 20)
     }
     
-    private var keyboardSpacer: some View {
-        Color.clear.frame(height: 60)
-    }
-    
     // MARK: - Private Methods
     private func getPlaceholder() -> String {
         switch contentType {
@@ -135,12 +118,6 @@ struct ContentInputView: View {
         withAnimation(.easeInOut(duration: 0.8)) {
             animatePrompt = true
         }
-        
-//        DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
-//            withAnimation(.easeInOut(duration: 0.6)) {
-//                showVoiceHint = true
-//            }
-//        }
     }
     
     private func hideKeyboard() {

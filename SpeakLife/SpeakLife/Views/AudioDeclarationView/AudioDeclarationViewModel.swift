@@ -72,26 +72,9 @@ final class AudioDeclarationViewModel: ObservableObject {
             let data = try Data(contentsOf: fileURL)
             let decoder = JSONDecoder()
             let cachedAudios = try decoder.decode([AudioDeclaration].self, from: data)
-            
             self.allAudioFiles = cachedAudios
-            
-            // Populate the filtered arrays
-            audioDeclarations = allAudioFiles.filter { $0.tag == "declarations" }
-            bedtimeStories = allAudioFiles.filter { $0.tag == "bedtimeStories" }
-            gospelStories = allAudioFiles.filter { $0.tag == "gospel" }
-            meditations = allAudioFiles.filter { $0.tag == "meditation" }
-            speaklife = allAudioFiles.filter { $0.tag == "speaklife" }
-            godsHeart = allAudioFiles.filter { $0.tag == "godsHeart" }
-            growWithJesus = allAudioFiles.filter { $0.tag == "growWithJesus" }
-            divineHealth = allAudioFiles.filter { $0.tag == "divineHealth" }
-            psalm91 = allAudioFiles.filter { $0.tag == "psalm91" }
-            imagination = allAudioFiles.filter { $0.tag == "imagination" }
-            magnify = allAudioFiles.filter { $0.tag == "magnify" }
-            praise = allAudioFiles.filter { $0.tag == "praise" }
-            
-        } catch {
-            // Failed to load cached data, will fetch from service
-        }
+            populateLegacyFilters()
+        } catch {}
     }
     
     private func saveAudioDataToCache() {
@@ -171,30 +154,10 @@ final class AudioDeclarationViewModel: ObservableObject {
                 guard let self = self else { return }
                 self.allAudioFiles = welcome?.audios ?? audios!
                 
-                // Legacy system - populate individual arrays
-                audioDeclarations = self.allAudioFiles.filter { $0.tag == "declarations" }
-                bedtimeStories = self.allAudioFiles.filter { $0.tag == "bedtimeStories" }
-                gospelStories = self.allAudioFiles.filter { $0.tag == "gospel" }
-                meditations = self.allAudioFiles.filter { $0.tag == "meditation" }
-                speaklife = self.allAudioFiles.filter { $0.tag == "speaklife" }
-                godsHeart = self.allAudioFiles.filter { $0.tag == "godsHeart" }
-                growWithJesus = self.allAudioFiles.filter { $0.tag == "growWithJesus" }
-                divineHealth = self.allAudioFiles.filter { $0.tag == "divineHealth" }
-                psalm91 = self.allAudioFiles.filter { $0.tag == "psalm91" }
-                imagination = self.allAudioFiles.filter { $0.tag == "imagination" }
-                magnify = self.allAudioFiles.filter { $0.tag == "magnify" }
-                praise = self.allAudioFiles.filter { $0.tag == "praise" }
-                
-                // New dynamic system
+                self.populateLegacyFilters()
                 self.setupDynamicFilters(welcome)
-                
-                // Legacy filter setup
-                setFilters(welcome)
-                
-                // Save audio data to cache
+                self.setFilters(welcome)
                 self.saveAudioDataToCache()
-                
-                // Update the cached version after successful fetch
                 self.lastCachedAudioVersion = version
             }
         }
@@ -248,6 +211,21 @@ final class AudioDeclarationViewModel: ObservableObject {
                 }
             }
         }
+    }
+    
+    private func populateLegacyFilters() {
+        audioDeclarations = allAudioFiles.filter { $0.tag == "declarations" }
+        bedtimeStories = allAudioFiles.filter { $0.tag == "bedtimeStories" }
+        gospelStories = allAudioFiles.filter { $0.tag == "gospel" }
+        meditations = allAudioFiles.filter { $0.tag == "meditation" }
+        speaklife = allAudioFiles.filter { $0.tag == "speaklife" }
+        godsHeart = allAudioFiles.filter { $0.tag == "godsHeart" }
+        growWithJesus = allAudioFiles.filter { $0.tag == "growWithJesus" }
+        divineHealth = allAudioFiles.filter { $0.tag == "divineHealth" }
+        psalm91 = allAudioFiles.filter { $0.tag == "psalm91" }
+        imagination = allAudioFiles.filter { $0.tag == "imagination" }
+        magnify = allAudioFiles.filter { $0.tag == "magnify" }
+        praise = allAudioFiles.filter { $0.tag == "praise" }
     }
                     
     private func setFilters(_ welcome: WelcomeAudio?) {

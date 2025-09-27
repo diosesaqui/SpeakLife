@@ -132,15 +132,7 @@ struct IntroTipScene: View {
             Spacer()
             ShimmerButton(colors: [.blue], buttonTitle: ctaText, action: buttonTouched)
             .frame(width: size.width * 0.87 ,height: 50)
-//            .shadow(color: .white.opacity(animateButton ? 0.3 : 0.1), radius: animateButton ? 12 : 6)
-//            .scaleEffect(animateButton ? 1.02 : 1.0)
-//            .animation(.easeInOut(duration: 1).repeatForever(autoreverses: true), value: animateButton)
-//            //.shadow(color: Constants.DAMidBlue, radius: 8, x: 0, y: 10)
-//            
-//            //.foregroundColor(.white)
-//            .cornerRadius(30)
-//            //.shadow(color: Constants.DAMidBlue.opacity(0.5), radius: 8, x: 0, y: 10)
-//            .scaleEffect(buttonTapped ? 0.95 : 1.0)
+
 
             
             Spacer()
@@ -149,12 +141,12 @@ struct IntroTipScene: View {
         .frame(width: size.width, height: size.height)
         .background(
             ZStack {
-                Image(subscriptionStore.testGroup == 0 ? subscriptionStore.onboardingBGImage : onboardingBGImage2)
+                Image(subscriptionStore.onboardingBGImage)
                     .resizable()
                     .aspectRatio(contentMode: .fill)
                     .edgesIgnoringSafeArea(.all)
                     .brightness(0.05)
-                Color.black.opacity(subscriptionStore.testGroup == 0 ? 0.4 : 0.2)
+                Color.black.opacity(0.4)
                     .edgesIgnoringSafeArea(.all)
             }
         )
@@ -264,15 +256,14 @@ struct IntroScene: View {
         .frame(width: size.width, height: size.height)
         .background(
             ZStack {
-                Image(subscriptionStore.testGroup == 0 ? subscriptionStore.onboardingBGImage : onboardingBGImage2)
+                Image(subscriptionStore.onboardingBGImage)
                     .resizable()
                     .aspectRatio(contentMode: .fill)
                     .edgesIgnoringSafeArea(.all)
-                Color.black.opacity(subscriptionStore.testGroup == 0 ? 0.1 : 0.2)
+                Color.black.opacity(0.1)
                     .edgesIgnoringSafeArea(.all)
             }
         )
-        
     }
 }
 
@@ -399,11 +390,11 @@ struct TestimonialScreen: View {
             .frame(width: size.width, height: size.height)
             .background(
                 ZStack {
-                    Image(subscriptionStore.testGroup == 0 ? subscriptionStore.onboardingBGImage : onboardingBGImage2)
+                    Image(subscriptionStore.onboardingBGImage)
                         .resizable()
                         .aspectRatio(contentMode: .fill)
                         .edgesIgnoringSafeArea(.all)
-                    Color.black.opacity(subscriptionStore.testGroup == 0 ? 0.1 : 0.2)
+                    Color.black.opacity(0.1)
                         .edgesIgnoringSafeArea(.all)
                 }
             )
@@ -482,11 +473,11 @@ struct FeatureShowcaseScreen: View {
         .frame(width: size.width, height: size.height)
         .background(
             ZStack {
-                Image(subscriptionStore.testGroup == 0 ? subscriptionStore.onboardingBGImage : onboardingBGImage2)
+                Image(subscriptionStore.onboardingBGImage)
                     .resizable()
                     .aspectRatio(contentMode: .fill)
                     .edgesIgnoringSafeArea(.all)
-                Color.black.opacity(subscriptionStore.testGroup == 0 ? 0.1 : 0.2)
+                Color.black.opacity(0.1)
                     .edgesIgnoringSafeArea(.all)
             }
                 )

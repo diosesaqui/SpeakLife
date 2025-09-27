@@ -27,22 +27,20 @@ final class EnhancedStreakViewModel: ObservableObject {
     private let hasAutoCompletedFirstTaskKey = "hasAutoCompletedFirstTask"
     
     // MARK: - User Preferences
+    /// Retrieves user's top 2 selected categories from UserDefaults
+    /// - Returns: Array of category strings (max 2) for task personalization
     private func getUserTopCategories() -> [String] {
         // Try to get categories from UserDefaults (stored by DeclarationViewModel)
         if let categoriesData = userDefaults.data(forKey: "userSelectedCategories"),
            let categories = try? JSONDecoder().decode([String].self, from: categoriesData) {
-            let topTwo = Array(categories.prefix(2))
-            print("📋 TASK PERSONALIZATION: Found user categories: \(topTwo)")
-            return topTwo // Top 2 categories
+            return Array(categories.prefix(2))
         }
         
-        // Fallback: check if there's a selected category stored
+        // Fallback: use single selected category if available
         if let selectedCategory = userDefaults.string(forKey: "selectedCategory") {
-            print("📋 TASK PERSONALIZATION: Found fallback category: \(selectedCategory)")
             return [selectedCategory]
         }
         
-        print("📋 TASK PERSONALIZATION: No user categories found, using generic tasks")
         return []
     }
     
@@ -71,21 +69,19 @@ final class EnhancedStreakViewModel: ObservableObject {
     }
     
     // MARK: - Task Personalization
+    /// Refreshes daily tasks with user category personalization while preserving completion status
     func refreshTasksWithUserCategories() {
         let userCategories = getUserTopCategories()
-        guard !userCategories.isEmpty else {
-            print("📋 TASK PERSONALIZATION: Skipping refresh - no categories")
-            return
-        }
+        guard !userCategories.isEmpty else { return }
         
-        print("📋 TASK PERSONALIZATION: Refreshing tasks with categories: \(userCategories)")
-        
-        // Re-personalize all current tasks
+        // Re-personalize all current tasks based on streak level
         let currentStreak = streakStats.currentStreak > 0 ? streakStats.currentStreak : 1
         let freshTasks = TaskLibrary.getCoreTasksForStreak(currentStreak, userCategories: userCategories)
         
-        // Preserve completion status
-        let existingCompletions = Dictionary(uniqueKeysWithValues: todayChecklist.tasks.map { ($0.id, ($0.isCompleted, $0.completedAt)) })
+        // Preserve completion status from existing tasks
+        let existingCompletions = Dictionary(uniqueKeysWithValues: todayChecklist.tasks.map { 
+            ($0.id, ($0.isCompleted, $0.completedAt)) 
+        })
         
         todayChecklist.tasks = freshTasks.map { task in
             var updatedTask = task
@@ -97,7 +93,6 @@ final class EnhancedStreakViewModel: ObservableObject {
         }
         
         saveData()
-        print("📋 TASK PERSONALIZATION: Tasks refreshed and saved")
     }
     
     deinit {
@@ -309,10 +304,6 @@ final class EnhancedStreakViewModel: ObservableObject {
         let currentStreakNumber = streakStats.currentStreak
         let isNewRecord = wasNewRecord && currentStreakNumber > streakStats.longestStreak
         
-        print("🔥 CELEBRATION DEBUG: Creating celebration with streak number: \(currentStreakNumber)")
-        print("🔥 CELEBRATION DEBUG: Is new record: \(isNewRecord)")
-        print("🔥 CELEBRATION DEBUG: Previous streak was: \(previousStreak)")
-        
         // Create celebration data
         celebrationData = CompletionCelebration(
             streakNumber: currentStreakNumber,
@@ -431,7 +422,6 @@ final class EnhancedStreakViewModel: ObservableObject {
         // Instagram Stories optimal dimensions (exactly 9:16 ratio)
         let size = CGSize(width: 1080, height: 1920)
         
-        print("🎨 Starting share image generation: \(size)")
         
         UIGraphicsBeginImageContextWithOptions(size, false, 0)
         defer { 
@@ -439,7 +429,6 @@ final class EnhancedStreakViewModel: ObservableObject {
         }
         
         guard let context = UIGraphicsGetCurrentContext() else { 
-            print("❌ Failed to get graphics context")
             return nil 
         }
         
@@ -514,9 +503,7 @@ final class EnhancedStreakViewModel: ObservableObject {
         let finalImage = UIGraphicsGetImageFromCurrentImageContext()
         
         if let image = finalImage {
-            print("✅ Share image generated successfully: \(image.size)")
         } else {
-            print("❌ Failed to generate share image")
         }
         
         return finalImage
@@ -749,11 +736,6 @@ final class EnhancedStreakViewModel: ObservableObject {
         
         // Powerful motivational message with premium styling
         let message = getMotivationalMessage()
-        let messageAttributes: [NSAttributedString.Key: Any] = [
-            .font: UIFont.systemFont(ofSize: 26, weight: .semibold),
-            .foregroundColor: textColor,
-            .kern: 0.8  // Subtle letter spacing for readability
-        ]
         
         // Enhanced multi-line text handling with premium spacing
         let maxWidth = size.width * 0.88  // Slightly wider for better use of space
@@ -793,10 +775,8 @@ final class EnhancedStreakViewModel: ObservableObject {
         for imageName in logoImageNames {
             if let image = UIImage(named: imageName) {
                 foundImage = image
-                print("✅ Found logo image '\(imageName)' with size: \(image.size)")
                 break
             } else {
-                print("❌ Could not find logo image: \(imageName)")
             }
         }
         
@@ -822,14 +802,12 @@ final class EnhancedStreakViewModel: ObservableObject {
             context.addEllipse(in: iconRect)
             context.clip()
             
-            print("✅ Drawing app icon in circular mask at rect: \(iconRect)")
             
             // Use UIImage.draw() only - it handles orientation correctly
             // CGImage can cause upside-down issues, so avoid it
             appIcon.draw(in: iconRect)
             
             context.restoreGState()
-            print("✅ Circular masked icon drawing completed")
             
         } else {
             // Enhanced fallback text logo with matching size
@@ -859,7 +837,6 @@ final class EnhancedStreakViewModel: ObservableObject {
                 height: textSize.height
             )
             logoText.draw(in: textRect, withAttributes: logoAttributes)
-            print("✅ Fallback 'SL' text logo drawn")
         }
         
         // Premium call-to-action with dramatic styling
@@ -892,7 +869,6 @@ final class EnhancedStreakViewModel: ObservableObject {
     }
     
     private func drawPremiumLogoBackground(in context: CGContext, rect: CGRect) {
-        print("✅ Drawing ultra-premium logo background at rect: \(rect)")
         
         // Draw MASSIVE outer glow for cinematic effect
         context.setShadow(offset: CGSize.zero, blur: 50, color: UIColor.white.withAlphaComponent(0.6).cgColor)
@@ -929,7 +905,6 @@ final class EnhancedStreakViewModel: ObservableObject {
         context.setLineWidth(1)
         context.strokeEllipse(in: rect.insetBy(dx: 5, dy: 5))
         
-        print("✅ Ultra-premium background drawn successfully")
     }
     
     // MARK: - Premium Helper Methods
@@ -1072,7 +1047,7 @@ final class EnhancedStreakViewModel: ObservableObject {
             (width: 380, height: 440, colors: [UIColor.white, UIColor.systemPink, UIColor.systemPurple], alpha: 0.2)
         ]
         
-        for (index, config) in flameConfigs.enumerated() {
+        for (_, config) in flameConfigs.enumerated() {
             let gradient = CGGradient(colorsSpace: CGColorSpaceCreateDeviceRGB(),
                                     colors: config.colors.map { $0.withAlphaComponent(config.alpha).cgColor } as CFArray,
                                     locations: [0.0, 0.5, 1.0])!

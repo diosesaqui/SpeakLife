@@ -87,7 +87,7 @@ final class LocalAPIClient: APIService {
         
         guard let data = try? Data(contentsOf: fileURL),
               let declarations = try? JSONDecoder().decode([AudioDeclaration].self, from: data) else {
-            print("failed to load audio RWRW")
+            print("Failed to load audio")
             completion([], APIError.failedRequest)
             return
         }
@@ -168,11 +168,11 @@ final class LocalAPIClient: APIService {
         } else {
             guard
                 let url = Bundle.main.url(forResource: "declarationsv7", withExtension: "json") else {
-                print("cant find file rwrw")
+                print("Cannot find declarations file")
                 return
             }
                 guard let data = try? Data(contentsOf: url) else {
-                    print("cant make data rwrw")
+                    print("Cannot create data from file")
                 completion(nil)
                 return
             }
@@ -197,7 +197,6 @@ final class LocalAPIClient: APIService {
         }
 
         if shouldFetchFromRemote {
-            print("Fetching from remote...")
             fetchDeclarationData(tryLocal: false) { [weak self] data in
                 self?.lastRemoteFetchDate = Date()
                 if let data = data {
@@ -224,7 +223,6 @@ final class LocalAPIClient: APIService {
                 if let declarations = declarations, !declarations.isEmpty {
                     completion(declarations, nil, false)
                 } else {
-                    print("Failed to decode any declarations from local data")
                     completion([], APIError.failedDecode, false)
                 }
             } else {
@@ -241,7 +239,6 @@ final class LocalAPIClient: APIService {
             return Array(declarations)
         } catch {
             // If that fails, try partial decoding
-            print("Standard decoding failed, attempting partial decoding: \(error)")
             
             do {
                 // Parse JSON as dictionary to extract individual declarations
@@ -263,44 +260,21 @@ final class LocalAPIClient: APIService {
                         failedCount += 1
                         // Log which declaration failed and why
                         let category = declarationDict["category"] as? String ?? "unknown"
-                        print("Failed to decode declaration at index \(index) with category '\(category)': \(error)")
                     }
                 }
                 
-                print("Successfully decoded \(successfulDeclarations.count) declarations, failed \(failedCount)")
                 
                 // Return unique declarations
                 let uniqueDeclarations = Set(successfulDeclarations)
                 return Array(uniqueDeclarations)
                 
             } catch {
-                print("Partial decoding also failed: \(error)")
                 return nil
             }
         }
     }
-//    func downloadUpdates(completion: @escaping((Bool, Error?) -> Void))  {
-//        let storage = Storage.storage()
-//        let jsonRef = storage.reference(withPath: "updates.json")
-//
-//        // Download the file into memory with a maximum allowed size of 1MB (1 * 1024 * 1024 bytes)
-//        jsonRef.getData(maxSize: 1 * 1024 * 1024) { [weak self] data, error in
-//            if let error = error {
-//                completion(false, error)
-//                print("Error downloading JSON file: \(error)")
-//            } else if let jsonData = data {
-//                guard let self = self else { completion(false, nil)
-//                    return
-//                }
-//                let version = try? JSONDecoder().decode(Updates.self, from: jsonData)
-//                self.remoteVersion = version?.currentDeclarationVersion ?? 0
-//                completion(self.remoteVersion > self.localVersion, nil)
-//                print("JSON download successful, data length: \(jsonData.count)")
-//            }
-//        }
-//    }
+    
     func audio(version: Int, completion: @escaping(WelcomeAudio?, [AudioDeclaration]?) -> Void) {
-        print(version, "rwrw")
         if audioLocalVersion < version {
             downloadAudioDeclarations() { data, error in
                 if let _ = error {
@@ -316,7 +290,7 @@ final class LocalAPIClient: APIService {
                         completion(welcome, nil)
                         return
                     } catch {
-                        print(error, error.localizedDescription, "RWRW")
+                        print("Audio decode error: \(error.localizedDescription)")
                         completion(nil, speaklifeFiles)
                     }
                 }
@@ -328,7 +302,6 @@ final class LocalAPIClient: APIService {
                 }
                     
                     if !audios.isEmpty {
-                        print("this got hit RWRW")
                         completion(nil, audios)
                     }
                 }
@@ -347,7 +320,6 @@ final class LocalAPIClient: APIService {
             } else if let jsonData = data {
                 //self?.storeFetchDate()
                 completion(jsonData, nil)
-                print("JSON download successful, data length: \(jsonData.count) decl rwrw")
             }
         }
     }
@@ -364,7 +336,6 @@ final class LocalAPIClient: APIService {
             } else if let jsonData = data {
                 //self?.storeFetchDate()
                 completion(jsonData, nil)
-                print("JSON download successful, data length: \(jsonData.count) audio rwrw")
             }
         }
     }

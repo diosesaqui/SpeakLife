@@ -21,7 +21,11 @@ struct MusicResources {
 }
 
 class TabViewModel: ObservableObject {
-    @Published var selectedTab: Int = 0
+    @Published var selectedTab: Int = 0 {
+        didSet {
+            trackTabNavigation(from: oldValue, to: selectedTab)
+        }
+    }
 
     func goToAudio() {
         selectedTab = 2
@@ -29,6 +33,31 @@ class TabViewModel: ObservableObject {
 
     func resetToHome() {
         selectedTab = 0
+    }
+    
+    private func trackTabNavigation(from previousTab: Int, to newTab: Int) {
+        let tabNames = [
+            0: "declarations",
+            1: "devotionals",
+            2: "audio",
+            3: "create_your_own",
+            4: "profile"
+        ]
+        
+        guard let fromName = tabNames[previousTab],
+              let toName = tabNames[newTab],
+              previousTab != newTab else { return }
+        
+        AnalyticsService.shared.trackNavigation(
+            from: fromName,
+            to: toName,
+            method: .tab
+        )
+        
+        Event.trackScreen("\(toName)_tab", metadata: [
+            "previous_tab": fromName,
+            "tab_index": newTab
+        ])
     }
 }
 
@@ -90,13 +119,9 @@ struct HomeView: View {
                                     }
                                 }
                             }
-                            .sheet(isPresented: $appState.needEmail, content: {
-                                //GeometryReader { proxy in
-                                    EmailCaptureView()
-                                //        .frame(height:  UIScreen.main.bounds.height * 0.96)
-                             //   }
-                            
-                            })
+                            .sheet(isPresented: $appState.needEmail) {
+                                EmailCaptureView()
+                            }
                             .sheet(isPresented: $showSubscription, content: {
                                 GeometryReader { proxy in
                                     OptimizedSubscriptionView {
@@ -127,7 +152,6 @@ struct HomeView: View {
                 declarationView
                 devotionalView
                 audioView
-              //  BootcampMainView()
                 createYourOwnView
                 profileView
                     
