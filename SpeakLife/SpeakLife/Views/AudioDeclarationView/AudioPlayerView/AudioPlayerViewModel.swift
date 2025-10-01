@@ -132,20 +132,21 @@ final class AudioPlayerViewModel: NSObject, ObservableObject {
             return 
         }
         resetPlayer()
+        
+        // Stop background music first to avoid conflicts
+        AudioPlayerService.shared.stopMusic()
 
         // Improved audio session setup with error handling for background playback
         do {
             // Configure for background audio playback
             let audioSession = AVAudioSession.sharedInstance()
-            #if targetEnvironment(simulator)
-            try audioSession.setCategory(.playback, mode: .default, options: [.mixWithOthers, .allowAirPlay])
-            #else
+            // Don't use mixWithOthers for content audio - we want lock screen controls
+            // This allows the app to show on lock screen and Dynamic Island
             try audioSession.setCategory(.playback, mode: .default, options: [.allowAirPlay])
-            #endif
-            try audioSession.setActive(true)
-            // Audio session configured successfully
+            try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
+            print("✅ Audio session configured for lock screen controls")
         } catch {
-            // Failed to configure audio session
+            print("❌ Failed to configure audio session: \(error)")
         }
 
         // Verify file exists at URL (important for simulator)
@@ -239,7 +240,7 @@ final class AudioPlayerViewModel: NSObject, ObservableObject {
         
         // Track listen event for metrics
       
-        AudioPlayerService.shared.pauseMusic()
+        // Background music already stopped earlier in setup process
         updateNowPlayingInfo()
 
         

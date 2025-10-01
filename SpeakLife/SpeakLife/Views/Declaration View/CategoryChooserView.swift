@@ -126,6 +126,11 @@ struct CategoryChooserView: View {
                             .background(BlurView(style: .systemUltraThinMaterialDark))
                             .cornerRadius(8)
                         
+                        // 🚀 AI Personalized Feed Section
+                        if subscriptionStore.isAIEnabled {
+                            PersonalizedFeedSection()
+                        }
+                        
                         generalList(geometry: geometry)
                         categoryList(geometry: geometry)
                         bibleBookList(geometry: geometry)

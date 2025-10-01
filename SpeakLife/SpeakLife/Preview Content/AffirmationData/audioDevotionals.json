@@ -15,7 +15,7 @@
         {
             "id": "declarations",
             "displayName": "Mountain-Moving Prayers",
-            "order": 2
+            "order": 4
         },
         {
             "id": "godsHeart",
@@ -26,7 +26,7 @@
         {
             "id": "growWithJesus",
             "displayName": "Grow With Jesus",
-            "order": 4
+            "order": 2
         },
         {
             "id": "psalm91",
@@ -470,6 +470,28 @@
             "imageUrl": "godsHeart",
             "isPremium": true,
             "tag": "godsHeart"
+        },
+        {
+            "id": "speaklife-s3ep6.mp3",
+            "title": "Close Every Door",
+            "subtitle": "S3 Episode 6",
+            "duration": "3m",
+            "imageUrl": "devotional",
+            "isPremium": true,
+            "tag": "speaklife",
+            "season": 3,
+            "episode": 6
+        },
+        {
+            "id": "speaklife-s3ep5.mp3",
+            "title": "Bold as a Lion",
+            "subtitle": "S3 Episode 5",
+            "duration": "3m",
+            "imageUrl": "devotional",
+            "isPremium": true,
+            "tag": "speaklife",
+            "season": 3,
+            "episode": 5
         },
         {
             "id": "speaklife-s3ep4.mp3",

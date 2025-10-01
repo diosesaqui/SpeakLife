@@ -12,7 +12,7 @@ extension AudioDeclarationViewModel {
     
     var speakLifeSections: [AudioSectionModel] {
         // Check if it's speaklife filter (case-insensitive)
-        let isSpeakLifeFilter = selectedFilterId.lowercased() == "speaklife" || selectedFilter == .speaklife
+        let isSpeakLifeFilter = selectedFilterId.lowercased() == "speaklife"
         
         guard isSpeakLifeFilter else { return [] }
         
@@ -21,11 +21,6 @@ extension AudioDeclarationViewModel {
         
         if !contentByFilter.isEmpty {
             allSpeakLife = contentByFilter["speaklife"] ?? []
-        }
-        
-        // If dynamic system has no content, use legacy speaklife array
-        if allSpeakLife.isEmpty {
-            allSpeakLife = speaklife
         }
         
         guard !allSpeakLife.isEmpty else { return [] }
@@ -220,63 +215,65 @@ extension AudioDeclarationViewModel {
     // Get full list for a specific section
     func getFullSectionItems(sectionId: String) -> [AudioDeclaration] {
         // Always use speaklife data regardless of current filter since this is for SpeakLife sections
-        let allSpeakLife = !contentByFilter.isEmpty ? (contentByFilter["speaklife"] ?? speaklife) : speaklife
-        
-        let result: [AudioDeclaration]
-        
-        switch sectionId {
-        case "favorites":
-            result = allSpeakLife.filter { favoritesManager.isFavorite($0) }
-        case "recent":
-            // Return sorted items (latest episodes first)
-            let sortedItems = allSpeakLife.sorted { item1, item2 in
-                let episode1 = SpeakLifeEpisodeInfo.parse(from: item1.subtitle, id: item1.id)
-                let episode2 = SpeakLifeEpisodeInfo.parse(from: item2.subtitle, id: item2.id)
-                
-                if let ep1 = episode1, let ep2 = episode2 {
-                    if ep1.season != ep2.season {
-                        return ep1.season > ep2.season
-                    }
-                    return ep1.episode > ep2.episode
-                }
-                return false
-            }
-            result = sortedItems
-        case "featured":
-            result = allSpeakLife.filter { 
-                let durationMinutes = extractMinutes(from: $0.duration)
-                return durationMinutes >= 10
-            }
-        case "quick":
-            result = allSpeakLife.filter { 
-                let durationMinutes = extractMinutes(from: $0.duration)
-                return durationMinutes > 0 && durationMinutes <= 5
-            }
-        default:
-            // Check if it's a season key (s1, s2, s3, etc.)
-            if sectionId.starts(with: "s") && sectionId.dropFirst().allSatisfy({ $0.isNumber }) {
-                result = allSpeakLife.filter { item in
-                    if let episodeInfo = SpeakLifeEpisodeInfo.parse(from: item.subtitle, id: item.id) {
-                        return episodeInfo.seasonKey == sectionId
+        if let allSpeakLife = contentByFilter["speaklife"] {//!contentByFilter.isEmpty ? (contentByFilter["speaklife"] ?? speaklife) : speaklife
+            
+            let result: [AudioDeclaration]
+            
+            switch sectionId {
+            case "favorites":
+                result = allSpeakLife.filter { favoritesManager.isFavorite($0) }
+            case "recent":
+                // Return sorted items (latest episodes first)
+                let sortedItems = allSpeakLife.sorted { item1, item2 in
+                    let episode1 = SpeakLifeEpisodeInfo.parse(from: item1.subtitle, id: item1.id)
+                    let episode2 = SpeakLifeEpisodeInfo.parse(from: item2.subtitle, id: item2.id)
+                    
+                    if let ep1 = episode1, let ep2 = episode2 {
+                        if ep1.season != ep2.season {
+                            return ep1.season > ep2.season
+                        }
+                        return ep1.episode > ep2.episode
                     }
                     return false
-                }.sorted { item1, item2 in
-                    // Sort episodes within season by episode number descending
-                    let ep1 = SpeakLifeEpisodeInfo.parse(from: item1.subtitle, id: item1.id)
-                    let ep2 = SpeakLifeEpisodeInfo.parse(from: item2.subtitle, id: item2.id)
-                    return (ep1?.episode ?? 0) > (ep2?.episode ?? 0)
+                }
+                result = sortedItems
+            case "featured":
+                result = allSpeakLife.filter {
+                    let durationMinutes = extractMinutes(from: $0.duration)
+                    return durationMinutes >= 10
+                }
+            case "quick":
+                result = allSpeakLife.filter {
+                    let durationMinutes = extractMinutes(from: $0.duration)
+                    return durationMinutes > 0 && durationMinutes <= 5
+                }
+            default:
+                // Check if it's a season key (s1, s2, s3, etc.)
+                if sectionId.starts(with: "s") && sectionId.dropFirst().allSatisfy({ $0.isNumber }) {
+                    result = allSpeakLife.filter { item in
+                        if let episodeInfo = SpeakLifeEpisodeInfo.parse(from: item.subtitle, id: item.id) {
+                            return episodeInfo.seasonKey == sectionId
+                        }
+                        return false
+                    }.sorted { item1, item2 in
+                        // Sort episodes within season by episode number descending
+                        let ep1 = SpeakLifeEpisodeInfo.parse(from: item1.subtitle, id: item1.id)
+                        let ep2 = SpeakLifeEpisodeInfo.parse(from: item2.subtitle, id: item2.id)
+                        return (ep1?.episode ?? 0) > (ep2?.episode ?? 0)
+                    }
+                }
+                // Check if it's a topic category
+                else if let topic = AudioTopicCategory(rawValue: sectionId) {
+                    result = allSpeakLife.filter { item in
+                        categorizeAudioContent(item).contains(topic)
+                    }
+                } else {
+                    result = []
                 }
             }
-            // Check if it's a topic category
-            else if let topic = AudioTopicCategory(rawValue: sectionId) {
-                result = allSpeakLife.filter { item in
-                    categorizeAudioContent(item).contains(topic)
-                }
-            } else {
-                result = []
-            }
+            
+            return result
         }
-        
-        return result
+        return []
     }
 }

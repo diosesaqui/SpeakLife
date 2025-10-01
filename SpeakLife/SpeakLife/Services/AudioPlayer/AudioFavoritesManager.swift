@@ -134,37 +134,61 @@ final class AudioFavoritesManager: ObservableObject {
         isLoading = true
         errorMessage = nil
         
-        do {
-            if fileManager.fileExists(atPath: favoritesURL.path) {
-                let data = try Data(contentsOf: favoritesURL)
-                let decoder = JSONDecoder()
-                decoder.dateDecodingStrategy = .iso8601
-                favorites = try decoder.decode([AudioDeclaration].self, from: data)
-            } else {
-                favorites = []
+        // Load favorites asynchronously to avoid blocking main thread
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            guard let self = self else { return }
+            
+            do {
+                if self.fileManager.fileExists(atPath: self.favoritesURL.path) {
+                    let data = try Data(contentsOf: self.favoritesURL)
+                    let decoder = JSONDecoder()
+                    decoder.dateDecodingStrategy = .iso8601
+                    let loadedFavorites = try decoder.decode([AudioDeclaration].self, from: data)
+                    
+                    DispatchQueue.main.async {
+                        self.favorites = loadedFavorites
+                        self.isLoading = false
+                    }
+                } else {
+                    DispatchQueue.main.async {
+                        self.favorites = []
+                        self.isLoading = false
+                    }
+                }
+            } catch {
+                DispatchQueue.main.async {
+                    print("❌ Error loading audio favorites: \(error)")
+                    self.errorMessage = "Failed to load favorites"
+                    self.favorites = []
+                    self.isLoading = false
+                }
             }
-        } catch {
-            print("❌ Error loading audio favorites: \(error)")
-            errorMessage = "Failed to load favorites"
-            favorites = []
         }
-        
-        isLoading = false
     }
     
     private func saveFavorites() {
-        do {
-            let encoder = JSONEncoder()
-            encoder.dateEncodingStrategy = .iso8601
-            encoder.outputFormatting = .prettyPrinted
+        // Save favorites asynchronously to avoid blocking main thread
+        let favoritesToSave = favorites
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            guard let self = self else { return }
             
-            let data = try encoder.encode(favorites)
-            try data.write(to: favoritesURL)
-            
-            print("✅ Audio favorites saved successfully (\(favorites.count) items)")
-        } catch {
-            print("❌ Error saving audio favorites: \(error)")
-            errorMessage = "Failed to save favorites"
+            do {
+                let encoder = JSONEncoder()
+                encoder.dateEncodingStrategy = .iso8601
+                encoder.outputFormatting = .prettyPrinted
+                
+                let data = try encoder.encode(favoritesToSave)
+                try data.write(to: self.favoritesURL)
+                
+                DispatchQueue.main.async {
+                    print("✅ Audio favorites saved successfully (\(favoritesToSave.count) items)")
+                }
+            } catch {
+                DispatchQueue.main.async {
+                    print("❌ Error saving audio favorites: \(error)")
+                    self.errorMessage = "Failed to save favorites"
+                }
+            }
         }
     }
     

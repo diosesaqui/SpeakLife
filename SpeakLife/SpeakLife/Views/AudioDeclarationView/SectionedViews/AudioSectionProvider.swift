@@ -32,6 +32,11 @@ class AudioSectionProvider: SectionProvider {
         case .testimonies:
             return createTestimonySections()
         case .custom(let identifier):
+            // Handle specific custom filters here
+            // Example for a new filter:
+            // if identifier == "yournewfilter" {
+            //     return createYourNewFilterSections()
+            // }
             return createCustomSections(for: identifier)
         }
     }
@@ -108,8 +113,189 @@ class AudioSectionProvider: SectionProvider {
     }
     
     private func createCustomSections(for identifier: String) -> [GenericSectionModel<AudioDeclaration>] {
-        // Future implementation for custom tabs
-        return []
+        // Get content for this filter
+        guard let filterContent = viewModel.contentByFilter[identifier], !filterContent.isEmpty else {
+            return []
+        }
+        
+        var sections: [GenericSectionModel<AudioDeclaration>] = []
+        
+        // 1. Favorites Section (if any)
+//        let favoriteItems = filterContent.filter { viewModel.favoritesManager.isFavorite($0) }
+//        if !favoriteItems.isEmpty {
+//            sections.append(GenericSectionModel(
+//                id: "\(identifier)-favorites",
+//                title: "Your Favorites",
+//                subtitle: "\(favoriteItems.count) saved",
+//                items: Array(favoriteItems.prefix(10)),
+//                configuration: GenericSectionConfiguration(
+//                    showSeeAll: favoriteItems.count > 10,
+//                    maxVisibleItems: 10,
+//                    itemWidth: 140,
+//                    itemHeight: 180,
+//                    horizontalSpacing: 10,
+//                    showPlayCount: false,
+//                    cellStyle: .standard
+//                ),
+//                type: .favorites
+//            ))
+//        }
+        
+        // 2. Check if content has seasons/episodes
+        let itemsWithSeasons = filterContent.filter { $0.season != nil }
+//        
+//        if !itemsWithSeasons.isEmpty {
+            // Create season-based sections
+            let seasonGroups = Dictionary(grouping: itemsWithSeasons) { $0.season ?? 0 }
+            let sortedSeasons = seasonGroups.keys.sorted()
+            
+            for season in sortedSeasons {
+                guard let seasonItems = seasonGroups[season] else { continue }
+                let sortedEpisodes = seasonItems.sorted { ($0.episode ?? 0) < ($1.episode ?? 0) }
+                
+                sections.append(GenericSectionModel(
+                    id: "\(identifier)-season-\(season)",
+                    title: "Season \(season)",
+                    subtitle: "\(seasonItems.count) episodes",
+                    items: sortedEpisodes,
+                    configuration: GenericSectionConfiguration(
+                        showSeeAll: false,
+                        maxVisibleItems: min(15, seasonItems.count),
+                        itemWidth: 160,
+                        itemHeight: 200,
+                        horizontalSpacing: 12,
+                        showPlayCount: false,
+                        cellStyle: .standard
+                    )
+                ))
+            }
+            
+            // Handle items without seasons separately if any exist
+            let itemsWithoutSeasons = filterContent.filter { $0.season == nil }
+            if !itemsWithoutSeasons.isEmpty {
+                sections.append(GenericSectionModel(
+                    id: "\(identifier)-other",
+                    title: "More \(identifier.capitalized)",
+                    subtitle: "\(itemsWithoutSeasons.count) items",
+                    items: itemsWithoutSeasons,
+                    configuration: GenericSectionConfiguration(
+                        showSeeAll: false,
+                        maxVisibleItems: min(15, itemsWithoutSeasons.count),
+                        itemWidth: 160,
+                        itemHeight: 200,
+                        horizontalSpacing: 12,
+                        showPlayCount: false,
+                        cellStyle: .standard
+                    )
+                ))
+            }
+     //   } else {
+            // No seasons - create smart sections based on content analysis
+            
+            // 2. Recently Added Section (first 15 items, assuming newer items are at the beginning)
+            let recentItems = Array(filterContent.prefix(15))
+            if !recentItems.isEmpty {
+                sections.append(GenericSectionModel(
+                    id: "\(identifier)-recent",
+                    title: "Recently Added",
+                    subtitle: "Latest content",
+                    items: recentItems,
+                    configuration: GenericSectionConfiguration(
+                        showSeeAll: false,
+                        maxVisibleItems: 10,
+                        itemWidth: 160,
+                        itemHeight: 200,
+                        horizontalSpacing: 12,
+                        showPlayCount: false,
+                        cellStyle: .standard
+                    )
+                ))
+            }
+            
+            // 3. Quick Sessions (items under 5 minutes)
+//            let quickItems = filterContent.filter { item in
+//                let minutes = extractMinutes(from: item.duration)
+//                return minutes > 0 && minutes <= 5
+//            }
+//            if !quickItems.isEmpty {
+//                sections.append(GenericSectionModel(
+//                    id: "\(identifier)-quick",
+//                    title: "Quick Sessions",
+//                    subtitle: "5 minutes or less",
+//                    items: Array(quickItems.prefix(10)),
+//                    configuration: GenericSectionConfiguration(
+//                        showSeeAll: quickItems.count > 10,
+//                        maxVisibleItems: 10,
+//                        itemWidth: 140,
+//                        itemHeight: 180,
+//                        horizontalSpacing: 10,
+//                        showPlayCount: false,
+//                        cellStyle: .compact
+//                    ),
+//                    type: .standard
+//                ))
+//            }
+//            
+//            // 4. Featured/Longer Sessions (items over 10 minutes)
+//            let featuredItems = filterContent.filter { item in
+//                let minutes = extractMinutes(from: item.duration)
+//                return minutes >= 10
+//            }
+//            if !featuredItems.isEmpty {
+//                sections.append(GenericSectionModel(
+//                    id: "\(identifier)-featured",
+//                    title: "Deep Dives",
+//                    subtitle: "Extended sessions",
+//                    items: Array(featuredItems.prefix(10)),
+//                    configuration: GenericSectionConfiguration(
+//                        showSeeAll: featuredItems.count > 10,
+//                        maxVisibleItems: 10,
+//                        itemWidth: 180,
+//                        itemHeight: 220,
+//                        horizontalSpacing: 12,
+//                        showPlayCount: false,
+//                        cellStyle: .featured
+//                    ),
+//                    type: .standard
+//                ))
+//            }
+            
+            // 5. All Content (if we have more items than shown in sections above)
+//            let shownItemsCount = (favoriteItems.count > 0 ? min(10, favoriteItems.count) : 0) +
+//                                  min(10, recentItems.count) +
+//                                  (quickItems.count > 0 ? min(10, quickItems.count) : 0) +
+//                                  (featuredItems.count > 0 ? min(10, featuredItems.count) : 0)
+//            
+//            if filterContent.count > shownItemsCount {
+//                sections.append(GenericSectionModel(
+//                    id: "\(identifier)-all",
+//                    title: "Browse All",
+//                    subtitle: "\(filterContent.count) total items",
+//                    items: filterContent,
+//                    configuration: GenericSectionConfiguration(
+//                        showSeeAll: false,
+//                        maxVisibleItems: min(20, filterContent.count),
+//                        itemWidth: 160,
+//                        itemHeight: 200,
+//                        horizontalSpacing: 12,
+//                        showPlayCount: false,
+//                        cellStyle: .standard
+//                    ),
+//                    type: .standard
+//                ))
+         //   }
+      //  }
+        
+        return sections
+   // }
+}
+    
+    private func extractMinutes(from duration: String) -> Int {
+        // Parse duration string like "5:30" or "10:45"
+        let components = duration.split(separator: ":")
+        guard components.count >= 1,
+              let minutes = Int(components[0]) else { return 0 }
+        return minutes
     }
     
     // MARK: - Helper Methods

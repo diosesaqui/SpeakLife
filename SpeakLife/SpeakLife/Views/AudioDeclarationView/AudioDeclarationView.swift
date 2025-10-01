@@ -176,42 +176,40 @@ struct ErrorWrapper: Identifiable {
     let message: String
 }
 
-enum Filter: String, CaseIterable {
-    case favorites
-    case declarations
-    case bedtimeStories
-    case gospel  
-    case meditation
-    case devotional
-    case speaklife
-    case godsHeart
-    case growWithJesus
-    case divineHealth
-    case imagination
-    case psalm91
-    case magnify
-    case praise
-    
-    // Display name for UI
-    var displayName: String {
-        switch self {
-        case .favorites: return "Favorites"
-        case .declarations: return "Mountain-Moving Prayers"
-        case .bedtimeStories: return "Bedtime Stories"
-        case .gospel: return "Gospel"
-        case .meditation: return "Scripture Meditation's"
-        case .devotional: return "Devotional"
-        case .speaklife: return "SpeakLife"
-        case .godsHeart: return "God's Heart"
-        case .growWithJesus: return "Grow With Jesus"
-        case .divineHealth: return "Divine Health"
-        case .imagination: return "Imagination"
-        case .psalm91: return "Psalm 91"
-        case .magnify: return "Behold & Become"
-        case .praise: return "Praise Wins Wars"
-        }
-    }
-}
+//enum Filter: String, CaseIterable {
+//    case favorites
+//    case declarations
+//    case bedtimeStories
+//    case gospel  
+//    case meditation
+//    case devotional
+//    case speaklife
+//    case godsHeart
+//    case growWithJesus
+//    case divineHealth
+//    case imagination
+//    case psalm91
+//    case magnify
+//    
+//    // Display name for UI
+//    var displayName: String {
+//        switch self {
+//        case .favorites: return "Favorites"
+//        case .declarations: return "Mountain-Moving Prayers"
+//        case .bedtimeStories: return "Bedtime Stories"
+//        case .gospel: return "Gospel"
+//        case .meditation: return "Scripture Meditation's"
+//        case .devotional: return "Devotional"
+//        case .speaklife: return "SpeakLife"
+//        case .godsHeart: return "God's Heart"
+//        case .growWithJesus: return "Grow With Jesus"
+//        case .divineHealth: return "Divine Health"
+//        case .imagination: return "Imagination"
+//        case .psalm91: return "Psalm 91"
+//        case .magnify: return "Behold & Become"
+//        }
+//    }
+//}
 
 struct FetchedFilter: Identifiable, Hashable {
     var id: String  // unique ID for the filter
@@ -254,8 +252,6 @@ struct AudioDeclarationView: View {
                         // Use dynamic header if filter configs are available, otherwise fall back to legacy
                         if !viewModel.dynamicFilters.isEmpty {
                             dynamicHeader
-                        } else {
-                            header
                         }
                     }
                     .padding(.vertical)
@@ -338,12 +334,12 @@ struct AudioDeclarationView: View {
                 Button(action: {
                     viewModel.selectedFilterId = filterConfig.id
                     // Update legacy system for compatibility
-                    if let legacyFilter = Filter(rawValue: filterConfig.id) {
-                        viewModel.selectedFilter = legacyFilter
-                    } else {
-                        // Reset legacy filter if no match found
-                        viewModel.selectedFilter = .speaklife // Default fallback
-                    }
+//                    if let legacyFilter = Filter(rawValue: filterConfig.id) {
+//                        viewModel.selectedFilter = legacyFilter
+//                    } else {
+//                        // Reset legacy filter if no match found
+//                        viewModel.selectedFilter = .speaklife // Default fallback
+//                    }
                     if filterConfig.id == "favorites" {
                         AudioAnalytics.shared.trackFavoritesCategoryViewed(
                             favoritesCount: viewModel.favoritesManager.favoritesCount
@@ -381,50 +377,6 @@ struct AudioDeclarationView: View {
         .padding(.horizontal)
     }
     
-    // Legacy header for backward compatibility
-    var header: some View {
-        HStack(spacing: 15) {
-            ForEach(viewModel.filters, id: \.self) { filter in
-                Button(action: {
-                    viewModel.selectedFilter = filter
-                    // Clear dynamic filter ID when using legacy filter
-                    viewModel.selectedFilterId = filter.rawValue
-                    if filter == .favorites {
-                        AudioAnalytics.shared.trackFavoritesCategoryViewed(
-                            favoritesCount: viewModel.favoritesManager.favoritesCount
-                        )
-                    }
-                }) {
-                    HStack(spacing: 6) {
-                        if filter == .favorites {
-                            Image(systemName: "heart.fill")
-                                .font(.caption2)
-                                .foregroundColor(viewModel.selectedFilter == filter ? .white : .pink)
-                        }
-                        
-                        Text(filter.displayName)
-                            .font(.caption)
-                        
-                        if filter == .favorites && viewModel.favoritesManager.favoritesCount > 0 {
-                            Text("(\(viewModel.favoritesManager.favoritesCount))")
-                                .font(.caption2)
-                                .foregroundColor(.white.opacity(0.8))
-                        }
-                    }
-                    .padding(.horizontal, 15)
-                    .padding(.vertical, 10)
-                    .background(
-                        viewModel.selectedFilter == filter ? 
-                        (filter == .favorites ? Color.pink : Constants.DAMidBlue) :
-                        Color.gray.opacity(0.2)
-                    )
-                    .foregroundColor(.white)
-                    .cornerRadius(20)
-                }
-            }
-        }
-        .padding(.horizontal)
-    }
     
     func episodeRow(_ proxy: GeometryProxy) -> some View {
         Group {
@@ -441,11 +393,13 @@ struct AudioDeclarationView: View {
     // MARK: - Computed Properties for SOLID Compliance
     
     private var isSpeakLifeFilterSelected: Bool {
-        if !viewModel.dynamicFilters.isEmpty {
+      //  if !viewModel.dynamicFilters.isEmpty {
             return viewModel.selectedFilterId.lowercased() == "speaklife"
-        } else {
-            return viewModel.selectedFilter == .speaklife
-        }
+     //   }
+       // return false
+//        } else {
+//            return viewModel.selectedFilter == .speaklife
+//        }
     }
     
     // MARK: - Generic Sectioned Layout Support
@@ -466,9 +420,7 @@ struct AudioDeclarationView: View {
     }
     
     private var shouldShowEmptyFavoritesState: Bool {
-        let currentContent = !viewModel.dynamicFilters.isEmpty ? 
-                           viewModel.dynamicFilteredContent : 
-                           viewModel.filteredContent
+        let currentContent = viewModel.dynamicFilteredContent
         return viewModel.selectedFilterId == "favorites" && currentContent.isEmpty
     }
     
@@ -501,7 +453,7 @@ struct AudioDeclarationView: View {
                 .padding(.horizontal, 40)
             
             Button("Browse Audio") {
-                viewModel.selectedFilter = .speaklife
+                viewModel.selectedFilterId = "speaklife"
             }
             .font(.headline)
             .foregroundColor(.white)
@@ -535,9 +487,7 @@ struct AudioDeclarationView: View {
     }
     
     private var currentFilteredContent: [AudioDeclaration] {
-        return !viewModel.dynamicFilters.isEmpty ? 
-               viewModel.dynamicFilteredContent : 
-               viewModel.filteredContent
+        return viewModel.dynamicFilteredContent
     }
     
     @ViewBuilder

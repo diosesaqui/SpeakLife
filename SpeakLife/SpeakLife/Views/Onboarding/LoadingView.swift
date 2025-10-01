@@ -40,6 +40,9 @@ struct PersonalizationLoadingView: View {
                     Text("Hang tight, while we build your Speak Life plan")
                         .font(.headline)
                         .foregroundColor(.white)
+                        .multilineTextAlignment(.center)
+                        .lineLimit(nil)
+                        .padding(.horizontal, 20)
                 }
                 
                 .onAppear {
@@ -93,6 +96,8 @@ struct BulletPointView: View {
                 .scaleEffect(isHighlighted ? 1.1 : 1.0)
             Text(text)
                 .foregroundColor(.white)
+                .lineLimit(nil)
+                .fixedSize(horizontal: false, vertical: true)
         }
         .opacity(!isHighlighted ? 0 : 1)
         .animation(.easeInOut, value: !isHighlighted)

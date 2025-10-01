@@ -54,7 +54,7 @@ extension AudioDeclarationViewModel {
     
     /// Determines the current tab configuration based on selected filter
     var currentTabConfig: SectionedTabConfig {
-        if !dynamicFilters.isEmpty {
+      //  if !dynamicFilters.isEmpty {
             // Using dynamic filter system
             switch selectedFilterId.lowercased() {
             case "speaklife":
@@ -63,22 +63,26 @@ extension AudioDeclarationViewModel {
                 return .devotionals
             case "declarations":
                 return .declarations
+            // Add your new filter here if you want specific behavior
+            // case "yournewfilter":
+            //     return .custom("yournewfilter")
             default:
                 return .custom(selectedFilterId)
             }
-        } else {
-            // Using legacy filter system
-            switch selectedFilter {
-            case .speaklife:
-                return .speakLife
-            case .devotional:
-                return .devotionals
-            case .declarations:
-                return .declarations
-            default:
-                return .custom(selectedFilter.rawValue)
-            }
-        }
+      //  }
+//        else {
+//            // Using legacy filter system
+//            switch selectedFilter {
+//            case .speaklife:
+//                return .speakLife
+//            case .devotional:
+//                return .devotionals
+//            case .declarations:
+//                return .declarations
+//            default:
+//                return .custom(selectedFilter.rawValue)
+//            }
+//        }
     }
 }
 

@@ -75,6 +75,11 @@ struct SpeakLifeApp: App {
                     if declarationStore.backgroundMusicEnabled {
                         AudioPlayerService.shared.playSound(files: resources)
                     }
+                    
+                    // 🚀 Initialize AI services and train initial models
+                    Task {
+                        await CreateMLTrainingPipeline.shared.trainInitialModels()
+                    }
                     DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
                         withAnimation {
                             isShowingLanding = false
@@ -104,11 +109,18 @@ struct SpeakLifeApp: App {
                 // Process any pending widget actions when app becomes active
                 WidgetDataBridge.shared.processPendingWidgetActions()
                 
-                // Resume background music if enabled, not already playing, and no content audio is active
+                // Only start background music if enabled, not already playing, no content audio,
+                // AND the app was recently backgrounded (not hours later)
+                // This prevents music from starting unexpectedly after long periods
                 if declarationStore.backgroundMusicEnabled && 
                    !AudioPlayerService.shared.isPlaying && 
                    !AudioPlayerViewModel.hasActiveAudio {
-                    AudioPlayerService.shared.playSound(files: resources)
+                    // Only restart background music if app was recently backgrounded (within 5 minutes)
+                    // This prevents music from randomly starting hours later
+                    let timeSinceBackground = Date().timeIntervalSince(appState.lastBackgroundDate ?? Date.distantPast)
+                    if timeSinceBackground < 300 { // 5 minutes
+                        AudioPlayerService.shared.playSound(files: resources)
+                    }
                 }
                     
                 if appState.notificationEnabled {
@@ -128,9 +140,12 @@ struct SpeakLifeApp: App {
                 // This allows music to continue when notification center/control center is opened
                 break
             case .background:
-                // Only pause background music when going to background
-                // Content audio should continue playing
-                AudioPlayerService.shared.pauseMusic()
+                // Stop background music completely when going to background
+                // This ensures clean state and prevents stale audio from playing later
+                AudioPlayerService.shared.stopMusic()
+                
+                // Track when app was backgrounded to prevent stale audio from restarting hours later
+                appState.lastBackgroundDate = Date()
                 break
             @unknown default:
                 break

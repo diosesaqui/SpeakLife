@@ -76,8 +76,14 @@ final class DevotionalServiceClient: DevotionalService {
             }
         }
 
-        return Bundle.main.url(forResource: "devotionals", withExtension: "json")
-            .flatMap { try? Data(contentsOf: $0) }
+        // Load bundle data asynchronously to avoid blocking main thread
+        return await withCheckedContinuation { continuation in
+            DispatchQueue.global(qos: .userInitiated).async {
+                let data = Bundle.main.url(forResource: "devotionals", withExtension: "json")
+                    .flatMap { try? Data(contentsOf: $0) }
+                continuation.resume(returning: data)
+            }
+        }
     }
 
     private func decodeDevotionals(from data: Data) throws -> [Devotional] {
@@ -135,12 +141,19 @@ final class DevotionalServiceClient: DevotionalService {
         let fileURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
             .appendingPathComponent("remoteDevotionals.json")
 
-        do {
-            let data = try Data(contentsOf: fileURL)
-            let devotionals = try JSONDecoder().decode([Devotional].self, from: data)
-            completion(.success(devotionals))
-        } catch {
-            completion(.failure(error))
+        // Load file asynchronously to avoid blocking main thread
+        DispatchQueue.global(qos: .userInitiated).async {
+            do {
+                let data = try Data(contentsOf: fileURL)
+                let devotionals = try JSONDecoder().decode([Devotional].self, from: data)
+                DispatchQueue.main.async {
+                    completion(.success(devotionals))
+                }
+            } catch {
+                DispatchQueue.main.async {
+                    completion(.failure(error))
+                }
+            }
         }
     }
 

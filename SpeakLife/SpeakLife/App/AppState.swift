@@ -51,6 +51,9 @@ final class AppState: ObservableObject {
     
     @AppStorage("hasCompletedDemo") var hasCompletedDemo = false
     
+    // Track when app was last backgrounded to prevent stale audio from restarting
+    @AppStorage("lastBackgroundDate") var lastBackgroundDate: Date?
+    
     // Checklist notification settings
     @AppStorage("checklistNotificationsEnabled") var checklistNotificationsEnabled = true
     @AppStorage("morningReminderEnabled") var morningReminderEnabled = true

@@ -5,27 +5,11 @@
 //  Created by Riccardo Washington on 11/14/24.
 //
 
-import Foundation
 import FirebaseStorage
 import SwiftUI
 import Combine
 
 final class AudioDeclarationViewModel: ObservableObject {
-    // Legacy arrays - kept for backward compatibility, will be deprecated
-    @Published var audioDeclarations: [AudioDeclaration]  = []
-    @Published var bedtimeStories: [AudioDeclaration]  = []
-    @Published var gospelStories: [AudioDeclaration]  = []
-    @Published var meditations: [AudioDeclaration]  = []
-    @Published var devotionals: [AudioDeclaration]  = []
-    @Published var speaklife: [AudioDeclaration]  = []
-    @Published var godsHeart: [AudioDeclaration]  = []
-    @Published var growWithJesus: [AudioDeclaration]  = []
-    @Published var divineHealth: [AudioDeclaration]  = []
-    @Published var imagination: [AudioDeclaration]  = []
-    @Published var psalm91: [AudioDeclaration]  = []
-    @Published var magnify: [AudioDeclaration]  = []
-    @Published var praise: [AudioDeclaration]  = []
-    
     // New dynamic system
     @Published var dynamicFilters: [FilterConfig] = []  // Filter configs from JSON
     @Published var contentByFilter: [String: [AudioDeclaration]] = [:]  // All content organized by filter ID
@@ -34,10 +18,6 @@ final class AudioDeclarationViewModel: ObservableObject {
     private(set) var allAudioFiles: [AudioDeclaration] = []
     @Published var downloadProgress: [String: Double] = [:]
     @Published var fetchingAudioIDs: Set<String> = []
-    
-    // Legacy filter system - will be deprecated
-    @Published var filters: [Filter] = [.favorites, .speaklife, .declarations, .praise, .godsHeart, .growWithJesus, .psalm91, .divineHealth, .magnify, .gospel, .meditation, .bedtimeStories]
-    @Published var selectedFilter: Filter = .speaklife
 
     // Favorites manager
     let favoritesManager = AudioFavoritesManager()
@@ -55,14 +35,17 @@ final class AudioDeclarationViewModel: ObservableObject {
             }
             .store(in: &cancellables)
         
-        // Load cached audio data on startup
-        loadCachedAudioData()
+        // Load cached audio data on startup (ensure on main thread for @Published updates)
+        DispatchQueue.main.async { [weak self] in
+            self?.loadCachedAudioData()
+        }
     }
     
     private func loadCachedAudioData() {
         let fileManager = FileManager.default
         let documentDirURL = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
         let fileURL = documentDirURL.appendingPathComponent("audioDeclarations").appendingPathExtension("txt")
+        let filtersURL = documentDirURL.appendingPathComponent("audioFilters").appendingPathExtension("txt")
         
         guard fileManager.fileExists(atPath: fileURL.path) else {
             return
@@ -73,56 +56,117 @@ final class AudioDeclarationViewModel: ObservableObject {
             let decoder = JSONDecoder()
             let cachedAudios = try decoder.decode([AudioDeclaration].self, from: data)
             self.allAudioFiles = cachedAudios
-            populateLegacyFilters()
+            
+            // Try to load cached filters
+            if fileManager.fileExists(atPath: filtersURL.path) {
+                let filtersData = try Data(contentsOf: filtersURL)
+                let cachedFilters = try decoder.decode([FilterConfig].self, from: filtersData)
+                self.dynamicFilters = cachedFilters
+            }
+            
+            populateDynamicFiltersFromCache()
         } catch {}
+    }
+    
+    private func populateDynamicFiltersFromCache() {
+        // Clear previous content
+        contentByFilter.removeAll()
+        
+        // Group all content by tag
+        let groupedContent = Dictionary(grouping: allAudioFiles) { $0.tag ?? "" }
+        
+        // If we don't have dynamicFilters loaded yet, create default ones
+        if dynamicFilters.isEmpty {
+            // Default filter order with favorites first
+            var defaultFilters: [FilterConfig] = []
+            
+            // Always add favorites filter first
+            defaultFilters.append(FilterConfig(
+                id: "favorites",
+                displayName: "Favorites",
+                order: 0,
+                reversed: false
+            ))
+            
+            // Define the preferred order and reversal settings for known filters
+            let knownFilters: [(id: String, displayName: String, order: Int, reversed: Bool)] = [
+                ("speaklife", "Speak Life", 1, true),
+                ("declarations", "Declarations", 3, false),
+                ("godsHeart", "God's Heart", 4, true),
+                ("growWithJesus", "Grow With Jesus", 2, false),
+                ("psalm91", "Psalm 91", 5, true),
+                ("divineHealth", "Divine Health", 6, false),
+                ("magnify", "Magnify", 7, true),
+                ("gospel", "Gospel", 8, false),
+                ("meditation", "Meditation", 9, false),
+                ("bedtimeStories", "Bedtime Stories", 10, false)
+            ]
+            
+            // Add known filters in order
+            for filter in knownFilters {
+                if groupedContent[filter.id] != nil {
+                    defaultFilters.append(FilterConfig(
+                        id: filter.id,
+                        displayName: filter.displayName,
+                        order: filter.order,
+                        reversed: filter.reversed
+                    ))
+                }
+            }
+            
+            // Add any unknown tags at the end
+            let knownIds = Set(knownFilters.map { $0.id })
+            let unknownTags = Set(allAudioFiles.compactMap { $0.tag }).filter { !knownIds.contains($0) }.sorted()
+            for tag in unknownTags {
+                defaultFilters.append(FilterConfig(
+                    id: tag,
+                    displayName: tag.capitalized,
+                    order: defaultFilters.count,
+                    reversed: false
+                ))
+            }
+            
+            dynamicFilters = defaultFilters
+        }
+        
+        // Populate content for each filter
+        for config in dynamicFilters {
+            if config.id == "favorites" {
+                // Favorites is handled separately via favoritesManager
+                continue
+            }
+            
+            var content = groupedContent[config.id] ?? []
+            
+            // Apply reversal if specified
+            if config.reversed == true {
+                content = content.reversed()
+            }
+            
+            contentByFilter[config.id] = content
+        }
     }
     
     private func saveAudioDataToCache() {
         let fileManager = FileManager.default
         let documentDirURL = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
         let fileURL = documentDirURL.appendingPathComponent("audioDeclarations").appendingPathExtension("txt")
+        let filtersURL = documentDirURL.appendingPathComponent("audioFilters").appendingPathExtension("txt")
         
         do {
             let encoder = JSONEncoder()
+            
+            // Save audio data
             let data = try encoder.encode(allAudioFiles)
             try data.write(to: fileURL)
+            
+            // Save filter configuration if available
+            if !dynamicFilters.isEmpty {
+                let filtersData = try encoder.encode(dynamicFilters)
+                try filtersData.write(to: filtersURL)
+            }
         } catch {
             // Failed to save cache, not critical
-        }
-    }
-
-    
-    // Legacy computed property for backward compatibility
-    var filteredContent: [AudioDeclaration] {
-        switch selectedFilter {
-        case .favorites:
-            return favoritesManager.getFavoritesSortedByDate()
-        case .declarations:
-            return audioDeclarations
-        case .bedtimeStories:
-            return bedtimeStories
-        case .gospel:
-            return gospelStories
-        case .meditation:
-            return meditations
-        case .devotional:
-            return devotionals
-        case .speaklife:
-            return speaklife.reversed()
-        case .godsHeart:
-            return godsHeart.reversed()
-        case .growWithJesus:
-            return growWithJesus
-        case .divineHealth:
-            return divineHealth
-        case .imagination:
-            return imagination
-        case .psalm91:
-            return psalm91.reversed()
-        case .magnify:
-            return magnify.reversed()
-        case .praise:
-            return praise.reversed()
         }
     }
     
@@ -154,9 +198,7 @@ final class AudioDeclarationViewModel: ObservableObject {
                 guard let self = self else { return }
                 self.allAudioFiles = welcome?.audios ?? audios!
                 
-                self.populateLegacyFilters()
                 self.setupDynamicFilters(welcome)
-                self.setFilters(welcome)
                 self.saveAudioDataToCache()
                 self.lastCachedAudioVersion = version
             }
@@ -210,50 +252,6 @@ final class AudioDeclarationViewModel: ObservableObject {
                     contentByFilter[filterId] = groupedContent[filterId] ?? []
                 }
             }
-        }
-    }
-    
-    private func populateLegacyFilters() {
-        audioDeclarations = allAudioFiles.filter { $0.tag == "declarations" }
-        bedtimeStories = allAudioFiles.filter { $0.tag == "bedtimeStories" }
-        gospelStories = allAudioFiles.filter { $0.tag == "gospel" }
-        meditations = allAudioFiles.filter { $0.tag == "meditation" }
-        speaklife = allAudioFiles.filter { $0.tag == "speaklife" }
-        godsHeart = allAudioFiles.filter { $0.tag == "godsHeart" }
-        growWithJesus = allAudioFiles.filter { $0.tag == "growWithJesus" }
-        divineHealth = allAudioFiles.filter { $0.tag == "divineHealth" }
-        psalm91 = allAudioFiles.filter { $0.tag == "psalm91" }
-        imagination = allAudioFiles.filter { $0.tag == "imagination" }
-        magnify = allAudioFiles.filter { $0.tag == "magnify" }
-        praise = allAudioFiles.filter { $0.tag == "praise" }
-    }
-                    
-    private func setFilters(_ welcome: WelcomeAudio?) {
-        // Default filters to use if none provided
-        let defaultFilters: [Filter] = [.favorites, .speaklife, .declarations, .praise, .godsHeart, .growWithJesus, .psalm91, .divineHealth, .magnify, .gospel, .meditation, .bedtimeStories]
-        
-        guard let filterStrings = welcome?.filters else {
-            self.filters = defaultFilters
-            return 
-        }
-        
-        // Dynamically map JSON strings to Filter enum cases
-        // This works because Filter enum raw values now match the JSON strings exactly
-        let mappedFilters = filterStrings.compactMap { filterString in
-            // Try to create Filter from raw value (this matches enum case names)
-            Filter(rawValue: filterString)
-        }
-        
-        // If we successfully mapped some filters, use them; otherwise use defaults
-        self.filters = mappedFilters.isEmpty ? defaultFilters : mappedFilters
-        
-        // Log any unmapped filters for debugging
-        let unmappedFilters = filterStrings.filter { filterString in
-            Filter(rawValue: filterString) == nil
-        }
-        if !unmappedFilters.isEmpty {
-            print("Warning: Could not map these filters from JSON: \(unmappedFilters)")
-            print("Available filter cases: \(Filter.allCases.map { $0.rawValue })")
         }
     }
     
@@ -325,10 +323,14 @@ final class AudioDeclarationViewModel: ObservableObject {
         let fileManager = FileManager.default
         let documentDirURL = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
         let fileURL = documentDirURL.appendingPathComponent("audioDeclarations").appendingPathExtension("txt")
+        let filtersURL = documentDirURL.appendingPathComponent("audioFilters").appendingPathExtension("txt")
         
         do {
             if fileManager.fileExists(atPath: fileURL.path) {
                 try fileManager.removeItem(at: fileURL)
+            }
+            if fileManager.fileExists(atPath: filtersURL.path) {
+                try fileManager.removeItem(at: filtersURL)
             }
         } catch {
             // Failed to clear cache

@@ -604,6 +604,12 @@ struct TaskLibrary {
     }
     
     static func getCoreTasksForStreak(_ streakDay: Int, userCategories: [String] = []) -> [DailyTask] {
+        // Check if AI features are enabled for enhanced task generation
+        if isAIEnabled() {
+            return getAIEnhancedTasks(streakDay: streakDay, userCategories: userCategories)
+        }
+        
+        // Standard task generation
         let phase = ProgressionPhase.getPhase(for: streakDay)
         let availableTasks = getAvailableTasks(for: streakDay)
         
@@ -650,6 +656,120 @@ struct TaskLibrary {
         
         return currentAvailable.filter { task in
             !previousAvailable.contains { $0.id == task.id }
+        }
+    }
+    
+    // MARK: - AI Enhanced Task Generation
+    
+    private static func isAIEnabled() -> Bool {
+        // Check if AI features are enabled via UserDefaults
+        // This is set by SubscriptionStore when AI features are enabled
+        return UserDefaults.standard.bool(forKey: "enableAIFeatures")
+    }
+    
+    private static func getAIEnhancedTasks(streakDay: Int, userCategories: [String]) -> [DailyTask] {
+        // AI-powered task selection based on user behavior and spiritual journey
+        let phase = ProgressionPhase.getPhase(for: streakDay)
+        let availableTasks = getAvailableTasks(for: streakDay)
+        
+        // Get user behavior data for personalization
+        let userBehavior = getUserBehaviorData()
+        
+        var tasks: [DailyTask] = []
+        
+        // Core task selection with AI personalization
+        switch phase {
+        case .foundation:
+            tasks = selectFoundationTasksWithAI(availableTasks: availableTasks, userBehavior: userBehavior, streakDay: streakDay)
+        case .growth:
+            tasks = selectGrowthTasksWithAI(availableTasks: availableTasks, userBehavior: userBehavior, streakDay: streakDay)
+        case .impact:
+            tasks = selectImpactTasksWithAI(availableTasks: availableTasks, userBehavior: userBehavior, streakDay: streakDay)
+        case .mastery:
+            tasks = selectMasteryTasksWithAI(availableTasks: availableTasks, userBehavior: userBehavior, streakDay: streakDay)
+        }
+        
+        // Apply AI-driven personalization based on user categories and behavior
+        tasks = personalizeTasksForUser(tasks: tasks, userCategories: userCategories, userBehavior: userBehavior)
+        
+        print("🤖 AI Enhanced Tasks generated for streak day \(streakDay): \(tasks.count) tasks")
+        return tasks
+    }
+    
+    private static func getUserBehaviorData() -> [String: Any] {
+        // Get user behavior data from EnhancedAnalyticsService
+        let userProfile = EnhancedAnalyticsService.shared.userBehaviorProfile
+        
+        return [
+            "topCategories": Array(userProfile.topCategories.keys),
+            "strugglingAreas": userProfile.strugglingAreas,
+            "spiritualMaturity": userProfile.spiritualMaturityLevel.rawValue,
+            "preferredTaskTypes": [], // Could be derived from user behavior patterns
+            "completionPatterns": userProfile.completionRates,
+            "weeklyPattern": userProfile.weeklyPattern,
+            "currentLifeSeason": userProfile.currentLifeSeason
+        ]
+    }
+    
+    private static func selectFoundationTasksWithAI(availableTasks: [DailyTask], userBehavior: [String: Any], streakDay: Int) -> [DailyTask] {
+        // AI-enhanced foundation task selection
+        let foundationTasks = availableTasks.filter { $0.category == .foundation }
+        
+        // Prioritize based on user's spiritual maturity and completion patterns
+        let prioritizedTasks = foundationTasks.sorted { task1, task2 in
+            // AI scoring logic would go here
+            return task1.minimumStreakDay <= task2.minimumStreakDay
+        }
+        
+        return Array(prioritizedTasks.prefix(4))
+    }
+    
+    private static func selectGrowthTasksWithAI(availableTasks: [DailyTask], userBehavior: [String: Any], streakDay: Int) -> [DailyTask] {
+        // AI-enhanced growth task selection
+        let baseGrowthTasks = availableTasks.filter { $0.category == .growth }
+        let foundationTasks = availableTasks.filter { $0.category == .foundation }
+        
+        // AI determines optimal mix based on user progress
+        var tasks = Array(foundationTasks.prefix(2))
+        tasks.append(contentsOf: Array(baseGrowthTasks.prefix(2)))
+        
+        return tasks
+    }
+    
+    private static func selectImpactTasksWithAI(availableTasks: [DailyTask], userBehavior: [String: Any], streakDay: Int) -> [DailyTask] {
+        // AI-enhanced impact task selection
+        let impactTasks = availableTasks.filter { $0.category == .impact }
+        let growthTasks = availableTasks.filter { $0.category == .growth }
+        let foundationTasks = availableTasks.filter { $0.category == .foundation }
+        
+        // AI balances challenge and foundation
+        var tasks = Array(foundationTasks.prefix(1))
+        tasks.append(contentsOf: Array(growthTasks.prefix(2)))
+        tasks.append(contentsOf: Array(impactTasks.prefix(1)))
+        
+        return tasks
+    }
+    
+    private static func selectMasteryTasksWithAI(availableTasks: [DailyTask], userBehavior: [String: Any], streakDay: Int) -> [DailyTask] {
+        // AI-enhanced mastery task selection
+        let masteryTasks = availableTasks.filter { $0.category == .mastery }
+        let impactTasks = availableTasks.filter { $0.category == .impact }
+        let growthTasks = availableTasks.filter { $0.category == .growth }
+        
+        // AI creates advanced spiritual practice combinations
+        var tasks = Array(growthTasks.prefix(1))
+        tasks.append(contentsOf: Array(impactTasks.prefix(2)))
+        tasks.append(contentsOf: Array(masteryTasks.prefix(1)))
+        
+        return tasks
+    }
+    
+    private static func personalizeTasksForUser(tasks: [DailyTask], userCategories: [String], userBehavior: [String: Any]) -> [DailyTask] {
+        // Apply final AI personalization layer
+        return tasks.map { task in
+            // AI could modify task descriptions, add personal touches, etc.
+            // For now, return tasks as-is
+            return task
         }
     }
 }

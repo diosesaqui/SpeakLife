@@ -19,8 +19,12 @@ final class NotificationManager: NSObject {
         get {
             UserDefaults.standard.object(forKey: "lastScheduledNotificationDate") as? Date
         } set {
-            UserDefaults.standard.set(newValue!, forKey: "lastScheduledNotificationDate")
-            scheduleNotificationResync(lastScheduledNotificationDate)
+            guard let newValue = newValue else {
+                UserDefaults.standard.removeObject(forKey: "lastScheduledNotificationDate")
+                return
+            }
+            UserDefaults.standard.set(newValue, forKey: "lastScheduledNotificationDate")
+            scheduleNotificationResync(newValue)
         }
     }
     
@@ -42,6 +46,16 @@ final class NotificationManager: NSObject {
                                categories: Set<DeclarationCategory>? = nil,
                                callback: (() -> Void)? = nil) {
         removeNotifications()
+        
+        // Check if AI features are enabled for enhanced notifications
+        // Note: This would need access to SubscriptionStore instance in a real implementation
+        // For now, we'll add a simple check here that can be expanded later
+        if shouldUseAINotifications() {
+            registerAIEnhancedNotifications(count: count, startTime: startTime, endTime: endTime, categories: categories, callback: callback)
+            return
+        }
+        
+        // Use original notification system
         if let categories = categories {
             let notifications = getNotificationData(for: count, categories: categories)
             // callback if data is less than count RWRW
@@ -917,6 +931,81 @@ final class NotificationManager: NSObject {
             ]
             return encouragementTemplates.randomElement() ?? "🕊️ There's still time \(userName)! A few moments with God can make all the difference."
         }
+    }
+    
+    // MARK: - AI Enhanced Notifications
+    
+    private func shouldUseAINotifications() -> Bool {
+        // For now, return false until we can properly access SubscriptionStore
+        // This can be updated when the notification system gets refactored
+        return false
+    }
+    
+    private func registerAIEnhancedNotifications(count: Int,
+                                               startTime: Int,
+                                               endTime: Int,
+                                               categories: Set<DeclarationCategory>? = nil,
+                                               callback: (() -> Void)? = nil) {
+        Task {
+            do {
+                // Get AI-optimized notification times
+                let optimalTimes = await RecommendationEngine.shared.getOptimalNotificationTimes()
+                
+                // Get AI-recommended contextual content
+                let contextualDeclarations = await RecommendationEngine.shared.getContextualDeclarations()
+                
+                // Use AI-selected content if available, otherwise fall back to categories
+                let notifications: [NotificationProcessor.NotificationData]
+                if !contextualDeclarations.isEmpty {
+                    // Convert AI declarations to notification data
+                    notifications = contextualDeclarations.prefix(count).map { declaration in
+                        NotificationProcessor.NotificationData(book: declaration.category.rawValue, body: declaration.text)
+                    }
+                } else if let categories = categories {
+                    notifications = getNotificationData(for: count, categories: categories)
+                } else {
+                    notifications = getNotificationData(for: count, categories: notificationCategories())
+                }
+                
+                await MainActor.run {
+                    // Use AI-optimized timing if available, otherwise use user preferences
+                    if !optimalTimes.isEmpty {
+                        self.prepareAINotifications(declarations: notifications, optimalTimes: optimalTimes, count: count) {
+                            callback?()
+                        }
+                    } else {
+                        // Fall back to regular timing
+                        self.prepareNotifications(declarations: notifications, startTime: startTime, endTime: endTime, count: count) {
+                            callback?()
+                        }
+                    }
+                }
+                
+            } catch {
+                print("❌ AI notification setup failed, falling back to standard: \(error)")
+                // Fall back to standard notification system
+                await MainActor.run {
+                    if let categories = categories {
+                        let notifications = self.getNotificationData(for: count, categories: categories)
+                        self.prepareNotifications(declarations: notifications, startTime: startTime, endTime: endTime, count: count) {
+                            callback?()
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    private func prepareAINotifications(declarations: [NotificationProcessor.NotificationData], optimalTimes: [Date], count: Int, callback: @escaping () -> Void) {
+        // Convert optimal times to hour-based scheduling similar to existing system
+        let timeHours = optimalTimes.map { Calendar.current.component(.hour, from: $0) }
+        let startTime = timeHours.min() ?? 9
+        let endTime = timeHours.max() ?? 21
+        
+        // Use existing notification preparation with AI-optimized timing
+        prepareNotifications(declarations: declarations, startTime: startTime, endTime: endTime, count: count, callback: callback)
+        
+        print("📱 AI-enhanced notifications scheduled for optimal times: \(timeHours)")
     }
 }
 

@@ -107,6 +107,11 @@ final class DeclarationViewModel: ObservableObject {
     
     private var allDeclarations: [Declaration] = []
     
+    // Public accessor for AI services
+    var allAvailableDeclarations: [Declaration] {
+        return allDeclarations
+    }
+    
     var selectedCategories = Set<DeclarationCategory>()
    
     private var service: APIService

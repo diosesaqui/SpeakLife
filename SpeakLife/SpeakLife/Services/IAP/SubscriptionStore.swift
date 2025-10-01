@@ -57,6 +57,9 @@ final class SubscriptionStore: ObservableObject {
     @Published var showTestimonyTab = false
     @Published var offerFreeTrial = false
     
+    // MARK: - AI Feature Flag
+    @Published var enableAIFeatures = false
+    
     @Published var yearlySubscription = ""
     @Published var monthlySubscription = ""
     @Published var discountSubscription = ""
@@ -143,6 +146,13 @@ final class SubscriptionStore: ObservableObject {
         showMostPopularBadge = remoteConfig["showMostPopularBadge"].boolValue
         showTestimonyTab = remoteConfig["showTestimonyTab"].boolValue
         offerFreeTrial = remoteConfig["offerFreeTrial"].boolValue
+        
+        // AI Feature Flag from Remote Config
+        enableAIFeatures = remoteConfig["enableAIFeatures"].boolValue
+        
+        // Sync to UserDefaults for TaskLibrary access
+        UserDefaults.standard.set(enableAIFeatures, forKey: "enableAIFeatures")
+        
         yearlyID = yearlySubscription
         monthlyID = monthlySubscription
         discountID = discountSubscription
@@ -168,6 +178,15 @@ final class SubscriptionStore: ObservableObject {
         
         // Check if the given date is after or on the date 30 days ago
         return date >= date30DaysAgo
+    }
+    
+    // MARK: - AI Feature Eligibility Methods
+    
+    var isAIEnabled: Bool {
+        let aiEnabled = enableAIFeatures
+        // Sync to UserDefaults for TaskLibrary access
+        UserDefaults.standard.set(aiEnabled, forKey: "enableAIFeatures")
+        return aiEnabled
     }
     
     func listenForTransactions() -> Task<Void, Error> {

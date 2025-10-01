@@ -42,6 +42,9 @@ struct IntentsBarView: View {
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.didEnterBackgroundNotification)) { _ in
             self.isPresentingThemeChooser = false
             self.isPresentingPremiumView = false
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("DismissCategoryChooser"))) { _ in
+            print("🔔 Received DismissCategoryChooser notification")
             self.isPresentingCategoryChooser = false
             self.isPresentingDevotionalView = false
             self.showEntryView = false

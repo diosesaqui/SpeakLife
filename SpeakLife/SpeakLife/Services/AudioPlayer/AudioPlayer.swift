@@ -43,28 +43,31 @@ class AudioPlayerService: NSObject, AVAudioPlayerDelegate {
     
     
     @objc private func appDidEnterBackground() {
-            // Only mark for resumption when truly backgrounded, not just inactive
-            if audioPlayer?.isPlaying == true {
-                savedPlaybackTime = audioPlayer?.currentTime ?? 0
-                isPausedInBackground = true
-            }
+            // Completely stop and clean up audio when entering background
+            // This prevents any chance of audio continuing after backgrounding
+            audioPlayer?.stop()
+            audioPlayer = nil
+            
+            // Reset all state to ensure fresh start when app returns
+            isPausedInBackground = false
+            savedPlaybackTime = 0
+            isPlaying = false
+            audioFiles = []
+            currentFileIndex = 0
+            
+            // Deactivate audio session to ensure no background audio continues
+            try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
         }
 
         @objc private func appWillEnterForeground() {
-            // Resume playback if it was playing when backgrounded
-            if isPausedInBackground && audioPlayer != nil {
-                DispatchQueue.main.async { [weak self] in
-                    guard let self = self else { return }
-                    // Resume from saved position if audio was paused due to backgrounding
-                    if self.savedPlaybackTime > 0 {
-                        self.audioPlayer?.currentTime = self.savedPlaybackTime
-                        self.savedPlaybackTime = 0
-                    }
-                    self.audioPlayer?.play()
-                    self.isPlaying = true
-                }
-                isPausedInBackground = false
-            }
+            // Ensure clean state when returning from background/suspension
+            isPausedInBackground = false
+            savedPlaybackTime = 0
+            isPlaying = false
+            
+            // Audio player was released in background, will be recreated when needed
+            audioPlayer = nil
+            // Note: Background music will be restarted by SpeakLifeApp if enabled
         }
         
         @objc private func appWillResignActive() {
@@ -79,6 +82,10 @@ class AudioPlayerService: NSObject, AVAudioPlayerDelegate {
 
 
     func playSound(files: [MusicResources]) {
+        // Clear any stale background flags before playing
+        isPausedInBackground = false
+        savedPlaybackTime = 0
+        
         // Setup audio session for background playback
         do {
             let audioSession = AVAudioSession.sharedInstance()
@@ -132,6 +139,7 @@ class AudioPlayerService: NSObject, AVAudioPlayerDelegate {
             self?.audioPlayer?.pause()
         }
         isPlaying = false
+        isPausedInBackground = false  // Clear any stale background state
     }
     
     func stopMusic() {
@@ -151,10 +159,17 @@ class AudioPlayerService: NSObject, AVAudioPlayerDelegate {
     func playMusic() {
         // Only play if we have audio files loaded
         guard !audioFiles.isEmpty else { return }
-        DispatchQueue.main.async { [weak self] in
-            self?.audioPlayer?.play()
+        
+        // If audio player was released (after background/suspension), recreate it
+        if audioPlayer == nil && currentFileIndex < audioFiles.count {
+            let type = audioFiles[currentFileIndex].type
+            playFile(type: type)
+        } else {
+            DispatchQueue.main.async { [weak self] in
+                self?.audioPlayer?.play()
+            }
+            isPlaying = true
         }
-        isPlaying = true
     }
     
     

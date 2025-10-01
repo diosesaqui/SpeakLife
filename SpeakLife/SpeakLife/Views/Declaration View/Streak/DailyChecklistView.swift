@@ -10,6 +10,7 @@ import SwiftUI
 struct DailyChecklistView: View {
     @ObservedObject var viewModel: EnhancedStreakViewModel
     @EnvironmentObject var appState: AppState
+    @EnvironmentObject var subscriptionStore: SubscriptionStore
     @State private var showInfoSheet = false
     @State private var showFirstTaskConfetti = false
     var onClose: (() -> Void)? = nil
