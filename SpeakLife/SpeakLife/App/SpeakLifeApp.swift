@@ -71,10 +71,8 @@ struct SpeakLifeApp: App {
                             appDelegate.initializeTikTokSDK()
                         }
                     }
-                    // Start background music if explicitly enabled
-                    if declarationStore.backgroundMusicEnabled {
-                        AudioPlayerService.shared.playSound(files: resources)
-                    }
+                    // DO NOT automatically start background music on app launch
+                    // User must manually enable it each session to prevent unwanted audio
                     
                     // 🚀 Initialize AI services and train initial models
                     Task {
@@ -109,19 +107,9 @@ struct SpeakLifeApp: App {
                 // Process any pending widget actions when app becomes active
                 WidgetDataBridge.shared.processPendingWidgetActions()
                 
-                // Only start background music if enabled, not already playing, no content audio,
-                // AND the app was recently backgrounded (not hours later)
-                // This prevents music from starting unexpectedly after long periods
-                if declarationStore.backgroundMusicEnabled && 
-                   !AudioPlayerService.shared.isPlaying && 
-                   !AudioPlayerViewModel.hasActiveAudio {
-                    // Only restart background music if app was recently backgrounded (within 5 minutes)
-                    // This prevents music from randomly starting hours later
-                    let timeSinceBackground = Date().timeIntervalSince(appState.lastBackgroundDate ?? Date.distantPast)
-                    if timeSinceBackground < 300 { // 5 minutes
-                        AudioPlayerService.shared.playSound(files: resources)
-                    }
-                }
+                // NEVER automatically restart background music when app becomes active
+                // User must manually re-enable it if they want it
+                // This prevents the issue of music randomly playing hours later
                     
                 if appState.notificationEnabled {
                     // Ensure checklist notifications are scheduled (they repeat daily)
@@ -140,9 +128,15 @@ struct SpeakLifeApp: App {
                 // This allows music to continue when notification center/control center is opened
                 break
             case .background:
-                // Stop background music completely when going to background
-                // This ensures clean state and prevents stale audio from playing later
-                AudioPlayerService.shared.stopMusic()
+                // ALWAYS stop background music when going to background
+                // Only content audio (lessons) should continue
+                if !AudioPlayerViewModel.hasActiveAudio {
+                    // No content audio playing, so completely terminate background music
+                    AudioPlayerService.shared.stopMusic()
+                    
+                    // Also disable background music to prevent any automatic restart
+                    declarationStore.backgroundMusicEnabled = false
+                }
                 
                 // Track when app was backgrounded to prevent stale audio from restarting hours later
                 appState.lastBackgroundDate = Date()

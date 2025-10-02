@@ -28,108 +28,114 @@ struct PricingOption {
 // MARK: - Subcomponents
 struct BenefitRow: View {
     let benefit: AbideStyleBenefit
+    @Environment(\.horizontalSizeClass) var sizeClass
+    
+    private var isCompact: Bool {
+        sizeClass == .compact
+    }
     
     var body: some View {
-        HStack(spacing: 16) {
+        HStack(spacing: isCompact ? 16 : 20) {
             VStack {
                 Image(systemName: benefit.icon)
-                    .font(.system(size: 20, weight: .medium))
+                    .font(.system(size: isCompact ? 20 : 24, weight: .medium))
                     .foregroundColor(Constants.DAMidBlue) // SpeakLife blue
-                    .frame(width: 24, height: 24)
+                    .frame(width: isCompact ? 24 : 30, height: isCompact ? 24 : 30)
                 Spacer()
                 
             }
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: isCompact ? 2 : 4) {
                 Text(benefit.title)
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(.system(size: isCompact ? 14 : 16, weight: .semibold))
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity, alignment: .leading)
                 
                 Text(benefit.description)
-                    .font(.system(size: 12, weight: .regular))
+                    .font(.system(size: isCompact ? 12 : 14, weight: .regular))
                     .foregroundColor(.white.opacity(0.8))
                     .fixedSize(horizontal: false, vertical: true)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.vertical, 4)
+        .padding(.vertical, isCompact ? 4 : 6)
     }
 }
 
 struct AbideStylePricingOption: View {
     let option: PricingOption
     let action: () -> Void
+    @Environment(\.horizontalSizeClass) var sizeClass
+    
+    private var isCompact: Bool {
+        sizeClass == .compact
+    }
     
     var body: some View {
         Button(action: action) {
-            ZStack {
-                HStack(spacing: 12) {
-                    // Selection indicator
-                    ZStack {
+            HStack(spacing: isCompact ? 12 : 16) {
+                // Selection indicator
+                ZStack {
+                    Circle()
+                        .stroke(Color.white.opacity(0.5), lineWidth: 2)
+                        .frame(width: isCompact ? 20 : 24, height: isCompact ? 20 : 24)
+                    
+                    if option.isSelected {
                         Circle()
-                            .stroke(Color.white.opacity(0.5), lineWidth: 2)
-                            .frame(width: 20, height: 20)
-                        
-                        if option.isSelected {
-                            Circle()
-                                .fill(Constants.DAMidBlue) // SpeakLife blue
-                                .frame(width: 12, height: 12)
-                        }
+                            .fill(Constants.DAMidBlue) // SpeakLife blue
+                            .frame(width: isCompact ? 12 : 14, height: isCompact ? 12 : 14)
                     }
-                    
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(option.title)
-                            .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(.white)
-                        
-                        Text(option.subtitle)
-                            .font(.system(size: 12, weight: .regular))
-                            .foregroundColor(.white.opacity(0.7))
-                    }
-                    
-                    Spacer()
-                    
-                    Text(option.price)
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(.white)
                 }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 12)
-                .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(option.isSelected ? 
-                              Constants.DAMidBlue.opacity(0.3) : // SpeakLife blue
-                              Color.black.opacity(0.2))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 12)
-                                .stroke(option.isSelected ? 
-                                       Constants.DAMidBlue : // SpeakLife blue
-                                       Color.white.opacity(0.2), 
-                                       lineWidth: option.isSelected ? 2 : 1)
-                        )
-                )
                 
-                // Best Offer badge
-                if option.isBestOffer {
-                    VStack {
-                        HStack {
-                            Spacer()
-                            Text("Best Offer")
-                                .font(.system(size: 12, weight: .bold))
-                                .foregroundColor(.black)
-                                .padding(.horizontal, 12)
-                                .padding(.vertical, 4)
-                                .background(
-                                    Capsule()
-                                        .fill(Color(red: 1.0, green: 0.8, blue: 0.0))
-                                )
-                                .offset(x: -8, y: -0)
-                        }
-                        Spacer()
+                VStack(alignment: .leading, spacing: isCompact ? 2 : 3) {
+                    Text(option.title)
+                        .font(.system(size: isCompact ? 16 : 18, weight: .medium))
+                        .foregroundColor(.white)
+                    
+                    Text(option.subtitle)
+                        .font(.system(size: isCompact ? 12 : 14, weight: .regular))
+                        .foregroundColor(.white.opacity(0.7))
+                }
+                
+                Spacer()
+                
+                Text(option.price)
+                    .font(.system(size: isCompact ? 16 : 20, weight: .semibold))
+                    .foregroundColor(.white)
+            }
+            .padding(.horizontal, isCompact ? 12 : 16)
+            .padding(.vertical, isCompact ? 12 : 16)
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(option.isSelected ? 
+                          Constants.DAMidBlue.opacity(0.3) : // SpeakLife blue
+                          Color.black.opacity(0.2))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(option.isSelected ? 
+                                   Constants.DAMidBlue : // SpeakLife blue
+                                   Color.white.opacity(0.2), 
+                                   lineWidth: option.isSelected ? 2 : 1)
+                    )
+            )
+            .overlay(
+                // Best Offer badge as overlay
+                Group {
+                    if option.isBestOffer {
+                        Text("Best Offer")
+                            .font(.system(size: 11, weight: .bold))
+                            .foregroundColor(.black)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 3)
+                            .background(
+                                Capsule()
+                                    .fill(Color(red: 1.0, green: 0.8, blue: 0.0))
+                            )
+                            .offset(y: -8)
                     }
                 }
-            }
+                , alignment: .topTrailing
+            )
         }
         .buttonStyle(PlainButtonStyle())
     }
@@ -220,15 +226,17 @@ struct OptimizedSubscriptionView: View {
                                 headerSection(geometry: geometry)
                                 
                                 // Benefits
-                                benefitsSection
+                                benefitsSection(geometry: geometry)
                                 
                                 // Space for sticky bottom
                                 // Spacer().frame(height: geometry.size.height * 0.2)
                             }
                         }
                         
-                        stickyBottomSection
-                            .frame(height: geometry.size.height * 0.35)
+                        stickyBottomSection(geometry: geometry)
+                            .frame(height: isIPad(geometry) ? 
+                                   geometry.size.height * 0.25 : 
+                                   geometry.size.height * 0.35)
                     }
                 
                     
@@ -245,6 +253,11 @@ struct OptimizedSubscriptionView: View {
                 }
             }
         }
+    }
+    
+    // Helper function to detect iPad
+    private func isIPad(_ geometry: GeometryProxy) -> Bool {
+        return geometry.size.width > 600
     }
     
     // MARK: - Computed Properties
@@ -293,83 +306,85 @@ struct OptimizedSubscriptionView: View {
     // MARK: - View Components
     
     private func headerSection(geometry: GeometryProxy) -> some View {
-        ZStack {
+        let iPad = isIPad(geometry)
+        let iconSize = iPad ? min(120, geometry.size.width * 0.12) : geometry.size.width * 0.18
+        let headerHeight = iPad ? geometry.size.height * 0.28 : geometry.size.height * 0.33
+        let titleSize: CGFloat = iPad ? 32 : 26
+        let joinTextSize = iPad ? min(20, geometry.size.width * 0.03) : geometry.size.width * 0.040
+        let subtitleSize = iPad ? min(16, geometry.size.width * 0.025) : geometry.size.width * 0.035
+        
+        return ZStack {
             // Background image
             Image("starrySunrise")
                 .resizable()
                 .aspectRatio(contentMode: .fill)
-                .frame(height: geometry.size.height * 0.33)
+                .frame(height: headerHeight)
                 .clipped()
             
-            // Gradient overlay
-//            LinearGradient(
-//                gradient: Gradient(colors: [
-//                    Color.clear,
-//                    Constants.SLBlue.opacity(0.3)
-//                ]),
-//                startPoint: .top,
-//                endPoint: .bottom
-//            )
-            
             // Content
-            VStack(spacing: geometry.size.height * 0.02) {
-                Spacer().frame(height:geometry.size.height * 0.1)
+            VStack(spacing: iPad ? 20 : geometry.size.height * 0.02) {
+                Spacer().frame(height: iPad ? 60 : geometry.size.height * 0.1)
                 
                 // Logo and title
-                VStack(spacing: geometry.size.height * 0.015) {
+                VStack(spacing: iPad ? 12 : geometry.size.height * 0.015) {
                     Image("appIconDisplay")
                         .resizable()
-                        .frame(width: geometry.size.width * 0.18, height: geometry.size.width * 0.18)
-                        .clipShape(RoundedRectangle(cornerRadius: geometry.size.width * 0.04))
+                        .frame(width: iconSize, height: iconSize)
+                        .clipShape(RoundedRectangle(cornerRadius: iPad ? 24 : geometry.size.width * 0.04))
                         .overlay(
-                            RoundedRectangle(cornerRadius: geometry.size.width * 0.04)
+                            RoundedRectangle(cornerRadius: iPad ? 24 : geometry.size.width * 0.04)
                                 .stroke(Color.white.opacity(0.3), lineWidth: 1)
                         )
                     
                     Text("SpeakLife")
-                        .font(.system(size: 26, weight: .bold))
+                        .font(.system(size: titleSize, weight: .bold))
                         .shadow(color: Color.white.opacity(0.6), radius: 4, x: 0, y: 2)
                         .foregroundColor(.white)
                         .shadow(radius: 2)
                 }
                 
                 Spacer()
-                    .frame(height:geometry.size.height * 0.0005)
+                    .frame(height: iPad ? 10 : geometry.size.height * 0.0005)
                 
                 // Join banner
-                VStack(spacing: geometry.size.height * 0.01) {
+                VStack(spacing: iPad ? 8 : geometry.size.height * 0.01) {
                     Text("Join the 50,000+ Growing in Faith Daily")
-                        .font(.system(size: geometry.size.width * 0.040, weight: .semibold))
+                        .font(.system(size: joinTextSize, weight: .semibold))
                         .foregroundColor(.white)
                         .multilineTextAlignment(.center)
+                        .lineLimit(iPad ? 1 : 2)
                     
                     Text(dynamicHeaderPricing)
-                        .font(.system(size: geometry.size.width * 0.035, weight: .regular))
+                        .font(.system(size: subtitleSize, weight: .regular))
                         .foregroundColor(.white.opacity(0.9))
                 }
-                .padding(.horizontal, geometry.size.width * 0.05)
-                .padding(.vertical, geometry.size.height * 0.02)
+                .padding(.horizontal, iPad ? 24 : geometry.size.width * 0.05)
+                .padding(.vertical, iPad ? 16 : geometry.size.height * 0.02)
+                .frame(maxWidth: iPad ? 500 : .infinity)
                 .background(
                     RoundedRectangle(cornerRadius: 16)
                         .fill(Constants.DAMidBlue.opacity(0.9))
                 )
-                .padding(.horizontal, geometry.size.width * 0.05)
-                .padding(.bottom, geometry.size.height * 0.025)
+                .padding(.horizontal, iPad ? 40 : geometry.size.width * 0.05)
+                .padding(.bottom, iPad ? 20 : geometry.size.height * 0.025)
             }
         }
-        .frame(height: geometry.size.height * 0.33)
+        .frame(height: headerHeight)
     }
     
-    private var benefitsSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
+    private func benefitsSection(geometry: GeometryProxy) -> some View {
+        let iPad = isIPad(geometry)
+        let horizontalPadding = iPad ? 40.0 : 24.0
+        let topPadding = iPad ? 32.0 : 24.0
+        
+        return VStack(alignment: .leading, spacing: iPad ? 16 : 12) {
             ForEach(benefits, id: \.title) { benefit in
                 BenefitRow(benefit: benefit)
             }
         }
-       // .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, 24)
-        .padding(.top, 24)
-       // .padding(.bottom, 24)
+        .frame(maxWidth: iPad ? 700 : .infinity, alignment: .leading)
+        .padding(.horizontal, horizontalPadding)
+        .padding(.top, topPadding)
     }
     
     private var pricingSection: some View {
@@ -385,6 +400,7 @@ struct OptimizedSubscriptionView: View {
                 ),
                 action: { selectedOption = "annual" }
             )
+            .padding(.bottom, 8)
             
             AbideStylePricingOption(
                 option: PricingOption(
@@ -406,8 +422,12 @@ struct OptimizedSubscriptionView: View {
             .frame(maxWidth: .infinity)
     }
     
-    private var stickyBottomSection: some View {
-        VStack(spacing: 0) {
+    private func stickyBottomSection(geometry: GeometryProxy) -> some View {
+        let iPad = isIPad(geometry)
+        let horizontalPadding = iPad ? 40.0 : 20.0
+        let verticalPadding = iPad ? 20.0 : 12.0
+        
+        return VStack(spacing: 0) {
             // Gradient fade effect at top
             LinearGradient(
                 gradient: Gradient(colors: [
@@ -419,19 +439,29 @@ struct OptimizedSubscriptionView: View {
             )
             .frame(height: 15)
             
-            VStack(spacing: 8) {
-                // Pricing options
-                pricingSection
+            VStack(spacing: 12) {
+                // Pricing options - centered on iPad
+                if iPad {
+                    HStack(spacing: 20) {
+                        Spacer()
+                        pricingSection
+                            .frame(maxWidth: 600)
+                        Spacer()
+                    }
+                } else {
+                    pricingSection
+                }
                 
                 // CTA button
                 ctaButton
+                    .frame(maxWidth: iPad ? 600 : .infinity)
                 
                 // Bottom links
                 bottomLinks
             }
-            .padding(.horizontal, 20)
-            .padding(.vertical, 12)
-            .padding(.bottom, 8)
+            .padding(.horizontal, horizontalPadding)
+            .padding(.vertical, verticalPadding)
+            .padding(.bottom, iPad ? 20 : 8)
             .background(Constants.SLBlue.opacity(0.95))
         }
         .ignoresSafeArea(edges: .bottom)

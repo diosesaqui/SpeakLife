@@ -20,6 +20,9 @@ class AudioPlayerService: NSObject, AVAudioPlayerDelegate {
     var currentArtist: String?
     var currentTitle: String?
     
+    // Failsafe timer to kill audio after backgrounding
+    private var backgroundKillTimer: Timer?
+    
     private override init() {
            super.init()
            NotificationCenter.default.addObserver(self, selector: #selector(appDidEnterBackground), name: UIApplication.didEnterBackgroundNotification, object: nil)
@@ -43,23 +46,31 @@ class AudioPlayerService: NSObject, AVAudioPlayerDelegate {
     
     
     @objc private func appDidEnterBackground() {
-            // Completely stop and clean up audio when entering background
-            // This prevents any chance of audio continuing after backgrounding
-            audioPlayer?.stop()
-            audioPlayer = nil
+            // Cancel any existing timer
+            backgroundKillTimer?.invalidate()
             
-            // Reset all state to ensure fresh start when app returns
-            isPausedInBackground = false
-            savedPlaybackTime = 0
-            isPlaying = false
-            audioFiles = []
-            currentFileIndex = 0
+            // Only stop BACKGROUND MUSIC when entering background
+            // Content audio (lessons) should continue playing
             
-            // Deactivate audio session to ensure no background audio continues
-            try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+            // Check if this is actually playing background music (not content audio)
+            if isPlaying && !AudioPlayerViewModel.hasActiveAudio {
+                // This is background music - stop it completely
+                stopMusic()
+            }
+            
+            // Set a failsafe timer to absolutely kill any background music after 60 seconds
+            // This prevents any possibility of music playing hours later
+            backgroundKillTimer = Timer.scheduledTimer(withTimeInterval: 60.0, repeats: false) { [weak self] _ in
+                self?.stopMusic()
+                print("⏰ Failsafe: Killed background music after 60 seconds in background")
+            }
         }
 
         @objc private func appWillEnterForeground() {
+            // Cancel the background kill timer since we're back
+            backgroundKillTimer?.invalidate()
+            backgroundKillTimer = nil
+            
             // Ensure clean state when returning from background/suspension
             isPausedInBackground = false
             savedPlaybackTime = 0
@@ -67,7 +78,7 @@ class AudioPlayerService: NSObject, AVAudioPlayerDelegate {
             
             // Audio player was released in background, will be recreated when needed
             audioPlayer = nil
-            // Note: Background music will be restarted by SpeakLifeApp if enabled
+            // Background music will NOT be automatically restarted
         }
         
         @objc private func appWillResignActive() {
@@ -125,12 +136,20 @@ class AudioPlayerService: NSObject, AVAudioPlayerDelegate {
     }
 
     func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
-        if flag && isPlaying {  // Only continue if we're actively playing
+        // Check if app is in foreground before continuing playback
+        let appState = UIApplication.shared.applicationState
+        
+        // Only continue playing if ALL conditions are met:
+        // 1. Playback was successful
+        // 2. We're actively playing
+        // 3. App is in foreground
+        // 4. No content audio is playing
+        if flag && isPlaying && appState == .active && !AudioPlayerViewModel.hasActiveAudio {
             currentFileIndex = (currentFileIndex + 1) % audioFiles.count
             playFile(type: "mp3") // Assuming all files are mp3
         } else {
-            // Stop playback if we're not actively playing
-            isPlaying = false
+            // Stop everything if any condition fails
+            stopMusic()
         }
     }
     
@@ -143,17 +162,23 @@ class AudioPlayerService: NSObject, AVAudioPlayerDelegate {
     }
     
     func stopMusic() {
-        DispatchQueue.main.async { [weak self] in
-            self?.audioPlayer?.stop()
-            self?.audioPlayer = nil
-        }
+        // Immediately stop and completely release all audio resources
+        audioPlayer?.stop()
+        audioPlayer = nil
+        
+        // Clear ALL state to prevent any possibility of resurrection
         isPlaying = false
         isPausedInBackground = false
         savedPlaybackTime = 0
         audioFiles = []
+        currentFileIndex = 0
+        currentArtist = nil
+        currentTitle = nil
         
-        // Don't deactivate audio session - other audio might be playing
-        // The session will be managed by the audio content player
+        // Deactivate audio session if no content audio is playing
+        if !AudioPlayerViewModel.hasActiveAudio {
+            try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+        }
     }
     
     func playMusic() {
