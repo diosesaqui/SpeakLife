@@ -11,15 +11,37 @@ final class NotificationHandler: NSObject, ObservableObject, UNUserNotificationC
     
     static let shared = NotificationHandler()
 
-    var callback: ((UNNotificationContent) -> Void)?
+    var callback: ((UNNotificationContent) -> Void)? {
+        didSet {
+            // If a callback is set and we have a pending notification, process it immediately
+            if let pending = pendingNotificationContent, let callback = callback {
+                print("🔔 Processing pending notification: \(pending.body)")
+                DispatchQueue.main.async { [weak self] in
+                    callback(pending)
+                    self?.pendingNotificationContent = nil
+                }
+            }
+        }
+    }
+    private var pendingNotificationContent: UNNotificationContent?
     
     func userNotificationCenter(_ center: UNUserNotificationCenter,
                                 didReceive response: UNNotificationResponse,
                                 withCompletionHandler completionHandler: @escaping () -> Void) {
         
         let content = response.notification.request.content
+        print("🔔 NotificationHandler.didReceive called with: \(content.body)")
+        
         DispatchQueue.main.async { [weak self] in
-            self?.callback?(content)
+            if let callback = self?.callback {
+                // If callback is set, call it immediately
+                print("🔔 Callback exists, calling immediately")
+                callback(content)
+            } else {
+                // If callback isn't set yet, store the notification for later
+                print("🔔 No callback yet, storing notification for later")
+                self?.pendingNotificationContent = content
+            }
         }
         completionHandler()
         

@@ -472,6 +472,17 @@
             "tag": "godsHeart"
         },
         {
+            "id": "speaklife-s3ep7.mp3",
+            "title": "A Sound Mind",
+            "subtitle": "S3 Episode 7",
+            "duration": "3m",
+            "imageUrl": "devotional",
+            "isPremium": true,
+            "tag": "speaklife",
+            "season": 3,
+            "episode": 7
+        },
+        {
             "id": "speaklife-s3ep6.mp3",
             "title": "Close Every Door",
             "subtitle": "S3 Episode 6",

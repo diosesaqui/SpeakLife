@@ -28,6 +28,7 @@ struct SpeakLifeApp: App {
     @StateObject var tabViewModel = TabViewModel()
     
     @State var isShowingLanding = true
+    @State var wasLaunchedFromNotification = false
     
     private let fourDaysInSeconds: Double = 345600
     
@@ -54,12 +55,19 @@ struct SpeakLifeApp: App {
                 .onAppear {
                     NotificationHandler.shared.callback = { content in
                         DispatchQueue.main.async {
+                            print("📱 Notification received - setting declaration: \(content.body)")
+                            // Mark that we were launched from a notification
+                            wasLaunchedFromNotification = true
+                            
                             if let _ = content.userInfo["tab"] {
                                 tabViewModel.goToAudio()
                             } else {
                                 tabViewModel.resetToHome()
                             }
-                                declarationStore.setDeclaration(content.body, category: content.title)
+                            // Use category from userInfo if available, otherwise fallback to title
+                            let category = content.userInfo["category"] as? String ?? content.title
+                            print("📱 Category from notification: \(category)")
+                            declarationStore.setDeclaration(content.body, category: category)
                         }
                     }
                     
@@ -83,14 +91,17 @@ struct SpeakLifeApp: App {
                             isShowingLanding = false
                         }
                         
-
-                            if !appState.isOnboarded {
-                                let categoryString = appState.selectedNotificationCategories.components(separatedBy: ",").first ?? "destiny"
-                                if let category = DeclarationCategory(categoryString) {
-                                    declarationStore.choose(category) { _ in }
-                                }
+                        // Only auto-select a category if we weren't launched from a notification
+                        if !wasLaunchedFromNotification && !appState.isOnboarded {
+                            print("⚠️ Auto-selecting category for non-onboarded user (not from notification)")
+                            let categoryString = appState.selectedNotificationCategories.components(separatedBy: ",").first ?? "destiny"
+                            if let category = DeclarationCategory(categoryString) {
+                                declarationStore.choose(category) { _ in }
                             }
+                        } else if wasLaunchedFromNotification {
+                            print("✅ Skipping auto-selection - launched from notification")
                         }
+                    }
     
                         } 
             //    .environmentObject(timeTracker)

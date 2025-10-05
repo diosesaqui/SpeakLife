@@ -87,6 +87,9 @@ final class AINotificationService {
             type: notificationType
         )
         
+        // Determine category based on user behavior or notification type
+        let category = determineDeclarationCategory(userBehavior: userBehavior, type: notificationType)
+        
         // Generate personalized message
         let (title, message) = await generatePersonalizedMessage(
             hour: hour,
@@ -103,6 +106,7 @@ final class AINotificationService {
         
         return AINotification(
             declarationId: declarationId,
+            declarationCategory: category,
             personalizedTitle: title,
             personalizedMessage: message,
             optimalTime: date,
@@ -123,6 +127,38 @@ final class AINotificationService {
             return .evening
         default:
             return .reminder
+        }
+    }
+    
+    private func determineDeclarationCategory(userBehavior: UserBehaviorFeatures, type: AINotification.NotificationType) -> String {
+        // Determine category based on user's struggling areas, growth areas, or time of day
+        if !userBehavior.strugglingAreas.isEmpty {
+            let area = userBehavior.strugglingAreas.first!
+            switch area {
+            case "Fear": return "fear"
+            case "Anxiety": return "anxiety"
+            case "Hard Times": return "hardtimes"
+            case "Faith": return "faith"
+            case "Hope": return "hope"
+            default: return "general"
+            }
+        } else if !userBehavior.growthAreas.isEmpty {
+            let area = userBehavior.growthAreas.first!
+            switch area {
+            case "Wisdom": return "wisdom"
+            case "Love": return "love"
+            case "Joy": return "joy"
+            case "Identity": return "identity"
+            default: return "general"
+            }
+        } else {
+            // Default categories based on time of day
+            switch type {
+            case .morning: return "gratitude"
+            case .midday: return "strength"
+            case .evening: return "rest"
+            default: return "general"
+            }
         }
     }
     
@@ -349,6 +385,7 @@ final class AINotificationService {
         // Add AI-specific metadata
         content.userInfo = [
             "declarationId": aiNotification.declarationId,
+            "category": aiNotification.declarationCategory,
             "aiGenerated": true,
             "reason": aiNotification.reason,
             "spiritualContext": aiNotification.spiritualContext,
@@ -400,6 +437,7 @@ final class AINotificationService {
     func scheduleImmediateSupport(for situation: String) async {
         let supportNotification = AINotification(
             declarationId: "crisis_support_immediate",
+            declarationCategory: "hardtimes",
             personalizedTitle: "Strength for Right Now",
             personalizedMessage: "God's power is with you in this moment",
             optimalTime: Date().addingTimeInterval(60), // 1 minute from now
@@ -423,6 +461,7 @@ final class AINotificationService {
     func scheduleCelebration(for achievement: String) async {
         let celebrationNotification = AINotification(
             declarationId: "celebration_achievement",
+            declarationCategory: "gratitude",
             personalizedTitle: "Celebrating Your Victory! 🎉",
             personalizedMessage: "God is rejoicing with you over this breakthrough",
             optimalTime: Date().addingTimeInterval(300), // 5 minutes from now

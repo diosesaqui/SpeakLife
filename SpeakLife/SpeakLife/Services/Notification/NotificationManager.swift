@@ -260,6 +260,7 @@ final class NotificationManager: NSObject {
             content.title = "SpeakLife"
             content.body = body
             content.sound = UNNotificationSound.default
+            content.userInfo = ["category": declaration.category]
             
             var dateComponents = DateComponents()
             dateComponents.calendar = Calendar.autoupdatingCurrent
@@ -959,7 +960,7 @@ final class NotificationManager: NSObject {
                 if !contextualDeclarations.isEmpty {
                     // Convert AI declarations to notification data
                     notifications = contextualDeclarations.prefix(count).map { declaration in
-                        NotificationProcessor.NotificationData(book: declaration.category.rawValue, body: declaration.text)
+                        NotificationProcessor.NotificationData(book: declaration.category.rawValue, body: declaration.text, category: declaration.category.rawValue)
                     }
                 } else if let categories = categories {
                     notifications = getNotificationData(for: count, categories: categories)

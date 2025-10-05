@@ -40,6 +40,10 @@ final class DeclarationViewModel: ObservableObject {
     
     private(set) var currentDeclaration: Declaration?
     
+    // Track if we've set a declaration from notification to avoid overriding it
+    private var hasNotificationDeclaration = false
+    private var pendingNotificationContent: (content: String, category: String)?
+    
     @Published var speaklifeCategories: [DeclarationCategory] = DeclarationCategory.categoryOrder
     
     @Published var allcategories: [DeclarationCategory] = DeclarationCategory.allCategories
@@ -181,7 +185,8 @@ final class DeclarationViewModel: ObservableObject {
             self.populateDeclarationsByCategory()
             
             // Only reshuffle if it's initial load or declarations is empty
-            if isInitialLoad || self.declarations.isEmpty {
+            // BUT skip if we have a notification declaration set
+            if (isInitialLoad || self.declarations.isEmpty) && !self.hasNotificationDeclaration {
                 self.choose(self.selectedCategory) { _ in }
             } else {
                 // Update existing declarations in place without reshuffling
@@ -190,6 +195,13 @@ final class DeclarationViewModel: ObservableObject {
             
             self.favorites = self.getFavorites()
             self.createOwn = self.getCreateOwn()
+            
+            // Process any pending notification after declarations are loaded
+            if let pending = self.pendingNotificationContent {
+                print("📌 Processing pending notification after declarations loaded")
+                self.pendingNotificationContent = nil
+                self.setDeclaration(pending.content, category: pending.category)
+            }
             
             // Sync initial favorites to widget
             let favoriteTexts = self.favorites.map { $0.text }
@@ -469,6 +481,7 @@ final class DeclarationViewModel: ObservableObject {
     }
     
     func choose(_  declaration: Declaration) {
+        print("📍 choose(declaration) called with: \(declaration.text)")
         if !declarations.contains(where: { $0 == declaration }) {
             declarations.append(declaration)
             guard declarations.count > 1 else { return }
@@ -477,6 +490,7 @@ final class DeclarationViewModel: ObservableObject {
             let favIndex = declarations.firstIndex(where: { $0.id == declaration.id})
             declarations.swapAt(declarations.indices.first!, favIndex!)
         }
+        print("📍 Declaration is now at index 0")
     }
     
     func fetchDeclarations(for category: DeclarationCategory, completion: @escaping(([Declaration]) -> Void)) {
@@ -539,19 +553,34 @@ final class DeclarationViewModel: ObservableObject {
     }
     
     func setDeclaration(_ content: String,  category: String)  {
+        print("📌 setDeclaration called with content: \(content), category: \(category)")
+        // Mark that we have a notification declaration to prevent override
+        hasNotificationDeclaration = true
+        
+        // If declarations aren't loaded yet, save for later
+        if allDeclarations.isEmpty {
+            print("📌 Declarations not loaded yet, saving notification for later")
+            pendingNotificationContent = (content: content, category: category)
+            return
+        }
+        
         let contentData = content
        // contentData += " ~ " + category
         let contentText = prefixString(content, until: " ~").dropLast()
         // Finding declaration by content text
         
-            guard let declaration = allDeclarations.first(where: { $0.text.hasPrefix(contentText) }) else {
-                let declaration = Declaration(text: content)
-                if category != "SpeakLife" {
-                    self.choose(declaration)
-                }
-                return
-            }
+        // First try to find the declaration by text
+        if let declaration = allDeclarations.first(where: { $0.text.hasPrefix(contentText) }) {
+            // Found the declaration, navigate to it
+            print("📌 Found existing declaration, navigating to it")
             self.choose(declaration)
+        } else {
+            // Create a new declaration with the content
+            let declaration = Declaration(text: content)
+            print("📌 Creating new declaration and navigating to it")
+            // Always navigate to the declaration regardless of category
+            self.choose(declaration)
+        }
     }
     
     func setRemoteDeclarationVersion(version: Int) {

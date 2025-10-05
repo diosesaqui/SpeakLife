@@ -317,6 +317,7 @@ struct PersonalInsight: Codable {
 // MARK: - Notification Models
 struct AINotification: Codable {
     let declarationId: String
+    let declarationCategory: String
     let personalizedTitle: String
     let personalizedMessage: String
     let optimalTime: Date

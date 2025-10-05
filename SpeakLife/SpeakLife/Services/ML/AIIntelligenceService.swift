@@ -571,6 +571,7 @@ final class AIIntelligenceService: ObservableObject {
         // Schedule a gentle re-engagement notification
         let reEngagementNotification = AINotification(
             declarationId: "re_engagement_gentle",
+            declarationCategory: "faith",
             personalizedTitle: "We've Missed You",
             personalizedMessage: "Your spiritual journey is waiting - here's some encouragement",
             optimalTime: Date().addingTimeInterval(3600), // 1 hour from now
