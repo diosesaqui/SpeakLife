@@ -947,52 +947,52 @@ final class NotificationManager: NSObject {
                                                endTime: Int,
                                                categories: Set<DeclarationCategory>? = nil,
                                                callback: (() -> Void)? = nil) {
-        Task {
-            do {
-                // Get AI-optimized notification times
-                let optimalTimes = await RecommendationEngine.shared.getOptimalNotificationTimes()
-                
-                // Get AI-recommended contextual content
-                let contextualDeclarations = await RecommendationEngine.shared.getContextualDeclarations()
-                
-                // Use AI-selected content if available, otherwise fall back to categories
-                let notifications: [NotificationProcessor.NotificationData]
-                if !contextualDeclarations.isEmpty {
-                    // Convert AI declarations to notification data
-                    notifications = contextualDeclarations.prefix(count).map { declaration in
-                        NotificationProcessor.NotificationData(book: declaration.category.rawValue, body: declaration.text, category: declaration.category.rawValue)
-                    }
-                } else if let categories = categories {
-                    notifications = getNotificationData(for: count, categories: categories)
-                } else {
-                    notifications = getNotificationData(for: count, categories: notificationCategories())
-                }
-                
-                await MainActor.run {
-                    // Use AI-optimized timing if available, otherwise use user preferences
-                    if !optimalTimes.isEmpty {
-                        self.prepareAINotifications(declarations: notifications, optimalTimes: optimalTimes, count: count) {
-                            callback?()
-                        }
-                    } else {
-                        // Fall back to regular timing
-                        self.prepareNotifications(declarations: notifications, startTime: startTime, endTime: endTime, count: count) {
-                            callback?()
-                        }
-                    }
-                }
-                
-            } catch {
-                print("❌ AI notification setup failed, falling back to standard: \(error)")
+//        Task {
+//            do {
+//                // Get AI-optimized notification times
+//                let optimalTimes = await RecommendationEngine.shared.getOptimalNotificationTimes()
+//                
+//                // Get AI-recommended contextual content
+//                let contextualDeclarations = await RecommendationEngine.shared.getContextualDeclarations()
+//                
+//                // Use AI-selected content if available, otherwise fall back to categories
+//                let notifications: [NotificationProcessor.NotificationData]
+//                if !contextualDeclarations.isEmpty {
+//                    // Convert AI declarations to notification data
+//                    notifications = contextualDeclarations.prefix(count).map { declaration in
+//                        NotificationProcessor.NotificationData(book: declaration.category.rawValue, body: declaration.text, category: declaration.category.rawValue)
+//                    }
+//                } else if let categories = categories {
+//                    notifications = getNotificationData(for: count, categories: categories)
+//                } else {
+//                    notifications = getNotificationData(for: count, categories: notificationCategories())
+//                }
+//                
+//                await MainActor.run {
+//                    // Use AI-optimized timing if available, otherwise use user preferences
+//                    if !optimalTimes.isEmpty {
+//                        self.prepareAINotifications(declarations: notifications, optimalTimes: optimalTimes, count: count) {
+//                            callback?()
+//                        }
+//                    } else {
+//                        // Fall back to regular timing
+//                        self.prepareNotifications(declarations: notifications, startTime: startTime, endTime: endTime, count: count) {
+//                            callback?()
+//                        }
+//                    }
+//                }
+//                
+//            } catch {
+              //  print("❌ AI notification setup failed, falling back to standard: \(error)")
                 // Fall back to standard notification system
-                await MainActor.run {
+              //  await MainActor.run {
                     if let categories = categories {
                         let notifications = self.getNotificationData(for: count, categories: categories)
                         self.prepareNotifications(declarations: notifications, startTime: startTime, endTime: endTime, count: count) {
                             callback?()
-                        }
-                    }
-                }
+                      //  }
+                  //  }
+               // }
             }
         }
     }

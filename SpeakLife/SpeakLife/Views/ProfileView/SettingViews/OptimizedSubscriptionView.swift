@@ -170,6 +170,7 @@ struct OptimizedSubscriptionView: View {
     @State private var isShowingError = false
     @State private var errorMessage = ""
     @State private var selectedOption: String = "annual" // "annual" or "monthly"
+    @State private var showPrivacyPolicy = false
     var flag = true
     var callback: (() -> Void)?
     
@@ -250,6 +251,9 @@ struct OptimizedSubscriptionView: View {
                     Button("OK", role: .cancel) { }
                 } message: {
                     Text(errorMessage)
+                }
+                .sheet(isPresented: $showPrivacyPolicy) {
+                    PrivacyPolicyView()
                 }
             }
         }
@@ -406,7 +410,7 @@ struct OptimizedSubscriptionView: View {
                 option: PricingOption(
                     product: subscriptionStore.currentOfferedPremiumMonthly,
                     title: "Monthly",
-                    subtitle: "Full access, 7 days free \(monthlyEquivalentPrice)",
+                    subtitle: "\(monthlyEquivalentPrice)",
                     price: monthlyPrice,
                     isSelected: selectedOption == "monthly",
                     isBestOffer: false
@@ -477,9 +481,11 @@ struct OptimizedSubscriptionView: View {
                 .font(.system(size: 14, weight: .medium))
                 .foregroundColor(.white)
             
-            Link("Privacy", destination: URL(string: "https://speaklife.io/privacy")!)
-                .font(.system(size: 14, weight: .medium))
-                .foregroundColor(.white)
+            Button("Privacy Policy") {
+                showPrivacyPolicy = true
+            }
+            .font(.system(size: 14, weight: .medium))
+            .foregroundColor(.white)
         }
     }
     

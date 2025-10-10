@@ -262,6 +262,7 @@ struct OptimizedSubscriptionViewV1: View {
     @State private var isInitialLoad = true
     @State private var testimonialIndex = 0
     @State private var timeRemaining: TimeInterval = 600
+    @State private var showPrivacyPolicy = false
     
     let size: CGSize
     var callback: (() -> Void)?
@@ -321,6 +322,9 @@ struct OptimizedSubscriptionViewV1: View {
         .onAppear(perform: setupView)
         .onReceive(Timer.publish(every: 1, on: .main, in: .common).autoconnect()) { _ in
             updateCountdown()
+        }
+        .sheet(isPresented: $showPrivacyPolicy) {
+            PrivacyPolicyView()
         }
         .alert("", isPresented: $isShowingError) {
             Button("OK", role: .cancel) { }
@@ -667,9 +671,10 @@ struct OptimizedSubscriptionViewV1: View {
                     .font(.caption)
                     .foregroundColor(.blue)
                 
-                Link("Privacy", destination: URL(string: "https://speaklife.io/privacy")!)
+                Button("Privacy Policy", action: privayPolicy)
                     .font(.caption)
                     .foregroundColor(.blue)
+            
             }
         }
         .padding(.bottom, 40)
@@ -762,5 +767,9 @@ struct OptimizedSubscriptionViewV1: View {
             errorMessage = "Purchases restored successfully"
             isShowingError = true
         }
+    }
+    
+    private func privayPolicy() {
+       showPrivacyPolicy = true
     }
 }

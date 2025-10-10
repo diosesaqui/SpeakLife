@@ -9,6 +9,46 @@ import SwiftUI
 import Combine
 import TipKit
 
+// MARK: - Notification Handling Documentation
+/*
+ NOTIFICATION FLOW OVERVIEW:
+ 
+ The app handles notifications in three distinct scenarios:
+ 
+ 1. COLD LAUNCH (App not running):
+    - User taps notification → App launches
+    - AppDelegate registers NotificationHandler as delegate
+    - NotificationHandler.didReceive is called BEFORE app UI is ready
+    - Notification is stored in pendingNotificationContent
+    - SpeakLifeApp.onAppear sets up the callback
+    - Callback setter detects pending notification and processes it
+    - Declaration is displayed, auto-selection is prevented
+ 
+ 2. BACKGROUND TO FOREGROUND (App suspended):
+    - User taps notification while app is in background
+    - NotificationHandler.didReceive is called
+    - Callback already exists from initial launch
+    - Notification is processed immediately
+    - notificationJustReceived flag prevents auto-selection
+    - Declaration is displayed correctly
+ 
+ 3. FOREGROUND (App active):
+    - Notification arrives while user is using app
+    - NotificationHandler.willPresent is called
+    - Notification is shown as banner
+    - If user taps, didReceive is called and processed normally
+ 
+ KEY FLAGS:
+ - notificationJustReceived: Prevents auto-category selection after notification
+ - isProcessingNotification: Prevents DeclarationViewModel from overriding selection
+ - isFirstAppear: Ensures callback is only set once
+ 
+ TIMING CONSIDERATIONS:
+ - 1-second delay for landing page dismissal
+ - 0.5-second retry if declarations aren't loaded
+ - Flags are reset after appropriate delays to prevent interference
+ */
+
 @main
 struct SpeakLifeApp: App {
     
@@ -28,7 +68,10 @@ struct SpeakLifeApp: App {
     @StateObject var tabViewModel = TabViewModel()
     
     @State var isShowingLanding = true
-    @State var wasLaunchedFromNotification = false
+    
+    // Notification handling state
+    @State private var notificationJustReceived = false
+    @State private var isFirstAppear = true
     
     private let fourDaysInSeconds: Double = 345600
     
@@ -53,22 +96,10 @@ struct SpeakLifeApp: App {
                     }
                 }
                 .onAppear {
-                    NotificationHandler.shared.callback = { content in
-                        DispatchQueue.main.async {
-                            print("📱 Notification received - setting declaration: \(content.body)")
-                            // Mark that we were launched from a notification
-                            wasLaunchedFromNotification = true
-                            
-                            if let _ = content.userInfo["tab"] {
-                                tabViewModel.goToAudio()
-                            } else {
-                                tabViewModel.resetToHome()
-                            }
-                            // Use category from userInfo if available, otherwise fallback to title
-                            let category = content.userInfo["category"] as? String ?? content.title
-                            print("📱 Category from notification: \(category)")
-                            declarationStore.setDeclaration(content.body, category: category)
-                        }
+                    // Set up notification callback only once on first appear
+                    if isFirstAppear {
+                        setupNotificationHandling()
+                        isFirstAppear = false
                     }
                     
                     // Sync widget data on app launch
@@ -86,21 +117,24 @@ struct SpeakLifeApp: App {
                     Task {
                         await CreateMLTrainingPipeline.shared.trainInitialModels()
                     }
+                    // Handle landing page and initial category selection
                     DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
                         withAnimation {
                             isShowingLanding = false
                         }
                         
-                        // Only auto-select a category if we weren't launched from a notification
-                        if !wasLaunchedFromNotification && !appState.isOnboarded {
-                            print("⚠️ Auto-selecting category for non-onboarded user (not from notification)")
+                        // Auto-select category for non-onboarded users
+                        // Skip if notification was just received
+                        if !appState.isOnboarded && !notificationJustReceived {
+                            print("⚠️ Auto-selecting category for non-onboarded user")
                             let categoryString = appState.selectedNotificationCategories.components(separatedBy: ",").first ?? "destiny"
                             if let category = DeclarationCategory(categoryString) {
                                 declarationStore.choose(category) { _ in }
                             }
-                        } else if wasLaunchedFromNotification {
-                            print("✅ Skipping auto-selection - launched from notification")
                         }
+                        
+                        // Clear notification flag after initial setup
+                        notificationJustReceived = false
                     }
     
                         } 
@@ -109,7 +143,9 @@ struct SpeakLifeApp: App {
         .onChange(of: scenePhase) { (newScenePhase) in
             switch newScenePhase {
             case .active:
-                //DispatchQueue.global().async {
+                print("📲 App became active")
+                
+                // Set up app state references
                 appDelegate.appState = appState
                 appDelegate.declarationStore = declarationStore
                 appDelegate.tabViewModel = tabViewModel
@@ -158,6 +194,40 @@ struct SpeakLifeApp: App {
         }
     }
 
+    
+    // MARK: - Notification Setup
+    
+    private func setupNotificationHandling() {
+        print("🚀 Setting up notification handling")
+        
+        NotificationHandler.shared.callback = { content in
+            
+            DispatchQueue.main.async {
+                self.handleNotificationContent(content)
+            }
+        }
+    }
+    
+    private func handleNotificationContent(_ content: UNNotificationContent) {
+        print("📱 Processing notification: \(content.body.prefix(50))...")
+        
+        // Mark that we just received a notification
+        notificationJustReceived = true
+        
+        // Navigate to appropriate tab
+        if content.userInfo["tab"] != nil {
+            tabViewModel.goToAudio()
+        } else {
+            tabViewModel.resetToHome()
+        }
+        
+        // Extract category from userInfo or use title as fallback
+        let category = content.userInfo["category"] as? String ?? content.title
+        print("📱 Notification category: \(category)")
+        
+        // Set the declaration in the store
+        declarationStore.setDeclaration(content.body, category: category)
+    }
     
     private func resetNotifications() {
         let categories = Set(appState.selectedNotificationCategories.components(separatedBy: ",").compactMap({ DeclarationCategory($0) }))

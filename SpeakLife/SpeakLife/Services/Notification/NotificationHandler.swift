@@ -7,44 +7,66 @@
 
 import SwiftUI
 
+/// Handles all notification-related events for the app
+/// Supports three scenarios:
+/// 1. Cold launch - App not running, launched via notification tap
+/// 2. Background - App in background, brought to foreground via notification tap
+/// 3. Foreground - App active when notification arrives
 final class NotificationHandler: NSObject, ObservableObject, UNUserNotificationCenterDelegate {
     
     static let shared = NotificationHandler()
-
+    
+    /// Callback to process notification content
+    /// Set by SpeakLifeApp on initial launch
     var callback: ((UNNotificationContent) -> Void)? {
         didSet {
-            // If a callback is set and we have a pending notification, process it immediately
-            if let pending = pendingNotificationContent, let callback = callback {
-                print("🔔 Processing pending notification: \(pending.body)")
-                DispatchQueue.main.async { [weak self] in
-                    callback(pending)
-                    self?.pendingNotificationContent = nil
-                }
-            }
+            // Process any pending notification when callback is set
+            processPendingNotificationIfNeeded()
         }
     }
+    
+    /// Stores notification content if received before callback is set (cold launch scenario)
     private var pendingNotificationContent: UNNotificationContent?
     
+    // MARK: - UNUserNotificationCenterDelegate
+    
+    /// Called when user taps on a notification
     func userNotificationCenter(_ center: UNUserNotificationCenter,
                                 didReceive response: UNNotificationResponse,
                                 withCompletionHandler completionHandler: @escaping () -> Void) {
         
         let content = response.notification.request.content
-        print("🔔 NotificationHandler.didReceive called with: \(content.body)")
+        print("🔔 Notification tapped - Body: \(content.body.prefix(50))...")
         
         DispatchQueue.main.async { [weak self] in
-            if let callback = self?.callback {
-                // If callback is set, call it immediately
-                print("🔔 Callback exists, calling immediately")
+            guard let self = self else { return }
+            
+            if let callback = self.callback {
+                // Callback exists - process immediately
+                print("🔔 Processing notification immediately")
                 callback(content)
             } else {
-                // If callback isn't set yet, store the notification for later
-                print("🔔 No callback yet, storing notification for later")
-                self?.pendingNotificationContent = content
+                // No callback yet - store for later (cold launch scenario)
+                print("🔔 Storing notification for processing after app initialization")
+                self.pendingNotificationContent = content
             }
         }
-        completionHandler()
         
+        completionHandler()
+    }
+    
+    // MARK: - Private Methods
+    
+    private func processPendingNotificationIfNeeded() {
+        guard let pending = pendingNotificationContent,
+              let callback = callback else { return }
+        
+        print("🔔 Processing stored notification from cold launch")
+        pendingNotificationContent = nil
+        
+        DispatchQueue.main.async {
+            callback(pending)
+        }
     }
     
     func userNotificationCenter(_ center: UNUserNotificationCenter,
