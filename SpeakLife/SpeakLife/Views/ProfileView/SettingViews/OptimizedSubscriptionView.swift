@@ -122,7 +122,7 @@ struct AbideStylePricingOption: View {
                 // Best Offer badge as overlay
                 Group {
                     if option.isBestOffer {
-                        Text("Best Offer")
+                        Text("SAVE 60%")
                             .font(.system(size: 11, weight: .bold))
                             .foregroundColor(.black)
                             .padding(.horizontal, 10)
@@ -146,7 +146,7 @@ struct AbideStyleCTAButton: View {
     
     var body: some View {
         Button(action: action) {
-            Text("Continue")
+            Text("Start My Transformation")
                 .font(.system(size: 18, weight: .semibold))
                 .foregroundColor(.white)
                 .frame(maxWidth: .infinity)
@@ -177,34 +177,34 @@ struct OptimizedSubscriptionView: View {
     // Benefits matching the Abide screenshot
     private let benefits = [
         AbideStyleBenefit(
-            icon: "leaf.fill",
-            title: "Find Peace",
-            description: "Explore affirmation categories for answers to your life's circumstances"
+            icon: "bolt.fill",
+            title: "Breakthrough Living",
+            description: "Watch anxiety melt away as God's promises rewire your mind daily"
         ),
-//        AbideStyleBenefit(
-//            icon: "moon.fill",
-//            title: "Improve Sleep",
-//            description: "500+ calming bedtime stories, relaxing music, and ambient sounds"
-//        ),
         AbideStyleBenefit(
             icon: "heart.fill",
-            title: "Be Encouraged",
-            description: "Start your day with \"New Creation\" devotionals and uplifting audio"
+            title: "Supernatural Peace",
+            description: "Experience the peace that passes understanding - even in chaos"
         ),
         AbideStyleBenefit(
             icon: "sparkles",
-            title: "Deepen Faith",
-            description: "1500+ affirmations on topics like anxiety, healing, and spiritual growth with 25+ visual backgrounds"
+            title: "Manifest Healing",
+            description: "Speak life over your body and relationships - see transformation unfold"
         ),
         AbideStyleBenefit(
-            icon: "speaker.wave.2.fill",
-            title: "Seamless Listening",
-            description: "Stream continuously to renw your mind"
+            icon: "crown.fill",
+            title: "Walk in Victory",
+            description: "Break free from cycles of defeat - step into your God-given authority"
         ),
         AbideStyleBenefit(
-            icon: "heart.circle.fill",
-            title: "Invest in Well-Being",
-            description: "Get full access for just $39.99/year—less than $1/week"
+            icon: "sunrise.fill",
+            title: "Daily Renewal",
+            description: "Wake up excited about life again - experience joy that doesn't fade"
+        ),
+        AbideStyleBenefit(
+            icon: "hands.sparkles.fill",
+            title: "Life-Changing Power",
+            description: "Join 50,000+ believers seeing miracles through spoken promises"
         )
     ]
     
@@ -290,14 +290,14 @@ struct OptimizedSubscriptionView: View {
     private var dynamicHeaderPricing: String {
         if selectedOption == "annual" {
             guard let yearlyProduct = subscriptionStore.currentOfferedPremium else {
-                return "Get 7 days free, then $39.99 per year"
+                return "First 7 days on us, then $39.99 per year"
             }
-            return "Get 7 days free, then \(yearlyProduct.displayPrice) per year"
+            return "First 7 days on us, then \(yearlyProduct.displayPrice) per year"
         } else {
             guard let monthlyProduct = subscriptionStore.currentOfferedPremiumMonthly else {
-                return "Get 7 days free, then $9.99/mo"
+                return "$9.99/mo"
             }
-            return "Get 7 days free, then \(monthlyProduct.displayPrice)/mo"
+            return "\(monthlyProduct.displayPrice)/mo"
         }
     }
     
@@ -352,7 +352,7 @@ struct OptimizedSubscriptionView: View {
                 
                 // Join banner
                 VStack(spacing: iPad ? 8 : geometry.size.height * 0.01) {
-                    Text("Join the 50,000+ Growing in Faith Daily")
+                    Text("Transform Your Spiritual Life")
                         .font(.system(size: joinTextSize, weight: .semibold))
                         .foregroundColor(.white)
                         .multilineTextAlignment(.center)
@@ -396,8 +396,8 @@ struct OptimizedSubscriptionView: View {
             AbideStylePricingOption(
                 option: PricingOption(
                     product: subscriptionStore.currentOfferedPremium,
-                    title: "Annual",
-                    subtitle: "Full access, 7 days free \(yearlyEquivalentPrice)",
+                    title: "Annual - Best Value",
+                    subtitle: "$39.99/year",
                     price: yearlyPrice,
                     isSelected: selectedOption == "annual",
                     isBestOffer: true
@@ -410,7 +410,7 @@ struct OptimizedSubscriptionView: View {
                 option: PricingOption(
                     product: subscriptionStore.currentOfferedPremiumMonthly,
                     title: "Monthly",
-                    subtitle: "\(monthlyEquivalentPrice)",
+                    subtitle: "Start your transformation today",
                     price: monthlyPrice,
                     isSelected: selectedOption == "monthly",
                     isBestOffer: false

@@ -234,16 +234,7 @@ struct PromiseSnippetView: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Image(systemName: "quote.bubble.fill")
-                    .font(.title2)
-                    .foregroundColor(.purple)
-                Text("Daily Promise")
-                    .font(.headline)
-                    .foregroundColor(.primary)
-                Spacer()
-            }
-            
+    
             Text(promise)
                 .font(.body)
                 .foregroundColor(.primary)

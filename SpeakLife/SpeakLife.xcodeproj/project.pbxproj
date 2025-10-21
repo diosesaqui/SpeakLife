@@ -34,6 +34,7 @@
 		452F6ADF2E87CD8500A27856 /* AIEnhancedDeclarationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 452F6ADB2E87CD8500A27856 /* AIEnhancedDeclarationView.swift */; };
 		452F6AE02E87CD8500A27856 /* AIEnhancedDailyChecklist.swift in Sources */ = {isa = PBXBuildFile; fileRef = 452F6ADA2E87CD8500A27856 /* AIEnhancedDailyChecklist.swift */; };
 		452F6AE22E87CDD400A27856 /* AIIntelligenceService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 452F6AE12E87CDD400A27856 /* AIIntelligenceService.swift */; };
+		452F6AE42E9B521800A27856 /* NotificationDebugger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 452F6AE32E9B521800A27856 /* NotificationDebugger.swift */; };
 		453172B42B2D274800388AD4 /* BenefitScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = 453172B32B2D274800388AD4 /* BenefitScene.swift */; };
 		453478F12B9D29CC0012C2C0 /* declarationsv4.json in Resources */ = {isa = PBXBuildFile; fileRef = 453478F02B9D29CC0012C2C0 /* declarationsv4.json */; };
 		453A831E2C9BF18500398ECE /* DeclarationMenuButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 453A831D2C9BF18500398ECE /* DeclarationMenuButton.swift */; };
@@ -308,6 +309,7 @@
 		452F6ADB2E87CD8500A27856 /* AIEnhancedDeclarationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIEnhancedDeclarationView.swift; sourceTree = "<group>"; };
 		452F6ADC2E87CD8500A27856 /* PersonalizedFeedSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersonalizedFeedSection.swift; sourceTree = "<group>"; };
 		452F6AE12E87CDD400A27856 /* AIIntelligenceService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIIntelligenceService.swift; sourceTree = "<group>"; };
+		452F6AE32E9B521800A27856 /* NotificationDebugger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationDebugger.swift; sourceTree = "<group>"; };
 		453172B32B2D274800388AD4 /* BenefitScene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BenefitScene.swift; sourceTree = "<group>"; };
 		453478F02B9D29CC0012C2C0 /* declarationsv4.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = declarationsv4.json; sourceTree = "<group>"; };
 		453A831D2C9BF18500398ECE /* DeclarationMenuButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeclarationMenuButton.swift; sourceTree = "<group>"; };
@@ -1110,6 +1112,7 @@
 				7AA8707528DACC8300134ADB /* NotificationManager.swift */,
 				7AA8707628DACC8300134ADB /* NotificationHandler.swift */,
 				7AA8707728DACC8300134ADB /* NotificationProcessor.swift */,
+				452F6AE32E9B521800A27856 /* NotificationDebugger.swift */,
 			);
 			path = Notification;
 			sourceTree = "<group>";
@@ -1563,6 +1566,7 @@
 				7AA8709428DACCA800134ADB /* App.swift in Sources */,
 				7A92E31B2993882F00FBF2AE /* Events.swift in Sources */,
 				452F6ADE2E87CD8500A27856 /* PersonalizedFeedSection.swift in Sources */,
+				452F6AE42E9B521800A27856 /* NotificationDebugger.swift in Sources */,
 				452F6ADF2E87CD8500A27856 /* AIEnhancedDeclarationView.swift in Sources */,
 				452F6AE02E87CD8500A27856 /* AIEnhancedDailyChecklist.swift in Sources */,
 				4597E2262E419183009D6C66 /* VoiceCorrectionsView.swift in Sources */,
@@ -1939,7 +1943,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = SpeakLife/SpeakLife.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 906;
+				CURRENT_PROJECT_VERSION = 908;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_ASSET_PATHS = "\"SpeakLife/Preview Content\"";
 				DEVELOPMENT_TEAM = 652R6A63L8;
@@ -1960,7 +1964,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 3.1.44;
+				MARKETING_VERSION = 3.1.46;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Franchiz.SpeakLife;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -1981,7 +1985,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = SpeakLife/SpeakLife.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 906;
+				CURRENT_PROJECT_VERSION = 908;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_ASSET_PATHS = "\"SpeakLife/Preview Content\"";
 				DEVELOPMENT_TEAM = 652R6A63L8;
@@ -2002,7 +2006,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 3.1.44;
+				MARKETING_VERSION = 3.1.46;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Franchiz.SpeakLife;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";

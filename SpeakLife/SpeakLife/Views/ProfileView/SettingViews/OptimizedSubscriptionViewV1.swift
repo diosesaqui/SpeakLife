@@ -94,7 +94,7 @@ struct PricingOptionViewV1: View {
                     VStack {
                         HStack {
                             Spacer()
-                            Text("7-Day Free Trial")
+                            Text("First 7 days on us")
                                 .font(.system(size: 12, weight: .bold, design: .rounded))
                                 .foregroundColor(.white)
                                 .padding(.horizontal, 10)

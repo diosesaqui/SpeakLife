@@ -323,13 +323,6 @@ struct PromisesWidgetEntryView: View {
     
     private var rectangularLockScreenView: some View {
         VStack(alignment: .leading, spacing: 4) {
-            HStack {
-                Image(systemName: "quote.opening")
-                    .font(.system(size: 12, weight: .medium))
-                Text("Daily Promise")
-                    .font(.system(size: 12, weight: .semibold, design: .rounded))
-                    .widgetAccentable()
-            }
             Text(mediumPromiseText)
                 .font(.system(size: 14, weight: .medium, design: .rounded))
                 .lineLimit(3)

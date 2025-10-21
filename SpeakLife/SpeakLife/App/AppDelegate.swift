@@ -134,19 +134,7 @@ final class AppDelegate: NSObject, MessagingDelegate {
                }
     }
     
-    func userNotificationCenter(
-            _ center: UNUserNotificationCenter,
-            didReceive response: UNNotificationResponse,
-            withCompletionHandler completionHandler: @escaping () -> Void
-        ) {
-            if response.actionIdentifier == "MANAGE_SUBSCRIPTION" {
-                // Navigate the user to the subscription management page
-                if let url = URL(string: "https://your-app-subscription-management-url.com") {
-                    UIApplication.shared.open(url)
-                }
-            }
-            completionHandler()
-        }
+    // Removed duplicate didReceive - now handled in extension
     
     func application(
             _ app: UIApplication,
@@ -162,7 +150,9 @@ final class AppDelegate: NSObject, MessagingDelegate {
         }
     
     private func registerNotificationHandler() {
-        NotificationManager.shared.notificationCenter.delegate = NotificationHandler.shared
+        // Set AppDelegate as the notification delegate to handle both foreground and background scenarios
+        UNUserNotificationCenter.current().delegate = self
+        print("📱 Notification delegate set to AppDelegate")
     }
     
     
@@ -235,6 +225,16 @@ extension AppDelegate: UIApplicationDelegate {
 
 extension AppDelegate: UNUserNotificationCenterDelegate {
     func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification, withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
-        completionHandler([.banner, .sound])
+        print("📬 Notification will present (foreground): \(notification.request.content.body)")
+        // Pass to NotificationHandler for app state updates
+        NotificationHandler.shared.userNotificationCenter(center, willPresent: notification) { options in
+            completionHandler(options)
+        }
+    }
+    
+    func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse, withCompletionHandler completionHandler: @escaping () -> Void) {
+        print("👆 Notification tapped: \(response.notification.request.content.body)")
+        // Pass to NotificationHandler for app state updates
+        NotificationHandler.shared.userNotificationCenter(center, didReceive: response, withCompletionHandler: completionHandler)
     }
 }

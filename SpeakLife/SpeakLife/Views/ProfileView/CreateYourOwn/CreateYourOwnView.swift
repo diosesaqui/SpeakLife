@@ -27,7 +27,6 @@ struct CreateYourOwnView: View {
     private var filteredDeclarations: [Declaration] {
         // Use local copy to avoid SwiftUI update issues
         let filtered = localDeclarations.filter { $0.contentType == selectedContentType }
-        print("RWRW: Filtered declarations count: \(filtered.count) for type: \(selectedContentType)")
         return filtered
     }
     

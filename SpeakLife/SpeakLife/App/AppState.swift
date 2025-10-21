@@ -63,6 +63,78 @@ final class AppState: ObservableObject {
     @AppStorage("eveningCheckInHour") var eveningCheckInHour = 19
     @AppStorage("eveningCheckInMinute") var eveningCheckInMinute = 0
     
+    init() {
+        // Force initialization of @AppStorage properties with defaults
+        if UserDefaults.standard.object(forKey: "notificationCount") == nil {
+            UserDefaults.standard.set(10, forKey: "notificationCount")
+        }
+        if UserDefaults.standard.object(forKey: "startTimeIndex") == nil {
+            UserDefaults.standard.set(12, forKey: "startTimeIndex")
+        }
+        if UserDefaults.standard.object(forKey: "endTimeIndex") == nil {
+            UserDefaults.standard.set(40, forKey: "endTimeIndex")
+        }
+//        if UserDefaults.standard.object(forKey: "notificationEnabled") == nil {
+//            UserDefaults.standard.set(false, forKey: "notificationEnabled")
+//        }
+        
+        // Validate and fix any invalid existing values
+        validateAndFixNotificationSettings()
+    }
+    
+    private func validateAndFixNotificationSettings() {
+        var fixed = false
+        
+        // Fix notification count
+        if notificationCount <= 0 {
+            print("🔧 AppState: Fixed notification count from \(notificationCount) to 5")
+            notificationCount = 5
+            fixed = true
+        }
+        
+        // Fix time indices
+        if startTimeIndex < 0 || startTimeIndex >= 48 {
+            print("🔧 AppState: Fixed invalid start time index from \(startTimeIndex) to 12")
+            startTimeIndex = 12 // 6 AM
+            fixed = true
+        }
+        
+        if endTimeIndex <= startTimeIndex || endTimeIndex >= 48 {
+            let newEndIndex = min(startTimeIndex + 16, 47)
+            print("🔧 AppState: Fixed invalid end time index from \(endTimeIndex) to \(newEndIndex)")
+            endTimeIndex = newEndIndex
+            fixed = true
+        }
+        
+        // Ensure minimum window of 2 hours
+        if (endTimeIndex - startTimeIndex) < 4 { // 4 = 2 hours (30min intervals)
+            let newEndIndex = min(startTimeIndex + 4, 47)
+            print("🔧 AppState: Fixed insufficient time window, end time set to \(newEndIndex)")
+            endTimeIndex = newEndIndex
+            fixed = true
+        }
+        
+        if !fixed {
+            print("✅ AppState: Notification settings validated - no fixes needed")
+        }
+        
+        print("📱 AppState: Final settings - Count: \(notificationCount), Start: \(startTimeIndex), End: \(endTimeIndex)")
+    }
+    
+    // Call this method when user changes start/end times to ensure validity
+    func validateTimeRange() {
+        if endTimeIndex <= startTimeIndex {
+            endTimeIndex = min(startTimeIndex + 4, 47) // Minimum 2 hour window
+        }
+    }
+    
+    // Call this method to ensure notification count is valid
+    func validateNotificationCount() {
+        if notificationCount <= 0 {
+            notificationCount = 5
+        }
+    }
+    
 }
 
 @propertyWrapper

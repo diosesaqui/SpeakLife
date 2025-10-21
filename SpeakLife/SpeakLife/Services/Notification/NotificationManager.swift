@@ -45,26 +45,32 @@ final class NotificationManager: NSObject {
                                endTime: Int,
                                categories: Set<DeclarationCategory>? = nil,
                                callback: (() -> Void)? = nil) {
+        let actualCount = max(5, count) // Ensure minimum of 1 notification
+        
+        // Log notification scheduling for verification
+        print("🔔 NotificationManager: Scheduling \(actualCount) notifications (requested: \(count))")
+        print("🔔 Time range: \(startTime) to \(endTime)")
+        
         removeNotifications()
         
         // Check if AI features are enabled for enhanced notifications
         // Note: This would need access to SubscriptionStore instance in a real implementation
         // For now, we'll add a simple check here that can be expanded later
-        if shouldUseAINotifications() {
-            registerAIEnhancedNotifications(count: count, startTime: startTime, endTime: endTime, categories: categories, callback: callback)
-            return
-        }
+//        if shouldUseAINotifications() {
+//            registerAIEnhancedNotifications(count: count, startTime: startTime, endTime: endTime, categories: categories, callback: callback)
+//            return
+//        }
         
         // Use original notification system
         if let categories = categories {
-            let notifications = getNotificationData(for: count, categories: categories)
+            let notifications = getNotificationData(for: actualCount, categories: categories)
             // callback if data is less than count RWRW
-            prepareNotifications(declarations: notifications,  startTime: startTime, endTime: endTime, count: count) {
+            prepareNotifications(declarations: notifications,  startTime: startTime, endTime: endTime, count: actualCount) {
                 callback?()
             }
         } else {
-            let notifications = getNotificationData(for: count, categories: notificationCategories())
-            prepareNotifications(declarations: notifications,  startTime: startTime, endTime: endTime, count: count) {
+            let notifications = getNotificationData(for: actualCount, categories: notificationCategories())
+            prepareNotifications(declarations: notifications,  startTime: startTime, endTime: endTime, count: actualCount) {
                 callback?()
             }
         }
@@ -72,9 +78,9 @@ final class NotificationManager: NSObject {
         nightlyAffirmationReminder()
         //devotionalAffirmationReminder()
        // prayersAffirmationReminder()
-        christmasReminder()
-        newYearsReminder()
-        thanksgivingReminder()
+//        christmasReminder()
+//        newYearsReminder()
+//        thanksgivingReminder()
         
         // Schedule new checklist notifications
         scheduleChecklistNotifications()
@@ -200,7 +206,7 @@ final class NotificationManager: NSObject {
         dateComponents.hour = 20
         
         let trigger = UNCalendarNotificationTrigger(
-            dateMatching: dateComponents, repeats: false)
+            dateMatching: dateComponents, repeats: true)
         let id = "StreakReminder"
         
         let request = UNNotificationRequest(identifier: id, content: content, trigger: trigger)
@@ -267,19 +273,43 @@ final class NotificationManager: NSObject {
             dateComponents.timeZone = TimeZone.autoupdatingCurrent
         
             dateComponents.hour = hourMinute[idx].hour
-
             dateComponents.minute = hourMinute[idx].minute
             
-            if let ymd = dateComponents.calendar?.dateComponents([.year, .month, .day, .hour], from: Date()) {
-                dateComponents.year = ymd.year
-                dateComponents.month = ymd.month
-                var day = ymd.day ?? 1
-                
-                if hourMinute[idx].hour < ymd.hour! {
-                    day += 1
-                }
-                dateComponents.day = day
+            // Debug logging - current time
+            let now = Date()
+            let formatter = DateFormatter()
+            formatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
+            formatter.timeZone = TimeZone.autoupdatingCurrent
+            print("📅 Current time: \(formatter.string(from: now))")
+            print("   Scheduling notification \(idx + 1) for \(hourMinute[idx].hour):\(String(format: "%02d", hourMinute[idx].minute))")
+            
+            let calendar = Calendar.autoupdatingCurrent
+            
+            // Create a date for today at the target time
+            var targetDate = calendar.date(bySettingHour: hourMinute[idx].hour, 
+                                          minute: hourMinute[idx].minute, 
+                                          second: 0, 
+                                          of: now)!
+            
+            print("   Current time: \(formatter.string(from: now))")
+            print("   Target time today: \(formatter.string(from: targetDate))")
+            
+            // If the target time has already passed today, schedule for tomorrow
+            if targetDate <= now {
+                targetDate = calendar.date(byAdding: .day, value: 1, to: targetDate)!
+                print("   ⏭️ Time already passed today, scheduling for tomorrow")
+            } else {
+                print("   ✅ Scheduling for later today")
             }
+            
+            // Extract the date components from the calculated target date
+            let finalComponents = calendar.dateComponents([.year, .month, .day, .hour, .minute], 
+                                                         from: targetDate)
+            dateComponents.year = finalComponents.year
+            dateComponents.month = finalComponents.month
+            dateComponents.day = finalComponents.day
+            
+            print("   📆 Final scheduled date/time: \(formatter.string(from: targetDate))")
             
             // Create the trigger as a repeating event.
             let trigger = UNCalendarNotificationTrigger(
@@ -288,10 +318,11 @@ final class NotificationManager: NSObject {
             
             let request = UNNotificationRequest(identifier: id, content: content, trigger: trigger)
             notificationCenter.add(request) { (error) in
-                if error != nil {
-                   //  TODO: - handle error
+                if let error = error {
+                    print("❌ Failed to schedule notification \(idx + 1): \(error.localizedDescription)")
+                } else {
+                    print("✅ Scheduled notification \(idx + 1)/\(count) at \(hourMinute[idx].hour):\(String(format: "%02d", hourMinute[idx].minute))")
                 }
-                
             }
             
             if idx == (count - 1) {
@@ -299,6 +330,12 @@ final class NotificationManager: NSObject {
                 let modifiedDate = Calendar.current.date(byAdding: .day, value: -1, to: now)
                 
                 lastScheduledNotificationDate = modifiedDate
+                print("🔔 Completed scheduling \(count) notifications")
+                
+                // Verify notifications were actually scheduled
+//                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+//                    self.verifyNotificationsScheduled()
+//                }
             }
         }
     }
@@ -731,6 +768,88 @@ final class NotificationManager: NSObject {
     
     private func removeNotifications() {
         notificationCenter.removeAllPendingNotificationRequests()
+        print("🗑️ Cleared all pending notifications")
+    }
+    
+    private func verifyNotificationsScheduled() {
+        notificationCenter.getPendingNotificationRequests { requests in
+            print("\n📊 NOTIFICATION VERIFICATION REPORT")
+            print("=====================================")
+            print("Total pending: \(requests.count) notifications")
+            
+            if requests.count == 0 {
+                print("⚠️ WARNING: No notifications were scheduled!")
+            } else {
+                print("✅ SUCCESS: Notifications are properly scheduled")
+                
+                // Check authorization status
+                self.notificationCenter.getNotificationSettings { settings in
+                    switch settings.authorizationStatus {
+                    case .authorized:
+                        print("✅ Permissions: Authorized")
+                    case .provisional:
+                        print("⚠️ Permissions: Provisional (may not show all alerts)")
+                    case .denied:
+                        print("❌ Permissions: DENIED - User must enable in Settings")
+                    case .notDetermined:
+                        print("❓ Permissions: Not determined - Need to request")
+                    @unknown default:
+                        print("❓ Permissions: Unknown status")
+                    }
+                    
+                    print("   Alert: \(settings.alertSetting == .enabled ? "✅" : "❌")")
+                    print("   Sound: \(settings.soundSetting == .enabled ? "✅" : "❌")")
+                    print("   Badge: \(settings.badgeSetting == .enabled ? "✅" : "❌")")
+                }
+                
+                let formatter = DateFormatter()
+                formatter.dateFormat = "yyyy-MM-dd HH:mm"
+                formatter.timeZone = TimeZone.autoupdatingCurrent
+                
+                // Show all scheduled notifications with full date info
+                print("\n📅 Scheduled Notifications:")
+                for (index, request) in requests.prefix(15).enumerated() {
+                    if let trigger = request.trigger as? UNCalendarNotificationTrigger {
+                        let components = trigger.dateComponents
+                        
+                        var dateStr = ""
+                        if let year = components.year,
+                           let month = components.month,
+                           let day = components.day,
+                           let hour = components.hour,
+                           let minute = components.minute {
+                            dateStr = "\(year)-\(String(format: "%02d", month))-\(String(format: "%02d", day)) \(String(format: "%02d:%02d", hour, minute))"
+                        } else if let hour = components.hour,
+                                  let minute = components.minute {
+                            dateStr = "Daily at \(String(format: "%02d:%02d", hour, minute))"
+                        }
+                        
+                        print("\n  \(index + 1). \(dateStr)")
+                        print("      Body: \(request.content.body.prefix(50))...")
+                        print("      Repeats: \(trigger.repeats)")
+                        
+                        // Check if notification date is in the past
+                        if let nextTriggerDate = trigger.nextTriggerDate() {
+                            let timeUntil = nextTriggerDate.timeIntervalSince(Date())
+                            if timeUntil < 0 {
+                                print("      ⚠️ WARNING: Next trigger is in the PAST!")
+                                print("      Was supposed to fire: \(formatter.string(from: nextTriggerDate))")
+                            } else {
+                                let hours = Int(timeUntil / 3600)
+                                let minutes = Int((timeUntil.truncatingRemainder(dividingBy: 3600)) / 60)
+                                print("      ⏰ Will fire: \(formatter.string(from: nextTriggerDate)) (in \(hours)h \(minutes)m)")
+                            }
+                        }
+                    }
+                }
+                
+                if requests.count > 15 {
+                    print("\n  ... and \(requests.count - 15) more notifications")
+                }
+                
+                print("\n=====================================\n")
+            }
+        }
     }
     
     // MARK: - Checklist Notifications
@@ -947,52 +1066,52 @@ final class NotificationManager: NSObject {
                                                endTime: Int,
                                                categories: Set<DeclarationCategory>? = nil,
                                                callback: (() -> Void)? = nil) {
-//        Task {
-//            do {
-//                // Get AI-optimized notification times
-//                let optimalTimes = await RecommendationEngine.shared.getOptimalNotificationTimes()
-//                
-//                // Get AI-recommended contextual content
-//                let contextualDeclarations = await RecommendationEngine.shared.getContextualDeclarations()
-//                
-//                // Use AI-selected content if available, otherwise fall back to categories
-//                let notifications: [NotificationProcessor.NotificationData]
-//                if !contextualDeclarations.isEmpty {
-//                    // Convert AI declarations to notification data
-//                    notifications = contextualDeclarations.prefix(count).map { declaration in
-//                        NotificationProcessor.NotificationData(book: declaration.category.rawValue, body: declaration.text, category: declaration.category.rawValue)
-//                    }
-//                } else if let categories = categories {
-//                    notifications = getNotificationData(for: count, categories: categories)
-//                } else {
-//                    notifications = getNotificationData(for: count, categories: notificationCategories())
-//                }
-//                
-//                await MainActor.run {
-//                    // Use AI-optimized timing if available, otherwise use user preferences
-//                    if !optimalTimes.isEmpty {
-//                        self.prepareAINotifications(declarations: notifications, optimalTimes: optimalTimes, count: count) {
-//                            callback?()
-//                        }
-//                    } else {
-//                        // Fall back to regular timing
-//                        self.prepareNotifications(declarations: notifications, startTime: startTime, endTime: endTime, count: count) {
-//                            callback?()
-//                        }
-//                    }
-//                }
-//                
-//            } catch {
-              //  print("❌ AI notification setup failed, falling back to standard: \(error)")
-                // Fall back to standard notification system
-              //  await MainActor.run {
+        Task {
+            do {
+                // Get AI-optimized notification times
+                let optimalTimes = await RecommendationEngine.shared.getOptimalNotificationTimes()
+                
+                // Get AI-recommended contextual content
+                let contextualDeclarations = await RecommendationEngine.shared.getContextualDeclarations()
+                
+                // Use AI-selected content if available, otherwise fall back to categories
+                let notifications: [NotificationProcessor.NotificationData]
+                if !contextualDeclarations.isEmpty {
+                    // Convert AI declarations to notification data
+                    notifications = contextualDeclarations.prefix(count).map { declaration in
+                        NotificationProcessor.NotificationData(book: declaration.category.rawValue, body: declaration.text, category: declaration.category.rawValue)
+                    }
+                } else if let categories = categories {
+                    notifications = getNotificationData(for: count, categories: categories)
+                } else {
+                    notifications = getNotificationData(for: count, categories: notificationCategories())
+                }
+                
+                await MainActor.run {
+                    // Use AI-optimized timing if available, otherwise use user preferences
+                    if !optimalTimes.isEmpty {
+                        self.prepareAINotifications(declarations: notifications, optimalTimes: optimalTimes, count: count) {
+                            callback?()
+                        }
+                    } else {
+                        // Fall back to regular timing
+                        self.prepareNotifications(declarations: notifications, startTime: startTime, endTime: endTime, count: count) {
+                            callback?()
+                        }
+                    }
+                }
+                
+            } catch {
+                print("❌ AI notification setup failed, falling back to standard: \(error)")
+             //    Fall back to standard notification system
+                await MainActor.run {
                     if let categories = categories {
                         let notifications = self.getNotificationData(for: count, categories: categories)
                         self.prepareNotifications(declarations: notifications, startTime: startTime, endTime: endTime, count: count) {
                             callback?()
-                      //  }
-                  //  }
-               // }
+                        }
+                    }
+                }
             }
         }
     }
