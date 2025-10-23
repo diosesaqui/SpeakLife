@@ -16,7 +16,7 @@ struct CreateYourOwnTutorial: View {
     @State private var sampleText = ""
     @State private var showSuccess = false
     
-    let exampleText = "I am blessed and highly favored"
+    let exampleText = "God has given me authority over anxiety. I walk in His perfect peace every day."
     
     var body: some View {
         GeometryReader { geometry in
@@ -34,7 +34,7 @@ struct CreateYourOwnTutorial: View {
                 VStack(spacing: 0) {
                     // Top spacing
                     Spacer()
-                        .frame(height: max(geometry.safeAreaInsets.top + 20, 50))
+                        .frame(height: max(geometry.safeAreaInsets.top + 20, 70))
                     
                     // Header
                     VStack(spacing: 12) {
@@ -108,7 +108,7 @@ struct CreateYourOwnTutorial: View {
                                                     VStack(alignment: .leading, spacing: 0) {
                                                         HStack(alignment: .top) {
                                                             if sampleText.isEmpty {
-                                                                Text("Type your affirmation here...")
+                                                                Text("Write a personal declaration for your life...")
                                                                     .foregroundColor(.white.opacity(0.4))
                                                                     .font(.system(size: 15))
                                                                     .frame(maxWidth: .infinity, alignment: .leading)

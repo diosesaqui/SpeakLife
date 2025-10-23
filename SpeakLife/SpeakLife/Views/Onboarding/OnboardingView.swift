@@ -28,16 +28,16 @@ struct OnboardingView: View  {
                 
                
                 IntroTipScene(
-                    title: "Walk in Your Authority in Christ",
+                    title: "Struggling with Anxiety, Fear, or Doubt?",
                     bodyText: """
-                    Jesus gave you power to trample on serpents and scorpions, and over all the power of the enemy. Nothing shall hurt you.
+                    You're not alone. Over 50,000+ believers have transformed their minds using God's Word daily.
 
-                    Every feature is designed to build your faith, declare His promises, and walk in the authority Christ purchased for you.
+                    Jesus gave you authority to trample every enemy - anxiety, fear, and doubt included. 
 
-                    Rise up, believer. Your enemy is defeated. Your victory is secured in Jesus.
+                    Join thousands who now walk in supernatural peace instead of worry.
                     """,
                     subtext: "",
-                    ctaText: "Walk in Victory →",
+                    ctaText: "Start My Transformation →",
                     showTestimonials: false,
                     isScholarship: false,
                     size: geometry.size)
@@ -45,6 +45,13 @@ struct OnboardingView: View  {
                     advance()
                 }
                 .tag(Tab.transformedLife)
+                
+                ImprovementScene(size: geometry.size, viewModel: improvementViewModel) {
+                    withAnimation {
+                        advance()
+                    }
+                }
+                .tag(Tab.improvement)
                 
                 AudioDevotionalsTutorial(size: geometry.size) {
                     advance()
@@ -72,15 +79,6 @@ struct OnboardingView: View  {
                     }
                 }
                 .tag(Tab.notification)
-                
-                ImprovementScene(size: geometry.size, viewModel: improvementViewModel) {
-                    withAnimation {
-                        advance()
-                    }
-                }
-                .tag(Tab.improvement)
-                
-                
                 RatingView(size: geometry.size) {
                     advance()
                 } .tag(Tab.review)
@@ -153,9 +151,16 @@ struct OnboardingView: View  {
         switch selection {
                 case .transformedLife:
                     impactMed.impactOccurred()
-                    selection = .audioSermons
+                    selection = .improvement
                     onboardingTab = selection.rawValue
                     Analytics.logEvent("TransformedLifeScreenDone", parameters: nil)
+                    
+                case .improvement:
+                    impactMed.impactOccurred()
+                    selection = .audioSermons
+                    onboardingTab = selection.rawValue
+                    decodeCategories(improvementViewModel.selectedExperiences)
+                    Analytics.logEvent("ImprovementScreenDone", parameters: nil)
                     
                 case .audioSermons:
                     impactMed.impactOccurred()
@@ -183,16 +188,9 @@ struct OnboardingView: View  {
                     
                 case .notification:
                     impactMed.impactOccurred()
-                    selection = .improvement
-                    onboardingTab = selection.rawValue
-                    Analytics.logEvent("NotificationScreenDone", parameters: nil)
-                    
-                case .improvement:
-                    impactMed.impactOccurred()
                     selection = .review
                     onboardingTab = selection.rawValue
-                    decodeCategories(improvementViewModel.selectedExperiences)
-                    Analytics.logEvent("ImprovementScreenDone", parameters: nil)
+                    Analytics.logEvent("NotificationScreenDone", parameters: nil)
                     
                 case .review:
                     impactMed.impactOccurred()

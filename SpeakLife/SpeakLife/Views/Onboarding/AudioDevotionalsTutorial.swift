@@ -62,7 +62,7 @@ struct AudioDevotionalsTutorial: View {
     
     private func contentView(geometry: GeometryProxy) -> some View {
         VStack(spacing: 0) {
-            Spacer().frame(height: 50)
+            Spacer().frame(height: 70)
             headerSection
             Spacer().frame(height: 40)
             mainContentCard(geometry: geometry)
