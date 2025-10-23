@@ -28,16 +28,16 @@ struct OnboardingView: View  {
                 
                
                 IntroTipScene(
-                    title: "Walk in Unshakeable Faith & Peace",
+                    title: "Walk in Your Authority in Christ",
                     bodyText: """
-                    Experience God's grace that transforms anxiety into peace, fear into faith, and doubt into divine confidence.
+                    Jesus gave you power to trample on serpents and scorpions, and over all the power of the enemy. Nothing shall hurt you.
 
-                    Thousands declare His promises daily — activating breakthrough, healing, and supernatural joy.
+                    Every feature is designed to build your faith, declare His promises, and walk in the authority Christ purchased for you.
 
-                    Your faith is rising. His grace is abundant. Peace is yours.
+                    Rise up, believer. Your enemy is defeated. Your victory is secured in Jesus.
                     """,
                     subtext: "",
-                    ctaText: "Activate My Faith →",
+                    ctaText: "Walk in Victory →",
                     showTestimonials: false,
                     isScholarship: false,
                     size: geometry.size)
@@ -45,7 +45,26 @@ struct OnboardingView: View  {
                     advance()
                 }
                 .tag(Tab.transformedLife)
-
+                
+                AudioDevotionalsTutorial(size: geometry.size) {
+                    advance()
+                }
+                .tag(Tab.audioSermons)
+                
+                AffirmationsTutorial(size: geometry.size) {
+                    advance()
+                }
+                .tag(Tab.affirmations)
+                
+                CreateYourOwnTutorial(size: geometry.size) {
+                    advance()
+                }
+                .tag(Tab.createYourOwn)
+                
+                DevotionalsTutorial(size: geometry.size) {
+                    advance()
+                }
+                .tag(Tab.devotionals)
 
                 NotificationOnboarding(size: geometry.size) {
                     withAnimation {
@@ -132,33 +151,59 @@ struct OnboardingView: View  {
     
     private func advance() {
         switch selection {
-                case .improvement:
+                case .transformedLife:
                     impactMed.impactOccurred()
-                    selection = .review
+                    selection = .audioSermons
                     onboardingTab = selection.rawValue
+                    Analytics.logEvent("TransformedLifeScreenDone", parameters: nil)
                     
-                    decodeCategories(improvementViewModel.selectedExperiences)
-                    Analytics.logEvent("ImprovementScreenDone", parameters: nil)
+                case .audioSermons:
+                    impactMed.impactOccurred()
+                    selection = .affirmations
+                    onboardingTab = selection.rawValue
+                    Analytics.logEvent("AudioSermonsScreenDone", parameters: nil)
+                    
+                case .affirmations:
+                    impactMed.impactOccurred()
+                    selection = .createYourOwn
+                    onboardingTab = selection.rawValue
+                    Analytics.logEvent("AffirmationsScreenDone", parameters: nil)
+                    
+                case .createYourOwn:
+                    impactMed.impactOccurred()
+                    selection = .devotionals
+                    onboardingTab = selection.rawValue
+                    Analytics.logEvent("CreateYourOwnScreenDone", parameters: nil)
+                    
+                case .devotionals:
+                    impactMed.impactOccurred()
+                    selection = .notification
+                    onboardingTab = selection.rawValue
+                    Analytics.logEvent("DevotionalsScreenDone", parameters: nil)
+                    
                 case .notification:
                     impactMed.impactOccurred()
                     selection = .improvement
                     onboardingTab = selection.rawValue
                     Analytics.logEvent("NotificationScreenDone", parameters: nil)
-                case .subscription:
-                    Analytics.logEvent("SubscriptionScreenDone", parameters: nil)
+                    
+                case .improvement:
                     impactMed.impactOccurred()
-                    dismissOnboarding()
-                case .transformedLife:
-                    impactMed.impactOccurred()
-                    selection = .notification
+                    selection = .review
                     onboardingTab = selection.rawValue
-                    Analytics.logEvent("TransformedLifeScreenDone", parameters: nil)
+                    decodeCategories(improvementViewModel.selectedExperiences)
+                    Analytics.logEvent("ImprovementScreenDone", parameters: nil)
+                    
                 case .review:
                     impactMed.impactOccurred()
                     selection = .subscription
                     onboardingTab = selection.rawValue
                     Analytics.logEvent("ReviewScreenDone", parameters: nil)
-                   
+                    
+                case .subscription:
+                    Analytics.logEvent("SubscriptionScreenDone", parameters: nil)
+                    impactMed.impactOccurred()
+                    dismissOnboarding()
         }
     }
     
