@@ -7,6 +7,10 @@
 
 import SwiftUI
 
+extension Notification.Name {
+    static let audioVersionUpdated = Notification.Name("audioVersionUpdated")
+}
+
 /// Handles all notification-related events for the app
 /// Supports three scenarios:
 /// 1. Cold launch - App not running, launched via notification tap

@@ -413,7 +413,7 @@ struct OptimizedSubscriptionViewV1: View {
         HStack {
             Image(systemName: "checkmark.shield.fill")
                 .foregroundColor(.green)
-            Text("Join 50,000+ believers transforming fear into faith in just 5 minutes.")
+            Text("Join 50,000+ Christians transforming their minds.")
                 .font(.system(size: 16, weight: .semibold))
                 .foregroundColor(.white)
             Image(systemName: "checkmark.shield.fill")

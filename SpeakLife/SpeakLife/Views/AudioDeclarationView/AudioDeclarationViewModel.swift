@@ -35,6 +35,19 @@ final class AudioDeclarationViewModel: ObservableObject {
             }
             .store(in: &cancellables)
         
+        // Listen for real-time audio version updates via push notifications
+        NotificationCenter.default
+            .publisher(for: .audioVersionUpdated)
+            .sink { [weak self] notification in
+                if let version = notification.userInfo?["version"] as? Int {
+                    print("🎵 AudioDeclarationViewModel: Received version update notification: v\(version)")
+                    DispatchQueue.main.async {
+                        self?.fetchAudio(version: version)
+                    }
+                }
+            }
+            .store(in: &cancellables)
+        
         // Load cached audio data on startup (ensure on main thread for @Published updates)
         DispatchQueue.main.async { [weak self] in
             self?.loadCachedAudioData()

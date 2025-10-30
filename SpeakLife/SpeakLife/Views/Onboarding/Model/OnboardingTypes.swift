@@ -10,10 +10,6 @@ import Foundation
 enum Tab: String {
     
     case transformedLife
-    case audioSermons
-    case affirmations
-    case createYourOwn
-    case devotionals
     case notification
     case improvement
     case review

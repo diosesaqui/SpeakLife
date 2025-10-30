@@ -694,7 +694,8 @@ struct AppLogoView: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 100, height: 100)
-                        .clipShape(Circle())
+                        .clipShape(Rectangle())
+                        .cornerRadius(12)
                 } else {
                     // Fallback to text logo
                     Text("SL")

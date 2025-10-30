@@ -483,6 +483,50 @@
             "episode": 7
         },
         {
+            "id": "speaklife-s3ep11.mp3",
+            "title": "Practice Your Position",
+            "subtitle": "S3 Episode 11",
+            "duration": "3m",
+            "imageUrl": "devotional",
+            "isPremium": true,
+            "tag": "speaklife",
+            "season": 3,
+            "episode": 11
+        },
+        {
+            "id": "speaklife-s3ep10.mp3",
+            "title": "Practice Your Position",
+            "subtitle": "S3 Episode 10",
+            "duration": "3m",
+            "imageUrl": "devotional",
+            "isPremium": true,
+            "tag": "speaklife",
+            "season": 3,
+            "episode": 10
+        },
+        {
+            "id": "speaklife-s3ep9.mp3",
+            "title": "Increase the Measure",
+            "subtitle": "S3 Episode 9",
+            "duration": "3m",
+            "imageUrl": "devotional",
+            "isPremium": true,
+            "tag": "speaklife",
+            "season": 3,
+            "episode": 9
+        },
+        {
+            "id": "speaklife-s3ep8.mp3",
+            "title": "Move Into What Jesus Paid For",
+            "subtitle": "S3 Episode 8",
+            "duration": "3m",
+            "imageUrl": "devotional",
+            "isPremium": true,
+            "tag": "speaklife",
+            "season": 3,
+            "episode": 8
+        },
+        {
             "id": "speaklife-s3ep6.mp3",
             "title": "Close Every Door",
             "subtitle": "S3 Episode 6",

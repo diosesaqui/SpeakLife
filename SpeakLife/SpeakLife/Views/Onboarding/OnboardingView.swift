@@ -26,7 +26,19 @@ struct OnboardingView: View  {
         GeometryReader { geometry in
             TabView(selection: $selection) {
                 
-               
+                // OPTION 1: Use new combined scene (recommended)
+                CombinedPersonalizationScene(
+                    size: geometry.size,
+                    viewModel: improvementViewModel
+                ) {
+                    withAnimation {
+                        advance()
+                    }
+                }
+                .tag(Tab.transformedLife)
+                
+                // OPTION 2: Keep existing separate scenes (comment out above and uncomment below)
+                /*
                 IntroTipScene(
                     title: "Struggling with Anxiety, Fear, or Doubt?",
                     bodyText: """
@@ -52,26 +64,7 @@ struct OnboardingView: View  {
                     }
                 }
                 .tag(Tab.improvement)
-                
-                AudioDevotionalsTutorial(size: geometry.size) {
-                    advance()
-                }
-                .tag(Tab.audioSermons)
-                
-                AffirmationsTutorial(size: geometry.size) {
-                    advance()
-                }
-                .tag(Tab.affirmations)
-                
-                CreateYourOwnTutorial(size: geometry.size) {
-                    advance()
-                }
-                .tag(Tab.createYourOwn)
-                
-                DevotionalsTutorial(size: geometry.size) {
-                    advance()
-                }
-                .tag(Tab.devotionals)
+                */
 
                 NotificationOnboarding(size: geometry.size) {
                     withAnimation {
@@ -79,9 +72,6 @@ struct OnboardingView: View  {
                     }
                 }
                 .tag(Tab.notification)
-                RatingView(size: geometry.size) {
-                    advance()
-                } .tag(Tab.review)
 
                 subscriptionScene(size: geometry.size)
                     .tag(Tab.subscription)
@@ -150,45 +140,27 @@ struct OnboardingView: View  {
     private func advance() {
         switch selection {
                 case .transformedLife:
+                    // Now combines both intro and improvement
                     impactMed.impactOccurred()
-                    selection = .improvement
+                    selection = .notification  // Skip directly to notification
                     onboardingTab = selection.rawValue
-                    Analytics.logEvent("TransformedLifeScreenDone", parameters: nil)
+                    decodeCategories(improvementViewModel.selectedExperiences)
+                    Analytics.logEvent("CombinedPersonalizationDone", parameters: [
+                        "categories_count": improvementViewModel.selectedExperiences.count
+                    ])
                     
                 case .improvement:
+                    // This case won't be used with combined scene
                     impactMed.impactOccurred()
-                    selection = .audioSermons
+                    selection = .notification
                     onboardingTab = selection.rawValue
                     decodeCategories(improvementViewModel.selectedExperiences)
                     Analytics.logEvent("ImprovementScreenDone", parameters: nil)
                     
-                case .audioSermons:
-                    impactMed.impactOccurred()
-                    selection = .affirmations
-                    onboardingTab = selection.rawValue
-                    Analytics.logEvent("AudioSermonsScreenDone", parameters: nil)
-                    
-                case .affirmations:
-                    impactMed.impactOccurred()
-                    selection = .createYourOwn
-                    onboardingTab = selection.rawValue
-                    Analytics.logEvent("AffirmationsScreenDone", parameters: nil)
-                    
-                case .createYourOwn:
-                    impactMed.impactOccurred()
-                    selection = .devotionals
-                    onboardingTab = selection.rawValue
-                    Analytics.logEvent("CreateYourOwnScreenDone", parameters: nil)
-                    
-                case .devotionals:
-                    impactMed.impactOccurred()
-                    selection = .notification
-                    onboardingTab = selection.rawValue
-                    Analytics.logEvent("DevotionalsScreenDone", parameters: nil)
                     
                 case .notification:
                     impactMed.impactOccurred()
-                    selection = .review
+                    selection = .subscription
                     onboardingTab = selection.rawValue
                     Analytics.logEvent("NotificationScreenDone", parameters: nil)
                     

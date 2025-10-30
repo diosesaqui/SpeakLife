@@ -20,7 +20,7 @@ struct APP {
     
     enum Product {
         static var urlID: String {
-            "https://apps.apple.com/app/id1617492998"
+            "https://apps.apple.com/app/speaklife-bible-affirmations/id1617492998"
         }
         
         static var instagramURL: String {

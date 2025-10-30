@@ -27,7 +27,7 @@ struct ImprovementScene: View {
                     VStack(spacing: 20) {
                         Spacer().frame(height: 30)
 
-                        Text("What's Your Biggest Battle Right Now?", comment: "Intro scene title label")
+                        Text("What brings you here today?", comment: "Intro scene title label")
                             .font(.system(size: 34, weight: .semibold, design: .rounded))
                             .shadow(color: Color.white.opacity(0.6), radius: 4, x: 0, y: 2)
                             .multilineTextAlignment(.center)
@@ -99,7 +99,7 @@ struct ImprovementSelectionListView: View {
     
     var newBody: some View {
         ScrollView {
-            FlowLayout(items: DeclarationCategory.categoryOrder + DeclarationCategory.bibleCategories, spacing: 2) { interest in
+            FlowLayout(items: DeclarationCategory.categoryOrder, spacing: 2) { interest in
                 Text(interest.name)
                     .font(.system(size: 14))
                     .foregroundColor(.white)

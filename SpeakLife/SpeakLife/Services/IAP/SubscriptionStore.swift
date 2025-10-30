@@ -74,10 +74,27 @@ final class SubscriptionStore: ObservableObject {
     private var remoteConfig = RemoteConfig.remoteConfig()
     var updateListenerTask: Task<Void, Error>? = nil
     var cancellable: AnyCancellable?
+    private var cancellables = Set<AnyCancellable>()
 
     init() {
         // Start a transaction listener as close to app launch as possible
         updateListenerTask = listenForTransactions()
+        
+        // Listen for audio version updates via push notifications
+        NotificationCenter.default
+            .publisher(for: .audioVersionUpdated)
+            .sink { [weak self] notification in
+                if let version = notification.userInfo?["version"] as? Int {
+                    DispatchQueue.main.async {
+                        print("📦 SubscriptionStore: Updating audio version from notification: v\(version)")
+                        self?.audioRemoteVersion = version
+                    }
+                }
+            }
+            .store(in: &cancellables)
+        
+        // Set up Remote Config real-time listener for automatic updates
+        setupRemoteConfigListener()
         
         fetchRemoteConfig() { [weak self] in
             
@@ -125,6 +142,37 @@ final class SubscriptionStore: ObservableObject {
             }
             
             self.updateConfigValues(completion: completion)
+        }
+    }
+    
+    private func setupRemoteConfigListener() {
+        // Add listener for Remote Config updates
+        remoteConfig.addOnConfigUpdateListener { [weak self] configUpdate, error in
+            guard error == nil else {
+                print("🔴 Remote Config listener error: \(error!.localizedDescription)")
+                return
+            }
+            
+            print("🔄 Remote Config updated, fetching new values...")
+            
+            // Automatically fetch and activate when config updates
+            self?.remoteConfig.fetchAndActivate { _, _ in
+                DispatchQueue.main.async {
+                    let oldAudioVersion = self?.audioRemoteVersion ?? 0
+                    self?.updateConfigValues {}
+                    let newAudioVersion = self?.audioRemoteVersion ?? 0
+                    
+                    // If audio version changed, notify the app
+                    if newAudioVersion > oldAudioVersion && newAudioVersion > 0 {
+                        print("🎵 Audio version changed from \(oldAudioVersion) to \(newAudioVersion)")
+                        NotificationCenter.default.post(
+                            name: .audioVersionUpdated,
+                            object: nil,
+                            userInfo: ["version": newAudioVersion]
+                        )
+                    }
+                }
+            }
         }
     }
     
