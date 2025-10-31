@@ -19,13 +19,15 @@ struct AnimatedDeclarationText: View {
     }
     
     @State private var animatedText: AttributedString = AttributedString("")
-    @State private var currentCharacterIndex = 0
+    @State private var revealProgress: Double = 0.0
     @State private var isAnimating = false
     @State private var animationComplete = false
     @State private var timer: Timer?
+    @State private var animationDebouncer: Timer?
+    @State private var fullStyledText: AttributedString = AttributedString("")
     
     // User settings
-    @AppStorage("animationSpeed") private var animationSpeed = 2.0
+    @AppStorage("animationSpeed") private var animationSpeed = 0.5
     @AppStorage("autoStartAnimation") private var autoStartAnimation = true
     @AppStorage("highlightPowerWords") private var highlightPowerWords = true
     @AppStorage("showAnimationProgress") private var showAnimationProgress = true
@@ -44,31 +46,36 @@ struct AnimatedDeclarationText: View {
                 .kerning(0.5) // Subtle letter spacing for elegance
                 .padding(.horizontal, 24)
                 .frame(maxWidth: .infinity)
-                .scaleEffect(animationComplete ? 1.0 : (isAnimating ? 1.0 : 0.96))
-                .blur(radius: animationComplete ? 0 : (isAnimating ? 0 : 1.2))
+                .scaleEffect(animationComplete ? 1.0 : 0.98)
+                .opacity(animationComplete || isAnimating ? 1.0 : 0.8)
                 .shadow(
-                    color: .black.opacity(themeViewModel.selectedTheme.blurEffect ? 0.25 : 0.1),
-                    radius: themeViewModel.selectedTheme.blurEffect ? 6 : 2,
+                    color: .black.opacity(themeViewModel.selectedTheme.blurEffect ? 0.15 : 0.05),
+                    radius: themeViewModel.selectedTheme.blurEffect ? 4 : 1,
                     x: 0,
-                    y: 2
+                    y: 1
                 )
-                .animation(.spring(response: 0.8, dampingFraction: 0.85, blendDuration: 0.4), value: isAnimating)
-                .animation(.easeInOut(duration: 0.3), value: animationComplete)
+                .animation(.easeOut(duration: 0.25), value: animationComplete)
         
         }
         .onAppear {
-            // ALWAYS animate on appear - every swipe should animate
-            resetAnimation()
-            DispatchQueue.main.async {
-                setupAnimation()
+            Task { @MainActor in
+                await forceResetAnimation()
             }
         }
-        .onChange(of: text) { _ in
-            // ALWAYS animate when text changes
-            resetAnimation()
-            DispatchQueue.main.async {
-                setupAnimation()
+        .onChange(of: text) { newText in
+            // NUCLEAR immediate cleanup before async task
+            cleanupResources()
+            animatedText = AttributedString("")
+            revealProgress = 0.0  // ⚡ FORCE progress reset immediately
+            isAnimating = false
+            animationComplete = false
+            
+            Task { @MainActor in
+                await forceResetAnimation()
             }
+        }
+        .onDisappear {
+            cleanupResources()
         }
         .onTapGesture {
             handleTap()
@@ -79,10 +86,6 @@ struct AnimatedDeclarationText: View {
     
     // MARK: - Computed Properties
     
-    private var characters: [Character] {
-        Array(text)
-    }
-    
     private var words: [String] {
         text.components(separatedBy: .whitespacesAndNewlines)
             .filter { !$0.isEmpty }
@@ -90,112 +93,233 @@ struct AnimatedDeclarationText: View {
     
     // MARK: - Animation Logic
     
-    private func resetAnimation() {
+    
+    private func cleanupResources() {
         timer?.invalidate()
         timer = nil
-        currentCharacterIndex = 0
+        animationDebouncer?.invalidate()
+        animationDebouncer = nil
+    }
+    
+    @MainActor
+    private func forceResetAnimation() async {
+        // Step 1: Kill everything and wait
+        timer?.invalidate()
+        timer = nil
+        animationDebouncer?.invalidate()
+        animationDebouncer = nil
+        
+        // PARANOID: Clear all visual state multiple times
+        animatedText = AttributedString("")
+        revealProgress = 0.0
+        animationComplete = false
+        isAnimating = false
+        fullStyledText = AttributedString("")
+        
+        // Wait for next runloop cycle
+        await Task.yield()
+        
+        // Step 2: Double-check cleanup and FORCE ZERO PROGRESS
+        timer?.invalidate()
+        timer = nil
+        animationDebouncer?.invalidate()
+        animationDebouncer = nil
+        
+        // TRIPLE check progress is zero
+        revealProgress = 0.0
+        animatedText = AttributedString("")
+        
+        // Step 3: Validate and start fresh
+        guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            animatedText = AttributedString("")
+            return
+        }
+        
+        // Create fresh text immediately
+        fullStyledText = createFullStyledText()
+        
+        // Start with completely clean state - QUADRUPLE CHECK
+        revealProgress = 0.0
+        animationComplete = false
+        isAnimating = true
+        
+        // ENSURE we start with blank text
+        animatedText = AttributedString("")
+        
+        // Calculate timing
+        let duration = max(1.0, Double(text.count) * 0.04 / animationSpeed)
+        let stepSize = 1.0 / (duration * 60.0)
+        
+        // Set initial frame with GUARANTEED zero progress
+        animatedText = createSmoothRevealText()
+        
+        // Start timer with fresh state
+        timer = Timer.scheduledTimer(withTimeInterval: 1.0/60.0, repeats: true) { _ in
+            Task { @MainActor in
+                self.updateRevealProgress(stepSize: stepSize)
+            }
+        }
+    }
+    
+    private func resetAndStartAnimation() {
+        // NUCLEAR OPTION - kill everything multiple times
+        timer?.invalidate()
+        timer = nil
+        animationDebouncer?.invalidate() 
+        animationDebouncer = nil
+        
+        // Wait a frame to ensure timers are truly dead
+        DispatchQueue.main.async {
+            // Kill timers again (paranoid)
+            self.timer?.invalidate()
+            self.timer = nil
+            self.animationDebouncer?.invalidate()
+            self.animationDebouncer = nil
+            
+            // FORCE complete state wipe
+            self.animatedText = AttributedString("")
+            self.revealProgress = 0.0
+            self.animationComplete = false
+            self.isAnimating = false
+            self.fullStyledText = AttributedString("")
+            
+            // Wait another frame before starting
+            DispatchQueue.main.async {
+                self.nuclearStartAnimation()
+            }
+        }
+    }
+    
+    private func nuclearStartAnimation() {
+        // PARANOID: Final timer check and kill
+        timer?.invalidate()
+        timer = nil
+        animationDebouncer?.invalidate()
+        animationDebouncer = nil
+        
+        // Validate text exists
+        guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            animatedText = AttributedString("")
+            return
+        }
+        
+        // NUCLEAR state reset with delays between each step
+        revealProgress = 0.0
         animationComplete = false
         isAnimating = false
         animatedText = AttributedString("")
+        
+        // Create fresh styled text
+        fullStyledText = createFullStyledText()
+        
+        // Small delay to ensure clean slate
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.016) { // One frame delay
+            self.actuallyStartAnimation()
+        }
+    }
+    
+    private func actuallyStartAnimation() {
+        // Final paranoid check
+        timer?.invalidate()
+        timer = nil
+        
+        // Set state
+        isAnimating = true
+        revealProgress = 0.0
+        animationComplete = false
+        
+        // Calculate timing
+        let duration = max(1.0, Double(text.count) * 0.04 / animationSpeed)
+        let stepSize = 1.0 / (duration * 60.0)
+        
+        // Set initial frame at 0% progress
+        animatedText = createSmoothRevealText()
+        
+        // Start timer
+        timer = Timer.scheduledTimer(withTimeInterval: 1.0/60.0, repeats: true) { _ in
+            DispatchQueue.main.async {
+                self.updateRevealProgress(stepSize: stepSize)
+            }
+        }
+    }
+    
+    private func forceStartAnimation() {
+        // Redirect to nuclear approach
+        nuclearStartAnimation()
     }
     
     private func setupAnimation() {
+        guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { 
+            // Handle empty or whitespace-only text
+            animatedText = AttributedString("")
+            return 
+        }
         guard !words.isEmpty else { return }
         
         // Always start animation for consistent behavior
-        startAnimation()
+        forceStartAnimation()
     }
     
-    private func startAnimation() {
-        guard !isAnimating else { return }
-        
-        withAnimation(.easeIn(duration: 0.1)) {
-            isAnimating = true
-        }
-        currentCharacterIndex = 0
-        animationComplete = false
-        
-        // Handle very short text immediately
-        if characters.count <= 10 {
-            showCompleteText()
-            return
-        }
-        
-        // Clear current text
-        animatedText = AttributedString("")
-        
-        // Start smooth, elegant reveal without jumps
-        // Perfect pacing for beautiful fade effect
-        let baseSpeed = 10.0 // Optimized for smooth fade perception
-        let speedMultiplier = 1.0 + (animationSpeed - 2.0) * 0.15 // Subtle speed adjustment
-        let charactersPerSecond = baseSpeed * speedMultiplier
-        let interval = 1.0 / charactersPerSecond
-        
-        timer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { _ in
-            self.revealNextCharacter()
-        }
-    }
     
-    private func revealNextCharacter() {
-        guard currentCharacterIndex < characters.count else {
+    @MainActor
+    private func updateRevealProgress(stepSize: Double) {
+        guard isAnimating && !animationComplete else { return }
+        
+        revealProgress = min(1.0, revealProgress + stepSize)
+        animatedText = createSmoothRevealText()
+        
+        if revealProgress >= 1.0 {
             completeAnimation()
-            return
         }
-        
-        // Always use full text to prevent layout jumps, control visibility through opacity
-        let fullString = text
-        
-        // Apply smooth opacity-based reveal without layout changes
-        withAnimation(.linear(duration: 0.06)) {
-            animatedText = createStyledAttributedString(from: fullString, forceFullOpacity: false)
-        }
-        
-        // Power word glow removed for cleaner animation
-        
-        currentCharacterIndex += 1
     }
     
-    private func createStyledAttributedString(from text: String, forceFullOpacity: Bool = false) -> AttributedString {
+    private func createFullStyledText() -> AttributedString {
         var result = AttributedString("")
+        let words = text.components(separatedBy: .whitespacesAndNewlines).filter { !$0.isEmpty }
         
-        // Process each character with legendary smooth opacity animation
-        for (index, char) in text.enumerated() {
-            var charString = AttributedString(String(char))
+        for word in words {
+            var wordString = AttributedString(word + " ")
             
-            // Determine if this character is part of a power word
-            let wordStart = findWordStart(in: text, at: index)
-            let wordEnd = findWordEnd(in: text, at: index)
-            let word = String(text[text.index(text.startIndex, offsetBy: wordStart)..<text.index(text.startIndex, offsetBy: wordEnd)])
-            
-            // Beautiful smooth gradient fade without harsh transitions
-            let opacity: Double
-            
-            if forceFullOpacity {
-                // Show all characters at full opacity when animation is complete
-                opacity = 1.0
+            if highlightPowerWords && isPowerWord(word) {
+                wordString.foregroundColor = Constants.gold
+                wordString.font = themeViewModel.selectedFont.weight(.bold)
             } else {
-                let distance = Double(index - currentCharacterIndex)
-                
-                if distance < -2 {
-                    // Fully settled characters
-                    opacity = 1.0
-                } else if distance < 0 {
-                    // Recently revealed - smooth settling animation
-                    let settlingProgress = 1.0 + (distance / 2.0) // Maps -2 to 0 -> 0 to 1
-                    opacity = 0.85 + (settlingProgress * 0.15) // 0.85 to 1.0
-                } else if distance <= 4 {
-                    // Upcoming characters - beautiful exponential fade
-                    // Using cosine for ultra-smooth falloff
-                    let progress = distance / 4.0 // 0 to 1
-                    opacity = (1.0 - progress) * 0.6 * cos(progress * .pi / 2)
-                } else {
-                    // Future characters - invisible but maintaining layout
-                    opacity = 0.0
-                }
+                wordString.foregroundColor = themeViewModel.selectedTheme.fontColor
+                wordString.font = themeViewModel.selectedFont
             }
             
-            // Apply smooth color transitions without animation artifacts
-            if highlightPowerWords && isPowerWord(word.trimmingCharacters(in: .whitespacesAndNewlines)) {
+            result.append(wordString)
+        }
+        
+        return result
+    }
+    
+    private func createSmoothRevealText() -> AttributedString {
+        var result = AttributedString("")
+        let totalLength = Double(text.count)
+        let revealPoint = totalLength * revealProgress
+        
+        for (index, char) in text.enumerated() {
+            var charString = AttributedString(String(char))
+            let charPosition = Double(index)
+            
+            // Smooth gradient calculation - buttery smooth fade
+            let opacity: Double
+            let fadeWidth: Double = 8.0 // Smooth fade width
+            
+            if charPosition < revealPoint - fadeWidth {
+                opacity = 1.0
+            } else if charPosition <= revealPoint {
+                let fadeProgress = (revealPoint - charPosition) / fadeWidth
+                opacity = max(0.0, min(1.0, fadeProgress))
+            } else {
+                opacity = 0.0
+            }
+            
+            // Find word for power word highlighting
+            let word = findWordContaining(index: index)
+            
+            if highlightPowerWords && isPowerWord(word) {
                 charString.foregroundColor = Constants.gold.opacity(opacity)
                 charString.font = themeViewModel.selectedFont.weight(.bold)
             } else {
@@ -209,58 +333,58 @@ struct AnimatedDeclarationText: View {
         return result
     }
     
-    private func findWordStart(in text: String, at index: Int) -> Int {
+    private func findWordContaining(index: Int) -> String {
+        guard index >= 0 && index < text.count else { return "" }
+        
         let chars = Array(text)
         var start = index
+        var end = index
+        
+        // Find word boundaries efficiently
         while start > 0 && !chars[start - 1].isWhitespace {
             start -= 1
         }
-        return start
-    }
-    
-    private func findWordEnd(in text: String, at index: Int) -> Int {
-        let chars = Array(text)
-        var end = index
         while end < chars.count - 1 && !chars[end + 1].isWhitespace {
             end += 1
         }
-        return end + 1
+        
+        return String(chars[start...end]).trimmingCharacters(in: .whitespacesAndNewlines)
     }
     
     
+    
     private func completeAnimation() {
+        guard !animationComplete else { return }
+        
         timer?.invalidate()
         timer = nil
         
-        // Show final bright, clear text
         showCompleteText()
     }
     
     private func showCompleteText() {
-        // Create attributed string that preserves original text structure
-        animatedText = createStyledAttributedString(from: text, forceFullOpacity: true)
+        guard !animationComplete else { return }
         
-        currentCharacterIndex = characters.count
+        // Show final complete text
+        revealProgress = 1.0
+        animatedText = fullStyledText
         
-        // Notify that animation is complete (only once)
-        if !animationComplete {
-            onAnimationComplete?()
-        }
+        // Mark animation as complete and notify callback
+        animationComplete = true
+        onAnimationComplete?()
         
         withAnimation(.easeOut(duration: 0.2)) {
             isAnimating = false
-            animationComplete = true
         }
     }
     
     private func handleTap() {
-        if isAnimating {
+        if isAnimating && !animationComplete {
             // Complete animation immediately
-            timer?.invalidate()
-            showCompleteText()
-        } else {
-            // Restart animation
-            startAnimation()
+            completeAnimation()
+        } else if animationComplete {
+            // Restart animation from beginning
+            resetAndStartAnimation()
         }
     }
     

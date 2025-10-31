@@ -202,7 +202,10 @@ struct DeclarationContentView: View {
             .opacity(viewModel.showVerse ? 1 : 0.9)
             .animation(.spring(response: 0.4, dampingFraction: 0.7), value: viewModel.showVerse)
             .onChange(of: viewModel.showVerse) { _ in
-                completedAnimations.removeAll()
+                // Clear completed animations with delay to prevent subtitle flash
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    completedAnimations.removeAll()
+                }
             }
 
             .tabViewStyle(.page(indexDisplayMode: .never))
@@ -359,7 +362,7 @@ struct DeclarationContentView: View {
                 .opacity(completedAnimations.contains("\(declaration.id)-\(viewModel.showVerse)") ? 1.0 : 0.0)
                 .scaleEffect(completedAnimations.contains("\(declaration.id)-\(viewModel.showVerse)") ? 1.0 : 0.8)
                 .offset(y: completedAnimations.contains("\(declaration.id)-\(viewModel.showVerse)") ? 0 : 10)
-                .animation(.spring(response: 0.8, dampingFraction: 0.8, blendDuration: 0.2).delay(0.3), value: completedAnimations.contains("\(declaration.id)-\(viewModel.showVerse)"))
+                .animation(.spring(response: 0.6, dampingFraction: 0.75, blendDuration: 0.1).delay(0.5), value: completedAnimations.contains("\(declaration.id)-\(viewModel.showVerse)"))
             
             Spacer()
                 .frame(height: geometry.size.height * 0.44)
