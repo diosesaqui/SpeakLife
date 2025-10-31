@@ -29,7 +29,7 @@ struct QuoteLabel: View {
                     themeViewModel: themeViewModel,
                     onAnimationComplete: onAnimationComplete
                 )
-                .id(quote) // Force recreation when text changes (verse toggle)
+                .id(quote) // Force recreation when text changes
             } else {
                 // Fallback to original static text
                 Text(quote.firstUppercased)

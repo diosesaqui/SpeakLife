@@ -31,7 +31,7 @@ struct AnimatedDeclarationText: View {
     @AppStorage("showAnimationProgress") private var showAnimationProgress = true
     
     // Power words for highlighting
-    private let powerWords = ["I", "am", "God", "Jesus", "blessed", "victorious", "loved", "chosen", "strong", "peace", "faith", "hope", "grace", "truth", "light", "kingdom", "eternal", "redeemed", "forgiven", "healed", "restored", "healing", "joy"]
+    private let powerWords = ["I", "am", "God", "Jesus", "blessed", "victorious", "loved", "chosen", "strong", "peace", "faith", "hope", "grace", "truth", "light", "kingdom", "eternal", "redeemed", "forgiven", "healed", "restored", "healing", "joy", "Christ"]
     
     var body: some View {
         VStack(spacing: 16) {
@@ -40,20 +40,35 @@ struct AnimatedDeclarationText: View {
                 .font(themeViewModel.selectedFont)
                 .foregroundColor(themeViewModel.selectedTheme.fontColor)
                 .multilineTextAlignment(.center)
-                .lineSpacing(8)
-                .padding(.horizontal, 20)
+                .lineSpacing(10)
+                .kerning(0.5) // Subtle letter spacing for elegance
+                .padding(.horizontal, 24)
                 .frame(maxWidth: .infinity)
-                .scaleEffect(animationComplete ? 1.0 : (isAnimating ? 1.0 : 0.98))
-                .blur(radius: (isAnimating || animationComplete) ? 0 : 0.5)
+                .scaleEffect(animationComplete ? 1.0 : (isAnimating ? 1.0 : 0.96))
+                .blur(radius: animationComplete ? 0 : (isAnimating ? 0 : 1.2))
                 .shadow(
-                    color: .black.opacity(themeViewModel.selectedTheme.blurEffect ? 0.3 : 0),
-                    radius: themeViewModel.selectedTheme.blurEffect ? 4 : 0
+                    color: .black.opacity(themeViewModel.selectedTheme.blurEffect ? 0.25 : 0.1),
+                    radius: themeViewModel.selectedTheme.blurEffect ? 6 : 2,
+                    x: 0,
+                    y: 2
                 )
-                .animation(.spring(response: 0.6, dampingFraction: 0.8, blendDuration: 0.3), value: isAnimating)
+                .animation(.spring(response: 0.8, dampingFraction: 0.85, blendDuration: 0.4), value: isAnimating)
+                .animation(.easeInOut(duration: 0.3), value: animationComplete)
         
         }
         .onAppear {
-            setupAnimation()
+            // ALWAYS animate on appear - every swipe should animate
+            resetAnimation()
+            DispatchQueue.main.async {
+                setupAnimation()
+            }
+        }
+        .onChange(of: text) { _ in
+            // ALWAYS animate when text changes
+            resetAnimation()
+            DispatchQueue.main.async {
+                setupAnimation()
+            }
         }
         .onTapGesture {
             handleTap()
@@ -75,14 +90,20 @@ struct AnimatedDeclarationText: View {
     
     // MARK: - Animation Logic
     
+    private func resetAnimation() {
+        timer?.invalidate()
+        timer = nil
+        currentCharacterIndex = 0
+        animationComplete = false
+        isAnimating = false
+        animatedText = AttributedString("")
+    }
+    
     private func setupAnimation() {
         guard !words.isEmpty else { return }
         
-        if autoStartAnimation {
-            startAnimation()
-        } else {
-            showCompleteText()
-        }
+        // Always start animation for consistent behavior
+        startAnimation()
     }
     
     private func startAnimation() {
@@ -103,16 +124,15 @@ struct AnimatedDeclarationText: View {
         // Clear current text
         animatedText = AttributedString("")
         
-        // Start legendary typewriter effect with buttery smooth timing
-        // Optimized speed for perfect reading rhythm
-        let charactersPerSecond = animationSpeed * 6 // Optimized for smooth flow
+        // Start smooth, elegant reveal without jumps
+        // Perfect pacing for beautiful fade effect
+        let baseSpeed = 10.0 // Optimized for smooth fade perception
+        let speedMultiplier = 1.0 + (animationSpeed - 2.0) * 0.15 // Subtle speed adjustment
+        let charactersPerSecond = baseSpeed * speedMultiplier
         let interval = 1.0 / charactersPerSecond
         
-        timer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { timer in
-            // Ensure UI updates happen on main thread for 60fps smoothness
-            DispatchQueue.main.async {
-                self.revealNextCharacter()
-            }
+        timer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { _ in
+            self.revealNextCharacter()
         }
     }
     
@@ -122,18 +142,15 @@ struct AnimatedDeclarationText: View {
             return
         }
         
-        let character = characters[currentCharacterIndex]
+        // Always use full text to prevent layout jumps, control visibility through opacity
+        let fullString = text
         
-        // Build only the revealed text to prevent showing unrevealed characters
-        let revealedString = String(characters[0...currentCharacterIndex])
-        
-        // Apply styling to revealed text only - no animation to prevent shaking
-        animatedText = createStyledAttributedString(from: revealedString, forceFullOpacity: true)
-        
-        // Check if we just completed a power word for glow effect
-        if character == " " || currentCharacterIndex == characters.count - 1 {
-            checkForCompletedPowerWord(at: currentCharacterIndex)
+        // Apply smooth opacity-based reveal without layout changes
+        withAnimation(.linear(duration: 0.06)) {
+            animatedText = createStyledAttributedString(from: fullString, forceFullOpacity: false)
         }
+        
+        // Power word glow removed for cleaner animation
         
         currentCharacterIndex += 1
     }
@@ -150,18 +167,34 @@ struct AnimatedDeclarationText: View {
             let wordEnd = findWordEnd(in: text, at: index)
             let word = String(text[text.index(text.startIndex, offsetBy: wordStart)..<text.index(text.startIndex, offsetBy: wordEnd)])
             
-            // Legendary smooth opacity transitions with easing curves
+            // Beautiful smooth gradient fade without harsh transitions
             let opacity: Double
             
             if forceFullOpacity {
                 // Show all characters at full opacity when animation is complete
                 opacity = 1.0
             } else {
-                // Since we're only showing revealed characters, all should be at full opacity
-                opacity = 1.0
+                let distance = Double(index - currentCharacterIndex)
+                
+                if distance < -2 {
+                    // Fully settled characters
+                    opacity = 1.0
+                } else if distance < 0 {
+                    // Recently revealed - smooth settling animation
+                    let settlingProgress = 1.0 + (distance / 2.0) // Maps -2 to 0 -> 0 to 1
+                    opacity = 0.85 + (settlingProgress * 0.15) // 0.85 to 1.0
+                } else if distance <= 4 {
+                    // Upcoming characters - beautiful exponential fade
+                    // Using cosine for ultra-smooth falloff
+                    let progress = distance / 4.0 // 0 to 1
+                    opacity = (1.0 - progress) * 0.6 * cos(progress * .pi / 2)
+                } else {
+                    // Future characters - invisible but maintaining layout
+                    opacity = 0.0
+                }
             }
             
-            // Apply smooth color transitions with easing
+            // Apply smooth color transitions without animation artifacts
             if highlightPowerWords && isPowerWord(word.trimmingCharacters(in: .whitespacesAndNewlines)) {
                 charString.foregroundColor = Constants.gold.opacity(opacity)
                 charString.font = themeViewModel.selectedFont.weight(.bold)
@@ -194,40 +227,6 @@ struct AnimatedDeclarationText: View {
         return end + 1
     }
     
-    private func checkForCompletedPowerWord(at index: Int) {
-        // Find the word that was just completed
-        let revealedText = String(characters[0...index])
-        let words = revealedText.components(separatedBy: .whitespacesAndNewlines)
-        
-        if let lastWord = words.last?.trimmingCharacters(in: .whitespacesAndNewlines),
-           !lastWord.isEmpty,
-           highlightPowerWords && isPowerWord(lastWord) {
-            
-            // Add subtle glow effect for power words
-            addGlowEffect(to: lastWord)
-        }
-    }
-    
-    private func addGlowEffect(to word: String) {
-        // Temporary glow effect for power words
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            // Find the word in the attributed string and add temporary styling
-            if let range = animatedText.range(of: word) {
-                withAnimation(.easeInOut(duration: 0.6)) {
-                    animatedText[range].backgroundColor = Constants.gold.opacity(0.2)
-                }
-                
-                // Remove glow after a moment
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
-                    withAnimation(.easeOut(duration: 0.4)) {
-                        if let range = animatedText.range(of: word) {
-                            animatedText[range].backgroundColor = nil
-                        }
-                    }
-                }
-            }
-        }
-    }
     
     private func completeAnimation() {
         timer?.invalidate()
@@ -241,15 +240,17 @@ struct AnimatedDeclarationText: View {
         // Create attributed string that preserves original text structure
         animatedText = createStyledAttributedString(from: text, forceFullOpacity: true)
         
+        currentCharacterIndex = characters.count
+        
+        // Notify that animation is complete (only once)
+        if !animationComplete {
+            onAnimationComplete?()
+        }
+        
         withAnimation(.easeOut(duration: 0.2)) {
             isAnimating = false
             animationComplete = true
         }
-        
-        currentCharacterIndex = characters.count
-        
-        // Notify that animation is complete
-        onAnimationComplete?()
     }
     
     private func handleTap() {

@@ -73,6 +73,9 @@ struct SpeakLifeApp: App {
     @State private var notificationJustReceived = false
     @State private var isFirstAppear = true
     
+    // Track if this is the very first launch of the app
+    @AppStorage("hasLaunchedBefore") private var hasLaunchedBefore = false
+    
     private let fourDaysInSeconds: Double = 345600
     
     var body: some Scene {
@@ -110,8 +113,19 @@ struct SpeakLifeApp: App {
                             appDelegate.initializeTikTokSDK()
                         }
                     }
-                    // DO NOT automatically start background music on app launch
-                    // User must manually enable it each session to prevent unwanted audio
+                    
+                    // Check if this is the first launch or if user has music enabled
+                    if !hasLaunchedBefore {
+                        // First launch - automatically start background music
+                        declarationStore.backgroundMusicEnabled = true
+                        AudioPlayerService.shared.playSound(files: resources)
+                        hasLaunchedBefore = true
+                        print("🎵 First launch detected - starting background music")
+                    } else if declarationStore.backgroundMusicEnabled {
+                        // Subsequent launches - respect user's saved preference
+                        AudioPlayerService.shared.playSound(files: resources)
+                        print("🎵 Background music enabled - starting playback")
+                    }
                     
                     // 🚀 Initialize AI services and train initial models
                     Task {
@@ -154,9 +168,16 @@ struct SpeakLifeApp: App {
                 // Process any pending widget actions when app becomes active
                 WidgetDataBridge.shared.processPendingWidgetActions()
                 
-                // NEVER automatically restart background music when app becomes active
-                // User must manually re-enable it if they want it
-                // This prevents the issue of music randomly playing hours later
+                // Check if background music should be playing when app becomes active
+                if declarationStore.backgroundMusicEnabled && !AudioPlayerService.shared.isPlaying {
+                    // Only restart if it was enabled and not already playing
+                    // Check if we're coming back from a recent background (within 5 minutes)
+                    if let lastBackground = appState.lastBackgroundDate,
+                       Date().timeIntervalSince(lastBackground) < 300 {
+                        AudioPlayerService.shared.playSound(files: resources)
+                        print("🎵 Resuming background music after returning from background")
+                    }
+                }
                     
                 if appState.notificationEnabled {
                     // Ensure checklist notifications are scheduled (they repeat daily)
@@ -175,14 +196,13 @@ struct SpeakLifeApp: App {
                 // This allows music to continue when notification center/control center is opened
                 break
             case .background:
-                // ALWAYS stop background music when going to background
+                // Stop background music when going to background
                 // Only content audio (lessons) should continue
                 if !AudioPlayerViewModel.hasActiveAudio {
-                    // No content audio playing, so completely terminate background music
-                    AudioPlayerService.shared.stopMusic()
-                    
-                    // Also disable background music to prevent any automatic restart
-                    declarationStore.backgroundMusicEnabled = false
+                    // No content audio playing, so pause background music (not stop)
+                    // This allows us to resume when coming back
+                    AudioPlayerService.shared.pauseMusic()
+                    print("🎵 Pausing background music when entering background")
                 }
                 
                 // Track when app was backgrounded to prevent stale audio from restarting hours later
