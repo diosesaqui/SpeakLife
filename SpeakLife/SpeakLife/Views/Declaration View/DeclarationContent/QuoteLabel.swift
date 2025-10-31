@@ -10,16 +10,28 @@ import SwiftUI
 struct QuoteLabel: View {
     
     @ObservedObject var themeViewModel: ThemeViewModel
+    @AppStorage("useAnimatedText") private var useAnimatedText = true
     
     var quote: String
     
     var body: some View {
-        Text(quote.firstUppercased)
-            .multilineTextAlignment(.center)
-            .lineLimit(nil)
-            .font(themeViewModel.selectedFont)
-            .minimumScaleFactor(0.4)
-            .padding()
+        Group {
+            if useAnimatedText {
+                AnimatedDeclarationText(
+                    text: quote.firstUppercased,
+                    themeViewModel: themeViewModel
+                )
+                .id(quote) // Force recreation when text changes (verse toggle)
+            } else {
+                // Fallback to original static text
+                Text(quote.firstUppercased)
+                    .multilineTextAlignment(.center)
+                    .lineLimit(nil)
+                    .font(themeViewModel.selectedFont)
+                    .minimumScaleFactor(0.4)
+                    .padding()
+            }
+        }
     }
 }
 

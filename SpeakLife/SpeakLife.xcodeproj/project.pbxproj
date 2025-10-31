@@ -164,6 +164,8 @@
 		45F3E75B2EAAAD41002B1F4E /* CreateYourOwnTutorial.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45F3E7592EAAAD41002B1F4E /* CreateYourOwnTutorial.swift */; };
 		45F3E75E2EAAB36B002B1F4E /* DevotionalsTutorial.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45F3E75D2EAAB36B002B1F4E /* DevotionalsTutorial.swift */; };
 		45F3E7602EB426CA002B1F4E /* CombinedPersonalizationScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45F3E75F2EB426CA002B1F4E /* CombinedPersonalizationScene.swift */; };
+		45F3E7632EB43B8A002B1F4E /* AnimatedDeclarationText.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45F3E7612EB43B8A002B1F4E /* AnimatedDeclarationText.swift */; };
+		45F3E7642EB43B8A002B1F4E /* DeclarationAnimationSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45F3E7622EB43B8A002B1F4E /* DeclarationAnimationSettings.swift */; };
 		45FF718E2E6294330048C523 /* declarationsv7_backup.json in Resources */ = {isa = PBXBuildFile; fileRef = 45FF718D2E6294330048C523 /* declarationsv7_backup.json */; };
 		45FF71912E64293D0048C523 /* ListenerMetricsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45FF718F2E64293D0048C523 /* ListenerMetricsService.swift */; };
 		7A00721828F8ED4A00965AF7 /* declarations.json in Resources */ = {isa = PBXBuildFile; fileRef = 7A00721728F8ED4A00965AF7 /* declarations.json */; };
@@ -442,6 +444,8 @@
 		45F3E7592EAAAD41002B1F4E /* CreateYourOwnTutorial.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateYourOwnTutorial.swift; sourceTree = "<group>"; };
 		45F3E75D2EAAB36B002B1F4E /* DevotionalsTutorial.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DevotionalsTutorial.swift; sourceTree = "<group>"; };
 		45F3E75F2EB426CA002B1F4E /* CombinedPersonalizationScene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CombinedPersonalizationScene.swift; sourceTree = "<group>"; };
+		45F3E7612EB43B8A002B1F4E /* AnimatedDeclarationText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnimatedDeclarationText.swift; sourceTree = "<group>"; };
+		45F3E7622EB43B8A002B1F4E /* DeclarationAnimationSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeclarationAnimationSettings.swift; sourceTree = "<group>"; };
 		45FF718D2E6294330048C523 /* declarationsv7_backup.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = declarationsv7_backup.json; sourceTree = "<group>"; };
 		45FF718F2E64293D0048C523 /* ListenerMetricsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ListenerMetricsService.swift; sourceTree = "<group>"; };
 		59BFF68BFA515EAC0AC88C85 /* WidgetIntents.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WidgetIntents.swift; sourceTree = "<group>"; };
@@ -1207,6 +1211,8 @@
 		7AA8709C28DACCB700134ADB /* DeclarationContent */ = {
 			isa = PBXGroup;
 			children = (
+				45F3E7612EB43B8A002B1F4E /* AnimatedDeclarationText.swift */,
+				45F3E7622EB43B8A002B1F4E /* DeclarationAnimationSettings.swift */,
 				7AA8709F28DACCB700134ADB /* DeclarationContentView.swift */,
 				7AA8709D28DACCB700134ADB /* QuoteLabel.swift */,
 				7AA8709E28DACCB700134ADB /* HeartView.swift */,
@@ -1643,6 +1649,8 @@
 				7AF18C7D29FD1A67005A6E31 /* AdBanner.swift in Sources */,
 				453172B42B2D274800388AD4 /* BenefitScene.swift in Sources */,
 				4575C9482E46F25B007C14F3 /* SiriIntents.swift in Sources */,
+				45F3E7632EB43B8A002B1F4E /* AnimatedDeclarationText.swift in Sources */,
+				45F3E7642EB43B8A002B1F4E /* DeclarationAnimationSettings.swift in Sources */,
 				4575C9492E46F25B007C14F3 /* SmartContentProvider.swift in Sources */,
 				4575C94A2E46F25B007C14F3 /* WidgetDataBridge.swift in Sources */,
 				457DC17E2CEEA92700C666D5 /* AudioPlayerView.swift in Sources */,
@@ -1959,7 +1967,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = SpeakLife/SpeakLife.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 911;
+				CURRENT_PROJECT_VERSION = 913;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_ASSET_PATHS = "\"SpeakLife/Preview Content\"";
 				DEVELOPMENT_TEAM = 652R6A63L8;
@@ -2001,7 +2009,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = SpeakLife/SpeakLife.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 911;
+				CURRENT_PROJECT_VERSION = 913;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_ASSET_PATHS = "\"SpeakLife/Preview Content\"";
 				DEVELOPMENT_TEAM = 652R6A63L8;

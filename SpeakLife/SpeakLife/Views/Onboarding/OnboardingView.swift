@@ -37,35 +37,6 @@ struct OnboardingView: View  {
                 }
                 .tag(Tab.transformedLife)
                 
-                // OPTION 2: Keep existing separate scenes (comment out above and uncomment below)
-                /*
-                IntroTipScene(
-                    title: "Struggling with Anxiety, Fear, or Doubt?",
-                    bodyText: """
-                    You're not alone. Over 50,000+ believers have transformed their minds using God's Word daily.
-
-                    Jesus gave you authority to trample every enemy - anxiety, fear, and doubt included. 
-
-                    Join thousands who now walk in supernatural peace instead of worry.
-                    """,
-                    subtext: "",
-                    ctaText: "Start My Transformation →",
-                    showTestimonials: false,
-                    isScholarship: false,
-                    size: geometry.size)
-                {
-                    advance()
-                }
-                .tag(Tab.transformedLife)
-                
-                ImprovementScene(size: geometry.size, viewModel: improvementViewModel) {
-                    withAnimation {
-                        advance()
-                    }
-                }
-                .tag(Tab.improvement)
-                */
-
                 NotificationOnboarding(size: geometry.size) {
                     withAnimation {
                         askNotificationPermission()

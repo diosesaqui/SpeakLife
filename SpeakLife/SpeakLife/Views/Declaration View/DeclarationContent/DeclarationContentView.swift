@@ -29,6 +29,68 @@ struct AppLogo: View {
         }
     }
 }
+
+// First-install banner encouraging users to speak declarations aloud like Jesus
+struct SpeakAloudBanner: View {
+    @AppStorage("hasShownSpeakAloudBanner") private var hasShownBanner = false
+    @Binding var showBanner: Bool
+    
+    let onDismiss: () -> Void
+    
+    var body: some View {
+        if !hasShownBanner && showBanner {
+            HStack(spacing: 8) {
+                Image(systemName: "speaker.wave.2.fill")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(Constants.gold)
+                
+                Text("Speak these aloud like Jesus")
+                    .font(.system(size: 14, weight: .medium, design: .rounded))
+                    .foregroundColor(.white)
+                    .lineLimit(1)
+                
+                Button(action: dismissBanner) {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundColor(.white.opacity(0.5))
+                }
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .background(
+                Capsule()
+                    .fill(.ultraThinMaterial)
+                    .overlay(
+                        Capsule()
+                            .stroke(.white.opacity(0.1), lineWidth: 0.5)
+                    )
+            )
+            .shadow(color: .black.opacity(0.15), radius: 8, x: 0, y: 2)
+            .transition(.asymmetric(
+                insertion: .scale(scale: 0.9).combined(with: .opacity),
+                removal: .scale(scale: 0.95).combined(with: .opacity)
+            ))
+            .onAppear {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
+                    if showBanner {
+                        dismissBanner()
+                    }
+                }
+            }
+        }
+    }
+    
+    private func dismissBanner() {
+        withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
+            showBanner = false
+        }
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            hasShownBanner = true
+            onDismiss()
+        }
+    }
+}
 struct DeclarationContentView: View {
     
     @Environment(\.horizontalSizeClass) var horizontalSizeClass
@@ -51,6 +113,7 @@ struct DeclarationContentView: View {
     @State private var rotationAngle: Double = 0
     @State private var buttonVisibilities: [Bool] = [false, false]
     @State private var numberOfItems: Int = 2
+    
     
     
     init(themeViewModel: ThemeViewModel,
@@ -152,8 +215,13 @@ struct DeclarationContentView: View {
             .onReceive(NotificationCenter.default.publisher(for: UIApplication.willResignActiveNotification)) { _ in
                 self.showShareSheet = false
             }
+            
+            // First-install banner centered and contained
+           
             }
         }
+       
+       // }
     }
     
     func getButtonVisibility(declaration: Declaration) {
@@ -163,6 +231,8 @@ struct DeclarationContentView: View {
         }
         buttonVisibilities = Array(repeating: false, count: numberOfItems)
     }
+    
+    
     
     func prepareShareItems() -> [UIImage] {
         guard let image = image else { return [] }
@@ -444,6 +514,9 @@ struct DeclarationContentView: View {
                         showVerse(declaration: declaration)
                     }
                 }
+                
+                // Animation settings toggle
+               // AnimationToggleButton()
                 
             }
             .foregroundColor(.white)

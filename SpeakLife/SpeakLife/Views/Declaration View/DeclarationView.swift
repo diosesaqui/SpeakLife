@@ -36,6 +36,7 @@ struct DeclarationView: View {
     @State private var isPresentingPremiumView = false
     @EnvironmentObject var timerViewModel: TimerViewModel
     @State var presentDevotionalSubscriptionView = false
+    @State private var showSpeakAloudBanner = false
     
     private var cancellables = Set<AnyCancellable>()
     
@@ -59,32 +60,40 @@ struct DeclarationView: View {
                     if !appState.showScreenshotLabel {
                        
                         VStack() {
-                           
+                        
+
                             HStack {
+                            
+                                SpeakAloudBanner(showBanner: $showSpeakAloudBanner) {
+                                    showSpeakAloudBanner = false
+                                }
+                                .frame(height: geometry.size.height * 0.10)
+                                if !showSpeakAloudBanner {
                                 Spacer()
                                 // Enhanced Streak System with Daily Checklist
                                 EnhancedStreakView()
                                     .opacity(appState.showScreenshotLabel ? 0 : 1)
                                     .allowsHitTesting(!appState.showScreenshotLabel)
-                                if !subscriptionStore.isPremium {
-                                    Spacer()
-                                        .frame(width: 8)
-                                    
-                                    CapsuleImageButton(title: "crown.fill") {
-                                        premiumView()
-                                        Selection.shared.selectionFeedback()
-                                    }
-                                    .opacity(appState.showScreenshotLabel ? 0 : 1)
-                                    .foregroundStyle(Constants.gold)
-                                   
-                                    .sheet(isPresented: $isPresentingPremiumView) {
+                                    if !subscriptionStore.isPremium {
+                                        Spacer()
+                                            .frame(width: 8)
+                                        
+                                        CapsuleImageButton(title: "crown.fill") {
+                                            premiumView()
+                                            Selection.shared.selectionFeedback()
+                                        }
+                                        .opacity(appState.showScreenshotLabel ? 0 : 1)
+                                        .foregroundStyle(Constants.gold)
+                                        
+                                        
+                                        .sheet(isPresented: $isPresentingPremiumView) {
                                             self.isPresentingPremiumView = false
                                             Analytics.logEvent(Event.tryPremiumAbandoned, parameters: nil)
                                             timerViewModel.loadRemainingTime()
                                         } content: {
                                             PremiumView()
                                                 .frame(height: UIScreen.main.bounds.height * 0.95)
-                    
+                                            
                                                 .onDisappear {
                                                     if !subscriptionStore.isPremium, !subscriptionStore.isInDevotionalPremium {
                                                         if subscriptionStore.showDevotionalSubscription {
@@ -97,7 +106,8 @@ struct DeclarationView: View {
                                             DevotionalSubscriptionView() {
                                                 presentDevotionalSubscriptionView = false
                                             }
-                                           }
+                                        }
+                                    }
                                     
                                     
                                 }
@@ -158,6 +168,7 @@ struct DeclarationView: View {
         
             
             .onAppear {
+                checkAndShowBanner()
                 reviewCounter += 1
                 shareCounter += 1
                 premiumCount += 1
@@ -206,6 +217,19 @@ struct DeclarationView: View {
         if shareCounter > 3 && shared < 2 && currentDate.timeIntervalSince(appState.lastSharedAttemptDate) >= 12 * 60 * 60 {
             share = true
             appState.lastSharedAttemptDate = currentDate
+        }
+    }
+    
+    private func checkAndShowBanner() {
+        // Check if this is a first install by checking if banner has been shown
+        @AppStorage("hasShownSpeakAloudBanner") var hasShownBanner = false
+        
+        if !hasShownBanner {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                withAnimation(.easeInOut(duration: 0.5)) {
+                    showSpeakAloudBanner = true
+                }
+            }
         }
     }
     

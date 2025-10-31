@@ -28,7 +28,7 @@ struct ValuePropositionV1: View {
     var body: some View {
         HStack(spacing: 16) {
             Image(systemName: icon)
-                .font(.system(size: 20, weight: .medium))
+                .font(.system(size: 16, weight: .medium))
                 .foregroundColor(.white)
                 .frame(width: 30, height: 30)
                 .background(
@@ -239,7 +239,7 @@ struct FloatingCTAButtonV1: View {
     }
     
     private var ctaTitle: String {
-        isYearlyPlan ? "Start My Transformation" : "Begin Speaking Life Today"
+        isYearlyPlan ? "Activate My Breakthrough Now" : "Claim My Promises Today"
     }
     
     private var ctaSubtitle: String {
@@ -278,18 +278,18 @@ struct OptimizedSubscriptionViewV1: View {
     ]
     
     private let valueProps = [
-        ValuePropositionV1(icon: "sparkles", text: "Speak healing, see it manifest"),
-        ValuePropositionV1(icon: "bolt.fill", text: "Turn setbacks into breakthroughs"),
-        ValuePropositionV1(icon: "leaf.fill", text: "Plant yourself in promises that prosper"),
-        ValuePropositionV1(icon: "crown.fill", text: "Walk in supernatural provision"),
-        ValuePropositionV1(icon: "heart.circle.fill", text: "Peace that silences every fear"),
+        ValuePropositionV1(icon: "sparkles", text: "Watch your words create miracles"),
+        ValuePropositionV1(icon: "bolt.fill", text: "Turn pain into unstoppable power"),
+        ValuePropositionV1(icon: "leaf.fill", text: "Harvest Heaven's abundance in you"),
+        ValuePropositionV1(icon: "crown.fill", text: "Walk in wealth & favor that's yours"),
+        ValuePropositionV1(icon: "heart.circle.fill", text: "Feel God's peace silence anxiety"),
     ]
     
     private let valuePropsSupport = [
-        ValuePropositionV1(icon: "sunrise.fill", text: "Build your life on Jesus"),
-        ValuePropositionV1(icon: "lock.open.fill", text: "Unlock 2000+ declarations, devotionals & audio"),
-        ValuePropositionV1(icon: "hands.sparkles.fill", text: "Help millions discover God's promises"),
-        ValuePropositionV1(icon: "sunrise.fill", text: "Life-changing revelations that unlock God's power"),
+        ValuePropositionV1(icon: "sunrise.fill", text: "Become the person Jesus sees when He looks at you"),
+        ValuePropositionV1(icon: "lock.open.fill", text: "Access 2000+ divine promises that reshape reality"),
+        ValuePropositionV1(icon: "hands.sparkles.fill", text: "Join the movement changing millions of destinies"),
+        ValuePropositionV1(icon: "sunrise.fill", text: "Discover Heaven's secrets that unlock breakthrough"),
     ]
     
     var body: some View {
@@ -413,7 +413,7 @@ struct OptimizedSubscriptionViewV1: View {
         HStack {
             Image(systemName: "checkmark.shield.fill")
                 .foregroundColor(.green)
-            Text("Join 50,000+ Christians transforming their minds.")
+            Text("50,000+ believers are already living their breakthrough")
                 .font(.system(size: 16, weight: .semibold))
                 .foregroundColor(.white)
             Image(systemName: "checkmark.shield.fill")
@@ -436,7 +436,8 @@ struct OptimizedSubscriptionViewV1: View {
     
     private var mainOfferSection: some View {
         VStack(spacing: 12) {
-            appIconSection
+          //  appIconSection
+            Spacer().frame(height: 30)
             headlineSection
             valuePropsSection
         }
@@ -483,11 +484,11 @@ struct OptimizedSubscriptionViewV1: View {
     
     private var headlineSection: some View {
         VStack(spacing: 4) {
-            Text("Ready to Speak God's Promises Daily?")
-                .font(.system(size: 22, weight: .medium, design: .rounded))
+            Text("Your Breakthrough is One Declaration Away")
+                .font(.system(size: 24, weight: .bold, design: .rounded))
                 .foregroundColor(.white.opacity(0.9))
             
-            Text("Join thousands who are watching their words become their reality.")
+            Text("Join 50,000+ believers who stopped surviving and started thriving with God's promises.")
                 .font(.system(size: 14, weight: .medium, design: .rounded))
                 .foregroundColor(.white.opacity(0.8))
                 .padding(.top, 4)
