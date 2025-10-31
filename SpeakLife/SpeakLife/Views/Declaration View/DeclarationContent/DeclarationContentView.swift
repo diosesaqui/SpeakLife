@@ -71,7 +71,7 @@ struct SpeakAloudBanner: View {
                 removal: .scale(scale: 0.95).combined(with: .opacity)
             ))
             .onAppear {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 9) {
                     if showBanner {
                         dismissBanner()
                     }
@@ -105,6 +105,7 @@ struct DeclarationContentView: View {
     @State private var image: UIImage?
     @State private var showAnimation = false
     @State private var reviewCounter = 0
+    @State private var completedAnimations: Set<String> = []
     
     private let degrees: Double = 90
     
@@ -200,6 +201,9 @@ struct DeclarationContentView: View {
             .scaleEffect(viewModel.showVerse ? 1.05 : 1)
             .opacity(viewModel.showVerse ? 1 : 0.9)
             .animation(.spring(response: 0.4, dampingFraction: 0.7), value: viewModel.showVerse)
+            .onChange(of: viewModel.showVerse) { _ in
+                completedAnimations.removeAll()
+            }
 
             .tabViewStyle(.page(indexDisplayMode: .never))
             .onChange(of: viewModel.selectedTab) { newIndex in
@@ -336,12 +340,14 @@ struct DeclarationContentView: View {
     
     private func quoteLabel(_ declaration: Declaration, _ geometry: GeometryProxy) -> some View  {
         
-        VStack(spacing: 1) {
+        VStack(spacing: 8) {
             
             Spacer()
-                    .frame(height: geometry.size.height * 0.05)
+                    .frame(height: geometry.size.height * 0.04)
             
-            QuoteLabel(themeViewModel: themeViewModel, quote: viewModel.showVerse ? declaration.bibleVerseText ?? declaration.text : declaration.text)
+            QuoteLabel(themeViewModel: themeViewModel, quote: viewModel.showVerse ? declaration.bibleVerseText ?? declaration.text : declaration.text) {
+                completedAnimations.insert("\(declaration.id)-\(viewModel.showVerse)")
+            }
                 .foregroundColor(themeViewModel.selectedTheme.fontColor)
                 .frame(width: geometry.size.width * 0.98)
                 .shadow(color: .black, radius: themeViewModel.selectedTheme.blurEffect ? 10 : 0)
@@ -350,6 +356,10 @@ struct DeclarationContentView: View {
                 .foregroundColor(.white.opacity(0.9))
                 .font(themeViewModel.selectedFontForBook ?? .caption)
                 .shadow(color: .black, radius: themeViewModel.selectedTheme.blurEffect ? 10 : 0)
+                .opacity(completedAnimations.contains("\(declaration.id)-\(viewModel.showVerse)") ? 1.0 : 0.0)
+                .scaleEffect(completedAnimations.contains("\(declaration.id)-\(viewModel.showVerse)") ? 1.0 : 0.8)
+                .offset(y: completedAnimations.contains("\(declaration.id)-\(viewModel.showVerse)") ? 0 : 10)
+                .animation(.spring(response: 0.8, dampingFraction: 0.8, blendDuration: 0.2).delay(0.3), value: completedAnimations.contains("\(declaration.id)-\(viewModel.showVerse)"))
             
             Spacer()
                 .frame(height: geometry.size.height * 0.44)

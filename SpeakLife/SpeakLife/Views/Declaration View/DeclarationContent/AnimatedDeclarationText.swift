@@ -10,6 +10,13 @@ import SwiftUI
 struct AnimatedDeclarationText: View {
     let text: String
     let themeViewModel: ThemeViewModel
+    let onAnimationComplete: (() -> Void)?
+    
+    init(text: String, themeViewModel: ThemeViewModel, onAnimationComplete: (() -> Void)? = nil) {
+        self.text = text
+        self.themeViewModel = themeViewModel
+        self.onAnimationComplete = onAnimationComplete
+    }
     
     @State private var animatedText: AttributedString = AttributedString("")
     @State private var currentCharacterIndex = 0
@@ -117,13 +124,11 @@ struct AnimatedDeclarationText: View {
         
         let character = characters[currentCharacterIndex]
         
-        // Build the revealed text with smooth transitions - always show full text
-        let fullString = text
+        // Build only the revealed text to prevent showing unrevealed characters
+        let revealedString = String(characters[0...currentCharacterIndex])
         
-        // Apply legendary smooth styling with anticipation
-        withAnimation(.easeOut(duration: 0.15).delay(0.02)) {
-            animatedText = createStyledAttributedString(from: fullString)
-        }
+        // Apply styling to revealed text only - no animation to prevent shaking
+        animatedText = createStyledAttributedString(from: revealedString, forceFullOpacity: true)
         
         // Check if we just completed a power word for glow effect
         if character == " " || currentCharacterIndex == characters.count - 1 {
@@ -133,7 +138,7 @@ struct AnimatedDeclarationText: View {
         currentCharacterIndex += 1
     }
     
-    private func createStyledAttributedString(from text: String) -> AttributedString {
+    private func createStyledAttributedString(from text: String, forceFullOpacity: Bool = false) -> AttributedString {
         var result = AttributedString("")
         
         // Process each character with legendary smooth opacity animation
@@ -147,24 +152,13 @@ struct AnimatedDeclarationText: View {
             
             // Legendary smooth opacity transitions with easing curves
             let opacity: Double
-            let distance = index - currentCharacterIndex
             
-            if distance <= 0 {
-                // Fully revealed characters - sharp and clear
+            if forceFullOpacity {
+                // Show all characters at full opacity when animation is complete
                 opacity = 1.0
-            } else if distance == 1 {
-                // Next character - subtle anticipation with breathing effect
-                let breathingEffect = sin(Date().timeIntervalSince1970 * 3) * 0.05 + 0.15
-                opacity = max(0.1, breathingEffect)
-            } else if distance == 2 {
-                // Second next character - barely visible hint
-                opacity = 0.08
-            } else if distance == 3 {
-                // Third character - ghost hint
-                opacity = 0.03
             } else {
-                // Future characters - invisible
-                opacity = 0.0
+                // Since we're only showing revealed characters, all should be at full opacity
+                opacity = 1.0
             }
             
             // Apply smooth color transitions with easing
@@ -244,34 +238,18 @@ struct AnimatedDeclarationText: View {
     }
     
     private func showCompleteText() {
-        var fullText = AttributedString("")
-        
-        for (index, word) in words.enumerated() {
-            if index > 0 {
-                fullText.append(AttributedString(" "))
-            }
-            
-            var attributedWord = AttributedString(word)
-            
-            if highlightPowerWords && isPowerWord(word) {
-                attributedWord.foregroundColor = Constants.gold
-                attributedWord.font = themeViewModel.selectedFont.weight(.bold)
-            } else {
-                // Ensure full brightness after completion
-                attributedWord.foregroundColor = themeViewModel.selectedTheme.fontColor
-                attributedWord.font = themeViewModel.selectedFont
-            }
-            
-            fullText.append(attributedWord)
-        }
+        // Create attributed string that preserves original text structure
+        animatedText = createStyledAttributedString(from: text, forceFullOpacity: true)
         
         withAnimation(.easeOut(duration: 0.2)) {
-            animatedText = fullText
             isAnimating = false
             animationComplete = true
         }
         
         currentCharacterIndex = characters.count
+        
+        // Notify that animation is complete
+        onAnimationComplete?()
     }
     
     private func handleTap() {
