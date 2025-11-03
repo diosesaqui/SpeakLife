@@ -25,6 +25,8 @@ struct AnimatedDeclarationText: View {
     @State private var timer: Timer?
     @State private var animationDebouncer: Timer?
     @State private var fullStyledText: AttributedString = AttributedString("")
+   // @State private var viewId = UUID() // Force view recreation
+    @State private var hasCalledCompletion = false // Prevent duplicate completions
     
     // User settings
     @AppStorage("animationSpeed") private var animationSpeed = 0.5
@@ -58,22 +60,12 @@ struct AnimatedDeclarationText: View {
         
         }
         .onAppear {
-            Task { @MainActor in
-                await forceResetAnimation()
-            }
+            resetAndStartAnimation()
         }
         .onChange(of: text) { newText in
-            // NUCLEAR immediate cleanup before async task
-            cleanupResources()
-            animatedText = AttributedString("")
-            revealProgress = 0.0  // ⚡ FORCE progress reset immediately
-            isAnimating = false
-            animationComplete = false
-            
-            Task { @MainActor in
-                await forceResetAnimation()
-            }
+            resetAndStartAnimation()
         }
+        //.id(viewId) // Force SwiftUI to recreate view when viewId changes
         .onDisappear {
             cleanupResources()
         }
@@ -101,138 +93,46 @@ struct AnimatedDeclarationText: View {
         animationDebouncer = nil
     }
     
-    @MainActor
-    private func forceResetAnimation() async {
-        // Step 1: Kill everything and wait
+    private func resetAndStartAnimation() {
+        // Kill all timers immediately
         timer?.invalidate()
         timer = nil
         animationDebouncer?.invalidate()
         animationDebouncer = nil
         
-        // PARANOID: Clear all visual state multiple times
+        // Clear all state
         animatedText = AttributedString("")
         revealProgress = 0.0
         animationComplete = false
         isAnimating = false
+        hasCalledCompletion = false
         fullStyledText = AttributedString("")
         
-        // Wait for next runloop cycle
-        await Task.yield()
-        
-        // Step 2: Double-check cleanup and FORCE ZERO PROGRESS
-        timer?.invalidate()
-        timer = nil
-        animationDebouncer?.invalidate()
-        animationDebouncer = nil
-        
-        // TRIPLE check progress is zero
-        revealProgress = 0.0
-        animatedText = AttributedString("")
-        
-        // Step 3: Validate and start fresh
+        // Start fresh after a small delay
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+            self.startFreshAnimation()
+        }
+    }
+    
+    private func startFreshAnimation() {
         guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
             animatedText = AttributedString("")
             return
         }
-        
-        // Create fresh text immediately
-        fullStyledText = createFullStyledText()
-        
-        // Start with completely clean state - QUADRUPLE CHECK
-        revealProgress = 0.0
-        animationComplete = false
-        isAnimating = true
-        
-        // ENSURE we start with blank text
-        animatedText = AttributedString("")
-        
-        // Calculate timing
-        let duration = max(1.0, Double(text.count) * 0.04 / animationSpeed)
-        let stepSize = 1.0 / (duration * 60.0)
-        
-        // Set initial frame with GUARANTEED zero progress
-        animatedText = createSmoothRevealText()
-        
-        // Start timer with fresh state
-        timer = Timer.scheduledTimer(withTimeInterval: 1.0/60.0, repeats: true) { _ in
-            Task { @MainActor in
-                self.updateRevealProgress(stepSize: stepSize)
-            }
-        }
-    }
-    
-    private func resetAndStartAnimation() {
-        // NUCLEAR OPTION - kill everything multiple times
-        timer?.invalidate()
-        timer = nil
-        animationDebouncer?.invalidate() 
-        animationDebouncer = nil
-        
-        // Wait a frame to ensure timers are truly dead
-        DispatchQueue.main.async {
-            // Kill timers again (paranoid)
-            self.timer?.invalidate()
-            self.timer = nil
-            self.animationDebouncer?.invalidate()
-            self.animationDebouncer = nil
-            
-            // FORCE complete state wipe
-            self.animatedText = AttributedString("")
-            self.revealProgress = 0.0
-            self.animationComplete = false
-            self.isAnimating = false
-            self.fullStyledText = AttributedString("")
-            
-            // Wait another frame before starting
-            DispatchQueue.main.async {
-                self.nuclearStartAnimation()
-            }
-        }
-    }
-    
-    private func nuclearStartAnimation() {
-        // PARANOID: Final timer check and kill
-        timer?.invalidate()
-        timer = nil
-        animationDebouncer?.invalidate()
-        animationDebouncer = nil
-        
-        // Validate text exists
-        guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            animatedText = AttributedString("")
-            return
-        }
-        
-        // NUCLEAR state reset with delays between each step
-        revealProgress = 0.0
-        animationComplete = false
-        isAnimating = false
-        animatedText = AttributedString("")
         
         // Create fresh styled text
         fullStyledText = createFullStyledText()
         
-        // Small delay to ensure clean slate
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.016) { // One frame delay
-            self.actuallyStartAnimation()
-        }
-    }
-    
-    private func actuallyStartAnimation() {
-        // Final paranoid check
-        timer?.invalidate()
-        timer = nil
-        
-        // Set state
-        isAnimating = true
+        // Reset state
         revealProgress = 0.0
         animationComplete = false
+        isAnimating = true
         
         // Calculate timing
         let duration = max(1.0, Double(text.count) * 0.04 / animationSpeed)
         let stepSize = 1.0 / (duration * 60.0)
         
-        // Set initial frame at 0% progress
+        // Set initial frame
         animatedText = createSmoothRevealText()
         
         // Start timer
@@ -243,25 +143,11 @@ struct AnimatedDeclarationText: View {
         }
     }
     
-    private func forceStartAnimation() {
-        // Redirect to nuclear approach
-        nuclearStartAnimation()
-    }
-    
-    private func setupAnimation() {
-        guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { 
-            // Handle empty or whitespace-only text
-            animatedText = AttributedString("")
-            return 
-        }
-        guard !words.isEmpty else { return }
-        
-        // Always start animation for consistent behavior
-        forceStartAnimation()
-    }
     
     
-    @MainActor
+    
+    
+    
     private func updateRevealProgress(stepSize: Double) {
         guard isAnimating && !animationComplete else { return }
         
@@ -369,9 +255,13 @@ struct AnimatedDeclarationText: View {
         revealProgress = 1.0
         animatedText = fullStyledText
         
-        // Mark animation as complete and notify callback
+        // Mark animation as complete and notify callback ONCE
         animationComplete = true
-        onAnimationComplete?()
+        
+        if !hasCalledCompletion {
+            hasCalledCompletion = true
+            onAnimationComplete?()
+        }
         
         withAnimation(.easeOut(duration: 0.2)) {
             isAnimating = false

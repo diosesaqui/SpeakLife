@@ -188,7 +188,7 @@ struct DeclarationView: View {
             }
             
             .sheet(isPresented: $isShowingMailView) {
-                MailView(isShowing: $isShowingMailView, result: self.$result, origin: .review)
+                MailView(isShowing: $isShowingMailView, result: self.$result, origin: .review, isSubscribed: subscriptionStore.isPremium)
             }
             .onReceive(NotificationCenter.default.publisher(for: UIApplication.willTerminateNotification)) { _ in
                 timerViewModel.saveRemainingTime()

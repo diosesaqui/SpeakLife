@@ -29,6 +29,7 @@ struct ProfileView: View {
     @EnvironmentObject var appState: AppState
     @EnvironmentObject var devotionalViewModel: DevotionalViewModel
     @EnvironmentObject var subscriptionStore: SubscriptionStore
+    @AppStorage("useAnimatedText") private var useAnimatedText = true
     
     @State var result: Result<MFMailComposeResult, Error>? = nil
     private let appVersion = "App version: \(APP.Version.stringNumber)"
@@ -100,6 +101,7 @@ struct ProfileView: View {
                        // favoritesRow
                         musicRow
                         soundsRow
+                        animationSettings
                     }
                     
                     
@@ -173,11 +175,11 @@ struct ProfileView: View {
                     HStack {
                         Text("Manage Subscription", comment:  "subs row")
                         Spacer()
-                        Image(systemName: "chevron.right")
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                            .frame(width: 8)
-                            .foregroundColor(Constants.DAMidBlue)
+//                        Image(systemName: "chevron.right")
+//                            .resizable()
+//                            .aspectRatio(contentMode: .fit)
+//                            .frame(width: 8)
+//                            .foregroundColor(Constants.DAMidBlue)
                     })
         }
     }
@@ -193,11 +195,11 @@ struct ProfileView: View {
                     HStack {
                         Text("Email", comment:  "subs row")
                         Spacer()
-                        Image(systemName: "chevron.right")
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                            .frame(width: 8)
-                            .foregroundColor(Constants.DAMidBlue)
+//                        Image(systemName: "chevron.right")
+//                            .resizable()
+//                            .aspectRatio(contentMode: .fit)
+//                            .frame(width: 8)
+//                            .foregroundColor(Constants.DAMidBlue)
                     })
         }
     }
@@ -214,11 +216,11 @@ struct ProfileView: View {
                     HStack {
                         Text("Reminders", comment: "Reminder row title")
                         Spacer()
-                        Image(systemName: "chevron.right")
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                            .frame(width: 8)
-                            .foregroundColor(Constants.DAMidBlue)
+//                        Image(systemName: "chevron.right")
+//                            .resizable()
+//                            .aspectRatio(contentMode: .fit)
+//                            .frame(width: 8)
+//                            .foregroundColor(Constants.DAMidBlue)
                     })
                 .simultaneousGesture(TapGesture().onEnded {
                     Event.trackUserAction(
@@ -265,11 +267,11 @@ struct ProfileView: View {
                     HStack {
                         Text("Quizzes", comment: "Reminder row title")
                         Spacer()
-                        Image(systemName: "chevron.right")
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                            .frame(width: 8)
-                            .foregroundColor(Constants.DAMidBlue)
+//                        Image(systemName: "chevron.right")
+//                            .resizable()
+//                            .aspectRatio(contentMode: .fit)
+//                            .frame(width: 8)
+//                            .foregroundColor(Constants.DAMidBlue)
                     })
                 .simultaneousGesture(TapGesture().onEnded {
                     Event.trackUserAction(
@@ -306,11 +308,11 @@ struct ProfileView: View {
                     HStack {
                         Text("Prayers", comment:  "Prayers row title")
                         Spacer()
-                        Image(systemName: "chevron.right")
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                            .frame(width: 8)
-                            .foregroundColor(Constants.DAMidBlue)
+//                        Image(systemName: "chevron.right")
+//                            .resizable()
+//                            .aspectRatio(contentMode: .fit)
+//                            .frame(width: 8)
+//                            .foregroundColor(Constants.DAMidBlue)
                     })
                 .simultaneousGesture(TapGesture().onEnded {
                     Event.trackUserAction(
@@ -333,11 +335,11 @@ struct ProfileView: View {
                     HStack {
                         Text("Tips on how to use SpeakLife", comment:  "Tips row title")
                         Spacer()
-                        Image(systemName: "chevron.right")
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                            .frame(width: 8)
-                            .foregroundColor(Constants.DAMidBlue)
+//                        Image(systemName: "chevron.right")
+//                            .resizable()
+//                            .aspectRatio(contentMode: .fit)
+//                            .frame(width: 8)
+//                            .foregroundColor(Constants.DAMidBlue)
                     })
         }
     }
@@ -374,11 +376,11 @@ struct ProfileView: View {
                     HStack {
                         Text("Father's Love Letter", comment:  "Love row title")
                         Spacer()
-                        Image(systemName: "chevron.right")
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                            .frame(width: 8)
-                            .foregroundColor(Constants.DAMidBlue)
+//                        Image(systemName: "chevron.right")
+//                            .resizable()
+//                            .aspectRatio(contentMode: .fit)
+//                            .frame(width: 8)
+//                            .foregroundColor(Constants.DAMidBlue)
                     })
                 .simultaneousGesture(TapGesture().onEnded {
                     Event.trackUserAction(
@@ -401,11 +403,11 @@ struct ProfileView: View {
                     HStack {
                         Text("Favorites", comment:  "Favorites row title")
                         Spacer()
-                        Image(systemName: "chevron.right")
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                            .frame(width: 8)
-                            .foregroundColor(Constants.DAMidBlue)
+//                        Image(systemName: "chevron.right")
+//                            .resizable()
+//                            .aspectRatio(contentMode: .fit)
+//                            .frame(width: 8)
+//                            .foregroundColor(Constants.DAMidBlue)
                     })
         }
     }
@@ -421,11 +423,11 @@ struct ProfileView: View {
                     HStack {
                         Text("My Own", comment: "create your own title")
                         Spacer()
-                        Image(systemName: "chevron.right")
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                            .frame(width: 8)
-                            .foregroundColor(Constants.DAMidBlue)
+//                        Image(systemName: "chevron.right")
+//                            .resizable()
+//                            .aspectRatio(contentMode: .fit)
+//                            .frame(width: 8)
+//                            .foregroundColor(Constants.DAMidBlue)
                     })
         }
     }
@@ -449,11 +451,11 @@ struct ProfileView: View {
                     HStack {
                         Text("Devotionals", comment: "")
                         Spacer()
-                        Image(systemName: "chevron.right")
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                            .frame(width: 8)
-                            .foregroundColor(Constants.DAMidBlue)
+//                        Image(systemName: "chevron.right")
+//                            .resizable()
+//                            .aspectRatio(contentMode: .fit)
+//                            .frame(width: 8)
+//                            .foregroundColor(Constants.DAMidBlue)
                     })
         }
     }
@@ -475,12 +477,16 @@ struct ProfileView: View {
         }
     }
     
+
+//    Section("Animation Settings") {
+//        Toggle("Enable Animated Text", isOn: $useAnimatedText)
+    
     
     @MainActor
     @ViewBuilder
     private var feedbackRow: some View {
         if MFMailComposeViewController.canSendMail() {
-            SettingsRow(isPresentingContentView: $isPresentingContentView, imageTitle: "highlighter", title: "Contact us", viewToPresent: LazyView(MailView(isShowing: $isPresentingContentView, result: self.$result, origin: .review))) {
+            SettingsRow(isPresentingContentView: $isPresentingContentView, imageTitle: "highlighter", title: "Contact us", viewToPresent: LazyView(MailView(isShowing: $isPresentingContentView, result: self.$result, origin: .review, isSubscribed: subscriptionStore.isPremium))) {
                 presentContentView()
             }
             .id(UUID())
@@ -497,15 +503,15 @@ struct ProfileView: View {
 //        }
 //    }
     
-    @MainActor
-    @ViewBuilder
-    private var scholarshipView: some View {
-        if MFMailComposeViewController.canSendMail(), !subscriptionStore.isPremium {
-            SettingsRow(isPresentingContentView: $isPresentingPrayerRequestView, imageTitle: "gift.fill", title: "Receive a free year on us", viewToPresent: LazyView(MailView(isShowing: $isPresentingPrayerRequestView, result: self.$result, origin: .profile))) {
-                presentPrayerRequestView()
-            }
-        }
-    }
+//    @MainActor
+//    @ViewBuilder
+//    private var scholarshipView: some View {
+//        if MFMailComposeViewController.canSendMail(), !subscriptionStore.isPremium {
+//            SettingsRow(isPresentingContentView: $isPresentingPrayerRequestView, imageTitle: "gift.fill", title: "Receive a free year on us", viewToPresent: LazyView(MailView(isShowing: $isPresentingPrayerRequestView, result: self.$result, origin: .profile))) {
+//                presentPrayerRequestView()
+//            }
+//        }
+//    }
     
     private var warriorView: some View {
         HStack {
@@ -518,11 +524,11 @@ struct ProfileView: View {
                     HStack {
                         Text("Warrior's Prayer", comment: "pp")
                         Spacer()
-                        Image(systemName: "chevron.right")
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                            .frame(width: 8)
-                            .foregroundColor(Constants.DAMidBlue)
+//                        Image(systemName: "chevron.right")
+//                            .resizable()
+//                            .aspectRatio(contentMode: .fit)
+//                            .frame(width: 8)
+//                            .foregroundColor(Constants.DAMidBlue)
                     })
         }
     }
@@ -534,11 +540,11 @@ struct ProfileView: View {
                 HStack {
                     Text("Privacy Policy", comment: "pp")
                     Spacer()
-                    Image(systemName: "chevron.right")
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .frame(width: 8)
-                        .foregroundColor(Constants.DAMidBlue)
+//                    Image(systemName: "chevron.right")
+//                        .resizable()
+//                        .aspectRatio(contentMode: .fit)
+//                        .frame(width: 8)
+//                        .foregroundColor(Constants.DAMidBlue)
                 })
     }
     
@@ -560,6 +566,18 @@ struct ProfileView: View {
             
         }
     }
+        
+        private var animationSettings: some View {
+            ZStack {
+                HStack {
+                    Text("Animation Settings", comment: "terms n conditions")
+                    Spacer()
+                    Toggle("", isOn: $useAnimatedText)
+                        .padding()
+                }
+                
+            }
+        }
     
     @MainActor
     private var bookLink: some  View {

@@ -94,7 +94,7 @@ struct PricingOptionViewV1: View {
                     VStack {
                         HStack {
                             Spacer()
-                            Text("First 7 days on us")
+                            Text("3 Day Free Trial")
                                 .font(.system(size: 12, weight: .bold, design: .rounded))
                                 .foregroundColor(.white)
                                 .padding(.horizontal, 10)
@@ -278,11 +278,11 @@ struct OptimizedSubscriptionViewV1: View {
     ]
     
     private let valueProps = [
-        ValuePropositionV1(icon: "sparkles", text: "Watch your words create miracles"),
-        ValuePropositionV1(icon: "bolt.fill", text: "Turn pain into unstoppable power"),
-        ValuePropositionV1(icon: "leaf.fill", text: "Harvest Heaven's abundance in you"),
-        ValuePropositionV1(icon: "crown.fill", text: "Walk in wealth & favor that's yours"),
-        ValuePropositionV1(icon: "heart.circle.fill", text: "Feel God's peace silence anxiety"),
+        ValuePropositionV1(icon: "flame.fill", text: "Awaken the power God already placed in you"),
+        ValuePropositionV1(icon: "sun.max.fill", text: "Trade anxiety for unshakable peace"),
+        ValuePropositionV1(icon: "crown.fill", text: "Walk in your royal identity — chosen, favored, unstoppable"),
+        ValuePropositionV1(icon: "heart.circle.fill", text: "Speak life, healing, and faith daily"),
+        ValuePropositionV1(icon: "sparkles", text: "Watch God's promises transform your life"),
     ]
     
     private let valuePropsSupport = [
@@ -488,7 +488,7 @@ struct OptimizedSubscriptionViewV1: View {
                 .font(.system(size: 24, weight: .bold, design: .rounded))
                 .foregroundColor(.white.opacity(0.9))
             
-            Text("Join 50,000+ believers who stopped surviving and started thriving with God's promises.")
+            Text("Join 50,000+ believers who stopped fighting alone and started winning with God’s Word.")
                 .font(.system(size: 14, weight: .medium, design: .rounded))
                 .foregroundColor(.white.opacity(0.8))
                 .padding(.top, 4)
@@ -658,7 +658,7 @@ struct OptimizedSubscriptionViewV1: View {
                             .foregroundColor(.yellow)
                     }
                 }
-                Text("3k+ 5 star reviews")
+                Text("4.9 stars")
                     .font(.system(size: 14, weight: .bold))
                     .foregroundColor(.white)
             }

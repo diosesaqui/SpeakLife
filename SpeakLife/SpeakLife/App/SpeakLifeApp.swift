@@ -169,7 +169,7 @@ struct SpeakLifeApp: App {
                 WidgetDataBridge.shared.processPendingWidgetActions()
                 
                 // Check if background music should be playing when app becomes active
-                if declarationStore.backgroundMusicEnabled && !AudioPlayerService.shared.isPlaying {
+                if declarationStore.backgroundMusicEnabled && !AudioPlayerService.shared.isPlaying && !AudioPlayerViewModel.hasActiveAudio {
                     // Only restart if it was enabled and not already playing
                     // Check if we're coming back from a recent background (within 5 minutes)
                     if let lastBackground = appState.lastBackgroundDate,
@@ -198,12 +198,13 @@ struct SpeakLifeApp: App {
             case .background:
                 // Stop background music when going to background
                 // Only content audio (lessons) should continue
-                if !AudioPlayerViewModel.hasActiveAudio {
-                    // No content audio playing, so pause background music (not stop)
-                    // This allows us to resume when coming back
-                    AudioPlayerService.shared.pauseMusic()
-                    print("🎵 Pausing background music when entering background")
-                }
+                AudioPlayerService.shared.stopMusic()
+//                if !AudioPlayerViewModel.hasActiveAudio {
+//                    // No content audio playing, so pause background music (not stop)
+//                    // This allows us to resume when coming back
+//                    
+//                    print("🎵 Pausing background music when entering background")
+//                }
                 
                 // Track when app was backgrounded to prevent stale audio from restarting hours later
                 appState.lastBackgroundDate = Date()

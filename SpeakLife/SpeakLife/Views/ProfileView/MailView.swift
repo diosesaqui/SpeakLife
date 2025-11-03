@@ -21,11 +21,13 @@ struct MailView: UIViewControllerRepresentable {
     
     let origin: Origin
     private let appVersion = "App version: \(APP.Version.stringNumber)"
+    let isSubscribed: Bool
     
     var title: String {
+        let isSubscribed = isSubscribed ? "✅" : ""
         switch origin {
         case .profile: return "Scholarship request"
-        case .review: return "Prayer Request / Report an issue \(appVersion)"
+        case .review: return "Prayer Request / Report an issue \(appVersion), \(isSubscribed)"
         case .newFeatures: return "Request new feature"
         case .prayer: return "Prayer request"
         }
