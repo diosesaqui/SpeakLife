@@ -25,8 +25,9 @@ struct AnimatedDeclarationText: View {
     @State private var timer: Timer?
     @State private var animationDebouncer: Timer?
     @State private var fullStyledText: AttributedString = AttributedString("")
-   // @State private var viewId = UUID() // Force view recreation
+    @State private var viewId = UUID() // Force view recreation on text change
     @State private var hasCalledCompletion = false // Prevent duplicate completions
+    @State private var lastText = "" // Track last text to detect changes
     
     // User settings
     @AppStorage("animationSpeed") private var animationSpeed = 0.5
@@ -60,12 +61,19 @@ struct AnimatedDeclarationText: View {
         
         }
         .onAppear {
-            resetAndStartAnimation()
+            if lastText != text {
+                lastText = text
+                resetAndStartAnimation()
+            }
         }
         .onChange(of: text) { newText in
-            resetAndStartAnimation()
+            if lastText != newText {
+                lastText = newText
+                viewId = UUID() // Force view recreation
+                resetAndStartAnimation()
+            }
         }
-        //.id(viewId) // Force SwiftUI to recreate view when viewId changes
+        .id(viewId) // Force SwiftUI to recreate view when viewId changes
         .onDisappear {
             cleanupResources()
         }
@@ -100,7 +108,7 @@ struct AnimatedDeclarationText: View {
         animationDebouncer?.invalidate()
         animationDebouncer = nil
         
-        // Clear all state
+        // Clear all state immediately
         animatedText = AttributedString("")
         revealProgress = 0.0
         animationComplete = false
@@ -108,9 +116,12 @@ struct AnimatedDeclarationText: View {
         hasCalledCompletion = false
         fullStyledText = AttributedString("")
         
-        // Start fresh after a small delay
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-            self.startFreshAnimation()
+        // Force UI update before starting new animation
+        DispatchQueue.main.async {
+            // Start fresh after ensuring UI has updated
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                self.startFreshAnimation()
+            }
         }
     }
     
@@ -245,7 +256,10 @@ struct AnimatedDeclarationText: View {
         timer?.invalidate()
         timer = nil
         
-        showCompleteText()
+        // Delay completion callback to ensure text is fully visible first
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+            self.showCompleteText()
+        }
     }
     
     private func showCompleteText() {

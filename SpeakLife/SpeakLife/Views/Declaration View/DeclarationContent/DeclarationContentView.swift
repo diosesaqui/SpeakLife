@@ -106,6 +106,7 @@ struct DeclarationContentView: View {
     @State private var showAnimation = false
     @State private var reviewCounter = 0
     @State private var completedAnimations: Set<String> = []
+    @State private var animationResetTrigger = UUID() // Trigger animation reset
     
     private let degrees: Double = 90
     
@@ -202,10 +203,9 @@ struct DeclarationContentView: View {
             .opacity(viewModel.showVerse ? 1 : 0.9)
             .animation(.spring(response: 0.4, dampingFraction: 0.7), value: viewModel.showVerse)
             .onChange(of: viewModel.showVerse) { _ in
-                // Clear completed animations with delay to prevent subtitle flash
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                    completedAnimations.removeAll()
-                }
+                // Clear animations immediately and trigger reset
+                completedAnimations.removeAll()
+                animationResetTrigger = UUID()
             }
 
             .tabViewStyle(.page(indexDisplayMode: .never))
@@ -214,6 +214,9 @@ struct DeclarationContentView: View {
                 askForReview()
                 let declaration = viewModel.declarations[newIndex]
                 viewModel.setCurrent(declaration)
+                // Reset animations for new declaration
+                completedAnimations.removeAll()
+                animationResetTrigger = UUID()
             }
                 
             .frame(width: geometry.size.height, height: geometry.size.width)
@@ -350,26 +353,28 @@ struct DeclarationContentView: View {
                     .frame(height: geometry.size.height * 0.04)
             
             QuoteLabel(themeViewModel: themeViewModel, quote: currentQuote) {
-                let animationKey = "\(declaration.id)-\(viewModel.showVerse)"
-                // Prevent duplicate completion callbacks
+                let animationKey = "\(declaration.id)-\(viewModel.showVerse)-\(animationResetTrigger)"
+                // Only add to completed if not already there
                 if !completedAnimations.contains(animationKey) {
-                    completedAnimations.insert(animationKey)
-                } else {
-            
+                    // Small delay to ensure animation completes before showing subtitle
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                        completedAnimations.insert(animationKey)
+                    }
                 }
             }
                 .foregroundColor(themeViewModel.selectedTheme.fontColor)
                 .frame(width: geometry.size.width * 0.98)
                 .shadow(color: .black, radius: themeViewModel.selectedTheme.blurEffect ? 10 : 0)
+                .id(animationResetTrigger) // Force QuoteLabel recreation when trigger changes
             
             Text(viewModel.subtitle(declaration))
                 .foregroundColor(.white.opacity(0.9))
                 .font(themeViewModel.selectedFontForBook ?? .caption)
                 .shadow(color: .black, radius: themeViewModel.selectedTheme.blurEffect ? 10 : 0)
-                .opacity(completedAnimations.contains("\(declaration.id)-\(viewModel.showVerse)") ? 1.0 : 0.0)
-                .scaleEffect(completedAnimations.contains("\(declaration.id)-\(viewModel.showVerse)") ? 1.0 : 0.8)
-                .offset(y: completedAnimations.contains("\(declaration.id)-\(viewModel.showVerse)") ? 0 : 10)
-                .animation(.spring(response: 0.6, dampingFraction: 0.75, blendDuration: 0.1).delay(0.5), value: completedAnimations.contains("\(declaration.id)-\(viewModel.showVerse)"))
+                .opacity(completedAnimations.contains("\(declaration.id)-\(viewModel.showVerse)-\(animationResetTrigger)") ? 1.0 : 0.0)
+                .scaleEffect(completedAnimations.contains("\(declaration.id)-\(viewModel.showVerse)-\(animationResetTrigger)") ? 1.0 : 0.8)
+                .offset(y: completedAnimations.contains("\(declaration.id)-\(viewModel.showVerse)-\(animationResetTrigger)") ? 0 : 10)
+                .animation(.spring(response: 0.6, dampingFraction: 0.75, blendDuration: 0.1).delay(0.2), value: completedAnimations.contains("\(declaration.id)-\(viewModel.showVerse)-\(animationResetTrigger)"))
             
             Spacer()
                 .frame(height: geometry.size.height * 0.44)
