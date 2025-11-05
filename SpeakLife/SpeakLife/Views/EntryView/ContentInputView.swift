@@ -15,15 +15,24 @@ struct ContentInputView: View {
     
     @State private var showVoiceHint = false
     @State private var animatePrompt = false
+    @State private var keyboardHeight: CGFloat = 0
     
     var body: some View {
         VStack(spacing: 0) {
-            // Top section with prompts
-            VStack(spacing: 12) {
-                contextualPromptSection
-                voiceCorrectionsSection
+            // Top section with prompts - more compact when keyboard is present
+            if keyboardHeight == 0 {
+                VStack(spacing: 12) {
+                    contextualPromptSection
+                    voiceCorrectionsSection
+                }
+                .padding(.bottom, 12)
+            } else {
+                // Minimal header when keyboard is present
+                VStack(spacing: 6) {
+                    voiceCorrectionsSection
+                }
+                .padding(.bottom, 8)
             }
-            .padding(.bottom, 20)
             
             // Text input section - takes most space
             textInputSection
@@ -34,12 +43,19 @@ struct ContentInputView: View {
                     .padding(.vertical, 8)
             }
             
-            // Bottom guidance
-            contentGuidanceSection
-                .padding(.top, 12)
+            // Bottom guidance - minimal when keyboard is present
+            if keyboardHeight == 0 {
+                contentGuidanceSection
+                    .padding(.top, 8)
+            }
         }
         .onAppear {
             setupAnimations()
+        }
+        .onKeyboardHeightChange { height in
+            withAnimation(.easeInOut(duration: 0.3)) {
+                keyboardHeight = height
+            }
         }
         .onTapGesture {
             if !isTextFieldFocused {
@@ -72,7 +88,7 @@ struct ContentInputView: View {
             wordCount: wordCount,
             animate: animatePrompt
         )
-        .padding(.top, 20)
+        .padding(.top, 12)
     }
     
     private var textInputSection: some View {
@@ -84,7 +100,7 @@ struct ContentInputView: View {
             isTextFieldFocused: isTextFieldFocused
         )
         .padding(.horizontal, 20)
-        .frame(maxHeight: .infinity)
+        .frame(maxHeight: .infinity, alignment: .top)
     }
     
     @ViewBuilder
@@ -430,7 +446,7 @@ struct TextInputAreaView: View {
                     .padding(16)
             }
         }
-        .frame(minHeight: 200)
+        .frame(minHeight: 120)
         .overlay(
             RoundedRectangle(cornerRadius: 16)
                 .stroke(

@@ -243,7 +243,7 @@ struct FloatingCTAButtonV1: View {
     }
     
     private var ctaSubtitle: String {
-        return "Cancel anytime"
+        return isYearlyPlan ? "No Payment Due Now" : "Cancel anytime"
     }
  }
 

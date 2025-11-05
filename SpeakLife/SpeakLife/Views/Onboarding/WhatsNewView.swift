@@ -12,7 +12,7 @@ struct WhatsNewBottomSheet: View {
     let version: String
     let features = [
         "New App Icon",
-        "UX updates",
+        "Theme chooser bug fixes",
     ]
 
     var body: some View {

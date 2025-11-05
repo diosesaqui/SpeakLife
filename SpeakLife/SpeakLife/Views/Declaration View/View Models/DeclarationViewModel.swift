@@ -425,7 +425,7 @@ final class DeclarationViewModel: ObservableObject {
     }
     
     private func getCreateOwn() -> [Declaration] {
-        allDeclarations.filter { $0.category == .myOwn }
+        allDeclarations.filter { $0.category == .myOwn && $0.contentType == .affirmation }
     }
     
     

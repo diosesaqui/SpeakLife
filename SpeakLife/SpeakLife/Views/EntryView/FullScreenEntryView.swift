@@ -75,7 +75,8 @@ struct FullScreenEntryView: View {
                         contentType: contentType,
                         isTextFieldFocused: textFieldFocusBinding
                     )
-                .padding(.bottom, 16)
+                    .frame(maxHeight: .infinity)
+                    .padding(.bottom, 16)
                 
                 // Voice input toolbar
 //                VoiceInputToolbar(
@@ -93,7 +94,7 @@ struct FullScreenEntryView: View {
                 )
                 .cornerRadius(8)
                 .padding(.horizontal, 16)
-                .padding(.bottom, keyboardHeight > 0 ? max(keyboardHeight - 100, 20) : 20)
+                .padding(.bottom, keyboardHeight > 0 ? max(keyboardHeight - 300, 20) : 20)
                 
             }
             
