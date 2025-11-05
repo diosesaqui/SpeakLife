@@ -18,7 +18,7 @@ class Theme: Identifiable, Codable {
     let isPremium: Bool
     
     var backgroundImageString: String
-    var id = UUID()
+    let id: UUID
     var mode: Mode
     let blurEffect: Bool
     
@@ -47,6 +47,7 @@ class Theme: Identifiable, Codable {
     }
     
     init(_ backgroundImageString: String, mode: Mode = .dark, isPremium: Bool = true, blurEffect: Bool = false, userSelectedImageData: Data? = nil, fontColorString: String = "white") {
+        self.id = UUID()
         self.backgroundImageString = backgroundImageString
         self.mode = mode
         self.isPremium = isPremium

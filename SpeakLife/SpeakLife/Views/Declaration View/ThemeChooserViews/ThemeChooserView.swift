@@ -47,14 +47,20 @@ struct ThemeChooserView: View {
                             .padding(.horizontal)
 
                         LazyVGrid(columns: twoColumnGrid, spacing: 16) {
-                            ForEach(themesViewModel.themes) { theme in
+                            ForEach(themesViewModel.themes.indices, id: \.self) { index in
+                                let theme = themesViewModel.themes[index]
+                                
                                 themeCell(imageString: theme.backgroundImageString, size: geometry.size, isPremium: theme.isPremium)
+                                    .contentShape(Rectangle()) // Make entire cell tappable
                                     .onTapGesture {
-                                        if theme.isPremium && !subscriptionStore.isPremium {
+                                        let tappedTheme = themesViewModel.themes[index]
+                                        
+                                        if tappedTheme.isPremium && !subscriptionStore.isPremium {
                                             isPresentingPremiumView = true
                                         } else {
                                             withAnimation(.easeInOut(duration: 0.3)) {
-                                                themesViewModel.choose(theme)
+                                                themesViewModel.choose(tappedTheme)
+                                                themesViewModel.save()
                                                 self.presentationMode.wrappedValue.dismiss()
                                             }
                                         }

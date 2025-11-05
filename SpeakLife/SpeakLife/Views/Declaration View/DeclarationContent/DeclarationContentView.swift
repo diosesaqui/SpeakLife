@@ -343,7 +343,6 @@ struct DeclarationContentView: View {
     
     private func quoteLabel(_ declaration: Declaration, _ geometry: GeometryProxy) -> some View  {
         let currentQuote = viewModel.showVerse ? declaration.bibleVerseText ?? declaration.text : declaration.text
-        print("🏗️ Building quoteLabel for: \(currentQuote.prefix(30))... showVerse: \(viewModel.showVerse)")
         
         return VStack(spacing: 8) {
             
@@ -352,15 +351,11 @@ struct DeclarationContentView: View {
             
             QuoteLabel(themeViewModel: themeViewModel, quote: currentQuote) {
                 let animationKey = "\(declaration.id)-\(viewModel.showVerse)"
-                print("🎬 Animation completed - ID: '\(declaration.id)', showVerse: \(viewModel.showVerse)")
-                print("🔑 Animation key: '\(animationKey)'")
-                
                 // Prevent duplicate completion callbacks
                 if !completedAnimations.contains(animationKey) {
                     completedAnimations.insert(animationKey)
-                    print("✅ Animation key added to completed set")
                 } else {
-                    print("⚠️ Duplicate completion callback ignored")
+            
                 }
             }
                 .foregroundColor(themeViewModel.selectedTheme.fontColor)

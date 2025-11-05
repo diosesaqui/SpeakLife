@@ -84,9 +84,16 @@ final class ThemeViewModel: ObservableObject {
     // MARK: Intent(s)
     
     func choose(_ theme: Theme) {
-        self.selectedTheme = theme
+        // Create a new theme instance to avoid modifying the static theme
+        let newTheme = Theme(
+            theme.backgroundImageString,
+            mode: theme.mode,
+            isPremium: theme.isPremium,
+            blurEffect: theme.blurEffect,
+            fontColorString: theme.fontColorString
+        )
+        self.selectedTheme = newTheme
         showUserSelectedImage = false
-        selectedTheme.setBackground(theme.backgroundImageString)
     }
     
     func choose(_ font: Font) {
