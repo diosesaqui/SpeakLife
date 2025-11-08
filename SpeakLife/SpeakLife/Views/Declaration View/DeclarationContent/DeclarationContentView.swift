@@ -378,20 +378,21 @@ struct DeclarationContentView: View {
             
             Spacer()
                 .frame(height: geometry.size.height * 0.44)
-        }.onAppear {
-            Event.trackContent(
-                type: "declaration",
-                id: declaration.id,
-                action: "viewed",
-                metadata: [
-                    "declaration_text": declaration.text.prefix(50),
-                    "category": declaration.category.rawValue,
-                    "has_verse": declaration.bibleVerseText != nil,
-                    "is_custom": declaration.category == .myOwn,
-                    "view_mode": viewModel.showVerse ? "verse" : "affirmation"
-                ]
-            )
         }
+//        .onAppear {
+//            Event.trackContent(
+//                type: "declaration",
+//                id: declaration.id,
+//                action: "viewed",
+//                metadata: [
+//                    "declaration_text": declaration.text.prefix(50),
+//                    "category": declaration.category.rawValue,
+//                    "has_verse": declaration.bibleVerseText != nil,
+//                    "is_custom": declaration.category == .myOwn,
+//                    "view_mode": viewModel.showVerse ? "verse" : "affirmation"
+//                ]
+//            )
+//        }
     }
     
     func setImage(completion: @escaping () -> Void) {
@@ -453,7 +454,7 @@ struct DeclarationContentView: View {
             category: "declaration",
             metadata: [
                 "declaration_id": declaration.id,
-                "declaration_text": declaration.text.prefix(100),
+                "declaration_text": declaration.text.prefix(50),
                 "category": declaration.category.rawValue,
                 "mode": viewModel.showVerse ? "verse" : "affirmation",
                 "is_custom": declaration.category == .myOwn
@@ -479,7 +480,7 @@ struct DeclarationContentView: View {
             category: "declaration",
             metadata: [
                 "declaration_id": declaration.id,
-                "declaration_text": declaration.text.prefix(100),
+                "declaration_text": declaration.text.prefix(50),
                 "category": declaration.category.rawValue,
                 "is_custom": declaration.category == .myOwn,
                 "total_favorites": viewModel.favorites.count,

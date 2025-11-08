@@ -28,6 +28,9 @@ struct AnimatedDeclarationText: View {
     @State private var viewId = UUID() // Force view recreation on text change
     @State private var hasCalledCompletion = false // Prevent duplicate completions
     @State private var lastText = "" // Track last text to detect changes
+    @State private var wasAnimatingBeforeDisappear = false // Track animation state before view disappears
+    @State private var savedProgress: Double = 0.0 // Save progress when interrupted
+    @Environment(\.scenePhase) private var scenePhase // Track app lifecycle
     
     // User settings
     @AppStorage("animationSpeed") private var animationSpeed = 0.5
@@ -61,8 +64,16 @@ struct AnimatedDeclarationText: View {
         
         }
         .onAppear {
-            if lastText != text {
+            // When view appears, check if animation was interrupted
+            if wasAnimatingBeforeDisappear {
+                // Animation was interrupted by tab switch - complete it instantly
+                showCompleteText()
+                wasAnimatingBeforeDisappear = false
+            } else if lastText != text {
                 lastText = text
+                resetAndStartAnimation()
+            } else if !animationComplete && !isAnimating {
+                // Text hasn't changed but no animation completed, start fresh
                 resetAndStartAnimation()
             }
         }
@@ -73,9 +84,38 @@ struct AnimatedDeclarationText: View {
                 resetAndStartAnimation()
             }
         }
+        .onChange(of: scenePhase) { newPhase in
+            switch newPhase {
+            case .background, .inactive:
+                // App going to background or becoming inactive - pause animation
+                if isAnimating && !animationComplete {
+                    timer?.invalidate()
+                    timer = nil
+                }
+            case .active:
+                // App becoming active - resume or complete animation
+                if isAnimating && !animationComplete && timer == nil {
+                    // Animation was interrupted, complete it instantly
+                    showCompleteText()
+                }
+            @unknown default:
+                break
+            }
+        }
         .id(viewId) // Force SwiftUI to recreate view when viewId changes
         .onDisappear {
-            cleanupResources()
+            // When view disappears (tab switch), save state and clean up timer
+            if isAnimating && !animationComplete {
+                // Animation in progress - save state and pause timer
+                wasAnimatingBeforeDisappear = true
+                savedProgress = revealProgress
+                timer?.invalidate()
+                timer = nil
+            } else {
+                // Animation complete or not started - full cleanup
+                wasAnimatingBeforeDisappear = false
+                cleanupResources()
+            }
         }
         .onTapGesture {
             handleTap()
@@ -115,6 +155,8 @@ struct AnimatedDeclarationText: View {
         isAnimating = false
         hasCalledCompletion = false
         fullStyledText = AttributedString("")
+        wasAnimatingBeforeDisappear = false // Reset tab switch state
+        savedProgress = 0.0
         
         // Force UI update before starting new animation
         DispatchQueue.main.async {
