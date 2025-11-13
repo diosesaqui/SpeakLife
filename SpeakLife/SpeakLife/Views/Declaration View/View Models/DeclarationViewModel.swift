@@ -571,19 +571,16 @@ final class DeclarationViewModel: ObservableObject {
         let contentText = String(prefixString(content, until: " ~").dropLast())
         
         // Find or create the declaration
-        let declaration: Declaration
         if let existingDeclaration = allDeclarations.first(where: { $0.text.hasPrefix(contentText) }) {
             print("📌 Found existing declaration")
-            declaration = existingDeclaration
+            self.choose(existingDeclaration)
+        } else {
+            print("📌 Creating new declaration from notification")
+            // Parse category from string
+            let declarationCategory = DeclarationCategory(category) ?? .faith
+            let declaration = Declaration(text: content, category: declarationCategory)
             self.choose(declaration)
         }
-//        else {
-//            print("📌 Creating new declaration")
-//            declaration = Declaration(text: content)
-//        }
-        
-        // Navigate to the declaration
-      //  self.choose(declaration)
         
         // Reset flag after processing
         DispatchQueue.main.asyncAfter(deadline: .now() + 1) { [weak self] in

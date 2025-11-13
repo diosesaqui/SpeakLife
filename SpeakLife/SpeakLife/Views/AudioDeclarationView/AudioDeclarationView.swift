@@ -496,11 +496,8 @@ struct AudioDeclarationView: View {
             PersistentAudioBar(viewModel: audioViewModel)
                 .transition(.move(edge: .bottom).combined(with: .opacity))
                 .animation(.easeOut(duration: 0.4), value: audioViewModel.isBarVisible)
-                .onDisappear {
-                    if declarationStore.backgroundMusicEnabled, !audioViewModel.isPlaying {
-                        AudioPlayerService.shared.playMusic()
-                    }
-                }
+                // REMOVED: onDisappear handler that was trying to resume background music
+                // This could contribute to unexpected audio playback
                 .onTapGesture {
                     if let lastSelectedItem = audioViewModel.lastSelectedItem {
                         self.audioViewModel.selectedItem = lastSelectedItem

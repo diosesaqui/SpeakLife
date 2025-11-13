@@ -294,19 +294,20 @@ struct OptimizedSubscriptionViewV1: View {
     
     var body: some View {
         ZStack {
-            backgroundGradient
-           // Constants.SLBlue
-            ScrollView {
-                VStack(spacing: 0) {
-                    headerSection
-                    mainOfferSection
-                    Spacer().frame(height: 16)
-                    pricingSection
-                    transformationSection
-                    Spacer().frame(height: 8)
-                   
-                    trustSection
-                    Spacer().frame(height: 150)
+            // Main content (background now provided by parent)
+            VStack(spacing: 0) {
+                ScrollView {
+                    VStack(spacing: 0) {
+                        headerSection
+                        mainOfferSection
+                        Spacer().frame(height: 16)
+                        pricingSection
+                        transformationSection
+                        Spacer().frame(height: 8)
+                       
+                        trustSection
+                        Spacer().frame(height: 150)
+                    }
                 }
             }
             
@@ -318,7 +319,7 @@ struct OptimizedSubscriptionViewV1: View {
             if declarationStore.isPurchasing {
                 RotatingLoadingImageView()
             }
-        }
+        } // Allow content to extend to bottom
         .onAppear(perform: setupView)
         .onReceive(Timer.publish(every: 1, on: .main, in: .common).autoconnect()) { _ in
             updateCountdown()
@@ -402,7 +403,6 @@ struct OptimizedSubscriptionViewV1: View {
             startPoint: .topLeading,
             endPoint: .bottomTrailing
         )
-        .ignoresSafeArea()
     }
     
     private var headerSection: some View {
@@ -585,7 +585,7 @@ struct OptimizedSubscriptionViewV1: View {
             showingWeeklyMonthly: false
         )
         .padding(.horizontal, 20)
-
+            if !subscriptionStore.onlyShowYearly {
                 // Monthly option
                 PricingOptionViewV1(
                     option: PricingOptionV1(
@@ -601,13 +601,22 @@ struct OptimizedSubscriptionViewV1: View {
                     showingWeeklyMonthly: true
                 )
                 .padding(.horizontal, 20)
+            }
         }
     }
     
     private var floatingCTASection: some View {
         VStack(spacing: 0) {
-            Constants.SLBlue.opacity(0.95)
-                .frame(height: 20)
+            // Subtle separator
+            LinearGradient(
+                gradient: Gradient(colors: [
+                    Color.white.opacity(0.1),
+                    Color.clear
+                ]),
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .frame(height: 1)
             
             VStack(spacing: 16) {
                 FloatingCTAButtonV1(
@@ -621,7 +630,13 @@ struct OptimizedSubscriptionViewV1: View {
             }
             .padding(.horizontal, 20)
             .padding(.vertical, 16)
-            .background(Constants.SLBlue.opacity(0.95))
+            .background(
+                // Semi-transparent blur effect background
+                Color.black.opacity(0.3)
+                    .background(
+                        .ultraThinMaterial
+                    )
+            )
         }
         .ignoresSafeArea(edges: .bottom)
     }

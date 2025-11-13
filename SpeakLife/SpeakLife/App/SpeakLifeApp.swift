@@ -168,13 +168,15 @@ struct SpeakLifeApp: App {
                 // Process any pending widget actions when app becomes active
                 WidgetDataBridge.shared.processPendingWidgetActions()
                 
-                // Check if background music should be playing when app becomes active
-                if declarationStore.backgroundMusicEnabled && !AudioPlayerService.shared.isPlaying && !AudioPlayerViewModel.hasActiveAudio {
-                    // Only restart if it was enabled and not already playing
-                    // Check if we're coming back from a recent background (within 5 minutes)
+                // Resume background music when returning from background (if it was playing before)
+                if declarationStore.backgroundMusicEnabled && 
+                   AudioPlayerService.shared.isPausedInBackground && 
+                   !AudioPlayerViewModel.hasActiveAudio {
+                    // Only restart if it was paused when going to background
+                    // and no content audio is currently playing
                     if let lastBackground = appState.lastBackgroundDate,
                        Date().timeIntervalSince(lastBackground) < 300 {
-                        AudioPlayerService.shared.playSound(files: resources)
+                        AudioPlayerService.shared.playMusic()
                         print("🎵 Resuming background music after returning from background")
                     }
                 }

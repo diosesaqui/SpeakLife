@@ -13,6 +13,7 @@ import MediaPlayer
 final class AudioPlayerViewModel: NSObject, ObservableObject {
     // Static property to track if any content audio is playing globally
     static var hasActiveAudio: Bool = false
+    private var backgroundTime: Date?
     
     @Published var isPlaying: Bool = false {
         didSet {
@@ -71,34 +72,61 @@ final class AudioPlayerViewModel: NSObject, ObservableObject {
     }
     
     @objc private func handleAppDidEnterBackground() {
-        // Content audio should continue playing in background
-        // Ensure audio session remains active for background playback
-        do {
-            let audioSession = AVAudioSession.sharedInstance()
-            // Re-enable the session to ensure background playback continues
-            try audioSession.setCategory(.playback, mode: .default, options: [.allowAirPlay])
-            try audioSession.setActive(true)
-            
-            // If audio was playing, ensure it continues
-            if isPlaying && player?.rate == 0 {
-                player?.play()
-            }
-        } catch {
-            print("❌ Failed to maintain audio session for background: \(error)")
-        }
+        // Record when we entered background
+        backgroundTime = Date()
         
-        // Update the Now Playing info for lock screen controls
-        updateNowPlayingInfo()
+        // Content audio CAN continue playing in background if actively playing
+        // But we need to ensure background music is stopped
+        AudioPlayerService.shared.stopMusic()
+        
+        // Only maintain audio session if content is actively playing
+        if isPlaying && player?.rate ?? 0 > 0 {
+            do {
+                let audioSession = AVAudioSession.sharedInstance()
+                // Re-enable the session to ensure background playback continues for content
+                try audioSession.setCategory(.playback, mode: .default, options: [.allowAirPlay])
+                try audioSession.setActive(true)
+            } catch {
+                print("❌ Failed to maintain audio session for background: \(error)")
+            }
+            
+            // Update the Now Playing info for lock screen controls
+            updateNowPlayingInfo()
+        } else {
+            // If not actively playing content, deactivate audio session
+            try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+        }
     }
     
     @objc private func handleAppWillEnterForeground() {
-        // If audio should be playing but isn't, resume it
-        if isPlaying && player?.rate == 0 {
-            player?.play()
+        // Check how long we've been in background
+        if let bgTime = backgroundTime {
+            let timeInBackground = Date().timeIntervalSince(bgTime)
+            print("⏱️ AudioPlayer was in background for \(timeInBackground) seconds")
+            
+            // If we've been backgrounded for more than 5 minutes, don't auto-resume
+            if timeInBackground > 300 {
+                // Stop everything to prevent zombie audio
+                if isPlaying {
+                    print("🛑 Stopping audio after extended background period")
+                    togglePlayPause() // This will pause the audio properly
+                }
+                backgroundTime = nil
+                return
+            }
         }
         
-        // Update Now Playing info when returning
-        updateNowPlayingInfo()
+        // Only resume if content audio was actively playing and we weren't suspended too long
+        if isPlaying && player?.rate == 0 && AudioPlayerViewModel.hasActiveAudio {
+            // This is content audio that should resume
+            player?.play()
+            updateNowPlayingInfo()
+        }
+        
+        // Always ensure background music is stopped
+        AudioPlayerService.shared.stopMusic()
+        
+        backgroundTime = nil
     }
 
     deinit {
@@ -328,6 +356,17 @@ final class AudioPlayerViewModel: NSObject, ObservableObject {
             else {
                 self.isPlaying = false
                 self.player?.seek(to: .zero)
+                
+                // If audio finished while app is in background, deactivate audio session
+                // This prevents zombie audio sessions that could allow random playback
+                if UIApplication.shared.applicationState != .active {
+                    do {
+                        try AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+                        print("🔇 Audio session deactivated - content finished while in background")
+                    } catch {
+                        print("❌ Failed to deactivate audio session after content finished: \(error)")
+                    }
+                }
             }
             self.updateNowPlayingInfo()
         }
@@ -398,7 +437,8 @@ final class AudioPlayerViewModel: NSObject, ObservableObject {
                 )
             }
             player.pause()
-            AudioPlayerService.shared.playMusic()
+            // DON'T automatically start background music when pausing content
+            // AudioPlayerService.shared.playMusic() // REMOVED - This could cause unwanted playback
         } else {
             if let audio = selectedItem {
                 AnalyticsService.shared.trackAudioPlayback(
@@ -412,7 +452,8 @@ final class AudioPlayerViewModel: NSObject, ObservableObject {
                     ]
                 )
             }
-            AudioPlayerService.shared.pauseMusic()
+            // Stop background music when playing content audio
+            AudioPlayerService.shared.stopMusic()
             player.play()
         }
         isPlaying.toggle()

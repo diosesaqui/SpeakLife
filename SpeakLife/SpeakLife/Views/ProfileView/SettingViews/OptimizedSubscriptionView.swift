@@ -209,11 +209,23 @@ struct OptimizedSubscriptionView: View {
     ]
     
     var body: some View {
-       
-        GeometryReader { geometry in
-            if subscriptionStore.showSubscriptionFirst {
-                OptimizedSubscriptionViewV1(size: geometry.size)
-            } else {
+        ZStack {
+            // Background that covers entire screen
+            LinearGradient(
+                gradient: Gradient(colors: [
+                    Color(red: 0.1, green: 0.2, blue: 0.4),
+                    Color(red: 0.3, green: 0.1, blue: 0.4),
+                    Color(red: 0.2, green: 0.1, blue: 0.3)
+                ]),
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .ignoresSafeArea()
+            
+            GeometryReader { geometry in
+                if subscriptionStore.showSubscriptionFirst {
+                    OptimizedSubscriptionViewV1(size: geometry.size)
+                } else {
                 ZStack {
                     // Background
                     Constants.SLBlue.ignoresSafeArea()
@@ -256,6 +268,7 @@ struct OptimizedSubscriptionView: View {
                     PrivacyPolicyView()
                 }
             }
+        }
         }
     }
     

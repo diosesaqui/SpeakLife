@@ -28,68 +28,71 @@ struct CombinedPersonalizationScene: View {
                     HStack {
                         Spacer()
                         ProgressDots(current: 0, total: 3)
-                            .padding(.top, 50)
+                            .padding(.top, proxy.safeAreaInsets.top + 10)
                             .padding(.trailing, 20)
                     }
                     .frame(width: proxy.size.width)
                     
                     ScrollView(showsIndicators: false) {
-                        VStack(spacing: 25) {
-                            Spacer().frame(height: 20)
+                        VStack(spacing: proxy.size.height < 700 ? 15 : 25) {
+                            Spacer().frame(height: proxy.size.height < 700 ? 10 : 20)
                             
                             // HOOK SECTION - Appears first
-                            VStack(spacing: 15) {
+                            VStack(spacing: proxy.size.height < 700 ? 10 : 15) {
                                 Text("Struggling with Anxiety, Fear, or Doubt?")
-                                    .font(.system(size: 30, weight: .bold, design: .rounded))
+                                    .font(.system(size: proxy.size.height < 700 ? 26 : 30, weight: .bold, design: .rounded))
                                     .multilineTextAlignment(.center)
                                     .foregroundColor(.white)
                                     .shadow(radius: 3)
                                     .padding(.horizontal)
                                     .lineLimit(3)
-                                    .minimumScaleFactor(0.8)
+                                    .minimumScaleFactor(0.65)
                                     .opacity(titleOpacity)
                                     .animation(.easeIn(duration: 0.8), value: titleOpacity)
                                 
                                 Text("Join 50,000+ believers who've found breakthrough")
-                                    .font(.system(size: 17, weight: .medium))
+                                    .font(.system(size: proxy.size.height < 700 ? 15 : 17, weight: .medium))
                                     .foregroundColor(.white.opacity(0.9))
                                     .multilineTextAlignment(.center)
                                     .padding(.horizontal, 20)
                                     .lineLimit(2)
+                                    .minimumScaleFactor(0.7)
                                     .opacity(titleOpacity)
                                     .animation(.easeIn(duration: 0.8).delay(0.3), value: titleOpacity)
                             }
                             
                             // PERSONALIZATION SECTION - Appears after delay
-                            VStack(spacing: 20) {
+                            VStack(spacing: proxy.size.height < 700 ? 12 : 20) {
                                 Divider()
                                     .background(Color.white.opacity(0.3))
                                     .frame(width: size.width * 0.3)
                                     .opacity(categoriesOpacity)
                                 
                                 Text("What brings you here today?")
-                                    .font(.system(size: 24, weight: .semibold))
+                                    .font(.system(size: proxy.size.height < 700 ? 20 : 24, weight: .semibold))
                                     .foregroundColor(.white)
+                                    .minimumScaleFactor(0.7)
                                     .opacity(categoriesOpacity)
                                 
                                 Text("Select all that apply (you can change later)")
-                                    .font(.system(size: 14))
+                                    .font(.system(size: proxy.size.height < 700 ? 13 : 14))
                                     .foregroundColor(.white.opacity(0.7))
+                                    .minimumScaleFactor(0.8)
                                     .opacity(categoriesOpacity)
                                 
                                 // Simplified category grid - show only top categories
-                                SimplifiedCategoryGrid(viewModel: viewModel)
-                                    .frame(width: size.width * 0.85)
+                                SimplifiedCategoryGrid(viewModel: viewModel, screenHeight: proxy.size.height)
+                                    .frame(width: size.width * 0.9)
                                     .opacity(categoriesOpacity)
                                     .animation(.easeIn(duration: 0.6).delay(0.8), value: categoriesOpacity)
                             }
                             
-                            Spacer(minLength: 100)
+                            Spacer(minLength: proxy.size.height < 700 ? 60 : 100)
                         }
                     }
                     
                     // CTA Button - Always visible at bottom
-                    VStack(spacing: 15) {
+                    VStack(spacing: proxy.size.height < 700 ? 10 : 15) {
                         // Dynamic button text based on selection
                         ShimmerButton(
                             colors: [.blue, .purple],
@@ -105,17 +108,17 @@ struct CombinedPersonalizationScene: View {
                                 callBack()
                             }
                         )
-                        .frame(width: size.width * 0.85, height: 54)
+                        .frame(width: size.width * 0.85, height: proxy.size.height < 700 ? 48 : 54)
                         
                         // Skip option (subtle)
                         Button("Skip for now") {
                             viewModel.selectedExperiences = [.general]
                             callBack()
                         }
-                        .font(.system(size: 14))
+                        .font(.system(size: proxy.size.height < 700 ? 13 : 14))
                         .foregroundColor(.white.opacity(0.5))
                     }
-                    .padding(.bottom, 40)
+                    .padding(.bottom, proxy.safeAreaInsets.bottom + (proxy.size.height < 700 ? 20 : 30))
                }
                 .frame(width: proxy.size.width, height: proxy.size.height)
                 .background(
@@ -161,29 +164,37 @@ struct CombinedPersonalizationScene: View {
 // Simplified category selection - only show most popular
 struct SimplifiedCategoryGrid: View {
     @ObservedObject var viewModel: ImprovementViewModel
+    let screenHeight: CGFloat
     let impactLight = UIImpactFeedbackGenerator(style: .light)
     
-    // Top categories based on user data
-    let topCategories: [DeclarationCategory] = [
-        .anxiety,
-        .fear,
-        .faith,
-        .health,
-        .marriage,
-        .joy,
-        .rest,
-        .confidence
-    ]
+    // Top categories based on user data - reduce for smaller screens
+    var topCategories: [DeclarationCategory] {
+        let allCategories: [DeclarationCategory] = [
+            .anxiety,
+            .fear,
+            .faith,
+            .health,
+            .marriage,
+            .joy
+        ]
+        
+        if screenHeight < 700 {
+            return Array(allCategories.prefix(6))
+        } else {
+            return allCategories + [.rest, .confidence]
+        }
+    }
     
     var body: some View {
         LazyVGrid(columns: [
-            GridItem(.flexible(), spacing: 10),
-            GridItem(.flexible(), spacing: 10)
-        ], spacing: 10) {
+            GridItem(.flexible(), spacing: screenHeight < 700 ? 8 : 10),
+            GridItem(.flexible(), spacing: screenHeight < 700 ? 8 : 10)
+        ], spacing: screenHeight < 700 ? 8 : 10) {
             ForEach(topCategories, id: \.self) { category in
                 CategoryPill(
                     category: category,
-                    isSelected: viewModel.selectedExperiences.contains(category)
+                    isSelected: viewModel.selectedExperiences.contains(category),
+                    isCompact: screenHeight < 700
                 ) {
                     impactLight.impactOccurred()
                     viewModel.selectExperience(category)
@@ -196,24 +207,25 @@ struct SimplifiedCategoryGrid: View {
 struct CategoryPill: View {
     let category: DeclarationCategory
     let isSelected: Bool
+    let isCompact: Bool
     let action: () -> Void
     
     var body: some View {
         Button(action: action) {
-            HStack(spacing: 6) {
+            HStack(spacing: isCompact ? 4 : 6) {
                 Image(systemName: category.iconName)
-                    .font(.system(size: 18))
-                    .frame(width: 20)
+                    .font(.system(size: isCompact ? 16 : 18))
+                    .frame(width: isCompact ? 18 : 20)
                 
                 Text(category.displayName)
-                    .font(.system(size: 14, weight: .medium))
+                    .font(.system(size: isCompact ? 13 : 14, weight: .medium))
                     .lineLimit(2)
                     .multilineTextAlignment(.leading)
-                    .minimumScaleFactor(0.8)
+                    .minimumScaleFactor(0.65)
             }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 12)
-            .frame(maxWidth: .infinity, minHeight: 48)
+            .padding(.horizontal, isCompact ? 10 : 12)
+            .padding(.vertical, isCompact ? 10 : 12)
+            .frame(maxWidth: .infinity, minHeight: isCompact ? 44 : 48)
             .background(
                 RoundedRectangle(cornerRadius: 25)
                     .fill(isSelected ? Color.blue : Color.white.opacity(0.15))

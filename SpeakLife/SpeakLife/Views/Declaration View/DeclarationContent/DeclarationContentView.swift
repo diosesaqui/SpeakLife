@@ -377,7 +377,7 @@ struct DeclarationContentView: View {
                 .animation(.spring(response: 0.6, dampingFraction: 0.75, blendDuration: 0.1).delay(0.2), value: completedAnimations.contains("\(declaration.id)-\(viewModel.showVerse)-\(animationResetTrigger)"))
             
             Spacer()
-                .frame(height: geometry.size.height * 0.44)
+                .frame(height: geometry.size.height * 0.34)
         }
 //        .onAppear {
 //            Event.trackContent(

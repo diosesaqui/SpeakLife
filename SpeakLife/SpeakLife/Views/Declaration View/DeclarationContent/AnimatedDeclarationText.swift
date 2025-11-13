@@ -46,6 +46,7 @@ struct AnimatedDeclarationText: View {
             // Main text display - legendary smooth animation
             Text(animatedText)
                 .font(themeViewModel.selectedFont)
+                .minimumScaleFactor(0.4)
                 .foregroundColor(themeViewModel.selectedTheme.fontColor)
                 .multilineTextAlignment(.center)
                 .lineSpacing(10)
