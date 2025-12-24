@@ -133,7 +133,7 @@ struct CategoryChooserView: View {
                         
                         generalList(geometry: geometry)
                         categoryList(geometry: geometry)
-                        bibleBookList(geometry: geometry)
+                       // bibleBookList(geometry: geometry)
                     }
                     .frame(maxWidth: .infinity, alignment: .top) // Keeps everything at the top
                 }
@@ -168,6 +168,9 @@ struct CategoryChooserView: View {
                             if category.isPremium && !subscriptionStore.isPremium {
                                 presentPremiumView = true
                             } else {
+                                // Track category change for paywall triggers
+                                PaywallTriggerManager.shared.trackCategoryChange()
+                                
                                 viewModel.choose(category) { success in
                                     if success {
                                         Analytics.logEvent(Event.categoryChooserTapped, parameters: ["category": category.rawValue])
@@ -193,6 +196,9 @@ struct CategoryChooserView: View {
                             if category.isPremium && !subscriptionStore.isPremium {
                                 presentPremiumView = true
                             } else {
+                                // Track category change for paywall triggers
+                                PaywallTriggerManager.shared.trackCategoryChange()
+                                
                                 viewModel.choose(category) { success in
                                     if success {
                                         Analytics.logEvent(Event.categoryChooserTapped, parameters: ["category": category.rawValue])
@@ -219,6 +225,9 @@ struct CategoryChooserView: View {
                             if category.isPremium && !subscriptionStore.isPremium {
                                 presentPremiumView = true
                             } else {
+                                // Track category change for paywall triggers
+                                PaywallTriggerManager.shared.trackCategoryChange()
+                                
                                 viewModel.choose(category) { success in
                                     if success {
                                         Analytics.logEvent(Event.categoryChooserTapped, parameters: ["category": category.rawValue])

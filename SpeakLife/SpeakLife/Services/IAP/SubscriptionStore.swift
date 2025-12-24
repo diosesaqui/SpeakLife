@@ -243,6 +243,45 @@ final class SubscriptionStore: ObservableObject {
             for await result in Transaction.updates {
                 do {
                     let transaction = try self.checkVerified(result)
+                    
+                    // Track subscription events based on transaction type
+                    if transaction.productType == .autoRenewable {
+                        // Check if this is a renewal or trial conversion
+                        let originalTransactionId = transaction.originalID
+                        
+                        // Get previous transactions for this subscription
+                        var previousTransactions: [Transaction] = []
+                        for await entitlement in Transaction.currentEntitlements {
+                            if let verifiedTransaction = try? self.checkVerified(entitlement),
+                               verifiedTransaction.originalID == originalTransactionId,
+                               verifiedTransaction.id != transaction.id {
+                                previousTransactions.append(verifiedTransaction)
+                            }
+                        }
+                        
+                        if !previousTransactions.isEmpty {
+                                // This is a renewal or trial conversion
+                                if transaction.offerType == .introductory {
+                                    // Trial conversion
+                                    AnalyticsService.shared.trackTrialActivated(
+                                        productId: transaction.productID,
+                                        metadata: [
+                                            "transaction_id": transaction.id,
+                                            "original_transaction_id": originalTransactionId
+                                        ]
+                                    )
+                                } else {
+                                    // Regular renewal
+                                    AnalyticsService.shared.trackSubscriptionRenewal(
+                                        productId: transaction.productID,
+                                        metadata: [
+                                            "transaction_id": transaction.id,
+                                            "original_transaction_id": originalTransactionId
+                                        ]
+                                    )
+                            }
+                        }
+                    }
 
                     // Deliver products to the user
                     await self.updateCustomerProductStatus()
@@ -365,6 +404,10 @@ final class SubscriptionStore: ObservableObject {
     func updateCustomerProductStatus() async {
         var purchasedSubscriptions: [Product] = []
         var purchasedNonConsumables: [Product] = [] // New list for purchased non-consumables
+        
+        // Store previous subscription state to detect cancellations
+        let previousSubscriptions = self.purchasedSubscriptions
+        let previousStatus = self.subscriptionGroupStatus
 
         // Iterate through all of the user's purchased products
         for await result in Transaction.currentEntitlements {
@@ -389,7 +432,35 @@ final class SubscriptionStore: ObservableObject {
 
         self.purchasedSubscriptions = purchasedSubscriptions
         self.purchasedNonConsumables = purchasedNonConsumables
-        subscriptionGroupStatus = try? await subscriptions.first?.subscription?.status.first?.state
+        
+        let newStatus = try? await subscriptions.first?.subscription?.status.first?.state
+        subscriptionGroupStatus = newStatus
+        
+        // Track subscription cancellation
+        if previousStatus == .subscribed && newStatus != .subscribed && !previousSubscriptions.isEmpty {
+            // User had a subscription but no longer does
+            if let lastSubscription = previousSubscriptions.first {
+                AnalyticsService.shared.trackSubscriptionCancelled(
+                    productId: lastSubscription.id,
+                    metadata: [
+                        "previous_status": String(describing: previousStatus),
+                        "new_status": String(describing: newStatus)
+                    ]
+                )
+            }
+        }
+        
+        // Also check for expired or revoked subscriptions
+        if newStatus == .expired || newStatus == .revoked {
+            if let currentSubscription = purchasedSubscriptions.first {
+                AnalyticsService.shared.trackSubscriptionCancelled(
+                    productId: currentSubscription.id,
+                    metadata: [
+                        "cancellation_reason": String(describing: newStatus)
+                    ]
+                )
+            }
+        }
     }
     
     func products(for ids: [String]) async -> [Product]? {

@@ -46,6 +46,9 @@ final class AudioFavoritesManager: ObservableObject {
             updatedAudio.favoriteId = UUID().uuidString
             updatedAudio.dateFavorited = Date()
             addFavoriteToList(updatedAudio)
+            
+            // Track favorite saved for paywall triggers
+            PaywallTriggerManager.shared.trackFavoriteSaved()
         }
         
         saveFavorites()

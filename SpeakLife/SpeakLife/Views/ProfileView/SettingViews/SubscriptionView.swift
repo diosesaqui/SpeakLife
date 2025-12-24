@@ -236,7 +236,36 @@ struct OfferPageView: View {
     
     func buy(_ iap: String) async {
         do {
-            if let _ = try await subscriptionStore.purchaseWithID([iap]) {
+            if let transaction = try await subscriptionStore.purchaseWithID([iap]) {
+                // Get product details for tracking
+                let products = await subscriptionStore.products(for: [iap])
+                if let product = products?.first {
+                    let priceValue = NSDecimalNumber(decimal: product.price).doubleValue
+                    
+                    // Track paywall conversion
+                    AnalyticsService.shared.trackPaywallConversion(
+                        productId: iap,
+                        paywallId: "subscription_view",
+                        price: priceValue,
+                        metadata: [
+                            "variant": "standard"
+                        ]
+                    )
+                    
+                    // Check if this is a trial start
+                    let hasTrial = product.subscription?.introductoryOffer?.period != nil
+                    if hasTrial {
+                        AnalyticsService.shared.trackTrialStarted(
+                            productId: iap,
+                            metadata: [
+                                "trial_days": product.subscription?.introductoryOffer?.period.value ?? 0,
+                                "variant": "standard"
+                            ]
+                        )
+                    }
+                }
+                
+                // Keep existing event for backward compatibility
                 Analytics.logEvent(iap, parameters: nil)
                 callBack()
             }
@@ -355,6 +384,15 @@ struct SubscriptionView: View {
             .onAppear {
                 currentSelection = subscriptionStore.currentOfferedPremium
                 startTestimonialRotation()
+                
+                // Track paywall impression
+                AnalyticsService.shared.trackPaywallImpression(
+                    paywallId: "subscription_view",
+                    metadata: [
+                        "variant": "standard",
+                        "initial_plan": "premium"
+                    ]
+                )
             }
             
             if declarationStore.isPurchasing {
@@ -609,7 +647,32 @@ struct SubscriptionView: View {
             }
             do {
                 if let currentSelection = currentSelection,
-                   let _ = try await subscriptionStore.purchaseWithID([currentSelection.id]) {
+                   let transaction = try await subscriptionStore.purchaseWithID([currentSelection.id]) {
+                    // Track paywall conversion
+                    let priceValue = NSDecimalNumber(decimal: currentSelection.price).doubleValue
+                    AnalyticsService.shared.trackPaywallConversion(
+                        productId: currentSelection.id,
+                        paywallId: "subscription_view",
+                        price: priceValue,
+                        metadata: [
+                            "variant": "standard",
+                            "duration": currentSelection.subscription?.subscriptionPeriod.debugDescription ?? "unknown"
+                        ]
+                    )
+                    
+                    // Check if this is a trial start
+                    let hasTrial = currentSelection.subscription?.introductoryOffer?.period != nil
+                    if hasTrial {
+                        AnalyticsService.shared.trackTrialStarted(
+                            productId: currentSelection.id,
+                            metadata: [
+                                "trial_days": currentSelection.subscription?.introductoryOffer?.period.value ?? 0,
+                                "variant": "standard"
+                            ]
+                        )
+                    }
+                    
+                    // Keep existing event for backward compatibility
                     Analytics.logEvent(currentSelection.id, parameters: nil)
                     callback?()
                 }

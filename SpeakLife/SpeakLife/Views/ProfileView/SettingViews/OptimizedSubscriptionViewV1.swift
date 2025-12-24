@@ -9,6 +9,13 @@ import SwiftUI
 import StoreKit
 import FirebaseAnalytics
 
+extension Array {
+    subscript(safe index: Int) -> Element? {
+        guard index >= 0, index < count else { return nil }
+        return self[index]
+    }
+}
+
 // MARK: - View Models (V1)
 struct PricingOptionV1 {
     let product: Product?
@@ -24,6 +31,7 @@ struct PricingOptionV1 {
 struct ValuePropositionV1: View {
     let icon: String
     let text: String
+    @State private var iconPulse = false
     
     var body: some View {
         HStack(spacing: 16) {
@@ -45,8 +53,14 @@ struct ValuePropositionV1: View {
                             )
 
                         )
-                        .shadow(color: Color.orange.opacity(0.3), radius: 4, x: 0, y: 2)
+                        .shadow(color: Color(red: 0.7, green: 0.3, blue: 1.0).opacity(iconPulse ? 0.6 : 0.3), radius: iconPulse ? 8 : 4, x: 0, y: 2)
                 )
+                .scaleEffect(iconPulse ? 1.05 : 1.0)
+                .onAppear {
+                    withAnimation(Animation.easeInOut(duration: 2.0).repeatForever(autoreverses: true)) {
+                        iconPulse = true
+                    }
+                }
             
             Text(text)
                 .font(.system(size: 15, weight: .semibold, design: .rounded))
@@ -60,6 +74,7 @@ struct PricingOptionViewV1: View {
     let option: PricingOptionV1
     let action: () -> Void
     let showingWeeklyMonthly: Bool
+    @State private var glowAnimation = false
     
     var body: some View {
         Button(action: action) {
@@ -84,8 +99,8 @@ struct PricingOptionViewV1: View {
                 .background(backgroundGradient)
                 .scaleEffect(option.isSelected ? 1.02 : 1.0)
                 .shadow(
-                    color: option.isSelected ? shadowColor : Color.clear,
-                    radius: option.isSelected ? (option.isYearly ? 12 : 8) : 0,
+                    color: option.isSelected ? (glowAnimation ? shadowColor.opacity(0.8) : shadowColor) : Color.clear,
+                    radius: option.isSelected ? (glowAnimation ? (option.isYearly ? 18 : 12) : (option.isYearly ? 12 : 8)) : 0,
                     y: option.isSelected ? (option.isYearly ? 6 : 4) : 0
                 )
                 
@@ -94,10 +109,10 @@ struct PricingOptionViewV1: View {
                     VStack {
                         HStack {
                             Spacer()
-                            Text("3 Day Free Trial")
-                                .font(.system(size: 12, weight: .bold, design: .rounded))
+                            Text("Most popular • Best for transformation")
+                                .font(.system(size: 11, weight: .bold, design: .rounded))
                                 .foregroundColor(.white)
-                                .padding(.horizontal, 10)
+                                .padding(.horizontal, 8)
                                 .padding(.vertical, 4)
                                 .background(
                                     Capsule()
@@ -114,6 +129,22 @@ struct PricingOptionViewV1: View {
             }
         }
         .buttonStyle(PlainButtonStyle())
+        .onAppear {
+            if option.isSelected {
+                withAnimation(Animation.easeInOut(duration: 2.5).repeatForever(autoreverses: true)) {
+                    glowAnimation = true
+                }
+            }
+        }
+        .onChange(of: option.isSelected) { isSelected in
+            if isSelected {
+                withAnimation(Animation.easeInOut(duration: 2.5).repeatForever(autoreverses: true)) {
+                    glowAnimation = true
+                }
+            } else {
+                glowAnimation = false
+            }
+        }
     }
     
     private func getSubscriptionTypeText(for option: PricingOptionV1, showingWeeklyMonthly: Bool) -> String {
@@ -124,7 +155,9 @@ struct PricingOptionViewV1: View {
         if product.id.contains("Weekly") || product.id.contains("1WK") || product.id.lowercased().contains("week") {
             return "Weekly"
         } else if product.id.contains("1YR") || product.id.contains("Yearly") || product.id.lowercased().contains("year") {
-            return "Yearly - \(option.monthlyEquivalent ?? "")"
+            return "Yearly – \(option.monthlyEquivalent ?? "")"
+        } else if product.id.contains("Lifetime") || product.id.lowercased().contains("lifetime") {
+            return "Lifetime"
         } else if product.id.contains("Monthly") || product.id.contains("MO") || product.id.lowercased().contains("month") {
             return "Monthly"
         } else {
@@ -200,6 +233,7 @@ struct PricingOptionViewV1: View {
 
 struct FloatingCTAButtonV1: View {
     let isYearlyPlan: Bool
+    let isLifetimePlan: Bool
     let displayPrice: String
     let action: () -> Void
     @Binding var animateCTA: Bool
@@ -239,11 +273,18 @@ struct FloatingCTAButtonV1: View {
     }
     
     private var ctaTitle: String {
-        isYearlyPlan ? "Activate My Breakthrough Now" : "Claim My Promises Today"
+        "Claim Your Victory Now"
     }
     
     private var ctaSubtitle: String {
-        return isYearlyPlan ? "No Payment Due Now" : "Cancel anytime"
+        if isLifetimePlan {
+            return "Forever access • One-time payment"
+        }
+        return isYearlyPlan ? "3 Days Free • Cancel Anytime" : "Your breakthrough starts today"
+    }
+    
+    private var preferencesTracker: UserPreferencesTracker {
+        UserPreferencesTracker.shared
     }
  }
 
@@ -253,6 +294,7 @@ struct OptimizedSubscriptionViewV1: View {
     @EnvironmentObject var appState: AppState
     @EnvironmentObject var declarationStore: DeclarationViewModel
     @EnvironmentObject var subscriptionStore: SubscriptionStore
+    @ObservedObject private var preferencesTracker = UserPreferencesTracker.shared
     
     @State private var isShowingError = false
     @State private var errorMessage = ""
@@ -263,9 +305,14 @@ struct OptimizedSubscriptionViewV1: View {
     @State private var testimonialIndex = 0
     @State private var timeRemaining: TimeInterval = 600
     @State private var showPrivacyPolicy = false
+    @State private var starAnimation = false
+    @State private var showCloseButton = false
+    @State private var starPositions: [CGPoint] = []
+    @State private var starOffsets: [CGPoint] = []
     
     let size: CGSize
     var callback: (() -> Void)?
+    var isPresentedModally: Bool = true  // Default to true to show close button by default
     
     private let transformationStories = [
         "Thanks SpeakLife for helping me to know who Jesus is. I love everything about SpeakLife. It has brought me closer to Him...",
@@ -277,13 +324,17 @@ struct OptimizedSubscriptionViewV1: View {
         "I love the daily reminders they've been helping me renew my mind and how I think..."
     ]
     
-    private let valueProps = [
-        ValuePropositionV1(icon: "flame.fill", text: "Awaken the power God already placed in you"),
-        ValuePropositionV1(icon: "sun.max.fill", text: "Trade anxiety for unshakable peace"),
-        ValuePropositionV1(icon: "crown.fill", text: "Walk in your royal identity — chosen, favored, unstoppable"),
-        ValuePropositionV1(icon: "heart.circle.fill", text: "Speak life, healing, and faith daily"),
-        ValuePropositionV1(icon: "sparkles", text: "Watch God's promises transform your life"),
-    ]
+    private var valueProps: [ValuePropositionV1] {
+        let paywallCopy = preferencesTracker.getDynamicPaywallCopy()
+        let icons = ["flame.fill", "sun.max.fill", "crown.fill", "heart.circle.fill", "sparkles"]
+        
+        return paywallCopy.valueProps.prefix(5).enumerated().map { index, prop in
+            ValuePropositionV1(
+                icon: icons[safe: index] ?? "star.fill",
+                text: prop
+            )
+        }
+    }
     
     private let valuePropsSupport = [
         ValuePropositionV1(icon: "sunrise.fill", text: "Become the person Jesus sees when He looks at you"),
@@ -294,11 +345,14 @@ struct OptimizedSubscriptionViewV1: View {
     
     var body: some View {
         ZStack {
-            // Main content (background now provided by parent)
+            // Enhanced gradient background with depth
+            enhancedBackgroundGradient
+            
+            // Main content
             VStack(spacing: 0) {
                 ScrollView {
                     VStack(spacing: 0) {
-                        headerSection
+                     //   headerSection
                         mainOfferSection
                         Spacer().frame(height: 16)
                         pricingSection
@@ -315,6 +369,21 @@ struct OptimizedSubscriptionViewV1: View {
                 Spacer()
                 floatingCTASection
             }
+            
+            // Enhanced close button - only show when presented modally
+//            if isPresentedModally {
+//                VStack {
+//                    HStack {
+//                        Spacer()
+//                        ElegantCloseButton(isVisible: showCloseButton) {
+//                            dismiss()
+//                        }
+//                    }
+//                    .padding(.top, 50)
+//                    .padding(.trailing, 20)
+//                    Spacer()
+//                }
+//            }
             
             if declarationStore.isPurchasing {
                 RotatingLoadingImageView()
@@ -342,6 +411,12 @@ struct OptimizedSubscriptionViewV1: View {
                currentSelection.id.contains("1YR") || currentSelection.id.contains("Yearly")
     }
     
+    private var isLifetimePlan: Bool {
+        guard let currentSelection = currentSelection else { return false }
+        return currentSelection.id == subscriptionStore.currentOfferedLifetime?.id ||
+               currentSelection.id.contains("Lifetime")
+    }
+    
     private var currentDisplayPrice: String {
         currentSelection?.displayPrice ?? 
         subscriptionStore.currentOfferedWeekly?.displayPrice ?? 
@@ -353,8 +428,8 @@ struct OptimizedSubscriptionViewV1: View {
         subscriptionStore.currentOfferedWeekly?.displayPrice ?? "$3.99"
     }
     
-    private var monthlyPrice: String {
-        subscriptionStore.currentOfferedPremiumMonthly?.displayPrice ?? "$9.99"
+    private var lifetimePrice: String {
+        subscriptionStore.currentOfferedLifetime?.displayPrice ?? "$99.99"
     }
     
     private var yearlyPrice: String {
@@ -393,6 +468,94 @@ struct OptimizedSubscriptionViewV1: View {
     }
     
     // MARK: - View Components (V1)
+    private var enhancedBackgroundGradient: some View {
+        ZStack {
+            // Base gradient layer with richer colors
+            LinearGradient(
+                gradient: Gradient(colors: [
+                    Color(red: 0.05, green: 0.1, blue: 0.35), // Deep royal blue
+                    Color(red: 0.35, green: 0.1, blue: 0.5),  // Rich purple
+                    Color(red: 0.15, green: 0.05, blue: 0.25) // Deep midnight
+                ]),
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            
+            // Overlay gradient for depth
+            RadialGradient(
+                gradient: Gradient(colors: [
+                    Color(red: 0.4, green: 0.2, blue: 0.8).opacity(0.3),
+                    Color.clear
+                ]),
+                center: .topLeading,
+                startRadius: 50,
+                endRadius: 400
+            )
+            
+            // Second radial gradient for glow effect
+            RadialGradient(
+                gradient: Gradient(colors: [
+                    Color(red: 0.2, green: 0.3, blue: 0.9).opacity(0.25),
+                    Color.clear
+                ]),
+                center: .bottomTrailing,
+                startRadius: 100,
+                endRadius: 500
+            )
+            
+            // Floating stars animation
+            GeometryReader { geometry in
+                ForEach(0..<20, id: \.self) { index in
+                    Image(systemName: getStarSymbol(for: index))
+                        .font(.system(size: getStarSize(for: index), weight: .light))
+                        .foregroundStyle(
+                            LinearGradient(
+                                gradient: Gradient(colors: [
+                                    Color.white.opacity(getStarOpacity(for: index, base: 0.4)),
+                                    Color(red: 0.9, green: 0.9, blue: 1.0).opacity(getStarOpacity(for: index, base: 0.3)),
+                                    Color(red: 0.8, green: 0.9, blue: 1.0).opacity(getStarOpacity(for: index, base: 0.2))
+                                ]),
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .position(
+                            x: (starPositions[safe: index]?.x ?? CGFloat.random(in: 20...max(40, geometry.size.width - 20))) + (starOffsets[safe: index]?.x ?? 0),
+                            y: (starPositions[safe: index]?.y ?? CGFloat.random(in: 80...max(160, geometry.size.height - 150))) + (starOffsets[safe: index]?.y ?? 0)
+                        )
+                        .scaleEffect(starAnimation ? 1.0 : 0.7)
+                        .rotationEffect(.degrees(starAnimation ? (index % 2 == 0 ? 360 : -360) : 0))
+                        .animation(
+                            Animation.easeInOut(duration: Double.random(in: 3.0...8.0))
+                                .repeatForever(autoreverses: true)
+                                .delay(Double(index) * 0.1),
+                            value: starAnimation
+                        )
+                        .onAppear {
+                            // Initialize positions if needed with safe bounds
+                            if starPositions.count <= index {
+                                let safeWidth = max(40, geometry.size.width - 20)
+                                let safeHeight = max(160, geometry.size.height - 150)
+                                
+                                let newPosition = CGPoint(
+                                    x: CGFloat.random(in: 20...safeWidth),
+                                    y: CGFloat.random(in: 80...safeHeight)
+                                )
+                                starPositions.append(newPosition)
+                                
+                                let newOffset = CGPoint(
+                                    x: CGFloat.random(in: -30...30),
+                                    y: CGFloat.random(in: -30...30)
+                                )
+                                starOffsets.append(newOffset)
+                            }
+                        }
+                }
+            }
+        }
+        .ignoresSafeArea()
+    }
+    
     private var backgroundGradient: some View {
         LinearGradient(
             gradient: Gradient(colors: [
@@ -406,14 +569,24 @@ struct OptimizedSubscriptionViewV1: View {
     }
     
     private var headerSection: some View {
-        Spacer().frame(height: 30)
+        VStack(spacing: 0) {
+            // Progress dots at top
+            HStack {
+                Spacer()
+                ProgressDots(current: 4, total: 4)
+                    .padding(.top, 10)
+                    .padding(.trailing, 20)
+            }
+            
+            Spacer().frame(height: 30)
+        }
     }
     
     private var socialProofBanner: some View {
         HStack {
             Image(systemName: "checkmark.shield.fill")
                 .foregroundColor(.green)
-            Text("50,000+ believers are already living their breakthrough")
+            Text("95% experience breakthrough within 7 days")
                 .font(.system(size: 16, weight: .semibold))
                 .foregroundColor(.white)
             Image(systemName: "checkmark.shield.fill")
@@ -439,6 +612,7 @@ struct OptimizedSubscriptionViewV1: View {
           //  appIconSection
             Spacer().frame(height: 30)
             headlineSection
+            Spacer().frame(height: 10)
             valuePropsSection
         }
     }
@@ -483,44 +657,55 @@ struct OptimizedSubscriptionViewV1: View {
     }
     
     private var headlineSection: some View {
-        VStack(spacing: 4) {
-            Text("Your Breakthrough is One Declaration Away")
-                .font(.system(size: 24, weight: .bold, design: .rounded))
-                .foregroundColor(.white.opacity(0.9))
-            
-            Text("Join 50,000+ believers who stopped fighting alone and started winning with God’s Word.")
-                .font(.system(size: 14, weight: .medium, design: .rounded))
-                .foregroundColor(.white.opacity(0.8))
-                .padding(.top, 4)
+        VStack(spacing: 8) {
+            Text("Jesus Has Already Won Victory Over Your Life")
+                .font(.system(size: 28, weight: .bold, design: .rounded))
+                .foregroundColor(.white.opacity(0.95))
+                .multilineTextAlignment(.center)
+//            
+//            Text("Your breakthrough is waiting.")
+//                .font(.system(size: 16, weight: .medium, design: .rounded))
+//                .foregroundColor(.white.opacity(0.85))
+//                .multilineTextAlignment(.center)
+//                .padding(.top, 2)
         }
         .multilineTextAlignment(.center)
     }
     
     private var valuePropsSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            ForEach(valueProps, id: \.text) { prop in
-                prop
+        VStack(spacing: 8) {
+            Text("Activate What's Already Yours:")
+                .font(.system(size: 16, weight: .semibold, design: .rounded))
+                .foregroundColor(.white.opacity(0.9))
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 20)
+            
+            VStack(alignment: .leading, spacing: 12) {
+                ValuePropositionV1(icon: "waveform.badge.mic", text: "Personalized declarations that align you with Heaven's reality")
+                ValuePropositionV1(icon: "brain.head.profile", text: "Anointed audio that rewires your thought life")
+                ValuePropositionV1(icon: "book.circle", text: "Living Word that transforms from the inside out")
+                ValuePropositionV1(icon: "shield.lefthalf.filled", text: "Supernatural peace that guards your heart and mind")
             }
-        }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 12)
-        .background(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(
-                    LinearGradient(
-                        gradient: Gradient(colors: [
-                            Color.white.opacity(0.08),
-                            Color.white.opacity(0.03)
-                        ]),
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
+            .padding(.horizontal, 20)
+            .padding(.vertical, 12)
+            .background(
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .fill(
+                        LinearGradient(
+                            gradient: Gradient(colors: [
+                                Color.white.opacity(0.08),
+                                Color.white.opacity(0.03)
+                            ]),
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
                     )
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 20, style: .continuous)
-                        .stroke(Color.white.opacity(0.1), lineWidth: 1)
-                )
-        )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 20, style: .continuous)
+                            .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                    )
+            )
+        }
     }
     
     private var valuePropsSupportSection: some View {
@@ -586,19 +771,19 @@ struct OptimizedSubscriptionViewV1: View {
         )
         .padding(.horizontal, 20)
             if !subscriptionStore.onlyShowYearly {
-                // Monthly option
+                // Lifetime option
                 PricingOptionViewV1(
                     option: PricingOptionV1(
-                        product: subscriptionStore.currentOfferedPremiumMonthly,
-                        isSelected: currentSelection == subscriptionStore.currentOfferedPremiumMonthly,
+                        product: subscriptionStore.currentOfferedLifetime,
+                        isSelected: currentSelection == subscriptionStore.currentOfferedLifetime,
                         isYearly: false,
-                        displayPrice: monthlyPrice,
-                        monthlyEquivalent: "Cancel anytime",
+                        displayPrice: lifetimePrice,
+                        monthlyEquivalent: "One-time purchase",
                         savingsPercentage: nil,
                         isMostPopular: false
                     ),
-                    action: selectMonthly,
-                    showingWeeklyMonthly: true
+                    action: selectLifetime,
+                    showingWeeklyMonthly: false
                 )
                 .padding(.horizontal, 20)
             }
@@ -621,6 +806,7 @@ struct OptimizedSubscriptionViewV1: View {
             VStack(spacing: 16) {
                 FloatingCTAButtonV1(
                     isYearlyPlan: isYearlyPlan,
+                    isLifetimePlan: isLifetimePlan,
                     displayPrice: currentDisplayPrice,
                     action: makePurchase,
                     animateCTA: $animateCTA
@@ -638,7 +824,8 @@ struct OptimizedSubscriptionViewV1: View {
                     )
             )
         }
-        .ignoresSafeArea(edges: .bottom)
+        .ignoresSafeArea(.all)
+        .preferredColorScheme(.dark)
     }
     
     private var trustIndicators: some View {
@@ -696,6 +883,27 @@ struct OptimizedSubscriptionViewV1: View {
         .padding(.bottom, 40)
     }
     
+    
+    // MARK: - Helper Functions
+    private func getStarSymbol(for index: Int) -> String {
+        let starSymbols = [
+            "star.fill", "star", "sparkle", 
+            "star.fill", "sparkles", "star",
+            "star.fill", "sparkle", "star"
+        ]
+        return starSymbols[index % starSymbols.count]
+    }
+    
+    private func getStarSize(for index: Int) -> CGFloat {
+        let sizes: [CGFloat] = [4, 6, 8, 5, 7, 3, 9, 4, 6, 5]
+        return sizes[index % sizes.count]
+    }
+    
+    private func getStarOpacity(for index: Int, base: Double) -> Double {
+        let variations: [Double] = [0.8, 0.6, 0.9, 0.5, 0.7, 0.4, 0.8, 0.6, 0.5, 0.7]
+        return base * variations[index % variations.count]
+    }
+    
     // MARK: - Actions (V1)
     private func selectWeekly() {
         withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
@@ -703,9 +911,9 @@ struct OptimizedSubscriptionViewV1: View {
         }
     }
     
-    private func selectMonthly() {
+    private func selectLifetime() {
         withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
-            currentSelection = subscriptionStore.currentOfferedPremiumMonthly
+            currentSelection = subscriptionStore.currentOfferedLifetime
         }
     }
     
@@ -722,6 +930,39 @@ struct OptimizedSubscriptionViewV1: View {
                 currentSelection = subscriptionStore.currentOfferedPremium
             }
         }
+        
+        // Initialize star arrays
+        starPositions = []
+        starOffsets = []
+        
+        // Start star floating animation
+        withAnimation(.easeInOut(duration: 1.0)) {
+            starAnimation = true
+        }
+        
+        // Start continuous star movement
+        startContinuousStarAnimation()
+        
+        // Start CTA button animation
+        withAnimation {
+            animateCTA = true
+        }
+        
+        // Elegant fade-in for close button after a delay
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+            withAnimation(.spring(response: 0.8, dampingFraction: 0.7, blendDuration: 0.6)) {
+                showCloseButton = true
+            }
+        }
+        
+        // Track paywall impression
+        AnalyticsService.shared.trackPaywallImpression(
+            paywallId: "optimized_subscription_v1",
+            metadata: [
+                "variant": "v1",
+                "initial_plan": "yearly"
+            ]
+        )
         
         startTestimonialRotation()
     }
@@ -740,48 +981,129 @@ struct OptimizedSubscriptionViewV1: View {
         }
     }
     
+    private func startContinuousStarAnimation() {
+        // Initialize star arrays with proper count (20 stars now)
+        DispatchQueue.main.async {
+            for i in 0..<20 {
+                if self.starPositions.count <= i {
+                    self.starPositions.append(CGPoint(x: 0, y: 0))
+                }
+                if self.starOffsets.count <= i {
+                    self.starOffsets.append(CGPoint(x: 0, y: 0))
+                }
+            }
+        }
+        
+        // Start a timer that continuously moves stars around
+        Timer.scheduledTimer(withTimeInterval: 2.5, repeats: true) { _ in
+            withAnimation(.easeInOut(duration: 4.0)) {
+                // Update star offsets randomly to create floating movement
+                for i in 0..<min(20, self.starOffsets.count) {
+                    self.starOffsets[i] = CGPoint(
+                        x: CGFloat.random(in: -40...40),
+                        y: CGFloat.random(in: -40...40)
+                    )
+                }
+            }
+        }
+        
+        // Additional timer for opacity changes to create twinkling effect
+        Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { _ in
+            withAnimation(.easeInOut(duration: 1.5)) {
+                self.starAnimation.toggle()
+            }
+        }
+    }
+    
     private func makePurchase() {
         UIImpactFeedbackGenerator(style: .medium).impactOccurred()
         
         Task {
-            declarationStore.isPurchasing = true
-            defer {
-                Task {
-                    try? await Task.sleep(nanoseconds: 500_000_000)
-                    declarationStore.isPurchasing = false
-                }
+            // Set loading state immediately
+            await MainActor.run {
+                declarationStore.isPurchasing = true
             }
             
             do {
                 guard let currentSelection = currentSelection else {
-                    errorMessage = "Please select a subscription option."
-                    isShowingError = true
+                    await MainActor.run {
+                        declarationStore.isPurchasing = false
+                        errorMessage = "Please select a subscription option."
+                        isShowingError = true
+                    }
                     return
                 }
                 
-                if let _ = try await subscriptionStore.purchaseWithID([currentSelection.id]) {
+                if let transaction = try await subscriptionStore.purchaseWithID([currentSelection.id]) {
+                    // Track paywall conversion
+                    let priceValue = NSDecimalNumber(decimal: currentSelection.price).doubleValue
+                    let productType = currentSelection.id.contains("Lifetime") ? "lifetime" : "subscription"
+                    AnalyticsService.shared.trackPaywallConversion(
+                        productId: currentSelection.id,
+                        paywallId: "optimized_subscription_v1",
+                        price: priceValue,
+                        metadata: [
+                            "variant": "v1",
+                            "type": productType,
+                            "duration": currentSelection.subscription?.subscriptionPeriod.debugDescription ?? (productType == "lifetime" ? "lifetime" : "unknown")
+                        ]
+                    )
+                    
+                    // Check if this is a trial start
+                    let hasTrial = currentSelection.subscription?.introductoryOffer?.period != nil
+                    if hasTrial {
+                        AnalyticsService.shared.trackTrialStarted(
+                            productId: currentSelection.id,
+                            metadata: [
+                                "trial_days": currentSelection.subscription?.introductoryOffer?.period.value ?? 0,
+                                "variant": "v1"
+                            ]
+                        )
+                    }
+                    
+                    // Keep existing event for backward compatibility
                     Analytics.logEvent("subscription_started_v1", parameters: [
                         "product_id": currentSelection.id,
                         "price": currentSelection.price,
                         "duration": currentSelection.subscription?.subscriptionPeriod.debugDescription ?? "unknown",
                         "ab_test_version": "v1"
                     ])
-                    callback?()
+                    
+                    // Success - dismiss view
+                    await MainActor.run {
+                        declarationStore.isPurchasing = false
+                        callback?()
+                        dismiss()
+                    }
+                } else {
+                    // User cancelled or purchase pending
+                    await MainActor.run {
+                        declarationStore.isPurchasing = false
+                    }
                 }
             } catch {
-                errorMessage = "Unable to start your subscription. Please try again."
-                isShowingError = true
+                await MainActor.run {
+                    declarationStore.isPurchasing = false
+                    errorMessage = "Unable to start your subscription. Please try again."
+                    isShowingError = true
+                }
             }
         }
     }
     
     private func restore() {
         Task {
-            declarationStore.isPurchasing = true
+            await MainActor.run {
+                declarationStore.isPurchasing = true
+            }
+            
             try? await AppStore.sync()
-            declarationStore.isPurchasing = false
-            errorMessage = "Purchases restored successfully"
-            isShowingError = true
+            
+            await MainActor.run {
+                declarationStore.isPurchasing = false
+                errorMessage = "Purchases restored successfully"
+                isShowingError = true
+            }
         }
     }
     

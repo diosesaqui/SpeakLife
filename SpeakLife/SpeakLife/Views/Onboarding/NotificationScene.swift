@@ -20,6 +20,13 @@ struct NotificationOnboarding:  View {
     
     private func notificationSceneAlt(size: CGSize) -> some View  {
         VStack {
+            // Progress dots at top
+            HStack {
+                Spacer()
+                ProgressDots(current: 3, total: 4)
+                    .padding(.top, 10)
+                    .padding(.trailing, 20)
+            }
             
             if appState.onBoardingTest {
                 Spacer().frame(height: 30)
@@ -44,11 +51,17 @@ struct NotificationOnboarding:  View {
                 Spacer().frame(height: 16)
                 
                 VStack(spacing: 8) {
-                    Text("92% of users who set reminders reach 21-day streaks", comment: "Setup notifications instructions")
+                    Text("Daily reminders are the #1 predictor of spiritual breakthrough", comment: "Setup notifications instructions")
                         .font(.system(size: 16, weight: .semibold, design: .rounded))
                         .foregroundColor(appState.onBoardingTest ? .white : Constants.DALightBlue)
                         .multilineTextAlignment(.center)
                         .lineSpacing(10)
+                        .lineLimit(2)
+                    
+                    Text("92% of users who set reminders reach 21-day streaks")
+                        .font(.system(size: 14, weight: .medium, design: .rounded))
+                        .foregroundColor(appState.onBoardingTest ? .white.opacity(0.9) : Constants.DALightBlue.opacity(0.9))
+                        .multilineTextAlignment(.center)
                         .lineLimit(2)
                     
                     HStack {

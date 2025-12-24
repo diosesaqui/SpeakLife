@@ -269,6 +269,14 @@ final class DeclarationViewModel: ObservableObject {
         declarations[indexOf].isFavorite = !wasFavorite
         print("   Was favorite:", wasFavorite, "Now:", !wasFavorite)
         
+        // Premium delight feedback
+        if !wasFavorite {
+            PremiumHaptics.favoriteAdded()
+            AudioDelightManager.shared.playFavoriteAdded()
+        } else {
+            PremiumHaptics.favoriteRemoved()
+        }
+        
         guard let index = allDeclarations.firstIndex(where: { $0.id == declaration.id }) else { 
             print("❌ Declaration not found in allDeclarations")
             return 
@@ -439,6 +447,13 @@ final class DeclarationViewModel: ObservableObject {
     // MARK: - Declarations
     
     func choose(_ category: DeclarationCategory, completion: @escaping(Bool) -> Void) {
+        // Track category selection for personalization
+        UserPreferencesTracker.shared.trackCategorySelection(category.rawValue)
+        
+        // Premium delight feedback for category selection
+        PremiumHaptics.categoryHaptic(for: category.rawValue)
+        AudioDelightManager.shared.playForCategory(category.rawValue)
+        
         // Don't reshuffle if we're already in this category
         let isChangingCategory = selectedCategory != category
         

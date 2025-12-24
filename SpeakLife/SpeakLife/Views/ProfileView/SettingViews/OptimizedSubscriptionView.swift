@@ -122,14 +122,14 @@ struct AbideStylePricingOption: View {
                 // Best Offer badge as overlay
                 Group {
                     if option.isBestOffer {
-                        Text("SAVE 60%")
-                            .font(.system(size: 11, weight: .bold))
-                            .foregroundColor(.black)
+                        Text("3 FREE DAYS")
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundColor(.white)
                             .padding(.horizontal, 10)
                             .padding(.vertical, 3)
                             .background(
                                 Capsule()
-                                    .fill(Color(red: 1.0, green: 0.8, blue: 0.0))
+                                    .fill(Color.green)
                             )
                             .offset(y: -8)
                     }
@@ -146,7 +146,7 @@ struct AbideStyleCTAButton: View {
     
     var body: some View {
         Button(action: action) {
-            Text("Start My Transformation")
+            Text(UserPreferencesTracker.shared.getDynamicPaywallCopy().ctaText)
                 .font(.system(size: 18, weight: .semibold))
                 .foregroundColor(.white)
                 .frame(maxWidth: .infinity)
@@ -166,6 +166,7 @@ struct OptimizedSubscriptionView: View {
     @EnvironmentObject var appState: AppState
     @EnvironmentObject var declarationStore: DeclarationViewModel
     @EnvironmentObject var subscriptionStore: SubscriptionStore
+    @ObservedObject private var preferencesTracker = UserPreferencesTracker.shared
     
     @State private var isShowingError = false
     @State private var errorMessage = ""
@@ -174,39 +175,78 @@ struct OptimizedSubscriptionView: View {
     var flag = true
     var callback: (() -> Void)?
     
-    // Benefits matching the Abide screenshot
-    private let benefits = [
-        AbideStyleBenefit(
-            icon: "bolt.fill",
-            title: "Breakthrough Living",
-            description: "Watch anxiety melt away as God's promises rewire your mind daily"
-        ),
-        AbideStyleBenefit(
-            icon: "heart.fill",
-            title: "Supernatural Peace",
-            description: "Experience the peace that passes understanding - even in chaos"
-        ),
-        AbideStyleBenefit(
-            icon: "sparkles",
-            title: "Manifest Healing",
-            description: "Speak life over your body and relationships - see transformation unfold"
-        ),
-        AbideStyleBenefit(
-            icon: "crown.fill",
-            title: "Walk in Victory",
-            description: "Break free from cycles of defeat - step into your God-given authority"
-        ),
-        AbideStyleBenefit(
-            icon: "sunrise.fill",
-            title: "Daily Renewal",
-            description: "Wake up excited about life again - experience joy that doesn't fade"
-        ),
-        AbideStyleBenefit(
-            icon: "hands.sparkles.fill",
-            title: "Life-Changing Power",
-            description: "Join 50,000+ believers seeing miracles through spoken promises"
-        )
-    ]
+    // Dynamic benefits based on user preferences
+    private var benefits: [AbideStyleBenefit] {
+        let paywallCopy = preferencesTracker.getDynamicPaywallCopy()
+        var dynamicBenefits: [AbideStyleBenefit] = []
+        
+        // Map value props to benefits with icons
+        for (index, prop) in paywallCopy.valueProps.prefix(4).enumerated() {
+            let icon: String
+            switch index {
+            case 0: icon = "bolt.fill"
+            case 1: icon = "heart.fill"
+            case 2: icon = "sparkles"
+            case 3: icon = "crown.fill"
+            default: icon = "star.fill"
+            }
+            
+            dynamicBenefits.append(AbideStyleBenefit(
+                icon: icon,
+                title: prop,
+                description: getDescriptionForProp(prop)
+            ))
+        }
+        
+        
+        return dynamicBenefits.isEmpty ? getDefaultBenefits() : dynamicBenefits
+    }
+    
+    private func getDescriptionForProp(_ prop: String) -> String {
+        // Convert value prop to descriptive text with unique descriptions
+        switch prop.lowercased() {
+        case let p where p.contains("anxiety") && p.contains("relief"):
+            return "Transform worry into worship with proven biblical techniques"
+        case let p where p.contains("faith") && p.contains("building"):
+            return "Build unshakeable confidence in God's promises for your life"
+        case let p where p.contains("audio") || p.contains("prayer"):
+            return "Immerse yourself in life-changing spiritual audio content"
+        case let p where p.contains("devotional") || p.contains("daily"):
+            return "Start each day with powerful God-centered inspiration"
+        case let p where p.contains("sleep") || p.contains("bedtime"):
+            return "Finally rest peacefully with God's protection over your mind"
+        case let p where p.contains("healing"):
+            return "Activate divine health through powerful scripture declarations"
+        case let p where p.contains("joy") || p.contains("happiness"):
+            return "Rediscover genuine happiness that circumstances can't steal"
+        case let p where p.contains("peace") || p.contains("calming"):
+            return "Experience God's supernatural peace in any storm"
+        case let p where p.contains("growth") || p.contains("tracking"):
+            return "Monitor your spiritual progress and celebrate victories"
+        default:
+            return "Experience breakthrough in every area of your life"
+        }
+    }
+    
+    private func getDefaultBenefits() -> [AbideStyleBenefit] {
+        return [
+            AbideStyleBenefit(
+                icon: "bolt.fill",
+                title: "Breakthrough Living",
+                description: "Watch anxiety melt away as God's promises rewire your mind"
+            ),
+            AbideStyleBenefit(
+                icon: "heart.fill",
+                title: "Supernatural Peace",
+                description: "Experience peace that passes understanding"
+            ),
+            AbideStyleBenefit(
+                icon: "hands.sparkles.fill",
+                title: "Life-Changing Power",
+                description: "Join 50,000+ believers seeing miracles through spoken promises"
+            )
+        ]
+    }
     
     var body: some View {
         ZStack {
@@ -220,11 +260,11 @@ struct OptimizedSubscriptionView: View {
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
-            .ignoresSafeArea()
+            .ignoresSafeArea(.all)
             
             GeometryReader { geometry in
                 if subscriptionStore.showSubscriptionFirst {
-                    OptimizedSubscriptionViewV1(size: geometry.size)
+                    OptimizedSubscriptionViewV1(size: geometry.size, isPresentedModally: true)
                 } else {
                 ZStack {
                     // Background
@@ -303,9 +343,9 @@ struct OptimizedSubscriptionView: View {
     private var dynamicHeaderPricing: String {
         if selectedOption == "annual" {
             guard let yearlyProduct = subscriptionStore.currentOfferedPremium else {
-                return "First 7 days on us, then $39.99 per year"
+                return "First 3 days on us, then $39.99 per year"
             }
-            return "First 7 days on us, then \(yearlyProduct.displayPrice) per year"
+            return "First 3 days on us, then \(yearlyProduct.displayPrice) per year"
         } else {
             guard let monthlyProduct = subscriptionStore.currentOfferedPremiumMonthly else {
                 return "$9.99/mo"
@@ -325,7 +365,7 @@ struct OptimizedSubscriptionView: View {
     private func headerSection(geometry: GeometryProxy) -> some View {
         let iPad = isIPad(geometry)
         let iconSize = iPad ? min(120, geometry.size.width * 0.12) : geometry.size.width * 0.18
-        let headerHeight = iPad ? geometry.size.height * 0.28 : geometry.size.height * 0.33
+        let headerHeight = iPad ? geometry.size.height * 0.26 : geometry.size.height * 0.28
         let titleSize: CGFloat = iPad ? 32 : 26
         let joinTextSize = iPad ? min(20, geometry.size.width * 0.03) : geometry.size.width * 0.040
         let subtitleSize = iPad ? min(16, geometry.size.width * 0.025) : geometry.size.width * 0.035
@@ -364,19 +404,25 @@ struct OptimizedSubscriptionView: View {
                     .frame(height: iPad ? 10 : geometry.size.height * 0.0005)
                 
                 // Join banner
-                VStack(spacing: iPad ? 8 : geometry.size.height * 0.01) {
-                    Text("Transform Your Spiritual Life")
+                VStack(spacing: iPad ? 6 : geometry.size.height * 0.008) {
+                    Text(preferencesTracker.getDynamicPaywallCopy().headline)
                         .font(.system(size: joinTextSize, weight: .semibold))
                         .foregroundColor(.white)
                         .multilineTextAlignment(.center)
                         .lineLimit(iPad ? 1 : 2)
                     
+                    Text(preferencesTracker.getDynamicPaywallCopy().subheadline)
+                        .font(.system(size: subtitleSize * 0.9, weight: .regular))
+                        .foregroundColor(.white.opacity(0.85))
+                        .multilineTextAlignment(.center)
+                        .lineLimit(2)
+                    
                     Text(dynamicHeaderPricing)
-                        .font(.system(size: subtitleSize, weight: .regular))
-                        .foregroundColor(.white.opacity(0.9))
+                        .font(.system(size: subtitleSize * 0.85, weight: .medium))
+                        .foregroundColor(.white.opacity(0.95))
                 }
-                .padding(.horizontal, iPad ? 24 : geometry.size.width * 0.05)
-                .padding(.vertical, iPad ? 16 : geometry.size.height * 0.02)
+                .padding(.horizontal, iPad ? 20 : geometry.size.width * 0.04)
+                .padding(.vertical, iPad ? 12 : geometry.size.height * 0.015)
                 .frame(maxWidth: iPad ? 500 : .infinity)
                 .background(
                     RoundedRectangle(cornerRadius: 16)
@@ -482,6 +528,7 @@ struct OptimizedSubscriptionView: View {
             .background(Constants.SLBlue.opacity(0.95))
         }
         .ignoresSafeArea(edges: .bottom)
+        .preferredColorScheme(.dark)
     }
     
     private var bottomLinks: some View {
@@ -506,49 +553,103 @@ struct OptimizedSubscriptionView: View {
     private func setupView() {
         // Default to annual option
         selectedOption = "annual"
+        
+        // Track paywall impression
+        AnalyticsService.shared.trackPaywallImpression(
+            paywallId: "optimized_subscription",
+            metadata: [
+                "variant": "default",
+                "initial_plan": "annual"
+            ]
+        )
     }
     
     private func makePurchase() {
         UIImpactFeedbackGenerator(style: .medium).impactOccurred()
         
         Task {
-            declarationStore.isPurchasing = true
-            defer {
-                Task {
-                    try? await Task.sleep(nanoseconds: 500_000_000)
-                    declarationStore.isPurchasing = false
-                }
+            // Set loading state immediately
+            await MainActor.run {
+                declarationStore.isPurchasing = true
             }
             
             do {
                 guard let selectedProduct = selectedProduct else {
-                    errorMessage = "Please select a subscription option."
-                    isShowingError = true
+                    await MainActor.run {
+                        declarationStore.isPurchasing = false
+                        errorMessage = "Please select a subscription option."
+                        isShowingError = true
+                    }
                     return
                 }
                 
-                if let _ = try await subscriptionStore.purchaseWithID([selectedProduct.id]) {
+                if let transaction = try await subscriptionStore.purchaseWithID([selectedProduct.id]) {
+                    // Track paywall conversion
+                    let priceValue = NSDecimalNumber(decimal: selectedProduct.price).doubleValue
+                    AnalyticsService.shared.trackPaywallConversion(
+                        productId: selectedProduct.id,
+                        paywallId: "optimized_subscription",
+                        price: priceValue,
+                        metadata: [
+                            "variant": "default",
+                            "duration": selectedProduct.subscription?.subscriptionPeriod.debugDescription ?? "unknown"
+                        ]
+                    )
+                    
+                    // Check if this is a trial start
+                    let hasTrial = selectedProduct.subscription?.introductoryOffer?.period != nil
+                    if hasTrial {
+                        AnalyticsService.shared.trackTrialStarted(
+                            productId: selectedProduct.id,
+                            metadata: [
+                                "trial_days": selectedProduct.subscription?.introductoryOffer?.period.value ?? 0,
+                                "variant": "default"
+                            ]
+                        )
+                    }
+                    
+                    // Keep existing event for backward compatibility
                     Analytics.logEvent("subscription_started", parameters: [
                         "product_id": selectedProduct.id,
                         "price": selectedProduct.price,
                         "duration": selectedProduct.subscription?.subscriptionPeriod.debugDescription ?? "unknown"
                     ])
-                    callback?()
+                    
+                    // Success - dismiss view
+                    await MainActor.run {
+                        declarationStore.isPurchasing = false
+                        callback?()
+                        dismiss()
+                    }
+                } else {
+                    // User cancelled or purchase pending
+                    await MainActor.run {
+                        declarationStore.isPurchasing = false
+                    }
                 }
             } catch {
-                errorMessage = "Unable to start your subscription. Please try again."
-                isShowingError = true
+                await MainActor.run {
+                    declarationStore.isPurchasing = false
+                    errorMessage = "Unable to start your subscription. Please try again."
+                    isShowingError = true
+                }
             }
         }
     }
     
     private func restore() {
         Task {
-            declarationStore.isPurchasing = true
+            await MainActor.run {
+                declarationStore.isPurchasing = true
+            }
+            
             try? await AppStore.sync()
-            declarationStore.isPurchasing = false
-            errorMessage = "Purchases restored successfully"
-            isShowingError = true
+            
+            await MainActor.run {
+                declarationStore.isPurchasing = false
+                errorMessage = "Purchases restored successfully"
+                isShowingError = true
+            }
         }
     }
 }

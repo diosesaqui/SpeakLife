@@ -9,7 +9,9 @@ import Foundation
 
 enum Tab: String {
     
+    case hook
     case transformedLife
+    case personalizationSummary
     case notification
     case improvement
     case review

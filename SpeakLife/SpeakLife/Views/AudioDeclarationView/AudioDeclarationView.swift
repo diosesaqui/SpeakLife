@@ -176,40 +176,6 @@ struct ErrorWrapper: Identifiable {
     let message: String
 }
 
-//enum Filter: String, CaseIterable {
-//    case favorites
-//    case declarations
-//    case bedtimeStories
-//    case gospel  
-//    case meditation
-//    case devotional
-//    case speaklife
-//    case godsHeart
-//    case growWithJesus
-//    case divineHealth
-//    case imagination
-//    case psalm91
-//    case magnify
-//    
-//    // Display name for UI
-//    var displayName: String {
-//        switch self {
-//        case .favorites: return "Favorites"
-//        case .declarations: return "Mountain-Moving Prayers"
-//        case .bedtimeStories: return "Bedtime Stories"
-//        case .gospel: return "Gospel"
-//        case .meditation: return "Scripture Meditation's"
-//        case .devotional: return "Devotional"
-//        case .speaklife: return "SpeakLife"
-//        case .godsHeart: return "God's Heart"
-//        case .growWithJesus: return "Grow With Jesus"
-//        case .divineHealth: return "Divine Health"
-//        case .imagination: return "Imagination"
-//        case .psalm91: return "Psalm 91"
-//        case .magnify: return "Behold & Become"
-//        }
-//    }
-//}
 
 struct FetchedFilter: Identifiable, Hashable {
     var id: String  // unique ID for the filter
@@ -333,13 +299,6 @@ struct AudioDeclarationView: View {
             ForEach(viewModel.dynamicFilters, id: \.id) { filterConfig in
                 Button(action: {
                     viewModel.selectedFilterId = filterConfig.id
-                    // Update legacy system for compatibility
-//                    if let legacyFilter = Filter(rawValue: filterConfig.id) {
-//                        viewModel.selectedFilter = legacyFilter
-//                    } else {
-//                        // Reset legacy filter if no match found
-//                        viewModel.selectedFilter = .speaklife // Default fallback
-//                    }
                     if filterConfig.id == "favorites" {
                         AudioAnalytics.shared.trackFavoritesCategoryViewed(
                             favoritesCount: viewModel.favoritesManager.favoritesCount

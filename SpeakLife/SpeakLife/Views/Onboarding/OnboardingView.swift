@@ -15,9 +15,9 @@ struct OnboardingView: View  {
     @EnvironmentObject var streakViewModel: StreakViewModel
     @Environment(\.colorScheme) var colorScheme
     
-    @State var selection: Tab = .transformedLife
+    @State var selection: Tab = .hook
     @StateObject var improvementViewModel = ImprovementViewModel()
-    @AppStorage("onboardingTab") var onboardingTab = Tab.transformedLife.rawValue
+    @AppStorage("onboardingTab") var onboardingTab = Tab.hook.rawValue
     @State private var isTextVisible = false
    
     let impactMed = UIImpactFeedbackGenerator(style: .soft)
@@ -26,7 +26,15 @@ struct OnboardingView: View  {
         GeometryReader { geometry in
             TabView(selection: $selection) {
                 
-                // OPTION 1: Use new combined scene (recommended)
+                // STEP 1: Hook Screen
+                HookScene(size: geometry.size) {
+                    withAnimation {
+                        advance()
+                    }
+                }
+                .tag(Tab.hook)
+                
+                // Category selection screen
                 CombinedPersonalizationScene(
                     size: geometry.size,
                     viewModel: improvementViewModel
@@ -36,6 +44,17 @@ struct OnboardingView: View  {
                     }
                 }
                 .tag(Tab.transformedLife)
+                
+                // STEP 2: Personalization Summary Screen
+                PersonalizationSummaryScene(
+                    size: geometry.size,
+                    selectedCategories: improvementViewModel.selectedExperiences
+                ) {
+                    withAnimation {
+                        advance()
+                    }
+                }
+                .tag(Tab.personalizationSummary)
                 
                 NotificationOnboarding(size: geometry.size) {
                     withAnimation {
@@ -79,12 +98,8 @@ struct OnboardingView: View  {
             
             VStack  {
                 HStack  {
-                    Button(action: advance) {
-                        Image(systemName: "xmark.circle.fill")
-                            .resizable()
-                            .frame(width: 30, height: 30)
-                            .foregroundColor(.white)
-                            .opacity(isTextVisible ? 1 : 0)
+                    ElegantCloseButton(isVisible: isTextVisible) {
+                        advance()
                     }
                     Spacer()
                 }
@@ -99,8 +114,8 @@ struct OnboardingView: View  {
    
     
     func revealText() {
-        DispatchQueue.main.asyncAfter(deadline: .now()) {
-            withAnimation {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
+            withAnimation(.easeIn(duration: 0.8)) {
                 isTextVisible = true
             }
         }
@@ -110,18 +125,30 @@ struct OnboardingView: View  {
     
     private func advance() {
         switch selection {
-                case .transformedLife:
-                    // Now combines both intro and improvement
+                case .hook:
                     impactMed.impactOccurred()
-                    selection = .notification  // Skip directly to notification
+                    selection = .transformedLife
+                    onboardingTab = selection.rawValue
+                    Analytics.logEvent("HookScreenDone", parameters: nil)
+                    
+                case .transformedLife:
+                    // Category selection completed
+                    impactMed.impactOccurred()
+                    selection = .personalizationSummary
                     onboardingTab = selection.rawValue
                     decodeCategories(improvementViewModel.selectedExperiences)
                     Analytics.logEvent("CombinedPersonalizationDone", parameters: [
                         "categories_count": improvementViewModel.selectedExperiences.count
                     ])
                     
+                case .personalizationSummary:
+                    impactMed.impactOccurred()
+                    selection = .notification
+                    onboardingTab = selection.rawValue
+                    Analytics.logEvent("PersonalizationSummaryDone", parameters: nil)
+                    
                 case .improvement:
-                    // This case won't be used with combined scene
+                    // This case won't be used with new flow
                     impactMed.impactOccurred()
                     selection = .notification
                     onboardingTab = selection.rawValue
@@ -208,6 +235,133 @@ struct OnboardingView: View  {
 struct OnboardingView_Previews: PreviewProvider {
     static var previews: some View {
         OnboardingView()
+    }
+}
+
+// MARK: - Elegant Close Button Component
+private struct ElegantCloseButton: View {
+    // MARK: - Configuration
+    struct Configuration {
+        let size: CGFloat
+        let iconSize: CGFloat
+        let shadowRadius: CGFloat
+        let shadowOffset: CGSize
+        let animationResponse: Double
+        let animationDamping: Double
+        
+        static let `default` = Configuration(
+            size: 36,
+            iconSize: 16,
+            shadowRadius: 8,
+            shadowOffset: CGSize(width: 0, height: 4),
+            animationResponse: 0.4,
+            animationDamping: 0.6
+        )
+    }
+    
+    // MARK: - Properties
+    private let action: () -> Void
+    private let configuration: Configuration
+    private let isVisible: Bool
+    private let enableHaptics: Bool
+    
+    // MARK: - Initialization
+    init(
+        configuration: Configuration = .default,
+        isVisible: Bool = true,
+        enableHaptics: Bool = true,
+        action: @escaping () -> Void
+    ) {
+        self.configuration = configuration
+        self.isVisible = isVisible
+        self.enableHaptics = enableHaptics
+        self.action = action
+    }
+    
+    // MARK: - View Body
+    var body: some View {
+        Button(action: handleAction) {
+            buttonContent
+        }
+        .buttonStyle(PlainButtonStyle())
+        .scaleEffect(isVisible ? 1.0 : 0.8)
+        .opacity(isVisible ? 1.0 : 0.0)
+    }
+    
+    // MARK: - Private Views
+    private var buttonContent: some View {
+        ZStack {
+            backgroundView
+            iconView
+        }
+        .frame(width: configuration.size, height: configuration.size)
+        .shadow(
+            color: Color.black.opacity(0.1),
+            radius: configuration.shadowRadius,
+            x: configuration.shadowOffset.width,
+            y: configuration.shadowOffset.height
+        )
+    }
+    
+    private var backgroundView: some View {
+        Circle()
+            .fill(backgroundGradient)
+            .background(Circle().fill(.ultraThinMaterial))
+            .overlay(Circle().stroke(borderGradient, lineWidth: 1))
+    }
+    
+    private var iconView: some View {
+        Image(systemName: "xmark")
+            .font(.system(size: configuration.iconSize, weight: .semibold, design: .rounded))
+            .foregroundStyle(iconGradient)
+    }
+    
+    // MARK: - Computed Properties
+    private var backgroundGradient: LinearGradient {
+        LinearGradient(
+            gradient: Gradient(colors: [
+                Color.white.opacity(0.25),
+                Color.white.opacity(0.1)
+            ]),
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
+    }
+    
+    private var borderGradient: LinearGradient {
+        LinearGradient(
+            gradient: Gradient(colors: [
+                Color.white.opacity(0.3),
+                Color.white.opacity(0.1)
+            ]),
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
+    }
+    
+    private var iconGradient: LinearGradient {
+        LinearGradient(
+            gradient: Gradient(colors: [
+                Color.white.opacity(0.9),
+                Color.white.opacity(0.7)
+            ]),
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
+    }
+    
+    // MARK: - Actions
+    private func handleAction() {
+        if enableHaptics {
+            UIImpactFeedbackGenerator(style: .soft).impactOccurred()
+        }
+        
+        withAnimation(.spring(
+            response: configuration.animationResponse,
+            dampingFraction: configuration.animationDamping
+        )) {
+            action()
+        }
     }
 }
 

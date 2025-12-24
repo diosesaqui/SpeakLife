@@ -11,7 +11,7 @@ import SwiftUI
 import FirebaseStorage
 
 final class LocalAPIClient: APIService {
-    
+    static let affirmationFilePath = "declarationsv7.json"
     @AppStorage("declarationCountFile") var declarationCountFile = 0
     @AppStorage("declarationCountBE") var declarationCountBE = 0
     @AppStorage("firstInstallDate") var firstInstallDate: Date?
@@ -310,7 +310,7 @@ final class LocalAPIClient: APIService {
     
     func downloadDeclarations(completion: @escaping((Data?, Error?) -> Void))  {
         let storage = Storage.storage()
-        let jsonRef = storage.reference(withPath: "declarationsv7.json")
+        let jsonRef = storage.reference(withPath: LocalAPIClient.affirmationFilePath)
 
         // Download the file into memory with a maximum allowed size of 2MB (4 * 1024 * 1024 bytes)
         jsonRef.getData(maxSize: 4 * 1024 * 1024) { data, error in

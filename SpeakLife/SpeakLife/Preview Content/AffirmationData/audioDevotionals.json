@@ -7,58 +7,68 @@
             "order": 0
         },
         {
+            "id": "declarations",
+            "displayName": "Mountain-Moving Prayers",
+            "order": 1
+        },
+        {
+            "id": "bibleverses",
+            "displayName": "Bible Promises",
+            "order": 2,
+        },
+        {
             "id": "speaklife",
             "displayName": "SpeakLife",
-            "order": 1,
+            "order": 3,
             "reversed": true
         },
         {
-            "id": "declarations",
-            "displayName": "Mountain-Moving Prayers",
+            "id": "newcreation",
+            "displayName": "New Creation",
             "order": 4
         },
         {
             "id": "godsHeart",
             "displayName": "God's Heart",
-            "order": 3,
+            "order": 5,
             "reversed": true
         },
         {
             "id": "growWithJesus",
             "displayName": "Grow With Jesus",
-            "order": 2
+            "order": 6
         },
         {
             "id": "psalm91",
             "displayName": "Psalm 91",
-            "order": 5,
+            "order": 7,
             "reversed": true
         },
         {
             "id": "divineHealth",
             "displayName": "Divine Health",
-            "order": 6
+            "order": 8
         },
         {
             "id": "magnify",
             "displayName": "Behold & Become",
-            "order": 7,
+            "order": 9,
             "reversed": true
         },
         {
             "id": "gospel",
             "displayName": "Gospel",
-            "order": 8
+            "order": 10
         },
         {
             "id": "meditation",
             "displayName": "Scripture Meditation's",
-            "order": 9
+            "order": 11
         },
         {
             "id": "bedtimeStories",
             "displayName": "Bedtime Stories",
-            "order": 10
+            "order": 12
         }
     ],
     "filters": [
@@ -75,6 +85,33 @@
         "bedtimeStories"
     ],
     "audios": [
+        {
+            "id": "newcreation-ep3.mp3",
+            "title": "The Spirit That Can’t Be Broken",
+            "subtitle": "New Creation Ep 3",
+            "duration": "3m",
+            "imageUrl": "heavenStairway",
+            "isPremium": true,
+            "tag": "newcreation"
+        },
+        {
+            "id": "newcreation-ep2.mp3",
+            "title": "Born Again: Not Fixed, Replaced",
+            "subtitle": "New Creation Ep 2",
+            "duration": "3m",
+            "imageUrl": "heavenStairway",
+            "isPremium": true,
+            "tag": "newcreation"
+        },
+        {
+            "id": "newcreation-ep1.mp3",
+            "title": "The Day Heaven Moved In",
+            "subtitle": "New Creation Ep 1",
+            "duration": "3m",
+            "imageUrl": "heavenStairway",
+            "isPremium": true,
+            "tag": "newcreation"
+        },
         {
             "id": "magnify-ep12.mp3",
             "title": "Behold Him, Become Like Him",
@@ -481,17 +518,6 @@
             "tag": "speaklife",
             "season": 3,
             "episode": 7
-        },
-        {
-            "id": "speaklife-s3ep11.mp3",
-            "title": "Practice Your Position",
-            "subtitle": "S3 Episode 11",
-            "duration": "3m",
-            "imageUrl": "devotional",
-            "isPremium": true,
-            "tag": "speaklife",
-            "season": 3,
-            "episode": 11
         },
         {
             "id": "speaklife-s3ep10.mp3",

@@ -198,6 +198,8 @@ struct SpeakLifeApp: App {
                 // This allows music to continue when notification center/control center is opened
                 break
             case .background:
+                // Reset session tracking when app goes to background
+                PaywallTriggerManager.shared.resetSessionTracking()
                 // Stop background music when going to background
                 // Only content audio (lessons) should continue
                 AudioPlayerService.shared.stopMusic()
@@ -244,12 +246,16 @@ struct SpeakLifeApp: App {
             tabViewModel.resetToHome()
         }
         
-        // Extract category from userInfo or use title as fallback
-        let category = content.userInfo["category"] as? String ?? content.title
-        print("📱 Notification category: \(category)")
-        
-        // Set the declaration in the store
-        declarationStore.setDeclaration(content.body, category: category)
+        // Only treat notifications with category as affirmations
+        // Other notifications (reminders, checklist, etc.) should just open the app
+        if let category = content.userInfo["category"] as? String {
+            print("📱 Affirmation notification - category: \(category)")
+            // Set the declaration in the store
+            declarationStore.setDeclaration(content.body, category: category)
+        } else {
+            print("📱 Non-affirmation notification (reminder/checklist) - opening app only")
+            // Just open the app without displaying as affirmation
+        }
     }
     
     private func resetNotifications() {

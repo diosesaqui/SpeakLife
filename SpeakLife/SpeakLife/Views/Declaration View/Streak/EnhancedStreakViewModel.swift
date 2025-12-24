@@ -161,6 +161,10 @@ final class EnhancedStreakViewModel: ObservableObject {
         todayChecklist.tasks[taskIndex].isCompleted = true
         todayChecklist.tasks[taskIndex].completedAt = Date()
         
+        // Premium celebration feedback
+        PremiumHaptics.affirmationCompleted()
+        AudioDelightManager.shared.playGentleSuccess()
+        
         // Check if all tasks are now completed
         if todayChecklist.isCompleted && todayChecklist.completedAt == nil {
             completeDay()
@@ -303,6 +307,14 @@ final class EnhancedStreakViewModel: ObservableObject {
         // Capture the current streak after update for celebration
         let currentStreakNumber = streakStats.currentStreak
         let isNewRecord = wasNewRecord && currentStreakNumber > streakStats.longestStreak
+        
+        // Premium celebration for daily goal completion
+        PremiumHaptics.dailyGoalCompleted()
+        AudioDelightManager.shared.playForStreakMilestone(currentStreakNumber)
+        
+        if isNewRecord {
+            PremiumHaptics.newRecordSet()
+        }
         
         // Create celebration data
         celebrationData = CompletionCelebration(

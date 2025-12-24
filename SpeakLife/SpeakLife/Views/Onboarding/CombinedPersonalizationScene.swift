@@ -27,7 +27,7 @@ struct CombinedPersonalizationScene: View {
                     // Progress dots at top
                     HStack {
                         Spacer()
-                        ProgressDots(current: 0, total: 3)
+                        ProgressDots(current: 1, total: 4)
                             .padding(.top, proxy.safeAreaInsets.top + 10)
                             .padding(.trailing, 20)
                     }
@@ -39,7 +39,7 @@ struct CombinedPersonalizationScene: View {
                             
                             // HOOK SECTION - Appears first
                             VStack(spacing: proxy.size.height < 700 ? 10 : 15) {
-                                Text("Struggling with Anxiety, Fear, or Doubt?")
+                                Text("What Brings You to SpeakLife?")
                                     .font(.system(size: proxy.size.height < 700 ? 26 : 30, weight: .bold, design: .rounded))
                                     .multilineTextAlignment(.center)
                                     .foregroundColor(.white)
@@ -68,11 +68,11 @@ struct CombinedPersonalizationScene: View {
                                     .frame(width: size.width * 0.3)
                                     .opacity(categoriesOpacity)
                                 
-                                Text("What brings you here today?")
-                                    .font(.system(size: proxy.size.height < 700 ? 20 : 24, weight: .semibold))
-                                    .foregroundColor(.white)
-                                    .minimumScaleFactor(0.7)
-                                    .opacity(categoriesOpacity)
+//                                Text("What brings you here today?")
+//                                    .font(.system(size: proxy.size.height < 700 ? 20 : 24, weight: .semibold))
+//                                    .foregroundColor(.white)
+//                                    .minimumScaleFactor(0.7)
+//                                    .opacity(categoriesOpacity)
                                 
                                 Text("Select all that apply (you can change later)")
                                     .font(.system(size: proxy.size.height < 700 ? 13 : 14))
@@ -102,8 +102,15 @@ struct CombinedPersonalizationScene: View {
                                     // If no selection, select default and continue
                                     viewModel.selectedExperiences = [.anxiety]
                                 }
+                                
+                                // Track all selected categories for personalization
+                                for category in viewModel.selectedExperiences {
+                                    UserPreferencesTracker.shared.trackCategorySelection(category.rawValue)
+                                }
+                                
                                 Analytics.logEvent("CombinedOnboardingComplete", parameters: [
-                                    "categories_selected": viewModel.selectedExperiences.count
+                                    "categories_selected": viewModel.selectedExperiences.count,
+                                    "categories": viewModel.selectedExperiences.map { $0.rawValue }.joined(separator: ",")
                                 ])
                                 callBack()
                             }
@@ -113,6 +120,8 @@ struct CombinedPersonalizationScene: View {
                         // Skip option (subtle)
                         Button("Skip for now") {
                             viewModel.selectedExperiences = [.general]
+                            // Track general preference when skipping
+                            UserPreferencesTracker.shared.trackCategorySelection("general")
                             callBack()
                         }
                         .font(.system(size: proxy.size.height < 700 ? 13 : 14))
@@ -141,10 +150,8 @@ struct CombinedPersonalizationScene: View {
     private var buttonTitle: String {
         if viewModel.selectedExperiences.isEmpty {
             return "Continue →"
-        } else if viewModel.selectedExperiences.count == 1 {
-            return "Get My Breakthrough Plan →"
         } else {
-            return "Get My \(viewModel.selectedExperiences.count) Breakthrough Plans →"
+            return "Start My Transformation →"
         }
     }
     
@@ -167,29 +174,30 @@ struct SimplifiedCategoryGrid: View {
     let screenHeight: CGFloat
     let impactLight = UIImpactFeedbackGenerator(style: .light)
     
-    // Top categories based on user data - reduce for smaller screens
+    // Top 10 categories based on analytics data
     var topCategories: [DeclarationCategory] {
-        let allCategories: [DeclarationCategory] = [
-            .anxiety,
-            .fear,
-            .faith,
-            .health,
-            .marriage,
-            .joy
+        let top10Categories: [DeclarationCategory] = [
+            .faith,        // 144 users - most popular
+            .anxiety,      // 140 users
+            .joy,          // 118 users  
+            .rest,         // 115 users
+            .health,       // 113 users
+            .confidence,   // 106 users
+            .fear,         // 103 users
+            .marriage,     // 60 users
+            .love,         // 13 users
+            .hope          // 11 users
         ]
         
-        if screenHeight < 700 {
-            return Array(allCategories.prefix(6))
-        } else {
-            return allCategories + [.rest, .confidence]
-        }
+        // Show all 10 categories regardless of screen size for better personalization
+        return top10Categories
     }
     
     var body: some View {
         LazyVGrid(columns: [
-            GridItem(.flexible(), spacing: screenHeight < 700 ? 8 : 10),
-            GridItem(.flexible(), spacing: screenHeight < 700 ? 8 : 10)
-        ], spacing: screenHeight < 700 ? 8 : 10) {
+            GridItem(.flexible(), spacing: screenHeight < 700 ? 6 : 8),
+            GridItem(.flexible(), spacing: screenHeight < 700 ? 6 : 8)
+        ], spacing: screenHeight < 700 ? 6 : 8) {
             ForEach(topCategories, id: \.self) { category in
                 CategoryPill(
                     category: category,

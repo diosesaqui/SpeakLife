@@ -84,6 +84,8 @@ class ImprovementViewModel: ObservableObject {
             selectedExperiences.removeAll(where: { $0 == experience })
         } else {
             selectedExperiences.append(experience)
+            // Track for personalization
+            UserPreferencesTracker.shared.trackCategorySelection(experience.rawValue)
             Analytics.logEvent(experience.rawValue, parameters: nil)
         }
     }

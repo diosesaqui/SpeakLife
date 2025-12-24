@@ -20,6 +20,11 @@ struct EnhancedStreakView: View {
                 // Show completion banner temporarily
                 CompletedStreakBadge(streakNumber: viewModel.streakStats.currentStreak)
                     .onTapGesture {
+                        // Track completed badge tap
+                        AnalyticsService.shared.trackUserAction("streak_completed_badge_tapped", metadata: [
+                            "current_streak": viewModel.streakStats.currentStreak,
+                            "streak_state": "completed"
+                        ])
                         showStreakSheet = true
                     }
                     .transition(.scale.combined(with: .opacity))
@@ -34,6 +39,13 @@ struct EnhancedStreakView: View {
             } else {
                 // Always show compact circle button (default state)
                 CompactStreakButton(viewModel: viewModel) {
+                    // Track compact button tap
+                    AnalyticsService.shared.trackUserAction("streak_compact_button_tapped", metadata: [
+                        "current_streak": viewModel.streakStats.currentStreak,
+                        "is_completed": viewModel.todayChecklist.isCompleted,
+                        "action": viewModel.todayChecklist.isCompleted ? "view_sheet" : "open_checklist"
+                    ])
+                    
                     if viewModel.todayChecklist.isCompleted {
                         showStreakSheet = true
                     } else {
@@ -43,8 +55,32 @@ struct EnhancedStreakView: View {
                 .transition(.scale.combined(with: .opacity))
             }
         }
+        .onAppear {
+            // Track streak view impression
+            AnalyticsService.shared.trackScreenView("enhanced_streak_view", metadata: [
+                "current_streak": viewModel.streakStats.currentStreak,
+                "best_streak": viewModel.streakStats.longestStreak,
+                "is_completed_today": viewModel.todayChecklist.isCompleted
+            ])
+        }
         .onChange(of: viewModel.todayChecklist.isCompleted) { isCompleted in
             if isCompleted {
+                // Track streak completion
+                let newStreak = viewModel.streakStats.currentStreak
+                AnalyticsService.shared.trackUserAction("streak_day_completed", metadata: [
+                    "new_streak_count": newStreak,
+                    "best_streak": viewModel.streakStats.longestStreak,
+                    "is_new_record": newStreak > viewModel.streakStats.longestStreak
+                ])
+                
+                // Track milestone achievements
+                if [7, 14, 30, 50, 100].contains(newStreak) {
+                    AnalyticsService.shared.trackUserAction("streak_milestone_reached", metadata: [
+                        "milestone": newStreak,
+                        "milestone_type": getMilestoneType(for: newStreak)
+                    ])
+                }
+                
                 // Show banner when tasks completed
                 withAnimation(.easeInOut(duration: 0.5)) {
                     showCompletedBanner = true
@@ -62,7 +98,18 @@ struct EnhancedStreakView: View {
         }
         .fullScreenCover(isPresented: $viewModel.showFireAnimation) {
             FireStreakView(streakNumber: viewModel.streakStats.currentStreak)
+                .onAppear {
+                    // Track fire animation display
+                    AnalyticsService.shared.trackUserAction("streak_fire_animation_shown", metadata: [
+                        "streak_count": viewModel.streakStats.currentStreak
+                    ])
+                }
                 .onTapGesture {
+                    // Track fire animation dismissal
+                    AnalyticsService.shared.trackUserAction("streak_fire_animation_dismissed", metadata: [
+                        "streak_count": viewModel.streakStats.currentStreak,
+                        "dismiss_method": "tap"
+                    ])
                     viewModel.showFireAnimation = false
                     // Show banner after fire animation
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
@@ -75,15 +122,43 @@ struct EnhancedStreakView: View {
         .fullScreenCover(isPresented: $viewModel.showCompletionCelebration) {
             if let celebration = viewModel.celebrationData {
                 CompletionCelebrationView(celebration: celebration)
+                    .onAppear {
+                        // Track completion celebration display
+                        AnalyticsService.shared.trackUserAction("streak_celebration_shown", metadata: [
+                            "is_new_record": celebration.isNewRecord,
+                            "streak_count": celebration.streakNumber
+                        ])
+                    }
             }
         }
         .fullScreenCover(isPresented: $viewModel.showBadgeUnlock) {
             if let badge = viewModel.badgeManager.recentlyUnlocked {
                 BadgeUnlockView(badge: badge, isPresented: $viewModel.showBadgeUnlock)
+                    .onAppear {
+                        // Track badge unlock display
+                        AnalyticsService.shared.trackUserAction("streak_badge_unlocked", metadata: [
+                            "badge_type": badge.type.rawValue,
+                            "badge_title": badge.title,
+                            "badge_rarity": badge.rarity.rawValue,
+                            "streak_count": viewModel.streakStats.currentStreak
+                        ])
+                    }
                     .onDisappear {
                         viewModel.dismissBadgeUnlock()
                     }
             }
+        }
+    }
+    
+    // Helper function to categorize milestone types
+    private func getMilestoneType(for streak: Int) -> String {
+        switch streak {
+        case 7: return "week"
+        case 14: return "two_weeks"
+        case 30: return "month"
+        case 50: return "fifty_days"
+        case 100: return "hundred_days"
+        default: return "custom"
         }
     }
 }

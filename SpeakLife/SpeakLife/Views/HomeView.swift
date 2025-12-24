@@ -78,6 +78,8 @@ struct HomeView: View {
     @State var showGiftView = false
     @State private var isPresented = false
     @State var showSubscription = false
+    @State private var showTriggeredPaywall = false
+    @StateObject private var paywallTrigger = PaywallTriggerManager.shared
     
     private let currentVersion = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0.0"
 
@@ -129,8 +131,21 @@ struct HomeView: View {
                                     }
                                     .frame(height:  UIScreen.main.bounds.height * 0.9)
                                 }
-                            
                             })
+                            .sheet(isPresented: $showTriggeredPaywall) {
+                                GeometryReader { proxy in
+                                    OptimizedSubscriptionView {
+                                        showTriggeredPaywall = false
+                                        paywallTrigger.dismissPaywall()
+                                    }
+                                    .frame(height:  UIScreen.main.bounds.height * 0.9)
+                                }
+                            }
+                            .onChange(of: paywallTrigger.shouldShowPaywall) { newValue in
+                                if newValue && !subscriptionStore.isPremium {
+                                    showTriggeredPaywall = true
+                                }
+                            }
                   
                 } else {
                     OnboardingView()
