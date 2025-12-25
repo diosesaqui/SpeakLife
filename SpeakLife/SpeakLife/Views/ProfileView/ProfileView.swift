@@ -88,10 +88,9 @@ struct ProfileView: View {
                     
                     Section(header: Text("Yours").font(.caption)) {
                         AbbasLoveRow
+                        createYourOwnRow  // Moved Create Your Own here (always visible)
                         if appState.onBoardingTest {
-                            createYourOwnRow
                             quizRow
-                          //  streakRow
                            prayerRow
                         }
                         
@@ -415,13 +414,13 @@ struct ProfileView: View {
     @MainActor
     private var createYourOwnRow: some View {
         HStack {
-            Image(systemName: "doc.fill.badge.plus")
+            Image(systemName: "plus.bubble.fill")
                 .foregroundColor(Constants.DAMidBlue)
             NavigationLink(LocalizedStringKey("Create Your Own"), destination: LazyView(CreateYourOwnView()))
                 .opacity(0)
                 .background(
                     HStack {
-                        Text("My Own", comment: "create your own title")
+                        Text("Create Your Own", comment: "create your own title")
                         Spacer()
 //                        Image(systemName: "chevron.right")
 //                            .resizable()
@@ -429,6 +428,13 @@ struct ProfileView: View {
 //                            .frame(width: 8)
 //                            .foregroundColor(Constants.DAMidBlue)
                     })
+                .simultaneousGesture(TapGesture().onEnded {
+                    Event.trackUserAction(
+                        "create_your_own_opened",
+                        category: "profile",
+                        metadata: ["source": "profile_menu"]
+                    )
+                })
         }
     }
     

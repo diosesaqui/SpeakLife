@@ -159,7 +159,7 @@ final class ContentCategorizationService: ObservableObject {
         do {
             // Prepare input for ML model
             let inputFeatures = try MLFeatureValue(string: text)
-            let prediction = try model.prediction(from: MLDictionaryFeatureProvider(dictionary: ["text": inputFeatures]))
+            let prediction = try await model.prediction(from: MLDictionaryFeatureProvider(dictionary: ["text": inputFeatures]))
             
             // Extract spiritual categories
             let spiritualCategories = extractSpiritualCategories(from: prediction)
@@ -187,7 +187,7 @@ final class ContentCategorizationService: ObservableObject {
         if let toneModel = emotionalToneModel {
             do {
                 let inputFeatures = try MLFeatureValue(string: text)
-                let prediction = try toneModel.prediction(from: MLDictionaryFeatureProvider(dictionary: ["text": inputFeatures]))
+                let prediction = try await toneModel.prediction(from: MLDictionaryFeatureProvider(dictionary: ["text": inputFeatures]))
                 
                 if let toneString = prediction.featureValue(for: "emotional_tone")?.stringValue,
                    let tone = EmotionalTone(rawValue: toneString) {

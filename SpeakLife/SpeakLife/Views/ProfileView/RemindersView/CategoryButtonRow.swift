@@ -80,7 +80,6 @@ struct CategoryButtonRow: View  {
             Analytics.logEvent(Event.tryPremiumTapped, parameters: nil)
         } else {
             isPresentingCategoryList = true
-            Analytics.logEvent(Event.reminders_categoriesTapped, parameters: nil)
         }
     }
 

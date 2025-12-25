@@ -214,6 +214,13 @@ struct DeclarationContentView: View {
                 askForReview()
                 let declaration = viewModel.declarations[newIndex]
                 viewModel.setCurrent(declaration)
+                
+                // Track swipe event
+                Analytics.logEvent("swipe_affirmation", parameters: [
+                    "declaration_id": declaration.id,
+                    "declaration_index": newIndex,
+                    "category": declaration.category
+                ])
                 // Reset animations for new declaration
                 completedAnimations.removeAll()
                 animationResetTrigger = UUID()

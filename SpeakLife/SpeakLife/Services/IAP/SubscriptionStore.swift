@@ -261,25 +261,67 @@ final class SubscriptionStore: ObservableObject {
                         
                         if !previousTransactions.isEmpty {
                                 // This is a renewal or trial conversion
-                                if transaction.offerType == .introductory {
-                                    // Trial conversion
-                                    AnalyticsService.shared.trackTrialActivated(
-                                        productId: transaction.productID,
-                                        metadata: [
-                                            "transaction_id": transaction.id,
-                                            "original_transaction_id": originalTransactionId
-                                        ]
-                                    )
+                                // Get the product to extract price
+                                if let product = self.subscriptions.first(where: { $0.id == transaction.productID }) ?? self.nonConsumables.first(where: { $0.id == transaction.productID }) {
+                                    let priceValue = NSDecimalNumber(decimal: product.price).doubleValue
+                                    
+                                    if transaction.offerType == .introductory {
+                                        // Trial conversion
+                                        AnalyticsService.shared.trackTrialActivated(
+                                            productId: transaction.productID,
+                                            metadata: [
+                                                "transaction_id": transaction.id,
+                                                "original_transaction_id": originalTransactionId,
+                                                "price": priceValue,
+                                                "currency": "USD"
+                                            ]
+                                        )
+                                        
+                                        // Track conversion with revenue
+                                        Analytics.logEvent("app_store_subscription_convert", parameters: [
+                                            "product_id": transaction.productID,
+                                            "value": priceValue,
+                                            "currency": "USD"
+                                        ])
+                                        Event.trackTikTokPremiumPurchase(value: priceValue, currency: "USD")
+                                    } else {
+                                        // Regular renewal
+                                        AnalyticsService.shared.trackSubscriptionRenewal(
+                                            productId: transaction.productID,
+                                            price: priceValue,
+                                            metadata: [
+                                                "transaction_id": transaction.id,
+                                                "original_transaction_id": originalTransactionId
+                                            ]
+                                        )
+                                        
+                                        // Track renewal with revenue
+                                        Analytics.logEvent("app_store_subscription_renew", parameters: [
+                                            "product_id": transaction.productID,
+                                            "value": priceValue,
+                                            "currency": "USD"
+                                        ])
+                                    }
                                 } else {
-                                    // Regular renewal
-                                    AnalyticsService.shared.trackSubscriptionRenewal(
-                                        productId: transaction.productID,
-                                        metadata: [
-                                            "transaction_id": transaction.id,
-                                            "original_transaction_id": originalTransactionId
-                                        ]
-                                    )
-                            }
+                                    // Fallback without price if product not found
+                                    if transaction.offerType == .introductory {
+                                        AnalyticsService.shared.trackTrialActivated(
+                                            productId: transaction.productID,
+                                            metadata: [
+                                                "transaction_id": transaction.id,
+                                                "original_transaction_id": originalTransactionId
+                                            ]
+                                        )
+                                    } else {
+                                        AnalyticsService.shared.trackSubscriptionRenewal(
+                                            productId: transaction.productID,
+                                            metadata: [
+                                                "transaction_id": transaction.id,
+                                                "original_transaction_id": originalTransactionId
+                                            ]
+                                        )
+                                    }
+                                }
                         }
                     }
 
@@ -360,15 +402,27 @@ final class SubscriptionStore: ObservableObject {
             let transaction = try checkVerified(verification)
             await updateCustomerProductStatus()
             
-            // Analytics tracking
+            // Analytics tracking with proper revenue
             let priceValue = NSDecimalNumber(decimal: product.price).doubleValue
             AppEvents.shared.logPurchase(amount: priceValue, currency: "USD")
-            Analytics.logEvent(Event.premiumSucceded, parameters: [
+            
+            // Track with revenue for all analytics platforms
+            Analytics.logEvent(Event.premiumSucceeded, parameters: [
                 "product_id": product.id,
-                "product_price": product.displayPrice,
-                "price_value": priceValue
+                "value": priceValue,
+                "currency": "USD",
+                "transaction_id": transaction.id
             ])
+            
+            // Track TikTok purchase with revenue
             Event.trackTikTokPremiumPurchase(value: priceValue, currency: "USD")
+            
+            // Track subscription_started for consistency
+            Analytics.logEvent("subscription_started", parameters: [
+                "product_id": product.id,
+                "value": priceValue,
+                "currency": "USD"
+            ])
 
             await transaction.finish()
             return transaction

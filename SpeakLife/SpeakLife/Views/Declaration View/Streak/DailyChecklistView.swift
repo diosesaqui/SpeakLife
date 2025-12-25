@@ -86,8 +86,8 @@ struct DailyChecklistView: View {
             ScrollView {
                 VStack(spacing: 16) {
                     // Progress Journey Info
-                    ProgressJourneyInfo()
-                        .padding(.horizontal, 20)
+//                    ProgressJourneyInfo()
+//                        .padding(.horizontal, 20)
                     
                     // Task List
                     LazyVStack(spacing: 12) {

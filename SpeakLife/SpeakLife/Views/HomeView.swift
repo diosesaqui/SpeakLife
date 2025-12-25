@@ -28,7 +28,11 @@ class TabViewModel: ObservableObject {
     }
 
     func goToAudio() {
-        selectedTab = 2
+        selectedTab = 3  // Audio is now at position 3
+    }
+    
+    func goToChecklist() {
+        selectedTab = 2  // Daily Checklist is at position 2
     }
 
     func resetToHome() {
@@ -39,8 +43,8 @@ class TabViewModel: ObservableObject {
         let tabNames = [
             0: "declarations",
             1: "devotionals",
-            2: "audio",
-            3: "create_your_own",
+            2: "daily_checklist",
+            3: "audio",
             4: "profile"
         ]
         
@@ -72,6 +76,7 @@ struct HomeView: View {
     @EnvironmentObject var viewModel: FacebookTrackingViewModel
     @EnvironmentObject var audioDeclarationViewModel: AudioDeclarationViewModel
     @EnvironmentObject var tabViewModel: TabViewModel
+    @EnvironmentObject var streakViewModel: EnhancedStreakViewModel
     @Binding var isShowingLanding: Bool
    
    
@@ -166,8 +171,8 @@ struct HomeView: View {
             TabView(selection: $tabViewModel.selectedTab) {
                 declarationView
                 devotionalView
+                dailyChecklistView
                 audioView
-                createYourOwnView
                 profileView
                     
                 }
@@ -210,7 +215,7 @@ struct HomeView: View {
     
     var audioView: some View {
         AudioDeclarationView()
-            .tag(2)
+            .tag(3)
             .tabItem {
                 if #available(iOS 17, *) {
                     Image(systemName: "waveform")
@@ -237,11 +242,11 @@ struct HomeView: View {
             }
     }
     
-    var createYourOwnView: some View {
-        CreateYourOwnView()
-            .tag(3)
+    var dailyChecklistView: some View {
+        ModernDailyChecklistView(viewModel: streakViewModel)
+            .tag(2)
             .tabItem {
-                Image(systemName: "plus.bubble.fill")
+                Image(systemName: "checklist")
                     .renderingMode(.original)
             }
     }

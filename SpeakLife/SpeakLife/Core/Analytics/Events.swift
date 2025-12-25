@@ -11,13 +11,14 @@ import TikTokBusinessSDK
 
 struct Event {
     
+    // MARK: - Standardized Event Names (snake_case)
     static let categoryChooserTapped = "category_chooser_tapped"
     static let tryPremiumAbandoned = "try_premium_abandoned"
     static let addYourOwnAbandoned = "add_your_own_abandoned"
-    static let reminders_categoriesTapped = "reminders_categories_tapped"
+    static let remindersCategoriesTapped = "reminders_categories_tapped"
     static let favoriteTapped = "favorite_tapped"
     static let speechTapped = "speech_tapped"
-    static let onBoardingFinished = "onboarding_finished"
+    static let onboardingFinished = "onboarding_finished"  // Fixed: was onBoardingFinished
     static let shareTapped = "share_tapped"
     static let remindersTapped = "reminders_tapped"
     static let powerDeclarationsTapped = "power_declarations_tapped"
@@ -26,13 +27,13 @@ struct Event {
     static let tryPremiumTapped = "try_premium_tapped"
     static let profileTapped = "profile_tapped"
     static let shareSpeakLifeTapped = "share_speak_life_tapped"
-    static let add_your_own_affirmation = "add_your_own_affirmation"
+    static let addYourOwnAffirmation = "add_your_own_affirmation"  // Fixed: was add_your_own_affirmation
     static let createYourOwnTapped = "create_your_own_tapped"
     static let themeChangerTapped = "theme_changer_tapped"
-    static let SessionStarted = "session_started"
-    static let swipe_affirmation = "swipe_affirmation"
+    static let sessionStarted = "session_started"  // Fixed: was SessionStarted
+    static let swipeAffirmation = "swipe_affirmation"  // Fixed: was swipe_affirmation
     static let manageSubscriptionTapped = "manage_subscription_tapped"
-    static let premiumSucceded = "premium_succeeded"
+    static let premiumSucceeded = "premium_succeeded"  // Fixed typo: was premiumSucceded
     static let devotionalTapped = "devotional_tapped"
     static let loveLetterTapped = "love_letter_tapped"
     static let devotionalShared = "devotional_shared"
@@ -106,7 +107,13 @@ extension Event {
     }
     
     static func trackTikTokPremiumPurchase(value: Double, currency: String = "USD") {
-        TikTokBusiness.trackTTEvent(.init(eventName:"Purchase"))
+        // Track TikTok purchase with revenue
+        let ttEvent = TikTokBaseEvent(eventName: "Purchase")
+        ttEvent.addProperty(withKey: "value", value: value)
+        ttEvent.addProperty(withKey: "currency", value: currency)
+        TikTokBusiness.trackTTEvent(ttEvent)
+        
+        // Also log to Firebase with revenue
         Analytics.logEvent("tiktok_purchase", parameters: [
             "value": value,
             "currency": currency

@@ -136,7 +136,7 @@ final class AnalyticsService {
         
         Analytics.logEvent("conversion", parameters: params)
         
-        if event.contains("purchase") || event.contains("subscription") {
+        if event.contains("purchase") || event.contains("subscription") || event.contains("trial") {
             if let value = value {
                 Event.trackTikTokPremiumPurchase(value: value, currency: currency)
             }
@@ -245,12 +245,17 @@ final class AnalyticsService {
     
     // MARK: - Subscription Events
     
-    func trackTrialStarted(productId: String, metadata: [String: Any] = [:]) {
+    func trackTrialStarted(productId: String, price: Double? = nil, metadata: [String: Any] = [:]) {
         var params: [String: Any] = [
             "product_id": productId,
             "screen": currentScreen ?? "unknown",
             "timestamp": Date().iso8601String
         ]
+        
+        if let price = price {
+            params["value"] = price
+            params["currency"] = "USD"
+        }
         
         params.merge(metadata) { (_, new) in new }
         

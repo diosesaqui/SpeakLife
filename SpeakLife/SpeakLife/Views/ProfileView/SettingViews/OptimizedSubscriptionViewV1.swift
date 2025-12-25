@@ -1054,6 +1054,7 @@ struct OptimizedSubscriptionViewV1: View {
                     if hasTrial {
                         AnalyticsService.shared.trackTrialStarted(
                             productId: currentSelection.id,
+                            price: priceValue,
                             metadata: [
                                 "trial_days": currentSelection.subscription?.introductoryOffer?.period.value ?? 0,
                                 "variant": "v1"

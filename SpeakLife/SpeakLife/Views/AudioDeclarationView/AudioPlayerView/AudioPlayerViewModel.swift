@@ -355,6 +355,15 @@ final class AudioPlayerViewModel: NSObject, ObservableObject {
 //            }
             else {
                 self.isPlaying = false
+                
+                // Track audio completion for paywall trigger (4+ minute audio)
+                if let duration = self.player?.currentItem?.duration {
+                    let durationInSeconds = CMTimeGetSeconds(duration)
+                    if !duration.isIndefinite && durationInSeconds > 0 {
+                        PaywallTriggerManager.shared.trackAudioCompletion(durationInSeconds: durationInSeconds)
+                    }
+                }
+                
                 self.player?.seek(to: .zero)
                 
                 // If audio finished while app is in background, deactivate audio session
@@ -487,20 +496,6 @@ final class AudioPlayerViewModel: NSObject, ObservableObject {
     func seek(to time: Double) {
         guard let player = player else { return }
         let targetTime = CMTime(seconds: time, preferredTimescale: 1)
-        
-        if let audio = selectedItem {
-            AnalyticsService.shared.trackAudioPlayback(
-                audioId: audio.id,
-                audioTitle: audio.title,
-                action: .seeked,
-                metadata: [
-                    "from_position": currentTime,
-                    "to_position": time,
-                    "seek_distance": abs(time - currentTime),
-                    "category": audio.tag ?? "unknown"
-                ]
-            )
-        }
         
         player.seek(to: targetTime)
     }

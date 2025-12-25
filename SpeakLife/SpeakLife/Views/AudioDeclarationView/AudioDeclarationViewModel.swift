@@ -8,12 +8,13 @@
 import FirebaseStorage
 import SwiftUI
 import Combine
+import FirebaseAnalytics
 
 final class AudioDeclarationViewModel: ObservableObject {
     // New dynamic system
     @Published var dynamicFilters: [FilterConfig] = []  // Filter configs from JSON
     @Published var contentByFilter: [String: [AudioDeclaration]] = [:]  // All content organized by filter ID
-    @Published var selectedFilterId: String = "speaklife"  // Selected filter ID
+    @Published var selectedFilterId: String = "speaklife"  // Selected filter ID (set dynamically from server)
     
     private(set) var allAudioFiles: [AudioDeclaration] = []
     @Published var downloadProgress: [String: Double] = [:]
@@ -232,6 +233,17 @@ final class AudioDeclarationViewModel: ObservableObject {
                 ($0.order ?? Int.max) < ($1.order ?? Int.max) 
             }
             
+            // Set selectedFilterId from server if provided and valid
+            if let serverSelectedFilterId = welcome?.selectedFilterId {
+                let availableFilterIds = filterConfigs.map { $0.id } + ["favorites"]
+                if availableFilterIds.contains(serverSelectedFilterId) {
+                    selectedFilterId = serverSelectedFilterId
+                    print("🎵 Selected filter updated from server: \(serverSelectedFilterId)")
+                } else {
+                    print("⚠️ Server provided invalid filter ID: \(serverSelectedFilterId)")
+                }
+            }
+            
             // Populate content for each filter
             for config in filterConfigs {
                 if config.id == "favorites" {
@@ -257,6 +269,14 @@ final class AudioDeclarationViewModel: ObservableObject {
                     order: nil,
                     reversed: nil
                 )
+            }
+            
+            // Set selectedFilterId from server if provided and valid (fallback)
+            if let serverSelectedFilterId = welcome?.selectedFilterId {
+                if filterStrings.contains(serverSelectedFilterId) || serverSelectedFilterId == "favorites" {
+                    selectedFilterId = serverSelectedFilterId
+                    print("🎵 Selected filter updated from server (fallback): \(serverSelectedFilterId)")
+                }
             }
             
             // Populate content using old filter strings
@@ -349,6 +369,30 @@ final class AudioDeclarationViewModel: ObservableObject {
             // Failed to clear cache
         }
     }
+    
+    // MARK: - Dynamic Filter Management
+    
+    /// Sets the selected filter ID dynamically
+    /// - Parameter filterId: The filter ID to select
+    func setSelectedFilter(_ filterId: String) {
+        // Validate that the filter exists
+        guard filterId == "favorites" || dynamicFilters.contains(where: { $0.id == filterId }) else {
+            print("⚠️ Invalid filter ID: \(filterId)")
+            return
+        }
+        
+        selectedFilterId = filterId
+    }
+    
+    /// Gets the display name for a filter ID
+    /// - Parameter filterId: The filter ID
+    /// - Returns: The display name for the filter
+    func getFilterDisplayName(for filterId: String) -> String {
+        if filterId == "favorites" {
+            return "Favorites"
+        }
+        return dynamicFilters.first(where: { $0.id == filterId })?.displayName ?? filterId.capitalized
+    }
   }
 
 struct FilterConfig: Codable {
@@ -362,6 +406,7 @@ struct WelcomeAudio: Codable {
     let version: Int
     let filters: [String]?  // Keep for backward compatibility
     let filterConfigs: [FilterConfig]?  // New dynamic filters
+    let selectedFilterId: String?  // Default selected filter from server
     let audios: [AudioDeclaration]
 }
 

@@ -34,6 +34,7 @@ struct DeclarationView: View {
     @State var isShowingMailView = false
     @State var showDailyDevotion = false
     @State private var isPresentingPremiumView = false
+    @State private var isPresentingCreateYourOwn = false
     @EnvironmentObject var timerViewModel: TimerViewModel
     @State var presentDevotionalSubscriptionView = false
     @State private var showSpeakAloudBanner = false
@@ -71,7 +72,11 @@ struct DeclarationView: View {
                                 if !showSpeakAloudBanner {
                                 Spacer()
                                 // Enhanced Streak System with Daily Checklist
-                                EnhancedStreakView()
+                                    CapsuleImageButton(title: "plus.bubble.fill") {
+                                        createYourOwnView()
+            
+                                    }
+                                    .opacity(appState.showScreenshotLabel ? 0 : 1)
                                     .opacity(appState.showScreenshotLabel ? 0 : 1)
                                     .allowsHitTesting(!appState.showScreenshotLabel)
                                     if !subscriptionStore.isPremium {
@@ -106,6 +111,13 @@ struct DeclarationView: View {
                                             DevotionalSubscriptionView() {
                                                 presentDevotionalSubscriptionView = false
                                             }
+                                        }
+                                        
+                                        .sheet(isPresented: $isPresentingCreateYourOwn) {
+                                            CreateYourOwnView()
+//                                            {
+//                                                isPresentingCreateYourOwn = false
+//                                            }
                                         }
                                     }
                                     
@@ -205,6 +217,12 @@ struct DeclarationView: View {
                 timerViewModel.saveRemainingTime()
             }
         
+    }
+    
+    private func createYourOwnView() {
+        timerViewModel.saveRemainingTime()
+        self.isPresentingCreateYourOwn = true
+        Analytics.logEvent(Event.tryPremiumTapped, parameters: nil)
     }
     private func premiumView()  {
         timerViewModel.saveRemainingTime()
