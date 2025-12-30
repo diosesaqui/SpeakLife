@@ -339,13 +339,13 @@ struct AudioDeclarationView: View {
     
     func episodeRow(_ proxy: GeometryProxy) -> some View {
         Group {
-            if isSpeakLifeFilterSelected {
-                speakLifeSectionedView
-            } else if shouldShowEmptyFavoritesState {
-                emptyFavoritesView
-            } else {
+//            if isSpeakLifeFilterSelected {
+//                speakLifeSectionedView
+//            } else if shouldShowEmptyFavoritesState {
+//                emptyFavoritesView
+//            } else {
                 audioListView(proxy)
-            }
+          //  }
         }
     }
     

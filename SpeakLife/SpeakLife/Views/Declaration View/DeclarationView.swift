@@ -37,6 +37,19 @@ struct DeclarationView: View {
     @State private var isPresentingCreateYourOwn = false
     @EnvironmentObject var timerViewModel: TimerViewModel
     @State var presentDevotionalSubscriptionView = false
+    
+    // Consolidated sheet management
+    @State private var activeSheet: ActiveSheet?
+    @State private var mailResult: Result<MFMailComposeResult, Error>? = nil
+    
+    enum ActiveSheet: Identifiable {
+        case premium
+        case createYourOwn  
+        case devotionalSubscription
+       // case mail
+        
+        var id: Int { hashValue }
+    }
     @State private var showSpeakAloudBanner = false
     
     private var cancellables = Set<AnyCancellable>()
@@ -89,36 +102,6 @@ struct DeclarationView: View {
                                         }
                                         .opacity(appState.showScreenshotLabel ? 0 : 1)
                                         .foregroundStyle(Constants.gold)
-                                        
-                                        
-                                        .sheet(isPresented: $isPresentingPremiumView) {
-                                            self.isPresentingPremiumView = false
-                                            Analytics.logEvent(Event.tryPremiumAbandoned, parameters: nil)
-                                            timerViewModel.loadRemainingTime()
-                                        } content: {
-                                            PremiumView()
-                                                .frame(height: UIScreen.main.bounds.height * 0.95)
-                                            
-                                                .onDisappear {
-                                                    if !subscriptionStore.isPremium, !subscriptionStore.isInDevotionalPremium {
-                                                        if subscriptionStore.showDevotionalSubscription {
-                                                            presentDevotionalSubscriptionView = true
-                                                        }
-                                                    }
-                                                }
-                                        }
-                                        .sheet(isPresented: $presentDevotionalSubscriptionView) {
-                                            DevotionalSubscriptionView() {
-                                                presentDevotionalSubscriptionView = false
-                                            }
-                                        }
-                                        
-                                        .sheet(isPresented: $isPresentingCreateYourOwn) {
-                                            CreateYourOwnView()
-//                                            {
-//                                                isPresentingCreateYourOwn = false
-//                                            }
-                                        }
                                     }
                                     
                                     
@@ -159,6 +142,27 @@ struct DeclarationView: View {
                 }
             )
             
+            .sheet(item: $activeSheet) { sheet in
+                let _ = print("🔧 Sheet: Presenting sheet with type: \(sheet)")
+                switch sheet {
+                case .createYourOwn:
+                    let _ = print("🔧 Sheet: Loading CreateYourOwnView")
+                    CreateYourOwnView()
+                case .premium:
+                    PremiumView()
+                        .frame(height: UIScreen.main.bounds.height * 0.95)
+                case .devotionalSubscription:
+                    DevotionalSubscriptionView() {
+                        activeSheet = nil
+                    }
+                }
+            }
+            .onChange(of: presentDevotionalSubscriptionView) { newValue in
+                if newValue && activeSheet == nil {
+                    activeSheet = .devotionalSubscription
+                    presentDevotionalSubscriptionView = false
+                }
+            }
             
             .alert(isPresented: $viewModel.showErrorMessage) {
                 Alert(
@@ -220,13 +224,27 @@ struct DeclarationView: View {
     }
     
     private func createYourOwnView() {
+        print("🔧 CreateYourOwn: Button tapped")
+        print("🔧 CreateYourOwn: isPremium = \(subscriptionStore.isPremium)")
+        print("🔧 CreateYourOwn: Current activeSheet = \(String(describing: activeSheet))")
+        
         timerViewModel.saveRemainingTime()
-        self.isPresentingCreateYourOwn = true
+        
+        // Clear any existing sheet first
+        activeSheet = nil
+        
+        // Use consolidated sheet approach with delay to ensure clean state
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            print("🔧 CreateYourOwn: Setting activeSheet = .createYourOwn")
+            self.activeSheet = .createYourOwn
+            print("🔧 CreateYourOwn: activeSheet is now \(String(describing: self.activeSheet))")
+        }
+        
         Analytics.logEvent(Event.tryPremiumTapped, parameters: nil)
     }
     private func premiumView()  {
         timerViewModel.saveRemainingTime()
-        self.isPresentingPremiumView = true
+        activeSheet = .premium
         Analytics.logEvent(Event.tryPremiumTapped, parameters: nil)
     }
     

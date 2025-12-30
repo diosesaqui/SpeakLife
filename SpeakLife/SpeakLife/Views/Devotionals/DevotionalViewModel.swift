@@ -146,4 +146,17 @@ final class DevotionalViewModel: ObservableObject, Sendable {
         let today = DateFormatter.localizedString(from: Date(), dateStyle: .short, timeStyle: .none)
         return today != lastFetchDate
     }
+    
+    func forceRefreshDevotional(remoteVersion: Int) async {
+        if let devotional = await service.forceRefreshDevotionals(remoteVersion: remoteVersion).first {
+            DispatchQueue.main.async { [weak self] in
+                self?.devotional = devotional
+            }
+            setDevotionalDictionary()
+        } else {
+            DispatchQueue.main.async { [weak self] in
+                self?.hasError = true
+            }
+        }
+    }
 }

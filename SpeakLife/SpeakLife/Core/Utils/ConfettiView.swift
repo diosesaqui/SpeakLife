@@ -6,52 +6,79 @@
 //
 
 import SwiftUI
-import UIKit
 
-struct ConfettiView: UIViewRepresentable {
-    func makeUIView(context: Context) -> UIView {
-        let view = UIView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 1)) // Ensure the view is wide enough
-            view.clipsToBounds = false // Avoid clipping the confetti
-               
-        
-        // Confetti pieces
-        let confettiTypes = ["🎉", "🎊", "🎈", "❤️", "🌟", "✝️"]
-        let emitter = CAEmitterLayer()
-        emitter.emitterShape = .line
-        emitter.emitterPosition = CGPoint(x: view.frame.size.width / 2, y: -10) // Start just above the view's bounds to avoid cutting off
-               emitter.emitterSize = CGSize(width: view.frame.size.width, height: 1)
-               
-        
-        emitter.emitterCells = confettiTypes.map { confettiType in
-            let cell = CAEmitterCell()
-            cell.birthRate = 6
-            cell.lifetime = 14.0
-            cell.velocity = CGFloat(300)
-            cell.velocityRange = CGFloat(100)
-            cell.emissionLongitude = .pi
-            cell.emissionRange = .pi / 4
-            cell.spin = 3.5
-            cell.spinRange = 1.0
-            cell.scaleRange = 0.25
-            cell.scaleSpeed = -0.1
-            cell.contents = confettiType.image().cgImage
-            return cell
+struct ConfettiView: View {
+    @State private var animate = false
+    
+    var body: some View {
+        ZStack {
+            // Modern particle system using SwiftUI
+            ForEach(0..<50, id: \.self) { index in
+                ConfettiParticleConfetti(delay: Double(index) * 0.02)
+            }
         }
-        
-        view.layer.addSublayer(emitter)
-        emitter.birthRate = 0 // Initially turned off
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 10) {
-            emitter.birthRate = 1 // Turn on after 10 seconds
+        .onAppear {
+            animate = true
         }
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 15) {
-            emitter.birthRate = 0 // Turn off after 15 seconds
-        }
-        return view
+    }
+}
+
+struct ConfettiParticleConfetti: View {
+    let delay: Double
+    @State private var yPosition: CGFloat = -100
+    @State private var xOffset: CGFloat = 0
+    @State private var rotation: Double = 0
+    @State private var opacity: Double = 1
+    @State private var scale: CGFloat = 1
+    
+    private let colors: [Color] = [.blue, .purple, .pink, .orange, .yellow, .green]
+    private let shapes: [String] = ["circle.fill", "diamond.fill", "star.fill", "heart.fill"]
+    private let randomColor: Color
+    private let randomShape: String
+    private let randomXStart: CGFloat
+    private let randomDuration: Double
+    
+    init(delay: Double) {
+        self.delay = delay
+        self.randomColor = colors.randomElement() ?? .blue
+        self.randomShape = shapes.randomElement() ?? "circle.fill"
+        self.randomXStart = CGFloat.random(in: -200...200)
+        self.randomDuration = Double.random(in: 2.5...4.0)
     }
     
-    func updateUIView(_ uiView: UIView, context: Context) {}
+    var body: some View {
+        Image(systemName: randomShape)
+            .font(.system(size: 16, weight: .semibold))
+            .foregroundColor(randomColor)
+            .scaleEffect(scale)
+            .rotationEffect(.degrees(rotation))
+            .opacity(opacity)
+            .offset(x: xOffset + randomXStart, y: yPosition)
+            .onAppear {
+                withAnimation(
+                    .easeOut(duration: randomDuration)
+                    .delay(delay)
+                ) {
+                    yPosition = UIScreen.main.bounds.height + 100
+                    xOffset = CGFloat.random(in: -100...100)
+                }
+                
+                withAnimation(
+                    .linear(duration: randomDuration)
+                    .delay(delay)
+                ) {
+                    rotation = Double.random(in: 360...720)
+                }
+                
+                withAnimation(
+                    .easeIn(duration: 0.5)
+                    .delay(delay + randomDuration - 0.5)
+                ) {
+                    opacity = 0
+                    scale = 0.5
+                }
+            }
+    }
 }
 
 extension String {

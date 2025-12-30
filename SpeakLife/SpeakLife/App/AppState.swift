@@ -22,7 +22,7 @@ final class AppState: ObservableObject {
     @AppStorage("lastNotificationSetDate") var lastNotificationSetDate = Date()
     @AppStorage("lastSharedAttemptDate") var lastSharedAttemptDate = Date()
     @AppStorage("notificationEnabled") var notificationEnabled = false
-    @AppStorage("notificationCount") var notificationCount = 10
+    @AppStorage("notificationCount") var notificationCount = 5
     @AppStorage("startTimeNotification") var startTimeNotification = ""
     @AppStorage("endTimeNotification") var endTimeNotification = ""
     @AppStorage("startTimeIndex") var startTimeIndex = 12

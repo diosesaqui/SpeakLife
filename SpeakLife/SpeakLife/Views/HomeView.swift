@@ -101,6 +101,7 @@ struct HomeView: View {
                                 declarationStore.setRemoteDeclarationVersion(version: subscriptionStore.remoteVersion)
                                 Task {
                                     if devotionalViewModel.shouldFetchNewDevotional() {
+                                            print("HomeView: Fetching devotional with version: \(subscriptionStore.currentDevotionalVersion)")
                                             await devotionalViewModel.fetchDevotional(remoteVersion: subscriptionStore.currentDevotionalVersion)
                                             devotionalViewModel.lastFetchDate = DateFormatter.localizedString(from: Date(), dateStyle: .short, timeStyle: .none)
                                         }
@@ -121,6 +122,7 @@ struct HomeView: View {
                                     
                                     // Fetch devotional if needed
                                     if devotionalViewModel.shouldFetchNewDevotional() {
+                                        print("HomeView: Fetching devotional after config update with version: \(subscriptionStore.currentDevotionalVersion)")
                                         await devotionalViewModel.fetchDevotional(remoteVersion: subscriptionStore.currentDevotionalVersion)
                                         devotionalViewModel.lastFetchDate = DateFormatter.localizedString(from: Date(), dateStyle: .short, timeStyle: .none)
                                     }
@@ -144,6 +146,15 @@ struct HomeView: View {
                                         paywallTrigger.dismissPaywall()
                                     }
                                     .frame(height:  UIScreen.main.bounds.height * 0.9)
+                                }
+                            }
+                            .onReceive(NotificationCenter.default.publisher(for: .devotionalVersionUpdated)) { notification in
+                                if let version = notification.userInfo?["version"] as? Int {
+                                    print("📖 HomeView: Received devotional version update notification: v\(version)")
+                                    Task {
+                                        await devotionalViewModel.forceRefreshDevotional(remoteVersion: version)
+                                        devotionalViewModel.lastFetchDate = DateFormatter.localizedString(from: Date(), dateStyle: .short, timeStyle: .none)
+                                    }
                                 }
                             }
                             .onChange(of: paywallTrigger.shouldShowPaywall) { newValue in

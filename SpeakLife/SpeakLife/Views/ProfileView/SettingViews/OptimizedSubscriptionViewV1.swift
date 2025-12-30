@@ -273,7 +273,7 @@ struct FloatingCTAButtonV1: View {
     }
     
     private var ctaTitle: String {
-        "Claim Your Victory Now"
+        "Walk in Your New Identity"
     }
     
     private var ctaSubtitle: String {
@@ -610,7 +610,7 @@ struct OptimizedSubscriptionViewV1: View {
     private var mainOfferSection: some View {
         VStack(spacing: 12) {
           //  appIconSection
-            Spacer().frame(height: 30)
+            Spacer().frame(height: 50)
             headlineSection
             Spacer().frame(height: 10)
             valuePropsSection
@@ -658,7 +658,7 @@ struct OptimizedSubscriptionViewV1: View {
     
     private var headlineSection: some View {
         VStack(spacing: 8) {
-            Text("Jesus Has Already Won Victory Over Your Life")
+            Text("Live Daily From Victory")
                 .font(.system(size: 28, weight: .bold, design: .rounded))
                 .foregroundColor(.white.opacity(0.95))
                 .multilineTextAlignment(.center)
@@ -681,10 +681,15 @@ struct OptimizedSubscriptionViewV1: View {
                 .padding(.horizontal, 20)
             
             VStack(alignment: .leading, spacing: 12) {
-                ValuePropositionV1(icon: "waveform.badge.mic", text: "Personalized declarations that align you with Heaven's reality")
-                ValuePropositionV1(icon: "brain.head.profile", text: "Anointed audio that rewires your thought life")
-                ValuePropositionV1(icon: "book.circle", text: "Living Word that transforms from the inside out")
-                ValuePropositionV1(icon: "shield.lefthalf.filled", text: "Supernatural peace that guards your heart and mind")
+//                ValuePropositionV1(icon: "waveform.badge.mic", text: "Personalized declarations that align you with Heaven's reality")
+//                ValuePropositionV1(icon: "brain.head.profile", text: "Anointed audio that rewires your thought life")
+//                ValuePropositionV1(icon: "book.circle", text: "Living Word that transforms from the inside out")
+//                ValuePropositionV1(icon: "shield.lefthalf.filled", text: "Supernatural peace that guards your heart and mind")
+                
+                ValuePropositionV1(icon: "waveform.badge.mic", text: "Speak from victory, not for it")
+                ValuePropositionV1(icon: "brain.head.profile", text: "Align your mind with God’s truth daily")
+                ValuePropositionV1(icon: "book.circle", text: "Live rooted in your identity and Jesus’ finished work")
+                ValuePropositionV1(icon: "shield.lefthalf.filled", text: "Peaceful, premium audio experiences")
             }
             .padding(.horizontal, 20)
             .padding(.vertical, 12)

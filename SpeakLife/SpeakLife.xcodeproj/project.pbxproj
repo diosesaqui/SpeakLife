@@ -157,6 +157,9 @@
 		45BC76322EF8058E003AC964 /* AudioDelights.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45BC76292EF8058E003AC964 /* AudioDelights.swift */; };
 		45BC76332EF8058E003AC964 /* GestureDelights.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45BC762C2EF8058E003AC964 /* GestureDelights.swift */; };
 		45BC76342EF8058E003AC964 /* MicroInteractions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45BC762D2EF8058E003AC964 /* MicroInteractions.swift */; };
+		45BC76402EFD10BF003AC964 /* CreateYourOwnButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45BC763F2EFD10BF003AC964 /* CreateYourOwnButton.swift */; };
+		45BC76422EFD1321003AC964 /* ModernDailyChecklistView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45BC76412EFD1321003AC964 /* ModernDailyChecklistView.swift */; };
+		45BC76442EFD2775003AC964 /* ModernCelebrationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45BC76432EFD2775003AC964 /* ModernCelebrationView.swift */; };
 		45BCBA9A2C360245001F28C4 /* BibleStory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45BCBA992C360245001F28C4 /* BibleStory.swift */; };
 		45C7481F2B55B4B80011D8F6 /* FacebookCore in Frameworks */ = {isa = PBXBuildFile; productRef = 45C7481E2B55B4B80011D8F6 /* FacebookCore */; };
 		45C748232B5802C60011D8F6 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 45C748222B5802C60011D8F6 /* GoogleService-Info.plist */; };
@@ -451,6 +454,9 @@
 		45BC762C2EF8058E003AC964 /* GestureDelights.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GestureDelights.swift; sourceTree = "<group>"; };
 		45BC762D2EF8058E003AC964 /* MicroInteractions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MicroInteractions.swift; sourceTree = "<group>"; };
 		45BC762E2EF8058E003AC964 /* PremiumHaptics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PremiumHaptics.swift; sourceTree = "<group>"; };
+		45BC763F2EFD10BF003AC964 /* CreateYourOwnButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateYourOwnButton.swift; sourceTree = "<group>"; };
+		45BC76412EFD1321003AC964 /* ModernDailyChecklistView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModernDailyChecklistView.swift; sourceTree = "<group>"; };
+		45BC76432EFD2775003AC964 /* ModernCelebrationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModernCelebrationView.swift; sourceTree = "<group>"; };
 		45BCBA992C360245001F28C4 /* BibleStory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BibleStory.swift; sourceTree = "<group>"; };
 		45C748222B5802C60011D8F6 /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = "GoogleService-Info.plist"; path = "../../../../Downloads/GoogleService-Info.plist"; sourceTree = "<group>"; };
 		45C748242B5802CA0011D8F6 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
@@ -754,6 +760,7 @@
 		458B6B1B2BA6D57F0001BEFE /* Streak */ = {
 			isa = PBXGroup;
 			children = (
+				45BC76412EFD1321003AC964 /* ModernDailyChecklistView.swift */,
 				4548075B2E3F04C100B8C71B /* StreakCompletionViews.swift */,
 				454807592E3F04B300B8C71B /* StreakIntegrationManager.swift */,
 				454807552E3F04A700B8C71B /* EnhancedStreakView.swift */,
@@ -1196,6 +1203,7 @@
 		7AA8708C28DACCA700134ADB /* Utils */ = {
 			isa = PBXGroup;
 			children = (
+				45BC76432EFD2775003AC964 /* ModernCelebrationView.swift */,
 				7AA8708D28DACCA700134ADB /* FontPickerController.swift */,
 				45ED72C32BA10B3500F5F5E3 /* ConfettiView.swift */,
 				45BC76292EF8058E003AC964 /* AudioDelights.swift */,
@@ -1222,6 +1230,7 @@
 			children = (
 				458B6B1B2BA6D57F0001BEFE /* Streak */,
 				7AA870B728DACCB700134ADB /* DeclarationView.swift */,
+				45BC763F2EFD10BF003AC964 /* CreateYourOwnButton.swift */,
 				7AA8709828DACCB700134ADB /* IntentsBarView.swift */,
 				7AA870B628DACCB700134ADB /* CategoryChooserView.swift */,
 				7AA8709928DACCB700134ADB /* View Models */,
@@ -1600,6 +1609,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				45BC76442EFD2775003AC964 /* ModernCelebrationView.swift in Sources */,
 				45BCBA9A2C360245001F28C4 /* BibleStory.swift in Sources */,
 				458B6B1F2BA6D5CF0001BEFE /* TimerViewModel.swift in Sources */,
 				7AA8706C28DACC4E00134ADB /* Theme.swift in Sources */,
@@ -1719,6 +1729,7 @@
 				45ED72C62BA64C3F00F5F5E3 /* StreakInfoBottomSheet.swift in Sources */,
 				7A60143F294E382700CD2103 /* SubscriptionStore.swift in Sources */,
 				7ABA50C529E4D818002699F1 /* Prayer.swift in Sources */,
+				45BC76402EFD10BF003AC964 /* CreateYourOwnButton.swift in Sources */,
 				454807602E3F11DC00B8C71B /* DailyChecklistFullScreenView.swift in Sources */,
 				45BC74632EDA4CB5003AC964 /* PaywallTriggerManager.swift in Sources */,
 				7AA8707E28DACC8300134ADB /* APIService.swift in Sources */,
@@ -1741,6 +1752,7 @@
 				453C35852C5092A800817FCC /* HelpUsGrowView.swift in Sources */,
 				7AA870D728DACCB700134ADB /* ProfileBarButton.swift in Sources */,
 				458510D92B159B0D00230EE5 /* LandingView.swift in Sources */,
+				45BC76422EFD1321003AC964 /* ModernDailyChecklistView.swift in Sources */,
 				7AF18C7B29FD1A43005A6E31 /* GoogleAdMob.swift in Sources */,
 				457CD3402E7E735A00F435EC /* OptimizedSubscriptionViewV1.swift in Sources */,
 				7AF18C9A2A0D9884005A6E31 /* BlurView.swift in Sources */,
@@ -2015,7 +2027,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = SpeakLife/SpeakLife.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 931;
+				CURRENT_PROJECT_VERSION = 933;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_ASSET_PATHS = "\"SpeakLife/Preview Content\"";
 				DEVELOPMENT_TEAM = 652R6A63L8;
@@ -2031,12 +2043,12 @@
 				INFOPLIST_KEY_UIRequiresFullScreen = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
-				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 3.1.57;
+				MARKETING_VERSION = 3.1.59;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Franchiz.SpeakLife;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -2057,7 +2069,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = SpeakLife/SpeakLife.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 931;
+				CURRENT_PROJECT_VERSION = 933;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_ASSET_PATHS = "\"SpeakLife/Preview Content\"";
 				DEVELOPMENT_TEAM = 652R6A63L8;
@@ -2073,12 +2085,12 @@
 				INFOPLIST_KEY_UIRequiresFullScreen = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
-				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 3.1.57;
+				MARKETING_VERSION = 3.1.59;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Franchiz.SpeakLife;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";

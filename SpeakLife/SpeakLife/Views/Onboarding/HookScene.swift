@@ -67,7 +67,7 @@ struct HookScene: View {
                             .shadow(radius: 4)
                             .opacity(titleOpacity)
                         
-                        Text("Let's Build a Life You Love Speaking.")
+                        Text("We speak because we agree with what Jesus already finished.")
                             .font(.system(size: proxy.size.height < 700 ? 18 : 22, weight: .semibold, design: .rounded))
                             .multilineTextAlignment(.center)
                             .foregroundColor(.white.opacity(0.9))
@@ -77,7 +77,7 @@ struct HookScene: View {
                     .padding(.horizontal, 30)
                     
                     // Emotional priming text
-                    Text("Jesus has breakthrough words waiting for you today")
+                    Text("SpeakLife isn’t about getting victory. It’s about living from it.")
                         .font(.system(size: proxy.size.height < 700 ? 15 : 17, weight: .medium))
                         .multilineTextAlignment(.center)
                         .foregroundColor(.white.opacity(0.8))
@@ -91,7 +91,7 @@ struct HookScene: View {
                 VStack(spacing: proxy.size.height < 700 ? 10 : 15) {
                     ShimmerButton(
                         colors: [.blue, .purple],
-                        buttonTitle: "Begin My Transformation →",
+                        buttonTitle: "Walk in My New Identity →",
                         action: {
                             Analytics.logEvent("HookScreenContinue", parameters: nil)
                             callBack()

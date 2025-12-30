@@ -136,9 +136,9 @@ struct DailyChecklistView: View {
             }
             }
             
-            // Confetti animation for first task completion
+            // Modern celebration animation for first task completion
             if showFirstTaskConfetti || viewModel.showFirstTaskConfetti {
-                ConfettiView()
+                ModernCelebrationView(accentColor: .green)
                     .ignoresSafeArea()
                     .allowsHitTesting(false)
             }
@@ -171,149 +171,261 @@ struct DailyChecklistView: View {
 struct DailyTaskRow: View {
     let task: DailyTask
     let onToggle: (String) -> Void
-    @State private var bounceScale: CGFloat = 1.0
     
     var body: some View {
         HStack(spacing: 16) {
-            // Checkbox
-            Button(action: {
-                withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
-                    bounceScale = 0.8
-                }
-                
-                onToggle(task.id)
-                
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                    withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
-                        bounceScale = 1.0
-                    }
-                }
-            }) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 8)
-                        .fill(task.isCompleted ? Color.white : Color.clear)
-                        .frame(width: 28, height: 28)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 8)
-                                .stroke(Color.white, lineWidth: 2)
-                        )
-                    
-                    if task.isCompleted {
-                        Image(systemName: "checkmark")
-                            .font(.system(size: 16, weight: .bold))
-                            .foregroundColor(Constants.DAMidBlue)
-                    }
-                }
-                .scaleEffect(bounceScale)
-            }
-            .buttonStyle(PlainButtonStyle())
-            
-            // Task Icon with Category Color
-            Image(systemName: task.icon)
-                .font(.system(size: 16, weight: .medium))
-                .foregroundColor(.white)
-                .frame(width: 32, height: 32)
-                .background(
-                    Circle()
-                        .fill(task.category.color.opacity(0.3))
-                )
+            TaskCheckbox(task: task, onToggle: onToggle)
+            TaskIcon(task: task)
+            TaskContent(task: task)
+            Spacer()
+            TaskCompletionIndicator(task: task)
+        }
+        .taskRowBackground(isCompleted: task.isCompleted)
+    }
+}
+
+// MARK: - Task Components (Single Responsibility)
+
+struct TaskCheckbox: View {
+    let task: DailyTask
+    let onToggle: (String) -> Void
+    @State private var bounceScale: CGFloat = 1.0
+    
+    var body: some View {
+        Button(action: handleToggle) {
+            checkboxContent
+        }
+        .buttonStyle(PlainButtonStyle())
+    }
+    
+    private var checkboxContent: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 8)
+                .fill(task.isCompleted ? Color.white : Color.clear)
+                .frame(width: 28, height: 28)
                 .overlay(
-                    Circle()
-                        .stroke(task.category.color.opacity(0.6), lineWidth: 1)
+                    RoundedRectangle(cornerRadius: 8)
+                        .stroke(Color.white, lineWidth: 2)
                 )
             
-            // Task Details
-            VStack(alignment: .leading, spacing: 6) {
-                HStack(alignment: .top, spacing: 8) {
-                    Text(task.title)
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(.white)
-                        .strikethrough(task.isCompleted)
-                    
-                    if task.isNewlyUnlocked {
-                        Text("NEW!")
-                            .font(.system(size: 10, weight: .bold))
-                            .foregroundColor(.yellow)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
-                            .background(
-                                RoundedRectangle(cornerRadius: 8)
-                                    .fill(Color.yellow.opacity(0.2))
-                            )
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 8)
-                                    .stroke(Color.yellow.opacity(0.6), lineWidth: 1)
-                            )
-                    }
-                    
-                    Spacer()
-                }
-                
-                Text(task.description)
-                    .font(.system(size: 14, weight: .regular))
-                    .foregroundColor(.white.opacity(0.8))
-                    .lineLimit(3)
-                
-                // Task metadata - clean and focused
-                HStack(spacing: 10) {
-                    // Category badge
-                    HStack(spacing: 4) {
-                        Text(task.category.emoji)
-                            .font(.system(size: 10))
-                        Text(task.category.displayName)
-                            .font(.system(size: 11, weight: .medium))
-                            .foregroundColor(task.category.color)
-                            .lineLimit(1)
-                    }
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 3)
-                    .background(
-                        RoundedRectangle(cornerRadius: 6)
-                            .fill(task.category.color.opacity(0.15))
-                    )
-                    
-                    // Estimated time
-                    HStack(spacing: 3) {
-                        Image(systemName: "clock")
-                            .font(.system(size: 9))
-                        Text("\(task.estimatedMinutes)m")
-                            .font(.system(size: 11, weight: .medium))
-                    }
-                    .foregroundColor(.white.opacity(0.6))
-                    
-                    Spacer()
-                }
+            if task.isCompleted {
+                Image(systemName: "checkmark")
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundColor(Constants.DAMidBlue)
+            }
+        }
+        .scaleEffect(bounceScale)
+    }
+    
+    private func handleToggle() {
+        HapticManager.impact(.medium)
+        animateToggle()
+        onToggle(task.id)
+    }
+    
+    private func animateToggle() {
+        withAnimation(.spring(response: 0.4, dampingFraction: 0.6)) {
+            bounceScale = 0.85
+        }
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
+                bounceScale = 1.0
+            }
+        }
+    }
+}
+
+struct TaskIcon: View {
+    let task: DailyTask
+    
+    var body: some View {
+        Image(systemName: task.icon)
+            .font(.system(size: 16, weight: .medium))
+            .foregroundColor(.white)
+            .frame(width: 32, height: 32)
+            .background(iconBackground)
+            .overlay(iconBorder)
+    }
+    
+    private var iconBackground: some View {
+        Circle()
+            .fill(task.category.color.opacity(0.3))
+    }
+    
+    private var iconBorder: some View {
+        Circle()
+            .stroke(task.category.color.opacity(0.6), lineWidth: 1)
+    }
+}
+
+struct TaskContent: View {
+    let task: DailyTask
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            TaskTitle(task: task)
+            TaskDescription(task: task)
+            TaskMetadata(task: task)
+        }
+    }
+}
+
+struct TaskTitle: View {
+    let task: DailyTask
+    
+    var body: some View {
+        HStack(alignment: .top, spacing: 8) {
+            Text(task.title)
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundColor(.white)
+                .strikethrough(task.isCompleted)
+            
+            if task.isNewlyUnlocked {
+                NewTaskBadge()
             }
             
             Spacer()
-            
-            // Completion indicator
-            if task.isCompleted {
-                VStack(spacing: 2) {
-                    Image(systemName: "star.fill")
-                        .font(.system(size: 12))
-                        .foregroundColor(.yellow)
-                    
-                    if let completedAt = task.completedAt {
-                        Text(DateFormatter.timeFormatter.string(from: completedAt))
-                            .font(.system(size: 10, weight: .medium))
-                            .foregroundColor(.white.opacity(0.6))
-                    }
+        }
+    }
+}
+
+struct TaskDescription: View {
+    let task: DailyTask
+    
+    var body: some View {
+        Text(task.description)
+            .font(.system(size: 14, weight: .regular))
+            .foregroundColor(.white.opacity(0.8))
+            .lineLimit(3)
+    }
+}
+
+struct TaskMetadata: View {
+    let task: DailyTask
+    
+    var body: some View {
+        HStack(spacing: 10) {
+            CategoryBadge(category: task.category)
+            EstimatedTime(minutes: task.estimatedMinutes)
+            Spacer()
+        }
+    }
+}
+
+struct NewTaskBadge: View {
+    var body: some View {
+        Text("NEW!")
+            .font(.system(size: 10, weight: .bold))
+            .foregroundColor(.yellow)
+            .padding(.horizontal, 6)
+            .padding(.vertical, 2)
+            .background(badgeBackground)
+            .overlay(badgeBorder)
+    }
+    
+    private var badgeBackground: some View {
+        RoundedRectangle(cornerRadius: 8)
+            .fill(Color.yellow.opacity(0.2))
+    }
+    
+    private var badgeBorder: some View {
+        RoundedRectangle(cornerRadius: 8)
+            .stroke(Color.yellow.opacity(0.6), lineWidth: 1)
+    }
+}
+
+struct CategoryBadge: View {
+    let category: TaskCategory
+    
+    var body: some View {
+        HStack(spacing: 4) {
+            Text(category.emoji)
+                .font(.system(size: 10))
+            Text(category.displayName)
+                .font(.system(size: 11, weight: .medium))
+                .foregroundColor(category.color)
+                .lineLimit(1)
+        }
+        .padding(.horizontal, 6)
+        .padding(.vertical, 3)
+        .background(
+            RoundedRectangle(cornerRadius: 6)
+                .fill(category.color.opacity(0.15))
+        )
+    }
+}
+
+struct EstimatedTime: View {
+    let minutes: Int
+    
+    var body: some View {
+        HStack(spacing: 3) {
+            Image(systemName: "clock")
+                .font(.system(size: 9))
+            Text("\(minutes)m")
+                .font(.system(size: 11, weight: .medium))
+        }
+        .foregroundColor(.white.opacity(0.6))
+    }
+}
+
+struct TaskCompletionIndicator: View {
+    let task: DailyTask
+    
+    var body: some View {
+        if task.isCompleted {
+            VStack(spacing: 2) {
+                Image(systemName: "star.fill")
+                    .font(.system(size: 12))
+                    .foregroundColor(.yellow)
+                
+                if let completedAt = task.completedAt {
+                    Text(DateFormatter.timeFormatter.string(from: completedAt))
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundColor(.white.opacity(0.6))
                 }
             }
         }
-        .padding(16)
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color.white.opacity(task.isCompleted ? 0.1 : 0.05))
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.white.opacity(task.isCompleted ? 0.3 : 0.1), lineWidth: 1)
-        )
+    }
+}
+
+// MARK: - Helper Extensions & Utilities
+
+struct HapticManager {
+    static func impact(_ style: UIImpactFeedbackGenerator.FeedbackStyle) {
+        let generator = UIImpactFeedbackGenerator(style: style)
+        generator.impactOccurred()
+    }
+}
+
+struct TaskRowBackgroundModifier: ViewModifier {
+    let isCompleted: Bool
+    
+    func body(content: Content) -> some View {
+        content
+            .padding(16)
+            .background(backgroundFill)
+            .overlay(backgroundStroke)
     }
     
+    private var backgroundFill: some View {
+        RoundedRectangle(cornerRadius: 12)
+            .fill(Color.white.opacity(isCompleted ? 0.1 : 0.05))
+    }
+    
+    private var backgroundStroke: some View {
+        RoundedRectangle(cornerRadius: 12)
+            .stroke(Color.white.opacity(isCompleted ? 0.3 : 0.1), lineWidth: 1)
+    }
 }
+
+extension View {
+    func taskRowBackground(isCompleted: Bool) -> some View {
+        modifier(TaskRowBackgroundModifier(isCompleted: isCompleted))
+    }
+}
+
 
 struct DailyChecklistInfoSheet: View {
     @Environment(\.presentationMode) var presentationMode

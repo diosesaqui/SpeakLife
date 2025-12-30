@@ -124,18 +124,18 @@ final class EnhancedStreakViewModel: ObservableObject {
     }
     
     private func completeTaskWithCelebration(taskId: String) {
-        // Complete the task with special celebration for first completion
+        // Complete the task with immediate celebration
         completeTask(taskId: taskId)
         
-        // Show confetti animation for first task completion
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+        // Show confetti animation immediately for first task completion
+        withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
             self.showFirstTaskConfetti = true
-            
-            // Hide confetti after 3 seconds
-            DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
-                withAnimation(.easeOut(duration: 0.5)) {
-                    self.showFirstTaskConfetti = false
-                }
+        }
+        
+        // Hide confetti after 2.5 seconds with smooth fade
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+            withAnimation(.easeOut(duration: 0.8)) {
+                self.showFirstTaskConfetti = false
             }
         }
     }

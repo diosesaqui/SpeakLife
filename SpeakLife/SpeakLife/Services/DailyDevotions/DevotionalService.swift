@@ -12,6 +12,7 @@ import SwiftUI
 protocol DevotionalService {
     func fetchTodayDevotional(remoteVersion: Int) async -> [Devotional]
     func fetchAllDevotionals(needsSync: Bool) async -> [Devotional]
+    func forceRefreshDevotionals(remoteVersion: Int) async -> [Devotional]
     var devotionals: [Devotional] { get }
 }
 
@@ -24,6 +25,7 @@ final class DevotionalServiceClient: DevotionalService {
     // MARK: - Public Methods
     func fetchTodayDevotional(remoteVersion: Int) async -> [Devotional] {
         let needsSync = currentVersion < remoteVersion
+        print("DevotionalService: currentVersion=\(currentVersion), remoteVersion=\(remoteVersion), needsSync=\(needsSync)")
         if needsSync {
             if let data = await fetchData(needsSync: needsSync) {
                 do {
@@ -64,6 +66,12 @@ final class DevotionalServiceClient: DevotionalService {
             print("Decoding error: \(error.localizedDescription)")
             return []
         }
+    }
+    
+    func forceRefreshDevotionals(remoteVersion: Int) async -> [Devotional] {
+        print("DevotionalService: Force refreshing devotionals, setting currentVersion to 0 to force sync")
+        self.currentVersion = 0
+        return await fetchTodayDevotional(remoteVersion: remoteVersion)
     }
 
     // MARK: - Private Helpers

@@ -426,80 +426,80 @@ struct DoubleTapHeart: ViewModifier {
 
 // MARK: - Magnetic Button Effect
 
-//struct MagneticButton<Content: View>: View {
-//    let content: Content
-//    let action: () -> Void
-//    let magnetStrength: CGFloat
-//    
-//    @State private var offset: CGSize = .zero
-//    @State private var scale: CGFloat = 1.0
-//    
-//    init(
-//        magnetStrength: CGFloat = 30,
-//        action: @escaping () -> Void,
-//        @ViewBuilder content: () -> Content
-//    ) {
-//        self.magnetStrength = magnetStrength
-//        self.action = action
-//        self.content = content()
-//    }
-//    
-//    var body: some View {
-//        content
-//            .scaleEffect(scale)
-//            .offset(offset)
-//            .gesture(
-//                DragGesture(coordinateSpace: .local)
-//                    .onChanged { value in
-//                        let distance = sqrt(
-//                            value.translation.x * value.translation.x +
-//                            value.translation.y * value.translation.y
-//                        )
-//                        
-//                        if distance < magnetStrength {
-//                            // Magnetic attraction
-//                            let attraction = (magnetStrength - distance) / magnetStrength
-//                            
-//                            withAnimation(.interactiveSpring(response: 0.3, dampingFraction: 0.8)) {
-//                                offset = CGSize(
-//                                    width: value.translation.x * 0.5,
-//                                    height: value.translation.y * 0.5
-//                                )
-//                                scale = 1.0 + attraction * 0.2
-//                            }
-//                            
-//                            if distance < magnetStrength * 0.3 {
-//                                PremiumHaptics.safeLight()
-//                            }
-//                        } else {
-//                            // Return to center
-//                            withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
-//                                offset = .zero
-//                                scale = 1.0
-//                            }
-//                        }
-//                    }
-//                    .onEnded { value in
-//                        let distance = sqrt(
-//                            value.translation.x * value.translation.x +
-//                            value.translation.y * value.translation.y
-//                        )
-//                        
-//                        if distance < magnetStrength * 0.3 {
-//                            // Triggered
-//                            PremiumHaptics.safeMedium()
-//                            action()
-//                        }
-//                        
-//                        // Return to original state
-//                        withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
-//                            offset = .zero
-//                            scale = 1.0
-//                        }
-//                    }
-//            )
-//    }
-//}
+struct MagneticButton<Content: View>: View {
+    let content: Content
+    let action: () -> Void
+    let magnetStrength: CGFloat
+    
+    @State private var offset: CGSize = .zero
+    @State private var scale: CGFloat = 1.0
+    
+    init(
+        magnetStrength: CGFloat = 30,
+        action: @escaping () -> Void,
+        @ViewBuilder content: () -> Content
+    ) {
+        self.magnetStrength = magnetStrength
+        self.action = action
+        self.content = content()
+    }
+    
+    var body: some View {
+        content
+            .scaleEffect(scale)
+            .offset(offset)
+            .gesture(
+                DragGesture(coordinateSpace: .local)
+                    .onChanged { value in
+                        let distance = sqrt(
+                            value.translation.width * value.translation.width +
+                            value.translation.height * value.translation.height
+                        )
+                        
+                        if distance < magnetStrength {
+                            // Magnetic attraction
+                            let attraction = (magnetStrength - distance) / magnetStrength
+                            
+                            withAnimation(.interactiveSpring(response: 0.3, dampingFraction: 0.8)) {
+                                offset = CGSize(
+                                    width: value.translation.width * 0.5,
+                                    height: value.translation.height * 0.5
+                                )
+                                scale = 1.0 + attraction * 0.2
+                            }
+                            
+                            if distance < magnetStrength * 0.3 {
+                                PremiumHaptics.safeLight()
+                            }
+                        } else {
+                            // Return to center
+                            withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                                offset = .zero
+                                scale = 1.0
+                            }
+                        }
+                    }
+                    .onEnded { value in
+                        let distance = sqrt(
+                            value.translation.width * value.translation.width +
+                            value.translation.height * value.translation.height
+                        )
+                        
+                        if distance < magnetStrength * 0.3 {
+                            // Triggered
+                            PremiumHaptics.safeMedium()
+                            action()
+                        }
+                        
+                        // Return to original state
+                        withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
+                            offset = .zero
+                            scale = 1.0
+                        }
+                    }
+            )
+    }
+}
 
 // MARK: - View Extensions
 
@@ -526,14 +526,14 @@ extension View {
         }
     }
     
-//    func magneticButton(
-//        magnetStrength: CGFloat = 30,
-//        action: @escaping () -> Void
-//    ) -> some View {
-//        MagneticButton(magnetStrength: magnetStrength, action: action) {
-//            self
-//        }
-//    }
+    func magneticButton(
+        magnetStrength: CGFloat = 30,
+        action: @escaping () -> Void
+    ) -> some View {
+        MagneticButton(magnetStrength: magnetStrength, action: action) {
+            self
+        }
+    }
     
     func pullToRefresh(onRefresh: @escaping () -> Void) -> some View {
         PullToRefreshGesture(onRefresh: onRefresh) {

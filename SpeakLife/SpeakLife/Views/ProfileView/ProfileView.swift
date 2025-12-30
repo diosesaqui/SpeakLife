@@ -168,18 +168,17 @@ struct ProfileView: View {
         HStack {
             Image(systemName: "crown.fill")
                 .foregroundColor(Constants.DAMidBlue)
-            NavigationLink(LocalizedStringKey("Manage Subscription"), destination: LazyView(PremiumView()))
-                .opacity(0)
-                .background(
-                    HStack {
-                        Text("Manage Subscription", comment:  "subs row")
-                        Spacer()
+            NavigationLink(destination: LazyView(PremiumView())) {
+                HStack {
+                    Text("Manage Subscription", comment:  "subs row")
+                    Spacer()
 //                        Image(systemName: "chevron.right")
 //                            .resizable()
 //                            .aspectRatio(contentMode: .fit)
 //                            .frame(width: 8)
 //                            .foregroundColor(Constants.DAMidBlue)
-                    })
+                }
+            }
         }
     }
     
@@ -188,18 +187,17 @@ struct ProfileView: View {
         HStack {
             Image(systemName: "crown.fill")
                 .foregroundColor(Constants.DAMidBlue)
-            NavigationLink(LocalizedStringKey("Emails"), destination: LazyView(EmailCaptureView()))
-                .opacity(0)
-                .background(
-                    HStack {
-                        Text("Email", comment:  "subs row")
-                        Spacer()
+            NavigationLink(destination: LazyView(EmailCaptureView())) {
+                HStack {
+                    Text("Email", comment:  "subs row")
+                    Spacer()
 //                        Image(systemName: "chevron.right")
 //                            .resizable()
 //                            .aspectRatio(contentMode: .fit)
 //                            .frame(width: 8)
 //                            .foregroundColor(Constants.DAMidBlue)
-                    })
+                }
+            }
         }
     }
     
@@ -209,25 +207,24 @@ struct ProfileView: View {
         HStack {
             Image(systemName: "bell.fill")
                 .foregroundColor(Constants.DAMidBlue)
-            NavigationLink("Reminder", destination: LazyView(ReminderView(reminderViewModel: ReminderViewModel())))
-                .opacity(0)
-                .background(
-                    HStack {
-                        Text("Reminders", comment: "Reminder row title")
-                        Spacer()
+            NavigationLink(destination: LazyView(ReminderView(reminderViewModel: ReminderViewModel()))) {
+                HStack {
+                    Text("Reminders", comment: "Reminder row title")
+                    Spacer()
 //                        Image(systemName: "chevron.right")
 //                            .resizable()
 //                            .aspectRatio(contentMode: .fit)
 //                            .frame(width: 8)
 //                            .foregroundColor(Constants.DAMidBlue)
-                    })
-                .simultaneousGesture(TapGesture().onEnded {
-                    Event.trackUserAction(
-                        "reminders_opened",
-                        category: "profile",
-                        metadata: ["source": "profile_menu"]
-                    )
-                })
+                }
+            }
+            .simultaneousGesture(TapGesture().onEnded {
+                Event.trackUserAction(
+                    "reminders_opened",
+                    category: "profile",
+                    metadata: ["source": "profile_menu"]
+                )
+            })
         }
         
     }
@@ -260,25 +257,24 @@ struct ProfileView: View {
         HStack {
             Image(systemName: "lightbulb.fill")
                 .foregroundColor(Constants.DAMidBlue)
-            NavigationLink("Quiz", destination: LazyView(QuizHomeView()))
-                .opacity(0)
-                .background(
-                    HStack {
-                        Text("Quizzes", comment: "Reminder row title")
-                        Spacer()
+            NavigationLink(destination: LazyView(QuizHomeView())) {
+                HStack {
+                    Text("Quizzes", comment: "Reminder row title")
+                    Spacer()
 //                        Image(systemName: "chevron.right")
 //                            .resizable()
 //                            .aspectRatio(contentMode: .fit)
 //                            .frame(width: 8)
 //                            .foregroundColor(Constants.DAMidBlue)
-                    })
-                .simultaneousGesture(TapGesture().onEnded {
-                    Event.trackUserAction(
-                        "quiz_opened",
-                        category: "profile",
-                        metadata: ["source": "profile_menu"]
-                    )
-                })
+                }
+            }
+            .simultaneousGesture(TapGesture().onEnded {
+                Event.trackUserAction(
+                    "quiz_opened",
+                    category: "profile",
+                    metadata: ["source": "profile_menu"]
+                )
+            })
         }
         
     }
@@ -301,25 +297,24 @@ struct ProfileView: View {
         HStack {
             Image(systemName: "hands.sparkles.fill")
                 .foregroundColor(Constants.DAMidBlue)
-            NavigationLink(LocalizedStringKey("Prayers"), destination: LazyView(WarriorView()))
-                .opacity(0)
-                .background(
-                    HStack {
-                        Text("Prayers", comment:  "Prayers row title")
-                        Spacer()
+            NavigationLink(destination: LazyView(WarriorView())) {
+                HStack {
+                    Text("Prayers", comment:  "Prayers row title")
+                    Spacer()
 //                        Image(systemName: "chevron.right")
 //                            .resizable()
 //                            .aspectRatio(contentMode: .fit)
 //                            .frame(width: 8)
 //                            .foregroundColor(Constants.DAMidBlue)
-                    })
-                .simultaneousGesture(TapGesture().onEnded {
-                    Event.trackUserAction(
-                        "prayers_opened",
-                        category: "profile",
-                        metadata: ["source": "profile_menu"]
-                    )
-                })
+                }
+            }
+            .simultaneousGesture(TapGesture().onEnded {
+                Event.trackUserAction(
+                    "prayers_opened",
+                    category: "profile",
+                    metadata: ["source": "profile_menu"]
+                )
+            })
         }
     }
     
@@ -328,18 +323,17 @@ struct ProfileView: View {
         HStack {
             Image(systemName: "exclamationmark.shield.fill")
                 .foregroundColor(Constants.DAMidBlue)
-            NavigationLink(LocalizedStringKey("Tips to be Victorious"), destination: LazyView(TipsView(tips: tips)))
-                .opacity(0)
-                .background(
-                    HStack {
-                        Text("Tips on how to use SpeakLife", comment:  "Tips row title")
-                        Spacer()
+            NavigationLink(destination: LazyView(TipsView(tips: tips))) {
+                HStack {
+                    Text("Tips on how to use SpeakLife", comment:  "Tips row title")
+                    Spacer()
 //                        Image(systemName: "chevron.right")
 //                            .resizable()
 //                            .aspectRatio(contentMode: .fit)
 //                            .frame(width: 8)
 //                            .foregroundColor(Constants.DAMidBlue)
-                    })
+                }
+            }
         }
     }
     
@@ -369,25 +363,24 @@ struct ProfileView: View {
         HStack {
             Image(systemName: "bolt.heart.fill")
                 .foregroundColor(Constants.DAMidBlue)
-            NavigationLink(LocalizedStringKey("Heavenly Father's Love"), destination: LazyView(AbbasLoveView()))
-                .opacity(0)
-                .background(
-                    HStack {
-                        Text("Father's Love Letter", comment:  "Love row title")
-                        Spacer()
+            NavigationLink(destination: LazyView(AbbasLoveView())) {
+                HStack {
+                    Text("Father's Love Letter", comment:  "Love row title")
+                    Spacer()
 //                        Image(systemName: "chevron.right")
 //                            .resizable()
 //                            .aspectRatio(contentMode: .fit)
 //                            .frame(width: 8)
 //                            .foregroundColor(Constants.DAMidBlue)
-                    })
-                .simultaneousGesture(TapGesture().onEnded {
-                    Event.trackUserAction(
-                        "love_letter_opened",
-                        category: "profile",
-                        metadata: ["source": "profile_menu"]
-                    )
-                })
+                }
+            }
+            .simultaneousGesture(TapGesture().onEnded {
+                Event.trackUserAction(
+                    "love_letter_opened",
+                    category: "profile",
+                    metadata: ["source": "profile_menu"]
+                )
+            })
         }
     }
     
@@ -396,18 +389,17 @@ struct ProfileView: View {
         HStack {
             Image(systemName: "star.fill")
                 .foregroundColor(Constants.DAMidBlue)
-            NavigationLink(LocalizedStringKey("Favorites"), destination: LazyView(FavoritesView()))
-                .opacity(0)
-                .background(
-                    HStack {
-                        Text("Favorites", comment:  "Favorites row title")
-                        Spacer()
+            NavigationLink(destination: LazyView(FavoritesView())) {
+                HStack {
+                    Text("Favorites", comment:  "Favorites row title")
+                    Spacer()
 //                        Image(systemName: "chevron.right")
 //                            .resizable()
 //                            .aspectRatio(contentMode: .fit)
 //                            .frame(width: 8)
 //                            .foregroundColor(Constants.DAMidBlue)
-                    })
+                }
+            }
         }
     }
     
@@ -416,25 +408,24 @@ struct ProfileView: View {
         HStack {
             Image(systemName: "plus.bubble.fill")
                 .foregroundColor(Constants.DAMidBlue)
-            NavigationLink(LocalizedStringKey("Create Your Own"), destination: LazyView(CreateYourOwnView()))
-                .opacity(0)
-                .background(
-                    HStack {
-                        Text("Create Your Own", comment: "create your own title")
-                        Spacer()
+            NavigationLink(destination: LazyView(CreateYourOwnView())) {
+                HStack {
+                    Text("Create Your Own", comment: "create your own title")
+                    Spacer()
 //                        Image(systemName: "chevron.right")
 //                            .resizable()
 //                            .aspectRatio(contentMode: .fit)
 //                            .frame(width: 8)
 //                            .foregroundColor(Constants.DAMidBlue)
-                    })
-                .simultaneousGesture(TapGesture().onEnded {
-                    Event.trackUserAction(
-                        "create_your_own_opened",
-                        category: "profile",
-                        metadata: ["source": "profile_menu"]
-                    )
-                })
+                }
+            }
+            .simultaneousGesture(TapGesture().onEnded {
+                Event.trackUserAction(
+                    "create_your_own_opened",
+                    category: "profile",
+                    metadata: ["source": "profile_menu"]
+                )
+            })
         }
     }
     
@@ -451,18 +442,17 @@ struct ProfileView: View {
                     .foregroundColor(Constants.DAMidBlue)
             }
             
-            NavigationLink(LocalizedStringKey("Create Your Own"), destination: LazyView( DevotionalView(viewModel: devotionalViewModel)))
-                .opacity(0)
-                .background(
-                    HStack {
-                        Text("Devotionals", comment: "")
-                        Spacer()
+            NavigationLink(destination: LazyView( DevotionalView(viewModel: devotionalViewModel))) {
+                HStack {
+                    Text("Devotionals", comment: "")
+                    Spacer()
 //                        Image(systemName: "chevron.right")
 //                            .resizable()
 //                            .aspectRatio(contentMode: .fit)
 //                            .frame(width: 8)
 //                            .foregroundColor(Constants.DAMidBlue)
-                    })
+                }
+            }
         }
     }
     
@@ -523,35 +513,32 @@ struct ProfileView: View {
         HStack {
             Image(systemName: "bolt.shield.fill")
                 .foregroundColor(Constants.DAMidBlue)
-            NavigationLink(LocalizedStringKey("WarriorView"), destination: LazyView(WarriorView()))
-            //  .navigationBarTitle("Warrior's Prayer", displayMode: .inline)
-                .opacity(0)
-                .background(
-                    HStack {
-                        Text("Warrior's Prayer", comment: "pp")
-                        Spacer()
+            NavigationLink(destination: LazyView(WarriorView())) {
+                HStack {
+                    Text("Warrior's Prayer", comment: "pp")
+                    Spacer()
 //                        Image(systemName: "chevron.right")
 //                            .resizable()
 //                            .aspectRatio(contentMode: .fit)
 //                            .frame(width: 8)
 //                            .foregroundColor(Constants.DAMidBlue)
-                    })
+                }
+            }
         }
     }
     
     private var privacyPolicyRow: some View {
-        NavigationLink(LocalizedStringKey("Privay Policy"), destination: LazyView(PrivacyPolicyView()))
-            .opacity(0)
-            .background(
-                HStack {
-                    Text("Privacy Policy", comment: "pp")
-                    Spacer()
+        NavigationLink(destination: LazyView(PrivacyPolicyView())) {
+            HStack {
+                Text("Privacy Policy", comment: "pp")
+                Spacer()
 //                    Image(systemName: "chevron.right")
 //                        .resizable()
 //                        .aspectRatio(contentMode: .fit)
 //                        .frame(width: 8)
 //                        .foregroundColor(Constants.DAMidBlue)
-                })
+            }
+        }
     }
     
     private var termsConditionsRow: some View {

@@ -1,5 +1,6 @@
 {
     "version": 1,
+    "selectedFilterId": "declarations",
     "filterConfigs": [
         {
             "id": "favorites",
@@ -12,63 +13,58 @@
             "order": 1
         },
         {
-            "id": "bibleverses",
-            "displayName": "Bible Promises",
-            "order": 2,
-        },
-        {
             "id": "speaklife",
             "displayName": "SpeakLife",
-            "order": 3,
+            "order": 2,
             "reversed": true
         },
         {
             "id": "newcreation",
             "displayName": "New Creation",
-            "order": 4
+            "order": 9
         },
         {
             "id": "godsHeart",
             "displayName": "God's Heart",
-            "order": 5,
+            "order": 3,
             "reversed": true
         },
         {
             "id": "growWithJesus",
             "displayName": "Grow With Jesus",
-            "order": 6
+            "order": 4
         },
         {
             "id": "psalm91",
             "displayName": "Psalm 91",
-            "order": 7,
+            "order": 5,
             "reversed": true
         },
         {
             "id": "divineHealth",
             "displayName": "Divine Health",
-            "order": 8
+            "order": 6
         },
         {
             "id": "magnify",
             "displayName": "Behold & Become",
-            "order": 9,
+            "order": 7,
             "reversed": true
         },
         {
             "id": "gospel",
             "displayName": "Gospel",
-            "order": 10
+            "order": 8
         },
         {
             "id": "meditation",
             "displayName": "Scripture Meditation's",
-            "order": 11
+            "order": 10
         },
         {
             "id": "bedtimeStories",
             "displayName": "Bedtime Stories",
-            "order": 12
+            "order": 11
         }
     ],
     "filters": [
@@ -1430,6 +1426,24 @@
             "imageUrl": "ruth",
             "isPremium": true,
             "tag": "bedtimeStories"
+        },
+        {
+            "id": "divine_restoration_3.mp3",
+            "title": "Divine Restoration",
+            "subtitle": "A Declaration of Renewed Youth Through God’s Healing Power",
+            "duration": "3m",
+            "imageUrl": "JesusHealing",
+            "isPremium": false,
+            "tag": "declarations"
+        },
+        {
+            "id": "iam_phil413.mp3",
+            "title": "Unstoppable in Him",
+            "subtitle": "A New Year Declaration Rooted in Christ’s Power",
+            "duration": "2m",
+            "imageUrl": "breathTakingSunset",
+            "isPremium": true,
+            "tag": "declarations"
         },
         {
             "id": "psalm9_11.mp3",
