@@ -267,28 +267,29 @@ struct FirstDeclarationGuideView: View {
     private var continueButton: some View {
         VStack(spacing: 15) {
             ShimmerButton(
-                colors: [.blue, .purple],
-                buttonTitle: declarationText.isEmpty ? "Skip for Now" : "Continue",
+                colors: declarationText.isEmpty ? [.gray, .gray.opacity(0.7)] : [.blue, .purple],
+                buttonTitle: declarationText.isEmpty ? "Write Your Declaration First" : "Continue",
                 action: {
+                    // Only proceed if declaration text is not empty
+                    guard !declarationText.isEmpty else { 
+                        // Gentle haptic to indicate they need to write something
+                        UIImpactFeedbackGenerator(style: .soft).impactOccurred()
+                        return 
+                    }
+                    
                     UIImpactFeedbackGenerator(style: .medium).impactOccurred()
                     
-                    if !declarationText.isEmpty {
-                        // Save the declaration
-                        saveDeclaration()
-                        
-                        // Log analytics
-                        Analytics.logEvent("FirstDeclarationCreated", parameters: [
-                            "has_content": true
-                        ])
-                        
-                        // Show save animation which will call action() when complete
-                        withAnimation(.spring()) {
-                            showingSaveAnimation = true
-                        }
-                    } else {
-                        // Skip without saving - proceed immediately
-                        Analytics.logEvent("FirstDeclarationSkipped", parameters: nil)
-                        action()
+                    // Save the declaration
+                    saveDeclaration()
+                    
+                    // Log analytics
+                    Analytics.logEvent("FirstDeclarationCreated", parameters: [
+                        "text_length": declarationText.count
+                    ])
+                    
+                    // Show save animation which will call action() when complete
+                    withAnimation(.spring()) {
+                        showingSaveAnimation = true
                     }
                 }
             )
