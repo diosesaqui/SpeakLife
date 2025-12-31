@@ -23,7 +23,7 @@ struct NotificationOnboarding:  View {
             // Progress dots at top
             HStack {
                 Spacer()
-                ProgressDots(current: 3, total: 4)
+                ProgressDots(current: 4, total: 5)
                     .padding(.top, 10)
                     .padding(.trailing, 20)
             }

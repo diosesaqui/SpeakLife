@@ -25,7 +25,7 @@ struct HookScene: View {
                 // Progress dots at top
                 HStack {
                     Spacer()
-                    ProgressDots(current: 0, total: 4)
+                    ProgressDots(current: 0, total: 5)
                         .padding(.top, proxy.safeAreaInsets.top + 10)
                         .padding(.trailing, 20)
                 }

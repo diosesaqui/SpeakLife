@@ -11,6 +11,7 @@ enum Tab: String {
     
     case hook
     case transformedLife
+    case firstDeclaration
     case personalizationSummary
     case notification
     case improvement

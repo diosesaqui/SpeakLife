@@ -27,7 +27,7 @@ struct CombinedPersonalizationScene: View {
                     // Progress dots at top
                     HStack {
                         Spacer()
-                        ProgressDots(current: 1, total: 4)
+                        ProgressDots(current: 1, total: 5)
                             .padding(.top, proxy.safeAreaInsets.top + 10)
                             .padding(.trailing, 20)
                     }

@@ -45,6 +45,16 @@ struct OnboardingView: View  {
                 }
                 .tag(Tab.transformedLife)
                 
+                // First Declaration Guide Screen
+                FirstDeclarationGuideView(
+                    size: geometry.size
+                ) {
+                    withAnimation {
+                        advance()
+                    }
+                }
+                .tag(Tab.firstDeclaration)
+                
                 // STEP 2: Personalization Summary Screen
                 PersonalizationSummaryScene(
                     size: geometry.size,
@@ -134,12 +144,19 @@ struct OnboardingView: View  {
                 case .transformedLife:
                     // Category selection completed
                     impactMed.impactOccurred()
-                    selection = .personalizationSummary
+                    selection = .firstDeclaration
                     onboardingTab = selection.rawValue
                     decodeCategories(improvementViewModel.selectedExperiences)
                     Analytics.logEvent("CombinedPersonalizationDone", parameters: [
                         "categories_count": improvementViewModel.selectedExperiences.count
                     ])
+                    
+                case .firstDeclaration:
+                    // First declaration guide completed
+                    impactMed.impactOccurred()
+                    selection = .personalizationSummary
+                    onboardingTab = selection.rawValue
+                    Analytics.logEvent("FirstDeclarationGuideDone", parameters: nil)
                     
                 case .personalizationSummary:
                     impactMed.impactOccurred()
@@ -215,7 +232,7 @@ struct OnboardingView: View  {
     private func dismissOnboarding() {
         withAnimation {
             appState.isOnboarded = true
-            Analytics.logEvent(Event.onBoardingFinished, parameters: nil)
+            Analytics.logEvent("onBoardingFinished", parameters: nil)
         }
     }
     

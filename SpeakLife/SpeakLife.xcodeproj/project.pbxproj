@@ -160,6 +160,7 @@
 		45BC76402EFD10BF003AC964 /* CreateYourOwnButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45BC763F2EFD10BF003AC964 /* CreateYourOwnButton.swift */; };
 		45BC76422EFD1321003AC964 /* ModernDailyChecklistView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45BC76412EFD1321003AC964 /* ModernDailyChecklistView.swift */; };
 		45BC76442EFD2775003AC964 /* ModernCelebrationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45BC76432EFD2775003AC964 /* ModernCelebrationView.swift */; };
+		45BC76762F04B284003AC964 /* FirstDeclarationGuideView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45BC76752F04B284003AC964 /* FirstDeclarationGuideView.swift */; };
 		45BCBA9A2C360245001F28C4 /* BibleStory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45BCBA992C360245001F28C4 /* BibleStory.swift */; };
 		45C7481F2B55B4B80011D8F6 /* FacebookCore in Frameworks */ = {isa = PBXBuildFile; productRef = 45C7481E2B55B4B80011D8F6 /* FacebookCore */; };
 		45C748232B5802C60011D8F6 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 45C748222B5802C60011D8F6 /* GoogleService-Info.plist */; };
@@ -457,6 +458,7 @@
 		45BC763F2EFD10BF003AC964 /* CreateYourOwnButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateYourOwnButton.swift; sourceTree = "<group>"; };
 		45BC76412EFD1321003AC964 /* ModernDailyChecklistView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModernDailyChecklistView.swift; sourceTree = "<group>"; };
 		45BC76432EFD2775003AC964 /* ModernCelebrationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModernCelebrationView.swift; sourceTree = "<group>"; };
+		45BC76752F04B284003AC964 /* FirstDeclarationGuideView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirstDeclarationGuideView.swift; sourceTree = "<group>"; };
 		45BCBA992C360245001F28C4 /* BibleStory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BibleStory.swift; sourceTree = "<group>"; };
 		45C748222B5802C60011D8F6 /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = "GoogleService-Info.plist"; path = "../../../../Downloads/GoogleService-Info.plist"; sourceTree = "<group>"; };
 		45C748242B5802CA0011D8F6 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
@@ -1357,6 +1359,7 @@
 				45CF27172B4E52C900BC8968 /* Personalization.swift */,
 				45CF27192B4E52EF00BC8968 /* HabitScene.swift */,
 				45CF271B2B4E530300BC8968 /* ImprovementScene.swift */,
+				45BC76752F04B284003AC964 /* FirstDeclarationGuideView.swift */,
 				4568BE8E2B60EB1300678565 /* LoadingView.swift */,
 				453C35842C5092A800817FCC /* HelpUsGrowView.swift */,
 				452D17E12D725F84000AB1D1 /* RatingView.swift */,
@@ -1615,6 +1618,7 @@
 				7AA8706C28DACC4E00134ADB /* Theme.swift in Sources */,
 				4575C9422E4657D2007C14F3 /* CloudKitDebugView.swift in Sources */,
 				4597E1EE2E3FECCA009D6C66 /* AudioFavoritesView.swift in Sources */,
+				45BC76762F04B284003AC964 /* FirstDeclarationGuideView.swift in Sources */,
 				454807572E3F04A700B8C71B /* EnhancedStreakView.swift in Sources */,
 				454807582E3F04A700B8C71B /* EnhancedStreakViewModel.swift in Sources */,
 				453C35872C50B15900817FCC /* MenuButtonView.swift in Sources */,
