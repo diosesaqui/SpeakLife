@@ -28,24 +28,23 @@ class TabViewModel: ObservableObject {
     }
 
     func goToAudio() {
-        selectedTab = 3  // Audio is now at position 3
+        selectedTab = 0
     }
     
-    func goToChecklist() {
-        selectedTab = 2  // Daily Checklist is at position 2
-    }
+//    func goToChecklist() {
+//        selectedTab = 2  // Daily Checklist is at position 2
+//    }
 
     func resetToHome() {
-        selectedTab = 0
+        selectedTab = 1
     }
     
     private func trackTabNavigation(from previousTab: Int, to newTab: Int) {
         let tabNames = [
-            0: "declarations",
-            1: "devotionals",
-            2: "daily_checklist",
-            3: "audio",
-            4: "profile"
+            0: "audio",
+            1: "declarations",
+            2: "devotionals",
+            3: "profile"
         ]
         
         guard let fromName = tabNames[previousTab],
@@ -85,6 +84,9 @@ struct HomeView: View {
     @State var showSubscription = false
     @State private var showTriggeredPaywall = false
     @StateObject private var paywallTrigger = PaywallTriggerManager.shared
+    @State private var showDeclarationPrompt = false
+    @AppStorage("hasCreatedFirstDeclaration") private var hasCreatedFirstDeclaration = false
+    @AppStorage("lastDeclarationPromptDate") private var lastDeclarationPromptDate: Double = 0
     
     private let currentVersion = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0.0"
 
@@ -109,6 +111,9 @@ struct HomeView: View {
                                 if appState.firstOpen {
                                     appState.firstOpen = false
                                 }
+                                
+                                // Check if user should see declaration prompt
+                              //  checkForDeclarationPrompt()
                             }
                             .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
                                
@@ -148,6 +153,18 @@ struct HomeView: View {
                                     .frame(height:  UIScreen.main.bounds.height * 0.9)
                                 }
                             }
+//                            .fullScreenCover(isPresented: $showDeclarationPrompt) {
+//                                FirstDeclarationGuideView(
+//                                    size: UIScreen.main.bounds.size,
+//                                    action: {
+//                                        hasCreatedFirstDeclaration = true
+//                                        showDeclarationPrompt = false
+//                                    },
+//                                    isDismissible: true
+//                                )
+//                                .environmentObject(declarationStore)
+//                                .environmentObject(subscriptionStore)
+//                            }
                             .onReceive(NotificationCenter.default.publisher(for: .devotionalVersionUpdated)) { notification in
                                 if let version = notification.userInfo?["version"] as? Int {
                                     print("📖 HomeView: Received devotional version update notification: v\(version)")
@@ -164,13 +181,24 @@ struct HomeView: View {
                             }
                   
                 } else {
-                    OnboardingView()
-                        .onAppear {
-                            viewModel.requestPermission { granted in
-                                // Handle permission result if needed
-                                print("ATT Permission granted: \(granted)")
+                    // Choose between original and enhanced onboarding based on flag
+                    if appState.useEnhancedOnboarding {
+                        EnhancedOnboardingViewRefactored()
+                            .onAppear {
+                                viewModel.requestPermission { granted in
+                                    // Handle permission result if needed
+                                    print("ATT Permission granted: \(granted)")
+                                }
                             }
-                        }
+                    } else {
+                        OnboardingView()
+                            .onAppear {
+                                viewModel.requestPermission { granted in
+                                    // Handle permission result if needed
+                                    print("ATT Permission granted: \(granted)")
+                                }
+                            }
+                    }
                 }
             }
         
@@ -181,9 +209,10 @@ struct HomeView: View {
         ZStack {
             TabView(selection: $tabViewModel.selectedTab) {
                 declarationView
-                devotionalView
-                dailyChecklistView
                 audioView
+                
+                dailyChecklistView
+                devotionalView
                 profileView
                     
                 }
@@ -210,7 +239,7 @@ struct HomeView: View {
             .id(appState.rootViewId)
             .tag(0)
             .tabItem {
-                Image(systemName: "house.fill")
+                Image(systemName: "quote.bubble.fill")
                     .renderingMode(.original)
                 
             }
@@ -226,7 +255,7 @@ struct HomeView: View {
     
     var audioView: some View {
         AudioDeclarationView()
-            .tag(3)
+            .tag(1)
             .tabItem {
                 if #available(iOS 17, *) {
                     Image(systemName: "waveform")
@@ -241,7 +270,7 @@ struct HomeView: View {
     
     var devotionalView: some View {
         DevotionalView(viewModel:devotionalViewModel)
-            .tag(1)
+            .tag(3)
             .tabItem {
                 if #available(iOS 17, *) {
                     Image(systemName: "book.pages.fill")
@@ -275,6 +304,41 @@ struct HomeView: View {
         if appState.showGiftViewCount <= 5 {
             showGiftView.toggle()
             appState.showGiftViewCount += 1
+        }
+    }
+    
+    private func checkForDeclarationPrompt() {
+        // Only show for users who have completed onboarding
+        guard appState.isOnboarded else { return }
+        
+        // Don't show if user has already created a declaration or marked as created
+        guard !hasCreatedFirstDeclaration else { return }
+        
+        // Don't show if subscription screen is showing
+        guard !showSubscription else { return }
+        
+        // Check if user has any user-created declarations
+        let hasUserDeclarations = declarationStore.createOwn.count > 0
+        
+        if hasUserDeclarations {
+            // User has declarations, don't show prompt again
+            hasCreatedFirstDeclaration = true
+            return
+        }
+        
+        // Check if we've shown the prompt recently (wait 3 days between prompts)
+        let currentTime = Date().timeIntervalSince1970
+        let daysSinceLastPrompt = (currentTime - lastDeclarationPromptDate) / 86400
+        
+        guard daysSinceLastPrompt >= 3 else { return }
+        
+        // Delay showing the prompt to let the app fully load
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+            // Double-check onboarding is still complete and no other modals are showing
+            guard appState.isOnboarded && !showSubscription else { return }
+            
+            showDeclarationPrompt = true
+            lastDeclarationPromptDate = currentTime
         }
     }
     

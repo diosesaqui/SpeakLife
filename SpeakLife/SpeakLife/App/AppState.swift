@@ -50,9 +50,12 @@ final class AppState: ObservableObject {
     @AppStorage("showQuizButton") var showQuizButton = true
     
     @AppStorage("hasCompletedDemo") var hasCompletedDemo = false
+    @AppStorage("hasCompletedEnhancedOnboarding") var hasCompletedEnhancedOnboarding = false
+    @AppStorage("useEnhancedOnboarding") var useEnhancedOnboarding = true // Toggle for A/B testing
     
     // Track when app was last backgrounded to prevent stale audio from restarting
     @AppStorage("lastBackgroundDate") var lastBackgroundDate: Date?
+    @AppStorage("backgroundMusicWasPlaying") var backgroundMusicWasPlaying = false
     
     // Checklist notification settings
     @AppStorage("checklistNotificationsEnabled") var checklistNotificationsEnabled = true

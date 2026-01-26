@@ -364,6 +364,7 @@ struct OptimizedSubscriptionViewV1: View {
                     }
                 }
             }
+            .ignoresSafeArea(.container, edges: .top)
             
             VStack {
                 Spacer()
@@ -610,7 +611,7 @@ struct OptimizedSubscriptionViewV1: View {
     private var mainOfferSection: some View {
         VStack(spacing: 12) {
           //  appIconSection
-            Spacer().frame(height: 50)
+            Spacer().frame(height: 70) // Increased to account for safe area
             headlineSection
             Spacer().frame(height: 10)
             valuePropsSection
@@ -662,7 +663,12 @@ struct OptimizedSubscriptionViewV1: View {
                 .font(.system(size: 28, weight: .bold, design: .rounded))
                 .foregroundColor(.white.opacity(0.95))
                 .multilineTextAlignment(.center)
-//            
+            
+            Text("Your support spreads Jesus to those in need.")
+                .font(.system(size: 16, weight: .medium, design: .rounded))
+                .foregroundColor(.white.opacity(0.95))
+                .multilineTextAlignment(.center)
+//
 //            Text("Your breakthrough is waiting.")
 //                .font(.system(size: 16, weight: .medium, design: .rounded))
 //                .foregroundColor(.white.opacity(0.85))

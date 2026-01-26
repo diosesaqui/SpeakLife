@@ -258,14 +258,15 @@ struct PromiseSnippetView: View {
 // MARK: - App Shortcuts Provider
 @available(iOS 16.0, *)
 struct PromiseAppShortcutsProvider: AppShortcutsProvider {
+
     static var appShortcuts: [AppShortcut] {
         AppShortcut(
             intent: GetDailyPromiseIntent(),
             phrases: [
                 "Get my daily promise from \(.applicationName)",
-                "Show me today's promise",
-                "What's my Bible promise for today",
-                "Get daily promise"
+                "Show me today's promise from \(.applicationName)",
+                "What's my Bible promise for today in \(.applicationName)",
+                "Get daily promise from \(.applicationName)"
             ],
             shortTitle: "Daily Promise",
             systemImageName: "quote.bubble.fill"
@@ -275,9 +276,9 @@ struct PromiseAppShortcutsProvider: AppShortcutsProvider {
             intent: GetRandomPromiseIntent(),
             phrases: [
                 "Get a random promise from \(.applicationName)",
-                "Show me a Bible promise",
-                "I need encouragement",
-                "Give me inspiration"
+                "Show me a Bible promise from \(.applicationName)",
+                "I need encouragement from \(.applicationName)",
+                "Give me inspiration from \(.applicationName)"
             ],
             shortTitle: "Random Promise",
             systemImageName: "shuffle"
@@ -287,8 +288,8 @@ struct PromiseAppShortcutsProvider: AppShortcutsProvider {
             intent: GetFavoritePromiseIntent(),
             phrases: [
                 "Get my favorite promise from \(.applicationName)",
-                "Show me my favorite promise",
-                "Read my favorite Bible verse"
+                "Show me my favorite promise from \(.applicationName)",
+                "Read my favorite Bible verse from \(.applicationName)"
             ],
             shortTitle: "Favorite Promise",
             systemImageName: "heart.fill"
@@ -298,8 +299,8 @@ struct PromiseAppShortcutsProvider: AppShortcutsProvider {
             intent: SetPromiseByCategoryIntent(),
             phrases: [
                 "Get a promise about faith from \(.applicationName)",
-                "Show me a Bible verse about hope",
-                "I need encouragement about love"
+                "Show me a Bible verse about hope from \(.applicationName)",
+                "I need encouragement about love from \(.applicationName)"
             ],
             shortTitle: "Promise by Topic",
             systemImageName: "tag.fill"

@@ -200,7 +200,7 @@ struct DeclarationContentView: View {
                 }
             }
             .scaleEffect(viewModel.showVerse ? 1.05 : 1)
-            .opacity(viewModel.showVerse ? 1 : 0.9)
+            .opacity(1.0)
             .animation(.spring(response: 0.4, dampingFraction: 0.7), value: viewModel.showVerse)
             .onChange(of: viewModel.showVerse) { _ in
                 // Clear animations immediately and trigger reset
@@ -463,7 +463,6 @@ struct DeclarationContentView: View {
                 "declaration_id": declaration.id,
                 "declaration_text": declaration.text.prefix(50),
                 "category": declaration.category.rawValue,
-                "mode": viewModel.showVerse ? "verse" : "affirmation",
                 "is_custom": declaration.category == .myOwn
             ]
         )

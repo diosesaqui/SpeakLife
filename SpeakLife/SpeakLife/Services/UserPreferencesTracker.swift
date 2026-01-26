@@ -237,15 +237,15 @@ final class UserPreferencesTracker: ObservableObject {
             
         case .general:
             return PaywallCopy(
-                headline: "Transform Your Life with Daily Faith",
-                subheadline: "Join thousands speaking life into their destiny",
+                headline: "Stop Reacting to Life",
+                subheadline: "Start Responding with God’s Truth.",
                 valueProps: [
-                    "1000+ powerful declarations",
-                    "Premium audio prayers",
-                    "Daily devotionals",
-                    "Personalized faith journey"
+                    "⚡ Faith that holds under pressure",
+                    "❤️ Peace you can access in minutes",
+                    "A renewed mind, daily",
+                    "Spiritual authority in real life"
                 ],
-                ctaText: "Start Your Transformation",
+                ctaText: "Start My Free 3-Day Trial",
                 urgencyText: "3 Days Free • Cancel Anytime"
             )
         }

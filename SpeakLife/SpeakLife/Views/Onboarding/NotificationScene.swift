@@ -23,7 +23,7 @@ struct NotificationOnboarding:  View {
             // Progress dots at top
             HStack {
                 Spacer()
-                ProgressDots(current: 4, total: 5)
+                ProgressDots(current: 2, total: 5)
                     .padding(.top, 10)
                     .padding(.trailing, 20)
             }
@@ -51,12 +51,12 @@ struct NotificationOnboarding:  View {
                 Spacer().frame(height: 16)
                 
                 VStack(spacing: 8) {
-                    Text("Daily reminders are the #1 predictor of spiritual breakthrough", comment: "Setup notifications instructions")
-                        .font(.system(size: 16, weight: .semibold, design: .rounded))
-                        .foregroundColor(appState.onBoardingTest ? .white : Constants.DALightBlue)
-                        .multilineTextAlignment(.center)
-                        .lineSpacing(10)
-                        .lineLimit(2)
+//                    Text("Daily reminders are the #1 predictor of spiritual breakthrough", comment: "Setup notifications instructions")
+//                        .font(.system(size: 16, weight: .semibold, design: .rounded))
+//                        .foregroundColor(appState.onBoardingTest ? .white : Constants.DALightBlue)
+//                        .multilineTextAlignment(.center)
+//                        .lineSpacing(10)
+//                        .lineLimit(2)
                     
                     Text("92% of users who set reminders reach 21-day streaks")
                         .font(.system(size: 14, weight: .medium, design: .rounded))
@@ -67,7 +67,7 @@ struct NotificationOnboarding:  View {
                     HStack {
                         Image(systemName: "bell.badge.fill")
                             .foregroundColor(.yellow)
-                        Text("Your brain rewires through consistency")
+                        Text("Your mind is renewed through consistency")
                             .font(.system(size: 14, weight: .medium))
                             .foregroundColor(appState.onBoardingTest ? .white.opacity(0.8) : Constants.DALightBlue.opacity(0.8))
                     }

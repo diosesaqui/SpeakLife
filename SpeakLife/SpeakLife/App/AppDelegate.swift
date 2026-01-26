@@ -67,7 +67,6 @@ final class AppDelegate: NSObject, MessagingDelegate {
        
         
         registerBGTask()
-        Analytics.logEvent(Event.SessionStarted, parameters: nil)
         
         // Initialize TikTok SDK after a brief delay to not interfere with landing animation
         DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {

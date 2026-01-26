@@ -8,6 +8,7 @@
 import SwiftUI
 import Combine
 import TipKit
+import AVFoundation
 
 // MARK: - Notification Handling Documentation
 /*
@@ -168,18 +169,17 @@ struct SpeakLifeApp: App {
                 // Process any pending widget actions when app becomes active
                 WidgetDataBridge.shared.processPendingWidgetActions()
                 
-                // Resume background music when returning from background (if it was playing before)
-                if declarationStore.backgroundMusicEnabled && 
-                   AudioPlayerService.shared.isPausedInBackground && 
-                   !AudioPlayerViewModel.hasActiveAudio {
-                    // Only restart if it was paused when going to background
-                    // and no content audio is currently playing
-                    if let lastBackground = appState.lastBackgroundDate,
-                       Date().timeIntervalSince(lastBackground) < 300 {
-                        AudioPlayerService.shared.playMusic()
-                        print("🎵 Resuming background music after returning from background")
-                    }
-                }
+//                if declarationStore.backgroundMusicEnabled && !AudioPlayerViewModel.hasActiveAudio {
+//                              DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+//                                  AudioPlayerService.shared.resumeOrStartMusic(files: resources)
+//                    }
+               // }
+
+                
+                // Don't automatically resume/start music when coming from background
+                // Music should only start from explicit user actions or app launch
+                // This prevents unwanted music playback when app becomes active
+                print("📲 App active - music auto-resume disabled to prevent unwanted playback")
                     
                 if appState.notificationEnabled {
                     // Ensure checklist notifications are scheduled (they repeat daily)
@@ -200,18 +200,20 @@ struct SpeakLifeApp: App {
             case .background:
                 // Reset session tracking when app goes to background
                 PaywallTriggerManager.shared.resetSessionTracking()
-                // Stop background music when going to background
-                // Only content audio (lessons) should continue
-                AudioPlayerService.shared.stopMusic()
-//                if !AudioPlayerViewModel.hasActiveAudio {
-//                    // No content audio playing, so pause background music (not stop)
-//                    // This allows us to resume when coming back
-//                    
-//                    print("🎵 Pausing background music when entering background")
-//                }
                 
-                // Track when app was backgrounded to prevent stale audio from restarting hours later
-                appState.lastBackgroundDate = Date()
+                // Stop music completely
+                AudioPlayerService.shared.stopMusic()
+                print("⏹️ Stopped music to prevent background playback")
+                
+                // Deactivate audio session to ensure no background audio can play
+                if !AudioPlayerViewModel.hasActiveAudio {
+                    do {
+                        try AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+                        print("🔇 Audio session deactivated for background")
+                    } catch {
+                        print("❌ Failed to deactivate audio session: \(error)")
+                    }
+                }
                 break
             @unknown default:
                 break

@@ -19,12 +19,12 @@ private enum WidgetConstants {
     
     enum Design {
         static let backgroundOpacity: Double = 0.4  // Lower opacity for image overlay
-        static let textBackgroundOpacity: Double = 0.15  // Very subtle background for text
-        static let greetingOpacity: Double = 0.95
-        static let contentSpacing: CGFloat = 8
-        static let horizontalPadding: CGFloat = 16
-        static let bottomPadding: CGFloat = 8
-        static let cornerRadius: CGFloat = 16
+        static let textBackgroundOpacity: Double = 0.08  // Ultra-subtle glass morphism
+        static let greetingOpacity: Double = 0.9
+        static let contentSpacing: CGFloat = 12
+        static let horizontalPadding: CGFloat = 20
+        static let bottomPadding: CGFloat = 12
+        static let cornerRadius: CGFloat = 20
         
         enum FontSizes {
             static let small: CGFloat = 16
@@ -241,16 +241,42 @@ struct PromisesWidgetEntryView: View {
             VStack(spacing: WidgetConstants.Design.contentSpacing) {
                 Spacer()
                 
-                // Text with subtle background
+                // Text with premium glass morphism background
                 VStack(spacing: 8) {
                     promiseText
                 }
                 .padding()
                 .background(
-                    RoundedRectangle(cornerRadius: WidgetConstants.Design.cornerRadius)
-                        .fill(Color.black.opacity(WidgetConstants.Design.textBackgroundOpacity))
+                    ZStack {
+                        // Glass morphism effect
+                        RoundedRectangle(cornerRadius: WidgetConstants.Design.cornerRadius)
+                            .fill(
+                                LinearGradient(
+                                    colors: [
+                                        Color.white.opacity(0.1),
+                                        Color.white.opacity(0.05)
+                                    ],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                        
+                        // Subtle border for definition
+                        RoundedRectangle(cornerRadius: WidgetConstants.Design.cornerRadius)
+                            .strokeBorder(
+                                LinearGradient(
+                                    colors: [
+                                        Color.white.opacity(0.2),
+                                        Color.white.opacity(0.1)
+                                    ],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ),
+                                lineWidth: 0.5
+                            )
+                    }
                 )
-                .padding(.horizontal, 8)
+                .padding(.horizontal, 12)
                 
                 Spacer()
                 
@@ -264,19 +290,19 @@ struct PromisesWidgetEntryView: View {
     private var promiseText: some View {
         Text(entry.promise)
             .foregroundColor(.white)
-            .font(.system(size: fontSize, weight: .semibold, design: .rounded))  // Clean, modern system font
+            .font(.system(size: fontSize, weight: .medium, design: .serif))  // Elegant serif for premium feel
             .multilineTextAlignment(.center)
-            .lineSpacing(3)
-            .shadow(color: .black.opacity(0.5), radius: 3, x: 0, y: 2)
-            .shadow(color: .black.opacity(0.3), radius: 1, x: 0, y: 1) // Double shadow for better readability
-            .minimumScaleFactor(0.75) // Allow text scaling for better fit
+            .lineSpacing(4)
+            .shadow(color: .black.opacity(0.3), radius: 2, x: 0, y: 1)
+            .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2) // Softer, layered shadows
+            .minimumScaleFactor(0.8) // Allow text scaling for better fit
     }
     
     private var greetingText: some View {
         Text(TimeBasedGreeting.current.message)
-            .font(.system(size: WidgetConstants.Design.FontSizes.greeting, weight: .regular, design: .rounded))
+            .font(.system(size: WidgetConstants.Design.FontSizes.greeting, weight: .light, design: .serif))
             .foregroundColor(.white.opacity(WidgetConstants.Design.greetingOpacity))
-            .shadow(color: .black.opacity(0.3), radius: 1, x: 0, y: 1)
+            .shadow(color: .black.opacity(0.2), radius: 1, x: 0, y: 1)
             .padding(.bottom, WidgetConstants.Design.bottomPadding)
     }
     
@@ -445,45 +471,49 @@ struct BeautifulGradientBackground: View {
         let hour = Calendar.current.component(.hour, from: Date())
         
         switch hour {
-        case 5...8: // Morning - sunrise colors
+        case 5...8: // Morning - sophisticated dawn
             return LinearGradient(
                 colors: [
-                    Color(red: 1.0, green: 0.6, blue: 0.4).opacity(0.9),   // Peach
-                    Color(red: 1.0, green: 0.4, blue: 0.5).opacity(0.8),   // Coral
-                    Color(red: 0.9, green: 0.3, blue: 0.6).opacity(0.7)    // Pink
+                    Color(red: 0.95, green: 0.85, blue: 0.75),   // Warm champagne
+                    Color(red: 0.85, green: 0.75, blue: 0.7),    // Soft beige
+                    Color(red: 0.75, green: 0.65, blue: 0.65),   // Muted rose
+                    Color(red: 0.65, green: 0.55, blue: 0.6)     // Dusty mauve
                 ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
+                startPoint: .top,
+                endPoint: .bottom
             )
-        case 9...16: // Day - sky blue colors  
+        case 9...16: // Day - elegant sky  
             return LinearGradient(
                 colors: [
-                    Color(red: 0.4, green: 0.6, blue: 0.9).opacity(0.9),   // Sky blue
-                    Color(red: 0.3, green: 0.5, blue: 0.8).opacity(0.8),   // Medium blue
-                    Color(red: 0.5, green: 0.7, blue: 0.9).opacity(0.7)    // Light blue
+                    Color(red: 0.85, green: 0.9, blue: 0.95),    // Soft cloud white
+                    Color(red: 0.75, green: 0.82, blue: 0.9),    // Powder blue
+                    Color(red: 0.65, green: 0.75, blue: 0.85),   // Steel blue
+                    Color(red: 0.55, green: 0.68, blue: 0.8)     // Sophisticated blue
                 ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
+                startPoint: .top,
+                endPoint: .bottom
             )
-        case 17...20: // Evening - sunset colors
+        case 17...20: // Evening - refined sunset
             return LinearGradient(
                 colors: [
-                    Color(red: 0.9, green: 0.4, blue: 0.3).opacity(0.9),   // Orange
-                    Color(red: 0.8, green: 0.3, blue: 0.5).opacity(0.8),   // Pink-purple
-                    Color(red: 0.6, green: 0.2, blue: 0.6).opacity(0.7)    // Purple
+                    Color(red: 0.85, green: 0.7, blue: 0.65),    // Warm taupe
+                    Color(red: 0.75, green: 0.6, blue: 0.6),     // Muted terracotta
+                    Color(red: 0.65, green: 0.5, blue: 0.55),    // Dusty rose
+                    Color(red: 0.55, green: 0.4, blue: 0.5)      // Deep mauve
                 ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
+                startPoint: .top,
+                endPoint: .bottom
             )
-        default: // Night - dark blue/purple
+        default: // Night - luxurious deep tones
             return LinearGradient(
                 colors: [
-                    Color(red: 0.1, green: 0.1, blue: 0.3).opacity(0.95),  // Dark blue
-                    Color(red: 0.2, green: 0.1, blue: 0.4).opacity(0.9),   // Deep purple
-                    Color(red: 0.1, green: 0.05, blue: 0.25).opacity(0.85) // Midnight
+                    Color(red: 0.15, green: 0.15, blue: 0.25),   // Rich navy
+                    Color(red: 0.12, green: 0.12, blue: 0.22),   // Deep midnight
+                    Color(red: 0.1, green: 0.1, blue: 0.18),     // Charcoal blue
+                    Color(red: 0.08, green: 0.08, blue: 0.15)    // Almost black
                 ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
+                startPoint: .top,
+                endPoint: .bottom
             )
         }
     }
@@ -493,16 +523,38 @@ struct BeautifulGradientBackground: View {
             // Base time-based gradient
             timeBasedGradient
             
-            // Subtle mesh gradient overlay for depth
+            // Multiple layers for sophisticated depth
             RadialGradient(
                 colors: [
-                    Color.white.opacity(0.1),
+                    Color.white.opacity(0.08),
                     Color.clear
                 ],
                 center: .topLeading,
-                startRadius: 50,
+                startRadius: 20,
+                endRadius: 200
+            )
+            
+            // Subtle vignette for depth
+            RadialGradient(
+                colors: [
+                    Color.clear,
+                    Color.black.opacity(0.15)
+                ],
+                center: .center,
+                startRadius: 100,
                 endRadius: 300
             )
+            
+            // Noise texture overlay for premium feel
+            LinearGradient(
+                colors: [
+                    Color.white.opacity(0.02),
+                    Color.black.opacity(0.02)
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .blendMode(.overlay)
         }
     }
 }
@@ -512,10 +564,22 @@ struct BeautifulGradientBackground: View {
 struct WidgetGradientBackground: View {
     
     private enum GradientColors {
-        static let morning: [Color] = [.orange.opacity(0.3), .yellow.opacity(0.3)]
-        static let afternoon: [Color] = [.blue.opacity(0.3), .cyan.opacity(0.3)]
-        static let evening: [Color] = [.purple.opacity(0.3), .indigo.opacity(0.3)]
-        static let night: [Color] = [.indigo.opacity(0.3), .black.opacity(0.5)]
+        static let morning: [Color] = [
+            Color(red: 0.9, green: 0.85, blue: 0.8).opacity(0.2),
+            Color(red: 0.85, green: 0.8, blue: 0.75).opacity(0.15)
+        ]
+        static let afternoon: [Color] = [
+            Color(red: 0.8, green: 0.85, blue: 0.9).opacity(0.2),
+            Color(red: 0.75, green: 0.8, blue: 0.85).opacity(0.15)
+        ]
+        static let evening: [Color] = [
+            Color(red: 0.8, green: 0.7, blue: 0.75).opacity(0.2),
+            Color(red: 0.75, green: 0.65, blue: 0.7).opacity(0.15)
+        ]
+        static let night: [Color] = [
+            Color(red: 0.2, green: 0.2, blue: 0.3).opacity(0.3),
+            Color(red: 0.15, green: 0.15, blue: 0.25).opacity(0.25)
+        ]
     }
     
     var body: some View {

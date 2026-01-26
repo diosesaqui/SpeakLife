@@ -199,7 +199,7 @@ struct OptimizedSubscriptionView: View {
         }
         
         
-        return dynamicBenefits.isEmpty ? getDefaultBenefits() : dynamicBenefits
+        return getDefaultBenefits()//dynamicBenefits.isEmpty ? getDefaultBenefits() : dynamicBenefits
     }
     
     private func getDescriptionForProp(_ prop: String) -> String {
@@ -232,18 +232,23 @@ struct OptimizedSubscriptionView: View {
         return [
             AbideStyleBenefit(
                 icon: "bolt.fill",
-                title: "Breakthrough Living",
-                description: "Watch anxiety melt away as God's promises rewire your mind"
+                title: "Unshakeable Faith",
+                description: "Confidence rooted in God’s promises"
             ),
             AbideStyleBenefit(
                 icon: "heart.fill",
                 title: "Supernatural Peace",
-                description: "Experience peace that passes understanding"
+                description: "Calm your mind in minutes"
             ),
             AbideStyleBenefit(
-                icon: "hands.sparkles.fill",
-                title: "Life-Changing Power",
-                description: "Join 50,000+ believers seeing miracles through spoken promises"
+                icon: "sun.max.fill",
+                title: "Renewed Mind",
+                description: "Truth that reshapes how you think"
+            ),
+            AbideStyleBenefit(
+                icon: "shield.fill",
+                title: "Spiritual Authority",
+                description: "Faith that holds under pressure"
             )
         ]
     }
@@ -277,9 +282,10 @@ struct OptimizedSubscriptionView: View {
                                 // Header with background image
                                 
                                 headerSection(geometry: geometry)
-                                
+                                Spacer().frame(height: geometry.size.height * 0.04)
                                 // Benefits
                                 benefitsSection(geometry: geometry)
+                                Spacer()
                                 
                                 // Space for sticky bottom
                                 // Spacer().frame(height: geometry.size.height * 0.2)
@@ -309,6 +315,21 @@ struct OptimizedSubscriptionView: View {
                 }
             }
         }
+        }
+    }
+    
+    private var starsSection: some View {
+        HStack(spacing: 4) {
+            HStack(spacing: 2) {
+                ForEach(0..<5) { _ in
+                    Image(systemName: "star.fill")
+                        .font(.system(size: 14))
+                        .foregroundColor(.yellow)
+                }
+            }
+            Text("4.9 stars")
+                .font(.system(size: 14, weight: .bold))
+                .foregroundColor(.white)
         }
     }
     
@@ -420,6 +441,8 @@ struct OptimizedSubscriptionView: View {
                     Text(dynamicHeaderPricing)
                         .font(.system(size: subtitleSize * 0.85, weight: .medium))
                         .foregroundColor(.white.opacity(0.95))
+                    
+                    starsSection
                 }
                 .padding(.horizontal, iPad ? 20 : geometry.size.width * 0.04)
                 .padding(.vertical, iPad ? 12 : geometry.size.height * 0.015)
@@ -443,6 +466,7 @@ struct OptimizedSubscriptionView: View {
         return VStack(alignment: .leading, spacing: iPad ? 16 : 12) {
             ForEach(benefits, id: \.title) { benefit in
                 BenefitRow(benefit: benefit)
+                Spacer().frame(height: 4)
             }
         }
         .frame(maxWidth: iPad ? 700 : .infinity, alignment: .leading)
@@ -455,8 +479,8 @@ struct OptimizedSubscriptionView: View {
             AbideStylePricingOption(
                 option: PricingOption(
                     product: subscriptionStore.currentOfferedPremium,
-                    title: "Annual - Best Value",
-                    subtitle: "$39.99/year",
+                    title: "Annual",
+                    subtitle: "Best Value",
                     price: yearlyPrice,
                     isSelected: selectedOption == "annual",
                     isBestOffer: true
@@ -465,17 +489,17 @@ struct OptimizedSubscriptionView: View {
             )
             .padding(.bottom, 8)
             
-            AbideStylePricingOption(
-                option: PricingOption(
-                    product: subscriptionStore.currentOfferedPremiumMonthly,
-                    title: "Monthly",
-                    subtitle: "Start your transformation today",
-                    price: monthlyPrice,
-                    isSelected: selectedOption == "monthly",
-                    isBestOffer: false
-                ),
-                action: { selectedOption = "monthly" }
-            )
+//            AbideStylePricingOption(
+//                option: PricingOption(
+//                    product: subscriptionStore.currentOfferedPremiumMonthly,
+//                    title: "Monthly",
+//                    subtitle: "Start your transformation today",
+//                    price: monthlyPrice,
+//                    isSelected: selectedOption == "monthly",
+//                    isBestOffer: false
+//                ),
+//                action: { selectedOption = "monthly" }
+//            )
         }
         .frame(maxWidth: .infinity)
     }
@@ -512,6 +536,7 @@ struct OptimizedSubscriptionView: View {
                         Spacer()
                     }
                 } else {
+                   
                     pricingSection
                 }
                 

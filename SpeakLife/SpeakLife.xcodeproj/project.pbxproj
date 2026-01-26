@@ -12,6 +12,7 @@
 		4501F3912D8926CA00315902 /* TestimonyViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4501F3902D8926C500315902 /* TestimonyViewModel.swift */; };
 		450720DB2BAFFB4A0029EE2B /* TimerViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 450720DA2BAFFB4A0029EE2B /* TimerViewModelTests.swift */; };
 		4514AF152E47031200254B74 /* AppGroupsDebugView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4514AF142E47031200254B74 /* AppGroupsDebugView.swift */; };
+		4517D1D42F26CCFA00CB1245 /* declarationsv9.json in Resources */ = {isa = PBXBuildFile; fileRef = 4517D1D32F26CCFA00CB1245 /* declarationsv9.json */; };
 		451AECE92E4EE7A000C1490E /* BootcampModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 451AECE82E4EE7A000C1490E /* BootcampModels.swift */; };
 		451AECEB2E4EE7B100C1490E /* BootcampViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 451AECEA2E4EE7B100C1490E /* BootcampViewModel.swift */; };
 		451AECF12E4EE7F000C1490E /* BootcampMainView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 451AECEF2E4EE7F000C1490E /* BootcampMainView.swift */; };
@@ -52,6 +53,9 @@
 		454807882E3F3CAA00B8C71B /* BadgeUnlockView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 454807852E3F3CAA00B8C71B /* BadgeUnlockView.swift */; };
 		454807892E3F3CAA00B8C71B /* BadgeRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 454807842E3F3CAA00B8C71B /* BadgeRenderer.swift */; };
 		4548078C2E3F3E6500B8C71B /* BadgeTestView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4548078A2E3F3E1D00B8C71B /* BadgeTestView.swift */; };
+		45567D262F27239A00382072 /* EnhancedOnboardingScreensRefactored.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45567D252F27239A00382072 /* EnhancedOnboardingScreensRefactored.swift */; };
+		45567D282F2723FE00382072 /* EnhancedOnboardingViewRefactored.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45567D272F2723FE00382072 /* EnhancedOnboardingViewRefactored.swift */; };
+		45567D2A2F27251400382072 /* EnhancedOnboardingModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45567D292F27251400382072 /* EnhancedOnboardingModels.swift */; };
 		456585F32D4F62EE002F2709 /* DevotionalSubscriptionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 456585F22D4F62EE002F2709 /* DevotionalSubscriptionView.swift */; };
 		456885262B390FF4007B1EBB /* WarriorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 456885252B390FF4007B1EBB /* WarriorView.swift */; };
 		456885282B395F66007B1EBB /* declarationsv3.json in Resources */ = {isa = PBXBuildFile; fileRef = 456885272B395F66007B1EBB /* declarationsv3.json */; };
@@ -314,6 +318,7 @@
 		4501F3902D8926C500315902 /* TestimonyViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestimonyViewModel.swift; sourceTree = "<group>"; };
 		450720DA2BAFFB4A0029EE2B /* TimerViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerViewModelTests.swift; sourceTree = "<group>"; };
 		4514AF142E47031200254B74 /* AppGroupsDebugView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppGroupsDebugView.swift; sourceTree = "<group>"; };
+		4517D1D32F26CCFA00CB1245 /* declarationsv9.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = declarationsv9.json; sourceTree = "<group>"; };
 		451AECE82E4EE7A000C1490E /* BootcampModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BootcampModels.swift; sourceTree = "<group>"; };
 		451AECEA2E4EE7B100C1490E /* BootcampViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BootcampViewModel.swift; sourceTree = "<group>"; };
 		451AECEF2E4EE7F000C1490E /* BootcampMainView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BootcampMainView.swift; sourceTree = "<group>"; };
@@ -351,6 +356,9 @@
 		454807842E3F3CAA00B8C71B /* BadgeRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BadgeRenderer.swift; sourceTree = "<group>"; };
 		454807852E3F3CAA00B8C71B /* BadgeUnlockView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BadgeUnlockView.swift; sourceTree = "<group>"; };
 		4548078A2E3F3E1D00B8C71B /* BadgeTestView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BadgeTestView.swift; sourceTree = "<group>"; };
+		45567D252F27239A00382072 /* EnhancedOnboardingScreensRefactored.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnhancedOnboardingScreensRefactored.swift; sourceTree = "<group>"; };
+		45567D272F2723FE00382072 /* EnhancedOnboardingViewRefactored.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnhancedOnboardingViewRefactored.swift; sourceTree = "<group>"; };
+		45567D292F27251400382072 /* EnhancedOnboardingModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnhancedOnboardingModels.swift; sourceTree = "<group>"; };
 		456585F22D4F62EE002F2709 /* DevotionalSubscriptionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DevotionalSubscriptionView.swift; sourceTree = "<group>"; };
 		456885252B390FF4007B1EBB /* WarriorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WarriorView.swift; sourceTree = "<group>"; };
 		456885272B395F66007B1EBB /* declarationsv3.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = declarationsv3.json; sourceTree = "<group>"; };
@@ -964,6 +972,7 @@
 				45D6402A2CD218AE006F05AD /* declarationsv5.json */,
 				458C75692D64811000C4F2B8 /* declarationsv6.json */,
 				45BC750B2EE44F00003AC964 /* declarationsv8.json */,
+				4517D1D32F26CCFA00CB1245 /* declarationsv9.json */,
 			);
 			path = AffirmationData;
 			sourceTree = "<group>";
@@ -1342,6 +1351,9 @@
 			children = (
 				7AA870BA28DACCB700134ADB /* Model */,
 				7AA870BE28DACCB700134ADB /* OnboardingView.swift */,
+				45567D252F27239A00382072 /* EnhancedOnboardingScreensRefactored.swift */,
+				45567D272F2723FE00382072 /* EnhancedOnboardingViewRefactored.swift */,
+				45567D292F27251400382072 /* EnhancedOnboardingModels.swift */,
 				45F3E75F2EB426CA002B1F4E /* CombinedPersonalizationScene.swift */,
 				46F66FE59AA649BFB7D06B09 /* HookScene.swift */,
 				30FA3E7536DE40B2B311F43E /* PersonalizationSummaryScene.swift */,
@@ -1555,6 +1567,7 @@
 				45A4A3A52D7BF62600DFCEB7 /* declarationsv7.json in Resources */,
 				45D6402B2CD218AE006F05AD /* declarationsv5.json in Resources */,
 				45A4A3D12D86B86100DFCEB7 /* washed.mp3 in Resources */,
+				4517D1D42F26CCFA00CB1245 /* declarationsv9.json in Resources */,
 				457CD3A72E8508F300F435EC /* README.md in Resources */,
 				456885282B395F66007B1EBB /* declarationsv3.json in Resources */,
 				45A4A3CB2D869D2700DFCEB7 /* sethpiano.mp3 in Resources */,
@@ -1635,6 +1648,7 @@
 				7AA8709428DACCA800134ADB /* App.swift in Sources */,
 				7A92E31B2993882F00FBF2AE /* Events.swift in Sources */,
 				452F6ADE2E87CD8500A27856 /* PersonalizedFeedSection.swift in Sources */,
+				45567D282F2723FE00382072 /* EnhancedOnboardingViewRefactored.swift in Sources */,
 				452F6ADF2E87CD8500A27856 /* AIEnhancedDeclarationView.swift in Sources */,
 				452F6AE02E87CD8500A27856 /* AIEnhancedDailyChecklist.swift in Sources */,
 				45BC762F2EF8058E003AC964 /* PremiumHaptics.swift in Sources */,
@@ -1807,11 +1821,13 @@
 				4597E2382E419CEA009D6C66 /* CoreDataAPIService.swift in Sources */,
 				4597E2392E419CEA009D6C66 /* Repository.swift in Sources */,
 				7AA8709328DACCA700134ADB /* CapsuleImageButton.swift in Sources */,
+				45567D2A2F27251400382072 /* EnhancedOnboardingModels.swift in Sources */,
 				457CD3962E84F88200F435EC /* SectionDetailView.swift in Sources */,
 				457CD3972E84F88200F435EC /* OptimizedAudioCell.swift in Sources */,
 				457CD3982E84F88200F435EC /* AudioSectionModel.swift in Sources */,
 				457CD3992E84F88200F435EC /* AudioSectionViewModel.swift in Sources */,
 				452F6AD32E87CD3F00A27856 /* EnhancedAnalyticsService.swift in Sources */,
+				45567D262F27239A00382072 /* EnhancedOnboardingScreensRefactored.swift in Sources */,
 				452F6AD42E87CD3F00A27856 /* RecommendationEngine.swift in Sources */,
 				452F6AD52E87CD3F00A27856 /* MLTaskLibrary.swift in Sources */,
 				452F6AD62E87CD3F00A27856 /* AINotificationService.swift in Sources */,
@@ -1864,7 +1880,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 652R6A63L8;
 				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -1892,7 +1908,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 652R6A63L8;
 				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -1959,7 +1975,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -2013,7 +2029,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = iphoneos;
@@ -2031,7 +2047,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = SpeakLife/SpeakLife.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 933;
+				CURRENT_PROJECT_VERSION = 937;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_ASSET_PATHS = "\"SpeakLife/Preview Content\"";
 				DEVELOPMENT_TEAM = 652R6A63L8;
@@ -2052,7 +2068,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 3.1.59;
+				MARKETING_VERSION = 3.1.62;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Franchiz.SpeakLife;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -2073,7 +2089,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = SpeakLife/SpeakLife.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 933;
+				CURRENT_PROJECT_VERSION = 937;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_ASSET_PATHS = "\"SpeakLife/Preview Content\"";
 				DEVELOPMENT_TEAM = 652R6A63L8;
@@ -2094,7 +2110,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 3.1.59;
+				MARKETING_VERSION = 3.1.62;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Franchiz.SpeakLife;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -2121,7 +2137,7 @@
 				INFOPLIST_FILE = PromisesWidget/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = PromisesWidget;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -2151,7 +2167,7 @@
 				INFOPLIST_FILE = PromisesWidget/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = PromisesWidget;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
