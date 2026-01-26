@@ -199,13 +199,20 @@ struct DeclarationContentView: View {
                     }
                 }
             }
-            .scaleEffect(viewModel.showVerse ? 1.05 : 1)
+            // .scaleEffect(viewModel.showVerse ? 1.05 : 1)  // REMOVED - causing opacity issue
             .opacity(1.0)
-            .animation(.spring(response: 0.4, dampingFraction: 0.7), value: viewModel.showVerse)
+            // .animation(.spring(response: 0.4, dampingFraction: 0.7), value: viewModel.showVerse)  // REMOVED - causing opacity issue
             .onChange(of: viewModel.showVerse) { _ in
                 // Clear animations immediately and trigger reset
                 completedAnimations.removeAll()
                 animationResetTrigger = UUID()
+                
+                // Immediately mark animation as complete for new state to prevent opacity issue
+                if viewModel.selectedTab < viewModel.declarations.count {
+                    let declaration = viewModel.declarations[viewModel.selectedTab]
+                    let animationKey = "\(declaration.id)-\(viewModel.showVerse)-\(animationResetTrigger)"
+                    completedAnimations.insert(animationKey)
+                }
             }
 
             .tabViewStyle(.page(indexDisplayMode: .never))
@@ -224,6 +231,10 @@ struct DeclarationContentView: View {
                 // Reset animations for new declaration
                 completedAnimations.removeAll()
                 animationResetTrigger = UUID()
+                
+                // Immediately mark animation as complete for new declaration to prevent opacity issue
+                let animationKey = "\(declaration.id)-\(viewModel.showVerse)-\(animationResetTrigger)"
+                completedAnimations.insert(animationKey)
             }
                 
             .frame(width: geometry.size.height, height: geometry.size.width)

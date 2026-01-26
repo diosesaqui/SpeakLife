@@ -154,7 +154,6 @@
 		45BC74612EC583E6003AC964 /* FirebaseInitializer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45BC74602EC583E6003AC964 /* FirebaseInitializer.swift */; };
 		45BC74632EDA4CB5003AC964 /* PaywallTriggerManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45BC74622EDA4CB5003AC964 /* PaywallTriggerManager.swift */; };
 		45BC74652EDA53FF003AC964 /* UserPreferencesTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45BC74642EDA53FF003AC964 /* UserPreferencesTracker.swift */; };
-		45BC750C2EE44F00003AC964 /* declarationsv8.json in Resources */ = {isa = PBXBuildFile; fileRef = 45BC750B2EE44F00003AC964 /* declarationsv8.json */; };
 		45BC762F2EF8058E003AC964 /* PremiumHaptics.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45BC762E2EF8058E003AC964 /* PremiumHaptics.swift */; };
 		45BC76302EF8058E003AC964 /* CategoryParticleEffects.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45BC762A2EF8058E003AC964 /* CategoryParticleEffects.swift */; };
 		45BC76312EF8058E003AC964 /* CelebrationAnimations.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45BC762B2EF8058E003AC964 /* CelebrationAnimations.swift */; };
@@ -456,7 +455,6 @@
 		45BC74602EC583E6003AC964 /* FirebaseInitializer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirebaseInitializer.swift; sourceTree = "<group>"; };
 		45BC74622EDA4CB5003AC964 /* PaywallTriggerManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallTriggerManager.swift; sourceTree = "<group>"; };
 		45BC74642EDA53FF003AC964 /* UserPreferencesTracker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserPreferencesTracker.swift; sourceTree = "<group>"; };
-		45BC750B2EE44F00003AC964 /* declarationsv8.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = declarationsv8.json; sourceTree = "<group>"; };
 		45BC76292EF8058E003AC964 /* AudioDelights.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioDelights.swift; sourceTree = "<group>"; };
 		45BC762A2EF8058E003AC964 /* CategoryParticleEffects.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CategoryParticleEffects.swift; sourceTree = "<group>"; };
 		45BC762B2EF8058E003AC964 /* CelebrationAnimations.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CelebrationAnimations.swift; sourceTree = "<group>"; };
@@ -971,7 +969,6 @@
 				453478F02B9D29CC0012C2C0 /* declarationsv4.json */,
 				45D6402A2CD218AE006F05AD /* declarationsv5.json */,
 				458C75692D64811000C4F2B8 /* declarationsv6.json */,
-				45BC750B2EE44F00003AC964 /* declarationsv8.json */,
 				4517D1D32F26CCFA00CB1245 /* declarationsv9.json */,
 			);
 			path = AffirmationData;
@@ -1581,7 +1578,6 @@
 				4583A4C52B0080440069C27D /* declarationsv2.json in Resources */,
 				45FF718E2E6294330048C523 /* declarationsv7_backup.json in Resources */,
 				7ABA50CF29E63275002699F1 /* prayers.json in Resources */,
-				45BC750C2EE44F00003AC964 /* declarationsv8.json in Resources */,
 				457D531B2D964AAF0098A49A /* audioDevotionals.json in Resources */,
 				45A4A3D32D86B8DB00DFCEB7 /* rainstorm.mp3 in Resources */,
 				453478F12B9D29CC0012C2C0 /* declarationsv4.json in Resources */,
