@@ -348,6 +348,8 @@ enum AudioPlaybackAction: String {
     case completed = "completed"
     case skipped = "skipped"
     case seeked = "seeked"
+    case progressMilestone = "progress_milestone"
+    case stopped = "stopped"
 }
 
 enum NavigationMethod: String {

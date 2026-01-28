@@ -11,7 +11,7 @@ struct WhatsNewBottomSheet: View {
     @Binding var isPresented: Bool
     let version: String
     let features = [
-        "Optimizations"
+        "Devotionals now moved to Daily Checklist page"
     ]
 
     var body: some View {

@@ -41,10 +41,11 @@ class TabViewModel: ObservableObject {
     
     private func trackTabNavigation(from previousTab: Int, to newTab: Int) {
         let tabNames = [
-            0: "audio",
-            1: "declarations",
-            2: "devotionals",
-            3: "profile"
+            0: "declarations",
+            1: "audio",
+            2: "daily_checklist",
+            3: "create_your_own",
+            4: "profile"
         ]
         
         guard let fromName = tabNames[previousTab],
@@ -210,9 +211,9 @@ struct HomeView: View {
             TabView(selection: $tabViewModel.selectedTab) {
                 declarationView
                 audioView
-                
                 dailyChecklistView
-                devotionalView
+                createYourOwnView
+               // devotionalView
                 profileView
                     
                 }
@@ -268,9 +269,18 @@ struct HomeView: View {
             .edgesIgnoringSafeArea(.all)
     }
     
+    var createYourOwnView: some View {
+        CreateYourOwnView()
+            .tag(3)
+            .tabItem {
+                Image(systemName: "plus.bubble.fill")
+                    .renderingMode(.original)
+            }
+    }
+    
     var devotionalView: some View {
         DevotionalView(viewModel:devotionalViewModel)
-            .tag(3)
+            .tag(4)
             .tabItem {
                 if #available(iOS 17, *) {
                     Image(systemName: "book.pages.fill")

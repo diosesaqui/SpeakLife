@@ -88,7 +88,7 @@ struct ProfileView: View {
                     
                     Section(header: Text("Yours").font(.caption)) {
                         AbbasLoveRow
-                        createYourOwnRow  // Moved Create Your Own here (always visible)
+                       // createYourOwnRow  // Moved Create Your Own here (always visible)
                         if appState.onBoardingTest {
                             quizRow
                            prayerRow

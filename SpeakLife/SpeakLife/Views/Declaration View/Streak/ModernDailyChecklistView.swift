@@ -12,7 +12,9 @@ struct ModernDailyChecklistView: View {
     @ObservedObject var viewModel: EnhancedStreakViewModel
     @EnvironmentObject var appState: AppState
     @EnvironmentObject var subscriptionStore: SubscriptionStore
+    @EnvironmentObject var devotionalViewModel: DevotionalViewModel
     @State private var showInfoSheet = false
+    @State private var showDevotional = false
     @State private var completedTasks = Set<String>()
     @State private var animateProgress = false
     @State private var celebrationScale: CGFloat = 1.0
@@ -87,6 +89,25 @@ struct ModernDailyChecklistView: View {
                             RoundedRectangle(cornerRadius: 12)
                                 .fill(Color.white.opacity(0.1))
                         )
+                        
+                        // Devotional button
+                        Button(action: { showDevotional = true }) {
+                            VStack(spacing: 4) {
+                                Image(systemName: "book.pages.fill")
+                                    .font(.largeTitle)
+                                    .fontWeight(.bold)
+                                    .foregroundColor(.white)
+                                Text("Devotional")
+                                    .font(.caption)
+                                    .foregroundColor(.white.opacity(0.7))
+                            }
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 8)
+                            .background(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .fill(Color.white.opacity(0.1))
+                            )
+                        }
                         
                         // Close button (if needed)
                         if let onClose = onClose {
@@ -240,6 +261,9 @@ struct ModernDailyChecklistView: View {
         )
         .sheet(isPresented: $showInfoSheet) {
             DailyChecklistInfoSheet()
+        }
+        .sheet(isPresented: $showDevotional) {
+            DevotionalView(viewModel: devotionalViewModel)
         }
         .onAppear {
             Analytics.logEvent("daily_checklist_viewed", parameters: [

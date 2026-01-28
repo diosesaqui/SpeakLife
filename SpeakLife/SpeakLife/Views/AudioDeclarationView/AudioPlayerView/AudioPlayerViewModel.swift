@@ -15,10 +15,25 @@ final class AudioPlayerViewModel: NSObject, ObservableObject {
     static var hasActiveAudio: Bool = false
     private var backgroundTime: Date?
     
+    // Progress tracking properties
+    private var playbackStartTime: Date?
+    private var totalListenTime: TimeInterval = 0
+    private var lastProgressUpdate: TimeInterval = 0
+    private var progressThresholds = [10, 20, 25, 50, 75, 90, 100] // Percentage thresholds to track
+    private var reportedThresholds = Set<Int>() // Track which thresholds were already reported
+    
     @Published var isPlaying: Bool = false {
         didSet {
             // Update the static property
             AudioPlayerViewModel.hasActiveAudio = isPlaying
+            
+            // Track playback time
+            if isPlaying {
+                playbackStartTime = Date()
+            } else if let startTime = playbackStartTime {
+                totalListenTime += Date().timeIntervalSince(startTime)
+                playbackStartTime = nil
+            }
         }
     }
     @Published var currentTime: Double = 0
@@ -169,6 +184,11 @@ final class AudioPlayerViewModel: NSObject, ObservableObject {
             return 
         }
         resetPlayer()
+        
+        // Reset progress tracking for new audio
+        totalListenTime = 0
+        playbackStartTime = nil
+        reportedThresholds.removeAll()
         
         // Stop background music first to avoid conflicts
         AudioPlayerService.shared.stopMusic()
@@ -325,6 +345,9 @@ final class AudioPlayerViewModel: NSObject, ObservableObject {
             guard let self = self else { return }
             self.currentTime = CMTimeGetSeconds(time)
             self.updateNowPlayingInfo()
+            
+            // Check and report listening progress
+            self.checkAndReportListeningProgress()
         }
        
         endObserver = NotificationCenter.default.addObserver(forName: .AVPlayerItemDidPlayToEndTime, object: player?.currentItem, queue: .main) { [weak self] _ in
@@ -497,15 +520,69 @@ final class AudioPlayerViewModel: NSObject, ObservableObject {
         guard let player = player else { return }
         let targetTime = CMTime(seconds: time, preferredTimescale: 1)
         
+        // Track seek event with progress information
+        if let audio = selectedItem, duration > 0 {
+            let fromPercentage = Int((currentTime / duration) * 100)
+            let toPercentage = Int((time / duration) * 100)
+            
+            AnalyticsService.shared.trackAudioPlayback(
+                audioId: audio.id,
+                audioTitle: audio.title,
+                action: .seeked,
+                metadata: [
+                    "from_position": currentTime,
+                    "to_position": time,
+                    "from_percentage": fromPercentage,
+                    "to_percentage": toPercentage,
+                    "seek_direction": time > currentTime ? "forward" : "backward",
+                    "seek_distance": abs(time - currentTime),
+                    "category": audio.tag ?? "unknown"
+                ]
+            )
+        }
+        
         player.seek(to: targetTime)
     }
 
     func repeatTrack() {
         onRepeat.toggle()
+        
+        // Track repeat toggle
+        if let audio = selectedItem {
+            AnalyticsService.shared.trackUserAction(
+                "repeat_toggled",
+                category: "audio",
+                metadata: [
+                    "audio_id": audio.id,
+                    "audio_title": audio.title,
+                    "repeat_enabled": onRepeat,
+                    "playback_position": currentTime,
+                    "progress_percentage": duration > 0 ? Int((currentTime / duration) * 100) : 0
+                ]
+            )
+        }
     }
 
     func changePlaybackSpeed(to speed: Float) {
+        let previousSpeed = playbackSpeed
         playbackSpeed = speed
+        
+        // Track speed change
+        if let audio = selectedItem {
+            AnalyticsService.shared.trackUserAction(
+                "playback_speed_changed",
+                category: "audio",
+                metadata: [
+                    "audio_id": audio.id,
+                    "audio_title": audio.title,
+                    "previous_speed": previousSpeed,
+                    "new_speed": speed,
+                    "playback_position": currentTime,
+                    "progress_percentage": duration > 0 ? Int((currentTime / duration) * 100) : 0
+                ]
+            )
+        }
+        
         // Only set rate if player is actually playing
         // Setting rate when not playing can interfere with playback
         if isPlaying, let player = player {
@@ -513,7 +590,94 @@ final class AudioPlayerViewModel: NSObject, ObservableObject {
         }
     }
 
+    private func checkAndReportListeningProgress() {
+        guard duration > 0 else { return }
+        
+        let progressPercentage = Int((currentTime / duration) * 100)
+        
+        // Check each threshold
+        for threshold in progressThresholds {
+            if progressPercentage >= threshold && !reportedThresholds.contains(threshold) {
+                reportedThresholds.insert(threshold)
+                
+                // Track the progress milestone
+                if let audio = selectedItem {
+                    let actualListenTime = totalListenTime + (playbackStartTime != nil ? Date().timeIntervalSince(playbackStartTime!) : 0)
+                    
+                    AnalyticsService.shared.trackAudioPlayback(
+                        audioId: audio.id,
+                        audioTitle: audio.title,
+                        action: .progressMilestone,
+                        metadata: [
+                            "progress_percentage": threshold,
+                            "actual_time_listened": actualListenTime,
+                            "audio_duration": duration,
+                            "playback_position": currentTime,
+                            "category": audio.tag ?? "unknown",
+                            "is_premium": audio.isPremium,
+                            "playback_speed": playbackSpeed
+                        ]
+                    )
+                    
+                    print("📊 Audio Progress: \(threshold)% reached for \"\(audio.title)\"")
+                    print("   Listen time: \(String(format: "%.1f", actualListenTime))s of \(String(format: "%.1f", duration))s")
+                }
+            }
+        }
+    }
+    
+    private func reportFinalListeningStats() {
+        guard let audio = selectedItem, duration > 0 else { return }
+        
+        let finalListenTime = totalListenTime + (playbackStartTime != nil ? Date().timeIntervalSince(playbackStartTime!) : 0)
+        let finalProgressPercentage = Int((currentTime / duration) * 100)
+        
+        // Determine engagement level based on percentage listened
+        let engagementLevel: String
+        if finalProgressPercentage >= 90 {
+            engagementLevel = "completed"
+        } else if finalProgressPercentage >= 50 {
+            engagementLevel = "engaged"
+        } else if finalProgressPercentage >= 25 {
+            engagementLevel = "partially_engaged"
+        } else if finalProgressPercentage >= 10 {
+            engagementLevel = "sampled"
+        } else {
+            engagementLevel = "bounced"
+        }
+        
+        AnalyticsService.shared.trackAudioPlayback(
+            audioId: audio.id,
+            audioTitle: audio.title,
+            action: .stopped,
+            metadata: [
+                "final_progress_percentage": finalProgressPercentage,
+                "total_listen_time": finalListenTime,
+                "audio_duration": duration,
+                "engagement_level": engagementLevel,
+                "category": audio.tag ?? "unknown",
+                "is_premium": audio.isPremium,
+                "playback_speed": playbackSpeed,
+                "was_repeated": onRepeat,
+                "highest_milestone_reached": reportedThresholds.max() ?? 0
+            ]
+        )
+        
+        print("📈 Final Audio Stats for \"\(audio.title)\":")
+        print("   Progress: \(finalProgressPercentage)% (\(engagementLevel))")
+        print("   Total listen time: \(String(format: "%.1f", finalListenTime))s")
+        print("   Milestones reached: \(reportedThresholds.sorted())")
+    }
+
     func resetPlayer() {
+        // Report final stats before resetting
+        reportFinalListeningStats()
+        
+        // Reset tracking variables
+        totalListenTime = 0
+        playbackStartTime = nil
+        reportedThresholds.removeAll()
+        
         // Safely remove KVO observer
         if player?.currentItem != nil {
             do {

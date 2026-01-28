@@ -160,7 +160,6 @@
 		45BC76322EF8058E003AC964 /* AudioDelights.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45BC76292EF8058E003AC964 /* AudioDelights.swift */; };
 		45BC76332EF8058E003AC964 /* GestureDelights.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45BC762C2EF8058E003AC964 /* GestureDelights.swift */; };
 		45BC76342EF8058E003AC964 /* MicroInteractions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45BC762D2EF8058E003AC964 /* MicroInteractions.swift */; };
-		45BC76402EFD10BF003AC964 /* CreateYourOwnButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45BC763F2EFD10BF003AC964 /* CreateYourOwnButton.swift */; };
 		45BC76422EFD1321003AC964 /* ModernDailyChecklistView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45BC76412EFD1321003AC964 /* ModernDailyChecklistView.swift */; };
 		45BC76442EFD2775003AC964 /* ModernCelebrationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45BC76432EFD2775003AC964 /* ModernCelebrationView.swift */; };
 		45BC76762F04B284003AC964 /* FirstDeclarationGuideView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45BC76752F04B284003AC964 /* FirstDeclarationGuideView.swift */; };
@@ -461,7 +460,6 @@
 		45BC762C2EF8058E003AC964 /* GestureDelights.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GestureDelights.swift; sourceTree = "<group>"; };
 		45BC762D2EF8058E003AC964 /* MicroInteractions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MicroInteractions.swift; sourceTree = "<group>"; };
 		45BC762E2EF8058E003AC964 /* PremiumHaptics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PremiumHaptics.swift; sourceTree = "<group>"; };
-		45BC763F2EFD10BF003AC964 /* CreateYourOwnButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateYourOwnButton.swift; sourceTree = "<group>"; };
 		45BC76412EFD1321003AC964 /* ModernDailyChecklistView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModernDailyChecklistView.swift; sourceTree = "<group>"; };
 		45BC76432EFD2775003AC964 /* ModernCelebrationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModernCelebrationView.swift; sourceTree = "<group>"; };
 		45BC76752F04B284003AC964 /* FirstDeclarationGuideView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirstDeclarationGuideView.swift; sourceTree = "<group>"; };
@@ -1238,7 +1236,6 @@
 			children = (
 				458B6B1B2BA6D57F0001BEFE /* Streak */,
 				7AA870B728DACCB700134ADB /* DeclarationView.swift */,
-				45BC763F2EFD10BF003AC964 /* CreateYourOwnButton.swift */,
 				7AA8709828DACCB700134ADB /* IntentsBarView.swift */,
 				7AA870B628DACCB700134ADB /* CategoryChooserView.swift */,
 				7AA8709928DACCB700134ADB /* View Models */,
@@ -1743,7 +1740,6 @@
 				45ED72C62BA64C3F00F5F5E3 /* StreakInfoBottomSheet.swift in Sources */,
 				7A60143F294E382700CD2103 /* SubscriptionStore.swift in Sources */,
 				7ABA50C529E4D818002699F1 /* Prayer.swift in Sources */,
-				45BC76402EFD10BF003AC964 /* CreateYourOwnButton.swift in Sources */,
 				454807602E3F11DC00B8C71B /* DailyChecklistFullScreenView.swift in Sources */,
 				45BC74632EDA4CB5003AC964 /* PaywallTriggerManager.swift in Sources */,
 				7AA8707E28DACC8300134ADB /* APIService.swift in Sources */,

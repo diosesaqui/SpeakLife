@@ -46,6 +46,7 @@ struct DeclarationView: View {
         case premium
         case createYourOwn  
         case devotionalSubscription
+        case loveLetter
        // case mail
         
         var id: Int { hashValue }
@@ -85,9 +86,8 @@ struct DeclarationView: View {
                                 if !showSpeakAloudBanner {
                                 Spacer()
                                 // Enhanced Streak System with Daily Checklist
-                                    CapsuleImageButton(title: "plus.bubble.fill") {
-                                        createYourOwnView()
-            
+                                    CapsuleImageButton(title: "envelope.fill") {
+                                        loveLetter()
                                     }
                                     .opacity(appState.showScreenshotLabel ? 0 : 1)
                                     .opacity(appState.showScreenshotLabel ? 0 : 1)
@@ -155,6 +155,8 @@ struct DeclarationView: View {
                     DevotionalSubscriptionView() {
                         activeSheet = nil
                     }
+                case .loveLetter:
+                    AbbasLoveView()
                 }
             }
             .onChange(of: presentDevotionalSubscriptionView) { newValue in
@@ -245,6 +247,12 @@ struct DeclarationView: View {
     private func premiumView()  {
         timerViewModel.saveRemainingTime()
         activeSheet = .premium
+        Analytics.logEvent(Event.tryPremiumTapped, parameters: nil)
+    }
+    
+    private func loveLetter()  {
+        timerViewModel.saveRemainingTime()
+        activeSheet = .loveLetter
         Analytics.logEvent(Event.tryPremiumTapped, parameters: nil)
     }
     
