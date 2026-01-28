@@ -94,8 +94,8 @@ struct ModernDailyChecklistView: View {
                         Button(action: { showDevotional = true }) {
                             VStack(spacing: 4) {
                                 Image(systemName: "book.pages.fill")
-                                    .font(.largeTitle)
-                                    .fontWeight(.bold)
+                                    .font(.title)
+                                    .fontWeight(.semibold)
                                     .foregroundColor(.white)
                                 Text("Devotional")
                                     .font(.caption)
