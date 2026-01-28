@@ -48,6 +48,16 @@ struct Event {
     static let badgeUnlocked = "badge_unlocked"
     static let settingsViewed = "settings_viewed"
     static let widgetConfigured = "widget_configured"
+    
+    // Bible Events
+    static let bibleTabOpened = "bible_tab_opened"
+    static let bibleBookSelected = "bible_book_selected"
+    static let bibleChapterViewed = "bible_chapter_viewed"
+    static let bibleVerseBookmarked = "bible_verse_bookmarked"
+    static let bibleVerseHighlighted = "bible_verse_highlighted"
+    static let bibleVerseShared = "bible_verse_shared"
+    static let bibleSearchPerformed = "bible_search_performed"
+    static let bibleVersionChanged = "bible_version_changed"
     static let notificationScheduled = "notification_scheduled"
     static let quizStarted = "quiz_started"
     static let quizCompleted = "quiz_completed"
@@ -142,5 +152,22 @@ extension Event {
             params["category"] = category
         }
         Analytics.logEvent("tiktok_engagement", parameters: params)
+    }
+    
+    // MARK: - Bible Events
+    static func trackBookmark(_ action: String, metadata: [String: Any]? = nil) {
+        var params: [String: Any] = ["action": action]
+        if let metadata = metadata {
+            params.merge(metadata) { _, new in new }
+        }
+        Analytics.logEvent(bibleVerseBookmarked, parameters: params)
+    }
+    
+    static func trackHighlight(_ action: String, metadata: [String: Any]? = nil) {
+        var params: [String: Any] = ["action": action]
+        if let metadata = metadata {
+            params.merge(metadata) { _, new in new }
+        }
+        Analytics.logEvent(bibleVerseHighlighted, parameters: params)
     }
 }

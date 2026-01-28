@@ -42,7 +42,6 @@ struct EnhancedStreakView: View {
                     // Track compact button tap
                     AnalyticsService.shared.trackUserAction("streak_compact_button_tapped", metadata: [
                         "current_streak": viewModel.streakStats.currentStreak,
-                        "is_completed": viewModel.todayChecklist.isCompleted,
                         "action": viewModel.todayChecklist.isCompleted ? "view_sheet" : "open_checklist"
                     ])
                     

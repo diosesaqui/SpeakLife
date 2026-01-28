@@ -28,7 +28,7 @@ class TabViewModel: ObservableObject {
     }
 
     func goToAudio() {
-        selectedTab = 0
+        selectedTab = 1
     }
     
 //    func goToChecklist() {
@@ -36,14 +36,14 @@ class TabViewModel: ObservableObject {
 //    }
 
     func resetToHome() {
-        selectedTab = 1
+        selectedTab = 0  // Go to Declarations (main home view)
     }
     
     private func trackTabNavigation(from previousTab: Int, to newTab: Int) {
         let tabNames = [
             0: "declarations",
             1: "audio",
-            2: "daily_checklist",
+            2: "bible",
             3: "create_your_own",
             4: "profile"
         ]
@@ -211,9 +211,9 @@ struct HomeView: View {
             TabView(selection: $tabViewModel.selectedTab) {
                 declarationView
                 audioView
-                dailyChecklistView
+                bibleView
+                // dailyChecklistView // Moved to DeclarationView
                 createYourOwnView
-               // devotionalView
                 profileView
                     
                 }
@@ -297,6 +297,15 @@ struct HomeView: View {
             .tag(2)
             .tabItem {
                 Image(systemName: "checklist")
+                    .renderingMode(.original)
+            }
+    }
+    
+    var bibleView: some View {
+        BibleView()
+            .tag(2)
+            .tabItem {
+                Image(systemName: "book.closed.fill")
                     .renderingMode(.original)
             }
     }

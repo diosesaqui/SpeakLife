@@ -21,6 +21,7 @@ struct DeclarationView: View {
     @EnvironmentObject var subscriptionStore: SubscriptionStore
     @EnvironmentObject var devotionalViewModel: DevotionalViewModel
     @EnvironmentObject var appState: AppState
+    @EnvironmentObject var streakViewModel: EnhancedStreakViewModel
     @Environment(\.presentationMode) var presentationMode
     
     @AppStorage("review.counter") private var reviewCounter = 0
@@ -37,6 +38,7 @@ struct DeclarationView: View {
     @State private var isPresentingCreateYourOwn = false
     @EnvironmentObject var timerViewModel: TimerViewModel
     @State var presentDevotionalSubscriptionView = false
+    @State var isPresentingBottomSheet = false
     
     // Consolidated sheet management
     @State private var activeSheet: ActiveSheet?
@@ -47,6 +49,8 @@ struct DeclarationView: View {
         case createYourOwn  
         case devotionalSubscription
         case loveLetter
+        case dailyChecklist
+        case timerStreak
        // case mail
         
         var id: Int { hashValue }
@@ -67,170 +71,230 @@ struct DeclarationView: View {
             }
     }
     
+    // MARK: - Overlay Content
+    
+    @ViewBuilder
+    private func overlayContent(_ geometry: GeometryProxy) -> some View {
+        VStack {
+            topButtonsRow(geometry)
+            Spacer()
+            if appState.showIntentBar {
+                IntentsBarView(viewModel: viewModel, themeViewModel: themeViewModel)
+                    .opacity(appState.showScreenshotLabel ? 0 : 1)
+                    .frame(height: geometry.size.height * 0.10)
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private func topButtonsRow(_ geometry: GeometryProxy) -> some View {
+        HStack {
+            devotionalButton
+            speakAloudBannerSection(geometry)
+            if !showSpeakAloudBanner {
+                Spacer()
+                timerSection
+                if !subscriptionStore.isPremium {
+                    premiumButton
+                }
+            }
+        }
+        .padding([.leading, .trailing])
+    }
+    
+    @ViewBuilder
+    private var devotionalButton: some View {
+        if !showSpeakAloudBanner {
+            Button(action: {
+                activeSheet = .devotionalSubscription
+                Analytics.logEvent("devotional_opened", parameters: nil)
+            }) {
+                Image(systemName: "book.fill")
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundColor(.white)
+                    .frame(width: 44, height: 44)
+                    .background(
+                        Circle()
+                            .fill(Color.black.opacity(0.7))
+                            .overlay(
+                                Circle()
+                                    .stroke(Constants.DAMidBlue.opacity(0.6), lineWidth: 1)
+                            )
+                    )
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private func speakAloudBannerSection(_ geometry: GeometryProxy) -> some View {
+        SpeakAloudBanner(showBanner: $showSpeakAloudBanner) {
+            showSpeakAloudBanner = false
+        }
+        .frame(height: geometry.size.height * 0.10)
+    }
+    
+    @ViewBuilder
+    private var timerSection: some View {
+        VStack(spacing: 4) {
+            if !timerViewModel.checkIfCompletedToday() {
+                CountdownTimerView(viewModel: timerViewModel) {
+                    showTimerSheet()
+                }
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private var premiumButton: some View {
+        Spacer()
+            .frame(width: 8)
+        
+        CapsuleImageButton(title: "crown.fill") {
+            premiumView()
+            Selection.shared.selectionFeedback()
+        }
+        .opacity(appState.showScreenshotLabel ? 0 : 1)
+        .foregroundStyle(Constants.gold)
+    }
+    
+    // MARK: - Background Content
+    
+    @ViewBuilder
+    private var backgroundContent: some View {
+        ZStack {
+            if themeViewModel.showUserSelectedImage {
+                Image(uiImage: themeViewModel.selectedImage!)
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .ignoresSafeArea()
+            } else {
+                Image(themeViewModel.selectedTheme.backgroundImageString)
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .ignoresSafeArea()
+            }
+            
+            Rectangle()
+                .fill(Color.black.opacity(themeViewModel.selectedTheme.blurEffect ? 0.25 : 0))
+                .edgesIgnoringSafeArea(.all)
+        }
+    }
+    
     var body: some View {
         GeometryReader { geometry in
-           
             ZStack {
                 declarationContent(geometry)
-                    if !appState.showScreenshotLabel {
-                       
-                        VStack() {
-                        
-
-                            HStack {
-                            
-                                SpeakAloudBanner(showBanner: $showSpeakAloudBanner) {
-                                    showSpeakAloudBanner = false
-                                }
-                                .frame(height: geometry.size.height * 0.10)
-                                if !showSpeakAloudBanner {
-                                Spacer()
-                                // Enhanced Streak System with Daily Checklist
-                                    CapsuleImageButton(title: "envelope.fill") {
-                                        loveLetter()
-                                    }
-                                    .opacity(appState.showScreenshotLabel ? 0 : 1)
-                                    .opacity(appState.showScreenshotLabel ? 0 : 1)
-                                    .allowsHitTesting(!appState.showScreenshotLabel)
-                                    if !subscriptionStore.isPremium {
-                                        Spacer()
-                                            .frame(width: 8)
-                                        
-                                        CapsuleImageButton(title: "crown.fill") {
-                                            premiumView()
-                                            Selection.shared.selectionFeedback()
-                                        }
-                                        .opacity(appState.showScreenshotLabel ? 0 : 1)
-                                        .foregroundStyle(Constants.gold)
-                                    }
-                                    
-                                    
-                                }
-                                
-                            } .padding([.leading,.trailing])
-                            
-                            Spacer()
-                           if appState.showIntentBar {
-                                 IntentsBarView(viewModel: viewModel, themeViewModel: themeViewModel)
-                                   .opacity(appState.showScreenshotLabel ? 0 : 1)
-                               .frame(height: geometry.size.height * 0.10)
-
-                        }
-                    }
-                    }
+                
+                if !appState.showScreenshotLabel {
+                    overlayContent(geometry)
                 }
+            }
         }
-            
-            .background(
-                ZStack {
-                    
-                    if themeViewModel.showUserSelectedImage {
-                        Image(uiImage: themeViewModel.selectedImage!)
-                            .resizable()
-                            .aspectRatio(contentMode: .fill)
-                            .ignoresSafeArea()
-                    } else {
-                        Image(themeViewModel.selectedTheme.backgroundImageString)
-                            .resizable()
-                            .aspectRatio(contentMode: .fill)
-                            .ignoresSafeArea()
-                    }
-                    
-                    Rectangle()
-                        .fill(Color.black.opacity(themeViewModel.selectedTheme.blurEffect ? 0.25 : 0))
-                        .edgesIgnoringSafeArea(.all)
-                }
-            )
-            
-            .sheet(item: $activeSheet) { sheet in
-                let _ = print("🔧 Sheet: Presenting sheet with type: \(sheet)")
-                switch sheet {
-                case .createYourOwn:
-                    let _ = print("🔧 Sheet: Loading CreateYourOwnView")
-                    CreateYourOwnView()
-                case .premium:
-                    PremiumView()
-                        .frame(height: UIScreen.main.bounds.height * 0.95)
-                case .devotionalSubscription:
-                    DevotionalSubscriptionView() {
-                        activeSheet = nil
-                    }
-                case .loveLetter:
-                    AbbasLoveView()
-                }
-            }
-            .onChange(of: presentDevotionalSubscriptionView) { newValue in
-                if newValue && activeSheet == nil {
-                    activeSheet = .devotionalSubscription
-                    presentDevotionalSubscriptionView = false
-                }
-            }
-            
-            .alert(isPresented: $viewModel.showErrorMessage) {
-                Alert(
-                    title: Text("Error", comment: "Error title message") + Text(viewModel.errorMessage ?? ""),
-                    message: Text("Select a category", comment: "OK alert message")
-                )
-            }
-        
-            .alert(isPresented: $viewModel.helpUsGrowAlert) {
-                Alert(
-                    title: Text("Help us grow?"),
-                    message: Text("Leave us a 5 star review 🌟"),
-                    primaryButton: .default(Text("Yes")) {
-                        requestReview()
-                    },
-                    secondaryButton: .cancel()
-                )
-            }
-        
-            
-            .onAppear {
-                checkAndShowBanner()
-                reviewCounter += 1
-                shareCounter += 1
-                premiumCount += 1
-                shareApp() 
-                timerViewModel.loadRemainingTime()
-            }
-            
-            .alert("Know anyone that can benefit from SpeakLife?", isPresented: $share) {
-                Button("Yes, I'll share with friends!") {
-                    shareSpeakLife()
-                }
-                Button("No thanks") {
-                }
-            }
-            .onDisappear {
-                timerViewModel.saveRemainingTime()
-            }
-            
-            .sheet(isPresented: $isShowingMailView) {
-                MailView(isShowing: $isShowingMailView, result: self.$result, origin: .review, isSubscribed: subscriptionStore.isPremium)
-            }
-            .onReceive(NotificationCenter.default.publisher(for: UIApplication.willTerminateNotification)) { _ in
-                timerViewModel.saveRemainingTime()
-            }
-            
-            .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
-                timerViewModel.loadRemainingTime()
-            }
-            
-            .onReceive(NotificationCenter.default.publisher(for: UIApplication.didEnterBackgroundNotification)) { _ in
-                timerViewModel.saveRemainingTime()
-            }
-            .onReceive(NotificationCenter.default.publisher(for: UIApplication.willResignActiveNotification)) { _ in
-                timerViewModel.saveRemainingTime()
-            }
-        
+        .background(backgroundContent)
+        .sheet(item: $activeSheet, content: sheetContent)
+        .onChange(of: presentDevotionalSubscriptionView, perform: handleDevotionalPresentation)
+        .alert(isPresented: $viewModel.showErrorMessage, content: errorAlert)
+        .alert(isPresented: $viewModel.helpUsGrowAlert, content: growAlert)
+        .alert("Know anyone that can benefit from SpeakLife?", isPresented: $share, actions: shareAlert)
+        .sheet(isPresented: $isShowingMailView) {
+            MailView(isShowing: $isShowingMailView, result: self.$result, origin: .review, isSubscribed: subscriptionStore.isPremium)
+        }
+        .onAppear(perform: handleOnAppear)
+        .onDisappear(perform: handleOnDisappear)
+        .setupNotificationObservers(timerViewModel: timerViewModel)
     }
+    
+    // MARK: - Sheet Management
+    
+    @ViewBuilder
+    private func sheetContent(_ sheet: ActiveSheet) -> some View {
+        let _ = print("🔧 Sheet: Presenting sheet with type: \(sheet)")
+        switch sheet {
+        case .createYourOwn:
+            CreateYourOwnView()
+        case .premium:
+            PremiumView()
+                .frame(height: UIScreen.main.bounds.height * 0.95)
+        case .devotionalSubscription:
+            DevotionalView(viewModel: devotionalViewModel)
+        case .loveLetter:
+            AbbasLoveView()
+        case .dailyChecklist:
+            ModernDailyChecklistView(viewModel: streakViewModel)
+                .environmentObject(streakViewModel)
+        case .timerStreak:
+            TimerStreakDetailView(timerViewModel: timerViewModel)
+//            StreakSheet(isShown: $isPresentingBottomSheet, streakViewModel: streakViewModel)
+//                .environmentObject(streakViewModel)
+        }
+    }
+    
+    private func handleDevotionalPresentation(_ newValue: Bool) {
+        if newValue && activeSheet == nil {
+            activeSheet = .devotionalSubscription
+            presentDevotionalSubscriptionView = false
+        }
+    }
+    
+    // MARK: - Alert Content
+    
+    private func errorAlert() -> Alert {
+        Alert(
+            title: Text("Error", comment: "Error title message") + Text(viewModel.errorMessage ?? ""),
+            message: Text("Select a category", comment: "OK alert message")
+        )
+    }
+    
+    private func growAlert() -> Alert {
+        Alert(
+            title: Text("Help us grow?"),
+            message: Text("Leave us a 5 star review 🌟"),
+            primaryButton: .default(Text("Yes")) {
+                requestReview()
+            },
+            secondaryButton: .cancel()
+        )
+    }
+    
+    @ViewBuilder
+    private func shareAlert() -> some View {
+        Button("Yes, I'll share with friends!") {
+            shareSpeakLife()
+        }
+        Button("No thanks") {
+        }
+    }
+    
+    // MARK: - Event Handlers
+    
+    private func handleOnAppear() {
+        checkAndShowBanner()
+        reviewCounter += 1
+        shareCounter += 1
+        premiumCount += 1
+        shareApp()
+        timerViewModel.loadRemainingTime()
+        
+        // Debug streak info
+        print("RWRW 🔍 OnAppear - Current streak: \(timerViewModel.currentStreak)")
+        print("RWRW 🔍 OnAppear - Completed today: \(timerViewModel.checkIfCompletedToday())")
+        
+        // Try to fix broken streak state
+        timerViewModel.debugFixStreak()
+    }
+    
+    private func handleOnDisappear() {
+        // Don't save timer here - let it keep running
+    }
+    
+    // MARK: - Sheet Actions
     
     private func createYourOwnView() {
         print("🔧 CreateYourOwn: Button tapped")
         print("🔧 CreateYourOwn: isPremium = \(subscriptionStore.isPremium)")
         print("🔧 CreateYourOwn: Current activeSheet = \(String(describing: activeSheet))")
         
-        timerViewModel.saveRemainingTime()
+        // Timer continues running - don't save
         
         // Clear any existing sheet first
         activeSheet = nil
@@ -245,15 +309,26 @@ struct DeclarationView: View {
         Analytics.logEvent(Event.tryPremiumTapped, parameters: nil)
     }
     private func premiumView()  {
-        timerViewModel.saveRemainingTime()
+        // Timer continues running - don't save
         activeSheet = .premium
         Analytics.logEvent(Event.tryPremiumTapped, parameters: nil)
     }
     
     private func loveLetter()  {
-        timerViewModel.saveRemainingTime()
+        // Timer continues running - don't save
         activeSheet = .loveLetter
         Analytics.logEvent(Event.tryPremiumTapped, parameters: nil)
+    }
+    
+    private func dailyChecklist() {
+        // Timer continues running - don't save
+        activeSheet = .dailyChecklist
+        Analytics.logEvent("daily_checklist_opened", parameters: nil)
+    }
+    
+    private func showTimerSheet() {
+        activeSheet = .timerStreak
+        Analytics.logEvent("timer_streak_opened", parameters: nil)
     }
     
     private func shareApp() {

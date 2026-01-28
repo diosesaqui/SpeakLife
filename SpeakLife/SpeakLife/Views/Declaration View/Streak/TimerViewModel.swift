@@ -24,6 +24,8 @@ final class TimerViewModel: ObservableObject {
     @Published private(set) var timeRemaining: Int = 0
     @Published private(set) var isActive = false
     @Published var timer: Timer? = nil
+    
+    private var hasLoadedInitialTime = false
 
     
     init() {
@@ -45,11 +47,16 @@ final class TimerViewModel: ObservableObject {
         timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] timer in
             guard let self = self else { return }
             if checkIfCompletedToday() {
+                print("RWRW ✅ Timer check - already completed today, stopping timer")
                 isActive = false
                 return
             } else if self.timeRemaining > 0 {
                 self.timeRemaining -= 1
+                if self.timeRemaining <= 10 {
+                    print("RWRW ⏱ Timer countdown: \(self.timeRemaining) seconds remaining")
+                }
             } else {
+                print("RWRW 🎯 Timer reached zero - calling completeMeditation()")
                 completeMeditation()
                 timer.invalidate()
                 // Prepare for the next day's reset if needed, or set up another logic as per your requirement
@@ -62,14 +69,29 @@ final class TimerViewModel: ObservableObject {
         UserDefaults.standard.removeObject(forKey: "timeRemaining")
         timeRemaining = 0
         isComplete = true
+        hasLoadedInitialTime = false // Reset for next day
+        
+        print("RWRW 🎯 Before completion - CurrentStreak: \(currentStreak), TotalDays: \(totalDaysCompleted)")
+        
         saveCompletionDate()
         currentStreak += 1
         totalDaysCompleted += 1
         if currentStreak > longestStreak {
-            longestStreak += 1
+            longestStreak = currentStreak  // Set to current streak, not increment
         }
+        
+        print("RWRW 🎉 Meditation completed! New streak: \(currentStreak), Total: \(totalDaysCompleted), Longest: \(longestStreak)")
+        
         NotificationCenter.default.post(name: Notification.Name("StreakCompleted"), object: nil)
         self.isActive = false
+    }
+    
+    // Debug method to manually fix streak if needed
+    func debugFixStreak() {
+        if checkIfCompletedToday() && currentStreak == 0 {
+            currentStreak = 1
+            print("RWRW 🔧 Debug fix: Set streak to 1 since task was completed today")
+        }
     }
     
     func saveCompletionDate() {
@@ -84,7 +106,10 @@ final class TimerViewModel: ObservableObject {
     }()
     
     func checkIfCompletedToday() -> Bool {
-        guard let completionDate = lastCompletedStreak else { return false }
+        guard let completionDate = lastCompletedStreak else { 
+            print("RWRW 🔍 checkIfCompletedToday: No completion date found")
+            return false 
+        }
         let currentDate = Date()
         let calendar = Calendar.current
 
@@ -96,6 +121,7 @@ final class TimerViewModel: ObservableObject {
 
         // Check if the completion date is within today's range
         let completed = completionDate >= startOfToday && completionDate < startOfTomorrow
+        print("RWRW 🔍 checkIfCompletedToday: \(completed) | CompletionDate: \(completionDate) | Today: \(startOfToday) | CurrentStreak: \(currentStreak)")
         return completed
     }
     
@@ -115,10 +141,14 @@ final class TimerViewModel: ObservableObject {
     }
     
     func checkAndUpdateCompletionDate() {
-        
-        if checkIfMidnightOfTomorrowHasPassedSinceLastCompletedStreak() {
+        // Only reset streak if we missed a day AND haven't completed today
+        if checkIfMidnightOfTomorrowHasPassedSinceLastCompletedStreak() && !checkIfCompletedToday() {
                // scheduleNotificationForMidnightTomorrow()
+            print("RWRW ⚠️ Resetting streak - missed a day and haven't completed today")
             currentStreak = 0
+            hasLoadedInitialTime = false // Allow fresh timer load for new day
+        } else if checkIfCompletedToday() {
+            print("RWRW ✅ Completed today - keeping streak: \(currentStreak)")
         }
     }
     
@@ -129,21 +159,31 @@ final class TimerViewModel: ObservableObject {
     }
     
     func loadRemainingTime() {
+        // Prevent multiple loads from resetting the timer
+        if hasLoadedInitialTime && isActive && timeRemaining > 0 {
+            print("RWRW ⚠️ Timer already loaded and running, skipping reload")
+            return
+        }
+        
         checkAndUpdateCompletionDate()
         
         if checkIfCompletedToday() {
+            print("RWRW ✅ Already completed today, timer not needed")
+            hasLoadedInitialTime = true
             return
-        } else if let savedTimeRemaining = UserDefaults.standard.value(forKey: "timeRemaining") as? Int, savedTimeRemaining > 2, let lastStartedStreak = lastStartedStreak, Calendar.current.isDateInToday(lastStartedStreak) {
-            print(lastStartedStreak, "RWRW saved time from today")
-            // Adjust the remaining time based on how much time has passed since the app was last open
+        } else if let savedTimeRemaining = UserDefaults.standard.value(forKey: "timeRemaining") as? Int, savedTimeRemaining > 2 {
+            print("RWRW 🔄 Restored saved time: \(savedTimeRemaining)")
+            // Restore the saved remaining time - don't require lastStartedStreak to be today
             timeRemaining = savedTimeRemaining
             isComplete = false
+            hasLoadedInitialTime = true
             startTimer()
         } else {
-            print("RWRW reset")
+            print("RWRW 🆕 No valid saved time, starting fresh timer")
             timeRemaining = TimerViewModel.totalDuration
             lastStartedStreak = Date()
             isComplete = false
+            hasLoadedInitialTime = true
             startTimer()
         }
     }

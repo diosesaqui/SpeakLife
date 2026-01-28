@@ -127,23 +127,23 @@ struct IntentsBarView: View {
     // MARK: - Intent(s)
     
     private func chooseWallPaper() {
-        timerViewModel.saveRemainingTime()
+        // Timer continues running - don't save
         self.isPresentingThemeChooser = true
         Analytics.logEvent(Event.themeChangerTapped, parameters: nil)
     }
     
     private func presentDevotional() {
-        timerViewModel.saveRemainingTime()
+        // Timer continues running - don't save
         self.isPresentingDevotionalView = true
     }
     
     private func profileButtonTapped() {
-        timerViewModel.saveRemainingTime()
+        // Timer continues running - don't save
         self.isPresentingProfileView = true
     }
     
     private func chooseCategory() {
-        timerViewModel.saveRemainingTime()
+        // Timer continues running - don't save
         self.isPresentingCategoryChooser = true
     }
     
