@@ -88,6 +88,8 @@ struct HomeView: View {
     @State private var showDeclarationPrompt = false
     @AppStorage("hasCreatedFirstDeclaration") private var hasCreatedFirstDeclaration = false
     @AppStorage("lastDeclarationPromptDate") private var lastDeclarationPromptDate: Double = 0
+    @State private var showStreakCelebration = false
+    @State private var celebrationStreakCount = 0
     
     private let currentVersion = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0.0"
 
@@ -180,6 +182,12 @@ struct HomeView: View {
                                     showTriggeredPaywall = true
                                 }
                             }
+                            .onReceive(NotificationCenter.default.publisher(for: Notification.Name("StreakCompleted"))) { _ in
+                                // Show celebration animation globally when timer completes
+                                celebrationStreakCount = timerViewModel.currentStreak
+                                showStreakCelebration = true
+                                print("🎉 Global streak celebration triggered for day \(celebrationStreakCount)")
+                            }
                   
                 } else {
                     // Choose between original and enhanced onboarding based on flag
@@ -211,7 +219,7 @@ struct HomeView: View {
             TabView(selection: $tabViewModel.selectedTab) {
                 declarationView
                 audioView
-                bibleView
+               // bibleView
                 // dailyChecklistView // Moved to DeclarationView
                 createYourOwnView
                 profileView
@@ -232,6 +240,58 @@ struct HomeView: View {
                 .environment(\.colorScheme, .dark)
                 .ignoresSafeArea()
             
+            // Global streak celebration overlay
+            if showStreakCelebration {
+                ZStack {
+                    Color.black.opacity(0.85)
+                        .ignoresSafeArea()
+                        .transition(.opacity)
+                    
+                    VStack(spacing: 30) {
+                        StreakCompletionCelebrationView(streakCount: celebrationStreakCount)
+                            .frame(width: 250, height: 250)
+                        
+                        VStack(spacing: 10) {
+                            Text("🔥 Day \(celebrationStreakCount) Complete!")
+                                .font(.title.bold())
+                                .foregroundColor(.white)
+                            
+                            Text("Keep the fire burning!")
+                                .font(.headline)
+                                .foregroundColor(.white.opacity(0.9))
+                        }
+                        
+                        Button(action: {
+                            withAnimation(.easeOut(duration: 0.3)) {
+                                showStreakCelebration = false
+                            }
+                        }) {
+                            Text("Continue")
+                                .font(.headline)
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 40)
+                                .padding(.vertical, 12)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 25)
+                                        .fill(LinearGradient(
+                                            colors: [.orange, .red],
+                                            startPoint: .leading,
+                                            endPoint: .trailing
+                                        ))
+                                )
+                        }
+                    }
+                    .transition(.scale.combined(with: .opacity))
+                }
+                .onAppear {
+                    // Auto dismiss after 6 seconds
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 6) {
+                        withAnimation(.easeOut(duration: 0.3)) {
+                            showStreakCelebration = false
+                        }
+                    }
+                }
+            }
         }
     }
     

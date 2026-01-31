@@ -109,6 +109,14 @@ class AudioPlayerService: NSObject, AVAudioPlayerDelegate {
             return
         }
         
+        // Check if app is in foreground before continuing to next song
+        let appState = UIApplication.shared.applicationState
+        guard appState == .active else {
+            print("⚠️ App is not active (state: \(appState.rawValue)) - stopping background music")
+            stopMusic()
+            return
+        }
+        
         // Check if we should continue playing
         guard !AudioPlayerViewModel.hasActiveAudio else {
             print("ℹ️ Content audio is active, stopping background music")
@@ -144,6 +152,7 @@ class AudioPlayerService: NSObject, AVAudioPlayerDelegate {
     func stopMusic() {
         // Stop and clear everything
         audioPlayer?.stop()
+        audioPlayer?.delegate = nil  // Remove delegate to prevent callbacks
         audioPlayer = nil
         isPlaying = false
         audioFiles = []
@@ -151,18 +160,30 @@ class AudioPlayerService: NSObject, AVAudioPlayerDelegate {
         currentArtist = nil
         currentTitle = nil
         
-        // Deactivate audio session
+        // Always deactivate audio session when stopping background music
+        // This ensures no audio can play in background
         if !AudioPlayerViewModel.hasActiveAudio {
-            try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+            do {
+                try AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+                print("🔇 Audio session deactivated")
+            } catch {
+                print("❌ Failed to deactivate audio session: \(error)")
+            }
         }
         
-        print("⏹️ Music stopped")
+        print("⏹️ Music stopped and cleaned up")
     }
     
     func playMusic() {
-        // ONLY resume if there's an existing player - never start new playback
+        // ONLY resume if there's an existing player and app is active
         guard let player = audioPlayer else {
             print("⚠️ No active music player to resume")
+            return
+        }
+        
+        // Don't resume if app is not active
+        guard UIApplication.shared.applicationState == .active else {
+            print("⚠️ App is not active - not resuming music")
             return
         }
         

@@ -154,7 +154,7 @@ struct DailyVerseDetailView: View {
                 name: "John",
                 author: "John",
                 group: "Gospel",
-                version: "nlt"
+                version: "kjv"
             ),
             chapter: 3,
             number: 16,

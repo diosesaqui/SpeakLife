@@ -252,8 +252,23 @@ struct BibleSettingsView: View {
                     HStack {
                         Text("Bible API")
                         Spacer()
-                        Text("aBibliaDigital")
+                        Text("HelloAO Bible API")
                             .foregroundColor(.white.opacity(0.8))
+                    }
+                    
+                    HStack {
+                        Text("Default Translation")
+                        Spacer()
+                        Text("Berean Standard Bible")
+                            .foregroundColor(.white.opacity(0.8))
+                    }
+                    
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Powered by HelloAO")
+                            .font(.system(size: 14, weight: .medium))
+                        Text("High-quality Bible translations and study resources")
+                            .font(.system(size: 12))
+                            .foregroundColor(.white.opacity(0.6))
                     }
                 }
             }
@@ -273,7 +288,9 @@ struct BibleSettingsView: View {
         }
         .navigationViewStyle(StackNavigationViewStyle())
         .onAppear {
-            cacheSize = viewModel.getCacheSizeFormatted()
+            Task {
+                cacheSize = await viewModel.getCacheSizeFormatted()
+            }
         }
     }
 }

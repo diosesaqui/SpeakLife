@@ -71,6 +71,8 @@
 		45567D672F29DB9F00382072 /* DailyVerseDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45567D662F29DB9F00382072 /* DailyVerseDetailView.swift */; };
 		45567D6B2F29E40000382072 /* TimerButtonView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45567D692F29E3FF00382072 /* TimerButtonView.swift */; };
 		45567D6C2F29E40000382072 /* NotificationObserversModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45567D682F29E3FF00382072 /* NotificationObserversModifier.swift */; };
+		45567D6F2F29F66000382072 /* KeychainHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45567D6D2F29F66000382072 /* KeychainHelper.swift */; };
+		45567D722F29F6FA00382072 /* FirebaseAuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45567D702F29F6FA00382072 /* FirebaseAuthService.swift */; };
 		456585F32D4F62EE002F2709 /* DevotionalSubscriptionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 456585F22D4F62EE002F2709 /* DevotionalSubscriptionView.swift */; };
 		456885262B390FF4007B1EBB /* WarriorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 456885252B390FF4007B1EBB /* WarriorView.swift */; };
 		456885282B395F66007B1EBB /* declarationsv3.json in Resources */ = {isa = PBXBuildFile; fileRef = 456885272B395F66007B1EBB /* declarationsv3.json */; };
@@ -197,6 +199,11 @@
 		45F3E7602EB426CA002B1F4E /* CombinedPersonalizationScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45F3E75F2EB426CA002B1F4E /* CombinedPersonalizationScene.swift */; };
 		45F3E7632EB43B8A002B1F4E /* AnimatedDeclarationText.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45F3E7612EB43B8A002B1F4E /* AnimatedDeclarationText.swift */; };
 		45F3E7642EB43B8A002B1F4E /* DeclarationAnimationSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45F3E7622EB43B8A002B1F4E /* DeclarationAnimationSettings.swift */; };
+		45F6D87E2F2AD75200C0B98D /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 45F6D87D2F2AD75200C0B98D /* FirebaseAuth */; };
+		45F6D8902F2AF3D700C0B98D /* HelloAOBibleAPIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45F6D88F2F2AF3D700C0B98D /* HelloAOBibleAPIService.swift */; };
+		45F6D8922F2AF45900C0B98D /* ClearBibleCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45F6D8912F2AF45900C0B98D /* ClearBibleCache.swift */; };
+		45F6D8942F2AF46900C0B98D /* BibleNetworkMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45F6D8932F2AF46900C0B98D /* BibleNetworkMonitor.swift */; };
+		45F6D8962F2AFCE700C0B98D /* HelloAOBibleAPIServiceTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45F6D8952F2AFCE700C0B98D /* HelloAOBibleAPIServiceTest.swift */; };
 		45FF718E2E6294330048C523 /* declarationsv7_backup.json in Resources */ = {isa = PBXBuildFile; fileRef = 45FF718D2E6294330048C523 /* declarationsv7_backup.json */; };
 		45FF71912E64293D0048C523 /* ListenerMetricsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45FF718F2E64293D0048C523 /* ListenerMetricsService.swift */; };
 		7A00721828F8ED4A00965AF7 /* declarations.json in Resources */ = {isa = PBXBuildFile; fileRef = 7A00721728F8ED4A00965AF7 /* declarations.json */; };
@@ -387,6 +394,8 @@
 		45567D662F29DB9F00382072 /* DailyVerseDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyVerseDetailView.swift; sourceTree = "<group>"; };
 		45567D682F29E3FF00382072 /* NotificationObserversModifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationObserversModifier.swift; sourceTree = "<group>"; };
 		45567D692F29E3FF00382072 /* TimerButtonView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerButtonView.swift; sourceTree = "<group>"; };
+		45567D6D2F29F66000382072 /* KeychainHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainHelper.swift; sourceTree = "<group>"; };
+		45567D702F29F6FA00382072 /* FirebaseAuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirebaseAuthService.swift; sourceTree = "<group>"; };
 		456585F22D4F62EE002F2709 /* DevotionalSubscriptionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DevotionalSubscriptionView.swift; sourceTree = "<group>"; };
 		456885252B390FF4007B1EBB /* WarriorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WarriorView.swift; sourceTree = "<group>"; };
 		456885272B395F66007B1EBB /* declarationsv3.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = declarationsv3.json; sourceTree = "<group>"; };
@@ -511,6 +520,10 @@
 		45F3E75F2EB426CA002B1F4E /* CombinedPersonalizationScene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CombinedPersonalizationScene.swift; sourceTree = "<group>"; };
 		45F3E7612EB43B8A002B1F4E /* AnimatedDeclarationText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnimatedDeclarationText.swift; sourceTree = "<group>"; };
 		45F3E7622EB43B8A002B1F4E /* DeclarationAnimationSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeclarationAnimationSettings.swift; sourceTree = "<group>"; };
+		45F6D88F2F2AF3D700C0B98D /* HelloAOBibleAPIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelloAOBibleAPIService.swift; sourceTree = "<group>"; };
+		45F6D8912F2AF45900C0B98D /* ClearBibleCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClearBibleCache.swift; sourceTree = "<group>"; };
+		45F6D8932F2AF46900C0B98D /* BibleNetworkMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BibleNetworkMonitor.swift; sourceTree = "<group>"; };
+		45F6D8952F2AFCE700C0B98D /* HelloAOBibleAPIServiceTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelloAOBibleAPIServiceTest.swift; sourceTree = "<group>"; };
 		45FF718D2E6294330048C523 /* declarationsv7_backup.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = declarationsv7_backup.json; sourceTree = "<group>"; };
 		45FF718F2E64293D0048C523 /* ListenerMetricsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ListenerMetricsService.swift; sourceTree = "<group>"; };
 		46F66FE59AA649BFB7D06B09 /* HookScene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HookScene.swift; sourceTree = "<group>"; };
@@ -637,6 +650,7 @@
 				7AF18CA22A0DB126005A6E31 /* SwiftUICharts in Frameworks */,
 				452D17DF2D703F3A000AB1D1 /* FirebaseFirestore in Frameworks */,
 				452D17DD2D703E9E000AB1D1 /* FirebaseStorage in Frameworks */,
+				45F6D87E2F2AD75200C0B98D /* FirebaseAuth in Frameworks */,
 				7A00721D2908D50800965AF7 /* (null) in Frameworks */,
 				7A7BEBCD2913536B008D08A3 /* StoreKit.framework in Frameworks */,
 			);
@@ -736,6 +750,8 @@
 		45567D532F29C9FC00382072 /* Bible */ = {
 			isa = PBXGroup;
 			children = (
+				45F6D8912F2AF45900C0B98D /* ClearBibleCache.swift */,
+				45F6D8932F2AF46900C0B98D /* BibleNetworkMonitor.swift */,
 				45567D502F29C9FC00382072 /* BibleCacheManager.swift */,
 				45567D512F29C9FC00382072 /* BibleInteractor.swift */,
 				45567D522F29C9FC00382072 /* BiblePresenter.swift */,
@@ -763,6 +779,22 @@
 				45567D692F29E3FF00382072 /* TimerButtonView.swift */,
 			);
 			path = Components;
+			sourceTree = "<group>";
+		};
+		45567D6E2F29F66000382072 /* Security */ = {
+			isa = PBXGroup;
+			children = (
+				45567D6D2F29F66000382072 /* KeychainHelper.swift */,
+			);
+			path = Security;
+			sourceTree = "<group>";
+		};
+		45567D712F29F6FA00382072 /* Auth */ = {
+			isa = PBXGroup;
+			children = (
+				45567D702F29F6FA00382072 /* FirebaseAuthService.swift */,
+			);
+			path = Auth;
 			sourceTree = "<group>";
 		};
 		4575C9472E46F25B007C14F3 /* Widget */ = {
@@ -1183,7 +1215,7 @@
 		7AA8706728DACB5100134ADB /* Services */ = {
 			isa = PBXGroup;
 			children = (
-				45567D532F29C9FC00382072 /* Bible */,
+				45567D712F29F6FA00382072 /* Auth */,
 				45BC74622EDA4CB5003AC964 /* PaywallTriggerManager.swift */,
 				45BC74642EDA53FF003AC964 /* UserPreferencesTracker.swift */,
 				452F6AD22E87CD3F00A27856 /* ML */,
@@ -1192,6 +1224,7 @@
 				4575C9472E46F25B007C14F3 /* Widget */,
 				4597E2322E419CEA009D6C66 /* CoreData */,
 				45C7482E2B5BC41E0011D8F6 /* AudioPlayer */,
+				45567D532F29C9FC00382072 /* Bible */,
 				7AF18C8D2A0CBAAF005A6E31 /* DailyDevotions */,
 				7AA8707828DACC8300134ADB /* IAP */,
 				7AA8706F28DACC8200134ADB /* Networking */,
@@ -1218,7 +1251,9 @@
 		7AA8706F28DACC8200134ADB /* Networking */ = {
 			isa = PBXGroup;
 			children = (
+				45F6D8952F2AFCE700C0B98D /* HelloAOBibleAPIServiceTest.swift */,
 				45567D4E2F29C9C500382072 /* BibleAPIService.swift */,
+				45F6D88F2F2AF3D700C0B98D /* HelloAOBibleAPIService.swift */,
 				7AA8707028DACC8300134ADB /* APIError.swift */,
 				7AA8707128DACC8300134ADB /* LocalAPIClient.swift */,
 				7AA8707228DACC8300134ADB /* Protocols */,
@@ -1248,6 +1283,7 @@
 		7AA8707828DACC8300134ADB /* IAP */ = {
 			isa = PBXGroup;
 			children = (
+				45567D6E2F29F66000382072 /* Security */,
 				7AA8707928DACC8300134ADB /* InAppPurchases.swift */,
 				7A60143E294E382700CD2103 /* SubscriptionStore.swift */,
 			);
@@ -1552,6 +1588,7 @@
 				45AE76702D7960BD0037EE12 /* FirebaseMessaging */,
 				45A4A3D72D8918BB00DFCEB7 /* FirebaseFirestoreCombine-Community */,
 				457CD38D2E84A11000F435EC /* TikTokBusinessSDK */,
+				45F6D87D2F2AD75200C0B98D /* FirebaseAuth */,
 			);
 			productName = SpeakLife;
 			productReference = 7A278F97288915DE0084BB57 /* SpeakLife.app */;
@@ -1738,6 +1775,8 @@
 				7AA8708228DACC8300134ADB /* InAppPurchases.swift in Sources */,
 				7AA870DE28DACCB700134ADB /* TimeNotificationStepper.swift in Sources */,
 				451AECF42E4EEB2D00C1490E /* BootcampTabViews.swift in Sources */,
+				45567D6F2F29F66000382072 /* KeychainHelper.swift in Sources */,
+				45F6D8942F2AF46900C0B98D /* BibleNetworkMonitor.swift in Sources */,
 				451AECF52E4EEB2D00C1490E /* BootcampDetailViews.swift in Sources */,
 				7AF18C8A29FF9819005A6E31 /* Gradients.swift in Sources */,
 				4582A9562CE690800077F555 /* AudioDeclarationView.swift in Sources */,
@@ -1779,6 +1818,7 @@
 				45567D672F29DB9F00382072 /* DailyVerseDetailView.swift in Sources */,
 				7AA8706D28DACC4E00134ADB /* Reminder.swift in Sources */,
 				45CF271C2B4E530300BC8968 /* ImprovementScene.swift in Sources */,
+				45F6D8902F2AF3D700C0B98D /* HelloAOBibleAPIService.swift in Sources */,
 				4548078C2E3F3E6500B8C71B /* BadgeTestView.swift in Sources */,
 				4597E1EB2E3FEC72009D6C66 /* AudioAnalytics.swift in Sources */,
 				4597E1EC2E3FEC72009D6C66 /* AudioFavoritesManager.swift in Sources */,
@@ -1814,6 +1854,7 @@
 				4568BE8F2B60EB1300678565 /* LoadingView.swift in Sources */,
 				7ABA50C729E4D996002699F1 /* PrayerViewModel.swift in Sources */,
 				7AA870C828DACCB700134ADB /* FontChooserView.swift in Sources */,
+				45F6D8962F2AFCE700C0B98D /* HelloAOBibleAPIServiceTest.swift in Sources */,
 				7AA8709028DACCA700134ADB /* SelectionFeedback.swift in Sources */,
 				7AA870CC28DACCB700134ADB /* SettingsRow.swift in Sources */,
 				7ABA50C929E4DE60002699F1 /* PrayerDetailView.swift in Sources */,
@@ -1854,6 +1895,7 @@
 				45BC76422EFD1321003AC964 /* ModernDailyChecklistView.swift in Sources */,
 				7AF18C7B29FD1A43005A6E31 /* GoogleAdMob.swift in Sources */,
 				457CD3402E7E735A00F435EC /* OptimizedSubscriptionViewV1.swift in Sources */,
+				45F6D8922F2AF45900C0B98D /* ClearBibleCache.swift in Sources */,
 				7AF18C9A2A0D9884005A6E31 /* BlurView.swift in Sources */,
 				45ED72C42BA10B3500F5F5E3 /* ConfettiView.swift in Sources */,
 				7AA870C628DACCB700134ADB /* HeartView.swift in Sources */,
@@ -1896,6 +1938,7 @@
 				458510D72B15935100230EE5 /* HideTabModifier.swift in Sources */,
 				7AF18C8C2A08CE92005A6E31 /* SpeechSynthesizer.swift in Sources */,
 				4597E2332E419CEA009D6C66 /* JournalRepository.swift in Sources */,
+				45567D722F29F6FA00382072 /* FirebaseAuthService.swift in Sources */,
 				4597E2342E419CEA009D6C66 /* PersistenceController.swift in Sources */,
 				4597E2352E419CEA009D6C66 /* DataMigrationManager.swift in Sources */,
 				4597E2362E419CEA009D6C66 /* AffirmationRepository.swift in Sources */,
@@ -2383,6 +2426,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 45C7481D2B55B4B80011D8F6 /* XCRemoteSwiftPackageReference "facebook-ios-sdk" */;
 			productName = FacebookCore;
+		};
+		45F6D87D2F2AD75200C0B98D /* FirebaseAuth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 452D17D72D703E9E000AB1D1 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAuth;
 		};
 		7AF18CA12A0DB126005A6E31 /* SwiftUICharts */ = {
 			isa = XCSwiftPackageProductDependency;

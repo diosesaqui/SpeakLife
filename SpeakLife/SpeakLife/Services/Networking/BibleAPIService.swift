@@ -14,12 +14,24 @@ protocol BibleAPIServiceProtocol {
     func fetchVersions() async throws -> [BibleVersion]
     func searchVerses(version: String, query: String) async throws -> BibleSearchResponse
     func fetchRandomVerse(version: String) async throws -> RandomVerse
-    func createUser(email: String, name: String, password: String) async throws -> BibleUserToken
+    func createUser(email: String, name: String, password: String, notifications: Bool) async throws -> BibleUserToken
     func loginUser(email: String, password: String) async throws -> BibleUserToken
 }
 
 struct BibleUserToken: Codable {
     let token: String
+}
+
+struct BibleUserRegistration: Codable {
+    let name: String
+    let email: String
+    let password: String
+    let notifications: Bool
+}
+
+struct BibleUserLogin: Codable {
+    let email: String
+    let password: String
 }
 
 enum BibleAPIError: LocalizedError {
@@ -57,7 +69,7 @@ final class BibleAPIService: BibleAPIServiceProtocol {
     private let baseURL = "https://www.abibliadigital.com.br/api"
     private let session: URLSession
     private var authToken: String?
-    private let defaultVersion = "nlt" // Default to NLT (New Living Translation)
+    private let defaultVersion = "kjv" // Default to KJV (King James Version)
     
     init(session: URLSession = .shared) {
         self.session = session
@@ -76,34 +88,42 @@ final class BibleAPIService: BibleAPIServiceProtocol {
     }
     
     // MARK: - Chapters & Verses
-    func fetchChapter(version: String = "nlt", abbrev: String, chapter: Int) async throws -> BibleChapter {
+    func fetchChapter(version: String = "kjv", abbrev: String, chapter: Int) async throws -> BibleChapter {
         let url = "\(baseURL)/verses/\(version)/\(abbrev)/\(chapter)"
         return try await performRequest(url: url)
     }
     
     // MARK: - Versions
     func fetchVersions() async throws -> [BibleVersion] {
+        print("RWRW 📖 Fetching all Bible versions from API")
         let url = "\(baseURL)/versions"
-        return try await performRequest(url: url)
+        let versions: [BibleVersion] = try await performRequest(url: url)
+        print("RWRW ✅ Successfully fetched \(versions.count) Bible versions")
+        print("RWRW 📚 Available versions response:")
+        for (index, version) in versions.enumerated() {
+            print("RWRW   \(index + 1). Version Code: '\(version.version)' | Total Verses: \(version.verses)")
+        }
+        print("RWRW 📚 Full versions list: \(versions.map { $0.version }.joined(separator: ", "))")
+        return versions
     }
     
     // MARK: - Search
-    func searchVerses(version: String = "nlt", query: String) async throws -> BibleSearchResponse {
+    func searchVerses(version: String = "kjv", query: String) async throws -> BibleSearchResponse {
         let url = "\(baseURL)/verses/search"
         let body = BibleSearchRequest(version: version, search: query)
         return try await performRequest(url: url, method: "POST", body: body)
     }
     
     // MARK: - Random Verse
-    func fetchRandomVerse(version: String = "nlt") async throws -> RandomVerse {
+    func fetchRandomVerse(version: String = "kjv") async throws -> RandomVerse {
         let url = "\(baseURL)/verses/\(version)/random"
         return try await performRequest(url: url)
     }
     
     // MARK: - Authentication
-    func createUser(email: String, name: String, password: String) async throws -> BibleUserToken {
+    func createUser(email: String, name: String, password: String, notifications: Bool = true) async throws -> BibleUserToken {
         let url = "\(baseURL)/users"
-        let body = ["email": email, "name": name, "password": password]
+        let body = BibleUserRegistration(name: name, email: email, password: password, notifications: notifications)
         let token: BibleUserToken = try await performRequest(url: url, method: "POST", body: body)
         saveAuthToken(token.token)
         return token
@@ -111,7 +131,7 @@ final class BibleAPIService: BibleAPIServiceProtocol {
     
     func loginUser(email: String, password: String) async throws -> BibleUserToken {
         let url = "\(baseURL)/users/token"
-        let body = ["email": email, "password": password]
+        let body = BibleUserLogin(email: email, password: password)
         let token: BibleUserToken = try await performRequest(url: url, method: "PUT", body: body)
         saveAuthToken(token.token)
         return token
@@ -208,16 +228,31 @@ final class BibleAPIService: BibleAPIServiceProtocol {
     // MARK: - Token Management
     private func saveAuthToken(_ token: String) {
         authToken = token
-        UserDefaults.standard.set(token, forKey: "BibleAPIAuthToken")
+        let success = KeychainHelper.shared.save(token, forKey: "BibleAPIAuthToken")
+        if success {
+            print("✅ Auth token saved securely to Keychain")
+        } else {
+            print("❌ Failed to save auth token to Keychain")
+        }
     }
     
     private func loadAuthToken() {
-        authToken = UserDefaults.standard.string(forKey: "BibleAPIAuthToken")
+        authToken = KeychainHelper.shared.loadString(forKey: "BibleAPIAuthToken")
+        if authToken != nil {
+            print("✅ Auth token loaded from Keychain")
+        } else {
+            print("ℹ️ No auth token found in Keychain")
+        }
     }
     
     func clearAuthToken() {
         authToken = nil
-        UserDefaults.standard.removeObject(forKey: "BibleAPIAuthToken")
+        let success = KeychainHelper.shared.delete(forKey: "BibleAPIAuthToken")
+        if success {
+            print("✅ Auth token cleared from Keychain")
+        } else {
+            print("❌ Failed to clear auth token from Keychain")
+        }
     }
     
     var isAuthenticated: Bool {

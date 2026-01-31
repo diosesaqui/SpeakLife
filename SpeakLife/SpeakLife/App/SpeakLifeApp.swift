@@ -132,6 +132,9 @@ struct SpeakLifeApp: App {
                     Task {
                         await CreateMLTrainingPipeline.shared.trainInitialModels()
                     }
+                    
+                    // 🧪 Test HelloAO Bible API integration
+                    runHelloAOTest()
                     // Handle landing page and initial category selection
                     DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
                         withAnimation {
@@ -169,17 +172,21 @@ struct SpeakLifeApp: App {
                 // Process any pending widget actions when app becomes active
                 WidgetDataBridge.shared.processPendingWidgetActions()
                 
-//                if declarationStore.backgroundMusicEnabled && !AudioPlayerViewModel.hasActiveAudio {
-//                              DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-//                                  AudioPlayerService.shared.resumeOrStartMusic(files: resources)
-//                    }
-               // }
-
+                // IMPORTANT: Never auto-resume background music when app becomes active
+                // Background music should ONLY play from:
+                // 1. Initial app launch (if enabled)
+                // 2. User manually enabling it in settings
+                // This prevents unwanted music playback when returning from background
+                print("🔇 App active - background music auto-resume is disabled")
                 
-                // Don't automatically resume/start music when coming from background
-                // Music should only start from explicit user actions or app launch
-                // This prevents unwanted music playback when app becomes active
-                print("📲 App active - music auto-resume disabled to prevent unwanted playback")
+                // Additional safety check - stop any lingering background music if app was backgrounded
+                if !AudioPlayerViewModel.hasActiveAudio {
+                    let audioService = AudioPlayerService.shared
+                    if audioService.isPlaying {
+                        print("⚠️ Found active background music after returning from background - stopping it")
+                        audioService.stopMusic()
+                    }
+                }
                     
                 if appState.notificationEnabled {
                     // Ensure checklist notifications are scheduled (they repeat daily)
@@ -194,25 +201,29 @@ struct SpeakLifeApp: App {
         
                     }
             case .inactive:
-                // Don't pause background music when app becomes inactive
-                // This allows music to continue when notification center/control center is opened
+                // Inactive state happens briefly when transitioning
+                // Stop music here to prevent it from continuing in background
+                print("📤 App inactive - preparing for background")
+                AudioPlayerService.shared.stopMusic()
                 break
             case .background:
                 // Reset session tracking when app goes to background
                 PaywallTriggerManager.shared.resetSessionTracking()
                 
-                // Stop music completely
+                // Stop ALL music immediately when going to background
                 AudioPlayerService.shared.stopMusic()
-                print("⏹️ Stopped music to prevent background playback")
+                print("⏹️ App entering background - all background music stopped")
                 
-                // Deactivate audio session to ensure no background audio can play
-                if !AudioPlayerViewModel.hasActiveAudio {
-                    do {
-                        try AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
-                        print("🔇 Audio session deactivated for background")
-                    } catch {
-                        print("❌ Failed to deactivate audio session: \(error)")
-                    }
+                // Force deactivate audio session to ensure no background audio can play
+                // Even if content audio is active, background music should stop
+                do {
+                    // Set category to playback with no options to clear any mixing
+                    try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, options: [])
+                    // Then deactivate completely
+                    try AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+                    print("🔇 Audio session fully deactivated for background")
+                } catch {
+                    print("❌ Failed to deactivate audio session: \(error)")
                 }
                 break
             @unknown default:

@@ -176,11 +176,20 @@ struct BibleAuthenticationView: View {
             
             VStack(spacing: 12) {
                 // Email field
-                TextField("Email", text: $email)
-                    .textFieldStyle(RoundedTextFieldStyle())
-                    .keyboardType(.emailAddress)
-                    .autocapitalization(.none)
-                    .disableAutocorrection(true)
+                VStack(alignment: .leading, spacing: 4) {
+                    TextField("Email", text: $email)
+                        .textFieldStyle(RoundedTextFieldStyle())
+                        .keyboardType(.emailAddress)
+                        .autocapitalization(.none)
+                        .disableAutocorrection(true)
+                    
+                    if !email.isEmpty && !isValidEmail(email.trimmingCharacters(in: .whitespacesAndNewlines)) {
+                        Text("Please enter a valid email address")
+                            .font(.caption)
+                            .foregroundColor(.red)
+                            .padding(.leading, 4)
+                    }
+                }
                 
                 if authMode == .signUp {
                     // Name field (only for sign up)
@@ -190,8 +199,17 @@ struct BibleAuthenticationView: View {
                 }
                 
                 // Password field
-                SecureField("Password", text: $password)
-                    .textFieldStyle(RoundedTextFieldStyle())
+                VStack(alignment: .leading, spacing: 4) {
+                    SecureField("Password", text: $password)
+                        .textFieldStyle(RoundedTextFieldStyle())
+                    
+                    if authMode == .signUp && !password.isEmpty && password.count < 6 {
+                        Text("Password must be at least 6 characters")
+                            .font(.caption)
+                            .foregroundColor(.red)
+                            .padding(.leading, 4)
+                    }
+                }
             }
             
             HStack(spacing: 12) {
@@ -262,6 +280,62 @@ struct BibleAuthenticationView: View {
         }
     }
     
+    private func validateForm() -> Bool {
+        // Reset any existing error
+        errorMessage = nil
+        showError = false
+        
+        // Validate email
+        let emailTrimmed = email.trimmingCharacters(in: .whitespacesAndNewlines)
+        if emailTrimmed.isEmpty {
+            errorMessage = "Please enter your email address"
+            showError = true
+            return false
+        }
+        
+        if !isValidEmail(emailTrimmed) {
+            errorMessage = "Please enter a valid email address"
+            showError = true
+            return false
+        }
+        
+        // Validate name (for sign up only)
+        if authMode == .signUp {
+            let nameTrimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+            if nameTrimmed.isEmpty {
+                errorMessage = "Please enter your name"
+                showError = true
+                return false
+            }
+            
+            if nameTrimmed.count < 2 {
+                errorMessage = "Name must be at least 2 characters long"
+                showError = true
+                return false
+            }
+        }
+        
+        // Validate password
+        if password.isEmpty {
+            errorMessage = "Please enter your password"
+            showError = true
+            return false
+        }
+        
+        if password.count < 6 {
+            errorMessage = "Password must be at least 6 characters long"
+            showError = true
+            return false
+        }
+        
+        return true
+    }
+    
+    private func isValidEmail(_ email: String) -> Bool {
+        let emailRegex = #"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"#
+        return email.range(of: emailRegex, options: .regularExpression) != nil
+    }
+    
     // MARK: - Authentication Methods
     private func handleAppleSignIn(_ result: Result<ASAuthorization, Error>) {
         isLoading = true
@@ -295,14 +369,32 @@ struct BibleAuthenticationView: View {
     
     private func signInWithEmail() {
         guard formIsValid else { return }
+        
+        // Additional validation before API call
+        guard validateForm() else { return }
+        
         isLoading = true
         
         Task {
             do {
-                let token = try await BibleAPIService.shared.loginUser(email: email, password: password)
+                let bibleToken = try await BibleAPIService.shared.loginUser(email: email, password: password)
+                
+                // Try to sign in to Firebase as well
+                do {
+                    let firebaseUser = try await FirebaseAuthService.shared.signIn(
+                        email: email,
+                        password: password
+                    )
+                    print("🎉 Both Bible API and Firebase sign in successful")
+                    print("🔥 Firebase UID: \(firebaseUser.uid)")
+                } catch {
+                    print("⚠️ Bible API sign in succeeded but Firebase sign in failed: \(error)")
+                    // Continue with Bible API success since that's the primary requirement
+                }
+                
                 await MainActor.run {
                     isLoading = false
-                    authManager.saveCredentials(email: email, token: token.token)
+                    authManager.saveCredentials(email: email, token: bibleToken.token)
                     onSuccess()
                     dismiss()
                 }
@@ -317,6 +409,10 @@ struct BibleAuthenticationView: View {
     
     private func signUpWithEmail() {
         guard formIsValid else { return }
+        
+        // Additional validation before API call
+        guard validateForm() else { return }
+        
         isLoading = true
         
         Task {
@@ -326,30 +422,57 @@ struct BibleAuthenticationView: View {
     
     private func createBibleUser(email: String, name: String, password: String) async {
         do {
-            // Try to create user first
-            let token = try await BibleAPIService.shared.createUser(
+            // Try to create Bible API user first
+            let bibleToken = try await BibleAPIService.shared.createUser(
                 email: email,
                 name: name,
                 password: password
             )
             
+            // If Bible API user creation succeeds, also create Firebase user
+            do {
+                let firebaseUser = try await FirebaseAuthService.shared.createUser(
+                    email: email,
+                    password: password,
+                    name: name
+                )
+                print("🎉 Both Bible API and Firebase users created successfully")
+                print("🔥 Firebase UID: \(firebaseUser.uid)")
+            } catch {
+                print("⚠️ Bible API user created but Firebase user creation failed: \(error)")
+                // Continue with Bible API success since that's the primary requirement
+            }
+            
             await MainActor.run {
                 isLoading = false
-                authManager.saveCredentials(email: email, token: token.token)
+                authManager.saveCredentials(email: email, name: name, token: bibleToken.token)
                 onSuccess()
                 dismiss()
             }
         } catch {
-            // If user already exists, try to login
+            // If Bible API user creation fails, try to login instead
             do {
-                let token = try await BibleAPIService.shared.loginUser(
+                let bibleToken = try await BibleAPIService.shared.loginUser(
                     email: email,
                     password: password
                 )
                 
+                // Try to sign in to Firebase as well
+                do {
+                    let firebaseUser = try await FirebaseAuthService.shared.signIn(
+                        email: email,
+                        password: password
+                    )
+                    print("🎉 Both Bible API and Firebase sign in successful")
+                    print("🔥 Firebase UID: \(firebaseUser.uid)")
+                } catch {
+                    print("⚠️ Bible API sign in succeeded but Firebase sign in failed: \(error)")
+                    // Continue with Bible API success since that's the primary requirement
+                }
+                
                 await MainActor.run {
                     isLoading = false
-                    authManager.saveCredentials(email: email, token: token.token)
+                    authManager.saveCredentials(email: email, name: name, token: bibleToken.token)
                     onSuccess()
                     dismiss()
                 }
@@ -371,19 +494,39 @@ struct BibleAuthenticationView: View {
                 errorMessage = "Too many attempts. Please try again later."
             case .serverError(let code):
                 if code == 400 {
-                    errorMessage = "Invalid credentials. Please check your email and password."
+                    errorMessage = "Invalid request. Please check your information and try again."
+                } else if code == 404 {
+                    errorMessage = "Bible service temporarily unavailable. Please try again later."
                 } else if code == 409 {
                     errorMessage = "An account with this email already exists. Please sign in instead."
+                } else if code >= 500 {
+                    errorMessage = "Service temporarily unavailable. Please try again later."
                 } else {
-                    errorMessage = "Server error (\(code)). Please try again later."
+                    errorMessage = "Request failed (\(code)). Please try again."
                 }
             case .networkError:
                 errorMessage = "Network connection error. Please check your internet connection."
-            default:
-                errorMessage = apiError.errorDescription ?? "Authentication failed"
+            case .decodingError:
+                errorMessage = "Service response error. Please try again."
+            case .invalidURL:
+                errorMessage = "Service configuration error. Please contact support."
+            case .noData:
+                errorMessage = "No response from service. Please try again."
             }
         } else {
-            errorMessage = "An unexpected error occurred: \(error.localizedDescription)"
+            // Handle specific common errors
+            let errorString = error.localizedDescription.lowercased()
+            if errorString.contains("network") || errorString.contains("connection") {
+                errorMessage = "Network connection error. Please check your internet connection."
+            } else if errorString.contains("timeout") {
+                errorMessage = "Request timed out. Please try again."
+            } else if errorString.contains("password") {
+                errorMessage = "Password must be at least 6 characters long."
+            } else if errorString.contains("email") {
+                errorMessage = "Please enter a valid email address."
+            } else {
+                errorMessage = "Authentication failed. Please try again."
+            }
         }
         showError = true
     }
@@ -432,8 +575,10 @@ struct RoundedTextFieldStyle: TextFieldStyle {
 class BibleAuthManager: ObservableObject {
     @Published var isAuthenticated = false
     @Published var userEmail: String?
+    @Published var userName: String?
     
     private let emailKey = "BibleUserEmail"
+    private let nameKey = "BibleUserName"
     private let tokenKey = "BibleAPIAuthToken"
     
     init() {
@@ -441,23 +586,30 @@ class BibleAuthManager: ObservableObject {
     }
     
     func checkAuthStatus() {
-        isAuthenticated = UserDefaults.standard.string(forKey: tokenKey) != nil
-        userEmail = UserDefaults.standard.string(forKey: emailKey)
+        isAuthenticated = KeychainHelper.shared.loadString(forKey: tokenKey) != nil
+        userEmail = KeychainHelper.shared.loadString(forKey: emailKey)
+        userName = KeychainHelper.shared.loadString(forKey: nameKey)
     }
     
-    func saveCredentials(email: String, token: String) {
-        UserDefaults.standard.set(email, forKey: emailKey)
-        UserDefaults.standard.set(token, forKey: tokenKey)
+    func saveCredentials(email: String, name: String? = nil, token: String) {
+        let _ = KeychainHelper.shared.save(email, forKey: emailKey)
+        if let name = name {
+            let _ = KeychainHelper.shared.save(name, forKey: nameKey)
+            userName = name
+        }
+        let _ = KeychainHelper.shared.save(token, forKey: tokenKey)
         isAuthenticated = true
         userEmail = email
     }
     
     func signOut() {
-        UserDefaults.standard.removeObject(forKey: emailKey)
-        UserDefaults.standard.removeObject(forKey: tokenKey)
+        let _ = KeychainHelper.shared.delete(forKey: emailKey)
+        let _ = KeychainHelper.shared.delete(forKey: nameKey)
+        let _ = KeychainHelper.shared.delete(forKey: tokenKey)
         BibleAPIService.shared.clearAuthToken()
         isAuthenticated = false
         userEmail = nil
+        userName = nil
     }
 }
 

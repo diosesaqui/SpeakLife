@@ -19,7 +19,7 @@ final class BibleViewModel: ObservableObject {
     @Published var bookmarks: [BibleBookmark] = []
     @Published var dailyVerse: RandomVerse?
     @Published var availableVersions: [BibleVersion] = []
-    @Published var selectedVersion: String = "nlt" // Default to NLT
+    @Published var selectedVersion: String = "bsb" // Default to BSB (Berean Standard Bible)
     
     @Published var isLoading = false
     @Published var errorMessage: String?
@@ -42,6 +42,11 @@ final class BibleViewModel: ObservableObject {
     private var cancellables = Set<AnyCancellable>()
     private var allBooks: [BibleBook] = []
     
+    // MARK: - Task Management
+    private var currentChapterLoadTask: Task<Void, Never>?
+    private var searchTask: Task<Void, Never>?
+    private var initialLoadTask: Task<Void, Never>?
+    
     // MARK: - Initialization
     init(
         interactor: BibleInteractorProtocol = BibleInteractor(),
@@ -54,21 +59,36 @@ final class BibleViewModel: ObservableObject {
         loadInitialData()
     }
     
+    deinit {
+        // Cancel all running tasks to prevent memory leaks
+        currentChapterLoadTask?.cancel()
+        searchTask?.cancel()
+        initialLoadTask?.cancel()
+    }
+    
     // MARK: - Setup
     private func setupBindings() {
         // Removed auto-search - now manual search only via onSubmit or explicit button tap
     }
     
     private func loadInitialData() {
+        print("RWRW 🚀 BibleViewModel.loadInitialData() starting")
         // Check authentication status
         isAuthenticated = BibleAPIService.shared.isAuthenticated
         
-        Task {
+        initialLoadTask = Task {
+            print("RWRW 📖 Starting to load Bible data...")
+            
+            // Load data sequentially to avoid complexity for now
             await loadBooks()
             await loadDailyVerse()
             await loadVersions()
-            loadBookmarks()
-            loadHistory()
+            
+            await MainActor.run {
+                loadBookmarks()
+                loadHistory()
+                print("RWRW ✅ Bible data loading completed")
+            }
             
             // Check for last read location
             if let lastRead = interactor.getLastReadLocation() {
@@ -92,66 +112,95 @@ final class BibleViewModel: ObservableObject {
     }
     
     func loadChapter(bookAbbrev: String, chapterNumber: Int) async {
-        isLoading = true
-        errorMessage = nil
+        // Cancel any existing chapter load task
+        currentChapterLoadTask?.cancel()
         
-        do {
-            let chapter = try await interactor.loadChapter(
-                bookAbbrev: bookAbbrev,
-                chapter: chapterNumber,
-                version: selectedVersion
-            )
-            
-            let highlights = interactor.getHighlights(for: bookAbbrev, chapter: chapterNumber)
-            let bookmarks = interactor.getBookmarks().filter { 
-                $0.bookAbbrev == bookAbbrev && $0.chapter == chapterNumber 
+        currentChapterLoadTask = Task {
+            await MainActor.run { 
+                isLoading = true
+                errorMessage = nil 
             }
             
-            currentChapter = presenter.formatChapterForDisplay(chapter, highlights: highlights, bookmarks: bookmarks)
-            selectedChapterNumber = chapterNumber
-            showBookSelection = false
-            showChapterGrid = false
-            isLoading = false
-            
-            // Track analytics
-            AnalyticsService.shared.trackContentInteraction(
-                contentType: "bible_chapter",
-                contentId: "\(bookAbbrev)_\(chapterNumber)",
-                action: "bible",// rwrw
-                metadata: [
-                    "book": bookAbbrev,
-                    "chapter": chapterNumber,
-                    "version": selectedVersion
-                ]
-            )
-        } catch {
-            handleError(error)
+            do {
+                let chapter = try await interactor.loadChapter(
+                    bookAbbrev: bookAbbrev,
+                    chapter: chapterNumber,
+                    version: selectedVersion
+                )
+                
+                let highlights = interactor.getHighlights(for: bookAbbrev, chapter: chapterNumber)
+                let bookmarks = interactor.getBookmarks().filter { 
+                    $0.bookAbbrev == bookAbbrev && $0.chapter == chapterNumber 
+                }
+                
+                await MainActor.run {
+                    currentChapter = presenter.formatChapterForDisplay(chapter, highlights: highlights, bookmarks: bookmarks)
+                    selectedChapterNumber = chapterNumber
+                    showBookSelection = false
+                    showChapterGrid = false
+                    isLoading = false
+                    
+                    // Update reading history after successfully loading a chapter
+                    loadHistory()
+                }
+                
+                // Track analytics
+                AnalyticsService.shared.trackContentInteraction(
+                    contentType: "bible_chapter",
+                    contentId: "\(bookAbbrev)_\(chapterNumber)",
+                    action: "bible",// rwrw
+                    metadata: [
+                        "book": bookAbbrev,
+                        "chapter": chapterNumber,
+                        "version": selectedVersion
+                    ]
+                )
+            } catch {
+                await MainActor.run {
+                    handleError(error)
+                }
+            }
         }
+        
+        await currentChapterLoadTask?.value
     }
     
     func searchVerses(query: String) async {
         guard !query.isEmpty else { return }
         
-        isSearching = true
-        errorMessage = nil
-        showSearchError = false
+        // Cancel any existing search task
+        searchTask?.cancel()
         
-        do {
-            let results = try await interactor.searchVerses(query: query, version: selectedVersion)
-            searchResults = presenter.formatSearchResults(results, searchTerm: query)
-            isSearching = false
+        searchTask = Task {
+            await MainActor.run {
+                isSearching = true
+                errorMessage = nil
+                showSearchError = false
+            }
             
-            // Track analytics
-            AnalyticsService.shared.trackSearch(
-                query: query,
-                resultCount: results.occurrence,
-                category: "bible_\(selectedVersion)"
-            )
-        } catch {
-            // Handle search errors locally without dismissing the search sheet
-            handleSearchError(error)
-            isSearching = false
+            do {
+                let results = try await interactor.searchVerses(query: query, version: selectedVersion)
+                await MainActor.run {
+                    searchResults = presenter.formatSearchResults(results, searchTerm: query)
+                    isSearching = false
+                }
+                
+                // Track analytics
+                AnalyticsService.shared.trackSearch(
+                    query: query,
+                    resultCount: results.occurrence,
+                    category: "bible_\(selectedVersion)"
+                )
+            } catch {
+                await MainActor.run {
+                    // Handle search errors locally without dismissing the search sheet
+                    handleSearchError(error)
+                    isSearching = false
+                }
+            }
         }
+        
+        await searchTask?.value
     }
     
     private func handleSearchError(_ error: Error) {
@@ -211,16 +260,28 @@ final class BibleViewModel: ObservableObject {
     }
     
     func loadVersions() async {
+        print("RWRW 🔍 BibleViewModel.loadVersions() called")
+        
+        // Clear cached versions to ensure we get fresh data without duplicates
+        interactor.clearVersionsCache()
+        
         do {
-            availableVersions = try await interactor.loadVersions()
+            let rawVersions = try await interactor.loadVersions()
+            
+            // Extra safety: Remove any duplicates based on version ID to prevent ForEach issues
+            availableVersions = Array(Dictionary(grouping: rawVersions, by: \.version).compactMapValues(\.first).values)
+            
+            print("RWRW ✅ BibleViewModel loaded \(rawVersions.count) raw versions, deduplicated to \(availableVersions.count) unique versions")
+            print("RWRW 📚 Final unique versions: \(availableVersions.map { $0.version }.joined(separator: ", "))")
         } catch {
-            print("Failed to load versions: \(error)")
+            print("RWRW ❌ Failed to load versions: \(error)")
         }
     }
     
     // MARK: - Navigation
     func selectBook(_ book: BookDisplayModel) {
         selectedBook = book
+        selectedChapterNumber = 1  // Reset chapter to 1 when selecting a new book
         showChapterGrid = true
         showBookSelection = false
         
@@ -253,6 +314,7 @@ final class BibleViewModel: ObservableObject {
         showBookSelection = true
         showChapterGrid = false
         selectedBook = nil
+        selectedChapterNumber = 1  // Reset chapter number when going back to books
     }
     
     func backToChapters() {
@@ -413,8 +475,8 @@ final class BibleViewModel: ObservableObject {
         interactor.clearCache()
     }
     
-    func getCacheSizeFormatted() -> String {
-        let bytes = interactor.getCacheSize()
+    func getCacheSizeFormatted() async -> String {
+        let bytes = await interactor.getCacheSize()
         let formatter = ByteCountFormatter()
         formatter.countStyle = .binary
         return formatter.string(fromByteCount: bytes)
@@ -424,6 +486,7 @@ final class BibleViewModel: ObservableObject {
     private func refreshCurrentChapter() {
         guard let book = selectedBook else { return }
         
+        // Cancel any existing task and use the managed loadChapter method
         Task {
             await loadChapter(bookAbbrev: book.abbreviation.lowercased(), chapterNumber: selectedChapterNumber)
         }

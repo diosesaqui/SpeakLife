@@ -33,13 +33,91 @@ protocol BibleInteractorProtocol {
     
     // Cache management
     func clearCache()
-    func getCacheSize() -> Int64
+    func clearVersionsCache()
+    func getCacheSize() async -> Int64
 }
 
 final class BibleInteractor: BibleInteractorProtocol {
-    private let apiService: BibleAPIServiceProtocol
+    private let helloAOService: HelloAOBibleAPIService
     private let cacheManager: BibleCacheManager
     private let userDefaults = UserDefaults.standard
+    
+    // Static mapping to avoid recreation - this is safer
+    private static let bookAbbrevMapping: [String: String] = {
+        var mapping: [String: String] = [:]
+        
+        // Old Testament
+        mapping["gn"] = "GEN"; mapping["gen"] = "GEN"
+        mapping["ex"] = "EXO"; mapping["exo"] = "EXO" 
+        mapping["lv"] = "LEV"; mapping["lev"] = "LEV"
+        mapping["nm"] = "NUM"; mapping["num"] = "NUM"
+        mapping["dt"] = "DEU"; mapping["deu"] = "DEU"
+        mapping["js"] = "JOS"; mapping["jos"] = "JOS"
+        mapping["jg"] = "JDG"; mapping["jdg"] = "JDG"
+        mapping["rt"] = "RUT"; mapping["rut"] = "RUT"
+        mapping["1sm"] = "1SA"; mapping["1sa"] = "1SA"
+        mapping["2sm"] = "2SA"; mapping["2sa"] = "2SA"
+        mapping["1rs"] = "1KI"; mapping["1ki"] = "1KI"
+        mapping["2rs"] = "2KI"; mapping["2ki"] = "2KI"
+        mapping["1cr"] = "1CH"; mapping["1ch"] = "1CH"
+        mapping["2cr"] = "2CH"; mapping["2ch"] = "2CH"
+        mapping["ed"] = "EZR"; mapping["ezr"] = "EZR"
+        mapping["ne"] = "NEH"; mapping["neh"] = "NEH"
+        mapping["et"] = "EST"; mapping["est"] = "EST"
+        mapping["jb"] = "JOB"; mapping["job"] = "JOB"
+        mapping["sl"] = "PSA"; mapping["psa"] = "PSA"; mapping["ps"] = "PSA"
+        mapping["pv"] = "PRO"; mapping["pro"] = "PRO"
+        mapping["ec"] = "ECC"; mapping["ecc"] = "ECC"
+        mapping["ct"] = "SNG"; mapping["sng"] = "SNG"; mapping["sos"] = "SNG"
+        mapping["is"] = "ISA"; mapping["isa"] = "ISA"
+        mapping["jr"] = "JER"; mapping["jer"] = "JER"
+        mapping["lm"] = "LAM"; mapping["lam"] = "LAM"
+        mapping["ez"] = "EZK"; mapping["ezk"] = "EZK"
+        mapping["dn"] = "DAN"; mapping["dan"] = "DAN"
+        mapping["os"] = "HOS"; mapping["hos"] = "HOS"
+        mapping["jl"] = "JOL"; mapping["jol"] = "JOL"; mapping["joe"] = "JOL"
+        mapping["am"] = "AMO"; mapping["amo"] = "AMO"
+        mapping["ob"] = "OBA"; mapping["oba"] = "OBA"
+        mapping["jon"] = "JON" // Jonah (using full name to avoid conflict with John)
+        mapping["mq"] = "MIC"; mapping["mic"] = "MIC"
+        mapping["na"] = "NAM"; mapping["nam"] = "NAM"; mapping["nah"] = "NAM"
+        mapping["hc"] = "HAB"; mapping["hab"] = "HAB"
+        mapping["sf"] = "ZEP"; mapping["zep"] = "ZEP"
+        mapping["ag"] = "HAG"; mapping["hag"] = "HAG"
+        mapping["zc"] = "ZEC"; mapping["zec"] = "ZEC"
+        mapping["ml"] = "MAL"; mapping["mal"] = "MAL"
+        
+        // New Testament  
+        mapping["mt"] = "MAT"; mapping["mat"] = "MAT"
+        mapping["mc"] = "MRK"; mapping["mrk"] = "MRK"; mapping["mk"] = "MRK"
+        mapping["lc"] = "LUK"; mapping["luk"] = "LUK"; mapping["lk"] = "LUK"
+        mapping["jo"] = "JHN"; mapping["jhn"] = "JHN"; mapping["jn"] = "JHN" // John
+        mapping["at"] = "ACT"; mapping["act"] = "ACT"
+        mapping["rm"] = "ROM"; mapping["rom"] = "ROM"
+        mapping["1co"] = "1CO"; mapping["1cor"] = "1CO"
+        mapping["2co"] = "2CO"; mapping["2cor"] = "2CO"
+        mapping["gl"] = "GAL"; mapping["gal"] = "GAL"
+        mapping["ef"] = "EPH"; mapping["eph"] = "EPH"
+        mapping["fp"] = "PHP"; mapping["php"] = "PHP"; mapping["phil"] = "PHP"
+        mapping["cl"] = "COL"; mapping["col"] = "COL"
+        mapping["1ts"] = "1TH"; mapping["1th"] = "1TH"
+        mapping["2ts"] = "2TH"; mapping["2th"] = "2TH"
+        mapping["1tm"] = "1TI"; mapping["1ti"] = "1TI"
+        mapping["2tm"] = "2TI"; mapping["2ti"] = "2TI"
+        mapping["tt"] = "TIT"; mapping["tit"] = "TIT"
+        mapping["fm"] = "PHM"; mapping["phm"] = "PHM"
+        mapping["hb"] = "HEB"; mapping["heb"] = "HEB"
+        mapping["tg"] = "JAS"; mapping["jas"] = "JAS"
+        mapping["1pe"] = "1PE"; mapping["1pet"] = "1PE"
+        mapping["2pe"] = "2PE"; mapping["2pet"] = "2PE"
+        mapping["1jo"] = "1JN"; mapping["1jn"] = "1JN"
+        mapping["2jo"] = "2JN"; mapping["2jn"] = "2JN"
+        mapping["3jo"] = "3JN"; mapping["3jn"] = "3JN"
+        mapping["jd"] = "JUD"; mapping["jud"] = "JUD"
+        mapping["ap"] = "REV"; mapping["rev"] = "REV"
+        
+        return mapping
+    }()
     
     // Keys for UserDefaults
     private let bookmarksKey = "BibleBookmarks"
@@ -47,21 +125,32 @@ final class BibleInteractor: BibleInteractorProtocol {
     private let readingHistoryKey = "BibleReadingHistory"
     private let lastReadKey = "BibleLastRead"
     
-    init(apiService: BibleAPIServiceProtocol = BibleAPIService.shared) {
-        self.apiService = apiService
+    init() {
+        self.helloAOService = HelloAOBibleAPIService.shared
         self.cacheManager = BibleCacheManager()
     }
     
     // MARK: - API Operations
     func loadBooks() async throws -> [BibleBook] {
+        print("RWRW 🔍 BibleInteractor.loadBooks() called (using HelloAO API)")
+        
         // Check cache first
         if let cachedBooks = cacheManager.getCachedBooks() {
+            print("RWRW ✅ Found \(cachedBooks.count) books in cache")
             return cachedBooks
         }
         
+        print("RWRW ❌ No cached books, fetching from API...")
+        
         // Try to fetch from API
         do {
-            let books = try await apiService.fetchBooks()
+            let books: [BibleBook]
+            
+            // Use HelloAO API
+            print("RWRW 📖 Fetching books from HelloAO API")
+            let helloBooks = try await helloAOService.fetchBooks()
+            books = helloBooks.map { helloAOService.adaptBookToBibleBook($0) }
+            print("RWRW ✅ Fetched \(books.count) books from HelloAO API")
             
             // Cache the result
             cacheManager.cacheBooks(books)
@@ -614,16 +703,44 @@ final class BibleInteractor: BibleInteractorProtocol {
         ]
     }
     
-    func loadChapter(bookAbbrev: String, chapter: Int, version: String = "nlt") async throws -> BibleChapter {
+    // MARK: - Private Helper Methods
+//    private func convertToPortugueseAbbreviation(_ englishAbbrev: String) -> String {
+//        // Find the book by English abbreviation and return Portuguese abbreviation
+//        if let book = bibleBooksData.first(where: { $0.abbrev.en.lowercased() == englishAbbrev.lowercased() }) {
+//            return book.abbrev.pt
+//        }
+//        // Fallback to original abbreviation if not found
+//        return englishAbbrev
+//    }
+    
+    func loadChapter(bookAbbrev: String, chapter: Int, version: String = "kjv") async throws -> BibleChapter {
+        print("RWRW 🔍 loadChapter called: \(bookAbbrev) chapter \(chapter), version: \(version)")
+        
         // Check cache first
         if let cachedChapter = cacheManager.getCachedChapter(bookAbbrev: bookAbbrev, chapter: chapter, version: version) {
+            print("RWRW ✅ Found chapter in cache")
             // Save to reading history
             saveReadingHistory(bookAbbrev: bookAbbrev, chapter: chapter)
             return cachedChapter
         }
         
+        print("RWRW ❌ Chapter not cached, fetching from API...")
+        
         // Fetch from API
-        let chapterData = try await apiService.fetchChapter(version: version, abbrev: bookAbbrev, chapter: chapter)
+        let chapterData: BibleChapter
+        
+        // Use HelloAO API - need to map version and book names
+        print("RWRW 📖 Fetching chapter from HelloAO API")
+        let translationId = mapVersionToHelloAO(version)
+        let bookId = mapBookAbbrevToHelloAO(bookAbbrev)
+        
+        let helloChapter = try await helloAOService.fetchChapter(
+            translation: translationId,
+            book: bookId,
+            chapter: chapter
+        )
+        chapterData = helloAOService.adaptChapterToBibleChapter(helloChapter, bookAbbrev: bookAbbrev)
+        print("RWRW ✅ Fetched chapter from HelloAO API: \(chapterData.verses.count) verses")
         
         // Cache the result
         cacheManager.cacheChapter(chapterData, bookAbbrev: bookAbbrev, chapter: chapter, version: version)
@@ -634,34 +751,160 @@ final class BibleInteractor: BibleInteractorProtocol {
         return chapterData
     }
     
-    func searchVerses(query: String, version: String = "nlt") async throws -> BibleSearchResponse {
-        // Search is not cached due to dynamic nature
-        return try await apiService.searchVerses(version: version, query: query)
+    // Helper methods for mapping between APIs
+    private func mapVersionToHelloAO(_ version: String) -> String {
+        // Map common version names to HelloAO translation IDs
+        // Note: KJV is not available in HelloAO, so we map it to BSB
+        switch version.uppercased() {
+        case "KJV": return "BSB" // KJV not available, use BSB instead
+        case "BSB": return "BSB"
+        case "WEB": return "ENGWEBP"
+        case "ENGWEBP": return "ENGWEBP"
+        default: return "BSB" // Default to Berean Standard Bible
+        }
     }
     
-    func getRandomVerse(version: String = "nlt") async throws -> RandomVerse {
-        // Random verses are not cached
-        return try await apiService.fetchRandomVerse(version: version)
+    private func mapBookAbbrevToHelloAO(_ abbrev: String) -> String {
+        return Self.bookAbbrevMapping[abbrev.lowercased()] ?? abbrev.uppercased()
+    }
+    
+    
+    func searchVerses(query: String, version: String = "kjv") async throws -> BibleSearchResponse {
+        print("RWRW 🔍 searchVerses called with query: \(query)")
+        
+        // HelloAO doesn't have search API, implement client-side search
+        print("RWRW ⚠️ HelloAO API doesn't support search, using client-side search")
+        
+        // For now, return empty results
+        // TODO: Implement client-side search by fetching and searching through books
+        return BibleSearchResponse(
+            occurrence: 0,
+            version: version,
+            verses: []
+        )
+    }
+    
+    func getRandomVerse(version: String = "kjv") async throws -> RandomVerse {
+        print("RWRW 🎲 getRandomVerse called")
+        
+        // HelloAO doesn't have random verse API, implement client-side
+        print("RWRW ⚠️ HelloAO API doesn't support random verse, generating client-side")
+        
+        // Generate a random verse from cached or known verses
+        let randomBook = ["JHN", "PSA", "PRO", "MAT", "ROM", "1CO", "EPH", "PHP"].randomElement() ?? "JHN"
+        let randomChapter = Int.random(in: 1...3)
+        let randomVerseNum = Int.random(in: 1...16)
+        
+        do {
+            // Fetch the chapter
+            let translationId = mapVersionToHelloAO(version)
+            let chapter = try await helloAOService.fetchChapter(
+                translation: translationId,
+                book: randomBook,
+                chapter: randomChapter
+            )
+            
+            // Find a verse from the chapter
+            if let verseContent = chapter.chapter.content.first(where: { $0.type == "verse" && $0.number == randomVerseNum }) {
+                let verseText = extractVerseTextFromContent(verseContent)
+                
+                return RandomVerse(
+                    book: BibleBookInfo(
+                        abbrev: BibleBookAbbrev(pt: randomBook.lowercased(), en: randomBook.lowercased()),
+                        name: chapter.book.name,
+                        author: "",
+                        group: "General",
+                        version: version
+                    ),
+                    chapter: randomChapter,
+                    number: randomVerseNum,
+                    text: verseText
+                )
+            }
+        } catch {
+            print("RWRW ❌ Failed to get random verse: \(error)")
+        }
+        
+        // Fallback to a default verse
+        return RandomVerse(
+            book: BibleBookInfo(
+                abbrev: BibleBookAbbrev(pt: "jhn", en: "jhn"),
+                name: "John",
+                author: "John",
+                group: "Gospel",
+                version: version
+            ),
+            chapter: 3,
+            number: 16,
+            text: "For God so loved the world that he gave his one and only Son, that whoever believes in him shall not perish but have eternal life."
+        )
+    }
+    
+    private func extractVerseTextFromContent(_ content: HelloAOContent) -> String {
+        guard let contentItems = content.content else { return "" }
+        
+        var textParts: [String] = []
+        for item in contentItems {
+            switch item {
+            case .text(let text):
+                textParts.append(text)
+            case .footnoteRef(_):
+                // Skip footnote references for now
+                break
+            case .unknown:
+                break
+            }
+        }
+        
+        return textParts.joined(separator: " ")
     }
     
     func loadVersions() async throws -> [BibleVersion] {
+        print("RWRW 🔍 BibleInteractor.loadVersions() called (using HelloAO API)")
+        
         // Check cache first
         if let cachedVersions = cacheManager.getCachedVersions() {
+            print("RWRW ✅ Found \(cachedVersions.count) versions in cache, returning cached versions")
+            print("RWRW 📚 Cached versions: \(cachedVersions.map { $0.version }.joined(separator: ", "))")
             return cachedVersions
         }
         
+        print("RWRW ❌ No cached versions found, fetching from API...")
+        
         // Try to fetch from API
         do {
-            let versions = try await apiService.fetchVersions()
+            let versions: [BibleVersion]
+            
+            // Use HelloAO API
+            print("RWRW 📖 Fetching translations from HelloAO API")
+            let translations = try await helloAOService.fetchAvailableTranslations()
+            
+            // Filter for English translations and convert to BibleVersion
+            let englishTranslations = translations.filter { 
+                $0.language == "en" || $0.languageEnglishName.lowercased().contains("english")
+            }
+            
+            let rawVersions = englishTranslations.map { helloAOService.adaptTranslationToBibleVersion($0) }
+            
+            // Remove duplicates based on version ID to prevent ForEach issues
+            versions = Array(Dictionary(grouping: rawVersions, by: \.version).compactMapValues(\.first).values)
+            print("RWRW ✅ Fetched \(rawVersions.count) raw versions, deduplicated to \(versions.count) unique versions from HelloAO API")
+            print("RWRW 📚 Available versions: \(versions.map { $0.version }.joined(separator: ", "))")
             
             // Cache the result
+            print("RWRW 💾 Caching \(versions.count) versions for future use")
             cacheManager.cacheVersions(versions)
             
             return versions
         } catch {
             print("RWRW ⚠️ API failed for versions, using fallback versions: \(error)")
             // If API fails, return fallback versions
-            let fallbackVersions = getFallbackVersions()
+            let rawFallbackVersions = getFallbackVersions()
+            
+            // Remove duplicates based on version ID to prevent ForEach issues
+            let fallbackVersions = Array(Dictionary(grouping: rawFallbackVersions, by: \.version).compactMapValues(\.first).values)
+            
+            print("RWRW 🔄 Returning \(rawFallbackVersions.count) raw fallback versions, deduplicated to \(fallbackVersions.count) unique versions")
             // Cache the fallback versions so they're available offline
             cacheManager.cacheVersions(fallbackVersions)
             return fallbackVersions
@@ -671,20 +914,13 @@ final class BibleInteractor: BibleInteractorProtocol {
     // MARK: - Fallback Versions Data
     private func getFallbackVersions() -> [BibleVersion] {
         return [
+            // English versions first (commonly available)
             BibleVersion(
-                version: "nlt",
-                verses: 31102,
-            ),
-            BibleVersion(
-                version: "niv",
+                version: "kjv",
                 verses: 31102,
             ),
             BibleVersion(
                 version: "esv",
-                verses: 31102,
-            ),
-            BibleVersion(
-                version: "kjv",
                 verses: 31102,
             ),
             BibleVersion(
@@ -697,6 +933,23 @@ final class BibleInteractor: BibleInteractorProtocol {
             ),
             BibleVersion(
                 version: "csb",
+                verses: 31102,
+            ),
+            BibleVersion(
+                version: "niv",
+                verses: 31102,
+            ),
+            BibleVersion(
+                version: "bsb",
+                verses: 31102,
+            ),
+            // Portuguese versions (for Brazilian API)
+            BibleVersion(
+                version: "arc",
+                verses: 31102,
+            ),
+            BibleVersion(
+                version: "nvi-pt",
                 verses: 31102,
             ),
             BibleVersion(
@@ -850,8 +1103,14 @@ final class BibleInteractor: BibleInteractorProtocol {
         cacheManager.clearAllCache()
     }
     
-    func getCacheSize() -> Int64 {
-        return cacheManager.getCacheSize()
+    func clearVersionsCache() {
+        // Clear only the versions cache to force refresh
+        cacheManager.clearVersionsCache()
+        print("RWRW 🗑️ Cleared versions cache to force refresh")
+    }
+    
+    func getCacheSize() async -> Int64 {
+        return await cacheManager.getCacheSize()
     }
 }
 

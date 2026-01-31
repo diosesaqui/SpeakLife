@@ -103,7 +103,12 @@ struct BibleView: View {
                             }
                             
                             Button(action: {
-                                Task { await viewModel.loadDailyVerse() }
+                                Task { 
+                                    await viewModel.loadDailyVerse()
+                                    if viewModel.dailyVerse != nil {
+                                        showDailyVerseDetail = true
+                                    }
+                                }
                             }) {
                                 Label("Daily Verse", systemImage: "quote.bubble.fill")
                             }
@@ -155,6 +160,38 @@ struct BibleView: View {
             .sheet(isPresented: $showDailyVerseDetail) {
                 if let dailyVerse = viewModel.dailyVerse {
                     DailyVerseDetailView(verse: dailyVerse)
+                } else {
+                    // Loading view while verse is being fetched
+                    NavigationView {
+                        VStack(spacing: 20) {
+                            ProgressView()
+                                .progressViewStyle(CircularProgressViewStyle())
+                                .scaleEffect(1.5)
+                            
+                            Text("Loading Daily Verse...")
+                                .font(.system(size: 16, weight: .medium))
+                                .foregroundColor(.secondary)
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .navigationTitle("Daily Verse")
+                        .navigationBarTitleDisplayMode(.inline)
+                        .toolbar {
+                            ToolbarItem(placement: .navigationBarTrailing) {
+                                Button("Cancel") {
+                                    showDailyVerseDetail = false
+                                }
+                            }
+                        }
+                    }
+                    .onAppear {
+                        Task {
+                            await viewModel.loadDailyVerse()
+                            if viewModel.dailyVerse == nil {
+                                // If still no verse after loading, dismiss
+                                showDailyVerseDetail = false
+                            }
+                        }
+                    }
                 }
             }
             .onChange(of: viewModel.isAuthenticated) { newValue in

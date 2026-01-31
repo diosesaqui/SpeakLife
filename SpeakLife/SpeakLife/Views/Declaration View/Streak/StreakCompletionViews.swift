@@ -743,11 +743,9 @@ struct CompletionCelebrationView: View {
                 // Main content with enhanced animations
                 if showContent {
                     VStack(spacing: 32) {
-                        // Stunning fire display with glow
-                        StunningFireDisplay(
-                            streakNumber: celebration.streakNumber,
-                            showContent: showContent
-                        )
+                        // New delightful celebration animation
+                        StreakCompletionCelebrationView(streakCount: celebration.streakNumber)
+                            .frame(width: 200, height: 200)
                         
                         // Animated days text with typewriter effect
                         AnimatedDaysText(showContent: showContent)

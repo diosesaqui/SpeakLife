@@ -15,6 +15,7 @@ struct BibleReaderView: View {
     @State private var selectedVerse: VerseDisplayModel?
     @State private var showVerseActions = false
     @State private var loadError = false
+    @State private var currentChapterId: String = ""
     @AppStorage("BibleReaderFont") private var selectedFont = "Georgia"
     @AppStorage("BibleLineSpacing") private var lineSpacing: Double = 8
     
@@ -36,6 +37,7 @@ struct BibleReaderView: View {
                     }
                     .padding(.horizontal)
                     .padding(.top)
+                    .id("chapter-header")
                     
                     // Verses
                     VStack(alignment: .leading, spacing: lineSpacing) {
@@ -58,7 +60,15 @@ struct BibleReaderView: View {
                     HStack {
                         if chapter.previousChapter != nil {
                             Button(action: {
-                                Task { await viewModel.navigateToPreviousChapter() }
+                                Task { 
+                                    await viewModel.navigateToPreviousChapter()
+                                    // Scroll to top after navigation
+                                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                                        withAnimation(.easeInOut(duration: 0.5)) {
+                                            proxy.scrollTo("chapter-header", anchor: .top)
+                                        }
+                                    }
+                                }
                             }) {
                                 HStack {
                                     Image(systemName: "chevron.left")
@@ -79,7 +89,15 @@ struct BibleReaderView: View {
                         
                         if chapter.nextChapter != nil {
                             Button(action: {
-                                Task { await viewModel.navigateToNextChapter() }
+                                Task { 
+                                    await viewModel.navigateToNextChapter()
+                                    // Scroll to top after navigation
+                                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                                        withAnimation(.easeInOut(duration: 0.5)) {
+                                            proxy.scrollTo("chapter-header", anchor: .top)
+                                        }
+                                    }
+                                }
                             }) {
                                 HStack {
                                     Text("Next")

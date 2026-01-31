@@ -13,10 +13,11 @@ struct TimerStreakDetailView: View {
     
     var body: some View {
         NavigationView {
-            VStack(spacing: 30) {
-                // Streak Stats
-                VStack(spacing: 20) {
-                    HStack(spacing: 40) {
+            ScrollView {
+                VStack(spacing: 24) {
+                    // Streak Stats
+                    VStack(spacing: 16) {
+                        HStack(spacing: 30) {
                         StatBox(
                             title: "Current Streak",
                             value: "\(timerViewModel.currentStreak)",
@@ -40,15 +41,25 @@ struct TimerStreakDetailView: View {
                     )
                     .frame(maxWidth: 150)
                 }
-                .padding(.top, 20)
+                .padding(.top, 10)
                 
                 Divider()
                 
                 // Timer Section
-                VStack(spacing: 20) {
-                    Text("Today's Meditation")
-                        .font(.headline)
-                        .foregroundColor(.secondary)
+                VStack(spacing: 16) {
+                    
+                    Text("Speak Life Daily")
+                        .font(.system(size: 22, weight: .semibold, design: .rounded))
+                        .foregroundColor(.white)
+
+                    Text("Practice God's presence and speak His Word—He promised to never leave you.")
+                        .foregroundColor(.white.opacity(0.85))
+                        .font(.system(size: 14, weight: .regular))
+                        .multilineTextAlignment(.center)
+                        .lineSpacing(2)
+                        .padding(.horizontal, 24)
+                        .fixedSize(horizontal: false, vertical: true)
+                    
                     
                     if timerViewModel.checkIfCompletedToday() {
                         VStack(spacing: 10) {
@@ -81,17 +92,17 @@ struct TimerStreakDetailView: View {
                                 .rotationEffect(Angle(degrees: -90))
                                 .animation(.easeInOut(duration: 0.5), value: timerViewModel.timeRemaining)
                             
-                            VStack(spacing: 8) {
+                            VStack(spacing: 4) {
                                 Text(timerViewModel.timeString(time: timerViewModel.timeRemaining))
-                                    .font(.system(size: 36, weight: .bold, design: .monospaced))
+                                    .font(.system(size: 32, weight: .bold, design: .monospaced))
                                     .foregroundColor(.primary)
                                 
                                 Text("minutes remaining")
-                                    .font(.caption)
+                                    .font(.system(size: 12))
                                     .foregroundColor(.secondary)
                             }
                         }
-                        .frame(width: 200, height: 200)
+                        .frame(width: 180, height: 180)
                         
                         // Auto-start timer if not active
                         .onAppear {
@@ -102,10 +113,10 @@ struct TimerStreakDetailView: View {
                     }
                 }
                 
-                Spacer()
-                
+                }
             }
-            .padding()
+            .padding(.horizontal)
+            .padding(.vertical, 12)
             .navigationTitle("Streak Progress")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -142,22 +153,22 @@ struct StatBox: View {
     let color: Color
     
     var body: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: 6) {
             Image(systemName: icon)
-                .font(.system(size: 24, weight: .medium))
+                .font(.system(size: 22, weight: .medium))
                 .foregroundColor(color)
             
             Text(value)
-                .font(.system(size: 28, weight: .bold, design: .rounded))
+                .font(.system(size: 26, weight: .bold, design: .rounded))
                 .foregroundColor(.primary)
             
             Text(title)
-                .font(.system(size: 12, weight: .medium))
+                .font(.system(size: 11, weight: .medium))
                 .foregroundColor(.secondary)
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 16)
-        .padding(.horizontal, 12)
+        .padding(.vertical, 14)
+        .padding(.horizontal, 10)
         .background(
             RoundedRectangle(cornerRadius: 16)
                 .fill(Color(UIColor.secondarySystemBackground))

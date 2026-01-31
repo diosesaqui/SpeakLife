@@ -14,11 +14,17 @@ final class BibleCacheManager {
     
     init() {
         // Create cache directory
-        let documentsPath = fileManager.urls(for: .cachesDirectory, in: .userDomainMask).first!
+        guard let documentsPath = fileManager.urls(for: .cachesDirectory, in: .userDomainMask).first else {
+            fatalError("Unable to access cache directory")
+        }
         cacheDirectory = documentsPath.appendingPathComponent("BibleCache")
         
         // Ensure directory exists
-        try? fileManager.createDirectory(at: cacheDirectory, withIntermediateDirectories: true)
+        do {
+            try fileManager.createDirectory(at: cacheDirectory, withIntermediateDirectories: true)
+        } catch {
+            print("Error creating cache directory: \(error)")
+        }
     }
     
     // MARK: - Books Cache
@@ -90,18 +96,25 @@ final class BibleCacheManager {
         try? fileManager.createDirectory(at: cacheDirectory, withIntermediateDirectories: true)
     }
     
-    func getCacheSize() -> Int64 {
-        var size: Int64 = 0
-        
-        if let enumerator = fileManager.enumerator(at: cacheDirectory, includingPropertiesForKeys: [.fileSizeKey]) {
-            for case let fileURL as URL in enumerator {
-                if let fileSize = try? fileURL.resourceValues(forKeys: [.fileSizeKey]).fileSize {
-                    size += Int64(fileSize)
+    func clearVersionsCache() {
+        let url = cacheDirectory.appendingPathComponent("versions.json")
+        try? fileManager.removeItem(at: url)
+    }
+    
+    func getCacheSize() async -> Int64 {
+        return await Task {
+            var size: Int64 = 0
+            
+            if let enumerator = fileManager.enumerator(at: cacheDirectory, includingPropertiesForKeys: [.fileSizeKey]) {
+                for case let fileURL as URL in enumerator {
+                    if let fileSize = try? fileURL.resourceValues(forKeys: [.fileSizeKey]).fileSize {
+                        size += Int64(fileSize)
+                    }
                 }
             }
-        }
-        
-        return size
+            
+            return size
+        }.value
     }
     
     private func isCacheExpired(url: URL) -> Bool {
