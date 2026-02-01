@@ -9,9 +9,10 @@ import Foundation
 import Combine
 import SwiftUI
 import FirebaseStorage
+import FirebaseRemoteConfigInternal
 
 final class LocalAPIClient: APIService {
-    static let affirmationFilePath = "declarationsv7.json"
+    @AppStorage("declarationsFileName") private var declarationsFileName = "declarationsv7.json"
     @AppStorage("declarationCountFile") var declarationCountFile = 0
     @AppStorage("declarationCountBE") var declarationCountBE = 0
     @AppStorage("firstInstallDate") var firstInstallDate: Date?
@@ -21,10 +22,16 @@ final class LocalAPIClient: APIService {
     @AppStorage("localVersion") var localVersion = 0
     @AppStorage("audioLocalVersion") var audioLocalVersion = 0
     
+    private var remoteConfig = RemoteConfig.remoteConfig()
+    
     func declarations(completion: @escaping([Declaration], APIError?, Bool) -> Void) {
         if firstInstallDate == nil {
             firstInstallDate = Date()
         }
+        
+        // Update declarations file name from remote config if available
+        updateDeclarationsFileName()
+        
         self.loadFromBackEnd() { [weak self] declarations, error, needsSync in
             var favorites: [Declaration] = []
             var myOwn: [Declaration] = []
@@ -166,9 +173,11 @@ final class LocalAPIClient: APIService {
                 completion(data)
             }
         } else {
+            // Extract filename without extension
+            let fileName = declarationsFileName.replacingOccurrences(of: ".json", with: "")
             guard
-                let url = Bundle.main.url(forResource: "declarationsv7", withExtension: "json") else {
-                print("Cannot find declarations file")
+                let url = Bundle.main.url(forResource: fileName, withExtension: "json") else {
+                print("Cannot find declarations file: \(fileName).json")
                 return
             }
                 guard let data = try? Data(contentsOf: url) else {
@@ -228,6 +237,15 @@ final class LocalAPIClient: APIService {
             } else {
                 completion([], APIError.failedDecode, false)
             }
+        }
+    }
+    
+    private func updateDeclarationsFileName() {
+        // Fetch the declarations file name from remote config
+        let configFileName = remoteConfig["declarationsFileName"].stringValue
+        if !configFileName.isEmpty && configFileName != declarationsFileName {
+            print("Updating declarations file name from \(declarationsFileName) to \(configFileName)")
+            declarationsFileName = configFileName
         }
     }
     
@@ -310,7 +328,7 @@ final class LocalAPIClient: APIService {
     
     func downloadDeclarations(completion: @escaping((Data?, Error?) -> Void))  {
         let storage = Storage.storage()
-        let jsonRef = storage.reference(withPath: LocalAPIClient.affirmationFilePath)
+        let jsonRef = storage.reference(withPath: declarationsFileName)
 
         // Download the file into memory with a maximum allowed size of 2MB (4 * 1024 * 1024 bytes)
         jsonRef.getData(maxSize: 4 * 1024 * 1024) { data, error in

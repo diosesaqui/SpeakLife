@@ -181,6 +181,7 @@
 		45BC76442EFD2775003AC964 /* ModernCelebrationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45BC76432EFD2775003AC964 /* ModernCelebrationView.swift */; };
 		45BC76762F04B284003AC964 /* FirstDeclarationGuideView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45BC76752F04B284003AC964 /* FirstDeclarationGuideView.swift */; };
 		45BCBA9A2C360245001F28C4 /* BibleStory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45BCBA992C360245001F28C4 /* BibleStory.swift */; };
+		45C15A782F2E9B27006171F5 /* declarationsv10.json in Sources */ = {isa = PBXBuildFile; fileRef = 45C15A772F2E9B21006171F5 /* declarationsv10.json */; };
 		45C7481F2B55B4B80011D8F6 /* FacebookCore in Frameworks */ = {isa = PBXBuildFile; productRef = 45C7481E2B55B4B80011D8F6 /* FacebookCore */; };
 		45C748232B5802C60011D8F6 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 45C748222B5802C60011D8F6 /* GoogleService-Info.plist */; };
 		45C748302B5BC4330011D8F6 /* AudioPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45C7482F2B5BC4330011D8F6 /* AudioPlayer.swift */; };
@@ -503,6 +504,7 @@
 		45BC76432EFD2775003AC964 /* ModernCelebrationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModernCelebrationView.swift; sourceTree = "<group>"; };
 		45BC76752F04B284003AC964 /* FirstDeclarationGuideView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirstDeclarationGuideView.swift; sourceTree = "<group>"; };
 		45BCBA992C360245001F28C4 /* BibleStory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BibleStory.swift; sourceTree = "<group>"; };
+		45C15A772F2E9B21006171F5 /* declarationsv10.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = declarationsv10.json; sourceTree = "<group>"; };
 		45C748222B5802C60011D8F6 /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = "GoogleService-Info.plist"; path = "../../../../Downloads/GoogleService-Info.plist"; sourceTree = "<group>"; };
 		45C748242B5802CA0011D8F6 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		45C7482F2B5BC4330011D8F6 /* AudioPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioPlayer.swift; sourceTree = "<group>"; };
@@ -1061,6 +1063,7 @@
 		7A00721628F8ED4A00965AF7 /* AffirmationData */ = {
 			isa = PBXGroup;
 			children = (
+				45C15A772F2E9B21006171F5 /* declarationsv10.json */,
 				457D531A2D964AA10098A49A /* audioDevotionals.json */,
 				45FF718D2E6294330048C523 /* declarationsv7_backup.json */,
 				7A00721728F8ED4A00965AF7 /* declarations.json */,
@@ -1854,6 +1857,7 @@
 				4568BE8F2B60EB1300678565 /* LoadingView.swift in Sources */,
 				7ABA50C729E4D996002699F1 /* PrayerViewModel.swift in Sources */,
 				7AA870C828DACCB700134ADB /* FontChooserView.swift in Sources */,
+				45C15A782F2E9B27006171F5 /* declarationsv10.json in Sources */,
 				45F6D8962F2AFCE700C0B98D /* HelloAOBibleAPIServiceTest.swift in Sources */,
 				7AA8709028DACCA700134ADB /* SelectionFeedback.swift in Sources */,
 				7AA870CC28DACCB700134ADB /* SettingsRow.swift in Sources */,

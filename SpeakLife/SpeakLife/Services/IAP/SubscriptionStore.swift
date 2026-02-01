@@ -213,6 +213,12 @@ final class SubscriptionStore: ObservableObject {
         // Sync to UserDefaults for TaskLibrary access
         UserDefaults.standard.set(enableAIFeatures, forKey: "enableAIFeatures")
         
+        // Declarations file name from Remote Config
+        let declarationsFileName = remoteConfig["declarationsFileName"].stringValue
+        if !declarationsFileName.isEmpty {
+            UserDefaults.standard.set(declarationsFileName, forKey: "declarationsFileName")
+        }
+        
         yearlyID = yearlySubscription
         monthlyID = monthlySubscription
         discountID = discountSubscription
