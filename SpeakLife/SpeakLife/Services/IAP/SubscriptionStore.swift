@@ -57,6 +57,9 @@ final class SubscriptionStore: ObservableObject {
     @Published var showTestimonyTab = false
     @Published var offerFreeTrial = false
     
+    // MARK: - Enhanced Onboarding Toggle
+    @Published var useEnhancedOnboarding = false
+    
     // MARK: - AI Feature Flag
     @Published var enableAIFeatures = false
     
@@ -206,6 +209,9 @@ final class SubscriptionStore: ObservableObject {
         showMostPopularBadge = remoteConfig["showMostPopularBadge"].boolValue
         showTestimonyTab = remoteConfig["showTestimonyTab"].boolValue
         offerFreeTrial = remoteConfig["offerFreeTrial"].boolValue
+        
+        // Enhanced Onboarding Toggle from Remote Config
+        useEnhancedOnboarding = remoteConfig["useEnhancedOnboarding"].boolValue
         
         // AI Feature Flag from Remote Config
         enableAIFeatures = remoteConfig["enableAIFeatures"].boolValue

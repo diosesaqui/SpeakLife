@@ -15,9 +15,8 @@ struct OnboardingView: View  {
     @EnvironmentObject var streakViewModel: StreakViewModel
     @Environment(\.colorScheme) var colorScheme
     
-    @State var selection: Tab = .hook
-    @StateObject var improvementViewModel = ImprovementViewModel()
-    @AppStorage("onboardingTab") var onboardingTab = Tab.hook.rawValue
+    @State var selection: Tab = .scriptureAnchor
+    @AppStorage("onboardingTab") var onboardingTab = Tab.scriptureAnchor.rawValue
     @State private var isTextVisible = false
    
     let impactMed = UIImpactFeedbackGenerator(style: .soft)
@@ -26,62 +25,89 @@ struct OnboardingView: View  {
         GeometryReader { geometry in
             TabView(selection: $selection) {
                 
-                // STEP 1: Hook Screen
-                HookScene(size: geometry.size) {
+                // SCREEN 1: Scripture Anchor
+                ScriptureAnchorScreen(size: geometry.size) {
                     withAnimation {
                         advance()
                     }
                 }
-                .tag(Tab.hook)
+                .tag(Tab.scriptureAnchor)
                 
-                // Category selection screen
-                CombinedPersonalizationScene(
-                    size: geometry.size,
-                    viewModel: improvementViewModel
-                ) {
+                // SCREEN 2: Reframe Problem
+                ReframeProblemScreen(size: geometry.size) {
                     withAnimation {
                         advance()
                     }
                 }
-                .tag(Tab.transformedLife)
+                .tag(Tab.reframeProblem)
                 
-                // First Declaration Guide Screen
-                FirstDeclarationGuideView(
-                    size: geometry.size
-                ) {
+                // SCREEN 3: Jesus Method
+                JesusMethodScreen(size: geometry.size) {
                     withAnimation {
                         advance()
                     }
                 }
-                .tag(Tab.firstDeclaration)
+                .tag(Tab.jesusMethod)
                 
-                // STEP 2: Personalization Summary Screen
-                PersonalizationSummaryScene(
-                    size: geometry.size,
-                    selectedCategories: improvementViewModel.selectedExperiences
-                ) {
+                // SCREEN 4: Self-Diagnosis
+                SelfDiagnosisScreen(size: geometry.size) {
                     withAnimation {
                         advance()
                     }
                 }
-                .tag(Tab.personalizationSummary)
+                .tag(Tab.selfDiagnosis)
                 
+                // SCREEN 5: Truth Gap
+                TruthGapScreen(size: geometry.size) {
+                    withAnimation {
+                        advance()
+                    }
+                }
+                .tag(Tab.truthGap)
+                
+                // SCREEN 6: Application
+                ApplicationScreen(size: geometry.size) {
+                    withAnimation {
+                        advance()
+                    }
+                }
+                .tag(Tab.application)
+                
+                // SCREEN 7: Micro-Commitment
+                MicroCommitmentScreen(size: geometry.size) {
+                    withAnimation {
+                        advance()
+                    }
+                }
+                .tag(Tab.microCommitment)
+                
+                // SCREEN 8: Position SpeakLife
+                PositionSpeakLifeScreen(size: geometry.size) {
+                    withAnimation {
+                        advance()
+                    }
+                }
+                .tag(Tab.positionSpeakLife)
+                
+                // Subscription Screen
+                subscriptionScene(size: geometry.size)
+                    .tag(Tab.subscription)
+                    
+                // Notification Screen
                 NotificationOnboarding(size: geometry.size) {
                     withAnimation {
                         askNotificationPermission()
                     }
                 }
                 .tag(Tab.notification)
-
-                subscriptionScene(size: geometry.size)
-                    .tag(Tab.subscription)
                 
                 
             }
-            .ignoresSafeArea()
             .tabViewStyle(.page(indexDisplayMode: .never))
             .font(.headline)
+            .ignoresSafeArea()
         }
+        .ignoresSafeArea()
         .preferredColorScheme(.light)
       
         .onAppear {
@@ -135,69 +161,67 @@ struct OnboardingView: View  {
     
     private func advance() {
         switch selection {
-                case .hook:
+                case .scriptureAnchor:
                     impactMed.impactOccurred()
-                    selection = .transformedLife
+                    selection = .reframeProblem
                     onboardingTab = selection.rawValue
-                    Analytics.logEvent("HookScreenDone", parameters: nil)
+                    Analytics.logEvent("ScriptureAnchorDone", parameters: nil)
                     
-                case .transformedLife:
-                    // Category selection completed
+                case .reframeProblem:
                     impactMed.impactOccurred()
-                    selection = .firstDeclaration
+                    selection = .jesusMethod
                     onboardingTab = selection.rawValue
-                    decodeCategories(improvementViewModel.selectedExperiences)
-                    Analytics.logEvent("CombinedPersonalizationDone", parameters: [
-                        "categories_count": improvementViewModel.selectedExperiences.count
-                    ])
+                    Analytics.logEvent("ReframeProblemDone", parameters: nil)
                     
-                case .firstDeclaration:
-                    // First declaration guide completed
+                case .jesusMethod:
                     impactMed.impactOccurred()
-                    selection = .personalizationSummary
+                    selection = .selfDiagnosis
                     onboardingTab = selection.rawValue
-                    Analytics.logEvent("FirstDeclarationGuideDone", parameters: nil)
+                    Analytics.logEvent("JesusMethodDone", parameters: nil)
                     
-                case .personalizationSummary:
+                case .selfDiagnosis:
                     impactMed.impactOccurred()
-                    selection = .notification
+                    selection = .truthGap
                     onboardingTab = selection.rawValue
-                    Analytics.logEvent("PersonalizationSummaryDone", parameters: nil)
+                    Analytics.logEvent("SelfDiagnosisDone", parameters: nil)
                     
-                case .improvement:
-                    // This case won't be used with new flow
+                case .truthGap:
                     impactMed.impactOccurred()
-                    selection = .notification
+                    selection = .application
                     onboardingTab = selection.rawValue
-                    decodeCategories(improvementViewModel.selectedExperiences)
-                    Analytics.logEvent("ImprovementScreenDone", parameters: nil)
+                    Analytics.logEvent("TruthGapDone", parameters: nil)
                     
-                    
-                case .notification:
+                case .application:
                     impactMed.impactOccurred()
-                    selection = .subscription
+                    selection = .microCommitment
                     onboardingTab = selection.rawValue
-                    Analytics.logEvent("NotificationScreenDone", parameters: nil)
+                    Analytics.logEvent("ApplicationDone", parameters: nil)
                     
-                case .review:
+                case .microCommitment:
+                    impactMed.impactOccurred()
+                    selection = .positionSpeakLife
+                    onboardingTab = selection.rawValue
+                    Analytics.logEvent("MicroCommitmentDone", parameters: nil)
+                    
+                case .positionSpeakLife:
                     impactMed.impactOccurred()
                     selection = .subscription
                     onboardingTab = selection.rawValue
-                    Analytics.logEvent("ReviewScreenDone", parameters: nil)
+                    Analytics.logEvent("PositionSpeakLifeDone", parameters: nil)
                     
                 case .subscription:
+                    impactMed.impactOccurred()
+                    selection = .notification
+                    onboardingTab = selection.rawValue
                     Analytics.logEvent("SubscriptionScreenDone", parameters: nil)
+                    
+                case .notification:
+                    Analytics.logEvent("NotificationScreenDone", parameters: nil)
                     impactMed.impactOccurred()
                     dismissOnboarding()
         }
     }
     
-    private func decodeCategories(_ categories: [DeclarationCategory]) {
-        let uniqueCategories = Set(categories)
-        let categoriesString = uniqueCategories.map { $0.rawValue }.joined(separator: ",")
-        appState.selectedNotificationCategories = categoriesString
-        viewModel.save(uniqueCategories)
-    }
     
     
     private func askNotificationPermission() {
@@ -238,11 +262,15 @@ struct OnboardingView: View  {
     
     private func registerNotifications() {
         if appState.notificationEnabled {
-            let categories = Set(appState.selectedNotificationCategories.components(separatedBy: ",").compactMap({ DeclarationCategory($0) }))
+            // Set default categories for new onboarding flow
+            let defaultCategories: Set<DeclarationCategory> = [.faith, .confidence, .wisdom, .speaklife]
+            appState.selectedNotificationCategories = defaultCategories.map { $0.rawValue }.joined(separator: ",")
+            viewModel.save(defaultCategories)
+            
             NotificationManager.shared.registerNotifications(count: appState.notificationCount,
                                                              startTime: appState.startTimeIndex,
                                                              endTime: appState.endTimeIndex,
-                                                             categories: categories)
+                                                             categories: defaultCategories)
             appState.lastNotificationSetDate = Date()
         }
     }

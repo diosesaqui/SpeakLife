@@ -190,8 +190,8 @@ struct HomeView: View {
                             }
                   
                 } else {
-                    // Choose between original and enhanced onboarding based on flag
-                    if appState.useEnhancedOnboarding {
+                    // Choose between original and enhanced onboarding based on Firebase Remote Config
+                    if subscriptionStore.useEnhancedOnboarding {
                         EnhancedOnboardingViewRefactored()
                             .onAppear {
                                 viewModel.requestPermission { granted in
@@ -219,7 +219,7 @@ struct HomeView: View {
             TabView(selection: $tabViewModel.selectedTab) {
                 declarationView
                 audioView
-               // bibleView
+              //  bibleView
                 // dailyChecklistView // Moved to DeclarationView
                 createYourOwnView
                 profileView

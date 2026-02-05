@@ -37,10 +37,23 @@ protocol BibleInteractorProtocol {
     func getCacheSize() async -> Int64
 }
 
+enum BibleAPIProvider: String, CaseIterable {
+    case wldeh = "Wldeh Bible API"
+    case helloAO = "HelloAO Bible API"
+    case abiblia = "A Biblia Digital API"
+    
+    var displayName: String { rawValue }
+}
+
 final class BibleInteractor: BibleInteractorProtocol {
     private let helloAOService: HelloAOBibleAPIService
+    private let wldehService: WldehBibleAPIService
+    private let bibliaService: BibleAPIService
     private let cacheManager: BibleCacheManager
     private let userDefaults = UserDefaults.standard
+    
+    // Current API provider - can be changed via settings
+    private var currentProvider: BibleAPIProvider = .wldeh
     
     // Static mapping to avoid recreation - this is safer
     private static let bookAbbrevMapping: [String: String] = {
@@ -127,12 +140,34 @@ final class BibleInteractor: BibleInteractorProtocol {
     
     init() {
         self.helloAOService = HelloAOBibleAPIService.shared
+        self.wldehService = WldehBibleAPIService.shared
+        self.bibliaService = BibleAPIService.shared
         self.cacheManager = BibleCacheManager()
+        
+        // Load saved provider preference
+        if let savedProvider = userDefaults.string(forKey: "BibleAPIProvider"),
+           let provider = BibleAPIProvider(rawValue: savedProvider) {
+            currentProvider = provider
+        }
+    }
+    
+    // Method to switch API provider
+    func setAPIProvider(_ provider: BibleAPIProvider) {
+        currentProvider = provider
+        userDefaults.set(provider.rawValue, forKey: "BibleAPIProvider")
+        // Clear cache when switching providers
+        clearCache()
+        clearVersionsCache()
+    }
+    
+    // Get current provider
+    func getCurrentProvider() -> BibleAPIProvider {
+        return currentProvider
     }
     
     // MARK: - API Operations
     func loadBooks() async throws -> [BibleBook] {
-        print("RWRW 🔍 BibleInteractor.loadBooks() called (using HelloAO API)")
+        print("RWRW 🔍 BibleInteractor.loadBooks() called (using \(currentProvider.displayName))")
         
         // Check cache first
         if let cachedBooks = cacheManager.getCachedBooks() {
@@ -146,11 +181,21 @@ final class BibleInteractor: BibleInteractorProtocol {
         do {
             let books: [BibleBook]
             
-            // Use HelloAO API
-            print("RWRW 📖 Fetching books from HelloAO API")
-            let helloBooks = try await helloAOService.fetchBooks()
-            books = helloBooks.map { helloAOService.adaptBookToBibleBook($0) }
-            print("RWRW ✅ Fetched \(books.count) books from HelloAO API")
+            switch currentProvider {
+            case .wldeh:
+                print("RWRW 📖 Fetching books from Wldeh API")
+                books = try await wldehService.fetchBooks()
+                print("RWRW ✅ Fetched \(books.count) books from Wldeh API")
+            case .helloAO:
+                print("RWRW 📖 Fetching books from HelloAO API")
+                let helloBooks = try await helloAOService.fetchBooks()
+                books = helloBooks.map { helloAOService.adaptBookToBibleBook($0) }
+                print("RWRW ✅ Fetched \(books.count) books from HelloAO API")
+            case .abiblia:
+                print("RWRW 📖 Fetching books from A Biblia Digital API")
+                books = try await bibliaService.fetchBooks()
+                print("RWRW ✅ Fetched \(books.count) books from A Biblia Digital API")
+            }
             
             // Cache the result
             cacheManager.cacheBooks(books)
@@ -729,18 +774,38 @@ final class BibleInteractor: BibleInteractorProtocol {
         // Fetch from API
         let chapterData: BibleChapter
         
-        // Use HelloAO API - need to map version and book names
-        print("RWRW 📖 Fetching chapter from HelloAO API")
-        let translationId = mapVersionToHelloAO(version)
-        let bookId = mapBookAbbrevToHelloAO(bookAbbrev)
-        
-        let helloChapter = try await helloAOService.fetchChapter(
-            translation: translationId,
-            book: bookId,
-            chapter: chapter
-        )
-        chapterData = helloAOService.adaptChapterToBibleChapter(helloChapter, bookAbbrev: bookAbbrev)
-        print("RWRW ✅ Fetched chapter from HelloAO API: \(chapterData.verses.count) verses")
+        switch currentProvider {
+        case .wldeh:
+            print("RWRW 📖 Fetching chapter from Wldeh API")
+            chapterData = try await wldehService.fetchChapter(
+                version: version,
+                abbrev: bookAbbrev,
+                chapter: chapter
+            )
+            print("RWRW ✅ Fetched chapter from Wldeh API: \(chapterData.verses.count) verses")
+            
+        case .helloAO:
+            print("RWRW 📖 Fetching chapter from HelloAO API")
+            let translationId = mapVersionToHelloAO(version)
+            let bookId = mapBookAbbrevToHelloAO(bookAbbrev)
+            
+            let helloChapter = try await helloAOService.fetchChapter(
+                translation: translationId,
+                book: bookId,
+                chapter: chapter
+            )
+            chapterData = helloAOService.adaptChapterToBibleChapter(helloChapter, bookAbbrev: bookAbbrev)
+            print("RWRW ✅ Fetched chapter from HelloAO API: \(chapterData.verses.count) verses")
+            
+        case .abiblia:
+            print("RWRW 📖 Fetching chapter from A Biblia Digital API")
+            chapterData = try await bibliaService.fetchChapter(
+                version: version,
+                abbrev: bookAbbrev,
+                chapter: chapter
+            )
+            print("RWRW ✅ Fetched chapter from A Biblia Digital API: \(chapterData.verses.count) verses")
+        }
         
         // Cache the result
         cacheManager.cacheChapter(chapterData, bookAbbrev: bookAbbrev, chapter: chapter, version: version)
@@ -875,20 +940,33 @@ final class BibleInteractor: BibleInteractorProtocol {
         do {
             let versions: [BibleVersion]
             
-            // Use HelloAO API
-            print("RWRW 📖 Fetching translations from HelloAO API")
-            let translations = try await helloAOService.fetchAvailableTranslations()
-            
-            // Filter for English translations and convert to BibleVersion
-            let englishTranslations = translations.filter { 
-                $0.language == "en" || $0.languageEnglishName.lowercased().contains("english")
+            switch currentProvider {
+            case .wldeh:
+                print("RWRW 📖 Fetching versions from Wldeh API")
+                versions = try await wldehService.fetchVersions()
+                print("RWRW ✅ Fetched \(versions.count) versions from Wldeh API")
+                
+            case .helloAO:
+                print("RWRW 📖 Fetching translations from HelloAO API")
+                let translations = try await helloAOService.fetchAvailableTranslations()
+                
+                // Filter for English translations and convert to BibleVersion
+                let englishTranslations = translations.filter { 
+                    $0.language == "en" || $0.languageEnglishName.lowercased().contains("english")
+                }
+                
+                let rawVersions = englishTranslations.map { helloAOService.adaptTranslationToBibleVersion($0) }
+                
+                // Remove duplicates based on version ID to prevent ForEach issues
+                versions = Array(Dictionary(grouping: rawVersions, by: \.version).compactMapValues(\.first).values)
+                print("RWRW ✅ Fetched \(rawVersions.count) raw versions, deduplicated to \(versions.count) unique versions from HelloAO API")
+                
+            case .abiblia:
+                print("RWRW 📖 Fetching versions from A Biblia Digital API")
+                versions = try await bibliaService.fetchVersions()
+                print("RWRW ✅ Fetched \(versions.count) versions from A Biblia Digital API")
             }
             
-            let rawVersions = englishTranslations.map { helloAOService.adaptTranslationToBibleVersion($0) }
-            
-            // Remove duplicates based on version ID to prevent ForEach issues
-            versions = Array(Dictionary(grouping: rawVersions, by: \.version).compactMapValues(\.first).values)
-            print("RWRW ✅ Fetched \(rawVersions.count) raw versions, deduplicated to \(versions.count) unique versions from HelloAO API")
             print("RWRW 📚 Available versions: \(versions.map { $0.version }.joined(separator: ", "))")
             
             // Cache the result

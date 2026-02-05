@@ -19,7 +19,7 @@ final class BibleViewModel: ObservableObject {
     @Published var bookmarks: [BibleBookmark] = []
     @Published var dailyVerse: RandomVerse?
     @Published var availableVersions: [BibleVersion] = []
-    @Published var selectedVersion: String = "bsb" // Default to BSB (Berean Standard Bible)
+    @Published var selectedVersion: String = "kjv" // Default to KJV (King James Version)
     
     @Published var isLoading = false
     @Published var errorMessage: String?
@@ -252,10 +252,85 @@ final class BibleViewModel: ObservableObject {
     }
     
     func loadDailyVerse() async {
+        // Check if we have a cached daily verse for today
+        let todayString = DateFormatter.localizedString(from: Date(), dateStyle: .short, timeStyle: .none)
+        let cachedDateKey = "DailyVerseDate"
+        let cachedVerseKey = "DailyVerseData"
+        
+        // Check if we already have today's verse
+        if let cachedDate = UserDefaults.standard.string(forKey: cachedDateKey),
+           cachedDate == todayString,
+           let cachedVerseData = UserDefaults.standard.data(forKey: cachedVerseKey),
+           let cachedVerse = try? JSONDecoder().decode(RandomVerse.self, from: cachedVerseData) {
+            // Use cached verse if it's from today
+            await MainActor.run {
+                dailyVerse = cachedVerse
+            }
+            print("RWRW ✅ Using cached daily verse from today: \(cachedVerse.book.name) \(cachedVerse.chapter):\(cachedVerse.number)")
+            return
+        }
+        
+        // Fetch a new verse for today
+        print("RWRW 📖 Fetching new daily verse for: \(todayString)")
+        
         do {
-            dailyVerse = try await interactor.getRandomVerse(version: selectedVersion)
+            let verse = try await interactor.getRandomVerse(version: selectedVersion)
+            
+            // Validate the verse has content
+            if verse.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                print("RWRW ⚠️ Daily verse text is empty, using fallback")
+                // Use a fallback verse
+                let fallbackVerse = RandomVerse(
+                    book: BibleBookInfo(
+                        abbrev: BibleBookAbbrev(pt: "jn", en: "jn"),
+                        name: "John",
+                        author: "John",
+                        group: "Gospel",
+                        version: selectedVersion
+                    ),
+                    chapter: 3,
+                    number: 16,
+                    text: "For God so loved the world, that he gave his only begotten Son, that whosoever believeth in him should not perish, but have everlasting life."
+                )
+                await MainActor.run {
+                    dailyVerse = fallbackVerse
+                }
+                saveDailyVerse(fallbackVerse, date: todayString)
+            } else {
+                await MainActor.run {
+                    dailyVerse = verse
+                }
+                saveDailyVerse(verse, date: todayString)
+                print("RWRW ✅ New daily verse loaded and cached: \(verse.book.name) \(verse.chapter):\(verse.number)")
+            }
         } catch {
-            print("Failed to load daily verse: \(error)")
+            print("RWRW ❌ Failed to load daily verse: \(error)")
+            // Use a fallback verse on error
+            let fallbackVerse = RandomVerse(
+                book: BibleBookInfo(
+                    abbrev: BibleBookAbbrev(pt: "phil", en: "phil"),
+                    name: "Philippians",
+                    author: "Paul",
+                    group: "Epistle",
+                    version: selectedVersion
+                ),
+                chapter: 4,
+                number: 13,
+                text: "I can do all things through Christ which strengtheneth me."
+            )
+            await MainActor.run {
+                dailyVerse = fallbackVerse
+            }
+            saveDailyVerse(fallbackVerse, date: todayString)
+        }
+    }
+    
+    private func saveDailyVerse(_ verse: RandomVerse, date: String) {
+        // Save the verse and date to UserDefaults
+        if let encoded = try? JSONEncoder().encode(verse) {
+            UserDefaults.standard.set(encoded, forKey: "DailyVerseData")
+            UserDefaults.standard.set(date, forKey: "DailyVerseDate")
+            print("RWRW 💾 Daily verse cached for date: \(date)")
         }
     }
     
@@ -425,12 +500,19 @@ final class BibleViewModel: ObservableObject {
     
     // MARK: - Version Management
     func changeVersion(_ version: String) async {
-        selectedVersion = version
+        await MainActor.run {
+            selectedVersion = version
+        }
         UserDefaults.standard.set(version, forKey: "SelectedBibleVersion")
         
+        // Clear current chapter to force UI update
+        await MainActor.run {
+            currentChapter = nil
+        }
+        
         // Reload current chapter if viewing one
-        if let book = selectedBook, let chapter = currentChapter {
-            await loadChapter(bookAbbrev: book.abbreviation.lowercased(), chapterNumber: chapter.chapterNumber)
+        if let book = selectedBook {
+            await loadChapter(bookAbbrev: book.abbreviation.lowercased(), chapterNumber: selectedChapterNumber)
         }
         
         // Reload daily verse

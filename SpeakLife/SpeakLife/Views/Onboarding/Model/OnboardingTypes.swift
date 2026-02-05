@@ -9,13 +9,15 @@ import Foundation
 
 enum Tab: String {
     
-    case hook
-    case transformedLife
-    case firstDeclaration
-    case personalizationSummary
+    case scriptureAnchor
+    case reframeProblem
+    case jesusMethod
+    case selfDiagnosis
+    case truthGap
+    case application
+    case microCommitment
+    case positionSpeakLife
     case notification
-    case improvement
-    case review
     case subscription
     
 }

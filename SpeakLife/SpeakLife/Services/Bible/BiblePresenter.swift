@@ -41,6 +41,7 @@ struct ChapterDisplayModel {
     let nextChapter: (book: String, chapter: Int)?
     let previousChapter: (book: String, chapter: Int)?
     let totalVerses: Int
+    let version: String
 }
 
 struct VerseDisplayModel: Identifiable {
@@ -145,7 +146,8 @@ final class BiblePresenter: BiblePresenterProtocol {
             verses: verses,
             nextChapter: nextChapter,
             previousChapter: previousChapter,
-            totalVerses: chapter.chapter.verses
+            totalVerses: chapter.chapter.verses,
+            version: chapter.book.version
         )
     }
     

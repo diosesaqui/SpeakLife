@@ -252,23 +252,21 @@ struct BibleSettingsView: View {
                     HStack {
                         Text("Bible API")
                         Spacer()
-                        Text("HelloAO Bible API")
+                        Text("Wldeh Bible API")
                             .foregroundColor(.white.opacity(0.8))
                     }
                     
                     HStack {
                         Text("Default Translation")
                         Spacer()
-                        Text("Berean Standard Bible")
+                        Text("King James Version")
                             .foregroundColor(.white.opacity(0.8))
                     }
                     
+                    
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("Powered by HelloAO")
+                        Text("Powered by Wldeh Bible API")
                             .font(.system(size: 14, weight: .medium))
-                        Text("High-quality Bible translations and study resources")
-                            .font(.system(size: 12))
-                            .foregroundColor(.white.opacity(0.6))
                     }
                 }
             }

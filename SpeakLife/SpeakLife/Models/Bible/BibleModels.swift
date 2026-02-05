@@ -75,9 +75,11 @@ struct BibleVersion: Codable, Identifiable {
     
     var displayName: String {
         switch version.lowercased() {
+        case "asv": return "American Standard Version"
+        case "kjv": return "King James Version"
+        case "web": return "World English Bible"
         case "nlt": return "New Living Translation"
         case "niv": return "New International Version"
-        case "kjv": return "King James Version"
         case "esv": return "English Standard Version"
         case "msg": return "The Message"
         case "amp": return "Amplified Bible"
