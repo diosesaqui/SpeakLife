@@ -60,6 +60,9 @@ final class SubscriptionStore: ObservableObject {
     // MARK: - Enhanced Onboarding Toggle
     @Published var useEnhancedOnboarding = false
     
+    // MARK: - Spiritual Warfare Onboarding Toggle
+    @Published var useSpiritualWarfareOnboarding: Bool? = false
+    
     // MARK: - AI Feature Flag
     @Published var enableAIFeatures = false
     
@@ -207,6 +210,9 @@ final class SubscriptionStore: ObservableObject {
         
         // Enhanced Onboarding Toggle from Remote Config
         useEnhancedOnboarding = remoteConfig["useEnhancedOnboarding"].boolValue
+        
+        // Spiritual Warfare Onboarding Toggle from Remote Config
+        useSpiritualWarfareOnboarding = remoteConfig["useSpiritualWarfareOnboarding"].boolValue
         
         // AI Feature Flag from Remote Config
         enableAIFeatures = remoteConfig["enableAIFeatures"].boolValue

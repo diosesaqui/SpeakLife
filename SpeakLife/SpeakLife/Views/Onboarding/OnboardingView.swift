@@ -298,7 +298,7 @@ struct OnboardingView_Previews: PreviewProvider {
 }
 
 // MARK: - Elegant Close Button Component
-private struct ElegantCloseButton: View {
+public struct ElegantCloseButton: View {
     // MARK: - Configuration
     struct Configuration {
         let size: CGFloat
@@ -338,7 +338,7 @@ private struct ElegantCloseButton: View {
     }
     
     // MARK: - View Body
-    var body: some View {
+    public var body: some View {
         Button(action: handleAction) {
             buttonContent
         }

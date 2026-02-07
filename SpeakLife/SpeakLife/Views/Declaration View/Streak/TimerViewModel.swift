@@ -31,7 +31,10 @@ final class TimerViewModel: ObservableObject {
 
     
     init() {
-        checkAndUpdateCompletionDate()
+        // Only start timer if onboarding is completed
+        if UserDefaults.standard.bool(forKey: "isOnboarded") {
+            checkAndUpdateCompletionDate()
+        }
 //        if !newStreakNotification {
 //            registerStreakNotification()
 //            newStreakNotification = true
@@ -227,6 +230,11 @@ final class TimerViewModel: ObservableObject {
         isActive = false
         timer?.invalidate()
         timer = nil
+    }
+    
+    func startTimerAfterOnboarding() {
+        // Called when onboarding completes to start the daily timer
+        checkAndUpdateCompletionDate()
     }
     
     

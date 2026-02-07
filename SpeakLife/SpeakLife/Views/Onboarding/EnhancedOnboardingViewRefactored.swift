@@ -395,121 +395,121 @@ struct EnhancedOnboardingViewRefactored: View {
 
 
 // MARK: - Elegant Close Button Component
-private struct ElegantCloseButton: View {
-    struct Configuration {
-        let size: CGFloat
-        let iconSize: CGFloat
-        let shadowRadius: CGFloat
-        let shadowOffset: CGSize
-        let animationResponse: Double
-        let animationDamping: Double
-        
-        static let `default` = Configuration(
-            size: 36,
-            iconSize: 16,
-            shadowRadius: 8,
-            shadowOffset: CGSize(width: 0, height: 4),
-            animationResponse: 0.4,
-            animationDamping: 0.6
-        )
-    }
-    
-    private let action: () -> Void
-    private let configuration: Configuration
-    private let isVisible: Bool
-    private let enableHaptics: Bool
-    
-    init(
-        configuration: Configuration = .default,
-        isVisible: Bool = true,
-        enableHaptics: Bool = true,
-        action: @escaping () -> Void
-    ) {
-        self.configuration = configuration
-        self.isVisible = isVisible
-        self.enableHaptics = enableHaptics
-        self.action = action
-    }
-    
-    var body: some View {
-        Button(action: handleAction) {
-            buttonContent
-        }
-        .buttonStyle(PlainButtonStyle())
-        .scaleEffect(isVisible ? 1.0 : 0.8)
-        .opacity(isVisible ? 1.0 : 0.0)
-    }
-    
-    private var buttonContent: some View {
-        ZStack {
-            backgroundView
-            iconView
-        }
-        .frame(width: configuration.size, height: configuration.size)
-        .shadow(
-            color: Color.black.opacity(0.1),
-            radius: configuration.shadowRadius,
-            x: configuration.shadowOffset.width,
-            y: configuration.shadowOffset.height
-        )
-    }
-    
-    private var backgroundView: some View {
-        Circle()
-            .fill(backgroundGradient)
-            .background(Circle().fill(.ultraThinMaterial))
-            .overlay(Circle().stroke(borderGradient, lineWidth: 1))
-    }
-    
-    private var iconView: some View {
-        Image(systemName: "xmark")
-            .font(.system(size: configuration.iconSize, weight: .semibold, design: .rounded))
-            .foregroundStyle(iconGradient)
-    }
-    
-    private var backgroundGradient: LinearGradient {
-        LinearGradient(
-            gradient: Gradient(colors: [
-                Color.white.opacity(0.25),
-                Color.white.opacity(0.1)
-            ]),
-            startPoint: .topLeading,
-            endPoint: .bottomTrailing
-        )
-    }
-    
-    private var borderGradient: LinearGradient {
-        LinearGradient(
-            gradient: Gradient(colors: [
-                Color.white.opacity(0.3),
-                Color.white.opacity(0.1)
-            ]),
-            startPoint: .topLeading,
-            endPoint: .bottomTrailing
-        )
-    }
-    
-    private var iconGradient: LinearGradient {
-        LinearGradient(
-            gradient: Gradient(colors: [
-                Color.white.opacity(0.9),
-                Color.white.opacity(0.7)
-            ]),
-            startPoint: .topLeading,
-            endPoint: .bottomTrailing
-        )
-    }
-    
-    private func handleAction() {
-        if enableHaptics {
-            UIImpactFeedbackGenerator(style: .soft).impactOccurred()
-        }
-        
-        withAnimation(.spring(
-            response: configuration.animationResponse,
-            dampingFraction: configuration.animationDamping
-        )) {
-            action()
-        }
-    }
-}
+//private struct ElegantCloseButton: View {
+//    struct Configuration {
+//        let size: CGFloat
+//        let iconSize: CGFloat
+//        let shadowRadius: CGFloat
+//        let shadowOffset: CGSize
+//        let animationResponse: Double
+//        let animationDamping: Double
+//        
+//        static let `default` = Configuration(
+//            size: 36,
+//            iconSize: 16,
+//            shadowRadius: 8,
+//            shadowOffset: CGSize(width: 0, height: 4),
+//            animationResponse: 0.4,
+//            animationDamping: 0.6
+//        )
+//    }
+//    
+//    private let action: () -> Void
+//    private let configuration: Configuration
+//    private let isVisible: Bool
+//    private let enableHaptics: Bool
+//    
+//    init(
+//        configuration: Configuration = .default,
+//        isVisible: Bool = true,
+//        enableHaptics: Bool = true,
+//        action: @escaping () -> Void
+//    ) {
+//        self.configuration = configuration
+//        self.isVisible = isVisible
+//        self.enableHaptics = enableHaptics
+//        self.action = action
+//    }
+//    
+//    var body: some View {
+//        Button(action: handleAction) {
+//            buttonContent
+//        }
+//        .buttonStyle(PlainButtonStyle())
+//        .scaleEffect(isVisible ? 1.0 : 0.8)
+//        .opacity(isVisible ? 1.0 : 0.0)
+//    }
+//    
+//    private var buttonContent: some View {
+//        ZStack {
+//            backgroundView
+//            iconView
+//        }
+//        .frame(width: configuration.size, height: configuration.size)
+//        .shadow(
+//            color: Color.black.opacity(0.1),
+//            radius: configuration.shadowRadius,
+//            x: configuration.shadowOffset.width,
+//            y: configuration.shadowOffset.height
+//        )
+//    }
+//    
+//    private var backgroundView: some View {
+//        Circle()
+//            .fill(backgroundGradient)
+//            .background(Circle().fill(.ultraThinMaterial))
+//            .overlay(Circle().stroke(borderGradient, lineWidth: 1))
+//    }
+//    
+//    private var iconView: some View {
+//        Image(systemName: "xmark")
+//            .font(.system(size: configuration.iconSize, weight: .semibold, design: .rounded))
+//            .foregroundStyle(iconGradient)
+//    }
+//    
+//    private var backgroundGradient: LinearGradient {
+//        LinearGradient(
+//            gradient: Gradient(colors: [
+//                Color.white.opacity(0.25),
+//                Color.white.opacity(0.1)
+//            ]),
+//            startPoint: .topLeading,
+//            endPoint: .bottomTrailing
+//        )
+//    }
+//    
+//    private var borderGradient: LinearGradient {
+//        LinearGradient(
+//            gradient: Gradient(colors: [
+//                Color.white.opacity(0.3),
+//                Color.white.opacity(0.1)
+//            ]),
+//            startPoint: .topLeading,
+//            endPoint: .bottomTrailing
+//        )
+//    }
+//    
+//    private var iconGradient: LinearGradient {
+//        LinearGradient(
+//            gradient: Gradient(colors: [
+//                Color.white.opacity(0.9),
+//                Color.white.opacity(0.7)
+//            ]),
+//            startPoint: .topLeading,
+//            endPoint: .bottomTrailing
+//        )
+//    }
+//    
+//    private func handleAction() {
+//        if enableHaptics {
+//            UIImpactFeedbackGenerator(style: .soft).impactOccurred()
+//        }
+//        
+//        withAnimation(.spring(
+//            response: configuration.animationResponse,
+//            dampingFraction: configuration.animationDamping
+//        )) {
+//            action()
+//        }
+//    }
+//}

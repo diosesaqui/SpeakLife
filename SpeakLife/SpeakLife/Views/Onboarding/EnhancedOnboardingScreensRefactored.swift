@@ -400,6 +400,114 @@ struct OnboardingContentProvider {
         analyticsEvent: "CoreMessage_Complete"
     )
     
+    // Simplified spiritual warfare intro - will use custom screen
+    static let spiritualWarfare = OnboardingScreenContent(
+        title: "Your mind is under attack",
+        subtitle: "Every. Single. Day.",
+        options: [], // Custom screen will handle visuals
+        buttonTitle: "Show me how to fight back →",
+        screenType: .nonInteractive(delay: 3.0),
+        progressStep: 0,
+        analyticsEvent: "SpiritualWarfare_Intro"
+    )
+    
+    static let enemyEntry = OnboardingScreenContent(
+        title: "Recognize these whispers?",
+        subtitle: "\"You're not enough.\" \"God's forgotten you.\" \"Nothing will change.\" \"You'll always struggle.\"",
+        options: [],
+        buttonTitle: "Yes, I hear these lies →",
+        screenType: .nonInteractive(delay: 3.0),
+        progressStep: 1,
+        analyticsEvent: "EnemyEntry_Complete"
+    )
+    
+    static let thoughtAgreement = OnboardingScreenContent(
+        title: "When you agree with those thoughts, they become your reality",
+        subtitle: "That's how the enemy steals your peace, your joy, and your victory.",
+        options: [],
+        buttonTitle: "How do I stop this? →",
+        screenType: .nonInteractive(delay: 2.5),
+        progressStep: 2,
+        analyticsEvent: "ThoughtAgreement_Complete"
+    )
+    
+    static let biblicalSolution = OnboardingScreenContent(
+        title: "God gave you the solution",
+        subtitle: "\"Be transformed by the renewing of your mind\" - Romans 12:2",
+        options: [],
+        buttonTitle: "Show me how →",
+        screenType: .nonInteractive(delay: 2.5),
+        progressStep: 3,
+        analyticsEvent: "BiblicalSolution_Complete"
+    )
+    
+    static let thoughtIdentification = OnboardingScreenContent(
+        title: "Which thoughts try to steal from you most?",
+        subtitle: "Select all that feel familiar.",
+        options: [
+            OnboardingOption(title: "I'm not worthy of love", icon: "heart.slash", color: .red),
+            OnboardingOption(title: "My situation won't change", icon: "lock.circle", color: .red),
+            OnboardingOption(title: "God's disappointed in me", icon: "cloud.rain", color: .red),
+            OnboardingOption(title: "I'll always struggle with this", icon: "infinity.circle", color: .red),
+            OnboardingOption(title: "I'm too broken to be used", icon: "bandage", color: .red),
+            OnboardingOption(title: "Fear of the future", icon: "exclamationmark.triangle", color: .red)
+        ],
+        buttonTitle: "These attack me →",
+        screenType: .multiSelect(maxCount: 3),
+        progressStep: 4,
+        analyticsEvent: "ThoughtIdentification_Complete"
+    )
+    
+    static let victoryPosition = OnboardingScreenContent(
+        title: "Here's the truth that changes everything",
+        subtitle: "Jesus already defeated those lies. You're not fighting FOR victory. You're fighting FROM victory.",
+        options: [],
+        buttonTitle: "I receive this truth →",
+        screenType: .nonInteractive(delay: 3.0),
+        progressStep: 5,
+        analyticsEvent: "VictoryPosition_Complete"
+    )
+    
+    static let dailyRenewal = OnboardingScreenContent(
+        title: "Every morning, you have a choice",
+        subtitle: "React to your thoughts and spiral... or respond with God's truth and rise.",
+        options: [],
+        buttonTitle: "I choose truth →",
+        screenType: .nonInteractive(delay: 2.0),
+        progressStep: 6,
+        analyticsEvent: "DailyRenewal_Complete"
+    )
+    
+    static let speakLifeSolution = OnboardingScreenContent(
+        title: "SpeakLife trains you to win this battle",
+        subtitle: "Recognize lies. Replace with truth. Renew your mind. Every single day.",
+        options: [],
+        buttonTitle: "Start my training →",
+        screenType: .nonInteractive(delay: 2.0),
+        progressStep: 7,
+        analyticsEvent: "SpeakLifeSolution_Complete"
+    )
+    
+    static let mindRenewalBenefits = OnboardingScreenContent(
+        title: "In just 21 days of daily renewal",
+        subtitle: "Peace replaces anxiety. Faith overcomes fear. Joy defeats darkness. You walk in authority.",
+        options: [],
+        buttonTitle: "I want this transformation →",
+        screenType: .nonInteractive(delay: 2.5),
+        progressStep: 8,
+        analyticsEvent: "MindRenewalBenefits_Complete"
+    )
+    
+    static let commitmentCall = OnboardingScreenContent(
+        title: "Will you commit to renewing your mind?",
+        subtitle: "Just a few minutes each day can break years of mental strongholds.",
+        options: [],
+        buttonTitle: "Yes, I'm ready →",
+        screenType: .nonInteractive(delay: 2.0),
+        progressStep: 9,
+        analyticsEvent: "CommitmentCall_Complete"
+    )
+    
     static func transitionToPaywall(journey: OnboardingUserJourney) -> OnboardingScreenContent {
         let title = getPersonalizedTitle(journey: journey)
         let features = getPersonalizedFeatures(journey: journey)

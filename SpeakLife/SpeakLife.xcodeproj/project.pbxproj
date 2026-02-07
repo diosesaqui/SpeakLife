@@ -186,11 +186,13 @@
 		45C15A8C2F31BEB7006171F5 /* NewOnboardingScreens.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45C15A8B2F31BEB7006171F5 /* NewOnboardingScreens.swift */; };
 		45C15A8E2F35751A006171F5 /* TestimonialsOnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45C15A8D2F35751A006171F5 /* TestimonialsOnboardingView.swift */; };
 		45C15A902F357857006171F5 /* LazyJSONLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45C15A8F2F357857006171F5 /* LazyJSONLoader.swift */; };
+		45C15A922F36FCCF006171F5 /* SpiritualWarfareOnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45C15A912F36FCCF006171F5 /* SpiritualWarfareOnboardingView.swift */; };
+		45C15A942F3704EB006171F5 /* SpiritualWarfareContentScreens.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45C15A932F3704EB006171F5 /* SpiritualWarfareContentScreens.swift */; };
+		45C15A962F37064A006171F5 /* OptimizedSubscriptionViewV2.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45C15A952F37064A006171F5 /* OptimizedSubscriptionViewV2.swift */; };
+		45C15A982F370869006171F5 /* StreamlinedSpiritualWarfareFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45C15A972F370869006171F5 /* StreamlinedSpiritualWarfareFlow.swift */; };
 		45C7481F2B55B4B80011D8F6 /* FacebookCore in Frameworks */ = {isa = PBXBuildFile; productRef = 45C7481E2B55B4B80011D8F6 /* FacebookCore */; };
 		45C748232B5802C60011D8F6 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 45C748222B5802C60011D8F6 /* GoogleService-Info.plist */; };
 		45C748302B5BC4330011D8F6 /* AudioPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45C7482F2B5BC4330011D8F6 /* AudioPlayer.swift */; };
-		45CF27182B4E52C900BC8968 /* Personalization.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45CF27172B4E52C900BC8968 /* Personalization.swift */; };
-		45CF271A2B4E52EF00BC8968 /* HabitScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45CF27192B4E52EF00BC8968 /* HabitScene.swift */; };
 		45CF271C2B4E530300BC8968 /* ImprovementScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45CF271B2B4E530300BC8968 /* ImprovementScene.swift */; };
 		45D623032D8A8B280059C935 /* FirebaseFirestoreCombine-Community in Frameworks */ = {isa = PBXBuildFile; productRef = 45A4A3D72D8918BB00DFCEB7 /* FirebaseFirestoreCombine-Community */; };
 		45D6402B2CD218AE006F05AD /* declarationsv5.json in Resources */ = {isa = PBXBuildFile; fileRef = 45D6402A2CD218AE006F05AD /* declarationsv5.json */; };
@@ -514,11 +516,13 @@
 		45C15A8B2F31BEB7006171F5 /* NewOnboardingScreens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewOnboardingScreens.swift; sourceTree = "<group>"; };
 		45C15A8D2F35751A006171F5 /* TestimonialsOnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestimonialsOnboardingView.swift; sourceTree = "<group>"; };
 		45C15A8F2F357857006171F5 /* LazyJSONLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LazyJSONLoader.swift; sourceTree = "<group>"; };
+		45C15A912F36FCCF006171F5 /* SpiritualWarfareOnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpiritualWarfareOnboardingView.swift; sourceTree = "<group>"; };
+		45C15A932F3704EB006171F5 /* SpiritualWarfareContentScreens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpiritualWarfareContentScreens.swift; sourceTree = "<group>"; };
+		45C15A952F37064A006171F5 /* OptimizedSubscriptionViewV2.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OptimizedSubscriptionViewV2.swift; sourceTree = "<group>"; };
+		45C15A972F370869006171F5 /* StreamlinedSpiritualWarfareFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StreamlinedSpiritualWarfareFlow.swift; sourceTree = "<group>"; };
 		45C748222B5802C60011D8F6 /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = "GoogleService-Info.plist"; path = "../../../../Downloads/GoogleService-Info.plist"; sourceTree = "<group>"; };
 		45C748242B5802CA0011D8F6 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		45C7482F2B5BC4330011D8F6 /* AudioPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioPlayer.swift; sourceTree = "<group>"; };
-		45CF27172B4E52C900BC8968 /* Personalization.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Personalization.swift; sourceTree = "<group>"; };
-		45CF27192B4E52EF00BC8968 /* HabitScene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HabitScene.swift; sourceTree = "<group>"; };
 		45CF271B2B4E530300BC8968 /* ImprovementScene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImprovementScene.swift; sourceTree = "<group>"; };
 		45D6402A2CD218AE006F05AD /* declarationsv5.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = declarationsv5.json; sourceTree = "<group>"; };
 		45ED72C32BA10B3500F5F5E3 /* ConfettiView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfettiView.swift; sourceTree = "<group>"; };
@@ -1432,6 +1436,7 @@
 			children = (
 				7AA870A528DACCB700134ADB /* SubscriptionView.swift */,
 				457CD33F2E7E735A00F435EC /* OptimizedSubscriptionViewV1.swift */,
+				45C15A952F37064A006171F5 /* OptimizedSubscriptionViewV2.swift */,
 				4575C93F2E45AA00007C14F3 /* OptimizedSubscriptionView.swift */,
 				7AA870A628DACCB700134ADB /* PremiumView.swift */,
 				7AA870A728DACCB700134ADB /* SettingsRow.swift */,
@@ -1477,6 +1482,9 @@
 				45C15A8B2F31BEB7006171F5 /* NewOnboardingScreens.swift */,
 				45567D252F27239A00382072 /* EnhancedOnboardingScreensRefactored.swift */,
 				45567D272F2723FE00382072 /* EnhancedOnboardingViewRefactored.swift */,
+				45C15A932F3704EB006171F5 /* SpiritualWarfareContentScreens.swift */,
+				45C15A912F36FCCF006171F5 /* SpiritualWarfareOnboardingView.swift */,
+				45C15A972F370869006171F5 /* StreamlinedSpiritualWarfareFlow.swift */,
 				45567D292F27251400382072 /* EnhancedOnboardingModels.swift */,
 				45F3E75F2EB426CA002B1F4E /* CombinedPersonalizationScene.swift */,
 				46F66FE59AA649BFB7D06B09 /* HookScene.swift */,
@@ -1493,8 +1501,6 @@
 				7AA870B928DACCB700134ADB /* NotificationScene.swift */,
 				7AA870C128DACCB700134ADB /* WidgetScene.swift */,
 				453172B32B2D274800388AD4 /* BenefitScene.swift */,
-				45CF27172B4E52C900BC8968 /* Personalization.swift */,
-				45CF27192B4E52EF00BC8968 /* HabitScene.swift */,
 				45CF271B2B4E530300BC8968 /* ImprovementScene.swift */,
 				45BC76752F04B284003AC964 /* FirstDeclarationGuideView.swift */,
 				4568BE8E2B60EB1300678565 /* LoadingView.swift */,
@@ -1785,6 +1791,7 @@
 				45BC76342EF8058E003AC964 /* MicroInteractions.swift in Sources */,
 				4597E2262E419183009D6C66 /* VoiceCorrectionsView.swift in Sources */,
 				7AF18C8229FD2494005A6E31 /* Badge.swift in Sources */,
+				45C15A922F36FCCF006171F5 /* SpiritualWarfareOnboardingView.swift in Sources */,
 				7AA2AFCA29DA1BBF00176ADF /* ImagePicker.swift in Sources */,
 				45567D5E2F29CA5D00382072 /* BibleView.swift in Sources */,
 				45567D5F2F29CA5D00382072 /* BibleBookmarksView.swift in Sources */,
@@ -1822,7 +1829,6 @@
 				4548075E2E3F0D8400B8C71B /* EnhancedProgressRing.swift in Sources */,
 				4575C93E2E45A8B5007C14F3 /* DemoExperienceView.swift in Sources */,
 				7AA870D028DACCB700134ADB /* ReminderView.swift in Sources */,
-				45CF271A2B4E52EF00BC8968 /* HabitScene.swift in Sources */,
 				4597E2222E4146C9009D6C66 /* EntryActionToolbar.swift in Sources */,
 				4501F3912D8926CA00315902 /* TestimonyViewModel.swift in Sources */,
 				7AF18C962A0CC532005A6E31 /* DevotionalView.swift in Sources */,
@@ -1858,6 +1864,7 @@
 				7AA870CF28DACCB700134ADB /* MailView.swift in Sources */,
 				45F3E75B2EAAAD41002B1F4E /* CreateYourOwnTutorial.swift in Sources */,
 				7AF18C7D29FD1A67005A6E31 /* AdBanner.swift in Sources */,
+				45C15A982F370869006171F5 /* StreamlinedSpiritualWarfareFlow.swift in Sources */,
 				453172B42B2D274800388AD4 /* BenefitScene.swift in Sources */,
 				4575C9482E46F25B007C14F3 /* SiriIntents.swift in Sources */,
 				45F3E7632EB43B8A002B1F4E /* AnimatedDeclarationText.swift in Sources */,
@@ -1879,6 +1886,7 @@
 				7AA8709028DACCA700134ADB /* SelectionFeedback.swift in Sources */,
 				7AA870CC28DACCB700134ADB /* SettingsRow.swift in Sources */,
 				7ABA50C929E4DE60002699F1 /* PrayerDetailView.swift in Sources */,
+				45C15A962F37064A006171F5 /* OptimizedSubscriptionViewV2.swift in Sources */,
 				45B02FD02E57A48D00D12033 /* EmailMarketingService.swift in Sources */,
 				45B02FD12E57A48D00D12033 /* EmailMarketingConfig.swift in Sources */,
 				45BC74652EDA53FF003AC964 /* UserPreferencesTracker.swift in Sources */,
@@ -1930,7 +1938,6 @@
 				457DC1802CEEB47700C666D5 /* AudioPlayerViewModel.swift in Sources */,
 				452F6ACA2E87BA8300A27856 /* AnalyticsService.swift in Sources */,
 				454807542E3F049400B8C71B /* DailyChecklistView.swift in Sources */,
-				45CF27182B4E52C900BC8968 /* Personalization.swift in Sources */,
 				7AF46FC52A41326100A45C01 /* AbbasLoveView.swift in Sources */,
 				453A831E2C9BF18500398ECE /* DeclarationMenuButton.swift in Sources */,
 				7AF18C982A0CC541005A6E31 /* DevotionalViewModel.swift in Sources */,
@@ -1977,6 +1984,7 @@
 				457CD3982E84F88200F435EC /* AudioSectionModel.swift in Sources */,
 				457CD3992E84F88200F435EC /* AudioSectionViewModel.swift in Sources */,
 				452F6AD32E87CD3F00A27856 /* EnhancedAnalyticsService.swift in Sources */,
+				45C15A942F3704EB006171F5 /* SpiritualWarfareContentScreens.swift in Sources */,
 				45567D262F27239A00382072 /* EnhancedOnboardingScreensRefactored.swift in Sources */,
 				452F6AD42E87CD3F00A27856 /* RecommendationEngine.swift in Sources */,
 				452F6AD52E87CD3F00A27856 /* MLTaskLibrary.swift in Sources */,

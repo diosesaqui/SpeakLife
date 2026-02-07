@@ -188,7 +188,7 @@ struct HomeView: View {
                             }
                   
                 } else {
-                    // Choose between original and enhanced onboarding based on Firebase Remote Config
+
                     if subscriptionStore.useEnhancedOnboarding {
                         EnhancedOnboardingViewRefactored()
                             .onAppear {
@@ -198,7 +198,7 @@ struct HomeView: View {
                                 }
                             }
                     } else {
-                        OnboardingView()
+                        StreamlinedSpiritualWarfareFlow()
                             .onAppear {
                                 viewModel.requestPermission { granted in
                                     // Handle permission result if needed
