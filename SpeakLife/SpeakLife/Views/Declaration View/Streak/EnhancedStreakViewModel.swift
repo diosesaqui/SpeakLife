@@ -1163,7 +1163,6 @@ final class EnhancedStreakViewModel: ObservableObject {
         if let newBadge = badgeManager.recentlyUnlocked,
            badgeManager.unlockedBadgeCount > previousBadgeCount {
             
-            print("🏆 NEW BADGE UNLOCKED: \(newBadge.title) for \(newBadge.requirement.description)")
             
             // Show badge unlock after main celebrations if they're showing, otherwise immediately
             let delay: Double = (showFireAnimation || showCompletionCelebration) ? 6.0 : 1.0

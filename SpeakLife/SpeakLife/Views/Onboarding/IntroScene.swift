@@ -332,100 +332,100 @@ struct LoadingScene: View {
 }
 
 
-struct TestimonialScreen: View {
-    @EnvironmentObject var subscriptionStore: SubscriptionStore
-    @EnvironmentObject var appState: AppState
-    let size: CGSize
-    let callBack: (() -> Void)
-    @State private var currentIndex = 0
-    
-    let testimonials = [
-        Testimony(author: "Sophia M.", text: "The app is so centered on what we need in line with God’s promise over our life. I appreciate the idea behind this invention and great work,God inspiration and ideas never cease from the organization."),
-        Testimony(author: "Sophia M.", text: "SpeakLife has brought so much peace into my life. The reminders of God’s promises help me stay calm even on my toughest days."),
-        Testimony(author: "Emma R.", text: "I just found this App & everything I’ve read has been rooted in Scripture! I highly recommend getting this App to ensure (like myself) you are firmly rooted in the Truth & the Light of Christ in a World of Darkness, Selfishness, & Deceit! May we all find Peace, Grace, & Love by becoming everything our Heavenly Father designed us to be in this Life!"),
-        Testimony(author: "Purestarcep17", text: "I love Bible apps that give you access to more Bible knowledge and affirmations so as I was discovering all of wonderful things that were included in SpeakLife I decided that this was something I needed in my life and I am so glad that I did. Because it was so well put together and informative. I have shared it with many people. I thank God for you all."),
-        Testimony(author: "John K.", text: "I was fearful of losing my job and stumbled upon this app with God’s promises. I found one on how he would never leave me nor forsake me! I started saying it multiple times a day everyday! I ended up losing the job due to layoffs but got a new job paying 2x as much right before I was out of savings! Never missed a bill or anything! God is great! Thank you Speaklife!"),
-        Testimony(author: "Sophia M.", text: "I love how the app represents the WORD OF GOD and I appreciate the affirmations and peaceful quotes."),
-       
-    ]
+//struct TestimonialScreen: View {
+//    @EnvironmentObject var subscriptionStore: SubscriptionStore
+//    @EnvironmentObject var appState: AppState
+//    let size: CGSize
+//    let callBack: (() -> Void)
+//    @State private var currentIndex = 0
+//    
+//    let testimonials = [
+//        Testimony(author: "Sophia M.", text: "The app is so centered on what we need in line with God’s promise over our life. I appreciate the idea behind this invention and great work,God inspiration and ideas never cease from the organization."),
+//        Testimony(author: "Sophia M.", text: "SpeakLife has brought so much peace into my life. The reminders of God’s promises help me stay calm even on my toughest days."),
+//        Testimony(author: "Emma R.", text: "I just found this App & everything I’ve read has been rooted in Scripture! I highly recommend getting this App to ensure (like myself) you are firmly rooted in the Truth & the Light of Christ in a World of Darkness, Selfishness, & Deceit! May we all find Peace, Grace, & Love by becoming everything our Heavenly Father designed us to be in this Life!"),
+//        Testimony(author: "Purestarcep17", text: "I love Bible apps that give you access to more Bible knowledge and affirmations so as I was discovering all of wonderful things that were included in SpeakLife I decided that this was something I needed in my life and I am so glad that I did. Because it was so well put together and informative. I have shared it with many people. I thank God for you all."),
+//        Testimony(author: "John K.", text: "I was fearful of losing my job and stumbled upon this app with God’s promises. I found one on how he would never leave me nor forsake me! I started saying it multiple times a day everyday! I ended up losing the job due to layoffs but got a new job paying 2x as much right before I was out of savings! Never missed a bill or anything! God is great! Thank you Speaklife!"),
+//        Testimony(author: "Sophia M.", text: "I love how the app represents the WORD OF GOD and I appreciate the affirmations and peaceful quotes."),
+//       
+//    ]
+//
+//    var body: some View {
+//        VStack {
+//            Spacer().frame(height: 30)
+//            VStack(spacing: 30) {
+//                
+//                Text("Here's what others are saying")
+//                    .font(.system(size: 34, weight: .semibold, design: .rounded))
+//                    .foregroundColor(.white)
+//                    .multilineTextAlignment(.center)
+//                StarRatingView(rating: 4.9)
+//                Spacer()
+//                
+//                ScrollView(.horizontal, showsIndicators: false) {
+//                 
+//                        HStack(spacing: 20) {
+//                            TestimonialCard(testimonial: testimonials[0])
+//                            TestimonialCard(testimonial: testimonials[1])
+//                            TestimonialCard(testimonial: testimonials[2])
+//                            TestimonialCard(testimonial: testimonials[3])
+//                            TestimonialCard(testimonial: testimonials[4])
+//                            TestimonialCard(testimonial: testimonials[5])
+//                        }
+//                        .padding(.horizontal, 20)
+//                }
+//                .frame(height: 300)
+//                
+//                
+//                Spacer()
+//                
+//                ShimmerButton(colors: [.blue], buttonTitle: "Continue", action: callBack)
+//                    .frame(width: size.width * 0.87, height: 50)
+//                    //.shadow(color: Constants.DAMidBlue, radius: 8, x: 0, y: 10)
+//                    .cornerRadius(30)
+//                
+//            }
+//            Spacer()
+//                .frame(width: 5, height: size.height * 0.07)
+//        }
+//            .frame(width: size.width, height: size.height)
+//            .background(
+//                ZStack {
+//                    Image(subscriptionStore.onboardingBGImage)
+//                        .resizable()
+//                        .aspectRatio(contentMode: .fill)
+//                        .edgesIgnoringSafeArea(.all)
+//                    Color.black.opacity(0.1)
+//                        .edgesIgnoringSafeArea(.all)
+//                }
+//            )
+//        }
+//}
 
-    var body: some View {
-        VStack {
-            Spacer().frame(height: 30)
-            VStack(spacing: 30) {
-                
-                Text("Here's what others are saying")
-                    .font(.system(size: 34, weight: .semibold, design: .rounded))
-                    .foregroundColor(.white)
-                    .multilineTextAlignment(.center)
-                StarRatingView(rating: 4.9)
-                Spacer()
-                
-                ScrollView(.horizontal, showsIndicators: false) {
-                 
-                        HStack(spacing: 20) {
-                            TestimonialCard(testimonial: testimonials[0])
-                            TestimonialCard(testimonial: testimonials[1])
-                            TestimonialCard(testimonial: testimonials[2])
-                            TestimonialCard(testimonial: testimonials[3])
-                            TestimonialCard(testimonial: testimonials[4])
-                            TestimonialCard(testimonial: testimonials[5])
-                        }
-                        .padding(.horizontal, 20)
-                }
-                .frame(height: 300)
-                
-                
-                Spacer()
-                
-                ShimmerButton(colors: [.blue], buttonTitle: "Continue", action: callBack)
-                    .frame(width: size.width * 0.87, height: 50)
-                    //.shadow(color: Constants.DAMidBlue, radius: 8, x: 0, y: 10)
-                    .cornerRadius(30)
-                
-            }
-            Spacer()
-                .frame(width: 5, height: size.height * 0.07)
-        }
-            .frame(width: size.width, height: size.height)
-            .background(
-                ZStack {
-                    Image(subscriptionStore.onboardingBGImage)
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                        .edgesIgnoringSafeArea(.all)
-                    Color.black.opacity(0.1)
-                        .edgesIgnoringSafeArea(.all)
-                }
-            )
-        }
-}
+//struct Testimony: Identifiable {
+//    let id = UUID()
+//    let author: String
+//    let text: String
+//}
 
-struct Testimony: Identifiable {
-    let id = UUID()
-    let author: String
-    let text: String
-}
-
-struct TestimonialCard: View {
-
-    let testimonial: Testimony
-
-    var body: some View {
-        VStack(spacing: 20) {
-            Text("“\(testimonial.text)”")
-                .font(Font.custom("AppleSDGothicNeo-Regular", size: 16, relativeTo: .body))
-                .multilineTextAlignment(.center)
-                .foregroundColor(.white)
-                .padding(.horizontal, 20)
-        }
-        .frame(width: 260, height: 300)
-            .padding()
-            .background(BlurView(style: .dark))
-            .cornerRadius(20)
-            .shadow(color: .black.opacity(0.2), radius: 10, x: 0, y: 5)
-    }
-}
+//struct TestimonialCard: View {
+//
+//    let testimonial: Testimony
+//
+//    var body: some View {
+//        VStack(spacing: 20) {
+//            Text("“\(testimonial.text)”")
+//                .font(Font.custom("AppleSDGothicNeo-Regular", size: 16, relativeTo: .body))
+//                .multilineTextAlignment(.center)
+//                .foregroundColor(.white)
+//                .padding(.horizontal, 20)
+//        }
+//        .frame(width: 260, height: 300)
+//            .padding()
+//            .background(BlurView(style: .dark))
+//            .cornerRadius(20)
+//            .shadow(color: .black.opacity(0.2), radius: 10, x: 0, y: 5)
+//    }
+//}
 
 
 import SwiftUI

@@ -96,7 +96,6 @@ struct AppGroupsDebugView: View {
             favorites = widgetDefaults?.stringArray(forKey: "widgetFavorites") ?? []
             
             // Debug print
-            print("🔍 AppGroupsDebugView loaded")
             print("   App Group available:", widgetDefaults != nil)
             print("   Favorites count:", favorites.count)
         }

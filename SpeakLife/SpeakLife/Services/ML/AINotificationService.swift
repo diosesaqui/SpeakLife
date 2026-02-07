@@ -23,6 +23,7 @@ final class AINotificationService {
         timeRange: ClosedRange<Int> = 7...21
     ) async {
         guard await requestNotificationPermission() else {
+            // Warning: 
             print("⚠️ Notification permission not granted")
             return
         }
@@ -404,7 +405,6 @@ final class AINotificationService {
         
         do {
             try await notificationCenter.add(request)
-            print("📱 Scheduled AI notification: \(aiNotification.personalizedTitle) at \(components.hour ?? 0):00")
         } catch {
             print("❌ Failed to schedule notification: \(error)")
         }

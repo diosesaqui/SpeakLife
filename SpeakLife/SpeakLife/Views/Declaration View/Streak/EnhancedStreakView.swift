@@ -495,9 +495,6 @@ struct EnhancedStreakStatsView: View {
                 isHero: true
             )
             .onAppear {
-                print("🔥 STATS DEBUG: Current streak displayed in stats: \(viewModel.streakStats.currentStreak)")
-                print("🔥 STATS DEBUG: Longest streak: \(viewModel.streakStats.longestStreak)")
-                print("🔥 STATS DEBUG: Total completed: \(viewModel.streakStats.totalDaysCompleted)")
             }
             
             // Secondary stats in elegant grid
@@ -596,7 +593,6 @@ struct StreakShareButton: View {
                 Text("Share My \(viewModel.streakStats.currentStreak) Day Streak!")
                     .font(.system(size: 16, weight: .bold, design: .rounded))
                     .onAppear {
-                        print("🔥 SHARE BUTTON DEBUG: Current streak displayed: \(viewModel.streakStats.currentStreak)")
                     }
             }
             .foregroundColor(.white)
@@ -693,7 +689,6 @@ struct StreakShareButton: View {
         let resizedImage = resizeImageForInstagram(shareImage, targetSize: targetSize)
         
         // Use Photos approach for reliable Instagram sharing
-        print("📱 Using Photos approach for reliable Instagram sharing")
         trySaveToPhotosForManualShare(image: resizedImage)
     }
     
@@ -719,17 +714,14 @@ struct StreakShareButton: View {
     }
     
     private func shareToInstagramStories(image: UIImage) -> Bool {
-        print("🚀 Starting Instagram Stories sharing...")
         
         // Method 1: Try the pasteboard approach for Instagram Stories
-        print("🔄 Trying pasteboard approach for Instagram Stories")
         if shareToInstagramViaPasteboard(image: image) {
             print("✅ Instagram Stories pasteboard method initiated")
             return true
         }
         
         // Method 2: Photos fallback (always works)
-        print("🔄 Using Photos fallback for reliable sharing")
         return trySaveToPhotosForManualShare(image: image)
     }
     
@@ -773,7 +765,6 @@ struct StreakShareButton: View {
         pasteboard.image = resizedImage
         
         print("✅ Pasteboard configured with Instagram format")
-        print("📱 Opening Instagram Stories...")
         
         // Open Instagram Stories
         UIApplication.shared.open(instagramStoriesURL, options: [:]) { success in

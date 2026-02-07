@@ -16,7 +16,6 @@ final class CreateMLTrainingPipeline {
     // MARK: - iOS AI Initialization
     
     func trainInitialModels() async {
-        print("📱 Initializing iOS AI system with existing declaration data...")
         
         // Track initialization start
         EnhancedAnalyticsService.shared.trackMLTraining(
@@ -39,7 +38,6 @@ final class CreateMLTrainingPipeline {
     }
     
     private func initializeAIServices() async {
-        print("🔄 Initializing iOS AI services...")
         
         // Initialize content categorization service with heuristic-based categorization
         ContentCategorizationService.shared.initializeForIOS()

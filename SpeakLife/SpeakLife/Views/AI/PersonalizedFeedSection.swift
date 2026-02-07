@@ -237,7 +237,6 @@ struct TodayRecommendationsSection: View {
                 RecommendedDeclarationRow(
                     declaration: declaration,
                     onTap: {
-                        print("🔵 Tapping recommendation: \(declaration.text.prefix(30))...")
                         
                         // Navigate to the specific declaration by loading its category first
                         navigateToDeclaration(declaration)
@@ -256,8 +255,6 @@ struct TodayRecommendationsSection: View {
     }
     
     private func navigateToDeclaration(_ declaration: Declaration) {
-        print("🔵 Starting navigation to declaration: \(declaration.text.prefix(50))...")
-        print("🔵 Declaration category: \(declaration.category.rawValue)")
         
         // Haptic feedback for selection
         let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
@@ -279,12 +276,12 @@ struct TodayRecommendationsSection: View {
                             print("✅ Set declaration directly as fallback")
                         }
                     } else {
+                        // Warning: 
                         print("⚠️ Failed to load category, using fallback")
                         self.declarationStore.setDeclaration(declaration.text, category: declaration.category.rawValue)
                     }
                     
                     // Try different dismissal methods
-                    print("🔄 Attempting to dismiss CategoryChooserView...")
                     
                     // Method 1: presentationMode
                     self.presentationMode.wrappedValue.dismiss()
@@ -356,7 +353,6 @@ struct RecommendedDeclarationRow: View {
         .scaleEffect(isPressed ? 0.98 : 1.0)
         .animation(.easeInOut(duration: 0.1), value: isPressed)
         .onTapGesture {
-            print("🟢 RecommendedDeclarationRow tapped!")
             
             // Visual feedback
             withAnimation(.easeInOut(duration: 0.1)) {

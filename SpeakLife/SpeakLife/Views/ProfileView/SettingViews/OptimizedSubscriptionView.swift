@@ -46,12 +46,12 @@ struct BenefitRow: View {
             }
             VStack(alignment: .leading, spacing: isCompact ? 2 : 4) {
                 Text(benefit.title)
-                    .font(.system(size: isCompact ? 14 : 16, weight: .semibold))
+                    .font(.system(size: isCompact ? 14 : 18, weight: .semibold))
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity, alignment: .leading)
                 
                 Text(benefit.description)
-                    .font(.system(size: isCompact ? 12 : 14, weight: .regular))
+                    .font(.system(size: isCompact ? 12 : 16, weight: .regular))
                     .foregroundColor(.white.opacity(0.8))
                     .fixedSize(horizontal: false, vertical: true)
                     .frame(maxWidth: .infinity, alignment: .leading)

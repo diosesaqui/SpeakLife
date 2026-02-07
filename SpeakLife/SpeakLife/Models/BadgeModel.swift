@@ -367,7 +367,6 @@ class BadgeManager: ObservableObject {
             allBadges[index] = unlockedBadge
         }
         
-        print("🏆 Badge Unlocked: \(badge.title)")
     }
     
     // MARK: - Persistence

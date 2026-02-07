@@ -692,7 +692,6 @@ struct TaskLibrary {
         // Apply AI-driven personalization based on user categories and behavior
         tasks = personalizeTasksForUser(tasks: tasks, userCategories: userCategories, userBehavior: userBehavior)
         
-        print("🤖 AI Enhanced Tasks generated for streak day \(streakDay): \(tasks.count) tasks")
         return tasks
     }
     

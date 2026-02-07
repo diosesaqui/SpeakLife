@@ -12,7 +12,6 @@ struct ContentRow: View {
 
     @Environment(\.colorScheme) var colorScheme
     @State private var showShareSheet = false
-    @State private var isPressed = false
     @State private var shouldGlow = false
 
     var isEditable: Bool
@@ -28,14 +27,14 @@ struct ContentRow: View {
         }
 
     var body: some View {
-        Button(action: handleRowTap) {
-            rowContent
-        }
-        .buttonStyle(PlainButtonStyle())
-        .simultaneousGesture(pressGesture)
-        .onReceive(NotificationCenter.default.publisher(for: UIApplication.willResignActiveNotification)) { _ in
-            self.showShareSheet = false
-        }
+        rowContent
+            .contentShape(Rectangle())
+            .onTapGesture {
+                handleRowTap()
+            }
+            .onReceive(NotificationCenter.default.publisher(for: UIApplication.willResignActiveNotification)) { _ in
+                self.showShareSheet = false
+            }
     }
     
     // MARK: - Private Views
@@ -49,8 +48,6 @@ struct ContentRow: View {
         .padding(.horizontal, 20)
         .padding(.vertical, 16)
         .background(backgroundStyle)
-        .scaleEffect(isPressed ? 0.97 : 1.0)
-        .animation(.spring(response: 0.25, dampingFraction: 0.65), value: isPressed)
     }
     
     private var contentSection: some View {
@@ -73,18 +70,19 @@ struct ContentRow: View {
     }
     
     private var menuButton: some View {
-        Image(systemName: "ellipsis.circle.fill")
-            .font(.title3)
-            .foregroundColor(colorScheme == .dark ? .white.opacity(0.8) : Constants.DAMidBlue)
-            .padding(8)
-            .background(Color.white.opacity(0.05))
-            .clipShape(Circle())
-            .contextMenu {
-                contextMenuContent
-            }
-            .sheet(isPresented: $showShareSheet) {
-                ShareSheet(activityItems: ["\(declaration.text) \nSpeakLife App:", APP.Product.urlID])
-            }
+        Menu {
+            contextMenuContent
+        } label: {
+            Image(systemName: "ellipsis.circle.fill")
+                .font(.title3)
+                .foregroundColor(colorScheme == .dark ? .white.opacity(0.8) : Constants.DAMidBlue)
+                .padding(8)
+                .background(Color.white.opacity(0.05))
+                .clipShape(Circle())
+        }
+        .sheet(isPresented: $showShareSheet) {
+            ShareSheet(activityItems: ["\(declaration.text) \nSpeakLife App:", APP.Product.urlID])
+        }
     }
     
     @ViewBuilder
@@ -109,21 +107,12 @@ struct ContentRow: View {
             .fill(.ultraThinMaterial)
             .overlay(
                 RoundedRectangle(cornerRadius: 20)
-                    .strokeBorder(Color.white.opacity(0.08), lineWidth: 0.5)
+                    .strokeBorder(Color.white.opacity(0.02), lineWidth: 0.5)
             )
             .shadow(color: shouldGlow ? Color.blue.opacity(0.4) : .black.opacity(0.15),
                     radius: shouldGlow ? 10 : 8, x: 0, y: 4)
     }
     
-    private var pressGesture: some Gesture {
-        DragGesture(minimumDistance: 0)
-            .onChanged { _ in isPressed = true }
-            .onEnded { _ in
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                    isPressed = false
-                }
-            }
-    }
     
     // MARK: - Private Methods
     

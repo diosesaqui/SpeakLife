@@ -104,6 +104,7 @@ struct DeclarationContentView: View {
     @State private var showShareSheet = false
     @State private var image: UIImage?
     @State private var showAnimation = false
+    @State private var isCapturingScreenshot = false
     @State private var reviewCounter = 0
     @State private var completedAnimations: Set<String> = []
     @State private var animationResetTrigger = UUID() // Trigger animation reset
@@ -131,22 +132,22 @@ struct DeclarationContentView: View {
                 ForEach(Array(viewModel.declarations.enumerated()), id: \.element.id) { index, declaration in
                     ZStack {
                             quoteLabel(declaration, geometry)
+                                .onAppear {
+                                }
                                 .padding()
                                 .rotationEffect(Angle(degrees: -degrees))
                                 .frame(
                                     width: geometry.size.width,
                                     height: geometry.size.height
                                 )
+                                .contentShape(Rectangle()) // Fix touch targets
                                 .offset(x: isMenuExpanded ? -geometry.size.width * 0.18 : 0)
                                 .animation(.easeInOut, value: isMenuExpanded)
 
 
                         
-                        if !showShareSheet {
-                            intentVstack(declaration: declaration, geometry)
-                                .rotationEffect(Angle(degrees: -degrees))
-                
-                        }
+                        intentVstack(declaration: declaration, geometry)
+                            .rotationEffect(Angle(degrees: -degrees))
                         
                         if isFavorite {
                             VStack {
@@ -175,24 +176,10 @@ struct DeclarationContentView: View {
                     }
                     
                     .tag(index)
-                    .onChange(of: image) { newImage in
-                        if newImage != nil {
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-                                showShareSheet = true
-                            }
-                        }
-                    }
-                    .sheet(isPresented: Binding<Bool>(
-                        get: {
-                            showShareSheet && image != nil
-                        },
-                        set: { newValue in
-                            showShareSheet = newValue
-                            if !newValue {
-                                image = nil // clear image after dismiss
-                            }
-                        }
-                    )) {
+                    .sheet(isPresented: $showShareSheet) {
+                        // On dismiss
+                        image = nil
+                    } content: {
                         if let image = image {
                             ShareSheet(activityItems: [image])
                         }
@@ -246,6 +233,16 @@ struct DeclarationContentView: View {
             
             // First-install banner centered and contained
            
+            }
+        }
+        .onAppear {
+            // Safety check on app launch
+            if appState.showScreenshotLabel {
+                appState.showScreenshotLabel = false
+            }
+            
+            if viewModel.selectedTab >= viewModel.declarations.count && !viewModel.declarations.isEmpty {
+                viewModel.selectedTab = 0
             }
         }
        
@@ -414,31 +411,101 @@ struct DeclarationContentView: View {
     }
     
     func setImage(completion: @escaping () -> Void) {
-        DispatchQueue.main.async {
-            guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-                  let window = windowScene.windows.first,
-                  let capturedImage = window.rootViewController?.view.toImage() else {
-                return
-            }
+        // Create a snapshot view specifically for screenshots
+        createScreenshotImage { capturedImage in
             self.image = capturedImage
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-                completion()
-            }
+            completion()
         }
+    }
+    
+    private func createScreenshotImage(completion: @escaping (UIImage?) -> Void) {
+        guard !viewModel.declarations.isEmpty,
+              viewModel.selectedTab < viewModel.declarations.count else { 
+            completion(nil)
+            return
+        }
+        
+        let declaration = viewModel.declarations[viewModel.selectedTab]
+        
+        // Create a SwiftUI view for the screenshot
+        let screenshotView = ZStack {
+            // Background
+            if themeViewModel.showUserSelectedImage, let selectedImage = themeViewModel.selectedImage {
+                Image(uiImage: selectedImage)
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+            } else {
+                Image(themeViewModel.selectedTheme.backgroundImageString)
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+            }
+            
+            // Black overlay if needed
+            Rectangle()
+                .fill(Color.black.opacity(themeViewModel.selectedTheme.blurEffect ? 0.25 : 0))
+            
+            // Declaration content - adaptive layout
+            VStack(spacing: 0) {
+                // Top spacer - flexible
+                Spacer(minLength: 50)
+                
+                // Content container
+                VStack(spacing: 16) {
+                    // Main declaration text
+                    Text(viewModel.showVerse ? declaration.bibleVerseText ?? declaration.text : declaration.text)
+                        .font(themeViewModel.selectedFont ?? .largeTitle)
+                        .foregroundColor(themeViewModel.selectedTheme.fontColor)
+                        .multilineTextAlignment(.center)
+                        .lineLimit(nil)
+                        .minimumScaleFactor(0.3) // Allow more shrinking for long text
+                        .padding(.horizontal, 40)
+                        .frame(maxWidth: UIScreen.main.bounds.width * 0.9)
+                        .frame(maxHeight: UIScreen.main.bounds.height * 0.6) // Limit max height
+                        .shadow(color: .black, radius: themeViewModel.selectedTheme.blurEffect ? 10 : 0)
+                    
+                    // Subtitle
+                    Text(viewModel.subtitle(declaration))
+                        .foregroundColor(.white.opacity(0.9))
+                        .font(themeViewModel.selectedFontForBook ?? .caption)
+                        .shadow(color: .black, radius: themeViewModel.selectedTheme.blurEffect ? 10 : 0)
+                        .padding(.horizontal, 30)
+                }
+                
+                // Middle spacer - will shrink if text is long
+                Spacer(minLength: 30)
+                
+                // App logo - stays visible
+                AppLogo(height: 70)
+                    .padding(.bottom, 20)
+                
+                // Bottom spacer - flexible
+                Spacer(minLength: 40)
+            }
+            .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
+        }
+        .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
+        
+        // Render the SwiftUI view to an image
+        let controller = UIHostingController(rootView: screenshotView)
+        controller.view.bounds = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
+        controller.view.backgroundColor = .clear
+        
+        let renderer = UIGraphicsImageRenderer(size: controller.view.bounds.size)
+        let image = renderer.image { _ in
+            controller.view.drawHierarchy(in: controller.view.bounds, afterScreenUpdates: true)
+        }
+        
+        completion(image)
     }
     
     private func shareTapped(declaration: Declaration) {
         viewModel.setCurrent(declaration)
+        Selection.shared.selectionFeedback()
         
-        withAnimation {
-            appState.showScreenshotLabel = true
-        }
-        DispatchQueue.main.async {
-            RunLoop.main.perform {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1){
-                setImage { }
-            }
-        }
+        // Create screenshot without affecting visible UI
+        setImage { 
+            // Show share sheet immediately after image is ready
+            self.showShareSheet = true
         }
 
         AnalyticsService.shared.trackShare(
@@ -453,14 +520,8 @@ struct DeclarationContentView: View {
                 "theme": themeViewModel.selectedTheme.backgroundImageString
             ]
         )
-        Selection.shared.selectionFeedback()
-
-        DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
-            withAnimation {
-                appState.showScreenshotLabel = false
-                appState.shareDiscountTry += 1
-            }
-        }
+        
+        appState.shareDiscountTry += 1
         StreakIntegrationManager.notifyAffirmationShared()
     }
     
@@ -516,26 +577,14 @@ struct DeclarationContentView: View {
     
     @ViewBuilder
     private func intentStackButtons(declaration: Declaration) -> some View  {
-        if !appState.showScreenshotLabel {
-            HStack(spacing: 24) {
+        HStack(spacing: 24) {
                 
                 Menu {
                     Button("Instagram Stories") {
-                        withAnimation {
-                            appState.showScreenshotLabel = true
-                        }
-                        DispatchQueue.main.async {
-                            RunLoop.main.perform {
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-                                    setImage() {
-                                        if let image = prepareShareItems().first {
-                                            shareToInstagramStories(image: image)
-                                            withAnimation {
-                                                appState.showScreenshotLabel = false
-                                            }
-                                        }
-                                    }
-                                }
+                        // Create screenshot without affecting UI
+                        setImage() {
+                            if let image = prepareShareItems().first {
+                                shareToInstagramStories(image: image)
                             }
                         }
                     }
@@ -561,9 +610,8 @@ struct DeclarationContentView: View {
                 // Animation settings toggle
                // AnimationToggleButton()
                 
-            }
-            .foregroundColor(.white)
         }
+        .foregroundColor(.white)
     }
     
     private func affirm(_ declaration: Declaration, isAffirmation: Bool) {

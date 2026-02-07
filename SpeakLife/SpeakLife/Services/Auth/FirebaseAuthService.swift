@@ -65,20 +65,17 @@ final class FirebaseAuthService: FirebaseAuthServiceProtocol {
     // MARK: - User Creation
     func createUser(email: String, password: String, name: String) async throws -> FirebaseUserResult {
         do {
-            print("🔥 Creating Firebase user with email: \(email)")
             
             // Create the authentication user
             let authResult = try await auth.createUser(withEmail: email, password: password)
             let user = authResult.user
             
-            print("🔥 Firebase user created with UID: \(user.uid)")
             
             // Update the user's display name
             let changeRequest = user.createProfileChangeRequest()
             changeRequest.displayName = name
             try await changeRequest.commitChanges()
             
-            print("🔥 Display name updated to: \(name)")
             
             // Create user document in Firestore
             let userData: [String: Any] = [
@@ -92,7 +89,6 @@ final class FirebaseAuthService: FirebaseAuthServiceProtocol {
             
             try await firestore.collection("users").document(user.uid).setData(userData)
             
-            print("🔥 User document created in Firestore")
             
             return FirebaseUserResult(
                 uid: user.uid,
@@ -101,7 +97,6 @@ final class FirebaseAuthService: FirebaseAuthServiceProtocol {
             )
             
         } catch {
-            print("🔥❌ Firebase user creation failed: \(error)")
             throw mapFirebaseError(error)
         }
     }
@@ -109,12 +104,10 @@ final class FirebaseAuthService: FirebaseAuthServiceProtocol {
     // MARK: - Sign In
     func signIn(email: String, password: String) async throws -> FirebaseUserResult {
         do {
-            print("🔥 Signing in Firebase user with email: \(email)")
             
             let authResult = try await auth.signIn(withEmail: email, password: password)
             let user = authResult.user
             
-            print("🔥 Firebase sign in successful for UID: \(user.uid)")
             
             // Update last login timestamp
             try await firestore.collection("users").document(user.uid).updateData([
@@ -128,7 +121,6 @@ final class FirebaseAuthService: FirebaseAuthServiceProtocol {
             )
             
         } catch {
-            print("🔥❌ Firebase sign in failed: \(error)")
             throw mapFirebaseError(error)
         }
     }
@@ -137,9 +129,7 @@ final class FirebaseAuthService: FirebaseAuthServiceProtocol {
     func signOut() throws {
         do {
             try auth.signOut()
-            print("🔥 Firebase user signed out successfully")
         } catch {
-            print("🔥❌ Firebase sign out failed: \(error)")
             throw FirebaseAuthError.unknown(error)
         }
     }

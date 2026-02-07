@@ -160,6 +160,7 @@ final class AudioFavoritesManager: ObservableObject {
                 }
             } catch {
                 DispatchQueue.main.async {
+                    // Error logging: 
                     print("❌ Error loading audio favorites: \(error)")
                     self.errorMessage = "Failed to load favorites"
                     self.favorites = []
@@ -188,6 +189,7 @@ final class AudioFavoritesManager: ObservableObject {
                 }
             } catch {
                 DispatchQueue.main.async {
+                    // Error logging: 
                     print("❌ Error saving audio favorites: \(error)")
                     self.errorMessage = "Failed to save favorites"
                 }
@@ -205,6 +207,7 @@ final class AudioFavoritesManager: ObservableObject {
             encoder.outputFormatting = .prettyPrinted
             return try encoder.encode(favorites)
         } catch {
+            // Error logging: 
             print("❌ Error exporting favorites: \(error)")
             return nil
         }
@@ -232,6 +235,7 @@ final class AudioFavoritesManager: ObservableObject {
             saveFavorites()
             return true
         } catch {
+            // Error logging: 
             print("❌ Error importing favorites: \(error)")
             errorMessage = "Failed to import favorites"
             return false

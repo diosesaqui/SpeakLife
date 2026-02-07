@@ -236,7 +236,6 @@ final class WldehBibleAPIService: BibleAPIServiceProtocol {
     // MARK: - BibleAPIServiceProtocol Implementation
     
     func fetchBooks() async throws -> [BibleBook] {
-        print("RWRW 📖 Fetching books from Wldeh API (using static list)")
         
         // Return cached books if available
         if let cachedBooks = cachedBooks {
@@ -269,7 +268,6 @@ final class WldehBibleAPIService: BibleAPIServiceProtocol {
         }
         
         cachedBooks = books
-        print("RWRW ✅ Generated \(books.count) books")
         return books
     }
     
@@ -289,7 +287,6 @@ final class WldehBibleAPIService: BibleAPIServiceProtocol {
         let wldehVersion = mapToWldehVersion(version)
         
         let url = "\(baseURL)/bibles/\(wldehVersion)/books/\(bookName)/chapters/\(chapter).json"
-        print("RWRW 📖 Fetching chapter from: \(url)")
         
         let response: WldehChapterResponse = try await performRequest(url: url)
         
@@ -298,7 +295,6 @@ final class WldehBibleAPIService: BibleAPIServiceProtocol {
     }
     
     func fetchVersions() async throws -> [BibleVersion] {
-        print("RWRW 📖 Fetching Bible versions from Wldeh API (filtered to ASV, KJV, WEB)")
         
         // Return cached versions if available
         if let cachedVersions = cachedVersions {
@@ -322,12 +318,10 @@ final class WldehBibleAPIService: BibleAPIServiceProtocol {
         ]
         
         cachedVersions = allowedVersions
-        print("RWRW ✅ Returning \(allowedVersions.count) allowed Bible versions: ASV, KJV, WEB")
         return allowedVersions
     }
     
     func searchVerses(version: String, query: String) async throws -> BibleSearchResponse {
-        print("RWRW ⚠️ Search not directly supported by Wldeh API - implementing client-side search")
         
         // For client-side search, we would need to:
         // 1. Cache chapters as they're loaded
@@ -343,7 +337,6 @@ final class WldehBibleAPIService: BibleAPIServiceProtocol {
     }
     
     func fetchRandomVerse(version: String) async throws -> RandomVerse {
-        print("RWRW 📖 Fetching daily verse")
         
         // Use day of year as seed for consistent daily verse
         let calendar = Calendar.current
@@ -376,7 +369,6 @@ final class WldehBibleAPIService: BibleAPIServiceProtocol {
         let chapterIndex = ((dayOfYear - 1) / popularBooks.count) % maxChapter
         let selectedChapter = chapterIndex + 1
         
-        print("RWRW 📅 Day \(dayOfYear) of year: Selected \(selectedBook) chapter \(selectedChapter)")
         
         // Fetch the chapter
         let abbrev = BibleBookMapping.abbreviationToApiName.first(where: { $0.value == selectedBook })?.key ?? selectedBook
@@ -388,7 +380,6 @@ final class WldehBibleAPIService: BibleAPIServiceProtocol {
         // Select verse deterministically based on day of year
         let verseIndex = dayOfYear % max(nonEmptyVerses.count, 1)
         guard let selectedVerse = nonEmptyVerses.indices.contains(verseIndex) ? nonEmptyVerses[verseIndex] : nonEmptyVerses.first else {
-            print("RWRW ⚠️ No non-empty verses found, using fallback")
             // Fallback to John 3:16
             return RandomVerse(
                 book: BibleBookInfo(
@@ -404,7 +395,6 @@ final class WldehBibleAPIService: BibleAPIServiceProtocol {
             )
         }
         
-        print("RWRW ✅ Daily verse: \(selectedBook) \(selectedChapter):\(selectedVerse.number) (text length: \(selectedVerse.text.count))")
         
         return RandomVerse(
             book: chapter.book,
@@ -435,7 +425,6 @@ final class WldehBibleAPIService: BibleAPIServiceProtocol {
             let (data, response) = try await session.data(from: url)
             
             if let httpResponse = response as? HTTPURLResponse {
-                print("RWRW 🔍 HTTP Status Code: \(httpResponse.statusCode)")
                 
                 guard (200...299).contains(httpResponse.statusCode) else {
                     throw BibleAPIError.serverError(httpResponse.statusCode)
@@ -445,19 +434,15 @@ final class WldehBibleAPIService: BibleAPIServiceProtocol {
             do {
                 let decoder = JSONDecoder()
                 let result = try decoder.decode(T.self, from: data)
-                print("RWRW ✅ Successfully decoded response")
                 return result
             } catch {
-                print("RWRW ❌ Decoding error: \(error)")
                 if let responseString = String(data: data, encoding: .utf8) {
-                    print("RWRW 🔍 Raw response (first 500 chars): \(String(responseString.prefix(500)))")
                 }
                 throw BibleAPIError.decodingError(error)
             }
         } catch let error as BibleAPIError {
             throw error
         } catch {
-            print("RWRW ❌ Network Error: \(error)")
             throw BibleAPIError.networkError(error)
         }
     }
@@ -614,7 +599,6 @@ final class WldehBibleAPIService: BibleAPIServiceProtocol {
         let bookName = BibleBookMapping.abbreviationToApiName[book.lowercased()] ?? book.lowercased()
         
         let url = "\(baseURL)/bibles/\(wldehVersion)/books/\(bookName)/chapters/\(chapter)/verses/\(verse).json"
-        print("RWRW 📖 Fetching verse from: \(url)")
         
         let singleVerse: WldehSingleVerse = try await performRequest(url: url)
         

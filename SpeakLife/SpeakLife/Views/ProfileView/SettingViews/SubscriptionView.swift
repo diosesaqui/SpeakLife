@@ -270,7 +270,6 @@ struct OfferPageView: View {
                 callBack()
             }
         } catch StoreError.failedVerification {
-            print("error RWRW")
             errorTitle = "Your purchase could not be verified by the App Store."
             isShowingError = true
         } catch {

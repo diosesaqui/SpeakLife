@@ -223,6 +223,8 @@ struct EmailCaptureView: View {
                     }
                 }
                 
+                // Error logging: 
+                
                 print("❌ Error subscribing email: \(error)")
                 print("Error details: \(error.localizedDescription)")
             }

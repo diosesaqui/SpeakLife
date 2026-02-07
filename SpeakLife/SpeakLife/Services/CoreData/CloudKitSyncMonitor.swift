@@ -47,7 +47,6 @@ final class CloudKitSyncMonitor: ObservableObject {
         // Monitor remote changes
         NotificationCenter.default.publisher(for: .NSPersistentStoreRemoteChange)
             .sink { [weak self] _ in
-                print("RWRW: Remote change detected - updating sync status")
                 self?.updateSyncStatus()
             }
             .store(in: &cancellables)
@@ -88,18 +87,14 @@ final class CloudKitSyncMonitor: ObservableObject {
         cloudKitContainer.accountStatus { [weak self] status, error in
             DispatchQueue.main.async {
                 if let error = error {
-                    print("RWRW: Sync Monitor - Account status error: \(error.localizedDescription)")
                     self?.syncStatus = .error(error.localizedDescription)
                 } else {
                     switch status {
                     case .available:
-                        print("RWRW: Sync Monitor - CloudKit account available")
                         self?.syncStatus = .synced
                     case .noAccount:
-                        print("RWRW: Sync Monitor - No iCloud account")
                         self?.syncStatus = .accountUnavailable
                     case .restricted, .couldNotDetermine, .temporarilyUnavailable:
-                        print("RWRW: Sync Monitor - CloudKit unavailable: \(status)")
                         self?.syncStatus = .accountUnavailable
                     @unknown default:
                         self?.syncStatus = .unknown
@@ -111,7 +106,6 @@ final class CloudKitSyncMonitor: ObservableObject {
     
     private func handleCloudKitEvent(_ event: NSPersistentCloudKitContainer.Event) {
         DispatchQueue.main.async { [weak self] in
-            print("RWRW: Sync Monitor - CloudKit event: \(event.type)")
             
             switch event.type {
             case .setup:
@@ -132,7 +126,6 @@ final class CloudKitSyncMonitor: ObservableObject {
                 } else {
                     self?.syncStatus = .synced
                     self?.lastSyncDate = event.endDate
-                    print("RWRW: Sync Monitor - Import completed successfully")
                 }
                 
             case .export:
@@ -144,7 +137,6 @@ final class CloudKitSyncMonitor: ObservableObject {
                 } else {
                     self?.syncStatus = .synced
                     self?.lastSyncDate = event.endDate
-                    print("RWRW: Sync Monitor - Export completed successfully")
                 }
                 
             @unknown default:
@@ -173,7 +165,6 @@ final class CloudKitSyncMonitor: ObservableObject {
     // MARK: - Public Methods
     func requestSync() {
         DispatchQueue.main.async { [weak self] in
-            print("RWRW: Sync Monitor - Manual sync requested")
             self?.syncStatus = .syncing
         }
         

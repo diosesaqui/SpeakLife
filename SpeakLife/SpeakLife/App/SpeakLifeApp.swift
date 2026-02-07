@@ -121,11 +121,11 @@ struct SpeakLifeApp: App {
                         declarationStore.backgroundMusicEnabled = true
                         AudioPlayerService.shared.playSound(files: resources)
                         hasLaunchedBefore = true
-                        print("🎵 First launch detected - starting background music")
+                        // First launch - background music started automatically
                     } else if declarationStore.backgroundMusicEnabled {
                         // Subsequent launches - respect user's saved preference
                         AudioPlayerService.shared.playSound(files: resources)
-                        print("🎵 Background music enabled - starting playback")
+                        // Background music enabled - starting playback
                     }
                     
                     // 🚀 Initialize AI services and train initial models
@@ -134,7 +134,7 @@ struct SpeakLifeApp: App {
                     }
                     
                     // 🧪 Test HelloAO Bible API integration
-                    runHelloAOTest()
+                    // runHelloAOTest() // Disabled: Test should not run in production
                     // Handle landing page and initial category selection
                     DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
                         withAnimation {
@@ -144,7 +144,7 @@ struct SpeakLifeApp: App {
                         // Auto-select category for non-onboarded users
                         // Skip if notification was just received
                         if !appState.isOnboarded && !notificationJustReceived {
-                            print("⚠️ Auto-selecting category for non-onboarded user")
+                            // Auto-selecting category for non-onboarded user
                             let categoryString = appState.selectedNotificationCategories.components(separatedBy: ",").first ?? "destiny"
                             if let category = DeclarationCategory(categoryString) {
                                 declarationStore.choose(category) { _ in }
@@ -161,7 +161,7 @@ struct SpeakLifeApp: App {
         .onChange(of: scenePhase) { (newScenePhase) in
             switch newScenePhase {
             case .active:
-                print("📲 App became active")
+                // App became active
                 
                 // Set up app state references
                 appDelegate.appState = appState
@@ -172,20 +172,33 @@ struct SpeakLifeApp: App {
                 // Process any pending widget actions when app becomes active
                 WidgetDataBridge.shared.processPendingWidgetActions()
                 
-                // IMPORTANT: Never auto-resume background music when app becomes active
-                // Background music should ONLY play from:
-                // 1. Initial app launch (if enabled)
-                // 2. User manually enabling it in settings
-                // This prevents unwanted music playback when returning from background
-                print("🔇 App active - background music auto-resume is disabled")
-                
-                // Additional safety check - stop any lingering background music if app was backgrounded
+                // Smart resume background music if enabled and not already playing audio content
                 if !AudioPlayerViewModel.hasActiveAudio {
-                    let audioService = AudioPlayerService.shared
-                    if audioService.isPlaying {
-                        print("⚠️ Found active background music after returning from background - stopping it")
-                        audioService.stopMusic()
+                    if declarationStore.backgroundMusicEnabled {
+                        // Try smart resume first, fall back to starting new music only if needed
+                        let audioService = AudioPlayerService.shared
+                        let wasResumed = audioService.resumeFromBackground()
+                        
+                        // App became active - audio resume status: \(wasResumed)
+                        
+                        // Only start fresh if nothing was resumed
+                        if !wasResumed {
+                            // Add small delay for TestFlight builds to let audio system settle
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                                audioService.playSound(files: resources)
+                                // Starting fresh background music
+                            }
+                        }
+                    } else {
+                        // Stop any lingering background music if disabled
+                        let audioService = AudioPlayerService.shared
+                        if audioService.isPlaying {
+                            // Background music disabled - stopping playback
+                            audioService.stopMusic()
+                        }
                     }
+                } else {
+                    // Audio content is playing - not resuming background music
                 }
                     
                 if appState.notificationEnabled {
@@ -202,29 +215,19 @@ struct SpeakLifeApp: App {
                     }
             case .inactive:
                 // Inactive state happens briefly when transitioning
-                // Stop music here to prevent it from continuing in background
-                print("📤 App inactive - preparing for background")
-                AudioPlayerService.shared.stopMusic()
+                // Don't pause here - wait for actual background state
+                // App inactive - waiting for background state
                 break
             case .background:
                 // Reset session tracking when app goes to background
                 PaywallTriggerManager.shared.resetSessionTracking()
                 
-                // Stop ALL music immediately when going to background
-                AudioPlayerService.shared.stopMusic()
-                print("⏹️ App entering background - all background music stopped")
+                // Smart pause music with timer - will auto-stop after 15 seconds
+                AudioPlayerService.shared.pauseForBackground()
+                // App entering background - music paused with auto-stop timer
                 
-                // Force deactivate audio session to ensure no background audio can play
-                // Even if content audio is active, background music should stop
-                do {
-                    // Set category to playback with no options to clear any mixing
-                    try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, options: [])
-                    // Then deactivate completely
-                    try AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
-                    print("🔇 Audio session fully deactivated for background")
-                } catch {
-                    print("❌ Failed to deactivate audio session: \(error)")
-                }
+                // Note: We don't deactivate audio session immediately anymore
+                // This allows for quick resume if user returns within 15 seconds
                 break
             @unknown default:
                 break
@@ -236,7 +239,7 @@ struct SpeakLifeApp: App {
     // MARK: - Notification Setup
     
     private func setupNotificationHandling() {
-        print("🚀 Setting up notification handling")
+        // Setting up notification handling
         
         NotificationHandler.shared.callback = { content in
             
@@ -247,7 +250,7 @@ struct SpeakLifeApp: App {
     }
     
     private func handleNotificationContent(_ content: UNNotificationContent) {
-        print("📱 Processing notification: \(content.body.prefix(50))...")
+        // Processing notification
         
         // Mark that we just received a notification
         notificationJustReceived = true
@@ -262,11 +265,11 @@ struct SpeakLifeApp: App {
         // Only treat notifications with category as affirmations
         // Other notifications (reminders, checklist, etc.) should just open the app
         if let category = content.userInfo["category"] as? String {
-            print("📱 Affirmation notification - category: \(category)")
+            // Affirmation notification received
             // Set the declaration in the store
             declarationStore.setDeclaration(content.body, category: category)
         } else {
-            print("📱 Non-affirmation notification (reminder/checklist) - opening app only")
+            // Non-affirmation notification received
             // Just open the app without displaying as affirmation
         }
     }
@@ -304,7 +307,7 @@ struct SpeakLifeApp: App {
         UNUserNotificationCenter.current().add(request) { error in
             if let error = error {
                 // Handle any errors.
-                print("Error scheduling notification: \(error)")
+                // Error scheduling notification: \(error)
             }
         }
     }

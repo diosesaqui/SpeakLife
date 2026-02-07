@@ -74,7 +74,6 @@ struct CreateYourOwnView: View {
             
             // Force refresh in case CloudKit import happened
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                print("RWRW: CreateYourOwnView onAppear - forcing data refresh")
                 declarationStore.fetchDeclarations(for: .myOwn) { decs in
                     self.refreshLocalDeclarations()
                 }
@@ -227,17 +226,18 @@ struct CreateYourOwnView: View {
     }
     
     private var declarationsList: some View {
-        List {
-            ForEach(filteredDeclarations.reversed()) { declaration in
-                declarationRow(for: declaration)
+        ScrollView {
+            LazyVStack(spacing: 12) {
+                ForEach(filteredDeclarations.reversed()) { declaration in
+                    declarationRow(for: declaration)
+                        .padding(.horizontal, 16)
+                }
+                
+                listFooterSection
             }
-            // Remove .onDelete completely to avoid SwiftUI collection view issues
-            
-            listFooterSection
+            .padding(.top, 12)
         }
-        .scrollContentBackground(.hidden)
         .background(Color.clear)
-        .id("declarations-\(forceRefresh)")
     }
     
     private func declarationRow(for declaration: Declaration) -> some View {
@@ -246,24 +246,18 @@ struct CreateYourOwnView: View {
         } onSelect: {
             selectedDeclaration = declaration
         }
-        .listRowBackground(Color.clear)
     }
     
     private var listFooterSection: some View {
-        Section {
-            VStack(spacing: 12) {
-                
-                HStack {
-                    Spacer()
-                    AppLogo(height: 80)
-                    Spacer()
-                }
+        VStack(spacing: 12) {
+            HStack {
+                Spacer()
+                AppLogo(height: 80)
+                Spacer()
             }
-            .padding(.top, 12)
-            .padding(.bottom, 40)
         }
-        .listRowInsets(EdgeInsets())
-        .listRowBackground(Color.clear)
+        .padding(.top, 12)
+        .padding(.bottom, 40)
     }
     
     private var hiddenNavigationLink: some View {
@@ -305,11 +299,9 @@ struct CreateYourOwnView: View {
     // MARK: - Action Handlers
     private func handleDeclarationAction(declaration: Declaration, delete: Bool) {
         if delete {
-            print("RWRW: Handling declaration delete for: \(declaration.text.prefix(20))")
             
             // Remove from local array immediately
             localDeclarations.removeAll { $0.id == declaration.id }
-            print("RWRW: Local declarations after delete: \(localDeclarations.count)")
             
             // Delete from store in background
             declarationStore.removeOwn(declaration: declaration)
@@ -330,7 +322,6 @@ struct CreateYourOwnView: View {
             }
         }
         
-        print("RWRW: Deleting \(itemsToDelete.count) items from UI")
         
         // Remove from local array immediately to prevent UI conflicts
         for item in itemsToDelete {
@@ -342,12 +333,10 @@ struct CreateYourOwnView: View {
             declarationStore.removeOwn(declaration: item)
         }
         
-        print("RWRW: Local declarations updated, count: \(localDeclarations.count)")
     }
     
     private func refreshLocalDeclarations() {
         localDeclarations = declarationStore.createOwn
-        print("RWRW: Local declarations refreshed, count: \(localDeclarations.count)")
     }
     
     

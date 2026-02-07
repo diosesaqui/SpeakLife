@@ -44,7 +44,6 @@ final class AffirmationRepository: AffirmationRepositoryProtocol {
             let entityText = entity.text?.prefix(50) ?? "nil"
             
             try self.context.save()
-            print("RWRW: Affirmation entry created - ID: \(entityId), Text: \(entityText)")
         }
         
         // Trigger immediate sync for faster perceived performance
@@ -76,10 +75,6 @@ final class AffirmationRepository: AffirmationRepositoryProtocol {
             request.predicate = predicate
             request.sortDescriptors = [NSSortDescriptor(keyPath: \AffirmationEntry.lastModified, ascending: false)]
             let results = try self.context.fetch(request)
-            print("RWRW: Affirmation fetch returned \(results.count) entries")
-            for (index, entry) in results.enumerated() {
-                print("RWRW: Affirmation[\(index)]: ID=\(entry.id?.uuidString ?? "nil"), Text=\(entry.text?.prefix(30) ?? "nil"), Created=\(entry.createdAt?.description ?? "nil")")
-            }
             return results
         }
     }

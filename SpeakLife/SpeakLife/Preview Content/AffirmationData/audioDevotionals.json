@@ -61,11 +61,6 @@
             "displayName": "Scripture Meditation's",
             "order": 10
         },
-        {
-            "id": "bedtimeStories",
-            "displayName": "Bedtime Stories",
-            "order": 11
-        }
     ],
     "filters": [
         "favorites",
@@ -78,7 +73,6 @@
         "magnify",
         "gospel",
         "meditation",
-        "bedtimeStories"
     ],
     "audios": [
         {
@@ -503,6 +497,17 @@
             "imageUrl": "godsHeart",
             "isPremium": true,
             "tag": "godsHeart"
+        },
+        {
+            "id": "speaklife-s3e11.mp3",
+            "title": "Keep on Hearing",
+            "subtitle": "S3 Episode 11",
+            "duration": "2m",
+            "imageUrl": "devotional",
+            "isPremium": true,
+            "tag": "speaklife",
+            "season": 3,
+            "episode": 11
         },
         {
             "id": "speaklife-s3ep7.mp3",
@@ -1291,141 +1296,6 @@
             "imageUrl": "jesusVictory",
             "isPremium": true,
             "tag": "gospel"
-        },
-        {
-            "id": "beginning.mp3",
-            "title": "In the Beginning",
-            "subtitle": "Journey into Gods Perfect Creation",
-            "duration": "9m",
-            "imageUrl": "flowingRiver",
-            "isPremium": true,
-            "tag": "bedtimeStories"
-        },
-        {
-            "id": "noah.mp3",
-            "title": "Noah and the Ark",
-            "subtitle": "Gods Promise of Protection and Hope",
-            "duration": "9m",
-            "imageUrl": "noah",
-            "isPremium": true,
-            "tag": "bedtimeStories"
-        },
-        {
-            "id": "babel.mp3",
-            "title": "The Tower of Babel",
-            "subtitle": "Gods Plan for the Nations",
-            "duration": "8m",
-            "imageUrl": "babel",
-            "isPremium": true,
-            "tag": "bedtimeStories"
-        },
-        {
-            "id": "abraham.mp3",
-            "title": "Abrahams Covenant",
-            "subtitle": "A Story of Trust in Gods Promises",
-            "duration": "8m",
-            "imageUrl": "abraham",
-            "isPremium": true,
-            "tag": "bedtimeStories"
-        },
-        {
-            "id": "sodom.mp3",
-            "title": "Sodom and Gomorrah",
-            "subtitle": "A Story of Justice, Mercy, and Gods Sovereignty",
-            "duration": "10m",
-            "imageUrl": "sodom",
-            "isPremium": true,
-            "tag": "bedtimeStories"
-        },
-        {
-            "id": "abrahamsacrifice.mp3",
-            "title": "Abraham and Isaac",
-            "subtitle": "Trusting Gods Perfect Plan",
-            "duration": "8m",
-            "imageUrl": "abrahamsacrifice",
-            "isPremium": true,
-            "tag": "bedtimeStories"
-        },
-        {
-            "id": "jacobsladder.mp3",
-            "title": "Jacobs Ladder",
-            "subtitle": "Gods Promise and Presence",
-            "duration": "8m",
-            "imageUrl": "jacobsladder",
-            "isPremium": true,
-            "tag": "bedtimeStories"
-        },
-        {
-            "id": "joseph.mp3",
-            "title": "Joseph and His Brothers",
-            "subtitle": "From Betrayal to Forgiveness",
-            "duration": "9m",
-            "imageUrl": "joseph",
-            "isPremium": true,
-            "tag": "bedtimeStories"
-        },
-        {
-            "id": "mosesburningbush.mp3",
-            "title": "Moses and the Burning Bush",
-            "subtitle": "Gods Call to Lead",
-            "duration": "9m",
-            "imageUrl": "mosesburningbush",
-            "isPremium": true,
-            "tag": "bedtimeStories"
-        },
-        {
-            "id": "tenplagues.mp3",
-            "title": "The Ten Plagues and the Exodus",
-            "subtitle": "Gods Power and Deliverance",
-            "duration": "9m",
-            "imageUrl": "tenplagues",
-            "isPremium": true,
-            "tag": "bedtimeStories"
-        },
-        {
-            "id": "redsea.mp3",
-            "title": "The Parting of the Red Sea",
-            "subtitle": "Gods Power to Make a Way",
-            "duration": "7m",
-            "imageUrl": "redsea",
-            "isPremium": true,
-            "tag": "bedtimeStories"
-        },
-        {
-            "id": "moses.mp3",
-            "title": "Bread from Heaven and Gods Covenant",
-            "subtitle": "God's Provision and the Ten Commandments",
-            "duration": "10m",
-            "imageUrl": "moses",
-            "isPremium": true,
-            "tag": "bedtimeStories"
-        },
-        {
-            "id": "david.mp3",
-            "title": "Davids Journey",
-            "subtitle": "From Shepherd to King",
-            "duration": "8m",
-            "imageUrl": "david",
-            "isPremium": true,
-            "tag": "bedtimeStories"
-        },
-        {
-            "id": "jonah.mp3",
-            "title": "Jonahs Journey of Gods Mercy",
-            "subtitle": "A Story of Obedience, Compassion, and Second Chances",
-            "duration": "8m",
-            "imageUrl": "jonah",
-            "isPremium": true,
-            "tag": "bedtimeStories"
-        },
-        {
-            "id": "ruth.mp3",
-            "title": "Ruths Journey of Loyalty and Love",
-            "subtitle": "A Story of Faithfulness, Redemption, and New Beginnings",
-            "duration": "9m",
-            "imageUrl": "ruth",
-            "isPremium": true,
-            "tag": "bedtimeStories"
         },
         {
             "id": "divine_restoration_3.mp3",

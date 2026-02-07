@@ -72,12 +72,10 @@ final class BibleViewModel: ObservableObject {
     }
     
     private func loadInitialData() {
-        print("RWRW 🚀 BibleViewModel.loadInitialData() starting")
         // Check authentication status
         isAuthenticated = BibleAPIService.shared.isAuthenticated
         
         initialLoadTask = Task {
-            print("RWRW 📖 Starting to load Bible data...")
             
             // Load data sequentially to avoid complexity for now
             await loadBooks()
@@ -87,7 +85,6 @@ final class BibleViewModel: ObservableObject {
             await MainActor.run {
                 loadBookmarks()
                 loadHistory()
-                print("RWRW ✅ Bible data loading completed")
             }
             
             // Check for last read location
@@ -204,7 +201,6 @@ final class BibleViewModel: ObservableObject {
     }
     
     private func handleSearchError(_ error: Error) {
-        print("🔍 Search Error: \(error)")
         
         if let apiError = error as? BibleAPIError {
             switch apiError {
@@ -215,19 +211,15 @@ final class BibleViewModel: ObservableObject {
                     errorMessage = "Too many requests. Please wait a moment and try again."
                 }
                 showSearchError = true
-                print("🔍 Rate limited error - showSearchError = true, showAuthView = \(showAuthView)")
             case .unauthorized:
                 errorMessage = "Your session has expired. Please sign in through Settings for unlimited access."
                 showSearchError = true
-                print("🔍 Unauthorized error - showSearchError = true, showAuthView = \(showAuthView)")
             case .networkError:
                 errorMessage = "No internet connection. Please check your network and try again."
                 showSearchError = true
-                print("🔍 Network error - showSearchError = true")
             case .noData:
                 errorMessage = "No search results found for this query."
                 showSearchError = true
-                print("🔍 No data error - showSearchError = true")
             case .serverError(let code):
                 if code >= 500 {
                     errorMessage = "The Bible service is temporarily unavailable. Please try again later."
@@ -235,20 +227,16 @@ final class BibleViewModel: ObservableObject {
                     errorMessage = "Unable to search. Please try again."
                 }
                 showSearchError = true
-                print("🔍 Server error (\(code)) - showSearchError = true")
             default:
                 errorMessage = apiError.errorDescription ?? "Search failed. Please try again."
                 showSearchError = true
-                print("🔍 Default API error - showSearchError = true")
             }
         } else {
             errorMessage = "Search failed. Please try again."
             showSearchError = true
-            print("🔍 Generic error - showSearchError = true")
         }
         
         // Ensure we don't trigger auth view from search
-        print("🔍 Final state: showSearchError = \(showSearchError), showAuthView = \(showAuthView)")
     }
     
     func loadDailyVerse() async {
@@ -266,19 +254,16 @@ final class BibleViewModel: ObservableObject {
             await MainActor.run {
                 dailyVerse = cachedVerse
             }
-            print("RWRW ✅ Using cached daily verse from today: \(cachedVerse.book.name) \(cachedVerse.chapter):\(cachedVerse.number)")
             return
         }
         
         // Fetch a new verse for today
-        print("RWRW 📖 Fetching new daily verse for: \(todayString)")
         
         do {
             let verse = try await interactor.getRandomVerse(version: selectedVersion)
             
             // Validate the verse has content
             if verse.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                print("RWRW ⚠️ Daily verse text is empty, using fallback")
                 // Use a fallback verse
                 let fallbackVerse = RandomVerse(
                     book: BibleBookInfo(
@@ -301,10 +286,8 @@ final class BibleViewModel: ObservableObject {
                     dailyVerse = verse
                 }
                 saveDailyVerse(verse, date: todayString)
-                print("RWRW ✅ New daily verse loaded and cached: \(verse.book.name) \(verse.chapter):\(verse.number)")
             }
         } catch {
-            print("RWRW ❌ Failed to load daily verse: \(error)")
             // Use a fallback verse on error
             let fallbackVerse = RandomVerse(
                 book: BibleBookInfo(
@@ -330,12 +313,10 @@ final class BibleViewModel: ObservableObject {
         if let encoded = try? JSONEncoder().encode(verse) {
             UserDefaults.standard.set(encoded, forKey: "DailyVerseData")
             UserDefaults.standard.set(date, forKey: "DailyVerseDate")
-            print("RWRW 💾 Daily verse cached for date: \(date)")
         }
     }
     
     func loadVersions() async {
-        print("RWRW 🔍 BibleViewModel.loadVersions() called")
         
         // Clear cached versions to ensure we get fresh data without duplicates
         interactor.clearVersionsCache()
@@ -346,10 +327,8 @@ final class BibleViewModel: ObservableObject {
             // Extra safety: Remove any duplicates based on version ID to prevent ForEach issues
             availableVersions = Array(Dictionary(grouping: rawVersions, by: \.version).compactMapValues(\.first).values)
             
-            print("RWRW ✅ BibleViewModel loaded \(rawVersions.count) raw versions, deduplicated to \(availableVersions.count) unique versions")
             print("RWRW 📚 Final unique versions: \(availableVersions.map { $0.version }.joined(separator: ", "))")
         } catch {
-            print("RWRW ❌ Failed to load versions: \(error)")
         }
     }
     

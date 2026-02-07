@@ -41,18 +41,15 @@ final class NotificationHandler: NSObject, ObservableObject, UNUserNotificationC
                                 withCompletionHandler completionHandler: @escaping () -> Void) {
         
         let content = response.notification.request.content
-        print("🔔 Notification tapped - Body: \(content.body.prefix(50))...")
         
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
             
             if let callback = self.callback {
                 // Callback exists - process immediately
-                print("🔔 Processing notification immediately")
                 callback(content)
             } else {
                 // No callback yet - store for later (cold launch scenario)
-                print("🔔 Storing notification for processing after app initialization")
                 self.pendingNotificationContent = content
             }
         }
@@ -66,7 +63,6 @@ final class NotificationHandler: NSObject, ObservableObject, UNUserNotificationC
         guard let pending = pendingNotificationContent,
               let callback = callback else { return }
         
-        print("🔔 Processing stored notification from cold launch")
         pendingNotificationContent = nil
         
         DispatchQueue.main.async {

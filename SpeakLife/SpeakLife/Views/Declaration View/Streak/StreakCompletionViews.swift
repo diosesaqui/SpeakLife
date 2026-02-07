@@ -847,7 +847,6 @@ struct CompletionCelebrationView: View {
         let resizedImage = resizeImageForInstagram(shareImage, targetSize: targetSize)
         
         // Use Photos approach for consistent behavior across all screens
-        print("📱 Using Photos approach for reliable Instagram sharing")
         trySaveToPhotosForManualShare(image: resizedImage)
     }
     

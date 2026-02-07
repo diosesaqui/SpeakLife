@@ -118,7 +118,6 @@ final class AppDelegate: NSObject, MessagingDelegate {
                     }
                 }
             } else {
-                print("🔴 Notifications not authorized: \(settings.authorizationStatus.rawValue)")
             }
         }
     }
@@ -129,7 +128,6 @@ final class AppDelegate: NSObject, MessagingDelegate {
         if let token = fcmToken {
                    print("✅ FCM Token: \(token)") // This should now appear in Xcode logs
                } else {
-                   print("🔴 Failed to retrieve FCM token.")
                }
     }
     
@@ -151,7 +149,6 @@ final class AppDelegate: NSObject, MessagingDelegate {
     private func registerNotificationHandler() {
         // Set AppDelegate as the notification delegate to handle both foreground and background scenarios
         UNUserNotificationCenter.current().delegate = self
-        print("📱 Notification delegate set to AppDelegate")
     }
     
     
@@ -218,13 +215,11 @@ extension AppDelegate: UIApplicationDelegate {
     }
     
     func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
-        print("🔴 Failed to register for APNs: \(error.localizedDescription)")
     }
 }
 
 extension AppDelegate: UNUserNotificationCenterDelegate {
     func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification, withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
-        print("📬 Notification will present (foreground): \(notification.request.content.body)")
         // Pass to NotificationHandler for app state updates
         NotificationHandler.shared.userNotificationCenter(center, willPresent: notification) { options in
             completionHandler(options)
@@ -232,7 +227,6 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
     }
     
     func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse, withCompletionHandler completionHandler: @escaping () -> Void) {
-        print("👆 Notification tapped: \(response.notification.request.content.body)")
         // Pass to NotificationHandler for app state updates
         NotificationHandler.shared.userNotificationCenter(center, didReceive: response, withCompletionHandler: completionHandler)
     }

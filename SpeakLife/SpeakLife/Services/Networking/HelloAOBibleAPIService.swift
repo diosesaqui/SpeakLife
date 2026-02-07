@@ -130,7 +130,6 @@ enum HelloAOContentItem: Codable {
         
         // For any other type, just log and continue as unknown
         let codingPath = decoder.codingPath.map { $0.stringValue }.joined(separator: " -> ")
-        print("RWRW ⚠️ Unknown content item type at path: \(codingPath), continuing...")
         self = .unknown
     }
     
@@ -220,21 +219,18 @@ final class HelloAOBibleAPIService {
     /// Fetch all available Bible translations
     func fetchAvailableTranslations() async throws -> [HelloAOTranslation] {
         let url = "\(baseURL)/available_translations.json"
-        print("RWRW 📖 Fetching available translations from: \(url)")
         return try await performRequest(url: url)
     }
     
     /// Fetch all books in a specific translation
     func fetchBooks(translation: String = "BSB") async throws -> [HelloAOBook] {
         let url = "\(baseURL)/\(translation)/books.json"
-        print("RWRW 📖 Fetching books for \(translation) from: \(url)")
         return try await performRequest(url: url)
     }
     
     /// Fetch a specific chapter from a translation
     func fetchChapter(translation: String = "BSB", book: String, chapter: Int) async throws -> HelloAOChapter {
         let url = "\(baseURL)/\(translation)/\(book)/\(chapter).json"
-        print("RWRW 📖 Fetching \(book) chapter \(chapter) (\(translation)) from: \(url)")
         return try await performRequest(url: url)
     }
     
@@ -243,21 +239,18 @@ final class HelloAOBibleAPIService {
     /// Fetch all available commentaries
     func fetchAvailableCommentaries() async throws -> [HelloAOCommentary] {
         let url = "\(baseURL)/available_commentaries.json"
-        print("RWRW 📖 Fetching available commentaries from: \(url)")
         return try await performRequest(url: url)
     }
     
     /// Fetch books in a specific commentary
     func fetchCommentaryBooks(commentary: String) async throws -> [HelloAOBook] {
         let url = "\(baseURL)/c/\(commentary)/books.json"
-        print("RWRW 📖 Fetching commentary books for \(commentary) from: \(url)")
         return try await performRequest(url: url)
     }
     
     /// Fetch a chapter from a commentary
     func fetchCommentaryChapter(commentary: String, book: String, chapter: Int) async throws -> HelloAOChapter {
         let url = "\(baseURL)/c/\(commentary)/\(book)/\(chapter).json"
-        print("RWRW 📖 Fetching commentary for \(book) chapter \(chapter) from: \(url)")
         return try await performRequest(url: url)
     }
     
@@ -266,21 +259,18 @@ final class HelloAOBibleAPIService {
     /// Fetch all available datasets
     func fetchAvailableDatasets() async throws -> [HelloAODataset] {
         let url = "\(baseURL)/available_datasets.json"
-        print("RWRW 📖 Fetching available datasets from: \(url)")
         return try await performRequest(url: url)
     }
     
     /// Fetch books in a specific dataset
     func fetchDatasetBooks(dataset: String) async throws -> [HelloAOBook] {
         let url = "\(baseURL)/d/\(dataset)/books.json"
-        print("RWRW 📖 Fetching dataset books for \(dataset) from: \(url)")
         return try await performRequest(url: url)
     }
     
     /// Fetch a chapter from a dataset
     func fetchDatasetChapter(dataset: String, book: String, chapter: Int) async throws -> HelloAOChapter {
         let url = "\(baseURL)/d/\(dataset)/\(book)/\(chapter).json"
-        print("RWRW 📖 Fetching dataset chapter \(book) \(chapter) from: \(url)")
         return try await performRequest(url: url)
     }
     
@@ -322,7 +312,6 @@ final class HelloAOBibleAPIService {
     func searchVerses(translation: String = "BSB", query: String) async throws -> BibleSearchResponse {
         // This API doesn't have a search endpoint, so we'd need to implement client-side search
         // For now, return empty response
-        print("RWRW ⚠️ Search not implemented for HelloAO API yet")
         return BibleSearchResponse(
             occurrence: 0,
             version: translation.lowercased(),
@@ -336,14 +325,12 @@ final class HelloAOBibleAPIService {
             throw BibleAPIError.invalidURL
         }
         
-        print("RWRW 🔍 HelloAO API Request: \(urlString)")
         
         do {
             let (data, response) = try await session.data(from: url)
             
             // Check HTTP response
             if let httpResponse = response as? HTTPURLResponse {
-                print("RWRW 🔍 HTTP Status Code: \(httpResponse.statusCode)")
                 
                 guard (200...299).contains(httpResponse.statusCode) else {
                     throw BibleAPIError.serverError(httpResponse.statusCode)
@@ -354,19 +341,15 @@ final class HelloAOBibleAPIService {
             do {
                 let decoder = JSONDecoder()
                 let result = try decoder.decode(T.self, from: data)
-                print("RWRW ✅ Successfully decoded HelloAO response")
                 return result
             } catch {
-                print("RWRW ❌ Decoding error: \(error)")
                 if let responseString = String(data: data, encoding: .utf8) {
-                    print("RWRW 🔍 Raw response (first 500 chars): \(String(responseString.prefix(500)))")
                 }
                 throw BibleAPIError.decodingError(error)
             }
         } catch let error as BibleAPIError {
             throw error
         } catch {
-            print("RWRW ❌ Network Error: \(error)")
             throw BibleAPIError.networkError(error)
         }
     }

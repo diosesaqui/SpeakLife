@@ -122,13 +122,11 @@ class VoiceInputManager: NSObject, ObservableObject {
         
         // If already listening, just return
         if isListening {
-            print("🎤 Voice Input: Already listening, ignoring start request")
             return
         }
         
         // Clean stop if engine is running or task exists
         if audioEngine.isRunning || recognitionTask != nil {
-            print("🎤 Voice Input: Cleaning up previous session")
             cleanupPreviousSession()
             // Shorter delay for better responsiveness
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
@@ -139,7 +137,6 @@ class VoiceInputManager: NSObject, ObservableObject {
         
         // Check if we're in a transitional state
         if voiceInputState == .processing || voiceInputState == .transcribing {
-            print("🎤 Voice Input: Waiting for transition to complete")
             // Wait for current operation to complete
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
                 self.startListening()
@@ -166,22 +163,17 @@ class VoiceInputManager: NSObject, ObservableObject {
     
     private func performStartListening() {
         do {
-            print("🎤 Voice Input: Starting new session...")
             
             // Reset audio engine to clean state
             if audioEngine.isRunning {
-                print("🎤 Voice Input: Stopping running engine")
                 audioEngine.stop()
                 audioEngine.reset()
             }
             
-            print("🎤 Voice Input: Setting up audio session")
             try setupAudioSession()
             
-            print("🎤 Voice Input: Starting speech recognition")
             try startSpeechRecognition()
             
-            print("🎤 Voice Input: Starting audio level monitoring")
             startAudioLevelMonitoring()
             
             voiceInputState = .listening
@@ -191,7 +183,6 @@ class VoiceInputManager: NSObject, ObservableObject {
             // Auto-stop after max duration
             recordingTimer = Timer.scheduledTimer(withTimeInterval: maxRecordingDuration, repeats: false) { [weak self] _ in
                 Task { @MainActor [weak self] in
-                    print("🎤 Voice Input: Max duration reached, stopping")
                     self?.stopListening()
                 }
             }
@@ -200,10 +191,8 @@ class VoiceInputManager: NSObject, ObservableObject {
             let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
             impactFeedback.impactOccurred()
             
-            print("🎤 Voice Input: Successfully started listening")
             
         } catch {
-            print("🎤 Voice Input Error: \(error)")
             handleError(error)
         }
     }
@@ -211,7 +200,6 @@ class VoiceInputManager: NSObject, ObservableObject {
     func stopListening() {
         guard isListening else { return }
         
-        print("🎤 Voice Input: Stopping listening session")
         
         // Set state first to prevent new operations
         isListening = false
@@ -302,7 +290,6 @@ class VoiceInputManager: NSObject, ObservableObject {
         do {
             try audioSession.setActive(false, options: .notifyOthersOnDeactivation)
         } catch {
-            print("🎤 Voice Input: Warning - Could not deactivate audio session: \(error)")
         }
         
         // Use speech mode for better recognition
@@ -318,17 +305,13 @@ class VoiceInputManager: NSObject, ObservableObject {
             try audioSession.setPreferredIOBufferDuration(0.01) // Balanced latency
             
             try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
-            print("🎤 Voice Input: Audio session configured successfully")
             
         } catch {
-            print("🎤 Voice Input: Failed with enhanced settings: \(error)")
             // Fallback to most basic configuration
             do {
                 try audioSession.setCategory(.playAndRecord, mode: .default)
                 try audioSession.setActive(true)
-                print("🎤 Voice Input: Using fallback audio configuration")
             } catch {
-                print("🎤 Voice Input: Critical error - cannot configure audio: \(error)")
                 throw error
             }
         }
@@ -400,7 +383,6 @@ class VoiceInputManager: NSObject, ObservableObject {
                         self.lastTranscriptionTime = Date()
                         self.retryCount = 0
                         self.voiceInputState = .completed
-                        print("🎤 Voice Input: Final transcription: \(newText.prefix(50))...")
                     } else if newText != self.transcribedText {
                         // Partial result - be more accepting of transcriptions
                         let significantlyLonger = newText.count > self.transcribedText.count + 3
@@ -412,11 +394,9 @@ class VoiceInputManager: NSObject, ObservableObject {
                             self.lastTranscriptionTime = Date()
                             self.retryCount = 0
                             self.voiceInputState = .transcribing
-                            print("🎤 Voice Input: Partial transcription (confidence: \(self.transcriptionConfidence)): \(newText.prefix(50))...")
                         } else if self.transcriptionConfidence <= 0.15 && self.retryCount < self.maxRetries {
                             // Very low confidence - might retry
                             self.retryCount += 1
-                            print("🎤 Voice Input: Low confidence, retry \(self.retryCount)")
                         }
                     }
                 }

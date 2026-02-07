@@ -74,7 +74,6 @@ struct BadgeCollectionView: View {
                 set: { if !$0 { selectedBadge = nil } }
             ))
             .onAppear {
-                print("🏆 BadgeDetailView appeared with badge: \(badge.title)")
             }
         }
         .onAppear {

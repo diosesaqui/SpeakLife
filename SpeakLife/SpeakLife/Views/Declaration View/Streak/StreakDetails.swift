@@ -257,8 +257,8 @@ struct StreakSheet: View {
                 .ignoresSafeArea()
 
             VStack(spacing: 20) {
-                HandleBar()
-                    .padding(.top, 12)
+//                HandleBar()
+//                    .padding(.top, 12)
 
                 StreakView(streak: streakViewModel.weekCompletions.map(\.isCompleted))
                     .padding(.top, 8)

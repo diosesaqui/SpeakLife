@@ -167,15 +167,12 @@ final class BibleInteractor: BibleInteractorProtocol {
     
     // MARK: - API Operations
     func loadBooks() async throws -> [BibleBook] {
-        print("RWRW 🔍 BibleInteractor.loadBooks() called (using \(currentProvider.displayName))")
         
         // Check cache first
         if let cachedBooks = cacheManager.getCachedBooks() {
-            print("RWRW ✅ Found \(cachedBooks.count) books in cache")
             return cachedBooks
         }
         
-        print("RWRW ❌ No cached books, fetching from API...")
         
         // Try to fetch from API
         do {
@@ -183,18 +180,12 @@ final class BibleInteractor: BibleInteractorProtocol {
             
             switch currentProvider {
             case .wldeh:
-                print("RWRW 📖 Fetching books from Wldeh API")
                 books = try await wldehService.fetchBooks()
-                print("RWRW ✅ Fetched \(books.count) books from Wldeh API")
             case .helloAO:
-                print("RWRW 📖 Fetching books from HelloAO API")
                 let helloBooks = try await helloAOService.fetchBooks()
                 books = helloBooks.map { helloAOService.adaptBookToBibleBook($0) }
-                print("RWRW ✅ Fetched \(books.count) books from HelloAO API")
             case .abiblia:
-                print("RWRW 📖 Fetching books from A Biblia Digital API")
                 books = try await bibliaService.fetchBooks()
-                print("RWRW ✅ Fetched \(books.count) books from A Biblia Digital API")
             }
             
             // Cache the result
@@ -202,7 +193,6 @@ final class BibleInteractor: BibleInteractorProtocol {
             
             return books
         } catch {
-            print("RWRW ⚠️ API failed, using fallback books: \(error)")
             // If API fails, return fallback books
             let fallbackBooks = getFallbackBooks()
             // Cache the fallback books so they're available offline
@@ -759,33 +749,27 @@ final class BibleInteractor: BibleInteractorProtocol {
 //    }
     
     func loadChapter(bookAbbrev: String, chapter: Int, version: String = "kjv") async throws -> BibleChapter {
-        print("RWRW 🔍 loadChapter called: \(bookAbbrev) chapter \(chapter), version: \(version)")
         
         // Check cache first
         if let cachedChapter = cacheManager.getCachedChapter(bookAbbrev: bookAbbrev, chapter: chapter, version: version) {
-            print("RWRW ✅ Found chapter in cache")
             // Save to reading history
             saveReadingHistory(bookAbbrev: bookAbbrev, chapter: chapter)
             return cachedChapter
         }
         
-        print("RWRW ❌ Chapter not cached, fetching from API...")
         
         // Fetch from API
         let chapterData: BibleChapter
         
         switch currentProvider {
         case .wldeh:
-            print("RWRW 📖 Fetching chapter from Wldeh API")
             chapterData = try await wldehService.fetchChapter(
                 version: version,
                 abbrev: bookAbbrev,
                 chapter: chapter
             )
-            print("RWRW ✅ Fetched chapter from Wldeh API: \(chapterData.verses.count) verses")
             
         case .helloAO:
-            print("RWRW 📖 Fetching chapter from HelloAO API")
             let translationId = mapVersionToHelloAO(version)
             let bookId = mapBookAbbrevToHelloAO(bookAbbrev)
             
@@ -795,16 +779,13 @@ final class BibleInteractor: BibleInteractorProtocol {
                 chapter: chapter
             )
             chapterData = helloAOService.adaptChapterToBibleChapter(helloChapter, bookAbbrev: bookAbbrev)
-            print("RWRW ✅ Fetched chapter from HelloAO API: \(chapterData.verses.count) verses")
             
         case .abiblia:
-            print("RWRW 📖 Fetching chapter from A Biblia Digital API")
             chapterData = try await bibliaService.fetchChapter(
                 version: version,
                 abbrev: bookAbbrev,
                 chapter: chapter
             )
-            print("RWRW ✅ Fetched chapter from A Biblia Digital API: \(chapterData.verses.count) verses")
         }
         
         // Cache the result
@@ -835,10 +816,8 @@ final class BibleInteractor: BibleInteractorProtocol {
     
     
     func searchVerses(query: String, version: String = "kjv") async throws -> BibleSearchResponse {
-        print("RWRW 🔍 searchVerses called with query: \(query)")
         
         // HelloAO doesn't have search API, implement client-side search
-        print("RWRW ⚠️ HelloAO API doesn't support search, using client-side search")
         
         // For now, return empty results
         // TODO: Implement client-side search by fetching and searching through books
@@ -850,10 +829,8 @@ final class BibleInteractor: BibleInteractorProtocol {
     }
     
     func getRandomVerse(version: String = "kjv") async throws -> RandomVerse {
-        print("RWRW 🎲 getRandomVerse called")
         
         // HelloAO doesn't have random verse API, implement client-side
-        print("RWRW ⚠️ HelloAO API doesn't support random verse, generating client-side")
         
         // Generate a random verse from cached or known verses
         let randomBook = ["JHN", "PSA", "PRO", "MAT", "ROM", "1CO", "EPH", "PHP"].randomElement() ?? "JHN"
@@ -887,7 +864,6 @@ final class BibleInteractor: BibleInteractorProtocol {
                 )
             }
         } catch {
-            print("RWRW ❌ Failed to get random verse: \(error)")
         }
         
         // Fallback to a default verse
@@ -925,16 +901,12 @@ final class BibleInteractor: BibleInteractorProtocol {
     }
     
     func loadVersions() async throws -> [BibleVersion] {
-        print("RWRW 🔍 BibleInteractor.loadVersions() called (using HelloAO API)")
         
         // Check cache first
         if let cachedVersions = cacheManager.getCachedVersions() {
-            print("RWRW ✅ Found \(cachedVersions.count) versions in cache, returning cached versions")
-            print("RWRW 📚 Cached versions: \(cachedVersions.map { $0.version }.joined(separator: ", "))")
             return cachedVersions
         }
         
-        print("RWRW ❌ No cached versions found, fetching from API...")
         
         // Try to fetch from API
         do {
@@ -942,12 +914,9 @@ final class BibleInteractor: BibleInteractorProtocol {
             
             switch currentProvider {
             case .wldeh:
-                print("RWRW 📖 Fetching versions from Wldeh API")
                 versions = try await wldehService.fetchVersions()
-                print("RWRW ✅ Fetched \(versions.count) versions from Wldeh API")
                 
             case .helloAO:
-                print("RWRW 📖 Fetching translations from HelloAO API")
                 let translations = try await helloAOService.fetchAvailableTranslations()
                 
                 // Filter for English translations and convert to BibleVersion
@@ -959,30 +928,23 @@ final class BibleInteractor: BibleInteractorProtocol {
                 
                 // Remove duplicates based on version ID to prevent ForEach issues
                 versions = Array(Dictionary(grouping: rawVersions, by: \.version).compactMapValues(\.first).values)
-                print("RWRW ✅ Fetched \(rawVersions.count) raw versions, deduplicated to \(versions.count) unique versions from HelloAO API")
                 
             case .abiblia:
-                print("RWRW 📖 Fetching versions from A Biblia Digital API")
                 versions = try await bibliaService.fetchVersions()
-                print("RWRW ✅ Fetched \(versions.count) versions from A Biblia Digital API")
             }
-            
-            print("RWRW 📚 Available versions: \(versions.map { $0.version }.joined(separator: ", "))")
+    
             
             // Cache the result
-            print("RWRW 💾 Caching \(versions.count) versions for future use")
             cacheManager.cacheVersions(versions)
             
             return versions
         } catch {
-            print("RWRW ⚠️ API failed for versions, using fallback versions: \(error)")
             // If API fails, return fallback versions
             let rawFallbackVersions = getFallbackVersions()
             
             // Remove duplicates based on version ID to prevent ForEach issues
             let fallbackVersions = Array(Dictionary(grouping: rawFallbackVersions, by: \.version).compactMapValues(\.first).values)
             
-            print("RWRW 🔄 Returning \(rawFallbackVersions.count) raw fallback versions, deduplicated to \(fallbackVersions.count) unique versions")
             // Cache the fallback versions so they're available offline
             cacheManager.cacheVersions(fallbackVersions)
             return fallbackVersions
@@ -1184,7 +1146,6 @@ final class BibleInteractor: BibleInteractorProtocol {
     func clearVersionsCache() {
         // Clear only the versions cache to force refresh
         cacheManager.clearVersionsCache()
-        print("RWRW 🗑️ Cleared versions cache to force refresh")
     }
     
     func getCacheSize() async -> Int64 {

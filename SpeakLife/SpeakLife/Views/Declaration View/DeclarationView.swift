@@ -208,7 +208,6 @@ struct DeclarationView: View {
     
     @ViewBuilder
     private func sheetContent(_ sheet: ActiveSheet) -> some View {
-        let _ = print("🔧 Sheet: Presenting sheet with type: \(sheet)")
         switch sheet {
         case .createYourOwn:
             CreateYourOwnView()
@@ -276,8 +275,6 @@ struct DeclarationView: View {
         timerViewModel.loadRemainingTime()
         
         // Debug streak info
-        print("RWRW 🔍 OnAppear - Current streak: \(timerViewModel.currentStreak)")
-        print("RWRW 🔍 OnAppear - Completed today: \(timerViewModel.checkIfCompletedToday())")
         
         // Try to fix broken streak state
         timerViewModel.debugFixStreak()
@@ -290,9 +287,6 @@ struct DeclarationView: View {
     // MARK: - Sheet Actions
     
     private func createYourOwnView() {
-        print("🔧 CreateYourOwn: Button tapped")
-        print("🔧 CreateYourOwn: isPremium = \(subscriptionStore.isPremium)")
-        print("🔧 CreateYourOwn: Current activeSheet = \(String(describing: activeSheet))")
         
         // Timer continues running - don't save
         
@@ -301,9 +295,7 @@ struct DeclarationView: View {
         
         // Use consolidated sheet approach with delay to ensure clean state
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            print("🔧 CreateYourOwn: Setting activeSheet = .createYourOwn")
             self.activeSheet = .createYourOwn
-            print("🔧 CreateYourOwn: activeSheet is now \(String(describing: self.activeSheet))")
         }
         
         Analytics.logEvent(Event.tryPremiumTapped, parameters: nil)

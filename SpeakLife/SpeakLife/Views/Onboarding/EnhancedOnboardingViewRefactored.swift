@@ -16,9 +16,9 @@ struct EnhancedOnboardingViewRefactored: View {
     @EnvironmentObject var streakViewModel: StreakViewModel
     @Environment(\.colorScheme) var colorScheme
     
-    @State var selection: EnhancedTab = .emotionalRecognition
+    @State var selection: EnhancedTab = .testimonials
     @StateObject var userJourney = OnboardingUserJourneyViewModel()
-    @AppStorage("enhancedOnboardingTab") var enhancedOnboardingTab = EnhancedTab.emotionalRecognition.rawValue
+    @AppStorage("enhancedOnboardingTab") var enhancedOnboardingTab = EnhancedTab.testimonials.rawValue
     @State private var isTextVisible = false
    
     let impactMed = UIImpactFeedbackGenerator(style: .soft)
@@ -27,7 +27,13 @@ struct EnhancedOnboardingViewRefactored: View {
         GeometryReader { geometry in
             TabView(selection: $selection) {
                 
-                // Screen 1: Emotional Recognition
+                // Screen 1: Testimonials
+                TestimonialsOnboardingView(size: geometry.size) {
+                    advance()
+                }
+                .tag(EnhancedTab.testimonials)
+                
+                // Screen 2: Emotional Recognition
                 GenericOnboardingScreen(
                     content: OnboardingContentProvider.emotionalRecognition,
                     size: geometry.size
@@ -37,7 +43,7 @@ struct EnhancedOnboardingViewRefactored: View {
                 }
                 .tag(EnhancedTab.emotionalRecognition)
                 
-                // Screen 2: Internal Experience
+                // Screen 3: Internal Experience
                 GenericOnboardingScreen(
                     content: OnboardingContentProvider.internalExperience,
                     size: geometry.size
@@ -47,7 +53,7 @@ struct EnhancedOnboardingViewRefactored: View {
                 }
                 .tag(EnhancedTab.internalExperience)
                 
-                // Screen 3: Belief Gap
+                // Screen 4: Belief Gap
                 GenericOnboardingScreen(
                     content: OnboardingContentProvider.beliefGap,
                     size: geometry.size
@@ -57,7 +63,7 @@ struct EnhancedOnboardingViewRefactored: View {
                 }
                 .tag(EnhancedTab.beliefGap)
                 
-                // Screen 4: Authority Reframe
+                // Screen 5: Authority Reframe
                 GenericOnboardingScreen(
                     content: OnboardingContentProvider.authorityReframe,
                     size: geometry.size
@@ -67,7 +73,7 @@ struct EnhancedOnboardingViewRefactored: View {
                 }
                 .tag(EnhancedTab.authorityReframe)
                 
-                // Screen 5: Practice Awareness
+                // Screen 6: Practice Awareness
                 GenericOnboardingScreen(
                     content: OnboardingContentProvider.practiceAwareness,
                     size: geometry.size
@@ -77,7 +83,7 @@ struct EnhancedOnboardingViewRefactored: View {
                 }
                 .tag(EnhancedTab.practiceAwareness)
                 
-                // Screen 6: Aha Moment
+                // Screen 7: Aha Moment
                 GenericOnboardingScreen(
                     content: OnboardingContentProvider.ahaMoment,
                     size: geometry.size
@@ -86,7 +92,7 @@ struct EnhancedOnboardingViewRefactored: View {
                 }
                 .tag(EnhancedTab.ahaMoment)
                 
-                // Screen 7: Identity Aspiration
+                // Screen 8: Identity Aspiration
                 GenericOnboardingScreen(
                     content: OnboardingContentProvider.identityAspiration,
                     size: geometry.size
@@ -96,7 +102,7 @@ struct EnhancedOnboardingViewRefactored: View {
                 }
                 .tag(EnhancedTab.identityAspiration)
                 
-                // Screen 8: Future Pacing
+                // Screen 9: Future Pacing
                 GenericOnboardingScreen(
                     content: OnboardingContentProvider.futurePacing,
                     size: geometry.size
@@ -106,7 +112,7 @@ struct EnhancedOnboardingViewRefactored: View {
                 }
                 .tag(EnhancedTab.futurePacing)
                 
-                // Screen 9: Core Message Lock-In
+                // Screen 10: Core Message Lock-In
                 GenericOnboardingScreen(
                     content: OnboardingContentProvider.coreMessage,
                     size: geometry.size
@@ -201,6 +207,11 @@ struct EnhancedOnboardingViewRefactored: View {
     
     private func advance() {
         switch selection {
+        case .testimonials:
+            impactMed.impactOccurred()
+            selection = .emotionalRecognition
+            enhancedOnboardingTab = selection.rawValue
+            
         case .emotionalRecognition:
             impactMed.impactOccurred()
             selection = .internalExperience

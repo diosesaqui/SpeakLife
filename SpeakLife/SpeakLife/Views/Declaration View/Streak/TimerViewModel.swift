@@ -48,7 +48,6 @@ final class TimerViewModel: ObservableObject {
     func runCountdownTimer() {
         // Check completion status once when starting timer, not every second
         if checkIfCompletedToday() {
-            print("RWRW ✅ Already completed today, not starting timer")
             isActive = false
             return
         }
@@ -62,14 +61,12 @@ final class TimerViewModel: ObservableObject {
             if self.timeRemaining > 0 {
                 self.timeRemaining -= 1
                 if self.timeRemaining <= 10 {
-                    print("RWRW ⏱ Timer countdown: \(self.timeRemaining) seconds remaining")
                 }
                 // Save time periodically to prevent data loss
                 if self.timeRemaining % 10 == 0 {
                     UserDefaults.standard.set(self.timeRemaining, forKey: "timeRemaining")
                 }
             } else {
-                print("RWRW 🎯 Timer reached zero - calling completeMeditation()")
                 timer.invalidate()
                 self.timer = nil
                 completeMeditation()
@@ -83,7 +80,6 @@ final class TimerViewModel: ObservableObject {
         isComplete = true
         hasLoadedInitialTime = false // Reset for next day
         
-        print("RWRW 🎯 Before completion - CurrentStreak: \(currentStreak), TotalDays: \(totalDaysCompleted)")
         
         saveCompletionDate()
         currentStreak += 1
@@ -92,7 +88,6 @@ final class TimerViewModel: ObservableObject {
             longestStreak = currentStreak  // Set to current streak, not increment
         }
         
-        print("RWRW 🎉 Meditation completed! New streak: \(currentStreak), Total: \(totalDaysCompleted), Longest: \(longestStreak)")
         
         // Post notification to trigger global celebration
         NotificationCenter.default.post(name: Notification.Name("StreakCompleted"), object: nil)
@@ -103,14 +98,12 @@ final class TimerViewModel: ObservableObject {
     func debugFixStreak() {
         if checkIfCompletedToday() && currentStreak == 0 {
             currentStreak = 1
-            print("RWRW 🔧 Debug fix: Set streak to 1 since task was completed today")
         }
     }
     
     func saveCompletionDate() {
         lastCompletedStreak = Date()
         // Invalidate cache since completion status changed
-        print("RWRW 🔍 Cache invalidated: meditation completed")
         cachedCompletionResult = nil
         cachedCompletionDate = nil
     }
@@ -127,12 +120,10 @@ final class TimerViewModel: ObservableObject {
         if let cached = cachedCompletionResult,
            let cachedDate = cachedCompletionDate,
            cachedDate == lastCompletedStreak {
-            print("RWRW 🔍 checkIfCompletedToday: Using cached result: \(cached)")
             return cached
         }
         
         guard let completionDate = lastCompletedStreak else { 
-            print("RWRW 🔍 checkIfCompletedToday: No completion date found")
             cachedCompletionResult = false
             cachedCompletionDate = nil
             return false 
@@ -154,7 +145,6 @@ final class TimerViewModel: ObservableObject {
         cachedCompletionResult = completed
         cachedCompletionDate = completionDate
         
-        print("RWRW 🔍 checkIfCompletedToday: CALCULATED \(completed) | CompletionDate: \(completionDate) | Today: \(startOfToday) | CurrentStreak: \(currentStreak)")
         return completed
     }
     
@@ -177,7 +167,6 @@ final class TimerViewModel: ObservableObject {
         // Invalidate cache at the start of a new day check
         if let cachedDate = cachedCompletionDate,
            !Calendar.current.isDateInToday(cachedDate) {
-            print("RWRW 🔍 Cache invalidated: new day started")
             cachedCompletionResult = nil
             cachedCompletionDate = nil
         }
@@ -185,11 +174,9 @@ final class TimerViewModel: ObservableObject {
         // Only reset streak if we missed a day AND haven't completed today
         if checkIfMidnightOfTomorrowHasPassedSinceLastCompletedStreak() && !checkIfCompletedToday() {
                // scheduleNotificationForMidnightTomorrow()
-            print("RWRW ⚠️ Resetting streak - missed a day and haven't completed today")
             currentStreak = 0
             hasLoadedInitialTime = false // Allow fresh timer load for new day
         } else if checkIfCompletedToday() {
-            print("RWRW ✅ Completed today - keeping streak: \(currentStreak)")
         }
     }
     
@@ -202,25 +189,21 @@ final class TimerViewModel: ObservableObject {
     func loadRemainingTime() {
         // Prevent multiple loads from resetting the timer
         if hasLoadedInitialTime && isActive && timeRemaining > 0 {
-            print("RWRW ⚠️ Timer already loaded and running, skipping reload")
             return
         }
         
         checkAndUpdateCompletionDate()
         
         if checkIfCompletedToday() {
-            print("RWRW ✅ Already completed today, timer not needed")
             hasLoadedInitialTime = true
             return
         } else if let savedTimeRemaining = UserDefaults.standard.value(forKey: "timeRemaining") as? Int, savedTimeRemaining > 0 {
-            print("RWRW 🔄 Restored saved time: \(savedTimeRemaining)")
             // Restore the saved remaining time - don't require lastStartedStreak to be today
             timeRemaining = savedTimeRemaining
             isComplete = false
             hasLoadedInitialTime = true
             startTimer()
         } else {
-            print("RWRW 🆕 No valid saved time, starting fresh timer")
             timeRemaining = TimerViewModel.totalDuration
             lastStartedStreak = Date()
             isComplete = false
@@ -231,15 +214,12 @@ final class TimerViewModel: ObservableObject {
     
     private func startTimer() {
         if checkIfCompletedToday() {
-            print("RWRW ⚠️ startTimer: Already completed today, skipping")
             return
         }
         if !isActive {
-            print("RWRW ▶️ Starting timer with \(timeRemaining) seconds remaining")
             isActive = true
             runCountdownTimer()
         } else {
-            print("RWRW ⚠️ startTimer: Timer already active, skipping")
         }
     }
     

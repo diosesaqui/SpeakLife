@@ -11,7 +11,19 @@ final class AppState: ObservableObject {
     @Published var rootViewId = UUID()
     @Published var showIntentBar = true
     @Published var onBoardingTest = true
-    @Published var showScreenshotLabel = false
+    @Published var showScreenshotLabel = false {
+        didSet {
+            // Automatically reset after 5 seconds as a safety measure
+            if showScreenshotLabel {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) { [weak self] in
+                    if self?.showScreenshotLabel == true {
+                        // Auto-resetting stuck showScreenshotLabel
+                        self?.showScreenshotLabel = false
+                    }
+                }
+            }
+        }
+    }
     @AppStorage("onboarded") var isOnboarded = false
     @AppStorage("newPrayersAdded") var newPrayersAdded = true
     @AppStorage("newCategoriesAddedv4") var newCategoriesAddedv4 = true
@@ -89,21 +101,21 @@ final class AppState: ObservableObject {
         
         // Fix notification count
         if notificationCount <= 0 {
-            print("🔧 AppState: Fixed notification count from \(notificationCount) to 5")
+            // Fixed notification count to 5
             notificationCount = 5
             fixed = true
         }
         
         // Fix time indices
         if startTimeIndex < 0 || startTimeIndex >= 48 {
-            print("🔧 AppState: Fixed invalid start time index from \(startTimeIndex) to 12")
+            // Fixed invalid start time index to 12
             startTimeIndex = 12 // 6 AM
             fixed = true
         }
         
         if endTimeIndex <= startTimeIndex || endTimeIndex >= 48 {
             let newEndIndex = min(startTimeIndex + 16, 47)
-            print("🔧 AppState: Fixed invalid end time index from \(endTimeIndex) to \(newEndIndex)")
+            // Fixed invalid end time index
             endTimeIndex = newEndIndex
             fixed = true
         }
@@ -111,16 +123,16 @@ final class AppState: ObservableObject {
         // Ensure minimum window of 2 hours
         if (endTimeIndex - startTimeIndex) < 4 { // 4 = 2 hours (30min intervals)
             let newEndIndex = min(startTimeIndex + 4, 47)
-            print("🔧 AppState: Fixed insufficient time window, end time set to \(newEndIndex)")
+            // Fixed insufficient time window
             endTimeIndex = newEndIndex
             fixed = true
         }
         
         if !fixed {
-            print("✅ AppState: Notification settings validated - no fixes needed")
+            // Notification settings validated
         }
         
-        print("📱 AppState: Final settings - Count: \(notificationCount), Start: \(startTimeIndex), End: \(endTimeIndex)")
+        // Final notification settings configured
     }
     
     // Call this method when user changes start/end times to ensure validity

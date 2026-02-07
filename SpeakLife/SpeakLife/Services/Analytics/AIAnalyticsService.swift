@@ -44,7 +44,6 @@ final class AIAnalyticsService: ObservableObject {
             metadata: parameters
         )
         
-        print("🤖 AI Analytics: \(feature.rawValue) - \(action.rawValue)")
     }
     
     // MARK: - Recommendation Performance
@@ -72,7 +71,6 @@ final class AIAnalyticsService: ObservableObject {
         // Track conversion funnel
         trackRecommendationFunnel(userAction: userAction, confidence: confidence)
         
-        print("📊 Recommendation Performance: \(userAction.rawValue) (confidence: \(confidence))")
     }
     
     func trackPersonalizedCategoryPerformance(
@@ -96,7 +94,6 @@ final class AIAnalyticsService: ObservableObject {
         
         Analytics.logEvent("ai_personalized_category_performance", parameters: categoryData)
         
-        print("🎯 Category Performance: \(categoryName) - engagement: \(userEngagement)")
     }
     
     // MARK: - AI Learning & Adaptation
@@ -120,7 +117,6 @@ final class AIAnalyticsService: ObservableObject {
         
         Analytics.logEvent("ai_model_performance", parameters: modelData)
         
-        print("🧠 Model Performance: \(modelType.rawValue) - accuracy: \(accuracy)")
     }
     
     func trackUserBehaviorChange(
@@ -143,7 +139,6 @@ final class AIAnalyticsService: ObservableObject {
         
         Analytics.logEvent("ai_behavior_change_detected", parameters: changeData)
         
-        print("📈 Behavior Change: \(changeType.rawValue) - \(previousValue) → \(newValue)")
     }
     
     // MARK: - User Experience & Satisfaction
@@ -211,7 +206,6 @@ final class AIAnalyticsService: ObservableObject {
             trackAIRevenueAttribution(value: conversionValue ?? 0, feature: aiFeatureUsed)
         }
         
-        print("💰 Conversion Impact: \(conversionType.rawValue) - AI attributed: \(attributedToAI)")
     }
     
     // MARK: - A/B Testing & Feature Flags
@@ -234,7 +228,6 @@ final class AIAnalyticsService: ObservableObject {
         
         Analytics.logEvent("ai_ab_test_result", parameters: testData)
         
-        print("🧪 A/B Test: \(testName) - \(variant) - \(metric): \(value)")
     }
     
     func trackFeatureFlagUsage(
@@ -253,7 +246,6 @@ final class AIAnalyticsService: ObservableObject {
         
         Analytics.logEvent("ai_feature_flag_usage", parameters: flagData)
         
-        print("🚩 Feature Flag: \(flagName) - enabled: \(isEnabled), used: \(featureUsed)")
     }
     
     // MARK: - Error & Performance Monitoring
@@ -280,6 +272,8 @@ final class AIAnalyticsService: ObservableObject {
         
         // Also log to existing error tracking
         AnalyticsService.shared.trackError("ai_\(component.rawValue)", message: errorMessage)
+        
+        // Error logging: 
         
         print("❌ AI Error: \(component.rawValue) - \(errorType): \(errorMessage)")
     }

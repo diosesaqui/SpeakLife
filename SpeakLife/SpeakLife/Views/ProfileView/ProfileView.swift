@@ -25,7 +25,8 @@ struct ProfileView: View {
     
     @Environment(\.colorScheme) var colorScheme
     @EnvironmentObject var declarationStore: DeclarationViewModel
-    @EnvironmentObject var streakViewModel: EnhancedStreakViewModel
+    //@EnvironmentObject var streakViewModel: EnhancedStreakViewModel
+    @EnvironmentObject var streakViewModel: StreakViewModel
     @EnvironmentObject var appState: AppState
     @EnvironmentObject var devotionalViewModel: DevotionalViewModel
     @EnvironmentObject var subscriptionStore: SubscriptionStore
@@ -89,10 +90,11 @@ struct ProfileView: View {
                     Section(header: Text("Yours").font(.caption)) {
                         AbbasLoveRow
                        // createYourOwnRow  // Moved Create Your Own here (always visible)
-                        if appState.onBoardingTest {
+                       // if appState.onBoardingTest {
+                        streakRow
                             quizRow
                            prayerRow
-                        }
+                       // }
                         
                         remindersRow
                      //   widgetPreferencesRow
@@ -337,26 +339,25 @@ struct ProfileView: View {
         }
     }
     
-//    @MainActor
-//    private var streakRow: some View {
-//        ZStack {
-//            Button("") {
-//                isPresentingBottomSheet = true
-//            }
-//            HStack {
-//                Image(systemName: "flame.fill")
-//                    .foregroundColor(Constants.DAMidBlue)
-//                
-//                Text("Streak")
-//                
-//            }
-//        }.sheet(isPresented: $isPresentingBottomSheet) {
-//           // EnhancedStreakView(viewModel: streakViewModel)
-//           // StreakSheet(isShown: $isPresentingBottomSheet, streakViewModel: streakViewModel)
-//                .presentationDetents([.medium, .fraction(0.7)])
-//                .preferredColorScheme(.light)
-//        }
-//    }
+    @MainActor
+    private var streakRow: some View {
+        ZStack {
+            Button("") {
+                isPresentingBottomSheet = true
+            }
+            HStack {
+                Image(systemName: "flame.fill")
+                    .foregroundColor(Constants.DAMidBlue)
+                
+                Text("Streak")
+                
+            }
+        }.sheet(isPresented: $isPresentingBottomSheet) {
+                StreakSheet(isShown: $isPresentingBottomSheet, streakViewModel: streakViewModel)
+                .presentationDetents([.medium, .fraction(0.7)])
+                .preferredColorScheme(.light)
+        }
+    }
     
     @MainActor
     private var AbbasLoveRow: some View {

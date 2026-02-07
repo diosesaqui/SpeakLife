@@ -39,7 +39,6 @@ final class DevotionalServiceClient: DevotionalService {
                     
                     return findTodayDevotional(from: decodedDevotionals)
                 } catch {
-                    print("Decoding error: \(error)")
                 }
             }
         } else {
@@ -63,7 +62,6 @@ final class DevotionalServiceClient: DevotionalService {
             }
             return decodedDevotionals
         } catch {
-            print("Decoding error: \(error.localizedDescription)")
             return []
         }
     }

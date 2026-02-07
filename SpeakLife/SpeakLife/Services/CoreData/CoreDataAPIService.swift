@@ -21,7 +21,7 @@ final class CoreDataAPIService: APIService {
     
     init(journalRepository: any JournalRepositoryProtocol = JournalRepository(),
          affirmationRepository: any AffirmationRepositoryProtocol = AffirmationRepository(),
-         legacyAPIService: APIService = LocalAPIClient(),
+         legacyAPIService: APIService = LocalAPIClient.shared,
          migrationManager: DataMigrationManager = DataMigrationManager()) {
         self.journalRepository = journalRepository
         self.affirmationRepository = affirmationRepository
@@ -49,11 +49,9 @@ final class CoreDataAPIService: APIService {
     
     // MARK: - APIService Implementation
     func declarations(completion: @escaping ([Declaration], APIError?, Bool) -> Void) {
-        print("RWRW: CoreDataAPIService.declarations() called")
         Task {
             do {
                 // Get both journal and affirmation entries
-                print("RWRW: Fetching journal and affirmation entries from Core Data...")
                 let journalEntries = try await journalRepository.fetch(predicate: nil)
                 let affirmationEntries = try await affirmationRepository.fetch(predicate: nil)
                 
@@ -88,14 +86,12 @@ final class CoreDataAPIService: APIService {
                     declarations.append(declaration)
                 }
                 
-                print("RWRW: Converted \(declarations.count) Core Data entries to Declaration objects")
                 
                 // Also get non-own declarations from legacy service
                 legacyAPIService.declarations { legacyDeclarations, error, synced in
                     let nonOwnDeclarations = legacyDeclarations.filter { $0.category != .myOwn }
                     let allDeclarations = declarations + nonOwnDeclarations
                     
-                    print("RWRW: Final declaration count: \(allDeclarations.count) (Core Data: \(declarations.count), Legacy: \(nonOwnDeclarations.count))")
                     
                     DispatchQueue.main.async {
                         completion(allDeclarations, error, synced)
@@ -103,7 +99,6 @@ final class CoreDataAPIService: APIService {
                 }
                 
             } catch {
-                print("RWRW: Error fetching declarations from Core Data - \(error.localizedDescription)")
                 DispatchQueue.main.async {
                     completion([], APIError.noData, false)
                 }
@@ -164,7 +159,6 @@ final class CoreDataAPIService: APIService {
         let journalEntry = JournalEntry(context: context)
         journalEntry.text = text
         journalEntry.category = category.rawValue
-        print("RWRW: Creating journal entry via API - Text: \(text.prefix(50))")
         try await journalRepository.create(journalEntry)
     }
     
@@ -173,7 +167,6 @@ final class CoreDataAPIService: APIService {
         let affirmationEntry = AffirmationEntry(context: context)
         affirmationEntry.text = text
         affirmationEntry.category = category.rawValue
-        print("RWRW: Creating affirmation entry via API - Text: \(text.prefix(50))")
         try await affirmationRepository.create(affirmationEntry)
     }
     
@@ -187,7 +180,6 @@ final class CoreDataAPIService: APIService {
     
     // MARK: - Remove Duplicates
     func removeDuplicates() async throws {
-        print("RWRW: Checking for duplicate entries...")
         
         // Remove duplicate journal entries
         let allJournals = try await journalRepository.fetch(predicate: nil)
@@ -221,29 +213,24 @@ final class CoreDataAPIService: APIService {
             }
         }
         
-        print("RWRW: Removed \(journalDuplicates) duplicate journal entries and \(affirmationDuplicates) duplicate affirmation entries")
     }
     
     // MARK: - Delete by UUID
     func deleteByUUID(_ uuid: UUID, contentType: ContentType) async throws {
-        print("RWRW: Deleting entry by UUID - ID: \(uuid), Type: \(contentType)")
         
         if contentType == .journal {
             if let entry = try await journalRepository.fetchById(uuid) {
                 try await journalRepository.delete(entry)
-                print("RWRW: Journal entry deleted successfully")
             }
         } else if contentType == .affirmation {
             if let entry = try await affirmationRepository.fetchById(uuid) {
                 try await affirmationRepository.delete(entry)
-                print("RWRW: Affirmation entry deleted successfully")
             }
         }
     }
     
     // MARK: - Legacy Delete Method (for compatibility)
     func deleteDeclaration(withId idString: String, contentType: ContentType) async throws {
-        print("RWRW: Legacy delete - ID: \(idString), Type: \(contentType)")
         
         // Since Declaration IDs are text+category+contentType, we need to find by text content
         // Parse the Declaration ID to extract the text
@@ -256,20 +243,17 @@ final class CoreDataAPIService: APIService {
             searchText = String(searchText.dropLast(categoryRaw.count + contentTypeRaw.count))
         }
         
-        print("RWRW: Searching for entries with text: '\(searchText)'")
         
         // For legacy compatibility, delete the first matching entry
         if contentType == .journal {
             let entries = try await journalRepository.fetch(predicate: NSPredicate(format: "text == %@", searchText))
             if let firstEntry = entries.first {
                 try await journalRepository.delete(firstEntry)
-                print("RWRW: Journal entry deleted (1 of \(entries.count) matching)")
             }
         } else if contentType == .affirmation {
             let entries = try await affirmationRepository.fetch(predicate: NSPredicate(format: "text == %@", searchText))
             if let firstEntry = entries.first {
                 try await affirmationRepository.delete(firstEntry)
-                print("RWRW: Affirmation entry deleted (1 of \(entries.count) matching)")
             }
         }
     }

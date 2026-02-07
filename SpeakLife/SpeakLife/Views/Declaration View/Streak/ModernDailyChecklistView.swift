@@ -297,7 +297,6 @@ struct ModernTaskRow: View {
     
     var body: some View {
         Button(action: {
-            print("📝 ModernTaskRow button tapped for task: \(task.title)")
             
             withAnimation(.spring(response: 0.2, dampingFraction: 0.6)) {
                 checkmarkScale = 0.8

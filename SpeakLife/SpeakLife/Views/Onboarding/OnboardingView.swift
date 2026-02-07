@@ -15,8 +15,8 @@ struct OnboardingView: View  {
     @EnvironmentObject var streakViewModel: StreakViewModel
     @Environment(\.colorScheme) var colorScheme
     
-    @State var selection: Tab = .scriptureAnchor
-    @AppStorage("onboardingTab") var onboardingTab = Tab.scriptureAnchor.rawValue
+    @State var selection: Tab = .testimonials
+    @AppStorage("onboardingTab") var onboardingTab = Tab.testimonials.rawValue
     @State private var isTextVisible = false
    
     let impactMed = UIImpactFeedbackGenerator(style: .soft)
@@ -25,7 +25,15 @@ struct OnboardingView: View  {
         GeometryReader { geometry in
             TabView(selection: $selection) {
                 
-                // SCREEN 1: Scripture Anchor
+                // SCREEN 1: Testimonials
+                TestimonialsOnboardingView(size: geometry.size) {
+                    withAnimation {
+                        advance()
+                    }
+                }
+                .tag(Tab.testimonials)
+                
+                // SCREEN 2: Scripture Anchor
                 ScriptureAnchorScreen(size: geometry.size) {
                     withAnimation {
                         advance()
@@ -33,7 +41,7 @@ struct OnboardingView: View  {
                 }
                 .tag(Tab.scriptureAnchor)
                 
-                // SCREEN 2: Reframe Problem
+                // SCREEN 3: Reframe Problem
                 ReframeProblemScreen(size: geometry.size) {
                     withAnimation {
                         advance()
@@ -41,7 +49,7 @@ struct OnboardingView: View  {
                 }
                 .tag(Tab.reframeProblem)
                 
-                // SCREEN 3: Jesus Method
+                // SCREEN 4: Jesus Method
                 JesusMethodScreen(size: geometry.size) {
                     withAnimation {
                         advance()
@@ -49,7 +57,7 @@ struct OnboardingView: View  {
                 }
                 .tag(Tab.jesusMethod)
                 
-                // SCREEN 4: Self-Diagnosis
+                // SCREEN 5: Self-Diagnosis
                 SelfDiagnosisScreen(size: geometry.size) {
                     withAnimation {
                         advance()
@@ -57,7 +65,7 @@ struct OnboardingView: View  {
                 }
                 .tag(Tab.selfDiagnosis)
                 
-                // SCREEN 5: Truth Gap
+                // SCREEN 6: Truth Gap
                 TruthGapScreen(size: geometry.size) {
                     withAnimation {
                         advance()
@@ -65,7 +73,7 @@ struct OnboardingView: View  {
                 }
                 .tag(Tab.truthGap)
                 
-                // SCREEN 6: Application
+                // SCREEN 7: Application
                 ApplicationScreen(size: geometry.size) {
                     withAnimation {
                         advance()
@@ -73,7 +81,7 @@ struct OnboardingView: View  {
                 }
                 .tag(Tab.application)
                 
-                // SCREEN 7: Micro-Commitment
+                // SCREEN 8: Micro-Commitment
                 MicroCommitmentScreen(size: geometry.size) {
                     withAnimation {
                         advance()
@@ -81,7 +89,7 @@ struct OnboardingView: View  {
                 }
                 .tag(Tab.microCommitment)
                 
-                // SCREEN 8: Position SpeakLife
+                // SCREEN 9: Position SpeakLife
                 PositionSpeakLifeScreen(size: geometry.size) {
                     withAnimation {
                         advance()
@@ -161,6 +169,12 @@ struct OnboardingView: View  {
     
     private func advance() {
         switch selection {
+                case .testimonials:
+                    impactMed.impactOccurred()
+                    selection = .scriptureAnchor
+                    onboardingTab = selection.rawValue
+                    Analytics.logEvent("TestimonialsDone", parameters: nil)
+                    
                 case .scriptureAnchor:
                     impactMed.impactOccurred()
                     selection = .reframeProblem

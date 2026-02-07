@@ -94,10 +94,9 @@ struct UpNextCell: View {
                 .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isTapped)
                 .onAppear {
                     // Fetch listener count for this audio
-                    print("🎵 UpNextCell appearing for: \(item.id)")
 //                    Task {
 //                        let metrics = await metricsService.fetchMetrics(for: [item.id], contentType: .audio)
-//                        print("📊 Metrics received for \(item.id): \(metrics)")
+//                        // Debug: emoji print removed
 //                        if let count = metrics[item.id] {
 //                            let formatted = ListenerMetricsService.formatListenerCount(count)
 //                            print("📝 Setting listenerCount to: \(formatted ?? "nil")")

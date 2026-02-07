@@ -95,15 +95,10 @@ final class BibleAPIService: BibleAPIServiceProtocol {
     
     // MARK: - Versions
     func fetchVersions() async throws -> [BibleVersion] {
-        print("RWRW 📖 Fetching all Bible versions from API")
         let url = "\(baseURL)/versions"
         let versions: [BibleVersion] = try await performRequest(url: url)
-        print("RWRW ✅ Successfully fetched \(versions.count) Bible versions")
-        print("RWRW 📚 Available versions response:")
         for (index, version) in versions.enumerated() {
-            print("RWRW   \(index + 1). Version Code: '\(version.version)' | Total Verses: \(version.verses)")
         }
-        print("RWRW 📚 Full versions list: \(versions.map { $0.version }.joined(separator: ", "))")
         return versions
     }
     
@@ -162,42 +157,29 @@ final class BibleAPIService: BibleAPIServiceProtocol {
         }
         
         do {
-            print("RWRW 🔍 Making request to: \(urlString)")
-            print("RWRW 🔍 Method: \(method)")
-            print("RWRW 🔍 Auth token present: \(authToken != nil)")
             
             let (data, response) = try await session.data(for: request)
             
-            print("RWRW 🔍 Received response data size: \(data.count) bytes")
             
             // Check HTTP response
             if let httpResponse = response as? HTTPURLResponse {
-                print("RWRW 🔍 HTTP Status Code: \(httpResponse.statusCode)")
-                print("RWRW 🔍 Response Headers: \(httpResponse.allHeaderFields)")
                 
                 // Print response body for debugging
                 if let responseString = String(data: data, encoding: .utf8) {
-                    print("RWRW 🔍 Response Body: \(responseString)")
                 }
                 
                 switch httpResponse.statusCode {
                 case 200...299:
-                    print("RWRW ✅ Success status code")
                     break // Success
                 case 401:
-                    print("RWRW ❌ Unauthorized error")
                     throw BibleAPIError.unauthorized
                 case 429:
-                    print("RWRW ❌ Rate limited error")
                     throw BibleAPIError.rateLimited
                 case 400...499:
-                    print("RWRW ❌ Client error: \(httpResponse.statusCode)")
                     throw BibleAPIError.serverError(httpResponse.statusCode)
                 case 500...599:
-                    print("RWRW ❌ Server error: \(httpResponse.statusCode)")
                     throw BibleAPIError.serverError(httpResponse.statusCode)
                 default:
-                    print("RWRW ❌ Unknown error: \(httpResponse.statusCode)")
                     throw BibleAPIError.serverError(httpResponse.statusCode)
                 }
             }
@@ -206,21 +188,15 @@ final class BibleAPIService: BibleAPIServiceProtocol {
             do {
                 let decoder = JSONDecoder()
                 let result = try decoder.decode(T.self, from: data)
-                print("RWRW ✅ Successfully decoded response")
                 return result
             } catch {
-                print("RWRW ❌ Decoding error: \(error)")
                 if let responseString = String(data: data, encoding: .utf8) {
-                    print("RWRW 🔍 Raw response for decoding error: \(responseString)")
                 }
                 throw BibleAPIError.decodingError(error)
             }
         } catch let error as BibleAPIError {
-            print("RWRW ❌ Bible API Error: \(error)")
             throw error
         } catch {
-            print("RWRW ❌ Network Error: \(error)")
-            print("RWRW 🔍 Network Error Details: \(error.localizedDescription)")
             throw BibleAPIError.networkError(error)
         }
     }

@@ -487,7 +487,6 @@ final class DeclarationViewModel: ObservableObject {
     }
     
     func choose(_ declaration: Declaration) {
-        print("📍 Choosing declaration: \(declaration.text.prefix(50))...")
         
         if !declarations.contains(where: { $0 == declaration }) {
             // Add new declaration and move to front
@@ -565,16 +564,12 @@ final class DeclarationViewModel: ObservableObject {
     /// Sets a declaration from a notification
     /// This method ensures the declaration is displayed regardless of current app state
     func setDeclaration(_ content: String, category: String) {
-        print("📌 Setting declaration from notification")
-        print("📌 Content: \(content.prefix(50))...")
-        print("📌 Category: \(category)")
         
         // Flag to prevent auto-selection overrides
         isProcessingNotification = true
         
         // Wait for declarations to load if necessary
         if allDeclarations.isEmpty {
-            print("📌 Waiting for declarations to load...")
             // Retry after a short delay
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
                 self?.setDeclaration(content, category: category)
@@ -587,10 +582,8 @@ final class DeclarationViewModel: ObservableObject {
         
         // Find or create the declaration
         if let existingDeclaration = allDeclarations.first(where: { $0.text.hasPrefix(contentText) }) {
-            print("📌 Found existing declaration")
             self.choose(existingDeclaration)
         } else {
-            print("📌 Creating new declaration from notification")
             // Parse category from string
             let declarationCategory = DeclarationCategory(category) ?? .faith
             let declaration = Declaration(text: content, category: declarationCategory)

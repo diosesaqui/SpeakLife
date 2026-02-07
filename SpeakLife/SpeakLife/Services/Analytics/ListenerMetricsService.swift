@@ -136,7 +136,6 @@ final class ListenerMetricsService: ObservableObject {
         
         // If we have fresh cache and all requested data, return immediately
         if !results.isEmpty && shouldUseCachedData() {
-            print("📦 Using cached metrics for: \(contentIds)")
             return results
         }
         
@@ -152,7 +151,6 @@ final class ListenerMetricsService: ObservableObject {
     
     // Efficient bulk fetch (called periodically, not per view)
     private func bulkFetchAllMetrics(contentType: ContentMetricType) async {
-        print("🔄 Background bulk fetch starting...")
         
         do {
             // Fetch ALL metrics at once (more efficient than individual calls)
@@ -184,6 +182,7 @@ final class ListenerMetricsService: ObservableObject {
             print("✅ Bulk fetched \(bulkMetrics.count) metrics")
             
         } catch {
+            // Error logging: 
             print("❌ Error in bulk fetch: \(error)")
         }
     }
@@ -228,7 +227,6 @@ final class ListenerMetricsService: ObservableObject {
     
     // MARK: - Formatting
     static func formatListenerCount(_ count: Int) -> String? {
-        print("🔢 Formatting count: \(count)")
         guard count >= 1000 else { 
             print("❌ Count below 1000 threshold")
             return nil 

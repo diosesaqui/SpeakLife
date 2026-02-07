@@ -18,6 +18,11 @@ final class PersistenceController {
     private let maxImportAttempts = 5
     private let importRetryDelays = [5.0, 10.0, 15.0, 30.0, 60.0] // Progressive delays
     
+    deinit {
+        // Clean up notification observers
+        NotificationCenter.default.removeObserver(self)
+    }
+    
     static var preview: PersistenceController = {
         let controller = PersistenceController(inMemory: true)
         let viewContext = controller.container.viewContext
@@ -212,6 +217,7 @@ final class PersistenceController {
                     print("CloudKit account status: \(statusString)")
                     
                     if status != .available {
+                        // Warning: 
                         print("⚠️ CloudKit not available - data will not sync")
                     }
                 }
@@ -435,6 +441,7 @@ final class PersistenceController {
                         NotificationCenter.default.post(name: NSNotification.Name("CloudKitImportCompleted"), object: nil)
                     }
                 } else {
+                    // Warning: 
                     print("⚠️ No data imported - attempt \(self.importAttempts)/\(self.maxImportAttempts)")
                     
                     // Retry with progressive delays

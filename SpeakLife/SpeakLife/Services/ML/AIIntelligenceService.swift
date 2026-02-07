@@ -31,9 +31,21 @@ final class AIIntelligenceService: ObservableObject {
     private var cancellables = Set<AnyCancellable>()
     private let processingQueue = DispatchQueue(label: "ai.intelligence", qos: .userInitiated)
     
+    // Timer references for proper cleanup
+    private var dailyTaskTimer: Timer?
+    private var weeklyTaskTimer: Timer?
+    
     private init() {
         setupAIServices()
         observeServiceReadiness()
+    }
+    
+    deinit {
+        // Clean up timers to prevent memory leaks
+        dailyTaskTimer?.invalidate()
+        weeklyTaskTimer?.invalidate()
+        dailyTaskTimer = nil
+        weeklyTaskTimer = nil
     }
     
     // MARK: - Service Initialization
@@ -93,6 +105,7 @@ final class AIIntelligenceService: ObservableObject {
     
     func updatePersonalizedContent() async {
         guard isAIReady else {
+            // Warning: 
             print("⚠️ AI services not ready")
             return
         }
@@ -168,7 +181,6 @@ final class AIIntelligenceService: ObservableObject {
     // MARK: - Crisis & Celebration Handling
     
     func handleSpiritualCrisis(_ situation: String) async {
-        print("🚨 Handling spiritual crisis: \(situation)")
         
         // Immediate support notification
         await notificationService.scheduleImmediateSupport(for: situation)
@@ -191,7 +203,6 @@ final class AIIntelligenceService: ObservableObject {
     }
     
     func celebrateAchievement(_ achievement: String) async {
-        print("🎉 Celebrating achievement: \(achievement)")
         
         // Celebration notification
         await notificationService.scheduleCelebration(for: achievement)
@@ -214,7 +225,6 @@ final class AIIntelligenceService: ObservableObject {
     func triggerModelRetraining() async {
         guard isAIReady else { return }
         
-        print("🧠 Starting AI model retraining...")
         
         await mlTaskLibrary.scheduleModelRetraining()
         
@@ -249,17 +259,23 @@ final class AIIntelligenceService: ObservableObject {
     }
     
     private func schedulePeriodicTasks() async {
-        // Schedule daily content updates
-        Timer.scheduledTimer(withTimeInterval: 86400, repeats: true) { _ in
-            Task {
-                await self.updatePersonalizedContent()
+        // Invalidate any existing timers before creating new ones
+        await MainActor.run {
+            dailyTaskTimer?.invalidate()
+            weeklyTaskTimer?.invalidate()
+            
+            // Schedule daily content updates
+            dailyTaskTimer = Timer.scheduledTimer(withTimeInterval: 86400, repeats: true) { [weak self] _ in
+                Task {
+                    await self?.updatePersonalizedContent()
+                }
             }
-        }
-        
-        // Schedule weekly model improvements
-        Timer.scheduledTimer(withTimeInterval: 604800, repeats: true) { _ in
-            Task {
-                await self.triggerModelRetraining()
+            
+            // Schedule weekly model improvements
+            weeklyTaskTimer = Timer.scheduledTimer(withTimeInterval: 604800, repeats: true) { [weak self] _ in
+                Task {
+                    await self?.triggerModelRetraining()
+                }
             }
         }
     }
@@ -392,7 +408,6 @@ final class AIIntelligenceService: ObservableObject {
             UserDefaults.standard.set(Date(), forKey: "emergency_content_cache_date")
         }
         
-        print("🚨 Cached \(content.count) emergency declarations")
     }
     
     private func updateSpiritualMaturity(basedOn achievement: String) async {
@@ -441,7 +456,6 @@ final class AIIntelligenceService: ObservableObject {
                 // Update the user's maturity level
                 enhancedAnalytics.userBehaviorProfile.spiritualMaturityLevel = newMaturity
                 
-                print("🌱 Spiritual maturity upgraded: \(currentMaturity) → \(newMaturity)")
                 
                 // Trigger content adaptation
                 await adaptContentToMaturity(newMaturity)
@@ -504,7 +518,6 @@ final class AIIntelligenceService: ObservableObject {
             UserDefaults.standard.set(weightsData, forKey: "ai_category_weights_\(maturity.rawValue)")
         }
         
-        print("🎯 Adapted content weights for \(maturity.displayName)")
     }
     
     private func personalizeContentWeights(_ userBehavior: UserBehaviorFeatures) async {
@@ -553,20 +566,17 @@ final class AIIntelligenceService: ObservableObject {
         let currentWeights = updatedProfile.topCategories
         
         if hasSignificantWeightChanges(previous: previousWeights, current: currentWeights) {
-            print("📊 Detected significant behavior changes, adapting recommendations")
             await personalizeContentWeights(updatedProfile)
             await updatePersonalizedContent()
         }
         
         // Check for new struggles or growth areas
         if !updatedProfile.strugglingAreas.isEmpty || !updatedProfile.growthAreas.isEmpty {
-            print("🎯 New spiritual focus areas detected, updating content strategy")
             await personalizeContentWeights(updatedProfile)
         }
     }
     
     private func adjustForInactivity() async {
-        print("😴 User inactive, sending re-engagement content")
         
         // Schedule a gentle re-engagement notification
         let reEngagementNotification = AINotification(
@@ -617,7 +627,6 @@ final class AIIntelligenceService: ObservableObject {
             UserDefaults.standard.set(Date(), forKey: "content_boost_last_update")
         }
         
-        print("🚀 Boosted similar content for categories: \(categories.map { $0.rawValue })")
     }
     
     // MARK: - Helper Methods for Content Weights

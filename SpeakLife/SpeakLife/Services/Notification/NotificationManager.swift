@@ -48,8 +48,6 @@ final class NotificationManager: NSObject {
         let actualCount = max(5, count) // Ensure minimum of 1 notification
         
         // Log notification scheduling for verification
-        print("🔔 NotificationManager: Scheduling \(actualCount) notifications (requested: \(count))")
-        print("🔔 Time range: \(startTime) to \(endTime)")
         
         removeNotifications()
         
@@ -242,8 +240,7 @@ final class NotificationManager: NSObject {
                                       endTime: Int,
                                       count: Int,
                                       callback: (() -> Void)? = nil) {
-        
-        print(startTime, endTime, "RWRW initial times")
+    
         
         let hourMinute = distributeTimes(startTime: startTime, endTime: endTime, count: count)
         
@@ -251,10 +248,6 @@ final class NotificationManager: NSObject {
             return }
         guard declarations.count >= count else { callback?()
             return }
-    
-        for (hour, minute) in hourMinute {
-            print(hour, minute, "RWRW")
-        }
         
         for (idx, declaration) in declarations.enumerated() {
             let id = UUID().uuidString
@@ -280,7 +273,6 @@ final class NotificationManager: NSObject {
             let formatter = DateFormatter()
             formatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
             formatter.timeZone = TimeZone.autoupdatingCurrent
-            print("📅 Current time: \(formatter.string(from: now))")
             print("   Scheduling notification \(idx + 1) for \(hourMinute[idx].hour):\(String(format: "%02d", hourMinute[idx].minute))")
             
             let calendar = Calendar.autoupdatingCurrent
@@ -330,7 +322,6 @@ final class NotificationManager: NSObject {
                 let modifiedDate = Calendar.current.date(byAdding: .day, value: -1, to: now)
                 
                 lastScheduledNotificationDate = modifiedDate
-                print("🔔 Completed scheduling \(count) notifications")
                 
                 // Verify notifications were actually scheduled
 //                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
@@ -768,7 +759,6 @@ final class NotificationManager: NSObject {
     
     private func removeNotifications() {
         notificationCenter.removeAllPendingNotificationRequests()
-        print("🗑️ Cleared all pending notifications")
     }
     
     private func verifyNotificationsScheduled() {
@@ -778,6 +768,7 @@ final class NotificationManager: NSObject {
             print("Total pending: \(requests.count) notifications")
             
             if requests.count == 0 {
+                // Warning: 
                 print("⚠️ WARNING: No notifications were scheduled!")
             } else {
                 print("✅ SUCCESS: Notifications are properly scheduled")
@@ -788,6 +779,7 @@ final class NotificationManager: NSObject {
                     case .authorized:
                         print("✅ Permissions: Authorized")
                     case .provisional:
+                        // Warning: 
                         print("⚠️ Permissions: Provisional (may not show all alerts)")
                     case .denied:
                         print("❌ Permissions: DENIED - User must enable in Settings")
@@ -832,6 +824,7 @@ final class NotificationManager: NSObject {
                         if let nextTriggerDate = trigger.nextTriggerDate() {
                             let timeUntil = nextTriggerDate.timeIntervalSince(Date())
                             if timeUntil < 0 {
+                                // Warning: 
                                 print("      ⚠️ WARNING: Next trigger is in the PAST!")
                                 print("      Was supposed to fire: \(formatter.string(from: nextTriggerDate))")
                             } else {
@@ -1125,7 +1118,6 @@ final class NotificationManager: NSObject {
         // Use existing notification preparation with AI-optimized timing
         prepareNotifications(declarations: declarations, startTime: startTime, endTime: endTime, count: count, callback: callback)
         
-        print("📱 AI-enhanced notifications scheduled for optimal times: \(timeHours)")
     }
 }
 

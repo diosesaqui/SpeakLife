@@ -123,7 +123,6 @@ final class AudioPlayerViewModel: NSObject, ObservableObject {
             if timeInBackground > 300 {
                 // Stop everything to prevent zombie audio
                 if isPlaying {
-                    print("🛑 Stopping audio after extended background period")
                     togglePlayPause() // This will pause the audio properly
                 }
                 backgroundTime = nil
@@ -239,7 +238,6 @@ final class AudioPlayerViewModel: NSObject, ObservableObject {
         do {
             let fileAttributes = try FileManager.default.attributesOfItem(atPath: url.path)
             let fileSize = fileAttributes[.size] as? Int ?? 0
-            print("📁 Audio file size: \(fileSize) bytes at: \(url.lastPathComponent)")
             if fileSize == 0 {
                 print("❌ Audio file is empty")
                 return
@@ -251,7 +249,6 @@ final class AudioPlayerViewModel: NSObject, ObservableObject {
         // For simulator, skip complex asset validation that causes -11800 errors
         #if targetEnvironment(simulator)
         // Simulator: Just create the player directly
-        print("📱 Simulator detected - using simplified audio loading")
         
         // Ensure the URL is properly formatted for simulator
         let fileURL: URL
@@ -260,7 +257,6 @@ final class AudioPlayerViewModel: NSObject, ObservableObject {
         } else {
             fileURL = URL(fileURLWithPath: url.path)
         }
-        print("🎵 Loading audio from: \(fileURL)")
         
         self.createAndConfigurePlayer(with: fileURL)
         #else
@@ -394,7 +390,6 @@ final class AudioPlayerViewModel: NSObject, ObservableObject {
                 if UIApplication.shared.applicationState != .active {
                     do {
                         try AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
-                        print("🔇 Audio session deactivated - content finished while in background")
                     } catch {
                         print("❌ Failed to deactivate audio session after content finished: \(error)")
                     }
@@ -431,13 +426,7 @@ final class AudioPlayerViewModel: NSObject, ObservableObject {
                 ]
             )
         }
-//        if let currentAudio = selectedItem {
-//            ListenerMetricsService.shared.trackListen(
-//                contentId: currentAudio.id,
-//                contentType: .audio
-//            )
-//            print(selectedItem, currentAudio.id, "RWRW selected item")
-//        }
+
         
         
         // Track listen event for metrics
@@ -494,7 +483,6 @@ final class AudioPlayerViewModel: NSObject, ObservableObject {
     }
     
     private func handleCorruptedAudioFile(item: AudioDeclaration, url: URL) {
-        print("🔄 Attempting to re-download corrupted audio file: \(item.title)")
         
         // Delete the corrupted file
         try? FileManager.default.removeItem(at: url)
@@ -512,6 +500,7 @@ final class AudioPlayerViewModel: NSObject, ObservableObject {
         // Notify user about the issue (you might want to show an alert)
         DispatchQueue.main.async { [weak self] in
             self?.isPlaying = false
+            // Warning: 
             print("⚠️ Audio file was corrupted. Please try playing it again to re-download.")
         }
     }
@@ -697,11 +686,9 @@ final class AudioPlayerViewModel: NSObject, ObservableObject {
         player = nil
         currentTime = 0
         isPlaying = false
-        print("🟣 resetPlayer COMPLETED - isPlaying now false")
         
         // Ensure we stop the background music player to prevent conflicts
         AudioPlayerService.shared.stopMusic()
-        print("🟣 resetPlayer fully completed")
     }
 
 //    func addToQueue(item: AudioDeclaration) {
@@ -783,6 +770,7 @@ final class AudioPlayerViewModel: NSObject, ObservableObject {
                 case .failed:
                     if let error = playerItem.error as NSError? {
                         #if targetEnvironment(simulator)
+                        // Warning: 
                         print("⚠️ Simulator Audio Error (code \(error.code))")
                         print("   This is a known simulator limitation that doesn't affect physical devices.")
                         print("   Audio works perfectly on real devices.")
@@ -804,8 +792,10 @@ final class AudioPlayerViewModel: NSObject, ObservableObject {
                         print("❌ Player failed with unknown error")
                     }
                 case .unknown:
+                    // Warning: 
                     print("⚠️ Player status unknown")
                 @unknown default:
+                    // Warning: 
                     print("⚠️ Player status unhandled")
                 }
             }

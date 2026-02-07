@@ -10,19 +10,20 @@ import FirebaseAnalytics
 
 // MARK: - Enhanced Tab Enum
 enum EnhancedTab: Int {
-    case emotionalRecognition = 0
-    case internalExperience = 1
-    case beliefGap = 2
-    case authorityReframe = 3
-    case practiceAwareness = 4
-    case ahaMoment = 5
-    case identityAspiration = 6
-    case futurePacing = 7
-    case coreMessage = 8
-    case transitionToPaywall = 9
-    case notification = 11
-    case review = 12
-    case subscription = 10
+    case testimonials = 0
+    case emotionalRecognition = 1
+    case internalExperience = 2
+    case beliefGap = 3
+    case authorityReframe = 4
+    case practiceAwareness = 5
+    case ahaMoment = 6
+    case identityAspiration = 7
+    case futurePacing = 8
+    case coreMessage = 9
+    case transitionToPaywall = 10
+    case notification = 12
+    case review = 13
+    case subscription = 11
 }
 
 // MARK: - User Journey View Model

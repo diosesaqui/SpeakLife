@@ -98,7 +98,7 @@ final class UserPreferencesTracker: ObservableObject {
         case .anxiety:
             return PaywallCopy(
                 headline: "Transform Anxiety into Abundant Faith",
-                subheadline: "Join 50,000+ believers who replaced worry with worship",
+                subheadline: "Join 100,000+ believers who replaced worry with worship",
                 valueProps: [
                     "Daily anxiety-relief declarations",
                     "Calming bedtime prayers & audio",

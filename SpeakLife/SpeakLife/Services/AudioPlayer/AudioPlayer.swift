@@ -18,6 +18,11 @@ class AudioPlayerService: NSObject, AVAudioPlayerDelegate {
     var currentArtist: String?
     var currentTitle: String?
     
+    // Smart pause/resume for background interruptions
+    private var backgroundStopTimer: Timer?
+    private var wasPausedForBackground = false
+    private let backgroundStopDelay: TimeInterval = 15.0 // 15 seconds
+    
     private override init() {
            super.init()
         NotificationCenter.default.addObserver(
@@ -39,14 +44,17 @@ class AudioPlayerService: NSObject, AVAudioPlayerDelegate {
     func playSound(files: [MusicResources]) {
         // If music is already playing with the same files, don't restart
         if isPlaying && !audioFiles.isEmpty {
-            print("🎵 Background music already playing - skipping restart")
             return
         }
         
         // Stop any existing music first
         stopMusic()
         
-        print("🎵 Starting background music with \(files.count) files")
+        
+        // Check if content audio is active before starting
+        guard !AudioPlayerViewModel.hasActiveAudio else {
+            return
+        }
         
         // Setup audio session
         do {
@@ -54,14 +62,16 @@ class AudioPlayerService: NSObject, AVAudioPlayerDelegate {
             try audioSession.setCategory(.playback, mode: .default, options: [.mixWithOthers])
             try audioSession.setActive(true)
         } catch {
-            print("❌ Failed to setup audio session: \(error)")
+            return
         }
         
         // Shuffle and play
         self.audioFiles = files.shuffled()
         self.currentFileIndex = 0
         
-        guard !audioFiles.isEmpty else { return }
+        guard !audioFiles.isEmpty else { 
+            return 
+        }
         
         let type = audioFiles[currentFileIndex].type
         currentArtist = audioFiles[currentFileIndex].artist
@@ -71,14 +81,16 @@ class AudioPlayerService: NSObject, AVAudioPlayerDelegate {
     }
 
     private func playFile(type: String) {
-        guard !audioFiles.isEmpty else { return }
-        guard currentFileIndex < audioFiles.count else { return }
+        guard !audioFiles.isEmpty else { 
+            return 
+        }
+        guard currentFileIndex < audioFiles.count else { 
+            return 
+        }
         
         let name = audioFiles[currentFileIndex].name
-        print("🎵 Playing: \(name) (index \(currentFileIndex))")
         
         guard let path = Bundle.main.path(forResource: name, ofType: type) else {
-            print("❌ Could not find file: \(name).\(type)")
             return
         }
         
@@ -86,19 +98,30 @@ class AudioPlayerService: NSObject, AVAudioPlayerDelegate {
             audioPlayer = try AVAudioPlayer(contentsOf: URL(fileURLWithPath: path))
             audioPlayer?.delegate = self
             audioPlayer?.prepareToPlay()
+            
+            // Check once more before playing
+            guard !AudioPlayerViewModel.hasActiveAudio else {
+                stopMusic()
+                return
+            }
+            
+            // CRITICAL: Check app state right before playing to prevent background playback
+            guard UIApplication.shared.applicationState == .active else {
+                stopMusic()
+                return
+            }
+            
             audioPlayer?.play()
             isPlaying = true
-            print("✅ Playback started")
         } catch {
-            print("❌ Failed to play file: \(error)")
         }
     }
 
     func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
-        print("🎵 Song finished playing (success: \(flag), isPlaying: \(isPlaying))")
         
         // Only continue if playback was successful and we're still supposed to be playing
         guard flag else {
+            // Warning: 
             print("⚠️ Playback did not finish successfully - stopping")
             stopMusic()
             return
@@ -112,6 +135,7 @@ class AudioPlayerService: NSObject, AVAudioPlayerDelegate {
         // Check if app is in foreground before continuing to next song
         let appState = UIApplication.shared.applicationState
         guard appState == .active else {
+            // Warning: 
             print("⚠️ App is not active (state: \(appState.rawValue)) - stopping background music")
             stopMusic()
             return
@@ -126,6 +150,7 @@ class AudioPlayerService: NSObject, AVAudioPlayerDelegate {
         
         // Ensure we have files to play
         guard !audioFiles.isEmpty else {
+            // Warning: 
             print("⚠️ No audio files available - stopping")
             stopMusic()
             return
@@ -133,12 +158,17 @@ class AudioPlayerService: NSObject, AVAudioPlayerDelegate {
         
         // Move to next song
         currentFileIndex = (currentFileIndex + 1) % audioFiles.count
-        print("🎵 Moving to next song (index \(currentFileIndex) of \(audioFiles.count))")
         
         // Get the file type from the current file
         let type = audioFiles[currentFileIndex].type
         currentArtist = audioFiles[currentFileIndex].artist
         currentTitle = audioFiles[currentFileIndex].name
+        
+        // Final check before playing next file to prevent race conditions
+        guard UIApplication.shared.applicationState == .active else {
+            stopMusic()
+            return
+        }
         
         playFile(type: type)
     }
@@ -149,7 +179,59 @@ class AudioPlayerService: NSObject, AVAudioPlayerDelegate {
         print("⏸️ Music paused")
     }
     
+    // Smart pause for background interruptions - won't reset music
+    func pauseForBackground() {
+        guard isPlaying else { 
+            return 
+        }
+        
+        // Don't pause again if already paused for background
+        if wasPausedForBackground {
+            return
+        }
+        
+        audioPlayer?.pause()
+        wasPausedForBackground = true
+        isPlaying = false
+        
+        
+        // Start timer to stop music after delay
+        backgroundStopTimer?.invalidate()
+        backgroundStopTimer = Timer.scheduledTimer(withTimeInterval: backgroundStopDelay, repeats: false) { [weak self] _ in
+            guard let self = self else { return }
+            if self.wasPausedForBackground {
+                self.stopMusic()
+            }
+        }
+    }
+    
+    // Smart resume for returning from background
+    func resumeFromBackground() -> Bool {
+        
+        // Cancel the background stop timer
+        backgroundStopTimer?.invalidate()
+        backgroundStopTimer = nil
+        
+        // Only resume if it was paused for background and player still exists
+        guard wasPausedForBackground, let player = audioPlayer else {
+            wasPausedForBackground = false
+            return false // No music to resume
+        }
+        
+        wasPausedForBackground = false
+        
+        // We're already being called from the .active case, so no need to check app state again
+        player.play()
+        isPlaying = true
+        return true // Successfully resumed
+    }
+    
     func stopMusic() {
+        // Cancel any background timers
+        backgroundStopTimer?.invalidate()
+        backgroundStopTimer = nil
+        wasPausedForBackground = false
+        
         // Stop and clear everything
         audioPlayer?.stop()
         audioPlayer?.delegate = nil  // Remove delegate to prevent callbacks
@@ -165,7 +247,6 @@ class AudioPlayerService: NSObject, AVAudioPlayerDelegate {
         if !AudioPlayerViewModel.hasActiveAudio {
             do {
                 try AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
-                print("🔇 Audio session deactivated")
             } catch {
                 print("❌ Failed to deactivate audio session: \(error)")
             }
@@ -177,12 +258,14 @@ class AudioPlayerService: NSObject, AVAudioPlayerDelegate {
     func playMusic() {
         // ONLY resume if there's an existing player and app is active
         guard let player = audioPlayer else {
+            // Warning: 
             print("⚠️ No active music player to resume")
             return
         }
         
         // Don't resume if app is not active
         guard UIApplication.shared.applicationState == .active else {
+            // Warning: 
             print("⚠️ App is not active - not resuming music")
             return
         }
@@ -200,6 +283,7 @@ class AudioPlayerService: NSObject, AVAudioPlayerDelegate {
         } else {
             // Only start new music if we're not in background and not playing content audio
             guard !AudioPlayerViewModel.hasActiveAudio else {
+                // Warning: 
                 print("⚠️ Content audio is active, not starting background music")
                 return
             }

@@ -286,13 +286,13 @@ final class EnhancedAnalyticsService: ObservableObject {
         
         do {
             // In a real implementation, this would send to ML pipeline
-            print("📊 Processing \(trainingEvents.count) training events")
             
             // Only clear events after successful processing
             // For now, we'll just clear them since this is a stub
             trainingEvents.removeAll()
             print("✅ Training events processed successfully")
         } catch {
+            // Warning: 
             print("⚠️ Failed to process training events: \(error)")
             // Keep events for retry
         }
@@ -304,6 +304,7 @@ final class EnhancedAnalyticsService: ObservableObject {
             let encoded = try JSONEncoder().encode(userBehaviorProfile)
             userDefaults.set(encoded, forKey: mlDataKey)
         } catch {
+            // Warning: 
             print("⚠️ Failed to save user behavior profile: \(error)")
             // Consider fallback or retry logic here
         }
@@ -319,6 +320,7 @@ final class EnhancedAnalyticsService: ObservableObject {
             userBehaviorProfile = try JSONDecoder().decode(UserBehaviorFeatures.self, from: data)
             print("✅ User behavior profile loaded successfully")
         } catch {
+            // Warning: 
             print("⚠️ Failed to load user behavior profile: \(error)")
             // Keep using default userBehaviorProfile
         }
@@ -344,7 +346,6 @@ final class EnhancedAnalyticsService: ObservableObject {
             metadata: trainingData
         )
         
-        print("📊 ML Training Analytics: \(modelType) - \(dataSize) data points")
     }
 }
 

@@ -106,14 +106,12 @@ struct HomeView: View {
                                 declarationStore.setRemoteDeclarationVersion(version: subscriptionStore.remoteVersion)
                                 Task {
                                     if devotionalViewModel.shouldFetchNewDevotional() {
-                                            print("HomeView: Fetching devotional with version: \(subscriptionStore.currentDevotionalVersion)")
+                                            // Fetching devotional with current version
                                             await devotionalViewModel.fetchDevotional(remoteVersion: subscriptionStore.currentDevotionalVersion)
                                             devotionalViewModel.lastFetchDate = DateFormatter.localizedString(from: Date(), dateStyle: .short, timeStyle: .none)
                                         }
                                 }
-                                if appState.firstOpen {
-                                    appState.firstOpen = false
-                                }
+                               
                                 
                                 // Check if user should see declaration prompt
                               //  checkForDeclarationPrompt()
@@ -130,7 +128,7 @@ struct HomeView: View {
                                     
                                     // Fetch devotional if needed
                                     if devotionalViewModel.shouldFetchNewDevotional() {
-                                        print("HomeView: Fetching devotional after config update with version: \(subscriptionStore.currentDevotionalVersion)")
+                                        // Fetching devotional after config update
                                         await devotionalViewModel.fetchDevotional(remoteVersion: subscriptionStore.currentDevotionalVersion)
                                         devotionalViewModel.lastFetchDate = DateFormatter.localizedString(from: Date(), dateStyle: .short, timeStyle: .none)
                                     }
@@ -170,7 +168,7 @@ struct HomeView: View {
 //                            }
                             .onReceive(NotificationCenter.default.publisher(for: .devotionalVersionUpdated)) { notification in
                                 if let version = notification.userInfo?["version"] as? Int {
-                                    print("📖 HomeView: Received devotional version update notification: v\(version)")
+                                    // Received devotional version update notification
                                     Task {
                                         await devotionalViewModel.forceRefreshDevotional(remoteVersion: version)
                                         devotionalViewModel.lastFetchDate = DateFormatter.localizedString(from: Date(), dateStyle: .short, timeStyle: .none)
@@ -186,7 +184,7 @@ struct HomeView: View {
                                 // Show celebration animation globally when timer completes
                                 celebrationStreakCount = timerViewModel.currentStreak
                                 showStreakCelebration = true
-                                print("🎉 Global streak celebration triggered for day \(celebrationStreakCount)")
+                                // Global streak celebration triggered
                             }
                   
                 } else {
@@ -196,7 +194,7 @@ struct HomeView: View {
                             .onAppear {
                                 viewModel.requestPermission { granted in
                                     // Handle permission result if needed
-                                    print("ATT Permission granted: \(granted)")
+                                    // ATT Permission handled
                                 }
                             }
                     } else {
@@ -204,7 +202,7 @@ struct HomeView: View {
                             .onAppear {
                                 viewModel.requestPermission { granted in
                                     // Handle permission result if needed
-                                    print("ATT Permission granted: \(granted)")
+                                    // ATT Permission handled
                                 }
                             }
                     }
@@ -219,7 +217,7 @@ struct HomeView: View {
             TabView(selection: $tabViewModel.selectedTab) {
                 declarationView
                 audioView
-              //  bibleView
+                //🔴bibleView
                 // dailyChecklistView // Moved to DeclarationView
                 createYourOwnView
                 profileView
@@ -234,6 +232,9 @@ struct HomeView: View {
                 .accentColor(Constants.DAMidBlue)
                 .onAppear {
                     checkForNewVersion()
+                    if appState.firstOpen {
+                        appState.firstOpen = false
+                    }
                     UIScrollView.appearance().isScrollEnabled = true
                 }
                 .background(Color.clear)
@@ -361,14 +362,14 @@ struct HomeView: View {
             }
     }
     
-    var bibleView: some View {
-        BibleView()
-            .tag(2)
-            .tabItem {
-                Image(systemName: "book.closed.fill")
-                    .renderingMode(.original)
-            }
-    }
+//    var bibleView: some View {
+//        BibleView()
+//            .tag(2)
+//            .tabItem {
+//                Image(systemName: "book.closed.fill")
+//                    .renderingMode(.original)
+//            }
+//    }
     
     var profileView: some View {
         ProfileView()
@@ -423,17 +424,10 @@ struct HomeView: View {
     
     private func checkForNewVersion() {
         let lastVersion = UserDefaults.standard.string(forKey: "lastVersion") ?? "0.0.0"
-        if lastVersion != currentVersion {
+        if lastVersion != currentVersion && !appState.firstOpen {
             isPresented = true
             UserDefaults.standard.set(currentVersion, forKey: "lastVersion")
        }
-        if currentVersion == "3.0.42" {
-            declarationStore.cleanUpSelectedCategories { selectedCategories in
-                let categoryString = selectedCategories.map { $0.name }.joined(separator: ",")
-                appState.selectedNotificationCategories = categoryString
-                declarationStore.save(selectedCategories)
-            }
-        }
     }
 }
 

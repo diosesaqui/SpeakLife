@@ -153,7 +153,6 @@ class EmailMarketingService: ObservableObject {
     }
     
     private func saveToFirebase(email: String, source: String, firstName: String? = nil) async throws {
-        print("📧 Attempting to save email to Firebase...")
         print("  - Email: \(email)")
         print("  - Source: \(source)")
         print("  - Collection: email_list")

@@ -101,7 +101,6 @@ struct DirectEmailCaptureView: View {
         isSubmitting = true
         message = nil
         
-        print("🔵 Starting DIRECT Firebase email save...")
         
         // Use the specific 'speaklife' database instead of default
         let db = Firestore.firestore(database: "speaklife")
@@ -112,6 +111,7 @@ struct DirectEmailCaptureView: View {
             .getDocuments { snapshot, error in
                 DispatchQueue.main.async {
                     if let error = error {
+                        // Error logging: 
                         print("❌ Error checking duplicates: \(error.localizedDescription)")
                         withAnimation {
                             message = "Error checking: \(error.localizedDescription)"
@@ -146,7 +146,6 @@ struct DirectEmailCaptureView: View {
                         "app_version": Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "unknown"
                     ]
                     
-                    print("📝 Adding document to Firebase...")
                     print("  Collection: email_list")
                     print("  Data: \(data)")
                     
@@ -154,6 +153,7 @@ struct DirectEmailCaptureView: View {
                         DispatchQueue.main.async {
                             isSubmitting = false
                             if let error = error {
+                                // Error logging: 
                                 print("❌ Error saving email: \(error.localizedDescription)")
                                 withAnimation {
                                     message = "Error: \(error.localizedDescription)"

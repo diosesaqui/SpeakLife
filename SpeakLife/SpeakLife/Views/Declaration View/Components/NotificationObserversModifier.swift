@@ -30,7 +30,6 @@ struct NotificationObserversModifier: ViewModifier {
             }
             .onReceive(NotificationCenter.default.publisher(for: Notification.Name("StreakCompleted"))) { _ in
                 // Force UI update when streak completes
-                print("RWRW 🎉 Streak completed notification received - Current streak: \(timerViewModel.currentStreak)")
             }
     }
 }

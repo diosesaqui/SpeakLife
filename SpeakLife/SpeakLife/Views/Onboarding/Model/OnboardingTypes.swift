@@ -9,6 +9,7 @@ import Foundation
 
 enum Tab: String {
     
+    case testimonials
     case scriptureAnchor
     case reframeProblem
     case jesusMethod

@@ -34,6 +34,7 @@ final class RecommendationEngine: ObservableObject {
     
     private func loadRecommendationModel() async {
         guard let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else {
+            // Warning: 
             print("⚠️ Could not access documents directory")
             return
         }
@@ -44,16 +45,15 @@ final class RecommendationEngine: ObservableObject {
                 recommendationModel = try MLModel(contentsOf: modelURL)
                 print("✅ Recommendation model loaded successfully")
             } catch {
+                // Warning: 
                 print("⚠️ Failed to load recommendation model: \(error)")
             }
         } else {
-            print("🔄 Training recommendation model...")
             await trainRecommendationModel()
         }
     }
     
     private func trainRecommendationModel() async {
-        print("📱 Using iOS-compatible rule-based recommendations instead of training")
         // iOS apps use rule-based recommendations instead of training ML models
         print("✅ iOS recommendation system ready")
     }
@@ -61,7 +61,6 @@ final class RecommendationEngine: ObservableObject {
     // MARK: - iOS Initialization
     
     func initializeForIOS() async {
-        print("📱 Initializing recommendation engine for iOS...")
         
         // Initialize with rule-based recommendations instead of ML models
         DispatchQueue.main.async {

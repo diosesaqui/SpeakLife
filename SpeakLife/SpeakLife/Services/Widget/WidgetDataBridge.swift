@@ -27,7 +27,6 @@ class WidgetDataBridge: ObservableObject {
     
     /// Direct sync method for Declaration favorites
     func syncDeclarationFavorites(_ favoriteTexts: [String]) {
-        print("🔄 WidgetDataBridge: Syncing \(favoriteTexts.count) favorites to widget")
         print("📝 Favorite texts:", favoriteTexts)
         
         // Update widget UserDefaults with favorite texts
@@ -40,7 +39,6 @@ class WidgetDataBridge: ObservableObject {
         
         // Refresh widgets
         WidgetCenter.shared.reloadTimelines(ofKind: "PromisesWidget")
-        print("🔄 Widget refresh triggered")
     }
     
     /// Sync optimized set of declarations to widget
@@ -179,7 +177,6 @@ class WidgetDataBridge: ObservableObject {
     
     /// Process pending widget actions
     func processPendingWidgetActions() {
-        print("🔍 WidgetDataBridge: Checking for pending widget actions...")
         
         // Check for pending favorite actions
         if let lastFavoriteChange = UserDefaults.widgetGroup.object(forKey: "needsSyncFavorites") as? Date,
@@ -297,8 +294,6 @@ class WidgetDataBridge: ObservableObject {
         UserDefaults.widgetGroup.set(testValue, forKey: testKey)
         
         let readBack = UserDefaults.widgetGroup.string(forKey: testKey)
-        print("RWRW- app: 🧪 App Groups Test - Wrote: \(testValue), Read back: \(readBack ?? "nil")")
-        print("RWRW- app: 🧪 App Groups Suite Name: \(UserDefaults.widgetGroup)")
         
         let existingDeclarations = UserDefaults.widgetGroup.stringArray(forKey: "syncedPromises") ?? []
         
@@ -317,36 +312,19 @@ class WidgetDataBridge: ObservableObject {
                 "Don't be afraid, for I am with you. Don't be discouraged, for I am your God. I will strengthen you and help you. I will hold you up with my victorious right hand."
             ]
             
-            print("RWRW- app: 🔄 WidgetDataBridge: Syncing fallback declarations to widget")
             UserDefaults.widgetGroup.set(fallbackDeclarations, forKey: "syncedPromises")
             UserDefaults.widgetGroup.set(fallbackDeclarations, forKey: "allDeclarations")
             
             // Refresh widgets
             WidgetCenter.shared.reloadTimelines(ofKind: "PromisesWidget")
             WidgetCenter.shared.reloadAllTimelines() // Force refresh all widgets
-            print("RWRW- app: ✅ Fallback declarations synced and widget refreshed")
-        } else {
-            print("RWRW- app: ✅ Widget already has \(existingDeclarations.count) declarations")
         }
         
         // Debug: Also set a current promise to ensure widget shows something
         let testPromise = "Trust in the Lord with all your heart; do not depend on your own understanding."
         UserDefaults.widgetGroup.set(testPromise, forKey: "currentWidgetPromise")
         UserDefaults.widgetGroup.set(Date(), forKey: "lastWidgetUpdate")
-        print("RWRW- app: 🔧 Debug: Force set test promise for widget at \(Date())")
         
-        // Debug: Check what widgets are available
-        WidgetCenter.shared.getCurrentConfigurations { result in
-            switch result {
-            case .success(let widgets):
-                print("RWRW- app: 🔧 Available widgets: \(widgets.count)")
-                for widget in widgets {
-                    print("RWRW- app:    - Widget: \(widget.kind), family: \(widget.family)")
-                }
-            case .failure(let error):
-                print("RWRW- app: 🔧 Error getting widgets: \(error)")
-            }
-        }
     }
 }
 

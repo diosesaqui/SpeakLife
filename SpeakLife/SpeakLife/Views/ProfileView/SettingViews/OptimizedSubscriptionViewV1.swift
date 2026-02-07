@@ -310,6 +310,12 @@ struct OptimizedSubscriptionViewV1: View {
     @State private var starPositions: [CGPoint] = []
     @State private var starOffsets: [CGPoint] = []
     
+    // Timer references for proper cleanup
+    @State private var countdownTimer: Timer?
+    @State private var testimonialTimer: Timer?
+    @State private var starAnimationTimer: Timer?
+    @State private var starTwinkleTimer: Timer?
+    
     let size: CGSize
     var callback: (() -> Void)?
     var isPresentedModally: Bool = true  // Default to true to show close button by default
@@ -391,6 +397,17 @@ struct OptimizedSubscriptionViewV1: View {
             }
         } // Allow content to extend to bottom
         .onAppear(perform: setupView)
+        .onDisappear {
+            // Clean up all timers when view disappears
+            countdownTimer?.invalidate()
+            testimonialTimer?.invalidate()
+            starAnimationTimer?.invalidate()
+            starTwinkleTimer?.invalidate()
+            countdownTimer = nil
+            testimonialTimer = nil
+            starAnimationTimer = nil
+            starTwinkleTimer = nil
+        }
         .onReceive(Timer.publish(every: 1, on: .main, in: .common).autoconnect()) { _ in
             updateCountdown()
         }
@@ -985,9 +1002,11 @@ struct OptimizedSubscriptionViewV1: View {
     }
     
     private func startTestimonialRotation() {
-        Timer.scheduledTimer(withTimeInterval: 4.0, repeats: true) { _ in
+        // Invalidate existing timer before creating new one
+        testimonialTimer?.invalidate()
+        testimonialTimer = Timer.scheduledTimer(withTimeInterval: 4.0, repeats: true) {  _ in
             withAnimation(.easeInOut(duration: 0.5)) {
-                testimonialIndex = (testimonialIndex + 1) % transformationStories.count
+                self.testimonialIndex = (self.testimonialIndex + 1) % self.transformationStories.count
             }
         }
     }
@@ -1006,7 +1025,8 @@ struct OptimizedSubscriptionViewV1: View {
         }
         
         // Start a timer that continuously moves stars around
-        Timer.scheduledTimer(withTimeInterval: 2.5, repeats: true) { _ in
+        starAnimationTimer?.invalidate()
+        starAnimationTimer = Timer.scheduledTimer(withTimeInterval: 2.5, repeats: true) {  _ in
             withAnimation(.easeInOut(duration: 4.0)) {
                 // Update star offsets randomly to create floating movement
                 for i in 0..<min(20, self.starOffsets.count) {
@@ -1019,7 +1039,8 @@ struct OptimizedSubscriptionViewV1: View {
         }
         
         // Additional timer for opacity changes to create twinkling effect
-        Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { _ in
+        starTwinkleTimer?.invalidate()
+        starTwinkleTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { _ in
             withAnimation(.easeInOut(duration: 1.5)) {
                 self.starAnimation.toggle()
             }

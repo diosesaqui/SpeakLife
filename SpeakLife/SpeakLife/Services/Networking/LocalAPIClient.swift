@@ -12,6 +12,15 @@ import FirebaseStorage
 import FirebaseRemoteConfigInternal
 
 final class LocalAPIClient: APIService {
+    // Singleton instance to prevent duplicate fetches
+    static let shared = LocalAPIClient()
+    
+    // Static cache and loading state shared across all instances
+    private static var cachedDeclarations: [Declaration]?
+    private static var isLoadingDeclarations = false
+    private static var pendingDeclarationCallbacks: [([Declaration], APIError?, Bool) -> Void] = []
+    private static let loadingQueue = DispatchQueue(label: "com.speaklife.declarations.loading")
+    
     @AppStorage("declarationsFileName") private var declarationsFileName = "declarationsv7.json"
     @AppStorage("declarationCountFile") var declarationCountFile = 0
     @AppStorage("declarationCountBE") var declarationCountBE = 0
@@ -24,6 +33,10 @@ final class LocalAPIClient: APIService {
     
     private var remoteConfig = RemoteConfig.remoteConfig()
     
+    // Public init allowed but uses static cache
+    init() {
+    }
+    
     func declarations(completion: @escaping([Declaration], APIError?, Bool) -> Void) {
         if firstInstallDate == nil {
             firstInstallDate = Date()
@@ -32,29 +45,46 @@ final class LocalAPIClient: APIService {
         // Update declarations file name from remote config if available
         updateDeclarationsFileName()
         
-        self.loadFromBackEnd() { [weak self] declarations, error, needsSync in
-            var favorites: [Declaration] = []
-            var myOwn: [Declaration] = []
+        var shouldLoad = false
+        
+        LocalAPIClient.loadingQueue.sync {
+            // Check if we have cached declarations
+            if let cached = LocalAPIClient.cachedDeclarations {
+                completion(cached, nil, false)
+                return
+            }
             
-            self?.loadFromDisk() { declarations, error in
-                favorites = declarations.filter { $0.isFavorite == true }
-                myOwn = declarations.filter {
-                    $0.category == .myOwn
+            // Check if already loading
+            if LocalAPIClient.isLoadingDeclarations {
+                LocalAPIClient.pendingDeclarationCallbacks.append(completion)
+                return
+            }
+            
+            // We're the first - set flag and prepare to load
+            LocalAPIClient.isLoadingDeclarations = true
+            LocalAPIClient.pendingDeclarationCallbacks.append(completion)
+            shouldLoad = true
+        }
+        
+        // Only load if we're the first request
+        guard shouldLoad else { return }
+        
+        
+        self.loadFromBackEnd() { declarations, error, needsSync in
+            LocalAPIClient.loadingQueue.sync {
+                // Cache the declarations
+                LocalAPIClient.cachedDeclarations = declarations
+                
+                // Call all pending callbacks
+                let callbacks = LocalAPIClient.pendingDeclarationCallbacks
+                LocalAPIClient.pendingDeclarationCallbacks = []
+                LocalAPIClient.isLoadingDeclarations = false
+                
+                
+                for callback in callbacks {
+                    callback(declarations, nil, needsSync)
                 }
             }
-            
-            
-            var updatedDeclarations: [Declaration] = declarations
-            
-            for fav in favorites  {
-                updatedDeclarations.removeAll { $0.id == fav.id }
-            }
-            updatedDeclarations.append(contentsOf: favorites)
-            updatedDeclarations.append(contentsOf: myOwn)
-           // self?.declarationCountFile = updatedDeclarations.count
-            completion(updatedDeclarations,  nil, needsSync)
-            return
-            
         }
     }
     
@@ -173,19 +203,16 @@ final class LocalAPIClient: APIService {
                 completion(data)
             }
         } else {
-            // Extract filename without extension
-            let fileName = declarationsFileName.replacingOccurrences(of: ".json", with: "")
-            guard
-                let url = Bundle.main.url(forResource: fileName, withExtension: "json") else {
-                print("Cannot find declarations file: \(fileName).json")
-                return
+            // Use lazy loading to prevent memory crashes
+            LazyJSONLoader.shared.loadDeclarations(fileName: declarationsFileName) { declarations in
+                do {
+                    let data = try JSONEncoder().encode(declarations)
+                    completion(data)
+                } catch {
+                    print("❌ Failed to encode declarations: \(error)")
+                    completion(nil)
+                }
             }
-                guard let data = try? Data(contentsOf: url) else {
-                    print("Cannot create data from file")
-                completion(nil)
-                return
-            }
-            completion(data)
         }
     }
     
@@ -194,8 +221,15 @@ final class LocalAPIClient: APIService {
         let twentyFourHoursAgo = now.addingTimeInterval(-86400)
 
         let shouldFetchFromRemote: Bool
+        
+        // Check if this is a fresh install
+        let isFreshInstall = lastRemoteFetchDate == nil && firstInstallDate != nil
+        
 
-        if localVersion < remoteVersion {
+        if isFreshInstall {
+            // Always fetch remote on fresh install
+            shouldFetchFromRemote = true
+        } else if localVersion < remoteVersion {
             if let lastFetchDate = lastRemoteFetchDate {
                 shouldFetchFromRemote = lastFetchDate <= twentyFourHoursAgo
             } else {
@@ -224,16 +258,19 @@ final class LocalAPIClient: APIService {
             fallbackToLocal(completion: completion)
         }
     }
+    
 
-    private func fallbackToLocal(completion: @escaping ([Declaration], APIError?, Bool) -> Void) {
-        fetchDeclarationData(tryLocal: true) { [weak self] data in
-            if let data = data {
-                let declarations = self?.decodeDeclarationsSafely(from: data)
-                if let declarations = declarations, !declarations.isEmpty {
-                    completion(declarations, nil, false)
-                } else {
-                    completion([], APIError.failedDecode, false)
-                }
+    
+    private func fallbackToLocal(completion: @escaping([Declaration], APIError?, Bool) -> Void) {
+        // Use lazy loading for fallback to prevent memory crashes
+        LazyJSONLoader.shared.loadDeclarations(fileName: declarationsFileName) { declarations in
+            // Apply same memory limits as remote loading
+            let maxDeclarations = 5000
+            let limitedDeclarations = declarations.count > maxDeclarations ? 
+                Array(declarations.prefix(maxDeclarations)) : declarations
+                
+            if !limitedDeclarations.isEmpty {
+                completion(limitedDeclarations, nil, false)
             } else {
                 completion([], APIError.failedDecode, false)
             }
@@ -293,36 +330,78 @@ final class LocalAPIClient: APIService {
     }
     
     func audio(version: Int, completion: @escaping(WelcomeAudio?, [AudioDeclaration]?) -> Void) {
-        if audioLocalVersion < version {
-            downloadAudioDeclarations() { data, error in
-                if let _ = error {
-                    completion(nil, speaklifeFiles)
+        
+        // Check if fresh install or need update  
+        let shouldFetchRemote = audioLocalVersion < version || audioLocalVersion == 0
+        
+        if shouldFetchRemote {
+            downloadAudioDeclarations() { [weak self] data, error in
+                if let error = error {
+                    // Fall back to local audioDevotionals.json file
+                    self?.loadLocalAudioDevotionals { localAudios in
+                        if !localAudios.isEmpty {
+                            completion(nil, localAudios)
+                        } else {
+                            completion(nil, speaklifeFiles)
+                        }
+                    }
+                    return
                 }
+                
                 if let data = data {
                     do {
                         let welcome = try JSONDecoder().decode(WelcomeAudio.self, from: data)
                         let audios = Array(welcome.audios)
-                        self.audioLocalVersion = version
-                        self.save(audioDeclarations: audios) { success in
+                        
+                        self?.audioLocalVersion = version
+                        self?.save(audioDeclarations: audios) { success in
                         }
                         completion(welcome, nil)
                         return
                     } catch {
-                        print("Audio decode error: \(error.localizedDescription)")
                         completion(nil, speaklifeFiles)
                     }
+                } else {
+                    completion(nil, speaklifeFiles)
                 }
             }
         } else {
             loadAudioFromDisk { audios, error in
                 if let error = error {
                     completion(nil, speaklifeFiles)
+                    return
                 }
                     
-                    if !audios.isEmpty {
-                        completion(nil, audios)
-                    }
+                if !audios.isEmpty {
+                    completion(nil, audios)
+                } else {
+                    completion(nil, speaklifeFiles)
                 }
+            }
+        }
+    }
+    
+    // Load audio from local bundle audioDevotionals.json
+    private func loadLocalAudioDevotionals(completion: @escaping([AudioDeclaration]) -> Void) {
+        
+        guard let url = Bundle.main.url(forResource: "audioDevotionals", withExtension: "json") else {
+            completion([])
+            return
+        }
+        
+        do {
+            let data = try Data(contentsOf: url)
+            
+            let welcome = try JSONDecoder().decode(WelcomeAudio.self, from: data)
+            let audios = Array(welcome.audios)
+            
+            // Save to disk for next time
+            self.save(audioDeclarations: audios) { success in
+            }
+            
+            completion(audios)
+        } catch {
+            completion([])
         }
     }
     

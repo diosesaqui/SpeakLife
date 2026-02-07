@@ -33,9 +33,11 @@ final class NotificationProcessor {
 //            getDeclarations()
             
             guard allDeclarations.count >= count else { 
+                // Warning:  
                 print("⚠️ NotificationProcessor: Insufficient declarations. Have: \(allDeclarations.count), Need: \(count)")
                 // Try to load declarations synchronously if empty
                 if allDeclarations.isEmpty {
+                    // Warning: 
                     print("⚠️ NotificationProcessor: Declarations array is empty, attempting to reload")
                     getDeclarations()
                 }

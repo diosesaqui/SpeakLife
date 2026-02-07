@@ -11,6 +11,7 @@ import FirebaseAnalytics
 struct FirstDeclarationGuideView: View {
     let size: CGSize
     let action: () -> Void
+    var isDismissible: Bool = false  // New parameter for post-onboarding use
     
     @State private var declarationText = ""
     @State private var showExample = false
@@ -19,18 +20,35 @@ struct FirstDeclarationGuideView: View {
     @EnvironmentObject var viewModel: DeclarationViewModel
     @EnvironmentObject var subscriptionStore: SubscriptionStore
     @Environment(\.colorScheme) var colorScheme
+    @Environment(\.dismiss) private var dismiss
     
     var body: some View {
         ZStack {
             GeometryReader { proxy in
                 VStack(spacing: 0) {
-                    // Progress dots at top
+                    // Top bar - Progress dots or close button
                     HStack {
+                        if isDismissible {
+                            Button(action: {
+                                Analytics.logEvent("DeclarationPromptDismissed", parameters: nil)
+                                dismiss()
+                                action()
+                            }) {
+                                Image(systemName: "xmark.circle.fill")
+                                    .font(.system(size: 28))
+                                    .foregroundColor(.white.opacity(0.6))
+                            }
+                            .padding(.leading, 20)
+                        }
+                        
                         Spacer()
-                        ProgressDots(current: 2, total: 5)
-                            .padding(.top, proxy.safeAreaInsets.top + 10)
-                            .padding(.trailing, 20)
+                        
+                        if !isDismissible {
+                            ProgressDots(current: 2, total: 5)
+                                .padding(.trailing, 20)
+                        }
                     }
+                    .padding(.top, proxy.safeAreaInsets.top + 10)
                     .frame(width: proxy.size.width)
                     
                     ScrollView(showsIndicators: false) {
@@ -268,7 +286,7 @@ struct FirstDeclarationGuideView: View {
         VStack(spacing: 15) {
             ShimmerButton(
                 colors: declarationText.isEmpty ? [.gray, .gray.opacity(0.7)] : [.blue, .purple],
-                buttonTitle: declarationText.isEmpty ? "Write Your Declaration First" : "Continue",
+                buttonTitle: declarationText.isEmpty ? "Write Your Declaration First" : (isDismissible ? "Save Declaration" : "Continue"),
                 action: {
                     // Only proceed if declaration text is not empty
                     guard !declarationText.isEmpty else { 
@@ -294,6 +312,17 @@ struct FirstDeclarationGuideView: View {
                 }
             )
             .frame(width: size.width * 0.85, height: 54)
+            
+            // Show "Maybe Later" option only in dismissible mode
+            if isDismissible {
+                Button("Maybe Later") {
+                    Analytics.logEvent("DeclarationPromptPostponed", parameters: nil)
+                    dismiss()
+                    action()
+                }
+                .font(.system(size: 14))
+                .foregroundColor(.white.opacity(0.5))
+            }
         }
     }
     

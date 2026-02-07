@@ -184,6 +184,8 @@
 		45C15A782F2E9B27006171F5 /* declarationsv10.json in Sources */ = {isa = PBXBuildFile; fileRef = 45C15A772F2E9B21006171F5 /* declarationsv10.json */; };
 		45C15A7A2F3084F7006171F5 /* WldehBibleAPIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45C15A792F3084F7006171F5 /* WldehBibleAPIService.swift */; };
 		45C15A8C2F31BEB7006171F5 /* NewOnboardingScreens.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45C15A8B2F31BEB7006171F5 /* NewOnboardingScreens.swift */; };
+		45C15A8E2F35751A006171F5 /* TestimonialsOnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45C15A8D2F35751A006171F5 /* TestimonialsOnboardingView.swift */; };
+		45C15A902F357857006171F5 /* LazyJSONLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45C15A8F2F357857006171F5 /* LazyJSONLoader.swift */; };
 		45C7481F2B55B4B80011D8F6 /* FacebookCore in Frameworks */ = {isa = PBXBuildFile; productRef = 45C7481E2B55B4B80011D8F6 /* FacebookCore */; };
 		45C748232B5802C60011D8F6 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 45C748222B5802C60011D8F6 /* GoogleService-Info.plist */; };
 		45C748302B5BC4330011D8F6 /* AudioPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45C7482F2B5BC4330011D8F6 /* AudioPlayer.swift */; };
@@ -510,6 +512,8 @@
 		45C15A772F2E9B21006171F5 /* declarationsv10.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = declarationsv10.json; sourceTree = "<group>"; };
 		45C15A792F3084F7006171F5 /* WldehBibleAPIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WldehBibleAPIService.swift; sourceTree = "<group>"; };
 		45C15A8B2F31BEB7006171F5 /* NewOnboardingScreens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewOnboardingScreens.swift; sourceTree = "<group>"; };
+		45C15A8D2F35751A006171F5 /* TestimonialsOnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestimonialsOnboardingView.swift; sourceTree = "<group>"; };
+		45C15A8F2F357857006171F5 /* LazyJSONLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LazyJSONLoader.swift; sourceTree = "<group>"; };
 		45C748222B5802C60011D8F6 /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = "GoogleService-Info.plist"; path = "../../../../Downloads/GoogleService-Info.plist"; sourceTree = "<group>"; };
 		45C748242B5802CA0011D8F6 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		45C7482F2B5BC4330011D8F6 /* AudioPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioPlayer.swift; sourceTree = "<group>"; };
@@ -1265,6 +1269,7 @@
 				45567D4E2F29C9C500382072 /* BibleAPIService.swift */,
 				45F6D88F2F2AF3D700C0B98D /* HelloAOBibleAPIService.swift */,
 				7AA8707028DACC8300134ADB /* APIError.swift */,
+				45C15A8F2F357857006171F5 /* LazyJSONLoader.swift */,
 				7AA8707128DACC8300134ADB /* LocalAPIClient.swift */,
 				7AA8707228DACC8300134ADB /* Protocols */,
 				7ABA50CA29E63178002699F1 /* PrayerServiceClient.swift */,
@@ -1479,6 +1484,7 @@
 				4575C93D2E45A8B5007C14F3 /* DemoExperienceView.swift */,
 				45B07A412D24D98300EA2F5D /* WhatsNewView.swift */,
 				7AA870BF28DACCB700134ADB /* TimeNotificationStepper.swift */,
+				45C15A8D2F35751A006171F5 /* TestimonialsOnboardingView.swift */,
 				7AA870C028DACCB700134ADB /* IntroScene.swift */,
 				45F3E7552EAAAD38002B1F4E /* AffirmationsTutorial.swift */,
 				45F3E7592EAAAD41002B1F4E /* CreateYourOwnTutorial.swift */,
@@ -1848,6 +1854,7 @@
 				451AECF12E4EE7F000C1490E /* BootcampMainView.swift in Sources */,
 				7AA870C428DACCB700134ADB /* DeclarationViewModel.swift in Sources */,
 				45F3E75E2EAAB36B002B1F4E /* DevotionalsTutorial.swift in Sources */,
+				45C15A8E2F35751A006171F5 /* TestimonialsOnboardingView.swift in Sources */,
 				7AA870CF28DACCB700134ADB /* MailView.swift in Sources */,
 				45F3E75B2EAAAD41002B1F4E /* CreateYourOwnTutorial.swift in Sources */,
 				7AF18C7D29FD1A67005A6E31 /* AdBanner.swift in Sources */,
@@ -1951,6 +1958,7 @@
 				4575C9402E45AA00007C14F3 /* OptimizedSubscriptionView.swift in Sources */,
 				452F6AE22E87CDD400A27856 /* AIIntelligenceService.swift in Sources */,
 				458510D72B15935100230EE5 /* HideTabModifier.swift in Sources */,
+				45C15A902F357857006171F5 /* LazyJSONLoader.swift in Sources */,
 				7AF18C8C2A08CE92005A6E31 /* SpeechSynthesizer.swift in Sources */,
 				4597E2332E419CEA009D6C66 /* JournalRepository.swift in Sources */,
 				45567D722F29F6FA00382072 /* FirebaseAuthService.swift in Sources */,
@@ -2190,7 +2198,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = SpeakLife/SpeakLife.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 941;
+				CURRENT_PROJECT_VERSION = 943;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_ASSET_PATHS = "\"SpeakLife/Preview Content\"";
 				DEVELOPMENT_TEAM = 652R6A63L8;
@@ -2211,7 +2219,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 3.1.64;
+				MARKETING_VERSION = 3.1.66;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Franchiz.SpeakLife;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -2232,7 +2240,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = SpeakLife/SpeakLife.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 941;
+				CURRENT_PROJECT_VERSION = 943;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_ASSET_PATHS = "\"SpeakLife/Preview Content\"";
 				DEVELOPMENT_TEAM = 652R6A63L8;
@@ -2253,7 +2261,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 3.1.64;
+				MARKETING_VERSION = 3.1.66;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Franchiz.SpeakLife;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";

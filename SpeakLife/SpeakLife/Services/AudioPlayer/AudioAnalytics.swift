@@ -29,7 +29,6 @@ final class AudioAnalytics {
             "action_timestamp": Date().iso8601String
         ])
         
-        print("📊 Audio Analytics: \(eventName) - \(audio.title)")
     }
     
     /// Track when favorited audio is played
@@ -43,7 +42,6 @@ final class AudioAnalytics {
             "play_timestamp": Date().iso8601String
         ])
         
-        print("📊 Audio Analytics: Favorite audio played - \(audio.title) from \(playSource.rawValue)")
     }
     
     /// Track when favorites category is viewed
@@ -54,7 +52,6 @@ final class AudioAnalytics {
             "view_timestamp": Date().iso8601String
         ])
         
-        print("📊 Audio Analytics: Favorites category viewed - \(favoritesCount) items, sorted by \(sortOrder.rawValue)")
     }
     
     /// Track when favorited audio is shared
@@ -68,7 +65,6 @@ final class AudioAnalytics {
             "share_timestamp": Date().iso8601String
         ])
         
-        print("📊 Audio Analytics: Favorite audio shared - \(audio.title) via \(shareMethod.rawValue)")
     }
     
     /// Track when favorite is removed
@@ -81,7 +77,6 @@ final class AudioAnalytics {
             "remove_timestamp": Date().iso8601String
         ])
         
-        print("📊 Audio Analytics: Favorite removed - \(audio.title) from \(removeSource.rawValue)")
     }
     
     /// Track when all favorites are cleared
@@ -91,7 +86,6 @@ final class AudioAnalytics {
             "clear_timestamp": Date().iso8601String
         ])
         
-        print("📊 Audio Analytics: All favorites cleared - \(count) items")
     }
     
     /// Track favorites sorting behavior
@@ -102,7 +96,6 @@ final class AudioAnalytics {
             "sort_timestamp": Date().iso8601String
         ])
         
-        print("📊 Audio Analytics: Favorites sorted by \(sortOrder.rawValue) - \(favoritesCount) items")
     }
     
     /// Track favorites search behavior
@@ -113,7 +106,6 @@ final class AudioAnalytics {
             "search_timestamp": Date().iso8601String
         ])
         
-        print("📊 Audio Analytics: Favorites searched - '\(searchTerm)' returned \(resultsCount) results")
     }
     
     /// Track when user replays a favorite audio
@@ -125,7 +117,6 @@ final class AudioAnalytics {
             "replay_timestamp": Date().iso8601String
         ])
         
-        print("📊 Audio Analytics: Favorite audio replayed - \(audio.title)")
     }
     
     /// Track favoriting from audio player
@@ -138,7 +129,6 @@ final class AudioAnalytics {
             "favorite_timestamp": Date().iso8601String
         ])
         
-        print("📊 Audio Analytics: Favorited from player - \(audio.title) at \(Int(playbackProgress * 100))% progress")
     }
     
     /// Track unfavoriting from audio player
@@ -151,7 +141,6 @@ final class AudioAnalytics {
             "unfavorite_timestamp": Date().iso8601String
         ])
         
-        print("📊 Audio Analytics: Unfavorited from player - \(audio.title) at \(Int(playbackProgress * 100))% progress")
     }
     
     // MARK: - Engagement Analytics
@@ -165,7 +154,6 @@ final class AudioAnalytics {
             "session_timestamp": Date().iso8601String
         ])
         
-        print("📊 Audio Analytics: Favorites session completed - \(Int(duration))s, \(actionsPerformed) actions, \(audioPlayed) audio played")
     }
     
     /// Track user behavior patterns for recommendations
@@ -176,7 +164,6 @@ final class AudioAnalytics {
             "pattern_timestamp": Date().iso8601String
         ])
         
-        print("📊 Audio Analytics: Behavior pattern - Categories: \(categories), Avg duration: \(Int(averageListenDuration))s")
     }
     
     // MARK: - Discovery Analytics
@@ -191,7 +178,6 @@ final class AudioAnalytics {
             "discovery_timestamp": Date().iso8601String
         ])
         
-        print("📊 Audio Analytics: Discovery to favorite - \(audio.title) from \(discoverySource.rawValue) in \(Int(timeToFavorite))s")
     }
     
     func trackAudioFetch(audio: AudioDeclaration, discoverySource: DiscoverySource) {

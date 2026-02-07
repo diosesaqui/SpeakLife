@@ -385,9 +385,8 @@ struct BibleAuthenticationView: View {
                         email: email,
                         password: password
                     )
-                    print("🎉 Both Bible API and Firebase sign in successful")
-                    print("🔥 Firebase UID: \(firebaseUser.uid)")
                 } catch {
+                    // Warning: 
                     print("⚠️ Bible API sign in succeeded but Firebase sign in failed: \(error)")
                     // Continue with Bible API success since that's the primary requirement
                 }
@@ -436,9 +435,8 @@ struct BibleAuthenticationView: View {
                     password: password,
                     name: name
                 )
-                print("🎉 Both Bible API and Firebase users created successfully")
-                print("🔥 Firebase UID: \(firebaseUser.uid)")
             } catch {
+                // Warning: 
                 print("⚠️ Bible API user created but Firebase user creation failed: \(error)")
                 // Continue with Bible API success since that's the primary requirement
             }
@@ -463,9 +461,8 @@ struct BibleAuthenticationView: View {
                         email: email,
                         password: password
                     )
-                    print("🎉 Both Bible API and Firebase sign in successful")
-                    print("🔥 Firebase UID: \(firebaseUser.uid)")
                 } catch {
+                    // Warning: 
                     print("⚠️ Bible API sign in succeeded but Firebase sign in failed: \(error)")
                     // Continue with Bible API success since that's the primary requirement
                 }

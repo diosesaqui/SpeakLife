@@ -41,7 +41,6 @@ final class AudioDeclarationViewModel: ObservableObject {
             .publisher(for: .audioVersionUpdated)
             .sink { [weak self] notification in
                 if let version = notification.userInfo?["version"] as? Int {
-                    print("🎵 AudioDeclarationViewModel: Received version update notification: v\(version)")
                     DispatchQueue.main.async {
                         self?.fetchAudio(version: version)
                     }
@@ -238,8 +237,8 @@ final class AudioDeclarationViewModel: ObservableObject {
                 let availableFilterIds = filterConfigs.map { $0.id } + ["favorites"]
                 if availableFilterIds.contains(serverSelectedFilterId) {
                     selectedFilterId = serverSelectedFilterId
-                    print("🎵 Selected filter updated from server: \(serverSelectedFilterId)")
                 } else {
+                    // Warning: 
                     print("⚠️ Server provided invalid filter ID: \(serverSelectedFilterId)")
                 }
             }
@@ -275,7 +274,6 @@ final class AudioDeclarationViewModel: ObservableObject {
             if let serverSelectedFilterId = welcome?.selectedFilterId {
                 if filterStrings.contains(serverSelectedFilterId) || serverSelectedFilterId == "favorites" {
                     selectedFilterId = serverSelectedFilterId
-                    print("🎵 Selected filter updated from server (fallback): \(serverSelectedFilterId)")
                 }
             }
             
@@ -377,6 +375,7 @@ final class AudioDeclarationViewModel: ObservableObject {
     func setSelectedFilter(_ filterId: String) {
         // Validate that the filter exists
         guard filterId == "favorites" || dynamicFilters.contains(where: { $0.id == filterId }) else {
+            // Warning: 
             print("⚠️ Invalid filter ID: \(filterId)")
             return
         }

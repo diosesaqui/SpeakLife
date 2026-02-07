@@ -55,6 +55,7 @@ final class ContentCategorizationService: ObservableObject {
             
             print("✅ ML models loaded successfully")
         } catch {
+            // Warning: 
             print("⚠️ Failed to load ML models, using fallback: \(error)")
             
             DispatchQueue.main.async {
@@ -68,6 +69,7 @@ final class ContentCategorizationService: ObservableObject {
         
         // Check if trained model exists
         guard let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else {
+            // Warning: 
             print("⚠️ Could not access documents directory")
             return
         }
@@ -76,13 +78,12 @@ final class ContentCategorizationService: ObservableObject {
         if FileManager.default.fileExists(atPath: modelURL.path) {
             do {
                 categorizationModel = try MLModel(contentsOf: modelURL)
-                print("📁 Loaded custom categorization model")
             } catch {
+                // Warning: 
                 print("⚠️ Failed to load custom model: \(error)")
                 await trainInitialModel()
             }
         } else {
-            print("🔄 No trained model found, training initial model...")
             await trainInitialModel()
         }
     }
@@ -91,6 +92,7 @@ final class ContentCategorizationService: ObservableObject {
         let modelName = "EmotionalToneClassifier"
         
         guard let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else {
+            // Warning: 
             print("⚠️ Could not access documents directory")
             return
         }
@@ -99,15 +101,14 @@ final class ContentCategorizationService: ObservableObject {
         if FileManager.default.fileExists(atPath: modelURL.path) {
             do {
                 emotionalToneModel = try MLModel(contentsOf: modelURL)
-                print("📁 Loaded emotional tone model")
             } catch {
+                // Warning: 
                 print("⚠️ Failed to load tone model: \(error)")
             }
         }
     }
     
     private func trainInitialModel() async {
-        print("📱 Using iOS-compatible heuristic categorization instead of training")
         // iOS apps use rule-based categorization instead of training ML models
         print("✅ iOS categorization ready")
     }
@@ -115,7 +116,6 @@ final class ContentCategorizationService: ObservableObject {
     // MARK: - iOS Initialization
     
     func initializeForIOS() {
-        print("📱 Initializing content categorization for iOS...")
         isModelLoaded = true
         lastUpdateDate = Date()
         print("✅ iOS content categorization ready (using heuristic-based analysis)")
@@ -127,10 +127,12 @@ final class ContentCategorizationService: ObservableObject {
         // Input validation
         let trimmedText = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedText.isEmpty else {
+            // Warning: 
             print("⚠️ Empty text provided for categorization")
             return ContentCategories.default
         }
         guard trimmedText.count <= 10000 else {
+            // Warning: 
             print("⚠️ Text too long for categorization: \(trimmedText.count) characters")
             return ContentCategories.default
         }
@@ -178,6 +180,7 @@ final class ContentCategorizationService: ObservableObject {
             )
             
         } catch {
+            // Warning: 
             print("⚠️ ML prediction failed, using fallback: \(error)")
             return await fallbackCategorizer.categorize(text)
         }
@@ -194,6 +197,7 @@ final class ContentCategorizationService: ObservableObject {
                     return tone
                 }
             } catch {
+                // Warning: 
                 print("⚠️ Emotional tone prediction failed: \(error)")
             }
         }

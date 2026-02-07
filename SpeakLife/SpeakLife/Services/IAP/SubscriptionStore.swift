@@ -89,7 +89,6 @@ final class SubscriptionStore: ObservableObject {
             .sink { [weak self] notification in
                 if let version = notification.userInfo?["version"] as? Int {
                     DispatchQueue.main.async {
-                        print("📦 SubscriptionStore: Updating audio version from notification: v\(version)")
                         self?.audioRemoteVersion = version
                     }
                 }
@@ -152,11 +151,9 @@ final class SubscriptionStore: ObservableObject {
         // Add listener for Remote Config updates
         remoteConfig.addOnConfigUpdateListener { [weak self] configUpdate, error in
             guard error == nil else {
-                print("🔴 Remote Config listener error: \(error!.localizedDescription)")
                 return
             }
             
-            print("🔄 Remote Config updated, fetching new values...")
             
             // Automatically fetch and activate when config updates
             self?.remoteConfig.fetchAndActivate { _, _ in
@@ -169,7 +166,6 @@ final class SubscriptionStore: ObservableObject {
                     
                     // If audio version changed, notify the app
                     if newAudioVersion > oldAudioVersion && newAudioVersion > 0 {
-                        print("🎵 Audio version changed from \(oldAudioVersion) to \(newAudioVersion)")
                         NotificationCenter.default.post(
                             name: .audioVersionUpdated,
                             object: nil,
@@ -179,7 +175,6 @@ final class SubscriptionStore: ObservableObject {
                     
                     // If devotional version changed, notify the app
                     if newDevotionalVersion > oldDevotionalVersion && newDevotionalVersion > 0 {
-                        print("📖 Devotional version changed from \(oldDevotionalVersion) to \(newDevotionalVersion)")
                         NotificationCenter.default.post(
                             name: .devotionalVersionUpdated,
                             object: nil,
