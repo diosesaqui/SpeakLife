@@ -190,7 +190,7 @@ struct HomeView: View {
                 } else {
 
                     if subscriptionStore.useEnhancedOnboarding {
-                        EnhancedOnboardingViewRefactored()
+                        PolishedCrossOnboardingFlow()
                             .onAppear {
                                 viewModel.requestPermission { granted in
                                     // Handle permission result if needed

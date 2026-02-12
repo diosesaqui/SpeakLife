@@ -27,34 +27,34 @@ struct Quiz: Identifiable {
 
 let questions = [
     (
-        "The enemy whispers, 'You're not good enough.' What do you do?",
-        ["Agree and try harder", "Ignore it", "Speak God's truth aloud", "Complain to a friend"],
+        "The enemy whispers, 'You're not good enough.' Which response demonstrates true spiritual warfare?",
+        ["Ignore it and hope it goes away", "Try harder to prove your worth", "Immediately declare your righteousness in Christ", "Pray for God to make you worthy"],
         2,
-        "Declare with authority: 'I am the righteousness of God in Christ' (2 Cor. 5:21). You’re not fighting for worth — you're standing in what Jesus already finished."
+        "Declare with authority: 'I am the righteousness of God in Christ' (2 Cor. 5:21). You're not fighting for worth — you're standing in what Jesus already finished. Prayer without declaration leaves the lie unchallenged."
     ),
     (
-        "Anxiety begins to rise — what’s your first response?",
-        ["Accept it as normal", "Declare 'God has not given me a spirit of fear'", "Distract yourself", "Call someone"],
+        "Anxiety floods your mind at 3 AM. Which response aligns with biblical authority?",
+        ["Meditate on the problem to find solutions", "Speak 2 Timothy 1:7 aloud until peace comes", "Pray silently and wait for relief", "Accept it as your cross to bear"],
         1,
-        "Your words are weapons. Speak 2 Tim. 1:7 — and peace will silence the storm. Fear has no legal ground."
+        "Your spoken words carry authority that thoughts don't. Speak 2 Tim. 1:7 aloud — 'God has not given me a spirit of fear.' Silent prayer leaves the atmosphere unchanged; declared truth shifts it."
     ),
     (
-        "Symptoms hit your body suddenly — how do you respond?",
-        ["Panic", "Pray silently", "Declare healing Scriptures", "Search online for answers"],
-        2,
-        "Isaiah 53:5 isn’t a maybe — it’s a blood-bought fact. Speak it: 'By His wounds, I AM healed.' The Word carries the healing itself."
-    ),
-    (
-        "The devil says, 'You’ll never change.' What’s the truth?",
-        ["Maybe that’s true", "Say nothing", "Declare 'I am a new creation in Christ'", "Try to prove him wrong"],
-        2,
-        "2 Cor. 5:17 — You're not improving the old you; you’re living from a completely new nature."
-    ),
-    (
-        "Your finances look hopeless — what do you say?",
-        ["Cry", "Declare God is your provider", "Blame yourself", "Work more hours"],
+        "Sharp pain hits during worship. What reveals mature faith?",
+        ["Stop worshiping to address the pain", "Continue worshiping while declaring Isaiah 53:5", "Ask others to pray for you first", "Accept it as God testing your faith"],
         1,
-        "Declare: 'My God shall supply all my needs' (Phil. 4:19). God isn’t reacting to need — He responds to faith in His promise."
+        "Mature faith doesn't stop worshiping to negotiate with symptoms. Declare 'By His stripes I AM healed' while maintaining your posture of worship. The highest warfare is worship with the Word."
+    ),
+    (
+        "After falling into the same sin pattern, the enemy says 'You'll never change.' What's the most powerful response?",
+        ["Confess harder and promise to do better", "Quote 2 Cor. 5:17 while doubting internally", "Declare your new creation reality regardless of feelings", "Fast and pray for more strength"],
+        2,
+        "2 Cor. 5:17 isn't dependent on your performance — it's based on your position. Declare: 'I AM a new creation. Old things HAVE passed away.' Past tense. It's done, even when you stumble."
+    ),
+    (
+        "Bills exceed income by $2,000 this month. Which response activates heaven's economy?",
+        ["Declare Philippians 4:19 while making a practical plan", "Just work harder and trust God will help", "Confess your poor stewardship first", "Wait for God to provide miraculously"],
+        0,
+        "Faith speaks AND acts. Declare 'My God supplies all my needs according to His riches' while stewarding wisely. Supernatural provision often flows through natural wisdom guided by the Spirit."
     ),
     (
         "In the middle of a trial, how do you honor God?",

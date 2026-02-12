@@ -19,6 +19,7 @@ struct OptimizedSubscriptionViewV2: View {
     @State private var errorMessage = ""
     @State private var selectedOption: String = "annual"
     @State private var showPrivacyPolicy = false
+    @State private var showCloseButton = false
     
     var callback: (() -> Void)?
     
@@ -88,10 +89,36 @@ struct OptimizedSubscriptionViewV2: View {
                 if declarationStore.isPurchasing {
                     RotatingLoadingImageView()
                 }
+                
+                // Close button (appears after 5 seconds)
+                if showCloseButton {
+                    VStack {
+                        HStack {
+                            Spacer()
+                            Button(action: {
+                                if let callback = callback {
+                                    callback()
+                                } else {
+                                    dismiss()
+                                }
+                            }) {
+                                Image(systemName: "xmark.circle.fill")
+                                    .font(.system(size: 30))
+                                    .foregroundColor(.white.opacity(0.7))
+                                    .background(Circle().fill(Color.black.opacity(0.3)))
+                            }
+                            .padding(.top, 60)
+                            .padding(.trailing, 20)
+                        }
+                        Spacer()
+                    }
+                    .transition(.opacity)
+                }
             }
         }
         .onAppear {
             setupView()
+            startCloseButtonTimer()
         }
         .alert("", isPresented: $isShowingError) {
             Button("OK", role: .cancel) { }
@@ -148,18 +175,6 @@ struct OptimizedSubscriptionViewV2: View {
                 .font(.system(size: 16, weight: .regular))
                 .foregroundColor(.white.opacity(0.8))
                 .multilineTextAlignment(.center)
-            
-            // Pricing highlight
-            HStack(spacing: 4) {
-                Text("First 3 days FREE,")
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.green)
-                
-                Text("then \(yearlyPrice)/year")
-                    .font(.system(size: 14, weight: .regular))
-                    .foregroundColor(.white.opacity(0.9))
-            }
-            .padding(.top, 4)
             
             // Rating
             HStack(spacing: 4) {
@@ -265,6 +280,10 @@ struct OptimizedSubscriptionViewV2: View {
                         Text("3 days free, then \(yearlyPrice)/year")
                             .font(.system(size: 13))
                             .foregroundColor(.white.opacity(0.7))
+                        
+                        Text("Just $0.14/day")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundColor(.green)
                     }
                     
                     Spacer()
@@ -285,6 +304,12 @@ struct OptimizedSubscriptionViewV2: View {
                 )
             }
             .buttonStyle(PlainButtonStyle())
+            
+            // Free trial text above CTA
+            Text("First 3 days FREE, then \(yearlyPrice)/year")
+                .font(.system(size: 14, weight: .medium))
+                .foregroundColor(.white.opacity(0.9))
+                .multilineTextAlignment(.center)
             
             // CTA Button
             Button(action: makePurchase) {
@@ -338,6 +363,14 @@ struct OptimizedSubscriptionViewV2: View {
     
     private func setupView() {
         Analytics.logEvent("subscription_view_appeared", parameters: nil)
+    }
+    
+    private func startCloseButtonTimer() {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
+            withAnimation(.easeIn(duration: 0.5)) {
+                self.showCloseButton = true
+            }
+        }
     }
     
     private func makePurchase() {
