@@ -1,817 +1,7 @@
 {
-    "count": 1930,
+    "count": 1935,
     "version": 1,
     "declarations": [
-        {
-            "text": "No closed door can stop the fulfillment of the destiny I have prepared for you.",
-            "book": "- Jesus",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "I hold the keys to every door, and I will open the right ones for you.",
-            "book": "- Jesus",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "Closed doors are opportunities for My supernatural intervention in your life.",
-            "book": "- Jesus",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "I am the God of breakthroughs; trust me to break through every closed door for you.",
-            "book": "- Jesus",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "I am blessed because I walk with God.",
-            "book": "Psalm 1:1",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "I am blessed in my coming in and blessed going out.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "I am a victorious warrior, walking confidently into my destiny.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "Everyday is a new chance to move closer to my destiny.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "I expect to fulfill my purpose with clarity and confidence.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "I expect opportunities that align with my God given destiny.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "I expect to overcome every obstacle with resilience and strength.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "I expect divine guidance to lead me to my destiny.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "I expect my gifts to make a meaningful impact on the world.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "I expect to grow wiser and stronger each day on my path.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "I expect fulfillment in every step toward my destiny.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "I expect my journey to be guided with purpose and passion.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "I expect new doors to open as I walk in alignment with my calling.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "I expect to be surrounded by people who support my purpose.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "I expect breakthroughs that move me closer to my destiny.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "I expect my intuition to guide me accurately on my journey.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "I expect my actions to align with my purpose daily.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "I expect abundance in all forms as I pursue my destiny.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "I expect joy and fulfillment as I walk in my true calling.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "I declare that God’s plans for me are prosperous and purposeful.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "I declare that I am fearfully and wonderfully made to fulfill my calling.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "I declare that God equips me with everything I need to complete my destiny.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "I declare that I walk in alignment with God’s perfect will for my life.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "I declare that every step I take is guided by God’s wisdom and love.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "I declare that no weapon formed against my destiny shall prosper.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "I declare that my gifts will open doors and bring me before great people.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "I declare that the Lord’s favor surrounds me as I walk in my calling.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "I declare that God’s grace empowers me to fulfill my purpose.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "I declare that the Lord establishes my steps and directs my path.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "I declare that God’s promises over my life will be fulfilled in due time.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "I declare that I have the mind of Christ, enabling me to fulfill my calling.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "I declare that God’s purpose for my life will be accomplished through me.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "I declare that I walk in boldness, knowing God has called me for His purpose.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "I declare that the Lord completes the good work He began in me.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "Let there be divine guidance in every step I take toward my purpose.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "Let there be clarity and wisdom in my decisions as I pursue my destiny.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "Let there be open doors that align with God’s calling on my life.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "Let there be an overflow of courage as I walk boldly in my calling.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "Let there be strength to overcome every obstacle in my path.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "Let there be favor with others as I pursue God’s purpose for me.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "Let there be peace and confidence as I trust in God’s plan for my life.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "Let there be joy in every step as I walk in alignment with my destiny.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "Let there be supernatural wisdom to discern my next steps.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "Let there be a clear vision of the path God has set before me.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "Let there be protection from distractions that deter me from my calling.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "Let there be an increase in my gifts, used to serve my purpose.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "Let there be a continual reminder of God’s promises over my life.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "Let there be provision and abundance as I fulfill my destiny.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "Let there be unwavering faith as I step into my God-given calling.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "I am guided by God’s wisdom in every step of my journey.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "I am strengthened by God to fulfill my purpose, no matter the challenges.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "I am walking confidently in the path God has set before me.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "I am empowered by the Holy Spirit to accomplish my destiny.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "I am surrounded by God’s favor as I pursue my calling.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "I am resilient, knowing God is with me in every trial and triumph.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "I am protected by God’s hand, no harm will deter me from my destiny.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "I am filled with God’s peace, trusting in His perfect plan for my life.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "I am equipped with everything I need to fulfill God’s purpose for me.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "I am a vessel of God’s light, shining brightly in my calling.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "I am an overcomer, with God’s strength carrying me through.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "I am fully aligned with God’s will, fulfilling my destiny with purpose.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "I am growing in faith, moving boldly toward my God-given destiny.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "I am confident that God’s promises over my life will be fulfilled.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "I am grateful for every step, knowing God’s purpose is being revealed.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "I choose to trust God’s timing in every step of my journey.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "I choose to walk boldly in the calling God has placed on my life.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "I choose to rely on God’s strength when challenges arise.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "I choose to embrace each opportunity God brings to fulfill my purpose.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "I choose to have faith in God’s promises, no matter what.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "I choose to speak life over my future and my God-given destiny.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "I choose to seek God’s wisdom in all my decisions.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "I choose to walk in gratitude, knowing God is guiding my path.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "I choose to release worry, trusting that God is in control.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "I choose to move forward with courage, supported by God’s grace.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "I choose to honor God’s calling by living with purpose and integrity.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "I choose to let go of fear, knowing God is with me.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "I choose to nurture my faith daily, aligning with God’s will.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "I choose to see every obstacle as a stepping stone toward my destiny.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "I choose to rely on God’s strength to accomplish my divine purpose.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "In Jesus' name, I declare my path is blessed and guided by God’s hand.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "In Jesus' name, I am empowered to fulfill my purpose with courage and faith.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "In Jesus' name, I walk in divine favor and protection toward my destiny.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "In Jesus' name, I receive wisdom and clarity for every decision.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "In Jesus' name, I am strengthened to overcome every challenge before me.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "In Jesus' name, I stand firm in faith, knowing God’s promises will be fulfilled.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "In Jesus' name, I am equipped with everything needed to live out my calling.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "In Jesus' name, I declare doors open for me in alignment with God’s purpose.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "In Jesus' name, I release all doubt and walk in divine confidence.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "In Jesus' name, I trust that God is working all things together for my good.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "In Jesus' name, I choose faith over fear in every season of my journey.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "In Jesus' name, I declare that no setback will hinder my God-given purpose.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "In Jesus' name, I am filled with God’s peace, no matter the circumstances.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "In Jesus' name, I proclaim that I am called, chosen, and equipped by God.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "In Jesus' name, I am surrounded by God’s love and favor as I fulfill my destiny.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "For I know the plans I have for you, says the Lord. They are plans for good and not for disaster, to give you a future and a hope.",
-            "isFavorite": false,
-            "book": "Jeremiah 29:11",
-            "category": "destiny"
-        },
-        {
-            "text": "And we know that God causes everything to work together for the good of those who love God and are called according to his purpose for them.",
-            "isFavorite": false,
-            "book": "Romans 8:28",
-            "category": "destiny"
-        },
-        {
-            "text": "The Lord will fulfill his purpose for me; your steadfast love, O Lord, endures forever.",
-            "isFavorite": false,
-            "book": "Psalm 138:8",
-            "category": "destiny"
-        },
-        {
-            "text": "Commit your actions to the Lord, and your plans will succeed.",
-            "isFavorite": false,
-            "book": "Proverbs 16:3",
-            "category": "destiny"
-        },
-        {
-            "text": "For God is working in you, giving you the desire and the power to do what pleases him.",
-            "isFavorite": false,
-            "book": "Philippians 2:13",
-            "category": "destiny"
-        },
-        {
-            "text": "Trust in the Lord with all your heart; do not depend on your own understanding. Seek his will in all you do, and he will show you which path to take.",
-            "isFavorite": false,
-            "book": "Proverbs 3:5-6",
-            "category": "destiny"
-        },
-        {
-            "text": "Take delight in the Lord, and he will give you your heart’s desires.",
-            "isFavorite": false,
-            "book": "Psalm 37:4",
-            "category": "destiny"
-        },
-        {
-            "text": "You can make many plans, but the Lord’s purpose will prevail.",
-            "isFavorite": false,
-            "book": "Proverbs 19:21",
-            "category": "destiny"
-        },
-        {
-            "text": "For we are God’s masterpiece. He has created us anew in Christ Jesus, so we can do the good things he planned for us long ago.",
-            "isFavorite": false,
-            "book": "Ephesians 2:10",
-            "category": "destiny"
-        },
-        {
-            "text": "I cry out to God Most High, to God who will fulfill his purpose for me.",
-            "isFavorite": false,
-            "book": "Psalm 57:2",
-            "category": "destiny"
-        },
-        {
-            "text": "The steps of the godly are directed by the Lord. He delights in every detail of their lives.",
-            "isFavorite": false,
-            "book": "Psalm 37:23",
-            "category": "destiny"
-        },
-        {
-            "text": "For the Lord grants wisdom! From his mouth come knowledge and understanding.",
-            "isFavorite": false,
-            "book": "Proverbs 2:6",
-            "category": "destiny"
-        },
-        {
-            "text": "Therefore, my dear brothers and sisters, stand firm. Let nothing move you. Always give yourselves fully to the work of the Lord, because you know that your labor in the Lord is not in vain.",
-            "isFavorite": false,
-            "book": "1 Corinthians 15:58",
-            "category": "destiny"
-        },
-        {
-            "text": "My purpose is to give them a rich and satisfying life.",
-            "isFavorite": false,
-            "book": "John 10:10",
-            "category": "destiny"
-        },
-        {
-            "text": "Now may the God of peace... equip you with all you need for doing his will. May he produce in you, through the power of Jesus Christ, every good thing that is pleasing to him.",
-            "isFavorite": false,
-            "book": "Hebrews 13:20-21",
-            "category": "destiny"
-        },
-        {
-            "text": "I am blessed because I walk with God.",
-            "book": "Psalm 1:1",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "I am blessed in my coming in and blessed going out.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "Whatever I do prospers, I am like a tree planted by the water.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "I am successful because I meditate on God's Word day and night.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "The favor of God surrounds me like a shield.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "My steps are ordered by the Lord, and He delights in my way.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "I have the mind of Christ and hold the thoughts, feelings, and purposes of His heart.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "I am confident of this very thing, that He who has begun a good work in me will complete it.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "I am made complete with God by my side.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "I seek first the kingdom of God and His righteousness, and all these things are added to me.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "My God supplies all my needs!",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "I am seated with Christ in heavenly places.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "I am God's masterpiece, and the evil one can not defeat me.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "I overcome the world through my faith in Jesus.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "I can do all things through Christ who strengthens me.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "I am blessed because Jesus conquered the world.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "I am chosen by God.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "I am victorious because of Jesus.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "I am more than a conqueror!",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "I am the head and not the tail.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "I am above and never beneath.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "As Jesus is in Heaven, so AM I in this world!",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "No weapon formed against me will prosper!",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "I have the mind of Christ!",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "My youth is renewed everyday!",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "I am grateful for a new day!",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "I am thankful for my vision.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "I am thankful for my senses.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "I am thankful for my mind.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "I am thankful for my body.",
-            "isFavorite": false,
-            "category": "destiny"
-        },{
-            "text": "I am thankful I made it over all my past storms.",
-            "isFavorite": false,
-            "category": "destiny"
-        }, {
-            "text": "I trample upon lions and cobras and crush them under my feet.",
-            "isFavorite": false,
-            "category": "destiny"
-        },{
-            "text": "This is the day the Lord has made I will be happy and enjoy it.",
-            "isFavorite": false,
-            "category": "destiny"
-        },
-        {
-            "text": "I am the Lord who goes before you; every obstacle in your path must bow before My power.",
-            "book": "Jesus",
-            "category": "destiny"
-        },
-        {
-            "text": "I hold the keys to every door; what I open, no one can shut. Trust Me, for your breakthrough is near.",
-            "book": "Jesus",
-            "category": "destiny"
-        },
-        {
-            "text": "I have called you by name and destined you for greatness. My power accomplishes what I have ordained for you.",
-            "book": "Jesus",
-            "category": "destiny"
-        },
-        {
-            "text": "I am making a way in the wilderness and streams in the desert. Watch as I turn impossibilities into testimonies.",
-            "book": "Jesus",
-            "category": "destiny"
-        },
-        {
-            "text": "My plans for you are unstoppable. I will break down every wall and shatter every chain that stands in your way.",
-            "book": "Jesus",
-            "category": "destiny"
-        },
-        {
-            "text": "I have anointed you for such a time as this. Step forward with boldness, for I am with you.",
-            "book": "Jesus",
-            "category": "destiny"
-        },
-        {
-            "text": "Your past cannot limit the future I have prepared for you. I am the God of new beginnings walk in My promise.",
-            "book": "Jesus",
-            "category": "destiny"
-        },
-        {
-            "text": "Do not fear, for I am fighting for you. The battles that seemed impossible are already won in My name.",
-            "book": "Jesus",
-            "category": "destiny"
-        },
-        {
-            "text": "My word over your life will not return void. Every promise I have spoken shall come to pass.",
-            "book": "Jesus",
-            "category": "destiny"
-        },
-        {
-            "text": "The doors I am opening for you will exceed your expectations. Get ready for the miraculous!",
-            "book": "Jesus",
-            "category": "destiny"
-        },
-        {
-            "text": "You are my masterpiece, created for great works that I have prepared just for you.",
-            "isFavorite": false,
-            "book": "Jesus",
-            "category": "destiny"
-        },
-        {
-            "text": "I am the God of breakthroughs; trust me to break through every closed door for you.",
-            "book": "Jesus",
-            "isFavorite": false,
-            "category": "destiny"
-        },
         {
             "text": "Have faith I am working even when you cannot see it.",
             "isFavorite": false,
@@ -823,186 +13,6 @@
             "isFavorite": false,
             "book": "Jesus",
             "category": "faith"
-        },
-        {
-            "text": "God chose me before I was born. I am built for victory.",
-            "bibleVerseText": "Before I formed you in the womb I knew you, before you were born I set you apart; I appointed you as a prophet to the nations.",
-            "book": "Jeremiah 1:5",
-            "category": "destiny"
-        },
-        {
-            "text": "I am God's masterpiece, breaking limits and achieving the impossible.",
-            "bibleVerseText": "For we are God's handiwork, created in Christ Jesus to do good works, which God prepared in advance for us to do.",
-            "book": "Ephesians 2:10",
-            "category": "destiny"
-        },
-        {
-            "text": "God's power flows through me as I change the world.",
-            "bibleVerseText": "Now to Him who is able to do immeasurably more than all we ask or imagine, according to His power that is at work within us.",
-            "book": "Ephesians 3:20",
-            "category": "destiny"
-        },
-        {
-            "text": "God chose me for glory and made me to rule.",
-            "bibleVerseText": "And those he predestined, he also called; those he called, he also justified; those he justified, he also glorified.",
-            "book": "Romans 8:30",
-            "category": "destiny"
-        },
-        {
-            "text": "I break through every wall with God's unstoppable plan.",
-            "bibleVerseText": "I will go before you and will level the mountains; I will break down gates of bronze and cut through bars of iron.",
-            "book": "Isaiah 45:2",
-            "category": "destiny"
-        },
-        {
-            "text": "God made me the head to rise above and lead.",
-            "bibleVerseText": "The Lord will make you the head, not the tail. If you pay attention to the commands of the Lord your God that I give you this day and carefully follow them, you will always be at the top, never at the bottom.",
-            "book": "Deuteronomy 28:13",
-            "category": "destiny"
-        },
-        {
-            "text": "God accelerates time for me and my breakthrough is here.",
-            "bibleVerseText": "The days are coming, declares the Lord, when the reaper will be overtaken by the plowman and the planter by the one treading grapes. New wine will drip from the mountains and flow from all the hills.",
-            "book": "Amos 9:13",
-            "category": "destiny"
-        },
-        {
-            "text": "All things are possible through God's power living in me.",
-            "bibleVerseText": "With man this is impossible, but with God all things are possible.",
-            "book": "Mark 10:27",
-            "category": "destiny"
-        },
-        {
-            "text": "I am royal blood with divine authority and victorious words.",
-            "bibleVerseText": "But you are a chosen people, a royal priesthood, a holy nation, God's special possession, that you may declare the praises of him who called you out of darkness into his wonderful light.",
-            "book": "1 Peter 2:9",
-            "category": "destiny"
-        },
-        {
-            "text": "God opens unstoppable doors and clears my path forward.",
-            "bibleVerseText": "See, I have placed before you an open door that no one can shut.",
-            "book": "Revelation 3:8",
-            "category": "destiny"
-        },
-        {
-            "text": "I am a king and priest ruling with God's power.",
-            "bibleVerseText": "And has made us to be a kingdom and priests to serve his God and Father to him be glory and power for ever and ever! Amen.",
-            "book": "Revelation 1:6",
-            "category": "destiny"
-        },
-        {
-            "text": "God's promises always succeed and come true in me.",
-            "bibleVerseText": "For no matter how many promises God has made, they are 'Yes' in Christ. And so through him the 'Amen' is spoken by us to the glory of God.",
-            "book": "2 Corinthians 1:20",
-            "category": "destiny"
-        },
-        {
-            "text": "I attract divine connections and together we achieve victory.",
-            "bibleVerseText": "Two are better than one, because they have a good return for their labor.",
-            "book": "Ecclesiastes 4:9",
-            "category": "destiny"
-        },
-        {
-            "text": "God protects me everywhere, so I walk in complete safety.",
-            "bibleVerseText": "If God is for us, who can be against us?",
-            "book": "Romans 8:31",
-            "category": "destiny"
-        },
-        {
-            "text": "God gives me answers to solve what others cannot.",
-            "bibleVerseText": "Call to me and I will answer you and tell you great and unsearchable things you do not know.",
-            "book": "Jeremiah 33:3",
-            "category": "destiny"
-        },
-        {
-            "text": "My destiny is secure in God's hands as He made me to win.",
-            "bibleVerseText": "The Lord will fulfill his purpose for me; your steadfast love, O Lord, endures forever. Do not abandon the works of your hands.",
-            "book": "Psalm 138:8",
-            "category": "destiny"
-        },
-        {
-            "text": "I shake the world for God as I'm built to win big.",
-            "bibleVerseText": "The people who know their God shall be strong and do great exploits.",
-            "book": "Daniel 11:32",
-            "category": "destiny"
-        },
-        {
-            "text": "Jesus in me breaks every limit, making impossible things happen.",
-            "bibleVerseText": "With man this is impossible, but with God all things are possible.",
-            "book": "Matthew 19:26",
-            "category": "destiny"
-        },
-        {
-            "text": "Miracles follow me everywhere as I'm built for the supernatural.",
-            "bibleVerseText": "And these signs will accompany those who believe: In my name they will drive out demons; they will speak in new tongues.",
-            "book": "Mark 16:17",
-            "category": "destiny"
-        },
-        {
-            "text": "I have royal power from God that breaks chains and destroys lies.",
-            "bibleVerseText": "I have given you authority to trample on snakes and scorpions and to overcome all the power of the enemy; nothing will harm you.",
-            "book": "Luke 10:19",
-            "category": "destiny"
-        },
-        {
-            "text": "My assignment moves forward powerfully as God's word stands forever.",
-            "bibleVerseText": "For the gifts and the calling of God are irrevocable.",
-            "book": "Romans 11:29",
-            "category": "destiny"
-        },
-        {
-            "text": "I do greater works than Jesus did as miracles flow through me.",
-            "bibleVerseText": "Very truly I tell you, whoever believes in me will do the works I have been doing, and they will do even greater things than these, because I am going to the Father.",
-            "book": "John 14:12",
-            "category": "destiny"
-        },
-        {
-            "text": "When I move mountains move through God's power leveling every obstacle.",
-            "bibleVerseText": "What are you, mighty mountain? Before Zerubbabel you will become level ground!",
-            "book": "Zechariah 4:7",
-            "category": "destiny"
-        },
-        {
-            "text": "Favor paves my future with God's unstoppable increase surrounding me.",
-            "bibleVerseText": "I know that you can do all things; no purpose of yours can be thwarted.",
-            "book": "Job 42:2",
-            "category": "destiny"
-        },
-        {
-            "text": "I am chosen to shake nations through God's impossible-conquering power.",
-            "bibleVerseText": "But the plans of the Lord stand firm forever, the purposes of his heart through all generations.",
-            "book": "Psalm 33:11",
-            "category": "destiny"
-        },
-        {
-            "text": "I am fully equipped and unstoppable with God's unlimited power backing me.",
-            "bibleVerseText": "Your eyes saw my unformed body; all the days ordained for me were written in your book before one of them came to be.",
-            "book": "Psalm 139:16",
-            "category": "destiny"
-        },
-        {
-            "text": "I crush every limit as God's presence breaks barriers bringing heaven through me.",
-            "bibleVerseText": "For no word from God will ever fail.",
-            "book": "Luke 1:37",
-            "category": "destiny"
-        },
-        {
-            "text": "In Jesus' name, My voice wakes up nations. I claim the world for God.",
-            "bibleVerseText": "Ask me, and I will make the nations your inheritance, the ends of the earth your possession.",
-            "book": "Psalm 2:8",
-            "category": "destiny"
-        },
-        {
-            "text": "In Jesus' name, My calling cannot be canceled. God marked me for greatness.",
-            "bibleVerseText": "God is not human, that he should lie, not a human being, that he should change his mind.",
-            "book": "Numbers 23:19",
-            "category": "destiny"
-        },
-        {
-            "text": "In Jesus' name, God unlocks influence through me. My light exposes darkness and draws hearts to Jesus.",
-            "bibleVerseText": "You are the light of the world. A town built on a hill cannot be hidden.",
-            "book": "Matthew 5:14",
-            "category": "destiny"
         },
         {
             "text": "I walk by unwavering faith with complete confidence in God's goodness.",
@@ -5523,126 +4533,6 @@
             "category": "spiritualGrowth"
         },
         {
-            "text": "I can do all things through Christ who strengthens me.",
-            "bibleVerseText": "I can do all things through Christ who strengthens me.",
-            "book": "Philippians 4:13",
-            "category": "speaklife"
-        },
-        {
-            "text": "I am divinely protected and blessed in all circumstances.",
-            "bibleVerseText": "No weapon formed against you shall prosper, and every tongue which rises against you in judgment You shall condemn.",
-            "book": "Isaiah 54:17",
-            "category": "speaklife"
-        },
-        {
-            "text": "God has given me a spirit of power, love, and sound mind.",
-            "bibleVerseText": "For God has not given us a spirit of fear, but of power and of love and of a sound mind.",
-            "book": "2 Timothy 1:7",
-            "category": "speaklife"
-        },
-        {
-            "text": "My God abundantly supplies every need from His unlimited riches.",
-            "bibleVerseText": "And my God shall supply all your need according to His riches in glory by Christ Jesus.",
-            "book": "Philippians 4:19",
-            "category": "speaklife"
-        },
-        {
-            "text": "By the stripes of Jesus, I am completely healed.",
-            "bibleVerseText": "By His stripes we are healed.",
-            "book": "Isaiah 53:5",
-            "category": "speaklife"
-        },
-        {
-            "text": "I trust wholeheartedly in the Lord who directs my paths.",
-            "bibleVerseText": "Trust in the Lord with all your heart, and lean not on your own understanding; In all your ways acknowledge Him, and He shall direct your paths.",
-            "book": "Proverbs 3:5-6",
-            "category": "speaklife"
-        },
-        {
-            "text": "The Lord has made me the head and never the tail.",
-            "bibleVerseText": "And the Lord will make you the head and not the tail; you shall be above only, and not be beneath.",
-            "book": "Deuteronomy 28:13",
-            "category": "speaklife"
-        },
-        {
-            "text": "The Lord my God goes with me making me strong and courageous.",
-            "bibleVerseText": "Have I not commanded you? Be strong and of good courage; do not be afraid, nor be dismayed, for the Lord your God is with you wherever you go.",
-            "book": "Joshua 1:9",
-            "category": "speaklife"
-        },
-        {
-            "text": "In all things, I am more than a conqueror through Him who loves me.",
-            "bibleVerseText": "Yet in all these things we are more than conquerors through Him who loved us.",
-            "book": "Romans 8:37",
-            "category": "speaklife"
-        },
-        {
-            "text": "I hold firmly to my faith because God always keeps His promises.",
-            "bibleVerseText": "Let us hold fast the confession of our hope without wavering, for He who promised is faithful.",
-            "book": "Hebrews 10:23",
-            "category": "speaklife"
-        },
-        {
-            "text": "I dwell in the secret place of God under His protective shadow.",
-            "bibleVerseText": "He who dwells in the secret place of the Most High shall abide under the shadow of the Almighty.",
-            "book": "Psalm 91:1",
-            "category": "speaklife"
-        },
-        {
-            "text": "God is working all things together for my good.",
-            "bibleVerseText": "And we know that all things work together for good to those who love God, to those who are called according to His purpose.",
-            "book": "Romans 8:28",
-            "category": "speaklife"
-        },
-        {
-            "text": "I seek first the kingdom of God, and everything I need is provided.",
-            "bibleVerseText": "But seek first the kingdom of God and His righteousness, and all these things shall be added to you.",
-            "book": "Matthew 6:33",
-            "category": "speaklife"
-        },
-        {
-            "text": "This is the day the Lord made and I rejoice with gladness.",
-            "bibleVerseText": "This is the day the Lord has made; we will rejoice and be glad in it.",
-            "book": "Psalm 118:24",
-            "category": "speaklife"
-        },
-        {
-            "text": "I trample every enemy under my feet with divine authority.",
-            "bibleVerseText": "You shall tread upon the lion and the cobra, the young lion and the serpent you shall trample underfoot.",
-            "book": "Psalm 91:13",
-            "category": "speaklife"
-        },
-        {
-            "text": "God satisfies me with long life and shows me His salvation.",
-            "bibleVerseText": "With long life I will satisfy him, and show him My salvation.",
-            "book": "Psalm 91:16",
-            "category": "speaklife"
-        },
-        {
-            "text": "I am completely protected under God's mighty shield of favor.",
-            "bibleVerseText": "Behold, I give you the authority to trample on serpents and scorpions, and over all the power of the enemy, and nothing shall by any means hurt you.",
-            "book": "Luke 10:19",
-            "category": "speaklife"
-        },
-        {
-            "text": "I persevere joyfully. God's blessing comes at the perfect time.",
-            "bibleVerseText": "Let us not grow weary in doing good, for at the proper time we will reap a harvest if we do not give up.",
-            "book": "Galatians 6:9",
-            "category": "speaklife"
-        },
-        {
-            "text": "God is making a way for me with perfect wisdom.",
-            "bibleVerseText": "See, I am doing a new thing! Now it springs up; do you not perceive it? I am making a way in the wilderness and streams in the wasteland.",
-            "book": "Isaiah 43:19",
-            "category": "speaklife"
-        },
-        {
-            "text": "My youth is renewed like eagles and I overflow with strength.",
-            "bibleVerseText": "Who satisfies your desires with good things so that your youth is renewed like the eagles.",
-            "book": "Psalm 103:5",
-            "category": "speaklife"
-        },
-        {
             "text": "I declare the blood of Jesus broke every chain, reversed every curse, and made my freedom final.",
             "bibleVerseText": "Christ has redeemed us from the curse of the law.",
             "book": "Galatians 3:13",
@@ -5805,134 +4695,134 @@
             "category": "nameOfJesus"
         },
         {
-          "text": "I declare my body must align with divine health and wholeness.",
-          "isFavorite": false,
-          "category": "health"
+            "text": "I declare my body must align with divine health and wholeness.",
+            "isFavorite": false,
+            "category": "health"
         },
         {
-          "text": "I declare every cell in my body functions perfectly as God intended.",
-          "isFavorite": false,
-          "category": "health"
+            "text": "I declare every cell in my body functions perfectly as God intended.",
+            "isFavorite": false,
+            "category": "health"
         },
         {
-          "text": "I declare that my body is renewed, restored, and filled with life.",
-          "isFavorite": false,
-          "category": "health"
+            "text": "I declare that my body is renewed, restored, and filled with life.",
+            "isFavorite": false,
+            "category": "health"
         },
         {
-          "text": "I declare that God’s healing power flows through every part of me.",
-          "isFavorite": false,
-          "category": "health"
+            "text": "I declare that God\u2019s healing power flows through every part of me.",
+            "isFavorite": false,
+            "category": "health"
         },
         {
-          "text": "I declare my heart beats strong and steady, aligned with God’s strength.",
-          "isFavorite": false,
-          "category": "health"
+            "text": "I declare my heart beats strong and steady, aligned with God\u2019s strength.",
+            "isFavorite": false,
+            "category": "health"
         },
         {
-          "text": "I declare my mind is clear, my spirit is strong, and my body is whole.",
-          "isFavorite": false,
-          "category": "health"
+            "text": "I declare my mind is clear, my spirit is strong, and my body is whole.",
+            "isFavorite": false,
+            "category": "health"
         },
         {
-          "text": "I declare my immune system is fortified, healthy, and resilient.",
-          "isFavorite": false,
-          "category": "health"
+            "text": "I declare my immune system is fortified, healthy, and resilient.",
+            "isFavorite": false,
+            "category": "health"
         },
         {
-          "text": "I declare my muscles, bones, and joints are aligned with vitality and strength.",
-          "isFavorite": false,
-          "category": "health"
+            "text": "I declare my muscles, bones, and joints are aligned with vitality and strength.",
+            "isFavorite": false,
+            "category": "health"
         },
         {
-          "text": "I declare my digestive system is healthy, strong, and perfectly functioning.",
-          "isFavorite": false,
-          "category": "health"
+            "text": "I declare my digestive system is healthy, strong, and perfectly functioning.",
+            "isFavorite": false,
+            "category": "health"
         },
         {
-          "text": "I declare my lungs are filled with the breath of life, bringing me energy and peace.",
-          "isFavorite": false,
-          "category": "health"
+            "text": "I declare my lungs are filled with the breath of life, bringing me energy and peace.",
+            "isFavorite": false,
+            "category": "health"
         },
         {
-          "text": "I declare that God’s peace flows through my mind and brings healing to my body.",
-          "isFavorite": false,
-          "category": "health"
+            "text": "I declare that God\u2019s peace flows through my mind and brings healing to my body.",
+            "isFavorite": false,
+            "category": "health"
         },
         {
-          "text": "I declare every organ is functioning in perfect harmony, aligned with God’s design.",
-          "isFavorite": false,
-          "category": "health"
+            "text": "I declare every organ is functioning in perfect harmony, aligned with God\u2019s design.",
+            "isFavorite": false,
+            "category": "health"
         },
         {
-          "text": "I declare my nervous system is calm, balanced, and perfectly aligned.",
-          "isFavorite": false,
-          "category": "health"
+            "text": "I declare my nervous system is calm, balanced, and perfectly aligned.",
+            "isFavorite": false,
+            "category": "health"
         },
         {
-          "text": "I declare that my body is continually renewed and strengthened by God’s love.",
-          "isFavorite": false,
-          "category": "health"
+            "text": "I declare that my body is continually renewed and strengthened by God\u2019s love.",
+            "isFavorite": false,
+            "category": "health"
         },
         {
-          "text": "I declare that I am vibrant, energetic, and full of life as God intended.",
-          "isFavorite": false,
-          "category": "health"
+            "text": "I declare that I am vibrant, energetic, and full of life as God intended.",
+            "isFavorite": false,
+            "category": "health"
         },
         {
-          "text": "In Jesus' name, my body is healed, for He has paid the price for my health.",
-          "isFavorite": false,
-          "category": "health"
+            "text": "In Jesus' name, my body is healed, for He has paid the price for my health.",
+            "isFavorite": false,
+            "category": "health"
         },
         {
-          "text": "In Jesus' name, I conquer every disease, as His power flows through me.",
-          "isFavorite": false,
-          "category": "health"
+            "text": "In Jesus' name, I conquer every disease, as His power flows through me.",
+            "isFavorite": false,
+            "category": "health"
         },
         {
-          "text": "In Jesus' name, I stand strong and healthy, redeemed from all sickness.",
-          "isFavorite": false,
-          "category": "health"
+            "text": "In Jesus' name, I stand strong and healthy, redeemed from all sickness.",
+            "isFavorite": false,
+            "category": "health"
         },
         {
-          "text": "In Jesus' name, every part of my body is restored to perfect health.",
-          "isFavorite": false,
-          "category": "health"
+            "text": "In Jesus' name, every part of my body is restored to perfect health.",
+            "isFavorite": false,
+            "category": "health"
         },
         {
-          "text": "In Jesus' name, no illness can remain in me, for His sacrifice made me whole.",
-          "isFavorite": false,
-          "category": "health"
+            "text": "In Jesus' name, no illness can remain in me, for His sacrifice made me whole.",
+            "isFavorite": false,
+            "category": "health"
         },
         {
-          "text": "In Jesus' name, I declare my immune system strong and disease-free.",
-          "isFavorite": false,
-          "category": "health"
+            "text": "In Jesus' name, I declare my immune system strong and disease-free.",
+            "isFavorite": false,
+            "category": "health"
         },
         {
-          "text": "In Jesus' name, my body is cleansed, renewed, and protected from all harm.",
-          "isFavorite": false,
-          "category": "health"
+            "text": "In Jesus' name, my body is cleansed, renewed, and protected from all harm.",
+            "isFavorite": false,
+            "category": "health"
         },
         {
-          "text": "In Jesus' name, every cell in my body is revitalized and filled with life.",
-          "isFavorite": false,
-          "category": "health"
+            "text": "In Jesus' name, every cell in my body is revitalized and filled with life.",
+            "isFavorite": false,
+            "category": "health"
         },
         {
-          "text": "In Jesus' name, I am free from pain and filled with divine health.",
-          "isFavorite": false,
-          "category": "health"
+            "text": "In Jesus' name, I am free from pain and filled with divine health.",
+            "isFavorite": false,
+            "category": "health"
         },
         {
-          "text": "In Jesus' name, I am whole, as He has defeated every illness on my behalf.",
-          "isFavorite": false,
-          "category": "health"
+            "text": "In Jesus' name, I am whole, as He has defeated every illness on my behalf.",
+            "isFavorite": false,
+            "category": "health"
         },
         {
-          "text": "In Jesus' name, I receive complete healing and strength in every organ.",
-          "isFavorite": false,
-          "category": "health"
+            "text": "In Jesus' name, I receive complete healing and strength in every organ.",
+            "isFavorite": false,
+            "category": "health"
         },
         {
             "text": "I am completely restored, my body perfectly renewed by His mighty power.",
@@ -11366,60 +10256,6 @@
             "isFavorite": false
         },
         {
-            "text": "God's purpose for me cannot fail because I am called according to His design.",
-            "bibleVerseText": "And we know that in all things God works for the good of those who love him, who have been called according to his purpose.",
-            "book": "Romans 8:28",
-            "category": "destiny"
-        },
-        {
-            "text": "I bear Kingdom fruit that remains because I am chosen and appointed.",
-            "bibleVerseText": "You did not choose me, but I chose you and appointed you so that you might go and bear fruit\u2014fruit that will last.",
-            "book": "John 15:16",
-            "category": "destiny"
-        },
-        {
-            "text": "I am a royal priest declaring God's excellence from my position of purpose.",
-            "bibleVerseText": "But you are a chosen people, a royal priesthood, a holy nation, God's special possession, that you may declare the praises of him who called you out of darkness into his wonderful light.",
-            "book": "1 Peter 2:9",
-            "category": "destiny"
-        },
-        {
-            "text": "I overcome every obstacle because greater is He who lives in me.",
-            "bibleVerseText": "You, dear children, are from God and have overcome them, because the one who is in you is greater than the one who is in the world.",
-            "book": "1 John 4:4",
-            "category": "destiny"
-        },
-        {
-            "text": "My calling is permanent and God's gifts and purpose in me stand forever.",
-            "bibleVerseText": "For God's gifts and his call are irrevocable.",
-            "book": "Romans 11:29",
-            "category": "destiny"
-        },
-        {
-            "text": "Christ in me is the hope of glory and my destiny shines with His presence.",
-            "bibleVerseText": "To them God has chosen to make known among the Gentiles the glorious riches of this mystery, which is Christ in you, the hope of glory.",
-            "book": "Colossians 1:27",
-            "category": "destiny"
-        },
-        {
-            "text": "Mountains move before me because nothing is impossible with my faith.",
-            "bibleVerseText": "Truly I tell you, if you have faith as small as a mustard seed, you can say to this mountain, 'Move from here to there,' and it will move. Nothing will be impossible for you.",
-            "book": "Matthew 17:20",
-            "category": "destiny"
-        },
-        {
-            "text": "I do greater works than these because Christ accomplished everything.",
-            "bibleVerseText": "Very truly I tell you, whoever believes in me will do the works I have been doing, and they will do even greater things than these.",
-            "book": "John 14:12",
-            "category": "destiny"
-        },
-        {
-            "text": "I reign in life through Christ, exercising dominion from my royal position.",
-            "bibleVerseText": "For if, by the trespass of the one man, death reigned through that one man, how much more will those who receive God's abundant provision of grace and of the gift of righteousness reign in life through the one man, Jesus Christ!",
-            "book": "Romans 5:17",
-            "category": "destiny"
-        },
-        {
             "text": "By His wounds I am healed and wholeness is my present reality.",
             "bibleVerseText": "By his wounds you have been healed.",
             "book": "1 Peter 2:24",
@@ -11538,126 +10374,6 @@
             "bibleVerseText": "And in Christ you have been brought to fullness. He is the head over every power and authority.",
             "book": "Colossians 2:10",
             "category": "health"
-        },
-        {
-            "text": "My words carry creative power and life and death bow to what I speak.",
-            "bibleVerseText": "The tongue has the power of life and death, and those who love it will eat its fruit.",
-            "book": "Proverbs 18:21",
-            "category": "speaklife"
-        },
-        {
-            "text": "I speak to mountains and they move because nothing is impossible when I declare.",
-            "bibleVerseText": "Truly I tell you, if anyone says to this mountain, 'Go, throw yourself into the sea,' and does not doubt in their heart but believes that what they say will happen, it will be done for them.",
-            "book": "Mark 11:23",
-            "category": "speaklife"
-        },
-        {
-            "text": "My mouth is filled with God's Word and I declare what Heaven has spoken.",
-            "bibleVerseText": "I have put my words in your mouth and covered you with the shadow of my hand.",
-            "book": "Isaiah 51:16",
-            "category": "speaklife"
-        },
-        {
-            "text": "I call things that are not as though they are because I speak from faith's reality.",
-            "bibleVerseText": "The God who gives life to the dead and calls into being things that were not.",
-            "book": "Romans 4:17",
-            "category": "speaklife"
-        },
-        {
-            "text": "My words accomplish what I send them to do and they never return empty.",
-            "bibleVerseText": "So is my word that goes out from my mouth: It will not return to me empty, but will accomplish what I desire and achieve the purpose for which I sent it.",
-            "book": "Isaiah 55:11",
-            "category": "speaklife"
-        },
-        {
-            "text": "I speak and it comes to pass as my declarations establish Kingdom reality.",
-            "bibleVerseText": "You will also declare a thing, and it will be established for you.",
-            "book": "Job 22:28",
-            "category": "speaklife"
-        },
-        {
-            "text": "Grace pours from my lips and my words heal, restore, and bring life.",
-            "bibleVerseText": "Gracious words are a honeycomb, sweet to the soul and healing to the bones.",
-            "book": "Proverbs 16:24",
-            "category": "speaklife"
-        },
-        {
-            "text": "I speak to dry bones and watch them live as resurrection flows through my words.",
-            "bibleVerseText": "So I prophesied as I was commanded. And as I was prophesying, there was a noise, a rattling sound, and the bones came together.",
-            "book": "Ezekiel 37:7",
-            "category": "speaklife"
-        },
-        {
-            "text": "My confession creates my reality as I speak and possess my inheritance.",
-            "bibleVerseText": "For it is with your heart that you believe and are justified, and it is with your mouth that you profess your faith and are saved.",
-            "book": "Romans 10:10",
-            "category": "speaklife"
-        },
-        {
-            "text": "I release Heaven's words on earth and what I bind and loose happens now.",
-            "bibleVerseText": "Truly I tell you, whatever you bind on earth will be bound in heaven, and whatever you loose on earth will be loosed in heaven.",
-            "book": "Matthew 18:18",
-            "category": "speaklife"
-        },
-        {
-            "text": "My words are spirit and life carrying divine power to transform.",
-            "bibleVerseText": "The words I have spoken to you\u2014they are full of the Spirit and life.",
-            "book": "John 6:63",
-            "category": "speaklife"
-        },
-        {
-            "text": "I speak peace to storms and they obey because creation responds to my voice.",
-            "bibleVerseText": "He got up, rebuked the wind and said to the waves, 'Quiet! Be still!' Then the wind died down and it was completely calm.",
-            "book": "Mark 4:39",
-            "category": "speaklife"
-        },
-        {
-            "text": "Faith comes alive when I speak and my declarations activate Heaven's power.",
-            "bibleVerseText": "Faith comes from hearing the message, and the message is heard through the word about Christ.",
-            "book": "Romans 10:17",
-            "category": "speaklife"
-        },
-        {
-            "text": "I am trapped by nothing because my words create freedom and breakthrough.",
-            "bibleVerseText": "You have been trapped by what you said, ensnared by the words of your mouth.",
-            "book": "Proverbs 6:2",
-            "category": "speaklife"
-        },
-        {
-            "text": "My tongue is the pen of a ready writer and I write victory with every word.",
-            "bibleVerseText": "My heart is stirred by a noble theme as I recite my verses for the king; my tongue is the pen of a skillful writer.",
-            "book": "Psalm 45:1",
-            "category": "speaklife"
-        },
-        {
-            "text": "I overcome by the word of my testimony and my declarations defeat darkness.",
-            "bibleVerseText": "They triumphed over him by the blood of the Lamb and by the word of their testimony.",
-            "book": "Revelation 12:11",
-            "category": "speaklife"
-        },
-        {
-            "text": "I speak as God's messenger and divine authority backs every word.",
-            "bibleVerseText": "If anyone speaks, they should do so as one who speaks the very words of God.",
-            "book": "1 Peter 4:11",
-            "category": "speaklife"
-        },
-        {
-            "text": "My mouth is a fountain of life and blessing flows from everything I say.",
-            "bibleVerseText": "The mouth of the righteous is a fountain of life.",
-            "book": "Proverbs 10:11",
-            "category": "speaklife"
-        },
-        {
-            "text": "I speak and darkness flees as light explodes from my declarations.",
-            "bibleVerseText": "And God said, 'Let there be light,' and there was light.",
-            "book": "Genesis 1:3",
-            "category": "speaklife"
-        },
-        {
-            "text": "My words frame my world and I am living in what I have been declaring.",
-            "bibleVerseText": "By faith we understand that the universe was formed at God's command, so that what is seen was not made out of what was visible.",
-            "book": "Hebrews 11:3",
-            "category": "speaklife"
         },
         {
             "text": "Nothing separates me from God's love and I am forever secure in Christ.",
@@ -11880,6 +10596,126 @@
             "bibleVerseText": "So that Christ may dwell in your hearts through faith. And I pray that you, being rooted and established in love.",
             "book": "Ephesians 3:17",
             "category": "faith"
+        },
+        {
+            "text": "My words carry creative power and life and death bow to what I speak.",
+            "bibleVerseText": "The tongue has the power of life and death, and those who love it will eat its fruit.",
+            "book": "Proverbs 18:21",
+            "category": "speaklife"
+        },
+        {
+            "text": "I speak to mountains and they move because nothing is impossible when I declare.",
+            "bibleVerseText": "Truly I tell you, if anyone says to this mountain, \"Go, throw yourself into the sea,\" and does not doubt in their heart but believes that what they say will happen, it will be done for them.",
+            "book": "Mark 11:23",
+            "category": "speaklife"
+        },
+        {
+            "text": "I call things that are not as though they are because I speak from faiths reality.",
+            "bibleVerseText": "The God who gives life to the dead and calls into being things that were not.",
+            "book": "Romans 4:17",
+            "category": "speaklife"
+        },
+        {
+            "text": "I speak and it comes to pass as my declarations establish Kingdom reality.",
+            "bibleVerseText": "You will also declare a thing, and it will be established for you.",
+            "book": "Job 22:28",
+            "category": "speaklife"
+        },
+        {
+            "text": "My words accomplish what I send them to do and they never return empty.",
+            "bibleVerseText": "So is my word that goes out from my mouth: It will not return to me empty, but will accomplish what I desire and achieve the purpose for which I sent it.",
+            "book": "Isaiah 55:11",
+            "category": "speaklife"
+        },
+        {
+            "text": "My mouth is filled with Gods Word and I declare what Heaven has spoken.",
+            "bibleVerseText": "I have put my words in your mouth and covered you with the shadow of my hand.",
+            "book": "Isaiah 51:16",
+            "category": "speaklife"
+        },
+        {
+            "text": "I speak to dry bones and watch them live as resurrection flows through my words.",
+            "bibleVerseText": "So I prophesied as I was commanded. And as I was prophesying, there was a noise, a rattling sound, and the bones came together.",
+            "book": "Ezekiel 37:7",
+            "category": "speaklife"
+        },
+        {
+            "text": "My confession creates my reality as I speak and possess my inheritance.",
+            "bibleVerseText": "For it is with your heart that you believe and are justified, and it is with your mouth that you profess your faith and are saved.",
+            "book": "Romans 10:10",
+            "category": "speaklife"
+        },
+        {
+            "text": "I release Heavens words on earth and what I bind and loose happens now.",
+            "bibleVerseText": "Truly I tell you, whatever you bind on earth will be bound in heaven, and whatever you loose on earth will be loosed in heaven.",
+            "book": "Matthew 18:18",
+            "category": "speaklife"
+        },
+        {
+            "text": "My words are spirit and life carrying divine power to transform.",
+            "bibleVerseText": "The words I have spoken to you\u2014they are full of the Spirit and life.",
+            "book": "John 6:63",
+            "category": "speaklife"
+        },
+        {
+            "text": "I speak peace to storms and they obey because creation responds to my voice.",
+            "bibleVerseText": "He got up, rebuked the wind and said to the waves, \"Quiet! Be still!\" Then the wind died down and it was completely calm.",
+            "book": "Mark 4:39",
+            "category": "speaklife"
+        },
+        {
+            "text": "Faith comes alive when I speak and my declarations activate Heavens power.",
+            "bibleVerseText": "Faith comes from hearing the message, and the message is heard through the word about Christ.",
+            "book": "Romans 10:17",
+            "category": "speaklife"
+        },
+        {
+            "text": "I overcome by the word of my testimony and my declarations defeat darkness.",
+            "bibleVerseText": "They triumphed over him by the blood of the Lamb and by the word of their testimony.",
+            "book": "Revelation 12:11",
+            "category": "speaklife"
+        },
+        {
+            "text": "I speak as Gods messenger and divine authority backs every word.",
+            "bibleVerseText": "If anyone speaks, they should do so as one who speaks the very words of God.",
+            "book": "1 Peter 4:11",
+            "category": "speaklife"
+        },
+        {
+            "text": "My mouth is a fountain of life and blessing flows from everything I say.",
+            "bibleVerseText": "The mouth of the righteous is a fountain of life.",
+            "book": "Proverbs 10:11",
+            "category": "speaklife"
+        },
+        {
+            "text": "I speak and darkness flees as light explodes from my declarations.",
+            "bibleVerseText": "And God said, \"Let there be light,\" and there was light.",
+            "book": "Genesis 1:3",
+            "category": "speaklife"
+        },
+        {
+            "text": "My words frame my world and I am living in what I have been declaring.",
+            "bibleVerseText": "By faith we understand that the universe was formed at Gods command, so that what is seen was not made out of what was visible.",
+            "book": "Hebrews 11:3",
+            "category": "speaklife"
+        },
+        {
+            "text": "Grace pours from my lips and my words heal, restore, and bring life.",
+            "bibleVerseText": "Gracious words are a honeycomb, sweet to the soul and healing to the bones.",
+            "book": "Proverbs 16:24",
+            "category": "speaklife"
+        },
+        {
+            "text": "My tongue is the pen of a ready writer and I write victory with every word.",
+            "bibleVerseText": "My heart is stirred by a noble theme as I recite my verses for the king; my tongue is the pen of a skillful writer.",
+            "book": "Psalm 45:1",
+            "category": "speaklife"
+        },
+        {
+            "text": "I am trapped by nothing because my words create freedom and breakthrough.",
+            "bibleVerseText": "You have been trapped by what you said, ensnared by the words of your mouth.",
+            "book": "Proverbs 6:2",
+            "category": "speaklife"
         },
         {
             "text": "Grace and peace are multiplied to me through the knowledge of God.",
@@ -13170,6 +12006,306 @@
             "bibleVerseText": "To him who sits on the throne and to the Lamb be praise and honor and glory and power, for ever and ever!",
             "book": "Revelation 5:13",
             "category": "praise"
+        },
+        {
+            "text": "The Lord will fulfill his purpose for me; your steadfast love, O Lord, endures forever.",
+            "book": "Psalm 138:8",
+            "isFavorite": false,
+            "category": "destiny"
+        },
+        {
+            "text": "I am chosen to shake nations through God's impossible-conquering power.",
+            "book": "Psalm 33:11",
+            "isFavorite": false,
+            "category": "destiny"
+        },
+        {
+            "text": "God's promises always succeed and come true in me.",
+            "book": "2 Corinthians 1:20",
+            "isFavorite": false,
+            "category": "destiny"
+        },
+        {
+            "text": "I bear Kingdom fruit that remains because I am chosen and appointed.",
+            "book": "John 15:16",
+            "isFavorite": false,
+            "category": "destiny"
+        },
+        {
+            "text": "Christ in me is the hope of glory and my destiny shines with His presence.",
+            "book": "Colossians 1:27",
+            "isFavorite": false,
+            "category": "destiny"
+        },
+        {
+            "text": "I break through every wall with God's unstoppable plan.",
+            "book": "Isaiah 45:2",
+            "isFavorite": false,
+            "category": "destiny"
+        },
+        {
+            "text": "God accelerates time for me and my breakthrough is here.",
+            "book": "Amos 9:13",
+            "isFavorite": false,
+            "category": "destiny"
+        },
+        {
+            "text": "I am a king and priest ruling with God's power.",
+            "book": "Revelation 1:6",
+            "isFavorite": false,
+            "category": "destiny"
+        },
+        {
+            "text": "My assignment moves forward powerfully as God's word stands forever.",
+            "book": "Romans 11:29",
+            "isFavorite": false,
+            "category": "destiny"
+        },
+        {
+            "text": "I am fully equipped and unstoppable with God's unlimited power backing me.",
+            "book": "Psalm 139:16",
+            "isFavorite": false,
+            "category": "destiny"
+        },
+        {
+            "text": "For I know the plans I have for you, says the Lord. They are plans for good and not for disaster, to give you a future and a hope.",
+            "book": "Jeremiah 29:11",
+            "isFavorite": false,
+            "category": "destiny"
+        },
+        {
+            "text": "And we know that God causes everything to work together for the good of those who love God and are called according to his purpose for them.",
+            "book": "Romans 8:28",
+            "isFavorite": false,
+            "category": "destiny"
+        },
+        {
+            "text": "Commit your actions to the Lord, and your plans will succeed.",
+            "book": "Proverbs 16:3",
+            "isFavorite": false,
+            "category": "destiny"
+        },
+        {
+            "text": "For God is working in you, giving you the desire and the power to do what pleases him.",
+            "book": "Philippians 2:13",
+            "isFavorite": false,
+            "category": "destiny"
+        },
+        {
+            "text": "Trust in the Lord with all your heart; do not depend on your own understanding.",
+            "book": "Proverbs 3:5-6",
+            "isFavorite": false,
+            "category": "destiny"
+        },
+        {
+            "text": "Take delight in the Lord, and he will give you your heart's desires.",
+            "book": "Psalm 37:4",
+            "isFavorite": false,
+            "category": "destiny"
+        },
+        {
+            "text": "You can make many plans, but the Lord's purpose will prevail.",
+            "book": "Proverbs 19:21",
+            "isFavorite": false,
+            "category": "destiny"
+        },
+        {
+            "text": "For we are God's masterpiece. He has created us anew in Christ Jesus.",
+            "book": "Ephesians 2:10",
+            "isFavorite": false,
+            "category": "destiny"
+        },
+        {
+            "text": "I cry out to God Most High, to God who will fulfill his purpose for me.",
+            "book": "Psalm 57:2",
+            "isFavorite": false,
+            "category": "destiny"
+        },
+        {
+            "text": "The steps of the godly are directed by the Lord.",
+            "book": "Psalm 37:23",
+            "isFavorite": false,
+            "category": "destiny"
+        },
+        {
+            "text": "Many are the plans in the mind of a man, but it is the purpose of the Lord that will stand.",
+            "book": "Proverbs 19:21",
+            "isFavorite": false,
+            "category": "destiny"
+        },
+        {
+            "text": "Before I formed you in the womb I knew you, before you were born I set you apart.",
+            "book": "Jeremiah 1:5",
+            "isFavorite": false,
+            "category": "destiny"
+        },
+        {
+            "text": "I can do all things through Christ who strengthens me.",
+            "book": "Philippians 4:13",
+            "isFavorite": false,
+            "category": "destiny"
+        },
+        {
+            "text": "No weapon formed against me shall prosper.",
+            "book": "Isaiah 54:17",
+            "isFavorite": false,
+            "category": "destiny"
+        },
+        {
+            "text": "The Lord directs the steps of the godly. He delights in every detail of their lives.",
+            "book": "Psalm 37:23",
+            "isFavorite": false,
+            "category": "destiny"
+        },
+        {
+            "text": "I am the head and not the tail.",
+            "book": "Deuteronomy 28:13",
+            "isFavorite": false,
+            "category": "destiny"
+        },
+        {
+            "text": "Greater is He that is in me than he that is in the world.",
+            "book": "1 John 4:4",
+            "isFavorite": false,
+            "category": "destiny"
+        },
+        {
+            "text": "I am more than a conqueror through Him who loved me.",
+            "book": "Romans 8:37",
+            "isFavorite": false,
+            "category": "destiny"
+        },
+        {
+            "text": "My gifts will make room for me and bring me before great men.",
+            "book": "Proverbs 18:16",
+            "isFavorite": false,
+            "category": "destiny"
+        },
+        {
+            "text": "I have the mind of Christ.",
+            "book": "1 Corinthians 2:16",
+            "isFavorite": false,
+            "category": "destiny"
+        },
+        {
+            "text": "God's grace is sufficient for me.",
+            "book": "2 Corinthians 12:9",
+            "isFavorite": false,
+            "category": "destiny"
+        },
+        {
+            "text": "I am fearfully and wonderfully made.",
+            "book": "Psalm 139:14",
+            "isFavorite": false,
+            "category": "destiny"
+        },
+        {
+            "text": "The Lord's favor surrounds me like a shield.",
+            "book": "Psalm 5:12",
+            "isFavorite": false,
+            "category": "destiny"
+        },
+        {
+            "text": "I am blessed in my coming in and blessed going out.",
+            "book": "Deuteronomy 28:6",
+            "isFavorite": false,
+            "category": "destiny"
+        },
+        {
+            "text": "Eye has not seen, nor ear heard what God has prepared for me.",
+            "book": "1 Corinthians 2:9",
+            "isFavorite": false,
+            "category": "destiny"
+        },
+        {
+            "text": "I walk by faith, not by sight.",
+            "book": "2 Corinthians 5:7",
+            "isFavorite": false,
+            "category": "destiny"
+        },
+        {
+            "text": "Old things have passed away; behold, all things have become new.",
+            "book": "2 Corinthians 5:17",
+            "isFavorite": false,
+            "category": "destiny"
+        },
+        {
+            "text": "I am complete in Him.",
+            "book": "Colossians 2:10",
+            "isFavorite": false,
+            "category": "destiny"
+        },
+        {
+            "text": "God will supply all my needs according to His riches in glory.",
+            "book": "Philippians 4:19",
+            "isFavorite": false,
+            "category": "destiny"
+        },
+        {
+            "text": "I am God's workmanship, created for good works.",
+            "book": "Ephesians 2:10",
+            "isFavorite": false,
+            "category": "destiny"
+        },
+        {
+            "text": "I hold the keys to every door, and I will open the right ones for you.",
+            "book": "- Jesus",
+            "isFavorite": false,
+            "category": "destiny"
+        },
+        {
+            "text": "I am the God of breakthroughs; trust me to break through every closed door for you.",
+            "book": "- Jesus",
+            "isFavorite": false,
+            "category": "destiny"
+        },
+        {
+            "text": "I declare that no weapon formed against my destiny shall prosper.",
+            "book": "Isaiah 54:17",
+            "isFavorite": false,
+            "category": "destiny"
+        },
+        {
+            "text": "I declare that my gifts will open doors and bring me before great people.",
+            "book": "Proverbs 18:16",
+            "isFavorite": false,
+            "category": "destiny"
+        },
+        {
+            "text": "I declare that the Lord establishes my steps and directs my path.",
+            "book": "Proverbs 16:9",
+            "isFavorite": false,
+            "category": "destiny"
+        },
+        {
+            "text": "I am empowered by the Holy Spirit to accomplish my destiny.",
+            "book": "Acts 1:8",
+            "isFavorite": false,
+            "category": "destiny"
+        },
+        {
+            "text": "I am protected by God's hand, no harm will deter me from my destiny.",
+            "book": "Psalm 91:11",
+            "isFavorite": false,
+            "category": "destiny"
+        },
+        {
+            "text": "I am confident that God's promises over my life will be fulfilled.",
+            "book": "Numbers 23:19",
+            "isFavorite": false,
+            "category": "destiny"
+        },
+        {
+            "text": "In Jesus' name, I declare doors open for me in alignment with God's purpose.",
+            "book": "Revelation 3:8",
+            "isFavorite": false,
+            "category": "destiny"
+        },
+        {
+            "text": "In Jesus' name, I proclaim that I am called, chosen, and equipped by God.",
+            "book": "1 Peter 2:9",
+            "isFavorite": false,
+            "category": "destiny"
         }
     ]
 }

@@ -110,8 +110,6 @@ struct ReminderView: View {
                 }
             }
             appState.lastNotificationSetDate = Date()
-        } else {
-            declarationViewModel.errorAlert.toggle()
         }
     }
     private func scheduleNotificationRequest() {

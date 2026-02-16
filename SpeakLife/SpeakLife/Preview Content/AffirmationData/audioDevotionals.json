@@ -499,6 +499,17 @@
             "tag": "godsHeart"
         },
         {
+            "id": "speaklife-s4e1.mp3",
+            "title": "Faith That Moves",
+            "subtitle": "S4 Episode 1",
+            "duration": "2m",
+            "imageUrl": "devotional",
+            "isPremium": true,
+            "tag": "speaklife",
+            "season": 4,
+            "episode": 1
+        },
+        {
             "id": "speaklife-s3e11.mp3",
             "title": "Keep on Hearing",
             "subtitle": "S3 Episode 11",

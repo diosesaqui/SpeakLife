@@ -68,13 +68,44 @@ final class NotificationProcessor {
                 for category in categories! {
                     let categoryDeclarations = allDeclarations.filter { $0.category == category }
                    // fetchDeclarations(for: category) { declarations in
-                        guard categoryDeclarations.count >= count else { completion([]); return }
-                        let divisor = (count/categories!.count)
-                        let endpoint = min(divisor, categoryDeclarations.count - 1)
-                        let notificationCategories = categoryDeclarations.shuffled()[0...endpoint]
-                        categoryReminders.append(contentsOf: notificationCategories)
+                        // Don't fail if category has fewer declarations, just use what's available
+                        guard !categoryDeclarations.isEmpty else { continue }
+                        
+                        let divisor = max(1, count/categories!.count)
+                        // Use all available declarations if needed, allowing repeats
+                        let availableCount = categoryDeclarations.count
+                        
+                        if availableCount >= divisor {
+                            // We have enough declarations, pick without replacement
+                            let endpoint = min(divisor, categoryDeclarations.count - 1)
+                            let notificationCategories = categoryDeclarations.shuffled()[0...endpoint]
+                            categoryReminders.append(contentsOf: notificationCategories)
+                        } else {
+                            // Not enough declarations, use all available and allow repeats if needed
+                            let shuffled = categoryDeclarations.shuffled()
+                            categoryReminders.append(contentsOf: shuffled)
+                            
+                            // If we still need more, repeat some declarations
+                            var remaining = divisor - availableCount
+                            while remaining > 0 && !shuffled.isEmpty {
+                                let toAdd = min(remaining, shuffled.count)
+                                categoryReminders.append(contentsOf: shuffled.prefix(toAdd))
+                                remaining -= toAdd
+                            }
+                        }
                  //   }
                 }
+                
+                // Ensure we have at least some notifications
+                if categoryReminders.isEmpty {
+                    // Fall back to using all categories if selected ones are empty
+                    let shuffled = allDeclarations.shuffled()
+                    let fallbackCount = min(count, shuffled.count)
+                    for i in 0..<fallbackCount {
+                        categoryReminders.append(shuffled[i])
+                    }
+                }
+                
                 if categoryReminders.count >= count {
                     data = parse(categoryReminders, count: count)
                 }  else {
