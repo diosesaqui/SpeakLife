@@ -59,8 +59,8 @@ class DailyDeclarationReminderService: ObservableObject {
         #endif
         
         let content = UNMutableNotificationContent()
-        content.title = "Start your day with victory 🌅"
-        content.body = "Speak life over your morning with God's promises"
+        content.title = "Your Daily Burst is ready! ⚡"
+        content.body = "7 powerful declarations to ignite your morning. Tap to start your victory burst."
         content.sound = UNNotificationSound.default
         content.categoryIdentifier = "DAILY_DECLARATION"
         content.userInfo = ["action": "daily_declaration_burst"]

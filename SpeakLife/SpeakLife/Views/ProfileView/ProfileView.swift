@@ -42,6 +42,7 @@ struct ProfileView: View {
     @State var isPresentingPrayerRequestView = false
     @State var isPresentingBottomSheet = false
     @State private var showShareSheet = false
+    @State private var showSpiritualGrowth = false
     let url = URL(string:APP.Product.urlID)
     
     
@@ -92,6 +93,7 @@ struct ProfileView: View {
                        // createYourOwnRow  // Moved Create Your Own here (always visible)
                        // if appState.onBoardingTest {
                         streakRow
+                        dailyBurstStatsRow
                             quizRow
                            prayerRow
                        // }
@@ -118,6 +120,9 @@ struct ProfileView: View {
                     .sheet(isPresented: $showShareSheet, content: {
                         ShareSheet(activityItems: ["Check out SpeakLife - Bible Affirmations app that'll transform your life!", url as Any])
                     })
+                    .sheet(isPresented: $showSpiritualGrowth) {
+                        SpiritualGrowthView()
+                    }
                     
                     Section(header: Text("Other".uppercased()).font(.caption)) {
                         privacyPolicyRow
@@ -356,6 +361,34 @@ struct ProfileView: View {
                 StreakSheet(isShown: $isPresentingBottomSheet, streakViewModel: streakViewModel)
                 .presentationDetents([.medium, .fraction(0.7)])
                 .preferredColorScheme(.light)
+        }
+    }
+    
+    @MainActor
+    private var dailyBurstStatsRow: some View {
+        Button(action: {
+            showSpiritualGrowth = true
+            Analytics.logEvent("Profile_DailyBurstStats_Tapped", parameters: nil)
+        }) {
+            HStack {
+                Image(systemName: "chart.line.uptrend.xyaxis")
+                    .foregroundColor(Constants.DAMidBlue)
+                
+                Text("Daily Burst Stats")
+                
+                Spacer()
+                
+                // Show current streak as a preview
+                if BurstCompletionTracker.shared.currentStreak > 0 {
+                    Text("\(BurstCompletionTracker.shared.currentStreak) days")
+                        .font(.caption)
+                        .foregroundColor(.gray)
+                }
+                
+                Image(systemName: "chevron.right")
+                    .font(.caption)
+                    .foregroundColor(.gray)
+            }
         }
     }
     

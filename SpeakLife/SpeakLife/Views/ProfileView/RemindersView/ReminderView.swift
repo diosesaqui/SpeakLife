@@ -48,11 +48,11 @@ struct ReminderView: View {
                                     .padding(.horizontal)
                             }
                             
-                            // Checklist Notifications Section
-                            ChecklistNotificationSettings(showConfirmation: $showConfirmation)
-                                .cornerRadius(16)
-                                .padding(.horizontal)
-                                .padding(.top, 8)
+//                            // Checklist Notifications Section
+//                            ChecklistNotificationSettings(showConfirmation: $showConfirmation)
+//                                .cornerRadius(16)
+//                                .padding(.horizontal)
+//                                .padding(.top, 8)
                         }
                         .padding(.bottom)
                     }

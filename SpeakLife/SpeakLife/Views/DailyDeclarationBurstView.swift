@@ -14,6 +14,7 @@ struct DailyDeclarationBurstView: View {
     @EnvironmentObject var timerViewModel: TimerViewModel
     @EnvironmentObject var streakViewModel: EnhancedStreakViewModel
     @Environment(\.dismiss) var dismiss
+    @EnvironmentObject var subscriptionStore: SubscriptionStore
     @Environment(\.colorScheme) var colorScheme
     
     @StateObject private var burstTracker = BurstCompletionTracker.shared
@@ -23,25 +24,30 @@ struct DailyDeclarationBurstView: View {
     @State private var declarationOpacity = 0.0
     @State private var isTransitioning = false
     @State private var showSpiritualGraph = false
+    @State private var morningDeclarations: [(text: String, verse: String, category: String)] = []
+    @State private var isLoadingDeclarations = true
+    @State private var showIntroScreen = true
     
-    // Morning burst declarations - curated for daily victory
-    let morningDeclarations = [
-        ("I am loved by God unconditionally", "Romans 8:38-39"),
-        ("My God supplies all my needs according to His riches", "Philippians 4:19"),
-        ("I have the mind of Christ", "1 Corinthians 2:16"),
-        ("Greater is He that is in me than he that is in the world", "1 John 4:4"),
-        ("I can do all things through Christ who strengthens me", "Philippians 4:13"),
-        ("The joy of the Lord is my strength", "Nehemiah 8:10"),
-        ("I am fearfully and wonderfully made", "Psalm 139:14")
-    ]
+    // Configuration for burst session
+    private let burstDeclarationCount = 7
+    private let favoriteWeight = 2  // Favorites appear 3x more likely
+    private let customWeight = 3    // Custom declarations 2x more likely
     
     var body: some View {
         GeometryReader { geometry in
             ZStack {
                 // Background
-                backgroundGradient
+                Image(subscriptionStore.onboardingBGImage)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: geometry.size.width, height: geometry.size.height)
+
+                    .opacity(0.8)
+                    .ignoresSafeArea()
                 
-                if !showCompletionView {
+                if showIntroScreen {
+                    introScreenView(geometry: geometry)
+                } else if !showCompletionView {
                     burstContentView(geometry: geometry)
                 } else {
                     completionView(geometry: geometry)
@@ -51,7 +57,187 @@ struct DailyDeclarationBurstView: View {
         }
         .preferredColorScheme(.dark)
         .onAppear {
-            startBurst()
+            loadDynamicDeclarations()
+        }
+    }
+    
+    // MARK: - Dynamic Declaration Selection
+    
+    private func loadDynamicDeclarations() {
+        var selectedDeclarations: [(text: String, verse: String, category: String)] = []
+        
+        // 1. Get favorites from viewModel
+        let favorites = viewModel.favorites
+        
+        // 2. Get custom declarations
+        let customDeclarations = viewModel.createOwn.filter({ $0.contentType == .affirmation })
+        
+        // 3. Get current category declarations
+        let categoryDeclarations = viewModel.declarations
+        
+        // 4. Build weighted pool
+        var pool: [Declaration] = []
+        
+        // Add favorites with higher weight
+        for _ in 0..<favoriteWeight {
+            pool.append(contentsOf: favorites)
+        }
+        
+        // Add custom declarations with weight
+        for _ in 0..<customWeight {
+            pool.append(contentsOf: customDeclarations)
+        }
+        
+        // Add current category declarations
+        pool.append(contentsOf: categoryDeclarations)
+        
+//        // If pool is still small, get more from all categories
+//        if pool.count < burstDeclarationCount * 2 {
+//            // Use allAvailableDeclarations if accessible, otherwise use what we have
+//            let additionalDeclarations = categoryDeclarations
+//                .shuffled()
+//                .prefix(20)
+//            pool.append(contentsOf: additionalDeclarations)
+//        }
+        
+        // 5. Shuffle and select unique declarations
+        pool.shuffle()
+        var usedIds = Set<String>()
+        
+        for declaration in pool {
+            if usedIds.contains(declaration.id) { continue }
+            if selectedDeclarations.count >= burstDeclarationCount { break }
+            
+            let text = declaration.text
+            let verse = declaration.book ?? ""
+            let categoryName = declaration.category.name
+            selectedDeclarations.append((text, verse, categoryName))
+            usedIds.insert(declaration.id)
+        }
+        
+        // 6. Fallback if needed
+        if selectedDeclarations.count < burstDeclarationCount {
+            let fallbackDeclarations = [
+                ("I am loved by God unconditionally", "Romans 8:38-39", "Love & Belonging"),
+                ("My God supplies all my needs according to His riches", "Philippians 4:19", "Wealth"),
+                ("I have the mind of Christ", "1 Corinthians 2:16", "Wisdom"),
+                ("Greater is He that is in me than he that is in the world", "1 John 4:4", "Warfare & Victory"),
+                ("I can do all things through Christ who strengthens me", "Philippians 4:13", "Faith"),
+                ("The joy of the Lord is my strength", "Nehemiah 8:10", "Joy"),
+                ("I am fearfully and wonderfully made", "Psalm 139:14", "Identity")
+            ]
+            
+            let needed = burstDeclarationCount - selectedDeclarations.count
+            let toAdd = Array(fallbackDeclarations.prefix(needed))
+            selectedDeclarations.append(contentsOf: toAdd)
+        }
+        
+        morningDeclarations = selectedDeclarations
+        isLoadingDeclarations = false
+        
+        // Log selection for debugging
+        print("📱 Daily Burst: Selected \(morningDeclarations.count) declarations")
+        print("  - Favorites: \(favorites.count)")
+        print("  - Custom: \(customDeclarations.count)")
+        print("  - Category: \(viewModel.selectedCategory)")
+        print("  - Final pool size: \(pool.count)")
+    }
+    
+    // MARK: - Intro Screen View
+    
+    private func introScreenView(geometry: GeometryProxy) -> some View {
+        VStack(spacing: 0) {
+            // Close button
+            HStack {
+                Button(action: { dismiss() }) {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 28))
+                        .foregroundColor(.white.opacity(0.6))
+                }
+                .padding(.leading, 20)
+                .padding(.top, 60)
+                Spacer()
+            }
+            
+            Spacer()
+            
+            // Content
+            VStack(spacing: 40) {
+                // Icon with animated glow
+                ZStack {
+                    Circle()
+                        .fill(
+                            LinearGradient(
+                                colors: [Color(red: 1.0, green: 0.58, blue: 0.0).opacity(0.3), Color(red: 1.0, green: 0.34, blue: 0.13).opacity(0.3)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 120, height: 120)
+                        .blur(radius: 20)
+                    
+                    Circle()
+                        .fill(
+                            LinearGradient(
+                                colors: [Color(red: 1.0, green: 0.58, blue: 0.0).opacity(0.2), Color(red: 1.0, green: 0.34, blue: 0.13).opacity(0.2)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 100, height: 100)
+                    
+                    Image(systemName: "bolt.fill")
+                        .font(.system(size: 50, weight: .bold))
+                        .foregroundColor(.white)
+                }
+                
+                VStack(spacing: 16) {
+                    Text("Daily Victory Burst")
+                        .font(.system(size: 32, weight: .bold))
+                        .foregroundColor(.white)
+                    
+                    Text("Speak life over your day with 7 powerful declarations")
+                        .font(.system(size: 18))
+                        .foregroundColor(.white.opacity(0.9))
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 40)
+                }
+            }
+            
+            Spacer()
+            
+            // CTA Button
+            Button(action: {
+                // Haptic feedback
+                let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
+                impactFeedback.prepare()
+                impactFeedback.impactOccurred()
+                
+                withAnimation(.easeInOut(duration: 0.5)) {
+                    showIntroScreen = false
+                }
+                startBurst()
+            }) {
+                HStack(spacing: 12) {
+                    Image(systemName: "bolt.fill")
+                        .font(.system(size: 20, weight: .bold))
+                    Text("Start Daily Burst")
+                        .font(.system(size: 18, weight: .semibold))
+                }
+                .foregroundColor(.white)
+                .frame(width: geometry.size.width * 0.85, height: 56)
+                .background(
+                    RoundedRectangle(cornerRadius: 28)
+                        .fill(
+                            LinearGradient(
+                                colors: [Color(red: 1.0, green: 0.58, blue: 0.0), Color(red: 1.0, green: 0.34, blue: 0.13)],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
+                )
+            }
+            .padding(.bottom, 60)
         }
     }
     
@@ -59,6 +245,19 @@ struct DailyDeclarationBurstView: View {
     
     private func burstContentView(geometry: GeometryProxy) -> some View {
         VStack(spacing: 0) {
+            if isLoadingDeclarations {
+                // Loading state
+                VStack(spacing: 20) {
+                    ProgressView()
+                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                        .scaleEffect(1.5)
+                    
+                    Text("Preparing your personalized declarations...")
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundColor(.white.opacity(0.8))
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else {
             // Header
             HStack {
                 Button(action: { dismiss() }) {
@@ -69,7 +268,7 @@ struct DailyDeclarationBurstView: View {
                 
                 Spacer()
                 
-                Text("Morning Victory")
+                Text("Daily Victory")
                     .font(.system(size: 20, weight: .semibold))
                     .foregroundColor(.white)
                 
@@ -85,7 +284,7 @@ struct DailyDeclarationBurstView: View {
                         .trim(from: 0, to: CGFloat(currentDeclarationIndex + 1) / CGFloat(morningDeclarations.count))
                         .stroke(
                             LinearGradient(
-                                colors: [Color(red: 0.9, green: 0.7, blue: 0.3), Color.yellow],
+                                colors: [Color(red: 1.0, green: 0.58, blue: 0.0), Color(red: 1.0, green: 0.34, blue: 0.13)],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             ),
@@ -106,10 +305,23 @@ struct DailyDeclarationBurstView: View {
             Spacer()
             
             // Declaration Content
-            VStack(spacing: 30) {
-                Image(systemName: "sunrise.fill")
-                    .font(.system(size: 60))
-                    .foregroundColor(Color(red: 0.9, green: 0.7, blue: 0.3))
+            VStack(spacing: 24) {
+                // Category label with orange gradient background
+                Text(morningDeclarations[currentDeclarationIndex].2.uppercased())
+                    .font(.system(size: 13, weight: .bold))
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
+                    .background(
+                        RoundedRectangle(cornerRadius: 20)
+                            .fill(
+                                LinearGradient(
+                                    colors: [Color(red: 1.0, green: 0.58, blue: 0.0), Color(red: 1.0, green: 0.34, blue: 0.13)],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
+                    )
                     .opacity(declarationOpacity)
                     .scaleEffect(declarationOpacity)
                 
@@ -139,7 +351,7 @@ struct DailyDeclarationBurstView: View {
                 HStack(spacing: 8) {
                     ForEach(0..<morningDeclarations.count, id: \.self) { index in
                         Circle()
-                            .fill(index <= currentDeclarationIndex ? Color(red: 0.9, green: 0.7, blue: 0.3) : Color.white.opacity(0.3))
+                            .fill(index <= currentDeclarationIndex ? Color(red: 1.0, green: 0.58, blue: 0.0) : Color.white.opacity(0.3))
                             .frame(width: 8, height: 8)
                     }
                 }
@@ -147,13 +359,13 @@ struct DailyDeclarationBurstView: View {
                 Button(action: nextDeclaration) {
                     Text(currentDeclarationIndex < morningDeclarations.count - 1 ? "Next Declaration" : "Complete Burst")
                         .font(.system(size: 17, weight: .semibold))
-                        .foregroundColor(.black)
+                        .foregroundColor(.white)
                         .frame(width: geometry.size.width * 0.85, height: 50)
                         .background(
                             RoundedRectangle(cornerRadius: 25)
                                 .fill(
                                     LinearGradient(
-                                        colors: [Color(red: 0.9, green: 0.7, blue: 0.3), Color.yellow],
+                                        colors: [Color(red: 1.0, green: 0.58, blue: 0.0), Color(red: 1.0, green: 0.34, blue: 0.13)],
                                         startPoint: .leading,
                                         endPoint: .trailing
                                     )
@@ -163,6 +375,7 @@ struct DailyDeclarationBurstView: View {
                 .disabled(isTransitioning)
             }
             .padding(.bottom, 50)
+            } // Close else for loading check
         }
     }
     
@@ -275,15 +488,15 @@ struct DailyDeclarationBurstView: View {
                 }
                 
                 Button(action: completeBurst) {
-                    Text("Continue Your Day")
+                    Text("Complete")
                         .font(.system(size: 17, weight: .semibold))
-                        .foregroundColor(.black)
+                        .foregroundColor(.white)
                         .frame(width: geometry.size.width * 0.85, height: 50)
                         .background(
                             RoundedRectangle(cornerRadius: 25)
                                 .fill(
                                     LinearGradient(
-                                        colors: [Color(red: 0.9, green: 0.7, blue: 0.3), Color.yellow],
+                                        colors: [Color(red: 1.0, green: 0.58, blue: 0.0), Color(red: 1.0, green: 0.34, blue: 0.13)],
                                         startPoint: .leading,
                                         endPoint: .trailing
                                     )
@@ -294,24 +507,10 @@ struct DailyDeclarationBurstView: View {
             .padding(.bottom, 50)
         }
         .sheet(isPresented: $showSpiritualGraph) {
-            SpiritualStrengthGraph()
-                .environmentObject(burstTracker)
+            SpiritualStrengthGraph(tracker: burstTracker)
         }
     }
     
-    // MARK: - Background
-    
-    private var backgroundGradient: some View {
-        LinearGradient(
-            colors: [
-                Color(red: 0.1, green: 0.1, blue: 0.2),
-                Color(red: 0.2, green: 0.1, blue: 0.3),
-                Color(red: 0.3, green: 0.2, blue: 0.4)
-            ],
-            startPoint: .topLeading,
-            endPoint: .bottomTrailing
-        )
-    }
     
     // MARK: - Actions
     
@@ -324,6 +523,11 @@ struct DailyDeclarationBurstView: View {
     
     private func nextDeclaration() {
         guard !isTransitioning else { return }
+        
+        // Haptic feedback
+        let impactFeedback = UIImpactFeedbackGenerator(style: .light)
+        impactFeedback.prepare()
+        impactFeedback.impactOccurred()
         
         if currentDeclarationIndex < morningDeclarations.count - 1 {
             isTransitioning = true
@@ -340,7 +544,11 @@ struct DailyDeclarationBurstView: View {
                 isTransitioning = false
             }
         } else {
-            // Complete the burst
+            // Complete the burst with success haptic
+            let successFeedback = UINotificationFeedbackGenerator()
+            successFeedback.prepare()
+            successFeedback.notificationOccurred(.success)
+            
             let timeSpent = Date().timeIntervalSince(startTime)
             burstTracker.recordBurstCompletion(
                 declarationCount: morningDeclarations.count,
@@ -360,23 +568,28 @@ struct DailyDeclarationBurstView: View {
     }
     
     private func completeBurst() {
+        // Haptic feedback on complete
+        let impactFeedback = UIImpactFeedbackGenerator(style: .light)
+        impactFeedback.prepare()
+        impactFeedback.impactOccurred()
+        
         dismiss()
         
         // Update streak if needed
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            streakViewModel.checkAndUpdateStreak()
+            // Streak will update automatically through BurstCompletionTracker
         }
     }
 }
 
 // MARK: - Preview
 
-struct DailyDeclarationBurstView_Previews: PreviewProvider {
-    static var previews: some View {
-        DailyDeclarationBurstView()
-            .environmentObject(DeclarationViewModel())
-            .environmentObject(ThemeViewModel())
-            .environmentObject(TimerViewModel())
-            .environmentObject(EnhancedStreakViewModel())
-    }
-}
+//struct DailyDeclarationBurstView_Previews: PreviewProvider {
+//    static var previews: some View {
+//        DailyDeclarationBurstView()
+//            .environmentObject(DeclarationViewModel())
+//            .environmentObject(ThemeViewModel())
+//            .environmentObject(TimerViewModel())
+//            .environmentObject(EnhancedStreakViewModel())
+//    }
+//}

@@ -18,25 +18,24 @@ struct SpiritualGrowthView: View {
     
     var body: some View {
         ZStack {
-            // Background gradient - darker for better contrast
-            Gradients().speakLifeCYOCell
-//            LinearGradient(
-//                gradient: Gradient(colors: [
-//                    Color.black,
-//                    Color.purple.opacity(0.15),
-//                    Color.black
-//                ]),
-//                startPoint: .topLeading,
-//                endPoint: .bottomTrailing
-//            )
-//            .ignoresSafeArea()
+            // Background gradient - SpeakLife signature dark gradient
+            LinearGradient(
+                colors: [
+                    Color(red: 0.1, green: 0.1, blue: 0.2),
+                    Color(red: 0.2, green: 0.1, blue: 0.3),
+                    Color(red: 0.3, green: 0.2, blue: 0.4)
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .ignoresSafeArea()
             
             // Subtle overlay for depth
             LinearGradient(
                 gradient: Gradient(colors: [
-                    Color.black.opacity(0.3),
+                    Color.black.opacity(0.2),
                     Color.clear,
-                    Color.black.opacity(0.4)
+                    Color.black.opacity(0.3)
                 ]),
                 startPoint: .top,
                 endPoint: .bottom

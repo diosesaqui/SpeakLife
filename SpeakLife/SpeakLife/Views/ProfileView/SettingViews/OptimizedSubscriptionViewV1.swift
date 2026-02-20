@@ -1066,7 +1066,7 @@ struct OptimizedSubscriptionViewV1: View {
                     return
                 }
                 
-                if let transaction = try await subscriptionStore.purchaseWithID([currentSelection.id]) {
+                if let transaction = try await subscriptionStore.purchaseWithID([currentSelection.id], paywallName: "OptimizedSubscriptionV1") {
                     // Track paywall conversion
                     let priceValue = NSDecimalNumber(decimal: currentSelection.price).doubleValue
                     let productType = currentSelection.id.contains("Lifetime") ? "lifetime" : "subscription"
@@ -1077,7 +1077,8 @@ struct OptimizedSubscriptionViewV1: View {
                         metadata: [
                             "variant": "v1",
                             "type": productType,
-                            "duration": currentSelection.subscription?.subscriptionPeriod.debugDescription ?? (productType == "lifetime" ? "lifetime" : "unknown")
+                            "duration": currentSelection.subscription?.subscriptionPeriod.debugDescription ?? (productType == "lifetime" ? "lifetime" : "unknown"),
+                            "paywall_name": "OptimizedSubscriptionV1"
                         ]
                     )
                     

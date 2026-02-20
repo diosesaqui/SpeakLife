@@ -49,6 +49,7 @@ struct OptimizedSubscriptionViewV2: View {
                     ScrollView(showsIndicators: false) {
                         VStack(spacing: 0) {
                             // App Icon & Title
+                            
                             headerSection
                               //  .padding(.top, )
                             
@@ -146,7 +147,8 @@ struct OptimizedSubscriptionViewV2: View {
     
     private var headerSection: some View {
         VStack(spacing: 16) {
-            // App Icon
+            // App Icon\
+            Spacer().frame(height: 44)
             Image("appIconDisplay")
                 .resizable()
                 .frame(width: 80, height: 80)
@@ -166,12 +168,12 @@ struct OptimizedSubscriptionViewV2: View {
     
     private var heroSection: some View {
         VStack(spacing: 12) {
-            Text("Win the Battle for Your Mind")
+            Text("Respond First. Win Faster.")
                 .font(.system(size: 24, weight: .bold))
                 .foregroundColor(.white)
                 .multilineTextAlignment(.center)
             
-            Text("Transform negative thoughts with God's promises")
+            Text("If you change your response, you change your outcome.")
                 .font(.system(size: 16, weight: .regular))
                 .foregroundColor(.white.opacity(0.8))
                 .multilineTextAlignment(.center)
@@ -198,25 +200,25 @@ struct OptimizedSubscriptionViewV2: View {
             ValuePropRow(
                 icon: "brain.head.profile",
                 title: "Renew Your Mind Daily",
-                description: "Science-backed method to rewire negative thought patterns"
+                description: "Build the reflex to respond like Jesus under pressure."
             )
             
             ValuePropRow(
                 icon: "shield.lefthalf.filled",
-                title: "Biblical Truth Arsenal",
-                description: "1,000+ declarations to combat anxiety, fear, and doubt"
+                title: "Scripture-Based Declarations",
+                description: "Know exactly what to declare in crisis."
             )
             
             ValuePropRow(
                 icon: "waveform",
-                title: "Audio Declarations",
-                description: "Listen anywhere to reinforce God's promises"
+                title: "Daily Victory Conditioning",
+                description: "Reinforce truth daily until it becomes instinct."
             )
             
             ValuePropRow(
                 icon: "chart.line.uptrend.xyaxis",
-                title: "Track Your Victory",
-                description: "Watch your faith grow stronger every day"
+                title: "Grow your Spiritual Muscles",
+                description: "Watch anxiety shrink and boldness grow."
             )
         }
     }
@@ -383,11 +385,12 @@ struct OptimizedSubscriptionViewV2: View {
         
         Task {
             do {
-                let transaction = try await subscriptionStore.purchase(product)
+                let transaction = try await subscriptionStore.purchase(product, paywallName: "OptimizedSubscriptionV2_Onboarding")
                 // Only advance if purchase was successful (transaction exists)
                 if transaction != nil {
                     Analytics.logEvent("subscription_success", parameters: [
-                        "product_type": selectedOption
+                        "product_type": selectedOption,
+                        "paywall_name": "OptimizedSubscriptionV2_Onboarding"
                     ])
                     callback?()
                     dismiss()

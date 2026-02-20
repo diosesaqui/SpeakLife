@@ -856,7 +856,7 @@
             "subtitle": "Episode 4",
             "duration": "3m",
             "imageUrl": "devotional",
-            "isPremium": false,
+            "isPremium": true,
             "tag": "speaklife",
             "season": 1,
             "episode": 4
@@ -895,12 +895,34 @@
             "episode": 1
         },
         {
+            "id": "speaklife-testimony2.mp3",
+            "title": "Founder's Testimony Pt2",
+            "subtitle": "My Healing Story",
+            "duration": "3m",
+            "imageUrl": "devotional",
+            "isPremium": false,
+            "tag": "speaklife",
+            "season": 1,
+            "episode": 0
+        },
+        {
+            "id": "speaklife-testimony.mp3",
+            "title": "Founder's Testimony",
+            "subtitle": "Why I Created SpeakLife",
+            "duration": "3m",
+            "imageUrl": "devotional",
+            "isPremium": false,
+            "tag": "speaklife",
+            "season": 1,
+            "episode": 0
+        },
+        {
             "id": "divineHealth-ep1.mp3",
             "title": "The Victory Is Already Won",
             "subtitle": "Episode 1",
             "duration": "4m",
             "imageUrl": "divineHealth",
-            "isPremium": false,
+            "isPremium": true,
             "tag": "divineHealth"
         },
         {

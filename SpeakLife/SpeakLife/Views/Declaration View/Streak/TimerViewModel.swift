@@ -46,6 +46,14 @@ final class TimerViewModel: ObservableObject {
                     self.scheduleDailyStreakReminder()
                 }
             }
+        
+        // Listen for midnight to reset timer
+        setupMidnightObserver()
+    }
+    
+    deinit {
+        NotificationCenter.default.removeObserver(self)
+        timer?.invalidate()
     }
     
     func runCountdownTimer() {
@@ -109,6 +117,59 @@ final class TimerViewModel: ObservableObject {
         // Invalidate cache since completion status changed
         cachedCompletionResult = nil
         cachedCompletionDate = nil
+    }
+    
+    private func setupMidnightObserver() {
+        // Listen for significant time changes (includes midnight)
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(significantTimeChange),
+            name: UIApplication.significantTimeChangeNotification,
+            object: nil
+        )
+        
+        // Also listen for app becoming active to check for day changes
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(appBecameActive),
+            name: UIApplication.didBecomeActiveNotification,
+            object: nil
+        )
+    }
+    
+    @objc private func significantTimeChange() {
+        // Check if we've crossed midnight
+        handlePotentialDayChange()
+    }
+    
+    @objc private func appBecameActive() {
+        // Check if day changed while app was in background
+        handlePotentialDayChange()
+    }
+    
+    private func handlePotentialDayChange() {
+        // Reset cached completion check
+        cachedCompletionResult = nil
+        cachedCompletionDate = nil
+        
+        // Check if we're on a new day and need to reset
+        if let lastStarted = lastStartedStreak,
+           !Calendar.current.isDateInToday(lastStarted),
+           !checkIfCompletedToday() {
+            // It's a new day and timer hasn't been completed - reset
+            stopTimer()
+            UserDefaults.standard.removeObject(forKey: "timeRemaining")
+            timeRemaining = TimerViewModel.totalDuration
+            lastStartedStreak = Date()
+            isComplete = false
+            hasLoadedInitialTime = false
+            
+            // Restart timer for new day
+            loadRemainingTime()
+        }
+        
+        // Update streak if needed
+        checkAndUpdateCompletionDate()
     }
     
     lazy var calendar: Calendar = {
@@ -200,13 +261,27 @@ final class TimerViewModel: ObservableObject {
         if checkIfCompletedToday() {
             hasLoadedInitialTime = true
             return
-        } else if let savedTimeRemaining = UserDefaults.standard.value(forKey: "timeRemaining") as? Int, savedTimeRemaining > 0 {
-            // Restore the saved remaining time - don't require lastStartedStreak to be today
+        } 
+        
+        // Check if we have a saved timer from today
+        let isTimerFromToday: Bool
+        if let lastStarted = lastStartedStreak {
+            isTimerFromToday = Calendar.current.isDateInToday(lastStarted)
+        } else {
+            isTimerFromToday = false
+        }
+        
+        if let savedTimeRemaining = UserDefaults.standard.value(forKey: "timeRemaining") as? Int, 
+           savedTimeRemaining > 0,
+           isTimerFromToday {
+            // Restore the saved remaining time only if it's from today
             timeRemaining = savedTimeRemaining
             isComplete = false
             hasLoadedInitialTime = true
             startTimer()
         } else {
+            // New day or no saved time - reset to full duration
+            UserDefaults.standard.removeObject(forKey: "timeRemaining")
             timeRemaining = TimerViewModel.totalDuration
             lastStartedStreak = Date()
             isComplete = false
@@ -251,23 +326,25 @@ final class TimerViewModel: ObservableObject {
     }
     
     lazy var speakLifeArray: [String] = [
-        // Existing 16 from previous message...
-        "What you speak today shapes your tomorrow. 🗣️💭 Speak life now.",
-        "Seeds of life planted today become harvests of breakthrough. 🌱✨ Start now.",
-        "Your words are weapons. The more you speak truth, the more you win. ⚔️🔥",
-        "Every time you show up, heaven moves. 📖🕊️ Let’s go again.",
-        "God’s promises work when you work them. 🔁📜 Speak life today.",
-        "The more time in His Word, the more power in your life. 📖⚡ Speak life now.",
-        "You grow when you speak. You win when you declare. 🔥🌿 Tap in.",
-        "Don’t wait for change—declare it into existence. 🎯🗣️ Speak life.",
-        "This is how mountains move. Start speaking. 🏔️🔊",
-        "You’re one declaration away from a shift. 🔁 Speak life boldly.",
-        "Every spoken promise waters your future. 💦🌻 Keep going.",
-        "Heaven responds to your voice. 🎙️🕊️ Declare His Word today.",
-        "Power, peace, and purpose await your voice. 🗣️☁️ Step in.",
-        "Breakthrough belongs to the bold. 📣💥 Speak like it’s already done.",
-        "Your future self will thank you for today’s declarations. 🧭🛡️",
-        "If you want more out of life, put more Word into your day. 🔥📖 Start now.",
+        // Daily Burst specific messages
+        "⚡ Your Daily Burst is ready! 7 declarations to ignite your morning.",
+        "🌅 Morning victory awaits! Your Daily Burst is prepared.",
+        "🔥 Start strong! Your personalized Daily Burst is waiting.",
+        "⚡ Power up your day! Tap for your 7-declaration burst.",
+        "💪 Your spiritual armor is ready. Begin your Daily Burst now.",
+        "🎯 Target victory! Your morning burst declarations are loaded.",
+        "🌟 Rise and declare! Your Daily Burst will transform today.",
+        "⚔️ Arm yourself! 7 powerful declarations ready to deploy.",
+        "🚀 Launch your day right! Daily Burst ready for takeoff.",
+        "🔥 Fuel your faith! Your burst of declarations awaits.",
+        
+        // Original messages
+        "What you speak today shapes your tomorrow. 🗣️💭 Daily Burst ready!",
+        "Seeds of life planted today become harvests. 🌱✨ Start your burst.",
+        "Your words are weapons. Daily Burst loaded. ⚔️🔥",
+        "Every time you show up, heaven moves. 📖🕊️ Burst ready.",
+        "God's promises work when you work them. 🔁📜 Daily Burst awaits.",
+        "More Word, more power. 📖⚡ Your Daily Burst is prepared.",
         
         // 🔥 10 NEW streak-based gamified nudges:
         "🔥 Day \(currentStreak + 1) is here. Let’s keep the fire going—don’t break the streak!",
@@ -312,8 +389,8 @@ final class TimerViewModel: ObservableObject {
 //
     func scheduleDailyStreakReminder() {
         let content = UNMutableNotificationContent()
-        content.title = "Keep your streak alive 🔥"
-        content.body = speakLifeArray.shuffled().first ?? "It’s a new day to speak life. Let’s go!"
+        content.title = "Daily Burst Ready! ⚡"
+        content.body = speakLifeArray.shuffled().first ?? "Your 7 morning declarations are ready. Tap to start your Daily Burst!"
         content.sound = UNNotificationSound.default
 
         var dateComponents = DateComponents()

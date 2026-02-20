@@ -9,16 +9,17 @@ import SwiftUI
 import FirebaseAnalytics
 import UserNotifications
 
-// MARK: - Streamlined Tab Enum (Reduced from 15 to 8 screens)
+// MARK: - Streamlined Tab Enum (Reduced from 15 to 9 screens)
 enum StreamlinedSpiritualTab: Int {
     case testimonials = 0
     case battleIntro = 1  // Combines intro + enemy entry
     case thoughtSelection = 2  // Interactive, personalized
     case biblicalSolution = 3  // Victory + solution combined
     case transformation = 4  // Benefits + commitment
-    case subscription = 5
-    case notification = 6
-    case complete = 7
+    case dailyBurst = 5  // Daily Burst feature intro
+    case subscription = 6
+    case notification = 7
+    case complete = 8
 }
 
 // MARK: - Main View
@@ -74,20 +75,27 @@ struct StreamlinedSpiritualWarfareFlow: View {
                 )
                 .tag(StreamlinedSpiritualTab.transformation)
                 
-                // Screen 6: Subscription
+                // Screen 6: Daily Burst Introduction
+                OnboardingDailyBurstScreen(
+                    size: geometry.size,
+                    onContinue: advance
+                )
+                .tag(StreamlinedSpiritualTab.dailyBurst)
+                
+                // Screen 7: Subscription
                 OptimizedSubscriptionViewV2(callback: {
                     // This callback is only called on successful purchase
                     advance()
                 })
                 .tag(StreamlinedSpiritualTab.subscription)
                 
-                // Screen 7: Notifications
+                // Screen 8: Notifications
                 NotificationOnboarding(size: geometry.size) {
                     askNotificationPermission()
                 }
                 .tag(StreamlinedSpiritualTab.notification)
                 
-                // Screen 8: Complete
+                // Screen 9: Complete
                 CompletionScreen(size: geometry.size) {
                     completeOnboarding()
                 }
@@ -118,6 +126,8 @@ struct StreamlinedSpiritualWarfareFlow: View {
             case .biblicalSolution:
                 selection = .transformation
             case .transformation:
+                selection = .dailyBurst
+            case .dailyBurst:
                 selection = .subscription
             case .subscription:
                 selection = .notification
@@ -634,10 +644,18 @@ struct TransformationScreen: View {
 struct CompletionScreen: View {
     let size: CGSize
     let onComplete: () -> Void
+    @EnvironmentObject var subscriptionStore: SubscriptionStore
     
     var body: some View {
         ZStack {
-            Color.black.ignoresSafeArea()
+            Image(subscriptionStore.onboardingBGImage)
+                .resizable()
+                .scaledToFill()
+                .frame(width: size.width, height: size.height)
+   
+                .opacity(0.8)
+                .ignoresSafeArea()
+
             
             VStack(spacing: 30) {
                 Image(systemName: "checkmark.circle.fill")

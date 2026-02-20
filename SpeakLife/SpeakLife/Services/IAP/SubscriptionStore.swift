@@ -411,15 +411,27 @@ final class SubscriptionStore: ObservableObject {
     }
 
     
-    func purchaseWithID(_ ids: [String]) async throws -> Transaction? {
+    func purchaseWithID(_ ids: [String], paywallName: String = "unknown") async throws -> Transaction? {
         guard let id = ids.first else { return nil }
         let productFromID = await products(for: [id])
         guard let product = productFromID?.first else { return nil }
-        let transaction = try await purchase(product)
+        let transaction = try await purchase(product, paywallName: paywallName)
         return transaction
     }
 
-    func purchase(_ product: Product) async throws -> Transaction? {
+    func purchase(_ product: Product, paywallName: String = "unknown") async throws -> Transaction? {
+        // Track trial start or purchase initiation
+        let priceValue = NSDecimalNumber(decimal: product.price).doubleValue
+        let isTrialProduct = product.subscription?.introductoryOffer != nil
+        
+        Analytics.logEvent(isTrialProduct ? "trial_started" : "purchase_initiated", parameters: [
+            "product_id": product.id,
+            "paywall_name": paywallName,
+            "value": priceValue,
+            "currency": product.priceFormatStyle.currencyCode ?? "USD",
+            "has_trial": isTrialProduct
+        ])
+        
         let result = try await product.purchase()
 
         switch result {
@@ -428,7 +440,6 @@ final class SubscriptionStore: ObservableObject {
             await updateCustomerProductStatus()
             
             // Analytics tracking with proper revenue
-            let priceValue = NSDecimalNumber(decimal: product.price).doubleValue
             AppEvents.shared.logPurchase(amount: priceValue, currency: "USD")
             
             // Track with revenue for all analytics platforms
@@ -436,7 +447,8 @@ final class SubscriptionStore: ObservableObject {
                 "product_id": product.id,
                 "value": priceValue,
                 "currency": "USD",
-                "transaction_id": transaction.id
+                "transaction_id": transaction.id,
+                "paywall_name": paywallName
             ])
             
             // Track TikTok purchase with revenue
@@ -446,12 +458,17 @@ final class SubscriptionStore: ObservableObject {
             Analytics.logEvent("subscription_started", parameters: [
                 "product_id": product.id,
                 "value": priceValue,
-                "currency": "USD"
+                "currency": "USD",
+                "paywall_name": paywallName
             ])
 
             await transaction.finish()
             return transaction
         case .userCancelled, .pending:
+            Analytics.logEvent("purchase_cancelled", parameters: [
+                "product_id": product.id,
+                "paywall_name": paywallName
+            ])
             return nil
         default:
             return nil

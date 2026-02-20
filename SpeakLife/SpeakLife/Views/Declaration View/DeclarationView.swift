@@ -39,6 +39,7 @@ struct DeclarationView: View {
     @EnvironmentObject var timerViewModel: TimerViewModel
     @State var presentDevotionalSubscriptionView = false
     @State var isPresentingBottomSheet = false
+    @State private var showDailyBurst = false
     
     // Consolidated sheet management
     @State private var activeSheet: ActiveSheet?
@@ -90,6 +91,7 @@ struct DeclarationView: View {
     private func topButtonsRow(_ geometry: GeometryProxy) -> some View {
         HStack {
             devotionalButton
+            dailyBurstButton
             speakAloudBannerSection(geometry)
             if !showSpeakAloudBanner {
                 Spacer()
@@ -119,6 +121,37 @@ struct DeclarationView: View {
                             .overlay(
                                 Circle()
                                     .stroke(Constants.DAMidBlue.opacity(0.6), lineWidth: 1)
+                            )
+                    )
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private var dailyBurstButton: some View {
+        if !showSpeakAloudBanner {
+            Button(action: {
+                showDailyBurst = true
+                Analytics.logEvent("daily_burst_opened", parameters: [
+                    "source": "home_screen"
+                ])
+            }) {
+                Image(systemName: "bolt.fill")
+                    .font(.system(size: 18, weight: .bold))
+                    .foregroundColor(.white)
+                    .frame(width: 44, height: 44)
+                    .background(
+                        Circle()
+                            .fill(
+                                LinearGradient(
+                                    colors: [Color(red: 1.0, green: 0.58, blue: 0.0), Color(red: 1.0, green: 0.34, blue: 0.13)],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .overlay(
+                                Circle()
+                                    .stroke(Color.white.opacity(0.2), lineWidth: 1)
                             )
                     )
             }
@@ -198,6 +231,13 @@ struct DeclarationView: View {
         .alert("Know anyone that can benefit from SpeakLife?", isPresented: $share, actions: shareAlert)
         .sheet(isPresented: $isShowingMailView) {
             MailView(isShowing: $isShowingMailView, result: self.$result, origin: .review, isSubscribed: subscriptionStore.isPremium)
+        }
+        .fullScreenCover(isPresented: $showDailyBurst) {
+            DailyDeclarationBurstView()
+                .environmentObject(viewModel)
+                .environmentObject(themeViewModel)
+                .environmentObject(timerViewModel)
+                .environmentObject(streakViewModel)
         }
         .onAppear(perform: handleOnAppear)
         .onDisappear(perform: handleOnDisappear)

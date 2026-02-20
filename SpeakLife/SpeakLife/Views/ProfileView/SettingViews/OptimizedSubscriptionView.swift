@@ -282,7 +282,7 @@ struct OptimizedSubscriptionView: View {
                                 // Header with background image
                                 
                                 headerSection(geometry: geometry)
-                                Spacer().frame(height: geometry.size.height * 0.04)
+                                Spacer().frame(height: geometry.size.height * 0.07)
                                 // Benefits
                                 benefitsSection(geometry: geometry)
                                 Spacer()
@@ -295,7 +295,7 @@ struct OptimizedSubscriptionView: View {
                         stickyBottomSection(geometry: geometry)
                             .frame(height: isIPad(geometry) ? 
                                    geometry.size.height * 0.25 : 
-                                   geometry.size.height * 0.35)
+                                   geometry.size.height * 0.30)
                     }
                 
                     
@@ -401,7 +401,7 @@ struct OptimizedSubscriptionView: View {
             
             // Content
             VStack(spacing: iPad ? 20 : geometry.size.height * 0.02) {
-                Spacer().frame(height: iPad ? 60 : geometry.size.height * 0.1)
+                Spacer().frame(height: iPad ? 60 : geometry.size.height * 0.15)
                 
                 // Logo and title
                 VStack(spacing: iPad ? 12 : geometry.size.height * 0.015) {
@@ -608,7 +608,7 @@ struct OptimizedSubscriptionView: View {
                     return
                 }
                 
-                if let transaction = try await subscriptionStore.purchaseWithID([selectedProduct.id]) {
+                if let transaction = try await subscriptionStore.purchaseWithID([selectedProduct.id], paywallName: "OptimizedSubscription_Settings") {
                     // Track paywall conversion
                     let priceValue = NSDecimalNumber(decimal: selectedProduct.price).doubleValue
                     AnalyticsService.shared.trackPaywallConversion(
@@ -617,7 +617,8 @@ struct OptimizedSubscriptionView: View {
                         price: priceValue,
                         metadata: [
                             "variant": "default",
-                            "duration": selectedProduct.subscription?.subscriptionPeriod.debugDescription ?? "unknown"
+                            "duration": selectedProduct.subscription?.subscriptionPeriod.debugDescription ?? "unknown",
+                            "paywall_name": "OptimizedSubscription_Settings"
                         ]
                     )
                     

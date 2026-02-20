@@ -1115,109 +1115,109 @@ struct TransformationPromiseScreen: View {
 }
 
 // MARK: - Completion Screen
-struct CompletionScreen: View {
-    let size: CGSize
-    let onContinue: () -> Void
-    @State private var showContent = false
-    @EnvironmentObject var subscriptionStore: SubscriptionStore
-    
-    var body: some View {
-        ZStack {
-            backgroundView
-                .frame(width: size.width, height: size.height)
-            
-            VStack(spacing: 0) {
-                Spacer()
-                
-                VStack(spacing: 30) {
-                    Image(systemName: "hands.and.sparkles.fill")
-                        .font(.system(size: 60))
-                        .foregroundColor(Color(red: 0.9, green: 0.7, blue: 0.3))
-                        .scaleEffect(showContent ? 1 : 0.5)
-                        .opacity(showContent ? 1 : 0)
-                    
-                    VStack(spacing: 16) {
-                        Text("Welcome to Your New Life")
-                            .font(.system(size: 28, weight: .bold))
-                            .foregroundColor(.white)
-                        
-                        Text("Where faith speaks first\nand heaven responds")
-                            .font(.system(size: 18))
-                            .foregroundColor(.white.opacity(0.85))
-                            .multilineTextAlignment(.center)
-                    }
-                    .opacity(showContent ? 1 : 0)
-                    
-                    VStack(spacing: 12) {
-                        HStack(spacing: 8) {
-                            Image(systemName: "checkmark.circle.fill")
-                                .foregroundColor(.green)
-                            Text("Daily morning burst activated")
-                                .font(.system(size: 14))
-                                .foregroundColor(.white.opacity(0.8))
-                        }
-                        
-                        HStack(spacing: 8) {
-                            Image(systemName: "checkmark.circle.fill")
-                                .foregroundColor(.green)
-                            Text("8 AM reminder scheduled")
-                                .font(.system(size: 14))
-                                .foregroundColor(.white.opacity(0.8))
-                        }
-                        
-                        HStack(spacing: 8) {
-                            Image(systemName: "checkmark.circle.fill")
-                                .foregroundColor(.green)
-                            Text("Ready to build spiritual strength")
-                                .font(.system(size: 14))
-                                .foregroundColor(.white.opacity(0.8))
-                        }
-                    }
-                    .opacity(showContent ? 1 : 0)
-                }
-                .padding(.horizontal, 30)
-                
-                Spacer()
-                
-                Button(action: onContinue) {
-                    Text("Begin Your Journey")
-                        .font(.system(size: 17, weight: .semibold))
-                        .foregroundColor(.black)
-                        .frame(width: size.width * 0.85, height: 50)
-                        .background(
-                            RoundedRectangle(cornerRadius: 25)
-                                .fill(
-                                    LinearGradient(
-                                        colors: [Color(red: 0.9, green: 0.7, blue: 0.3), Color.yellow],
-                                        startPoint: .leading,
-                                        endPoint: .trailing
-                                    )
-                                )
-                        )
-                }
-                .padding(.bottom, 40)
-                .opacity(showContent ? 1 : 0)
-            }
-        }
-        .frame(width: size.width)
-        .onAppear {
-            withAnimation(.spring(response: 0.8, dampingFraction: 0.8)) {
-                showContent = true
-            }
-        }
-    }
-    
-    private var backgroundView: some View {
-        ZStack {
-            Image(subscriptionStore.onboardingBGImage)
-                .resizable()
-                .scaledToFill()
-                .ignoresSafeArea()
-            Color.black.opacity(0.3)
-                .ignoresSafeArea()
-        }
-    }
-}
+//struct CompletionScreen: View {
+//    let size: CGSize
+//    let onContinue: () -> Void
+//    @State private var showContent = false
+//    @EnvironmentObject var subscriptionStore: SubscriptionStore
+//    
+//    var body: some View {
+//        ZStack {
+//            backgroundView
+//                .frame(width: size.width, height: size.height)
+//            
+//            VStack(spacing: 0) {
+//                Spacer()
+//                
+//                VStack(spacing: 30) {
+//                    Image(systemName: "hands.and.sparkles.fill")
+//                        .font(.system(size: 60))
+//                        .foregroundColor(Color(red: 0.9, green: 0.7, blue: 0.3))
+//                        .scaleEffect(showContent ? 1 : 0.5)
+//                        .opacity(showContent ? 1 : 0)
+//                    
+//                    VStack(spacing: 16) {
+//                        Text("Welcome to Your New Life")
+//                            .font(.system(size: 28, weight: .bold))
+//                            .foregroundColor(.white)
+//                        
+//                        Text("Where faith speaks first\nand heaven responds")
+//                            .font(.system(size: 18))
+//                            .foregroundColor(.white.opacity(0.85))
+//                            .multilineTextAlignment(.center)
+//                    }
+//                    .opacity(showContent ? 1 : 0)
+//                    
+//                    VStack(spacing: 12) {
+//                        HStack(spacing: 8) {
+//                            Image(systemName: "checkmark.circle.fill")
+//                                .foregroundColor(.green)
+//                            Text("Daily morning burst activated")
+//                                .font(.system(size: 14))
+//                                .foregroundColor(.white.opacity(0.8))
+//                        }
+//                        
+//                        HStack(spacing: 8) {
+//                            Image(systemName: "checkmark.circle.fill")
+//                                .foregroundColor(.green)
+//                            Text("8 AM reminder scheduled")
+//                                .font(.system(size: 14))
+//                                .foregroundColor(.white.opacity(0.8))
+//                        }
+//                        
+//                        HStack(spacing: 8) {
+//                            Image(systemName: "checkmark.circle.fill")
+//                                .foregroundColor(.green)
+//                            Text("Ready to build spiritual strength")
+//                                .font(.system(size: 14))
+//                                .foregroundColor(.white.opacity(0.8))
+//                        }
+//                    }
+//                    .opacity(showContent ? 1 : 0)
+//                }
+//                .padding(.horizontal, 30)
+//                
+//                Spacer()
+//                
+//                Button(action: onContinue) {
+//                    Text("Begin Your Journey")
+//                        .font(.system(size: 17, weight: .semibold))
+//                        .foregroundColor(.black)
+//                        .frame(width: size.width * 0.85, height: 50)
+//                        .background(
+//                            RoundedRectangle(cornerRadius: 25)
+//                                .fill(
+//                                    LinearGradient(
+//                                        colors: [Color(red: 0.9, green: 0.7, blue: 0.3), Color.yellow],
+//                                        startPoint: .leading,
+//                                        endPoint: .trailing
+//                                    )
+//                                )
+//                        )
+//                }
+//                .padding(.bottom, 40)
+//                .opacity(showContent ? 1 : 0)
+//            }
+//        }
+//        .frame(width: size.width)
+//        .onAppear {
+//            withAnimation(.spring(response: 0.8, dampingFraction: 0.8)) {
+//                showContent = true
+//            }
+//        }
+//    }
+//    
+//    private var backgroundView: some View {
+//        ZStack {
+//            Image(subscriptionStore.onboardingBGImage)
+//                .resizable()
+//                .scaledToFill()
+//                .ignoresSafeArea()
+//            Color.black.opacity(0.3)
+//                .ignoresSafeArea()
+//        }
+//    }
+//}
 
 // MARK: - Helper Components
 struct LimitationButton: View {
