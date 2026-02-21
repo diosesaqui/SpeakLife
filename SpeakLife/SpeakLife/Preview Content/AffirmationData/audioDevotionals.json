@@ -10,7 +10,7 @@
         {
             "id": "declarations",
             "displayName": "Mountain-Moving Prayers",
-            "order": 3
+            "order": 2
         },
         {
             "id": "speaklife",
@@ -26,7 +26,7 @@
         {
             "id": "godsHeart",
             "displayName": "God's Heart",
-            "order": 2,
+            "order": 8,
             "reversed": true
         },
         {
@@ -54,12 +54,12 @@
         {
             "id": "gospel",
             "displayName": "Gospel",
-            "order": 8
+            "order": 10
         },
         {
             "id": "meditation",
             "displayName": "Scripture Meditation's",
-            "order": 10
+            "order": 3
         },
     ],
     "filters": [
@@ -1331,24 +1331,6 @@
             "tag": "gospel"
         },
         {
-            "id": "divine_restoration_3.mp3",
-            "title": "Divine Restoration",
-            "subtitle": "A Declaration of Renewed Youth Through God’s Healing Power",
-            "duration": "3m",
-            "imageUrl": "JesusHealing",
-            "isPremium": false,
-            "tag": "declarations"
-        },
-        {
-            "id": "iam_phil413.mp3",
-            "title": "Unstoppable in Him",
-            "subtitle": "A New Year Declaration Rooted in Christ’s Power",
-            "duration": "2m",
-            "imageUrl": "breathTakingSunset",
-            "isPremium": true,
-            "tag": "declarations"
-        },
-        {
             "id": "psalm9_11.mp3",
             "title": "Psalm 91: A Shield of Protection",
             "subtitle": "Declaring Gods Faithful Promises of Safety and Refuge",
@@ -1479,6 +1461,24 @@
             "title": "Restoring Relationships",
             "subtitle": "Declaring Healing, Unity, and Love Over Marriages and Families",
             "duration": "3m",
+            "imageUrl": "breathTakingSunset",
+            "isPremium": true,
+            "tag": "declarations"
+        },
+        {
+            "id": "divine_restoration_3.mp3",
+            "title": "Divine Restoration",
+            "subtitle": "A Declaration of Renewed Youth Through God’s Healing Power",
+            "duration": "3m",
+            "imageUrl": "JesusHealing",
+            "isPremium": false,
+            "tag": "declarations"
+        },
+        {
+            "id": "iam_phil413.mp3",
+            "title": "Unstoppable in Him",
+            "subtitle": "A New Year Declaration Rooted in Christ’s Power",
+            "duration": "2m",
             "imageUrl": "breathTakingSunset",
             "isPremium": true,
             "tag": "declarations"
