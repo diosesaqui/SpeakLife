@@ -78,6 +78,7 @@ struct HomeView: View {
     @EnvironmentObject var tabViewModel: TabViewModel
     @EnvironmentObject var streakViewModel: EnhancedStreakViewModel
     @Binding var isShowingLanding: Bool
+    @Binding var showDailyBurstOnLaunch: Bool
    
    
     @State var showGiftView = false
@@ -185,6 +186,18 @@ struct HomeView: View {
                                 celebrationStreakCount = timerViewModel.currentStreak
                                 showStreakCelebration = true
                                 // Global streak celebration triggered
+                            }
+                            .fullScreenCover(isPresented: $showDailyBurstOnLaunch) {
+                                DailyDeclarationBurstView()
+                                    .environmentObject(declarationStore)
+                                    .environmentObject(themeStore)
+                                    .environmentObject(timerViewModel)
+                                    .environmentObject(streakViewModel)
+                                    .environmentObject(subscriptionStore)
+                            }
+                            .onReceive(NotificationCenter.default.publisher(for: Notification.Name("ShowDailyDeclarationBurst"))) { _ in
+                                // Show burst when notification is tapped
+                                showDailyBurstOnLaunch = true
                             }
                   
                 } else {

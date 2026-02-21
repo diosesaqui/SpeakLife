@@ -95,7 +95,7 @@ struct DeclarationView: View {
             speakAloudBannerSection(geometry)
             if !showSpeakAloudBanner {
                 Spacer()
-                timerSection
+               // timerSection
                 if !subscriptionStore.isPremium {
                     premiumButton
                 }
@@ -108,8 +108,8 @@ struct DeclarationView: View {
     private var devotionalButton: some View {
         if !showSpeakAloudBanner {
             Button(action: {
-                activeSheet = .devotionalSubscription
-                Analytics.logEvent("devotional_opened", parameters: nil)
+                activeSheet = .loveLetter
+                Analytics.logEvent("love_letter_opened", parameters: nil)
             }) {
                 Image(systemName: "book.fill")
                     .font(.system(size: 16, weight: .medium))

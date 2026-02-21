@@ -69,6 +69,7 @@ struct SpeakLifeApp: App {
     @StateObject var tabViewModel = TabViewModel()
     
     @State var isShowingLanding = true
+    @State private var showDailyBurstOnLaunch = false
     
     // Notification handling state
     @State private var notificationJustReceived = false
@@ -81,7 +82,7 @@ struct SpeakLifeApp: App {
     
     var body: some Scene {
         WindowGroup {
-            HomeView(isShowingLanding: $isShowingLanding)
+            HomeView(isShowingLanding: $isShowingLanding, showDailyBurstOnLaunch: $showDailyBurstOnLaunch)
                 .environment(\.managedObjectContext, persistenceController.container.viewContext)
                 .environmentObject(appState)
                 .environmentObject(declarationStore)
@@ -133,12 +134,24 @@ struct SpeakLifeApp: App {
                         await CreateMLTrainingPipeline.shared.trainInitialModels()
                     }
                     
+                    // Set up daily burst reminders
+                    DailyDeclarationReminderService.shared.setupDailyReminders()
+                    DailyDeclarationReminderService.setupNotificationActions()
+                    
                     // 🧪 Test HelloAO Bible API integration
                     // runHelloAOTest() // Disabled: Test should not run in production
                     // Handle landing page and initial category selection
                     DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
                         withAnimation {
                             isShowingLanding = false
+                        }
+                        
+                        // Check if daily burst should be shown
+                        if appState.isOnboarded && !BurstCompletionTracker.shared.hasTodaysCompletion() {
+                            // Show daily burst popup after a short delay
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                                showDailyBurstOnLaunch = true
+                            }
                         }
                         
                         // Auto-select category for non-onboarded users
@@ -205,6 +218,9 @@ struct SpeakLifeApp: App {
                     // Ensure checklist notifications are scheduled (they repeat daily)
                     NotificationManager.shared.scheduleChecklistNotifications()
                 }
+                
+                // Check if we should show evening reminder for daily burst
+                DailyDeclarationReminderService.shared.refreshEveningReminderIfNeeded()
                 
                
                 // update for next four days

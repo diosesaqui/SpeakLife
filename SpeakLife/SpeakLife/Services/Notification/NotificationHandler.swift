@@ -42,15 +42,24 @@ final class NotificationHandler: NSObject, ObservableObject, UNUserNotificationC
         
         let content = response.notification.request.content
         
-        DispatchQueue.main.async { [weak self] in
-            guard let self = self else { return }
-            
-            if let callback = self.callback {
-                // Callback exists - process immediately
-                callback(content)
-            } else {
-                // No callback yet - store for later (cold launch scenario)
-                self.pendingNotificationContent = content
+        // Check if this is a daily burst notification
+        if content.userInfo["action"] as? String == "daily_declaration_burst" {
+            // Handle daily burst notification
+            DispatchQueue.main.async {
+                DailyDeclarationReminderService.shared.handleNotificationTap()
+            }
+        } else {
+            // Handle other notifications
+            DispatchQueue.main.async { [weak self] in
+                guard let self = self else { return }
+                
+                if let callback = self.callback {
+                    // Callback exists - process immediately
+                    callback(content)
+                } else {
+                    // No callback yet - store for later (cold launch scenario)
+                    self.pendingNotificationContent = content
+                }
             }
         }
         

@@ -981,7 +981,7 @@ struct SpiritualStrengthGraph: View {
             HStack {
                 Image(systemName: "bolt.circle.fill")
                     .font(.system(size: 20))
-                    .foregroundColor(.yellow)
+                    .foregroundColor(Color(red: 1.0, green: 0.7, blue: 0.0))
                 
                 Text("Spiritual Strength")
                     .font(.system(size: 20, weight: .semibold))
@@ -1116,20 +1116,33 @@ struct SpiritualStrengthGraph: View {
         }
         .padding()
         .background(
-            RoundedRectangle(cornerRadius: 20)
-                .fill(Color.white.opacity(0.05))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 20)
-                        .stroke(
-                            LinearGradient(
-                                colors: [Color.white.opacity(0.2), Color.white.opacity(0.05)],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            ),
-                            lineWidth: 1
+            ZStack {
+                // Dark background to ensure contrast
+                RoundedRectangle(cornerRadius: 20)
+                    .fill(Color(red: 0.1, green: 0.1, blue: 0.15))
+                
+                RoundedRectangle(cornerRadius: 20)
+                    .fill(
+                        LinearGradient(
+                            colors: [Color.black.opacity(0.4), Color.black.opacity(0.2)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
                         )
-                )
+                    )
+            }
+            .overlay(
+                RoundedRectangle(cornerRadius: 20)
+                    .stroke(
+                        LinearGradient(
+                            colors: [Color.white.opacity(0.2), Color.white.opacity(0.05)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        lineWidth: 1
+                    )
+            )
         )
+        .environment(\.colorScheme, .dark)
         .onAppear {
             withAnimation(.easeInOut(duration: 0.5)) {
                 animateGraph = true

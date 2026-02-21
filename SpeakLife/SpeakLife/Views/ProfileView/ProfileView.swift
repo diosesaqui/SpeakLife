@@ -92,7 +92,7 @@ struct ProfileView: View {
                         AbbasLoveRow
                        // createYourOwnRow  // Moved Create Your Own here (always visible)
                        // if appState.onBoardingTest {
-                        streakRow
+                       // streakRow
                         dailyBurstStatsRow
                             quizRow
                            prayerRow

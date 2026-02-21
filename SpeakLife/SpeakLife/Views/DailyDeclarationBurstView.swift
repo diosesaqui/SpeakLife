@@ -2,7 +2,7 @@
 //  DailyDeclarationBurstView.swift
 //  SpeakLife
 //
-//  Daily burst feature for morning declarations
+//  Daily burst feature for morning declarations - Enhanced Version
 //
 
 import SwiftUI
@@ -27,6 +27,15 @@ struct DailyDeclarationBurstView: View {
     @State private var morningDeclarations: [(text: String, verse: String, category: String)] = []
     @State private var isLoadingDeclarations = true
     @State private var showIntroScreen = true
+    
+    // Animation states for completion screen
+    @State private var checkmarkScale: CGFloat = 0.0
+    @State private var checkmarkRotation: Double = 0.0
+    @State private var starOpacity: Double = 0.0
+    @State private var confettiOpacity: Double = 0.0
+    @State private var statsScale: CGFloat = 0.0
+    @State private var levelBadgeScale: CGFloat = 0.0
+    @State private var shareButtonOpacity: Double = 0.0
     
     // Configuration for burst session
     private let burstDeclarationCount = 7
@@ -90,15 +99,6 @@ struct DailyDeclarationBurstView: View {
         
         // Add current category declarations
         pool.append(contentsOf: categoryDeclarations)
-        
-//        // If pool is still small, get more from all categories
-//        if pool.count < burstDeclarationCount * 2 {
-//            // Use allAvailableDeclarations if accessible, otherwise use what we have
-//            let additionalDeclarations = categoryDeclarations
-//                .shuffled()
-//                .prefix(20)
-//            pool.append(contentsOf: additionalDeclarations)
-//        }
         
         // 5. Shuffle and select unique declarations
         pool.shuffle()
@@ -308,7 +308,7 @@ struct DailyDeclarationBurstView: View {
             VStack(spacing: 24) {
                 // Category label with orange gradient background
                 Text(morningDeclarations[currentDeclarationIndex].2.uppercased())
-                    .font(.system(size: 13, weight: .bold))
+                    .font(.system(size: 13, weight: .semibold))
                     .foregroundColor(.white)
                     .padding(.horizontal, 16)
                     .padding(.vertical, 8)
@@ -327,7 +327,7 @@ struct DailyDeclarationBurstView: View {
                 
                 VStack(spacing: 20) {
                     Text(morningDeclarations[currentDeclarationIndex].0)
-                        .font(.system(size: 28, weight: .bold))
+                        .font(.system(size: 28, weight: .medium))
                         .foregroundColor(.white)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 30)
@@ -382,135 +382,465 @@ struct DailyDeclarationBurstView: View {
     // MARK: - Completion View
     
     private func completionView(geometry: GeometryProxy) -> some View {
-        VStack(spacing: 0) {
-            Spacer()
-            
-            VStack(spacing: 30) {
-                // Success Animation
-                ZStack {
-                    Circle()
-                        .fill(Color(red: 0.9, green: 0.7, blue: 0.3).opacity(0.2))
-                        .frame(width: 120, height: 120)
-                        .scaleEffect(1.2)
-                        .animation(
-                            Animation.easeInOut(duration: 1.5)
-                                .repeatForever(autoreverses: true),
-                            value: showCompletionView
+        ZStack {
+            // Animated background particles
+            ForEach(0..<20, id: \.self) { index in
+                Circle()
+                    .fill(
+                        LinearGradient(
+                            colors: [Color.yellow.opacity(0.6), Color.orange.opacity(0.4)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
                         )
-                    
-                    Image(systemName: "checkmark.circle.fill")
-                        .font(.system(size: 80))
-                        .foregroundColor(Color(red: 0.9, green: 0.7, blue: 0.3))
-                }
-                
-                Text("Victory Declared!")
-                    .font(.system(size: 32, weight: .bold))
-                    .foregroundColor(.white)
-                
-                VStack(spacing: 12) {
-                    Text("You've aligned your morning with God's truth")
-                        .font(.system(size: 18))
-                        .foregroundColor(.white.opacity(0.9))
-                        .multilineTextAlignment(.center)
-                    
-                    // Stats
-                    HStack(spacing: 40) {
-                        VStack(spacing: 4) {
-                            Text("\(morningDeclarations.count)")
-                                .font(.system(size: 24, weight: .bold))
-                                .foregroundColor(Color(red: 0.9, green: 0.7, blue: 0.3))
-                            Text("Declarations")
-                                .font(.system(size: 12))
-                                .foregroundColor(.white.opacity(0.7))
-                        }
-                        
-                        VStack(spacing: 4) {
-                            Text("\(burstTracker.currentStreak)")
-                                .font(.system(size: 24, weight: .bold))
-                                .foregroundColor(Color(red: 0.9, green: 0.7, blue: 0.3))
-                            Text("Day Streak")
-                                .font(.system(size: 12))
-                                .foregroundColor(.white.opacity(0.7))
-                        }
-                        
-                        VStack(spacing: 4) {
-                            Text("\(burstTracker.currentStrengthScore)%")
-                                .font(.system(size: 24, weight: .bold))
-                                .foregroundColor(Color(red: 0.9, green: 0.7, blue: 0.3))
-                            Text("Strength")
-                                .font(.system(size: 12))
-                                .foregroundColor(.white.opacity(0.7))
-                        }
-                    }
-                    .padding(.top, 20)
-                }
-                .padding(.horizontal, 30)
-                
-                // Spiritual Strength Level
-                HStack(spacing: 12) {
-                    Image(systemName: burstTracker.strengthLevel.icon)
-                        .font(.system(size: 24))
-                        .foregroundColor(burstTracker.strengthLevel.color)
-                    
-                    Text("Spiritual Level: \(burstTracker.strengthLevel.rawValue)")
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(.white)
-                }
-                .padding(.vertical, 12)
-                .padding(.horizontal, 24)
-                .background(
-                    RoundedRectangle(cornerRadius: 20)
-                        .fill(burstTracker.strengthLevel.color.opacity(0.2))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 20)
-                                .stroke(burstTracker.strengthLevel.color, lineWidth: 1)
-                        )
-                )
-                .padding(.top, 10)
+                    )
+                    .frame(width: CGFloat.random(in: 2...6))
+                    .position(
+                        x: CGFloat.random(in: 0...geometry.size.width),
+                        y: CGFloat.random(in: 0...geometry.size.height)
+                    )
+                    .opacity(confettiOpacity)
+                    .animation(
+                        Animation.easeInOut(duration: 2)
+                            .repeatForever(autoreverses: true)
+                            .delay(Double(index) * 0.1),
+                        value: confettiOpacity
+                    )
             }
             
-            Spacer()
-            
-            VStack(spacing: 12) {
-                Button(action: { showSpiritualGraph = true }) {
-                    HStack {
-                        Image(systemName: "chart.line.uptrend.xyaxis")
-                            .font(.system(size: 18))
-                        Text("View Spiritual Growth")
-                            .font(.system(size: 16, weight: .medium))
+            VStack(spacing: 0) {
+                Spacer()
+                
+                VStack(spacing: 30) {
+                    // Success Animation with multiple layers
+                    ZStack {
+                        // Outer pulsing ring
+                        Circle()
+                            .stroke(
+                                LinearGradient(
+                                    colors: [Color.yellow.opacity(0.3), Color.orange.opacity(0.2)],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ),
+                                lineWidth: 2
+                            )
+                            .frame(width: 160, height: 160)
+                            .scaleEffect(checkmarkScale * 1.3)
+                            .opacity(starOpacity)
+                        
+                        // Middle glow
+                        Circle()
+                            .fill(
+                                RadialGradient(
+                                    colors: [Color.orange.opacity(0.5), Color.clear],
+                                    center: .center,
+                                    startRadius: 5,
+                                    endRadius: 60
+                                )
+                            )
+                            .frame(width: 140, height: 140)
+                            .scaleEffect(checkmarkScale * 1.1)
+                            .blur(radius: 10)
+                        
+                        // Stars around the checkmark
+                        ForEach(0..<8, id: \.self) { index in
+                            Image(systemName: "star.fill")
+                                .font(.system(size: 16, weight: .bold))
+                                .foregroundColor(.yellow)
+                                .offset(
+                                    x: cos(CGFloat(index) * .pi / 4) * 70,
+                                    y: sin(CGFloat(index) * .pi / 4) * 70
+                                )
+                                .rotationEffect(.degrees(Double(index) * 45 + checkmarkRotation))
+                                .scaleEffect(starOpacity)
+                                .opacity(starOpacity)
+                        }
+                        
+                        // Main checkmark with gradient
+                        ZStack {
+                            Circle()
+                                .fill(
+                                    LinearGradient(
+                                        colors: [Color(red: 1.0, green: 0.8, blue: 0.2), Color(red: 1.0, green: 0.6, blue: 0.1)],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                                .frame(width: 100, height: 100)
+                                .scaleEffect(checkmarkScale)
+                                .shadow(color: .orange, radius: 20, x: 0, y: 5)
+                            
+                            Image(systemName: "checkmark")
+                                .font(.system(size: 50, weight: .bold))
+                                .foregroundColor(.white)
+                                .scaleEffect(checkmarkScale)
+                                .rotationEffect(.degrees(checkmarkRotation))
+                        }
                     }
-                    .foregroundColor(Color(red: 0.9, green: 0.7, blue: 0.3))
-                    .frame(width: geometry.size.width * 0.85, height: 44)
-                    .background(
-                        RoundedRectangle(cornerRadius: 22)
-                            .stroke(Color(red: 0.9, green: 0.7, blue: 0.3), lineWidth: 1)
-                    )
+                    
+                    // Dynamic title with gradient
+                    Text(getVictoryMessage())
+                        .font(.system(size: 34, weight: .black))
+                        .foregroundStyle(
+                            LinearGradient(
+                                colors: [.white, Color(red: 1.0, green: 0.9, blue: 0.7)],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                        )
+                        .scaleEffect(checkmarkScale)
+                        .shadow(color: .black.opacity(0.3), radius: 2, x: 0, y: 2)
+                    
+                    VStack(spacing: 12) {
+                        Text(getMotivationalMessage())
+                            .font(.system(size: 19, weight: .medium))
+                            .foregroundColor(.white.opacity(0.95))
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, 20)
+                            .scaleEffect(statsScale)
+                        
+                        // Animated Stats Cards
+                        HStack(spacing: 20) {
+                            StatCard(
+                                value: "\(morningDeclarations.count)",
+                                label: "Spoken",
+                                icon: "bolt.fill",
+                                scale: statsScale
+                            )
+                            
+                            StatCard(
+                                value: "\(burstTracker.currentStreak)",
+                                label: burstTracker.currentStreak == 1 ? "Day" : "Days",
+                                icon: "flame.fill",
+                                scale: statsScale,
+                                highlight: burstTracker.currentStreak >= 7
+                            )
+                            
+                            StatCard(
+                                value: "\(burstTracker.currentStrengthScore)%",
+                                label: "Power",
+                                icon: "star.fill",
+                                scale: statsScale
+                            )
+                        }
+                        .padding(.top, 20)
+                    }
+                    .padding(.horizontal, 30)
+                    
+                    // Enhanced Spiritual Level Badge
+                    VStack(spacing: 8) {
+                        HStack(spacing: 12) {
+                            Image(systemName: burstTracker.strengthLevel.icon)
+                                .font(.system(size: 28, weight: .bold))
+                                .foregroundColor(burstTracker.strengthLevel.color)
+                                .rotationEffect(.degrees(levelBadgeScale > 0 ? 360 : 0))
+                                .animation(.easeInOut(duration: 1), value: levelBadgeScale)
+                            
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("SPIRITUAL WARRIOR")
+                                    .font(.system(size: 11, weight: .heavy))
+                                    .foregroundColor(.white.opacity(0.7))
+                                    .tracking(1.5)
+                                
+                                Text(burstTracker.strengthLevel.rawValue)
+                                    .font(.system(size: 20, weight: .bold))
+                                    .foregroundColor(.white)
+                            }
+                        }
+                        .padding(.vertical, 14)
+                        .padding(.horizontal, 28)
+                        .background(
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 25)
+                                    .fill(
+                                        LinearGradient(
+                                            colors: [burstTracker.strengthLevel.color.opacity(0.3), burstTracker.strengthLevel.color.opacity(0.15)],
+                                            startPoint: .topLeading,
+                                            endPoint: .bottomTrailing
+                                        )
+                                    )
+                                
+                                RoundedRectangle(cornerRadius: 25)
+                                    .stroke(
+                                        LinearGradient(
+                                            colors: [burstTracker.strengthLevel.color, burstTracker.strengthLevel.color.opacity(0.5)],
+                                            startPoint: .topLeading,
+                                            endPoint: .bottomTrailing
+                                        ),
+                                        lineWidth: 2
+                                    )
+                            }
+                        )
+                        .scaleEffect(levelBadgeScale)
+                        .shadow(color: burstTracker.strengthLevel.color.opacity(0.5), radius: 10, x: 0, y: 5)
+                        
+                        // Milestone messages
+                        if burstTracker.currentStreak % 7 == 0 && burstTracker.currentStreak > 0 {
+                            Text("🎉 \(burstTracker.currentStreak / 7) WEEK\(burstTracker.currentStreak == 7 ? "" : "S") STRONG!")
+                                .font(.system(size: 13, weight: .bold))
+                                .foregroundColor(.yellow)
+                                .opacity(starOpacity)
+                        }
+                    }
+                    .padding(.top, 10)
                 }
                 
-                Button(action: completeBurst) {
-                    Text("Complete")
-                        .font(.system(size: 17, weight: .semibold))
+                Spacer()
+                
+                VStack(spacing: 16) {
+                    // Share Victory Button
+                    Button(action: shareVictory) {
+                        HStack(spacing: 10) {
+                            Image(systemName: "square.and.arrow.up")
+                                .font(.system(size: 17, weight: .semibold))
+                            Text("Share Your Victory")
+                                .font(.system(size: 17, weight: .semibold))
+                        }
                         .foregroundColor(.white)
                         .frame(width: geometry.size.width * 0.85, height: 50)
                         .background(
-                            RoundedRectangle(cornerRadius: 25)
-                                .fill(
-                                    LinearGradient(
-                                        colors: [Color(red: 1.0, green: 0.58, blue: 0.0), Color(red: 1.0, green: 0.34, blue: 0.13)],
-                                        startPoint: .leading,
-                                        endPoint: .trailing
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 25)
+                                    .fill(
+                                        LinearGradient(
+                                            colors: [Color.purple.opacity(0.8), Color.blue.opacity(0.8)],
+                                            startPoint: .leading,
+                                            endPoint: .trailing
+                                        )
                                     )
-                                )
+                                
+                                RoundedRectangle(cornerRadius: 25)
+                                    .stroke(Color.white.opacity(0.3), lineWidth: 1)
+                            }
                         )
+                        .shadow(color: .purple.opacity(0.3), radius: 10, x: 0, y: 5)
+                    }
+                    .scaleEffect(shareButtonOpacity)
+                    .opacity(shareButtonOpacity)
+                    
+                    HStack(spacing: 12) {
+                        Button(action: { showSpiritualGraph = true }) {
+                            HStack {
+                                Image(systemName: "chart.line.uptrend.xyaxis")
+                                    .font(.system(size: 16))
+                                Text("Growth")
+                                    .font(.system(size: 15, weight: .medium))
+                            }
+                            .foregroundColor(Color(red: 0.9, green: 0.7, blue: 0.3))
+                            .frame(width: geometry.size.width * 0.4, height: 44)
+                            .background(
+                                RoundedRectangle(cornerRadius: 22)
+                                    .stroke(Color(red: 0.9, green: 0.7, blue: 0.3), lineWidth: 1)
+                            )
+                        }
+                        
+                        Button(action: completeBurst) {
+                            Text("Continue")
+                                .font(.system(size: 17, weight: .bold))
+                                .foregroundColor(.white)
+                                .frame(width: geometry.size.width * 0.4, height: 44)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 22)
+                                        .fill(
+                                            LinearGradient(
+                                                colors: [Color(red: 1.0, green: 0.58, blue: 0.0), Color(red: 1.0, green: 0.34, blue: 0.13)],
+                                                startPoint: .leading,
+                                                endPoint: .trailing
+                                            )
+                                        )
+                                )
+                                .shadow(color: .orange.opacity(0.3), radius: 10, x: 0, y: 5)
+                        }
+                    }
                 }
+                .padding(.bottom, 50)
             }
-            .padding(.bottom, 50)
+        }
+        .onAppear {
+            triggerCompletionAnimations()
         }
         .sheet(isPresented: $showSpiritualGraph) {
             SpiritualStrengthGraph(tracker: burstTracker)
         }
     }
     
+    // MARK: - Completion Helper Views
+    
+    private struct StatCard: View {
+        let value: String
+        let label: String
+        let icon: String
+        let scale: CGFloat
+        var highlight: Bool = false
+        
+        var body: some View {
+            VStack(spacing: 8) {
+                ZStack {
+                    Circle()
+                        .fill(
+                            LinearGradient(
+                                colors: highlight ? [.orange, .red] : [Color(red: 1.0, green: 0.8, blue: 0.3).opacity(0.3), Color(red: 1.0, green: 0.6, blue: 0.2).opacity(0.2)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 60, height: 60)
+                    
+                    Image(systemName: icon)
+                        .font(.system(size: 24, weight: .bold))
+                        .foregroundColor(highlight ? .white : Color(red: 1.0, green: 0.8, blue: 0.3))
+                }
+                
+                Text(value)
+                    .font(.system(size: 28, weight: .black))
+                    .foregroundColor(.white)
+                
+                Text(label)
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundColor(.white.opacity(0.8))
+            }
+            .scaleEffect(scale)
+            .animation(
+                .spring(response: 0.5, dampingFraction: 0.6)
+                    .delay(0.1),
+                value: scale
+            )
+        }
+    }
+    
+    // MARK: - Completion Helpers
+    
+    private func getVictoryMessage() -> String {
+        let messages = [
+            "Victory Declared! 🔥",
+            "Champion Status! 💪",
+            "Warrior Mode ON! ⚡",
+            "Faith Activated! 🙏",
+            "Power Released! 🚀",
+            "Kingdom Strength! 👑"
+        ]
+        
+        if burstTracker.currentStreak >= 30 {
+            return "UNSTOPPABLE! 🌟"
+        } else if burstTracker.currentStreak >= 21 {
+            return "LEGENDARY! 🏆"
+        } else if burstTracker.currentStreak >= 7 {
+            return messages.randomElement() ?? "Victory Declared! 🔥"
+        } else {
+            return ["Victory Claimed!", "Day Conquered!", "Truth Spoken!"].randomElement() ?? "Victory!"
+        }
+    }
+    
+    private func getMotivationalMessage() -> String {
+        let messages = [
+            "You just armed yourself with heaven's ammunition!",
+            "Your spirit is stronger than yesterday!",
+            "You're building an unshakeable foundation!",
+            "Today's battles are already won!",
+            "You've activated divine power for your day!",
+            "Your faith just leveled up!",
+            "You're walking in supernatural authority!"
+        ]
+        
+        if burstTracker.currentStreak >= 7 {
+            return "You're unstoppable! \(burstTracker.currentStreak) days of declaring victory!"
+        } else {
+            return messages.randomElement() ?? "You've aligned your morning with God's truth!"
+        }
+    }
+    
+    private func triggerCompletionAnimations() {
+        // Trigger haptic feedback
+        let successFeedback = UINotificationFeedbackGenerator()
+        successFeedback.prepare()
+        successFeedback.notificationOccurred(.success)
+        
+        // Cascade animations
+        withAnimation(.spring(response: 0.6, dampingFraction: 0.7)) {
+            checkmarkScale = 1.0
+        }
+        
+        // Single rotation animation for the checkmark
+        withAnimation(.easeInOut(duration: 1.5)) {
+            checkmarkRotation = 360
+        }
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
+                starOpacity = 1.0
+                confettiOpacity = 1.0
+            }
+            
+            // Medium haptic
+            let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
+            impactFeedback.prepare()
+            impactFeedback.impactOccurred()
+        }
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
+                statsScale = 1.0
+            }
+        }
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.7) {
+            withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
+                levelBadgeScale = 1.0
+            }
+            
+            // Light haptic
+            let lightFeedback = UIImpactFeedbackGenerator(style: .light)
+            lightFeedback.prepare()
+            lightFeedback.impactOccurred()
+        }
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
+                shareButtonOpacity = 1.0
+            }
+        }
+    }
+    
+    private func shareVictory() {
+        // Haptic feedback
+        let impactFeedback = UIImpactFeedbackGenerator(style: .light)
+        impactFeedback.prepare()
+        impactFeedback.impactOccurred()
+        
+        let message = "I just completed my Daily Victory Burst on SpeakLife! 🔥\n\n✅ \(morningDeclarations.count) Declarations Spoken\n🔥 \(burstTracker.currentStreak) Day Streak\n💪 \(burstTracker.currentStrengthScore)% Spiritual Strength\n\nJoin me in speaking life daily!"
+        
+        // Get the active window scene
+        guard let windowScene = UIApplication.shared.connectedScenes
+            .first(where: { $0.activationState == .foregroundActive || $0.activationState == .foregroundInactive }) as? UIWindowScene,
+              let rootViewController = windowScene.windows.first?.rootViewController else {
+            print("Could not find root view controller for sharing")
+            return
+        }
+        
+        // Find the topmost view controller
+        var topController = rootViewController
+        while let presentedController = topController.presentedViewController {
+            topController = presentedController
+        }
+        
+        let activityVC = UIActivityViewController(
+            activityItems: [message],
+            applicationActivities: nil
+        )
+        
+        // For iPad
+        if let popover = activityVC.popoverPresentationController {
+            popover.sourceView = topController.view
+            popover.sourceRect = CGRect(x: topController.view.bounds.midX, y: topController.view.bounds.midY, width: 0, height: 0)
+            popover.permittedArrowDirections = []
+        }
+        
+        topController.present(activityVC, animated: true)
+        
+        Analytics.logEvent("daily_burst_shared", parameters: [
+            "streak": burstTracker.currentStreak,
+            "strength_score": burstTracker.currentStrengthScore
+        ])
+    }
     
     // MARK: - Actions
     
@@ -581,15 +911,3 @@ struct DailyDeclarationBurstView: View {
         }
     }
 }
-
-// MARK: - Preview
-
-//struct DailyDeclarationBurstView_Previews: PreviewProvider {
-//    static var previews: some View {
-//        DailyDeclarationBurstView()
-//            .environmentObject(DeclarationViewModel())
-//            .environmentObject(ThemeViewModel())
-//            .environmentObject(TimerViewModel())
-//            .environmentObject(EnhancedStreakViewModel())
-//    }
-//}
