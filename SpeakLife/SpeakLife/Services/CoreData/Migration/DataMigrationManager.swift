@@ -13,11 +13,14 @@ final class DataMigrationManager {
     
     private let persistenceController: PersistenceController
     private let legacyAPIService: APIService
+    private let favoritesMigrationService: FavoritesMigrationService
     
     init(persistenceController: PersistenceController = .shared,
-         legacyAPIService: APIService = LocalAPIClient()) {
+         legacyAPIService: APIService = LocalAPIClient(),
+         favoritesMigrationService: FavoritesMigrationService = FavoritesMigrationService()) {
         self.persistenceController = persistenceController
         self.legacyAPIService = legacyAPIService
+        self.favoritesMigrationService = favoritesMigrationService
     }
     
     // MARK: - Migration
@@ -61,6 +64,9 @@ final class DataMigrationManager {
                         
                         // Calculate migration duration
                         let migrationDuration = Date().timeIntervalSince(migrationStartTime)
+                        
+                        // Migrate favorites after declarations
+                        try await self.favoritesMigrationService.migrateLegacyFavorites()
                         
                         // Only set migration flag if we actually migrated some data
                         if migrationResult.totalEntries > 0 {

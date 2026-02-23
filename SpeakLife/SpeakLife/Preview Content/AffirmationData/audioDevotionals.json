@@ -21,7 +21,7 @@
         {
             "id": "newcreation",
             "displayName": "New Creation",
-            "order": 9
+            "order": 7
         },
         {
             "id": "godsHeart",
@@ -32,34 +32,34 @@
         {
             "id": "growWithJesus",
             "displayName": "Grow With Jesus",
-            "order": 4
+            "order": 5
         },
         {
             "id": "psalm91",
             "displayName": "Psalm 91",
-            "order": 5,
+            "order": 4,
             "reversed": true
         },
         {
             "id": "divineHealth",
             "displayName": "Divine Health",
-            "order": 6
+            "order": 3
         },
         {
             "id": "magnify",
             "displayName": "Behold & Become",
-            "order": 7,
+            "order": 6,
             "reversed": true
         },
         {
             "id": "gospel",
             "displayName": "Gospel",
-            "order": 10
+            "order": 9
         },
         {
             "id": "meditation",
             "displayName": "Scripture Meditation's",
-            "order": 3
+            "order": 8
         },
     ],
     "filters": [

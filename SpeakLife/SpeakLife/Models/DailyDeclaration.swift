@@ -127,41 +127,41 @@ enum DeclarationCategory: String, CaseIterable, Identifiable, Codable,  Comparab
         // Tier 8 - Eternal Perspective
         .heaven,
         .confidence,
-//        .genesis,
-//        .exodus,
-//        .leviticus,
-//        .numbers,
-//        .deuteronomy,
-//        .joshua,
-//        .judges,
-//        .ruth,
-//        .samuel1,
-//        .samuel2,
-//        .kings1,
-//        .kings2,
-//        .chronicles1,
-//        .chronicles2,
-//        .ezra,
-//        .psalms,
-//        .proverbs,
-//        .matthew,
-//        .mark,
-//        .luke,
-//        .john,
-//        .romans,
-//        .corinthians1,
-//        .corinthians2,
-//        .galatians,
-//        .ephesians,
-//        .philippians,
-//        .colossians,
-//        .hebrews,
-//        .james,
-//        .peter1,
-//        .peter2,
-//        .thessalonians1,
-//        .thessalonians2,
-//        .revelation,
+        .genesis,
+        .exodus,
+        .leviticus,
+        .numbers,
+        .deuteronomy,
+        .joshua,
+        .judges,
+        .ruth,
+        .samuel1,
+        .samuel2,
+        .kings1,
+        .kings2,
+        .chronicles1,
+        .chronicles2,
+        .ezra,
+        .psalms,
+        .proverbs,
+        .matthew,
+        .mark,
+        .luke,
+        .john,
+        .romans,
+        .corinthians1,
+        .corinthians2,
+        .galatians,
+        .ephesians,
+        .philippians,
+        .colossians,
+        .hebrews,
+        .james,
+        .peter1,
+        .peter2,
+        .thessalonians1,
+        .thessalonians2,
+        .revelation,
         
         ]
     
@@ -213,7 +213,7 @@ enum DeclarationCategory: String, CaseIterable, Identifiable, Codable,  Comparab
     
     static var categoryOrder: [DeclarationCategory] = [
         // Tier 1 - Foundation (God & Identity)
-        .speaklife,
+       // .speaklife,
         .love,
         .identity,
         .faith,
@@ -235,7 +235,7 @@ enum DeclarationCategory: String, CaseIterable, Identifiable, Codable,  Comparab
         
         // Tier 4 - Daily Walk
         .obedience,
-        .spiritualGrowth,
+       // .spiritualGrowth,
         .purity,
         .gratitude,
         
@@ -258,7 +258,7 @@ enum DeclarationCategory: String, CaseIterable, Identifiable, Codable,  Comparab
         
         // Tier 8 - Eternal Perspective
         .heaven,
-        .confidence
+       // .confidence
     ]
     
     var isBibleBook: Bool {

@@ -21,6 +21,20 @@
 		4525D6852F37C0EB00571394 /* DailyDeclarationBurstView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4525D6842F37C0EB00571394 /* DailyDeclarationBurstView.swift */; };
 		4525D7D02F3DC7B400571394 /* PolishedCrossOnboardingFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4525D7CF2F3DC7B400571394 /* PolishedCrossOnboardingFlow.swift */; };
 		4525D7D22F3DC87E00571394 /* DailyDeclarationReminderService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4525D7D12F3DC87E00571394 /* DailyDeclarationReminderService.swift */; };
+		4525D8D92F4AC12800571394 /* DeclarationFavoriteEntry+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4525D8D72F4AC12800571394 /* DeclarationFavoriteEntry+CoreDataClass.swift */; };
+		4525D8DA2F4AC12800571394 /* AudioFavoriteEntry+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4525D8D62F4AC12800571394 /* AudioFavoriteEntry+CoreDataProperties.swift */; };
+		4525D8DB2F4AC12800571394 /* AudioFavoriteEntry+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4525D8D52F4AC12800571394 /* AudioFavoriteEntry+CoreDataClass.swift */; };
+		4525D8DC2F4AC12800571394 /* DeclarationFavoriteEntry+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4525D8D82F4AC12800571394 /* DeclarationFavoriteEntry+CoreDataProperties.swift */; };
+		4525D8DF2F4AC15300571394 /* DeclarationFavoriteRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4525D8DE2F4AC15300571394 /* DeclarationFavoriteRepository.swift */; };
+		4525D8E02F4AC15300571394 /* AudioFavoriteRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4525D8DD2F4AC15300571394 /* AudioFavoriteRepository.swift */; };
+		4525D8E22F4AC18500571394 /* UnifiedFavoritesManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4525D8E12F4AC18500571394 /* UnifiedFavoritesManager.swift */; };
+		4525D8E42F4AC19C00571394 /* FavoritesMigrationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4525D8E32F4AC19C00571394 /* FavoritesMigrationService.swift */; };
+		4525D8E72F4ADC9700571394 /* DeclarationFavoriteRepositoryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4525D8E62F4ADC9700571394 /* DeclarationFavoriteRepositoryTests.swift */; };
+		4525D8E82F4ADC9700571394 /* AudioFavoriteRepositoryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4525D8E52F4ADC9700571394 /* AudioFavoriteRepositoryTests.swift */; };
+		4525D8F52F4B5CA900571394 /* FavoritesSyncIntegrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4525D8F32F4B5CA900571394 /* FavoritesSyncIntegrationTests.swift */; };
+		4525D8FA2F4B5CB400571394 /* UnifiedFavoritesManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4525D8F82F4B5CB400571394 /* UnifiedFavoritesManagerTests.swift */; };
+		4525D8FB2F4B5CB400571394 /* FavoritesMigrationServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4525D8F72F4B5CB400571394 /* FavoritesMigrationServiceTests.swift */; };
+		4525D8FC2F4B5CB400571394 /* AudioFavoritesManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4525D8F62F4B5CB400571394 /* AudioFavoritesManagerTests.swift */; };
 		452D17D92D703E9E000AB1D1 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = 452D17D82D703E9E000AB1D1 /* FirebaseAnalytics */; };
 		452D17DB2D703E9E000AB1D1 /* FirebaseRemoteConfig in Frameworks */ = {isa = PBXBuildFile; productRef = 452D17DA2D703E9E000AB1D1 /* FirebaseRemoteConfig */; };
 		452D17DD2D703E9E000AB1D1 /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = 452D17DC2D703E9E000AB1D1 /* FirebaseStorage */; };
@@ -361,6 +375,20 @@
 		4525D6842F37C0EB00571394 /* DailyDeclarationBurstView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyDeclarationBurstView.swift; sourceTree = "<group>"; };
 		4525D7CF2F3DC7B400571394 /* PolishedCrossOnboardingFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PolishedCrossOnboardingFlow.swift; sourceTree = "<group>"; };
 		4525D7D12F3DC87E00571394 /* DailyDeclarationReminderService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyDeclarationReminderService.swift; sourceTree = "<group>"; };
+		4525D8D52F4AC12800571394 /* AudioFavoriteEntry+CoreDataClass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AudioFavoriteEntry+CoreDataClass.swift"; sourceTree = "<group>"; };
+		4525D8D62F4AC12800571394 /* AudioFavoriteEntry+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AudioFavoriteEntry+CoreDataProperties.swift"; sourceTree = "<group>"; };
+		4525D8D72F4AC12800571394 /* DeclarationFavoriteEntry+CoreDataClass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DeclarationFavoriteEntry+CoreDataClass.swift"; sourceTree = "<group>"; };
+		4525D8D82F4AC12800571394 /* DeclarationFavoriteEntry+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DeclarationFavoriteEntry+CoreDataProperties.swift"; sourceTree = "<group>"; };
+		4525D8DD2F4AC15300571394 /* AudioFavoriteRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioFavoriteRepository.swift; sourceTree = "<group>"; };
+		4525D8DE2F4AC15300571394 /* DeclarationFavoriteRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeclarationFavoriteRepository.swift; sourceTree = "<group>"; };
+		4525D8E12F4AC18500571394 /* UnifiedFavoritesManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnifiedFavoritesManager.swift; sourceTree = "<group>"; };
+		4525D8E32F4AC19C00571394 /* FavoritesMigrationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FavoritesMigrationService.swift; sourceTree = "<group>"; };
+		4525D8E52F4ADC9700571394 /* AudioFavoriteRepositoryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioFavoriteRepositoryTests.swift; sourceTree = "<group>"; };
+		4525D8E62F4ADC9700571394 /* DeclarationFavoriteRepositoryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeclarationFavoriteRepositoryTests.swift; sourceTree = "<group>"; };
+		4525D8F32F4B5CA900571394 /* FavoritesSyncIntegrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FavoritesSyncIntegrationTests.swift; sourceTree = "<group>"; };
+		4525D8F62F4B5CB400571394 /* AudioFavoritesManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioFavoritesManagerTests.swift; sourceTree = "<group>"; };
+		4525D8F72F4B5CB400571394 /* FavoritesMigrationServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FavoritesMigrationServiceTests.swift; sourceTree = "<group>"; };
+		4525D8F82F4B5CB400571394 /* UnifiedFavoritesManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnifiedFavoritesManagerTests.swift; sourceTree = "<group>"; };
 		452D17E12D725F84000AB1D1 /* RatingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RatingView.swift; sourceTree = "<group>"; };
 		452F6AC92E87BA8200A27856 /* AnalyticsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalyticsService.swift; sourceTree = "<group>"; };
 		452F6ACB2E87CD3F00A27856 /* AINotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AINotificationService.swift; sourceTree = "<group>"; };
@@ -738,6 +766,24 @@
 			path = EmailCampaign;
 			sourceTree = "<group>";
 		};
+		4525D8F42F4B5CA900571394 /* Integration */ = {
+			isa = PBXGroup;
+			children = (
+				4525D8F32F4B5CA900571394 /* FavoritesSyncIntegrationTests.swift */,
+			);
+			path = Integration;
+			sourceTree = "<group>";
+		};
+		4525D8F92F4B5CB400571394 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				4525D8F62F4B5CB400571394 /* AudioFavoritesManagerTests.swift */,
+				4525D8F72F4B5CB400571394 /* FavoritesMigrationServiceTests.swift */,
+				4525D8F82F4B5CB400571394 /* UnifiedFavoritesManagerTests.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
 		452F6AD22E87CD3F00A27856 /* ML */ = {
 			isa = PBXGroup;
 			children = (
@@ -949,6 +995,7 @@
 		4597E2282E419CEA009D6C66 /* Migration */ = {
 			isa = PBXGroup;
 			children = (
+				4525D8E32F4AC19C00571394 /* FavoritesMigrationService.swift */,
 				4597E2272E419CEA009D6C66 /* DataMigrationManager.swift */,
 			);
 			path = Migration;
@@ -965,6 +1012,8 @@
 		4597E22D2E419CEA009D6C66 /* Repositories */ = {
 			isa = PBXGroup;
 			children = (
+				4525D8DD2F4AC15300571394 /* AudioFavoriteRepository.swift */,
+				4525D8DE2F4AC15300571394 /* DeclarationFavoriteRepository.swift */,
 				4597E22B2E419CEA009D6C66 /* AffirmationRepository.swift */,
 				4597E22C2E419CEA009D6C66 /* JournalRepository.swift */,
 			);
@@ -982,6 +1031,7 @@
 		4597E2322E419CEA009D6C66 /* CoreData */ = {
 			isa = PBXGroup;
 			children = (
+				4525D8E12F4AC18500571394 /* UnifiedFavoritesManager.swift */,
 				4597E2282E419CEA009D6C66 /* Migration */,
 				4597E22A2E419CEA009D6C66 /* Protocols */,
 				4597E22D2E419CEA009D6C66 /* Repositories */,
@@ -999,6 +1049,10 @@
 			children = (
 				4597E23A2E419D7D009D6C66 /* AffirmationEntry+CoreDataClass.swift */,
 				4597E23B2E419D7D009D6C66 /* AffirmationEntry+CoreDataProperties.swift */,
+				4525D8D52F4AC12800571394 /* AudioFavoriteEntry+CoreDataClass.swift */,
+				4525D8D62F4AC12800571394 /* AudioFavoriteEntry+CoreDataProperties.swift */,
+				4525D8D72F4AC12800571394 /* DeclarationFavoriteEntry+CoreDataClass.swift */,
+				4525D8D82F4AC12800571394 /* DeclarationFavoriteEntry+CoreDataProperties.swift */,
 				4597E23C2E419D7D009D6C66 /* CoreDataExtensions.swift */,
 				4597E23D2E419D7D009D6C66 /* JournalEntry+CoreDataClass.swift */,
 				4597E23E2E419D7D009D6C66 /* JournalEntry+CoreDataProperties.swift */,
@@ -1019,7 +1073,11 @@
 		4597E24D2E419DDF009D6C66 /* CoreData */ = {
 			isa = PBXGroup;
 			children = (
+				4525D8F92F4B5CB400571394 /* Services */,
+				4525D8F42F4B5CA900571394 /* Integration */,
 				4597E2482E419DDF009D6C66 /* AffirmationRepositoryTests.swift */,
+				4525D8E52F4ADC9700571394 /* AudioFavoriteRepositoryTests.swift */,
+				4525D8E62F4ADC9700571394 /* DeclarationFavoriteRepositoryTests.swift */,
 				4597E2492E419DDF009D6C66 /* DataMigrationManagerTests.swift */,
 				4597E24A2E419DDF009D6C66 /* JournalRepositoryTests.swift */,
 				4597E24B2E419DDF009D6C66 /* PersistenceControllerTests.swift */,
@@ -1768,12 +1826,18 @@
 				4597E2512E419DDF009D6C66 /* SyncConflictResolverTests.swift in Sources */,
 				4597E2522E419DDF009D6C66 /* DataMigrationManagerTests.swift in Sources */,
 				4597E1E42E3FDC66009D6C66 /* EnhancedStreakViewModelTests.swift in Sources */,
+				4525D8FA2F4B5CB400571394 /* UnifiedFavoritesManagerTests.swift in Sources */,
+				4525D8FB2F4B5CB400571394 /* FavoritesMigrationServiceTests.swift in Sources */,
+				4525D8FC2F4B5CB400571394 /* AudioFavoritesManagerTests.swift in Sources */,
 				45B5A8302DDC14B4006DE6AA /* DevotionalTests.swift in Sources */,
 				4597E1E72E3FDC79009D6C66 /* StreakDisplayTests.swift in Sources */,
 				4597E1E82E3FDC79009D6C66 /* StreakStatsTests.swift in Sources */,
 				4568852A2B428D77007B1EBB /* NotificationManagerTests.swift in Sources */,
 				450720DB2BAFFB4A0029EE2B /* TimerViewModelTests.swift in Sources */,
 				4597E1E22E3FDC5C009D6C66 /* DailyChecklistTests.swift in Sources */,
+				4525D8E72F4ADC9700571394 /* DeclarationFavoriteRepositoryTests.swift in Sources */,
+				4525D8F52F4B5CA900571394 /* FavoritesSyncIntegrationTests.swift in Sources */,
+				4525D8E82F4ADC9700571394 /* AudioFavoriteRepositoryTests.swift in Sources */,
 				2F740F6929D4017400E89E7F /* APIClientTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1814,6 +1878,7 @@
 				45BC76312EF8058E003AC964 /* CelebrationAnimations.swift in Sources */,
 				45BC76322EF8058E003AC964 /* AudioDelights.swift in Sources */,
 				45BC76332EF8058E003AC964 /* GestureDelights.swift in Sources */,
+				4525D8E42F4AC19C00571394 /* FavoritesMigrationService.swift in Sources */,
 				45BC76342EF8058E003AC964 /* MicroInteractions.swift in Sources */,
 				4597E2262E419183009D6C66 /* VoiceCorrectionsView.swift in Sources */,
 				7AF18C8229FD2494005A6E31 /* Badge.swift in Sources */,
@@ -1863,6 +1928,8 @@
 				458B6B212BA6E3EC0001BEFE /* StreakDetails.swift in Sources */,
 				7A278F9B288915DE0084BB57 /* SpeakLifeApp.swift in Sources */,
 				7AA870C528DACCB700134ADB /* QuoteLabel.swift in Sources */,
+				4525D8DF2F4AC15300571394 /* DeclarationFavoriteRepository.swift in Sources */,
+				4525D8E02F4AC15300571394 /* AudioFavoriteRepository.swift in Sources */,
 				7AA870DB28DACCB700134ADB /* OnboardingTypes.swift in Sources */,
 				456885262B390FF4007B1EBB /* WarriorView.swift in Sources */,
 				45B07A422D24D98300EA2F5D /* WhatsNewView.swift in Sources */,
@@ -1950,6 +2017,7 @@
 				453C35852C5092A800817FCC /* HelpUsGrowView.swift in Sources */,
 				7AA870D728DACCB700134ADB /* ProfileBarButton.swift in Sources */,
 				458510D92B159B0D00230EE5 /* LandingView.swift in Sources */,
+				4525D8E22F4AC18500571394 /* UnifiedFavoritesManager.swift in Sources */,
 				45BC76422EFD1321003AC964 /* ModernDailyChecklistView.swift in Sources */,
 				7AF18C7B29FD1A43005A6E31 /* GoogleAdMob.swift in Sources */,
 				457CD3402E7E735A00F435EC /* OptimizedSubscriptionViewV1.swift in Sources */,
@@ -2032,6 +2100,10 @@
 				7AA870DD28DACCB700134ADB /* OnboardingView.swift in Sources */,
 				7AA870E328DACD1A00134ADB /* AppDelegate.swift in Sources */,
 				7AF18C8429FDCE0A005A6E31 /* ShimmerButton.swift in Sources */,
+				4525D8D92F4AC12800571394 /* DeclarationFavoriteEntry+CoreDataClass.swift in Sources */,
+				4525D8DA2F4AC12800571394 /* AudioFavoriteEntry+CoreDataProperties.swift in Sources */,
+				4525D8DB2F4AC12800571394 /* AudioFavoriteEntry+CoreDataClass.swift in Sources */,
+				4525D8DC2F4AC12800571394 /* DeclarationFavoriteEntry+CoreDataProperties.swift in Sources */,
 				01ED29F757107A93D56507E0 /* WidgetIntents.swift in Sources */,
 				F3F466B4CB267BFBE4FD8CC8 /* WldehBibleAPIService.swift in Sources */,
 			);
@@ -2238,7 +2310,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = SpeakLife/SpeakLife.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 955;
+				CURRENT_PROJECT_VERSION = 957;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_ASSET_PATHS = "\"SpeakLife/Preview Content\"";
 				DEVELOPMENT_TEAM = 652R6A63L8;
@@ -2259,7 +2331,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 3.1.69;
+				MARKETING_VERSION = 3.1.70;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Franchiz.SpeakLife;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -2280,7 +2352,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = SpeakLife/SpeakLife.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 955;
+				CURRENT_PROJECT_VERSION = 957;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_ASSET_PATHS = "\"SpeakLife/Preview Content\"";
 				DEVELOPMENT_TEAM = 652R6A63L8;
@@ -2301,7 +2373,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 3.1.69;
+				MARKETING_VERSION = 3.1.70;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Franchiz.SpeakLife;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
