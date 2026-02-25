@@ -41,11 +41,16 @@ final class DeclarationFavoriteRepository: DeclarationFavoriteRepositoryProtocol
             }
             entity.lastModified = Date()
             
+            print("📱 Creating DeclarationFavoriteEntry: \(entity.declarationId ?? "unknown") - \(entity.text ?? "")")
+            
             try self.context.save()
+            
+            print("✅ DeclarationFavoriteEntry saved to Core Data: \(entity.declarationId ?? "unknown")")
         }
         
         // Trigger immediate sync for faster perceived performance
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            print("🔄 Requesting CloudKit sync for declaration favorite")
             PersistenceController.shared.requestImmediateSync()
         }
     }

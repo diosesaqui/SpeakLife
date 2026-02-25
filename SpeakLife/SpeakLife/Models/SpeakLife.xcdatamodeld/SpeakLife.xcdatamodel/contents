@@ -44,6 +44,7 @@
         <attribute name="episode" optional="YES" attributeType="Integer 32" usedWithCloudKit="YES"/>
         <attribute name="createdAt" attributeType="Date" defaultDateTimeInterval="0" usedWithCloudKit="YES"/>
         <attribute name="lastModified" attributeType="Date" defaultDateTimeInterval="0" usedWithCloudKit="YES"/>
+        <attribute name="dateFavorited" optional="YES" attributeType="Date" usedWithCloudKit="YES"/>
         <attribute name="id" optional="YES" attributeType="UUID" usedWithCloudKit="YES"/>
         <fetchIndex name="byAudioId">
             <fetchIndexElement property="audioId" type="Binary" order="ascending"/>

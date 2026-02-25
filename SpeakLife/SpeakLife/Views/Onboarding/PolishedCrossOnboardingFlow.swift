@@ -127,10 +127,10 @@ struct PolishedCrossOnboardingFlow: View {
                 .tag(PolishedCrossTab.notification)
                 
                 // Screen 13: Complete
-                CompletionScreen(size: geometry.size) {
-                    completeOnboarding()
-                }
-                .tag(PolishedCrossTab.complete)
+//                CompletionScreen(size: geometry.size) {
+//                    completeOnboarding()
+//                }
+//                .tag(PolishedCrossTab.complete)
             }
             .frame(width: geometry.size.width)
             .ignoresSafeArea()

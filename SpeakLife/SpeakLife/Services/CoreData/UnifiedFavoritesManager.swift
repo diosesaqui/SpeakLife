@@ -61,7 +61,13 @@ final class UnifiedFavoritesManager: ObservableObject {
         self.audioFavoriteRepository = audioFavoriteRepository
         
         setupObservers()
-        loadAllFavorites()
+        // Defer initial load to avoid blocking UI initialization
+        Task(priority: .userInitiated) {
+            try? await Task.sleep(nanoseconds: 500_000_000) // 0.5 second delay
+            await MainActor.run {
+                self.loadAllFavorites()
+            }
+        }
     }
     
     // MARK: - Setup
@@ -73,7 +79,7 @@ final class UnifiedFavoritesManager: ObservableObject {
             journalRepository.observeAll().map { _ in () },
             declarationFavoriteRepository.observeAll().map { _ in () }
         )
-        .debounce(for: .milliseconds(300), scheduler: updateQueue)
+        .debounce(for: .milliseconds(500), scheduler: updateQueue)  // Balanced debounce for responsiveness
         .sink { [weak self] _ in
             self?.updateDeclarationFavorites()
         }
@@ -81,7 +87,7 @@ final class UnifiedFavoritesManager: ObservableObject {
         
         // Observe audio favorites with debouncing
         audioFavoriteRepository.observeAll()
-            .debounce(for: .milliseconds(300), scheduler: updateQueue)
+            .debounce(for: .milliseconds(500), scheduler: updateQueue)  // Balanced debounce for responsiveness
             .sink { [weak self] entries in
                 self?.updateAudioFavorites(entries)
             }
@@ -89,6 +95,7 @@ final class UnifiedFavoritesManager: ObservableObject {
     }
     
     private func loadAllFavorites() {
+        print("\n🔄 ===== UnifiedFavoritesManager.loadAllFavorites =====")
         isLoading = true
         Task {
             await updateDeclarationFavoritesAsync()
@@ -96,6 +103,10 @@ final class UnifiedFavoritesManager: ObservableObject {
             
             await MainActor.run {
                 self.isLoading = false
+                print("🔄 Favorites loaded. Declaration count: \(self.declarationFavorites.count)")
+                for fav in self.declarationFavorites {
+                    print("  - \(fav.text) (category: \(fav.category.rawValue))")
+                }
             }
         }
     }
@@ -110,10 +121,14 @@ final class UnifiedFavoritesManager: ObservableObject {
     
     @MainActor
     private func updateDeclarationFavoritesAsync() async {
+        // Use optimized batch fetch for better performance
+        let batchResult = await BatchFetchCoordinator.shared.fetchAllFavoritesOptimized()
+        
+        // Update declarations from batch result
+        var allFavorites = batchResult.declarations
+        
+        // Also fetch myOwn favorites separately if needed
         do {
-            var allFavorites: [Declaration] = []
-            
-            // Get Core Data favorites (affirmations and journals)
             let favoriteAffirmations = try await affirmationRepository.fetchFavorites()
             let favoriteJournals = try await journalRepository.fetchFavorites()
             
@@ -143,13 +158,6 @@ final class UnifiedFavoritesManager: ObservableObject {
                     contentType: .journal,
                     lastEdit: entry.lastModified
                 )
-                allFavorites.append(declaration)
-            }
-            
-            // Get standalone declaration favorites (legacy non-myOwn favorites)
-            let standaloneFavorites = try await declarationFavoriteRepository.fetch(predicate: nil)
-            for entry in standaloneFavorites {
-                let declaration = declarationFavoriteRepository.toDeclaration(entry)
                 allFavorites.append(declaration)
             }
             
@@ -195,6 +203,70 @@ final class UnifiedFavoritesManager: ObservableObject {
         return declarationFavorites.contains { $0.id == declaration.id }
     }
     
+    /// Set declaration favorite status explicitly (doesn't toggle, uses declaration.isFavorite)
+    func setDeclarationFavorite(_ declaration: Declaration, retryCount: Int = 3) {
+        print("\n📦 ===== UnifiedFavoritesManager.setDeclarationFavorite =====")
+        print("📦 Declaration ID: \(declaration.id)")
+        print("📦 Declaration isFavorite: \(declaration.isFavorite ?? false)")
+        print("📦 Declaration category: \(declaration.category.rawValue)")
+        
+        Task { @MainActor in
+            var lastError: Error?
+            
+            for attempt in 1...retryCount {
+                do {
+                    if declaration.category == .myOwn {
+                        print("📦 MyOwn category - skipping (handled elsewhere)")
+                        return
+                    }
+                    
+                    // For non-myOwn, use the declaration's isFavorite status
+                    let shouldBeFavorite = declaration.isFavorite ?? false
+                    print("📦 Should be favorite: \(shouldBeFavorite)")
+                    
+                    if shouldBeFavorite {
+                        // Should be favorited - add if not exists
+                        if let existing = try await declarationFavoriteRepository.findByDeclarationId(declaration.id) {
+                            print("📦 ✓ Already exists in Core Data with ID: \(existing.id?.uuidString ?? "no-id")")
+                        } else {
+                            print("📦 ➕ Adding NEW favorite to Core Data...")
+                            let created = try await declarationFavoriteRepository.createFromDeclaration(declaration)
+                            print("📦 ✅ Created DeclarationFavoriteEntry with ID: \(created.id?.uuidString ?? "no-id")")
+                        }
+                    } else {
+                        // Should not be favorited - remove if exists
+                        if let existing = try await declarationFavoriteRepository.findByDeclarationId(declaration.id) {
+                            print("📦 ➖ Removing from Core Data (ID: \(existing.id?.uuidString ?? "no-id"))...")
+                            try await declarationFavoriteRepository.delete(existing)
+                            print("📦 ✅ Removed from Core Data")
+                        } else {
+                            print("📦 ✓ Already not in Core Data favorites")
+                        }
+                    }
+                    
+                    // Success - clear error and return
+                    self.errorMessage = nil
+                    return
+                    
+                } catch {
+                    lastError = error
+                    
+                    // If not the last attempt, wait and retry with exponential backoff
+                    if attempt < retryCount {
+                        let delay = UInt64(attempt * 500_000_000) // Exponential backoff
+                        try? await Task.sleep(nanoseconds: delay)
+                    }
+                }
+            }
+            
+            // All retries failed
+            if let error = lastError {
+                self.errorMessage = UnifiedFavoritesError.toggleFailed(error).localizedDescription
+                print("❌ Set declaration favorite failed after \(retryCount) attempts: \(error)")
+            }
+        }
+    }
+    
     /// Toggle declaration favorite status with retry logic
     func toggleDeclarationFavorite(_ declaration: Declaration, retryCount: Int = 3) {
         Task { @MainActor in
@@ -215,12 +287,19 @@ final class UnifiedFavoritesManager: ObservableObject {
                         }
                     } else {
                         // Handle non-myOwn declarations through standalone favorites
+                        print("🔍 Handling non-myOwn declaration: \(declaration.text)")
+                        print("   Category: \(declaration.category.rawValue)")
+                        print("   ID: \(declaration.id)")
+                        
                         if let existing = try await declarationFavoriteRepository.findByDeclarationId(declaration.id) {
                             // Remove favorite
+                            print("❌ Removing existing favorite")
                             try await declarationFavoriteRepository.delete(existing)
                         } else {
                             // Add favorite
-                            _ = try await declarationFavoriteRepository.createFromDeclaration(declaration)
+                            print("➕ Adding new favorite")
+                            let created = try await declarationFavoriteRepository.createFromDeclaration(declaration)
+                            print("✅ Created DeclarationFavoriteEntry with ID: \(created.id?.uuidString ?? "no-id")")
                         }
                     }
                     

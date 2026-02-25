@@ -116,9 +116,11 @@ final class ContentCategorizationService: ObservableObject {
     // MARK: - iOS Initialization
     
     func initializeForIOS() {
-        isModelLoaded = true
-        lastUpdateDate = Date()
-        print("✅ iOS content categorization ready (using heuristic-based analysis)")
+        DispatchQueue.main.async { [weak self] in
+            self?.isModelLoaded = true
+            self?.lastUpdateDate = Date()
+            print("✅ iOS content categorization ready (using heuristic-based analysis)")
+        }
     }
     
     // MARK: - Content Categorization

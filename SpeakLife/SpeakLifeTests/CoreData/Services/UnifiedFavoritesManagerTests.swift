@@ -104,6 +104,10 @@ class MockJournalRepository: JournalRepositoryProtocol {
 }
 
 class MockDeclarationFavoriteRepository: DeclarationFavoriteRepositoryProtocol {
+    func fetchByContentType(_ contentType: String) async throws -> [SpeakLife.DeclarationFavoriteEntry] {
+        return []
+    }
+    
     var entries: [DeclarationFavoriteEntry] = []
     private let context = PersistenceController(inMemory: true).container.viewContext
     

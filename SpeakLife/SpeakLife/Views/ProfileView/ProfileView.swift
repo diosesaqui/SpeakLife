@@ -120,9 +120,6 @@ struct ProfileView: View {
                     .sheet(isPresented: $showShareSheet, content: {
                         ShareSheet(activityItems: ["Check out SpeakLife - Bible Affirmations app that'll transform your life!", url as Any])
                     })
-                    .sheet(isPresented: $showSpiritualGrowth) {
-                        SpiritualGrowthView()
-                    }
                     
                     Section(header: Text("Other".uppercased()).font(.caption)) {
                         privacyPolicyRow
@@ -153,6 +150,9 @@ struct ProfileView: View {
             }
             .foregroundColor(.white)
         )
+        .sheet(isPresented: $showSpiritualGrowth) {
+            SpiritualGrowthView()
+        }
         .alert(isPresented: $declarationStore.errorAlert) {
             Alert(
                 title: Text("Failed to register notifications", comment: "notifications not enough"),
@@ -207,7 +207,8 @@ struct ProfileView: View {
             }
         }
     }
-    
+
+
     
     @MainActor
     private var remindersRow: some View {
@@ -366,14 +367,11 @@ struct ProfileView: View {
     
     @MainActor
     private var dailyBurstStatsRow: some View {
-        Button(action: {
-            showSpiritualGrowth = true
-            Analytics.logEvent("Profile_DailyBurstStats_Tapped", parameters: nil)
-        }) {
+        HStack {
+            Image(systemName: "chart.line.uptrend.xyaxis")
+                .foregroundColor(Constants.DAMidBlue)
+            
             HStack {
-                Image(systemName: "chart.line.uptrend.xyaxis")
-                    .foregroundColor(Constants.DAMidBlue)
-                
                 Text("Daily Burst Stats")
                 
                 Spacer()
@@ -388,6 +386,14 @@ struct ProfileView: View {
                 Image(systemName: "chevron.right")
                     .font(.caption)
                     .foregroundColor(.gray)
+            }
+        }
+        .contentShape(Rectangle())
+        .onTapGesture {
+            // Add slight delay to ensure proper state transition
+            DispatchQueue.main.async {
+                showSpiritualGrowth = true
+                Analytics.logEvent("Profile_DailyBurstStats_Tapped", parameters: nil)
             }
         }
     }

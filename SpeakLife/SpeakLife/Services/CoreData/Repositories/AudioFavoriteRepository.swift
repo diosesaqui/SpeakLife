@@ -40,11 +40,16 @@ final class AudioFavoriteRepository: AudioFavoriteRepositoryProtocol {
             }
             entity.lastModified = Date()
             
+            print("📱 Creating AudioFavoriteEntry: \(entity.audioId) - \(entity.title)")
+            
             try self.context.save()
+            
+            print("✅ AudioFavoriteEntry saved to Core Data: \(entity.audioId)")
         }
         
         // Trigger immediate sync for faster perceived performance
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            print("🔄 Requesting CloudKit sync for audio favorite")
             PersistenceController.shared.requestImmediateSync()
         }
     }

@@ -90,13 +90,6 @@ final class PersistenceController {
             let options = NSPersistentCloudKitContainerOptions(containerIdentifier: "iCloud.com.franchiz.speaklife")
             options.databaseScope = .private
             
-            // IMPORTANT: Check if we're in production (TestFlight/App Store) or development
-            #if DEBUG
-            print("Using CloudKit DEVELOPMENT environment")
-            #else
-            print("Using CloudKit PRODUCTION environment")
-            #endif
-            
             description.cloudKitContainerOptions = options
         }
         
@@ -114,8 +107,8 @@ final class PersistenceController {
                 print("Store URL: \(storeDescription.url?.path ?? "No URL")")
                 print("CloudKit enabled: \(storeDescription.cloudKitContainerOptions != nil)")
                 
-                // CRITICAL: For production builds, we need to ensure schema is initialized
-                #if !DEBUG
+                // Initialize CloudKit schema check only in debug or if needed
+                #if DEBUG
                 self.initializeCloudKitSchema()
                 #endif
                 
@@ -138,9 +131,12 @@ final class PersistenceController {
         // Setup background sync optimization
         setupBackgroundSyncOptimization()
         
-        // Force initial CloudKit import check on fresh install with longer delay
-        DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) {
-            self.checkForInitialCloudKitImport()
+        // Check CloudKit import in background to avoid blocking UI
+        Task(priority: .background) {
+            try? await Task.sleep(nanoseconds: 5_000_000_000) // 5 seconds
+            await MainActor.run {
+                self.checkForInitialCloudKitImport()
+            }
         }
     }
     
@@ -170,15 +166,18 @@ final class PersistenceController {
             print("CloudKit remote change notification received - \(notification.userInfo ?? [:])")
         }
         
+        // More detailed CloudKit event logging
         NotificationCenter.default.addObserver(
-            forName: NSNotification.Name("NSPersistentCloudKitContainerEventChangedNotification"),
-            object: container,
-            queue: .main
-        ) { notification in
-            if let event = notification.userInfo?["event"] as? NSPersistentCloudKitContainer.Event {
-                self.logCloudKitEvent(event)
-            }
-        }
+            self,
+            selector: #selector(handleCloudKitEvent(_:)),
+            name: NSNotification.Name("NSPersistentCloudKitContainer.eventChangedNotification"),
+            object: nil
+        )
+    }
+    
+    @objc private func handleCloudKitEvent(_ notification: Notification) {
+        guard let event = notification.userInfo?["event"] as? NSPersistentCloudKitContainer.Event else { return }
+        logCloudKitEvent(event)
     }
     
     private func logCloudKitEvent(_ event: NSPersistentCloudKitContainer.Event) {
@@ -294,14 +293,19 @@ final class PersistenceController {
                 // Check if we have any local data
                 let journalRequest = JournalEntry.fetchRequest()
                 let affirmationRequest = AffirmationEntry.fetchRequest()
+                let audioFavoriteRequest = AudioFavoriteEntry.fetchRequest()
+                let declarationFavoriteRequest = DeclarationFavoriteEntry.fetchRequest()
                 
                 do {
                     let journalCount = try context.count(for: journalRequest)
                     let affirmationCount = try context.count(for: affirmationRequest)
+                    let audioFavoriteCount = try context.count(for: audioFavoriteRequest)
+                    let declarationFavoriteCount = try context.count(for: declarationFavoriteRequest)
                     
                     print("Local data count - Journals: \(journalCount), Affirmations: \(affirmationCount)")
+                    print("Favorite data count - Audio: \(audioFavoriteCount), Declarations: \(declarationFavoriteCount)")
                     
-                    if journalCount == 0 && affirmationCount == 0 {
+                    if journalCount == 0 && affirmationCount == 0 && audioFavoriteCount == 0 && declarationFavoriteCount == 0 {
                         print("No local data found - forcing CloudKit import...")
                         
                         self.importAttempts += 1
@@ -487,30 +491,21 @@ final class PersistenceController {
     
     // MARK: - CloudKit Schema Initialization
     private func initializeCloudKitSchema() {
-        print("Initializing CloudKit schema for production")
-        
-        // This forces Core Data to initialize the CloudKit schema
-        // by performing a simple operation
-        do {
-            let backgroundContext = container.newBackgroundContext()
-            backgroundContext.perform {
-                // Try to count existing records - this ensures schema exists
-                let journalRequest = JournalEntry.fetchRequest()
-                journalRequest.fetchLimit = 1
+        // Simple schema check - just verify entities can be queried
+        let backgroundContext = container.newBackgroundContext()
+        backgroundContext.perform {
+            do {
+                // Perform a simple count to ensure entities are recognized
+                _ = try backgroundContext.count(for: JournalEntry.fetchRequest())
+                _ = try backgroundContext.count(for: AffirmationEntry.fetchRequest())
+                _ = try backgroundContext.count(for: DeclarationFavoriteEntry.fetchRequest())
+                _ = try backgroundContext.count(for: AudioFavoriteEntry.fetchRequest())
                 
-                let affirmationRequest = AffirmationEntry.fetchRequest()
-                affirmationRequest.fetchLimit = 1
-                
-                do {
-                    _ = try backgroundContext.count(for: journalRequest)
-                    _ = try backgroundContext.count(for: affirmationRequest)
-                    print("CloudKit schema check completed")
-                } catch {
-                    print("CloudKit schema initialization error: \(error)")
-                }
+                print("CloudKit schema check completed")
+            } catch {
+                print("CloudKit schema initialization check failed: \(error)")
+                // Non-fatal - schema will be created when first entity is saved
             }
-        } catch {
-            print("Failed to initialize CloudKit schema: \(error)")
         }
     }
     

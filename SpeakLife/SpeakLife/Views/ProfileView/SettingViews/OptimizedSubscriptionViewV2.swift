@@ -168,12 +168,12 @@ struct OptimizedSubscriptionViewV2: View {
     
     private var heroSection: some View {
         VStack(spacing: 12) {
-            Text("Respond First. Win Faster.")
+            Text("Renew Your Mind. Respond Like Jesus")
                 .font(.system(size: 24, weight: .bold))
                 .foregroundColor(.white)
                 .multilineTextAlignment(.center)
             
-            Text("If you change your response, you change your outcome.")
+            Text("Give God’s Word daily attention and grow stronger in Christ.")
                 .font(.system(size: 16, weight: .regular))
                 .foregroundColor(.white.opacity(0.8))
                 .multilineTextAlignment(.center)
@@ -199,7 +199,7 @@ struct OptimizedSubscriptionViewV2: View {
         VStack(spacing: 20) {
             ValuePropRow(
                 icon: "brain.head.profile",
-                title: "Renew Your Mind Daily",
+                title: "Renew Your Mind in",
                 description: "Build the reflex to respond like Jesus under pressure."
             )
             
@@ -211,13 +211,13 @@ struct OptimizedSubscriptionViewV2: View {
             
             ValuePropRow(
                 icon: "waveform",
-                title: "Daily Victory Conditioning",
+                title: "Daily Faith Conditioning",
                 description: "Reinforce truth daily until it becomes instinct."
             )
             
             ValuePropRow(
                 icon: "chart.line.uptrend.xyaxis",
-                title: "Grow your Spiritual Muscles",
+                title: "Strengthen your Spiritual Discipline",
                 description: "Watch anxiety shrink and boldness grow."
             )
         }
@@ -225,7 +225,7 @@ struct OptimizedSubscriptionViewV2: View {
     
     private var socialProofSection: some View {
         VStack(spacing: 12) {
-            Text("Join 100,000+ believers transforming their minds")
+            Text("Join 100,000+ believers transforming their minds in Christ")
                 .font(.system(size: 14, weight: .medium))
                 .foregroundColor(.white.opacity(0.9))
                 .multilineTextAlignment(.center)

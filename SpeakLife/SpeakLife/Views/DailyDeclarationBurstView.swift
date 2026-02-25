@@ -327,14 +327,14 @@ struct DailyDeclarationBurstView: View {
                 
                 VStack(spacing: 20) {
                     Text(morningDeclarations[currentDeclarationIndex].0)
-                        .font(.system(size: 28, weight: .medium))
+                        .font(.system(size: 28, weight: .bold, design: .serif))
                         .foregroundColor(.white)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 30)
                         .opacity(declarationOpacity)
                     
                     Text(morningDeclarations[currentDeclarationIndex].1)
-                        .font(.system(size: 14))
+                        .font(.system(size: 14, weight: .medium, design: .rounded))
                         .foregroundColor(.white.opacity(0.6))
                         .opacity(declarationOpacity)
                 }
@@ -884,6 +884,9 @@ struct DailyDeclarationBurstView: View {
                 declarationCount: morningDeclarations.count,
                 timeSpent: timeSpent
             )
+            
+            // Automatically complete the daily burst task
+            streakViewModel.completeTask(taskId: "complete_daily_burst")
             
             withAnimation(.spring()) {
                 showCompletionView = true

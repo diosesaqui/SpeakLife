@@ -285,15 +285,15 @@ struct TaskLibrary {
     // MARK: - Foundation Phase Tasks (Days 1-7)
     static let foundationTasks: [DailyTask] = [
         DailyTask(
-            id: "speak_affirmation",
-            title: "Speak a Favorited Affirmation",
-            description: "Declare one of your saved affirmations out loud",
-            icon: "speaker.wave.3.fill",
+            id: "complete_daily_burst",
+            title: "Complete Daily Burst",
+            description: "Speak your 7 daily declarations to release your faith",
+            icon: "bolt.circle.fill",
             category: .foundation,
             type: .speak,
             difficulty: .beginner,
             minimumStreakDay: 1,
-            estimatedMinutes: 2
+            estimatedMinutes: 3
         ),
         DailyTask(
             id: "read_devotional",
@@ -363,9 +363,9 @@ struct TaskLibrary {
                 personalizedTask.description = "Spend time in God's Word focusing on \(formatCategoryName(primaryCategory))"
             }
             
-        case "speak_affirmation":
+        case "complete_daily_burst":
             if let primaryCategory = topCategories.first {
-                personalizedTask.description = "Declare a \(formatCategoryName(primaryCategory)) affirmation out loud"
+                personalizedTask.description = "Experience your 7 daily declarations with focus on \(formatCategoryName(primaryCategory))"
             }
             
         case "journal_insight":

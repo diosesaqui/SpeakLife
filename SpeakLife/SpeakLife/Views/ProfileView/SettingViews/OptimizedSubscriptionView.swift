@@ -366,7 +366,7 @@ struct OptimizedSubscriptionView: View {
             guard let yearlyProduct = subscriptionStore.currentOfferedPremium else {
                 return "First 3 days on us, then $39.99 per year"
             }
-            return "First 3 days on us, then \(yearlyProduct.displayPrice) per year"
+            return "Renew Your Mind. Respond Like Jesus"
         } else {
             guard let monthlyProduct = subscriptionStore.currentOfferedPremiumMonthly else {
                 return "$9.99/mo"

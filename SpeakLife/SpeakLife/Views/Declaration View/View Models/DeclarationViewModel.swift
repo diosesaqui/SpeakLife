@@ -43,6 +43,9 @@ final class DeclarationViewModel: ObservableObject {
     // Track notification-triggered declarations to prevent overrides
     private var isProcessingNotification = false
     
+    // Add UnifiedFavoritesManager
+    private let unifiedFavoritesManager = UnifiedFavoritesManager()
+    
     @Published var speaklifeCategories: [DeclarationCategory] = DeclarationCategory.categoryOrder
     
     @Published var allcategories: [DeclarationCategory] = DeclarationCategory.allCategories
@@ -121,6 +124,8 @@ final class DeclarationViewModel: ObservableObject {
     
     private let notificationManager: NotificationManager
     
+    private var cancellables = Set<AnyCancellable>()
+    
     // MARK: - Init(s)
     
     init(apiService: APIService,
@@ -136,7 +141,17 @@ final class DeclarationViewModel: ObservableObject {
         ) { [weak self] _ in
             // CloudKit import completed - refresh data
             self?.fetchDeclarations()
+            // Also refresh favorites from Core Data
+            self?.refreshFavoritesFromCoreData()
         }
+        
+        // Observe favorites from UnifiedFavoritesManager
+        unifiedFavoritesManager.$declarationFavorites
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] coreDataFavorites in
+                self?.updateFavoritesFromCoreData(coreDataFavorites)
+            }
+            .store(in: &cancellables)
         
         // Clean up duplicates on startup if using CoreDataAPIService
         if let coreDataService = service as? CoreDataAPIService {
@@ -145,16 +160,21 @@ final class DeclarationViewModel: ObservableObject {
             }
         }
         
-        fetchSelectedCategories() { [weak self] in
-            self?.cleanUpSelectedCategories() { [weak self] _ in
-                guard let self = self else { return }
-                if general.isEmpty {
-                    let destiny = self.allDeclarations.filter({ $0.category == .destiny })
-                    let identity = self.allDeclarations.filter({ $0.category == .identity })
-                    let love = self.allDeclarations.filter({ $0.category == .love })
-                    general = destiny + identity + love
+        // Defer initial data loading to prevent blocking UI
+        Task(priority: .userInitiated) {
+            await MainActor.run {
+                self.fetchSelectedCategories() { [weak self] in
+                    self?.cleanUpSelectedCategories() { [weak self] _ in
+                        guard let self = self else { return }
+                        if general.isEmpty {
+                            let destiny = self.allDeclarations.filter({ $0.category == .destiny })
+                            let identity = self.allDeclarations.filter({ $0.category == .identity })
+                            let love = self.allDeclarations.filter({ $0.category == .love })
+                            general = destiny + identity + love
+                        }
+                        self.fetchDeclarations(isInitialLoad: true)
+                    }
                 }
-                self.fetchDeclarations(isInitialLoad: true)
             }
         }
     }
@@ -193,6 +213,9 @@ final class DeclarationViewModel: ObservableObject {
             
             self.favorites = self.getFavorites()
             self.createOwn = self.getCreateOwn()
+            
+            // Also ensure Core Data favorites are loaded
+            self.refreshFavoritesFromCoreData()
             
             // Sync initial favorites to widget
             let favoriteTexts = self.favorites.map { $0.text }
@@ -258,16 +281,42 @@ final class DeclarationViewModel: ObservableObject {
     // MARK: - Favorites
     
     func favorite(declaration: Declaration) {
-        print("💖 DeclarationViewModel: Toggling favorite for:", declaration.text)
+        print("\n💖 ========== FAVORITE DEBUG ==========")
+        print("💖 Declaration text: \(declaration.text)")
+        print("💖 Declaration ID: \(declaration.id)")
+        print("💖 Declaration category: \(declaration.category.rawValue)")
         
         guard let indexOf = declarations.firstIndex(where: { $0.id == declaration.id } ) else {
-            print("❌ Declaration not found in current declarations")
+            print("❌ Declaration not found in current declarations array")
             return
         }
         
+        // Set the toggling flag to prevent observer updates
+        isTogglingFavorite = true
+        
         let wasFavorite = declarations[indexOf].isFavorite ?? false
         declarations[indexOf].isFavorite = !wasFavorite
-        print("   Was favorite:", wasFavorite, "Now:", !wasFavorite)
+        print("💖 Was favorite: \(wasFavorite) → Now: \(!wasFavorite)")
+        
+        // Save to Core Data for CloudKit sync (non-myOwn declarations)
+        if declaration.category != .myOwn {
+            print("💖 Non-myOwn category, saving to Core Data...")
+            // Use the UnifiedFavoritesManager which already has the repository
+            let updatedDeclaration = declarations[indexOf] // Already has the new favorite status
+            print("💖 Updated declaration isFavorite: \(updatedDeclaration.isFavorite ?? false)")
+            
+            // Use setDeclarationFavorite which respects the declaration's isFavorite status
+            unifiedFavoritesManager.setDeclarationFavorite(updatedDeclaration)
+            print("💖 Sent to UnifiedFavoritesManager for Core Data sync")
+        } else {
+            print("💖 MyOwn category, will be saved through regular save mechanism")
+        }
+        print("💖 =====================================\n")
+        
+        // Clear the toggling flag after a short delay to ensure Core Data updates don't interfere
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+            self?.isTogglingFavorite = false
+        }
         
         // Premium delight feedback
         if !wasFavorite {
@@ -332,11 +381,73 @@ final class DeclarationViewModel: ObservableObject {
     func refreshFavorites() {
         // Clear the toggling flag before refresh
         isTogglingFavorite = false
-        favorites = getFavorites()
+        // Get favorites from both JSON and Core Data
+        refreshFavoritesFromCoreData()
     }
     
     private func getFavorites() -> [Declaration] {
-        allDeclarations.filter { $0.isFavorite == true }
+        // Combine favorites from JSON (legacy) and Core Data (new)
+        let jsonFavorites = allDeclarations.filter { $0.isFavorite == true }
+        let coreDataFavorites = unifiedFavoritesManager.declarationFavorites
+        
+        // Merge both sources, avoiding duplicates based on ID
+        var mergedFavorites = jsonFavorites
+        let existingIds = Set(jsonFavorites.map { $0.id })
+        
+        for favorite in coreDataFavorites {
+            if !existingIds.contains(favorite.id) {
+                mergedFavorites.append(favorite)
+            }
+        }
+        
+        return mergedFavorites
+    }
+    
+    private func refreshFavoritesFromCoreData() {
+        // Force UnifiedFavoritesManager to refresh
+        unifiedFavoritesManager.refreshAllFavorites()
+    }
+    
+    private func updateFavoritesFromCoreData(_ coreDataFavorites: [Declaration]) {
+        // Skip updates if we're actively toggling a favorite
+        guard !isTogglingFavorite else { return }
+        
+        // Update allDeclarations with Core Data favorite status
+        for coreDataFavorite in coreDataFavorites {
+            if let index = allDeclarations.firstIndex(where: { $0.id == coreDataFavorite.id }) {
+                // Only update if the favorite status is different
+                if allDeclarations[index].isFavorite != true {
+                    allDeclarations[index].isFavorite = true
+                }
+            }
+        }
+        
+        // Also update declarations array if the current view contains these items
+        for coreDataFavorite in coreDataFavorites {
+            if let index = declarations.firstIndex(where: { $0.id == coreDataFavorite.id }) {
+                // Only update if the favorite status is different
+                if declarations[index].isFavorite != true {
+                    declarations[index].isFavorite = true
+                }
+            }
+        }
+        
+        // Combine with existing JSON favorites
+        let jsonFavorites = allDeclarations.filter { $0.isFavorite == true }
+        var mergedFavorites = jsonFavorites
+        let existingIds = Set(jsonFavorites.map { $0.id })
+        
+        for favorite in coreDataFavorites {
+            if !existingIds.contains(favorite.id) {
+                mergedFavorites.append(favorite)
+            }
+        }
+        
+        favorites = mergedFavorites
+        
+        // Update widget with new favorites
+        let favoriteTexts = favorites.map { $0.text }
+        WidgetDataBridge.shared.syncDeclarationFavorites(favoriteTexts)
     }
     
     
@@ -454,8 +565,12 @@ final class DeclarationViewModel: ObservableObject {
         PremiumHaptics.categoryHaptic(for: category.rawValue)
         AudioDelightManager.shared.playForCategory(category.rawValue)
         
-        // Don't reshuffle if we're already in this category
+        // Check if we're actually changing categories
         let isChangingCategory = selectedCategory != category
+        
+        // Update the selected category IMMEDIATELY
+        self.selectedCategoryString = category.rawValue
+        print("📱 Selecting category: \(category.rawValue), was: \(selectedCategory.rawValue)")
         
         fetchDeclarations(for: category) { [weak self] declarations in
             guard let self = self else { return }
@@ -465,7 +580,6 @@ final class DeclarationViewModel: ObservableObject {
                     let identity = self.allDeclarations.filter({ $0.category == .identity })
                     let love = self.allDeclarations.filter({ $0.category == .love })
                     general = destiny + identity + love
-                    self.selectedCategoryString = category.rawValue
                     self.resetListToTop = true
                     completion(true)
                     return
@@ -474,14 +588,13 @@ final class DeclarationViewModel: ObservableObject {
                 completion(false)
                 return
             }
-            self.selectedCategoryString = category.rawValue
             
-            // Only shuffle if changing categories or if declarations is empty
-            if isChangingCategory || self.declarations.isEmpty {
-                let shuffled = declarations.shuffled()
-                self.declarations = shuffled
-                self.resetListToTop = true
-            }
+            // Always update declarations when explicitly choosing a category
+            // The user tapped it, so they expect it to change
+            let shuffled = declarations.shuffled()
+            self.declarations = shuffled
+            self.resetListToTop = true
+            
             completion(true)
         }
     }

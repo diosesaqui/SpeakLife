@@ -25,11 +25,11 @@ struct PremiumView: View {
                 if appState.offerDiscount {
                     OfferPageView(countdown: $countdown) { }
                 } else {
-                    if subscriptionStore.useEnhancedOnboarding {
-                        OptimizedSubscriptionViewV2() { }
-                    } else {
+//                    if subscriptionStore.useEnhancedOnboarding {
+//                        OptimizedSubscriptionViewV2() { }
+//                    } else {
                         OptimizedSubscriptionView() { }
-                    }
+                  //  }
                 }
             } else {
                 NavigationView {

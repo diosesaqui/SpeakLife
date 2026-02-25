@@ -35,6 +35,7 @@
 		4525D8FA2F4B5CB400571394 /* UnifiedFavoritesManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4525D8F82F4B5CB400571394 /* UnifiedFavoritesManagerTests.swift */; };
 		4525D8FB2F4B5CB400571394 /* FavoritesMigrationServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4525D8F72F4B5CB400571394 /* FavoritesMigrationServiceTests.swift */; };
 		4525D8FC2F4B5CB400571394 /* AudioFavoritesManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4525D8F62F4B5CB400571394 /* AudioFavoritesManagerTests.swift */; };
+		4525D9512F4E903700571394 /* BatchFetchCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4525D94F2F4E903700571394 /* BatchFetchCoordinator.swift */; };
 		452D17D92D703E9E000AB1D1 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = 452D17D82D703E9E000AB1D1 /* FirebaseAnalytics */; };
 		452D17DB2D703E9E000AB1D1 /* FirebaseRemoteConfig in Frameworks */ = {isa = PBXBuildFile; productRef = 452D17DA2D703E9E000AB1D1 /* FirebaseRemoteConfig */; };
 		452D17DD2D703E9E000AB1D1 /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = 452D17DC2D703E9E000AB1D1 /* FirebaseStorage */; };
@@ -389,6 +390,7 @@
 		4525D8F62F4B5CB400571394 /* AudioFavoritesManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioFavoritesManagerTests.swift; sourceTree = "<group>"; };
 		4525D8F72F4B5CB400571394 /* FavoritesMigrationServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FavoritesMigrationServiceTests.swift; sourceTree = "<group>"; };
 		4525D8F82F4B5CB400571394 /* UnifiedFavoritesManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnifiedFavoritesManagerTests.swift; sourceTree = "<group>"; };
+		4525D94F2F4E903700571394 /* BatchFetchCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BatchFetchCoordinator.swift; sourceTree = "<group>"; };
 		452D17E12D725F84000AB1D1 /* RatingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RatingView.swift; sourceTree = "<group>"; };
 		452F6AC92E87BA8200A27856 /* AnalyticsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalyticsService.swift; sourceTree = "<group>"; };
 		452F6ACB2E87CD3F00A27856 /* AINotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AINotificationService.swift; sourceTree = "<group>"; };
@@ -784,6 +786,14 @@
 			path = Services;
 			sourceTree = "<group>";
 		};
+		4525D9502F4E903700571394 /* PerformanceOptimization */ = {
+			isa = PBXGroup;
+			children = (
+				4525D94F2F4E903700571394 /* BatchFetchCoordinator.swift */,
+			);
+			path = PerformanceOptimization;
+			sourceTree = "<group>";
+		};
 		452F6AD22E87CD3F00A27856 /* ML */ = {
 			isa = PBXGroup;
 			children = (
@@ -1031,6 +1041,7 @@
 		4597E2322E419CEA009D6C66 /* CoreData */ = {
 			isa = PBXGroup;
 			children = (
+				4525D9502F4E903700571394 /* PerformanceOptimization */,
 				4525D8E12F4AC18500571394 /* UnifiedFavoritesManager.swift */,
 				4597E2282E419CEA009D6C66 /* Migration */,
 				4597E22A2E419CEA009D6C66 /* Protocols */,
@@ -1039,6 +1050,7 @@
 				4597E2562E41C181009D6C66 /* CloudKitSyncMonitor.swift */,
 				4597E2302E419CEA009D6C66 /* CoreDataAPIService.swift */,
 				4597E2312E419CEA009D6C66 /* PersistenceController.swift */,
+				CC406F19EF64575C52B3CF43 /* PerformanceOptimization */,
 			);
 			name = CoreData;
 			path = SpeakLife/Services/CoreData;
@@ -1647,6 +1659,13 @@
 			path = Tracker;
 			sourceTree = "<group>";
 		};
+		CC406F19EF64575C52B3CF43 /* PerformanceOptimization */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = PerformanceOptimization;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -1907,6 +1926,7 @@
 				7AA8707F28DACC8300134ADB /* NotificationManager.swift in Sources */,
 				7AA870E028DACCB700134ADB /* WidgetScene.swift in Sources */,
 				451AECE92E4EE7A000C1490E /* BootcampModels.swift in Sources */,
+				4525D9512F4E903700571394 /* BatchFetchCoordinator.swift in Sources */,
 				458BBE702D1F8A3D0035985F /* AudioFiles.swift in Sources */,
 				457CD3A82E8508F300F435EC /* SectionableContent.swift in Sources */,
 				457CD3A92E8508F300F435EC /* GenericContentCell.swift in Sources */,
@@ -2310,7 +2330,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = SpeakLife/SpeakLife.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 957;
+				CURRENT_PROJECT_VERSION = 965;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_ASSET_PATHS = "\"SpeakLife/Preview Content\"";
 				DEVELOPMENT_TEAM = 652R6A63L8;
@@ -2352,7 +2372,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = SpeakLife/SpeakLife.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 957;
+				CURRENT_PROJECT_VERSION = 965;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_ASSET_PATHS = "\"SpeakLife/Preview Content\"";
 				DEVELOPMENT_TEAM = 652R6A63L8;

@@ -97,20 +97,20 @@ enum DeclarationCategory: String, CaseIterable, Identifiable, Codable,  Comparab
         // Tier 3 - Transformation & Victory
         .destiny,
         .warfare,
-        .miracles,
+        //.miracles, // might get rid of these
         .health,
-        .innerHealing,
+        .innerHealing, // might get rid of these
         
         // Tier 4 - Daily Walk
         .obedience,
-        .spiritualGrowth,
+       // .spiritualGrowth, // might get rid of these
         .purity,
         .gratitude,
         
         // Tier 5 - Relationships
         .marriage,
         .parenting,
-        .friendship,
+       // .friendship, // might get rid of these
         
         // Tier 6 - Provision & Protection
         .godsprotection,
@@ -120,13 +120,13 @@ enum DeclarationCategory: String, CaseIterable, Identifiable, Codable,  Comparab
         
         // Tier 7 - Challenges & Struggles
         .anxiety,
-        .fear,
+       // .fear, // might get rid of these
         .hardtimes,
         .addiction,
         
         // Tier 8 - Eternal Perspective
-        .heaven,
-        .confidence,
+//        .heaven, // might get rid of these
+//        .confidence, // might get rid of these
         .genesis,
         .exodus,
         .leviticus,

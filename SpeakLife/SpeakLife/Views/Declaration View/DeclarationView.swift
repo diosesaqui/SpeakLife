@@ -90,12 +90,14 @@ struct DeclarationView: View {
     @ViewBuilder
     private func topButtonsRow(_ geometry: GeometryProxy) -> some View {
         HStack {
-            devotionalButton
+            loveLetterButton
             dailyBurstButton
+            
             speakAloudBannerSection(geometry)
             if !showSpeakAloudBanner {
                 Spacer()
                // timerSection
+                dailyChecklistButton
                 if !subscriptionStore.isPremium {
                     premiumButton
                 }
@@ -105,13 +107,36 @@ struct DeclarationView: View {
     }
     
     @ViewBuilder
-    private var devotionalButton: some View {
+    private var loveLetterButton: some View {
         if !showSpeakAloudBanner {
             Button(action: {
                 activeSheet = .loveLetter
                 Analytics.logEvent("love_letter_opened", parameters: nil)
             }) {
-                Image(systemName: "book.fill")
+                Image(systemName: "envelope.fill")
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundColor(.white)
+                    .frame(width: 44, height: 44)
+                    .background(
+                        Circle()
+                            .fill(Color.black.opacity(0.7))
+                            .overlay(
+                                Circle()
+                                    .stroke(Constants.DAMidBlue.opacity(0.6), lineWidth: 1)
+                            )
+                    )
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private var dailyChecklistButton: some View {
+        if !showSpeakAloudBanner {
+            Button(action: {
+                activeSheet = .dailyChecklist
+                Analytics.logEvent("checkList_opened", parameters: nil)
+            }) {
+                Image(systemName: "checklist")
                     .font(.system(size: 16, weight: .medium))
                     .foregroundColor(.white)
                     .frame(width: 44, height: 44)

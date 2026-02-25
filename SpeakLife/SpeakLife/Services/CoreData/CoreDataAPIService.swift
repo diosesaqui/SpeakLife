@@ -32,8 +32,11 @@ final class CoreDataAPIService: APIService {
         let syncResolver = SyncConflictResolver()
         syncResolver.setupConflictResolution()
         
-        // Perform migration if needed
-        Task {
+        // Perform migration in background with low priority to avoid blocking UI
+        Task(priority: .background) {
+            // Add small delay to let UI initialize first
+            try? await Task.sleep(nanoseconds: 2_000_000_000) // 2 seconds
+            
             do {
                 try await migrationManager.migrateLegacyData()
                 // Track that Core Data service was initialized successfully

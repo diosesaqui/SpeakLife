@@ -26,6 +26,7 @@ extension AudioFavoriteEntry {
     @NSManaged public var episode: Int32
     @NSManaged public var createdAt: Date?
     @NSManaged public var lastModified: Date?
+    @NSManaged public var dateFavorited: Date?
 }
 
 extension AudioFavoriteEntry: Identifiable {

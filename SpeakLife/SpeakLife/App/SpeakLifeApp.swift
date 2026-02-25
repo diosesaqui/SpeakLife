@@ -129,8 +129,10 @@ struct SpeakLifeApp: App {
                         // Background music enabled - starting playback
                     }
                     
-                    // 🚀 Initialize AI services and train initial models
-                    Task {
+                    // 🚀 Initialize AI services and train initial models (deferred to avoid blocking)
+                    Task(priority: .background) {
+                        // Wait for app to fully initialize before training
+                        try? await Task.sleep(nanoseconds: 10_000_000_000) // 10 seconds
                         await CreateMLTrainingPipeline.shared.trainInitialModels()
                     }
                     
