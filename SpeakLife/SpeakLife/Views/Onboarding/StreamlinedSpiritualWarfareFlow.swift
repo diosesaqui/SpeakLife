@@ -99,7 +99,7 @@ struct StreamlinedSpiritualWarfareFlow: View {
                 .tag(StreamlinedSpiritualTab.dailyBurst)
                 
                 // Screen 9: Subscription
-                OptimizedSubscriptionViewV2(callback: {
+                OptimizedSubscriptionView(callback: {
                     // This callback is only called on successful purchase
                     advance()
                 })
@@ -163,6 +163,7 @@ struct StreamlinedSpiritualWarfareFlow: View {
        // Analytics.logEvent("StreamlinedOnboarding_Completed")
         withAnimation {
             appState.isOnboarded = true
+            LifecycleNotificationService.shared.scheduleLifecycleNotifications()
         }
         
         // Start the timer now that onboarding is complete
@@ -192,12 +193,12 @@ struct PatternInterruptScreen: View {
                     .frame(height: size.height * 0.25)
                 
                 VStack(spacing: 24) {
-                    Text("Your Faith Grows Where\nYour Attention Goes.")
+                    Text("Your Faith Is Only As Strong As What You Hear Daily.")
                         .font(.system(size: 28, weight: .bold))
                         .foregroundColor(.white)
                         .multilineTextAlignment(.center)
                     
-                    Text("What you repeatedly focus on\nbecomes your reflex.")
+                    Text("Spiritual strength isn’t automatic. It’s trained.")
                         .font(.system(size: 18))
                         .foregroundColor(.white.opacity(0.8))
                         .multilineTextAlignment(.center)
@@ -706,8 +707,11 @@ struct PersonalSelectionScreen: View {
         .faith,        // Strengthen Faith
         .anxiety,
         .health,
-        .grace,// Anxiety & Worry
-        .fear,         // Fear & Doubt
+        .grace,
+        .identity,
+        .addiction,
+        .destiny,// Anxiety & Worry
+        //.fear,         // Fear & Doubt
         .rest,         // Rest & Peace
         .confidence,   // Confidence
         .joy          // Joy & Happiness

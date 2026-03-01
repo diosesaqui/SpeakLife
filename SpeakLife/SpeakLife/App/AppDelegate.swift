@@ -93,7 +93,9 @@ final class AppDelegate: NSObject, MessagingDelegate {
             if !hasMigratedFCM {
                 UserDefaults.standard.set(true, forKey: "hasMigratedToFCM")
             }
-        }        
+        }
+        // Lifecycle: track app open for lapsed re-engagement detection
+        LifecycleNotificationService.shared.onAppOpen()
         return true
     }
     

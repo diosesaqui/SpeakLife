@@ -268,7 +268,9 @@ struct OptimizedSubscriptionView: View {
             .ignoresSafeArea(.all)
             
             GeometryReader { geometry in
-                if subscriptionStore.showSubscriptionFirst {
+                if subscriptionStore.useHighConversionPaywall {
+                    HighConversionPaywallView(callback: callback)
+                } else if subscriptionStore.showSubscriptionFirst {
                     OptimizedSubscriptionViewV1(size: geometry.size, isPresentedModally: true)
                 } else {
                 ZStack {

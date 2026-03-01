@@ -164,9 +164,9 @@ struct ProfileView: View {
     
     var body: some View {
         profileView
-            .onAppear {
-                Analytics.logEvent(Event.profileTapped, parameters: nil)
-            }
+//            .onAppear {
+//                Analytics.logEvent(Event.profileTapped, parameters: nil)
+//            }
             .environment(\.colorScheme, .dark)
     }
     

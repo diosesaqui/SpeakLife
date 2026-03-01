@@ -10,7 +10,7 @@
         {
             "id": "declarations",
             "displayName": "Mountain-Moving Prayers",
-            "order": 2
+            "order": 5
         },
         {
             "id": "speaklife",
@@ -32,18 +32,18 @@
         {
             "id": "growWithJesus",
             "displayName": "Grow With Jesus",
-            "order": 5
+            "order": 2
         },
         {
             "id": "psalm91",
             "displayName": "Psalm 91",
-            "order": 4,
+            "order": 3,
             "reversed": true
         },
         {
             "id": "divineHealth",
             "displayName": "Divine Health",
-            "order": 3
+            "order": 4
         },
         {
             "id": "magnify",

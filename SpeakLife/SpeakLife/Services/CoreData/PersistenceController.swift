@@ -61,6 +61,13 @@ final class PersistenceController {
     init(inMemory: Bool = false) {
         container = NSPersistentCloudKitContainer(name: "SpeakLife")
         
+        // Detect which CloudKit environment we're in
+        #if DEBUG
+        print("🔵 CloudKit Environment: DEVELOPMENT")
+        #else
+        print("🟢 CloudKit Environment: PRODUCTION")
+        #endif
+        
         if inMemory {
             container.persistentStoreDescriptions.forEach { storeDescription in
                 storeDescription.url = URL(fileURLWithPath: "/dev/null")
@@ -107,10 +114,8 @@ final class PersistenceController {
                 print("Store URL: \(storeDescription.url?.path ?? "No URL")")
                 print("CloudKit enabled: \(storeDescription.cloudKitContainerOptions != nil)")
                 
-                // Initialize CloudKit schema check only in debug or if needed
-                #if DEBUG
+                // Initialize CloudKit schema for all builds to ensure proper sync
                 self.initializeCloudKitSchema()
-                #endif
                 
                 // Check CloudKit account status
                 self.checkCloudKitAccountStatus()

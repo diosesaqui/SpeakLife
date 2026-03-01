@@ -210,8 +210,16 @@ struct SpiritualWarfareOnboardingView: View {
     // MARK: - Private Views
     
     private func subscriptionScene(size: CGSize) -> some View  {
-        OptimizedSubscriptionViewV2 {
-            advance()
+        Group {
+            if subscriptionStore.useHighConversionPaywall {
+                HighConversionPaywallView {
+                    advance()
+                }
+            } else {
+                OptimizedSubscriptionViewV2 {
+                    advance()
+                }
+            }
         }
         .ignoresSafeArea()
     }
@@ -377,6 +385,7 @@ struct SpiritualWarfareOnboardingView: View {
         
         withAnimation {
             appState.isOnboarded = true
+            LifecycleNotificationService.shared.scheduleLifecycleNotifications()
         }
     }
     

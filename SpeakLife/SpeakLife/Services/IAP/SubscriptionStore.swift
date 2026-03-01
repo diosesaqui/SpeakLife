@@ -66,6 +66,9 @@ final class SubscriptionStore: ObservableObject {
     // MARK: - AI Feature Flag
     @Published var enableAIFeatures = false
     
+    // MARK: - High Conversion Paywall Flag
+    @Published var useHighConversionPaywall = false
+    
     @Published var yearlySubscription = ""
     @Published var monthlySubscription = ""
     @Published var discountSubscription = ""
@@ -213,6 +216,9 @@ final class SubscriptionStore: ObservableObject {
         
         // Spiritual Warfare Onboarding Toggle from Remote Config
         useSpiritualWarfareOnboarding = remoteConfig["useSpiritualWarfareOnboarding"].boolValue
+        
+        // High Conversion Paywall Flag
+        useHighConversionPaywall = remoteConfig["useHighConversionPaywall"].boolValue
         
         // AI Feature Flag from Remote Config
         enableAIFeatures = remoteConfig["enableAIFeatures"].boolValue

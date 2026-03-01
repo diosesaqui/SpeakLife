@@ -270,6 +270,7 @@ struct OnboardingView: View  {
     private func dismissOnboarding() {
         withAnimation {
             appState.isOnboarded = true
+            LifecycleNotificationService.shared.scheduleLifecycleNotifications()
             Analytics.logEvent("onBoardingFinished", parameters: nil)
         }
     }

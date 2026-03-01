@@ -7,6 +7,7 @@
 
 import SwiftUI
 import StoreKit
+import FirebaseAnalytics
 
 struct PremiumView: View {
     
@@ -93,6 +94,7 @@ struct PremiumView: View {
                                         metadata: ["source": "premium_view"]
                                     )
                                     showCancelConfirmation = true
+                                    Analytics.logEvent("cancel_button_tapped", parameters: ["source": "premium_view"])
                                 }) {
                                     HStack {
                                         Image(systemName: "xmark.circle")
@@ -120,9 +122,9 @@ struct PremiumView: View {
                     .navigationTitle("Manage Subscription")
                     .navigationBarTitleDisplayMode(.inline)
                     .sheet(isPresented: $showCancelConfirmation) {
-                        CancellationConfirmationView(
+                        CancelInterventionView(
                             isPresented: $showCancelConfirmation,
-                            onCancel: {
+                            onProceedToCancel: {
                                 openURL(URL(string: "itms-apps://buy.itunes.apple.com/WebObjects/MZFinance.woa/wa/DirectAction/manageSubscriptions")!)
                             }
                         )

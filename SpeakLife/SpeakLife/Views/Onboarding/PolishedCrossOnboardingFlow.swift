@@ -115,7 +115,7 @@ struct PolishedCrossOnboardingFlow: View {
                 .tag(PolishedCrossTab.dailyBurst)
                 
                 // Screen 11: Subscription
-                OptimizedSubscriptionViewV2(callback: {
+                OptimizedSubscriptionView(callback: {
                     advance()
                 })
                 .tag(PolishedCrossTab.subscription)
@@ -206,6 +206,7 @@ struct PolishedCrossOnboardingFlow: View {
         ])
         withAnimation {
             appState.isOnboarded = true
+            LifecycleNotificationService.shared.scheduleLifecycleNotifications()
         }
         
         timerViewModel.startTimerAfterOnboarding()

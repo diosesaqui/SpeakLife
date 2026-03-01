@@ -240,8 +240,8 @@ final class UserPreferencesTracker: ObservableObject {
                 headline: "Stop Reacting to Life",
                 subheadline: "Start Responding with God’s Truth.",
                 valueProps: [
-                    "⚡ Faith that holds under pressure",
-                    "❤️ Peace you can access in minutes",
+                    "Faith that holds under pressure",
+                    "Peace you can access in minutes",
                     "A renewed mind, daily",
                     "Spiritual authority in real life"
                 ],

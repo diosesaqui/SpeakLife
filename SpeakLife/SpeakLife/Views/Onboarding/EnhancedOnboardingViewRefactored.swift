@@ -376,6 +376,7 @@ struct EnhancedOnboardingViewRefactored: View {
     private func dismissOnboarding() {
         withAnimation {
             appState.isOnboarded = true
+            LifecycleNotificationService.shared.scheduleLifecycleNotifications()
             appState.hasCompletedEnhancedOnboarding = true
             Analytics.logEvent("EnhancedOnboardingFinished", parameters: nil)
         }

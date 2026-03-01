@@ -61,11 +61,16 @@ final class UnifiedFavoritesManager: ObservableObject {
         self.audioFavoriteRepository = audioFavoriteRepository
         
         setupObservers()
-        // Defer initial load to avoid blocking UI initialization
+        // Load favorites immediately for better responsiveness in production
+        // The app-level initialization will call refreshAllFavorites when ready
         Task(priority: .userInitiated) {
-            try? await Task.sleep(nanoseconds: 500_000_000) // 0.5 second delay
             await MainActor.run {
                 self.loadAllFavorites()
+                
+                // In Production builds, force migration of JSON favorites on first launch
+                #if !DEBUG
+                self.migrateJSONFavoritesToCoreDataIfNeeded()
+                #endif
             }
         }
     }
@@ -92,6 +97,16 @@ final class UnifiedFavoritesManager: ObservableObject {
                 self?.updateAudioFavorites(entries)
             }
             .store(in: &cancellables)
+        
+        // CRITICAL: Listen to CloudKit remote changes for production sync
+        NotificationCenter.default.addObserver(
+            forName: .NSPersistentStoreRemoteChange,
+            object: nil,
+            queue: .main
+        ) { [weak self] notification in
+            print("🔄 CloudKit remote change detected - refreshing favorites")
+            self?.refreshAllFavorites()
+        }
     }
     
     private func loadAllFavorites() {
@@ -415,5 +430,63 @@ final class UnifiedFavoritesManager: ObservableObject {
     /// Refresh all favorites
     func refreshAllFavorites() {
         loadAllFavorites()
+    }
+    
+    // MARK: - Production Migration
+    
+    /// Migrate JSON favorites to Core Data for Production CloudKit sync
+    private func migrateJSONFavoritesToCoreDataIfNeeded() {
+        let migrationKey = "hasMigratedFavoritesToProduction"
+        
+        // Check if we've already migrated
+        guard !UserDefaults.standard.bool(forKey: migrationKey) else {
+            print("✅ Production favorites migration already completed")
+            return
+        }
+        
+        print("🔄 Starting Production favorites migration from JSON to Core Data...")
+        
+        Task {
+            // Load JSON favorites using the service.declarations() method
+            let service = CoreDataAPIService()
+            
+            await withCheckedContinuation { continuation in
+                service.declarations { declarations, error, _ in
+                    // Find all favorited declarations in JSON
+                    let jsonFavorites = declarations.filter { $0.isFavorite == true }
+                    print("📦 Found \(jsonFavorites.count) JSON favorites to migrate")
+                    
+                    // Save each to Core Data
+                    Task {
+                        var migratedCount = 0
+                        
+                        for favorite in jsonFavorites {
+                            // Skip if it's myOwn category (handled by affirmation/journal repos)
+                            guard favorite.category != .myOwn else { continue }
+                            
+                            do {
+                                // Use the repository's createFromDeclaration method which handles duplicates
+                                _ = try await self.declarationFavoriteRepository.createFromDeclaration(favorite)
+                                migratedCount += 1
+                                print("✅ Migrated favorite: \(favorite.text.prefix(30))...")
+                            } catch {
+                                print("⚠️ Failed to migrate favorite: \(error)")
+                            }
+                        }
+                        
+                        // Mark migration as complete
+                        UserDefaults.standard.set(true, forKey: migrationKey)
+                        print("✅ Production favorites migration completed - \(migratedCount) favorites migrated")
+                        
+                        // Refresh to show migrated favorites
+                        await MainActor.run {
+                            self.loadAllFavorites()
+                        }
+                    }
+                    
+                    continuation.resume()
+                }
+            }
+        }
     }
 }

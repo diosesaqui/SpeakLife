@@ -26,7 +26,7 @@ final class DeclarationViewModel: ObservableObject {
         }
     }
     
-    @Published var showVerse = true
+    @Published var showVerse = false
     
     @Published var selectedTab = 0
     
@@ -89,7 +89,7 @@ final class DeclarationViewModel: ObservableObject {
     @Published var createOwn: [Declaration] = [] {
         didSet {
             if selectedCategory == .myOwn {
-                declarations = createOwn.shuffled()
+                declarations = createOwn.filter { $0.contentType == .affirmation }.shuffled()
                 showVerse = false
             }
         }
@@ -544,7 +544,7 @@ final class DeclarationViewModel: ObservableObject {
     }
     
     private func getCreateOwn() -> [Declaration] {
-        allDeclarations.filter { $0.category == .myOwn && $0.contentType == .affirmation }
+        allDeclarations.filter { $0.category == .myOwn }
     }
     
     
