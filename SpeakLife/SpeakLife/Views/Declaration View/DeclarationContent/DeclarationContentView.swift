@@ -215,6 +215,8 @@ struct DeclarationContentView: View {
                     "declaration_index": newIndex,
                     "category": declaration.category
                 ])
+                // Track declaration count for trial experience
+                TrialExperienceService.shared.onDeclarationSpoken()
                 // Reset animations for new declaration
                 completedAnimations.removeAll()
                 animationResetTrigger = UUID()

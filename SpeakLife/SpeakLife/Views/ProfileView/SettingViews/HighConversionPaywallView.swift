@@ -217,7 +217,7 @@ struct HighConversionPaywallView: View {
             HStack(spacing: 10) {
                 planCard(plan: .monthly, topLabel: nil, title: "Monthly", price: monthlyPrice, sub: "per month")
                     .frame(width: cardWidth)
-                planCard(plan: .annual, topLabel: "BEST VALUE", title: "Annual", price: annualPerMonth, sub: "per month · billed \(annualPrice)/yr")
+                planCard(plan: .annual, topLabel: "BEST VALUE", title: "Annual", price: annualPrice, sub: "per month \(annualPerMonth)")
                     .frame(width: cardWidth)
             }
         }

@@ -91,13 +91,7 @@ struct StreamlinedSpiritualWarfareFlow: View {
                 }
                 .tag(StreamlinedSpiritualTab.prePaywallClose)
                 
-                // Screen 8: Daily Burst Introduction
-                OnboardingDailyBurstScreen(
-                    size: geometry.size,
-                    onContinue: advance
-                )
-                .tag(StreamlinedSpiritualTab.dailyBurst)
-                
+                // Screen 8 (dailyBurst skipped - shown post-onboarding instead)
                 // Screen 9: Subscription
                 OptimizedSubscriptionView(callback: {
                     // This callback is only called on successful purchase
@@ -140,9 +134,9 @@ struct StreamlinedSpiritualWarfareFlow: View {
             case .outcomeVisualization:
                 selection = .prePaywallClose
             case .prePaywallClose:
-                selection = .dailyBurst
-            case .dailyBurst:
                 selection = .subscription
+            case .dailyBurst:
+                selection = .subscription // skipped in flow
             case .subscription:
                 selection = .notification
             case .notification:
@@ -165,6 +159,8 @@ struct StreamlinedSpiritualWarfareFlow: View {
             appState.isOnboarded = true
             LifecycleNotificationService.shared.scheduleLifecycleNotifications()
         }
+        // Trigger Daily Declaration Burst immediately after onboarding
+        UserDefaults.standard.set(true, forKey: "showBurstAfterOnboarding")
         
         // Start the timer now that onboarding is complete
        // timerViewModel.startTimerAfterOnboarding()

@@ -226,7 +226,7 @@ struct HomeView: View {
     
     @ViewBuilder
     var homeView: some View {
-        ZStack {
+        ZStack(alignment: .top) {
             TabView(selection: $tabViewModel.selectedTab) {
                 declarationView
                 audioView
@@ -254,6 +254,12 @@ struct HomeView: View {
                 .environment(\.colorScheme, .dark)
                 .ignoresSafeArea()
             
+            // Trial ending banner (Day 3)
+            VStack {
+                TrialEndingBanner()
+                Spacer()
+            }
+
             // Global streak celebration overlay
             if showStreakCelebration {
                 ZStack {
