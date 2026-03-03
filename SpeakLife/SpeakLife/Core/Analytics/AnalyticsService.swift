@@ -1,6 +1,7 @@
 import Foundation
 import FirebaseAnalytics
 import TikTokBusinessSDK
+import FacebookCore
 
 final class AnalyticsService {
     
@@ -259,7 +260,20 @@ final class AnalyticsService {
         
         params.merge(metadata) { (_, new) in new }
         
+        // Firebase
         Analytics.logEvent("trial_started", parameters: params)
+
+        // Meta — StartTrial is the primary optimization event for FB ad campaigns
+        AppEvents.shared.logEvent(
+            AppEvents.Name("StartTrial"),
+            valueToSum: 0.00,
+            parameters: [
+                AppEvents.ParameterName("product_id"): productId as NSString,
+                AppEvents.ParameterName("currency"): "USD" as NSString
+            ]
+        )
+
+        // TikTok
         Event.trackTikTokEngagement(action: "trial_started", category: "subscription")
     }
     
@@ -272,7 +286,24 @@ final class AnalyticsService {
         
         params.merge(metadata) { (_, new) in new }
         
+        // Firebase
         Analytics.logEvent("trial_activated", parameters: params)
+
+        // Meta — trial converted to paid subscription
+        if let price = metadata["price"] as? Double {
+            AppEvents.shared.logEvent(
+                AppEvents.Name("Subscribe"),
+                valueToSum: price,
+                parameters: [
+                    AppEvents.ParameterName("product_id"): productId as NSString,
+                    AppEvents.ParameterName("currency"): "USD" as NSString,
+                    AppEvents.ParameterName("conversion_type"): "trial_to_paid" as NSString
+                ]
+            )
+            AppEvents.shared.logPurchase(amount: price, currency: "USD")
+        }
+
+        // TikTok
         Event.trackTikTokEngagement(action: "trial_activated", category: "subscription")
     }
     
@@ -325,7 +356,13 @@ final class AnalyticsService {
         
         params.merge(metadata) { (_, new) in new }
         
+        // Firebase
         Analytics.logEvent("subscription_renewal", parameters: params)
+
+        // Meta — log renewals as purchases for LTV tracking
+        if let price = price {
+            AppEvents.shared.logPurchase(amount: price, currency: "USD")
+        }
     }
     
     func trackSubscriptionCancelled(productId: String, metadata: [String: Any] = [:]) {
