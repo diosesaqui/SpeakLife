@@ -463,25 +463,30 @@ class TrackingManager {
 class FacebookTrackingViewModel: ObservableObject {
     
     func requestPermission(completion: @escaping (Bool) -> Void) {
+        let currentStatus = ATTrackingManager.trackingAuthorizationStatus
         
-        if ATTrackingManager.trackingAuthorizationStatus == .notDetermined {
+        if currentStatus == .notDetermined {
+            // First time: show the ATT prompt
             TrackingManager.shared.requestTrackingPermission { status in
                 switch status {
-                case .notDetermined:
-                    Settings.shared.isAdvertiserIDCollectionEnabled = false
-                    completion(false)
-                case .restricted:
-                    Settings.shared.isAdvertiserIDCollectionEnabled = false
-                    completion(false)
-                case .denied:
-                    Settings.shared.isAdvertiserIDCollectionEnabled = false
-                    completion(false)
                 case .authorized:
+                    // User granted — enable Meta advertiser ID collection
                     Settings.shared.isAdvertiserIDCollectionEnabled = true
                     completion(true)
-                @unknown default: break
+                case .notDetermined, .restricted, .denied:
+                    Settings.shared.isAdvertiserIDCollectionEnabled = false
+                    completion(false)
+                @unknown default:
+                    Settings.shared.isAdvertiserIDCollectionEnabled = false
+                    completion(false)
                 }
             }
+        } else {
+            // Returning user — ATT already resolved. Sync isAdvertiserIDCollectionEnabled
+            // so Meta doesn't run in limited mode on every re-launch after prior approval.
+            let isAuthorized = currentStatus == .authorized
+            Settings.shared.isAdvertiserIDCollectionEnabled = isAuthorized
+            completion(isAuthorized)
         }
     }
 }

@@ -15,7 +15,6 @@ import AppTrackingTransparency
 import FirebaseMessaging
 import FirebaseRemoteConfigInternal
 import TikTokBusinessSDK
-import AdSupport
 
 final class AppDelegate: NSObject, MessagingDelegate {
     
@@ -26,31 +25,6 @@ final class AppDelegate: NSObject, MessagingDelegate {
     
     override init() {
         FirebaseApp.configure()
-    }
-    
-    // MARK: - ATT (App Tracking Transparency)
-    // Required for Meta to match events & optimize ad campaigns on iOS 14.5+
-    // Without this, Meta Pixel fires but can't be attributed to users — campaigns run blind
-    func requestTrackingAuthorization() {
-        if #available(iOS 14.5, *) {
-            ATTrackingManager.requestTrackingAuthorization { status in
-                DispatchQueue.main.async {
-                    switch status {
-                    case .authorized:
-                        print("✅ ATT authorized — Meta event matching enabled")
-                        // Settings.shared.isAdvertiserIDCollectionEnabled is auto-enabled
-                    case .denied:
-                        print("🔴 ATT denied — Meta running in limited mode")
-                    case .restricted:
-                        print("⚠️ ATT restricted")
-                    case .notDetermined:
-                        print("⚠️ ATT not determined")
-                    @unknown default:
-                        break
-                    }
-                }
-            }
-        }
     }
     
     // Initialize TikTok SDK after ATT permission is handled
@@ -97,12 +71,6 @@ final class AppDelegate: NSObject, MessagingDelegate {
         // Initialize TikTok SDK after a brief delay to not interfere with landing animation
         DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
             self.initializeTikTokSDK()
-        }
-        
-        // Request ATT permission — required for Meta event matching on iOS 14.5+
-        // Without this, Meta cannot attribute ad-driven installs or optimize for events
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-            self.requestTrackingAuthorization()
         }
         
         // Track TikTok app launch (will queue until SDK is ready)
