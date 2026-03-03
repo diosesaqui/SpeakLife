@@ -426,50 +426,88 @@ final class SubscriptionStore: ObservableObject {
     }
 
     func purchase(_ product: Product, paywallName: String = "unknown") async throws -> Transaction? {
-        // Track trial start or purchase initiation
         let priceValue = NSDecimalNumber(decimal: product.price).doubleValue
         let isTrialProduct = product.subscription?.introductoryOffer != nil
-        
-        Analytics.logEvent(isTrialProduct ? "trial_started" : "purchase_initiated", parameters: [
-            "product_id": product.id,
-            "paywall_name": paywallName,
-            "value": priceValue,
-            "currency": product.priceFormatStyle.currencyCode ?? "USD",
-            "has_trial": isTrialProduct
-        ])
-        
+        let currency = product.priceFormatStyle.currencyCode ?? "USD"
+
+        // NOTE: Do NOT fire analytics here — Apple has not confirmed the purchase yet.
+        // All event tracking belongs inside case .success after checkVerified().
+
         let result = try await product.purchase()
 
         switch result {
         case .success(let verification):
             let transaction = try checkVerified(verification)
             await updateCustomerProductStatus()
-            
-            // Analytics tracking with proper revenue
-            AppEvents.shared.logPurchase(amount: priceValue, currency: "USD")
-            
-            // Track with revenue for all analytics platforms
+
+            if isTrialProduct {
+                // ─── TRIAL START ──────────────────────────────────────────────
+                // Fire Meta StartTrial event — $0 value (trial is free)
+                // This is the primary optimization event for Meta ad campaigns
+                AppEvents.shared.logEvent(
+                    AppEvents.Name("StartTrial"),
+                    valueToSum: 0.00,
+                    parameters: [
+                        AppEvents.ParameterName("product_id"): product.id as NSString,
+                        AppEvents.ParameterName("currency"): currency as NSString,
+                        AppEvents.ParameterName("paywall_name"): paywallName as NSString,
+                        AppEvents.ParameterName("predicted_value"): priceValue as NSNumber
+                    ]
+                )
+
+                // Firebase: trial started (correctly placed after Apple confirmation)
+                Analytics.logEvent("trial_started", parameters: [
+                    "product_id": product.id,
+                    "paywall_name": paywallName,
+                    "value": priceValue,
+                    "currency": currency,
+                    "transaction_id": transaction.id
+                ])
+
+                // TikTok
+                Event.trackTikTokEngagement(action: "trial_started", category: "subscription")
+
+            } else {
+                // ─── PAID SUBSCRIPTION (no trial / direct purchase) ───────────
+                // Fire Meta Subscribe event with actual revenue value
+                AppEvents.shared.logEvent(
+                    AppEvents.Name("Subscribe"),
+                    valueToSum: priceValue,
+                    parameters: [
+                        AppEvents.ParameterName("product_id"): product.id as NSString,
+                        AppEvents.ParameterName("currency"): currency as NSString,
+                        AppEvents.ParameterName("paywall_name"): paywallName as NSString
+                    ]
+                )
+
+                // Meta generic purchase (belt + suspenders)
+                AppEvents.shared.logPurchase(amount: priceValue, currency: currency)
+
+                // TikTok
+                Event.trackTikTokPremiumPurchase(value: priceValue, currency: currency)
+            }
+
+            // Firebase: purchase succeeded (fires for both trial and direct)
             Analytics.logEvent(Event.premiumSucceeded, parameters: [
                 "product_id": product.id,
                 "value": priceValue,
-                "currency": "USD",
+                "currency": currency,
                 "transaction_id": transaction.id,
-                "paywall_name": paywallName
+                "paywall_name": paywallName,
+                "is_trial": isTrialProduct
             ])
-            
-            // Track TikTok purchase with revenue
-            Event.trackTikTokPremiumPurchase(value: priceValue, currency: "USD")
-            
-            // Track subscription_started for consistency
+
             Analytics.logEvent("subscription_started", parameters: [
                 "product_id": product.id,
                 "value": priceValue,
-                "currency": "USD",
-                "paywall_name": paywallName
+                "currency": currency,
+                "paywall_name": paywallName,
+                "is_trial": isTrialProduct
             ])
 
             await transaction.finish()
             return transaction
+
         case .userCancelled, .pending:
             Analytics.logEvent("purchase_cancelled", parameters: [
                 "product_id": product.id,
