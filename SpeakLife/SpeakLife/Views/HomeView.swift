@@ -142,6 +142,11 @@ struct HomeView: View {
                                 EmailCaptureView(source: "post_purchase")
                                     .environmentObject(appState)
                             }
+                            .sheet(isPresented: $subscriptionStore.showEmailConfirmAfterPurchase) {
+                                EmailConfirmationView(storedEmail: appState.email)
+                                    .environmentObject(appState)
+                                    .environmentObject(subscriptionStore)
+                            }
                             .sheet(isPresented: $showSubscription, content: {
                                 GeometryReader { proxy in
                                     OptimizedSubscriptionView {
@@ -254,12 +259,21 @@ struct HomeView: View {
                     }
                     UIScrollView.appearance().isScrollEnabled = true
 
-                    // Ask existing premium users for their email on first launch after feature ships.
-                    // Fires once only — guarded by hasShownEmailCapture in UserDefaults.
-                    let alreadyShown = UserDefaults.standard.bool(forKey: "hasShownEmailCapture")
-                    if subscriptionStore.isPremium && appState.needEmail && !alreadyShown {
+                    // Email capture / confirmation for existing premium users.
+                    // Fires once only per path — guarded by separate UserDefaults keys.
+                    if subscriptionStore.isPremium {
+                        let alreadyCaptured    = UserDefaults.standard.bool(forKey: "hasShownEmailCapture")
+                        let alreadyConfirmed   = UserDefaults.standard.bool(forKey: "hasConfirmedPostPurchaseEmail")
+                        let hasStoredEmail     = !appState.email.isEmpty
+
                         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                            subscriptionStore.showEmailCaptureAfterPurchase = true
+                            if hasStoredEmail && !alreadyConfirmed {
+                                // Has email locally → show confirmation popup to tag as post_purchase
+                                subscriptionStore.showEmailConfirmAfterPurchase = true
+                            } else if !hasStoredEmail && !alreadyCaptured {
+                                // No email at all → show capture sheet
+                                subscriptionStore.showEmailCaptureAfterPurchase = true
+                            }
                         }
                     }
                 }

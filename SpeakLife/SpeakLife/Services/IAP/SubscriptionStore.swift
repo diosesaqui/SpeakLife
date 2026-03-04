@@ -47,8 +47,9 @@ final class SubscriptionStore: ObservableObject {
     @Published var isInDevotionalPremium = false
     @AppStorage("lastDevotionalPurchase") var lastDevotionalPurchaseDate: Date?
     
-    // MARK: - Email Capture After Purchase
-    @Published var showEmailCaptureAfterPurchase = false
+    // MARK: - Email Capture / Confirmation After Purchase
+    @Published var showEmailCaptureAfterPurchase = false   // premium, no email stored
+    @Published var showEmailConfirmAfterPurchase = false   // premium, email already stored → confirm + tag post_purchase
 
     @Published var showDevotionalSubscription = false
     @Published var showOneTimeSubscription = false
