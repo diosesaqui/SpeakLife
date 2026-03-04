@@ -253,6 +253,15 @@ struct HomeView: View {
                         appState.firstOpen = false
                     }
                     UIScrollView.appearance().isScrollEnabled = true
+
+                    // Ask existing premium users for their email on first launch after feature ships.
+                    // Fires once only — guarded by hasShownEmailCapture in UserDefaults.
+                    let alreadyShown = UserDefaults.standard.bool(forKey: "hasShownEmailCapture")
+                    if subscriptionStore.isPremium && appState.needEmail && !alreadyShown {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                            subscriptionStore.showEmailCaptureAfterPurchase = true
+                        }
+                    }
                 }
                 .background(Color.clear)
                 .environment(\.colorScheme, .dark)
