@@ -183,6 +183,9 @@
 		45A4A3CF2D86B81900DFCEB7 /* everpresent.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 45A4A3CE2D86B81900DFCEB7 /* everpresent.mp3 */; };
 		45A4A3D12D86B86100DFCEB7 /* washed.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 45A4A3D02D86B86100DFCEB7 /* washed.mp3 */; };
 		45A4A3D32D86B8DB00DFCEB7 /* rainstorm.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 45A4A3D22D86B8DB00DFCEB7 /* rainstorm.mp3 */; };
+		366C715A18394BF6A25222D6 /* eveningmelodrama.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 38BF469E182643469C1EF0BC /* eveningmelodrama.mp3 */; };
+		23723146DBE24C2086D7DEDA /* somewheresunny.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = C2416F9541D34344B5EBDCE0 /* somewheresunny.mp3 */; };
+		C9BADD252A1743E09FD8CBC0 /* heartwarming.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 9D2E9D7C77DA4CDF9D654B92 /* heartwarming.mp3 */; };
 		45A4A3D62D8917D600DFCEB7 /* TestimonyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45A4A3D52D8917D000DFCEB7 /* TestimonyView.swift */; };
 		45AE76712D7960BD0037EE12 /* FirebaseMessaging in Frameworks */ = {isa = PBXBuildFile; productRef = 45AE76702D7960BD0037EE12 /* FirebaseMessaging */; };
 		45B02FD02E57A48D00D12033 /* EmailMarketingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45B02FCE2E57A48D00D12033 /* EmailMarketingService.swift */; };
@@ -541,6 +544,9 @@
 		45A4A3CE2D86B81900DFCEB7 /* everpresent.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = everpresent.mp3; sourceTree = "<group>"; };
 		45A4A3D02D86B86100DFCEB7 /* washed.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = washed.mp3; sourceTree = "<group>"; };
 		45A4A3D22D86B8DB00DFCEB7 /* rainstorm.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = rainstorm.mp3; sourceTree = "<group>"; };
+		38BF469E182643469C1EF0BC /* eveningmelodrama.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = eveningmelodrama.mp3; sourceTree = "<group>"; };
+		C2416F9541D34344B5EBDCE0 /* somewheresunny.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = somewheresunny.mp3; sourceTree = "<group>"; };
+		9D2E9D7C77DA4CDF9D654B92 /* heartwarming.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = heartwarming.mp3; sourceTree = "<group>"; };
 		45A4A3D52D8917D000DFCEB7 /* TestimonyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestimonyView.swift; sourceTree = "<group>"; };
 		45B02FCD2E57A48D00D12033 /* EmailMarketingConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmailMarketingConfig.swift; sourceTree = "<group>"; };
 		45B02FCE2E57A48D00D12033 /* EmailMarketingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmailMarketingService.swift; sourceTree = "<group>"; };
@@ -1158,6 +1164,9 @@
 				45A4A3D02D86B86100DFCEB7 /* washed.mp3 */,
 				45A4A3D22D86B8DB00DFCEB7 /* rainstorm.mp3 */,
 				45A4A3CA2D869D2700DFCEB7 /* sethpiano.mp3 */,
+				38BF469E182643469C1EF0BC /* eveningmelodrama.mp3 */,
+				C2416F9541D34344B5EBDCE0 /* somewheresunny.mp3 */,
+				9D2E9D7C77DA4CDF9D654B92 /* heartwarming.mp3 */,
 			);
 			path = Audio;
 			sourceTree = "<group>";
@@ -1841,6 +1850,9 @@
 				7ABA50CF29E63275002699F1 /* prayers.json in Resources */,
 				457D531B2D964AAF0098A49A /* audioDevotionals.json in Resources */,
 				45A4A3D32D86B8DB00DFCEB7 /* rainstorm.mp3 in Resources */,
+				366C715A18394BF6A25222D6 /* eveningmelodrama.mp3 in Resources */,
+				23723146DBE24C2086D7DEDA /* somewheresunny.mp3 in Resources */,
+				C9BADD252A1743E09FD8CBC0 /* heartwarming.mp3 in Resources */,
 				453478F12B9D29CC0012C2C0 /* declarationsv4.json in Resources */,
 				7A00721828F8ED4A00965AF7 /* declarations.json in Resources */,
 				7A278F9F288915DF0084BB57 /* Assets.xcassets in Resources */,
