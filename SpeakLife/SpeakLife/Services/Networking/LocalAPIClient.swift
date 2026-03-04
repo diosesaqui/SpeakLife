@@ -21,7 +21,7 @@ final class LocalAPIClient: APIService {
     private static var pendingDeclarationCallbacks: [([Declaration], APIError?, Bool) -> Void] = []
     private static let loadingQueue = DispatchQueue(label: "com.speaklife.declarations.loading")
     
-    @AppStorage("declarationsFileName") private var declarationsFileName = "declarationsv7.json"
+    @AppStorage("declarationsFileName") private var declarationsFileName = "declarationsv9.json"
     @AppStorage("declarationCountFile") var declarationCountFile = 0
     @AppStorage("declarationCountBE") var declarationCountBE = 0
     @AppStorage("firstInstallDate") var firstInstallDate: Date?

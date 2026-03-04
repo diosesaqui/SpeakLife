@@ -186,10 +186,11 @@ struct HighConversionPaywallView: View {
             HStack(spacing: 2) {
                 ForEach(0..<stars) { _ in Image(systemName:"star.fill").font(.system(size:10)).foregroundColor(.yellow) }
             }
-            Text("\(quote)").font(.system(size: 13)).foregroundColor(.white.opacity(0.85)).fixedSize(horizontal: false, vertical: true)
+            Text("\(quote)").font(.system(size: 13)).foregroundColor(.white.opacity(0.85)).lineLimit(2)
             Text("— \(author)").font(.system(size: 12, weight: .medium)).foregroundColor(.white.opacity(0.45))
         }
         .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
         .background(RoundedRectangle(cornerRadius: 12).fill(Color.white.opacity(0.06)))
     }
 
