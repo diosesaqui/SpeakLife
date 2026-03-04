@@ -47,6 +47,10 @@ final class SubscriptionStore: ObservableObject {
     @Published var isInDevotionalPremium = false
     @AppStorage("lastDevotionalPurchase") var lastDevotionalPurchaseDate: Date?
     
+    // MARK: - Email Capture / Confirmation After Purchase
+    @Published var showEmailCaptureAfterPurchase = false   // premium, no email stored
+    @Published var showEmailConfirmAfterPurchase = false   // premium, email already stored → confirm + tag post_purchase
+
     @Published var showDevotionalSubscription = false
     @Published var showOneTimeSubscription = false
     @Published var showSubscription = false
@@ -506,6 +510,16 @@ final class SubscriptionStore: ObservableObject {
             ])
 
             await transaction.finish()
+
+            // MARK: - Post-Purchase Email Capture
+            // Show email capture sheet once per user, after their first successful purchase/trial
+            let hasShownEmailCapture = UserDefaults.standard.bool(forKey: "hasShownEmailCapture")
+            if !hasShownEmailCapture {
+                DispatchQueue.main.async {
+                    self.showEmailCaptureAfterPurchase = true
+                }
+            }
+
             return transaction
 
         case .userCancelled, .pending:

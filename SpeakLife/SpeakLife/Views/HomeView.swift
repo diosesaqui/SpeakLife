@@ -138,6 +138,15 @@ struct HomeView: View {
                             .sheet(isPresented: $appState.needEmail) {
                                 EmailCaptureView()
                             }
+                            .sheet(isPresented: $subscriptionStore.showEmailCaptureAfterPurchase) {
+                                EmailCaptureView(source: "post_purchase")
+                                    .environmentObject(appState)
+                            }
+                            .sheet(isPresented: $subscriptionStore.showEmailConfirmAfterPurchase) {
+                                EmailConfirmationView(storedEmail: appState.email)
+                                    .environmentObject(appState)
+                                    .environmentObject(subscriptionStore)
+                            }
                             .sheet(isPresented: $showSubscription, content: {
                                 GeometryReader { proxy in
                                     OptimizedSubscriptionView {
@@ -249,6 +258,24 @@ struct HomeView: View {
                         appState.firstOpen = false
                     }
                     UIScrollView.appearance().isScrollEnabled = true
+
+                    // Email capture / confirmation for existing premium users.
+                    // Fires once only per path — guarded by separate UserDefaults keys.
+                    if subscriptionStore.isPremium {
+                        let alreadyCaptured    = UserDefaults.standard.bool(forKey: "hasShownEmailCapture")
+                        let alreadyConfirmed   = UserDefaults.standard.bool(forKey: "hasConfirmedPostPurchaseEmail")
+                        let hasStoredEmail     = !appState.email.isEmpty
+
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                            if hasStoredEmail && !alreadyConfirmed {
+                                // Has email locally → show confirmation popup to tag as post_purchase
+                                subscriptionStore.showEmailConfirmAfterPurchase = true
+                            } else if !hasStoredEmail && !alreadyCaptured {
+                                // No email at all → show capture sheet
+                                subscriptionStore.showEmailCaptureAfterPurchase = true
+                            }
+                        }
+                    }
                 }
                 .background(Color.clear)
                 .environment(\.colorScheme, .dark)
