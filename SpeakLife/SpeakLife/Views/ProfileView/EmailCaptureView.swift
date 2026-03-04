@@ -17,7 +17,10 @@ struct EmailCaptureView: View {
     @State private var showSuccess: Bool = false
     @State private var showAdvancedOptions: Bool = false
     @State private var messageType: MessageType = .info
-    
+
+    /// Source tag saved to Firestore — use "post_purchase" when shown after subscription
+    var source: String = "ios_app_profile"
+
     private let emailService = EmailMarketingService.shared
     private let submissionTimeout: TimeInterval = 10.0
     
@@ -81,6 +84,12 @@ struct EmailCaptureView: View {
         }
         .padding()
         .animation(.easeInOut, value: showSuccess)
+        .onDisappear {
+            // Mark as shown so it never appears again, regardless of whether user submitted
+            if source == "post_purchase" {
+                UserDefaults.standard.set(true, forKey: "hasShownEmailCapture")
+            }
+        }
     }
     
     private var isFormValid: Bool {
@@ -130,7 +139,7 @@ struct EmailCaptureView: View {
         guard isValidEmail(trimmedEmail) else {
             showMessage("Please enter a valid email address (e.g., name@example.com)", type: .error)
             Analytics.logEvent("email_signup_invalid", parameters: [
-                "source": "ios_app_profile"
+                "source": source
             ])
             return
         }
@@ -141,7 +150,7 @@ struct EmailCaptureView: View {
         
         // Log attempt
         Analytics.logEvent("email_signup_attempt", parameters: [
-            "source": "ios_app_profile"
+            "source": source
         ])
         
         // Set a timeout timer
@@ -161,7 +170,7 @@ struct EmailCaptureView: View {
                         try await self.emailService.addSubscriber(
                             email: trimmedEmail,
                             firstName: nil,
-                            source: "ios_app_profile"
+                            source: self.source
                         )
                     }
                     
@@ -179,7 +188,7 @@ struct EmailCaptureView: View {
                 
                 // Log success
                 Analytics.logEvent("email_signup_success", parameters: [
-                    "source": "ios_app_profile"
+                    "source": source
                 ])
                 
                 await MainActor.run {
@@ -201,7 +210,7 @@ struct EmailCaptureView: View {
                 
                 // Log failure
                 Analytics.logEvent("email_signup_failed", parameters: [
-                    "source": "ios_app_profile",
+                    "source": source,
                     "error": error.localizedDescription
                 ])
                 

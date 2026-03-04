@@ -138,6 +138,10 @@ struct HomeView: View {
                             .sheet(isPresented: $appState.needEmail) {
                                 EmailCaptureView()
                             }
+                            .sheet(isPresented: $subscriptionStore.showEmailCaptureAfterPurchase) {
+                                EmailCaptureView(source: "post_purchase")
+                                    .environmentObject(appState)
+                            }
                             .sheet(isPresented: $showSubscription, content: {
                                 GeometryReader { proxy in
                                     OptimizedSubscriptionView {
