@@ -107,7 +107,7 @@ struct TimerStreakDetailView: View {
                         // Auto-start timer if not active
                         .onAppear {
                             if !timerViewModel.isActive {
-                                timerViewModel.loadRemainingTime()
+                             //   timerViewModel.loadRemainingTime()
                             }
                         }
                     }
@@ -139,7 +139,7 @@ struct TimerStreakDetailView: View {
         )
         .onAppear {
             if !timerViewModel.isActive && !timerViewModel.checkIfCompletedToday() {
-                timerViewModel.loadRemainingTime()
+               // timerViewModel.loadRemainingTime()
             }
         }
         // Timer continues when sheet is dismissed - no need to save
@@ -176,7 +176,7 @@ struct StatBox: View {
         )
     }
 }
-
-#Preview {
-    TimerStreakDetailView(timerViewModel: TimerViewModel())
-}
+//
+//#Preview {
+//    TimerStreakDetailView(timerViewModel: TimerViewModel())
+//}

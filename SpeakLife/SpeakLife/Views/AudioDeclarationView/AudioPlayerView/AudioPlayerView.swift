@@ -148,7 +148,7 @@ struct AudioPlayerView: View {
         }
         .onAppear {
             viewModel.changePlaybackSpeed(to: 1.0)
-            timerViewModel.loadRemainingTime()
+           // timerViewModel.loadRemainingTime()
         }
         .onReceive(viewModel.$isPlaying) { isPlaying in
             withAnimation(Animation.easeInOut(duration: 0.8).repeatForever(autoreverses: true)) {

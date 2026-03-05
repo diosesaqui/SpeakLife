@@ -266,7 +266,7 @@ struct DeclarationView: View {
         }
         .onAppear(perform: handleOnAppear)
         .onDisappear(perform: handleOnDisappear)
-        .setupNotificationObservers(timerViewModel: timerViewModel)
+        //.setupNotificationObservers(timerViewModel: timerViewModel)
     }
     
     // MARK: - Sheet Management
@@ -337,7 +337,7 @@ struct DeclarationView: View {
         shareCounter += 1
         premiumCount += 1
         shareApp()
-        timerViewModel.loadRemainingTime()
+     //   timerViewModel.loadRemainingTime()
         
         // Debug streak info
         

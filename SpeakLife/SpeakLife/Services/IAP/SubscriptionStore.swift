@@ -444,6 +444,9 @@ final class SubscriptionStore: ObservableObject {
             let transaction = try checkVerified(verification)
             await updateCustomerProductStatus()
 
+            // Ensure premium unlocks immediately after verified purchase
+            await MainActor.run { self.isPremium = true }
+
             if isTrialProduct {
                 // ─── TRIAL START ──────────────────────────────────────────────
                 // Fire Meta StartTrial event — $0 value (trial is free)
@@ -584,10 +587,41 @@ final class SubscriptionStore: ObservableObject {
             }
         }
 
-        self.purchasedSubscriptions = purchasedSubscriptions
         self.purchasedNonConsumables = purchasedNonConsumables
-        
-        let newStatus = try? await subscriptions.first?.subscription?.status.first?.state
+
+        // Determine subscription group status robustly:
+        // 1. Try the purchased product first (most reliable after a purchase)
+        // 2. Fall back to any product in the subscriptions list
+        // 3. If we have verified entitlements but status query fails, treat as subscribed
+        var newStatus: RenewalState? = nil
+
+        // Try purchased products first — they're in the active subscription group
+        for product in purchasedSubscriptions {
+            if let statuses = try? await product.subscription?.status,
+               let status = statuses.first?.state {
+                newStatus = status
+                break
+            }
+        }
+
+        // Fall back to checking all available subscription products
+        if newStatus == nil {
+            for product in subscriptions {
+                if let statuses = try? await product.subscription?.status,
+                   let status = statuses.first?.state {
+                    newStatus = status
+                    break
+                }
+            }
+        }
+
+        // Safety net: if we have verified active entitlements but status query
+        // failed for all products, the user IS subscribed — don't lock them out
+        if newStatus == nil && !purchasedSubscriptions.isEmpty {
+            newStatus = .subscribed
+        }
+
+        self.purchasedSubscriptions = purchasedSubscriptions
         subscriptionGroupStatus = newStatus
         
         // Track subscription cancellation

@@ -33,22 +33,22 @@ final class TimerViewModel: ObservableObject {
     init() {
         // Only start timer if onboarding is completed
         if UserDefaults.standard.bool(forKey: "isOnboarded") {
-            checkAndUpdateCompletionDate()
+            /// checkAndUpdateCompletionDate()
         }
 //        if !newStreakNotification {
 //            registerStreakNotification()
 //            newStreakNotification = true
 //        }
         
-        UNUserNotificationCenter.current().getPendingNotificationRequests { requests in
-                let hasDailyReminder = requests.contains { $0.identifier == "daily_speak_life_reminder" }
-                if !hasDailyReminder {
-                    self.scheduleDailyStreakReminder()
-                }
-            }
-        
-        // Listen for midnight to reset timer
-        setupMidnightObserver()
+//        UNUserNotificationCenter.current().getPendingNotificationRequests { requests in
+//                let hasDailyReminder = requests.contains { $0.identifier == "daily_speak_life_reminder" }
+//                if !hasDailyReminder {
+//                    self.scheduleDailyStreakReminder()
+//                }
+//            }
+//        
+//        // Listen for midnight to reset timer
+//        setupMidnightObserver()
     }
     
     deinit {
@@ -80,7 +80,7 @@ final class TimerViewModel: ObservableObject {
             } else {
                 timer.invalidate()
                 self.timer = nil
-                completeMeditation()
+               // completeMeditation()
             }
         }
     }
@@ -144,7 +144,7 @@ final class TimerViewModel: ObservableObject {
     
     @objc private func appBecameActive() {
         // Check if day changed while app was in background
-        handlePotentialDayChange()
+       // handlePotentialDayChange()
     }
     
     private func handlePotentialDayChange() {
@@ -165,7 +165,7 @@ final class TimerViewModel: ObservableObject {
             hasLoadedInitialTime = false
             
             // Restart timer for new day
-            loadRemainingTime()
+           // loadRemainingTime()
         }
         
         // Update streak if needed
@@ -250,56 +250,56 @@ final class TimerViewModel: ObservableObject {
        
     }
     
-    func loadRemainingTime() {
-        // Prevent multiple loads from resetting the timer
-        if hasLoadedInitialTime && isActive && timeRemaining > 0 {
-            return
-        }
-        
-        checkAndUpdateCompletionDate()
-        
-        if checkIfCompletedToday() {
-            hasLoadedInitialTime = true
-            return
-        } 
-        
-        // Check if we have a saved timer from today
-        let isTimerFromToday: Bool
-        if let lastStarted = lastStartedStreak {
-            isTimerFromToday = Calendar.current.isDateInToday(lastStarted)
-        } else {
-            isTimerFromToday = false
-        }
-        
-        if let savedTimeRemaining = UserDefaults.standard.value(forKey: "timeRemaining") as? Int, 
-           savedTimeRemaining > 0,
-           isTimerFromToday {
-            // Restore the saved remaining time only if it's from today
-            timeRemaining = savedTimeRemaining
-            isComplete = false
-            hasLoadedInitialTime = true
-            startTimer()
-        } else {
-            // New day or no saved time - reset to full duration
-            UserDefaults.standard.removeObject(forKey: "timeRemaining")
-            timeRemaining = TimerViewModel.totalDuration
-            lastStartedStreak = Date()
-            isComplete = false
-            hasLoadedInitialTime = true
-            startTimer()
-        }
-    }
-    
-    private func startTimer() {
-        if checkIfCompletedToday() {
-            return
-        }
-        if !isActive {
-            isActive = true
-            runCountdownTimer()
-        } else {
-        }
-    }
+//    func loadRemainingTime() {
+//        // Prevent multiple loads from resetting the timer
+//        if hasLoadedInitialTime && isActive && timeRemaining > 0 {
+//            return
+//        }
+//        
+//        checkAndUpdateCompletionDate()
+//        
+//        if checkIfCompletedToday() {
+//            hasLoadedInitialTime = true
+//            return
+//        } 
+//        
+//        // Check if we have a saved timer from today
+//        let isTimerFromToday: Bool
+//        if let lastStarted = lastStartedStreak {
+//            isTimerFromToday = Calendar.current.isDateInToday(lastStarted)
+//        } else {
+//            isTimerFromToday = false
+//        }
+//        
+//        if let savedTimeRemaining = UserDefaults.standard.value(forKey: "timeRemaining") as? Int, 
+//           savedTimeRemaining > 0,
+//           isTimerFromToday {
+//            // Restore the saved remaining time only if it's from today
+//            timeRemaining = savedTimeRemaining
+//            isComplete = false
+//            hasLoadedInitialTime = true
+//            startTimer()
+//        } else {
+//            // New day or no saved time - reset to full duration
+//            UserDefaults.standard.removeObject(forKey: "timeRemaining")
+//            timeRemaining = TimerViewModel.totalDuration
+//            lastStartedStreak = Date()
+//            isComplete = false
+//            hasLoadedInitialTime = true
+//            startTimer()
+//        }
+//    }
+//    
+//    private func startTimer() {
+//        if checkIfCompletedToday() {
+//            return
+//        }
+//        if !isActive {
+//            isActive = true
+//            runCountdownTimer()
+//        } else {
+//        }
+//    }
     
     func stopTimer() {
         isActive = false

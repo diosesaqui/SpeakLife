@@ -71,7 +71,7 @@ struct IntentsBarView: View {
                 self.isPresentingCategoryChooser = false
                 self.appState.newCategoriesAddedv4 = false
                 if appState.onBoardingTest {
-                    timerViewModel.loadRemainingTime()
+                 //   timerViewModel.loadRemainingTime()
                 }
             }
         }, content: {
@@ -91,7 +91,7 @@ struct IntentsBarView: View {
             }.sheet(isPresented: $isPresentingThemeChooser) {
                 self.isPresentingThemeChooser = false
                 if appState.onBoardingTest {
-                    timerViewModel.loadRemainingTime()
+                 //   timerViewModel.loadRemainingTime()
                 }
             } content: {
                 ThemeChooserView(themesViewModel: themeViewModel)
@@ -113,7 +113,7 @@ struct IntentsBarView: View {
             self.isPresentingDevotionalView = false
             withAnimation {
                 if appState.onBoardingTest {
-                    timerViewModel.loadRemainingTime()
+                   // timerViewModel.loadRemainingTime()
                 }
             }
         } content: {

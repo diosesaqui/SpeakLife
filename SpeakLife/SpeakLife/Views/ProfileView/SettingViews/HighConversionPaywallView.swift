@@ -24,6 +24,7 @@ struct HighConversionPaywallView: View {
     @State private var showPrivacyPolicy = false
     @State private var showCloseButton = false
     @State private var timeOnPaywall: Date = Date()
+    @State private var isEligibleForTrial = false
 
     var callback: (() -> Void)?
     private let paywallVariant = "high_conversion_v1"
@@ -162,6 +163,10 @@ struct HighConversionPaywallView: View {
     private var testimonialsSection: some View {
         VStack(spacing: 12) {
             testimonialCard(
+                quote: "This app was created under the manifestation and direction of the Holy Spirit, bringing life through scripture and meditation to God’s people.",
+                author: "Crash L.", stars: 5
+            )
+            testimonialCard(
                 quote: "My anxiety attacks stopped after 2 weeks. I speak these declarations every morning and it changed everything.",
                 author: "Marcus T.", stars: 5
             )
@@ -177,6 +182,11 @@ struct HighConversionPaywallView: View {
                 quote: "My marriage was falling apart. We started doing the declarations together every morning. Three months later we're in a completely different place.",
                 author: "Samantha L.", stars: 5
             )
+            testimonialCard(
+                quote: "I love this app. To feed on the promises of God regularly throughout the day is so uplifting and encouraging. It feeds my soul. I love that they come through automatically. I find it so helpful to regularly have my attention drawn back to His promises.",
+                author: "Tina", stars: 5
+            )
+            
         }
         .padding(.horizontal, 24)
     }
@@ -261,7 +271,7 @@ struct HighConversionPaywallView: View {
     private var trialCallout: some View {
         HStack(spacing: 6) {
             Image(systemName: "checkmark.circle.fill").foregroundColor(.green).font(.system(size: 14))
-            Text(selectedPlan == .annual ? "3 days free — cancel anytime before trial ends" : "Start today — cancel anytime")
+            Text(selectedPlan == .annual && isEligibleForTrial ? "3 days free — cancel anytime before trial ends" : "Start today — cancel anytime")
                 .font(.system(size: 13, weight: .medium)).foregroundColor(.white.opacity(0.85))
         }
     }
@@ -271,8 +281,7 @@ struct HighConversionPaywallView: View {
         if selectedPlan == .monthly {
             return "Start Monthly Plan"
         }
-        // Annual — check if trial is available
-        if subscriptionStore.currentOfferedPremium?.subscription?.introductoryOffer != nil {
+        if isEligibleForTrial {
             return copy.ctaText // e.g. "Start My Free 3-Day Trial"
         }
         return "Get Annual Access"
@@ -280,10 +289,19 @@ struct HighConversionPaywallView: View {
 
     private var ctaButton: some View {
         Button(action: makePurchase) {
-            Text(ctaText).font(.system(size: 17, weight: .bold)).foregroundColor(.white)
-                .frame(maxWidth: .infinity).padding(.vertical, 17)
-                .background(RoundedRectangle(cornerRadius: 30).fill(LinearGradient(colors: [Constants.DAMidBlue, Constants.DAMidBlue.opacity(0.85)], startPoint: .leading, endPoint: .trailing)))
+            Group {
+                if declarationStore.isPurchasing {
+                    ProgressView()
+                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                } else {
+                    Text(ctaText).font(.system(size: 17, weight: .bold)).foregroundColor(.white)
+                }
+            }
+            .frame(maxWidth: .infinity).padding(.vertical, 17)
+            .background(RoundedRectangle(cornerRadius: 30).fill(LinearGradient(colors: [Constants.DAMidBlue, Constants.DAMidBlue.opacity(0.85)], startPoint: .leading, endPoint: .trailing)))
         }
+        .disabled(declarationStore.isPurchasing)
+        .opacity(declarationStore.isPurchasing ? 0.7 : 1.0)
         .buttonStyle(PlainButtonStyle())
     }
 
@@ -324,6 +342,11 @@ struct HighConversionPaywallView: View {
     private func onAppear() {
         timeOnPaywall = Date()
         selectedPlan = .annual
+        // Check actual trial eligibility from Apple
+        Task {
+            let eligible = await subscriptionStore.currentOfferedPremium?.subscription?.isEligibleForIntroOffer ?? false
+            await MainActor.run { isEligibleForTrial = eligible }
+        }
         AnalyticsService.shared.trackPaywallImpression(paywallId: paywallVariant, metadata: [
             "variant": paywallVariant,
             "user_category": preferencesTracker.primaryCategory.rawValue,
@@ -336,7 +359,11 @@ struct HighConversionPaywallView: View {
 
     // MARK: - Purchase
     private func makePurchase() {
-        guard let product = selectedProduct else { return }
+        guard let product = selectedProduct else {
+            errorMessage = "Please select a subscription option."
+            isShowingError = true
+            return
+        }
         UIImpactFeedbackGenerator(style: .medium).impactOccurred()
         Analytics.logEvent("paywall_cta_tapped", parameters: [
             "variant": paywallVariant,
@@ -356,7 +383,7 @@ struct HighConversionPaywallView: View {
                                    "user_category": preferencesTracker.primaryCategory.rawValue,
                                    "seconds_to_convert": Int(Date().timeIntervalSince(timeOnPaywall))]
                     )
-                    if product.subscription?.introductoryOffer != nil {
+                    if isEligibleForTrial {
                         AnalyticsService.shared.trackTrialStarted(productId: product.id, metadata: ["variant": paywallVariant])
                     }
                     await MainActor.run { declarationStore.isPurchasing = false; callback?(); dismiss() }

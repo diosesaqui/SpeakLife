@@ -10,96 +10,96 @@ import FirebaseAnalytics
 import UserNotifications
 
 // MARK: - New Faith Growth Onboarding (8 slides + burst/subscription)
+// Ordering: personal selection early (slide 3) to capture investment before product pitch
 enum StreamlinedSpiritualTab: Int {
     case patternInterrupt = 0     // Your Faith Grows Where Your Attention Goes
     case authorityAnchor = 1      // Jesus Said It First (Mark 4:24)
     case convictionGap = 2        // Most Believers Want Strong Faith
-    case mindRenewalBridge = 3    // Transformation Starts in the Mind
-    case introduceSystem = 4      // Train Your Faith Daily
-    case personalSelection = 5    // What Do You Need Most?
+    case personalSelection = 3    // What Do You Need Most? (early = higher investment)
+    case mindRenewalBridge = 4    // Transformation Starts in the Mind
+    case introduceSystem = 5      // Train Your Faith Daily
     case outcomeVisualization = 6 // Imagine Responding Like Jesus
     case prePaywallClose = 7      // Start Increasing Today
-    case dailyBurst = 8          // Daily Burst feature intro
-    case subscription = 9
-    case notification = 10
+    case subscription = 8
+    case notification = 9
 }
 
 // MARK: - Main View
 struct StreamlinedSpiritualWarfareFlow: View {
     @EnvironmentObject var subscriptionStore: SubscriptionStore
+    @EnvironmentObject var declarationStore: DeclarationViewModel
     @EnvironmentObject var appState: AppState
     @EnvironmentObject var timerViewModel: TimerViewModel
     @Environment(\.colorScheme) var colorScheme
-    
+
     @State var selection: StreamlinedSpiritualTab = .patternInterrupt
     @State private var selectedCategories: Set<DeclarationCategory> = []
-    
+
     let impactMed = UIImpactFeedbackGenerator(style: .soft)
-    
+
     var body: some View {
         GeometryReader { geometry in
             TabView(selection: $selection) {
-                
+
                 // Slide 1: Pattern Interrupt
                 PatternInterruptScreen(size: geometry.size) {
                     advance()
                 }
                 .tag(StreamlinedSpiritualTab.patternInterrupt)
-                
+
                 // Slide 2: Authority Anchor
                 AuthorityAnchorScreen(size: geometry.size) {
                     advance()
                 }
                 .tag(StreamlinedSpiritualTab.authorityAnchor)
-                
+
                 // Slide 3: Conviction Gap
                 ConvictionGapScreen(size: geometry.size) {
                     advance()
                 }
                 .tag(StreamlinedSpiritualTab.convictionGap)
-                
-                // Slide 4: Mind Renewal Bridge
-                MindRenewalBridgeScreen(size: geometry.size) {
-                    advance()
-                }
-                .tag(StreamlinedSpiritualTab.mindRenewalBridge)
-                
-                // Slide 5: Introduce System
-                IntroduceSystemScreen(size: geometry.size) {
-                    advance()
-                }
-                .tag(StreamlinedSpiritualTab.introduceSystem)
-                
-                // Slide 6: Personal Selection
+
+                // Slide 4: Personal Selection (early to build investment)
                 PersonalSelectionScreen(
                     size: geometry.size,
                     selectedCategories: $selectedCategories
                 ) {
+                    saveSelectedCategories()
                     advance()
                 }
                 .tag(StreamlinedSpiritualTab.personalSelection)
-                
+
+                // Slide 5: Mind Renewal Bridge
+                MindRenewalBridgeScreen(size: geometry.size) {
+                    advance()
+                }
+                .tag(StreamlinedSpiritualTab.mindRenewalBridge)
+
+                // Slide 6: Introduce System
+                IntroduceSystemScreen(size: geometry.size) {
+                    advance()
+                }
+                .tag(StreamlinedSpiritualTab.introduceSystem)
+
                 // Slide 7: Outcome Visualization
                 OutcomeVisualizationScreen(size: geometry.size) {
                     advance()
                 }
                 .tag(StreamlinedSpiritualTab.outcomeVisualization)
-                
-                // Slide 7: Pre-Paywall Close
+
+                // Slide 8: Pre-Paywall Close
                 PrePaywallCloseScreen(size: geometry.size) {
                     advance()
                 }
                 .tag(StreamlinedSpiritualTab.prePaywallClose)
-                
-                // Screen 8 (dailyBurst skipped - shown post-onboarding instead)
-                // Screen 9: Subscription
+
+                // Slide 9: Subscription
                 OptimizedSubscriptionView(callback: {
-                    // This callback is only called on successful purchase
                     advance()
                 })
                 .tag(StreamlinedSpiritualTab.subscription)
-                
-                // Screen 10: Notifications
+
+                // Slide 10: Notifications
                 NotificationOnboarding(size: geometry.size) {
                     askNotificationPermission()
                 }
@@ -124,19 +124,17 @@ struct StreamlinedSpiritualWarfareFlow: View {
             case .authorityAnchor:
                 selection = .convictionGap
             case .convictionGap:
+                selection = .personalSelection
+            case .personalSelection:
                 selection = .mindRenewalBridge
             case .mindRenewalBridge:
                 selection = .introduceSystem
             case .introduceSystem:
-                selection = .personalSelection
-            case .personalSelection:
                 selection = .outcomeVisualization
             case .outcomeVisualization:
                 selection = .prePaywallClose
             case .prePaywallClose:
                 selection = .subscription
-            case .dailyBurst:
-                selection = .subscription // skipped in flow
             case .subscription:
                 selection = .notification
             case .notification:
@@ -145,11 +143,54 @@ struct StreamlinedSpiritualWarfareFlow: View {
         }
         impactMed.impactOccurred()
     }
+
+    /// Persist user's category selections for notifications, declarations feed, and paywall personalization
+    private func saveSelectedCategories() {
+        var categories = selectedCategories
+        if categories.isEmpty {
+            categories = [.faith, .grace, .identity]
+        }
+
+        // Save to AppState for notifications
+        appState.selectedNotificationCategories = categories.map { $0.rawValue }.joined(separator: ",")
+
+        // Save to DeclarationViewModel for feed personalization
+        declarationStore.save(categories)
+
+        // Track each selection for paywall copy personalization
+        for category in categories {
+            UserPreferencesTracker.shared.trackCategorySelection(category.rawValue)
+        }
+
+        Analytics.logEvent("onboarding_categories_selected", parameters: [
+            "categories": categories.map { $0.rawValue }.joined(separator: ","),
+            "count": categories.count
+        ])
+    }
     
     func askNotificationPermission() {
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { success, error in
             Analytics.logEvent("notification_permission", parameters: ["granted": success])
-            advance()
+            DispatchQueue.main.async {
+                appState.notificationEnabled = success
+                
+                if success {
+                    UIApplication.shared.registerForRemoteNotifications()
+                    registerNotifications()
+                }
+                advance()
+            }
+        }
+    }
+    
+    private func registerNotifications() {
+        if appState.notificationEnabled {
+            let categories = Set(appState.selectedNotificationCategories.components(separatedBy: ",").compactMap({ DeclarationCategory($0) }))
+            NotificationManager.shared.registerNotifications(count: appState.notificationCount,
+                                                             startTime: appState.startTimeIndex,
+                                                             endTime: appState.endTimeIndex,
+                                                             categories: categories)
+            appState.lastNotificationSetDate = Date()
         }
     }
     

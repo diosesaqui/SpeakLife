@@ -29,7 +29,7 @@ struct PremiumView: View {
 //                    if subscriptionStore.useEnhancedOnboarding {
 //                        OptimizedSubscriptionViewV2() { }
 //                    } else {
-                        OptimizedSubscriptionView() { }
+                    HighConversionPaywallView() { }
                   //  }
                 }
             } else {
