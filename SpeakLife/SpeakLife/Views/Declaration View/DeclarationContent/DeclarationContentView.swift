@@ -601,17 +601,6 @@ struct DeclarationContentView: View {
                 CapsuleImageButton(title: (declaration.isFavorite ?? false) ? "heart.fill" : "heart") {
                     favoriteTapped(declaration: declaration)
                 }
-
-                // Read aloud button — lets users listen to affirmations while walking around
-                CapsuleImageButton(title: coordinator.isSpeaking ? "speaker.wave.3.fill" : "speaker.wave.2") {
-                    if coordinator.isSpeaking {
-                        coordinator.synthesizer.stopSpeaking(at: .immediate)
-                        coordinator.isSpeaking = false
-                        AudioPlayerService.shared.playMusic()
-                    } else {
-                        speakTapped(declaration: declaration)
-                    }
-                }
                 
                 if declaration.bibleVerseText != nil {
                     CapsuleImageButton(title: viewModel.showVerse ? "arrowshape.zigzag.right.fill" : "arrowshape.zigzag.forward") {
