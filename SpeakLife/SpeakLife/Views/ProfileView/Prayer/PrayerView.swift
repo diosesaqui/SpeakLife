@@ -49,6 +49,7 @@ struct PrayerView: View {
 //                    Button("OK", role: .cancel) {}
 //                }
             }
+            .navigationViewStyle(.stack)
             .onReceive(NotificationCenter.default.publisher(for: UIApplication.willResignActiveNotification)) { _ in
                 isPresentingManageSubscriptionView = false
             }

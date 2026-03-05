@@ -300,6 +300,7 @@ struct AudioFavoritesView: View {
                 )
             }
         }
+        .navigationViewStyle(.stack)
     }
     
     @ViewBuilder

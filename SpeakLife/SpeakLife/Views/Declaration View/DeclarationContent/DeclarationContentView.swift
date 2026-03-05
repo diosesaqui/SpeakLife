@@ -601,8 +601,18 @@ struct DeclarationContentView: View {
                 CapsuleImageButton(title: (declaration.isFavorite ?? false) ? "heart.fill" : "heart") {
                     favoriteTapped(declaration: declaration)
                 }
-        
-                
+
+                // TODO: Read aloud button — pending Google Cloud Neural2 TTS integration
+                // CapsuleImageButton(title: coordinator.isSpeaking ? "speaker.wave.3.fill" : "speaker.wave.2") {
+                //     if coordinator.isSpeaking {
+                //         coordinator.synthesizer.stopSpeaking(at: .immediate)
+                //         coordinator.isSpeaking = false
+                //         AudioPlayerService.shared.playMusic()
+                //     } else {
+                //         speakTapped(declaration: declaration)
+                //     }
+                // }
+
                 if declaration.bibleVerseText != nil {
                     CapsuleImageButton(title: viewModel.showVerse ? "arrowshape.zigzag.right.fill" : "arrowshape.zigzag.forward") {
                         showVerse(declaration: declaration)
@@ -619,10 +629,12 @@ struct DeclarationContentView: View {
     private func affirm(_ declaration: Declaration, isAffirmation: Bool) {
         AudioPlayerService.shared.pauseMusic()
         let text = isAffirmation ? declaration.text : declaration.bibleVerseText
+        // Use female voice for affirmations, male for Bible verses
+        let gender: AVSpeechSynthesisVoiceGender = isAffirmation ? .female : .male
         if isAffirmation {
-            coordinator.speakText("Repeat after me")
+            coordinator.speakText("Repeat after me", gender: gender)
         }
-        coordinator.speakText(text!)
+        coordinator.speakText(text!, gender: gender)
     }
     
     private func setCurrentDelcaration(declaration: Declaration) {

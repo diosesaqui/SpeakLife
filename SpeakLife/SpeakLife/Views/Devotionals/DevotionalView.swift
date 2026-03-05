@@ -66,12 +66,22 @@ struct DevotionalView: View {
     }
     
     var devotionalView: some View {
+        GeometryReader { geo in
+            devotionalContent(geo: geo)
+        }
+        .ignoresSafeArea()
+    }
+
+    @ViewBuilder
+    private func devotionalContent(geo: GeometryProxy) -> some View {
         ZStack {
-        
+
             Image(subscriptionStore.backgroundImage)
                 .resizable()
                 .aspectRatio(contentMode: .fill)
-                .frame(width:UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
+                // Use container size instead of UIScreen so it fills the sheet correctly on iPad
+                .frame(width: geo.size.width, height: geo.size.height)
+                .clipped()
                 .overlay(
                     Rectangle()
                         .fill(Color.black.opacity(0.2))

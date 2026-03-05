@@ -101,6 +101,7 @@
 		4568BE8F2B60EB1300678565 /* LoadingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4568BE8E2B60EB1300678565 /* LoadingView.swift */; };
 		4575C93E2E45A8B5007C14F3 /* DemoExperienceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4575C93D2E45A8B5007C14F3 /* DemoExperienceView.swift */; };
 		4575C9402E45AA00007C14F3 /* OptimizedSubscriptionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4575C93F2E45AA00007C14F3 /* OptimizedSubscriptionView.swift */; };
+		DA3182D477494E6A9E4F8AC4 /* AdaptiveSheetModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 067C652453504C60AD4342E8 /* AdaptiveSheetModifier.swift */; };
 		4575C9422E4657D2007C14F3 /* CloudKitDebugView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4575C9412E4657D2007C14F3 /* CloudKitDebugView.swift */; };
 		4575C9482E46F25B007C14F3 /* SiriIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4575C9432E46F25B007C14F3 /* SiriIntents.swift */; };
 		4575C9492E46F25B007C14F3 /* SmartContentProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4575C9442E46F25B007C14F3 /* SmartContentProvider.swift */; };
@@ -463,6 +464,7 @@
 		4568BE8E2B60EB1300678565 /* LoadingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoadingView.swift; sourceTree = "<group>"; };
 		4575C93D2E45A8B5007C14F3 /* DemoExperienceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoExperienceView.swift; sourceTree = "<group>"; };
 		4575C93F2E45AA00007C14F3 /* OptimizedSubscriptionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OptimizedSubscriptionView.swift; sourceTree = "<group>"; };
+		067C652453504C60AD4342E8 /* AdaptiveSheetModifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdaptiveSheetModifier.swift; sourceTree = "<group>"; };
 		4575C9412E4657D2007C14F3 /* CloudKitDebugView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudKitDebugView.swift; sourceTree = "<group>"; };
 		4575C9432E46F25B007C14F3 /* SiriIntents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiriIntents.swift; sourceTree = "<group>"; };
 		4575C9442E46F25B007C14F3 /* SmartContentProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmartContentProvider.swift; sourceTree = "<group>"; };
@@ -1123,6 +1125,7 @@
 		4597E2592E41C1AC009D6C66 /* Components */ = {
 			isa = PBXGroup;
 			children = (
+				067C652453504C60AD4342E8 /* AdaptiveSheetModifier.swift */,
 				4575C9412E4657D2007C14F3 /* CloudKitDebugView.swift */,
 				4514AF142E47031200254B74 /* AppGroupsDebugView.swift */,
 				4597E2582E41C1AC009D6C66 /* CloudKitSyncBadge.swift */,
@@ -1904,6 +1907,7 @@
 				45BCBA9A2C360245001F28C4 /* BibleStory.swift in Sources */,
 				458B6B1F2BA6D5CF0001BEFE /* TimerViewModel.swift in Sources */,
 				7AA8706C28DACC4E00134ADB /* Theme.swift in Sources */,
+				DA3182D477494E6A9E4F8AC4 /* AdaptiveSheetModifier.swift in Sources */,
 				4575C9422E4657D2007C14F3 /* CloudKitDebugView.swift in Sources */,
 				4597E1EE2E3FECCA009D6C66 /* AudioFavoritesView.swift in Sources */,
 				45BC76762F04B284003AC964 /* FirstDeclarationGuideView.swift in Sources */,
@@ -2387,7 +2391,7 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UIRequiresFullScreen = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -2429,7 +2433,7 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UIRequiresFullScreen = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",

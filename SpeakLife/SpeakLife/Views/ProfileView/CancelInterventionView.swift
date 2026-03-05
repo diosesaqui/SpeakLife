@@ -75,6 +75,7 @@ struct CancelInterventionView: View {
                 }
             }
         }
+        .navigationViewStyle(.stack)
         .onAppear {
             Analytics.logEvent("cancel_intervention_shown", parameters: [
                 "user_category": preferencesTracker.primaryCategory.rawValue

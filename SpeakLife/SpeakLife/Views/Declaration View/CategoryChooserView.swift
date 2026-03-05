@@ -148,6 +148,7 @@ struct CategoryChooserView: View {
                     self.presentationMode.wrappedValue.dismiss()
                 }
             }
+            .navigationViewStyle(.stack)
             .navigationViewStyle(StackNavigationViewStyle()) // Fixes NavigationView extra padding
             .onAppear {
                 UINavigationBar.appearance().largeTitleTextAttributes = [.foregroundColor: UIColor(Constants.DAMidBlue)]

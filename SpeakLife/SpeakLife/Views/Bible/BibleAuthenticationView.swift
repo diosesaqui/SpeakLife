@@ -162,6 +162,7 @@ struct BibleAuthenticationView: View {
                 Text(errorMessage ?? "An error occurred during authentication")
             }
         }
+        .navigationViewStyle(.stack)
     }
     
     @ViewBuilder

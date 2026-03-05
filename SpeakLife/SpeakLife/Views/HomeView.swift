@@ -148,21 +148,19 @@ struct HomeView: View {
                                     .environmentObject(subscriptionStore)
                             }
                             .sheet(isPresented: $showSubscription, content: {
-                                GeometryReader { proxy in
-                                    OptimizedSubscriptionView {
-                                        showSubscription = false
-                                    }
-                                    .frame(height:  UIScreen.main.bounds.height * 0.9)
+                                OptimizedSubscriptionView {
+                                    showSubscription = false
                                 }
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                .presentationDetents([.large])
                             })
                             .sheet(isPresented: $showTriggeredPaywall) {
-                                GeometryReader { proxy in
-                                    OptimizedSubscriptionView {
-                                        showTriggeredPaywall = false
-                                        paywallTrigger.dismissPaywall()
-                                    }
-                                    .frame(height:  UIScreen.main.bounds.height * 0.9)
+                                OptimizedSubscriptionView {
+                                    showTriggeredPaywall = false
+                                    paywallTrigger.dismissPaywall()
                                 }
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                .presentationDetents([.large])
                             }
 //                            .fullScreenCover(isPresented: $showDeclarationPrompt) {
 //                                FirstDeclarationGuideView(

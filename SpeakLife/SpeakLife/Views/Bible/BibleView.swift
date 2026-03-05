@@ -201,6 +201,7 @@ struct BibleView: View {
                 
             }
         }
+        .navigationViewStyle(.stack)
         .navigationViewStyle(StackNavigationViewStyle())
         .onAppear {
             // Make navigation bar transparent to show gradient

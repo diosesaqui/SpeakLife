@@ -36,6 +36,7 @@ struct BibleBookmarksView: View {
                 }
             }
         }
+        .navigationViewStyle(.stack)
         .navigationViewStyle(StackNavigationViewStyle())
     }
     
@@ -284,6 +285,7 @@ struct BibleSettingsView: View {
                     .ignoresSafeArea(.all)
             )
         }
+        .navigationViewStyle(.stack)
         .navigationViewStyle(StackNavigationViewStyle())
         .onAppear {
             Task {

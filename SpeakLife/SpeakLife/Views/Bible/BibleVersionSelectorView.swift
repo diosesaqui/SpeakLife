@@ -61,6 +61,7 @@ struct BibleVersionSelectorView: View {
                 }
             }
         }
+        .navigationViewStyle(.stack)
         .navigationViewStyle(StackNavigationViewStyle())
         .onAppear {
             Task {

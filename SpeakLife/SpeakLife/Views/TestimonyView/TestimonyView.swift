@@ -88,6 +88,7 @@ struct TestimonyFeedView: View {
                       dismissButton: .default(Text("OK")))
             }
         }
+        .navigationViewStyle(.stack)
     }
 }
 
@@ -167,6 +168,7 @@ struct TestimonyFormView: View {
             }
             .navigationTitle("Share Your Testimony")
         }
+        .navigationViewStyle(.stack)
     }
     
     private func submitTestimony() {

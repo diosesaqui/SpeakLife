@@ -58,6 +58,7 @@ struct WidgetPreferencesView: View {
                 Text("Your widget will now show personalized promises based on your selected categories.")
             }
         }
+        .navigationViewStyle(.stack)
     }
     
     private var headerSection: some View {

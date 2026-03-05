@@ -13,6 +13,9 @@ struct ModernDailyChecklistView: View {
     @EnvironmentObject var appState: AppState
     @EnvironmentObject var subscriptionStore: SubscriptionStore
     @EnvironmentObject var devotionalViewModel: DevotionalViewModel
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    private var isIPad: Bool { horizontalSizeClass == .regular }
     @State private var showInfoSheet = false
     @State private var showDevotional = false
     @State private var completedTasks = Set<String>()
@@ -109,9 +112,16 @@ struct ModernDailyChecklistView: View {
                             )
                         }
                         
-                        // Close button (if needed)
-                        if let onClose = onClose {
-                            Button(action: onClose) {
+                        // On iPad: always show close button (fullScreenCover has no swipe-to-dismiss)
+                        // On iPhone: only show if an onClose callback was explicitly passed
+                        if isIPad || onClose != nil {
+                            Button(action: {
+                                if let onClose = onClose {
+                                    onClose()
+                                } else {
+                                    dismiss()
+                                }
+                            }) {
                                 Image(systemName: "xmark.circle.fill")
                                     .font(.title3)
                                     .foregroundColor(.white.opacity(0.5))
@@ -245,19 +255,14 @@ struct ModernDailyChecklistView: View {
                     .allowsHitTesting(false)
             }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(
-                    LinearGradient(
-                        colors: [Color(red: 0.1, green: 0.15, blue: 0.3), Color(red: 0.02, green: 0.07, blue: 0.15)],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
-                )
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .stroke(Color.white.opacity(0.2), lineWidth: 1)
+            LinearGradient(
+                colors: [Color(red: 0.1, green: 0.15, blue: 0.3), Color(red: 0.02, green: 0.07, blue: 0.15)],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .ignoresSafeArea()
         )
         .sheet(isPresented: $showInfoSheet) {
             DailyChecklistInfoSheet()

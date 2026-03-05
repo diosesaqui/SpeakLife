@@ -68,6 +68,7 @@ struct BadgeCollectionView: View {
             .navigationBarTitleDisplayMode(.large)
             .preferredColorScheme(.dark)
         }
+        .navigationViewStyle(.stack)
         .sheet(item: $selectedBadge) { badge in
             BadgeDetailView(badge: badge, isPresented: Binding(
                 get: { selectedBadge != nil },

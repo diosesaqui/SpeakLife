@@ -56,6 +56,7 @@ struct ProfileView: View {
             NavigationView {
                 content
             }
+            .navigationViewStyle(.stack)
         }
     }
     

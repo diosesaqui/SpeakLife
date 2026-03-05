@@ -99,6 +99,9 @@ struct CreateYourOwnView: View {
             .toolbarBackground(.visible, for: .navigationBar)
             .toolbarColorScheme(.dark, for: .navigationBar)
         }
+        // Force single-column stack on iPad — prevents the default
+        // split-view layout that leaves a black empty detail pane.
+        .navigationViewStyle(.stack)
     }
     
     // MARK: - Background Components

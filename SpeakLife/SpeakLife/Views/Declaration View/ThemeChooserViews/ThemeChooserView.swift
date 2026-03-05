@@ -104,6 +104,7 @@ struct ThemeChooserView: View {
                 }
             }
         }
+        .navigationViewStyle(.stack)
     }
 
     private var selectCustomImageView: some View {

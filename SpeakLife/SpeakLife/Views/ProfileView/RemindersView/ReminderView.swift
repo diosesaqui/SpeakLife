@@ -60,6 +60,7 @@ struct ReminderView: View {
                     .background(Gradients().speakLifeCYOCell)
                 }
             }
+            .navigationViewStyle(.stack)
             .alert(isPresented: $showAlert) {
                 Alert(
                     title: Text("Notifications are not enabled on this device"),

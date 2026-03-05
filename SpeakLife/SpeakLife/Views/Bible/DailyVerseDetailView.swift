@@ -127,6 +127,7 @@ struct DailyVerseDetailView: View {
                 ShareSheet(activityItems: [shareText])
             }
         }
+        .navigationViewStyle(.stack)
     }
     
     private func shareVerse() {

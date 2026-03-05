@@ -364,6 +364,7 @@ struct VoiceTipsView: View {
                 }
             }
         }
+        .navigationViewStyle(.stack)
     }
 }
 

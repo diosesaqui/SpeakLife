@@ -45,12 +45,15 @@ struct DailyDeclarationBurstView: View {
     var body: some View {
         GeometryReader { geometry in
             ZStack {
+                // Solid base — prevents the underlying view from bleeding through
+                // on iPad where fullScreenCover presentations can be transparent.
+                Color.black.ignoresSafeArea()
+
                 // Background
                 Image(subscriptionStore.onboardingBGImage)
                     .resizable()
                     .scaledToFill()
                     .frame(width: geometry.size.width, height: geometry.size.height)
-
                     .opacity(0.8)
                     .ignoresSafeArea()
                 

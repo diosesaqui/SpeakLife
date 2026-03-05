@@ -68,6 +68,8 @@ struct HighConversionPaywallView: View {
             if declarationStore.isPurchasing { RotatingLoadingImageView() }
             if showCloseButton { closeButton }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .ignoresSafeArea(edges: .bottom)
         .onAppear(perform: onAppear)
         .alert("", isPresented: $isShowingError) {
             Button("OK", role: .cancel) { }

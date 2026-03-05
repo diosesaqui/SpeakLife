@@ -23,6 +23,9 @@ struct DeclarationView: View {
     @EnvironmentObject var appState: AppState
     @EnvironmentObject var streakViewModel: EnhancedStreakViewModel
     @Environment(\.presentationMode) var presentationMode
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+
+    private var isIPad: Bool { horizontalSizeClass == .regular }
     
     @AppStorage("review.counter") private var reviewCounter = 0
     @AppStorage("share.counter") private var shareCounter = 0
@@ -249,7 +252,11 @@ struct DeclarationView: View {
             }
         }
         .background(backgroundContent)
-        .sheet(item: $activeSheet, content: sheetContent)
+        // On iPad use fullScreenCover so sheets fill the whole screen.
+        // On iPhone keep the standard bottom sheet behaviour.
+        .modifier(AdaptiveSheetModifier(item: $activeSheet, isIPad: isIPad) { sheet in
+            AnyView(sheetContent(sheet))
+        })
         .onChange(of: presentDevotionalSubscriptionView, perform: handleDevotionalPresentation)
         .alert(isPresented: $viewModel.showErrorMessage, content: errorAlert)
         .alert(isPresented: $viewModel.helpUsGrowAlert, content: growAlert)
@@ -278,7 +285,7 @@ struct DeclarationView: View {
             CreateYourOwnView()
         case .premium:
             PremiumView()
-                .frame(height: UIScreen.main.bounds.height * 0.95)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
         case .devotionalSubscription:
             DevotionalView(viewModel: devotionalViewModel)
         case .loveLetter:
