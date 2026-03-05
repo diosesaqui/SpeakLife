@@ -602,16 +602,16 @@ struct DeclarationContentView: View {
                     favoriteTapped(declaration: declaration)
                 }
 
-                // Read aloud — uses Apple Enhanced/Premium neural voice
-                CapsuleImageButton(title: coordinator.isSpeaking ? "speaker.wave.3.fill" : "speaker.wave.2") {
-                    if coordinator.isSpeaking {
-                        coordinator.synthesizer.stopSpeaking(at: .immediate)
-                        coordinator.isSpeaking = false
-                        AudioPlayerService.shared.playMusic()
-                    } else {
-                        speakTapped(declaration: declaration)
-                    }
-                }
+                // TODO: Read aloud button — pending Google Cloud Neural2 TTS integration
+                // CapsuleImageButton(title: coordinator.isSpeaking ? "speaker.wave.3.fill" : "speaker.wave.2") {
+                //     if coordinator.isSpeaking {
+                //         coordinator.synthesizer.stopSpeaking(at: .immediate)
+                //         coordinator.isSpeaking = false
+                //         AudioPlayerService.shared.playMusic()
+                //     } else {
+                //         speakTapped(declaration: declaration)
+                //     }
+                // }
 
                 if declaration.bibleVerseText != nil {
                     CapsuleImageButton(title: viewModel.showVerse ? "arrowshape.zigzag.right.fill" : "arrowshape.zigzag.forward") {
