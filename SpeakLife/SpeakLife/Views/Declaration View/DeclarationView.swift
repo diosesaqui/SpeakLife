@@ -249,7 +249,12 @@ struct DeclarationView: View {
             }
         }
         .background(backgroundContent)
-        .sheet(item: $activeSheet, content: sheetContent)
+        .sheet(item: $activeSheet) { sheet in
+            sheetContent(sheet)
+                // Force large presentation on iPad so sheets aren't tiny form-sheets
+                .presentationDetents([.large])
+                .presentationDragIndicator(.visible)
+        }
         .onChange(of: presentDevotionalSubscriptionView, perform: handleDevotionalPresentation)
         .alert(isPresented: $viewModel.showErrorMessage, content: errorAlert)
         .alert(isPresented: $viewModel.helpUsGrowAlert, content: growAlert)
