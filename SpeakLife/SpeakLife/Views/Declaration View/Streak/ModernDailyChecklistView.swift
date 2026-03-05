@@ -14,6 +14,8 @@ struct ModernDailyChecklistView: View {
     @EnvironmentObject var subscriptionStore: SubscriptionStore
     @EnvironmentObject var devotionalViewModel: DevotionalViewModel
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    private var isIPad: Bool { horizontalSizeClass == .regular }
     @State private var showInfoSheet = false
     @State private var showDevotional = false
     @State private var completedTasks = Set<String>()
@@ -110,17 +112,20 @@ struct ModernDailyChecklistView: View {
                             )
                         }
                         
-                        // Close button — always visible so fullScreenCover can be dismissed
-                        Button(action: {
-                            if let onClose = onClose {
-                                onClose()
-                            } else {
-                                dismiss()
+                        // On iPad: always show close button (fullScreenCover has no swipe-to-dismiss)
+                        // On iPhone: only show if an onClose callback was explicitly passed
+                        if isIPad || onClose != nil {
+                            Button(action: {
+                                if let onClose = onClose {
+                                    onClose()
+                                } else {
+                                    dismiss()
+                                }
+                            }) {
+                                Image(systemName: "xmark.circle.fill")
+                                    .font(.title3)
+                                    .foregroundColor(.white.opacity(0.5))
                             }
-                        }) {
-                            Image(systemName: "xmark.circle.fill")
-                                .font(.title3)
-                                .foregroundColor(.white.opacity(0.5))
                         }
                     }
                     

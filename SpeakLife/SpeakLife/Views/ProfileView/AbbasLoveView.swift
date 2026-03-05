@@ -10,6 +10,8 @@ import FirebaseAnalytics
 
 struct AbbasLoveView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    private var isIPad: Bool { horizontalSizeClass == .regular }
 
     let pageContentViews = [
         PageContent(verse: "You may not know me, but I know everything about you.", book: "Psalm 139:1"),
@@ -81,16 +83,18 @@ struct AbbasLoveView: View {
                     // Spacer from top
                     Spacer().frame(height: proxy.size.height * 0.05)
 
-                    // Dismiss button (needed for fullScreenCover on iPad)
-                    HStack {
-                        Spacer()
-                        Button(action: { dismiss() }) {
-                            Image(systemName: "xmark.circle.fill")
-                                .font(.title2)
-                                .foregroundColor(.white.opacity(0.5))
+                    // Dismiss button — iPad only (fullScreenCover has no swipe-to-dismiss)
+                    if isIPad {
+                        HStack {
+                            Spacer()
+                            Button(action: { dismiss() }) {
+                                Image(systemName: "xmark.circle.fill")
+                                    .font(.title2)
+                                    .foregroundColor(.white.opacity(0.5))
+                            }
                         }
+                        .padding(.horizontal, 24)
                     }
-                    .padding(.horizontal, 24)
 
                     // ✉️ Title
                     Text("Heavenly Father's Love Letter 💌")
