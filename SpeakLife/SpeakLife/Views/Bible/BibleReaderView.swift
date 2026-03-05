@@ -398,6 +398,7 @@ struct VerseActionsSheet: View {
                 }
             }
         }
+        .navigationViewStyle(.stack)
     }
 }
 

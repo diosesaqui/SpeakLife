@@ -130,6 +130,7 @@ struct PremiumView: View {
                         )
                     }
                 }
+                .navigationViewStyle(.stack)
             }
         }
         .onAppear {
@@ -245,5 +246,6 @@ struct CancellationConfirmationView: View {
                 }
             }
         }
+        .navigationViewStyle(.stack)
     }
 }

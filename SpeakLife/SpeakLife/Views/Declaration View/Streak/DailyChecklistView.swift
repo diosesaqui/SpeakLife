@@ -497,6 +497,7 @@ struct DailyChecklistInfoSheet: View {
                 .foregroundColor(.white)
             )
         }
+        .navigationViewStyle(.stack)
     }
 }
 

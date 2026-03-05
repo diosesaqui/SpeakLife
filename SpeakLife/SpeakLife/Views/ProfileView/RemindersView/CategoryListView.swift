@@ -97,6 +97,7 @@ struct CategoryListView: View {
                 }
             }
         }
+        .navigationViewStyle(.stack)
         .onAppear {
             UINavigationBar.appearance().largeTitleTextAttributes = [.foregroundColor: UIColor.white]
             UINavigationBar.appearance().titleTextAttributes = [.foregroundColor: UIColor.white]

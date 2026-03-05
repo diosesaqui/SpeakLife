@@ -187,6 +187,7 @@ struct BibleSearchView: View {
                     .ignoresSafeArea(.all)
             )
         }
+        .navigationViewStyle(.stack)
         .navigationViewStyle(StackNavigationViewStyle())
         .onAppear {
             isSearchFocused = true

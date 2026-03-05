@@ -104,6 +104,7 @@ struct QuizHomeView: View {
             }
             .navigationTitle("SpeakLife Lessons")
         }
+        .navigationViewStyle(.stack)
     }
 }
 

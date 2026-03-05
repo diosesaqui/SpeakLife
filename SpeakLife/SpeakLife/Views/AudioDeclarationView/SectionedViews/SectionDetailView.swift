@@ -155,6 +155,7 @@ struct SectionDetailView: View {
                 }
             }
         }
+        .navigationViewStyle(.stack)
     }
     
     private var emptySearchView: some View {

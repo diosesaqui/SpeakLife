@@ -127,6 +127,7 @@ struct TimerStreakDetailView: View {
                 }
             }
         }
+        .navigationViewStyle(.stack)
         .background(
             LinearGradient(
                 gradient: Gradient(colors: [

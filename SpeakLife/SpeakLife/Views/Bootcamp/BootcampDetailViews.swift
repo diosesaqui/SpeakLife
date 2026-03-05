@@ -298,6 +298,7 @@ struct PurchaseBootcampView: View {
                 }
             }
         }
+        .navigationViewStyle(.stack)
     }
 }
 
