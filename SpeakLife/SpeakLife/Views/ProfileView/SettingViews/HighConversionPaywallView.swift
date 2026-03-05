@@ -68,6 +68,7 @@ struct HighConversionPaywallView: View {
             if showCloseButton { closeButton }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .ignoresSafeArea(edges: .bottom)
         .onAppear(perform: onAppear)
         .alert("", isPresented: $isShowingError) {
             Button("OK", role: .cancel) { }
