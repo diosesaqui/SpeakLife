@@ -320,6 +320,7 @@ struct OptimizedSubscriptionView: View {
         }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .ignoresSafeArea()
     }
     
     private var starsSection: some View {
