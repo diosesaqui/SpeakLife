@@ -13,6 +13,7 @@ struct AudioPlayerView: View {
     @ObservedObject var viewModel: AudioPlayerViewModel
     @EnvironmentObject var timerViewModel: TimerViewModel
 
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
     @State private var isPlayingPulse = false
 
@@ -27,137 +28,30 @@ struct AudioPlayerView: View {
                         .overlay(Color.black.opacity(0.4))
                         .ignoresSafeArea()
                 }
-                
-                VStack(spacing: 24) {
-                    // Sheet grabber
-                    RoundedRectangle(cornerRadius: 3)
-                        .fill(Color.white.opacity(0.3))
-                        .frame(width: 40, height: 4)
-                        .padding(.top, 8)
-                    
-                    Spacer()
-                        .frame(height: proxy.size.height * 0.02)
-                    
-                    // Cover Image
-                    Image(viewModel.imageUrl)
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                        .frame(width: viewModel.isPlaying ? proxy.size.width * 0.9 : proxy.size.width * 0.7, height: viewModel.isPlaying ? proxy.size.width * 0.9 : proxy.size.width * 0.7)
-                        .clipped()
-                        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-                        .shadow(radius: 12)
-                    
-                    Spacer()
-                        .frame(height: proxy.size.height * 0.02)
-                    
-                    // Title & Subtitle
-                    VStack(spacing: 6) {
-                        Text(viewModel.currentTrack)
-                            .font(.title2)
-                            .fontWeight(.bold)
-                            .foregroundColor(.white)
-                            .multilineTextAlignment(.center)
-                        
-                        Text(viewModel.subtitle)
-                            .font(.subheadline)
-                            .foregroundColor(.white.opacity(0.75))
-                    }
-                    
-                    VStack(spacing: 16) {
-                        if viewModel.duration > 0 {
-                            Slider(
-                                value: $viewModel.currentTime,
-                                in: 0...viewModel.duration,
-                                onEditingChanged: { isEditing in
-                                    if !isEditing {
-                                        viewModel.seek(to: viewModel.currentTime)
-                                    }
-                                }
-                            ).tint(.white)
-                            
-                            HStack {
-                                Text(formatTime(viewModel.currentTime))
-                                Spacer()
-                                Text(formatTime(viewModel.duration))
-                            }
-                            .font(.caption)
-                            .foregroundColor(.white.opacity(0.8))
-                            .padding(.horizontal)
+
+                // ScrollView ensures nothing is clipped on smaller/constrained sheets
+                ScrollView(.vertical, showsIndicators: false) {
+                    VStack(spacing: 20) {
+                        // Sheet grabber
+                        RoundedRectangle(cornerRadius: 3)
+                            .fill(Color.white.opacity(0.3))
+                            .frame(width: 40, height: 4)
+                            .padding(.top, 8)
+
+                        if horizontalSizeClass == .regular {
+                            // ─── iPad layout: image + controls side-by-side in landscape,
+                            //     or image capped + scrollable in portrait sheet
+                            iPadLayout(proxy: proxy)
                         } else {
-                            Text("Loading...")
-                                .foregroundColor(.white)
-                                .font(.subheadline)
+                            // ─── iPhone layout (original, unchanged)
+                            iPhoneLayout(proxy: proxy)
                         }
-                        HStack(spacing: 40) {
-                            // Repeat button
-                            Button(action: {
-                                viewModel.repeatTrack()
-                            }) {
-                                Image(systemName: "repeat")
-                                    .font(.title2)
-                                    .foregroundColor(viewModel.onRepeat ? .yellow : .white)
-                                    .opacity(viewModel.onRepeat ? 1.0 : 0.6)
-                            }
-
-                            Button(action: {
-                                let newTime = max(viewModel.currentTime - 15, 0)
-                                viewModel.seek(to: newTime)
-                            }) {
-                                Image(systemName: "gobackward.15")
-                                    .font(.title)
-                                    .foregroundColor(.white)
-                            }
-                            
-                            Button(action: {
-                                withAnimation(.easeOut(duration: 0.15)) {
-                                    isPlayingPulse = false
-                                }
-
-                                // Slight bounce effect on tap
-                                withAnimation(.spring(response: 0.3, dampingFraction: 0.4)) {
-                                    viewModel.togglePlayPause()
-                                }
-
-                                // Restart pulse if still playing
-                                if viewModel.isPlaying {
-                                    withAnimation(Animation.easeInOut(duration: 1.0).repeatForever(autoreverses: true)) {
-                                        isPlayingPulse = true
-                                    }
-                                }
-                            }) {
-                                ZStack {
-                                    Circle()
-                                        .fill(Color.white.opacity(0.1))
-                                        .frame(width: 80, height: 80)
-                                        .scaleEffect(isPlayingPulse ? 1.08 : 1.0)
-                                        .shadow(color: .white.opacity(0.25), radius: 10, x: 0, y: 4)
-
-                                    Image(systemName: viewModel.isPlaying ? "pause.fill" : "play.fill")
-                                        .font(.system(size: 30, weight: .bold))
-                                        .foregroundColor(.white)
-                                        .scaleEffect(isPlayingPulse ? 1.1 : 1.0)
-                                        .transition(.scale.combined(with: .opacity))
-                                        .animation(.easeInOut(duration: 0.2), value: viewModel.isPlaying)
-                                }
-                            }
-                            
-                            Button(action: {
-                                let newTime = min(viewModel.currentTime + 30, viewModel.duration)
-                                viewModel.seek(to: newTime)
-                            }) {
-                                Image(systemName: "goforward.30")
-                                    .font(.title)
-                                    .foregroundColor(.white)
-                            }
-
-                            // Spacer to balance the repeat button on the left
-                            Color.clear
-                                .frame(width: 28, height: 28)
-                        }
-                        .padding(.top)
                     }
+                    .padding()
+                    // Ensure content is always at least as tall as the container so it
+                    // centres when there's plenty of room, but scrolls when it's tight.
+                    .frame(minHeight: proxy.size.height)
                 }
-                .padding()
             }
         }
         .onAppear {
@@ -170,12 +64,190 @@ struct AudioPlayerView: View {
             }
         }
     }
-    
-    private func formatTime(_ time: Double) -> String {
-            let minutes = Int(time) / 60
-            let seconds = Int(time) % 60
-            return String(format: "%01d:%02d", minutes, seconds)
+
+    // MARK: - iPhone Layout (portrait-focused, original feel)
+
+    @ViewBuilder
+    private func iPhoneLayout(proxy: GeometryProxy) -> some View {
+        let coverSize = coverImageSize(proxy: proxy, fraction: 0.70)
+
+        VStack(spacing: 20) {
+            coverArt(size: coverSize)
+
+            trackInfo
+
+            playerControls(proxy: proxy)
         }
+    }
+
+    // MARK: - iPad Layout (adapts to both portrait sheet and landscape full-screen)
+
+    @ViewBuilder
+    private func iPadLayout(proxy: GeometryProxy) -> some View {
+        let isLandscape = proxy.size.width > proxy.size.height
+
+        if isLandscape {
+            // Side-by-side: art on left, controls on right
+            HStack(alignment: .center, spacing: 40) {
+                let coverSize = min(proxy.size.height * 0.55, proxy.size.width * 0.38)
+                coverArt(size: coverSize)
+                    .frame(maxWidth: .infinity)
+
+                VStack(spacing: 20) {
+                    trackInfo
+                    playerControls(proxy: proxy)
+                }
+                .frame(maxWidth: .infinity)
+            }
+            .padding(.horizontal, 24)
+        } else {
+            // Portrait sheet: cap image so controls always stay visible
+            let coverSize = coverImageSize(proxy: proxy, fraction: 0.50)
+
+            VStack(spacing: 20) {
+                coverArt(size: coverSize)
+                trackInfo
+                playerControls(proxy: proxy)
+            }
+        }
+    }
+
+    // MARK: - Shared Sub-views
+
+    /// Calculates a square cover image size capped to both width and height budgets.
+    private func coverImageSize(proxy: GeometryProxy, fraction: CGFloat) -> CGFloat {
+        // Never let the art exceed `fraction` of width OR 38% of available height,
+        // so controls always have room below.
+        let byWidth  = proxy.size.width * fraction
+        let byHeight = proxy.size.height * 0.38
+        return min(byWidth, byHeight)
+    }
+
+    @ViewBuilder
+    private func coverArt(size: CGFloat) -> some View {
+        Image(viewModel.imageUrl)
+            .resizable()
+            .aspectRatio(contentMode: .fill)
+            .frame(width: size, height: size)
+            .clipped()
+            .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+            .shadow(radius: 12)
+            .scaleEffect(viewModel.isPlaying ? 1.0 : 0.92)
+            .animation(.spring(response: 0.4, dampingFraction: 0.7), value: viewModel.isPlaying)
+    }
+
+    private var trackInfo: some View {
+        VStack(spacing: 6) {
+            Text(viewModel.currentTrack)
+                .font(.title2)
+                .fontWeight(.bold)
+                .foregroundColor(.white)
+                .multilineTextAlignment(.center)
+
+            Text(viewModel.subtitle)
+                .font(.subheadline)
+                .foregroundColor(.white.opacity(0.75))
+        }
+    }
+
+    @ViewBuilder
+    private func playerControls(proxy: GeometryProxy) -> some View {
+        VStack(spacing: 16) {
+            // Progress slider
+            if viewModel.duration > 0 {
+                Slider(
+                    value: $viewModel.currentTime,
+                    in: 0...viewModel.duration,
+                    onEditingChanged: { isEditing in
+                        if !isEditing {
+                            viewModel.seek(to: viewModel.currentTime)
+                        }
+                    }
+                ).tint(.white)
+
+                HStack {
+                    Text(formatTime(viewModel.currentTime))
+                    Spacer()
+                    Text(formatTime(viewModel.duration))
+                }
+                .font(.caption)
+                .foregroundColor(.white.opacity(0.8))
+                .padding(.horizontal)
+            } else {
+                Text("Loading...")
+                    .foregroundColor(.white)
+                    .font(.subheadline)
+            }
+
+            // Playback buttons
+            HStack(spacing: 40) {
+                // Repeat
+                Button(action: { viewModel.repeatTrack() }) {
+                    Image(systemName: "repeat")
+                        .font(.title2)
+                        .foregroundColor(viewModel.onRepeat ? .yellow : .white)
+                        .opacity(viewModel.onRepeat ? 1.0 : 0.6)
+                }
+
+                // Skip back 15s
+                Button(action: {
+                    viewModel.seek(to: max(viewModel.currentTime - 15, 0))
+                }) {
+                    Image(systemName: "gobackward.15")
+                        .font(.title)
+                        .foregroundColor(.white)
+                }
+
+                // Play / Pause
+                Button(action: {
+                    withAnimation(.easeOut(duration: 0.15)) { isPlayingPulse = false }
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.4)) {
+                        viewModel.togglePlayPause()
+                    }
+                    if viewModel.isPlaying {
+                        withAnimation(Animation.easeInOut(duration: 1.0).repeatForever(autoreverses: true)) {
+                            isPlayingPulse = true
+                        }
+                    }
+                }) {
+                    ZStack {
+                        Circle()
+                            .fill(Color.white.opacity(0.1))
+                            .frame(width: 80, height: 80)
+                            .scaleEffect(isPlayingPulse ? 1.08 : 1.0)
+                            .shadow(color: .white.opacity(0.25), radius: 10, x: 0, y: 4)
+
+                        Image(systemName: viewModel.isPlaying ? "pause.fill" : "play.fill")
+                            .font(.system(size: 30, weight: .bold))
+                            .foregroundColor(.white)
+                            .scaleEffect(isPlayingPulse ? 1.1 : 1.0)
+                            .transition(.scale.combined(with: .opacity))
+                            .animation(.easeInOut(duration: 0.2), value: viewModel.isPlaying)
+                    }
+                }
+
+                // Skip forward 30s
+                Button(action: {
+                    viewModel.seek(to: min(viewModel.currentTime + 30, viewModel.duration))
+                }) {
+                    Image(systemName: "goforward.30")
+                        .font(.title)
+                        .foregroundColor(.white)
+                }
+
+                // Invisible spacer to keep play button visually centred
+                Color.clear.frame(width: 28, height: 28)
+            }
+            .padding(.top, 4)
+            .padding(.bottom, 24)
+        }
+    }
+
+    private func formatTime(_ time: Double) -> String {
+        let minutes = Int(time) / 60
+        let seconds = Int(time) % 60
+        return String(format: "%01d:%02d", minutes, seconds)
+    }
 }
 
 
