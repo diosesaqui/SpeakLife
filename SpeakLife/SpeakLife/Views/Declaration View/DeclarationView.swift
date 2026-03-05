@@ -254,7 +254,9 @@ struct DeclarationView: View {
         .background(backgroundContent)
         // On iPad use fullScreenCover so sheets fill the whole screen.
         // On iPhone keep the standard bottom sheet behaviour.
-        .modifier(AdaptiveSheetModifier(item: $activeSheet, isIPad: isIPad, content: sheetContent))
+        .modifier(AdaptiveSheetModifier(item: $activeSheet, isIPad: isIPad) { sheet in
+            AnyView(sheetContent(sheet))
+        })
         .onChange(of: presentDevotionalSubscriptionView, perform: handleDevotionalPresentation)
         .alert(isPresented: $viewModel.showErrorMessage, content: errorAlert)
         .alert(isPresented: $viewModel.helpUsGrowAlert, content: growAlert)

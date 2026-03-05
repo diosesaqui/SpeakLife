@@ -9,21 +9,21 @@
 
 import SwiftUI
 
-struct AdaptiveSheetModifier<Item: Identifiable, SheetContent: View>: ViewModifier {
+struct AdaptiveSheetModifier<Item: Identifiable>: ViewModifier {
     @Binding var item: Item?
     let isIPad: Bool
-    let content: (Item) -> SheetContent
+    let content: (Item) -> AnyView
 
     func body(content outerContent: Content) -> some View {
         if isIPad {
             outerContent
                 .fullScreenCover(item: $item) { item in
-                    content(item)
+                    self.content(item)
                 }
         } else {
             outerContent
                 .sheet(item: $item) { item in
-                    content(item)
+                    self.content(item)
                         .presentationDetents([.large])
                         .presentationDragIndicator(.visible)
                 }
