@@ -266,6 +266,7 @@ struct OptimizedSubscriptionView: View {
                 endPoint: .bottomTrailing
             )
             .ignoresSafeArea(.all)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
             
             GeometryReader { geometry in
                 if subscriptionStore.useHighConversionPaywall {
@@ -318,6 +319,7 @@ struct OptimizedSubscriptionView: View {
             }
         }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
     
     private var starsSection: some View {
