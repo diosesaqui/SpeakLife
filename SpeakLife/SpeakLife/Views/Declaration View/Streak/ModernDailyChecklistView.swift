@@ -13,6 +13,7 @@ struct ModernDailyChecklistView: View {
     @EnvironmentObject var appState: AppState
     @EnvironmentObject var subscriptionStore: SubscriptionStore
     @EnvironmentObject var devotionalViewModel: DevotionalViewModel
+    @Environment(\.dismiss) private var dismiss
     @State private var showInfoSheet = false
     @State private var showDevotional = false
     @State private var completedTasks = Set<String>()
@@ -109,13 +110,11 @@ struct ModernDailyChecklistView: View {
                             )
                         }
                         
-                        // Close button (if needed)
-                        if let onClose = onClose {
-                            Button(action: onClose) {
-                                Image(systemName: "xmark.circle.fill")
-                                    .font(.title3)
-                                    .foregroundColor(.white.opacity(0.5))
-                            }
+                        // Close button — always visible so fullScreenCover can be dismissed
+                        Button(action: { onClose?() ?? dismiss() }) {
+                            Image(systemName: "xmark.circle.fill")
+                                .font(.title3)
+                                .foregroundColor(.white.opacity(0.5))
                         }
                     }
                     

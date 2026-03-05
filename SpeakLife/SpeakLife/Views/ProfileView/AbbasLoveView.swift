@@ -9,7 +9,8 @@ import SwiftUI
 import FirebaseAnalytics
 
 struct AbbasLoveView: View {
-    
+    @Environment(\.dismiss) private var dismiss
+
     let pageContentViews = [
         PageContent(verse: "You may not know me, but I know everything about you.", book: "Psalm 139:1"),
         PageContent(verse: "I know when you sit down and when you rise up.", book: "Psalm 139:2"),
@@ -61,15 +62,15 @@ struct AbbasLoveView: View {
         PageContent(verse: "I gave up everything I loved that I might gain your love.", book: "Romans 8:31-32"),
         PageContent(verse: "If you receive the gift of My Son Jesus, you receive me.", book: "1 John 2:23"),
         PageContent(verse: "And nothing will ever separate you from My love again.", book: "Romans 8:38-39"),
-        PageContent(verse: "Come home and I’ll throw the biggest party heaven has ever seen.", book: "Luke 15:7"),
+        PageContent(verse: "Come home and I'll throw the biggest party heaven has ever seen.", book: "Luke 15:7"),
         PageContent(verse: "I have always been Father, and will always be Father.", book: "Ephesians 3:14-15"),
         PageContent(verse: "My question is...Will you be my child?", book: "John 1:12-13"),
         PageContent(verse: "l am waiting for you.", book: "Luke 15:11-32"),
         PageContent(verse: "Love, Your Dad", book: "")
     ]
-    
+
     @EnvironmentObject var appState: AppState
-    
+
     init() {
         Analytics.logEvent("LoveLetterOpened", parameters: nil)
     }
@@ -80,8 +81,19 @@ struct AbbasLoveView: View {
                     // Spacer from top
                     Spacer().frame(height: proxy.size.height * 0.05)
 
+                    // Dismiss button (needed for fullScreenCover on iPad)
+                    HStack {
+                        Spacer()
+                        Button(action: { dismiss() }) {
+                            Image(systemName: "xmark.circle.fill")
+                                .font(.title2)
+                                .foregroundColor(.white.opacity(0.5))
+                        }
+                    }
+                    .padding(.horizontal, 24)
+
                     // ✉️ Title
-                    Text("Heavenly Father’s Love Letter 💌")
+                    Text("Heavenly Father's Love Letter 💌")
                         .font(.system(size: 28, weight: .bold, design: .rounded))
                         .foregroundStyle(.white)
                         .multilineTextAlignment(.center)
