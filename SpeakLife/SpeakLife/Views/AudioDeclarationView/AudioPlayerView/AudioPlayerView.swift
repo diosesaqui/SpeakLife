@@ -88,7 +88,17 @@ struct AudioPlayerView: View {
                                 .foregroundColor(.white)
                                 .font(.subheadline)
                         }
-                        HStack(spacing: 50) {
+                        HStack(spacing: 40) {
+                            // Repeat button
+                            Button(action: {
+                                viewModel.repeatTrack()
+                            }) {
+                                Image(systemName: "repeat")
+                                    .font(.title2)
+                                    .foregroundColor(viewModel.onRepeat ? .yellow : .white)
+                                    .opacity(viewModel.onRepeat ? 1.0 : 0.6)
+                            }
+
                             Button(action: {
                                 let newTime = max(viewModel.currentTime - 15, 0)
                                 viewModel.seek(to: newTime)
@@ -139,6 +149,10 @@ struct AudioPlayerView: View {
                                     .font(.title)
                                     .foregroundColor(.white)
                             }
+
+                            // Spacer to balance the repeat button on the left
+                            Color.clear
+                                .frame(width: 28, height: 28)
                         }
                         .padding(.top)
                     }
