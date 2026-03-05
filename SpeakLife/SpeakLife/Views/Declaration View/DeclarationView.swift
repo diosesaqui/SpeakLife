@@ -23,6 +23,9 @@ struct DeclarationView: View {
     @EnvironmentObject var appState: AppState
     @EnvironmentObject var streakViewModel: EnhancedStreakViewModel
     @Environment(\.presentationMode) var presentationMode
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+
+    private var isIPad: Bool { horizontalSizeClass == .regular }
     
     @AppStorage("review.counter") private var reviewCounter = 0
     @AppStorage("share.counter") private var shareCounter = 0
@@ -249,12 +252,9 @@ struct DeclarationView: View {
             }
         }
         .background(backgroundContent)
-        .sheet(item: $activeSheet) { sheet in
-            sheetContent(sheet)
-                // Force large presentation on iPad so sheets aren't tiny form-sheets
-                .presentationDetents([.large])
-                .presentationDragIndicator(.visible)
-        }
+        // On iPad use fullScreenCover so sheets fill the whole screen.
+        // On iPhone keep the standard bottom sheet behaviour.
+        .modifier(AdaptiveSheetModifier(item: $activeSheet, isIPad: isIPad, content: sheetContent))
         .onChange(of: presentDevotionalSubscriptionView, perform: handleDevotionalPresentation)
         .alert(isPresented: $viewModel.showErrorMessage, content: errorAlert)
         .alert(isPresented: $viewModel.helpUsGrowAlert, content: growAlert)
