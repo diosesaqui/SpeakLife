@@ -285,7 +285,7 @@ struct DeclarationView: View {
             CreateYourOwnView()
         case .premium:
             PremiumView()
-                .frame(height: UIScreen.main.bounds.height * 0.95)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
         case .devotionalSubscription:
             DevotionalView(viewModel: devotionalViewModel)
         case .loveLetter:
