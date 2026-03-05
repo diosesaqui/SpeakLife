@@ -111,7 +111,13 @@ struct ModernDailyChecklistView: View {
                         }
                         
                         // Close button — always visible so fullScreenCover can be dismissed
-                        Button(action: { onClose?() ?? dismiss() }) {
+                        Button(action: {
+                            if let onClose = onClose {
+                                onClose()
+                            } else {
+                                dismiss()
+                            }
+                        }) {
                             Image(systemName: "xmark.circle.fill")
                                 .font(.title3)
                                 .foregroundColor(.white.opacity(0.5))
