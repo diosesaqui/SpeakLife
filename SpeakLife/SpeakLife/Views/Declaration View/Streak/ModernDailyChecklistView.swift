@@ -245,19 +245,14 @@ struct ModernDailyChecklistView: View {
                     .allowsHitTesting(false)
             }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(
-                    LinearGradient(
-                        colors: [Color(red: 0.1, green: 0.15, blue: 0.3), Color(red: 0.02, green: 0.07, blue: 0.15)],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
-                )
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .stroke(Color.white.opacity(0.2), lineWidth: 1)
+            LinearGradient(
+                colors: [Color(red: 0.1, green: 0.15, blue: 0.3), Color(red: 0.02, green: 0.07, blue: 0.15)],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .ignoresSafeArea()
         )
         .sheet(isPresented: $showInfoSheet) {
             DailyChecklistInfoSheet()
