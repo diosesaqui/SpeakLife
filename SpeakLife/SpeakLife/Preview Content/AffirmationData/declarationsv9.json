@@ -1,5 +1,5 @@
 {
-  "count": 1388,
+  "count": 1373,
   "version": 9,
   "declarations": [
     {
@@ -549,7 +549,7 @@
       "category": "speaklife"
     },
     {
-      "text": "I have a bright future because God has planned good things for my life.",
+      "text": "I am grounded in God's promise that His plans for me are filled with hope and a future.",
       "bibleVerseText": "For I know the plans I have for you, declares the Lord, plans to prosper you and not to harm you, plans to give you hope and a future.",
       "book": "Jeremiah 29:11",
       "category": "hope"
@@ -561,19 +561,13 @@
       "category": "hope"
     },
     {
-      "text": "I expect good things to happen today because God is working for my benefit.",
-      "bibleVerseText": "And we know that in all things God works for the good of those who love him, who have been called according to his purpose.",
-      "book": "Romans 8:28",
-      "category": "hope"
-    },
-    {
       "text": "I am not discouraged because God is the one who keeps my head held high.",
       "bibleVerseText": "But you, Lord, are a shield around me, my glory, the One who lifts my head high.",
       "book": "Psalm 3:3",
       "category": "hope"
     },
     {
-      "text": "I hold my hope without wavering — not because I am strong, but because the One who promised is faithful.",
+      "text": "I hold my hope without wavering because the One who promised is faithful and His word cannot fail.",
       "bibleVerseText": "Let us hold unswervingly to the hope we profess, for he who promised is faithful.",
       "book": "Hebrews 10:23",
       "category": "hope"
@@ -585,27 +579,9 @@
       "category": "hope"
     },
     {
-      "text": "I refuse to give up because I know I will see God's goodness in my life.",
-      "bibleVerseText": "I remain confident of this: I will see the goodness of the Lord in the land of the living.",
-      "book": "Psalm 27:13",
-      "category": "hope"
-    },
-    {
       "text": "I have a solid anchor for my soul that keeps me steady through any storm.",
       "bibleVerseText": "We have this hope as an anchor for the soul, firm and secure.",
       "book": "Hebrews 6:19",
-      "category": "hope"
-    },
-    {
-      "text": "I look forward with excitement because the best days of my life are still ahead of me.",
-      "bibleVerseText": "The glory of this present house will be greater than the glory of the former house, says the Lord Almighty.",
-      "book": "Haggai 2:9",
-      "category": "hope"
-    },
-    {
-      "text": "I am not put to shame because God’s love has been poured into my heart.",
-      "bibleVerseText": "And hope does not put us to shame, because God’s love has been poured out into our hearts.",
-      "book": "Romans 5:5",
       "category": "hope"
     },
     {
@@ -615,13 +591,7 @@
       "category": "hope"
     },
     {
-      "text": "I believe that every difficult situation will eventually turn around for my good.",
-      "bibleVerseText": "You intended to harm me, but God intended it for good to accomplish what is now being done.",
-      "book": "Genesis 50:20",
-      "category": "hope"
-    },
-    {
-      "text": "I am full of confidence because God will never leave me or let me down.",
+      "text": "I stand unshaken and confident because God has pledged never to leave me or forsake me.",
       "bibleVerseText": "Be strong and courageous. Do not be afraid or terrified because of them, for the Lord your God goes with you; he will never leave you nor forsake you.",
       "book": "Deuteronomy 31:6",
       "category": "hope"
@@ -639,33 +609,15 @@
       "category": "hope"
     },
     {
-      "text": "I look for the light in every situation because God is my salvation.",
-      "bibleVerseText": "The Lord is my light and my salvation—whom shall I fear?",
-      "book": "Psalm 27:1",
-      "category": "hope"
-    },
-    {
       "text": "I am a prisoner of hope and I expect God to restore double to me.",
       "bibleVerseText": "Return to your fortress, you prisoners of hope; even now I announce that I will restore twice as much to you.",
       "book": "Zechariah 9:12",
       "category": "hope"
     },
     {
-      "text": "I know that my current troubles are small compared to the glory that is coming.",
+      "text": "I carry my present difficulties with perspective because they are producing in me an eternal weight of glory beyond all comparison.",
       "bibleVerseText": "For our light and momentary troubles are achieving for us an eternal glory that far outweighs them all.",
       "book": "2 Corinthians 4:17",
-      "category": "hope"
-    },
-    {
-      "text": "I am confident that God will finish the good work He started in me.",
-      "bibleVerseText": "Being confident of this, that he who began a good work in you will carry it on to completion.",
-      "book": "Philippians 1:6",
-      "category": "hope"
-    },
-    {
-      "text": "I trust that God will meet all my needs according to His great riches.",
-      "bibleVerseText": "And my God will meet all your needs according to the riches of his glory in Christ Jesus.",
-      "book": "Philippians 4:19",
       "category": "hope"
     },
     {
@@ -675,19 +627,13 @@
       "category": "hope"
     },
     {
-      "text": "I refuse to worry because I know God is taking care of my future.",
-      "bibleVerseText": "Therefore do not worry about tomorrow, for tomorrow will worry about itself.",
-      "book": "Matthew 6:34",
-      "category": "hope"
-    },
-    {
       "text": "I walk in hope because I am a child of the light and not of the darkness.",
       "bibleVerseText": "But since we belong to the day, let us be sober, putting on faith and love as a breastplate, and the hope of salvation as a helmet.",
       "book": "1 Thessalonians 5:8",
       "category": "hope"
     },
     {
-      "text": "I keep my eyes on what is coming and not on the problems I see right now.",
+      "text": "I fix my eyes on what is eternal and unseen rather than on what is visible and passing.",
       "bibleVerseText": "So we fix our eyes not on what is seen, but on what is unseen, since what is seen is temporary, but what is unseen is eternal.",
       "book": "2 Corinthians 4:18",
       "category": "hope"
@@ -849,7 +795,7 @@
       "category": "health"
     },
     {
-      "text": "I will live a long and full life and I will not die before my time.",
+      "text": "I am alive to proclaim what the Lord has done because He has ordained my days and preserved my life for His glory.",
       "bibleVerseText": "I will not die but live, and will proclaim what the Lord has done.",
       "book": "Psalm 118:17",
       "category": "health"
@@ -885,12 +831,6 @@
       "category": "health"
     },
     {
-      "text": "I refuse to let symptoms discourage me because I trust in the Great Physician.",
-      "bibleVerseText": "Is there no balm in Gilead? Is there no physician there? Why then is there no healing for the wound of my people?",
-      "book": "Jeremiah 8:22",
-      "category": "health"
-    },
-    {
       "text": "I call forth health in my bones and strength in my muscles right now.",
       "bibleVerseText": "This will bring health to your body and nourishment to your bones.",
       "book": "Proverbs 3:8",
@@ -900,12 +840,6 @@
       "text": "I am free from pain because Jesus carried all my sicknesses and sorrows.",
       "bibleVerseText": "Surely he took up our pain and bore our suffering.",
       "book": "Isaiah 53:4",
-      "category": "health"
-    },
-    {
-      "text": "I choose to think about life and health instead of focusing on sickness.",
-      "bibleVerseText": "My son, pay attention to what I say... for they are life to those who find them and health to one’s whole body.",
-      "book": "Proverbs 4:20-22",
       "category": "health"
     },
     {
@@ -921,15 +855,9 @@
       "category": "health"
     },
     {
-      "text": "I declare that every part of my body is a temple of the Holy Spirit and must be healthy.",
-      "bibleVerseText": "Do you not know that your bodies are temples of the Holy Spirit?",
-      "book": "1 Corinthians 6:19",
-      "category": "health"
-    },
-    {
-      "text": "I eat and drink with gratitude, knowing my body is God's temple — and He keeps His temple in health.",
-      "bibleVerseText": "Do you not know that your bodies are temples of the Holy Spirit, who is in you?",
-      "book": "1 Corinthians 6:19",
+      "text": "I eat and drink with gratitude knowing that my body is a temple of the Holy Spirit and He keeps what is His in perfect health.",
+      "bibleVerseText": "Do you not know that your bodies are temples of the Holy Spirit, who is in you, whom you have received from God? You are not your own; you were bought at a price. Therefore honor God with your bodies.",
+      "book": "1 Corinthians 6:19-20",
       "category": "health"
     },
     {
@@ -939,33 +867,15 @@
       "category": "health"
     },
     {
-      "text": "Healing is the children's bread — I am God's child and I take what is mine through Christ's wounds.",
-      "bibleVerseText": "But he was pierced for our transgressions... and by his wounds we are healed.",
+      "text": "I am a child of God and I receive healing as my rightful inheritance purchased by the wounds of Christ.",
+      "bibleVerseText": "But he was pierced for our transgressions, he was crushed for our iniquities; the punishment that brought us peace was on him, and by his wounds we are healed.",
       "book": "Isaiah 53:5",
-      "category": "health"
-    },
-    {
-      "text": "I command my immune system to be strong and to protect my body from all harm.",
-      "bibleVerseText": "The Lord is my strength and my shield; my heart trusts in him, and he helps me.",
-      "book": "Psalm 28:7",
       "category": "health"
     },
     {
       "text": "I have the peace of God which keeps my heart and my body in perfect health.",
       "bibleVerseText": "A tranquil heart gives life to the body.",
       "book": "Proverbs 14:30",
-      "category": "health"
-    },
-    {
-      "text": "I receive the power of God today to heal every sickness and every disease in me.",
-      "bibleVerseText": "He gave them power and authority to drive out all demons and to cure diseases.",
-      "book": "Luke 9:1",
-      "category": "health"
-    },
-    {
-      "text": "I walk in the light and my body is full of the life of God.",
-      "bibleVerseText": "The eye is the lamp of the body. If your eyes are healthy, your whole body will be full of light.",
-      "book": "Matthew 6:22",
       "category": "health"
     },
     {
@@ -1035,12 +945,6 @@
       "category": "warfare"
     },
     {
-      "text": "I am strong in the Lord and in His mighty power today.",
-      "bibleVerseText": "Finally, be strong in the Lord and in his mighty power.",
-      "book": "Ephesians 6:10",
-      "category": "warfare"
-    },
-    {
       "text": "I am surrounded by an army of angels that protect me wherever I go.",
       "bibleVerseText": "For he will command his angels concerning you to guard you in all your ways.",
       "book": "Psalm 91:11",
@@ -1071,14 +975,8 @@
       "category": "warfare"
     },
     {
-      "text": "I am of good cheer because Jesus has already overcome the world for me.",
-      "bibleVerseText": "In this world you will have trouble. But take heart! I have overcome the world.",
-      "book": "John 16:33",
-      "category": "warfare"
-    },
-    {
-      "text": "I am a soldier for God and I do not get distracted by the things of this world.",
-      "bibleVerseText": "No one serving as a soldier gets involved in civilian affairs; rather, they try to please their commanding officer.",
+      "text": "I am a soldier for God and I keep my focus locked on Him alone refusing to be entangled in civilian affairs.",
+      "bibleVerseText": "No one serving as a soldier gets entangled in civilian affairs, but rather tries to please his commanding officer.",
       "book": "2 Timothy 2:4",
       "category": "warfare"
     },
@@ -1122,12 +1020,6 @@
       "text": "I am bold as a lion because I know that I am right with God.",
       "bibleVerseText": "The wicked flee though no one pursues, but the righteous are as bold as a lion.",
       "book": "Proverbs 28:1",
-      "category": "warfare"
-    },
-    {
-      "text": "I give thanks to God who gives me the victory through Jesus Christ.",
-      "bibleVerseText": "But thanks be to God! He gives us the victory through our Lord Jesus Christ.",
-      "book": "1 Corinthians 15:57",
       "category": "warfare"
     },
     {
@@ -7742,96 +7634,6 @@
       "category": "speaklife"
     },
     {
-      "text": "I am a prisoner of hope — chained to God's promises even when circumstances try to talk me into despair.",
-      "bibleVerseText": "Return to your fortress, you prisoners of hope; even now I announce that I will restore twice as much to you.",
-      "book": "Zechariah 9:12",
-      "category": "hope"
-    },
-    {
-      "text": "Joy comes in the morning — and I have decided to believe that, even in the middle of the longest night.",
-      "bibleVerseText": "Weeping may stay for the night, but rejoicing comes in the morning.",
-      "book": "Psalm 30:5",
-      "category": "hope"
-    },
-    {
-      "text": "My hope is not wishful thinking — it is an anchor that cannot be moved, secured to the throne of God.",
-      "bibleVerseText": "We have this hope as an anchor for the soul, firm and secure.",
-      "book": "Hebrews 6:19",
-      "category": "hope"
-    },
-    {
-      "text": "I will see the goodness of the Lord in the land of the living — this is not how my story ends.",
-      "bibleVerseText": "I remain confident of this: I will see the goodness of the Lord in the land of the living.",
-      "book": "Psalm 27:13",
-      "category": "hope"
-    },
-    {
-      "text": "Even when everything is stripped away, hope remains — because hope is not a feeling, it is a Person.",
-      "bibleVerseText": "May the God of hope fill you with all joy and peace as you trust in him.",
-      "book": "Romans 15:13",
-      "category": "hope"
-    },
-    {
-      "text": "By His stripes I was healed — past tense, done deal. My body is catching up to what was settled at the cross.",
-      "bibleVerseText": "By his wounds we are healed.",
-      "book": "Isaiah 53:5",
-      "category": "health"
-    },
-    {
-      "text": "I am not fighting for healing — I am fighting from it. The victory was won at Calvary.",
-      "bibleVerseText": "Surely he took up our pain and bore our suffering.",
-      "book": "Isaiah 53:4",
-      "category": "health"
-    },
-    {
-      "text": "The same Spirit who raised Jesus from the dead lives in me — giving life to my mortal body right now.",
-      "bibleVerseText": "And if the Spirit of him who raised Jesus from the dead is living in you, he who raised Christ from the dead will also give life to your mortal bodies.",
-      "book": "Romans 8:11",
-      "category": "health"
-    },
-    {
-      "text": "I speak to my body with the authority Jesus used on the storm — and my body aligns with health.",
-      "bibleVerseText": "He sent out his word and healed them; he rescued them from the grave.",
-      "book": "Psalm 107:20",
-      "category": "health"
-    },
-    {
-      "text": "God restores my health and heals every wound — that is His promise over me and I declare it now.",
-      "bibleVerseText": "But I will restore you to health and heal your wounds, declares the Lord.",
-      "book": "Jeremiah 30:17",
-      "category": "health"
-    },
-    {
-      "text": "I am not a passive believer — I am a soldier of the Most High God, and I advance, I don't retreat.",
-      "bibleVerseText": "Put on the full armor of God, so that you can take your stand against the devil's schemes.",
-      "book": "Ephesians 6:11",
-      "category": "warfare"
-    },
-    {
-      "text": "The name of Jesus is my weapon — it silences hell and shakes every chain in every room I enter.",
-      "bibleVerseText": "That at the name of Jesus every knee should bow, in heaven and on earth and under the earth.",
-      "book": "Philippians 2:10",
-      "category": "warfare"
-    },
-    {
-      "text": "I don't fight for victory — I fight from it. The cross already decided the outcome.",
-      "bibleVerseText": "But thanks be to God! He gives us the victory through our Lord Jesus Christ.",
-      "book": "1 Corinthians 15:57",
-      "category": "warfare"
-    },
-    {
-      "text": "Every stronghold in my mind is coming down — my weapons are divine and they demolish every lie.",
-      "bibleVerseText": "The weapons we fight with are not the weapons of the world. On the contrary, they have divine power to demolish strongholds.",
-      "book": "2 Corinthians 10:4",
-      "category": "warfare"
-    },
-    {
-      "text": "I overcome by the blood of the Lamb and the word of my testimony — and I will not stay silent.",
-      "bibleVerseText": "They triumphed over him by the blood of the Lamb and by the word of their testimony.",
-      "book": "Revelation 12:11",
-      "category": "warfare"
-    },
-    {
       "text": "I offer a sacrifice of praise — not because everything is perfect, but because God is, and that's enough.",
       "bibleVerseText": "Through Jesus, therefore, let us continually offer to God a sacrifice of praise.",
       "book": "Hebrews 13:15",
@@ -8742,6 +8544,114 @@
       "bibleVerseText": "The Lord your God is with you, the Mighty Warrior who saves. He will take great delight in you; in his love he will no longer rebuke you, but will rejoice over you with singing.",
       "book": "Zephaniah 3:17",
       "category": "rest"
+    },
+    {
+      "text": "I overflow with hope by the power of the Holy Spirit filling me right now.",
+      "bibleVerseText": "May the God of hope fill you with all joy and peace as you trust in him, so that you may overflow with hope by the power of the Holy Spirit.",
+      "book": "Romans 15:13",
+      "category": "hope"
+    },
+    {
+      "text": "I stand on a hope that does not disappoint because God's love has been poured into my heart.",
+      "bibleVerseText": "And hope does not put us to shame, because God's love has been poured out into our hearts through the Holy Spirit, who has been given to us.",
+      "book": "Romans 5:5",
+      "category": "hope"
+    },
+    {
+      "text": "I rejoice in my suffering because I know it is producing in me endurance, character, and a tested hope that will not fail.",
+      "bibleVerseText": "Not only so, but we also glory in our sufferings, because we know that suffering produces perseverance; perseverance, character; and character, hope.",
+      "book": "Romans 5:3-4",
+      "category": "hope"
+    },
+    {
+      "text": "I wait on the Lord with expectation because every promise He has ever made is yes and amen in Christ.",
+      "bibleVerseText": "For no matter how many promises God has made, they are Yes in Christ. And so through him the Amen is spoken by us to the glory of God.",
+      "book": "2 Corinthians 1:20",
+      "category": "hope"
+    },
+    {
+      "text": "I carry resurrection hope because the Spirit that raised Christ from the dead lives inside me.",
+      "bibleVerseText": "And if the Spirit of him who raised Jesus from the dead is living in you, he who raised Christ from the dead will also give life to your mortal bodies.",
+      "book": "Romans 8:11",
+      "category": "hope"
+    },
+    {
+      "text": "I count the sufferings of this present time as nothing because the glory about to be revealed in me exceeds them.",
+      "bibleVerseText": "I consider that our present sufferings are not worth comparing with the glory that will be revealed in us.",
+      "book": "Romans 8:18",
+      "category": "hope"
+    },
+    {
+      "text": "I am being saved by hope and I wait with patience for what I cannot yet see but know to be certain.",
+      "bibleVerseText": "For in this hope we were saved. But hope that is seen is no hope at all. Who hopes for what they already have? But if we hope for what we do not yet have, we wait for it patiently.",
+      "book": "Romans 8:24-25",
+      "category": "hope"
+    },
+    {
+      "text": "I live with my head up because the hope of glory is Christ Himself living and reigning inside me.",
+      "bibleVerseText": "To them God has chosen to make known among the Gentiles the glorious riches of this mystery, which is Christ in you, the hope of glory.",
+      "book": "Colossians 1:27",
+      "category": "hope"
+    },
+    {
+      "text": "God's Word is medicine to my whole body and I take it daily as my prescription for perfect health.",
+      "bibleVerseText": "For they are life to those who find them and health to one's whole body.",
+      "book": "Proverbs 4:22",
+      "category": "health"
+    },
+    {
+      "text": "I live in the shadow of the Most High and no sickness or plague comes near my dwelling place.",
+      "bibleVerseText": "No harm will overtake you, no disaster will come near your tent.",
+      "book": "Psalm 91:10",
+      "category": "health"
+    },
+    {
+      "text": "I carry the resurrection life of Jesus in my body and that life overcomes every form of weakness and disease.",
+      "bibleVerseText": "We always carry around in our body the death of Jesus, so that the life of Jesus may also be revealed in our body.",
+      "book": "2 Corinthians 4:10",
+      "category": "health"
+    },
+    {
+      "text": "Every morning I rise in strength because the Lord is the sustainer of my life and the restorer of my health.",
+      "bibleVerseText": "Surely God is my help; the Lord is the one who sustains me.",
+      "book": "Psalm 54:4",
+      "category": "health"
+    },
+    {
+      "text": "I walk in wholeness in spirit, soul, and body because the God of peace sanctifies me completely.",
+      "bibleVerseText": "May God himself, the God of peace, sanctify you through and through. May your whole spirit, soul and body be kept blameless at the coming of our Lord Jesus Christ.",
+      "book": "1 Thessalonians 5:23",
+      "category": "health"
+    },
+    {
+      "text": "I honor my body as God's dwelling place and He maintains the health of every system within it.",
+      "bibleVerseText": "Don't you know that you yourselves are God's temple and that God's Spirit dwells in your midst? God's temple is sacred, and you together are that temple.",
+      "book": "1 Corinthians 3:16-17",
+      "category": "health"
+    },
+    {
+      "text": "I pull down every high thing that exalts itself against the knowledge of God and take every thought captive to Christ.",
+      "bibleVerseText": "We demolish arguments and every pretension that sets itself up against the knowledge of God, and we take captive every thought to make it obedient to Christ.",
+      "book": "2 Corinthians 10:5",
+      "category": "warfare"
+    },
+    {
+      "text": "I stand in the gap for my family and my prayers shift the atmosphere over everyone I love.",
+      "bibleVerseText": "I looked for someone among them who would build up the wall and stand before me in the gap on behalf of the land.",
+      "book": "Ezekiel 22:30",
+      "category": "warfare"
+    },
+    {
+      "text": "I do not wrestle against flesh and blood but I engage spiritual powers with divine weapons that demolish their strongholds.",
+      "bibleVerseText": "For our struggle is not against flesh and blood, but against the rulers, against the authorities, against the powers of this dark world and against the spiritual forces of evil in the heavenly realms.",
+      "book": "Ephesians 6:12",
+      "category": "warfare"
+    },
+    {
+      "text": "I refuse to give up because I remain confident of seeing the goodness of the Lord in the land of the living.",
+      "bibleVerseText": "I remain confident of this: I will see the goodness of the Lord in the land of the living.",
+      "book": "Psalm 27:13",
+      "category": "hope"
     }
   ]
 }
