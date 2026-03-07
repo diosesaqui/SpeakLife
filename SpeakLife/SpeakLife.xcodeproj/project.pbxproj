@@ -101,7 +101,6 @@
 		4568BE8F2B60EB1300678565 /* LoadingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4568BE8E2B60EB1300678565 /* LoadingView.swift */; };
 		4575C93E2E45A8B5007C14F3 /* DemoExperienceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4575C93D2E45A8B5007C14F3 /* DemoExperienceView.swift */; };
 		4575C9402E45AA00007C14F3 /* OptimizedSubscriptionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4575C93F2E45AA00007C14F3 /* OptimizedSubscriptionView.swift */; };
-		DA3182D477494E6A9E4F8AC4 /* AdaptiveSheetModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 067C652453504C60AD4342E8 /* AdaptiveSheetModifier.swift */; };
 		4575C9422E4657D2007C14F3 /* CloudKitDebugView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4575C9412E4657D2007C14F3 /* CloudKitDebugView.swift */; };
 		4575C9482E46F25B007C14F3 /* SiriIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4575C9432E46F25B007C14F3 /* SiriIntents.swift */; };
 		4575C9492E46F25B007C14F3 /* SmartContentProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4575C9442E46F25B007C14F3 /* SmartContentProvider.swift */; };
@@ -184,9 +183,6 @@
 		45A4A3CF2D86B81900DFCEB7 /* everpresent.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 45A4A3CE2D86B81900DFCEB7 /* everpresent.mp3 */; };
 		45A4A3D12D86B86100DFCEB7 /* washed.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 45A4A3D02D86B86100DFCEB7 /* washed.mp3 */; };
 		45A4A3D32D86B8DB00DFCEB7 /* rainstorm.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 45A4A3D22D86B8DB00DFCEB7 /* rainstorm.mp3 */; };
-		366C715A18394BF6A25222D6 /* eveningmelodrama.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 38BF469E182643469C1EF0BC /* eveningmelodrama.mp3 */; };
-		23723146DBE24C2086D7DEDA /* somewheresunny.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = C2416F9541D34344B5EBDCE0 /* somewheresunny.mp3 */; };
-		C9BADD252A1743E09FD8CBC0 /* heartwarming.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 9D2E9D7C77DA4CDF9D654B92 /* heartwarming.mp3 */; };
 		45A4A3D62D8917D600DFCEB7 /* TestimonyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45A4A3D52D8917D000DFCEB7 /* TestimonyView.swift */; };
 		45AE76712D7960BD0037EE12 /* FirebaseMessaging in Frameworks */ = {isa = PBXBuildFile; productRef = 45AE76702D7960BD0037EE12 /* FirebaseMessaging */; };
 		45B02FD02E57A48D00D12033 /* EmailMarketingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45B02FCE2E57A48D00D12033 /* EmailMarketingService.swift */; };
@@ -221,10 +217,10 @@
 		45CF271C2B4E530300BC8968 /* ImprovementScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45CF271B2B4E530300BC8968 /* ImprovementScene.swift */; };
 		45D623032D8A8B280059C935 /* FirebaseFirestoreCombine-Community in Frameworks */ = {isa = PBXBuildFile; productRef = 45A4A3D72D8918BB00DFCEB7 /* FirebaseFirestoreCombine-Community */; };
 		45D6402B2CD218AE006F05AD /* declarationsv5.json in Resources */ = {isa = PBXBuildFile; fileRef = 45D6402A2CD218AE006F05AD /* declarationsv5.json */; };
+		45E56DC32F5BD28600859EDC /* RevenueCat in Frameworks */ = {isa = PBXBuildFile; productRef = 45E56DC22F5BD28600859EDC /* RevenueCat */; };
 		45ED72C42BA10B3500F5F5E3 /* ConfettiView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45ED72C32BA10B3500F5F5E3 /* ConfettiView.swift */; };
 		45ED72C62BA64C3F00F5F5E3 /* StreakInfoBottomSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45ED72C52BA64C3F00F5F5E3 /* StreakInfoBottomSheet.swift */; };
 		45F32FDA2E0F29B80035FB1D /* EmailCaptureView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45F32FD92E0F29AE0035FB1D /* EmailCaptureView.swift */; };
-		D807A5FAC8CD4B79A92D4C57 /* EmailConfirmationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61721EDB270E45A784DF2A6C /* EmailConfirmationView.swift */; };
 		45F3E7572EAAAD38002B1F4E /* AudioDevotionalsTutorial.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45F3E7562EAAAD38002B1F4E /* AudioDevotionalsTutorial.swift */; };
 		45F3E7582EAAAD38002B1F4E /* AffirmationsTutorial.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45F3E7552EAAAD38002B1F4E /* AffirmationsTutorial.swift */; };
 		45F3E75B2EAAAD41002B1F4E /* CreateYourOwnTutorial.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45F3E7592EAAAD41002B1F4E /* CreateYourOwnTutorial.swift */; };
@@ -240,7 +236,7 @@
 		45FF718E2E6294330048C523 /* declarationsv7_backup.json in Resources */ = {isa = PBXBuildFile; fileRef = 45FF718D2E6294330048C523 /* declarationsv7_backup.json */; };
 		45FF71912E64293D0048C523 /* ListenerMetricsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45FF718F2E64293D0048C523 /* ListenerMetricsService.swift */; };
 		7A00721828F8ED4A00965AF7 /* declarations.json in Resources */ = {isa = PBXBuildFile; fileRef = 7A00721728F8ED4A00965AF7 /* declarations.json */; };
-		7A00721D2908D50800965AF7 /* BuildFile in Frameworks */ = {isa = PBXBuildFile; };
+		7A00721D2908D50800965AF7 /* (null) in Frameworks */ = {isa = PBXBuildFile; };
 		7A278F9B288915DE0084BB57 /* SpeakLifeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A278F9A288915DE0084BB57 /* SpeakLifeApp.swift */; };
 		7A278F9F288915DF0084BB57 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 7A278F9E288915DF0084BB57 /* Assets.xcassets */; };
 		7A278FA2288915DF0084BB57 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 7A278FA1288915DF0084BB57 /* Preview Assets.xcassets */; };
@@ -312,7 +308,7 @@
 		7ABA50CF29E63275002699F1 /* prayers.json in Resources */ = {isa = PBXBuildFile; fileRef = 7ABA50CE29E63275002699F1 /* prayers.json */; };
 		7AF18C7B29FD1A43005A6E31 /* GoogleAdMob.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AF18C7A29FD1A43005A6E31 /* GoogleAdMob.swift */; };
 		7AF18C7D29FD1A67005A6E31 /* AdBanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AF18C7C29FD1A67005A6E31 /* AdBanner.swift */; };
-		7AF18C8029FD1E20005A6E31 /* BuildFile in Frameworks */ = {isa = PBXBuildFile; };
+		7AF18C8029FD1E20005A6E31 /* (null) in Frameworks */ = {isa = PBXBuildFile; };
 		7AF18C8229FD2494005A6E31 /* Badge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AF18C8129FD2494005A6E31 /* Badge.swift */; };
 		7AF18C8429FDCE0A005A6E31 /* ShimmerButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AF18C8329FDCE0A005A6E31 /* ShimmerButton.swift */; };
 		7AF18C8629FEC6EB005A6E31 /* BulletList.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AF18C8529FEC6EB005A6E31 /* BulletList.swift */; };
@@ -335,6 +331,8 @@
 		918D0ED751C243E98A66C8E4 /* SpiritualGrowthView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 918D0ED751C243E98A66C8E3 /* SpiritualGrowthView.swift */; };
 		9A194914114F422786A1CE9F /* PersonalizationSummaryScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30FA3E7536DE40B2B311F43E /* PersonalizationSummaryScene.swift */; };
 		AC33C8C521764DF3961EA018 /* OnboardingDailyBurstScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC33C8C421764DF3961EA018 /* OnboardingDailyBurstScreen.swift */; };
+		D807A5FAC8CD4B79A92D4C57 /* EmailConfirmationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61721EDB270E45A784DF2A6C /* EmailConfirmationView.swift */; };
+		DA3182D477494E6A9E4F8AC4 /* AdaptiveSheetModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 067C652453504C60AD4342E8 /* AdaptiveSheetModifier.swift */; };
 		E260535F74194D8CB0442F40 /* HookScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46F66FE59AA649BFB7D06B09 /* HookScene.swift */; };
 		F3F466B4CB267BFBE4FD8CC8 /* WldehBibleAPIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D920701A13775F49180D845 /* WldehBibleAPIService.swift */; };
 		FCB7A8468DAA92844336D893 /* CancelInterventionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA6F23A3327C444669DC03A5 /* CancelInterventionView.swift */; };
@@ -372,6 +370,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		067C652453504C60AD4342E8 /* AdaptiveSheetModifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdaptiveSheetModifier.swift; sourceTree = "<group>"; };
 		2F740F5E29D4014500E89E7F /* SpeakLifeTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SpeakLifeTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		2F740F6829D4017400E89E7F /* APIClientTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClientTests.swift; sourceTree = "<group>"; };
 		30FA3E7536DE40B2B311F43E /* PersonalizationSummaryScene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersonalizationSummaryScene.swift; sourceTree = "<group>"; };
@@ -464,7 +463,6 @@
 		4568BE8E2B60EB1300678565 /* LoadingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoadingView.swift; sourceTree = "<group>"; };
 		4575C93D2E45A8B5007C14F3 /* DemoExperienceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoExperienceView.swift; sourceTree = "<group>"; };
 		4575C93F2E45AA00007C14F3 /* OptimizedSubscriptionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OptimizedSubscriptionView.swift; sourceTree = "<group>"; };
-		067C652453504C60AD4342E8 /* AdaptiveSheetModifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdaptiveSheetModifier.swift; sourceTree = "<group>"; };
 		4575C9412E4657D2007C14F3 /* CloudKitDebugView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudKitDebugView.swift; sourceTree = "<group>"; };
 		4575C9432E46F25B007C14F3 /* SiriIntents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiriIntents.swift; sourceTree = "<group>"; };
 		4575C9442E46F25B007C14F3 /* SmartContentProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmartContentProvider.swift; sourceTree = "<group>"; };
@@ -546,9 +544,6 @@
 		45A4A3CE2D86B81900DFCEB7 /* everpresent.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = everpresent.mp3; sourceTree = "<group>"; };
 		45A4A3D02D86B86100DFCEB7 /* washed.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = washed.mp3; sourceTree = "<group>"; };
 		45A4A3D22D86B8DB00DFCEB7 /* rainstorm.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = rainstorm.mp3; sourceTree = "<group>"; };
-		38BF469E182643469C1EF0BC /* eveningmelodrama.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = eveningmelodrama.mp3; sourceTree = "<group>"; };
-		C2416F9541D34344B5EBDCE0 /* somewheresunny.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = somewheresunny.mp3; sourceTree = "<group>"; };
-		9D2E9D7C77DA4CDF9D654B92 /* heartwarming.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = heartwarming.mp3; sourceTree = "<group>"; };
 		45A4A3D52D8917D000DFCEB7 /* TestimonyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestimonyView.swift; sourceTree = "<group>"; };
 		45B02FCD2E57A48D00D12033 /* EmailMarketingConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmailMarketingConfig.swift; sourceTree = "<group>"; };
 		45B02FCE2E57A48D00D12033 /* EmailMarketingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmailMarketingService.swift; sourceTree = "<group>"; };
@@ -584,7 +579,6 @@
 		45ED72C32BA10B3500F5F5E3 /* ConfettiView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfettiView.swift; sourceTree = "<group>"; };
 		45ED72C52BA64C3F00F5F5E3 /* StreakInfoBottomSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StreakInfoBottomSheet.swift; sourceTree = "<group>"; };
 		45F32FD92E0F29AE0035FB1D /* EmailCaptureView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmailCaptureView.swift; sourceTree = "<group>"; };
-		61721EDB270E45A784DF2A6C /* EmailConfirmationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmailConfirmationView.swift; sourceTree = "<group>"; };
 		45F3E7552EAAAD38002B1F4E /* AffirmationsTutorial.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AffirmationsTutorial.swift; sourceTree = "<group>"; };
 		45F3E7562EAAAD38002B1F4E /* AudioDevotionalsTutorial.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioDevotionalsTutorial.swift; sourceTree = "<group>"; };
 		45F3E7592EAAAD41002B1F4E /* CreateYourOwnTutorial.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateYourOwnTutorial.swift; sourceTree = "<group>"; };
@@ -600,6 +594,7 @@
 		45FF718F2E64293D0048C523 /* ListenerMetricsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ListenerMetricsService.swift; sourceTree = "<group>"; };
 		46F66FE59AA649BFB7D06B09 /* HookScene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HookScene.swift; sourceTree = "<group>"; };
 		59BFF68BFA515EAC0AC88C85 /* WidgetIntents.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WidgetIntents.swift; sourceTree = "<group>"; };
+		61721EDB270E45A784DF2A6C /* EmailConfirmationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmailConfirmationView.swift; sourceTree = "<group>"; };
 		66D0E43E7B9E3396848559EA /* TrialEndingBanner.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TrialEndingBanner.swift; sourceTree = "<group>"; };
 		6D920701A13775F49180D845 /* WldehBibleAPIService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WldehBibleAPIService.swift; sourceTree = "<group>"; };
 		7A00721728F8ED4A00965AF7 /* declarations.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = declarations.json; sourceTree = "<group>"; };
@@ -703,8 +698,6 @@
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		45B5A8082DD30B7D006DE6AA /* SpeakLifeQuiz */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
 			path = SpeakLifeQuiz;
 			sourceTree = "<group>";
 		};
@@ -724,8 +717,9 @@
 			files = (
 				45D623032D8A8B280059C935 /* FirebaseFirestoreCombine-Community in Frameworks */,
 				457CD38E2E84A11000F435EC /* TikTokBusinessSDK in Frameworks */,
+				45E56DC32F5BD28600859EDC /* RevenueCat in Frameworks */,
 				45C7481F2B55B4B80011D8F6 /* FacebookCore in Frameworks */,
-				7AF18C8029FD1E20005A6E31 /* BuildFile in Frameworks */,
+				7AF18C8029FD1E20005A6E31 /* (null) in Frameworks */,
 				45AE76712D7960BD0037EE12 /* FirebaseMessaging in Frameworks */,
 				452D17D92D703E9E000AB1D1 /* FirebaseAnalytics in Frameworks */,
 				452D17DB2D703E9E000AB1D1 /* FirebaseRemoteConfig in Frameworks */,
@@ -733,7 +727,7 @@
 				452D17DF2D703F3A000AB1D1 /* FirebaseFirestore in Frameworks */,
 				452D17DD2D703E9E000AB1D1 /* FirebaseStorage in Frameworks */,
 				45F6D87E2F2AD75200C0B98D /* FirebaseAuth in Frameworks */,
-				7A00721D2908D50800965AF7 /* BuildFile in Frameworks */,
+				7A00721D2908D50800965AF7 /* (null) in Frameworks */,
 				7A7BEBCD2913536B008D08A3 /* StoreKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1167,9 +1161,6 @@
 				45A4A3D02D86B86100DFCEB7 /* washed.mp3 */,
 				45A4A3D22D86B8DB00DFCEB7 /* rainstorm.mp3 */,
 				45A4A3CA2D869D2700DFCEB7 /* sethpiano.mp3 */,
-				38BF469E182643469C1EF0BC /* eveningmelodrama.mp3 */,
-				C2416F9541D34344B5EBDCE0 /* somewheresunny.mp3 */,
-				9D2E9D7C77DA4CDF9D654B92 /* heartwarming.mp3 */,
 			);
 			path = Audio;
 			sourceTree = "<group>";
@@ -1751,6 +1742,7 @@
 				45A4A3D72D8918BB00DFCEB7 /* FirebaseFirestoreCombine-Community */,
 				457CD38D2E84A11000F435EC /* TikTokBusinessSDK */,
 				45F6D87D2F2AD75200C0B98D /* FirebaseAuth */,
+				45E56DC22F5BD28600859EDC /* RevenueCat */,
 			);
 			productName = SpeakLife;
 			productReference = 7A278F97288915DE0084BB57 /* SpeakLife.app */;
@@ -1809,6 +1801,7 @@
 				45C7481D2B55B4B80011D8F6 /* XCRemoteSwiftPackageReference "facebook-ios-sdk" */,
 				452D17D72D703E9E000AB1D1 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 				457CD38C2E84A11000F435EC /* XCRemoteSwiftPackageReference "tiktok-business-ios-sdk" */,
+				45E56DC12F5BD28600859EDC /* XCRemoteSwiftPackageReference "purchases-ios-spm" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 7A278F98288915DE0084BB57 /* Products */;
@@ -1853,9 +1846,6 @@
 				7ABA50CF29E63275002699F1 /* prayers.json in Resources */,
 				457D531B2D964AAF0098A49A /* audioDevotionals.json in Resources */,
 				45A4A3D32D86B8DB00DFCEB7 /* rainstorm.mp3 in Resources */,
-				366C715A18394BF6A25222D6 /* eveningmelodrama.mp3 in Resources */,
-				23723146DBE24C2086D7DEDA /* somewheresunny.mp3 in Resources */,
-				C9BADD252A1743E09FD8CBC0 /* heartwarming.mp3 in Resources */,
 				453478F12B9D29CC0012C2C0 /* declarationsv4.json in Resources */,
 				7A00721828F8ED4A00965AF7 /* declarations.json in Resources */,
 				7A278F9F288915DF0084BB57 /* Assets.xcassets in Resources */,
@@ -2578,6 +2568,14 @@
 				minimumVersion = 18.0.0;
 			};
 		};
+		45E56DC12F5BD28600859EDC /* XCRemoteSwiftPackageReference "purchases-ios-spm" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/RevenueCat/purchases-ios-spm";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 5.61.0;
+			};
+		};
 		7AF18CA02A0DB126005A6E31 /* XCRemoteSwiftPackageReference "ChartView" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/AppPear/ChartView";
@@ -2628,6 +2626,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 45C7481D2B55B4B80011D8F6 /* XCRemoteSwiftPackageReference "facebook-ios-sdk" */;
 			productName = FacebookCore;
+		};
+		45E56DC22F5BD28600859EDC /* RevenueCat */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 45E56DC12F5BD28600859EDC /* XCRemoteSwiftPackageReference "purchases-ios-spm" */;
+			productName = RevenueCat;
 		};
 		45F6D87D2F2AD75200C0B98D /* FirebaseAuth */ = {
 			isa = XCSwiftPackageProductDependency;
