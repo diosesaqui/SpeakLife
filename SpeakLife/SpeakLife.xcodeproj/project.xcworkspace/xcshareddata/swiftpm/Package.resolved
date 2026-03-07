@@ -137,15 +137,6 @@
       }
     },
     {
-      "identity" : "purchases-ios",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/RevenueCat/purchases-ios",
-      "state" : {
-        "revision" : "d38e4ce577be0eb6a806ecac68ed9d5a3f06c6d1",
-        "version" : "5.18.0"
-      }
-    },
-    {
       "identity" : "tiktok-business-ios-sdk",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/tiktok/tiktok-business-ios-sdk",
