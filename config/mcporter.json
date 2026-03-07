@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "memelord": {
+      "command": "node",
+      "args": [
+        "/home/node/.local/bin/memelord",
+        "serve"
+      ],
+      "env": {
+        "MEMELORD_DIR": "/home/node/.openclaw/workspace/.memelord"
+      }
+    }
+  }
+}
