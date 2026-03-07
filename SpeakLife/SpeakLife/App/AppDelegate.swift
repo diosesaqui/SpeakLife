@@ -15,6 +15,7 @@ import AppTrackingTransparency
 import FirebaseMessaging
 import FirebaseRemoteConfigInternal
 import TikTokBusinessSDK
+import RevenueCat
 
 final class AppDelegate: NSObject, MessagingDelegate {
     
@@ -25,6 +26,18 @@ final class AppDelegate: NSObject, MessagingDelegate {
     
     override init() {
         FirebaseApp.configure()
+
+        // ─── RevenueCat ──────────────────────────────────────────────────────
+        // Configure as early as possible — before any purchase UI is shown.
+        #if DEBUG
+        Purchases.logLevel = .debug
+        #endif
+        Purchases.configure(withAPIKey: "appl_MUGzgdbuQuNIDtfDLiJtIdyYPqf")
+
+        // Link RC attribution data to Firebase for campaign attribution
+        if let instanceID = Analytics.appInstanceID() {
+            Purchases.shared.attribution.setFirebaseAppInstanceID(instanceID)
+        }
     }
     
     // Initialize TikTok SDK after ATT permission is handled
