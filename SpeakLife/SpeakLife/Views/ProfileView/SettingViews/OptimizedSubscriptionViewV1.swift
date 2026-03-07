@@ -1066,7 +1066,7 @@ struct OptimizedSubscriptionViewV1: View {
                     return
                 }
                 
-                if let transaction = try await subscriptionStore.purchaseWithID([currentSelection.id], paywallName: "OptimizedSubscriptionV1") {
+                if try await subscriptionStore.purchaseWithID([currentSelection.id], paywallName: "OptimizedSubscriptionV1") {
                     // Track paywall conversion
                     let priceValue = NSDecimalNumber(decimal: currentSelection.price).doubleValue
                     let productType = currentSelection.id.contains("Lifetime") ? "lifetime" : "subscription"

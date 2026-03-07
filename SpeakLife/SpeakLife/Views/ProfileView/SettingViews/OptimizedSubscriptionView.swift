@@ -610,7 +610,7 @@ struct OptimizedSubscriptionView: View {
                     return
                 }
                 
-                if let transaction = try await subscriptionStore.purchaseWithID([selectedProduct.id], paywallName: "OptimizedSubscription_Settings") {
+                if try await subscriptionStore.purchaseWithID([selectedProduct.id], paywallName: "OptimizedSubscription_Settings") {
                     // Track paywall conversion
                     let priceValue = NSDecimalNumber(decimal: selectedProduct.price).doubleValue
                     AnalyticsService.shared.trackPaywallConversion(

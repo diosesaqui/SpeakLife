@@ -376,8 +376,8 @@ struct HighConversionPaywallView: View {
         Task {
             await MainActor.run { declarationStore.isPurchasing = true }
             do {
-                let transaction = try await subscriptionStore.purchase(product, paywallName: paywallVariant)
-                if transaction != nil {
+                let purchased = try await subscriptionStore.purchase(product, paywallName: paywallVariant)
+                if purchased {
                     let price = NSDecimalNumber(decimal: product.price).doubleValue
                     AnalyticsService.shared.trackPaywallConversion(
                         productId: product.id, paywallId: paywallVariant, price: price,

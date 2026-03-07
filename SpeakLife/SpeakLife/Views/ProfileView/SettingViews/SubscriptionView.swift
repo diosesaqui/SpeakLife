@@ -236,7 +236,7 @@ struct OfferPageView: View {
     
     func buy(_ iap: String) async {
         do {
-            if let transaction = try await subscriptionStore.purchaseWithID([iap], paywallName: "SubscriptionView_Standard") {
+            if try await subscriptionStore.purchaseWithID([iap], paywallName: "SubscriptionView_Standard") {
                 // Get product details for tracking
                 let products = await subscriptionStore.products(for: [iap])
                 if let product = products?.first {
@@ -646,7 +646,7 @@ struct SubscriptionView: View {
             }
             do {
                 if let currentSelection = currentSelection,
-                   let transaction = try await subscriptionStore.purchaseWithID([currentSelection.id], paywallName: "SubscriptionView_Selector") {
+                   (try await subscriptionStore.purchaseWithID([currentSelection.id], paywallName: "SubscriptionView_Selector")) {
                     // Track paywall conversion
                     let priceValue = NSDecimalNumber(decimal: currentSelection.price).doubleValue
                     AnalyticsService.shared.trackPaywallConversion(
