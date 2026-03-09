@@ -206,19 +206,38 @@ async function postSlot(slotName, date, dryRun) {
 
   if (dryRun) { console.log("[DRY RUN] Would post:", slides.map(s => basename(s))); return; }
 
-  // Upload all slides as images (carousel — swipeable on IG, TikTok, Twitter)
+  // Upload all 5 slides
   const mediaUrls = [];
   for (const s of slides) { mediaUrls.push(await ayrshareUploadMedia(s)); }
 
-  const result = await ayrsharePost({
+  // Instagram: all 5 slides as carousel
+  const igResult = await ayrsharePost({
     post: caption,
-    platforms: PLATFORMS,
+    platforms: ["instagram"],
     mediaUrls,
     instagramOptions: { type: "carousel" },
+  });
+  console.log(`IG posted:`, (igResult.postIds || [igResult]).map(p => p.postUrl || p.id));
+
+  // Twitter: max 4 images — hook + 3 declarations (skip CTA slide)
+  const twitterUrls = mediaUrls.slice(0, 4);
+  const twitterResult = await ayrsharePost({
+    post: caption,
+    platforms: ["twitter"],
+    mediaUrls: twitterUrls,
+  });
+  console.log(`Twitter posted:`, (twitterResult.postIds || [twitterResult]).map(p => p.postUrl || p.id));
+
+  // TikTok: slideshow with auto music
+  const tiktokResult = await ayrsharePost({
+    post: caption,
+    platforms: ["tiktok"],
+    mediaUrls,
     tiktokOptions: { autoAddMusic: true },
   });
-  console.log(`Posted! IDs:`, result.postIds || result.id);
-  return result;
+  console.log(`TikTok posted:`, (tiktokResult.postIds || [tiktokResult]).map(p => p.id));
+
+  return { igResult, twitterResult, tiktokResult };
 }
 
 // 7 AM ET
