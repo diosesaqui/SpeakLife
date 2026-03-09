@@ -141,10 +141,10 @@ async function renderHookSlide(angle, pillar, outPath) {
   ctx.lineTo(W/2 + 80, divY);
   ctx.stroke();
 
-  // "DECLARE THESE  SWIPE ->" in accent color — smaller, secondary
-  ctx.font = "700 34px DisplayBold";
+  // "DECLARE THESE  SWIPE ->" in accent color
+  ctx.font = "800 46px Display";
   ctx.fillStyle = theme.accent;
-  ctx.fillText("DECLARE THESE  SWIPE ->", W/2, divY + 62);
+  ctx.fillText("DECLARE THESE  SWIPE ->", W/2, divY + 66);
 
   // Slide indicator dots (5 slides)
   const dotY = H - 220;
