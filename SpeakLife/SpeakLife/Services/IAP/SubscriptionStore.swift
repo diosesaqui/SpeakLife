@@ -230,10 +230,17 @@ final class SubscriptionStore: ObservableObject {
         // Sync to UserDefaults for TaskLibrary access
         UserDefaults.standard.set(enableAIFeatures, forKey: "enableAIFeatures")
         
-        // Declarations file name from Remote Config
-        let declarationsFileName = remoteConfig["declarationsFileName"].stringValue
-        if !declarationsFileName.isEmpty {
-            UserDefaults.standard.set(declarationsFileName, forKey: "declarationsFileName")
+        // Declarations file name from Remote Config — only upgrade, never downgrade
+        let remoteDeclarationsFileName = remoteConfig["declarationsFileName"].stringValue
+        if !remoteDeclarationsFileName.isEmpty {
+            let currentFileName = UserDefaults.standard.string(forKey: "declarationsFileName") ?? "declarationsv9.json"
+            let currentVer = Int(currentFileName.filter { $0.isNumber }) ?? 0
+            let remoteVer = Int(remoteDeclarationsFileName.filter { $0.isNumber }) ?? 0
+            if remoteVer >= currentVer {
+                UserDefaults.standard.set(remoteDeclarationsFileName, forKey: "declarationsFileName")
+            } else {
+                print("⚠️ Ignoring Remote Config downgrade: \(remoteDeclarationsFileName) < \(currentFileName)")
+            }
         }
         
         yearlyID = yearlySubscription

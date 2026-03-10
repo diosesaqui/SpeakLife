@@ -246,6 +246,8 @@ final class LocalAPIClient: APIService {
                     let declarations = self?.decodeDeclarationsSafely(from: data)
                     if let declarations = declarations, !declarations.isEmpty {
                         self?.localVersion = self?.remoteVersion ?? 2
+                        // Save to disk so fallback works on subsequent launches
+                        self?.save(declarations: declarations) { _ in }
                         completion(declarations, nil, true)
                     } else {
                         self?.fallbackToLocal(completion: completion)
@@ -262,27 +264,45 @@ final class LocalAPIClient: APIService {
 
     
     private func fallbackToLocal(completion: @escaping([Declaration], APIError?, Bool) -> Void) {
-        // Use lazy loading for fallback to prevent memory crashes
-        LazyJSONLoader.shared.loadDeclarations(fileName: declarationsFileName) { declarations in
-            // Apply same memory limits as remote loading
-            let maxDeclarations = 5000
-            let limitedDeclarations = declarations.count > maxDeclarations ? 
-                Array(declarations.prefix(maxDeclarations)) : declarations
+        // First try disk-saved declarations (written after successful remote fetch)
+        loadFromDisk { [weak self] diskDeclarations, diskError in
+            guard let self = self else { return }
+            
+            if diskError == nil && !diskDeclarations.isEmpty {
+                let maxDeclarations = 5000
+                let limited = diskDeclarations.count > maxDeclarations ?
+                    Array(diskDeclarations.prefix(maxDeclarations)) : diskDeclarations
+                completion(limited, nil, false)
+                return
+            }
+            
+            // Disk empty or failed — fall back to bundled JSON
+            LazyJSONLoader.shared.loadDeclarations(fileName: self.declarationsFileName) { declarations in
+                let maxDeclarations = 5000
+                let limitedDeclarations = declarations.count > maxDeclarations ?
+                    Array(declarations.prefix(maxDeclarations)) : declarations
                 
-            if !limitedDeclarations.isEmpty {
-                completion(limitedDeclarations, nil, false)
-            } else {
-                completion([], APIError.failedDecode, false)
+                if !limitedDeclarations.isEmpty {
+                    completion(limitedDeclarations, nil, false)
+                } else {
+                    completion([], APIError.failedDecode, false)
+                }
             }
         }
     }
     
     private func updateDeclarationsFileName() {
-        // Fetch the declarations file name from remote config
+        // Fetch the declarations file name from remote config — only upgrade, never downgrade
         let configFileName = remoteConfig["declarationsFileName"].stringValue
         if !configFileName.isEmpty && configFileName != declarationsFileName {
-            print("Updating declarations file name from \(declarationsFileName) to \(configFileName)")
-            declarationsFileName = configFileName
+            let currentVer = Int(declarationsFileName.filter { $0.isNumber }) ?? 0
+            let remoteVer = Int(configFileName.filter { $0.isNumber }) ?? 0
+            if remoteVer >= currentVer {
+                print("Updating declarations file name from \(declarationsFileName) to \(configFileName)")
+                declarationsFileName = configFileName
+            } else {
+                print("⚠️ Ignoring Remote Config downgrade: \(configFileName) < \(declarationsFileName)")
+            }
         }
     }
     
