@@ -278,11 +278,17 @@ final class LocalAPIClient: APIService {
     }
     
     private func updateDeclarationsFileName() {
-        // Fetch the declarations file name from remote config
+        // Fetch the declarations file name from remote config — only upgrade, never downgrade
         let configFileName = remoteConfig["declarationsFileName"].stringValue
         if !configFileName.isEmpty && configFileName != declarationsFileName {
-            print("Updating declarations file name from \(declarationsFileName) to \(configFileName)")
-            declarationsFileName = configFileName
+            let currentVer = Int(declarationsFileName.filter { $0.isNumber }) ?? 0
+            let remoteVer = Int(configFileName.filter { $0.isNumber }) ?? 0
+            if remoteVer >= currentVer {
+                print("Updating declarations file name from \(declarationsFileName) to \(configFileName)")
+                declarationsFileName = configFileName
+            } else {
+                print("⚠️ Ignoring Remote Config downgrade: \(configFileName) < \(declarationsFileName)")
+            }
         }
     }
     
