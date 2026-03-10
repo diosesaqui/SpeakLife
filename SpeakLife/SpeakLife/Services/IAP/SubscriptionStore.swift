@@ -3,6 +3,8 @@
 //  SpeakLife
 //
 //  Created by Riccardo Washington on 12/17/22.
+//  Updated: RevenueCat integration — purchase/restore/entitlements via RC,
+//           StoreKit products still used for price display in views.
 //
 
 import StoreKit
@@ -11,8 +13,10 @@ import FirebaseAnalytics
 import FacebookCore
 import SwiftUI
 import FirebaseRemoteConfig
+import RevenueCat
 
-typealias Transaction = StoreKit.Transaction
+// Keep these typealiases only for the Product extension at the bottom of the file.
+// Transaction is no longer used directly — RC manages the transaction lifecycle.
 typealias RenewalInfo = StoreKit.Product.SubscriptionInfo.RenewalInfo
 typealias RenewalState = StoreKit.Product.SubscriptionInfo.RenewalState
 
@@ -85,14 +89,10 @@ final class SubscriptionStore: ObservableObject {
     @Published var audioRemoteVersion: Int = 0
    
     private var remoteConfig = RemoteConfig.remoteConfig()
-    var updateListenerTask: Task<Void, Error>? = nil
     var cancellable: AnyCancellable?
     private var cancellables = Set<AnyCancellable>()
 
     init() {
-        // Start a transaction listener as close to app launch as possible
-        updateListenerTask = listenForTransactions()
-        
         // Listen for audio version updates via push notifications
         NotificationCenter.default
             .publisher(for: .audioVersionUpdated)
@@ -104,35 +104,22 @@ final class SubscriptionStore: ObservableObject {
                 }
             }
             .store(in: &cancellables)
-        
+
         // Set up Remote Config real-time listener for automatic updates
         setupRemoteConfigListener()
-        
+
         fetchRemoteConfig() { [weak self] in
-            
             Task {
-                // During store initialization, request products from the App Store
+                // Fetch StoreKit products for price display in views (unchanged)
                 await self?.requestProducts()
-                
-                // Deliver products that the customer purchases
-                await self?.updateCustomerProductStatus()
+
+                // ── RevenueCat: check entitlements on launch ──────────────────
+                await self?.updateEntitlementsFromRC()
             }
         }
-        
-        cancellable = Publishers.CombineLatest3($subscriptionGroupStatus, $purchasedNonConsumables, $purchasedSubscriptions)
-            .sink { [weak self] subscriptionStatus, nonConsumables, purchasedSubscriptions in
-                guard let self = self else { return }
-                // Update isPremium based on subscription state and purchased non-consumables
-                self.isInDevotionalPremium = checkIsDevotionalActive(nonConsumables: nonConsumables)
-                // Fix: Check purchased non-consumables, not all available non-consumables
-                self.isPremium = (subscriptionStatus == .subscribed) || self.purchasedNonConsumables.contains( where: { $0.id == lifetimeID })
-                
-            }
-        
-    }
 
-    deinit {
-        updateListenerTask?.cancel()
+        // ── RevenueCat: listen for customerInfo changes (renewals, cancellations, etc.)
+        setupRCCustomerInfoListener()
     }
     
     func fetchRemoteConfig() async {
@@ -279,103 +266,59 @@ final class SubscriptionStore: ObservableObject {
         return aiEnabled
     }
     
-    func listenForTransactions() -> Task<Void, Error> {
-        return Task.detached {
-            // Iterate through any transactions that don't come from a direct call to `purchase()`
-            for await result in Transaction.updates {
-                do {
-                    let transaction = try self.checkVerified(result)
-                    
-                    // Track subscription events based on transaction type
-                    if transaction.productType == .autoRenewable {
-                        // Check if this is a renewal or trial conversion
-                        let originalTransactionId = transaction.originalID
-                        
-                        // Get previous transactions for this subscription
-                        var previousTransactions: [Transaction] = []
-                        for await entitlement in Transaction.currentEntitlements {
-                            if let verifiedTransaction = try? self.checkVerified(entitlement),
-                               verifiedTransaction.originalID == originalTransactionId,
-                               verifiedTransaction.id != transaction.id {
-                                previousTransactions.append(verifiedTransaction)
-                            }
-                        }
-                        
-                        if !previousTransactions.isEmpty {
-                                // This is a renewal or trial conversion
-                                // Get the product to extract price
-                                if let product = self.subscriptions.first(where: { $0.id == transaction.productID }) ?? self.nonConsumables.first(where: { $0.id == transaction.productID }) {
-                                    let priceValue = NSDecimalNumber(decimal: product.price).doubleValue
-                                    
-                                    if transaction.offerType == .introductory {
-                                        // Trial conversion
-                                        AnalyticsService.shared.trackTrialActivated(
-                                            productId: transaction.productID,
-                                            metadata: [
-                                                "transaction_id": transaction.id,
-                                                "original_transaction_id": originalTransactionId,
-                                                "price": priceValue,
-                                                "currency": "USD"
-                                            ]
-                                        )
-                                        
-                                        // Track conversion with revenue
-                                        Analytics.logEvent("app_store_subscription_convert", parameters: [
-                                            "product_id": transaction.productID,
-                                            "value": priceValue,
-                                            "currency": "USD"
-                                        ])
-                                        Event.trackTikTokPremiumPurchase(value: priceValue, currency: "USD")
-                                    } else {
-                                        // Regular renewal
-                                        AnalyticsService.shared.trackSubscriptionRenewal(
-                                            productId: transaction.productID,
-                                            price: priceValue,
-                                            metadata: [
-                                                "transaction_id": transaction.id,
-                                                "original_transaction_id": originalTransactionId
-                                            ]
-                                        )
-                                        
-                                        // Track renewal with revenue
-                                        Analytics.logEvent("app_store_subscription_renew", parameters: [
-                                            "product_id": transaction.productID,
-                                            "value": priceValue,
-                                            "currency": "USD"
-                                        ])
-                                    }
-                                } else {
-                                    // Fallback without price if product not found
-                                    if transaction.offerType == .introductory {
-                                        AnalyticsService.shared.trackTrialActivated(
-                                            productId: transaction.productID,
-                                            metadata: [
-                                                "transaction_id": transaction.id,
-                                                "original_transaction_id": originalTransactionId
-                                            ]
-                                        )
-                                    } else {
-                                        AnalyticsService.shared.trackSubscriptionRenewal(
-                                            productId: transaction.productID,
-                                            metadata: [
-                                                "transaction_id": transaction.id,
-                                                "original_transaction_id": originalTransactionId
-                                            ]
-                                        )
-                                    }
-                                }
-                        }
-                    }
+    // MARK: - RevenueCat Customer Info Listener
 
-                    // Deliver products to the user
-                    await self.updateCustomerProductStatus()
+    /// Sets up a Purchases delegate so we react to background renewals,
+    /// cancellations, and billing retries without polling.
+    private func setupRCCustomerInfoListener() {
+        Purchases.shared.delegate = RCCustomerInfoDelegate { [weak self] customerInfo in
+            guard let self else { return }
+            Task { @MainActor in
+                self.applyCustomerInfo(customerInfo)
+            }
+        }
+    }
 
-                    // Always finish a transaction
-                    await transaction.finish()
-                } catch {
-                    // StoreKit has a transaction that fails verification; don't deliver content
-                    print("Transaction failed verification")
-                }
+    /// Fetches entitlements from RC and updates all published state.
+    func updateEntitlementsFromRC() async {
+        do {
+            let info = try await RevenueCatManager.shared.customerInfo()
+            await MainActor.run { applyCustomerInfo(info) }
+        } catch {
+            print("RC entitlement fetch failed: \(error)")
+        }
+    }
+
+    @MainActor
+    private func applyCustomerInfo(_ info: RevenueCat.CustomerInfo) {
+        let premiumActive   = RevenueCatManager.shared.isPremiumActive(info)
+        let devotionalActive = RevenueCatManager.shared.isDevotionalActive(info)
+
+        isPremium          = premiumActive
+        isInDevotionalPremium = devotionalActive
+
+        // Mirror into purchasedSubscriptions / purchasedNonConsumables so any
+        // view code that checks those arrays keeps working.
+        // We use the already-fetched StoreKit products for the Product objects.
+        if premiumActive {
+            // If no StoreKit products loaded yet, leave arrays as-is
+            if purchasedSubscriptions.isEmpty, let activeSub = subscriptions.first {
+                purchasedSubscriptions = [activeSub]
+            }
+        } else {
+            purchasedSubscriptions = []
+        }
+
+        // Sync subscriptionGroupStatus
+        subscriptionGroupStatus = premiumActive ? .subscribed : nil
+
+        // Track cancellations
+        if !premiumActive && subscriptionGroupStatus != nil {
+            if let last = purchasedSubscriptions.first {
+                AnalyticsService.shared.trackSubscriptionCancelled(
+                    productId: last.id,
+                    metadata: ["source": "rc_customer_info_update"]
+                )
             }
         }
     }
@@ -428,252 +371,148 @@ final class SubscriptionStore: ObservableObject {
     }
 
     
-    func purchaseWithID(_ ids: [String], paywallName: String = "unknown") async throws -> Transaction? {
-        guard let id = ids.first else { return nil }
+    // MARK: - Purchase (via RevenueCat)
+
+    /// Purchase by product ID — used by paywalls that pass raw ID strings.
+    @discardableResult
+    func purchaseWithID(_ ids: [String], paywallName: String = "unknown") async throws -> Bool {
+        guard let id = ids.first else { return false }
         let productFromID = await products(for: [id])
-        guard let product = productFromID?.first else { return nil }
-        let transaction = try await purchase(product, paywallName: paywallName)
-        return transaction
+        guard let product = productFromID?.first else { return false }
+        return try await purchase(product, paywallName: paywallName)
     }
 
-    func purchase(_ product: Product, paywallName: String = "unknown") async throws -> Transaction? {
-        let priceValue = NSDecimalNumber(decimal: product.price).doubleValue
+    /// Purchase a StoreKit Product — views call this with the product they fetched.
+    /// Internally routes through RC so all entitlements are tracked on the RC dashboard.
+    @discardableResult
+    func purchase(_ product: Product, paywallName: String = "unknown") async throws -> Bool {
+        let priceValue   = NSDecimalNumber(decimal: product.price).doubleValue
         let isTrialProduct = product.subscription?.introductoryOffer != nil
-        let currency = product.priceFormatStyle.currencyCode ?? "USD"
+        let currency     = product.priceFormatStyle.currencyCode ?? "USD"
 
-        // NOTE: Do NOT fire analytics here — Apple has not confirmed the purchase yet.
-        // All event tracking belongs inside case .success after checkVerified().
+        // NOTE: Do NOT fire analytics before RC confirms — RC validates the receipt.
+        let customerInfo = try await RevenueCatManager.shared.purchase(storeProduct: product)
 
-        let result = try await product.purchase()
+        let purchased = RevenueCatManager.shared.isPremiumActive(customerInfo)
+            || RevenueCatManager.shared.isDevotionalActive(customerInfo)
 
-        switch result {
-        case .success(let verification):
-            let transaction = try checkVerified(verification)
-            await updateCustomerProductStatus()
-
-            // Ensure premium unlocks immediately after verified purchase
-            await MainActor.run { self.isPremium = true }
-
-            if isTrialProduct {
-                // ─── TRIAL START ──────────────────────────────────────────────
-                // Fire Meta StartTrial event — $0 value (trial is free)
-                // This is the primary optimization event for Meta ad campaigns
-                AppEvents.shared.logEvent(
-                    AppEvents.Name("StartTrial"),
-                    valueToSum: 0.00,
-                    parameters: [
-                        AppEvents.ParameterName("product_id"): product.id as NSString,
-                        AppEvents.ParameterName("currency"): currency as NSString,
-                        AppEvents.ParameterName("paywall_name"): paywallName as NSString,
-                        AppEvents.ParameterName("predicted_value"): priceValue as NSNumber
-                    ]
-                )
-
-                // Firebase: trial started (correctly placed after Apple confirmation)
-                Analytics.logEvent("trial_started", parameters: [
-                    "product_id": product.id,
-                    "paywall_name": paywallName,
-                    "value": priceValue,
-                    "currency": currency,
-                    "transaction_id": transaction.id
-                ])
-
-                // TikTok
-                Event.trackTikTokEngagement(action: "trial_started", category: "subscription")
-
-            } else {
-                // ─── PAID SUBSCRIPTION (no trial / direct purchase) ───────────
-                // Fire Meta Subscribe event with actual revenue value
-                AppEvents.shared.logEvent(
-                    AppEvents.Name("Subscribe"),
-                    valueToSum: priceValue,
-                    parameters: [
-                        AppEvents.ParameterName("product_id"): product.id as NSString,
-                        AppEvents.ParameterName("currency"): currency as NSString,
-                        AppEvents.ParameterName("paywall_name"): paywallName as NSString
-                    ]
-                )
-
-                // Meta generic purchase (belt + suspenders)
-                AppEvents.shared.logPurchase(amount: priceValue, currency: currency)
-
-                // TikTok
-                Event.trackTikTokPremiumPurchase(value: priceValue, currency: currency)
-            }
-
-            // Firebase: purchase succeeded (fires for both trial and direct)
-            Analytics.logEvent(Event.premiumSucceeded, parameters: [
-                "product_id": product.id,
-                "value": priceValue,
-                "currency": currency,
-                "transaction_id": transaction.id,
-                "paywall_name": paywallName,
-                "is_trial": isTrialProduct
-            ])
-
-            Analytics.logEvent("subscription_started", parameters: [
-                "product_id": product.id,
-                "value": priceValue,
-                "currency": currency,
-                "paywall_name": paywallName,
-                "is_trial": isTrialProduct
-            ])
-
-            await transaction.finish()
-
-            // MARK: - Post-Purchase Email Capture
-            // Show email capture sheet once per user, after their first successful purchase/trial
-            let hasShownEmailCapture = UserDefaults.standard.bool(forKey: "hasShownEmailCapture")
-            if !hasShownEmailCapture {
-                DispatchQueue.main.async {
-                    self.showEmailCaptureAfterPurchase = true
-                }
-            }
-
-            return transaction
-
-        case .userCancelled, .pending:
+        guard purchased else {
+            // User cancelled or purchase is pending
             Analytics.logEvent("purchase_cancelled", parameters: [
                 "product_id": product.id,
                 "paywall_name": paywallName
             ])
-            return nil
-        default:
-            return nil
-        }
-    }
-
-    func isPurchased(_ product: Product) async throws -> Bool {
-        // Determine whether the user purchased a given product
-        switch product.type {
-        case .autoRenewable:
-            return purchasedSubscriptions.contains(product)
-        case .nonConsumable:
-            return purchasedNonConsumables.contains(product) // Check for non-consumables
-        default:
             return false
         }
+
+        // ── Unlock premium immediately ────────────────────────────────────
+        await MainActor.run {
+            self.isPremium = RevenueCatManager.shared.isPremiumActive(customerInfo)
+            self.isInDevotionalPremium = RevenueCatManager.shared.isDevotionalActive(customerInfo)
+            self.subscriptionGroupStatus = .subscribed
+        }
+
+        if isTrialProduct {
+            // ─── TRIAL START ─────────────────────────────────────────────
+            AppEvents.shared.logEvent(
+                AppEvents.Name("StartTrial"),
+                valueToSum: 0.00,
+                parameters: [
+                    AppEvents.ParameterName("product_id"): product.id as NSString,
+                    AppEvents.ParameterName("currency"): currency as NSString,
+                    AppEvents.ParameterName("paywall_name"): paywallName as NSString,
+                    AppEvents.ParameterName("predicted_value"): priceValue as NSNumber
+                ]
+            )
+            Analytics.logEvent("trial_started", parameters: [
+                "product_id": product.id,
+                "paywall_name": paywallName,
+                "value": priceValue,
+                "currency": currency
+            ])
+            Event.trackTikTokEngagement(action: "trial_started", category: "subscription")
+        } else {
+            // ─── PAID SUBSCRIPTION ────────────────────────────────────────
+            AppEvents.shared.logEvent(
+                AppEvents.Name("Subscribe"),
+                valueToSum: priceValue,
+                parameters: [
+                    AppEvents.ParameterName("product_id"): product.id as NSString,
+                    AppEvents.ParameterName("currency"): currency as NSString,
+                    AppEvents.ParameterName("paywall_name"): paywallName as NSString
+                ]
+            )
+            AppEvents.shared.logPurchase(amount: priceValue, currency: currency)
+            Event.trackTikTokPremiumPurchase(value: priceValue, currency: currency)
+        }
+
+        Analytics.logEvent(Event.premiumSucceeded, parameters: [
+            "product_id": product.id,
+            "value": priceValue,
+            "currency": currency,
+            "paywall_name": paywallName,
+            "is_trial": isTrialProduct
+        ])
+        Analytics.logEvent("subscription_started", parameters: [
+            "product_id": product.id,
+            "value": priceValue,
+            "currency": currency,
+            "paywall_name": paywallName,
+            "is_trial": isTrialProduct
+        ])
+
+        // Post-purchase email capture (unchanged)
+        let hasShownEmailCapture = UserDefaults.standard.bool(forKey: "hasShownEmailCapture")
+        if !hasShownEmailCapture {
+            DispatchQueue.main.async { self.showEmailCaptureAfterPurchase = true }
+        }
+
+        return true
     }
 
-    func checkVerified<T>(_ result: VerificationResult<T>) throws -> T {
-        switch result {
-        case .unverified:
-            throw StoreError.failedVerification
-        case .verified(let safe):
-            return safe
-        }
+    // MARK: - Helpers
+
+    func isPurchased(_ product: Product) async -> Bool {
+        isPremium || purchasedNonConsumables.contains(product)
     }
 
-    @MainActor
-    func updateCustomerProductStatus() async {
-        var purchasedSubscriptions: [Product] = []
-        var purchasedNonConsumables: [Product] = [] // New list for purchased non-consumables
-        
-        // Store previous subscription state to detect cancellations
-        let previousSubscriptions = self.purchasedSubscriptions
-        let previousStatus = self.subscriptionGroupStatus
-
-        // Iterate through all of the user's purchased products
-        for await result in Transaction.currentEntitlements {
-            do {
-                let transaction = try checkVerified(result)
-                switch transaction.productType {
-                case .autoRenewable:
-                    if let subscription = subscriptions.first(where: { $0.id == transaction.productID }) {
-                        purchasedSubscriptions.append(subscription)
-                    }
-                case .nonConsumable:
-                    if let nonConsumable = nonConsumables.first(where: { $0.id == transaction.productID }) {
-                        purchasedNonConsumables.append(nonConsumable)
-                    }
-                default:
-                    break
-                }
-            } catch {
-                print("Transaction verification failed")
-            }
-        }
-
-        self.purchasedNonConsumables = purchasedNonConsumables
-
-        // Determine subscription group status robustly:
-        // 1. Try the purchased product first (most reliable after a purchase)
-        // 2. Fall back to any product in the subscriptions list
-        // 3. If we have verified entitlements but status query fails, treat as subscribed
-        var newStatus: RenewalState? = nil
-
-        // Try purchased products first — they're in the active subscription group
-        for product in purchasedSubscriptions {
-            if let statuses = try? await product.subscription?.status,
-               let status = statuses.first?.state {
-                newStatus = status
-                break
-            }
-        }
-
-        // Fall back to checking all available subscription products
-        if newStatus == nil {
-            for product in subscriptions {
-                if let statuses = try? await product.subscription?.status,
-                   let status = statuses.first?.state {
-                    newStatus = status
-                    break
-                }
-            }
-        }
-
-        // Safety net: if we have verified active entitlements but status query
-        // failed for all products, the user IS subscribed — don't lock them out
-        if newStatus == nil && !purchasedSubscriptions.isEmpty {
-            newStatus = .subscribed
-        }
-
-        self.purchasedSubscriptions = purchasedSubscriptions
-        subscriptionGroupStatus = newStatus
-        
-        // Track subscription cancellation
-        if previousStatus == .subscribed && newStatus != .subscribed && !previousSubscriptions.isEmpty {
-            // User had a subscription but no longer does
-            if let lastSubscription = previousSubscriptions.first {
-                AnalyticsService.shared.trackSubscriptionCancelled(
-                    productId: lastSubscription.id,
-                    metadata: [
-                        "previous_status": String(describing: previousStatus),
-                        "new_status": String(describing: newStatus)
-                    ]
-                )
-            }
-        }
-        
-        // Also check for expired or revoked subscriptions
-        if newStatus == .expired || newStatus == .revoked {
-            if let currentSubscription = purchasedSubscriptions.first {
-                AnalyticsService.shared.trackSubscriptionCancelled(
-                    productId: currentSubscription.id,
-                    metadata: [
-                        "cancellation_reason": String(describing: newStatus)
-                    ]
-                )
-            }
-        }
-    }
-    
     func products(for ids: [String]) async -> [Product]? {
         do {
-            let products = try await Product.products(for: ids)
-            return products
+            return try await Product.products(for: ids)
         } catch {
-            print("Failed product request from the App Store server: \(error)")
+            print("StoreKit product request failed: \(error)")
+            return nil
         }
-        return nil
     }
 
     func sortByPrice(_ products: [Product]) -> [Product] {
-        products.sorted(by: { return $0.price < $1.price })
+        products.sorted { $0.price < $1.price }
     }
-    
+
+    // MARK: - Restore (via RevenueCat)
+
     func restore() async {
-        await updateCustomerProductStatus()
+        do {
+            let info = try await RevenueCatManager.shared.restorePurchases()
+            await MainActor.run { applyCustomerInfo(info) }
+        } catch {
+            print("RC restore failed: \(error)")
+        }
+    }
+}
+
+// MARK: - RC Delegate Adapter
+
+/// Lightweight Purchases delegate that forwards customerInfo updates to a closure.
+private final class RCCustomerInfoDelegate: NSObject, PurchasesDelegate {
+    private let onUpdate: (RevenueCat.CustomerInfo) -> Void
+
+    init(onUpdate: @escaping (RevenueCat.CustomerInfo) -> Void) {
+        self.onUpdate = onUpdate
+    }
+
+    func purchases(_ purchases: Purchases, receivedUpdated customerInfo: RevenueCat.CustomerInfo) {
+        onUpdate(customerInfo)
     }
 }
 

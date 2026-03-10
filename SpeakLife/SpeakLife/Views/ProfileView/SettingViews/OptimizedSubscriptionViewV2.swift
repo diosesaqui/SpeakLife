@@ -385,9 +385,9 @@ struct OptimizedSubscriptionViewV2: View {
         
         Task {
             do {
-                let transaction = try await subscriptionStore.purchase(product, paywallName: "OptimizedSubscriptionV2_Onboarding")
-                // Only advance if purchase was successful (transaction exists)
-                if transaction != nil {
+                let purchased = try await subscriptionStore.purchase(product, paywallName: "OptimizedSubscriptionV2_Onboarding")
+                // Only advance if purchase was successful
+                if purchased {
                     Analytics.logEvent("subscription_success", parameters: [
                         "product_type": selectedOption,
                         "paywall_name": "OptimizedSubscriptionV2_Onboarding"
