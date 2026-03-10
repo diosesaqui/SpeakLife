@@ -241,6 +241,7 @@
 		7A278F9F288915DF0084BB57 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 7A278F9E288915DF0084BB57 /* Assets.xcassets */; };
 		7A278FA2288915DF0084BB57 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 7A278FA1288915DF0084BB57 /* Preview Assets.xcassets */; };
 		7A60143F294E382700CD2103 /* SubscriptionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A60143E294E382700CD2103 /* SubscriptionStore.swift */; };
+		RC00000001294E382700CD2103 /* RevenueCatManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = RC00000002294E382700CD2103 /* RevenueCatManager.swift */; };
 		7A601441294E574500CD2103 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A601440294E574500CD2103 /* HomeView.swift */; };
 		7A7BEBCD2913536B008D08A3 /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7A7BEBCC2913536B008D08A3 /* StoreKit.framework */; };
 		7A7BEBD42913574D008D08A3 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7A7BEBD32913574D008D08A3 /* WidgetKit.framework */; };
@@ -603,6 +604,7 @@
 		7A278F9E288915DF0084BB57 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		7A278FA1288915DF0084BB57 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		7A60143E294E382700CD2103 /* SubscriptionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubscriptionStore.swift; sourceTree = "<group>"; };
+		RC00000002294E382700CD2103 /* RevenueCatManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RevenueCatManager.swift; sourceTree = "<group>"; };
 		7A601440294E574500CD2103 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 		7A7BEBCA2913534E008D08A3 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		7A7BEBCC2913536B008D08A3 /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = System/Library/Frameworks/StoreKit.framework; sourceTree = SDKROOT; };
@@ -1421,6 +1423,7 @@
 				45567D6E2F29F66000382072 /* Security */,
 				7AA8707928DACC8300134ADB /* InAppPurchases.swift */,
 				7A60143E294E382700CD2103 /* SubscriptionStore.swift */,
+				RC00000002294E382700CD2103 /* RevenueCatManager.swift */,
 			);
 			path = IAP;
 			sourceTree = "<group>";
@@ -2043,6 +2046,7 @@
 				AC33C8C521764DF3961EA018 /* OnboardingDailyBurstScreen.swift in Sources */,
 				45ED72C62BA64C3F00F5F5E3 /* StreakInfoBottomSheet.swift in Sources */,
 				7A60143F294E382700CD2103 /* SubscriptionStore.swift in Sources */,
+				RC00000001294E382700CD2103 /* RevenueCatManager.swift in Sources */,
 				45567D6B2F29E40000382072 /* TimerButtonView.swift in Sources */,
 				45567D6C2F29E40000382072 /* NotificationObserversModifier.swift in Sources */,
 				7ABA50C529E4D818002699F1 /* Prayer.swift in Sources */,
