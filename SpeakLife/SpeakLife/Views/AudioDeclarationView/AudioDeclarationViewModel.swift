@@ -15,6 +15,7 @@ final class AudioDeclarationViewModel: ObservableObject {
     @Published var dynamicFilters: [FilterConfig] = []  // Filter configs from JSON
     @Published var contentByFilter: [String: [AudioDeclaration]] = [:]  // All content organized by filter ID
     @Published var selectedFilterId: String = "speaklife"  // Selected filter ID (set dynamically from server)
+    @Published var playedFilter: PlayedFilter = .all  // Played / Unplayed sub-filter
     
     private(set) var allAudioFiles: [AudioDeclaration] = []
     @Published var downloadProgress: [String: Double] = [:]
@@ -31,6 +32,13 @@ final class AudioDeclarationViewModel: ObservableObject {
     init() {
         // Observe changes in favorites manager to trigger UI updates
         favoritesManager.objectWillChange
+            .sink { [weak self] _ in
+                self?.objectWillChange.send()
+            }
+            .store(in: &cancellables)
+
+        // Re-render list when played status changes (e.g. filter by played/unplayed)
+        AudioProgressStore.shared.$playedIDs
             .sink { [weak self] _ in
                 self?.objectWillChange.send()
             }
@@ -185,10 +193,18 @@ final class AudioDeclarationViewModel: ObservableObject {
     
     // New dynamic filtered content
     var dynamicFilteredContent: [AudioDeclaration] {
+        let base: [AudioDeclaration]
         if selectedFilterId == "favorites" {
-            return favoritesManager.getFavoritesSortedByDate()
+            base = favoritesManager.getFavoritesSortedByDate()
+        } else {
+            base = contentByFilter[selectedFilterId] ?? []
         }
-        return contentByFilter[selectedFilterId] ?? []
+
+        switch playedFilter {
+        case .all:      return base
+        case .played:   return base.filter { AudioProgressStore.shared.isPlayed($0.id) }
+        case .unplayed: return base.filter { !AudioProgressStore.shared.isPlayed($0.id) }
+        }
     }
     
     func fetchAudio(version: Int) {
@@ -393,6 +409,15 @@ final class AudioDeclarationViewModel: ObservableObject {
         return dynamicFilters.first(where: { $0.id == filterId })?.displayName ?? filterId.capitalized
     }
   }
+
+// MARK: - Played Filter
+
+enum PlayedFilter: String, CaseIterable, Identifiable {
+    case all      = "All"
+    case played   = "Played"
+    case unplayed = "Unplayed"
+    var id: String { rawValue }
+}
 
 struct FilterConfig: Codable {
     let id: String

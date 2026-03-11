@@ -132,8 +132,8 @@ final class AudioPlayerViewModel: NSObject, ObservableObject {
         
         // Only resume if content audio was actively playing and we weren't suspended too long
         if isPlaying && player?.rate == 0 && AudioPlayerViewModel.hasActiveAudio {
-            // This is content audio that should resume
-            player?.play()
+            // This is content audio that should resume at current playback speed
+            player?.rate = playbackSpeed
             updateNowPlayingInfo()
         }
         
@@ -365,7 +365,8 @@ final class AudioPlayerViewModel: NSObject, ObservableObject {
             
             if self.onRepeat {
                 self.player?.seek(to: .zero)
-                self.player?.play()
+                // Resume at current playback speed
+                self.player?.rate = self.playbackSpeed
             }
 //            else if !self.urlQueue.isEmpty {
 //                playNextInQueue()
@@ -475,7 +476,8 @@ final class AudioPlayerViewModel: NSObject, ObservableObject {
             }
             // Stop background music when playing content audio
             AudioPlayerService.shared.stopMusic()
-            player.play()
+            // Use rate instead of play() so the current playback speed is preserved
+            player.rate = playbackSpeed
         }
         isPlaying.toggle()
         
@@ -607,7 +609,12 @@ final class AudioPlayerViewModel: NSObject, ObservableObject {
                             "playback_speed": playbackSpeed
                         ]
                     )
-                    
+
+                    // Persist as "played" once the listener passes the 50% mark
+                    if threshold == 50 {
+                        AudioProgressStore.shared.markPlayed(audio.id)
+                    }
+
                     print("📊 Audio Progress: \(threshold)% reached for \"\(audio.title)\"")
                     print("   Listen time: \(String(format: "%.1f", actualListenTime))s of \(String(format: "%.1f", duration))s")
                 }

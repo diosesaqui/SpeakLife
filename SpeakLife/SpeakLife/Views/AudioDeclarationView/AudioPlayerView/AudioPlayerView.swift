@@ -235,11 +235,36 @@ struct AudioPlayerView: View {
                         .foregroundColor(.white)
                 }
 
-                // Invisible spacer to keep play button visually centred
-                Color.clear.frame(width: 28, height: 28)
+                // Speed toggle — cycles 1× → 1.5× → 2× → 1×
+                Button(action: {
+                    let next: Float
+                    switch viewModel.playbackSpeed {
+                    case 1.0:  next = 1.5
+                    case 1.5:  next = 2.0
+                    default:   next = 1.0
+                    }
+                    viewModel.changePlaybackSpeed(to: next)
+                }) {
+                    Text(playbackSpeedLabel)
+                        .font(.system(size: 13, weight: .bold, design: .rounded))
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(Capsule().fill(Color.white.opacity(0.2)))
+                        .frame(minWidth: 44)
+                }
             }
             .padding(.top, 4)
             .padding(.bottom, 24)
+        }
+    }
+
+    // Returns a short label for the current playback speed
+    private var playbackSpeedLabel: String {
+        switch viewModel.playbackSpeed {
+        case 1.5:  return "1.5×"
+        case 2.0:  return "2×"
+        default:   return "1×"
         }
     }
 
