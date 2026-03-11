@@ -100,7 +100,23 @@ class DailyDeclarationReminderService: ObservableObject {
         scheduleConditionalEveningReminder()
     }
     
+    /// Call this when the user completes the daily burst so the evening reminder is cancelled.
+    func cancelEveningReminderAfterBurstCompletion() {
+        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [eveningReminderIdentifier])
+        #if DEBUG
+        print("🔔 Evening burst reminder cancelled — burst already completed today")
+        #endif
+    }
+    
     private func scheduleConditionalEveningReminder() {
+        // Skip scheduling if the user already completed today's burst
+        guard !BurstCompletionTracker.shared.hasTodaysCompletion() else {
+            #if DEBUG
+            print("🔔 Evening burst reminder skipped — burst already completed today")
+            #endif
+            return
+        }
+        
         // Schedule for 8:00 PM every day
         var dateComponents = DateComponents()
         dateComponents.hour = 20  // 8:00 PM
@@ -133,7 +149,7 @@ class DailyDeclarationReminderService: ObservableObject {
             ("Don't break your streak! 🔥", "Your daily burst is waiting. Takes just 2 minutes to declare victory."),
             ("End strong, warrior! 💪", "Complete your daily burst before bed and keep your streak alive."),
             ("Quick reminder ⚡", "You haven't completed today's burst. Don't let the day end without declaring truth!"),
-            ("Keep the momentum! 🚀", "Your \(BurstCompletionTracker.shared.currentStreak + 1) day streak is calling. Complete your burst now."),
+            ("Keep the momentum! 🚀", "Your \(UserDefaults.standard.integer(forKey: "currentStreak") + 1) day streak is calling. Complete your burst now."),
             ("Finish what you started! 🎯", "Just 7 declarations between you and today's victory.")
         ]
         
