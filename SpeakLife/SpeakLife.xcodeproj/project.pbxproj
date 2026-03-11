@@ -146,6 +146,7 @@
 		4597E1E82E3FDC79009D6C66 /* StreakStatsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4597E1E62E3FDC79009D6C66 /* StreakStatsTests.swift */; };
 		4597E1EB2E3FEC72009D6C66 /* AudioAnalytics.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4597E1E92E3FEC72009D6C66 /* AudioAnalytics.swift */; };
 		4597E1EC2E3FEC72009D6C66 /* AudioFavoritesManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4597E1EA2E3FEC72009D6C66 /* AudioFavoritesManager.swift */; };
+		8D9D24C8C66A40D5AF502D31 /* AudioProgressStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 750128553E56408E9225277C /* AudioProgressStore.swift */; };
 		4597E1EE2E3FECCA009D6C66 /* AudioFavoritesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4597E1ED2E3FECCA009D6C66 /* AudioFavoritesView.swift */; };
 		4597E1F02E412346009D6C66 /* ChecklistNotificationSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4597E1EF2E412346009D6C66 /* ChecklistNotificationSettings.swift */; };
 		4597E21A2E4138A9009D6C66 /* ContentInputView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4597E2142E4138A9009D6C66 /* ContentInputView.swift */; };
@@ -508,6 +509,7 @@
 		4597E1E62E3FDC79009D6C66 /* StreakStatsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StreakStatsTests.swift; sourceTree = "<group>"; };
 		4597E1E92E3FEC72009D6C66 /* AudioAnalytics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioAnalytics.swift; sourceTree = "<group>"; };
 		4597E1EA2E3FEC72009D6C66 /* AudioFavoritesManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioFavoritesManager.swift; sourceTree = "<group>"; };
+		750128553E56408E9225277C /* AudioProgressStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioProgressStore.swift; sourceTree = "<group>"; };
 		4597E1ED2E3FECCA009D6C66 /* AudioFavoritesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioFavoritesView.swift; sourceTree = "<group>"; };
 		4597E1EF2E412346009D6C66 /* ChecklistNotificationSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChecklistNotificationSettings.swift; sourceTree = "<group>"; };
 		4597E2112E4138A9009D6C66 /* VoiceInputManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceInputManager.swift; sourceTree = "<group>"; };
@@ -1179,6 +1181,7 @@
 			children = (
 				4597E1E92E3FEC72009D6C66 /* AudioAnalytics.swift */,
 				4597E1EA2E3FEC72009D6C66 /* AudioFavoritesManager.swift */,
+				750128553E56408E9225277C /* AudioProgressStore.swift */,
 				45C7482F2B5BC4330011D8F6 /* AudioPlayer.swift */,
 			);
 			path = AudioPlayer;
@@ -2002,6 +2005,7 @@
 				4548078C2E3F3E6500B8C71B /* BadgeTestView.swift in Sources */,
 				4597E1EB2E3FEC72009D6C66 /* AudioAnalytics.swift in Sources */,
 				4597E1EC2E3FEC72009D6C66 /* AudioFavoritesManager.swift in Sources */,
+				8D9D24C8C66A40D5AF502D31 /* AudioProgressStore.swift in Sources */,
 				7AA8709228DACCA700134ADB /* ToggleStyle.swift in Sources */,
 				45567D652F29CE7700382072 /* BibleAuthenticationView.swift in Sources */,
 				458B6B1D2BA6D58D0001BEFE /* StreakView.swift in Sources */,
