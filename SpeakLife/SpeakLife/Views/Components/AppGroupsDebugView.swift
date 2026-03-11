@@ -9,7 +9,7 @@ import SwiftUI
 import WidgetKit
 
 // Helper to access widget UserDefaults
-private let widgetDefaults = UserDefaults(suiteName: "group.com.speaklife.widget")
+private let widgetDefaults = UserDefaults(suiteName: "group.com.Franchiz.SpeakLife")
 
 struct AppGroupsDebugView: View {
     @State private var testValue = ""
@@ -27,7 +27,7 @@ struct AppGroupsDebugView: View {
                 Text("App Group Available: \(widgetDefaults != nil ? "✅ YES" : "❌ NO")")
                     .foregroundColor(widgetDefaults != nil ? .green : .red)
                 
-                Text("Suite Name: group.com.speaklife.widget")
+                Text("Suite Name: group.com.Franchiz.SpeakLife")
                 
                 Divider()
                 
