@@ -15,6 +15,7 @@ struct UpNextCell: View {
     @ObservedObject var viewModel: AudioDeclarationViewModel
     @ObservedObject var audioViewModel: AudioPlayerViewModel
     @StateObject private var metricsService = ListenerMetricsService.shared
+    @ObservedObject private var progressStore = AudioProgressStore.shared
 
     let item: AudioDeclaration
 
@@ -33,6 +34,20 @@ struct UpNextCell: View {
                         .frame(width: 80, height: 80)
                         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                         .shadow(color: .black.opacity(0.2), radius: 6, x: 0, y: 4)
+                        .overlay(alignment: .bottomTrailing) {
+                            if progressStore.isPlayed(item.id) {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .font(.system(size: 18, weight: .bold))
+                                    .symbolRenderingMode(.palette)
+                                    .foregroundStyle(Color.white, Color(red: 0.18, green: 0.78, blue: 0.45))
+                                    .background(
+                                        Circle()
+                                            .fill(Color.black.opacity(0.3))
+                                            .padding(2)
+                                    )
+                                    .offset(x: 5, y: 5)
+                            }
+                        }
                     
                     VStack(alignment: .leading, spacing: 6) {
                         Text(item.title)
@@ -221,6 +236,10 @@ struct AudioDeclarationView: View {
                     }
                     .padding(.vertical)
 
+                    // Played / Unplayed sub-filter
+                    playedFilterRow
+                        .padding(.bottom, 4)
+
                     // Episode List with swipe support
                     episodeRow(proxy)
                         .listStyle(.plain)
@@ -292,6 +311,31 @@ struct AudioDeclarationView: View {
         }
     }
     
+    // MARK: - Played / Unplayed sub-filter
+
+    private var playedFilterRow: some View {
+        HStack(spacing: 4) {
+            ForEach(PlayedFilter.allCases) { option in
+                Button(action: { viewModel.playedFilter = option }) {
+                    Text(option.rawValue)
+                        .font(.system(size: 13, weight: viewModel.playedFilter == option ? .semibold : .regular))
+                        .foregroundColor(viewModel.playedFilter == option ? .white : .white.opacity(0.45))
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 6)
+                        .background(
+                            Capsule()
+                                .fill(viewModel.playedFilter == option
+                                      ? Color.white.opacity(0.18)
+                                      : Color.clear)
+                        )
+                }
+            }
+
+            Spacer()
+        }
+        .padding(.horizontal)
+    }
+
     // Dynamic header using new filter system
     var dynamicHeader: some View {
         HStack(spacing: 15) {

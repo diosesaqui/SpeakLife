@@ -609,7 +609,12 @@ final class AudioPlayerViewModel: NSObject, ObservableObject {
                             "playback_speed": playbackSpeed
                         ]
                     )
-                    
+
+                    // Persist as "played" once the listener passes the 50% mark
+                    if threshold == 50 {
+                        AudioProgressStore.shared.markPlayed(audio.id)
+                    }
+
                     print("📊 Audio Progress: \(threshold)% reached for \"\(audio.title)\"")
                     print("   Listen time: \(String(format: "%.1f", actualListenTime))s of \(String(format: "%.1f", duration))s")
                 }
