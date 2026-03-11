@@ -151,5 +151,5 @@ struct MarkAsReadIntent: AppIntent {
 
 //// MARK: - UserDefaults Extension
 extension UserDefaults {
-    static let widgetGroup = UserDefaults(suiteName: "group.com.Franchiz.SpeakLife") ?? UserDefaults.standard
+    static let widgetGroup = UserDefaults(suiteName: "group.com.speaklife.widget") ?? UserDefaults.standard
 }

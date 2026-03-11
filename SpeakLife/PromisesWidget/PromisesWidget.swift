@@ -11,7 +11,7 @@ import SwiftUI
 // MARK: - Constants
 
 private enum WidgetConstants {
-    static let appGroupSuiteName = "group.com.Franchiz.SpeakLife"
+    static let appGroupSuiteName = "group.com.speaklife.widget"
     static let syncedPromisesKey = "syncedPromises"
     static let fallbackPromise = "I am blessed!"
     static let placeholderText = "Loading..."
