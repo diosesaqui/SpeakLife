@@ -241,7 +241,6 @@
 		7A278F9F288915DF0084BB57 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 7A278F9E288915DF0084BB57 /* Assets.xcassets */; };
 		7A278FA2288915DF0084BB57 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 7A278FA1288915DF0084BB57 /* Preview Assets.xcassets */; };
 		7A60143F294E382700CD2103 /* SubscriptionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A60143E294E382700CD2103 /* SubscriptionStore.swift */; };
-		RC00000001294E382700CD2103 /* RevenueCatManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = RC00000002294E382700CD2103 /* RevenueCatManager.swift */; };
 		7A601441294E574500CD2103 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A601440294E574500CD2103 /* HomeView.swift */; };
 		7A7BEBCD2913536B008D08A3 /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7A7BEBCC2913536B008D08A3 /* StoreKit.framework */; };
 		7A7BEBD42913574D008D08A3 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7A7BEBD32913574D008D08A3 /* WidgetKit.framework */; };
@@ -337,6 +336,7 @@
 		E260535F74194D8CB0442F40 /* HookScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46F66FE59AA649BFB7D06B09 /* HookScene.swift */; };
 		F3F466B4CB267BFBE4FD8CC8 /* WldehBibleAPIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D920701A13775F49180D845 /* WldehBibleAPIService.swift */; };
 		FCB7A8468DAA92844336D893 /* CancelInterventionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA6F23A3327C444669DC03A5 /* CancelInterventionView.swift */; };
+		RC00000001294E382700CD2103 /* RevenueCatManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = RC00000002294E382700CD2103 /* RevenueCatManager.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -604,7 +604,6 @@
 		7A278F9E288915DF0084BB57 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		7A278FA1288915DF0084BB57 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		7A60143E294E382700CD2103 /* SubscriptionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubscriptionStore.swift; sourceTree = "<group>"; };
-		RC00000002294E382700CD2103 /* RevenueCatManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RevenueCatManager.swift; sourceTree = "<group>"; };
 		7A601440294E574500CD2103 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 		7A7BEBCA2913534E008D08A3 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		7A7BEBCC2913536B008D08A3 /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = System/Library/Frameworks/StoreKit.framework; sourceTree = SDKROOT; };
@@ -695,6 +694,7 @@
 		BA221D745BD49CF6BCFEBAA1 /* LifecycleNotificationService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LifecycleNotificationService.swift; sourceTree = "<group>"; };
 		DC73B2698B17B267C7A6F437 /* TrialExperienceService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TrialExperienceService.swift; sourceTree = "<group>"; };
 		FA6F23A3327C444669DC03A5 /* CancelInterventionView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CancelInterventionView.swift; sourceTree = "<group>"; };
+		RC00000002294E382700CD2103 /* RevenueCatManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RevenueCatManager.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -2370,7 +2370,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = SpeakLife/SpeakLife.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 966;
+				CURRENT_PROJECT_VERSION = 967;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_ASSET_PATHS = "\"SpeakLife/Preview Content\"";
 				DEVELOPMENT_TEAM = 652R6A63L8;
@@ -2391,7 +2391,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 3.1.71;
+				MARKETING_VERSION = 3.1.72;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Franchiz.SpeakLife;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -2412,7 +2412,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = SpeakLife/SpeakLife.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 966;
+				CURRENT_PROJECT_VERSION = 967;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_ASSET_PATHS = "\"SpeakLife/Preview Content\"";
 				DEVELOPMENT_TEAM = 652R6A63L8;
@@ -2433,7 +2433,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 3.1.71;
+				MARKETING_VERSION = 3.1.72;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Franchiz.SpeakLife;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
