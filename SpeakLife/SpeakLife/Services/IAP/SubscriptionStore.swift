@@ -113,7 +113,11 @@ final class SubscriptionStore: ObservableObject {
                 // Fetch StoreKit products for price display in views (unchanged)
                 await self?.requestProducts()
 
-                // ── RevenueCat: check entitlements on launch ──────────────────
+                // ── RevenueCat: sync then check entitlements on launch ────────
+                // syncPurchases() forces a fresh Apple receipt sync — catches
+                // promo code redemptions and purchases made outside the app
+                // (e.g. gifted codes, Family Sharing) that may be in RC cache.
+                try? await Purchases.shared.syncPurchases()
                 await self?.updateEntitlementsFromRC()
             }
         }
