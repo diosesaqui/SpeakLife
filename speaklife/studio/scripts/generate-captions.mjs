@@ -17,15 +17,18 @@ const WORKSPACE = resolve(STUDIO, "..", "..");
 const PILLAR_NAMES = ["anxiety", "healing", "strength", "purpose", "peace", "belonging", "grief"];
 
 // ── Engagement CTAs (rotate by day) ──────────────────────────
+// Tip #6: Mid-thought entry — CTAs feel like they're in the middle of something
 const CTAS = [
-  "Save this for 6am when your brain starts spiraling 🙏",
-  "Which declaration hit you hardest? Drop it below 👇",
-  "Type AMEN if you needed this today.",
-  "Share this with someone who's struggling right now.",
-  "Save this. Come back to it when you need it most.",
-  "Tag someone who needs to hear this today 👇",
-  "Which one hit different? Tell me below.",
-  "If this is for you, save it. Don't scroll past this.",
+  "Save this. You'll need it at 2am.",
+  "Which one hit you? Drop it below 👇",
+  "Type AMEN if God sent this to your feed today.",
+  "Share this with someone who's fighting their own mind right now.",
+  "Save this. The enemy knows you'll forget it when you need it most.",
+  "Tag someone who needs this — not tomorrow, right now 👇",
+  "Which declaration are you taking into today? Tell me.",
+  "Don't scroll past this one. Save it.",
+  "Screenshot this. Put it somewhere you'll see it tomorrow morning.",
+  "Reply PEACE if you're claiming this today.",
 ];
 
 // ── Hashtags: max 5 (Instagram limit) ────────────────────────
@@ -117,17 +120,100 @@ const BRIDGES = {
   grief: "God is not distant from your pain. He entered it.\n\nYou don't have to be okay to declare the truth. Declare it especially when you're not.",
 };
 
-// ── Follow lines (rotate) ─────────────────────────────────────
-// NOTE: @mention CTAs removed — Instagram rate-limits @mentions to 1 per day.
-// Using mention in morning post blocks evening retries. Non-mention CTAs below.
-const FOLLOWS = [
-  "Save this for when the doubt gets loud.",
-  "Download the SpeakLife app — link in bio.",
-  "Share with someone who needs this today.",
-  "Make this the first thing you read every morning.",
-];
+// ── Open Loops (Tip #2: end with a tease pointing to the next post) ──────────
+// These replace the old FOLLOWS — creates anticipation, brings people back
+const OPEN_LOOPS = {
+  anxiety: [
+    "Tomorrow I'm dropping the one for when it hits at 3am. Follow so you don't miss it.",
+    "Next one is the declaration for when your brain won't let you sleep. Follow.",
+    "Tomorrow: what to declare when the spiral starts before your feet hit the floor.",
+    "Part of a series. If this helped, follow — there's one coming for every kind of fear.",
+  ],
+  healing: [
+    "Tomorrow I'm sharing the declaration for when healing is taking longer than you expected.",
+    "Next post: what to say over your body when the doctors' report says one thing and God says another.",
+    "Follow for tomorrow's — it's for the ones healing from something they can't explain to anyone.",
+    "Part of a series on restoration. Follow so you get every part.",
+  ],
+  strength: [
+    "Tomorrow: the declaration for when you've already tried everything and still feel empty.",
+    "Next one is for the people who are tired of being strong. Follow.",
+    "Follow for tomorrow — it's the one for when the strength you had last week is gone.",
+    "Part of a strength series. Each one builds on the last. Follow.",
+  ],
+  purpose: [
+    "Tomorrow I'm posting the declaration for when you feel like you missed your window. Follow.",
+    "Next post: what to declare when everyone around you seems to be walking in their calling and you're still waiting.",
+    "Follow for tomorrow — it's for the ones who know they were made for something but can't see it yet.",
+    "Part of a series on calling. This one gets deeper tomorrow.",
+  ],
+  peace: [
+    "Tomorrow: the declaration for when peace feels impossible because the situation is genuinely bad.",
+    "Next one is for the overthinkers who can't stop even when they want to. Follow.",
+    "Follow for tomorrow — it's the one for when peace feels like a luxury you can't afford.",
+    "Part of a peace series. Tomorrow we go deeper into what guarded means.",
+  ],
+  belonging: [
+    "Tomorrow: the declaration for the person who has felt invisible their entire life.",
+    "Next post is for anyone who's ever felt like they were born into the wrong family, city, life.",
+    "Follow for tomorrow — it's for the ones rejection follows everywhere they go.",
+    "Part of a belonging series. The next one is the hardest and the most important.",
+  ],
+  grief: [
+    "Tomorrow I'm sharing what to declare when you're grieving something no one knows about.",
+    "Next one is for the people who smile in public and fall apart in private. Follow.",
+    "Follow for tomorrow — it's for grief that doesn't have a name or a timeline.",
+    "Part of a grief series. Tomorrow: what to say when hope feels disrespectful to the loss.",
+  ],
+};
+
+// ── Past-post callbacks (Tip #3: casual reference to previous content) ────────
+const CALLBACKS = {
+  anxiety: [
+    "If you saved last week's anxiety declarations, this one picks up where that left off.",
+    "If you've been here for the fear series, this is the next level.",
+    "This builds on what I posted earlier this week about what to do at 3am.",
+  ],
+  healing: [
+    "If you caught the healing post from earlier this week, this is the declaration that follows it.",
+    "This one connects to the restoration series I've been running.",
+    "Following up on the healing declarations — this one is specifically for the waiting.",
+  ],
+  strength: [
+    "This is part of the strength series — if you missed Monday's, go find it on my page.",
+    "Continuing from earlier this week on what to declare when you're running out of strength.",
+    "This builds on the previous strength post. Worth going back to read both.",
+  ],
+  purpose: [
+    "If you read the purpose post from earlier, this takes it further.",
+    "Continuing the calling series — each post unlocks the next one.",
+    "This is part 2 of what I started earlier this week about how God sees your purpose.",
+  ],
+  peace: [
+    "This connects to the peace series I've been running all week.",
+    "If you saved the peace declaration from earlier, declare this one right after it.",
+    "Following up on the anxiety post — this is what you declare once you've cast it.",
+  ],
+  belonging: [
+    "If you found the belonging post from earlier, this is what comes after it.",
+    "Part of the identity series — they build on each other. Check my page for the full set.",
+    "This continues from what I shared about rejection earlier this week.",
+  ],
+  grief: [
+    "This is connected to the grief series — if you missed the earlier posts, they're on my page.",
+    "Following up on the loss declaration from earlier this week.",
+    "Part 2 of the grief series. The first one is still pinned on my page.",
+  ],
+};
 
 // ── Build caption ─────────────────────────────────────────────
+// Implements all 6 Netflix-binge retention tips:
+// 1. Series naming (pillar + series day)
+// 2. Open loop at the end (tease tomorrow's post)
+// 3. Occasional callback to past posts
+// 4. Signature mid-thought hook style
+// 5. 5 declarations (more value per post)
+// 6. Mid-thought entry — drop in like the conversation already started
 function buildCaption(pillar, type, date) {
   const now = date ? new Date(date) : new Date();
   const start = new Date(now.getFullYear(), 0, 0);
@@ -137,77 +223,134 @@ function buildCaption(pillar, type, date) {
   const hook = hooks[dayOfYear % hooks.length];
 
   const bridge = BRIDGES[pillar] || BRIDGES.anxiety;
-
   const hashtags = HASHTAGS[pillar] || HASHTAGS.anxiety;
-
   const cta = CTAS[dayOfYear % CTAS.length];
-  const follow = FOLLOWS[dayOfYear % FOLLOWS.length];
 
-  // Declarations vary slightly by type
-  const declarations = {
-    declaration: getDeclarations(pillar, dayOfYear),
-    "god-speaks": getDeclarations(pillar, dayOfYear + 1),
-    pov: getDeclarations(pillar, dayOfYear + 2),
+  // Tip #2: Open loop — rotate through pillar-specific teasers
+  const loops = OPEN_LOOPS[pillar] || OPEN_LOOPS.anxiety;
+  const openLoop = loops[Math.floor(dayOfYear / 3) % loops.length];
+
+  // Tip #3: Callback — include ~every 3rd day to feel natural, not spammy
+  const callbackSets = CALLBACKS[pillar] || CALLBACKS.anxiety;
+  const callback = (dayOfYear % 3 === 0) ? callbackSets[Math.floor(dayOfYear / 3) % callbackSets.length] : null;
+
+  // Tip #1: Series naming — pillar "day" within a 7-day cycle
+  const pillarDayInCycle = (dayOfYear % 7) + 1;
+  const SERIES_NAMES = {
+    anxiety:   "THE ANXIETY SERIES",
+    healing:   "THE HEALING SERIES",
+    strength:  "THE STRENGTH SERIES",
+    purpose:   "THE PURPOSE SERIES",
+    peace:     "THE PEACE SERIES",
+    belonging: "THE BELONGING SERIES",
+    grief:     "THE GRIEF SERIES",
   };
+  const seriesName = SERIES_NAMES[pillar] || "THE DECLARATION SERIES";
+  const seriesTag = `${seriesName} · Part ${pillarDayInCycle}`;
 
-  const decl = declarations[type] || declarations.declaration;
+  // Tip #5: 5 declarations per post (more value)
+  const decl = getDeclarations(pillar, type === "god-speaks" ? dayOfYear + 1 : type === "pov" ? dayOfYear + 2 : dayOfYear, 5);
 
-  return [
+  const parts = [
+    // Tip #4: Signature opening (hook is already mid-thought style)
     hook,
     "",
+    // Tip #3: Callback (every 3rd day)
+    ...(callback ? [callback, ""] : []),
     bridge,
     "",
     decl,
     "",
     cta,
     "",
-    follow,
+    // Tip #2: Open loop
+    openLoop,
+    "",
+    // Tip #1: Series tag
+    seriesTag,
     "",
     hashtags,
-  ].join("\n");
+  ];
+
+  return parts.join("\n");
 }
 
-function getDeclarations(pillar, seed) {
+// Tip #5: Expanded declaration pools — 7+ per pillar, return 5 at a time
+function getDeclarations(pillar, seed, count = 5) {
   const sets = {
     anxiety: [
       "I CAST MY ANXIETY ON GOD.\nHIS PEACE GUARDS MY HEART AND MIND.",
       "I DO NOT FEAR.\nGOD IS WITH ME, FOR ME, AND IN ME.",
       "MY MIND IS RENEWED.\nI WALK IN DIVINE PEACE, NOT PANIC.",
+      "ANXIETY HAS NO AUTHORITY OVER ME.\nI AM RULED BY THE SPIRIT, NOT MY THOUGHTS.",
+      "I RECEIVE THE PEACE THAT PASSES UNDERSTANDING.\nIT IS MINE RIGHT NOW.",
+      "I DO NOT CARRY WHAT GOD NEVER ASKED ME TO.\nI RELEASE IT. ALL OF IT.",
+      "MY MIND BELONGS TO CHRIST.\nEVERY THOUGHT SUBMITS TO HIS TRUTH.",
     ],
     healing: [
       "BY HIS STRIPES I AM HEALED.\nRESTORATION IS MY INHERITANCE.",
       "GOD IS RESTORING EVERYTHING.\nMY BODY, MY MIND, MY HEART.",
       "HEALING IS MINE.\nGOD'S POWER IS AT WORK IN ME NOW.",
+      "I AM NOT DEFINED BY THIS DIAGNOSIS.\nI AM DEFINED BY WHAT GOD SAYS.",
+      "EVERY CELL IN MY BODY RESPONDS TO THE WORD OF GOD.\nI AM HEALED.",
+      "THE SAME POWER THAT RAISED JESUS IS IN ME.\nIT IS HEALING ME NOW.",
+      "I RECEIVE COMPLETE RESTORATION.\nNOTHING THE ENEMY STOLE STAYS STOLEN.",
     ],
     strength: [
       "I CAN DO ALL THINGS THROUGH CHRIST.\nHIS STRENGTH IS MADE PERFECT IN MY WEAKNESS.",
       "I AM STRONG IN THE LORD.\nHIS MIGHTY POWER WORKS THROUGH ME.",
       "I DON'T GIVE UP.\nGOD RENEWS MY STRENGTH DAILY.",
+      "WHEN I AM WEAK, HE IS STRONG IN ME.\nI AM NOT DEPENDENT ON MY OWN RESERVES.",
+      "I RISE ABOVE EVERY OBSTACLE.\nGOD'S STRENGTH IN ME IS LIMITLESS.",
+      "I WILL NOT COLLAPSE UNDER THIS PRESSURE.\nGOD IS HOLDING ME UP.",
+      "TIRED IS TEMPORARY.\nGOD'S STRENGTH IN ME IS PERMANENT.",
     ],
     purpose: [
       "I AM CHOSEN AND CALLED.\nGOD CREATED ME WITH SPECIFIC PURPOSE.",
       "MY LIFE IS NOT AN ACCIDENT.\nGOD'S PLAN FOR ME IS GOOD.",
       "I WALK IN MY CALLING.\nWHAT GOD PURPOSED FOR ME WILL STAND.",
+      "I WAS MADE FOR THIS SEASON.\nGOD PLACED ME HERE ON PURPOSE.",
+      "MY GIFTS ARE NOT WASTED.\nGOD IS USING EVERYTHING — EVEN THIS.",
+      "I DO NOT COMPARE MY PATH TO ANYONE ELSE'S.\nMY CALLING IS MINE ALONE.",
+      "THE DELAY IS NOT DENIAL.\nGOD'S TIMING IS PERFECT FOR MY LIFE.",
     ],
     peace: [
       "I HAVE THE PEACE THAT PASSES UNDERSTANDING.\nIT GUARDS MY MIND RIGHT NOW.",
       "I REST IN GOD.\nHIS PEACE IS MY PORTION TODAY.",
       "MY MIND IS STILL.\nGOD HOLDS EVERYTHING I CAN'T CONTROL.",
+      "I RELEASE CONTROL AND RECEIVE PEACE.\nGOD IS WORKING IN WHAT I CANNOT SEE.",
+      "PEACE IS MY INHERITANCE.\nI WALK IN IT REGARDLESS OF MY CIRCUMSTANCES.",
+      "I CHOOSE PEACE OVER PANIC.\nGOD'S PRESENCE IS MY ANCHOR.",
+      "I AM NOT MOVED BY WHAT I SEE.\nI AM ANCHORED IN WHAT GOD SAYS.",
     ],
     belonging: [
       "I AM CHOSEN. I AM SEEN. I BELONG TO GOD.\nMY PLACE IS SECURE.",
       "I WAS WANTED BEFORE THE WORLD BEGAN.\nGOD CHOSE ME ON PURPOSE.",
       "I AM NOT REJECTED.\nI AM ACCEPTED, LOVED, AND CALLED HIS OWN.",
+      "I DO NOT NEED HUMAN APPROVAL TO KNOW MY WORTH.\nGOD SETTLED IT.",
+      "I BELONG TO THE MOST HIGH GOD.\nNO REJECTION CAN CHANGE THAT.",
+      "I AM FULLY KNOWN AND FULLY LOVED.\nTHERE IS NOTHING I NEED TO HIDE.",
+      "I WALK INTO EVERY ROOM KNOWING I AM CHOSEN.\nGOD SENT ME HERE.",
     ],
     grief: [
       "GOD MEETS ME IN MY PAIN.\nHE COLLECTS EVERY TEAR. I AM NOT ALONE.",
       "JOY IS COMING.\nGOD IS CLOSE TO THE BROKENHEARTED.",
       "I GRIEVE WITH HOPE.\nGOD RESTORES WHAT WAS LOST.",
+      "MY MOURNING WILL TURN TO DANCING.\nGOD PROMISED IT AND HE KEEPS HIS WORD.",
+      "THE LOSS IS REAL.\nSO IS THE GOD WHO REDEEMS EVERY PAINFUL THING.",
+      "I AM NOT CONSUMED BY THIS GRIEF.\nGOD'S MERCIES ARE NEW EVERY MORNING.",
+      "BEAUTY WILL COME FROM THESE ASHES.\nI BELIEVE IT EVEN WHEN I CAN'T SEE IT.",
     ],
   };
 
-  const pillarSets = sets[pillar] || sets.anxiety;
-  return pillarSets[seed % pillarSets.length];
+  const all = sets[pillar] || sets.anxiety;
+  // Rotate through the pool, returning `count` consecutive declarations
+  const start = seed % all.length;
+  const result = [];
+  for (let i = 0; i < count; i++) {
+    result.push(all[(start + i) % all.length]);
+  }
+  return result.join("\n\n");
 }
 
 // ── CLI Args ─────────────────────────────────────────────────
