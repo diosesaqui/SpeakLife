@@ -499,6 +499,17 @@
             "tag": "godsHeart"
         },
         {
+            "id": "speaklife-s4e3.mp3",
+            "title": "No Condemnation",
+            "subtitle": "The Verdict Is Final",
+            "duration": "4m",
+            "imageUrl": "devotional",
+            "isPremium": true,
+            "tag": "speaklife",
+            "season": 4,
+            "episode": 3
+        },
+        {
             "id": "speaklife-s4e2.mp3",
             "title": "Already There",
             "subtitle": "You're Seated, Not Striving",
