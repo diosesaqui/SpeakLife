@@ -111,6 +111,16 @@ struct EmailConfirmationView: View {
     }
 
     private func confirmEmail() {
+        guard !storedEmail.isEmpty else {
+            // No email stored — switch to capture sheet instead
+            markShown()
+            subscriptionStore.showEmailConfirmAfterPurchase = false
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                subscriptionStore.showEmailCaptureAfterPurchase = true
+            }
+            return
+        }
+
         isConfirming = true
         errorMessage = nil
 
@@ -134,7 +144,6 @@ struct EmailConfirmationView: View {
                     isConfirming = false
                     confirmed = true
                     markShown()
-                    // Dismiss after brief success moment
                     DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
                         subscriptionStore.showEmailConfirmAfterPurchase = false
                     }
@@ -146,7 +155,12 @@ struct EmailConfirmationView: View {
                 ])
                 await MainActor.run {
                     isConfirming = false
-                    errorMessage = "Couldn't update. Please try again."
+                    // Mark as shown so they're not stuck in a loop — they can retry from Settings
+                    markShown()
+                    errorMessage = "Something went wrong. You can update your email anytime in Settings."
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                        subscriptionStore.showEmailConfirmAfterPurchase = false
+                    }
                 }
             }
         }
