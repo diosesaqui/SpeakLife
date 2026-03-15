@@ -415,7 +415,7 @@ struct OptimizedSubscriptionViewV2: View {
                 declarationStore.isPurchasing = true
             }
             
-            try? await AppStore.sync()
+            await subscriptionStore.restore()
             
             await MainActor.run {
                 declarationStore.isPurchasing = false
@@ -427,7 +427,7 @@ struct OptimizedSubscriptionViewV2: View {
     
 //    private func restore() {
 //        Task {
-//            try await subscriptionStore.restorePurchases()
+
 //            if subscriptionStore.isPremium {
 //                callback?()
 //                dismiss()

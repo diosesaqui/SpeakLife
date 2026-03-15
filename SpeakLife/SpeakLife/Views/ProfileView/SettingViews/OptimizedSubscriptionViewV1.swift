@@ -1131,7 +1131,7 @@ struct OptimizedSubscriptionViewV1: View {
                 declarationStore.isPurchasing = true
             }
             
-            try? await AppStore.sync()
+            await subscriptionStore.restore()
             
             await MainActor.run {
                 declarationStore.isPurchasing = false

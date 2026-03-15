@@ -406,7 +406,7 @@ struct HighConversionPaywallView: View {
     private func restore() {
         Task {
             await MainActor.run { declarationStore.isPurchasing = true }
-            try? await AppStore.sync()
+            await subscriptionStore.restore()
             await MainActor.run { declarationStore.isPurchasing = false; errorMessage = "Purchases restored"; isShowingError = true }
         }
     }
