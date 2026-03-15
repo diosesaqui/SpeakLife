@@ -38,6 +38,13 @@ final class AppDelegate: NSObject, MessagingDelegate {
         if let instanceID = Analytics.appInstanceID() {
             Purchases.shared.attribution.setFirebaseAppInstanceID(instanceID)
         }
+
+        // Sync purchases on every cold launch so RC re-validates receipts with Apple.
+        // Prevents subscribers from being locked out when RC's cached entitlement
+        // state goes stale (e.g. after renewals, promo codes, or Family Sharing).
+        Task {
+            try? await Purchases.shared.syncPurchases()
+        }
     }
     
     // Initialize TikTok SDK after ATT permission is handled
