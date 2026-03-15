@@ -295,7 +295,7 @@ struct OfferPageView: View {
     private func restore() {
         Task {
             declarationStore.isPurchasing = true
-            try? await AppStore.sync()
+            await subscriptionStore.restore()
             declarationStore.isPurchasing = false
             errorTitle = "All purchases restored"
             isShowingError = true
@@ -684,7 +684,7 @@ struct SubscriptionView: View {
     private func restore() {
         Task {
             declarationStore.isPurchasing = true
-            try? await AppStore.sync()
+            await subscriptionStore.restore()
             declarationStore.isPurchasing = false
             isShowingError = true
         }
