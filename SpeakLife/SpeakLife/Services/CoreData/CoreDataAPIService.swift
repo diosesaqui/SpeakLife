@@ -76,8 +76,14 @@ final class CoreDataAPIService: APIService {
                 }
                 
                 for entry in affirmationEntries {
+                    let text = entry.text ?? ""
+                    // Guard: skip any test/schema records that leaked from CloudKit dev testing
+                    guard !Self.isTestRecord(text: text) else {
+                        print("⚠️ Skipping CloudKit test record: \(text.prefix(60))")
+                        continue
+                    }
                     let declaration = Declaration(
-                        text: entry.text ?? "",
+                        text: text,
                         book: entry.book,
                         bibleVerseText: entry.bibleVerseText,
                         category: DeclarationCategory(rawValue: entry.category ?? "faith") ?? .faith,
@@ -232,6 +238,22 @@ final class CoreDataAPIService: APIService {
         }
     }
     
+    // MARK: - Test Record Guard
+
+    /// Returns true if a declaration text looks like a developer test record that
+    /// should never appear in production (e.g. CloudKit schema test entries).
+    private static func isTestRecord(text: String) -> Bool {
+        let lowered = text.lowercased()
+        let testPhrases = [
+            "cloudkit schema test",
+            "schema test",
+            "test record",
+            "test declaration",
+            "lorem ipsum",
+        ]
+        return testPhrases.contains { lowered.hasPrefix($0) }
+    }
+
     // MARK: - Legacy Delete Method (for compatibility)
     func deleteDeclaration(withId idString: String, contentType: ContentType) async throws {
         
