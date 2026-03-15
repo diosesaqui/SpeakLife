@@ -101,8 +101,9 @@ final class AppDelegate: NSObject, MessagingDelegate {
         
         // Register FCM for onboarded users (including migration for existing users)
         let hasMigratedFCM = UserDefaults.standard.bool(forKey: "hasMigratedToFCM")
+        registerForPushNotifications()
         if appState?.isOnboarded ?? false {
-            registerForPushNotifications()
+            
             if !hasMigratedFCM {
                 UserDefaults.standard.set(true, forKey: "hasMigratedToFCM")
             }
@@ -117,7 +118,7 @@ final class AppDelegate: NSObject, MessagingDelegate {
             if settings.authorizationStatus == .authorized {
                 // Already authorized - just register for remote notifications
                 DispatchQueue.main.async {
-                    print("✅ Already authorized - registering for FCM Token")
+                    print("✅ Already authorized - registering for FCM Token RWRW")
                     UIApplication.shared.registerForRemoteNotifications()
                 }
             } else if settings.authorizationStatus == .notDetermined {
@@ -125,14 +126,15 @@ final class AppDelegate: NSObject, MessagingDelegate {
                 UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { granted, error in
                     if granted {
                         DispatchQueue.main.async {
-                            print("✅ Permission granted - registering for FCM Token")
+                            print("✅ Permission granted - registering for FCM Token  RWRW")
                             UIApplication.shared.registerForRemoteNotifications()
                         }
                     } else {
-                        print("🔴 Push notifications permission denied: \(error?.localizedDescription ?? "No error")")
+                        print("🔴 Push notifications permission denied: \(error?.localizedDescription ?? "No error") RWRW")
                     }
                 }
             } else {
+                print("RWRW weird state")
             }
         }
     }
@@ -223,13 +225,15 @@ final class AppDelegate: NSObject, MessagingDelegate {
 extension AppDelegate: UIApplicationDelegate {
     func application(_ application: UIApplication,
                      didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
+        print(deviceToken, "RWRW")
         let tokenString = deviceToken.map { String(format: "%02.2hhx", $0) }.joined()
-           print("✅ Successfully registered for APNs with token: \(tokenString)")
+           print("✅ Successfully registered for APNs with token: \(tokenString) RWRW success")
         Messaging.messaging().apnsToken = deviceToken
     
     }
     
     func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
+        print(error, "RWRW failed")
     }
 }
 
