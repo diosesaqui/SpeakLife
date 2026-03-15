@@ -45,6 +45,7 @@ struct ProfileView: View {
     @State private var showShareSheet = false
     @State private var showSpiritualGrowth = false
     @State private var showSupportIDCopied = false
+    @State private var showEmailCaptureSheet = false
     let url = URL(string:APP.Product.urlID)
     
     
@@ -116,6 +117,7 @@ struct ProfileView: View {
                         shareRow
                         reviewRow
                         feedbackRow
+                        emailRow
                         supportIDRow
                         
                         
@@ -124,6 +126,10 @@ struct ProfileView: View {
                     .sheet(isPresented: $showShareSheet, content: {
                         ShareSheet(activityItems: ["Check out SpeakLife - Bible Affirmations app that'll transform your life!", url as Any])
                     })
+                    .sheet(isPresented: $showEmailCaptureSheet) {
+                        EmailCaptureView(source: "settings")
+                            .environmentObject(appState)
+                    }
                     
                     Section(header: Text("Other".uppercased()).font(.caption)) {
                         privacyPolicyRow
@@ -530,6 +536,31 @@ struct ProfileView: View {
                 presentContentView()
             }
             .id(UUID())
+        }
+    }
+
+    @ViewBuilder
+    private var emailRow: some View {
+        Button(action: { showEmailCaptureSheet = true }) {
+            HStack {
+                Image(systemName: appState.email.isEmpty ? "envelope.fill" : "envelope.badge.fill")
+                    .foregroundColor(.primary)
+                    .frame(width: 24)
+                Text(appState.email.isEmpty ? "Join Weekly Emails" : "Update Email")
+                    .foregroundColor(.primary)
+                Spacer()
+                if !appState.email.isEmpty {
+                    Text(appState.email)
+                        .font(.footnote)
+                        .foregroundColor(.secondary)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                }
+                Image(systemName: "chevron.right")
+                    .foregroundColor(.secondary)
+                    .font(.footnote)
+            }
+            .padding(.vertical, 4)
         }
     }
 

@@ -59,7 +59,7 @@ struct EmailCaptureView: View {
                         .cornerRadius(10)
                 }
             }
-            .disabled(isSubmitting || email.isEmpty)
+            .disabled(isSubmitting || !isFormValid)
             
             
             if let message = message {
