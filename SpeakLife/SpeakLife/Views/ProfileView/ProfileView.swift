@@ -8,6 +8,7 @@
 import SwiftUI
 import MessageUI
 import FirebaseAnalytics
+import RevenueCat
 
 struct LazyView<Content: View>: View {
     let build: () -> Content
@@ -43,6 +44,7 @@ struct ProfileView: View {
     @State var isPresentingBottomSheet = false
     @State private var showShareSheet = false
     @State private var showSpiritualGrowth = false
+    @State private var showSupportIDCopied = false
     let url = URL(string:APP.Product.urlID)
     
     
@@ -114,6 +116,7 @@ struct ProfileView: View {
                         shareRow
                         reviewRow
                         feedbackRow
+                        supportIDRow
                         
                         
                     }
@@ -527,6 +530,36 @@ struct ProfileView: View {
                 presentContentView()
             }
             .id(UUID())
+        }
+    }
+
+    @ViewBuilder
+    private var supportIDRow: some View {
+        Button(action: {
+            let userID = Purchases.shared.appUserID
+            UIPasteboard.general.string = userID
+            Analytics.logEvent("support_id_copied", parameters: nil)
+            withAnimation {
+                showSupportIDCopied = true
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+                withAnimation {
+                    showSupportIDCopied = false
+                }
+            }
+        }) {
+            HStack {
+                Image(systemName: showSupportIDCopied ? "checkmark.circle.fill" : "person.badge.key.fill")
+                    .foregroundColor(showSupportIDCopied ? .green : .primary)
+                    .frame(width: 24)
+                Text(showSupportIDCopied ? "Support ID copied!" : "Copy Support ID")
+                    .foregroundColor(.primary)
+                Spacer()
+                Image(systemName: "doc.on.doc")
+                    .foregroundColor(.secondary)
+                    .font(.footnote)
+            }
+            .padding(.vertical, 4)
         }
     }
     
