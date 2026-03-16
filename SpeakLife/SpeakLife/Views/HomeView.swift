@@ -143,7 +143,7 @@ struct HomeView: View {
                                     .environmentObject(appState)
                             }
                             .sheet(isPresented: $subscriptionStore.showEmailConfirmAfterPurchase) {
-                                EmailConfirmationView(storedEmail: appState.email)
+                                EmailConfirmationView(storedEmail: appState.email, source: "post_purchase")
                                     .environmentObject(appState)
                                     .environmentObject(subscriptionStore)
                             }
