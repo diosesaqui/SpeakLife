@@ -59,6 +59,9 @@ const SWIPE_PROMPTS = {
 };
 
 // ── Background selection ──────────────────────────────────────
+const BG_HISTORY_FILE = resolve(BG_DIR, "usage-history.json");
+const BG_AVOID_LAST_N = 2; // never repeat hook bg within last 2 posts
+
 let _bgManifest = null;
 function getBgManifest() {
   if (_bgManifest) return _bgManifest;
@@ -70,65 +73,89 @@ function getBgManifest() {
   return _bgManifest;
 }
 
+function loadBgHistory() {
+  if (existsSync(BG_HISTORY_FILE)) {
+    try { return JSON.parse(readFileSync(BG_HISTORY_FILE, "utf-8")); } catch {}
+  }
+  return [];
+}
+
+function saveBgHistory(history) {
+  writeFileSync(BG_HISTORY_FILE, JSON.stringify(history, null, 2));
+}
+
+/** Get the last N hook background names used (to avoid repeating them) */
+function recentHookBgs(n = BG_AVOID_LAST_N) {
+  const history = loadBgHistory();
+  return history.slice(-n).map(h => h.hookBg).filter(Boolean);
+}
+
 /**
  * Pick a set of 3 backgrounds for this pillar + date.
  * Returns { hook, declarations, verse } — different bg for each section.
  * Deterministic by date so re-renders are consistent.
  */
-function selectBackgrounds(pillar, dateStr) {
+function selectBackgrounds(pillar, dateStr, slotOffset = 0) {
   const manifest = getBgManifest();
-  if (!manifest.length) return { hook: null, declarations: null, verse: null };
+  if (!manifest.length) return { hook: null, hookName: null, declarations: null, verse: null, cta: null };
 
-  const seed = parseInt(dateStr.replace(/-/g, "").slice(-5), 10);
+  // slotOffset shifts the seed so morning/evening/midday never land on same images
+  const seed = parseInt(dateStr.replace(/-/g, "").slice(-5), 10) + slotOffset * 1000;
 
-  // Intimate/quiet images — for pillars that are personal/vulnerable (anxiety, grief, peace)
-  const intimatePillars = ["anxiety", "grief", "peace", "healing"];
-  const isIntimate = intimatePillars.includes(pillar);
+  const pick = (pool, offset) => {
+    const idx = (seed + offset) % pool.length;
+    return pool[idx];
+  };
 
-  // Hook background pool:
-  // All hooks address personal pain points, so always use intimate/quiet backgrounds.
-  // Worship crowd images don't match hook copy (hooks are personal, not communal).
-  // Priority: woman-reading → bible/devotional → woman-worship (solo, not crowd)
-  const hookPool = (() => {
-    const intimate = manifest.filter(b =>
-      b.name.includes("reading") || b.name.includes("bible") ||
-      b.name.includes("devotional") || b.name.includes("window")
-    );
-    if (intimate.length) return intimate;
-    const solo = manifest.filter(b => b.name.includes("woman") && !b.name.includes("worship"));
-    if (solo.length) return solo;
-    return manifest;
-  })();
+  // ── Hook pool: people/intimate backgrounds (hooks are personal moments) ──
+  // Tier 1 (preferred): devotional/reading/bible — intimate, quiet
+  // Tier 2 (fallback): women worship — still people-focused, warm
+  // Never use pure landscape/nature on hook (mismatch with emotional copy)
+  const recentHooks = recentHookBgs(); // names to avoid
+  const tier1 = manifest.filter(b =>
+    b.name.includes("reading") || b.name.includes("bible") ||
+    b.name.includes("devotional") || b.name.includes("window")
+  );
+  const tier2 = manifest.filter(b => b.name.includes("worship") || b.name.includes("woman"));
+  let hookCandidates = tier1.length ? tier1 : (tier2.length ? tier2 : manifest);
+  // Add tier2 as supplement so pool is large enough to avoid repeats
+  const fullHookPool = [...new Map([...tier1, ...tier2].map(b => [b.name, b])).values()];
 
-  // Nature images → declarations (expansive, freedom, God's creation)
+  // Remove recently used from hook pool — try tier1 first, then full pool
+  let freshHookPool = tier1.filter(b => !recentHooks.includes(b.name));
+  if (!freshHookPool.length) freshHookPool = fullHookPool.filter(b => !recentHooks.includes(b.name));
+  if (!freshHookPool.length) freshHookPool = fullHookPool; // last resort: allow repeat
+
+  const hookBg   = pick(freshHookPool, 0);
+
+  // ── Declarations pool: nature/landscape ──
   const natureBgs = manifest.filter(b =>
     b.name.includes("sunrise") || b.name.includes("ocean") ||
     b.name.includes("forest") || b.name.includes("mountain") ||
     b.name.includes("wheat") || b.name.includes("cross") || b.name.includes("fog")
   );
-  const declPool = natureBgs.length ? natureBgs : manifest;
+  const declBg = pick(natureBgs.length ? natureBgs : manifest, 1);
 
-  // Bible/devotional → verse (intimate, Word-focused)
+  // ── Verse pool: Bible/devotional ──
   const verseBgs = manifest.filter(b =>
     b.name.includes("bible") || b.name.includes("devotional") || b.name.includes("reading")
   );
-  const versePool  = verseBgs.length   ? verseBgs   : manifest;
+  // Verse bg should differ from hook bg
+  const versePool = (verseBgs.length ? verseBgs : manifest).filter(b => b.name !== hookBg.name);
+  const verseBg  = pick(versePool.length ? versePool : verseBgs, 2);
 
-  const pick = (pool, offset) => {
-    const idx = (seed + offset) % pool.length;
-    return resolve(BG_DIR, pool[idx].file.replace("backgrounds/", ""));
-  };
+  // ── CTA pool: worship/community ──
+  const worshipBgs = manifest.filter(b => b.name.includes("worship"));
+  const ctaBg = pick(worshipBgs.length ? worshipBgs : manifest, 3);
+
+  const toPath = b => resolve(BG_DIR, b.file.replace("backgrounds/", ""));
 
   return {
-    hook:         pick(hookPool,  0),
-    declarations: pick(declPool,  1),
-    verse:        pick(versePool, 2),
-    // CTA = worship/community bg (celebrate what God has done)
-    cta: (() => {
-      const worshipBgs = manifest.filter(b => b.name.includes("worship"));
-      const pool = worshipBgs.length ? worshipBgs : manifest;
-      return pick(pool, 3);
-    })(),
+    hookName:     hookBg.name,        // stored in history
+    hook:         toPath(hookBg),
+    declarations: toPath(declBg),
+    verse:        toPath(verseBg),
+    cta:          toPath(ctaBg),
   };
 }
 
@@ -445,16 +472,20 @@ async function renderCtaSlide(pillar, bgPath, outPath) {
 // ── Main ──────────────────────────────────────────────────────
 const args = process.argv.slice(2);
 let pillar = null, slug = null, outDir = resolve(STUDIO, "../output/declare-angles");
-let dateArg = null;
+let dateArg = null, slotArg = null;
 
 for (let i = 0; i < args.length; i++) {
   if (args[i] === "--pillar") pillar  = args[++i];
   else if (args[i] === "--slug")   slug    = args[++i];
   else if (args[i] === "--out")    outDir  = args[++i];
   else if (args[i] === "--date")   dateArg = args[++i];
+  else if (args[i] === "--slot")   slotArg = args[++i]; // morning|midday|evening
 }
 
 const TODAY = dateArg || new Date().toISOString().slice(0, 10);
+// Slot offsets so each slot gets distinct backgrounds on the same day
+const SLOT_SEED_OFFSET = { morning: 0, midday: 3, evening: 7 };
+const slotOffset = SLOT_SEED_OFFSET[slotArg] ?? 0;
 const data  = JSON.parse(readFileSync(ANGLES, "utf-8"));
 
 // Pick pillar
@@ -482,8 +513,8 @@ if (slug) {
   angle = angles[angleIndex];
 }
 
-// Select 3 distinct backgrounds for this carousel
-const bgs = selectBackgrounds(activePillar, TODAY);
+// Select 3 distinct backgrounds for this carousel (slot offset ensures morning ≠ evening)
+const bgs = selectBackgrounds(activePillar, TODAY, slotOffset);
 
 mkdirSync(outDir, { recursive: true });
 
@@ -521,6 +552,11 @@ await renderVerseSlide(
 );
 
 await renderCtaSlide(activePillar, bgs.cta, resolve(outDir, `${prefix}-slide-7-cta.png`));
+
+// Log used hook background so future renders avoid it
+const history = loadBgHistory();
+history.push({ date: TODAY, slot: slotArg || "manual", hookBg: bgs.hookName });
+saveBgHistory(history.slice(-20)); // keep last 20 entries max
 
 console.log(`\nDone — 8 slides`);
 console.log(`Output: ${outDir}`);

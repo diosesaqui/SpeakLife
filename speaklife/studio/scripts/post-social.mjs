@@ -144,13 +144,59 @@ async function ayrshareUploadMedia(filePath) {
   return data.url;
 }
 
+// Hook-first captions per pillar — rotates daily so every post is unique
+const CAPTION_HOOKS = {
+  anxiety:   ["If you woke up with dread this morning, read these slowly.", "Your mind was spiraling before your feet hit the floor. This is what God says.", "That heavy feeling in your chest before the day starts? God sees it.", "You've been white-knuckling something God never asked you to carry.", "If your brain won't stop racing — read this out loud."],
+  healing:   ["You've been waiting for your body — or heart — to catch up to your faith.", "Healing isn't always instant. But God is always moving.", "Say this over yourself today. Your healing is already bought.", "The wound is real. So is the One who restores.", "You didn't come this far to stay broken. Declare this."],
+  strength:  ["You're not tired because you're weak. You're carrying too much.", "If you feel like you have nothing left — God's strength is for this exact moment.", "The thing trying to knock you down doesn't know Who's holding you up.", "Tired is temporary. God's strength in you is not.", "You've made it through 100% of your hardest days. Declare what got you here."],
+  purpose:   ["You've been wondering if you're in the wrong life. You're not.", "Your purpose wasn't an afterthought. God planned it before you were born.", "Stop waiting to feel ready. Your calling doesn't require confidence — just your yes.", "You weren't placed here by accident. Every detail of you was intentional.", "The world needs what only you carry. Declare this today."],
+  peace:     ["Peace isn't the absence of chaos. It's knowing Who holds it all.", "You don't have to figure everything out today. Declare this instead.", "Stop trying to manufacture calm. Receive it.", "If you can't seem to slow down, this is what God says about rest.", "Your mind doesn't have to race just because the world does."],
+  belonging: ["You've walked into rooms and felt invisible. God has never once not seen you.", "If rejection has been following you — this breaks its power.", "Chosen. Called. Placed on purpose. Declare it.", "The world may have made you feel like an afterthought. God made you a priority.", "You are not too much. You are not too little. You are exactly who God made."],
+  grief:     ["If you're walking through the darkest season of your life, these are yours.", "God doesn't ask you to pretend it doesn't hurt. He meets you in it.", "You're allowed to mourn. And you're allowed to still believe.", "Even in the valley — especially in the valley — God is here.", "The loss is real. So is the God who collects every tear."],
+};
+
+const CAPTION_CTAS = [
+  "Save this for when you need it 🙏",
+  "Type AMEN if you needed this today.",
+  "Which one hit you? Drop it below 👇",
+  "Share with someone who's struggling right now.",
+  "Tag someone who needs to hear this.",
+  "If this is for you, save it. Don't scroll past.",
+];
+
+const CAPTION_HASHTAGS = {
+  anxiety:   "#SpeakLife #FaithOverFear #AnxietyRelief #ChristianWomen #MorningMotivation",
+  healing:   "#SpeakLife #HealingJourney #GodsRestoration #ChristianWomen #MorningMotivation",
+  strength:  "#SpeakLife #GodsStrength #OvercomerFaith #ChristianWomen #MorningMotivation",
+  purpose:   "#SpeakLife #ChristianPurpose #ChosenByGod #ChristianWomen #MorningMotivation",
+  peace:     "#SpeakLife #GodsPeace #InnerPeace #ChristianWomen #MorningMotivation",
+  belonging: "#SpeakLife #ChosenByGod #ChristianIdentity #ChristianWomen #MorningMotivation",
+  grief:     "#SpeakLife #GriefFaith #HopeInDarkness #ChristianWomen #MorningMotivation",
+};
+
 function loadCaption(pillar, type, date) {
   const captionPath = resolve(WORKSPACE, "speaklife/output/captions", date, `${type}-${pillar}.txt`);
   if (existsSync(captionPath)) {
     return readFileSync(captionPath, "utf-8").trim();
   }
-  // Fallback caption
-  return `Declare this over your life today. #SpeakLife #${pillar} #faithdeclarations #christianwomen #morningdeclarations`;
+
+  // Generate a real hook-first caption on the fly — never use the generic fallback
+  const now = date ? new Date(date) : new Date();
+  const start = new Date(now.getFullYear(), 0, 0);
+  const dayOfYear = Math.floor((now - start) / (1000 * 60 * 60 * 24));
+
+  const hooks = CAPTION_HOOKS[pillar] || CAPTION_HOOKS.anxiety;
+  const hook = hooks[dayOfYear % hooks.length];
+  const cta = CAPTION_CTAS[dayOfYear % CAPTION_CTAS.length];
+  const hashtags = CAPTION_HASHTAGS[pillar] || CAPTION_HASHTAGS.anxiety;
+
+  return [
+    hook,
+    "",
+    cta,
+    "",
+    hashtags,
+  ].join("\n");
 }
 
 // ── Pick angle slug for a slot ────────────────────────────────
@@ -177,7 +223,7 @@ async function buildCarousel(pillar, slot, date) {
   // Always re-render so we get the latest template (5 slides, correct fonts)
   const renderer = resolve(STUDIO, "scripts/render-declare-angle.mjs");
   await new Promise((res, rej) => {
-    const p = spawn(process.execPath, [renderer, "--pillar", pillar, "--slug", slug, "--out", outDir], {
+    const p = spawn(process.execPath, [renderer, "--pillar", pillar, "--slug", slug, "--out", outDir, "--slot", slot], {
       stdio: ["ignore", "pipe", "pipe"],
     });
     p.stdout.on("data", d => process.stdout.write(d));
@@ -190,13 +236,40 @@ async function buildCarousel(pillar, slot, date) {
     .filter(f => f.startsWith(`${pillar}-${slug}-slide-`) && f.endsWith(".png"))
     .sort();
 
-  if (files.length < 5) throw new Error(`Expected 5 slides, got ${files.length} for ${pillar}/${slug}`);
+  if (files.length < 8) throw new Error(`Expected 5 slides, got ${files.length} for ${pillar}/${slug}`);
   return files.map(f => resolve(outDir, f));
+}
+
+// ── Posted Log (dedup guard) ──────────────────────────────────
+const POSTED_LOG = resolve(WORKSPACE, "speaklife/output/posted-log.json");
+
+function loadPostedLog() {
+  if (!existsSync(POSTED_LOG)) return {};
+  try { return JSON.parse(readFileSync(POSTED_LOG, "utf-8")); }
+  catch { return {}; }
+}
+
+function markPosted(date, slot, data) {
+  const log = loadPostedLog();
+  if (!log[date]) log[date] = {};
+  log[date][slot] = { postedAt: new Date().toISOString(), ...data };
+  writeFileSync(POSTED_LOG, JSON.stringify(log, null, 2));
+}
+
+function alreadyPosted(date, slot) {
+  const log = loadPostedLog();
+  return !!(log[date] && log[date][slot]);
 }
 
 // ── Slot Handlers ─────────────────────────────────────────────
 
 async function postSlot(slotName, date, dryRun) {
+  if (!dryRun && alreadyPosted(date, slotName)) {
+    console.log(`⚠️  Already posted ${slotName} for ${date} — skipping to prevent duplicate.`);
+    console.log(`    To force re-post, delete entry from ${POSTED_LOG}`);
+    return { skipped: true, reason: "already-posted" };
+  }
+
   const pillar  = getTodaysPillar(date);
   const slides  = await buildCarousel(pillar, slotName, date);
   const caption = loadCaption(pillar, "declaration", date);
@@ -210,32 +283,38 @@ async function postSlot(slotName, date, dryRun) {
   const mediaUrls = [];
   for (const s of slides) { mediaUrls.push(await ayrshareUploadMedia(s)); }
 
-  // Instagram: all 5 slides as carousel
-  const igResult = await ayrsharePost({
-    post: caption,
-    platforms: ["instagram"],
-    mediaUrls,
-    instagramOptions: { type: "carousel" },
-  });
-  console.log(`IG posted:`, (igResult.postIds || [igResult]).map(p => p.postUrl || p.id));
+  // Twitter needs a shorter caption (280 char limit) — truncate at last full word before limit
+  function truncateForTwitter(text, limit = 275) {
+    if (text.length <= limit) return text;
+    const cut = text.lastIndexOf(" ", limit);
+    return text.slice(0, cut > 0 ? cut : limit) + "…";
+  }
+  const twitterCaption = truncateForTwitter(caption);
 
-  // Twitter: max 4 images — hook + 3 declarations (skip CTA slide)
-  const twitterUrls = mediaUrls.slice(0, 4);
-  const twitterResult = await ayrsharePost({
-    post: caption,
-    platforms: ["twitter"],
-    mediaUrls: twitterUrls,
-  });
-  console.log(`Twitter posted:`, (twitterResult.postIds || [twitterResult]).map(p => p.postUrl || p.id));
+  // Post to all platforms in parallel so no single platform can time out the others
+  const [igResult, twitterResult, tiktokResult] = await Promise.all([
+    ayrsharePost({
+      post: caption,
+      platforms: ["instagram"],
+      mediaUrls,
+      instagramOptions: { type: "carousel" },
+    }).then(r => { console.log(`IG posted:`, (r.postIds || [r]).map(p => p.postUrl || p.id)); return r; }),
 
-  // TikTok: slideshow with auto music
-  const tiktokResult = await ayrsharePost({
-    post: caption,
-    platforms: ["tiktok"],
-    mediaUrls,
-    tiktokOptions: { autoAddMusic: true },
-  });
-  console.log(`TikTok posted:`, (tiktokResult.postIds || [tiktokResult]).map(p => p.id));
+    ayrsharePost({
+      post: twitterCaption,
+      platforms: ["twitter"],
+      mediaUrls: mediaUrls.slice(0, 4),
+    }).then(r => { console.log(`Twitter posted:`, (r.postIds || [r]).map(p => p.postUrl || p.id)); return r; }),
+
+    ayrsharePost({
+      post: caption,
+      platforms: ["tiktok"],
+      mediaUrls,
+      tikTokOptions: { autoAddMusic: true },
+    }).then(r => { console.log(`TikTok draft:`, (r.postIds || [r]).map(p => p.id)); return r; }),
+  ]);
+
+  if (!dryRun) markPosted(date, slotName, { pillar, igResult, twitterResult, tiktokResult });
 
   return { igResult, twitterResult, tiktokResult };
 }
