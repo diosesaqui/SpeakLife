@@ -11,6 +11,7 @@ import FirebaseAnalytics
 
 struct EmailCaptureView: View {
     @EnvironmentObject var appState: AppState
+    @EnvironmentObject var subscriptionStore: SubscriptionStore
     @State private var email: String = ""
     @State private var message: String?
     @State private var isSubmitting: Bool = false
@@ -18,8 +19,16 @@ struct EmailCaptureView: View {
     @State private var showAdvancedOptions: Bool = false
     @State private var messageType: MessageType = .info
 
-    /// Source tag saved to Firestore — use "post_purchase" when shown after subscription
+    /// Intended source — only "post_purchase" will be used if user is actually subscribed
     var source: String = "ios_app_profile"
+
+    /// Resolved source: guards post_purchase tag behind actual subscription check
+    private var resolvedSource: String {
+        if source == "post_purchase" && subscriptionStore.isPremium {
+            return "post_purchase"
+        }
+        return source == "post_purchase" ? "settings" : source
+    }
 
     private let emailService = EmailMarketingService.shared
     private let submissionTimeout: TimeInterval = 10.0
@@ -139,7 +148,7 @@ struct EmailCaptureView: View {
         guard isValidEmail(trimmedEmail) else {
             showMessage("Please enter a valid email address (e.g., name@example.com)", type: .error)
             Analytics.logEvent("email_signup_invalid", parameters: [
-                "source": source
+                "source": resolvedSource
             ])
             return
         }
@@ -150,7 +159,7 @@ struct EmailCaptureView: View {
         
         // Log attempt
         Analytics.logEvent("email_signup_attempt", parameters: [
-            "source": source
+            "source": resolvedSource
         ])
         
         // Set a timeout timer
@@ -170,7 +179,7 @@ struct EmailCaptureView: View {
                         try await self.emailService.addSubscriber(
                             email: trimmedEmail,
                             firstName: nil,
-                            source: self.source
+                            source: self.resolvedSource
                         )
                     }
                     
@@ -188,7 +197,7 @@ struct EmailCaptureView: View {
                 
                 // Log success
                 Analytics.logEvent("email_signup_success", parameters: [
-                    "source": source
+                    "source": resolvedSource
                 ])
                 
                 await MainActor.run {
@@ -210,7 +219,7 @@ struct EmailCaptureView: View {
                 
                 // Log failure
                 Analytics.logEvent("email_signup_failed", parameters: [
-                    "source": source,
+                    "source": resolvedSource,
                     "error": error.localizedDescription
                 ])
                 
