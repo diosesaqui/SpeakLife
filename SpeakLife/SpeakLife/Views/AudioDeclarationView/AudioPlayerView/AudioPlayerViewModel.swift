@@ -364,6 +364,10 @@ final class AudioPlayerViewModel: NSObject, ObservableObject {
             }
             
             if self.onRepeat {
+                // Mark as played even when repeating — user listened to completion
+                if let audio = self.selectedItem {
+                    AudioProgressStore.shared.markPlayed(audio.id)
+                }
                 self.player?.seek(to: .zero)
                 // Resume at current playback speed
                 self.player?.rate = self.playbackSpeed
