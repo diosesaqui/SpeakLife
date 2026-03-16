@@ -615,7 +615,7 @@ final class AudioPlayerViewModel: NSObject, ObservableObject {
                     )
 
                     // Persist as "played" once the listener passes the 85% mark
-                    if threshold == 85 {
+                    if threshold >= 85 {
                         AudioProgressStore.shared.markPlayed(audio.id)
                     }
 
