@@ -22,12 +22,9 @@ struct EmailCaptureView: View {
     /// Intended source — only "post_purchase" will be used if user is actually subscribed
     var source: String = "ios_app_profile"
 
-    /// Resolved source: guards post_purchase tag behind actual subscription check
+    /// Resolved source: tag as post_purchase only if subscribed, otherwise pass source through as-is
     private var resolvedSource: String {
-        if source == "post_purchase" && subscriptionStore.isPremium {
-            return "post_purchase"
-        }
-        return source == "post_purchase" ? "settings" : source
+        subscriptionStore.isPremium ? "post_purchase" : source
     }
 
     private let emailService = EmailMarketingService.shared

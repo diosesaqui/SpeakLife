@@ -29,12 +29,9 @@ struct EmailConfirmationView: View {
     // If storedEmail is empty, route to capture instead
     private var hasStoredEmail: Bool { !storedEmail.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
 
-    /// Resolved source: only tag as post_purchase if user is actually subscribed
+    /// Resolved source: tag as post_purchase only if subscribed, otherwise pass source through as-is
     private var resolvedSource: String {
-        if source == "post_purchase" && subscriptionStore.isPremium {
-            return "post_purchase"
-        }
-        return "settings"
+        subscriptionStore.isPremium ? "post_purchase" : source
     }
 
     var body: some View {
