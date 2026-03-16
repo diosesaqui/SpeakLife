@@ -17,9 +17,6 @@ struct EmailConfirmationView: View {
     /// Pre-filled from AppState.email (AppStorage)
     let storedEmail: String
 
-    /// Override source — defaults to "settings". Pass "post_purchase" only from the post-purchase sheet.
-    var source: String = "settings"
-
     @State private var isConfirming = false
     @State private var confirmed = false
     @State private var errorMessage: String?
@@ -28,14 +25,6 @@ struct EmailConfirmationView: View {
 
     // If storedEmail is empty, route to capture instead
     private var hasStoredEmail: Bool { !storedEmail.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
-
-    /// Resolved source: only tag as post_purchase if user is actually subscribed
-    private var resolvedSource: String {
-        if source == "post_purchase" && subscriptionStore.isPremium {
-            return "post_purchase"
-        }
-        return "settings"
-    }
 
     var body: some View {
         Group {
@@ -144,7 +133,7 @@ struct EmailConfirmationView: View {
                 try await emailService.addSubscriber(
                     email: storedEmail,
                     firstName: nil,
-                    source: resolvedSource
+                    source: "post_purchase"
                 )
 
                 Analytics.logEvent("email_confirm_success", parameters: [
