@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import FirebaseAuth
 import FirebaseFirestore
 
 enum EmailMarketingProvider {
@@ -160,6 +161,12 @@ class EmailMarketingService: ObservableObject {
         // Skip duplicate check - let Firestore handle it with security rules
         // The duplicate check requires read permissions which anonymous users don't have
         
+        // Use Firebase UID as document ID so email updates overwrite the same record
+        // Falls back to sanitized email if user isn't authenticated
+        let userId = Auth.auth().currentUser?.uid
+        let documentId = userId ?? email.replacingOccurrences(of: ".", with: "_")
+            .replacingOccurrences(of: "@", with: "_at_")
+
         var data: [String: Any] = [
             "email": email,
             "timestamp": Timestamp(date: Date()),
@@ -167,24 +174,17 @@ class EmailMarketingService: ObservableObject {
             "platform": "iOS",
             "app_version": Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "unknown"
         ]
-        
+
+        if let uid = userId {
+            data["user_id"] = uid
+        }
+
         if let firstName = firstName, !firstName.isEmpty {
             data["first_name"] = firstName
         }
         
-        // Use email as document ID (sanitized)
-        // This prevents duplicates automatically at database level
-        let documentId = email.replacingOccurrences(of: ".", with: "_")
-            .replacingOccurrences(of: "@", with: "_at_")
-        
         do {
             let docRef = db.collection("email_list").document(documentId)
-            
-            // Check if document exists (requires read permission)
-            // If you want to avoid reads, just use setData and it will overwrite
-            // For now, let's just save without checking (cheaper)
-            
-            // Option 1: Overwrite (cheapest - 1 write only)
             try await docRef.setData(data)
             
             // Option 2: Preserve first signup (uncomment if you prefer)
