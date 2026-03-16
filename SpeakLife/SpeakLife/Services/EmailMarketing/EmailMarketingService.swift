@@ -32,28 +32,27 @@ struct SubscriberStatus {
 
 class EmailMarketingService: ObservableObject {
     static let shared = EmailMarketingService()
-    
-    private let provider: EmailMarketingProvider = .mailchimp
-    private var apiKey: String = ""
-    private var listId: String = ""
-    private var audienceId: String = ""
-    
-    private var baseURL: String = ""
-    // Use the specific 'speaklife' database instead of default
+
     private let db = Firestore.firestore(database: "speaklife")
-    
+
+    // Klaviyo config — loaded from EmailConfig.plist
+    private var klaviyoPrivateKey: String = ""
+    private var klaviyoListId: String = ""
+    private let klaviyoBaseURL = "https://a.klaviyo.com"
+    private let klaviyoRevision = "2024-10-15"
+
     init() {
-//        switch provider {
-//        case .mailchimp:
-//            baseURL = "https://us1.api.mailchimp.com/3.0"
-//            loadMailchimpConfig()
-//        case .convertKit:
-//            baseURL = "https://api.convertkit.com/v3"
-//            loadConvertKitConfig()
-//        case .sendGrid:
-//            baseURL = "https://api.sendgrid.com/v3"
-//            loadSendGridConfig()
-//        }
+        loadKlaviyoConfig()
+    }
+
+    private func loadKlaviyoConfig() {
+        guard let path = Bundle.main.path(forResource: "EmailConfig", ofType: "plist"),
+              let config = NSDictionary(contentsOfFile: path) else {
+            print("⚠️ EmailConfig.plist not found — Klaviyo sync disabled")
+            return
+        }
+        klaviyoPrivateKey = config["KlaviyoPrivateKey"] as? String ?? ""
+        klaviyoListId     = config["KlaviyoListId"]     as? String ?? ""
     }
     
     private func loadMailchimpConfig() {
@@ -121,36 +120,128 @@ class EmailMarketingService: ObservableObject {
             throw EmailMarketingError.invalidEmail
         }
         
-        // Always save to Firebase first
+        let userId = Auth.auth().currentUser?.uid
+
+        // 1. Save to Firebase (source of truth)
         try await saveToFirebase(email: normalizedEmail, source: source, firstName: firstName)
-        
-        // Then try to add to email marketing service if configured
-        // Don't throw error if not configured - just skip
-  //      do {
-//            switch provider {
-//            case .mailchimp:
-//                if !apiKey.isEmpty && !listId.isEmpty {
-//                    try await addToMailchimp(email: normalizedEmail, firstName: firstName, source: source)
-//                } else {
-//                    print("Mailchimp not configured - saved to Firebase only")
-//                }
-//            case .convertKit:
-//                if !apiKey.isEmpty && !listId.isEmpty {
-//                    try await addToConvertKit(email: normalizedEmail, firstName: firstName, source: source)
-//                } else {
-//                    print("ConvertKit not configured - saved to Firebase only")
-//                }
-//            case .sendGrid:
-//                if !apiKey.isEmpty {
-//                    try await addToSendGrid(email: normalizedEmail, firstName: firstName, source: source)
-//                } else {
-//                    print("SendGrid not configured - saved to Firebase only")
-//                }
-//            }
-//        } catch {
-//            // Log error but don't throw - Firebase save was successful
-//            print("Email service error (Firebase save successful): \(error)")
-//        }
+
+        // 2. Sync to Klaviyo (non-blocking — Firebase save already succeeded)
+        if !klaviyoPrivateKey.isEmpty && !klaviyoListId.isEmpty {
+            do {
+                let profileId = try await createOrUpdateKlaviyoProfile(
+                    email: normalizedEmail,
+                    firstName: firstName,
+                    source: source,
+                    userId: userId
+                )
+                try await addKlaviyoProfileToList(profileId: profileId)
+                print("✅ Klaviyo sync successful for \(normalizedEmail)")
+            } catch {
+                // Don't fail the whole call — Firebase already saved
+                print("⚠️ Klaviyo sync failed (Firebase save OK): \(error.localizedDescription)")
+            }
+        }
+    }
+
+    // MARK: - Klaviyo
+
+    private func createOrUpdateKlaviyoProfile(
+        email: String,
+        firstName: String?,
+        source: String,
+        userId: String?
+    ) async throws -> String {
+        let url = URL(string: "\(klaviyoBaseURL)/api/profiles/")!
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("Klaviyo-API-Key \(klaviyoPrivateKey)", forHTTPHeaderField: "Authorization")
+        request.setValue(klaviyoRevision, forHTTPHeaderField: "revision")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        var attributes: [String: Any] = [
+            "email": email,
+            "properties": {
+                var props: [String: Any] = [
+                    "source": source,
+                    "platform": "iOS",
+                    "app_version": Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "unknown"
+                ]
+                if let uid = userId { props["firebase_uid"] = uid }
+                return props
+            }()
+        ]
+        if let firstName = firstName, !firstName.isEmpty {
+            attributes["first_name"] = firstName
+        }
+
+        let body: [String: Any] = ["data": ["type": "profile", "attributes": attributes]]
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+        let statusCode = (response as? HTTPURLResponse)?.statusCode ?? 0
+
+        if statusCode == 201 {
+            // Created — parse profile ID from response
+            if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+               let dataObj = json["data"] as? [String: Any],
+               let id = dataObj["id"] as? String {
+                return id
+            }
+        } else if statusCode == 409 {
+            // Profile already exists — extract ID from error response
+            if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+               let errors = json["errors"] as? [[String: Any]],
+               let meta = errors.first?["meta"] as? [String: Any],
+               let duplicate = meta["duplicate_profile_id"] as? String {
+                // Update existing profile with latest source/props
+                try? await updateKlaviyoProfile(id: duplicate, source: source, userId: userId)
+                return duplicate
+            }
+        }
+
+        throw EmailMarketingError.apiError
+    }
+
+    private func updateKlaviyoProfile(id: String, source: String, userId: String?) async throws {
+        let url = URL(string: "\(klaviyoBaseURL)/api/profiles/\(id)/")!
+        var request = URLRequest(url: url)
+        request.httpMethod = "PATCH"
+        request.setValue("Klaviyo-API-Key \(klaviyoPrivateKey)", forHTTPHeaderField: "Authorization")
+        request.setValue(klaviyoRevision, forHTTPHeaderField: "revision")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        var props: [String: Any] = ["source": source]
+        if let uid = userId { props["firebase_uid"] = uid }
+
+        let body: [String: Any] = [
+            "data": [
+                "type": "profile",
+                "id": id,
+                "attributes": ["properties": props]
+            ]
+        ]
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+        _ = try await URLSession.shared.data(for: request)
+    }
+
+    private func addKlaviyoProfileToList(profileId: String) async throws {
+        let url = URL(string: "\(klaviyoBaseURL)/api/lists/\(klaviyoListId)/relationships/profiles/")!
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("Klaviyo-API-Key \(klaviyoPrivateKey)", forHTTPHeaderField: "Authorization")
+        request.setValue(klaviyoRevision, forHTTPHeaderField: "revision")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        let body: [String: Any] = ["data": [["type": "profile", "id": profileId]]]
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+
+        let (_, response) = try await URLSession.shared.data(for: request)
+        let statusCode = (response as? HTTPURLResponse)?.statusCode ?? 0
+
+        // 200 = added, 204 = already in list — both are fine
+        guard [200, 204].contains(statusCode) else {
+            throw EmailMarketingError.apiError
+        }
     }
     
     private func saveToFirebase(email: String, source: String, firstName: String? = nil) async throws {
