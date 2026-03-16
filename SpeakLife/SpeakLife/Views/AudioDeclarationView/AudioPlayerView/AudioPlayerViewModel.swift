@@ -19,7 +19,7 @@ final class AudioPlayerViewModel: NSObject, ObservableObject {
     private var playbackStartTime: Date?
     private var totalListenTime: TimeInterval = 0
     private var lastProgressUpdate: TimeInterval = 0
-    private var progressThresholds = [10, 20, 25, 50, 75, 90, 100] // Percentage thresholds to track
+    private var progressThresholds = [10, 20, 25, 50, 75, 85, 90, 100] // Percentage thresholds to track
     private var reportedThresholds = Set<Int>() // Track which thresholds were already reported
     
     @Published var isPlaying: Bool = false {
@@ -614,8 +614,8 @@ final class AudioPlayerViewModel: NSObject, ObservableObject {
                         ]
                     )
 
-                    // Persist as "played" once the listener passes the 50% mark
-                    if threshold == 50 {
+                    // Persist as "played" once the listener passes the 85% mark
+                    if threshold == 85 {
                         AudioProgressStore.shared.markPlayed(audio.id)
                     }
 
