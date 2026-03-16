@@ -23,7 +23,17 @@ struct EmailConfirmationView: View {
 
     private let emailService = EmailMarketingService.shared
 
+    // If storedEmail is empty, route to capture instead
+    private var hasStoredEmail: Bool { !storedEmail.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+
     var body: some View {
+        // Guard: if no email is stored, show capture view instead
+        if !hasStoredEmail {
+            EmailCaptureView(source: "post_purchase")
+                .environmentObject(appState)
+            return
+        }
+
         VStack(spacing: 20) {
             Image(systemName: "envelope.badge.fill")
                 .font(.system(size: 44))
