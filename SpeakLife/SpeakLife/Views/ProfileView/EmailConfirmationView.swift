@@ -133,7 +133,7 @@ struct EmailConfirmationView: View {
         errorMessage = nil
 
         Analytics.logEvent("email_confirm_attempt", parameters: [
-            "source": "post_purchase_confirm"
+            "source": resolvedSource
         ])
 
         Task {
@@ -145,7 +145,7 @@ struct EmailConfirmationView: View {
                 )
 
                 Analytics.logEvent("email_confirm_success", parameters: [
-                    "source": "post_purchase_confirm"
+                    "source": resolvedSource
                 ])
 
                 await MainActor.run {
@@ -159,7 +159,7 @@ struct EmailConfirmationView: View {
                 }
             } catch {
                 Analytics.logEvent("email_confirm_failed", parameters: [
-                    "source": "post_purchase_confirm",
+                    "source": resolvedSource,
                     "error": error.localizedDescription
                 ])
                 await MainActor.run {
