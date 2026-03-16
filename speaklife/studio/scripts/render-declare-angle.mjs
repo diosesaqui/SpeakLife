@@ -1,11 +1,20 @@
 #!/usr/bin/env node
 /**
- * SpeakLife Declare Angle Renderer
- * Format: "If you need X, declare these" → 4 slides (hook + 3 declarations)
- * Output: 1080x1350 PNGs (4:5 feed) or 1080x1920 (9:16 stories/reels)
+ * SpeakLife Declare Angle Renderer — v2 (2026-03-16)
+ *
+ * Fixes:
+ *   1. Rotating backgrounds from 12-image library (no more single AI image)
+ *   2. Dynamic, curiosity-driven swipe prompt (not "DECLARE THESE SWIPE ->")
+ *   3. Declaration slides = declarations ONLY (no scripture ref mixed in)
+ *   4. Verse slide gets solo scripture focus
+ *   5. Logo only on CTA slide; others get subtle wordmark watermark
+ *   6. Alternating slide contrast for visual variety
+ *
+ * Format: 8 slides (hook + 5 declarations + verse + CTA)
+ * Output: 1080x1350 PNGs (4:5 feed)
  */
 import { createCanvas, loadImage, GlobalFonts } from "@napi-rs/canvas";
-import { writeFileSync, mkdirSync, readFileSync } from "fs";
+import { writeFileSync, mkdirSync, readFileSync, existsSync } from "fs";
 import { resolve, dirname } from "path";
 import { fileURLToPath } from "url";
 
@@ -13,8 +22,11 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const STUDIO = resolve(__dirname, "..");
 const FONTS  = resolve(STUDIO, "public/fonts");
 const LOGO   = resolve(STUDIO, "public/logo.png");
-const BG     = resolve(STUDIO, "public/bg-main.jpg");
 const ANGLES = resolve(STUDIO, "public/ad-angles.json");
+const BG_MANIFEST = resolve(STUDIO, "public/backgrounds/MANIFEST.json");
+const BG_DIR      = resolve(STUDIO, "public/backgrounds");
+// Fallback to old single BG if manifest missing
+const BG_FALLBACK = resolve(STUDIO, "public/bg-main.jpg");
 
 GlobalFonts.registerFromPath(resolve(FONTS, "Montserrat-ExtraBold.ttf"), "Display");
 GlobalFonts.registerFromPath(resolve(FONTS, "Montserrat-Bold.ttf"),      "DisplayBold");
@@ -24,16 +36,103 @@ GlobalFonts.registerFromPath(resolve(FONTS, "Montserrat-Regular.ttf"),   "Displa
 const W = 1080, H = 1350;
 
 const THEMES = {
-  anxiety:    { accent: "#8B5CF6", glow: "rgba(139,92,246,0.22)"  },
-  healing:    { accent: "#3B82F6", glow: "rgba(59,130,246,0.22)"  },
-  strength:   { accent: "#EF4444", glow: "rgba(239,68,68,0.22)"   },
-  purpose:    { accent: "#F59E0B", glow: "rgba(245,158,11,0.22)"  },
-  peace:      { accent: "#10B981", glow: "rgba(16,185,129,0.22)"  },
-  belonging:  { accent: "#EC4899", glow: "rgba(236,72,153,0.22)"  },
-  grief:      { accent: "#6B7280", glow: "rgba(107,114,128,0.22)" },
-  default:    { accent: "#F5A623", glow: "rgba(245,166,35,0.22)"  },
+  anxiety:   { accent: "#8B5CF6", glow: "rgba(139,92,246,0.20)" },
+  healing:   { accent: "#3B82F6", glow: "rgba(59,130,246,0.20)"  },
+  strength:  { accent: "#EF4444", glow: "rgba(239,68,68,0.20)"   },
+  purpose:   { accent: "#F59E0B", glow: "rgba(245,158,11,0.20)"  },
+  peace:     { accent: "#10B981", glow: "rgba(16,185,129,0.20)"  },
+  belonging: { accent: "#EC4899", glow: "rgba(236,72,153,0.20)"  },
+  grief:     { accent: "#94A3B8", glow: "rgba(148,163,184,0.20)" },
+  default:   { accent: "#F5A623", glow: "rgba(245,166,35,0.20)"  },
 };
 
+// Curiosity-driven swipe prompts — forces the swipe, not just an instruction
+const SWIPE_PROMPTS = {
+  anxiety:   "SWIPE TO TAKE YOUR PEACE BACK",
+  healing:   "SWIPE AND DECLARE YOUR HEALING",
+  strength:  "SWIPE — DECLARE YOUR STRENGTH NOW",
+  purpose:   "SWIPE INTO YOUR PURPOSE",
+  peace:     "SWIPE AND SILENCE THE NOISE",
+  belonging: "SWIPE — YOU WERE CHOSEN",
+  grief:     "SWIPE — GOD SEES YOU RIGHT NOW",
+  default:   "SWIPE TO SPEAK LIFE OVER THIS",
+};
+
+// ── Background selection ──────────────────────────────────────
+let _bgManifest = null;
+function getBgManifest() {
+  if (_bgManifest) return _bgManifest;
+  if (existsSync(BG_MANIFEST)) {
+    _bgManifest = JSON.parse(readFileSync(BG_MANIFEST, "utf-8"));
+  } else {
+    _bgManifest = [];
+  }
+  return _bgManifest;
+}
+
+/**
+ * Pick a set of 3 backgrounds for this pillar + date.
+ * Returns { hook, declarations, verse } — different bg for each section.
+ * Deterministic by date so re-renders are consistent.
+ */
+function selectBackgrounds(pillar, dateStr) {
+  const manifest = getBgManifest();
+  if (!manifest.length) return { hook: null, declarations: null, verse: null };
+
+  const seed = parseInt(dateStr.replace(/-/g, "").slice(-5), 10);
+
+  // Intimate/quiet images — for pillars that are personal/vulnerable (anxiety, grief, peace)
+  const intimatePillars = ["anxiety", "grief", "peace", "healing"];
+  const isIntimate = intimatePillars.includes(pillar);
+
+  // Hook background pool:
+  // All hooks address personal pain points, so always use intimate/quiet backgrounds.
+  // Worship crowd images don't match hook copy (hooks are personal, not communal).
+  // Priority: woman-reading → bible/devotional → woman-worship (solo, not crowd)
+  const hookPool = (() => {
+    const intimate = manifest.filter(b =>
+      b.name.includes("reading") || b.name.includes("bible") ||
+      b.name.includes("devotional") || b.name.includes("window")
+    );
+    if (intimate.length) return intimate;
+    const solo = manifest.filter(b => b.name.includes("woman") && !b.name.includes("worship"));
+    if (solo.length) return solo;
+    return manifest;
+  })();
+
+  // Nature images → declarations (expansive, freedom, God's creation)
+  const natureBgs = manifest.filter(b =>
+    b.name.includes("sunrise") || b.name.includes("ocean") ||
+    b.name.includes("forest") || b.name.includes("mountain") ||
+    b.name.includes("wheat") || b.name.includes("cross") || b.name.includes("fog")
+  );
+  const declPool = natureBgs.length ? natureBgs : manifest;
+
+  // Bible/devotional → verse (intimate, Word-focused)
+  const verseBgs = manifest.filter(b =>
+    b.name.includes("bible") || b.name.includes("devotional") || b.name.includes("reading")
+  );
+  const versePool  = verseBgs.length   ? verseBgs   : manifest;
+
+  const pick = (pool, offset) => {
+    const idx = (seed + offset) % pool.length;
+    return resolve(BG_DIR, pool[idx].file.replace("backgrounds/", ""));
+  };
+
+  return {
+    hook:         pick(hookPool,  0),
+    declarations: pick(declPool,  1),
+    verse:        pick(versePool, 2),
+    // CTA = worship/community bg (celebrate what God has done)
+    cta: (() => {
+      const worshipBgs = manifest.filter(b => b.name.includes("worship"));
+      const pool = worshipBgs.length ? worshipBgs : manifest;
+      return pick(pool, 3);
+    })(),
+  };
+}
+
+// ── Helpers ───────────────────────────────────────────────────
 function wrapText(ctx, text, maxW) {
   const words = text.split(" ");
   const lines = [];
@@ -48,40 +147,39 @@ function wrapText(ctx, text, maxW) {
   return lines;
 }
 
-async function drawBase(ctx, theme) {
-  // BG image
-  try {
-    const bg = await loadImage(BG);
-    ctx.drawImage(bg, -40, -80, W + 80, H + 80);
-  } catch {
-    ctx.fillStyle = "#08061A"; ctx.fillRect(0, 0, W, H);
+async function drawBase(ctx, theme, bgPath, overlayOpacity = 0.70) {
+  // Try selected background → fall back to bg-main.jpg → solid color
+  let loaded = false;
+  for (const p of [bgPath, BG_FALLBACK]) {
+    if (!p || !existsSync(p)) continue;
+    try {
+      const bg = await loadImage(p);
+      // Fill canvas first, then draw image to cover
+      ctx.fillStyle = "#000";
+      ctx.fillRect(0, 0, W, H);
+      // Draw with slight scale for visual breathing room
+      const scale = 1.06;
+      const sw = W * scale, sh = H * scale;
+      ctx.drawImage(bg, -(sw - W) / 2, -(sh - H) / 2, sw, sh);
+      loaded = true;
+      break;
+    } catch {}
   }
+  if (!loaded) {
+    ctx.fillStyle = "#08061A";
+    ctx.fillRect(0, 0, W, H);
+  }
+
   // Dark overlay
-  const ov = ctx.createLinearGradient(0, 0, 0, H);
-  ov.addColorStop(0,   "rgba(5,3,16,0.90)");
-  ov.addColorStop(0.5, "rgba(8,5,22,0.93)");
-  ov.addColorStop(1,   "rgba(3,2,10,0.97)");
-  ctx.fillStyle = ov;
+  ctx.fillStyle = `rgba(0,0,0,${overlayOpacity})`;
   ctx.fillRect(0, 0, W, H);
-  // Glow
-  const glow = ctx.createRadialGradient(W/2, H*0.5, 0, W/2, H*0.5, W*0.6);
+
+  // Subtle accent glow — bottom-left (varied position keeps slides distinct)
+  const glow = ctx.createRadialGradient(W * 0.25, H * 0.7, 0, W * 0.25, H * 0.7, W * 0.7);
   glow.addColorStop(0, theme.glow);
   glow.addColorStop(1, "rgba(0,0,0,0)");
   ctx.fillStyle = glow;
   ctx.fillRect(0, 0, W, H);
-}
-
-async function drawLogo(ctx) {
-  const ls = 100;
-  const logoY = H - 190;
-  try {
-    const logo = await loadImage(LOGO);
-    ctx.drawImage(logo, (W - ls) / 2, logoY, ls, ls);
-  } catch {}
-  ctx.font = "700 34px DisplayBold";
-  ctx.fillStyle = "rgba(255,255,255,0.80)";
-  ctx.textAlign = "center";
-  ctx.fillText("SpeakLife", W/2, logoY + ls + 40);
 }
 
 function drawPill(ctx, label, theme, y = 80) {
@@ -94,7 +192,8 @@ function drawPill(ctx, label, theme, y = 80) {
   ctx.lineWidth = 1.5;
   const r = ph / 2;
   ctx.beginPath();
-  ctx.moveTo(px + r, y); ctx.lineTo(px + pw - r, y);
+  ctx.moveTo(px + r, y);
+  ctx.lineTo(px + pw - r, y);
   ctx.arcTo(px + pw, y, px + pw, y + ph, r);
   ctx.lineTo(px + pw, y + ph - r);
   ctx.arcTo(px + pw, y + ph, px + pw - r, y + ph, r);
@@ -106,180 +205,229 @@ function drawPill(ctx, label, theme, y = 80) {
   ctx.fill(); ctx.stroke();
   ctx.fillStyle = theme.accent;
   ctx.textAlign = "center";
-  ctx.fillText(text, W/2, y + ph/2 + 8);
+  ctx.fillText(text, W / 2, y + ph / 2 + 8);
 }
 
-// SLIDE 1 — Hook card: "If you need X, declare these"
-async function renderHookSlide(angle, pillar, outPath) {
+function drawDots(ctx, activeIdx, total, theme, yPos) {
+  for (let i = 0; i < total; i++) {
+    ctx.beginPath();
+    ctx.arc(W / 2 - ((total - 1) * 14) + i * 28, yPos, i === activeIdx ? 6 : 4, 0, Math.PI * 2);
+    ctx.fillStyle = i === activeIdx ? theme.accent : "rgba(255,255,255,0.25)";
+    ctx.fill();
+  }
+}
+
+// Tiny "SpeakLife" wordmark watermark — used on all non-CTA slides
+function drawWatermark(ctx) {
+  ctx.font = "600 26px DisplaySemi";
+  ctx.fillStyle = "rgba(255,255,255,0.35)";
+  ctx.textAlign = "center";
+  ctx.fillText("SpeakLife", W / 2, H - 40);
+}
+
+// ── SLIDE 0 — Hook ────────────────────────────────────────────
+async function renderHookSlide(angle, pillar, bgPath, outPath) {
   const canvas = createCanvas(W, H);
   const ctx    = canvas.getContext("2d");
   const theme  = THEMES[pillar] || THEMES.default;
 
-  await drawBase(ctx, theme);
+  await drawBase(ctx, theme, bgPath, 0.68);
   drawPill(ctx, pillar, theme, 80);
 
-  // Full hook as one statement — split into two parts visually
-  // Part 1: the "IF" condition (white)
-  const fullHook = angle.hook.replace(/, declare these$/i, "").toUpperCase();
+  // Hook text — strip trailing "declare these" if present, force CAPS
+  const hookRaw = angle.hook.replace(/, declare these\.?$/i, "").trim();
+  const fullHook = hookRaw.toUpperCase();
+
   ctx.font = "800 64px Display";
   ctx.fillStyle = "#FFFFFF";
+  ctx.textAlign = "center";
   const hookLines = wrapText(ctx, fullHook, W - 100);
   const lineH = 78;
-  const totalH = hookLines.length * lineH + 30 + 80; // hook + divider + cta
-  const startY = H/2 - totalH / 2 + 40;
+  const blockH = hookLines.length * lineH + 32 + 72; // hook + divider gap + swipe line
+  const startY = H / 2 - blockH / 2 + 20;
 
   hookLines.forEach((line, i) => {
-    ctx.fillText(line, W/2, startY + i * lineH);
+    ctx.fillText(line, W / 2, startY + i * lineH);
   });
 
   // Accent divider
-  const divY = startY + hookLines.length * lineH + 30;
+  const divY = startY + hookLines.length * lineH + 26;
   ctx.strokeStyle = theme.accent;
   ctx.lineWidth = 3;
   ctx.beginPath();
-  ctx.moveTo(W/2 - 80, divY);
-  ctx.lineTo(W/2 + 80, divY);
+  ctx.moveTo(W / 2 - 80, divY);
+  ctx.lineTo(W / 2 + 80, divY);
   ctx.stroke();
 
-  // "DECLARE THESE  SWIPE ->" in accent color
-  ctx.font = "800 46px Display";
-  ctx.fillStyle = theme.accent;
-  ctx.fillText("DECLARE THESE  SWIPE ->", W/2, divY + 66);
+  // Dynamic swipe prompt — punchy, curiosity-driven
+  const swipePrompt = SWIPE_PROMPTS[pillar] || SWIPE_PROMPTS.default;
+  ctx.font = "800 42px Display";
+  ctx.fillStyle = "#8FB5FF";
+  ctx.fillText(swipePrompt, W / 2, divY + 62);
 
-  // Slide indicator dots (5 slides)
-  const dotY = H - 220;
-  [0,1,2,3,4].forEach(i => {
-    ctx.beginPath();
-    ctx.arc(W/2 - 48 + i * 24, dotY, i === 0 ? 6 : 4, 0, Math.PI * 2);
-    ctx.fillStyle = i === 0 ? theme.accent : "rgba(255,255,255,0.25)";
-    ctx.fill();
-  });
+  drawDots(ctx, 0, 8, theme, H - 80);
+  drawWatermark(ctx);
 
-  await drawLogo(ctx);
   writeFileSync(outPath, canvas.toBuffer("image/png"));
-  console.log(`  Hook slide -> ${outPath}`);
+  console.log(`  Hook -> ${outPath}`);
 }
 
-// SLIDES 2-4 — Declaration cards
-async function renderDeclarationSlide(declaration, slideIndex, totalSlides, reference, pillar, outPath) {
+// ── SLIDES 1-5 — Declarations ────────────────────────────────
+async function renderDeclarationSlide(declaration, slideIndex, pillar, bgPath, outPath) {
   const canvas = createCanvas(W, H);
   const ctx    = canvas.getContext("2d");
   const theme  = THEMES[pillar] || THEMES.default;
+  const PAD    = 110; // generous padding = breathing room
 
-  await drawBase(ctx, theme);
+  // Slightly lighter overlay on even slides for visual variation
+  const overlayOpacity = slideIndex % 2 === 1 ? 0.70 : 0.75;
+  await drawBase(ctx, theme, bgPath, overlayOpacity);
 
-  // Declaration number
-  ctx.font = "700 24px DisplaySemi";
-  ctx.fillStyle = theme.accent;
+  // "DECLARE #N" — small, accent colored, top center
+  ctx.font = "600 24px DisplaySemi";
+  ctx.fillStyle = theme.accent + "CC";
   ctx.textAlign = "center";
-  ctx.fillText(`DECLARE #${slideIndex}`, W/2, 120);
+  ctx.fillText(`DECLARE #${slideIndex}`, W / 2, 108);
 
-  // Decorative accent bar (top-left corner)
-  ctx.fillStyle = theme.accent + "88";
-  ctx.fillRect(80, 180, 6, 80);
+  // Short accent line under the label
+  ctx.strokeStyle = theme.accent + "55";
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(W / 2 - 50, 122); ctx.lineTo(W / 2 + 50, 122);
+  ctx.stroke();
 
-  // Declaration text (large, centered)
-  ctx.font = "800 62px Display";
-  ctx.fillStyle = "#FFFFFF";
-  const lines = wrapText(ctx, declaration, W - 140);
-  const lineH = 76;
-  const startY = H/2 - (lines.length * lineH) / 2 + 30;
-  lines.forEach((line, i) => {
-    ctx.fillText(line, W/2, startY + i * lineH);
-  });
-
-  // Reference (last slide only)
-  if (slideIndex === totalSlides && reference) {
-    ctx.font = "600 26px DisplaySemi";
-    ctx.fillStyle = theme.accent + "CC";
-    ctx.fillText(`— ${reference}`, W/2, startY + lines.length * lineH + 52);
+  // Declaration text — slightly smaller, with breathing room
+  let fontSize = 58;
+  ctx.font = `800 ${fontSize}px Display`;
+  let lines = wrapText(ctx, declaration, W - PAD * 2);
+  while (lines.length > 5 && fontSize > 42) {
+    fontSize -= 2;
+    ctx.font = `800 ${fontSize}px Display`;
+    lines = wrapText(ctx, declaration, W - PAD * 2);
   }
 
-  // Slide indicator dots
-  const dotY = H - 220;
-  [0,1,2,3].forEach(i => {
-    ctx.beginPath();
-    ctx.arc(W/2 - 36 + i * 24, dotY, i === slideIndex ? 6 : 4, 0, Math.PI * 2);
-    ctx.fillStyle = i === slideIndex ? theme.accent : "rgba(255,255,255,0.25)";
-    ctx.fill();
+  ctx.fillStyle = "#FFFFFF";
+  ctx.textAlign = "center";
+  const lineH = fontSize * 1.30; // generous line spacing
+  const textBlockH = lines.length * lineH;
+  const startY = H / 2 - textBlockH / 2 + fontSize / 2;
+
+  lines.forEach((line, i) => {
+    ctx.fillText(line, W / 2, startY + i * lineH);
   });
 
-  await drawLogo(ctx);
+  drawDots(ctx, slideIndex, 8, theme, H - 80);
+  drawWatermark(ctx);
+
   writeFileSync(outPath, canvas.toBuffer("image/png"));
   console.log(`  Declaration ${slideIndex} -> ${outPath}`);
 }
 
-// SLIDE 5 — CTA
-async function renderCtaSlide(pillar, outPath) {
+// ── SLIDE 6 — Verse spotlight ─────────────────────────────────
+async function renderVerseSlide(verseText, reference, pillar, bgPath, outPath) {
+  const canvas = createCanvas(W, H);
+  const ctx    = canvas.getContext("2d");
+  const theme  = THEMES[pillar] || THEMES.default;
+
+  await drawBase(ctx, theme, bgPath, 0.74);
+
+  // "ANCHOR SCRIPTURE" label
+  ctx.font = "700 22px DisplayBold";
+  ctx.fillStyle = "rgba(255,255,255,0.45)";
+  ctx.textAlign = "center";
+  ctx.fillText("ANCHOR SCRIPTURE", W / 2, 100);
+
+  // Large decorative open-quote
+  ctx.font = "800 160px Display";
+  ctx.fillStyle = theme.accent + "33";
+  ctx.fillText("\u201C", W / 2 - 260, H / 2 - 140);
+
+  // Verse text — centered, italic feel with bold weight
+  ctx.font = "700 52px DisplayBold";
+  ctx.fillStyle = "#FFFFFF";
+  const lines = wrapText(ctx, verseText, W - 140);
+  const lineH = 68;
+  const startY = H / 2 - (lines.length * lineH) / 2 + 20;
+  lines.forEach((line, i) => ctx.fillText(line, W / 2, startY + i * lineH));
+
+  // Reference — accent colored, clearly separated
+  const refY = startY + lines.length * lineH + 52;
+  ctx.font = "600 38px DisplaySemi";
+  ctx.fillStyle = theme.accent;
+  ctx.fillText(`\u2014 ${reference}`, W / 2, refY);
+
+  drawDots(ctx, 6, 8, theme, H - 80);
+  drawWatermark(ctx);
+
+  writeFileSync(outPath, canvas.toBuffer("image/png"));
+  console.log(`  Verse -> ${outPath}`);
+}
+
+// ── SLIDE 7 — CTA ─────────────────────────────────────────────
+async function renderCtaSlide(pillar, bgPath, outPath) {
   const canvas = createCanvas(W, H);
   const ctx    = canvas.getContext("2d");
   const theme  = THEMES[pillar] || THEMES.default;
   const PAD    = 72;
   const maxW   = W - PAD * 2;
 
-  await drawBase(ctx, theme);
+  // CTA uses lighter overlay so the background image shows through more
+  await drawBase(ctx, theme, bgPath, 0.62);
 
-  // Logo centered upper section
-  const ls = 120;
-  const logoY = H * 0.22;
+  // Logo
+  const ls   = 130;
+  const logoY = H * 0.20;
   try {
     const logo = await loadImage(LOGO);
     ctx.drawImage(logo, (W - ls) / 2, logoY, ls, ls);
   } catch {}
   ctx.font = "700 38px DisplayBold";
-  ctx.fillStyle = "rgba(255,255,255,0.85)";
+  ctx.fillStyle = "rgba(255,255,255,0.90)";
   ctx.textAlign = "center";
   ctx.fillText("SpeakLife", W / 2, logoY + ls + 46);
 
   // Stars
-  const starY = logoY + ls + 100;
-  const starColor = "#F5A623";
+  const starY   = logoY + ls + 104;
   const starOuter = 18, starInner = 8, starGap = starOuter * 2.8;
-  const starSx = W / 2 - ((5 - 1) * starGap) / 2;
-  ctx.fillStyle = starColor;
+  const starSx  = W / 2 - ((5 - 1) * starGap) / 2;
+  ctx.fillStyle = "#F5A623";
   for (let s = 0; s < 5; s++) {
     const ox = starSx + s * starGap;
     ctx.beginPath();
     for (let i = 0; i < 10; i++) {
       const a = (Math.PI / 5) * i - Math.PI / 2;
       const r = i % 2 === 0 ? starOuter : starInner;
-      i === 0 ? ctx.moveTo(ox + r * Math.cos(a), starY + r * Math.sin(a))
-              : ctx.lineTo(ox + r * Math.cos(a), starY + r * Math.sin(a));
+      i === 0
+        ? ctx.moveTo(ox + r * Math.cos(a), starY + r * Math.sin(a))
+        : ctx.lineTo(ox + r * Math.cos(a), starY + r * Math.sin(a));
     }
     ctx.closePath(); ctx.fill();
   }
   ctx.font = "600 26px DisplaySemi";
   ctx.fillStyle = "rgba(255,255,255,0.55)";
-  ctx.fillText("Rated 4.9/5 · 100K+ downloads", W / 2, starY + 40);
+  ctx.fillText("Rated 4.9/5 \u00B7 100K+ downloads", W / 2, starY + 40);
 
   // CTA headline
-  ctx.font = "800 56px Display";
+  ctx.font = "800 52px Display";
   ctx.fillStyle = "#FFFFFF";
   const ctaText = "SPEAK GOD'S WORD OVER YOUR LIFE EVERY MORNING";
-  const ctaLines = (() => {
-    const words = ctaText.split(" "), lines = [];
-    let line = "";
-    for (const w of words) {
-      const t = line ? `${line} ${w}` : w;
-      if (ctx.measureText(t).width > maxW && line) { lines.push(line); line = w; }
-      else line = t;
-    }
-    if (line) lines.push(line);
-    return lines;
-  })();
-  const ctaLH = 68;
-  const ctaTotalH = ctaLines.length * ctaLH;
-  const ctaStartY = H * 0.58 - ctaTotalH / 2;
+  ctx.font = "800 52px Display";
+  const ctaLines = wrapText(ctx, ctaText, maxW);
+  const ctaLH = 64;
+  const ctaStartY = H * 0.57 - (ctaLines.length * ctaLH) / 2;
   ctaLines.forEach((line, i) => ctx.fillText(line, W / 2, ctaStartY + i * ctaLH));
 
-  // Download button
-  const btnY = ctaStartY + ctaTotalH + 44;
+  // Download button — uses theme accent so it matches every pillar's palette
+  const btnY = ctaStartY + ctaLines.length * ctaLH + 40;
   const btnW = maxW, btnH = 112, btnX = PAD;
   ctx.beginPath();
   ctx.roundRect(btnX, btnY, btnW, btnH, 22);
-  const btnGrad = ctx.createLinearGradient(btnX, btnY, btnX + btnW, btnY);
-  btnGrad.addColorStop(0, "#F5A623"); btnGrad.addColorStop(1, "#F07C2A");
-  ctx.fillStyle = btnGrad; ctx.fill();
+  // Build a gradient from the theme accent
+  const btnGrad = ctx.createLinearGradient(btnX, btnY, btnX + btnW, btnY + btnH);
+  btnGrad.addColorStop(0, theme.accent);
+  btnGrad.addColorStop(1, theme.accent + "CC");
+  ctx.fillStyle = btnGrad;
+  ctx.fill();
   ctx.font = "700 36px DisplayBold";
   ctx.fillStyle = "#FFFFFF";
   ctx.fillText("Download FREE on App Store", W / 2, btnY + 44);
@@ -287,80 +435,92 @@ async function renderCtaSlide(pillar, outPath) {
   ctx.fillStyle = "rgba(255,255,255,0.80)";
   ctx.fillText("Share this with someone who needs it", W / 2, btnY + 82);
 
-  // Slide indicator dots
-  const dotY = H - 100;
-  [0,1,2,3,4].forEach(i => {
-    ctx.beginPath();
-    ctx.arc(W/2 - 48 + i * 24, dotY, i === 4 ? 6 : 4, 0, Math.PI * 2);
-    ctx.fillStyle = i === 4 ? theme.accent : "rgba(255,255,255,0.25)";
-    ctx.fill();
-  });
+  // Dots
+  drawDots(ctx, 7, 8, theme, H - 60);
 
   writeFileSync(outPath, canvas.toBuffer("image/png"));
-  console.log(`  CTA slide -> ${outPath}`);
+  console.log(`  CTA -> ${outPath}`);
 }
 
 // ── Main ──────────────────────────────────────────────────────
 const args = process.argv.slice(2);
 let pillar = null, slug = null, outDir = resolve(STUDIO, "../output/declare-angles");
-let randomMode = false;
+let dateArg = null;
 
 for (let i = 0; i < args.length; i++) {
-  if (args[i] === "--pillar") pillar = args[++i];
-  else if (args[i] === "--slug")   slug   = args[++i];
-  else if (args[i] === "--out")    outDir = args[++i];
-  else if (args[i] === "--random") randomMode = true;
+  if (args[i] === "--pillar") pillar  = args[++i];
+  else if (args[i] === "--slug")   slug    = args[++i];
+  else if (args[i] === "--out")    outDir  = args[++i];
+  else if (args[i] === "--date")   dateArg = args[++i];
 }
 
-const data = JSON.parse(readFileSync(ANGLES, "utf-8"));
+const TODAY = dateArg || new Date().toISOString().slice(0, 10);
+const data  = JSON.parse(readFileSync(ANGLES, "utf-8"));
 
 // Pick pillar
-const pillarNames = Object.keys(data.pillars);
+const PILLAR_ORDER = ["anxiety", "healing", "strength", "purpose", "peace", "belonging", "grief"];
 let activePillar = pillar?.toLowerCase();
 if (!activePillar || !data.pillars[activePillar]) {
-  // Auto-rotate by day of year (matches daily-organic.mjs)
-  const PILLAR_ORDER = ["anxiety", "healing", "strength", "purpose", "peace", "belonging", "grief"];
-  const now   = new Date();
+  const now   = new Date(TODAY);
   const start = new Date(now.getFullYear(), 0, 0);
   const dayOfYear = Math.floor((now - start) / (1000 * 60 * 60 * 24));
-  activePillar = PILLAR_ORDER[dayOfYear % 5];
+  activePillar = PILLAR_ORDER[dayOfYear % PILLAR_ORDER.length];
 }
 
 const angles = data.pillars[activePillar];
 
-// Pick angle (slug or random/sequential by day)
+// Pick angle
 let angle;
 if (slug) {
   angle = angles.find(a => a.slug === slug);
   if (!angle) throw new Error(`Slug "${slug}" not found in pillar "${activePillar}"`);
 } else {
-  const now   = new Date();
+  const now   = new Date(TODAY);
   const start = new Date(now.getFullYear(), 0, 0);
   const dayOfYear = Math.floor((now - start) / (1000 * 60 * 60 * 24));
-  const angleIndex = Math.floor(dayOfYear / 5) % angles.length;
+  const angleIndex = Math.floor(dayOfYear / PILLAR_ORDER.length) % angles.length;
   angle = angles[angleIndex];
 }
+
+// Select 3 distinct backgrounds for this carousel
+const bgs = selectBackgrounds(activePillar, TODAY);
 
 mkdirSync(outDir, { recursive: true });
 
 const prefix = `${activePillar}-${angle.slug}`;
-console.log(`\n=== Declare Angle Renderer ===`);
-console.log(`Pillar: ${activePillar} | Angle: ${angle.slug}`);
-console.log(`Hook: "${angle.hook}"`);
+console.log(`\n=== Declare Angle Renderer v2 ===`);
+console.log(`Date:          ${TODAY}`);
+console.log(`Pillar:        ${activePillar}`);
+console.log(`Angle:         ${angle.slug}`);
+console.log(`Hook:          "${angle.hook}"`);
+console.log(`BG hook:       ${bgs.hook?.split("/").slice(-1)[0] ?? "fallback"}`);
+console.log(`BG decl:       ${bgs.declarations?.split("/").slice(-1)[0] ?? "fallback"}`);
+console.log(`BG verse:      ${bgs.verse?.split("/").slice(-1)[0] ?? "fallback"}`);
+console.log(`Swipe CTA:     "${SWIPE_PROMPTS[activePillar] || SWIPE_PROMPTS.default}"`);
+console.log("=".repeat(44));
 
-// Render all 5 slides
-await renderHookSlide(angle, activePillar, resolve(outDir, `${prefix}-slide-0-hook.png`));
-for (let i = 0; i < angle.declarations.length; i++) {
+// Render all 8 slides — each section gets its own background
+await renderHookSlide(angle, activePillar, bgs.hook, resolve(outDir, `${prefix}-slide-0-hook.png`));
+
+for (let i = 0; i < 5; i++) {
   await renderDeclarationSlide(
     angle.declarations[i],
     i + 1,
-    angle.declarations.length,
-    i === angle.declarations.length - 1 ? angle.reference : null,
     activePillar,
-    resolve(outDir, `${prefix}-slide-${i+1}-decl.png`)
+    bgs.declarations,
+    resolve(outDir, `${prefix}-slide-${i + 1}-decl.png`)
   );
 }
-await renderCtaSlide(activePillar, resolve(outDir, `${prefix}-slide-4-cta.png`));
 
-console.log(`\nDone — 5 slides for "${angle.hook}"`);
+await renderVerseSlide(
+  angle.verseText,
+  angle.reference,
+  activePillar,
+  bgs.verse,
+  resolve(outDir, `${prefix}-slide-6-verse.png`)
+);
+
+await renderCtaSlide(activePillar, bgs.cta, resolve(outDir, `${prefix}-slide-7-cta.png`));
+
+console.log(`\nDone — 8 slides`);
 console.log(`Output: ${outDir}`);

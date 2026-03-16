@@ -5,365 +5,561 @@
     "anxiety": [
       {
         "slug": "3am-thoughts",
-        "hook": "If you wake up anxious at 3AM, declare these",
+        "hook": "You woke up anxious at 3AM again.",
         "declarations": [
-          "I am not a prisoner of my thoughts.",
-          "The peace of God is guarding my heart and mind right now.",
-          "I was not made to worry. I was made to reign."
+          "My mind does not get to run wild at 3AM. I take these thoughts captive.",
+          "The peace of God is standing guard over my mind right now.",
+          "I was not made to lie here and worry. I was made to reign.",
+          "I am guarded. God's peace is on duty right now.",
+          "Morning is coming. This night does not last forever."
         ],
-        "reference": "Philippians 4:7"
+        "reference": "Philippians 4:7",
+        "verseText": "And the peace of God, which surpasses all understanding, will guard your hearts and your minds in Christ Jesus."
       },
       {
         "slug": "fear",
-        "hook": "If fear feels louder than your faith, declare these",
+        "hook": "Fear is loud right now. God is louder.",
         "declarations": [
-          "God has not given me a spirit of fear.",
-          "I have power, love, and a sound mind.",
-          "Fear is a liar. I choose faith."
+          "God did not wire me for fear. Power, love, and a sound mind — that is my DNA.",
+          "Fear is loud. But it is a liar. I choose faith over the noise.",
+          "I will not let fear make my decisions. God leads me. I follow.",
+          "I am not paralyzed. I move forward in faith.",
+          "The spirit in me is stronger than the fear around me."
         ],
-        "reference": "2 Timothy 1:7"
+        "reference": "2 Timothy 1:7",
+        "verseText": "For God gave us a spirit not of fear but of power and love and self-control."
       },
       {
         "slug": "overwhelmed",
-        "hook": "If you are overwhelmed and about to break, declare these",
+        "hook": "You are not falling apart. You are being held.",
         "declarations": [
-          "I do not carry this alone. God is with me.",
-          "I can do all things through Christ who strengthens me.",
-          "One step at a time is enough. I will not quit."
+          "I do not carry this alone. God steps in where I run out.",
+          "I can do every single thing God has called me to — through His strength.",
+          "One breath. One step. One moment at a time. I will not break.",
+          "I do not need to see the whole path. Just today.",
+          "God carries what is too heavy for me."
         ],
-        "reference": "Philippians 4:13"
+        "reference": "Philippians 4:13",
+        "verseText": "I can do all things through him who strengthens me."
       },
       {
         "slug": "panic",
-        "hook": "If panic keeps hitting you out of nowhere, declare these",
+        "hook": "Panic hits without warning. So does God's peace.",
         "declarations": [
-          "My body is not my enemy. God is restoring my peace.",
-          "I breathe in. God is here. I breathe out. Fear has to go.",
-          "I am safe. I am held. God has not left me."
+          "My body is not my enemy. God is rebuilding my peace right now.",
+          "Breathe in — God is here. Breathe out — fear has to leave.",
+          "I am safe. I am held. God has not taken His hands off me.",
+          "My nervous system is not my authority. God is.",
+          "I am strengthened. I am upheld. God's right hand holds me."
         ],
-        "reference": "Isaiah 41:10"
+        "reference": "Isaiah 41:10",
+        "verseText": "Fear not, for I am with you; be not dismayed, for I am your God; I will strengthen you, I will help you."
       },
       {
         "slug": "worry",
-        "hook": "If you cannot stop worrying about the future, declare these",
+        "hook": "Your future is in better hands than yours.",
         "declarations": [
-          "I give today's worry to God. He can handle it.",
-          "My future is in the hands of the One who holds all things.",
-          "I refuse to let worry steal today from me."
+          "I hand today's worry to God. He has never dropped anything I gave Him.",
+          "My tomorrow is already in God's hands. I can rest today.",
+          "Worry is not my job. Trust is. I choose trust.",
+          "God already knows my tomorrow. I can rest.",
+          "I trade my worry for God's wisdom. He knows the way."
         ],
-        "reference": "Matthew 6:34"
+        "reference": "Matthew 6:34",
+        "verseText": "Therefore do not be anxious about tomorrow, for tomorrow will be anxious for itself."
+      },
+      {
+        "slug": "financial-worry",
+        "hook": "Money stress is real. So is God's provision.",
+        "declarations": [
+          "I refuse to let my bank account decide my worth.",
+          "My God supplies every need I have. Not some. Every one.",
+          "Fear does not get to live in my finances. I give this to God.",
+          "I am provided for. I have been before. I will be again.",
+          "My future is not held by an economy. It is held by God."
+        ],
+        "reference": "Philippians 4:19",
+        "verseText": "And my God will supply every need of yours according to his riches in glory in Christ Jesus."
       }
     ],
     "healing": [
       {
         "slug": "body-healed",
-        "hook": "If your body is fighting something right now, declare these",
+        "hook": "Your body is not beyond what God can heal.",
         "declarations": [
-          "By the stripes of Jesus, I am healed.",
-          "God restores what sickness tried to take.",
-          "My body is strong, whole, and made new by God's power."
+          "By the stripes of Jesus, I am healed. That word does not expire.",
+          "My body was made to be whole. I call it back to wholeness now.",
+          "God restores what sickness came to take. I am not finished yet.",
+          "I am whole. Not one day — right now.",
+          "God is the God of the impossible. My body is no exception."
         ],
-        "reference": "Isaiah 53:5"
+        "reference": "Isaiah 53:5",
+        "verseText": "But he was pierced for our transgressions; he was crushed for our iniquities; upon him was the chastisement that brought us peace, and with his wounds we are healed."
       },
       {
         "slug": "diagnosis",
-        "hook": "If you just received a scary diagnosis, declare these",
+        "hook": "A diagnosis is not the final word.",
         "declarations": [
-          "A report is not my final word. God is my healer.",
-          "I speak life over my body. I am not defeated.",
-          "I trust God's hand more than any doctor's report."
+          "A report is not my final word. God's word over my body is.",
+          "I speak life over every cell, every organ, every system in me.",
+          "My faith is bigger than this diagnosis. I stand on what God says.",
+          "I am healed because God said so. That is enough.",
+          "My faith is bigger than this report. I stand on God's word."
         ],
-        "reference": "Jeremiah 17:14"
+        "reference": "Jeremiah 17:14",
+        "verseText": "Heal me, O Lord, and I shall be healed; save me, and I shall be saved, for you are my praise."
       },
       {
         "slug": "chronic-pain",
-        "hook": "If you have been living with chronic pain, declare these",
+        "hook": "You have lived in this pain long enough.",
         "declarations": [
-          "I am not defined by my pain. I am more than my body.",
-          "God sees what I carry every single day. He is with me.",
-          "I declare healing over every part of me, seen and unseen."
+          "I am not defined by how my body feels today. I am more than this.",
+          "God sees every day I push through. He is not unmoved by what I carry.",
+          "I call healing into every part of me — seen and unseen, known and unknown.",
+          "My suffering is not my sentence. God is still at work.",
+          "God restores what years of pain have taken. I receive it now."
         ],
-        "reference": "Exodus 23:25"
+        "reference": "Exodus 23:25",
+        "verseText": "You shall serve the Lord your God, and he will bless your bread and your water, and I will take sickness away from among you."
       },
       {
         "slug": "mental-health",
-        "hook": "If you are struggling with your mental health, declare these",
+        "hook": "You are not weak for struggling. You are still loved.",
         "declarations": [
-          "I have the mind of Christ. My thoughts can be renewed.",
-          "I am not my diagnosis. I am a child of God.",
-          "God heals my mind just like He heals my body."
+          "I have the mind of Christ. My thoughts can be — and are being — renewed.",
+          "I am not my diagnosis. I am a child of God who is being made whole.",
+          "God heals minds. He heals mine. I will not stop believing that.",
+          "My mind is being renewed. Day by day. Thought by thought.",
+          "I am not my worst thought. I am who God says I am."
         ],
-        "reference": "1 Corinthians 2:16"
+        "reference": "1 Corinthians 2:16",
+        "verseText": "But we have the mind of Christ."
       },
       {
         "slug": "heartbreak-healing",
-        "hook": "If your heart is broken and you need it healed, declare these",
+        "hook": "Your heart is broken. God collects every piece.",
         "declarations": [
-          "God heals every broken heart. Mine included.",
-          "What was lost will not define what is coming.",
-          "I am whole. Not because of another person. Because of God."
+          "God heals broken hearts. He is working on mine right now.",
+          "What that loss took from me, God is already restoring.",
+          "I am whole — not because someone stayed, but because God never left.",
+          "My heart is healing. Even now. Even today.",
+          "God stitches back together what was torn apart. I trust His hands."
         ],
-        "reference": "Psalm 147:3"
+        "reference": "Psalm 147:3",
+        "verseText": "He heals the brokenhearted and binds up their wounds."
+      },
+      {
+        "slug": "holding-it-together",
+        "hook": "You have been strong for everyone. This is for you.",
+        "declarations": [
+          "I give myself permission to be held right now, not just to hold others.",
+          "My worth is not measured by how much I carry for everyone else.",
+          "I am not a machine. I am a person and I deserve care too.",
+          "God sees the weight I carry that no one else notices. He is near.",
+          "Where I run out, God steps in. That is wisdom, not weakness."
+        ],
+        "reference": "Matthew 11:28",
+        "verseText": "Come to me, all who labor and are heavy laden, and I will give you rest."
       }
     ],
     "strength": [
       {
         "slug": "keep-going",
-        "hook": "If you are running on empty and need strength, declare these",
+        "hook": "You are closer than you think. Do not stop.",
         "declarations": [
-          "God is my strength when mine runs out.",
-          "I will not give up. I am closer than I think.",
-          "The same power that raised Jesus lives in me."
+          "When my strength runs out, God's kicks in. I am not done.",
+          "I refuse to quit when I am this close. I keep going.",
+          "The power that raised Jesus from the dead lives in me. I have enough.",
+          "I am not tired in my spirit. My spirit is strong.",
+          "I will run and not grow weary. God is my source."
         ],
-        "reference": "Romans 8:11"
+        "reference": "Romans 8:11",
+        "verseText": "If the Spirit of him who raised Jesus from the dead dwells in you, he who raised Christ Jesus from the dead will also give life to your mortal bodies."
       },
       {
         "slug": "burnout",
-        "hook": "If you are burnt out and running on empty, declare these",
+        "hook": "Running on empty. God still has something left.",
         "declarations": [
-          "I come to Jesus and He gives me rest.",
-          "Rest is not weakness. It is wisdom. I allow myself to rest.",
-          "My strength is being renewed right now. I will rise again."
+          "Jesus said come to Him when I am weary. I come. I receive rest.",
+          "Rest is not weakness. Choosing it is wisdom. I rest without guilt.",
+          "I will mount up. I will run. I will not grow weary. His word says so.",
+          "I mount up with wings like eagles. My strength is renewed.",
+          "I stop striving. I start trusting. God is the one who carries me."
         ],
-        "reference": "Isaiah 40:31"
+        "reference": "Isaiah 40:31",
+        "verseText": "But they who wait for the Lord shall renew their strength; they shall mount up with wings like eagles."
       },
       {
         "slug": "hard-season",
-        "hook": "If you are in the hardest season of your life, declare these",
+        "hook": "This season is hard. It is also not forever.",
         "declarations": [
-          "This season is not my story. It is just a chapter.",
-          "God does not waste hard things. He is working in this.",
-          "I will come out of this stronger than I went in."
+          "This is a chapter, not my story. God writes better endings than I can imagine.",
+          "God does not waste hard things. He is working in this. I trust it.",
+          "I will come out the other side of this — stronger, clearer, and more free.",
+          "God is producing something in me that cannot be learned any other way.",
+          "I am not crushed. I am being shaped."
         ],
-        "reference": "Romans 8:28"
+        "reference": "Romans 8:28",
+        "verseText": "And we know that for those who love God all things work together for good."
       },
       {
         "slug": "starting-over",
-        "hook": "If you are starting over and it feels impossible, declare these",
+        "hook": "Starting over takes more courage than people know.",
         "declarations": [
-          "God makes all things new. This is my new beginning.",
-          "I am not starting from zero. I am starting from experience.",
-          "Every great story has a turning point. This is mine."
+          "God makes all things new. This restart is not a setback. It is a setup.",
+          "I am not starting from zero. I carry every lesson, every scar, every breakthrough.",
+          "My best chapter has not been written yet. God is writing it now.",
+          "God is doing something new right now. I can see it.",
+          "I do not go back. I go forward. God goes with me."
         ],
-        "reference": "Isaiah 43:19"
+        "reference": "Isaiah 43:19",
+        "verseText": "Behold, I am doing a new thing; now it springs forth, do you not perceive it?"
       },
       {
         "slug": "failure",
-        "hook": "If you feel like you have failed, declare these",
+        "hook": "You think you failed. Here is what God sees instead.",
         "declarations": [
-          "My failure is not final. God is still writing my story.",
-          "I fall down but I get back up. That is who I am.",
-          "God does not waste anything. Even this will be used for good."
+          "My failure is not final. God is still authoring my story.",
+          "I fall. I get back up. That is not weakness — that is who I am.",
+          "God does not waste failure. He recycles it into something powerful.",
+          "I am not a failure. I am someone God is still working on.",
+          "What knocked me down will not keep me down. I rise."
         ],
-        "reference": "Micah 7:8"
+        "reference": "Micah 7:8",
+        "verseText": "Rejoice not over me, O my enemy; when I fall, I shall rise."
+      },
+      {
+        "slug": "brutal-middle",
+        "hook": "The hardest part of any journey is the middle.",
+        "declarations": [
+          "The middle is the hardest part. And I am still here. That counts.",
+          "I refuse to quit right before the breakthrough I cannot yet see.",
+          "God did not bring me this far to leave me stuck in the middle.",
+          "Finishing is in my DNA. God finishes what He starts. I am His work.",
+          "I do not need to feel strong. I just need to take the next step."
+        ],
+        "reference": "Philippians 1:6",
+        "verseText": "And I am sure of this, that he who began a good work in you will bring it to completion."
       }
     ],
     "purpose": [
       {
         "slug": "calling",
-        "hook": "If you do not know your purpose, declare these",
+        "hook": "You have a specific assignment. Here is how to claim it.",
         "declarations": [
-          "God knew me before I was formed. I was made on purpose.",
-          "I have a calling that no one else can fill.",
-          "I will walk in the purpose God placed on me. Starting today."
+          "God knew me before I was formed. My purpose was settled before I was born.",
+          "There is a calling on my life that no one else can fill. I will walk in it.",
+          "I stop waiting to feel ready. I step into what God placed in me today.",
+          "I do not have to earn my purpose. I was born with it.",
+          "God is not confused about who I am or what I am for."
         ],
-        "reference": "Jeremiah 1:5"
+        "reference": "Jeremiah 1:5",
+        "verseText": "Before I formed you in the womb I knew you, and before you were born I consecrated you."
       },
       {
         "slug": "stuck",
-        "hook": "If you feel stuck and behind in life, declare these",
+        "hook": "Feeling stuck means something is about to shift.",
         "declarations": [
-          "I am not behind. I am right on time.",
-          "Every delay is preparation. God is still working.",
-          "My path is not late. It is unique. And it is mine."
+          "I am not behind. I am right on time — God's time.",
+          "Every delay has been preparation. God is still working on my behalf.",
+          "My path looks different. It is not wrong. It is mine.",
+          "I release the timeline I built. I accept God's.",
+          "My story is not behind schedule. It is exactly where it should be."
         ],
-        "reference": "Ecclesiastes 3:11"
+        "reference": "Ecclesiastes 3:11",
+        "verseText": "He has made everything beautiful in its time."
       },
       {
         "slug": "dream",
-        "hook": "If your dream feels impossible right now, declare these",
+        "hook": "Your dream did not die. It is being tested.",
         "declarations": [
-          "Nothing is impossible with God. My dream is still alive.",
-          "God gave me this vision. He will bring it to pass.",
-          "I will not bury what God placed in me. I will see it happen."
+          "Nothing is impossible with God. My dream is not dead — it is developing.",
+          "God gave me this vision. He does not give gifts He does not intend to fulfill.",
+          "I will not bury what God placed in me. I protect it. I water it. I wait.",
+          "The dream God gave me did not come with an expiration date.",
+          "I protect what God placed in me. I will not let it die."
         ],
-        "reference": "Luke 1:37"
+        "reference": "Luke 1:37",
+        "verseText": "For nothing will be impossible with God."
       },
       {
         "slug": "future",
-        "hook": "If you are scared about your future, declare these",
+        "hook": "God already knows how your story ends. Swipe.",
         "declarations": [
-          "God has plans for me. Plans for hope and a future.",
-          "My future is not an accident. It is a design.",
-          "I trust where God is taking me even when I cannot see it."
+          "God has plans for me — good ones, not disasters. I choose to believe that.",
+          "My future was designed by God. Not by my mistakes or my past.",
+          "I trust where God is taking me, even when I cannot see the next step.",
+          "My best days are not behind me. They are ahead.",
+          "God's plan for me is good. Even when I cannot see it yet."
         ],
-        "reference": "Jeremiah 29:11"
+        "reference": "Jeremiah 29:11",
+        "verseText": "For I know the plans I have for you, declares the Lord, plans for welfare and not for evil, to give you a future and a hope."
       },
       {
         "slug": "next-step",
-        "hook": "If you are scared to take the next step, declare these",
+        "hook": "The next step is terrifying. Take it anyway.",
         "declarations": [
-          "God has not given me a spirit of fear. I move forward.",
-          "I do not need to see the whole road. Just the next step.",
-          "God goes before me. I will not be afraid."
+          "I do not need to see the whole staircase. I just need to take this step.",
+          "God goes before me. The same God who got me here is leading me forward.",
+          "I move. I trust. I do not wait for certainty — I walk in faith.",
+          "I take the step. God handles the rest.",
+          "Courage is not the absence of fear. It is moving anyway."
         ],
-        "reference": "Deuteronomy 31:8"
+        "reference": "Deuteronomy 31:8",
+        "verseText": "It is the Lord who goes before you. He will be with you; he will not leave you or forsake you."
+      },
+      {
+        "slug": "called-to-lead",
+        "hook": "You were overlooked. Here is why God allowed it.",
+        "declarations": [
+          "God does not overlook me when people do. My calling is not on their timeline.",
+          "I was not made to shrink. I step into what God built me for.",
+          "The right doors will open for me. No one can shut what God opens.",
+          "I stop waiting for permission. God already said yes.",
+          "My season is coming. Being overlooked is preparation, not the verdict."
+        ],
+        "reference": "Isaiah 60:22",
+        "verseText": "I am the Lord; in its time I will hasten it."
       }
     ],
     "peace": [
       {
         "slug": "inner-chaos",
-        "hook": "If your mind will not be still, declare these",
+        "hook": "Your mind will not stop. Declare this first.",
         "declarations": [
-          "I have the peace of God that passes all understanding.",
-          "I cast every anxious thought down. My mind is at rest.",
-          "I choose peace. Not because things are perfect. Because God is."
+          "I have a peace that does not make sense to my circumstances. I choose it.",
+          "I take every racing thought captive. My mind is not a battlefield anymore.",
+          "Peace is not the absence of chaos. It is choosing God in the middle of it.",
+          "I will not be ruled by what I cannot control.",
+          "My mind is a garden. I choose what grows there."
         ],
-        "reference": "Philippians 4:7"
+        "reference": "Philippians 4:7",
+        "verseText": "And the peace of God, which surpasses all understanding, will guard your hearts and your minds in Christ Jesus."
       },
       {
         "slug": "sleep",
-        "hook": "If you cannot sleep at night, declare these",
+        "hook": "Can't sleep? Say these before you close your eyes.",
         "declarations": [
-          "God grants sleep to those He loves. I receive rest tonight.",
-          "I lay every burden down before I close my eyes.",
-          "My sleep is sweet. My body is safe. I am at peace."
+          "God gives rest to those He loves. I receive it tonight — deeply and fully.",
+          "I release today. Every worry, every weight — I lay it down right now.",
+          "My sleep is sweet. God watches over me. I do not need to stay awake.",
+          "I let go of today. God watches over me while I rest.",
+          "My rest is not earned. It is a gift. I receive it."
         ],
-        "reference": "Psalm 127:2"
+        "reference": "Psalm 127:2",
+        "verseText": "He grants sleep to those he loves."
       },
       {
         "slug": "waiting",
-        "hook": "If the waiting is driving you crazy, declare these",
+        "hook": "The waiting is unbearable. God is still working.",
         "declarations": [
-          "I will wait on God. His timing has never been wrong.",
-          "Peace is not the absence of waiting. It is trust while I wait.",
-          "God is working in the wait. I will not rush what He is building."
+          "I will wait on God. His timing has never once been wrong.",
+          "The wait is not empty. God is working inside it. I trust what I cannot see.",
+          "I am at peace right now — not when it is over, not when I understand. Now.",
+          "The wait is not wasted. God is active in it.",
+          "I am at peace right now. Not when it is over. Right now."
         ],
-        "reference": "Psalm 27:14"
+        "reference": "Psalm 27:14",
+        "verseText": "Wait for the Lord; be strong, and let your heart take courage; wait for the Lord."
       },
       {
         "slug": "conflict",
-        "hook": "If conflict and chaos are surrounding you, declare these",
+        "hook": "Peace is not the absence of chaos. Swipe.",
         "declarations": [
-          "God is my peace in the middle of the storm.",
-          "I do not have to fix everything. I give this to God.",
-          "Where peace is absent, I carry it in. God placed it in me."
+          "God is my peace in the middle of the storm around me.",
+          "I do not have to fix every broken thing. I give this to the One who can.",
+          "I carry peace into every room I enter. God placed it in me.",
+          "I do not need to win this. God will handle it.",
+          "I leave what I cannot control in God's hands. That is enough."
         ],
-        "reference": "John 14:27"
+        "reference": "John 14:27",
+        "verseText": "Peace I leave with you; my peace I give to you. Not as the world gives do I give to you."
       },
       {
         "slug": "storm",
-        "hook": "If your life feels like a storm right now, declare these",
+        "hook": "You are in a storm. God is in the boat.",
         "declarations": [
-          "Jesus speaks peace to every storm. Even this one.",
-          "I will not be moved by what I see. My anchor is God.",
-          "The storm will pass. I will still be standing."
+          "Jesus speaks peace to every storm. He is speaking to mine right now.",
+          "I will not be shaken by what I see. My anchor holds and it does not move.",
+          "The storm will pass. God will still be standing. And so will I.",
+          "I do not panic at the wind. I know who holds it.",
+          "The same Jesus who calmed the sea is in my boat."
         ],
-        "reference": "Mark 4:39"
+        "reference": "Mark 4:39",
+        "verseText": "And he awoke and rebuked the wind and said to the sea, 'Peace! Be still!'"
+      },
+      {
+        "slug": "spring-transition",
+        "hook": "This new season feels more like pressure than peace.",
+        "declarations": [
+          "I do not owe anyone a new start on their schedule. God sets mine.",
+          "I refuse to rush my healing because the season changed. God sets my pace.",
+          "New things take time. I give myself the grace to grow slowly.",
+          "God is doing something new in me right now even when I cannot feel it.",
+          "I am not behind the season. I am exactly where God has me."
+        ],
+        "reference": "Song of Solomon 2:11-12",
+        "verseText": "For behold, the winter is past; the rain is over and gone. The flowers appear on the earth."
       }
     ],
     "belonging": [
       {
         "slug": "loved",
-        "hook": "If you feel unloved or forgotten, declare these",
+        "hook": "You do not feel loved right now. Here is what is actually true.",
         "declarations": [
-          "God loves me. Not because of what I do. Because of who I am.",
-          "I am chosen. I am wanted. I am His.",
-          "No person can take away the love God has placed on my life."
+          "God loves me — not because of what I do, but because of who He is.",
+          "I am chosen. I am wanted. I belong to Him. Nothing changes that.",
+          "No person's rejection, silence, or absence changes how God sees me.",
+          "I am so loved that God sent His son. That has not changed.",
+          "God's love for me is not based on my performance."
         ],
-        "reference": "John 3:16"
+        "reference": "John 3:16",
+        "verseText": "For God so loved the world, that he gave his only Son, that whoever believes in him should not perish but have eternal life."
       },
       {
         "slug": "not-enough",
-        "hook": "If you feel like you are not enough, declare these",
+        "hook": "The world says you are not enough. God disagrees.",
         "declarations": [
-          "I am fearfully and wonderfully made.",
-          "God does not make mistakes. I am not one.",
-          "I am enough because He is in me."
+          "I am fearfully and wonderfully made. God does not make mistakes.",
+          "I stop measuring myself against people God never asked me to be.",
+          "I am exactly enough for what God has called me to do right now.",
+          "I stop comparing. God made one of me on purpose.",
+          "I have everything I need to do what God has called me to do."
         ],
-        "reference": "Psalm 139:14"
+        "reference": "Psalm 139:14",
+        "verseText": "I praise you, for I am fearfully and wonderfully made."
       },
       {
         "slug": "lonely",
-        "hook": "If you feel completely alone, declare these",
+        "hook": "You feel completely alone. You have never been.",
         "declarations": [
-          "I am never alone. God is always with me.",
-          "God places the lonely in families. My people are coming.",
-          "Even in my loneliest moment, I am deeply loved."
+          "I am never truly alone. God is present in every quiet, painful moment.",
+          "God places the lonely in family. My people are coming. I hold on.",
+          "Even in the loneliest room, I am deeply, completely, unconditionally loved.",
+          "God knows my name. I am never invisible to Him.",
+          "Connection is coming. I am not forgotten."
         ],
-        "reference": "Psalm 68:6"
+        "reference": "Psalm 68:6",
+        "verseText": "God settles the lonely in families."
       },
       {
         "slug": "rejection",
-        "hook": "If rejection has been following you, declare these",
+        "hook": "Every rejection redirected you. You will see why.",
         "declarations": [
-          "I am accepted by God. No human rejection changes that.",
-          "Every closed door is pushing me toward the right one.",
-          "I am not what others say. I am what God says."
+          "I am accepted by God. Every human rejection loses its power over that.",
+          "Every door that closed was pushing me toward the right one. I trust the redirect.",
+          "I am not what others said or didn't say. I am what God says. Full stop.",
+          "I am not defined by who let me go. I am defined by who chose me.",
+          "Rejection redirects. God knows where I am going."
         ],
-        "reference": "John 1:12"
+        "reference": "John 1:12",
+        "verseText": "But to all who did receive him, who believed in his name, he gave the right to become children of God."
       },
       {
         "slug": "shame",
-        "hook": "If shame keeps following you, declare these",
+        "hook": "Shame is a liar. Here is what God actually says.",
         "declarations": [
-          "I am not defined by my past. I am made new.",
-          "There is no condemnation for those in Christ Jesus.",
-          "I walk in freedom. My story is not over."
+          "I am not who I used to be. I am a new creation. The old is gone.",
+          "There is no condemnation for me. Jesus paid that price. I walk free.",
+          "Shame has no claim on me. I was bought at a price. I live like it.",
+          "I do not carry what was already paid for on the cross.",
+          "I am clean. I am free. The old is gone."
         ],
-        "reference": "Romans 8:1"
+        "reference": "Romans 8:1",
+        "verseText": "There is therefore now no condemnation for those who are in Christ Jesus."
+      },
+      {
+        "slug": "comparison-spiral",
+        "hook": "Everyone looks like they are thriving. You feel invisible.",
+        "declarations": [
+          "I stop measuring my story against someone else's highlight reel.",
+          "God made one of me on purpose. My path belongs to me.",
+          "Someone else's success is not my failure. I celebrate them and keep going.",
+          "I am not in competition. I am in my lane and God is with me.",
+          "My worth is not a ranking. It was settled before I was born."
+        ],
+        "reference": "Galatians 6:4",
+        "verseText": "But let each one test his own work, and then his reason to boast will be in himself alone and not in his neighbor."
       }
     ],
     "grief": [
       {
         "slug": "loss",
-        "hook": "If you are grieving a loss, declare these",
+        "hook": "Grief is real. So is the God holding you in it.",
         "declarations": [
-          "God is close to the broken. He sees every tear I cry.",
-          "My grief is real and God holds space for it.",
-          "Joy will come again. I give myself permission to heal."
+          "God is close to the brokenhearted. He is as close to me right now as He has ever been.",
+          "My grief is real and God holds space for every part of it.",
+          "Joy will come again. I give myself permission to heal at God's pace.",
+          "Grief does not mean God is absent. He is the closest He has ever been.",
+          "I am allowed to mourn. And I am also going to make it."
         ],
-        "reference": "Psalm 34:18"
+        "reference": "Psalm 34:18",
+        "verseText": "The Lord is near to the brokenhearted and saves the crushed in spirit."
       },
       {
         "slug": "dark-valley",
-        "hook": "If you are walking through the darkest season of your life, declare these",
+        "hook": "The darkest valleys are where God walks closest.",
         "declarations": [
-          "Even in the darkest valley, God is with me.",
-          "This valley is a hallway, not a destination.",
-          "I will fear no evil. God is right here beside me."
+          "Even in the valley so dark I cannot see — God is walking right beside me.",
+          "This valley is a hallway, not a home. I am just passing through.",
+          "I will fear no evil. Not because I am brave. Because God is with me.",
+          "I keep walking. God is with me every step.",
+          "Darkness is not my home. I am just passing through."
         ],
-        "reference": "Psalm 23:4"
+        "reference": "Psalm 23:4",
+        "verseText": "Even though I walk through the valley of the shadow of death, I will fear no evil, for you are with me."
       },
       {
         "slug": "dry-season",
-        "hook": "If you are in a spiritual dry season, declare these",
+        "hook": "Spiritually dry. God is still the source.",
         "declarations": [
-          "Even when I cannot feel God, He has not moved.",
-          "My faith is not built on feelings. It is built on truth.",
-          "Rain is coming. I will not quit before my breakthrough."
+          "Even when I cannot feel God, He has not moved. I hold to what I know.",
+          "My faith is not built on feelings. It is built on a word that does not change.",
+          "Rain is coming. I will not give up right before my breakthrough.",
+          "I put my hope in God. He is my salvation. He will come through.",
+          "The dry season is temporary. My God is eternal."
         ],
-        "reference": "Psalm 42:11"
+        "reference": "Psalm 42:11",
+        "verseText": "Why are you cast down, O my soul, and why are you in turmoil within me? Hope in God; for I shall again praise him."
       },
       {
         "slug": "betrayal",
-        "hook": "If someone you trusted hurt or betrayed you, declare these",
+        "hook": "Betrayal cuts deep. God restores deeper.",
         "declarations": [
-          "God sees what was done to me. He is my vindicator.",
-          "I release this to God. I do not carry bitterness.",
-          "What others meant for harm, God will turn for my good."
+          "God sees every injustice done to me. He is my vindicator. I wait on Him.",
+          "I release the bitterness. Not for them — for me. I choose to be free.",
+          "What they meant for harm, God is already turning for my good.",
+          "I am not defined by what someone did to me.",
+          "Forgiveness is not for them. It is for me. I choose to be free."
         ],
-        "reference": "Genesis 50:20"
+        "reference": "Genesis 50:20",
+        "verseText": "As for you, you meant evil against me, but God meant it for good."
       },
       {
         "slug": "hope-deferred",
-        "hook": "If your hope has been deferred so long it hurts, declare these",
+        "hook": "Still waiting. Here is what God says about that.",
         "declarations": [
-          "Hope deferred is not hope denied.",
-          "God's promises do not expire. Mine is still coming.",
-          "I will not stop believing. My breakthrough is on the way."
+          "Hope deferred is not hope denied. My promise is still alive.",
+          "God's word over my life does not expire. What He said, He will do.",
+          "I will not stop believing. My breakthrough is on the other side of this.",
+          "I am not forgotten. God knows my name and my need.",
+          "The wait has not killed the promise. It is still mine."
         ],
-        "reference": "Proverbs 13:12"
+        "reference": "Proverbs 13:12",
+        "verseText": "Hope deferred makes the heart sick, but a desire fulfilled is a tree of life."
+      },
+      {
+        "slug": "unanswered-prayer",
+        "hook": "You prayed for years. Here is what God was doing.",
+        "declarations": [
+          "My prayers are not lost. God hears every single one. I keep asking.",
+          "Silence is not rejection. God is working in ways I cannot see yet.",
+          "I refuse to stop trusting just because the answer has not come.",
+          "My faith is not in the answer. It is in God.",
+          "What God has promised me, He will deliver. The wait does not cancel the promise."
+        ],
+        "reference": "Luke 18:1",
+        "verseText": "And he told them a parable to the effect that they ought always to pray and not lose heart."
       }
     ]
   }
