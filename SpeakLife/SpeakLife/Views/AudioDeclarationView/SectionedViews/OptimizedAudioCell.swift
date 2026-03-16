@@ -17,6 +17,7 @@ struct OptimizedAudioCell: View {
     @State private var isPressed = false
     @State private var showFavoriteAnimation = false
     @EnvironmentObject var subscriptionStore: SubscriptionStore
+    @ObservedObject private var progressStore = AudioProgressStore.shared
     
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -34,6 +35,20 @@ struct OptimizedAudioCell: View {
                             endPoint: .bottom
                         )
                     )
+                    .overlay(alignment: .bottomTrailing) {
+                        if progressStore.isPlayed(item.id) {
+                            Image(systemName: "checkmark.circle.fill")
+                                .font(.system(size: 18, weight: .bold))
+                                .symbolRenderingMode(.palette)
+                                .foregroundStyle(Color.white, Color(red: 0.18, green: 0.78, blue: 0.45))
+                                .background(
+                                    Circle()
+                                        .fill(Color.black.opacity(0.3))
+                                        .padding(2)
+                                )
+                                .offset(x: -6, y: -6)
+                        }
+                    }
                 
                 // Favorite button
                 Button(action: {

@@ -202,7 +202,8 @@ struct AudioDeclarationView: View {
     @StateObject private var audioViewModel = AudioPlayerViewModel()
     @EnvironmentObject var subscriptionStore: SubscriptionStore
     @EnvironmentObject var declarationStore: DeclarationViewModel
-   
+    @ObservedObject private var progressStore = AudioProgressStore.shared
+
     @State private var audioURL: URL? = nil
     @State private var errorMessage: ErrorWrapper? = nil
     @State private var isPresentingPremiumView = false
