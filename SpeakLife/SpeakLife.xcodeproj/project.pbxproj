@@ -13,6 +13,7 @@
 		4501F3912D8926CA00315902 /* TestimonyViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4501F3902D8926C500315902 /* TestimonyViewModel.swift */; };
 		450720DB2BAFFB4A0029EE2B /* TimerViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 450720DA2BAFFB4A0029EE2B /* TimerViewModelTests.swift */; };
 		450901B22F630925008704F9 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 450901B12F630925008704F9 /* GoogleService-Info.plist */; };
+		450901C12F640000008704F9 /* EmailConfig.plist in Resources */ = {isa = PBXBuildFile; fileRef = 450901C02F640000008704F9 /* EmailConfig.plist */; };
 		4514AF152E47031200254B74 /* AppGroupsDebugView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4514AF142E47031200254B74 /* AppGroupsDebugView.swift */; };
 		4517D1D42F26CCFA00CB1245 /* declarationsv9.json in Resources */ = {isa = PBXBuildFile; fileRef = 4517D1D32F26CCFA00CB1245 /* declarationsv9.json */; };
 		451AECE92E4EE7A000C1490E /* BootcampModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 451AECE82E4EE7A000C1490E /* BootcampModels.swift */; };
@@ -379,6 +380,7 @@
 		4501F3902D8926C500315902 /* TestimonyViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestimonyViewModel.swift; sourceTree = "<group>"; };
 		450720DA2BAFFB4A0029EE2B /* TimerViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerViewModelTests.swift; sourceTree = "<group>"; };
 		450901B12F630925008704F9 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
+		450901C02F640000008704F9 /* EmailConfig.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "EmailConfig.plist"; sourceTree = "<group>"; };
 		4514AF142E47031200254B74 /* AppGroupsDebugView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppGroupsDebugView.swift; sourceTree = "<group>"; };
 		4517D1D32F26CCFA00CB1245 /* declarationsv9.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = declarationsv9.json; sourceTree = "<group>"; };
 		451AECE82E4EE7A000C1490E /* BootcampModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BootcampModels.swift; sourceTree = "<group>"; };
@@ -1245,6 +1247,7 @@
 				7A278FA0288915DF0084BB57 /* Preview Content */,
 				457DF4AA2BDA3313006974C3 /* PrivacyInfo.xcprivacy */,
 				450901B12F630925008704F9 /* GoogleService-Info.plist */,
+				450901C02F640000008704F9 /* EmailConfig.plist */,
 			);
 			path = SpeakLife;
 			sourceTree = "<group>";
@@ -1848,6 +1851,7 @@
 				45FF718E2E6294330048C523 /* declarationsv7_backup.json in Resources */,
 				7ABA50CF29E63275002699F1 /* prayers.json in Resources */,
 				450901B22F630925008704F9 /* GoogleService-Info.plist in Resources */,
+				450901C12F640000008704F9 /* EmailConfig.plist in Resources */,
 				457D531B2D964AAF0098A49A /* audioDevotionals.json in Resources */,
 				45A4A3D32D86B8DB00DFCEB7 /* rainstorm.mp3 in Resources */,
 				453478F12B9D29CC0012C2C0 /* declarationsv4.json in Resources */,
