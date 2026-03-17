@@ -18,7 +18,7 @@
       },
       {
         "slug": "fear",
-        "hook": "Fear is loud right now. God is louder.",
+        "hook": "Fear shows up before your feet even hit the floor.",
         "declarations": [
           "God did not wire me for fear. Power, love, and a sound mind — that is my DNA.",
           "Fear is loud. But it is a liar. I choose faith over the noise.",
@@ -57,7 +57,7 @@
       },
       {
         "slug": "worry",
-        "hook": "Your future is in better hands than yours.",
+        "hook": "You keep planning. Life keeps changing the plan.",
         "declarations": [
           "I hand today's worry to God. He has never dropped anything I gave Him.",
           "My tomorrow is already in God's hands. I can rest today.",
@@ -70,7 +70,7 @@
       },
       {
         "slug": "financial-worry",
-        "hook": "Money stress is real. So is God's provision.",
+        "hook": "Money stress doesn't clock out at night. It follows you everywhere.",
         "declarations": [
           "I refuse to let my bank account decide my worth.",
           "My God supplies every need I have. Not some. Every one.",
@@ -85,7 +85,7 @@
     "healing": [
       {
         "slug": "body-healed",
-        "hook": "Your body is not beyond what God can heal.",
+        "hook": "You've been pushing through the pain so long you forgot what okay felt like.",
         "declarations": [
           "By the stripes of Jesus, I am healed. That word does not expire.",
           "My body was made to be whole. I call it back to wholeness now.",
@@ -485,7 +485,7 @@
     "grief": [
       {
         "slug": "loss",
-        "hook": "Grief is real. So is the God holding you in it.",
+        "hook": "Nobody tells you grief doesn't follow a schedule.",
         "declarations": [
           "God is close to the brokenhearted. He is as close to me right now as He has ever been.",
           "My grief is real and God holds space for every part of it.",
@@ -498,7 +498,7 @@
       },
       {
         "slug": "dark-valley",
-        "hook": "The darkest valleys are where God walks closest.",
+        "hook": "You've been in this dark place so long you forgot what light felt like.",
         "declarations": [
           "Even in the valley so dark I cannot see — God is walking right beside me.",
           "This valley is a hallway, not a home. I am just passing through.",
@@ -511,7 +511,7 @@
       },
       {
         "slug": "dry-season",
-        "hook": "Spiritually dry. God is still the source.",
+        "hook": "Going through the motions. Saying the right things. Feeling nothing.",
         "declarations": [
           "Even when I cannot feel God, He has not moved. I hold to what I know.",
           "My faith is not built on feelings. It is built on a word that does not change.",
@@ -524,7 +524,7 @@
       },
       {
         "slug": "betrayal",
-        "hook": "Betrayal cuts deep. God restores deeper.",
+        "hook": "Betrayal doesn't just hurt. It rewires how you trust everyone after.",
         "declarations": [
           "God sees every injustice done to me. He is my vindicator. I wait on Him.",
           "I release the bitterness. Not for them — for me. I choose to be free.",

@@ -58,6 +58,8 @@ SpeakLife brand DNA already lives in:
 
 | Rule | Detail |
 |---|---|
+| **EMOTION FIRST. REVELATION SECOND.** | Hook text must lead with a feeling/pain state — zero faith language in the headline. God/scripture is the payoff, not the opening. If hook text mentions "God", "Jesus", "scripture", "faith", "prayer" → rewrite it. |
+| **Hook self-check** | Ask: would a non-Christian stop scrolling for this hook? YES = good. NO = rewrite. |
 | **Always prepend prompt modifier** | First ~86 words of every prompt = IMAGE GENERATION PROMPT MODIFIER from brand-dna.md |
 | **Always tag aspect_ratio** | Required field for every prompt in prompts.json |
 | **Always set needs_product_images** | Must match the template spec — never assume false |

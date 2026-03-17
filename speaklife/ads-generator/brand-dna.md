@@ -31,7 +31,7 @@ SpeakLife is the daily mind-renewal habit for Christian women who know their fai
 | **Core mechanic** | Active declaration (speak out loud) | Devotionals + worship | Catholic prayer/meditation | Bible audio |
 | **Format** | 3–5 min audio declarations | Daily devotional + livestream | Guided prayer, sleep content | Bible + narration |
 | **Audience focus** | Women 25–40, real pain states | Broad evangelical | Catholic Christians | Bible readers |
-| **Hook style** | Pain-first → Scripture → Declaration | Inspirational | Liturgical | Educational |
+| **Hook style** | Emotion-first (zero faith language) → Discovery → Scripture Revelation → Declaration | Inspirational | Liturgical | Educational |
 | **Daily habit driver** | Pillar rotation, audio habit | Streaks + community | Pray with others | Reading plans |
 | **Differentiation** | ACTIVE — you say it out loud (Romans 10:17) | Passive consumption | Passive listening | Passive reading |
 | **Time commitment** | 3–5 min (fits anywhere) | 10–30 min | 10–20 min | Variable |
