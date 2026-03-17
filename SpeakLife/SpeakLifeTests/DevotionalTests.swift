@@ -69,7 +69,7 @@ final class DevotionalTests: XCTestCase {
     }
 
     func testDeclarationsFormat() throws {
-        guard let url = Bundle.main.url(forResource: "declarationsv7", withExtension: "json") else {
+        guard let url = Bundle.main.url(forResource: "declarationsv9", withExtension: "json") else {
             XCTFail("Missing devotional.json file in test bundle")
             return
         }
