@@ -22,7 +22,6 @@ enum StreamlinedSpiritualTab: Int {
     case prePaywallClose = 7      // Start Increasing Today
     case subscription = 8
     case notification = 9
-    case rating = 10
 }
 
 // MARK: - Main View
@@ -105,12 +104,6 @@ struct StreamlinedSpiritualWarfareFlow: View {
                     askNotificationPermission()
                 }
                 .tag(StreamlinedSpiritualTab.notification)
-
-                // Slide 11: Rating
-                RatingView(size: geometry.size) {
-                    advance()
-                }
-                .tag(StreamlinedSpiritualTab.rating)
             }
             .frame(width: geometry.size.width)
             .ignoresSafeArea()
@@ -145,8 +138,6 @@ struct StreamlinedSpiritualWarfareFlow: View {
             case .subscription:
                 selection = .notification
             case .notification:
-                selection = .rating
-            case .rating:
                 completeOnboarding()
             }
         }
