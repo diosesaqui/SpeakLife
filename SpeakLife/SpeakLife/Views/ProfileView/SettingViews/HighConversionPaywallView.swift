@@ -2,7 +2,7 @@
 //  HighConversionPaywallView.swift
 //  SpeakLife
 //
-//  Data-driven paywall — Remote Config flag: useHighConversionPaywall
+//  Data-driven paywall - Remote Config flag: useHighConversionPaywall
 //  Fixes: 70% abandon rate, missing price anchor, weak social proof
 //  Tracks: paywallVariant = "high_conversion_v1" on all events
 //
@@ -57,8 +57,9 @@ struct HighConversionPaywallView: View {
                     VStack(spacing: 0) {
                         headerSection
                         socialProofBanner.padding(.top, 20)
-                        benefitsSection.padding(.top, 28)
-                        testimonialsSection.padding(.top, 24)
+                        featuredTestimonial.padding(.top, 20)
+                        benefitsSection.padding(.top, 24)
+                        remainingTestimonialsSection.padding(.top, 24)
                         Spacer(minLength: 20)
                     }
                 }
@@ -147,10 +148,10 @@ struct HighConversionPaywallView: View {
     private var benefitsSection: some View {
         let icons = ["bolt.fill","heart.fill","sun.max.fill","shield.fill"]
         let descs = [
-            "Daily Scripture declarations that retrain your automatic responses",
-            "Access God's peace in minutes — anytime, anywhere",
-            "Devotionals, audio, and Bible plans that build daily momentum",
-            "Faith that holds under pressure, fear, and uncertainty"
+            "Speak God's Word over anxiety every morning and retrain your default response",
+            "Access peace declarations in under 2 minutes - morning, night, or mid-panic",
+            "Devotionals, audio, and Bible plans that build calm daily momentum",
+            "Scripture that holds when fear, pressure, and overwhelm hit hardest"
         ]
         let props = Array(copy.valueProps.prefix(4))
         return VStack(alignment: .leading, spacing: 16) {
@@ -161,34 +162,49 @@ struct HighConversionPaywallView: View {
         .padding(.horizontal, 24)
     }
 
-    // MARK: - Testimonials
-    private var testimonialsSection: some View {
+    // MARK: - Featured Testimonial (above the fold, anxiety-first)
+    private var featuredTestimonial: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 2) {
+                ForEach(0..<5) { _ in Image(systemName: "star.fill").font(.system(size: 12)).foregroundColor(.yellow) }
+            }
+            Text("\"My anxiety attacks stopped after 2 weeks. I speak these declarations every morning and it changed everything.\"")
+                .font(.system(size: 15, weight: .medium))
+                .foregroundColor(.white)
+                .fixedSize(horizontal: false, vertical: true)
+            Text("— Marcus T., verified subscriber")
+                .font(.system(size: 12, weight: .medium))
+                .foregroundColor(.white.opacity(0.5))
+        }
+        .padding(18)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 14)
+                .fill(Color.white.opacity(0.08))
+                .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.white.opacity(0.12), lineWidth: 1))
+        )
+        .padding(.horizontal, 24)
+    }
+
+    // MARK: - Remaining Testimonials
+    private var remainingTestimonialsSection: some View {
         VStack(spacing: 12) {
             testimonialCard(
-                quote: "This app was created under the manifestation and direction of the Holy Spirit, bringing life through scripture and meditation to God’s people.",
-                author: "Crash L.", stars: 5
-            )
-            testimonialCard(
-                quote: "My anxiety attacks stopped after 2 weeks. I speak these declarations every morning and it changed everything.",
-                author: "Marcus T.", stars: 5
+                quote: "I've tried journaling, therapy, everything. Nothing rewired my thinking like speaking God's Word daily. This app is different.",
+                author: "DeShawn R.", stars: 5
             )
             testimonialCard(
                 quote: "I was skeptical but this is the real deal. My mind literally works differently now. Best $4/month I spend.",
                 author: "Priya K.", stars: 5
             )
             testimonialCard(
-                quote: "I've tried journaling, therapy, everything. Nothing rewired my thinking like speaking God's Word daily. This app is different.",
-                author: "DeShawn R.", stars: 5
-            )
-            testimonialCard(
-                quote: "My marriage was falling apart. We started doing the declarations together every morning. Three months later we're in a completely different place.",
-                author: "Samantha L.", stars: 5
-            )
-            testimonialCard(
-                quote: "I love this app. To feed on the promises of God regularly throughout the day is so uplifting and encouraging. It feeds my soul. I love that they come through automatically. I find it so helpful to regularly have my attention drawn back to His promises.",
+                quote: "I love this app. To feed on the promises of God regularly throughout the day is so uplifting and encouraging. It feeds my soul.",
                 author: "Tina", stars: 5
             )
-            
+            testimonialCard(
+                quote: "This app was created under the manifestation and direction of the Holy Spirit, bringing life through scripture and meditation to God's people.",
+                author: "Crash L.", stars: 5
+            )
         }
         .padding(.horizontal, 24)
     }
@@ -196,10 +212,15 @@ struct HighConversionPaywallView: View {
     private func testimonialCard(quote: String, author: String, stars: Int) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 2) {
-                ForEach(0..<stars) { _ in Image(systemName:"star.fill").font(.system(size:10)).foregroundColor(.yellow) }
+                ForEach(0..<stars) { _ in Image(systemName: "star.fill").font(.system(size: 10)).foregroundColor(.yellow) }
             }
-            Text("\(quote)").font(.system(size: 13)).foregroundColor(.white.opacity(0.85)).lineLimit(2)
-            Text("— \(author)").font(.system(size: 12, weight: .medium)).foregroundColor(.white.opacity(0.45))
+            Text("\(quote)")
+                .font(.system(size: 13))
+                .foregroundColor(.white.opacity(0.85))
+                .fixedSize(horizontal: false, vertical: true)
+            Text("— \(author)")
+                .font(.system(size: 12, weight: .medium))
+                .foregroundColor(.white.opacity(0.45))
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -273,7 +294,7 @@ struct HighConversionPaywallView: View {
     private var trialCallout: some View {
         HStack(spacing: 6) {
             Image(systemName: "checkmark.circle.fill").foregroundColor(.green).font(.system(size: 14))
-            Text(selectedPlan == .annual && isEligibleForTrial ? "3 days free — cancel anytime before trial ends" : "Start today — cancel anytime")
+            Text(selectedPlan == .annual && isEligibleForTrial ? "7 days free - cancel anytime before trial ends" : "Start today - cancel anytime")
                 .font(.system(size: 13, weight: .medium)).foregroundColor(.white.opacity(0.85))
         }
     }

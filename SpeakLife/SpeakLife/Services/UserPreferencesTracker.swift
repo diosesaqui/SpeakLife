@@ -10,16 +10,16 @@ import SwiftUI
 
 final class UserPreferencesTracker: ObservableObject {
     static let shared = UserPreferencesTracker()
-    
+
     @AppStorage("userTopCategories") private var topCategoriesData: String = ""
     @AppStorage("lastCategorySelected") private var lastCategorySelected: String = ""
     @Published var topCategories: [CategoryPreference] = []
     @Published var primaryCategory: CategoryType = .general
-    
+
     private init() {
         loadTopCategories()
     }
-    
+
     enum CategoryType: String, CaseIterable {
         case anxiety = "anxiety"
         case faith = "faith"
@@ -32,7 +32,7 @@ final class UserPreferencesTracker: ObservableObject {
         case love = "love"
         case hope = "hope"
         case general = "general"
-        
+
         var displayName: String {
             switch self {
             case .anxiety: return "Anxiety"
@@ -49,13 +49,13 @@ final class UserPreferencesTracker: ObservableObject {
             }
         }
     }
-    
+
     struct CategoryPreference: Codable {
         let category: String
         var count: Int
         var lastSelected: Date
     }
-    
+
     struct PaywallCopy {
         let headline: String
         let subheadline: String
@@ -63,10 +63,10 @@ final class UserPreferencesTracker: ObservableObject {
         let ctaText: String
         let urgencyText: String?
     }
-    
+
     func trackCategorySelection(_ categoryName: String) {
         lastCategorySelected = categoryName.lowercased()
-        
+
         // Update category count
         var categories = topCategories
         if let index = categories.firstIndex(where: { $0.category == categoryName.lowercased() }) {
@@ -79,36 +79,36 @@ final class UserPreferencesTracker: ObservableObject {
                 lastSelected: Date()
             ))
         }
-        
+
         // Sort by count and keep top 5
         categories.sort { $0.count > $1.count }
         topCategories = Array(categories.prefix(5))
-        
+
         // Update primary category
         if let topCategory = topCategories.first,
            let categoryType = CategoryType(rawValue: topCategory.category) {
             primaryCategory = categoryType
         }
-        
+
         saveTopCategories()
     }
-    
+
     func getDynamicPaywallCopy() -> PaywallCopy {
         switch primaryCategory {
         case .anxiety:
             return PaywallCopy(
-                headline: "Transform Anxiety into Abundant Faith",
-                subheadline: "Join 100,000+ believers who replaced worry with worship",
+                headline: "If anxiety hits first - your words can change that",
+                subheadline: "Daily declarations to speak peace over your morning",
                 valueProps: [
-                    "Daily anxiety-relief declarations",
-                    "Calming bedtime prayers & audio",
-                    "Peace-building morning routines",
-                    "Stress-to-strength exercises"
+                    "Wake up calm with anxiety-specific declarations",
+                    "God's peace in 2 minutes - morning and night",
+                    "Retrain your thoughts with Scripture daily",
+                    "Built for people who wake up already overwhelmed"
                 ],
-                ctaText: "Start Your Peace Journey",
-                urgencyText: "3-Day Free Trial • Cancel Anytime"
+                ctaText: "Start My Free 7-Day Trial",
+                urgencyText: "7 Days Free • Cancel Anytime"
             )
-            
+
         case .faith:
             return PaywallCopy(
                 headline: "Deepen Your Faith, Transform Your Life",
@@ -122,7 +122,7 @@ final class UserPreferencesTracker: ObservableObject {
                 ctaText: "Strengthen Your Faith Today",
                 urgencyText: "Start Free & Grow Stronger"
             )
-            
+
         case .joy:
             return PaywallCopy(
                 headline: "Rediscover True Joy Through Faith",
@@ -136,7 +136,7 @@ final class UserPreferencesTracker: ObservableObject {
                 ctaText: "Unlock Your Joy Today",
                 urgencyText: "Experience Joy in 3 Days"
             )
-            
+
         case .rest:
             return PaywallCopy(
                 headline: "Find Deep Rest in God's Peace",
@@ -150,7 +150,7 @@ final class UserPreferencesTracker: ObservableObject {
                 ctaText: "Sleep Peacefully Tonight",
                 urgencyText: "Better Sleep Starts Today"
             )
-            
+
         case .health:
             return PaywallCopy(
                 headline: "Heal Your Body, Mind & Spirit",
@@ -164,7 +164,7 @@ final class UserPreferencesTracker: ObservableObject {
                 ctaText: "Claim Your Healing",
                 urgencyText: "Start Your Healing Journey"
             )
-            
+
         case .confidence:
             return PaywallCopy(
                 headline: "Build Unshakeable God-Confidence",
@@ -178,7 +178,7 @@ final class UserPreferencesTracker: ObservableObject {
                 ctaText: "Unlock Bold Confidence",
                 urgencyText: "Transform in 3 Days Free"
             )
-            
+
         case .fear:
             return PaywallCopy(
                 headline: "Conquer Fear with Faith",
@@ -192,7 +192,7 @@ final class UserPreferencesTracker: ObservableObject {
                 ctaText: "Overcome Fear Today",
                 urgencyText: "Freedom Starts Now"
             )
-            
+
         case .marriage:
             return PaywallCopy(
                 headline: "Strengthen Your Marriage with Faith",
@@ -206,7 +206,7 @@ final class UserPreferencesTracker: ObservableObject {
                 ctaText: "Bless Your Marriage",
                 urgencyText: "Transform Your Marriage"
             )
-            
+
         case .love:
             return PaywallCopy(
                 headline: "Experience God's Perfect Love",
@@ -220,7 +220,7 @@ final class UserPreferencesTracker: ObservableObject {
                 ctaText: "Receive Perfect Love",
                 urgencyText: "Love Transformation Awaits"
             )
-            
+
         case .hope:
             return PaywallCopy(
                 headline: "Restore Hope, Renew Purpose",
@@ -234,27 +234,27 @@ final class UserPreferencesTracker: ObservableObject {
                 ctaText: "Reclaim Your Hope",
                 urgencyText: "Hope Starts Today"
             )
-            
+
         case .general:
             return PaywallCopy(
-                headline: "Stop Reacting to Life",
-                subheadline: "Start Responding with God’s Truth.",
+                headline: "Start Your Morning with Peace, Not Anxiety",
+                subheadline: "Join 100,000+ believers who took their peace back",
                 valueProps: [
-                    "Faith that holds under pressure",
-                    "Peace you can access in minutes",
-                    "A renewed mind, daily",
-                    "Spiritual authority in real life"
+                    "Wake up calm — declarations that quiet morning anxiety",
+                    "God's peace in 2 minutes, morning or night",
+                    "Retrain your mind to respond instead of react",
+                    "Daily Scripture that speaks to what you're feeling"
                 ],
-                ctaText: "Start My Free 3-Day Trial",
-                urgencyText: "3 Days Free • Cancel Anytime"
+                ctaText: "Start My Free 7-Day Trial",
+                urgencyText: "7 Days Free • Cancel Anytime"
             )
         }
     }
-    
+
     func getSecondaryValueProps() -> [String] {
         // Additional value props based on top 3 categories
         var props: Set<String> = []
-        
+
         for category in topCategories.prefix(3) {
             if let categoryType = CategoryType(rawValue: category.category) {
                 switch categoryType {
@@ -283,10 +283,10 @@ final class UserPreferencesTracker: ObservableObject {
                 }
             }
         }
-        
+
         return Array(props.prefix(2))
     }
-    
+
     private func loadTopCategories() {
         guard !topCategoriesData.isEmpty,
               let data = topCategoriesData.data(using: .utf8),
@@ -294,13 +294,13 @@ final class UserPreferencesTracker: ObservableObject {
             return
         }
         topCategories = categories
-        
+
         if let topCategory = categories.first,
            let categoryType = CategoryType(rawValue: topCategory.category) {
             primaryCategory = categoryType
         }
     }
-    
+
     private func saveTopCategories() {
         guard let data = try? JSONEncoder().encode(topCategories),
               let string = String(data: data, encoding: .utf8) else {
