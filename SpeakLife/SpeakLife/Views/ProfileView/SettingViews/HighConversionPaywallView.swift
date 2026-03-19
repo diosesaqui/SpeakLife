@@ -147,10 +147,10 @@ struct HighConversionPaywallView: View {
     private var benefitsSection: some View {
         let icons = ["bolt.fill","heart.fill","sun.max.fill","shield.fill"]
         let descs = [
-            "Daily Scripture declarations that retrain your automatic responses",
-            "Access God's peace in minutes — anytime, anywhere",
-            "Devotionals, audio, and Bible plans that build daily momentum",
-            "Faith that holds under pressure, fear, and uncertainty"
+            "Speak God's Word over anxiety every morning and retrain your default response",
+            "Access peace declarations in under 2 minutes — morning, night, or mid-panic",
+            "Devotionals, audio, and Bible plans that build calm daily momentum",
+            "Scripture that holds when fear, pressure, and overwhelm hit hardest"
         ]
         let props = Array(copy.valueProps.prefix(4))
         return VStack(alignment: .leading, spacing: 16) {
@@ -273,7 +273,7 @@ struct HighConversionPaywallView: View {
     private var trialCallout: some View {
         HStack(spacing: 6) {
             Image(systemName: "checkmark.circle.fill").foregroundColor(.green).font(.system(size: 14))
-            Text(selectedPlan == .annual && isEligibleForTrial ? "3 days free — cancel anytime before trial ends" : "Start today — cancel anytime")
+            Text(selectedPlan == .annual && isEligibleForTrial ? "7 days free — cancel anytime before trial ends" : "Start today — cancel anytime")
                 .font(.system(size: 13, weight: .medium)).foregroundColor(.white.opacity(0.85))
         }
     }
