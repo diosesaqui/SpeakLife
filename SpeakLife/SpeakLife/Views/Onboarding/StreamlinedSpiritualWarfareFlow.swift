@@ -122,7 +122,7 @@ struct StreamlinedSpiritualWarfareFlow: View {
             Analytics.logEvent("StreamlinedOnboarding_Started", parameters: nil)
         }
     }
-    
+
     private func advance() {
         withAnimation {
             switch selection {
@@ -133,11 +133,11 @@ struct StreamlinedSpiritualWarfareFlow: View {
             case .convictionGap:
                 selection = .personalSelection
             case .personalSelection:
-                selection = .mindRenewalBridge
-            case .mindRenewalBridge:
-                selection = .introduceSystem
-            case .introduceSystem:
                 selection = .outcomeVisualization
+            case .mindRenewalBridge:
+                selection = .outcomeVisualization  // skipped
+            case .introduceSystem:
+                selection = .outcomeVisualization  // skipped
             case .outcomeVisualization:
                 selection = .prePaywallClose
             case .prePaywallClose:
@@ -176,13 +176,13 @@ struct StreamlinedSpiritualWarfareFlow: View {
             "count": categories.count
         ])
     }
-    
+
     func askNotificationPermission() {
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { success, error in
             Analytics.logEvent("notification_permission", parameters: ["granted": success])
             DispatchQueue.main.async {
                 appState.notificationEnabled = success
-                
+
                 if success {
                     UIApplication.shared.registerForRemoteNotifications()
                     registerNotifications()
@@ -191,7 +191,7 @@ struct StreamlinedSpiritualWarfareFlow: View {
             }
         }
     }
-    
+
     private func registerNotifications() {
         if appState.notificationEnabled {
             let categories = Set(appState.selectedNotificationCategories.components(separatedBy: ",").compactMap({ DeclarationCategory($0) }))
@@ -202,7 +202,7 @@ struct StreamlinedSpiritualWarfareFlow: View {
             appState.lastNotificationSetDate = Date()
         }
     }
-    
+
     private func completeOnboarding() {
        // Analytics.logEvent("StreamlinedOnboarding_Completed")
         withAnimation {
@@ -211,7 +211,7 @@ struct StreamlinedSpiritualWarfareFlow: View {
         }
         // Trigger Daily Declaration Burst immediately after onboarding
         UserDefaults.standard.set(true, forKey: "showBurstAfterOnboarding")
-        
+
         // Start the timer now that onboarding is complete
        // timerViewModel.startTimerAfterOnboarding()
     }
@@ -223,7 +223,7 @@ struct PatternInterruptScreen: View {
     let onContinue: () -> Void
     @State private var contentOpacity = 0.0
     @EnvironmentObject var subscriptionStore: SubscriptionStore
-    
+
     var body: some View {
         ZStack {
             // Background
@@ -233,29 +233,29 @@ struct PatternInterruptScreen: View {
                 .ignoresSafeArea()
                 .overlay(Color.black.opacity(0.3))
                 .frame(width: size.width, height: size.height)
-            
+
             VStack(spacing: 0) {
                 Spacer()
                     .frame(height: size.height * 0.25)
-                
+
                 VStack(spacing: 24) {
-                    Text("Your Faith Is Only As Strong As What You Hear Daily.")
+                    Text("If anxiety hits before your feet touch the floor -")
                         .font(.system(size: 28, weight: .bold))
                         .foregroundColor(.white)
                         .multilineTextAlignment(.center)
-                    
-                    Text("Spiritual strength isn’t automatic. It’s trained.")
-                        .font(.system(size: 18))
-                        .foregroundColor(.white.opacity(0.8))
+
+                    Text("your words have the power to change that.")
+                        .font(.system(size: 20, weight: .medium))
+                        .foregroundColor(.white.opacity(0.9))
                         .multilineTextAlignment(.center)
                 }
                 .padding(.horizontal, 30)
                 .opacity(contentOpacity)
-                
+
                 Spacer()
-                
+
                 Button(action: onContinue) {
-                    Text("Continue")
+                    Text("That's Me")
                         .font(.system(size: 17, weight: .semibold))
                         .foregroundColor(.white)
                         .frame(width: size.width * 0.85, height: 50)
@@ -282,7 +282,7 @@ struct AuthorityAnchorScreen: View {
     let onContinue: () -> Void
     @State private var contentOpacity = 0.0
     @EnvironmentObject var subscriptionStore: SubscriptionStore
-    
+
     var body: some View {
         ZStack {
             Image(subscriptionStore.onboardingBGImage)
@@ -291,40 +291,41 @@ struct AuthorityAnchorScreen: View {
                 .ignoresSafeArea()
                 .overlay(Color.black.opacity(0.3))
                 .frame(width: size.width, height: size.height)
-            
+
             VStack(spacing: 0) {
                 Spacer()
                     .frame(height: size.height * 0.20)
-                
+
                 VStack(spacing: 30) {
-                    Text("Jesus Said It First.")
+                    Text("God didn't design you to live in fear.")
                         .font(.system(size: 28, weight: .bold))
                         .foregroundColor(.white)
-                    
+                        .multilineTextAlignment(.center)
+
                     VStack(spacing: 16) {
-                        Text("\"With the measure you use,\nit will be measured to you\n— and even more.\"")
+                        Text("\"God has not given us a spirit of fear,\nbut of power, love,\nand a sound mind.\"")
                             .font(.system(size: 20, weight: .medium))
                             .foregroundColor(.white.opacity(0.9))
                             .multilineTextAlignment(.center)
                             .italic()
-                        
-                        Text("— Mark 4:24")
+
+                        Text("- 2 Timothy 1:7")
                             .font(.system(size: 16))
                             .foregroundColor(.white.opacity(0.7))
                     }
-                    
-                    Text("The attention you give God's Word\ndetermines the strength you walk in.")
+
+                    Text("That sound mind is yours.\nYou just have to speak it every day.")
                         .font(.system(size: 17))
                         .foregroundColor(.white.opacity(0.8))
                         .multilineTextAlignment(.center)
                 }
                 .padding(.horizontal, 30)
                 .opacity(contentOpacity)
-                
+
                 Spacer()
-                
+
                 Button(action: onContinue) {
-                    Text("That Makes Sense")
+                    Text("I Receive That")
                         .font(.system(size: 17, weight: .semibold))
                         .foregroundColor(.white)
                         .frame(width: size.width * 0.85, height: 50)
@@ -351,7 +352,7 @@ struct ConvictionGapScreen: View {
     let onContinue: () -> Void
     @State private var contentOpacity = 0.0
     @EnvironmentObject var subscriptionStore: SubscriptionStore
-    
+
     var body: some View {
         ZStack {
             Image(subscriptionStore.onboardingBGImage)
@@ -360,30 +361,30 @@ struct ConvictionGapScreen: View {
                 .ignoresSafeArea()
                 .overlay(Color.black.opacity(0.3))
                 .frame(width: size.width, height: size.height)
-            
+
             VStack(spacing: 0) {
                 Spacer()
                     .frame(height: size.height * 0.20)
-                
+
                 VStack(spacing: 32) {
-                    Text("Most Believers Want Strong Faith.")
+                    Text("Anxiety isn't random.\nIt's what you've been repeating.")
                         .font(.system(size: 26, weight: .bold))
                         .foregroundColor(.white)
                         .multilineTextAlignment(.center)
-                    
+
                     VStack(spacing: 20) {
-                        Text("But faith doesn't grow by accident.")
-                            .font(.system(size: 18))
-                            .foregroundColor(.white.opacity(0.9))
+                        Text("Change what you repeat.")
+                            .font(.system(size: 20, weight: .semibold))
+                            .foregroundColor(.white)
                             .multilineTextAlignment(.center)
-                        
+
                         VStack(spacing: 12) {
-                            Text("If you give God's Word occasional attention,\nyou get occasional strength.")
+                            Text("SpeakLife gives you God's promises\nto declare every single morning.")
                                 .font(.system(size: 16))
                                 .foregroundColor(.white.opacity(0.8))
                                 .multilineTextAlignment(.center)
-                            
-                            Text("Daily attention builds daily power.")
+
+                            Text("2 minutes. Real peace.")
                                 .font(.system(size: 18, weight: .semibold))
                                 .foregroundColor(.white)
                                 .multilineTextAlignment(.center)
@@ -392,11 +393,11 @@ struct ConvictionGapScreen: View {
                 }
                 .padding(.horizontal, 30)
                 .opacity(contentOpacity)
-                
+
                 Spacer()
-                
+
                 Button(action: onContinue) {
-                    Text("I Want Strong Faith")
+                    Text("I'm Ready to Change That")
                         .font(.system(size: 17, weight: .semibold))
                         .foregroundColor(.white)
                         .frame(width: size.width * 0.85, height: 50)
@@ -423,7 +424,7 @@ struct MindRenewalBridgeScreen: View {
     let onContinue: () -> Void
     @State private var contentOpacity = 0.0
     @EnvironmentObject var subscriptionStore: SubscriptionStore
-    
+
     var body: some View {
         ZStack {
             Image(subscriptionStore.onboardingBGImage)
@@ -432,28 +433,28 @@ struct MindRenewalBridgeScreen: View {
                 .ignoresSafeArea()
                 .overlay(Color.black.opacity(0.3))
                 .frame(width: size.width, height: size.height)
-            
+
             VStack(spacing: 0) {
                 Spacer()
                     .frame(height: size.height * 0.20)
-                
+
                 VStack(spacing: 32) {
                     Text("Transformation Starts\nin the Mind.")
                         .font(.system(size: 26, weight: .bold))
                         .foregroundColor(.white)
                         .multilineTextAlignment(.center)
-                    
+
                     VStack(spacing: 20) {
                         Text("\"Be transformed by the\nrenewing of your mind.\"")
                             .font(.system(size: 20, weight: .medium))
                             .foregroundColor(.white.opacity(0.9))
                             .multilineTextAlignment(.center)
                             .italic()
-                        
-                        Text("— Romans 12:2")
+
+                        Text("- Romans 12:2")
                             .font(.system(size: 16))
                             .foregroundColor(.white.opacity(0.7))
-                        
+
                         Text("When truth becomes your first response,\nvictory becomes natural.")
                             .font(.system(size: 17))
                             .foregroundColor(.white.opacity(0.8))
@@ -462,9 +463,9 @@ struct MindRenewalBridgeScreen: View {
                 }
                 .padding(.horizontal, 30)
                 .opacity(contentOpacity)
-                
+
                 Spacer()
-                
+
                 Button(action: onContinue) {
                     Text("Keep Going")
                         .font(.system(size: 17, weight: .semibold))
@@ -494,13 +495,13 @@ struct IntroduceSystemScreen: View {
     @State private var contentOpacity = 0.0
     @State private var featuresVisible: [Bool] = [false, false, false]
     @EnvironmentObject var subscriptionStore: SubscriptionStore
-    
+
     let features = [
         ("7", "Scripture Declarations a Day"),
         ("🎧", "Christ-Centered Audio Reinforcement"),
         ("💪", "Daily Victory Conditioning")
     ]
-    
+
     var body: some View {
         ZStack {
             Image(subscriptionStore.onboardingBGImage)
@@ -509,23 +510,23 @@ struct IntroduceSystemScreen: View {
                 .ignoresSafeArea()
                 .overlay(Color.black.opacity(0.3))
                 .frame(width: size.width, height: size.height)
-            
+
             VStack(spacing: 0) {
                 Spacer()
                     .frame(height: size.height * 0.18)
-                
+
                 VStack(spacing: 32) {
                     Text("Train Your Faith Daily.")
                         .font(.system(size: 26, weight: .bold))
                         .foregroundColor(.white)
                         .multilineTextAlignment(.center)
-                    
+
                     VStack(spacing: 18) {
                         Text("SpeakLife helps you give God's Word\ndaily attention through:")
                             .font(.system(size: 17))
                             .foregroundColor(.white.opacity(0.9))
                             .multilineTextAlignment(.center)
-                        
+
                         VStack(spacing: 16) {
                             ForEach(0..<features.count, id: \.self) { index in
                                 if featuresVisible[index] {
@@ -534,7 +535,7 @@ struct IntroduceSystemScreen: View {
                                             .font(.system(size: 24, weight: .semibold))
                                             .foregroundColor(Color(red: 0.4, green: 0.5, blue: 0.9))
                                             .frame(width: 40, alignment: .center)
-                                        
+
                                         Text(features[index].1)
                                             .font(.system(size: 16))
                                             .foregroundColor(.white.opacity(0.9))
@@ -546,7 +547,7 @@ struct IntroduceSystemScreen: View {
                             }
                         }
                     }
-                    
+
                     Text("Faith grows with repetition.")
                         .font(.system(size: 16))
                         .foregroundColor(.white.opacity(0.7))
@@ -554,9 +555,9 @@ struct IntroduceSystemScreen: View {
                 }
                 .padding(.horizontal, 30)
                 .opacity(contentOpacity)
-                
+
                 Spacer()
-                
+
                 Button(action: onContinue) {
                     Text("This Is Powerful")
                         .font(.system(size: 17, weight: .semibold))
@@ -575,7 +576,7 @@ struct IntroduceSystemScreen: View {
             withAnimation(.easeIn(duration: 0.8)) {
                 contentOpacity = 1
             }
-            
+
             // Animate features appearing
             for i in 0..<features.count {
                 DispatchQueue.main.asyncAfter(deadline: .now() + Double(i) * 0.3 + 0.5) {
@@ -595,9 +596,9 @@ struct OutcomeVisualizationScreen: View {
     @State private var contentOpacity = 0.0
     @State private var outcomesVisible: [Bool] = [false, false, false]
     @EnvironmentObject var subscriptionStore: SubscriptionStore
-    
+
     let outcomes = ["Anxiety shrinks.", "Boldness grows.", "Peace becomes instinct."]
-    
+
     var body: some View {
         ZStack {
             Image(subscriptionStore.onboardingBGImage)
@@ -606,17 +607,17 @@ struct OutcomeVisualizationScreen: View {
                 .ignoresSafeArea()
                 .overlay(Color.black.opacity(0.3))
                 .frame(width: size.width, height: size.height)
-            
+
             VStack(spacing: 0) {
                 Spacer()
                     .frame(height: size.height * 0.20)
-                
+
                 VStack(spacing: 32) {
                     Text("Imagine Responding Like Jesus\nUnder Pressure.")
                         .font(.system(size: 24, weight: .bold))
                         .foregroundColor(.white)
                         .multilineTextAlignment(.center)
-                    
+
                     VStack(spacing: 20) {
                         ForEach(0..<outcomes.count, id: \.self) { index in
                             if outcomesVisible[index] {
@@ -627,7 +628,7 @@ struct OutcomeVisualizationScreen: View {
                                     .transition(.move(edge: .leading).combined(with: .opacity))
                             }
                         }
-                        
+
                         if outcomesVisible[2] {
                             VStack(spacing: 12) {
                                 Text("Because truth is already in you.")
@@ -641,9 +642,9 @@ struct OutcomeVisualizationScreen: View {
                 }
                 .padding(.horizontal, 30)
                 .opacity(contentOpacity)
-                
+
                 Spacer()
-                
+
                 Button(action: onContinue) {
                     Text("I'm Ready")
                         .font(.system(size: 17, weight: .semibold))
@@ -662,7 +663,7 @@ struct OutcomeVisualizationScreen: View {
             withAnimation(.easeIn(duration: 0.8)) {
                 contentOpacity = 1
             }
-            
+
             // Animate outcomes appearing
             for i in 0..<outcomes.count {
                 DispatchQueue.main.asyncAfter(deadline: .now() + Double(i) * 0.4 + 0.5) {
@@ -681,7 +682,7 @@ struct PrePaywallCloseScreen: View {
     let onContinue: () -> Void
     @State private var contentOpacity = 0.0
     @EnvironmentObject var subscriptionStore: SubscriptionStore
-    
+
     var body: some View {
         ZStack {
             Image(subscriptionStore.onboardingBGImage)
@@ -690,26 +691,26 @@ struct PrePaywallCloseScreen: View {
                 .ignoresSafeArea()
                 .overlay(Color.black.opacity(0.3))
                 .frame(width: size.width, height: size.height)
-            
+
             VStack(spacing: 0) {
                 Spacer()
                     .frame(height: size.height * 0.22)
-                
+
                 VStack(spacing: 32) {
-                    Text("Start Increasing Today.")
+                    Text("You don't have to wake up\nanxious anymore.")
                         .font(.system(size: 26, weight: .bold))
                         .foregroundColor(.white)
                         .multilineTextAlignment(.center)
                     
                     VStack(spacing: 20) {
-                        Text("The more attention you give His Word,\nthe more strength you walk in.")
+                        Text("100,000+ believers have taken their\npeace back — one declaration at a time.")
                             .font(.system(size: 18))
                             .foregroundColor(.white.opacity(0.9))
                             .multilineTextAlignment(.center)
                         
-                        Text("Give God's Word your daily measure.")
-                            .font(.system(size: 17, weight: .medium))
-                            .foregroundColor(.white.opacity(0.8))
+                        Text("Start yours today.")
+                            .font(.system(size: 17, weight: .semibold))
+                            .foregroundColor(.white)
                             .multilineTextAlignment(.center)
                     }
                 }
@@ -719,7 +720,7 @@ struct PrePaywallCloseScreen: View {
                 Spacer()
                 
                 Button(action: onContinue) {
-                    Text("Build My Faith")
+                    Text("Take My Peace Back")
                         .font(.system(size: 17, weight: .semibold))
                         .foregroundColor(.white)
                         .frame(width: size.width * 0.85, height: 50)
@@ -747,7 +748,7 @@ struct PersonalSelectionScreen: View {
     let onContinue: () -> Void
     @State private var contentOpacity = 0.0
     @EnvironmentObject var subscriptionStore: SubscriptionStore
-    
+
     // Top 6 most relevant categories for faith-focused onboarding
     private let topCategories: [DeclarationCategory] = [
         .faith,        // Strengthen Faith
@@ -762,7 +763,7 @@ struct PersonalSelectionScreen: View {
         .confidence,   // Confidence
         .joy          // Joy & Happiness
     ]
-    
+
     var body: some View {
         ZStack {
             Image(subscriptionStore.onboardingBGImage)
@@ -771,23 +772,23 @@ struct PersonalSelectionScreen: View {
                 .ignoresSafeArea()
                 .overlay(Color.black.opacity(0.3))
                 .frame(width: size.width, height: size.height)
-            
+
             VStack(spacing: 0) {
                 Spacer()
                     .frame(height: size.height * 0.18)
-                
+
                 VStack(spacing: 32) {
                     Text("What Do You Need Most?")
                         .font(.system(size: 26, weight: .bold))
                         .foregroundColor(.white)
                         .multilineTextAlignment(.center)
-                    
+
                     VStack(spacing: 20) {
                         Text("Select the areas where you'd like to see breakthrough")
                             .font(.system(size: 16))
                             .foregroundColor(.white.opacity(0.9))
                             .multilineTextAlignment(.center)
-                        
+
                         // Category selection grid
                         LazyVGrid(columns: [
                             GridItem(.flexible(), spacing: 8),
@@ -803,7 +804,7 @@ struct PersonalSelectionScreen: View {
                                     } else {
                                         selectedCategories.insert(category)
                                     }
-                                    
+
                                     // Haptic feedback
                                     let impactFeedback = UIImpactFeedbackGenerator(style: .light)
                                     impactFeedback.impactOccurred()
@@ -815,22 +816,22 @@ struct PersonalSelectionScreen: View {
                 }
                 .padding(.horizontal, 30)
                 .opacity(contentOpacity)
-                
+
                 Spacer()
-                
+
                 VStack(spacing: 12) {
                     if !selectedCategories.isEmpty {
                         Text("\(selectedCategories.count) selected")
                             .font(.system(size: 14))
                             .foregroundColor(.white.opacity(0.7))
                     }
-                    
+
                     Button(action: {
                         // Track selections for personalization
                         for category in selectedCategories {
                             UserPreferencesTracker.shared.trackCategorySelection(category.rawValue)
                         }
-                        
+
                         // If nothing selected, default to faith
                         if selectedCategories.isEmpty {
                             selectedCategories.insert(.faith)
@@ -838,7 +839,7 @@ struct PersonalSelectionScreen: View {
                             selectedCategories.insert(.identity)
                             UserPreferencesTracker.shared.trackCategorySelection("faith")
                         }
-                        
+
                         onContinue()
                     }) {
                         Text(selectedCategories.isEmpty ? "Continue" : "Personalize My Experience")
@@ -850,7 +851,7 @@ struct PersonalSelectionScreen: View {
                                     .fill(Color(red: 0.4, green: 0.5, blue: 0.9))
                             )
                     }
-                    
+
                     // Skip option
                     Button(action: {
                         selectedCategories.insert(.faith)
@@ -878,7 +879,7 @@ struct CategorySelectionButton: View {
     let category: DeclarationCategory
     let isSelected: Bool
     let action: () -> Void
-    
+
     var body: some View {
         Button(action: action) {
             HStack(spacing: 8) {
@@ -886,14 +887,14 @@ struct CategorySelectionButton: View {
                     .font(.system(size: 16))
                     .foregroundColor(isSelected ? .white : .white.opacity(0.8))
                     .frame(width: 20)
-                
+
                 Text(category.displayName)
                     .font(.system(size: 14, weight: .medium))
                     .foregroundColor(isSelected ? .white : .white.opacity(0.9))
                     .multilineTextAlignment(.leading)
                     .lineLimit(2)
                     .minimumScaleFactor(0.8)
-                
+
                 Spacer(minLength: 0)
             }
             .padding(.horizontal, 14)
@@ -905,7 +906,7 @@ struct CategorySelectionButton: View {
                     .overlay(
                         RoundedRectangle(cornerRadius: 24)
                             .stroke(
-                                isSelected ? Color(red: 0.4, green: 0.5, blue: 0.9) : Color.white.opacity(0.25), 
+                                isSelected ? Color(red: 0.4, green: 0.5, blue: 0.9) : Color.white.opacity(0.25),
                                 lineWidth: 1
                             )
                     )
