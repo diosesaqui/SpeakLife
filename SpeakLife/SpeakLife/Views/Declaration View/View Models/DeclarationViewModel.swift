@@ -692,20 +692,26 @@ final class DeclarationViewModel: ObservableObject {
         
         // Extract the core text (before any " ~ " separator)
         let contentText = String(prefixString(content, until: " ~").dropLast())
+        let declarationCategory = DeclarationCategory(category) ?? .faith
         
-        // Find or create the declaration
-        if let existingDeclaration = allDeclarations.first(where: { $0.text.hasPrefix(contentText) }) {
-            self.choose(existingDeclaration)
-        } else {
-            // Parse category from string
-            let declarationCategory = DeclarationCategory(category) ?? .faith
-            let declaration = Declaration(text: content, category: declarationCategory)
-            self.choose(declaration)
-        }
-        
-        // Reset flag after processing
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1) { [weak self] in
-            self?.isProcessingNotification = false
+        // FIX: Load the FULL category feed first so the user can swipe after tapping a notification.
+        // Previously we only called choose(declaration) which placed a single card in the feed
+        // with no neighbours — making swipe appear broken.
+        choose(declarationCategory) { [weak self] _ in
+            guard let self = self else { return }
+            
+            // Pin the specific notification declaration to the front of the loaded feed.
+            // Search the already-loaded declarations first (fastest), fall back to allDeclarations.
+            if let target = self.declarations.first(where: { $0.text.hasPrefix(contentText) })
+                ?? self.allDeclarations.first(where: { $0.text.hasPrefix(contentText) }) {
+                self.choose(target)  // swaps to index 0; selectedTab already reset to 0 by choose(category)
+            }
+            // If not found the category feed is still fully loaded — user can swipe normally.
+            
+            // Reset processing flag after feed is ready
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1) { [weak self] in
+                self?.isProcessingNotification = false
+            }
         }
     }
     
