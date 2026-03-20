@@ -34,13 +34,15 @@ import mimetypes
 from pathlib import Path
 from datetime import datetime
 
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Constants
 # ─────────────────────────────────────────────────────────────────────────────
 
 FAL_BASE_URL = "https://queue.fal.run/fal-ai/nano-banana-2"
 FAL_EDIT_URL = "https://queue.fal.run/fal-ai/nano-banana-2/edit"
-FAL_REST_URL = "https://rest.fal.run"
+FAL_REST_URL = "https://queue.fal.run"  # rest.fal.run doesn't resolve in all envs; queue.fal.run is the same backend
 FAL_STATUS_POLL_INTERVAL = 3   # seconds between status polls
 FAL_STATUS_TIMEOUT = 300       # seconds before giving up on a request
 MAX_RETRIES = 3
@@ -166,7 +168,8 @@ def upload_file_to_fal(file_path: Path, key: str) -> str:
 
 
 def upload_product_images(product_images_dir: Path, key: str) -> list[str]:
-    """Scan product-images/ folder and upload all images to FAL storage."""
+    """Scan product-images/ folder and upload all images to FAL storage.
+    Returns empty list (with warning) if storage endpoint is unreachable."""
     supported_exts = {".png", ".jpg", ".jpeg", ".webp"}
     images = [
         f for f in product_images_dir.iterdir()
@@ -187,7 +190,9 @@ def upload_product_images(product_images_dir: Path, key: str) -> list[str]:
             print(f"✓  {url[:60]}...")
         except Exception as e:
             print(f"FAILED: {e}")
-            raise
+            # If storage is unreachable, skip gracefully rather than aborting
+            print(f"  ⚠️  FAL storage upload failed — product-image templates will fall back to text-to-image.")
+            return []
 
     return urls
 
@@ -196,8 +201,8 @@ def upload_product_images(product_images_dir: Path, key: str) -> list[str]:
 # FAL Queue: Submit → Poll → Result
 # ─────────────────────────────────────────────────────────────────────────────
 
-def fal_submit(endpoint_url: str, payload: dict, key: str) -> str:
-    """Submit a job to FAL queue. Returns request_id."""
+def fal_submit(endpoint_url: str, payload: dict, key: str) -> tuple[str, str, str]:
+    """Submit a job to FAL queue. Returns (request_id, status_url, response_url)."""
     resp = requests.post(
         endpoint_url,
         headers=fal_headers(key),
@@ -209,17 +214,18 @@ def fal_submit(endpoint_url: str, payload: dict, key: str) -> str:
     request_id = data.get("request_id")
     if not request_id:
         raise RuntimeError(f"FAL submit did not return request_id: {data}")
-    return request_id
+    # Use the URLs returned by FAL — they include the correct model path
+    status_url = data.get("status_url") or f"{endpoint_url}/requests/{request_id}/status"
+    response_url = data.get("response_url") or f"{endpoint_url}/requests/{request_id}"
+    return request_id, status_url, response_url
 
 
-def fal_poll_status(request_id: str, key: str) -> dict:
+def fal_poll_status(request_id: str, key: str, status_url: str) -> dict:
     """
     Poll FAL queue status until completed or failed.
     Returns the full status response dict when status == 'COMPLETED'.
     Raises RuntimeError on failure or timeout.
     """
-    # Determine model from known pattern — status URL is on rest.fal.run
-    status_url = f"{FAL_REST_URL}/queue/requests/{request_id}/status"
     headers = fal_headers(key)
     deadline = time.time() + FAL_STATUS_TIMEOUT
 
@@ -244,10 +250,9 @@ def fal_poll_status(request_id: str, key: str) -> dict:
     raise RuntimeError(f"FAL request {request_id} timed out after {FAL_STATUS_TIMEOUT}s")
 
 
-def fal_get_result(request_id: str, key: str) -> dict:
+def fal_get_result(request_id: str, key: str, response_url: str) -> dict:
     """Fetch the final result for a completed FAL request."""
-    result_url = f"{FAL_REST_URL}/queue/requests/{request_id}"
-    resp = requests.get(result_url, headers=fal_headers(key), timeout=30)
+    resp = requests.get(response_url, headers=fal_headers(key), timeout=30)
     resp.raise_for_status()
     return resp.json()
 
@@ -287,6 +292,7 @@ def generate_template(
     resolution: str,
     template_index: int,
     total_templates: int,
+    num_images: int = IMAGES_PER_PROMPT,
 ) -> list[Path]:
     """
     Generate images for a single template. Returns list of saved image paths.
@@ -325,7 +331,7 @@ def generate_template(
                 payload = {
                     "prompt": prompt,
                     "image_urls": product_image_urls,
-                    "num_images": IMAGES_PER_PROMPT,
+                    "num_images": num_images,
                     "image_size": dims,
                 }
                 endpoint = FAL_EDIT_URL
@@ -333,20 +339,20 @@ def generate_template(
                 # Text-to-image endpoint
                 payload = {
                     "prompt": prompt,
-                    "num_images": IMAGES_PER_PROMPT,
+                    "num_images": num_images,
                     "image_size": dims,
                 }
                 endpoint = FAL_BASE_URL
 
             print(f"  📤 Submitting to FAL ({endpoint.split('/')[-1]})...", end=" ", flush=True)
-            request_id = fal_submit(endpoint, payload, key)
+            request_id, status_url, response_url = fal_submit(endpoint, payload, key)
             print(f"request_id: {request_id}")
 
             print(f"  ⏳ Polling for completion...")
-            status = fal_poll_status(request_id, key)
+            status = fal_poll_status(request_id, key, status_url)
 
             # Fetch full result
-            result = fal_get_result(request_id, key)
+            result = fal_get_result(request_id, key, response_url)
             image_urls = extract_image_urls(result)
 
             print(f"  ✅ Got {len(image_urls)} image(s). Downloading...")
@@ -522,6 +528,12 @@ def main():
         action="store_true",
         help="Print what would be run without calling the FAL API.",
     )
+    parser.add_argument(
+        "--num-images",
+        type=int,
+        default=4,
+        help="Number of images per template. Default: 4",
+    )
 
     args = parser.parse_args()
 
@@ -576,14 +588,15 @@ def main():
         prompts = filtered
         print(f"  Filtered to {len(prompts)} template(s): {[t.get('id') for t in prompts]}")
 
-    total_images_expected = len(prompts) * IMAGES_PER_PROMPT
+    num_images = args.num_images
+    total_images_expected = len(prompts) * num_images
     cost_2k = total_images_expected * COST_PER_IMAGE_2K
     dims = resolve_dimensions(args.resolution, "4:5")  # reference for cost
     scale_factor = (dims["width"] * dims["height"]) / (RESOLUTION_MAP["2K"]["width"] * RESOLUTION_MAP["2K"]["height"])
     estimated_cost = cost_2k * scale_factor
 
     print(f"  Templates to run: {len(prompts)}")
-    print(f"  Images per prompt: {IMAGES_PER_PROMPT}")
+    print(f"  Images per prompt: {num_images}")
     print(f"  Total images: {total_images_expected}")
     print(f"  Estimated cost: ${estimated_cost:.2f} (at {args.resolution})")
     print()
@@ -627,6 +640,7 @@ def main():
             resolution=args.resolution,
             template_index=i,
             total_templates=len(prompts),
+            num_images=num_images,
         )
         all_saved[template_id] = saved
 
