@@ -34,7 +34,6 @@ struct DailyDeclarationBurstView: View {
     @State private var starOpacity: Double = 0.0
     @State private var confettiOpacity: Double = 0.0
     @State private var statsScale: CGFloat = 0.0
-    @State private var levelBadgeScale: CGFloat = 0.0
     @State private var shareButtonOpacity: Double = 0.0
     
     // Configuration for burst session
@@ -493,7 +492,7 @@ struct DailyDeclarationBurstView: View {
                         .scaleEffect(checkmarkScale)
                         .shadow(color: .black.opacity(0.3), radius: 2, x: 0, y: 2)
                     
-                    VStack(spacing: 12) {
+                    VStack(spacing: 20) {
                         Text(getMotivationalMessage())
                             .font(.system(size: 19, weight: .medium))
                             .foregroundColor(.white.opacity(0.95))
@@ -501,82 +500,17 @@ struct DailyDeclarationBurstView: View {
                             .padding(.horizontal, 20)
                             .scaleEffect(statsScale)
                         
-                        // Animated Stats Cards
-                        HStack(spacing: 20) {
-                            StatCard(
-                                value: "\(morningDeclarations.count)",
-                                label: "Spoken",
-                                icon: "bolt.fill",
-                                scale: statsScale
-                            )
-                            
-                            StatCard(
-                                value: "\(burstTracker.currentStreak)",
-                                label: burstTracker.currentStreak == 1 ? "Day" : "Days",
-                                icon: "flame.fill",
-                                scale: statsScale,
-                                highlight: burstTracker.currentStreak >= 7
-                            )
-                            
-                            StatCard(
-                                value: "\(burstTracker.currentStrengthScore)%",
-                                label: "Power",
-                                icon: "star.fill",
-                                scale: statsScale
-                            )
-                        }
-                        .padding(.top, 20)
-                    }
-                    .padding(.horizontal, 30)
-                    
-                    // Enhanced Spiritual Level Badge
-                    VStack(spacing: 8) {
-                        HStack(spacing: 12) {
-                            Image(systemName: burstTracker.strengthLevel.icon)
-                                .font(.system(size: 28, weight: .bold))
-                                .foregroundColor(burstTracker.strengthLevel.color)
-                                .rotationEffect(.degrees(levelBadgeScale > 0 ? 360 : 0))
-                                .animation(.easeInOut(duration: 1), value: levelBadgeScale)
-                            
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text("SPIRITUAL WARRIOR")
-                                    .font(.system(size: 11, weight: .heavy))
-                                    .foregroundColor(.white.opacity(0.7))
-                                    .tracking(1.5)
-                                
-                                Text(burstTracker.strengthLevel.rawValue)
-                                    .font(.system(size: 20, weight: .bold))
-                                    .foregroundColor(.white)
-                            }
-                        }
-                        .padding(.vertical, 14)
-                        .padding(.horizontal, 28)
-                        .background(
-                            ZStack {
-                                RoundedRectangle(cornerRadius: 25)
-                                    .fill(
-                                        LinearGradient(
-                                            colors: [burstTracker.strengthLevel.color.opacity(0.3), burstTracker.strengthLevel.color.opacity(0.15)],
-                                            startPoint: .topLeading,
-                                            endPoint: .bottomTrailing
-                                        )
-                                    )
-                                
-                                RoundedRectangle(cornerRadius: 25)
-                                    .stroke(
-                                        LinearGradient(
-                                            colors: [burstTracker.strengthLevel.color, burstTracker.strengthLevel.color.opacity(0.5)],
-                                            startPoint: .topLeading,
-                                            endPoint: .bottomTrailing
-                                        ),
-                                        lineWidth: 2
-                                    )
-                            }
+                        // Streak only — the one stat that actually matters
+                        StatCard(
+                            value: "\(burstTracker.currentStreak)",
+                            label: burstTracker.currentStreak == 1 ? "Day Streak" : "Day Streak",
+                            icon: "flame.fill",
+                            scale: statsScale,
+                            highlight: burstTracker.currentStreak >= 7
                         )
-                        .scaleEffect(levelBadgeScale)
-                        .shadow(color: burstTracker.strengthLevel.color.opacity(0.5), radius: 10, x: 0, y: 5)
+                        .padding(.top, 8)
                         
-                        // Milestone messages
+                        // Milestone callout
                         if burstTracker.currentStreak % 7 == 0 && burstTracker.currentStreak > 0 {
                             Text("🎉 \(burstTracker.currentStreak / 7) WEEK\(burstTracker.currentStreak == 7 ? "" : "S") STRONG!")
                                 .font(.system(size: 13, weight: .bold))
@@ -584,7 +518,7 @@ struct DailyDeclarationBurstView: View {
                                 .opacity(starOpacity)
                         }
                     }
-                    .padding(.top, 10)
+                    .padding(.horizontal, 30)
                 }
                 
                 Spacer()
@@ -786,17 +720,13 @@ struct DailyDeclarationBurstView: View {
         }
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.7) {
-            withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
-                levelBadgeScale = 1.0
-            }
-            
             // Light haptic
             let lightFeedback = UIImpactFeedbackGenerator(style: .light)
             lightFeedback.prepare()
             lightFeedback.impactOccurred()
         }
         
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
             withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
                 shareButtonOpacity = 1.0
             }
