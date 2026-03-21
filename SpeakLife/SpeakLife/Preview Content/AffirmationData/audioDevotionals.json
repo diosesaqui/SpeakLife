@@ -499,6 +499,17 @@
             "tag": "godsHeart"
         },
         {
+            "id": "speaklife-s4e4.mp3",
+            "title": "The Gift You Can't Earn",
+            "subtitle": "Already Righteous",
+            "duration": "4m",
+            "imageUrl": "devotional",
+            "isPremium": true,
+            "tag": "speaklife",
+            "season": 4,
+            "episode": 4
+        },
+        {
             "id": "speaklife-s4e3.mp3",
             "title": "No Condemnation",
             "subtitle": "The Verdict Is Final",
