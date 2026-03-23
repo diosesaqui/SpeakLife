@@ -97,16 +97,16 @@ final class UserPreferencesTracker: ObservableObject {
         switch primaryCategory {
         case .anxiety:
             return PaywallCopy(
-                headline: "If anxiety hits first - your words can change that",
-                subheadline: "Daily declarations to speak peace over your morning",
+                headline: "Rewire Your Mind with God's Promises",
+                subheadline: "Anxiety isn't random. It's repetition. SpeakLife trains a new one.",
                 valueProps: [
-                    "Wake up calm with anxiety-specific declarations",
-                    "God's peace in 2 minutes - morning and night",
-                    "Retrain your thoughts with Scripture daily",
-                    "Built for people who wake up already overwhelmed"
+                    "Daily Spoken Promises",
+                    "Anxiety Reset Declarations",
+                    "Scriptural Rewiring",
+                    "Morning & night routines that replace anxious patterns"
                 ],
-                ctaText: "Start My Free 7-Day Trial",
-                urgencyText: "7 Days Free • Cancel Anytime"
+                ctaText: "Start My Free Trial",
+                urgencyText: "3 Days Free • Cancel Anytime"
             )
 
         case .faith:

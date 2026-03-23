@@ -146,12 +146,12 @@ struct HighConversionPaywallView: View {
 
     // MARK: - Benefits
     private var benefitsSection: some View {
-        let icons = ["bolt.fill","heart.fill","sun.max.fill","shield.fill"]
+        let icons = ["waveform","arrow.counterclockwise.circle.fill","text.book.closed.fill","shield.fill"]
         let descs = [
-            "Speak God's Word over anxiety every morning and retrain your default response",
-            "Access peace declarations in under 2 minutes - morning, night, or mid-panic",
-            "Devotionals, audio, and Bible plans that build calm daily momentum",
-            "Scripture that holds when fear, pressure, and overwhelm hit hardest"
+            "Speak God's Word over anxiety every morning — repeated truth rewires the default response",
+            "Targeted declarations reset the anxiety loop in under 2 minutes, morning or mid-panic",
+            "Devotionals and audio plans that replace anxious patterns with scriptural ones, day by day",
+            "Promises that hold when fear, pressure, and overwhelm try to take over your mind"
         ]
         let props = Array(copy.valueProps.prefix(4))
         return VStack(alignment: .leading, spacing: 16) {
@@ -162,13 +162,13 @@ struct HighConversionPaywallView: View {
         .padding(.horizontal, 24)
     }
 
-    // MARK: - Featured Testimonial (above the fold, anxiety-first)
+    // MARK: - Featured Testimonial (above the fold, rewiring-first)
     private var featuredTestimonial: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 2) {
                 ForEach(0..<5) { _ in Image(systemName: "star.fill").font(.system(size: 12)).foregroundColor(.yellow) }
             }
-            Text("\"My anxiety attacks stopped after 2 weeks. I speak these declarations every morning and it changed everything.\"")
+            Text("\"My anxiety was just a habit. After 2 weeks of morning declarations my mind literally responds differently. It rewired me.\"")
                 .font(.system(size: 15, weight: .medium))
                 .foregroundColor(.white)
                 .fixedSize(horizontal: false, vertical: true)

@@ -8,69 +8,78 @@
 import SwiftUI
 import FirebaseAnalytics
 
-// MARK: - Screen 1: Scripture Anchor
+// MARK: - Screen 1: Rewire Hook (mirrors top-performing ad)
 struct ScriptureAnchorScreen: View {
     @EnvironmentObject var subscriptionStore: SubscriptionStore
     let size: CGSize
     let onContinue: () -> Void
-    @State private var isContentVisible = false
+    @State private var isLine1Visible = false
+    @State private var isLine2Visible = false
+    @State private var isRewireVisible = false
     @State private var isButtonVisible = false
     
     var body: some View {
         ZStack {
-            // Background
             backgroundView
             
-            // Content
             VStack(spacing: 0) {
                 Spacer()
                 
-                // Main Quote
-                VStack(spacing: 20) {
-                    Text("\"My people are destroyed for lack of knowledge.\"")
+                // Hook — mirrors the winning ad copy exactly
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Anxiety isn't random.")
+                        .font(.system(size: 32, weight: .bold, design: .rounded))
+                        .foregroundColor(.white)
+                        .opacity(isLine1Visible ? 1 : 0)
+                        .offset(y: isLine1Visible ? 0 : 24)
+                    
+                    Text("It's repetition.")
+                        .font(.system(size: 32, weight: .bold, design: .rounded))
+                        .foregroundColor(.white)
+                        .opacity(isLine2Visible ? 1 : 0)
+                        .offset(y: isLine2Visible ? 0 : 24)
+                }
+                .padding(.horizontal, 32)
+                
+                Spacer().frame(height: 48)
+                
+                // Divider
+                Rectangle()
+                    .fill(Color.white.opacity(0.25))
+                    .frame(width: 48, height: 1)
+                    .opacity(isLine2Visible ? 1 : 0)
+                
+                Spacer().frame(height: 48)
+                
+                // The promise — "Rewire Your Mind"
+                VStack(spacing: 14) {
+                    Text("Rewire Your Mind")
+                        .font(.system(size: 28, weight: .bold, design: .rounded))
+                        .foregroundColor(.white)
+                    Text("with God's Promises.")
                         .font(.system(size: 28, weight: .bold, design: .serif))
-                        .multilineTextAlignment(.center)
-                        .foregroundColor(.white)
-                        .lineSpacing(6)
-                        .padding(.horizontal, 24)
-                        .minimumScaleFactor(0.8)
-                        .opacity(isContentVisible ? 1 : 0)
-                        .offset(y: isContentVisible ? 0 : 20)
-                    
-                    // Scripture Reference
-                    Text("Hosea 4:6")
-                        .font(.system(size: 16, weight: .medium, design: .rounded))
-                        .foregroundColor(.white.opacity(0.8))
-                        .opacity(isContentVisible ? 1 : 0)
-                        .offset(y: isContentVisible ? 0 : 20)
-                        .animation(.easeOut(duration: 0.8).delay(0.2), value: isContentVisible)
+                        .foregroundColor(Color(red: 1.0, green: 0.85, blue: 0.5)) // warm gold
                 }
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 32)
+                .opacity(isRewireVisible ? 1 : 0)
+                .scaleEffect(isRewireVisible ? 1 : 0.9)
                 
-                Spacer()
-                    .frame(minHeight: 40, maxHeight: 60)
+                Spacer().frame(height: 36)
                 
-                // Sub-points
+                // What that means in practice
                 VStack(spacing: 12) {
-                    Text("Not lack of faith.")
-                        .font(.system(size: 19, weight: .medium, design: .rounded))
-                        .foregroundColor(.white.opacity(0.95))
-                    
-                    Text("Not lack of prayer.")
-                        .font(.system(size: 19, weight: .medium, design: .rounded))
-                        .foregroundColor(.white.opacity(0.95))
-                    
-                    Text("Lack of knowing how to respond.")
-                        .font(.system(size: 19, weight: .semibold, design: .rounded))
-                        .foregroundColor(.white)
+                    RewireFeatureRow(icon: "waveform", text: "Daily Spoken Promises")
+                    RewireFeatureRow(icon: "arrow.counterclockwise.circle.fill", text: "Anxiety Reset")
+                    RewireFeatureRow(icon: "text.book.closed.fill", text: "Scriptural Declarations")
                 }
-                .padding(.horizontal, 24)
-                .opacity(isContentVisible ? 1 : 0)
-                .offset(y: isContentVisible ? 0 : 30)
-                .animation(.easeOut(duration: 0.8).delay(0.4), value: isContentVisible)
+                .padding(.horizontal, 40)
+                .opacity(isRewireVisible ? 1 : 0)
+                .offset(y: isRewireVisible ? 0 : 16)
+                .animation(.easeOut(duration: 0.7).delay(0.2), value: isRewireVisible)
                 
                 Spacer()
                 
-                // Continue Button
                 continueButton
                     .padding(.horizontal, 24)
                     .padding(.bottom, 50)
@@ -81,12 +90,10 @@ struct ScriptureAnchorScreen: View {
         }
         .ignoresSafeArea()
         .onAppear {
-            withAnimation(.easeOut(duration: 0.8)) {
-                isContentVisible = true
-            }
-            withAnimation(.easeOut(duration: 0.6).delay(0.8)) {
-                isButtonVisible = true
-            }
+            withAnimation(.easeOut(duration: 0.7)) { isLine1Visible = true }
+            withAnimation(.easeOut(duration: 0.7).delay(0.35)) { isLine2Visible = true }
+            withAnimation(.spring(response: 0.7, dampingFraction: 0.85).delay(0.85)) { isRewireVisible = true }
+            withAnimation(.easeOut(duration: 0.5).delay(1.3)) { isButtonVisible = true }
         }
     }
     
@@ -99,17 +106,15 @@ struct ScriptureAnchorScreen: View {
                 .clipped()
                 .ignoresSafeArea()
             
-            // Gradient overlay for better text readability
             LinearGradient(
                 gradient: Gradient(colors: [
-                    Color.black.opacity(0.7),
-                    Color.black.opacity(0.4),
-                    Color.black.opacity(0.5)
+                    Color.black.opacity(0.75),
+                    Color.black.opacity(0.5),
+                    Color.black.opacity(0.6)
                 ]),
                 startPoint: .top,
                 endPoint: .bottom
             )
-            .ignoresSafeArea()
             .ignoresSafeArea()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -122,7 +127,7 @@ struct ScriptureAnchorScreen: View {
             onContinue()
         }) {
             HStack(spacing: 8) {
-                Text("Continue")
+                Text("Show me how")
                     .font(.system(size: 17, weight: .semibold, design: .rounded))
                 Image(systemName: "arrow.right")
                     .font(.system(size: 15, weight: .semibold))
@@ -130,20 +135,37 @@ struct ScriptureAnchorScreen: View {
             .foregroundColor(.black)
             .frame(maxWidth: .infinity)
             .frame(height: 56)
-            .background(
-                Capsule()
-                    .fill(Color.white)
-            )
+            .background(Capsule().fill(Color.white))
         }
     }
 }
 
-// MARK: - Screen 2: Reframe the Problem
+// Small helper row used on the hook screen
+private struct RewireFeatureRow: View {
+    let icon: String
+    let text: String
+    var body: some View {
+        HStack(spacing: 14) {
+            Image(systemName: icon)
+                .font(.system(size: 16, weight: .medium))
+                .foregroundColor(Color(red: 1.0, green: 0.85, blue: 0.5))
+                .frame(width: 24)
+            Text(text)
+                .font(.system(size: 16, weight: .medium, design: .rounded))
+                .foregroundColor(.white.opacity(0.9))
+            Spacer()
+        }
+    }
+}
+
+// MARK: - Screen 2: Repetition Reframe
 struct ReframeProblemScreen: View {
     @EnvironmentObject var subscriptionStore: SubscriptionStore
     let size: CGSize
     let onContinue: () -> Void
-    @State private var isContentVisible = false
+    @State private var isTopVisible = false
+    @State private var isDividerVisible = false
+    @State private var isBottomVisible = false
     @State private var isButtonVisible = false
     
     var body: some View {
@@ -153,66 +175,70 @@ struct ReframeProblemScreen: View {
             VStack(spacing: 0) {
                 Spacer()
                 
-                VStack(spacing: 48) {
-                    // Main Message
-                    VStack(spacing: 16) {
-                        Text("You don't lose because")
-                            .font(.system(size: 28, weight: .medium, design: .rounded))
+                VStack(spacing: 44) {
+                    // Top — the bad news
+                    VStack(spacing: 10) {
+                        Text("Your brain learned anxiety")
+                            .font(.system(size: 26, weight: .medium, design: .rounded))
                             .foregroundColor(.white.opacity(0.95))
                         
-                        Text("life is strong.")
-                            .font(.system(size: 28, weight: .bold, design: .rounded))
+                        Text("through repetition.")
+                            .font(.system(size: 30, weight: .bold, design: .rounded))
                             .foregroundColor(.white)
-                            .scaleEffect(isContentVisible ? 1 : 0.8)
-                            .animation(.spring(response: 0.6, dampingFraction: 0.8).delay(0.2), value: isContentVisible)
+                            .scaleEffect(isTopVisible ? 1 : 0.85)
+                            .animation(.spring(response: 0.6, dampingFraction: 0.8).delay(0.2), value: isTopVisible)
                     }
                     .multilineTextAlignment(.center)
-                    .opacity(isContentVisible ? 1 : 0)
-                    .offset(y: isContentVisible ? 0 : 30)
+                    .opacity(isTopVisible ? 1 : 0)
+                    .offset(y: isTopVisible ? 0 : 28)
                     
-                    Rectangle()
-                        .fill(Color.white.opacity(0.3))
-                        .frame(width: 60, height: 1)
-                        .opacity(isContentVisible ? 1 : 0)
-                        .scaleEffect(x: isContentVisible ? 1 : 0)
-                        .animation(.easeOut(duration: 0.8).delay(0.4), value: isContentVisible)
+                    // Divider
+                    HStack(spacing: 10) {
+                        Rectangle().fill(Color.white.opacity(0.25)).frame(height: 1)
+                        Text("but")
+                            .font(.system(size: 14, weight: .medium, design: .rounded))
+                            .foregroundColor(.white.opacity(0.5))
+                            .fixedSize()
+                        Rectangle().fill(Color.white.opacity(0.25)).frame(height: 1)
+                    }
+                    .padding(.horizontal, 48)
+                    .opacity(isDividerVisible ? 1 : 0)
+                    .scaleEffect(x: isDividerVisible ? 1 : 0.3)
                     
-                    VStack(spacing: 16) {
-                        Text("You lose because")
-                            .font(.system(size: 28, weight: .medium, design: .rounded))
-                            .foregroundColor(.white.opacity(0.95))
+                    // Bottom — the good news
+                    VStack(spacing: 10) {
+                        Text("So can peace.")
+                            .font(.system(size: 30, weight: .bold, design: .rounded))
+                            .foregroundColor(.white)
+                            .scaleEffect(isBottomVisible ? 1 : 0.85)
+                            .animation(.spring(response: 0.6, dampingFraction: 0.8), value: isBottomVisible)
                         
-                        Text("truth isn't spoken.")
-                            .font(.system(size: 28, weight: .bold, design: .rounded))
-                            .foregroundColor(.white)
-                            .scaleEffect(isContentVisible ? 1 : 0.8)
-                            .animation(.spring(response: 0.6, dampingFraction: 0.8).delay(0.6), value: isContentVisible)
+                        Text("Speak God's Word daily\nand you retrain the response.")
+                            .font(.system(size: 19, weight: .regular, design: .rounded))
+                            .foregroundColor(.white.opacity(0.85))
+                            .lineSpacing(4)
                     }
                     .multilineTextAlignment(.center)
-                    .opacity(isContentVisible ? 1 : 0)
-                    .offset(y: isContentVisible ? 0 : 30)
-                    .animation(.easeOut(duration: 0.8).delay(0.4), value: isContentVisible)
+                    .opacity(isBottomVisible ? 1 : 0)
+                    .offset(y: isBottomVisible ? 0 : 28)
                 }
                 .padding(.horizontal, 32)
                 
-                Spacer()
-                    .frame(height: 80)
+                Spacer().frame(height: 56)
                 
-                // Scripture Context
-                VStack(spacing: 12) {
-                    Text("Jesus didn't tell us to endure mountains.")
-                        .font(.system(size: 19, weight: .regular, design: .rounded))
-                        .foregroundColor(.white.opacity(0.85))
-                    
-                    Text("He told us to talk to them.")
-                        .font(.system(size: 20, weight: .semibold, design: .rounded))
-                        .foregroundColor(.white)
+                // Scripture grounding
+                VStack(spacing: 8) {
+                    Text("\"Be transformed by the renewing of your mind.\"")
+                        .font(.system(size: 16, weight: .medium, design: .serif))
+                        .foregroundColor(.white.opacity(0.8))
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 40)
+                    Text("Romans 12:2")
+                        .font(.system(size: 13, weight: .medium, design: .rounded))
+                        .foregroundColor(.white.opacity(0.5))
                 }
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 40)
-                .opacity(isContentVisible ? 1 : 0)
-                .offset(y: isContentVisible ? 0 : 30)
-                .animation(.easeOut(duration: 0.8).delay(0.8), value: isContentVisible)
+                .opacity(isBottomVisible ? 1 : 0)
+                .animation(.easeOut(duration: 0.6).delay(0.3), value: isBottomVisible)
                 
                 Spacer()
                 
@@ -224,12 +250,10 @@ struct ReframeProblemScreen: View {
             }
         }
         .onAppear {
-            withAnimation(.easeOut(duration: 0.8)) {
-                isContentVisible = true
-            }
-            withAnimation(.easeOut(duration: 0.6).delay(1.0)) {
-                isButtonVisible = true
-            }
+            withAnimation(.easeOut(duration: 0.7)) { isTopVisible = true }
+            withAnimation(.easeOut(duration: 0.6).delay(0.5)) { isDividerVisible = true }
+            withAnimation(.easeOut(duration: 0.7).delay(0.8)) { isBottomVisible = true }
+            withAnimation(.easeOut(duration: 0.5).delay(1.3)) { isButtonVisible = true }
         }
     }
     
@@ -262,15 +286,12 @@ struct ReframeProblemScreen: View {
             UIImpactFeedbackGenerator(style: .light).impactOccurred()
             onContinue()
         }) {
-            Text("Show me")
+            Text("I need this")
                 .font(.system(size: 17, weight: .semibold, design: .rounded))
                 .foregroundColor(.black)
                 .frame(maxWidth: .infinity)
                 .frame(height: 56)
-                .background(
-                    Capsule()
-                        .fill(Color.white)
-                )
+                .background(Capsule().fill(Color.white))
         }
     }
 }
@@ -958,28 +979,34 @@ struct PositionSpeakLifeScreen: View {
                 Spacer()
                     .frame(height: 50)
                 
-                VStack(spacing: 40) {
-                    Text("SpeakLife trains\nyour response.")
-                        .font(.system(size: 38, weight: .bold, design: .rounded))
-                        .multilineTextAlignment(.center)
-                        .lineSpacing(4)
-                        .foregroundColor(.white)
-                        .opacity(isContentVisible ? 1 : 0)
-                        .offset(y: isContentVisible ? 0 : 20)
+                VStack(spacing: 32) {
+                    VStack(spacing: 10) {
+                        Text("Rewire Your Mind")
+                            .font(.system(size: 36, weight: .bold, design: .rounded))
+                            .foregroundColor(.white)
+                        Text("with God's Promises.")
+                            .font(.system(size: 32, weight: .bold, design: .serif))
+                            .foregroundColor(Color(red: 1.0, green: 0.85, blue: 0.5))
+                    }
+                    .multilineTextAlignment(.center)
+                    .opacity(isContentVisible ? 1 : 0)
+                    .offset(y: isContentVisible ? 0 : 20)
                     
-                    Text("Daily audio declarations\nrooted in Scripture to help you\nspeak truth, believe boldly,\nand expect results.")
-                        .font(.system(size: 19, weight: .medium, design: .rounded))
+                    Text("SpeakLife gives you daily spoken declarations, anxiety resets, and scriptural promises — so every morning you train a new response.")
+                        .font(.system(size: 18, weight: .medium, design: .rounded))
                         .multilineTextAlignment(.center)
-                        .lineSpacing(6)
+                        .lineSpacing(5)
                         .foregroundColor(.white.opacity(0.9))
-                        .padding(.horizontal, 40)
+                        .padding(.horizontal, 36)
                         .opacity(isContentVisible ? 1 : 0)
                         .offset(y: isContentVisible ? 0 : 20)
                         .animation(.easeOut(duration: 0.8).delay(0.3), value: isContentVisible)
                     
-                    Text("Faith isn't silent.")
-                        .font(.system(size: 17, weight: .semibold, design: .rounded))
-                        .foregroundColor(.white.opacity(0.8))
+                    Text("\"Be transformed by the renewing of your mind.\" — Romans 12:2")
+                        .font(.system(size: 14, weight: .medium, design: .serif))
+                        .foregroundColor(.white.opacity(0.65))
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 48)
                         .italic()
                         .opacity(isContentVisible ? 1 : 0)
                         .animation(.easeOut(duration: 0.8).delay(0.6), value: isContentVisible)
@@ -1036,15 +1063,12 @@ struct PositionSpeakLifeScreen: View {
             UIImpactFeedbackGenerator(style: .light).impactOccurred()
             onContinue()
         }) {
-            Text("Show me how")
-                .font(.system(size: 17, weight: .semibold, design: .rounded))
+            Text("Start Rewiring Today")
+                .font(.system(size: 17, weight: .bold, design: .rounded))
                 .foregroundColor(.black)
                 .frame(maxWidth: .infinity)
                 .frame(height: 56)
-                .background(
-                    Capsule()
-                        .fill(Color.white)
-                )
+                .background(Capsule().fill(Color.white))
         }
     }
 }
