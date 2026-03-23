@@ -217,61 +217,122 @@ struct StreamlinedSpiritualWarfareFlow: View {
     }
 }
 
-// MARK: - Slide 1: Pattern Interrupt
+// MARK: - Slide 1: Pattern Interrupt (mirrors top-performing ad)
 struct PatternInterruptScreen: View {
     let size: CGSize
     let onContinue: () -> Void
-    @State private var contentOpacity = 0.0
     @EnvironmentObject var subscriptionStore: SubscriptionStore
+
+    @State private var line1Visible = false
+    @State private var line2Visible = false
+    @State private var rewireVisible = false
+    @State private var featuresVisible = false
+
+    private let goldColor = Color(red: 1.0, green: 0.85, blue: 0.5)
 
     var body: some View {
         ZStack {
-            // Background
             Image(subscriptionStore.onboardingBGImage)
                 .resizable()
                 .scaledToFill()
                 .ignoresSafeArea()
-                .overlay(Color.black.opacity(0.3))
+                .overlay(Color.black.opacity(0.45))
                 .frame(width: size.width, height: size.height)
 
             VStack(spacing: 0) {
                 Spacer()
-                    .frame(height: size.height * 0.25)
 
-                VStack(spacing: 24) {
-                    Text("If anxiety hits before your feet touch the floor -")
+                // Hook — exact ad copy
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Anxiety isn't random.")
+                        .font(.system(size: 32, weight: .bold))
+                        .foregroundColor(.white)
+                        .opacity(line1Visible ? 1 : 0)
+                        .offset(y: line1Visible ? 0 : 22)
+
+                    Text("It's repetition.")
+                        .font(.system(size: 32, weight: .bold))
+                        .foregroundColor(.white)
+                        .opacity(line2Visible ? 1 : 0)
+                        .offset(y: line2Visible ? 0 : 22)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 32)
+
+                Spacer().frame(height: 40)
+
+                // Divider
+                Rectangle()
+                    .fill(Color.white.opacity(0.25))
+                    .frame(width: 48, height: 1)
+                    .opacity(line2Visible ? 1 : 0)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.leading, 32)
+
+                Spacer().frame(height: 40)
+
+                // Promise
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Rewire Your Mind")
                         .font(.system(size: 28, weight: .bold))
                         .foregroundColor(.white)
-                        .multilineTextAlignment(.center)
-
-                    Text("your words have the power to change that.")
-                        .font(.system(size: 20, weight: .medium))
-                        .foregroundColor(.white.opacity(0.9))
-                        .multilineTextAlignment(.center)
+                    Text("with God's Promises.")
+                        .font(.system(size: 26, weight: .bold))
+                        .foregroundColor(goldColor)
                 }
-                .padding(.horizontal, 30)
-                .opacity(contentOpacity)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 32)
+                .opacity(rewireVisible ? 1 : 0)
+                .scaleEffect(rewireVisible ? 1 : 0.92, anchor: .leading)
+
+                Spacer().frame(height: 28)
+
+                // Feature rows (mirroring the ad)
+                VStack(alignment: .leading, spacing: 14) {
+                    SWFeatureRow(icon: "waveform", text: "Daily Spoken Promises", gold: goldColor)
+                    SWFeatureRow(icon: "arrow.counterclockwise.circle.fill", text: "Anxiety Reset", gold: goldColor)
+                    SWFeatureRow(icon: "text.book.closed.fill", text: "Scriptural Declarations", gold: goldColor)
+                }
+                .padding(.horizontal, 32)
+                .opacity(featuresVisible ? 1 : 0)
+                .offset(y: featuresVisible ? 0 : 14)
 
                 Spacer()
 
                 Button(action: onContinue) {
-                    Text("That's Me")
+                    Text("Show Me How")
                         .font(.system(size: 17, weight: .semibold))
-                        .foregroundColor(.white)
-                        .frame(width: size.width * 0.85, height: 50)
-                        .background(
-                            RoundedRectangle(cornerRadius: 25)
-                                .fill(Color(red: 0.4, green: 0.5, blue: 0.9))
-                        )
+                        .foregroundColor(.black)
+                        .frame(width: size.width * 0.85, height: 52)
+                        .background(Capsule().fill(Color.white))
                 }
                 .padding(.bottom, 60)
+                .opacity(featuresVisible ? 1 : 0)
             }
         }
         .frame(width: size.width)
         .onAppear {
-            withAnimation(.easeIn(duration: 0.8)) {
-                contentOpacity = 1
-            }
+            withAnimation(.easeOut(duration: 0.6)) { line1Visible = true }
+            withAnimation(.easeOut(duration: 0.6).delay(0.35)) { line2Visible = true }
+            withAnimation(.spring(response: 0.65, dampingFraction: 0.85).delay(0.8)) { rewireVisible = true }
+            withAnimation(.easeOut(duration: 0.5).delay(1.2)) { featuresVisible = true }
+        }
+    }
+}
+
+private struct SWFeatureRow: View {
+    let icon: String
+    let text: String
+    let gold: Color
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: icon)
+                .font(.system(size: 16, weight: .medium))
+                .foregroundColor(gold)
+                .frame(width: 22)
+            Text(text)
+                .font(.system(size: 16, weight: .medium))
+                .foregroundColor(.white.opacity(0.9))
         }
     }
 }
@@ -367,27 +428,33 @@ struct ConvictionGapScreen: View {
                     .frame(height: size.height * 0.20)
 
                 VStack(spacing: 32) {
-                    Text("Anxiety isn't random.\nIt's what you've been repeating.")
-                        .font(.system(size: 26, weight: .bold))
-                        .foregroundColor(.white)
-                        .multilineTextAlignment(.center)
+                    VStack(spacing: 10) {
+                        Text("Anxiety isn't random.")
+                            .font(.system(size: 26, weight: .bold))
+                            .foregroundColor(.white)
+                        Text("It's what you've been repeating.")
+                            .font(.system(size: 26, weight: .bold))
+                            .foregroundColor(.white)
+                    }
+                    .multilineTextAlignment(.center)
 
                     VStack(spacing: 20) {
-                        Text("Change what you repeat.")
-                            .font(.system(size: 20, weight: .semibold))
-                            .foregroundColor(.white)
+                        Text("But your brain can be rewired.")
+                            .font(.system(size: 22, weight: .semibold))
+                            .foregroundColor(Color(red: 1.0, green: 0.85, blue: 0.5))
                             .multilineTextAlignment(.center)
 
                         VStack(spacing: 12) {
-                            Text("SpeakLife gives you God's promises\nto declare every single morning.")
+                            Text("Speak God's promises every morning\nand you train a new response.")
                                 .font(.system(size: 16))
-                                .foregroundColor(.white.opacity(0.8))
+                                .foregroundColor(.white.opacity(0.85))
                                 .multilineTextAlignment(.center)
 
-                            Text("2 minutes. Real peace.")
-                                .font(.system(size: 18, weight: .semibold))
-                                .foregroundColor(.white)
+                            Text("\"Be transformed by the renewing of your mind.\"\n— Romans 12:2")
+                                .font(.system(size: 14))
+                                .foregroundColor(.white.opacity(0.6))
                                 .multilineTextAlignment(.center)
+                                .italic()
                         }
                     }
                 }
@@ -696,18 +763,23 @@ struct PrePaywallCloseScreen: View {
                 Spacer()
                     .frame(height: size.height * 0.22)
 
-                VStack(spacing: 32) {
-                    Text("You don't have to wake up\nanxious anymore.")
-                        .font(.system(size: 26, weight: .bold))
-                        .foregroundColor(.white)
-                        .multilineTextAlignment(.center)
-                    
-                    VStack(spacing: 20) {
-                        Text("100,000+ believers have taken their\npeace back — one declaration at a time.")
-                            .font(.system(size: 18))
+                VStack(spacing: 28) {
+                    VStack(spacing: 8) {
+                        Text("Rewire Your Mind")
+                            .font(.system(size: 32, weight: .bold))
+                            .foregroundColor(.white)
+                        Text("with God's Promises.")
+                            .font(.system(size: 28, weight: .bold))
+                            .foregroundColor(Color(red: 1.0, green: 0.85, blue: 0.5))
+                    }
+                    .multilineTextAlignment(.center)
+
+                    VStack(spacing: 16) {
+                        Text("100,000+ believers are already\nrewiring their mornings — one declaration at a time.")
+                            .font(.system(size: 17))
                             .foregroundColor(.white.opacity(0.9))
                             .multilineTextAlignment(.center)
-                        
+
                         Text("Start yours today.")
                             .font(.system(size: 17, weight: .semibold))
                             .foregroundColor(.white)
@@ -720,14 +792,11 @@ struct PrePaywallCloseScreen: View {
                 Spacer()
                 
                 Button(action: onContinue) {
-                    Text("Take My Peace Back")
+                    Text("Start Rewiring Today")
                         .font(.system(size: 17, weight: .semibold))
-                        .foregroundColor(.white)
-                        .frame(width: size.width * 0.85, height: 50)
-                        .background(
-                            RoundedRectangle(cornerRadius: 25)
-                                .fill(Color(red: 0.4, green: 0.5, blue: 0.9))
-                        )
+                        .foregroundColor(.black)
+                        .frame(width: size.width * 0.85, height: 52)
+                        .background(Capsule().fill(Color.white))
                 }
                 .padding(.bottom, 60)
             }
