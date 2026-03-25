@@ -31,9 +31,9 @@ class TabViewModel: ObservableObject {
         selectedTab = 1
     }
     
-//    func goToChecklist() {
-//        selectedTab = 2  // Daily Checklist is at position 2
-//    }
+    func goToAsk() {
+        selectedTab = 2
+    }
 
     func resetToHome() {
         selectedTab = 0  // Go to Declarations (main home view)
@@ -43,7 +43,7 @@ class TabViewModel: ObservableObject {
         let tabNames = [
             0: "declarations",
             1: "audio",
-            2: "bible",
+            2: "ask",
             3: "create_your_own",
             4: "profile"
         ]
@@ -237,8 +237,7 @@ struct HomeView: View {
             TabView(selection: $tabViewModel.selectedTab) {
                 declarationView
                 audioView
-                //🔴bibleView
-                // dailyChecklistView // Moved to DeclarationView
+                askView
                 createYourOwnView
                 profileView
                     
@@ -372,6 +371,15 @@ struct HomeView: View {
                 }
             }
             .edgesIgnoringSafeArea(.all)
+    }
+    
+    var askView: some View {
+        AskTabView()
+            .tag(2)
+            .tabItem {
+                Image(systemName: "bubble.left.and.text.bubble.right.fill")
+                    .renderingMode(.original)
+            }
     }
     
     var createYourOwnView: some View {
