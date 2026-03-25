@@ -13,7 +13,6 @@ import SwiftUI
 
 struct AskTabView: View {
     @EnvironmentObject var subscriptionStore: SubscriptionStore
-    @EnvironmentObject var themeStore: ThemeViewModel
     @StateObject private var viewModel = AskViewModel()
     
     @State private var showChips = true
@@ -75,7 +74,7 @@ struct AskTabView: View {
                 ScrollView(.vertical, showsIndicators: false) {
                     LazyVStack(spacing: 16) {
                         // Empty state
-                        if case .empty = viewModel.viewState, viewModel.messages.isEmpty {
+                        if viewModel.viewState == .empty, viewModel.messages.isEmpty {
                             emptyState
                                 .padding(.top, 20)
                         }
@@ -88,7 +87,7 @@ struct AskTabView: View {
                         }
                         
                         // Typing indicator
-                        if case .loading = viewModel.viewState {
+                        if viewModel.viewState == .loading {
                             HStack {
                                 TypingIndicatorView()
                                     .padding(.leading, 16)
@@ -112,13 +111,13 @@ struct AskTabView: View {
                     }
                     .padding(.bottom, 12)
                 }
-                .onChange(of: viewModel.messages.count) { _ in
+                .onChange(of: viewModel.messages.count) { _, _ in
                     withAnimation(.easeOut(duration: 0.3)) {
                         proxy.scrollTo("bottom", anchor: .bottom)
                     }
                 }
-                .onChange(of: viewModel.viewState) { state in
-                    if case .loading = state {
+                .onChange(of: viewModel.viewState) { _, newState in
+                    if case .loading = newState {
                         withAnimation(.easeOut(duration: 0.3)) {
                             proxy.scrollTo("typing", anchor: .bottom)
                         }
@@ -320,7 +319,7 @@ struct AskTabView: View {
                                 )
                                 .frame(width: 42, height: 42)
                             
-                            if case .loading = viewModel.viewState {
+                            if viewModel.viewState == .loading {
                                 ProgressView()
                                     .tint(.white)
                                     .scaleEffect(0.75)
@@ -332,10 +331,7 @@ struct AskTabView: View {
                         }
                     }
                     .buttonStyle(PlainButtonStyle())
-                    .disabled(!viewModel.canSubmit || {
-                        if case .loading = viewModel.viewState { return true }
-                        return false
-                    }())
+                    .disabled(!viewModel.canSubmit || viewModel.viewState == .loading)
                     .animation(.spring(response: 0.3, dampingFraction: 0.7), value: viewModel.canSubmit)
                 }
                 .padding(.horizontal, 16)

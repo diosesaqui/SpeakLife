@@ -192,22 +192,13 @@ struct VerseCardView: View {
 // MARK: - Typing Indicator
 
 struct TypingIndicatorView: View {
-    @State private var dotScale: [CGFloat] = [0.5, 0.5, 0.5]
+    @State private var animating = false
     
     var body: some View {
         HStack(spacing: 6) {
-            ForEach(0..<3, id: \.self) { index in
-                Circle()
-                    .fill(Constants.DAMidBlue.opacity(0.8))
-                    .frame(width: 8, height: 8)
-                    .scaleEffect(dotScale[index])
-                    .animation(
-                        .easeInOut(duration: 0.5)
-                        .repeatForever()
-                        .delay(Double(index) * 0.18),
-                        value: dotScale[index]
-                    )
-            }
+            typingDot(delay: 0.0)
+            typingDot(delay: 0.18)
+            typingDot(delay: 0.36)
         }
         .padding(.horizontal, 18)
         .padding(.vertical, 14)
@@ -216,7 +207,25 @@ struct TypingIndicatorView: View {
                 .fill(Color.white.opacity(0.08))
         )
         .onAppear {
-            dotScale = [1.2, 1.2, 1.2]
+            withAnimation(
+                .easeInOut(duration: 0.5)
+                .repeatForever(autoreverses: true)
+            ) {
+                animating = true
+            }
         }
+    }
+    
+    private func typingDot(delay: Double) -> some View {
+        Circle()
+            .fill(Constants.DAMidBlue.opacity(0.8))
+            .frame(width: 8, height: 8)
+            .scaleEffect(animating ? 1.3 : 0.6)
+            .animation(
+                .easeInOut(duration: 0.5)
+                .repeatForever(autoreverses: true)
+                .delay(delay),
+                value: animating
+            )
     }
 }

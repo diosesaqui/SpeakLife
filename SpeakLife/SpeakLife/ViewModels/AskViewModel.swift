@@ -13,7 +13,7 @@ final class AskViewModel: ObservableObject {
     
     // MARK: - State
     
-    enum ViewState {
+    enum ViewState: Equatable {
         case empty       // No conversation yet
         case loading     // Waiting on AI
         case chat        // Conversation active

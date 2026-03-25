@@ -48,7 +48,7 @@ struct AIChatMessage: Identifiable {
 
 // MARK: - Service
 
-final class AIVerseService: ObservableObject {
+final class AIVerseService {
     static let shared = AIVerseService()
     
     // TODO: Move to secure config / remote config before production.
