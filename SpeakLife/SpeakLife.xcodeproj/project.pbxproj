@@ -715,6 +715,10 @@
 		20C138E367E34F4AB3A7B120 /* AskTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AskTabView.swift; sourceTree = "<group>"; };
 		7D6DAE2F956C423DBAD73F7F /* TopicChipGridView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TopicChipGridView.swift; sourceTree = "<group>"; };
 		B101C9D5472D49569FF82575 /* VerseCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VerseCardView.swift; sourceTree = "<group>"; };
+		E14CE42195E228734ACB9A2C /* PrayerWallView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrayerWallView.swift; sourceTree = "<group>"; };
+		6BA7EE898DF248C4EB6EDEB2 /* PrayerWallViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrayerWallViewModel.swift; sourceTree = "<group>"; };
+		35B4B5074F8CB5AB1E2EA0DC /* AppleSignInPromptView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleSignInPromptView.swift; sourceTree = "<group>"; };
+		DC27319C7422AFA8C439B08F /* AppleSignInService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleSignInService.swift; sourceTree = "<group>"; };
 		/* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
