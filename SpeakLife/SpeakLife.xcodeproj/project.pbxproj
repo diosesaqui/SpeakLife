@@ -2235,6 +2235,10 @@
 				8C81294FE8FD42174F375CFB /* LifecycleNotificationService.swift in Sources */,
 				20F4D11E6F9CB2FA07540EE7 /* TrialExperienceService.swift in Sources */,
 				80C39CCCF6868B4C448E5D18 /* TrialEndingBanner.swift in Sources */,
+				E01A18B72FC2499B944E600A /* AskTabView.swift in Sources */,
+				CBD3CBD21F57488B88A684B9 /* AskViewModel.swift in Sources */,
+				DD8EAB46A2D64E41A354B836 /* TopicChipGridView.swift in Sources */,
+				9088ED3BB77D44829C8254E6 /* VerseCardView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
