@@ -45,7 +45,8 @@ class TabViewModel: ObservableObject {
             1: "audio",
             2: "ask",
             3: "create_your_own",
-            4: "profile"
+            4: "community",
+            5: "profile"
         ]
         
         guard let fromName = tabNames[previousTab],
@@ -239,6 +240,7 @@ struct HomeView: View {
                 audioView
                 askView
                 createYourOwnView
+                communityView
                 profileView
                     
                 }
@@ -423,9 +425,23 @@ struct HomeView: View {
 //            }
 //    }
     
+    var communityView: some View {
+        PrayerWallView()
+            .tag(4)
+            .tabItem {
+                if #available(iOS 17, *) {
+                    Image(systemName: "hands.and.sparkles.fill")
+                        .renderingMode(.original)
+                } else {
+                    Image(systemName: "person.2.fill")
+                        .renderingMode(.original)
+                }
+            }
+    }
+
     var profileView: some View {
         ProfileView()
-            .tag(4)
+            .tag(5)
             .tabItem {
                 Image(systemName: "line.3.horizontal")
                     .renderingMode(.original)
