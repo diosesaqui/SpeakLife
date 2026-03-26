@@ -912,7 +912,6 @@
 			isa = PBXGroup;
 			children = (
 				45567D702F29F6FA00382072 /* FirebaseAuthService.swift */,
-				DC27319C7422AFA8C439B08F /* AppleSignInService.swift */,
 			);
 			path = Auth;
 			sourceTree = "<group>";
@@ -1163,6 +1162,7 @@
 				6BA7EE898DF248C4EB6EDEB2 /* PrayerWallViewModel.swift */,
 				E14CE42195E228734ACB9A2C /* PrayerWallView.swift */,
 				35B4B5074F8CB5AB1E2EA0DC /* AppleSignInPromptView.swift */,
+				DC27319C7422AFA8C439B08F /* AppleSignInService.swift */,
 			);
 			path = Community;
 			sourceTree = "<group>";

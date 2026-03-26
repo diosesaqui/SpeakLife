@@ -15,7 +15,7 @@ import AuthenticationServices
 struct PrayerWallView: View {
     @EnvironmentObject var subscriptionStore: SubscriptionStore
     @StateObject private var viewModel = PrayerWallViewModel()
-    @StateObject private var appleSignIn = AppleSignInService.shared
+    @ObservedObject private var appleSignIn = AppleSignInService.shared
 
     @State private var selectedTab: PrayerTab = .wall
     @State private var showPostForm = false
