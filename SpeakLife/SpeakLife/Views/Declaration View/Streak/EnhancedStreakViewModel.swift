@@ -167,8 +167,10 @@ final class EnhancedStreakViewModel: ObservableObject {
         PremiumHaptics.affirmationCompleted()
         AudioDelightManager.shared.playGentleSuccess()
         
-        // Check if all tasks are now completed
-        if todayChecklist.isCompleted && todayChecklist.completedAt == nil {
+        // Streak is earned as soon as the Daily Burst is completed.
+        // All other tasks (devotional, audio, gratitude, etc.) are bonus — they
+        // show progress in the checklist UI but don't gate the streak.
+        if todayChecklist.isStreakEarned && todayChecklist.completedAt == nil {
             completeDay()
         }
         
@@ -1243,12 +1245,11 @@ final class EnhancedStreakViewModel: ObservableObject {
                               "PersonalizedEveningNotification"]
         )
 
-        // Only send the streak-at-risk notification — and only when user has an
-        // active streak AND hasn't finished today's tasks.
-        let remainingActivities = todayChecklist.tasks.filter { !$0.isCompleted }
-        let hasTasks = !remainingActivities.isEmpty
+        // Streak is safe once the burst is done — cancel at-risk immediately.
+        // Only send at-risk when user has an active streak AND hasn't done their burst yet.
+        let burstDone = todayChecklist.isStreakEarned
 
-        if hasTasks && streakStats.currentStreak >= 1 {
+        if !burstDone && streakStats.currentStreak >= 1 {
             LifecycleNotificationService.shared.scheduleStreakAtRiskNotification(
                 currentStreak: streakStats.currentStreak
             )

@@ -28,16 +28,19 @@ struct ModernDailyChecklistView: View {
         let hour = Calendar.current.component(.hour, from: Date())
         let completed = viewModel.todayChecklist.completedTasksCount
         let total = viewModel.todayChecklist.tasks.count
-        
+        let streakEarned = viewModel.todayChecklist.isStreakEarned
+
         if completed == total {
-            return "Amazing! All tasks completed! 🎉"
+            return "All tasks complete — you went above and beyond! 🎉"
+        } else if streakEarned {
+            return "Streak secured! 🔥 Bonus tasks below for extra growth."
         } else if completed > 0 {
-            return "Great progress! Keep going! 💪"
+            return "Great progress! Complete your Burst to lock in today's streak. 💪"
         } else {
             switch hour {
-            case 5..<12: return "Start your day strong! 🌅"
-            case 12..<17: return "Keep the momentum going! 💪"
-            case 17..<21: return "Finish today strong! 🌟"
+            case 5..<12: return "Start your day strong! Complete your Burst 🌅"
+            case 12..<17: return "Don't forget your Burst — streak is on the line! 💪"
+            case 17..<21: return "Complete your Burst before midnight to keep your streak 🔥"
             default: return "End your day with purpose! 🙏"
             }
         }

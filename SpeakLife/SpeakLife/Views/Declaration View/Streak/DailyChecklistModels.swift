@@ -113,8 +113,15 @@ struct DailyChecklist: Codable {
     var currentPhase: ProgressionPhase
     var newTasksUnlocked: [String] = []
     
+    /// True when ALL tasks are done (used for full-checklist celebration UI only).
     var isCompleted: Bool {
         tasks.allSatisfy { $0.isCompleted }
+    }
+
+    /// True when the Daily Burst is done — this is the only requirement to earn a streak day.
+    /// Devotional, audio, gratitude etc. are bonus tasks and don't gate the streak.
+    var isStreakEarned: Bool {
+        tasks.first(where: { $0.id == "complete_daily_burst" })?.isCompleted ?? false
     }
     
     var completionProgress: Double {
