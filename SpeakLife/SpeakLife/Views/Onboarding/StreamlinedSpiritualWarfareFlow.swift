@@ -630,15 +630,7 @@ struct OutcomeVisualizationScreen: View {
                             }
                         }
 
-                        if outcomesVisible[2] {
-                            VStack(spacing: 12) {
-                                Text("Feet hit the floor. No pit in your stomach. Just knowing whose you are.")
-                                    .font(.system(size: 17))
-                                    .foregroundColor(.white.opacity(0.8))
-                                    .multilineTextAlignment(.center)
-                                    .transition(.scale.combined(with: .opacity))
-                            }
-                        }
+
                     }
                 }
                 .padding(.horizontal, 30)
