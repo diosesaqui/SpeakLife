@@ -523,7 +523,7 @@ struct IntroduceSystemScreen: View {
                         .multilineTextAlignment(.center)
 
                     VStack(spacing: 18) {
-                        Text("SpeakLife helps you give God's Word\ndaily attention through:")
+                        Text("Faith is a skill. Every declaration you speak is a rep. The stronger you train, the less anything can shake you.")
                             .font(.system(size: 17))
                             .foregroundColor(.white.opacity(0.9))
                             .multilineTextAlignment(.center)
@@ -549,7 +549,7 @@ struct IntroduceSystemScreen: View {
                         }
                     }
 
-                    Text("Speak it. Believe it. Become it.")
+                    Text("Train daily. Level up. Become unshakable.")
                         .font(.system(size: 16))
                         .foregroundColor(.white.opacity(0.7))
                         .multilineTextAlignment(.center)
