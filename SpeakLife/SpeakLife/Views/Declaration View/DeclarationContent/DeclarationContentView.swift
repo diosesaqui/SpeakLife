@@ -215,6 +215,11 @@ struct DeclarationContentView: View {
                     "declaration_index": newIndex,
                     "category": declaration.category
                 ])
+                // Fix 3: Increment affirmations spoken counter for badge tracking
+                UserDefaults.standard.set(
+                    UserDefaults.standard.integer(forKey: "totalAffirmationsSpoken") + 1,
+                    forKey: "totalAffirmationsSpoken"
+                )
                 // Track declaration count for trial experience
                 TrialExperienceService.shared.onDeclarationSpoken()
                 // Reset animations for new declaration
@@ -503,7 +508,13 @@ struct DeclarationContentView: View {
     private func shareTapped(declaration: Declaration) {
         viewModel.setCurrent(declaration)
         Selection.shared.selectionFeedback()
-        
+
+        // Fix 3: Increment social shares counter for badge tracking
+        UserDefaults.standard.set(
+            UserDefaults.standard.integer(forKey: "totalSocialShares") + 1,
+            forKey: "totalSocialShares"
+        )
+
         // Create screenshot without affecting visible UI
         setImage { 
             // Show share sheet immediately after image is ready
@@ -570,6 +581,13 @@ struct DeclarationContentView: View {
         
         favorite(declaration)
         self.isFavorite = !wasFavorite
+        // Fix 3: Increment favorites counter when adding (not removing) a favorite
+        if !wasFavorite {
+            UserDefaults.standard.set(
+                UserDefaults.standard.integer(forKey: "totalFavoritesAdded") + 1,
+                forKey: "totalFavoritesAdded"
+            )
+        }
         Selection.shared.selectionFeedback()
         appState.offerDiscountTry += 1
         if !subscriptionStore.isPremium, appState.offerDiscountTry % 5 == 0 {

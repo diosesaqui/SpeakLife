@@ -1150,13 +1150,17 @@ final class EnhancedStreakViewModel: ObservableObject {
     // MARK: - Badge System Integration
     
     private func checkForNewBadges() {
-        // Only use metrics we can actually track accurately
+        // Fix 3: Use real tracked values from UserDefaults instead of hardcoded zeros
+        let affirmationsSpoken = userDefaults.integer(forKey: "totalAffirmationsSpoken")
+        let versesRead = userDefaults.integer(forKey: "totalVersesRead")
+        let socialShares = userDefaults.integer(forKey: "totalSocialShares")
+        let favoritesAdded = userDefaults.integer(forKey: "totalFavoritesAdded")
         let userStats = UserStats(
-            affirmationsSpoken: 0, // Not tracking yet
-            versesRead: 0, // Not tracking yet
-            socialShares: 0, // Not tracking yet
-            favoritesAdded: 0, // Not tracking yet
-            categoriesCompleted: Set<String>() // Not tracking yet
+            affirmationsSpoken: affirmationsSpoken,
+            versesRead: versesRead,
+            socialShares: socialShares,
+            favoritesAdded: favoritesAdded,
+            categoriesCompleted: Set<String>()
         )
         
         let previousBadgeCount = badgeManager.unlockedBadgeCount
