@@ -342,6 +342,15 @@ struct PostPrayerView: View {
     @State private var isSister = true
     @State private var text = ""
     private let maxChars = 280
+    private let minWords = 5
+
+    private var wordCount: Int {
+        text.split(whereSeparator: \.isWhitespace).count
+    }
+
+    private var canPost: Bool {
+        wordCount >= minWords && !viewModel.isSubmitting
+    }
 
     var body: some View {
         ZStack {
@@ -373,44 +382,53 @@ struct PostPrayerView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 22))
                 .frame(width: 200)
 
-                // Text editor
-                GeometryReader { proxy in
-                    ZStack(alignment: .topLeading) {
-                        if text.isEmpty {
-                            Text("Share your prayer request…")
-                                .font(Font.custom("AppleSDGothicNeo-Regular", size: 15, relativeTo: .body))
-                                .foregroundColor(.white.opacity(0.35))
-                                .padding(14)
-                        }
-                        
-                        TextEditor(text: $text)
+                // Text editor — fix: full width (no GeometryReader), matched insets
+                ZStack(alignment: .topLeading) {
+                    if text.isEmpty {
+                        Text("Share your prayer request…")
                             .font(Font.custom("AppleSDGothicNeo-Regular", size: 15, relativeTo: .body))
-                            .foregroundColor(.white)
-                            .scrollContentBackground(.hidden)
-                            .background(Color.clear)
-                            .padding(10)
-                            .onChange(of: text) { newValue in
-                                if newValue.count > maxChars {
-                                    text = String(newValue.prefix(maxChars))
-                                }
-                            }
+                            .foregroundColor(.white.opacity(0.35))
+                            .padding(.top, 16)
+                            .padding(.leading, 16)
+                            .allowsHitTesting(false)
                     }
-                    .frame(width: proxy.size.width * 0.9, height: 200)
-                    .background(Color.white.opacity(0.1))
-                    .clipShape(RoundedRectangle(cornerRadius: 14))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 14)
-                            .stroke(Color.white.opacity(0.2), lineWidth: 1)
-                    )
-                    .padding(.horizontal, 4)
+
+                    TextEditor(text: $text)
+                        .font(Font.custom("AppleSDGothicNeo-Regular", size: 15, relativeTo: .body))
+                        .foregroundColor(.white)
+                        .scrollContentBackground(.hidden)
+                        .background(Color.clear)
+                        .onChange(of: text) { newValue in
+                            if newValue.count > maxChars {
+                                text = String(newValue.prefix(maxChars))
+                            }
+                        }
+                }
+                .frame(maxWidth: .infinity)
+                .frame(height: 150)
+                .background(Color.white.opacity(0.1))
+                .clipShape(RoundedRectangle(cornerRadius: 14))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14)
+                        .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                )
+                .onAppear {
+                    // Align UITextView internal insets with placeholder padding
+                    UITextView.appearance().textContainerInset = UIEdgeInsets(top: 12, left: 10, bottom: 12, right: 10)
                 }
 
-                // Character counter
+                // Counter + word-count hint
                 HStack {
+                    if !text.isEmpty && wordCount < minWords {
+                        Text("\(minWords - wordCount) more word\(minWords - wordCount == 1 ? "" : "s") needed")
+                            .font(Font.custom("AppleSDGothicNeo-Regular", size: 12, relativeTo: .caption))
+                            .foregroundColor(.white.opacity(0.45))
+                    }
                     Spacer()
-                    Text("\(text.count)/\(maxChars)")
+                    let remaining = maxChars - text.count
+                    Text(remaining == maxChars ? "\(maxChars) characters" : "\(remaining) left")
                         .font(Font.custom("AppleSDGothicNeo-Regular", size: 12, relativeTo: .caption))
-                        .foregroundColor(text.count >= maxChars ? Color(hex: "F87171") : .white.opacity(0.4))
+                        .foregroundColor(remaining <= 20 ? Color(hex: "F87171") : .white.opacity(0.4))
                 }
 
                 // Submission feedback
@@ -428,38 +446,37 @@ struct PostPrayerView: View {
                         .multilineTextAlignment(.center)
                 }
 
-                // Post button
-                Button {
-                    viewModel.addPost(text: text, isSister: isSister)
-                    if viewModel.errorMessage == nil {
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
-                            dismiss()
-                        }
-                    }
-                } label: {
-                    Group {
-                        if viewModel.isSubmitting {
-                            ProgressView().tint(.white)
-                        } else {
-                            Text("Post Request")
-                                .font(Font.custom("AppleSDGothicNeo-Bold", size: 16, relativeTo: .body))
-                                .foregroundColor(.white)
-                        }
-                    }
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 52)
-                    .background(
-                        text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || viewModel.isSubmitting
-                            ? Color.gray.opacity(0.4)
-                            : Color(hex: "7C3AED")
-                    )
-                    .clipShape(RoundedRectangle(cornerRadius: 14))
-                }
-                .disabled(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || viewModel.isSubmitting)
-
                 Spacer()
             }
             .padding(.horizontal, 24)
+        }
+        // Fix: CTA pinned to bottom, not floating mid-screen
+        .safeAreaInset(edge: .bottom) {
+            Button {
+                viewModel.addPost(text: text, isSister: isSister)
+                if viewModel.errorMessage == nil {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+                        dismiss()
+                    }
+                }
+            } label: {
+                Group {
+                    if viewModel.isSubmitting {
+                        ProgressView().tint(.white)
+                    } else {
+                        Text("Post Request")
+                            .font(Font.custom("AppleSDGothicNeo-Bold", size: 16, relativeTo: .body))
+                            .foregroundColor(.white)
+                    }
+                }
+                .frame(maxWidth: .infinity)
+                .frame(height: 52)
+                .background(canPost ? Color(hex: "7C3AED") : Color.gray.opacity(0.4))
+                .clipShape(RoundedRectangle(cornerRadius: 14))
+            }
+            .disabled(!canPost)
+            .padding(.horizontal, 24)
+            .padding(.bottom, 16)
         }
     }
 
