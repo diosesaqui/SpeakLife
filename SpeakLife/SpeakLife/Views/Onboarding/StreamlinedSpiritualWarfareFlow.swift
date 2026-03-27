@@ -598,7 +598,7 @@ struct OutcomeVisualizationScreen: View {
     @State private var outcomesVisible: [Bool] = [false, false, false]
     @EnvironmentObject var subscriptionStore: SubscriptionStore
 
-    let outcomes = ["Anxiety doesn't own your mornings anymore.", "Your body, your peace, your finances — aligned with what God says.", "Fear stops making your decisions for you."]
+    let outcomes = ["Anxiety doesn't own your mornings anymore.", "Your body, your peace, your finances — aligned with what God says.", "A renewed mind. An unshakable life. — Romans 12:2"]
 
     var body: some View {
         ZStack {
