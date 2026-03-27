@@ -58,7 +58,7 @@ struct PrayerWallView: View {
                     }
                 }
             }
-            .navigationTitle("Prayer Wall")
+            .navigationTitle("Warrior Room")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
@@ -110,7 +110,7 @@ struct PrayerWallView: View {
 
     private var segmentedControl: some View {
         HStack(spacing: 0) {
-            tabButton("Prayer Wall", tab: .wall)
+            tabButton("Warrior Room", tab: .wall)
             tabButton("My Prayers", tab: .mine)
         }
         .background(Color.white.opacity(0.12))
@@ -341,7 +341,7 @@ struct PostPrayerView: View {
 
     @State private var isSister = true
     @State private var text = ""
-    private let maxChars = 140
+    private let maxChars = 280
 
     var body: some View {
         ZStack {
