@@ -97,7 +97,7 @@ struct ProfileView: View {
                     Section(header: Text("Yours").font(.caption)) {
                         AbbasLoveRow
                         streakStatsRow
-                        dailyBurstStatsRow
+                      //  dailyBurstStatsRow
                             quizRow
                            prayerRow
                        // }
@@ -354,8 +354,7 @@ struct ProfileView: View {
             }
         }
     }
-    
-    @MainActor
+
     // MARK: - Streak Stats + Badges Row
 
     @MainActor
@@ -941,7 +940,6 @@ struct StreakStatsProfileSheet: View {
     private func streakRarityColor(_ rarity: BadgeRarity) -> Color {
         switch rarity {
         case .common: return .gray
-        case .uncommon: return .green
         case .rare: return .blue
         case .epic: return .purple
         case .legendary: return .orange
