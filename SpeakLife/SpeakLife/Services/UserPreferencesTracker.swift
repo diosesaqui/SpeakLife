@@ -97,8 +97,8 @@ final class UserPreferencesTracker: ObservableObject {
         switch primaryCategory {
         case .anxiety:
             return PaywallCopy(
-                headline: "If anxiety hits first - your words can change that",
-                subheadline: "Daily declarations to speak peace over your morning",
+                headline: "Become Unshakable — One Declaration at a Time",
+                subheadline: "Replace anxiety with God's truth. Every single morning.",
                 valueProps: [
                     "Replace every lie with what God says about you — daily",
                     "Build a mind nothing can shake. Not fear. Not doubt. Nothing.",
@@ -111,8 +111,8 @@ final class UserPreferencesTracker: ObservableObject {
 
         case .faith:
             return PaywallCopy(
-                headline: "Deepen Your Faith, Transform Your Life",
-                subheadline: "Build an unshakeable foundation with daily spiritual practices",
+                headline: "Build a Faith Nothing Can Move",
+                subheadline: "Daily declarations rooted in God's Word to make you unshakable.",
                 valueProps: [
                     "Replace every lie with what God says about you — daily",
                     "Build a mind nothing can shake. Not fear. Not doubt. Nothing.",
@@ -125,8 +125,8 @@ final class UserPreferencesTracker: ObservableObject {
 
         case .joy:
             return PaywallCopy(
-                headline: "Rediscover True Joy Through Faith",
-                subheadline: "Cultivate lasting happiness grounded in God's love",
+                headline: "Find a Joy the World Cannot Steal",
+                subheadline: "God's promises spoken daily build a happiness nothing can shake.",
                 valueProps: [
                     "Replace every lie with what God says about you — daily",
                     "Build a mind nothing can shake. Not fear. Not doubt. Nothing.",
@@ -139,8 +139,8 @@ final class UserPreferencesTracker: ObservableObject {
 
         case .rest:
             return PaywallCopy(
-                headline: "Find Deep Rest in God's Peace",
-                subheadline: "End restless nights with faith-based sleep solutions",
+                headline: "Rest Like Someone Whose God Never Sleeps",
+                subheadline: "Declarations that quiet your mind and anchor your soul at night.",
                 valueProps: [
                     "Replace every lie with what God says about you — daily",
                     "Build a mind nothing can shake. Not fear. Not doubt. Nothing.",
@@ -153,8 +153,8 @@ final class UserPreferencesTracker: ObservableObject {
 
         case .health:
             return PaywallCopy(
-                headline: "Heal Your Body, Mind & Spirit",
-                subheadline: "Activate divine health through daily declarations",
+                headline: "Speak Life Over Your Body — and Mean It",
+                subheadline: "God's Word over your health is the most powerful medicine there is.",
                 valueProps: [
                     "Replace every lie with what God says about you — daily",
                     "Build a mind nothing can shake. Not fear. Not doubt. Nothing.",
@@ -167,8 +167,8 @@ final class UserPreferencesTracker: ObservableObject {
 
         case .confidence:
             return PaywallCopy(
-                headline: "Build Unshakeable God-Confidence",
-                subheadline: "Discover your true identity and worth in Christ",
+                headline: "Walk Like You Know Who Made You",
+                subheadline: "Your identity in God is unshakable — start living like it.",
                 valueProps: [
                     "Replace every lie with what God says about you — daily",
                     "Build a mind nothing can shake. Not fear. Not doubt. Nothing.",
@@ -181,8 +181,8 @@ final class UserPreferencesTracker: ObservableObject {
 
         case .fear:
             return PaywallCopy(
-                headline: "Conquer Fear with Faith",
-                subheadline: "Replace fear with courage through God's promises",
+                headline: "You Were Not Made to Be Afraid",
+                subheadline: "God's Word spoken daily dismantles fear at the root.",
                 valueProps: [
                     "Replace every lie with what God says about you — daily",
                     "Build a mind nothing can shake. Not fear. Not doubt. Nothing.",
@@ -195,8 +195,8 @@ final class UserPreferencesTracker: ObservableObject {
 
         case .marriage:
             return PaywallCopy(
-                headline: "Strengthen Your Marriage with Faith",
-                subheadline: "Build a God-centered relationship that thrives",
+                headline: "A Marriage Built on the Word Does Not Break",
+                subheadline: "Speak God's promises over your relationship every day.",
                 valueProps: [
                     "Replace every lie with what God says about you — daily",
                     "Build a mind nothing can shake. Not fear. Not doubt. Nothing.",
@@ -209,8 +209,8 @@ final class UserPreferencesTracker: ObservableObject {
 
         case .love:
             return PaywallCopy(
-                headline: "Experience God's Perfect Love",
-                subheadline: "Open your heart to receive and give divine love",
+                headline: "Loved by God. Unshakable.",
+                subheadline: "When you know how God loves you, nothing else can define you.",
                 valueProps: [
                     "Replace every lie with what God says about you — daily",
                     "Build a mind nothing can shake. Not fear. Not doubt. Nothing.",
@@ -223,8 +223,8 @@ final class UserPreferencesTracker: ObservableObject {
 
         case .hope:
             return PaywallCopy(
-                headline: "Restore Hope, Renew Purpose",
-                subheadline: "Find renewed hope and direction in God's plan",
+                headline: "Your Future Is Written by God, Not Your Past",
+                subheadline: "Daily declarations to reset your mind on what God says is possible.",
                 valueProps: [
                     "Replace every lie with what God says about you — daily",
                     "Build a mind nothing can shake. Not fear. Not doubt. Nothing.",
@@ -237,8 +237,8 @@ final class UserPreferencesTracker: ObservableObject {
 
         case .general:
             return PaywallCopy(
-                headline: "Start Your Morning with Peace, Not Anxiety",
-                subheadline: "Join 100,000+ believers who took their peace back",
+                headline: "Become Unshakable — One Declaration at a Time",
+                subheadline: "Join 100,000+ believers who chose God's truth over their feelings.",
                 valueProps: [
                     "Replace every lie with what God says about you — daily",
                     "Build a mind nothing can shake. Not fear. Not doubt. Nothing.",
