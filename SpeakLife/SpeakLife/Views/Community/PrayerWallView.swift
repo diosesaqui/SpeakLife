@@ -353,131 +353,130 @@ struct PostPrayerView: View {
     }
 
     var body: some View {
-        ZStack {
-            // Background
-            Image(subscriptionStore.onboardingBGImage)
-                .resizable()
-                .scaledToFill()
-                .ignoresSafeArea()
+        // VStack is the layout root — background is visual-only via .background{}
+        // This gives the VStack a proper width context so padding works correctly.
+        VStack(spacing: 0) {
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 20) {
+                    // Handle bar
+                    Capsule()
+                        .fill(Color.white.opacity(0.25))
+                        .frame(width: 40, height: 4)
+                        .padding(.top, 12)
 
-            Color.black.opacity(0.62)
-                .ignoresSafeArea()
+                    Text("Share Your Prayer Request")
+                        .font(Font.custom("AppleSDGothicNeo-Bold", size: 20, relativeTo: .title2))
+                        .foregroundColor(.white)
 
-            // VStack: scroll content + button sit in one column.
-            // When keyboard appears the sheet lifts and the button stays visible.
-            VStack(spacing: 0) {
-                ScrollView(showsIndicators: false) {
-                    VStack(spacing: 20) {
-                        // Handle bar
-                        Capsule()
-                            .fill(Color.white.opacity(0.25))
-                            .frame(width: 40, height: 4)
-                            .padding(.top, 12)
+                    // Gender toggle
+                    HStack(spacing: 0) {
+                        genderPill("Sister", isSelected: isSister) { isSister = true }
+                        genderPill("Brother", isSelected: !isSister) { isSister = false }
+                    }
+                    .background(Color.white.opacity(0.1))
+                    .clipShape(RoundedRectangle(cornerRadius: 22))
+                    .frame(width: 200)
 
-                        Text("Share Your Prayer Request")
-                            .font(Font.custom("AppleSDGothicNeo-Bold", size: 20, relativeTo: .title2))
-                            .foregroundColor(.white)
-
-                        // Gender toggle
-                        HStack(spacing: 0) {
-                            genderPill("Sister", isSelected: isSister) { isSister = true }
-                            genderPill("Brother", isSelected: !isSister) { isSister = false }
-                        }
-                        .background(Color.white.opacity(0.1))
-                        .clipShape(RoundedRectangle(cornerRadius: 22))
-                        .frame(width: 200)
-
-                        // Text editor — .frame(height:) on TextEditor itself prevents expansion
-                        ZStack(alignment: .topLeading) {
-                            if text.isEmpty {
-                                Text("Share your prayer request…")
-                                    .font(Font.custom("AppleSDGothicNeo-Regular", size: 15, relativeTo: .body))
-                                    .foregroundColor(.white.opacity(0.35))
-                                    .padding(.top, 14)
-                                    .padding(.leading, 18)
-                                    .allowsHitTesting(false)
-                            }
-
-                            TextEditor(text: $text)
+                    // Text editor
+                    ZStack(alignment: .topLeading) {
+                        if text.isEmpty {
+                            Text("Share your prayer request…")
                                 .font(Font.custom("AppleSDGothicNeo-Regular", size: 15, relativeTo: .body))
-                                .foregroundColor(.white)
-                                .scrollContentBackground(.hidden)
-                                .background(Color.clear)
-                                .frame(height: 150)
-                                .onChange(of: text) { newValue in
-                                    if newValue.count > maxChars {
-                                        text = String(newValue.prefix(maxChars))
-                                    }
+                                .foregroundColor(.white.opacity(0.35))
+                                .padding(.top, 14)
+                                .padding(.leading, 18)
+                                .allowsHitTesting(false)
+                        }
+
+                        TextEditor(text: $text)
+                            .font(Font.custom("AppleSDGothicNeo-Regular", size: 15, relativeTo: .body))
+                            .foregroundColor(.white)
+                            .scrollContentBackground(.hidden)
+                            .background(Color.clear)
+                            .frame(height: 150)
+                            .onChange(of: text) { newValue in
+                                if newValue.count > maxChars {
+                                    text = String(newValue.prefix(maxChars))
                                 }
-                        }
-                        .frame(maxWidth: .infinity, minHeight: 150, maxHeight: 150)
-                        .background(Color.white.opacity(0.1))
-                        .clipShape(RoundedRectangle(cornerRadius: 14))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 14)
-                                .stroke(Color.white.opacity(0.2), lineWidth: 1)
-                        )
-
-                        // Counter + word-count hint
-                        HStack {
-                            if !text.isEmpty && wordCount < minWords {
-                                Text("\(minWords - wordCount) more word\(minWords - wordCount == 1 ? "" : "s") needed")
-                                    .font(Font.custom("AppleSDGothicNeo-Regular", size: 12, relativeTo: .caption))
-                                    .foregroundColor(.white.opacity(0.45))
                             }
-                            Spacer()
-                            let remaining = maxChars - text.count
-                            Text(remaining == maxChars ? "\(maxChars) characters" : "\(remaining) left")
-                                .font(Font.custom("AppleSDGothicNeo-Regular", size: 12, relativeTo: .caption))
-                                .foregroundColor(remaining <= 20 ? Color(hex: "F87171") : .white.opacity(0.4))
-                        }
-
-                        // Submission / error feedback
-                        if let msg = viewModel.submissionMessage {
-                            Text(msg)
-                                .font(Font.custom("AppleSDGothicNeo-Regular", size: 14, relativeTo: .body))
-                                .foregroundColor(Color(hex: "A78BFA"))
-                                .multilineTextAlignment(.center)
-                        }
-
-                        if let err = viewModel.errorMessage {
-                            Text(err)
-                                .font(Font.custom("AppleSDGothicNeo-Regular", size: 13, relativeTo: .caption))
-                                .foregroundColor(Color(hex: "F87171"))
-                                .multilineTextAlignment(.center)
-                        }
                     }
-                    .padding(.horizontal, 24)
-                    .padding(.bottom, 16)
-                }
-
-                // Post button — always below the scroll area, lifts with keyboard
-                Button {
-                    viewModel.addPost(text: text, isSister: isSister)
-                    if viewModel.errorMessage == nil {
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
-                            dismiss()
-                        }
-                    }
-                } label: {
-                    Group {
-                        if viewModel.isSubmitting {
-                            ProgressView().tint(.white)
-                        } else {
-                            Text("Post Request")
-                                .font(Font.custom("AppleSDGothicNeo-Bold", size: 16, relativeTo: .body))
-                                .foregroundColor(.white)
-                        }
-                    }
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 52)
-                    .background(canPost ? Color(hex: "7C3AED") : Color.gray.opacity(0.4))
+                    .frame(maxWidth: .infinity, minHeight: 150, maxHeight: 150)
+                    .background(Color.white.opacity(0.1))
                     .clipShape(RoundedRectangle(cornerRadius: 14))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 14)
+                            .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                    )
+
+                    // Counter + word-count hint
+                    HStack {
+                        if !text.isEmpty && wordCount < minWords {
+                            Text("\(minWords - wordCount) more word\(minWords - wordCount == 1 ? "" : "s") needed")
+                                .font(Font.custom("AppleSDGothicNeo-Regular", size: 12, relativeTo: .caption))
+                                .foregroundColor(.white.opacity(0.45))
+                        }
+                        Spacer()
+                        let remaining = maxChars - text.count
+                        Text(remaining == maxChars ? "\(maxChars) characters" : "\(remaining) left")
+                            .font(Font.custom("AppleSDGothicNeo-Regular", size: 12, relativeTo: .caption))
+                            .foregroundColor(remaining <= 20 ? Color(hex: "F87171") : .white.opacity(0.4))
+                    }
+
+                    // Submission / error feedback
+                    if let msg = viewModel.submissionMessage {
+                        Text(msg)
+                            .font(Font.custom("AppleSDGothicNeo-Regular", size: 14, relativeTo: .body))
+                            .foregroundColor(Color(hex: "A78BFA"))
+                            .multilineTextAlignment(.center)
+                    }
+
+                    if let err = viewModel.errorMessage {
+                        Text(err)
+                            .font(Font.custom("AppleSDGothicNeo-Regular", size: 13, relativeTo: .caption))
+                            .foregroundColor(Color(hex: "F87171"))
+                            .multilineTextAlignment(.center)
+                    }
                 }
-                .disabled(!canPost)
                 .padding(.horizontal, 24)
-                .padding(.top, 12)
-                .padding(.bottom, 28)
+                .padding(.bottom, 16)
+            }
+
+            // Post button — sits below scroll, lifts with keyboard naturally
+            Button {
+                viewModel.addPost(text: text, isSister: isSister)
+                if viewModel.errorMessage == nil {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+                        dismiss()
+                    }
+                }
+            } label: {
+                Group {
+                    if viewModel.isSubmitting {
+                        ProgressView().tint(.white)
+                    } else {
+                        Text("Post Request")
+                            .font(Font.custom("AppleSDGothicNeo-Bold", size: 16, relativeTo: .body))
+                            .foregroundColor(.white)
+                    }
+                }
+                .frame(maxWidth: .infinity)
+                .frame(height: 52)
+                .background(canPost ? Color(hex: "7C3AED") : Color.gray.opacity(0.4))
+                .clipShape(RoundedRectangle(cornerRadius: 14))
+            }
+            .disabled(!canPost)
+            .padding(.horizontal, 24)
+            .padding(.top, 12)
+            .padding(.bottom, 28)
+        }
+        .background {
+            ZStack {
+                Image(subscriptionStore.onboardingBGImage)
+                    .resizable()
+                    .scaledToFill()
+                    .ignoresSafeArea()
+                Color.black.opacity(0.62)
+                    .ignoresSafeArea()
             }
         }
     }
