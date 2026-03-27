@@ -425,9 +425,10 @@ struct PostPrayerView: View {
                             .foregroundColor(.white.opacity(0.45))
                     }
                     Spacer()
-                    Text("\(text.count)/\(maxChars)")
+                    let remaining = maxChars - text.count
+                    Text(remaining == maxChars ? "\(maxChars) characters" : "\(remaining) left")
                         .font(Font.custom("AppleSDGothicNeo-Regular", size: 12, relativeTo: .caption))
-                        .foregroundColor(text.count >= maxChars ? Color(hex: "F87171") : .white.opacity(0.4))
+                        .foregroundColor(remaining <= 20 ? Color(hex: "F87171") : .white.opacity(0.4))
                 }
 
                 // Submission feedback
