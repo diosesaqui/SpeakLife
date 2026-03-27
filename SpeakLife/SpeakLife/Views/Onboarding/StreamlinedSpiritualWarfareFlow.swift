@@ -244,7 +244,7 @@ struct PatternInterruptScreen: View {
                         .foregroundColor(.white)
                         .multilineTextAlignment(.center)
 
-                    Text("That's not weakness. That's a mind that hasn't been retrained. Yet.")
+                    Text("That's not a faith failure. That's an enemy who got there first.")
                         .font(.system(size: 20, weight: .medium))
                         .foregroundColor(.white.opacity(0.9))
                         .multilineTextAlignment(.center)
