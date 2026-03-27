@@ -23,15 +23,15 @@ struct PremiumView: View {
     var body: some View {
         GeometryReader { geometry in
             if !subscriptionStore.isPremium {
-                if appState.offerDiscount {
-                    OfferPageView(countdown: $countdown) { }
-                } else {
+//                if appState.offerDiscount {
+//                    OfferPageView(countdown: $countdown) { }
+//                } else {
 //                    if subscriptionStore.useEnhancedOnboarding {
 //                        OptimizedSubscriptionViewV2() { }
 //                    } else {
                     HighConversionPaywallView() { }
                   //  }
-                }
+           //     }
             } else {
                 NavigationView {
                     ZStack {

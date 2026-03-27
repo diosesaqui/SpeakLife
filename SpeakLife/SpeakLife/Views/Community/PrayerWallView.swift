@@ -32,12 +32,12 @@ struct PrayerWallView: View {
                     .scaledToFill()
                     .ignoresSafeArea()
 
-                Color.black.opacity(0.65)
+                Color.black.opacity(0.50)
                     .ignoresSafeArea()
 
                 VStack(spacing: 0) {
                     segmentedControl
-                        .padding(.horizontal, 16)
+                        .padding(.horizontal, 20)
                         .padding(.top, 8)
                         .padding(.bottom, 12)
 
@@ -168,7 +168,7 @@ struct PrayerWallView: View {
                     .padding(.vertical, 16)
                 }
             }
-            .padding(.horizontal, 16)
+            .padding(.horizontal, 24)
             .padding(.top, 4)
             .padding(.bottom, 30)
         }
