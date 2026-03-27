@@ -350,7 +350,7 @@ struct PostPrayerView: View {
                 .scaledToFill()
                 .ignoresSafeArea()
 
-            Color.black.opacity(0.78)
+            Color.black.opacity(0.62)
                 .ignoresSafeArea()
 
             VStack(spacing: 24) {
@@ -374,34 +374,36 @@ struct PostPrayerView: View {
                 .frame(width: 200)
 
                 // Text editor
-                ZStack(alignment: .topLeading) {
-                    if text.isEmpty {
-                        Text("Share your prayer request…")
-                            .font(Font.custom("AppleSDGothicNeo-Regular", size: 15, relativeTo: .body))
-                            .foregroundColor(.white.opacity(0.35))
-                            .padding(14)
-                    }
-
-                    TextEditor(text: $text)
-                        .font(Font.custom("AppleSDGothicNeo-Regular", size: 15, relativeTo: .body))
-                        .foregroundColor(.white)
-                        .scrollContentBackground(.hidden)
-                        .background(Color.clear)
-                        .padding(10)
-                        .onChange(of: text) { newValue in
-                            if newValue.count > maxChars {
-                                text = String(newValue.prefix(maxChars))
-                            }
+                GeometryReader { proxy in
+                    ZStack(alignment: .topLeading) {
+                        if text.isEmpty {
+                            Text("Share your prayer request…")
+                                .font(Font.custom("AppleSDGothicNeo-Regular", size: 15, relativeTo: .body))
+                                .foregroundColor(.white.opacity(0.35))
+                                .padding(14)
                         }
+                        
+                        TextEditor(text: $text)
+                            .font(Font.custom("AppleSDGothicNeo-Regular", size: 15, relativeTo: .body))
+                            .foregroundColor(.white)
+                            .scrollContentBackground(.hidden)
+                            .background(Color.clear)
+                            .padding(10)
+                            .onChange(of: text) { newValue in
+                                if newValue.count > maxChars {
+                                    text = String(newValue.prefix(maxChars))
+                                }
+                            }
+                    }
+                    .frame(width: proxy.size.width * 0.9, height: 200)
+                    .background(Color.white.opacity(0.1))
+                    .clipShape(RoundedRectangle(cornerRadius: 14))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 14)
+                            .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                    )
+                    .padding(.horizontal, 4)
                 }
-                .frame(height: 150)
-                .background(Color.white.opacity(0.1))
-                .clipShape(RoundedRectangle(cornerRadius: 14))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 14)
-                        .stroke(Color.white.opacity(0.2), lineWidth: 1)
-                )
-                .padding(.horizontal, 4)
 
                 // Character counter
                 HStack {
