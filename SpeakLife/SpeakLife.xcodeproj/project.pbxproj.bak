@@ -11,11 +11,6 @@
 		20F4D11E6F9CB2FA07540EE7 /* TrialExperienceService.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC73B2698B17B267C7A6F437 /* TrialExperienceService.swift */; };
 		2F740F6929D4017400E89E7F /* APIClientTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F740F6829D4017400E89E7F /* APIClientTests.swift */; };
 		4501F3912D8926CA00315902 /* TestimonyViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4501F3902D8926C500315902 /* TestimonyViewModel.swift */; };
-		3D80B3F476D5A3B34421898E /* PrayerWallPost.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0214EB35A67E7EF76115C40 /* PrayerWallPost.swift */; };
-		CF8E572E5459A038EEE73B3A /* PrayerWallViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BA7EE898DF248C4EB6EDEB2 /* PrayerWallViewModel.swift */; };
-		503EFF467A63F444F830D175 /* PrayerWallView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E14CE42195E228734ACB9A2C /* PrayerWallView.swift */; };
-		C1A98C89749C94FF718F1980 /* AppleSignInPromptView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35B4B5074F8CB5AB1E2EA0DC /* AppleSignInPromptView.swift */; };
-		E0EA353D8043F358064AADB7 /* AppleSignInService.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC27319C7422AFA8C439B08F /* AppleSignInService.swift */; };
 		450720DB2BAFFB4A0029EE2B /* TimerViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 450720DA2BAFFB4A0029EE2B /* TimerViewModelTests.swift */; };
 		450901B22F630925008704F9 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 450901B12F630925008704F9 /* GoogleService-Info.plist */; };
 		450901C12F640000008704F9 /* EmailConfig.plist in Resources */ = {isa = PBXBuildFile; fileRef = 450901C02F640000008704F9 /* EmailConfig.plist */; };
@@ -344,7 +339,13 @@
 		F3F466B4CB267BFBE4FD8CC8 /* WldehBibleAPIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D920701A13775F49180D845 /* WldehBibleAPIService.swift */; };
 		FCB7A8468DAA92844336D893 /* CancelInterventionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA6F23A3327C444669DC03A5 /* CancelInterventionView.swift */; };
 		RC00000001294E382700CD2103 /* RevenueCatManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = RC00000002294E382700CD2103 /* RevenueCatManager.swift */; };
-/* End PBXBuildFile section */
+
+		40A8CF1B2A3B453FB9262211 /* AIVerseService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CAB9EB3C4D12487EA5CE2D87 /* AIVerseService.swift */; };
+		CBD3CBD21F57488B88A684B9 /* AskViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66DD52F153424690B4AFC830 /* AskViewModel.swift */; };
+		E01A18B72FC2499B944E600A /* AskTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20C138E367E34F4AB3A7B120 /* AskTabView.swift */; };
+		DD8EAB46A2D64E41A354B836 /* TopicChipGridView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D6DAE2F956C423DBAD73F7F /* TopicChipGridView.swift */; };
+		9088ED3BB77D44829C8254E6 /* VerseCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B101C9D5472D49569FF82575 /* VerseCardView.swift */; };
+		/* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
 		2F740F6229D4014500E89E7F /* PBXContainerItemProxy */ = {
@@ -703,12 +704,13 @@
 		DC73B2698B17B267C7A6F437 /* TrialExperienceService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TrialExperienceService.swift; sourceTree = "<group>"; };
 		FA6F23A3327C444669DC03A5 /* CancelInterventionView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CancelInterventionView.swift; sourceTree = "<group>"; };
 		RC00000002294E382700CD2103 /* RevenueCatManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RevenueCatManager.swift; sourceTree = "<group>"; };
-		E14CE42195E228734ACB9A2C /* PrayerWallView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrayerWallView.swift; sourceTree = "<group>"; };
-		B0214EB35A67E7EF76115C40 /* PrayerWallPost.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrayerWallPost.swift; sourceTree = "<group>"; };
-		6BA7EE898DF248C4EB6EDEB2 /* PrayerWallViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrayerWallViewModel.swift; sourceTree = "<group>"; };
-		35B4B5074F8CB5AB1E2EA0DC /* AppleSignInPromptView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleSignInPromptView.swift; sourceTree = "<group>"; };
-		DC27319C7422AFA8C439B08F /* AppleSignInService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleSignInService.swift; sourceTree = "<group>"; };
-/* End PBXFileReference section */
+
+		CAB9EB3C4D12487EA5CE2D87 /* AIVerseService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIVerseService.swift; sourceTree = "<group>"; };
+		66DD52F153424690B4AFC830 /* AskViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AskViewModel.swift; sourceTree = "<group>"; };
+		20C138E367E34F4AB3A7B120 /* AskTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AskTabView.swift; sourceTree = "<group>"; };
+		7D6DAE2F956C423DBAD73F7F /* TopicChipGridView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TopicChipGridView.swift; sourceTree = "<group>"; };
+		B101C9D5472D49569FF82575 /* VerseCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VerseCardView.swift; sourceTree = "<group>"; };
+		/* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		45B5A8082DD30B7D006DE6AA /* SpeakLifeQuiz */ = {
@@ -1109,6 +1111,7 @@
 			isa = PBXGroup;
 			children = (
 				45567D572F29CA2700382072 /* BibleViewModel.swift */,
+				66DD52F153424690B4AFC830 /* AskViewModel.swift */,
 				451AECEA2E4EE7B100C1490E /* BootcampViewModel.swift */,
 				4597E2452E419DB4009D6C66 /* CoreDataDeclarationViewModel.swift */,
 			);
@@ -1158,18 +1161,6 @@
 				45A4A3D52D8917D000DFCEB7 /* TestimonyView.swift */,
 			);
 			path = TestimonyView;
-			sourceTree = "<group>";
-		};
-		B12A5F08994181473DD5B48A /* Community */ = {
-			isa = PBXGroup;
-			children = (
-				B0214EB35A67E7EF76115C40 /* PrayerWallPost.swift */,
-				6BA7EE898DF248C4EB6EDEB2 /* PrayerWallViewModel.swift */,
-				E14CE42195E228734ACB9A2C /* PrayerWallView.swift */,
-				35B4B5074F8CB5AB1E2EA0DC /* AppleSignInPromptView.swift */,
-				DC27319C7422AFA8C439B08F /* AppleSignInService.swift */,
-			);
-			path = Community;
 			sourceTree = "<group>";
 		};
 		45B02FCF2E57A48D00D12033 /* EmailMarketing */ = {
@@ -1339,11 +1330,10 @@
 				7AA8709728DACCB700134ADB /* Declaration View */,
 				7AF18C942A0CC518005A6E31 /* Devotionals */,
 				4582A9542CE690560077F555 /* AudioDeclarationView */,
-
-				B12A5F08994181473DD5B48A /* Community */,
 				45A4A3D42D89179C00DFCEB7 /* TestimonyView */,
 				7AA870A328DACCB700134ADB /* ProfileView */,
 				452F6ADD2E87CD8500A27856 /* AI */,
+				CD4EA0CA54784CFE89FB7A82 /* Ask */,
 				457CD3A62E8508F300F435EC /* Common */,
 				45B5A8082DD30B7D006DE6AA /* SpeakLifeQuiz */,
 				456885252B390FF4007B1EBB /* WarriorView.swift */,
@@ -1378,6 +1368,7 @@
 				45BC74622EDA4CB5003AC964 /* PaywallTriggerManager.swift */,
 				45BC74642EDA53FF003AC964 /* UserPreferencesTracker.swift */,
 				452F6AD22E87CD3F00A27856 /* ML */,
+				A7B5DC8CE7F44DE7BC02F1A0 /* AI */,
 				45FF71902E64293D0048C523 /* Analytics */,
 				45B02FCF2E57A48D00D12033 /* EmailMarketing */,
 				4575C9472E46F25B007C14F3 /* Widget */,
@@ -1723,7 +1714,27 @@
 			name = PerformanceOptimization;
 			sourceTree = "<group>";
 		};
-/* End PBXGroup section */
+
+		CD4EA0CA54784CFE89FB7A82 /* Ask */ = {
+			isa = PBXGroup;
+			children = (
+				20C138E367E34F4AB3A7B120 /* AskTabView.swift */,
+				7D6DAE2F956C423DBAD73F7F /* TopicChipGridView.swift */,
+				B101C9D5472D49569FF82575 /* VerseCardView.swift */,
+			);
+			path = Ask;
+			sourceTree = "<group>";
+		};
+
+		A7B5DC8CE7F44DE7BC02F1A0 /* AI */ = {
+			isa = PBXGroup;
+			children = (
+				CAB9EB3C4D12487EA5CE2D87 /* AIVerseService.swift */,
+			);
+			path = AI;
+			sourceTree = "<group>";
+		};
+		/* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
 		2F740F5D29D4014400E89E7F /* SpeakLifeTests */ = {
@@ -2006,11 +2017,6 @@
 				7AA870D028DACCB700134ADB /* ReminderView.swift in Sources */,
 				4597E2222E4146C9009D6C66 /* EntryActionToolbar.swift in Sources */,
 				4501F3912D8926CA00315902 /* TestimonyViewModel.swift in Sources */,
-				3D80B3F476D5A3B34421898E /* PrayerWallPost.swift in Sources */,
-				CF8E572E5459A038EEE73B3A /* PrayerWallViewModel.swift in Sources */,
-				503EFF467A63F444F830D175 /* PrayerWallView.swift in Sources */,
-				C1A98C89749C94FF718F1980 /* AppleSignInPromptView.swift in Sources */,
-				E0EA353D8043F358064AADB7 /* AppleSignInService.swift in Sources */,
 				7AF18C962A0CC532005A6E31 /* DevotionalView.swift in Sources */,
 				7AA870D828DACCB700134ADB /* CategoryChooserView.swift in Sources */,
 				457CD39D2E8503C800F435EC /* AudioListItemView.swift in Sources */,
@@ -2405,7 +2411,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = SpeakLife/SpeakLife.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 976;
+				CURRENT_PROJECT_VERSION = 973;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_ASSET_PATHS = "\"SpeakLife/Preview Content\"";
 				DEVELOPMENT_TEAM = G7398P2856;
@@ -2426,7 +2432,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 3.1.79;
+				MARKETING_VERSION = 3.1.77;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Franchiz.SpeakLife;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -2447,7 +2453,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = SpeakLife/SpeakLife.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 976;
+				CURRENT_PROJECT_VERSION = 973;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_ASSET_PATHS = "\"SpeakLife/Preview Content\"";
 				DEVELOPMENT_TEAM = G7398P2856;
@@ -2468,7 +2474,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 3.1.79;
+				MARKETING_VERSION = 3.1.77;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Franchiz.SpeakLife;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
