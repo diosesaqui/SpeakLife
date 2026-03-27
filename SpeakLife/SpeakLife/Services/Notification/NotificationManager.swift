@@ -249,7 +249,11 @@ final class NotificationManager: NSObject {
             return }
         
         for (idx, declaration) in declarations.enumerated() {
-            let id = UUID().uuidString
+            // Deterministic ID: same date+time slot always produces the same ID.
+            // This prevents duplicate notifications when registerNotifications() is
+            // called more than once (scene phase changes, resync timer, settings update).
+            // UNUserNotificationCenter.add() silently replaces an existing request
+            // with the same identifier, so stacking is impossible.
             var body = declaration.body
             if declaration.book.count > 1 {
                 body += " ~ " + declaration.book
@@ -299,6 +303,11 @@ final class NotificationManager: NSObject {
             dateComponents.year = finalComponents.year
             dateComponents.month = finalComponents.month
             dateComponents.day = finalComponents.day
+
+            // Deterministic ID: year-month-day-hour-minute
+            // Same slot on the same day always maps to the same ID, so calling
+            // registerNotifications() multiple times replaces rather than stacks.
+            let id = "verse_\(finalComponents.year ?? 0)-\(finalComponents.month ?? 0)-\(finalComponents.day ?? 0)_\(finalComponents.hour ?? 0):\(finalComponents.minute ?? 0)"
             
             print("   📆 Final scheduled date/time: \(formatter.string(from: targetDate))")
             
