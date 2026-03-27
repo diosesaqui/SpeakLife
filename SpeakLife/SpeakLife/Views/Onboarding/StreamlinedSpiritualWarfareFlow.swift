@@ -10,19 +10,20 @@ import FirebaseAnalytics
 import UserNotifications
 
 // MARK: - New Faith Growth Onboarding (8 slides + burst/subscription)
-// Ordering: personal selection early (slide 3) to capture investment before product pitch
+// Ordering: pain-first empathy hook → personal selection (slot 2) to capture investment ASAP
 enum StreamlinedSpiritualTab: Int {
-    case patternInterrupt = 0     // Your Faith Grows Where Your Attention Goes
-    case authorityAnchor = 1      // Jesus Said It First (Mark 4:24)
-    case convictionGap = 2        // Most Believers Want Strong Faith
-    case personalSelection = 3    // What Do You Need Most? (early = higher investment)
-    case mindRenewalBridge = 4    // Transformation Starts in the Mind
-    case introduceSystem = 5      // Train Your Faith Daily
-    case outcomeVisualization = 6 // Imagine Responding Like Jesus
-    case prePaywallClose = 7      // Start Increasing Today
-    case subscription = 8
-    case notification = 9
-    case rating = 10
+    case empathyHook = 0          // You believe. You pray. But something still feels stuck.
+    case personalSelection = 1    // What Do You Need Most? (moved to slot 2 for max investment)
+    case patternInterrupt = 2     // Your Faith Grows Where Your Attention Goes
+    case authorityAnchor = 3      // Jesus Said It First (Mark 4:24)
+    case convictionGap = 4        // Most Believers Want Strong Faith
+    case mindRenewalBridge = 5    // Transformation Starts in the Mind
+    case introduceSystem = 6      // Train Your Faith Daily
+    case outcomeVisualization = 7 // Imagine Responding Like Jesus
+    case prePaywallClose = 8      // Start Increasing Today
+    case subscription = 9
+    case notification = 10
+    case rating = 11
 }
 
 // MARK: - Main View
@@ -33,7 +34,7 @@ struct StreamlinedSpiritualWarfareFlow: View {
     @EnvironmentObject var timerViewModel: TimerViewModel
     @Environment(\.colorScheme) var colorScheme
 
-    @State var selection: StreamlinedSpiritualTab = .patternInterrupt
+    @State var selection: StreamlinedSpiritualTab = .empathyHook
     @State private var selectedCategories: Set<DeclarationCategory> = []
 
     let impactMed = UIImpactFeedbackGenerator(style: .soft)
@@ -42,25 +43,13 @@ struct StreamlinedSpiritualWarfareFlow: View {
         GeometryReader { geometry in
             TabView(selection: $selection) {
 
-                // Slide 1: Pattern Interrupt
-                PatternInterruptScreen(size: geometry.size) {
+                // Slide 1: Empathy Hook — pain recognition, meet them where they are
+                EmpathyHookScreen(size: geometry.size) {
                     advance()
                 }
-                .tag(StreamlinedSpiritualTab.patternInterrupt)
+                .tag(StreamlinedSpiritualTab.empathyHook)
 
-                // Slide 2: Authority Anchor
-                AuthorityAnchorScreen(size: geometry.size) {
-                    advance()
-                }
-                .tag(StreamlinedSpiritualTab.authorityAnchor)
-
-                // Slide 3: Conviction Gap
-                ConvictionGapScreen(size: geometry.size) {
-                    advance()
-                }
-                .tag(StreamlinedSpiritualTab.convictionGap)
-
-                // Slide 4: Personal Selection (early to build investment)
+                // Slide 2: Personal Selection (moved early — user is already feeling seen)
                 PersonalSelectionScreen(
                     size: geometry.size,
                     selectedCategories: $selectedCategories
@@ -70,13 +59,31 @@ struct StreamlinedSpiritualWarfareFlow: View {
                 }
                 .tag(StreamlinedSpiritualTab.personalSelection)
 
-                // Slide 5: Mind Renewal Bridge
+                // Slide 3: Pattern Interrupt
+                PatternInterruptScreen(size: geometry.size) {
+                    advance()
+                }
+                .tag(StreamlinedSpiritualTab.patternInterrupt)
+
+                // Slide 4: Authority Anchor
+                AuthorityAnchorScreen(size: geometry.size) {
+                    advance()
+                }
+                .tag(StreamlinedSpiritualTab.authorityAnchor)
+
+                // Slide 5: Conviction Gap
+                ConvictionGapScreen(size: geometry.size) {
+                    advance()
+                }
+                .tag(StreamlinedSpiritualTab.convictionGap)
+
+                // Slide 6: Mind Renewal Bridge
                 MindRenewalBridgeScreen(size: geometry.size) {
                     advance()
                 }
                 .tag(StreamlinedSpiritualTab.mindRenewalBridge)
 
-                // Slide 6: Introduce System
+                // Slide 7: Introduce System
                 IntroduceSystemScreen(size: geometry.size) {
                     advance()
                 }
@@ -126,13 +133,15 @@ struct StreamlinedSpiritualWarfareFlow: View {
     private func advance() {
         withAnimation {
             switch selection {
+            case .empathyHook:
+                selection = .personalSelection
+            case .personalSelection:
+                selection = .patternInterrupt
             case .patternInterrupt:
                 selection = .authorityAnchor
             case .authorityAnchor:
                 selection = .convictionGap
             case .convictionGap:
-                selection = .personalSelection
-            case .personalSelection:
                 selection = .mindRenewalBridge
             case .mindRenewalBridge:
                 selection = .introduceSystem
@@ -913,6 +922,103 @@ struct CategorySelectionButton: View {
         }
         .scaleEffect(isSelected ? 1.02 : 1.0)
         .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isSelected)
+    }
+}
+
+// MARK: - Slide 0: Empathy Hook (Pain Recognition)
+// Lead with empathy — meet them where they are before teaching them anything
+struct EmpathyHookScreen: View {
+    let size: CGSize
+    let onContinue: () -> Void
+    @State private var headlineOpacity = 0.0
+    @State private var subOpacity = 0.0
+    @State private var buttonOpacity = 0.0
+    @EnvironmentObject var subscriptionStore: SubscriptionStore
+
+    var body: some View {
+        ZStack {
+            Image(subscriptionStore.onboardingBGImage)
+                .resizable()
+                .scaledToFill()
+                .ignoresSafeArea()
+                .overlay(Color.black.opacity(0.55))
+                .frame(width: size.width, height: size.height)
+
+            VStack(spacing: 0) {
+                Spacer()
+
+                VStack(spacing: 36) {
+                    // Pain hook — staggered lines land harder
+                    VStack(spacing: 12) {
+                        Text("You believe.")
+                            .font(.system(size: 34, weight: .bold, design: .rounded))
+                            .foregroundColor(.white)
+
+                        Text("You pray.")
+                            .font(.system(size: 34, weight: .bold, design: .rounded))
+                            .foregroundColor(.white)
+
+                        Text("But something still\nfeels stuck.")
+                            .font(.system(size: 34, weight: .bold, design: .rounded))
+                            .foregroundColor(.white)
+                            .multilineTextAlignment(.center)
+                    }
+                    .opacity(headlineOpacity)
+                    .offset(y: headlineOpacity == 1 ? 0 : 20)
+
+                    Rectangle()
+                        .fill(Color.white.opacity(0.25))
+                        .frame(width: 50, height: 1)
+                        .opacity(subOpacity)
+
+                    // Empathy reframe — before the teaching
+                    VStack(spacing: 8) {
+                        Text("You're not weak.")
+                            .font(.system(size: 19, weight: .medium, design: .rounded))
+                            .foregroundColor(.white.opacity(0.9))
+
+                        Text("You're not failing.")
+                            .font(.system(size: 19, weight: .medium, design: .rounded))
+                            .foregroundColor(.white.opacity(0.9))
+
+                        Text("You're just missing one thing.")
+                            .font(.system(size: 20, weight: .semibold, design: .rounded))
+                            .foregroundColor(.white)
+                    }
+                    .opacity(subOpacity)
+                    .offset(y: subOpacity == 1 ? 0 : 16)
+                }
+                .padding(.horizontal, 32)
+
+                Spacer()
+
+                Button(action: {
+                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                    onContinue()
+                }) {
+                    Text("What is it?")
+                        .font(.system(size: 17, weight: .semibold, design: .rounded))
+                        .foregroundColor(.black)
+                        .frame(width: size.width * 0.85, height: 54)
+                        .background(Capsule().fill(Color.white))
+                }
+                .opacity(buttonOpacity)
+                .padding(.bottom, 60)
+            }
+        }
+        .frame(width: size.width)
+        .onAppear {
+            withAnimation(.easeOut(duration: 0.8)) {
+                headlineOpacity = 1
+            }
+            withAnimation(.easeOut(duration: 0.7).delay(0.6)) {
+                subOpacity = 1
+            }
+            withAnimation(.easeOut(duration: 0.5).delay(1.1)) {
+                buttonOpacity = 1
+            }
+            Analytics.logEvent("EmpathyHookScreenShown", parameters: nil)
+        }
     }
 }
 
