@@ -169,7 +169,11 @@ exports.onNewPrayerPost = onDocumentCreated(
 
     // Include posterDeviceId so the iOS app can suppress the notification
     // for the person who just posted (they don't need to be notified of their own request).
-    await sendToTopicWithData(NEW_POST_TOPIC, title, body, { posterDeviceId: post.deviceId || '' });
+    // notificationType lets the app skip tab navigation for prayer wall pushes.
+    await sendToTopicWithData(NEW_POST_TOPIC, title, body, {
+      posterDeviceId: post.deviceId || '',
+      notificationType: 'prayerWall',
+    });
 
     // ── Update meta doc ──────────────────────────────────────────────────────
     sentTimestamps.push(now);
