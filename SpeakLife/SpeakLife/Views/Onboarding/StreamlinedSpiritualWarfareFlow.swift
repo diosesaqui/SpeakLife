@@ -239,12 +239,12 @@ struct PatternInterruptScreen: View {
                     .frame(height: size.height * 0.25)
 
                 VStack(spacing: 24) {
-                    Text("If anxiety hits before your feet touch the floor -")
+                    Text("You Pray. You Believe. And Still — Fear Shows Up First.")
                         .font(.system(size: 28, weight: .bold))
                         .foregroundColor(.white)
                         .multilineTextAlignment(.center)
 
-                    Text("your words have the power to change that.")
+                    Text("That's not weakness. That's a mind that hasn't been retrained. Yet.")
                         .font(.system(size: 20, weight: .medium))
                         .foregroundColor(.white.opacity(0.9))
                         .multilineTextAlignment(.center)
@@ -255,7 +255,7 @@ struct PatternInterruptScreen: View {
                 Spacer()
 
                 Button(action: onContinue) {
-                    Text("That's Me")
+                    Text("That's Exactly Where I Am")
                         .font(.system(size: 17, weight: .semibold))
                         .foregroundColor(.white)
                         .frame(width: size.width * 0.85, height: 50)
@@ -297,7 +297,7 @@ struct AuthorityAnchorScreen: View {
                     .frame(height: size.height * 0.20)
 
                 VStack(spacing: 30) {
-                    Text("God didn't design you to live in fear.")
+                    Text("Your Mind Is the Battlefield. And the Enemy Knows It.")
                         .font(.system(size: 28, weight: .bold))
                         .foregroundColor(.white)
                         .multilineTextAlignment(.center)
@@ -325,7 +325,7 @@ struct AuthorityAnchorScreen: View {
                 Spacer()
 
                 Button(action: onContinue) {
-                    Text("I Receive That")
+                    Text("I'm Ready to Fight Back")
                         .font(.system(size: 17, weight: .semibold))
                         .foregroundColor(.white)
                         .frame(width: size.width * 0.85, height: 50)
@@ -397,7 +397,7 @@ struct ConvictionGapScreen: View {
                 Spacer()
 
                 Button(action: onContinue) {
-                    Text("I'm Ready to Change That")
+                    Text("I Want What's Already Mine")
                         .font(.system(size: 17, weight: .semibold))
                         .foregroundColor(.white)
                         .frame(width: size.width * 0.85, height: 50)
@@ -467,7 +467,7 @@ struct MindRenewalBridgeScreen: View {
                 Spacer()
 
                 Button(action: onContinue) {
-                    Text("Keep Going")
+                    Text("Teach Me to Speak to My Mountains")
                         .font(.system(size: 17, weight: .semibold))
                         .foregroundColor(.white)
                         .frame(width: size.width * 0.85, height: 50)
@@ -493,13 +493,14 @@ struct IntroduceSystemScreen: View {
     let size: CGSize
     let onContinue: () -> Void
     @State private var contentOpacity = 0.0
-    @State private var featuresVisible: [Bool] = [false, false, false]
+    @State private var featuresVisible: [Bool] = [false, false, false, false]
     @EnvironmentObject var subscriptionStore: SubscriptionStore
 
     let features = [
-        ("7", "Scripture Declarations a Day"),
-        ("🎧", "Christ-Centered Audio Reinforcement"),
-        ("💪", "Daily Victory Conditioning")
+        ("🛡️", "Protection — speak God's shield over your life and family"),
+        ("❤️", "Health — declare healing over your body. Daily."),
+        ("☮️", "Peace — silence anxiety with the Word in under 5 minutes"),
+        ("✨", "Provision — speak abundance and breakthrough over your finances")
     ]
 
     var body: some View {
@@ -516,7 +517,7 @@ struct IntroduceSystemScreen: View {
                     .frame(height: size.height * 0.18)
 
                 VStack(spacing: 32) {
-                    Text("Train Your Faith Daily.")
+                    Text("That's Exactly What SpeakLife Is Built For.")
                         .font(.system(size: 26, weight: .bold))
                         .foregroundColor(.white)
                         .multilineTextAlignment(.center)
@@ -548,7 +549,7 @@ struct IntroduceSystemScreen: View {
                         }
                     }
 
-                    Text("Faith grows with repetition.")
+                    Text("Speak it. Believe it. Become it.")
                         .font(.system(size: 16))
                         .foregroundColor(.white.opacity(0.7))
                         .multilineTextAlignment(.center)
@@ -559,7 +560,7 @@ struct IntroduceSystemScreen: View {
                 Spacer()
 
                 Button(action: onContinue) {
-                    Text("This Is Powerful")
+                    Text("This Is What I Need")
                         .font(.system(size: 17, weight: .semibold))
                         .foregroundColor(.white)
                         .frame(width: size.width * 0.85, height: 50)
@@ -579,7 +580,7 @@ struct IntroduceSystemScreen: View {
 
             // Animate features appearing
             for i in 0..<features.count {
-                DispatchQueue.main.asyncAfter(deadline: .now() + Double(i) * 0.3 + 0.5) {
+                DispatchQueue.main.asyncAfter(deadline: .now() + Double(i) * 0.25 + 0.5) {
                     withAnimation(.spring()) {
                         featuresVisible[i] = true
                     }
@@ -597,7 +598,7 @@ struct OutcomeVisualizationScreen: View {
     @State private var outcomesVisible: [Bool] = [false, false, false]
     @EnvironmentObject var subscriptionStore: SubscriptionStore
 
-    let outcomes = ["Anxiety shrinks.", "Boldness grows.", "Peace becomes instinct."]
+    let outcomes = ["Anxiety doesn't own your mornings anymore.", "Your body, your peace, your finances — aligned with what God says.", "You don't just believe you're protected. You walk like it."]
 
     var body: some View {
         ZStack {
@@ -631,7 +632,7 @@ struct OutcomeVisualizationScreen: View {
 
                         if outcomesVisible[2] {
                             VStack(spacing: 12) {
-                                Text("Because truth is already in you.")
+                                Text("Feet hit the floor. No pit in your stomach. Just knowing whose you are.")
                                     .font(.system(size: 17))
                                     .foregroundColor(.white.opacity(0.8))
                                     .multilineTextAlignment(.center)
@@ -646,7 +647,7 @@ struct OutcomeVisualizationScreen: View {
                 Spacer()
 
                 Button(action: onContinue) {
-                    Text("I'm Ready")
+                    Text("I Want to Wake Up Like That")
                         .font(.system(size: 17, weight: .semibold))
                         .foregroundColor(.white)
                         .frame(width: size.width * 0.85, height: 50)
@@ -720,7 +721,7 @@ struct PrePaywallCloseScreen: View {
                 Spacer()
                 
                 Button(action: onContinue) {
-                    Text("Take My Peace Back")
+                    Text("Become Unshakable →")
                         .font(.system(size: 17, weight: .semibold))
                         .foregroundColor(.white)
                         .frame(width: size.width * 0.85, height: 50)
