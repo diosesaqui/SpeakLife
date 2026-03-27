@@ -27,7 +27,7 @@ final class AppleSignInService: NSObject, ObservableObject {
     @Published var errorMessage: String?
 
     // MARK: - Private
-    private var currentNonce: String?
+    private nonisolated(unsafe) var currentNonce: String?
     private var presentationWindow: ASPresentationAnchor?
     private let db = Firestore.firestore()
 
