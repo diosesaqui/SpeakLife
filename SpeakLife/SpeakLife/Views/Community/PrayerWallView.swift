@@ -48,7 +48,11 @@ struct PrayerWallView: View {
                             .scaleEffect(1.4)
                         Spacer()
                     } else if currentPosts.isEmpty {
-                        emptyState
+                        ScrollView {
+                            emptyState
+                                .frame(maxWidth: .infinity)
+                        }
+                        .refreshable { viewModel.refresh() }
                     } else {
                         postList
                     }
