@@ -598,7 +598,7 @@ struct OutcomeVisualizationScreen: View {
     @State private var outcomesVisible: [Bool] = [false, false, false]
     @EnvironmentObject var subscriptionStore: SubscriptionStore
 
-    let outcomes = ["Anxiety doesn't own your mornings anymore.", "Your body, your peace, your finances — aligned with what God says.", "Fear stops making your decisions for you."]
+    let outcomes = ["Anxiety doesn't own your mornings anymore.", "Your body, your peace, your finances — aligned with what God says.", "A renewed mind. An unshakable life. — Romans 12:2"]
 
     var body: some View {
         ZStack {
@@ -630,15 +630,7 @@ struct OutcomeVisualizationScreen: View {
                             }
                         }
 
-                        if outcomesVisible[2] {
-                            VStack(spacing: 12) {
-                                Text("Feet hit the floor. No pit in your stomach. Just knowing whose you are.")
-                                    .font(.system(size: 17))
-                                    .foregroundColor(.white.opacity(0.8))
-                                    .multilineTextAlignment(.center)
-                                    .transition(.scale.combined(with: .opacity))
-                            }
-                        }
+
                     }
                 }
                 .padding(.horizontal, 30)
