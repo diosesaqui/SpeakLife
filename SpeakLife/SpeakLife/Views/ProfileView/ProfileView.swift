@@ -28,6 +28,7 @@ struct ProfileView: View {
     @EnvironmentObject var declarationStore: DeclarationViewModel
     //@EnvironmentObject var streakViewModel: EnhancedStreakViewModel
     @EnvironmentObject var streakViewModel: StreakViewModel
+    @EnvironmentObject var enhancedStreakViewModel: EnhancedStreakViewModel
     @EnvironmentObject var appState: AppState
     @EnvironmentObject var devotionalViewModel: DevotionalViewModel
     @EnvironmentObject var subscriptionStore: SubscriptionStore
@@ -42,6 +43,7 @@ struct ProfileView: View {
     @State var isPresentingContentView = false
     @State var isPresentingPrayerRequestView = false
     @State var isPresentingBottomSheet = false
+    @State private var showStreakStats = false
     @State private var showShareSheet = false
     @State private var showSpiritualGrowth = false
     @State private var showSupportIDCopied = false
@@ -94,9 +96,7 @@ struct ProfileView: View {
                     
                     Section(header: Text("Yours").font(.caption)) {
                         AbbasLoveRow
-                       // createYourOwnRow  // Moved Create Your Own here (always visible)
-                       // if appState.onBoardingTest {
-                       // streakRow
+                        streakStatsRow
                         dailyBurstStatsRow
                             quizRow
                            prayerRow
@@ -356,6 +356,65 @@ struct ProfileView: View {
     }
     
     @MainActor
+    // MARK: - Streak Stats + Badges Row
+
+    @MainActor
+    private var streakStatsRow: some View {
+        let stats = enhancedStreakViewModel.streakStats
+        let earnedBadges = enhancedStreakViewModel.badgeManager.allBadges.filter { $0.isUnlocked }
+
+        return HStack(spacing: 12) {
+            Image(systemName: "flame.fill")
+                .foregroundColor(.orange)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Streak & Badges")
+                    .font(.body)
+
+                HStack(spacing: 10) {
+                    Label("\(stats.currentStreak) day streak", systemImage: "bolt.fill")
+                        .font(.caption)
+                        .foregroundColor(.orange)
+
+                    if earnedBadges.count > 0 {
+                        Label("\(earnedBadges.count) badge\(earnedBadges.count == 1 ? "" : "s")", systemImage: "rosette")
+                            .font(.caption)
+                            .foregroundColor(.purple)
+                    }
+                }
+            }
+
+            Spacer()
+
+            // Longest streak preview
+            if stats.longestStreak > 0 {
+                VStack(spacing: 1) {
+                    Text("\(stats.longestStreak)")
+                        .font(.headline)
+                        .foregroundColor(.white)
+                    Text("best")
+                        .font(.system(size: 9))
+                        .foregroundColor(.gray)
+                }
+            }
+
+            Image(systemName: "chevron.right")
+                .font(.caption)
+                .foregroundColor(.gray)
+        }
+        .contentShape(Rectangle())
+        .onTapGesture {
+            showStreakStats = true
+            Analytics.logEvent("Profile_StreakStats_Tapped", parameters: [
+                "current_streak": stats.currentStreak,
+                "badges_earned": earnedBadges.count
+            ])
+        }
+        .sheet(isPresented: $showStreakStats) {
+            StreakStatsProfileSheet(viewModel: enhancedStreakViewModel)
+        }
+    }
+
     private var streakRow: some View {
         ZStack {
             Button("") {
