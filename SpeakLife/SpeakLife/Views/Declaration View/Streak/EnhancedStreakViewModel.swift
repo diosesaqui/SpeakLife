@@ -1237,48 +1237,24 @@ final class EnhancedStreakViewModel: ObservableObject {
     }
     
     func scheduleEveningCheckIn() {
-        // Called during the day to schedule evening reminder based on current progress
-        let completedActivities = todayChecklist.tasks.filter { $0.isCompleted }.map { $0.title }
-        let remainingActivities = todayChecklist.tasks.filter { !$0.isCompleted }.map { $0.title }
-        let userName = getUserName()
-
+        // Cancel all old daily system notifications (no longer sent daily)
         NotificationManager.shared.notificationCenter.removePendingNotificationRequests(
-            withIdentifiers: ["FallbackEveningNotification", "streak_crushed_it"]
+            withIdentifiers: ["FallbackEveningNotification", "streak_crushed_it",
+                              "PersonalizedEveningNotification"]
         )
 
-        // Fix 6: If all tasks done → send a "you crushed it" notification
-        if remainingActivities.isEmpty && !completedActivities.isEmpty {
-            let content = UNMutableNotificationContent()
-            content.title = "Day \(streakStats.currentStreak) complete 🔥"
-            content.body = streakStats.currentStreak >= 7
-                ? "You're on a \(streakStats.currentStreak)-day streak. God is working through your consistency."
-                : "You showed up today. That matters more than you know. See you tomorrow."
-            content.sound = .default
-            content.userInfo = ["notificationType": "streakComplete"]
+        // Only send the streak-at-risk notification — and only when user has an
+        // active streak AND hasn't finished today's tasks.
+        let remainingActivities = todayChecklist.tasks.filter { !$0.isCompleted }
+        let hasTasks = !remainingActivities.isEmpty
 
-            var components = DateComponents()
-            components.hour = 20
-            components.minute = 30
-            let trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: false)
-            let request = UNNotificationRequest(identifier: "streak_crushed_it", content: content, trigger: trigger)
-            NotificationManager.shared.notificationCenter.add(request, withCompletionHandler: nil)
-
-            // All done — cancel at-risk notification
+        if hasTasks && streakStats.currentStreak >= 1 {
+            LifecycleNotificationService.shared.scheduleStreakAtRiskNotification(
+                currentStreak: streakStats.currentStreak
+            )
+        } else {
             LifecycleNotificationService.shared.cancelStreakAtRiskNotification()
-            return
         }
-
-        // Fix 2: Not all done — schedule at-risk + regular evening reminder
-        LifecycleNotificationService.shared.scheduleStreakAtRiskNotification(currentStreak: streakStats.currentStreak)
-
-        NotificationManager.shared.schedulePersonalizedChecklistNotification(
-            isEvening: true,
-            userName: userName,
-            currentStreak: streakStats.currentStreak,
-            completedActivities: completedActivities,
-            remainingActivities: remainingActivities,
-            totalActivities: todayChecklist.tasks.count
-        )
     }
     
     private func getUserName() -> String {
