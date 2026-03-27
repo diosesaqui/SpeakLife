@@ -200,7 +200,7 @@ final class LifecycleNotificationService {
         content.title = title
         content.body = body
         content.sound = .default
-        content.userInfo = ["lifecycle_id": id]
+        content.userInfo = ["lifecycle_id": id, "deepLink": "declarations"]
 
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: delayHours * 3600, repeats: false)
         let request = UNNotificationRequest(identifier: id, content: content, trigger: trigger)
