@@ -270,6 +270,49 @@ struct ModernDailyChecklistView: View {
         .sheet(isPresented: $showDevotional) {
             DevotionalView(viewModel: devotionalViewModel)
         }
+        // ── Streak celebrations & badges ──────────────────────────────────────
+        // These fullScreenCovers were built in EnhancedStreakView but never wired
+        // into the live checklist flow. Connecting them here so users actually see them.
+        .fullScreenCover(isPresented: $viewModel.showFireAnimation) {
+            FireStreakView(streakNumber: viewModel.streakStats.currentStreak)
+                .onTapGesture {
+                    viewModel.showFireAnimation = false
+                }
+        }
+        .fullScreenCover(isPresented: $viewModel.showCompletionCelebration) {
+            if let celebration = viewModel.celebrationData {
+                CompletionCelebrationView(celebration: celebration)
+            }
+        }
+        .fullScreenCover(isPresented: $viewModel.showBadgeUnlock) {
+            if let badge = viewModel.badgeManager.recentlyUnlocked {
+                BadgeUnlockView(badge: badge, isPresented: $viewModel.showBadgeUnlock)
+                    .onDisappear { viewModel.dismissBadgeUnlock() }
+            }
+        }
+        // ── Streak freeze used banner ─────────────────────────────────────────
+        .overlay(alignment: .top) {
+            if viewModel.showFreezeUsedMessage {
+                HStack(spacing: 8) {
+                    Text("🛡️")
+                    Text("Streak freeze used — your streak is safe!")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundColor(.white)
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 10)
+                .background(Color(red: 0.2, green: 0.5, blue: 1.0).opacity(0.9))
+                .clipShape(RoundedRectangle(cornerRadius: 12))
+                .padding(.top, 8)
+                .transition(.move(edge: .top).combined(with: .opacity))
+                .onAppear {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 3.5) {
+                        withAnimation { viewModel.showFreezeUsedMessage = false }
+                    }
+                }
+            }
+        }
+        .animation(.spring(response: 0.4, dampingFraction: 0.8), value: viewModel.showFreezeUsedMessage)
         .onAppear {
             Analytics.logEvent("daily_checklist_viewed", parameters: [
                 "current_streak": viewModel.streakStats.currentStreak,

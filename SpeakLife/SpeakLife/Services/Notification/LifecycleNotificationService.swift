@@ -178,7 +178,7 @@ final class LifecycleNotificationService {
         content.title = title
         content.body = body
         content.sound = .default
-        content.userInfo = ["lifecycle_id": id]
+        content.userInfo = ["lifecycle_id": id, "deepLink": "declarations"]
 
         var triggerDate = Calendar.current.date(byAdding: .day, value: daysFromNow, to: date) ?? date
         triggerDate = Calendar.current.date(bySettingHour: hour, minute: 0, second: 0, of: triggerDate) ?? triggerDate

@@ -28,6 +28,12 @@ struct DevotionalView: View {
             .onReceive(NotificationCenter.default.publisher(for: UIApplication.willResignActiveNotification)) { _ in
                 self.presentationMode.wrappedValue.dismiss()
             }
+            .onAppear {
+                // Track verses/devotionals read for badge system
+                let current = UserDefaults.standard.integer(forKey: "totalVersesRead")
+                UserDefaults.standard.set(current + 1, forKey: "totalVersesRead")
+                StreakIntegrationManager.notifyDevotionalCompleted()
+            }
 //            .onAppear {
 //                // Track devotional view for metrics
 //                ListenerMetricsService.shared.trackListen(

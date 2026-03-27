@@ -279,6 +279,12 @@ struct SpeakLifeApp: App {
             return
         }
 
+        // Lifecycle notifications deep link directly to declarations tab
+        if let deepLink = content.userInfo["deepLink"] as? String, deepLink == "declarations" {
+            tabViewModel.selectedTab = 0
+            return
+        }
+
         // Mark that we just received a notification
         notificationJustReceived = true
         
