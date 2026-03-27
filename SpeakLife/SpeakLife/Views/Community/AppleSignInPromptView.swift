@@ -77,7 +77,8 @@ struct AppleSignInPromptView: View {
                     }
                 }
                 .signInWithAppleButtonStyle(.white)
-                .frame(height: 50)
+                .frame(width: 280, height: 56)
+                .clipShape(Capsule())
                 .cornerRadius(12)
                 .padding(.horizontal, 32)
                 .disabled(appleSignIn.isLoading)
