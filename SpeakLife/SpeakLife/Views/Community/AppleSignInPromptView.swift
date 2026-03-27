@@ -35,7 +35,7 @@ struct AppleSignInPromptView: View {
                     .symbolRenderingMode(.multicolor)
 
                 // Title
-                Text("Join the Prayer Wall")
+                Text("Join the Warrior Room")
                     .font(Font.custom("AppleSDGothicNeo-Bold", size: 26, relativeTo: .title))
                     .foregroundColor(.white)
                     .multilineTextAlignment(.center)
