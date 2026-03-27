@@ -168,8 +168,8 @@ struct PrayerWallView: View {
                     .padding(.vertical, 16)
                 }
             }
-            .padding(.horizontal, 16)
-            .padding(.top, 4)
+            .padding(.horizontal, 20)
+            .padding(.top, 8)
             .padding(.bottom, 30)
         }
         .refreshable {
