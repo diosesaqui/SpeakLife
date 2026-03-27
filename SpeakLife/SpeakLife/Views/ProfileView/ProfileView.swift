@@ -366,34 +366,22 @@ struct ProfileView: View {
             Image(systemName: "flame.fill")
                 .foregroundColor(.orange)
 
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Streak & Badges")
-                    .font(.body)
-
-                HStack(spacing: 10) {
-                    Label("\(stats.currentStreak) day streak", systemImage: "bolt.fill")
-                        .font(.caption)
-                        .foregroundColor(.orange)
-
-                    if earnedBadges.count > 0 {
-                        Label("\(earnedBadges.count) badge\(earnedBadges.count == 1 ? "" : "s")", systemImage: "rosette")
-                            .font(.caption)
-                            .foregroundColor(.purple)
-                    }
-                }
-            }
+            Text("Streak & Badges")
 
             Spacer()
 
-            // Longest streak preview
-            if stats.longestStreak > 0 {
-                VStack(spacing: 1) {
-                    Text("\(stats.longestStreak)")
-                        .font(.headline)
-                        .foregroundColor(.white)
-                    Text("best")
-                        .font(.system(size: 9))
-                        .foregroundColor(.gray)
+            // Compact preview: "🔥 5 · 3 badges"
+            HStack(spacing: 6) {
+                Text("\(stats.currentStreak) day\(stats.currentStreak == 1 ? "" : "s")")
+                    .font(.subheadline)
+                    .foregroundColor(.orange)
+
+                if earnedBadges.count > 0 {
+                    Text("·")
+                        .foregroundColor(.secondary)
+                    Text("\(earnedBadges.count) badge\(earnedBadges.count == 1 ? "" : "s")")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
                 }
             }
 
