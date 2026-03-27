@@ -71,9 +71,10 @@ struct AppleSignInPromptView: View {
                         break
                     case .failure(let error):
                         let asError = error as? ASAuthorizationError
-                        if asError?.code != .canceled {
-                            appleSignIn.errorMessage = error.localizedDescription
-                        }
+                        // Ignore cancellation + error 1000 (Apple Sign In unsupported in simulator)
+                        let ignored: [ASAuthorizationError.Code] = [.canceled, .unknown]
+                        if let code = asError?.code, ignored.contains(code) { break }
+                        appleSignIn.errorMessage = error.localizedDescription
                     }
                 }
                 .signInWithAppleButtonStyle(.white)
