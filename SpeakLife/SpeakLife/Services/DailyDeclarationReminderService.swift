@@ -74,9 +74,10 @@ class DailyDeclarationReminderService: ObservableObject {
         content.categoryIdentifier = "DAILY_DECLARATION"
         content.userInfo = ["action": "daily_declaration_burst"]
         
-        // Schedule for 8:00 AM every day
+        // Schedule for 7:00 AM — moved from 8am to avoid collision with
+        // PersonalizedMorningNotification (checklist system) which fires at 8am.
         var dateComponents = DateComponents()
-        dateComponents.hour = 8
+        dateComponents.hour = 7
         dateComponents.minute = 0
         
         let trigger = UNCalendarNotificationTrigger(dateMatching: dateComponents, repeats: true)
