@@ -244,7 +244,7 @@ struct PatternInterruptScreen: View {
                         .foregroundColor(.white)
                         .multilineTextAlignment(.center)
 
-                    Text("That's not weakness. That's a mind that hasn't been retrained. Yet.")
+                    Text("That's not a faith failure. That's an enemy who got there first.")
                         .font(.system(size: 20, weight: .medium))
                         .foregroundColor(.white.opacity(0.9))
                         .multilineTextAlignment(.center)
@@ -598,7 +598,7 @@ struct OutcomeVisualizationScreen: View {
     @State private var outcomesVisible: [Bool] = [false, false, false]
     @EnvironmentObject var subscriptionStore: SubscriptionStore
 
-    let outcomes = ["Anxiety doesn't own your mornings anymore.", "Your body, your peace, your finances — aligned with what God says.", "You don't just believe you're protected. You walk like it."]
+    let outcomes = ["Anxiety doesn't own your mornings anymore.", "Your body, your peace, your finances — aligned with what God says.", "Fear stops making your decisions for you."]
 
     var body: some View {
         ZStack {
@@ -614,7 +614,7 @@ struct OutcomeVisualizationScreen: View {
                     .frame(height: size.height * 0.20)
 
                 VStack(spacing: 32) {
-                    Text("Imagine Responding Like Jesus\nUnder Pressure.")
+                    Text("30 Days From Now — You'll Wake Up Different.")
                         .font(.system(size: 24, weight: .bold))
                         .foregroundColor(.white)
                         .multilineTextAlignment(.center)
@@ -653,7 +653,7 @@ struct OutcomeVisualizationScreen: View {
                         .frame(width: size.width * 0.85, height: 50)
                         .background(
                             RoundedRectangle(cornerRadius: 25)
-                                .fill(Color(red: 0.3, green: 0.7, blue: 0.4))
+                                .fill(Color(red: 0.4, green: 0.5, blue: 0.9))
                         )
                 }
                 .padding(.bottom, 60)
