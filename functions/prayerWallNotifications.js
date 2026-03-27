@@ -71,9 +71,14 @@ async function sendToDevice(fcmToken, title, body) {
 // ─── Helper: send FCM topic message ──────────────────────────────────────────
 
 async function sendToTopic(topic, title, body) {
+  return sendToTopicWithData(topic, title, body, {});
+}
+
+async function sendToTopicWithData(topic, title, body, data = {}) {
   const message = {
     notification: { title, body },
     topic,
+    data,  // extra key/value pairs forwarded to the app (strings only)
     apns: {
       payload: { aps: { sound: 'default' } },
     },
@@ -162,7 +167,13 @@ exports.onNewPrayerPost = onDocumentCreated(
     const title = 'Someone needs prayer 🙏';
     const body  = preview;
 
-    await sendToTopic(NEW_POST_TOPIC, title, body);
+    // Include posterDeviceId so the iOS app can suppress the notification
+    // for the person who just posted (they don't need to be notified of their own request).
+    // notificationType lets the app skip tab navigation for prayer wall pushes.
+    await sendToTopicWithData(NEW_POST_TOPIC, title, body, {
+      posterDeviceId: post.deviceId || '',
+      notificationType: 'prayerWall',
+    });
 
     // ── Update meta doc ──────────────────────────────────────────────────────
     sentTimestamps.push(now);

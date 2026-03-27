@@ -84,6 +84,18 @@ final class NotificationHandler: NSObject, ObservableObject, UNUserNotificationC
                                 withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
 
         let content = notification.request.content
+
+        // Suppress prayer-wall notifications that this device posted —
+        // posterDeviceId is injected by the Cloud Function into the FCM data payload.
+        if let posterDeviceId = content.userInfo["posterDeviceId"] as? String,
+           !posterDeviceId.isEmpty {
+            let myDeviceId = UserDefaults.standard.string(forKey: "prayerWallDeviceId") ?? ""
+            if posterDeviceId == myDeviceId {
+                completionHandler([]) // silent — don't show banner or play sound
+                return
+            }
+        }
+
         callback?(content)
         completionHandler([.banner, .sound])
     }
