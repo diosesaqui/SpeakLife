@@ -20,6 +20,7 @@
  */
 
 const { onDocumentUpdated, onDocumentCreated } = require('firebase-functions/v2/firestore');
+const { onSchedule }                           = require('firebase-functions/v2/scheduler');
 const { initializeApp }                         = require('firebase-admin/app');
 const { getFirestore, FieldValue }              = require('firebase-admin/firestore');
 const { getMessaging }                          = require('firebase-admin/messaging');
@@ -31,11 +32,8 @@ const messaging = getMessaging();
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
-const PRAYER_MILESTONES       = [5, 10, 25, 50, 100];
-const NEW_POST_TOPIC          = 'prayerWall';
-const NEW_POST_COOLDOWN_HOURS = 6;
-const NEW_POST_COOLDOWN_MAX   = 3;   // max notifications per cooldown window
-const META_DOC                = 'meta/prayerWallNotifications';
+const PRAYER_MILESTONES = [5, 10, 25, 50, 100];
+const NEW_POST_TOPIC    = 'prayerWall';
 
 // ─── Helper: look up FCM token for a deviceId ────────────────────────────────
 
@@ -126,61 +124,46 @@ exports.onPrayerCountIncremented = onDocumentUpdated(
 );
 
 // ═══════════════════════════════════════════════════════════════════════════
-// 2. onNewPrayerPost
-//    Fires when a new prayerWall document is created.
-//    Broadcasts to the "prayerWall" FCM topic with cooldown throttle.
-//    Cooldown: max 3 notifications per 6-hour window, tracked in Firestore.
+// 2. dailyPrayerDigest
+//    Replaces per-post broadcasts (which became spam as the wall grew).
+//    Runs daily at 10:00 AM UTC. Counts new prayer posts from the last
+//    24 hours. If any exist, sends ONE push to the prayerWall topic.
+//    No push at all if there were no new posts that day.
 // ═══════════════════════════════════════════════════════════════════════════
 
-exports.onNewPrayerPost = onDocumentCreated(
-  'prayerWall/{postId}',
-  async (event) => {
-    const post = event.data.data();
+exports.dailyPrayerDigest = onSchedule(
+  { schedule: '0 10 * * *', timeZone: 'UTC' },
+  async () => {
+    const now        = Date.now();
+    const since      = now - 24 * 60 * 60 * 1000; // last 24 hours
 
-    if (post.isHidden) return; // don't notify for hidden posts
+    // Count new, non-hidden posts in the last 24h
+    const snap = await db.collection('prayerWall')
+      .where('createdAt', '>=', new Date(since))
+      .where('isHidden', '!=', true)
+      .get();
 
-    // ── Cooldown check ──────────────────────────────────────────────────────
-    const metaRef  = db.doc(META_DOC);
-    const metaSnap = await metaRef.get();
-    const now      = Date.now();
-    const windowMs = NEW_POST_COOLDOWN_HOURS * 60 * 60 * 1000;
-
-    let sentTimestamps = [];
-    if (metaSnap.exists) {
-      sentTimestamps = (metaSnap.data().sentTimestamps || [])
-        .filter((ts) => now - ts < windowMs); // keep only within window
-    }
-
-    if (sentTimestamps.length >= NEW_POST_COOLDOWN_MAX) {
-      console.log(
-        `onNewPrayerPost: cooldown active (${sentTimestamps.length}/${NEW_POST_COOLDOWN_MAX} in last ${NEW_POST_COOLDOWN_HOURS}h)`
-      );
+    const count = snap.size;
+    if (count === 0) {
+      console.log('dailyPrayerDigest: no new posts today, skipping.');
       return;
     }
 
-    // ── Build message ────────────────────────────────────────────────────────
-    const rawText = post.text || '';
-    const preview = rawText.length > 80
-      ? rawText.substring(0, 80).trimEnd() + '…'
-      : rawText;
+    // Build copy based on count
+    let title, body;
+    if (count === 1) {
+      title = 'Someone needs prayer today 🙏';
+      body  = 'A brother or sister shared a prayer request. Lift them up.';
+    } else {
+      title = `${count} prayer requests today 🙏`;
+      body  = `Your community is seeking God. Take a moment to pray for them.`;
+    }
 
-    const title = 'Someone needs prayer 🙏';
-    const body  = preview;
-
-    // Include posterDeviceId so the iOS app can suppress the notification
-    // for the person who just posted (they don't need to be notified of their own request).
-    // notificationType lets the app skip tab navigation for prayer wall pushes.
     await sendToTopicWithData(NEW_POST_TOPIC, title, body, {
-      posterDeviceId: post.deviceId || '',
       notificationType: 'prayerWall',
     });
 
-    // ── Update meta doc ──────────────────────────────────────────────────────
-    sentTimestamps.push(now);
-    await metaRef.set(
-      { sentTimestamps, lastUpdated: FieldValue.serverTimestamp() },
-      { merge: true }
-    );
+    console.log(`dailyPrayerDigest: sent digest for ${count} post(s).`);
   }
 );
 
