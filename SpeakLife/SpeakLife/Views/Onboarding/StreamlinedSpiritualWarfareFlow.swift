@@ -614,7 +614,7 @@ struct OutcomeVisualizationScreen: View {
                     .frame(height: size.height * 0.20)
 
                 VStack(spacing: 32) {
-                    Text("30 Days From Now — You'll Wake Up Different.")
+                    Text("30 Days From Now — Nothing Shakes You the Same Way.")
                         .font(.system(size: 24, weight: .bold))
                         .foregroundColor(.white)
                         .multilineTextAlignment(.center)
