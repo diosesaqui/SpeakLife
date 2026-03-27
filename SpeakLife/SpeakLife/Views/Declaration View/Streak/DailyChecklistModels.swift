@@ -247,7 +247,12 @@ struct StreakStats: Codable {
         let daysDifference = calendar.dateComponents([.day], from: lastDate, to: today).day ?? 0
         
         if daysDifference > 1 {
+            let previousStreak = currentStreak
             currentStreak = 0
+            // Notify user that their streak was broken (Fix 1)
+            if previousStreak > 0 {
+                LifecycleNotificationService.shared.scheduleStreakBreakNotification(previousStreak: previousStreak)
+            }
         }
     }
 }
