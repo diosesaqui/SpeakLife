@@ -97,13 +97,13 @@ final class UserPreferencesTracker: ObservableObject {
         switch primaryCategory {
         case .anxiety:
             return PaywallCopy(
-                headline: "If anxiety hits first - your words can change that",
-                subheadline: "Daily declarations to speak peace over your morning",
+                headline: "Become Unshakable — One Declaration at a Time",
+                subheadline: "Replace anxiety with God's truth. Every single morning.",
                 valueProps: [
-                    "Wake up calm with anxiety-specific declarations",
-                    "God's peace in 2 minutes - morning and night",
-                    "Retrain your thoughts with Scripture daily",
-                    "Built for people who wake up already overwhelmed"
+                    "Replace every lie with what God says about you — daily",
+                    "Build a mind nothing can shake. Not fear. Not doubt. Nothing.",
+                    "Silence anxiety with the Word — in under 5 minutes",
+                    "Become who God said you are before you were born"
                 ],
                 ctaText: "Start My Free 7-Day Trial",
                 urgencyText: "7 Days Free • Cancel Anytime"
@@ -111,13 +111,13 @@ final class UserPreferencesTracker: ObservableObject {
 
         case .faith:
             return PaywallCopy(
-                headline: "Deepen Your Faith, Transform Your Life",
-                subheadline: "Build an unshakeable foundation with daily spiritual practices",
+                headline: "Build a Faith Nothing Can Move",
+                subheadline: "Daily declarations rooted in God's Word to make you unshakable.",
                 valueProps: [
-                    "Scripture-powered declarations",
-                    "Faith-building audio series",
-                    "Daily devotionals & prayers",
-                    "Spiritual growth tracking"
+                    "Replace every lie with what God says about you — daily",
+                    "Build a mind nothing can shake. Not fear. Not doubt. Nothing.",
+                    "Silence anxiety with the Word — in under 5 minutes",
+                    "Become who God said you are before you were born"
                 ],
                 ctaText: "Strengthen Your Faith Today",
                 urgencyText: "Start Free & Grow Stronger"
@@ -125,13 +125,13 @@ final class UserPreferencesTracker: ObservableObject {
 
         case .joy:
             return PaywallCopy(
-                headline: "Rediscover True Joy Through Faith",
-                subheadline: "Cultivate lasting happiness grounded in God's love",
+                headline: "Find a Joy the World Cannot Steal",
+                subheadline: "God's promises spoken daily build a happiness nothing can shake.",
                 valueProps: [
-                    "Joy activation morning routines",
-                    "Gratitude-focused declarations",
-                    "Happiness breakthrough audio",
-                    "Daily encouragement & hope"
+                    "Replace every lie with what God says about you — daily",
+                    "Build a mind nothing can shake. Not fear. Not doubt. Nothing.",
+                    "Silence anxiety with the Word — in under 5 minutes",
+                    "Become who God said you are before you were born"
                 ],
                 ctaText: "Unlock Your Joy Today",
                 urgencyText: "Experience Joy in 3 Days"
@@ -139,13 +139,13 @@ final class UserPreferencesTracker: ObservableObject {
 
         case .rest:
             return PaywallCopy(
-                headline: "Find Deep Rest in God's Peace",
-                subheadline: "End restless nights with faith-based sleep solutions",
+                headline: "Rest Like Someone Whose God Never Sleeps",
+                subheadline: "Declarations that quiet your mind and anchor your soul at night.",
                 valueProps: [
-                    "Bedtime peace declarations",
-                    "Sleep meditation prayers",
-                    "Calming nighttime audio",
-                    "Rest & restoration toolkit"
+                    "Replace every lie with what God says about you — daily",
+                    "Build a mind nothing can shake. Not fear. Not doubt. Nothing.",
+                    "Silence anxiety with the Word — in under 5 minutes",
+                    "Become who God said you are before you were born"
                 ],
                 ctaText: "Sleep Peacefully Tonight",
                 urgencyText: "Better Sleep Starts Today"
@@ -153,13 +153,13 @@ final class UserPreferencesTracker: ObservableObject {
 
         case .health:
             return PaywallCopy(
-                headline: "Heal Your Body, Mind & Spirit",
-                subheadline: "Activate divine health through daily declarations",
+                headline: "Speak Life Over Your Body — and Mean It",
+                subheadline: "God's Word over your health is the most powerful medicine there is.",
                 valueProps: [
-                    "Healing scripture declarations",
-                    "Wellness prayer library",
-                    "Mind-body-spirit alignment",
-                    "Health breakthrough audio"
+                    "Replace every lie with what God says about you — daily",
+                    "Build a mind nothing can shake. Not fear. Not doubt. Nothing.",
+                    "Silence anxiety with the Word — in under 5 minutes",
+                    "Become who God said you are before you were born"
                 ],
                 ctaText: "Claim Your Healing",
                 urgencyText: "Start Your Healing Journey"
@@ -167,13 +167,13 @@ final class UserPreferencesTracker: ObservableObject {
 
         case .confidence:
             return PaywallCopy(
-                headline: "Build Unshakeable God-Confidence",
-                subheadline: "Discover your true identity and worth in Christ",
+                headline: "Walk Like You Know Who Made You",
+                subheadline: "Your identity in God is unshakable — start living like it.",
                 valueProps: [
-                    "Identity-affirming declarations",
-                    "Confidence-building audio",
-                    "Fear-conquering prayers",
-                    "Daily courage activation"
+                    "Replace every lie with what God says about you — daily",
+                    "Build a mind nothing can shake. Not fear. Not doubt. Nothing.",
+                    "Silence anxiety with the Word — in under 5 minutes",
+                    "Become who God said you are before you were born"
                 ],
                 ctaText: "Unlock Bold Confidence",
                 urgencyText: "Transform in 3 Days Free"
@@ -181,13 +181,13 @@ final class UserPreferencesTracker: ObservableObject {
 
         case .fear:
             return PaywallCopy(
-                headline: "Conquer Fear with Faith",
-                subheadline: "Replace fear with courage through God's promises",
+                headline: "You Were Not Made to Be Afraid",
+                subheadline: "God's Word spoken daily dismantles fear at the root.",
                 valueProps: [
-                    "Fear-breaking declarations",
-                    "Courage-building prayers",
-                    "Anxiety-defeating audio",
-                    "Daily strength activation"
+                    "Replace every lie with what God says about you — daily",
+                    "Build a mind nothing can shake. Not fear. Not doubt. Nothing.",
+                    "Silence anxiety with the Word — in under 5 minutes",
+                    "Become who God said you are before you were born"
                 ],
                 ctaText: "Overcome Fear Today",
                 urgencyText: "Freedom Starts Now"
@@ -195,13 +195,13 @@ final class UserPreferencesTracker: ObservableObject {
 
         case .marriage:
             return PaywallCopy(
-                headline: "Strengthen Your Marriage with Faith",
-                subheadline: "Build a God-centered relationship that thrives",
+                headline: "A Marriage Built on the Word Does Not Break",
+                subheadline: "Speak God's promises over your relationship every day.",
                 valueProps: [
-                    "Marriage blessing declarations",
-                    "Couples prayer guides",
-                    "Relationship healing audio",
-                    "Love & unity exercises"
+                    "Replace every lie with what God says about you — daily",
+                    "Build a mind nothing can shake. Not fear. Not doubt. Nothing.",
+                    "Silence anxiety with the Word — in under 5 minutes",
+                    "Become who God said you are before you were born"
                 ],
                 ctaText: "Bless Your Marriage",
                 urgencyText: "Transform Your Marriage"
@@ -209,13 +209,13 @@ final class UserPreferencesTracker: ObservableObject {
 
         case .love:
             return PaywallCopy(
-                headline: "Experience God's Perfect Love",
-                subheadline: "Open your heart to receive and give divine love",
+                headline: "Loved by God. Unshakable.",
+                subheadline: "When you know how God loves you, nothing else can define you.",
                 valueProps: [
-                    "Love-affirming declarations",
-                    "Self-love in Christ audio",
-                    "Relationship prayers",
-                    "Heart-healing meditations"
+                    "Replace every lie with what God says about you — daily",
+                    "Build a mind nothing can shake. Not fear. Not doubt. Nothing.",
+                    "Silence anxiety with the Word — in under 5 minutes",
+                    "Become who God said you are before you were born"
                 ],
                 ctaText: "Receive Perfect Love",
                 urgencyText: "Love Transformation Awaits"
@@ -223,13 +223,13 @@ final class UserPreferencesTracker: ObservableObject {
 
         case .hope:
             return PaywallCopy(
-                headline: "Restore Hope, Renew Purpose",
-                subheadline: "Find renewed hope and direction in God's plan",
+                headline: "Your Future Is Written by God, Not Your Past",
+                subheadline: "Daily declarations to reset your mind on what God says is possible.",
                 valueProps: [
-                    "Hope-building declarations",
-                    "Purpose discovery prayers",
-                    "Future-focused audio",
-                    "Daily encouragement"
+                    "Replace every lie with what God says about you — daily",
+                    "Build a mind nothing can shake. Not fear. Not doubt. Nothing.",
+                    "Silence anxiety with the Word — in under 5 minutes",
+                    "Become who God said you are before you were born"
                 ],
                 ctaText: "Reclaim Your Hope",
                 urgencyText: "Hope Starts Today"
@@ -237,13 +237,13 @@ final class UserPreferencesTracker: ObservableObject {
 
         case .general:
             return PaywallCopy(
-                headline: "Start Your Morning with Peace, Not Anxiety",
-                subheadline: "Join 100,000+ believers who took their peace back",
+                headline: "Become Unshakable — One Declaration at a Time",
+                subheadline: "Join 100,000+ believers who chose God's truth over their feelings.",
                 valueProps: [
-                    "Wake up calm — declarations that quiet morning anxiety",
-                    "God's peace in 2 minutes, morning or night",
-                    "Retrain your mind to respond instead of react",
-                    "Daily Scripture that speaks to what you're feeling"
+                    "Replace every lie with what God says about you — daily",
+                    "Build a mind nothing can shake. Not fear. Not doubt. Nothing.",
+                    "Silence anxiety with the Word — in under 5 minutes",
+                    "Become who God said you are before you were born"
                 ],
                 ctaText: "Start My Free 7-Day Trial",
                 urgencyText: "7 Days Free • Cancel Anytime"
