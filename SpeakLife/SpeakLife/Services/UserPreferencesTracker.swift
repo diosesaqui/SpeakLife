@@ -100,10 +100,10 @@ final class UserPreferencesTracker: ObservableObject {
                 headline: "If anxiety hits first - your words can change that",
                 subheadline: "Daily declarations to speak peace over your morning",
                 valueProps: [
-                    "Wake up calm with anxiety-specific declarations",
-                    "God's peace in 2 minutes - morning and night",
-                    "Retrain your thoughts with Scripture daily",
-                    "Built for people who wake up already overwhelmed"
+                    "Replace every lie with what God says about you — daily",
+                    "Build a mind nothing can shake. Not fear. Not doubt. Nothing.",
+                    "Silence anxiety with the Word — in under 5 minutes",
+                    "Become who God said you are before you were born"
                 ],
                 ctaText: "Start My Free 7-Day Trial",
                 urgencyText: "7 Days Free • Cancel Anytime"
@@ -114,10 +114,10 @@ final class UserPreferencesTracker: ObservableObject {
                 headline: "Deepen Your Faith, Transform Your Life",
                 subheadline: "Build an unshakeable foundation with daily spiritual practices",
                 valueProps: [
-                    "Scripture-powered declarations",
-                    "Faith-building audio series",
-                    "Daily devotionals & prayers",
-                    "Spiritual growth tracking"
+                    "Replace every lie with what God says about you — daily",
+                    "Build a mind nothing can shake. Not fear. Not doubt. Nothing.",
+                    "Silence anxiety with the Word — in under 5 minutes",
+                    "Become who God said you are before you were born"
                 ],
                 ctaText: "Strengthen Your Faith Today",
                 urgencyText: "Start Free & Grow Stronger"
@@ -128,10 +128,10 @@ final class UserPreferencesTracker: ObservableObject {
                 headline: "Rediscover True Joy Through Faith",
                 subheadline: "Cultivate lasting happiness grounded in God's love",
                 valueProps: [
-                    "Joy activation morning routines",
-                    "Gratitude-focused declarations",
-                    "Happiness breakthrough audio",
-                    "Daily encouragement & hope"
+                    "Replace every lie with what God says about you — daily",
+                    "Build a mind nothing can shake. Not fear. Not doubt. Nothing.",
+                    "Silence anxiety with the Word — in under 5 minutes",
+                    "Become who God said you are before you were born"
                 ],
                 ctaText: "Unlock Your Joy Today",
                 urgencyText: "Experience Joy in 3 Days"
@@ -142,10 +142,10 @@ final class UserPreferencesTracker: ObservableObject {
                 headline: "Find Deep Rest in God's Peace",
                 subheadline: "End restless nights with faith-based sleep solutions",
                 valueProps: [
-                    "Bedtime peace declarations",
-                    "Sleep meditation prayers",
-                    "Calming nighttime audio",
-                    "Rest & restoration toolkit"
+                    "Replace every lie with what God says about you — daily",
+                    "Build a mind nothing can shake. Not fear. Not doubt. Nothing.",
+                    "Silence anxiety with the Word — in under 5 minutes",
+                    "Become who God said you are before you were born"
                 ],
                 ctaText: "Sleep Peacefully Tonight",
                 urgencyText: "Better Sleep Starts Today"
@@ -156,10 +156,10 @@ final class UserPreferencesTracker: ObservableObject {
                 headline: "Heal Your Body, Mind & Spirit",
                 subheadline: "Activate divine health through daily declarations",
                 valueProps: [
-                    "Healing scripture declarations",
-                    "Wellness prayer library",
-                    "Mind-body-spirit alignment",
-                    "Health breakthrough audio"
+                    "Replace every lie with what God says about you — daily",
+                    "Build a mind nothing can shake. Not fear. Not doubt. Nothing.",
+                    "Silence anxiety with the Word — in under 5 minutes",
+                    "Become who God said you are before you were born"
                 ],
                 ctaText: "Claim Your Healing",
                 urgencyText: "Start Your Healing Journey"
@@ -170,10 +170,10 @@ final class UserPreferencesTracker: ObservableObject {
                 headline: "Build Unshakeable God-Confidence",
                 subheadline: "Discover your true identity and worth in Christ",
                 valueProps: [
-                    "Identity-affirming declarations",
-                    "Confidence-building audio",
-                    "Fear-conquering prayers",
-                    "Daily courage activation"
+                    "Replace every lie with what God says about you — daily",
+                    "Build a mind nothing can shake. Not fear. Not doubt. Nothing.",
+                    "Silence anxiety with the Word — in under 5 minutes",
+                    "Become who God said you are before you were born"
                 ],
                 ctaText: "Unlock Bold Confidence",
                 urgencyText: "Transform in 3 Days Free"
@@ -184,10 +184,10 @@ final class UserPreferencesTracker: ObservableObject {
                 headline: "Conquer Fear with Faith",
                 subheadline: "Replace fear with courage through God's promises",
                 valueProps: [
-                    "Fear-breaking declarations",
-                    "Courage-building prayers",
-                    "Anxiety-defeating audio",
-                    "Daily strength activation"
+                    "Replace every lie with what God says about you — daily",
+                    "Build a mind nothing can shake. Not fear. Not doubt. Nothing.",
+                    "Silence anxiety with the Word — in under 5 minutes",
+                    "Become who God said you are before you were born"
                 ],
                 ctaText: "Overcome Fear Today",
                 urgencyText: "Freedom Starts Now"
@@ -198,10 +198,10 @@ final class UserPreferencesTracker: ObservableObject {
                 headline: "Strengthen Your Marriage with Faith",
                 subheadline: "Build a God-centered relationship that thrives",
                 valueProps: [
-                    "Marriage blessing declarations",
-                    "Couples prayer guides",
-                    "Relationship healing audio",
-                    "Love & unity exercises"
+                    "Replace every lie with what God says about you — daily",
+                    "Build a mind nothing can shake. Not fear. Not doubt. Nothing.",
+                    "Silence anxiety with the Word — in under 5 minutes",
+                    "Become who God said you are before you were born"
                 ],
                 ctaText: "Bless Your Marriage",
                 urgencyText: "Transform Your Marriage"
@@ -212,10 +212,10 @@ final class UserPreferencesTracker: ObservableObject {
                 headline: "Experience God's Perfect Love",
                 subheadline: "Open your heart to receive and give divine love",
                 valueProps: [
-                    "Love-affirming declarations",
-                    "Self-love in Christ audio",
-                    "Relationship prayers",
-                    "Heart-healing meditations"
+                    "Replace every lie with what God says about you — daily",
+                    "Build a mind nothing can shake. Not fear. Not doubt. Nothing.",
+                    "Silence anxiety with the Word — in under 5 minutes",
+                    "Become who God said you are before you were born"
                 ],
                 ctaText: "Receive Perfect Love",
                 urgencyText: "Love Transformation Awaits"
@@ -226,10 +226,10 @@ final class UserPreferencesTracker: ObservableObject {
                 headline: "Restore Hope, Renew Purpose",
                 subheadline: "Find renewed hope and direction in God's plan",
                 valueProps: [
-                    "Hope-building declarations",
-                    "Purpose discovery prayers",
-                    "Future-focused audio",
-                    "Daily encouragement"
+                    "Replace every lie with what God says about you — daily",
+                    "Build a mind nothing can shake. Not fear. Not doubt. Nothing.",
+                    "Silence anxiety with the Word — in under 5 minutes",
+                    "Become who God said you are before you were born"
                 ],
                 ctaText: "Reclaim Your Hope",
                 urgencyText: "Hope Starts Today"
@@ -240,10 +240,10 @@ final class UserPreferencesTracker: ObservableObject {
                 headline: "Start Your Morning with Peace, Not Anxiety",
                 subheadline: "Join 100,000+ believers who took their peace back",
                 valueProps: [
-                    "Wake up calm — declarations that quiet morning anxiety",
-                    "God's peace in 2 minutes, morning or night",
-                    "Retrain your mind to respond instead of react",
-                    "Daily Scripture that speaks to what you're feeling"
+                    "Replace every lie with what God says about you — daily",
+                    "Build a mind nothing can shake. Not fear. Not doubt. Nothing.",
+                    "Silence anxiety with the Word — in under 5 minutes",
+                    "Become who God said you are before you were born"
                 ],
                 ctaText: "Start My Free 7-Day Trial",
                 urgencyText: "7 Days Free • Cancel Anytime"
