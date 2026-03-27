@@ -47,6 +47,12 @@ struct CompactStreakButton: View {
                             .font(.system(size: 12, weight: .bold))
                             .foregroundColor(.white)
                     }
+                    // Fix 4: Show shield when streak freeze is available
+                    if viewModel.streakStats.streakFreezeAvailable {
+                        Text("🛡️")
+                            .font(.system(size: 8))
+                            .offset(x: 14, y: -14)
+                    }
                 } else {
                     // Sexy task count with dots indicator
                     VStack(spacing: 4) {

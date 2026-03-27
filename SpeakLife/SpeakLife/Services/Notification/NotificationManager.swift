@@ -72,15 +72,14 @@ final class NotificationManager: NSObject {
                 callback?()
             }
         }
-        morningAffirmationReminder()
-        nightlyAffirmationReminder()
-        //devotionalAffirmationReminder()
-       // prayersAffirmationReminder()
-//        christmasReminder()
-//        newYearsReminder()
-//        thanksgivingReminder()
-        
-        // Schedule new checklist notifications
+        // Removed: morningAffirmationReminder() — used UUID identifiers so it stacked
+        //          infinitely and fired multiple 8am notifications on the same user.
+        //          Content is now covered by PersonalizedMorningNotification below.
+        // Removed: nightlyAffirmationReminder() — same UUID stacking issue.
+        //          Replaced by PersonalizedEveningNotification + streak_at_risk.
+
+        // Schedule checklist notifications (PersonalizedMorningNotification at 8am
+        // + FallbackEveningNotification removed — see scheduleFallbackEveningNotification)
         scheduleChecklistNotifications()
     }
     
@@ -849,7 +848,9 @@ final class NotificationManager: NSObject {
     
     func scheduleChecklistNotifications() {
         scheduleDailyPersonalizedNotifications()
-        scheduleFallbackEveningNotification()
+        // FallbackEveningNotification removed — replaced by streak_at_risk (9pm)
+        // and streak_crushed_it (8:30pm) from LifecycleNotificationService
+        notificationCenter.removePendingNotificationRequests(withIdentifiers: ["FallbackEveningNotification"])
     }
     
     // Schedule a fallback evening notification that repeats for days when app isn't opened
@@ -881,25 +882,13 @@ final class NotificationManager: NSObject {
         }
     }
     
-    // Schedule morning personalized notifications (repeating)
+    // Daily personalized morning notification removed — only user-configured
+    // declaration reminders + streak-at-risk (9pm) fire on a daily basis.
     func scheduleDailyPersonalizedNotifications() {
-        // Get current streak info from UserDefaults if available
-        let userDefaults = UserDefaults.standard
-        let currentStreak = userDefaults.integer(forKey: "currentStreak")
-        let userName = userDefaults.string(forKey: "userName") ?? "Friend"
-        
-        // Schedule morning notification (repeats daily at 8 AM)
-        schedulePersonalizedChecklistNotification(
-            isEvening: false,
-            userName: userName,
-            currentStreak: currentStreak,
-            completedActivities: [],
-            remainingActivities: [],
-            totalActivities: 0
+        // Cancel any previously scheduled morning notification
+        notificationCenter.removePendingNotificationRequests(
+            withIdentifiers: ["PersonalizedMorningNotification"]
         )
-        
-        // Evening notifications are scheduled separately by the ViewModel 
-        // with actual daily progress - not here
     }
     
     // MARK: - Dynamic Checklist Notifications

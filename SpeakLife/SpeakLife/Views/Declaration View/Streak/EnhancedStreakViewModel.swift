@@ -19,6 +19,8 @@ final class EnhancedStreakViewModel: ObservableObject {
     @Published var badgeManager: BadgeManager
     @Published var showBadgeUnlock = false
     @Published var showFirstTaskConfetti = false
+    // Fix 4: Show banner when streak freeze was auto-applied
+    @Published var showFreezeUsedMessage = false
     
     // MARK: - Private Properties
     private let userDefaults = UserDefaults.standard
@@ -165,8 +167,10 @@ final class EnhancedStreakViewModel: ObservableObject {
         PremiumHaptics.affirmationCompleted()
         AudioDelightManager.shared.playGentleSuccess()
         
-        // Check if all tasks are now completed
-        if todayChecklist.isCompleted && todayChecklist.completedAt == nil {
+        // Streak is earned as soon as the Daily Burst is completed.
+        // All other tasks (devotional, audio, gratitude, etc.) are bonus — they
+        // show progress in the checklist UI but don't gate the streak.
+        if todayChecklist.isStreakEarned && todayChecklist.completedAt == nil {
             completeDay()
         }
         
@@ -242,6 +246,12 @@ final class EnhancedStreakViewModel: ObservableObject {
             }
         }
         
+        // Fix 4: Award a new streak freeze at milestone days
+        let freezeMilestones = [7, 14, 30, 60, 100]
+        if freezeMilestones.contains(streakStats.currentStreak) {
+            streakStats.streakFreezeAvailable = true
+        }
+
         // Update current phase
         todayChecklist.currentPhase = currentPhase
         
@@ -336,7 +346,10 @@ final class EnhancedStreakViewModel: ObservableObject {
         }
         
         saveData()
-        
+
+        // Fix 2: Cancel streak-at-risk notification since day is complete
+        LifecycleNotificationService.shared.cancelStreakAtRiskNotification()
+
         // Check for badges AFTER completing the day to ensure proper timing
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
             self.checkForNewBadges()
@@ -355,7 +368,15 @@ final class EnhancedStreakViewModel: ObservableObject {
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: Date())
         let checklistDate = calendar.startOfDay(for: todayChecklist.date)
-        
+
+        // Fix 4: Show banner if streak freeze was used while app was away
+        if UserDefaults.standard.bool(forKey: "streakFreezeWasUsed") {
+            UserDefaults.standard.set(false, forKey: "streakFreezeWasUsed")
+            DispatchQueue.main.async {
+                self.showFreezeUsedMessage = true
+            }
+        }
+
         if today != checklistDate {
             // New day, create fresh checklist with progressive tasks
             checkStreakValidity()
@@ -1147,13 +1168,17 @@ final class EnhancedStreakViewModel: ObservableObject {
     // MARK: - Badge System Integration
     
     private func checkForNewBadges() {
-        // Only use metrics we can actually track accurately
+        // Fix 3: Use real tracked values from UserDefaults instead of hardcoded zeros
+        let affirmationsSpoken = userDefaults.integer(forKey: "totalAffirmationsSpoken")
+        let versesRead = userDefaults.integer(forKey: "totalVersesRead")
+        let socialShares = userDefaults.integer(forKey: "totalSocialShares")
+        let favoritesAdded = userDefaults.integer(forKey: "totalFavoritesAdded")
         let userStats = UserStats(
-            affirmationsSpoken: 0, // Not tracking yet
-            versesRead: 0, // Not tracking yet
-            socialShares: 0, // Not tracking yet
-            favoritesAdded: 0, // Not tracking yet
-            categoriesCompleted: Set<String>() // Not tracking yet
+            affirmationsSpoken: affirmationsSpoken,
+            versesRead: versesRead,
+            socialShares: socialShares,
+            favoritesAdded: favoritesAdded,
+            categoriesCompleted: Set<String>()
         )
         
         let previousBadgeCount = badgeManager.unlockedBadgeCount
@@ -1214,22 +1239,23 @@ final class EnhancedStreakViewModel: ObservableObject {
     }
     
     func scheduleEveningCheckIn() {
-        // Called during the day to schedule evening reminder based on current progress
-        let completedActivities = todayChecklist.tasks.filter { $0.isCompleted }.map { $0.title }
-        let remainingActivities = todayChecklist.tasks.filter { !$0.isCompleted }.map { $0.title }
-        let userName = getUserName()
-        
-        // Cancel the fallback evening notification since we're providing a personalized one
-        NotificationManager.shared.notificationCenter.removePendingNotificationRequests(withIdentifiers: ["FallbackEveningNotification"])
-        
-        NotificationManager.shared.schedulePersonalizedChecklistNotification(
-            isEvening: true,
-            userName: userName,
-            currentStreak: streakStats.currentStreak,
-            completedActivities: completedActivities,
-            remainingActivities: remainingActivities,
-            totalActivities: todayChecklist.tasks.count
+        // Cancel all old daily system notifications (no longer sent daily)
+        NotificationManager.shared.notificationCenter.removePendingNotificationRequests(
+            withIdentifiers: ["FallbackEveningNotification", "streak_crushed_it",
+                              "PersonalizedEveningNotification"]
         )
+
+        // Streak is safe once the burst is done — cancel at-risk immediately.
+        // Only send at-risk when user has an active streak AND hasn't done their burst yet.
+        let burstDone = todayChecklist.isStreakEarned
+
+        if !burstDone && streakStats.currentStreak >= 1 {
+            LifecycleNotificationService.shared.scheduleStreakAtRiskNotification(
+                currentStreak: streakStats.currentStreak
+            )
+        } else {
+            LifecycleNotificationService.shared.cancelStreakAtRiskNotification()
+        }
     }
     
     private func getUserName() -> String {

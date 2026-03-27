@@ -55,15 +55,12 @@ class DailyDeclarationReminderService: ObservableObject {
     }
     
     private func scheduleDailyDeclarationReminder() {
-        #if DEBUG
-        print("📅 Scheduling daily declaration reminders...")
-        #endif
-        
-        // Morning reminder - 8:00 AM
-        scheduleMorningReminder()
-        
-        // Evening reminder - 8:00 PM (only if burst not completed)
-        scheduleEveningReminder()
+        // Daily burst reminders removed — too noisy on top of user-configured
+        // declaration reminders. Only streak-at-risk fires as a system daily push.
+        // Cancel any previously scheduled ones.
+        UNUserNotificationCenter.current().removePendingNotificationRequests(
+            withIdentifiers: [reminderIdentifier, eveningReminderIdentifier]
+        )
     }
     
     private func scheduleMorningReminder() {
@@ -74,9 +71,10 @@ class DailyDeclarationReminderService: ObservableObject {
         content.categoryIdentifier = "DAILY_DECLARATION"
         content.userInfo = ["action": "daily_declaration_burst"]
         
-        // Schedule for 8:00 AM every day
+        // Schedule for 7:00 AM — moved from 8am to avoid collision with
+        // PersonalizedMorningNotification (checklist system) which fires at 8am.
         var dateComponents = DateComponents()
-        dateComponents.hour = 8
+        dateComponents.hour = 7
         dateComponents.minute = 0
         
         let trigger = UNCalendarNotificationTrigger(dateMatching: dateComponents, repeats: true)
