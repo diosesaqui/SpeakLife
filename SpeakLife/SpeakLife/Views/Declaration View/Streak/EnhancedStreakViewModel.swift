@@ -19,6 +19,8 @@ final class EnhancedStreakViewModel: ObservableObject {
     @Published var badgeManager: BadgeManager
     @Published var showBadgeUnlock = false
     @Published var showFirstTaskConfetti = false
+    // Fix 4: Show banner when streak freeze was auto-applied
+    @Published var showFreezeUsedMessage = false
     
     // MARK: - Private Properties
     private let userDefaults = UserDefaults.standard
@@ -242,6 +244,12 @@ final class EnhancedStreakViewModel: ObservableObject {
             }
         }
         
+        // Fix 4: Award a new streak freeze at milestone days
+        let freezeMilestones = [7, 14, 30, 60, 100]
+        if freezeMilestones.contains(streakStats.currentStreak) {
+            streakStats.streakFreezeAvailable = true
+        }
+
         // Update current phase
         todayChecklist.currentPhase = currentPhase
         
@@ -358,7 +366,15 @@ final class EnhancedStreakViewModel: ObservableObject {
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: Date())
         let checklistDate = calendar.startOfDay(for: todayChecklist.date)
-        
+
+        // Fix 4: Show banner if streak freeze was used while app was away
+        if UserDefaults.standard.bool(forKey: "streakFreezeWasUsed") {
+            UserDefaults.standard.set(false, forKey: "streakFreezeWasUsed")
+            DispatchQueue.main.async {
+                self.showFreezeUsedMessage = true
+            }
+        }
+
         if today != checklistDate {
             // New day, create fresh checklist with progressive tasks
             checkStreakValidity()
