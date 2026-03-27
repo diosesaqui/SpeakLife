@@ -10,10 +10,10 @@ import FirebaseAnalytics
 import UserNotifications
 
 // MARK: - New Faith Growth Onboarding (8 slides + burst/subscription)
-// Ordering: personal selection at slot 1 — capture investment while emotionally primed
+// Ordering: pain hook first → personal selection → teaching → paywall
 enum StreamlinedSpiritualTab: Int {
-    case personalSelection = 0    // What Do You Need Most? (first = maximum investment)
-    case patternInterrupt = 1     // Your Faith Grows Where Your Attention Goes
+    case patternInterrupt = 0     // "You Pray. You Believe. And Still — Fear Shows Up First." (empathy hook)
+    case personalSelection = 1    // What Do You Need Most? (emotionally warm, now feels personal)
     case authorityAnchor = 2      // Jesus Said It First (Mark 4:24)
     case convictionGap = 3        // Most Believers Want Strong Faith
     case mindRenewalBridge = 4    // Transformation Starts in the Mind
@@ -33,7 +33,7 @@ struct StreamlinedSpiritualWarfareFlow: View {
     @EnvironmentObject var timerViewModel: TimerViewModel
     @Environment(\.colorScheme) var colorScheme
 
-    @State var selection: StreamlinedSpiritualTab = .personalSelection
+    @State var selection: StreamlinedSpiritualTab = .patternInterrupt
     @State private var selectedCategories: Set<DeclarationCategory> = []
 
     let impactMed = UIImpactFeedbackGenerator(style: .soft)
@@ -42,7 +42,13 @@ struct StreamlinedSpiritualWarfareFlow: View {
         GeometryReader { geometry in
             TabView(selection: $selection) {
 
-                // Slide 1: Personal Selection — ask what they need first, while emotionally fresh
+                // Slide 1: Pattern Interrupt — empathy hook, name their pain first
+                PatternInterruptScreen(size: geometry.size) {
+                    advance()
+                }
+                .tag(StreamlinedSpiritualTab.patternInterrupt)
+
+                // Slide 2: Personal Selection — emotionally primed, now feels personal not clinical
                 PersonalSelectionScreen(
                     size: geometry.size,
                     selectedCategories: $selectedCategories
@@ -51,12 +57,6 @@ struct StreamlinedSpiritualWarfareFlow: View {
                     advance()
                 }
                 .tag(StreamlinedSpiritualTab.personalSelection)
-
-                // Slide 2: Pattern Interrupt
-                PatternInterruptScreen(size: geometry.size) {
-                    advance()
-                }
-                .tag(StreamlinedSpiritualTab.patternInterrupt)
 
                 // Slide 3: Authority Anchor
                 AuthorityAnchorScreen(size: geometry.size) {
@@ -126,9 +126,9 @@ struct StreamlinedSpiritualWarfareFlow: View {
     private func advance() {
         withAnimation {
             switch selection {
-            case .personalSelection:
-                selection = .patternInterrupt
             case .patternInterrupt:
+                selection = .personalSelection
+            case .personalSelection:
                 selection = .authorityAnchor
             case .authorityAnchor:
                 selection = .convictionGap
