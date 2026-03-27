@@ -149,12 +149,14 @@ struct SpeakLifeApp: App {
                             isShowingLanding = false
                         }
                         
-                        // Check if daily burst should be shown — only once per session
-                        // (onAppear can fire more than once; guard prevents showing it again
-                        // after the user already completed or dismissed the burst)
+                        // Check if daily burst should be shown — only once per session.
+                        // Source of truth: BurstCompletionTracker OR checklist task done.
                         if !hasCheckedBurstThisSession {
                             hasCheckedBurstThisSession = true
-                            if appState.isOnboarded && !BurstCompletionTracker.shared.hasTodaysCompletion() {
+                            let burstTrackerDone = BurstCompletionTracker.shared.hasTodaysCompletion()
+                            let checklistDone = enhancedStreakViewModel.todayChecklist.tasks
+                                .first(where: { $0.id == "complete_daily_burst" })?.isCompleted ?? false
+                            if appState.isOnboarded && !burstTrackerDone && !checklistDone {
                                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                                     showDailyBurstOnLaunch = true
                                 }

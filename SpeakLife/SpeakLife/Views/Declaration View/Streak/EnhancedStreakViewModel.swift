@@ -173,6 +173,12 @@ final class EnhancedStreakViewModel: ObservableObject {
         if todayChecklist.isStreakEarned && todayChecklist.completedAt == nil {
             completeDay()
         }
+
+        // Keep BurstCompletionTracker in sync — ensures hasTodaysCompletion()
+        // returns true regardless of which code path completed the burst.
+        if taskId == "complete_daily_burst" && !BurstCompletionTracker.shared.hasTodaysCompletion() {
+            BurstCompletionTracker.shared.recordBurstCompletion(declarationCount: 0, timeSpent: 0)
+        }
         
         saveData()
         checkForNewBadges()
