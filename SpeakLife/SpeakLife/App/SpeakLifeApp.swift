@@ -70,6 +70,7 @@ struct SpeakLifeApp: App {
     
     @State var isShowingLanding = true
     @State private var showDailyBurstOnLaunch = false
+    @State private var hasCheckedBurstThisSession = false
     
     // Notification handling state
     @State private var notificationJustReceived = false
@@ -148,11 +149,15 @@ struct SpeakLifeApp: App {
                             isShowingLanding = false
                         }
                         
-                        // Check if daily burst should be shown
-                        if appState.isOnboarded && !BurstCompletionTracker.shared.hasTodaysCompletion() {
-                            // Show daily burst popup after a short delay
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                                showDailyBurstOnLaunch = true
+                        // Check if daily burst should be shown — only once per session
+                        // (onAppear can fire more than once; guard prevents showing it again
+                        // after the user already completed or dismissed the burst)
+                        if !hasCheckedBurstThisSession {
+                            hasCheckedBurstThisSession = true
+                            if appState.isOnboarded && !BurstCompletionTracker.shared.hasTodaysCompletion() {
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                                    showDailyBurstOnLaunch = true
+                                }
                             }
                         }
                         
