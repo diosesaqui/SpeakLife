@@ -103,6 +103,37 @@ final class LifecycleNotificationService {
         }
     }
 
+    // MARK: - Streak At-Risk Notification (Fix 2)
+
+    /// Schedule a daily 9pm notification that fires when tasks aren't done yet.
+    func scheduleStreakAtRiskNotification(currentStreak: Int) {
+        // Cancel first to avoid duplicates
+        center.removePendingNotificationRequests(withIdentifiers: ["streak_at_risk"])
+
+        guard currentStreak >= 1 else { return }
+
+        center.getNotificationSettings { [weak self] settings in
+            guard settings.authorizationStatus == .authorized else { return }
+
+            let content = UNMutableNotificationContent()
+            content.title = "Your \(currentStreak)-day streak ends tonight 🔥"
+            content.body = "Don't let it slip. 60 seconds is all it takes — open SpeakLife before midnight."
+            content.sound = .default
+            content.userInfo = ["notificationType": "streakAtRisk"]
+
+            var components = DateComponents()
+            components.hour = 21  // 9pm
+            components.minute = 0
+            let trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: true)
+            let request = UNNotificationRequest(identifier: "streak_at_risk", content: content, trigger: trigger)
+            self?.center.add(request, withCompletionHandler: nil)
+        }
+    }
+
+    func cancelStreakAtRiskNotification() {
+        center.removePendingNotificationRequests(withIdentifiers: ["streak_at_risk"])
+    }
+
     // MARK: - Streak Break Notification
 
     /// Call when a streak is broken (streak resets to 0)

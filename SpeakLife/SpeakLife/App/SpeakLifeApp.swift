@@ -270,9 +270,12 @@ struct SpeakLifeApp: App {
     private func handleNotificationContent(_ content: UNNotificationContent) {
         // Processing notification
 
-        // Prayer wall notifications should surface as banners only —
+        // Prayer wall, streak-at-risk, and streak-complete notifications surface as banners only —
         // never navigate away from whatever tab the user is on.
-        if content.userInfo["notificationType"] as? String == "prayerWall" {
+        let notifType = content.userInfo["notificationType"] as? String
+        if notifType == "prayerWall" ||
+           notifType == "streakAtRisk" ||
+           notifType == "streakComplete" {
             return
         }
 
