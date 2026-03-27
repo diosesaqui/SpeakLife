@@ -10,12 +10,12 @@ import FirebaseAnalytics
 import UserNotifications
 
 // MARK: - New Faith Growth Onboarding (8 slides + burst/subscription)
-// Ordering: personal selection early (slide 3) to capture investment before product pitch
+// Ordering: personal selection at slot 1 — capture investment while emotionally primed
 enum StreamlinedSpiritualTab: Int {
-    case patternInterrupt = 0     // Your Faith Grows Where Your Attention Goes
-    case authorityAnchor = 1      // Jesus Said It First (Mark 4:24)
-    case convictionGap = 2        // Most Believers Want Strong Faith
-    case personalSelection = 3    // What Do You Need Most? (early = higher investment)
+    case personalSelection = 0    // What Do You Need Most? (first = maximum investment)
+    case patternInterrupt = 1     // Your Faith Grows Where Your Attention Goes
+    case authorityAnchor = 2      // Jesus Said It First (Mark 4:24)
+    case convictionGap = 3        // Most Believers Want Strong Faith
     case mindRenewalBridge = 4    // Transformation Starts in the Mind
     case introduceSystem = 5      // Train Your Faith Daily
     case outcomeVisualization = 6 // Imagine Responding Like Jesus
@@ -33,7 +33,7 @@ struct StreamlinedSpiritualWarfareFlow: View {
     @EnvironmentObject var timerViewModel: TimerViewModel
     @Environment(\.colorScheme) var colorScheme
 
-    @State var selection: StreamlinedSpiritualTab = .patternInterrupt
+    @State var selection: StreamlinedSpiritualTab = .personalSelection
     @State private var selectedCategories: Set<DeclarationCategory> = []
 
     let impactMed = UIImpactFeedbackGenerator(style: .soft)
@@ -42,25 +42,7 @@ struct StreamlinedSpiritualWarfareFlow: View {
         GeometryReader { geometry in
             TabView(selection: $selection) {
 
-                // Slide 1: Pattern Interrupt
-                PatternInterruptScreen(size: geometry.size) {
-                    advance()
-                }
-                .tag(StreamlinedSpiritualTab.patternInterrupt)
-
-                // Slide 2: Authority Anchor
-                AuthorityAnchorScreen(size: geometry.size) {
-                    advance()
-                }
-                .tag(StreamlinedSpiritualTab.authorityAnchor)
-
-                // Slide 3: Conviction Gap
-                ConvictionGapScreen(size: geometry.size) {
-                    advance()
-                }
-                .tag(StreamlinedSpiritualTab.convictionGap)
-
-                // Slide 4: Personal Selection (early to build investment)
+                // Slide 1: Personal Selection — ask what they need first, while emotionally fresh
                 PersonalSelectionScreen(
                     size: geometry.size,
                     selectedCategories: $selectedCategories
@@ -69,6 +51,24 @@ struct StreamlinedSpiritualWarfareFlow: View {
                     advance()
                 }
                 .tag(StreamlinedSpiritualTab.personalSelection)
+
+                // Slide 2: Pattern Interrupt
+                PatternInterruptScreen(size: geometry.size) {
+                    advance()
+                }
+                .tag(StreamlinedSpiritualTab.patternInterrupt)
+
+                // Slide 3: Authority Anchor
+                AuthorityAnchorScreen(size: geometry.size) {
+                    advance()
+                }
+                .tag(StreamlinedSpiritualTab.authorityAnchor)
+
+                // Slide 4: Conviction Gap
+                ConvictionGapScreen(size: geometry.size) {
+                    advance()
+                }
+                .tag(StreamlinedSpiritualTab.convictionGap)
 
                 // Slide 5: Mind Renewal Bridge
                 MindRenewalBridgeScreen(size: geometry.size) {
@@ -126,18 +126,18 @@ struct StreamlinedSpiritualWarfareFlow: View {
     private func advance() {
         withAnimation {
             switch selection {
+            case .personalSelection:
+                selection = .patternInterrupt
             case .patternInterrupt:
                 selection = .authorityAnchor
             case .authorityAnchor:
                 selection = .convictionGap
             case .convictionGap:
-                selection = .personalSelection
-            case .personalSelection:
-                selection = .outcomeVisualization
+                selection = .mindRenewalBridge
             case .mindRenewalBridge:
-                selection = .outcomeVisualization  // skipped
+                selection = .introduceSystem
             case .introduceSystem:
-                selection = .outcomeVisualization  // skipped
+                selection = .outcomeVisualization
             case .outcomeVisualization:
                 selection = .prePaywallClose
             case .prePaywallClose:
