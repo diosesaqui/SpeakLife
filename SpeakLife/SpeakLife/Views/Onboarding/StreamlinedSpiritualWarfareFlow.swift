@@ -18,11 +18,10 @@ enum StreamlinedSpiritualTab: Int {
     case convictionGap = 3        // Most Believers Want Strong Faith
     case mindRenewalBridge = 4    // Transformation Starts in the Mind
     case introduceSystem = 5      // Train Your Faith Daily
-    case outcomeVisualization = 6 // Imagine Responding Like Jesus
-    case prePaywallClose = 7      // Start Increasing Today
-    case subscription = 8
-    case notification = 9
-    case rating = 10
+    case prePaywallClose = 6      // You don't have to wake up anxious anymore
+    case subscription = 7
+    case notification = 8
+    case rating = 9
 }
 
 // MARK: - Main View
@@ -82,13 +81,7 @@ struct StreamlinedSpiritualWarfareFlow: View {
                 }
                 .tag(StreamlinedSpiritualTab.introduceSystem)
 
-                // Slide 7: Outcome Visualization
-                OutcomeVisualizationScreen(size: geometry.size) {
-                    advance()
-                }
-                .tag(StreamlinedSpiritualTab.outcomeVisualization)
-
-                // Slide 8: Pre-Paywall Close
+                // Slide 7: Pre-Paywall Close
                 PrePaywallCloseScreen(size: geometry.size) {
                     advance()
                 }
@@ -137,8 +130,6 @@ struct StreamlinedSpiritualWarfareFlow: View {
             case .mindRenewalBridge:
                 selection = .introduceSystem
             case .introduceSystem:
-                selection = .outcomeVisualization
-            case .outcomeVisualization:
                 selection = .prePaywallClose
             case .prePaywallClose:
                 selection = .subscription
