@@ -69,8 +69,16 @@ struct SpeakLifeApp: App {
     @StateObject var tabViewModel = TabViewModel()
     
     @State var isShowingLanding = true
-    @State private var showDailyBurstOnLaunch = false
     @State private var hasCheckedBurstThisSession = false
+
+    // Pre-computed synchronously at init — before any view renders.
+    // Uses both BurstCompletionTracker and the onboarded flag from UserDefaults
+    // so the burst never flashes up for users who already completed it today.
+    @State private var showDailyBurstOnLaunch: Bool = {
+        let isOnboarded = UserDefaults.standard.bool(forKey: "onboarded")
+        guard isOnboarded else { return false }
+        return !BurstCompletionTracker.shared.hasTodaysCompletion()
+    }()
     
     // Notification handling state
     @State private var notificationJustReceived = false
@@ -149,19 +157,8 @@ struct SpeakLifeApp: App {
                             isShowingLanding = false
                         }
                         
-                        // Check if daily burst should be shown — only once per session.
-                        // Source of truth: BurstCompletionTracker OR checklist task done.
-                        if !hasCheckedBurstThisSession {
-                            hasCheckedBurstThisSession = true
-                            let burstTrackerDone = BurstCompletionTracker.shared.hasTodaysCompletion()
-                            let checklistDone = enhancedStreakViewModel.todayChecklist.tasks
-                                .first(where: { $0.id == "complete_daily_burst" })?.isCompleted ?? false
-                            if appState.isOnboarded && !burstTrackerDone && !checklistDone {
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                                    showDailyBurstOnLaunch = true
-                                }
-                            }
-                        }
+                        // showDailyBurstOnLaunch is pre-computed at init (see @State above).
+                        // No runtime check needed here.
                         
                         // Auto-select category for non-onboarded users
                         // Skip if notification was just received
