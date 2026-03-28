@@ -1,25 +1,17 @@
 //
 //  OnboardingTypes.swift
-//  Dios Es Aqui
-//
-//  Created by Riccardo Washington on 2/8/22.
+//  SpeakLife
 //
 
 import Foundation
 
 enum Tab: String {
-    
-    case testimonials
-    case scriptureAnchor
-    case reframeProblem
-    case jesusMethod
-    case selfDiagnosis
-    case truthGap
-    case application
-    case microCommitment
-    case positionSpeakLife
+
+    case emotionalHook
+    case categorySelect
     case livePreview
-    case notification
+    case socialProof
     case subscription
-    
+    case notification
+
 }
