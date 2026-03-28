@@ -83,6 +83,8 @@ struct OnboardingView: View {
             UIScrollView.appearance().isScrollEnabled = false
             setupAppearance()
             Analytics.logEvent(Event.freshInstall, parameters: nil)
+            // Start background music on onboarding launch
+            AudioPlayerService.shared.playSound(files: resources)
         }
     }
 
@@ -230,6 +232,8 @@ struct OnboardingView: View {
     }
 
     private func dismissOnboarding() {
+        // Stop onboarding music — main app will restart it via SpeakLifeApp
+        AudioPlayerService.shared.stopMusic()
         withAnimation {
             appState.isOnboarded = true
             LifecycleNotificationService.shared.scheduleLifecycleNotifications()
