@@ -83,30 +83,18 @@ struct OnboardingView: View {
             UIScrollView.appearance().isScrollEnabled = false
             setupAppearance()
             Analytics.logEvent(Event.freshInstall, parameters: nil)
+            // Start background music on onboarding launch
+            AudioPlayerService.shared.playSound(files: resources)
         }
     }
 
     // MARK: - Subscription Scene
 
     private func subscriptionScene(size: CGSize) -> some View {
-        ZStack {
-            OptimizedSubscriptionView() {
-                advance()
-            }
-            .frame(height: UIScreen.main.bounds.height * 0.96)
-
-            VStack {
-                HStack {
-                    ElegantCloseButton(isVisible: isTextVisible) {
-                        advance()
-                    }
-                    Spacer()
-                }
-                .padding()
-                Spacer()
-            }
+        OptimizedSubscriptionView() {
+            advance()
         }
-        .onAppear { revealText() }
+        .frame(height: UIScreen.main.bounds.height * 0.96)
     }
 
     private func revealText() {
@@ -230,6 +218,8 @@ struct OnboardingView: View {
     }
 
     private func dismissOnboarding() {
+        // Stop onboarding music — main app will restart it via SpeakLifeApp
+        AudioPlayerService.shared.stopMusic()
         withAnimation {
             appState.isOnboarded = true
             LifecycleNotificationService.shared.scheduleLifecycleNotifications()
