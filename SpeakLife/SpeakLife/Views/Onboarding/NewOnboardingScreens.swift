@@ -1677,7 +1677,7 @@ struct LiveDeclarationPreviewScreen: View {
                 // Why declarations work — scripture backing
                 HStack(spacing: 8) {
                     Image(systemName: "text.book.closed.fill")
-                        .font(.system(size: 13))
+                        .font(.system(size: 16))
                         .foregroundColor(.white.opacity(0.55))
                     Text("\u{201C}Death and life are in the power of the tongue.\u{201D} \u{2014} Prov 18:21")
                         .font(.system(size: 13, weight: .medium, design: .rounded))
