@@ -2137,7 +2137,7 @@ struct WarriorRoomFeatureScreen: View {
                             .background(Capsule().fill(Color.white))
                     }
 
-                    Text("7 days free \u{2022} 30-day guarantee \u{2022} Cancel anytime")
+                    Text("7 days free \u{2022}\u{2022} Cancel anytime")
                         .font(.system(size: 12))
                         .foregroundColor(.white.opacity(0.4))
                         .multilineTextAlignment(.center)
