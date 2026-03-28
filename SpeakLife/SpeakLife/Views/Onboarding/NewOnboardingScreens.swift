@@ -1949,7 +1949,7 @@ struct DailyDevotionalFeatureScreen: View {
                             .fill(Color.white.opacity(0.12))
                             .frame(height: 1)
 
-                        Text("Every day, a short devotional opens a new window into how deeply God loves you. Not religion — relationship. When you know how loved you are, fear loses its grip.")
+                        Text("Every day, a short devotional opens a new window into how deeply God loves you. Not religion but relationship. When you know how loved you are, fear loses its grip.")
                             .font(.system(size: 15, weight: .regular, design: .rounded))
                             .foregroundColor(.white.opacity(0.8))
                             .lineSpacing(4)
