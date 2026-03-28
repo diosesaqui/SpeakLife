@@ -91,24 +91,10 @@ struct OnboardingView: View {
     // MARK: - Subscription Scene
 
     private func subscriptionScene(size: CGSize) -> some View {
-        ZStack {
-            OptimizedSubscriptionView() {
-                advance()
-            }
-            .frame(height: UIScreen.main.bounds.height * 0.96)
-
-            VStack {
-                HStack {
-                    ElegantCloseButton(isVisible: isTextVisible) {
-                        advance()
-                    }
-                    Spacer()
-                }
-                .padding()
-                Spacer()
-            }
+        OptimizedSubscriptionView() {
+            advance()
         }
-        .onAppear { revealText() }
+        .frame(height: UIScreen.main.bounds.height * 0.96)
     }
 
     private func revealText() {
