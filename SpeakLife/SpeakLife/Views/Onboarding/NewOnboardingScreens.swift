@@ -8,6 +8,269 @@
 import SwiftUI
 import FirebaseAnalytics
 
+// MARK: - NEW SCREEN 1: Emotional Hook
+struct EmotionalHookScreen: View {
+    @EnvironmentObject var subscriptionStore: SubscriptionStore
+    let size: CGSize
+    let onContinue: () -> Void
+
+    @State private var headlineVisible = false
+    @State private var subVisible = false
+    @State private var buttonVisible = false
+
+    private let painPoints = [
+        "Anxiety that won't quit",
+        "Feeling lost or without purpose",
+        "Fear holding you back",
+        "Struggling with your identity",
+        "Carrying hurt you can't shake"
+    ]
+
+    var body: some View {
+        ZStack {
+            backgroundView
+            VStack(spacing: 0) {
+                Spacer()
+                VStack(spacing: 24) {
+                    Text("You didn't download\nthis by accident.")
+                        .font(.system(size: 34, weight: .bold, design: .rounded))
+                        .multilineTextAlignment(.center)
+                        .foregroundColor(.white)
+                        .lineSpacing(4)
+                        .opacity(headlineVisible ? 1 : 0)
+                        .offset(y: headlineVisible ? 0 : 24)
+
+                    Text("Something brought you here.\nGod's Word has something to say about it.")
+                        .font(.system(size: 18, weight: .medium, design: .rounded))
+                        .multilineTextAlignment(.center)
+                        .foregroundColor(.white.opacity(0.8))
+                        .lineSpacing(4)
+                        .padding(.horizontal, 32)
+                        .opacity(subVisible ? 1 : 0)
+                        .offset(y: subVisible ? 0 : 16)
+
+                    VStack(spacing: 10) {
+                        ForEach(Array(painPoints.enumerated()), id: \.offset) { index, point in
+                            HStack(spacing: 10) {
+                                Image(systemName: "circle.fill")
+                                    .font(.system(size: 6))
+                                    .foregroundColor(.white.opacity(0.5))
+                                Text(point)
+                                    .font(.system(size: 16, weight: .medium, design: .rounded))
+                                    .foregroundColor(.white.opacity(0.85))
+                            }
+                            .opacity(subVisible ? 1 : 0)
+                            .offset(x: subVisible ? 0 : -20)
+                            .animation(.easeOut(duration: 0.5).delay(0.3 + Double(index) * 0.08), value: subVisible)
+                        }
+                    }
+                    .padding(.horizontal, 48)
+                    .padding(.top, 8)
+                }
+                .padding(.horizontal, 24)
+                Spacer()
+                Button(action: {
+                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                    onContinue()
+                }) {
+                    Text("Let's find what God says about it")
+                        .font(.system(size: 17, weight: .semibold, design: .rounded))
+                        .foregroundColor(.black)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 56)
+                        .background(Capsule().fill(Color.white))
+                }
+                .padding(.horizontal, 32)
+                .padding(.bottom, 50)
+                .opacity(buttonVisible ? 1 : 0)
+                .offset(y: buttonVisible ? 0 : 20)
+            }
+        }
+        .ignoresSafeArea()
+        .onAppear {
+            withAnimation(.easeOut(duration: 0.8)) { headlineVisible = true }
+            withAnimation(.easeOut(duration: 0.8).delay(0.3)) { subVisible = true }
+            withAnimation(.easeOut(duration: 0.6).delay(0.8)) { buttonVisible = true }
+        }
+    }
+
+    var backgroundView: some View {
+        ZStack {
+            Image(subscriptionStore.onboardingBGImage)
+                .resizable()
+                .aspectRatio(contentMode: .fill)
+                .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
+                .clipped()
+                .ignoresSafeArea()
+            LinearGradient(
+                gradient: Gradient(colors: [Color.black.opacity(0.78), Color.black.opacity(0.45), Color.black.opacity(0.6)]),
+                startPoint: .top, endPoint: .bottom
+            ).ignoresSafeArea()
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .edgesIgnoringSafeArea(.all)
+    }
+}
+
+// MARK: - NEW SCREEN 4: Transformation Social Proof
+struct TransformationSocialProofScreen: View {
+    @EnvironmentObject var subscriptionStore: SubscriptionStore
+    let size: CGSize
+    let onContinue: () -> Void
+
+    @State private var statVisible = false
+    @State private var card1Visible = false
+    @State private var card2Visible = false
+    @State private var buttonVisible = false
+
+    private let testimonials: [(before: String, after: String, name: String)] = [
+        (
+            before: "I used to wake up in a panic every morning. Anxiety ruled my days.",
+            after: "Now I wake up declaring. The fear is still there sometimes — but it doesn't get the first word anymore.",
+            name: "Sarah M."
+        ),
+        (
+            before: "I didn't know who I was in Christ. I just felt lost. Unworthy.",
+            after: "After 30 days of identity declarations, something shifted. I actually believe I'm chosen now.",
+            name: "Marcus T."
+        )
+    ]
+
+    var body: some View {
+        ZStack {
+            backgroundView
+            VStack(spacing: 0) {
+                Spacer()
+                VStack(spacing: 28) {
+                    VStack(spacing: 6) {
+                        Text("100,000+")
+                            .font(.system(size: 48, weight: .black, design: .rounded))
+                            .foregroundColor(.white)
+                        Text("believers have made this shift")
+                            .font(.system(size: 17, weight: .medium, design: .rounded))
+                            .foregroundColor(.white.opacity(0.75))
+                        HStack(spacing: 3) {
+                            ForEach(0..<5) { _ in
+                                Image(systemName: "star.fill")
+                                    .font(.system(size: 13))
+                                    .foregroundColor(.yellow)
+                            }
+                            Text("Rated 4.9 on App Store")
+                                .font(.system(size: 13, weight: .medium))
+                                .foregroundColor(.white.opacity(0.65))
+                                .padding(.leading, 4)
+                        }
+                    }
+                    .opacity(statVisible ? 1 : 0)
+                    .scaleEffect(statVisible ? 1 : 0.9)
+
+                    VStack(spacing: 14) {
+                        ForEach(Array(testimonials.enumerated()), id: \.offset) { index, t in
+                            TestimonyTransformCard(
+                                before: t.before,
+                                after: t.after,
+                                name: t.name,
+                                isVisible: index == 0 ? card1Visible : card2Visible
+                            )
+                        }
+                    }
+                    .padding(.horizontal, 20)
+                }
+                Spacer()
+                Button(action: {
+                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                    onContinue()
+                }) {
+                    Text("Start my transformation")
+                        .font(.system(size: 17, weight: .semibold, design: .rounded))
+                        .foregroundColor(.black)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 56)
+                        .background(Capsule().fill(Color.white))
+                }
+                .padding(.horizontal, 32)
+                .padding(.bottom, 50)
+                .opacity(buttonVisible ? 1 : 0)
+                .offset(y: buttonVisible ? 0 : 20)
+            }
+        }
+        .ignoresSafeArea()
+        .onAppear {
+            withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) { statVisible = true }
+            withAnimation(.easeOut(duration: 0.6).delay(0.4)) { card1Visible = true }
+            withAnimation(.easeOut(duration: 0.6).delay(0.65)) { card2Visible = true }
+            withAnimation(.easeOut(duration: 0.5).delay(0.9)) { buttonVisible = true }
+        }
+    }
+
+    var backgroundView: some View {
+        ZStack {
+            Image(subscriptionStore.onboardingBGImage)
+                .resizable()
+                .aspectRatio(contentMode: .fill)
+                .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
+                .clipped()
+                .ignoresSafeArea()
+            LinearGradient(
+                gradient: Gradient(colors: [Color.black.opacity(0.75), Color.black.opacity(0.45), Color.black.opacity(0.6)]),
+                startPoint: .top, endPoint: .bottom
+            ).ignoresSafeArea()
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .edgesIgnoringSafeArea(.all)
+    }
+}
+
+struct TestimonyTransformCard: View {
+    let before: String
+    let after: String
+    let name: String
+    let isVisible: Bool
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(alignment: .top, spacing: 8) {
+                Text("BEFORE")
+                    .font(.system(size: 10, weight: .bold, design: .rounded))
+                    .foregroundColor(.white.opacity(0.4))
+                    .padding(.top, 2)
+                Text(before)
+                    .font(.system(size: 14, weight: .regular, design: .rounded))
+                    .foregroundColor(.white.opacity(0.65))
+                    .italic()
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Rectangle().fill(Color.white.opacity(0.15)).frame(height: 1)
+            HStack(alignment: .top, spacing: 8) {
+                Text("NOW")
+                    .font(.system(size: 10, weight: .bold, design: .rounded))
+                    .foregroundColor(.green.opacity(0.8))
+                    .padding(.top, 2)
+                Text(after)
+                    .font(.system(size: 14, weight: .semibold, design: .rounded))
+                    .foregroundColor(.white.opacity(0.9))
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Text("— \(name)")
+                .font(.system(size: 12, weight: .medium, design: .rounded))
+                .foregroundColor(.white.opacity(0.4))
+                .frame(maxWidth: .infinity, alignment: .trailing)
+        }
+        .padding(16)
+        .background(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(Color.white.opacity(0.08))
+                .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .strokeBorder(Color.white.opacity(0.15), lineWidth: 1))
+        )
+        .opacity(isVisible ? 1 : 0)
+        .offset(y: isVisible ? 0 : 20)
+        .animation(.easeOut(duration: 0.5), value: isVisible)
+    }
+}
+
+// MARK: - Legacy screens (no longer in main flow, kept for reference)
+
 // MARK: - Screen 1: Scripture Anchor
 struct ScriptureAnchorScreen: View {
     @EnvironmentObject var subscriptionStore: SubscriptionStore
