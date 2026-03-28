@@ -57,20 +57,12 @@ struct OnboardingView: View {
                 .tag(Tab.devotionalFeature)
 
                 // SCREEN 6: Warrior Room — community prayer & testimonies
-                // Flow: emotionalHook → categorySelect → livePreview → audioFeature → devotionalFeature → warriorRoom → dailyCommitment → subscription → notification
                 WarriorRoomFeatureScreen(size: geometry.size) {
                     withAnimation { advance() }
                 }
                 .tag(Tab.warriorRoom)
 
-                // SCREEN 7: Daily Commitment — sets expectation before paywall
-                DailyCommitmentScreen(size: geometry.size) {
-                    Analytics.logEvent("onboarding_commitment_done", parameters: nil)
-                    advance()
-                }
-                .tag(Tab.dailyCommitment)
-
-                // SCREEN 8: Subscription / Paywall
+                // SCREEN 7: Subscription / Paywall
                 subscriptionScene(size: geometry.size)
                     .tag(Tab.subscription)
 
@@ -149,15 +141,9 @@ struct OnboardingView: View {
 
         case .warriorRoom:
             impactMed.impactOccurred()
-            selection = .dailyCommitment
-            onboardingTab = selection.rawValue
-            Analytics.logEvent("onboarding_warrior_room_done", parameters: nil)
-
-        case .dailyCommitment:
-            impactMed.impactOccurred()
             selection = .subscription
             onboardingTab = selection.rawValue
-            Analytics.logEvent("onboarding_commitment_done", parameters: nil)
+            Analytics.logEvent("onboarding_warrior_room_done", parameters: nil)
 
         case .subscription:
             impactMed.impactOccurred()

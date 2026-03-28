@@ -13,7 +13,6 @@ enum Tab: String {
     case audioFeature
     case devotionalFeature
     case warriorRoom
-    case dailyCommitment
     case subscription
     case notification
 
