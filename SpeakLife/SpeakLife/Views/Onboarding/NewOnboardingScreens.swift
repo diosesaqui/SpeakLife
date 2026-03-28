@@ -1677,14 +1677,19 @@ struct LiveDeclarationPreviewScreen: View {
 
                 // Why declarations work — scripture backing
                 HStack(spacing: 8) {
-                    Image(systemName: "text.book.closed.fill")
-                        .font(.system(size: 16))
+                    Text("Knowing the truth isn't enough. You have to SPEAK it until you live it.")
+                        .font(.system(size: 15, weight: .bold, design: .rounded))
                         .foregroundColor(.white.opacity(0.55))
-                    Text("\u{201C}Death and life are in the power of the tongue.\u{201D} \u{2014} Prov 18:21")
-                        .font(.system(size: 13, weight: .medium, design: .rounded))
-                        .foregroundColor(.white.opacity(0.6))
-                        .italic()
                         .multilineTextAlignment(.center)
+                        .italic()
+//                    Image(systemName: "text.book.closed.fill")
+//                        .font(.system(size: 16))
+//                        .foregroundColor(.white.opacity(0.55))
+//                    Text("\u{201C}Death and life are in the power of the tongue.\u{201D} \u{2014} Prov 18:21")
+//                        .font(.system(size: 13, weight: .medium, design: .rounded))
+//                        .foregroundColor(.white.opacity(0.6))
+//                        .italic()
+//                        .multilineTextAlignment(.center)
                 }
                 .padding(.horizontal, 32)
                 .padding(.bottom, 12)
@@ -1704,11 +1709,7 @@ struct LiveDeclarationPreviewScreen: View {
                             .background(Capsule().fill(Color.white))
                     }
 
-                    Text("Knowing the truth isn't enough. You have to SPEAK it until you live it.")
-                        .font(.system(size: 13, weight: .medium, design: .rounded))
-                        .foregroundColor(.white.opacity(0.55))
-                        .multilineTextAlignment(.center)
-                        .italic()
+                   
                 }
                 .padding(.horizontal, 32)
                 .padding(.bottom, 50)
@@ -1838,7 +1839,7 @@ struct AudioFeatureScreen: View {
 
                 VStack(spacing: 12) {
                     Text("Read it once and it informs you. Hear it daily and it TRANSFORMS you.")
-                        .font(.system(size: 13, weight: .medium, design: .rounded))
+                        .font(.system(size: 15, weight: .bold, design: .rounded))
                         .foregroundColor(.white.opacity(0.55))
                         .multilineTextAlignment(.center)
                         .italic()
@@ -1971,7 +1972,7 @@ struct DailyDevotionalFeatureScreen: View {
 
                 VStack(spacing: 12) {
                     Text("You know God is good. This is how you start believing He's good to YOU.")
-                        .font(.system(size: 13, weight: .medium, design: .rounded))
+                        .font(.system(size: 15, weight: .bold, design: .rounded))
                         .foregroundColor(.white.opacity(0.55))
                         .multilineTextAlignment(.center)
                         .italic()
