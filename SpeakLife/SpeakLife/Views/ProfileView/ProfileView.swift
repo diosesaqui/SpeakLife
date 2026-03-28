@@ -48,6 +48,7 @@ struct ProfileView: View {
     @State private var showSpiritualGrowth = false
     @State private var showSupportIDCopied = false
     @State private var showEmailCaptureSheet = false
+    @State private var showHowToUse = false
     let url = URL(string:APP.Product.urlID)
     
     
@@ -96,6 +97,7 @@ struct ProfileView: View {
                     
                     Section(header: Text("Yours").font(.caption)) {
                         AbbasLoveRow
+                        howToUseRow
                         streakStatsRow
                       //  dailyBurstStatsRow
                             quizRow
@@ -480,6 +482,30 @@ struct ProfileView: View {
         }
     }
     
+    @MainActor
+    private var howToUseRow: some View {
+        HStack {
+            Image(systemName: "book.pages.fill")
+                .foregroundColor(Constants.DAMidBlue)
+            Button(action: { showHowToUse = true }) {
+                HStack {
+                    Text("How to Use SpeakLife")
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.caption)
+                        .foregroundColor(.gray)
+                }
+            }
+            .foregroundColor(.white)
+        }
+        .fullScreenCover(isPresented: $showHowToUse) {
+            HowToUseSpeakLifeView()
+                .environmentObject(subscriptionStore)
+                .environmentObject(appState)
+                .environmentObject(declarationStore)
+        }
+    }
+
     @MainActor
     private var favoritesRow: some View {
         HStack {
