@@ -794,13 +794,6 @@
 			path = Bootcamp;
 			sourceTree = "<group>";
 		};
-		4525D7092F3D16F700571394 /* EmailCampaign */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = EmailCampaign;
-			sourceTree = "<group>";
-		};
 		4525D8F42F4B5CA900571394 /* Integration */ = {
 			isa = PBXGroup;
 			children = (
@@ -1317,7 +1310,6 @@
 				458510D82B159B0D00230EE5 /* LandingView.swift */,
 				7A601440294E574500CD2103 /* HomeView.swift */,
 				4525D6842F37C0EB00571394 /* DailyDeclarationBurstView.swift */,
-				4525D7092F3D16F700571394 /* EmailCampaign */,
 				45567D5D2F29CA5D00382072 /* Bible */,
 				451AECF02E4EE7F000C1490E /* Bootcamp */,
 				4597E2592E41C1AC009D6C66 /* Components */,
