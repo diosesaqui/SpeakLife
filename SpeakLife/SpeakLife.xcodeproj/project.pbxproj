@@ -227,6 +227,7 @@
 		45F3E7582EAAAD38002B1F4E /* AffirmationsTutorial.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45F3E7552EAAAD38002B1F4E /* AffirmationsTutorial.swift */; };
 		45F3E75B2EAAAD41002B1F4E /* CreateYourOwnTutorial.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45F3E7592EAAAD41002B1F4E /* CreateYourOwnTutorial.swift */; };
 		45F3E75E2EAAB36B002B1F4E /* DevotionalsTutorial.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45F3E75D2EAAB36B002B1F4E /* DevotionalsTutorial.swift */; };
+		0E1A8C97F61B9FB156F0F50F /* HowToUseSpeakLifeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74DAA35385DD02F8B0DCADE5 /* HowToUseSpeakLifeView.swift */; };
 		45F3E7602EB426CA002B1F4E /* CombinedPersonalizationScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45F3E75F2EB426CA002B1F4E /* CombinedPersonalizationScene.swift */; };
 		45F3E7632EB43B8A002B1F4E /* AnimatedDeclarationText.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45F3E7612EB43B8A002B1F4E /* AnimatedDeclarationText.swift */; };
 		45F3E7642EB43B8A002B1F4E /* DeclarationAnimationSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45F3E7622EB43B8A002B1F4E /* DeclarationAnimationSettings.swift */; };
@@ -592,6 +593,7 @@
 		45F3E7562EAAAD38002B1F4E /* AudioDevotionalsTutorial.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioDevotionalsTutorial.swift; sourceTree = "<group>"; };
 		45F3E7592EAAAD41002B1F4E /* CreateYourOwnTutorial.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateYourOwnTutorial.swift; sourceTree = "<group>"; };
 		45F3E75D2EAAB36B002B1F4E /* DevotionalsTutorial.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DevotionalsTutorial.swift; sourceTree = "<group>"; };
+		74DAA35385DD02F8B0DCADE5 /* HowToUseSpeakLifeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HowToUseSpeakLifeView.swift; sourceTree = "<group>"; };
 		45F3E75F2EB426CA002B1F4E /* CombinedPersonalizationScene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CombinedPersonalizationScene.swift; sourceTree = "<group>"; };
 		45F3E7612EB43B8A002B1F4E /* AnimatedDeclarationText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnimatedDeclarationText.swift; sourceTree = "<group>"; };
 		45F3E7622EB43B8A002B1F4E /* DeclarationAnimationSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeclarationAnimationSettings.swift; sourceTree = "<group>"; };
@@ -1630,6 +1632,7 @@
 				45F3E7592EAAAD41002B1F4E /* CreateYourOwnTutorial.swift */,
 				45F3E75D2EAAB36B002B1F4E /* DevotionalsTutorial.swift */,
 				45F3E7562EAAAD38002B1F4E /* AudioDevotionalsTutorial.swift */,
+				74DAA35385DD02F8B0DCADE5 /* HowToUseSpeakLifeView.swift */,
 				7AA870B928DACCB700134ADB /* NotificationScene.swift */,
 				7AA870C128DACCB700134ADB /* WidgetScene.swift */,
 				453172B32B2D274800388AD4 /* BenefitScene.swift */,
@@ -2034,6 +2037,7 @@
 				451AECF12E4EE7F000C1490E /* BootcampMainView.swift in Sources */,
 				7AA870C428DACCB700134ADB /* DeclarationViewModel.swift in Sources */,
 				45F3E75E2EAAB36B002B1F4E /* DevotionalsTutorial.swift in Sources */,
+				0E1A8C97F61B9FB156F0F50F /* HowToUseSpeakLifeView.swift in Sources */,
 				45C15A8E2F35751A006171F5 /* TestimonialsOnboardingView.swift in Sources */,
 				7AA870CF28DACCB700134ADB /* MailView.swift in Sources */,
 				45F3E75B2EAAAD41002B1F4E /* CreateYourOwnTutorial.swift in Sources */,
