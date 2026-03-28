@@ -111,6 +111,7 @@ struct EmotionalHookScreen: View {
             withAnimation(.easeOut(duration: 0.7)) { headlineVisible = true }
             withAnimation(.easeOut(duration: 0.7).delay(0.3)) { subVisible = true }
             withAnimation(.easeOut(duration: 0.5).delay(0.9)) { buttonVisible = true }
+            Analytics.logEvent("onboarding_hook_shown", parameters: nil)
         }
     }
 
@@ -419,8 +420,8 @@ struct CategorySelectScreen: View {
                             let cats = Set(selectionVM.selectedExperiences)
                             appState.selectedNotificationCategories = cats.map { $0.rawValue }.joined(separator: ",")
                             Analytics.logEvent("onboarding_category_selected", parameters: [
-                                "count": selectionVM.selectedExperiences.count,
-                                "categories": selectionVM.selectedExperiences.map { $0.rawValue }.joined(separator: ",")
+                                "count": NSNumber(value: selectionVM.selectedExperiences.count),
+                                "categories": selectionVM.selectedExperiences.map { $0.rawValue }.joined(separator: ",") as NSString
                             ])
                             onContinue()
                         }) {
@@ -1725,6 +1726,7 @@ struct LiveDeclarationPreviewScreen: View {
             withAnimation(.easeOut(duration: 0.5).delay(0.9)) {
                 buttonVisible = true
             }
+            Analytics.logEvent("onboarding_preview_shown", parameters: nil)
         }
     }
 
