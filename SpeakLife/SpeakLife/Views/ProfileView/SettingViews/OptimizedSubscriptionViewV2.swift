@@ -198,27 +198,33 @@ struct OptimizedSubscriptionViewV2: View {
     private var valuePropsSection: some View {
         VStack(spacing: 20) {
             ValuePropRow(
-                icon: "brain.head.profile",
-                title: "Renew Your Mind in",
-                description: "Build the reflex to respond like Jesus under pressure."
+                icon: "quote.bubble.fill",
+                title: "Replace Every Lie With God's Truth",
+                description: "Daily declarations rewire your mind until God's Word becomes your first response."
             )
-            
+
             ValuePropRow(
-                icon: "shield.lefthalf.filled",
-                title: "Scripture-Based Declarations",
-                description: "Know exactly what to declare in crisis."
+                icon: "shield.fill",
+                title: "Build a Mind Nothing Can Shake",
+                description: "Spoken truth is your greatest weapon. It's exactly how Jesus defeated every attack."
             )
-            
+
             ValuePropRow(
-                icon: "waveform",
-                title: "Daily Faith Conditioning",
-                description: "Reinforce truth daily until it becomes instinct."
+                icon: "headphones",
+                title: "Hear God's Word Daily",
+                description: "Faith comes by hearing. Audio devotionals put Scripture in your ears morning and night."
             )
-            
+
             ValuePropRow(
-                icon: "chart.line.uptrend.xyaxis",
-                title: "Strengthen your Spiritual Discipline",
-                description: "Watch anxiety shrink and boldness grow."
+                icon: "person.circle.fill",
+                title: "Become Who God Said You Are",
+                description: "Know your identity in Christ so deeply that fear, doubt, and shame lose their grip."
+            )
+
+            ValuePropRow(
+                icon: "hands.and.sparkles.fill",
+                title: "Pray With 100,000+ Believers",
+                description: "The Warrior Room — share prayers, claim testimonies, and never fight alone."
             )
         }
     }
@@ -315,7 +321,7 @@ struct OptimizedSubscriptionViewV2: View {
             
             // CTA Button
             Button(action: makePurchase) {
-                Text("Start My Free Trial")
+                Text("Begin My 7-Day Faith Reset")
                     .font(.system(size: 18, weight: .bold))
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
