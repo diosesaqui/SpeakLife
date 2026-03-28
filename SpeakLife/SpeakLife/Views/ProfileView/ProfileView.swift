@@ -591,7 +591,7 @@ struct ProfileView: View {
     }
     
     private var reviewRow: some View  {
-        SettingsRow(isPresentingContentView: $isPresentingContentView, imageTitle: "star.bubble.fill", title: "Encourage us", viewToPresent: EmptyView(), url: "\(APP.Product.urlID)?action=write-review") {
+        SettingsRow(isPresentingContentView: $isPresentingContentView, imageTitle: "star.bubble.fill", title: "Your Review Helps Someone Find Faith", viewToPresent: EmptyView(), url: "\(APP.Product.urlID)?action=write-review") {
         }
     }
     
