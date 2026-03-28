@@ -21,7 +21,7 @@ struct EmotionalHookScreen: View {
     // Pain confessions — 2 most powerful, most universal
     private let painPoints = [
         "You know God is real — but anxiety still wins some mornings",
-        "You've read the Word — but it hasn't become instinct yet"
+        "You've read the Word — but it hasn't become first response yet"
     ]
 
     var body: some View {
