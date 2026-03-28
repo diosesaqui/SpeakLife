@@ -18,13 +18,10 @@ struct EmotionalHookScreen: View {
     @State private var subVisible = false
     @State private var buttonVisible = false
 
-    // Pain confessions — the gap between what they believe and what they feel
+    // Pain confessions — 2 most powerful, most universal
     private let painPoints = [
         "You know God is real — but anxiety still wins some mornings",
-        "You believe His promises — but fear gets the first word",
-        "You've read the Word — but it hasn't become instinct yet",
-        "You know who God says you are — but you don't always feel it",
-        "You pray, you believe — but doubt creeps in when life gets hard"
+        "You've read the Word — but it hasn't become instinct yet"
     ]
 
     var body: some View {
