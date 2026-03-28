@@ -2211,9 +2211,9 @@ struct DailyCommitmentScreen: View {
     @State private var buttonVisible = false
 
     private let milestones: [(String, String, String)] = [
-        ("1", "Week 1", "Your mornings start to feel different"),
-        ("2", "Month 1", "Your first response to fear begins to change"),
-        ("3", "Month 3", "Trials come. And they don't take you down.")
+        ("1", "Week 1", "You start waking up with God's Word — not your worries."),
+        ("2", "Month 1", "When fear hits, you speak before you spiral."),
+        ("3", "Month 3", "A trial hits that would have broken you before. It doesn't.")
     ]
 
     var body: some View {
