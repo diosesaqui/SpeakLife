@@ -2199,3 +2199,146 @@ struct WarriorRoomFeatureScreen: View {
         .edgesIgnoringSafeArea(.all)
     }
 }
+
+// MARK: - Daily Commitment Screen
+
+struct DailyCommitmentScreen: View {
+    let size: CGSize
+    let onContinue: () -> Void
+
+    @State private var headerVisible = false
+    @State private var timelinesVisible = false
+    @State private var buttonVisible = false
+
+    private let milestones: [(String, String, String)] = [
+        ("1", "Week 1", "Your mornings start to feel different"),
+        ("2", "Month 1", "Your first response to fear begins to change"),
+        ("3", "Month 3", "Trials come. And they don't take you down.")
+    ]
+
+    var body: some View {
+        ZStack {
+            // Background
+            LinearGradient(
+                gradient: Gradient(colors: [Color(red: 0.06, green: 0.08, blue: 0.18), Color(red: 0.1, green: 0.05, blue: 0.2)]),
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .ignoresSafeArea()
+
+            VStack(spacing: 0) {
+                Spacer()
+
+                // Header
+                VStack(spacing: 16) {
+                    Text("Daily is the difference.")
+                        .font(.system(size: 32, weight: .bold, design: .rounded))
+                        .foregroundColor(.white)
+                        .multilineTextAlignment(.center)
+
+                    Text("\"Be transformed by the renewing of your mind.\"")
+                        .font(.system(size: 15, weight: .medium, design: .rounded))
+                        .foregroundColor(.white.opacity(0.65))
+                        .italic()
+                        .multilineTextAlignment(.center)
+
+                    Text("— Romans 12:2")
+                        .font(.system(size: 13, weight: .regular, design: .rounded))
+                        .foregroundColor(.white.opacity(0.4))
+                }
+                .padding(.horizontal, 32)
+                .opacity(headerVisible ? 1 : 0)
+                .offset(y: headerVisible ? 0 : 16)
+
+                Spacer().frame(height: 36)
+
+                // Subhead
+                Text("The world renews your mind constantly — through fear, noise, and bad news.\nSpeakLife makes sure God's truth gets there first.")
+                    .font(.system(size: 15, design: .rounded))
+                    .foregroundColor(.white.opacity(0.7))
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 32)
+                    .opacity(headerVisible ? 1 : 0)
+
+                Spacer().frame(height: 40)
+
+                // Timeline milestones
+                VStack(spacing: 16) {
+                    ForEach(Array(milestones.enumerated()), id: \.offset) { index, milestone in
+                        HStack(alignment: .top, spacing: 16) {
+                            // Step indicator
+                            ZStack {
+                                Circle()
+                                    .fill(Color.white.opacity(0.15))
+                                    .frame(width: 36, height: 36)
+                                Text(milestone.0)
+                                    .font(.system(size: 14, weight: .bold, design: .rounded))
+                                    .foregroundColor(.white)
+                            }
+
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(milestone.1)
+                                    .font(.system(size: 15, weight: .bold, design: .rounded))
+                                    .foregroundColor(.white)
+                                Text(milestone.2)
+                                    .font(.system(size: 14, design: .rounded))
+                                    .foregroundColor(.white.opacity(0.65))
+                            }
+                            Spacer()
+                        }
+                        .padding(.horizontal, 28)
+                        .opacity(timelinesVisible ? 1 : 0)
+                        .offset(y: timelinesVisible ? 0 : 12)
+                        .animation(.easeOut(duration: 0.45).delay(Double(index) * 0.15), value: timelinesVisible)
+                    }
+                }
+
+                Spacer().frame(height: 32)
+
+                // Commitment note
+                Text("The bigger the battle, the more you need to speak it. Every single day.")
+                    .font(.system(size: 13, weight: .medium, design: .rounded))
+                    .foregroundColor(.white.opacity(0.55))
+                    .italic()
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 32)
+                    .opacity(timelinesVisible ? 1 : 0)
+
+                Spacer()
+
+                // CTA
+                VStack(spacing: 10) {
+                    Button(action: {
+                        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                        onContinue()
+                    }) {
+                        Text("I'm ready to commit")
+                            .font(.system(size: 17, weight: .semibold, design: .rounded))
+                            .foregroundColor(.black)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 56)
+                            .background(Capsule().fill(Color.white))
+                    }
+
+                    Text("Daily practice builds an unshakable mind")
+                        .font(.system(size: 12))
+                        .foregroundColor(.white.opacity(0.4))
+                        .multilineTextAlignment(.center)
+                }
+                .padding(.horizontal, 32)
+                .padding(.bottom, 50)
+                .opacity(buttonVisible ? 1 : 0)
+            }
+        }
+        .onAppear {
+            Analytics.logEvent("onboarding_commitment_shown", parameters: nil)
+            withAnimation(.easeOut(duration: 0.6)) { headerVisible = true }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                withAnimation { timelinesVisible = true }
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                withAnimation(.easeIn(duration: 0.5)) { buttonVisible = true }
+            }
+        }
+    }
+}
