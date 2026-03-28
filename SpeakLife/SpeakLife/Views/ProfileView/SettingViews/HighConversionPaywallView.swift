@@ -146,7 +146,7 @@ struct HighConversionPaywallView: View {
 
     // MARK: - Benefits
     private var benefitsSection: some View {
-        let icons = ["quote.bubble.fill", "shield.fill", "headphones", "person.circle.fill", "hands.and.sparkles.fill"]
+        let icons = ["quote.bubble.fill", "shield.fill", "eye.fill", "person.circle.fill", "hands.and.sparkles.fill"]
         let descs = [
             "Daily declarations rewire your mind until God's Word becomes your first response.",
             "Spoken truth is your greatest weapon. It's exactly how Jesus defeated every attack.",

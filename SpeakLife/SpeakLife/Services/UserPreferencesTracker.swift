@@ -102,7 +102,7 @@ final class UserPreferencesTracker: ObservableObject {
                 valueProps: [
                     "Replace Every Lie With God's Truth",
                     "Build a Mind Nothing Can Shake",
-                    "Hear God's Word Daily",
+                    "No More Fear of the Future — God Has a Promise for It",
                     "Become Who God Said You Are",
                     "Pray With 100,000+ Believers"
                 ],
@@ -117,7 +117,7 @@ final class UserPreferencesTracker: ObservableObject {
                 valueProps: [
                     "Replace Every Lie With God's Truth",
                     "Build a Mind Nothing Can Shake",
-                    "Hear God's Word Daily",
+                    "No More Fear of the Future — God Has a Promise for It",
                     "Become Who God Said You Are",
                     "Pray With 100,000+ Believers"
                 ],
@@ -132,7 +132,7 @@ final class UserPreferencesTracker: ObservableObject {
                 valueProps: [
                     "Replace Every Lie With God's Truth",
                     "Build a Mind Nothing Can Shake",
-                    "Hear God's Word Daily",
+                    "No More Fear of the Future — God Has a Promise for It",
                     "Become Who God Said You Are",
                     "Pray With 100,000+ Believers"
                 ],
@@ -147,7 +147,7 @@ final class UserPreferencesTracker: ObservableObject {
                 valueProps: [
                     "Replace Every Lie With God's Truth",
                     "Build a Mind Nothing Can Shake",
-                    "Hear God's Word Daily",
+                    "No More Fear of the Future — God Has a Promise for It",
                     "Become Who God Said You Are",
                     "Pray With 100,000+ Believers"
                 ],
@@ -162,7 +162,7 @@ final class UserPreferencesTracker: ObservableObject {
                 valueProps: [
                     "Replace Every Lie With God's Truth",
                     "Build a Mind Nothing Can Shake",
-                    "Hear God's Word Daily",
+                    "No More Fear of the Future — God Has a Promise for It",
                     "Become Who God Said You Are",
                     "Pray With 100,000+ Believers"
                 ],
@@ -177,7 +177,7 @@ final class UserPreferencesTracker: ObservableObject {
                 valueProps: [
                     "Replace Every Lie With God's Truth",
                     "Build a Mind Nothing Can Shake",
-                    "Hear God's Word Daily",
+                    "No More Fear of the Future — God Has a Promise for It",
                     "Become Who God Said You Are",
                     "Pray With 100,000+ Believers"
                 ],
@@ -192,7 +192,7 @@ final class UserPreferencesTracker: ObservableObject {
                 valueProps: [
                     "Replace Every Lie With God's Truth",
                     "Build a Mind Nothing Can Shake",
-                    "Hear God's Word Daily",
+                    "No More Fear of the Future — God Has a Promise for It",
                     "Become Who God Said You Are",
                     "Pray With 100,000+ Believers"
                 ],
@@ -207,7 +207,7 @@ final class UserPreferencesTracker: ObservableObject {
                 valueProps: [
                     "Replace Every Lie With God's Truth",
                     "Build a Mind Nothing Can Shake",
-                    "Hear God's Word Daily",
+                    "No More Fear of the Future — God Has a Promise for It",
                     "Become Who God Said You Are",
                     "Pray With 100,000+ Believers"
                 ],
@@ -222,7 +222,7 @@ final class UserPreferencesTracker: ObservableObject {
                 valueProps: [
                     "Replace Every Lie With God's Truth",
                     "Build a Mind Nothing Can Shake",
-                    "Hear God's Word Daily",
+                    "No More Fear of the Future — God Has a Promise for It",
                     "Become Who God Said You Are",
                     "Pray With 100,000+ Believers"
                 ],
@@ -237,7 +237,7 @@ final class UserPreferencesTracker: ObservableObject {
                 valueProps: [
                     "Replace Every Lie With God's Truth",
                     "Build a Mind Nothing Can Shake",
-                    "Hear God's Word Daily",
+                    "No More Fear of the Future — God Has a Promise for It",
                     "Become Who God Said You Are",
                     "Pray With 100,000+ Believers"
                 ],
@@ -252,7 +252,7 @@ final class UserPreferencesTracker: ObservableObject {
                 valueProps: [
                     "Replace Every Lie With God's Truth",
                     "Build a Mind Nothing Can Shake",
-                    "Hear God's Word Daily",
+                    "No More Fear of the Future — God Has a Promise for It",
                     "Become Who God Said You Are",
                     "Pray With 100,000+ Believers"
                 ],
