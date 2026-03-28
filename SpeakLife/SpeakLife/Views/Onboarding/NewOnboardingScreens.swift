@@ -1704,7 +1704,7 @@ struct LiveDeclarationPreviewScreen: View {
                             .background(Capsule().fill(Color.white))
                     }
 
-                    Text("Knowing the truth isn't enough. You have to speak it until you live it.")
+                    Text("Knowing the truth isn't enough. You have to SPEAK it until you live it.")
                         .font(.system(size: 13, weight: .medium, design: .rounded))
                         .foregroundColor(.white.opacity(0.55))
                         .multilineTextAlignment(.center)
@@ -1837,7 +1837,7 @@ struct AudioFeatureScreen: View {
                 Spacer()
 
                 VStack(spacing: 12) {
-                    Text("Read it once and it informs you. Hear it daily and it transforms you.")
+                    Text("Read it once and it informs you. Hear it daily and it TRANSFORMS you.")
                         .font(.system(size: 13, weight: .medium, design: .rounded))
                         .foregroundColor(.white.opacity(0.55))
                         .multilineTextAlignment(.center)
@@ -1970,7 +1970,7 @@ struct DailyDevotionalFeatureScreen: View {
                 Spacer()
 
                 VStack(spacing: 12) {
-                    Text("You know God is good. This is how you start believing He's good to you.")
+                    Text("You know God is good. This is how you start believing He's good to YOU.")
                         .font(.system(size: 13, weight: .medium, design: .rounded))
                         .foregroundColor(.white.opacity(0.55))
                         .multilineTextAlignment(.center)
