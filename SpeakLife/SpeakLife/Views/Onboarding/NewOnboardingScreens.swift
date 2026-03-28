@@ -269,6 +269,143 @@ struct TestimonyTransformCard: View {
     }
 }
 
+// MARK: - NEW SCREEN 2: Category Select
+struct CategorySelectScreen: View {
+    @EnvironmentObject var subscriptionStore: SubscriptionStore
+    @EnvironmentObject var appState: AppState
+    @StateObject private var selectionVM = ImprovementViewModel()
+    let size: CGSize
+    let onContinue: () -> Void
+
+    @State private var titleVisible = false
+    @State private var gridVisible = false
+
+    private let topCategories: [DeclarationCategory] = [
+        .anxiety, .identity, .fear, .faith,
+        .confidence, .rest, .health, .joy,
+        .hope, .marriage, .wealth, .wisdom
+    ]
+
+    var body: some View {
+        ZStack {
+            backgroundView
+
+            VStack(spacing: 0) {
+                Spacer().frame(height: 20)
+
+                // Header
+                VStack(spacing: 8) {
+                    Text("What are you believing\nGod for?")
+                        .font(.system(size: 30, weight: .bold, design: .rounded))
+                        .multilineTextAlignment(.center)
+                        .foregroundColor(.white)
+                        .opacity(titleVisible ? 1 : 0)
+                        .offset(y: titleVisible ? 0 : 20)
+
+                    Text("Your declarations will be personalized for your journey")
+                        .font(.system(size: 15, weight: .medium))
+                        .foregroundColor(.white.opacity(0.75))
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 32)
+                        .opacity(titleVisible ? 1 : 0)
+                        .offset(y: titleVisible ? 0 : 12)
+                        .animation(.easeOut(duration: 0.6).delay(0.2), value: titleVisible)
+
+                    Text("Select all that apply")
+                        .font(.system(size: 13))
+                        .foregroundColor(.white.opacity(0.5))
+                        .opacity(titleVisible ? 1 : 0)
+                        .animation(.easeOut(duration: 0.6).delay(0.3), value: titleVisible)
+                }
+                .padding(.horizontal, 20)
+
+                Spacer().frame(height: 24)
+
+                // Category grid
+                ScrollView(showsIndicators: false) {
+                    LazyVGrid(columns: [
+                        GridItem(.flexible(), spacing: 8),
+                        GridItem(.flexible(), spacing: 8)
+                    ], spacing: 8) {
+                        ForEach(topCategories, id: \.self) { category in
+                            CategoryPill(
+                                category: category,
+                                isSelected: selectionVM.selectedExperiences.contains(category),
+                                isCompact: size.height < 700
+                            ) {
+                                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                                selectionVM.selectExperience(category)
+                            }
+                        }
+                    }
+                    .padding(.horizontal, 20)
+                    .opacity(gridVisible ? 1 : 0)
+                    .animation(.easeOut(duration: 0.5).delay(0.3), value: gridVisible)
+                }
+
+                Spacer()
+
+                // CTA
+                VStack(spacing: 10) {
+                    Button(action: {
+                        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                        if selectionVM.selectedExperiences.isEmpty {
+                            selectionVM.selectedExperiences = [.faith]
+                        }
+                        // Persist for notification setup
+                        let cats = Set(selectionVM.selectedExperiences)
+                        appState.selectedNotificationCategories = cats.map { $0.rawValue }.joined(separator: ",")
+                        Analytics.logEvent("onboarding_category_selected", parameters: [
+                            "count": selectionVM.selectedExperiences.count,
+                            "categories": selectionVM.selectedExperiences.map { $0.rawValue }.joined(separator: ",")
+                        ])
+                        onContinue()
+                    }) {
+                        Text(selectionVM.selectedExperiences.isEmpty ? "Continue" : "Personalize My Experience")
+                            .font(.system(size: 17, weight: .semibold, design: .rounded))
+                            .foregroundColor(.black)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 56)
+                            .background(Capsule().fill(Color.white))
+                    }
+
+                    Button("Skip for now") {
+                        selectionVM.selectedExperiences = [.general]
+                        onContinue()
+                    }
+                    .font(.system(size: 14))
+                    .foregroundColor(.white.opacity(0.45))
+                }
+                .padding(.horizontal, 28)
+                .padding(.bottom, 44)
+            }
+        }
+        .ignoresSafeArea()
+        .onAppear {
+            withAnimation(.easeOut(duration: 0.7)) { titleVisible = true }
+            withAnimation(.easeOut(duration: 0.6).delay(0.4)) { gridVisible = true }
+            Analytics.logEvent("onboarding_category_shown", parameters: nil)
+        }
+    }
+
+    var backgroundView: some View {
+        ZStack {
+            Image(subscriptionStore.onboardingBGImage)
+                .resizable()
+                .aspectRatio(contentMode: .fill)
+                .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
+                .clipped()
+                .ignoresSafeArea()
+            LinearGradient(
+                gradient: Gradient(colors: [Color.black.opacity(0.72), Color.black.opacity(0.45), Color.black.opacity(0.58)]),
+                startPoint: .top, endPoint: .bottom
+            ).ignoresSafeArea()
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .edgesIgnoringSafeArea(.all)
+    }
+}
+
 // MARK: - Legacy screens (no longer in main flow, kept for reference)
 
 // MARK: - Screen 1: Scripture Anchor

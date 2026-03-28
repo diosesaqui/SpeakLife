@@ -33,7 +33,7 @@ struct OnboardingView: View {
                 .tag(Tab.emotionalHook)
 
                 // SCREEN 2: Category Selection
-                CombinedPersonalizationScene(size: geometry.size) {
+                CategorySelectScreen(size: geometry.size) {
                     withAnimation { advance() }
                 }
                 .tag(Tab.categorySelect)
