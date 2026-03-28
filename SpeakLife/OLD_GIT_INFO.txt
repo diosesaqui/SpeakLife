@@ -1,0 +1,25 @@
+Previous Git Repository Information
+=====================================
+Date: 2025-09-20
+
+Original Remote:
+origin	https://github.com/KingCardo/SpeakLife.git
+
+Last Known Branch: master
+Main Branch: main
+
+Last Commits:
+f12461b 3.1.28
+e9c1024 3.1.28
+a0e37d8 new affirmations
+af5ba26 3.1.28
+983fcad 3.1.28
+
+Files that were modified but not committed:
+- .gitignore
+- SpeakLife/SpeakLife/Preview Content/AffirmationData/declarationsv7.json
+- SpeakLife/SpeakLife/Services/IAP/SubscriptionStore.swift
+- SpeakLife/SpeakLife/Views/AudioDeclarationView/AudioDeclarationViewModel.swift
+
+Note: All git history has been removed. This file preserves the remote information 
+in case you need to reference or restore it later.

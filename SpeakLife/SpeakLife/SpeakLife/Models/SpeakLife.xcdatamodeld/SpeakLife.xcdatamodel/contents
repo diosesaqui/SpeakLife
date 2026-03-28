@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="22522" systemVersion="23F79" minimumToolsVersion="Automatic" sourceLanguage="Swift" usedWithCloudKit="YES" userDefinedModelVersionIdentifier="">
+    <entity name="JournalEntry" representedClassName="JournalEntry" syncable="YES">
+        <attribute name="bibleVerseText" optional="YES" attributeType="String"/>
+        <attribute name="book" optional="YES" attributeType="String"/>
+        <attribute name="category" attributeType="String" defaultValueString="myOwn"/>
+        <attribute name="createdAt" attributeType="Date" defaultDateTimeInterval="0" usedWithCloudKit="YES"/>
+        <attribute name="id" optional="YES" attributeType="UUID" usedWithCloudKit="YES"/>
+        <attribute name="isFavorite" attributeType="Boolean" defaultValueString="NO" usedWithCloudKit="YES"/>
+        <attribute name="lastModified" attributeType="Date" defaultDateTimeInterval="0" usedWithCloudKit="YES"/>
+        <attribute name="text" attributeType="String" defaultValueString=""/>
+        <fetchIndex name="byIsFavorite">
+            <fetchIndexElement property="isFavorite" type="Binary" order="ascending"/>
+        </fetchIndex>
+        <fetchIndex name="byCreatedAt">
+            <fetchIndexElement property="createdAt" type="Binary" order="descending"/>
+        </fetchIndex>
+    </entity>
+    <entity name="AffirmationEntry" representedClassName="AffirmationEntry" syncable="YES">
+        <attribute name="bibleVerseText" optional="YES" attributeType="String"/>
+        <attribute name="book" optional="YES" attributeType="String"/>
+        <attribute name="category" attributeType="String" defaultValueString="myOwn"/>
+        <attribute name="createdAt" attributeType="Date" defaultDateTimeInterval="0" usedWithCloudKit="YES"/>
+        <attribute name="id" optional="YES" attributeType="UUID" usedWithCloudKit="YES"/>
+        <attribute name="isFavorite" attributeType="Boolean" defaultValueString="NO" usedWithCloudKit="YES"/>
+        <attribute name="lastModified" attributeType="Date" defaultDateTimeInterval="0" usedWithCloudKit="YES"/>
+        <attribute name="text" attributeType="String" defaultValueString=""/>
+        <fetchIndex name="byIsFavorite">
+            <fetchIndexElement property="isFavorite" type="Binary" order="ascending"/>
+        </fetchIndex>
+        <fetchIndex name="byCreatedAt">
+            <fetchIndexElement property="createdAt" type="Binary" order="descending"/>
+        </fetchIndex>
+    </entity>
+    <entity name="AudioFavoriteEntry" representedClassName="AudioFavoriteEntry" syncable="YES">
+        <attribute name="audioId" attributeType="String" defaultValueString="" usedWithCloudKit="YES"/>
+        <attribute name="title" attributeType="String" defaultValueString="" usedWithCloudKit="YES"/>
+        <attribute name="subtitle" attributeType="String" defaultValueString="" usedWithCloudKit="YES"/>
+        <attribute name="duration" attributeType="String" defaultValueString="" usedWithCloudKit="YES"/>
+        <attribute name="imageUrl" attributeType="String" defaultValueString="" usedWithCloudKit="YES"/>
+        <attribute name="isPremium" attributeType="Boolean" defaultValueString="NO" usedWithCloudKit="YES"/>
+        <attribute name="tag" optional="YES" attributeType="String" usedWithCloudKit="YES"/>
+        <attribute name="season" optional="YES" attributeType="Integer 32" usedWithCloudKit="YES"/>
+        <attribute name="episode" optional="YES" attributeType="Integer 32" usedWithCloudKit="YES"/>
+        <attribute name="createdAt" attributeType="Date" defaultDateTimeInterval="0" usedWithCloudKit="YES"/>
+        <attribute name="lastModified" attributeType="Date" defaultDateTimeInterval="0" usedWithCloudKit="YES"/>
+        <attribute name="dateFavorited" optional="YES" attributeType="Date" usedWithCloudKit="YES"/>
+        <attribute name="id" optional="YES" attributeType="UUID" usedWithCloudKit="YES"/>
+        <fetchIndex name="byAudioId">
+            <fetchIndexElement property="audioId" type="Binary" order="ascending"/>
+        </fetchIndex>
+        <fetchIndex name="byTag">
+            <fetchIndexElement property="tag" type="Binary" order="ascending"/>
+        </fetchIndex>
+        <fetchIndex name="byCreatedAt">
+            <fetchIndexElement property="createdAt" type="Binary" order="descending"/>
+        </fetchIndex>
+    </entity>
+    <entity name="DeclarationFavoriteEntry" representedClassName="DeclarationFavoriteEntry" syncable="YES">
+        <attribute name="declarationId" attributeType="String" defaultValueString="" usedWithCloudKit="YES"/>
+        <attribute name="text" attributeType="String" defaultValueString="" usedWithCloudKit="YES"/>
+        <attribute name="category" attributeType="String" defaultValueString="" usedWithCloudKit="YES"/>
+        <attribute name="contentType" attributeType="String" defaultValueString="affirmation" usedWithCloudKit="YES"/>
+        <attribute name="book" optional="YES" attributeType="String" usedWithCloudKit="YES"/>
+        <attribute name="bibleVerseText" optional="YES" attributeType="String" usedWithCloudKit="YES"/>
+        <attribute name="createdAt" attributeType="Date" defaultDateTimeInterval="0" usedWithCloudKit="YES"/>
+        <attribute name="lastModified" attributeType="Date" defaultDateTimeInterval="0" usedWithCloudKit="YES"/>
+        <attribute name="id" optional="YES" attributeType="UUID" usedWithCloudKit="YES"/>
+        <fetchIndex name="byDeclarationId">
+            <fetchIndexElement property="declarationId" type="Binary" order="ascending"/>
+        </fetchIndex>
+        <fetchIndex name="byCategory">
+            <fetchIndexElement property="category" type="Binary" order="ascending"/>
+        </fetchIndex>
+        <fetchIndex name="byCreatedAt">
+            <fetchIndexElement property="createdAt" type="Binary" order="descending"/>
+        </fetchIndex>
+    </entity>
+</model>
