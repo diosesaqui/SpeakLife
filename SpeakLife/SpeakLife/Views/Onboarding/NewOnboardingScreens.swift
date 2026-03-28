@@ -2154,7 +2154,7 @@ struct WarriorRoomFeatureScreen: View {
                         UIImpactFeedbackGenerator(style: .medium).impactOccurred()
                         onContinue()
                     }) {
-                        Text("Start my 7-Day Faith Reset")
+                        Text("I'm ready — show me how")
                             .font(.system(size: 17, weight: .semibold, design: .rounded))
                             .foregroundColor(.black)
                             .frame(maxWidth: .infinity)
@@ -2282,15 +2282,16 @@ struct DailyCommitmentScreen: View {
                                     .foregroundColor(.white)
                             }
 
-                            VStack(alignment: .leading, spacing: 2) {
+                            VStack(alignment: .leading, spacing: 4) {
                                 Text(milestone.1)
                                     .font(.system(size: 15, weight: .bold, design: .rounded))
                                     .foregroundColor(.white)
                                 Text(milestone.2)
                                     .font(.system(size: 14, design: .rounded))
                                     .foregroundColor(.white.opacity(0.65))
+                                    .fixedSize(horizontal: false, vertical: true)
+                                    .lineLimit(nil)
                             }
-                            Spacer()
                         }
                         .padding(.horizontal, 28)
                         .opacity(timelinesVisible ? 1 : 0)
@@ -2327,7 +2328,7 @@ struct DailyCommitmentScreen: View {
                         UIImpactFeedbackGenerator(style: .medium).impactOccurred()
                         onContinue()
                     }) {
-                        Text("I'm ready to commit")
+                        Text("Begin My 7-Day Faith Reset")
                             .font(.system(size: 17, weight: .semibold, design: .rounded))
                             .foregroundColor(.black)
                             .frame(maxWidth: .infinity)
