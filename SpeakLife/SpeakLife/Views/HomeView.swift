@@ -208,24 +208,12 @@ struct HomeView: View {
                             }
                   
                 } else {
-//
-//                    if subscriptionStore.useEnhancedOnboarding {
-//                        PolishedCrossOnboardingFlow()
-//                            .onAppear {
-//                                viewModel.requestPermission { granted in
-//                                    // Handle permission result if needed
-//                                    // ATT Permission handled
-//                                }
-//                            }
-//                    } else {
-                        StreamlinedSpiritualWarfareFlow()
+                        OnboardingView()
                             .onAppear {
                                 viewModel.requestPermission { granted in
-                                    // Handle permission result if needed
                                     // ATT Permission handled
-                             //   }
+                                }
                             }
-                    }
                 }
             }
         
