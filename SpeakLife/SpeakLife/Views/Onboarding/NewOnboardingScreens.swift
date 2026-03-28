@@ -1704,10 +1704,11 @@ struct LiveDeclarationPreviewScreen: View {
                             .background(Capsule().fill(Color.white))
                     }
 
-                    Text("See how SpeakLife builds your faith daily")
-                        .font(.system(size: 13))
-                        .foregroundColor(.white.opacity(0.5))
+                    Text("Knowing the truth isn't enough. You have to speak it until you live it.")
+                        .font(.system(size: 13, weight: .medium, design: .rounded))
+                        .foregroundColor(.white.opacity(0.55))
                         .multilineTextAlignment(.center)
+                        .italic()
                 }
                 .padding(.horizontal, 32)
                 .padding(.bottom, 50)
@@ -1835,16 +1836,25 @@ struct AudioFeatureScreen: View {
 
                 Spacer()
 
-                Button(action: {
-                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                    onContinue()
-                }) {
-                    Text("What else does SpeakLife do?")
-                        .font(.system(size: 17, weight: .semibold, design: .rounded))
-                        .foregroundColor(.black)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 56)
-                        .background(Capsule().fill(Color.white))
+                VStack(spacing: 12) {
+                    Text("Read it once and it informs you. Hear it daily and it transforms you.")
+                        .font(.system(size: 13, weight: .medium, design: .rounded))
+                        .foregroundColor(.white.opacity(0.55))
+                        .multilineTextAlignment(.center)
+                        .italic()
+                        .padding(.horizontal, 8)
+
+                    Button(action: {
+                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                        onContinue()
+                    }) {
+                        Text("What else does SpeakLife do?")
+                            .font(.system(size: 17, weight: .semibold, design: .rounded))
+                            .foregroundColor(.black)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 56)
+                            .background(Capsule().fill(Color.white))
+                    }
                 }
                 .padding(.horizontal, 32)
                 .padding(.bottom, 50)
@@ -1959,7 +1969,14 @@ struct DailyDevotionalFeatureScreen: View {
 
                 Spacer()
 
-                VStack(spacing: 8) {
+                VStack(spacing: 12) {
+                    Text("You know God is good. This is how you start believing He's good to you.")
+                        .font(.system(size: 13, weight: .medium, design: .rounded))
+                        .foregroundColor(.white.opacity(0.55))
+                        .multilineTextAlignment(.center)
+                        .italic()
+                        .padding(.horizontal, 8)
+
                     Button(action: {
                         UIImpactFeedbackGenerator(style: .medium).impactOccurred()
                         onContinue()
@@ -2126,7 +2143,12 @@ struct WarriorRoomFeatureScreen: View {
 
                 Spacer()
 
-                VStack(spacing: 8) {
+                VStack(spacing: 12) {
+                    Text("No warrior wins alone.")
+                        .font(.system(size: 15, weight: .bold, design: .rounded))
+                        .foregroundColor(.white.opacity(0.7))
+                        .multilineTextAlignment(.center)
+
                     Button(action: {
                         UIImpactFeedbackGenerator(style: .medium).impactOccurred()
                         onContinue()
