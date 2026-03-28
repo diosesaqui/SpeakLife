@@ -5,7 +5,7 @@
 //  Reuses the real onboarding screens as a standalone
 //  "How to Use SpeakLife" guide accessible from Settings.
 //
-//  Flow: LiveDeclarationPreview → AudioFeature → DailyDevotionalFeature → WarriorRoom
+//  Flow: LiveDeclarationPreview → AudioFeature → DailyDevotionalFeature → CreateYourOwn → WarriorRoom
 //
 
 import SwiftUI
@@ -18,7 +18,7 @@ struct HowToUseSpeakLifeView: View {
 
     @State private var currentPage = 0
 
-    private let totalPages = 4
+    private let totalPages = 5
 
     var body: some View {
         GeometryReader { geometry in
@@ -46,6 +46,12 @@ struct HowToUseSpeakLifeView: View {
                         .environmentObject(subscriptionStore)
 
                     case 3:
+                        CreateYourOwnTutorial(size: geometry.size, action: {
+                            advance()
+                        })
+                        .environmentObject(subscriptionStore)
+
+                    case 4:
                         WarriorRoomFeatureScreen(size: geometry.size) {
                             dismiss()
                         }
