@@ -1962,18 +1962,13 @@ struct DailyDevotionalFeatureScreen: View {
                         UIImpactFeedbackGenerator(style: .medium).impactOccurred()
                         onContinue()
                     }) {
-                        Text("Start my 7-Day Faith Reset")
+                        Text("There\'s one more thing")
                             .font(.system(size: 17, weight: .semibold, design: .rounded))
                             .foregroundColor(.black)
                             .frame(maxWidth: .infinity)
                             .frame(height: 56)
                             .background(Capsule().fill(Color.white))
                     }
-
-                    Text("7 days free \u{2022} 30-day guarantee \u{2022} Cancel anytime")
-                        .font(.system(size: 12))
-                        .foregroundColor(.white.opacity(0.45))
-                        .multilineTextAlignment(.center)
                 }
                 .padding(.horizontal, 32)
                 .padding(.bottom, 50)
