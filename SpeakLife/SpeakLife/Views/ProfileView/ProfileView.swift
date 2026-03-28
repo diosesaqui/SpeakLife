@@ -28,6 +28,7 @@ struct ProfileView: View {
     @EnvironmentObject var declarationStore: DeclarationViewModel
     //@EnvironmentObject var streakViewModel: EnhancedStreakViewModel
     @EnvironmentObject var streakViewModel: StreakViewModel
+    @EnvironmentObject var enhancedStreakViewModel: EnhancedStreakViewModel
     @EnvironmentObject var appState: AppState
     @EnvironmentObject var devotionalViewModel: DevotionalViewModel
     @EnvironmentObject var subscriptionStore: SubscriptionStore
@@ -42,6 +43,7 @@ struct ProfileView: View {
     @State var isPresentingContentView = false
     @State var isPresentingPrayerRequestView = false
     @State var isPresentingBottomSheet = false
+    @State private var showStreakStats = false
     @State private var showShareSheet = false
     @State private var showSpiritualGrowth = false
     @State private var showSupportIDCopied = false
@@ -94,10 +96,8 @@ struct ProfileView: View {
                     
                     Section(header: Text("Yours").font(.caption)) {
                         AbbasLoveRow
-                       // createYourOwnRow  // Moved Create Your Own here (always visible)
-                       // if appState.onBoardingTest {
-                       // streakRow
-                        dailyBurstStatsRow
+                        streakStatsRow
+                      //  dailyBurstStatsRow
                             quizRow
                            prayerRow
                        // }
@@ -354,8 +354,54 @@ struct ProfileView: View {
             }
         }
     }
-    
+
+    // MARK: - Streak Stats + Badges Row
+
     @MainActor
+    private var streakStatsRow: some View {
+        let stats = enhancedStreakViewModel.streakStats
+        let earnedBadges = enhancedStreakViewModel.badgeManager.allBadges.filter { $0.isUnlocked }
+
+        return HStack(spacing: 12) {
+            Image(systemName: "flame.fill")
+                .foregroundColor(.orange)
+
+            Text("Streak & Badges")
+
+            Spacer()
+
+            // Compact preview: "🔥 5 · 3 badges"
+            HStack(spacing: 6) {
+                Text("\(stats.currentStreak) day\(stats.currentStreak == 1 ? "" : "s")")
+                    .font(.subheadline)
+                    .foregroundColor(.orange)
+
+                if earnedBadges.count > 0 {
+                    Text("·")
+                        .foregroundColor(.secondary)
+                    Text("\(earnedBadges.count) badge\(earnedBadges.count == 1 ? "" : "s")")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                }
+            }
+
+            Image(systemName: "chevron.right")
+                .font(.caption)
+                .foregroundColor(.gray)
+        }
+        .contentShape(Rectangle())
+        .onTapGesture {
+            showStreakStats = true
+            Analytics.logEvent("Profile_StreakStats_Tapped", parameters: [
+                "current_streak": stats.currentStreak,
+                "badges_earned": earnedBadges.count
+            ])
+        }
+        .sheet(isPresented: $showStreakStats) {
+            StreakStatsProfileSheet(viewModel: enhancedStreakViewModel)
+        }
+    }
+
     private var streakRow: some View {
         ZStack {
             Button("") {
@@ -767,5 +813,124 @@ struct PrivacyPolicyView: View {
             .padding()
         }
         .navigationTitle("Privacy Policy")
+    }
+}
+
+// MARK: - StreakStatsProfileSheet
+
+struct StreakStatsProfileSheet: View {
+    @ObservedObject var viewModel: EnhancedStreakViewModel
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationView {
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 24) {
+
+                    // ── Streak Stats ──────────────────────────────────────
+                    VStack(spacing: 16) {
+                        Text("Your Streak")
+                            .font(.title2.bold())
+                            .frame(maxWidth: .infinity, alignment: .leading)
+
+                        HStack(spacing: 12) {
+                            streakStatCard(icon: "flame.fill",              color: .orange, value: "\(viewModel.streakStats.currentStreak)",    label: "Current")
+                            streakStatCard(icon: "trophy.fill",             color: .yellow, value: "\(viewModel.streakStats.longestStreak)",     label: "Best")
+                            streakStatCard(icon: "calendar.badge.checkmark",color: .green,  value: "\(viewModel.streakStats.totalDaysCompleted)",label: "Total Days")
+                        }
+
+                        if viewModel.streakStats.streakFreezeAvailable {
+                            HStack(spacing: 8) {
+                                Text("🛡️")
+                                Text("Streak freeze available — one missed day won't break your streak")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                            .padding(10)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .background(Color.blue.opacity(0.08))
+                            .clipShape(RoundedRectangle(cornerRadius: 10))
+                        }
+                    }
+                    .padding(.horizontal, 20)
+
+                    Divider().padding(.horizontal, 20)
+
+                    // ── Badges ────────────────────────────────────────────
+                    VStack(spacing: 16) {
+                        let allBadges   = viewModel.badgeManager.allBadges
+                        let earnedCount = allBadges.filter { $0.isUnlocked }.count
+
+                        HStack {
+                            Text("Badges").font(.title2.bold())
+                            Spacer()
+                            Text("\(earnedCount)/\(allBadges.count)").font(.caption).foregroundColor(.secondary)
+                        }
+                        .padding(.horizontal, 20)
+
+                        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
+                            ForEach(allBadges) { badge in
+                                streakBadgeCell(badge)
+                            }
+                        }
+                        .padding(.horizontal, 20)
+                    }
+
+                    Color.clear.frame(height: 20)
+                }
+                .padding(.top, 20)
+            }
+            .navigationTitle("Streak & Badges")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") { dismiss() }
+                }
+            }
+        }
+    }
+
+    private func streakStatCard(icon: String, color: Color, value: String, label: String) -> some View {
+        VStack(spacing: 6) {
+            Image(systemName: icon).font(.title2).foregroundColor(color)
+            Text(value).font(.title.bold())
+            Text(label).font(.caption).foregroundColor(.secondary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 16)
+        .background(Color(.secondarySystemBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 14))
+    }
+
+    private func streakBadgeCell(_ badge: Badge) -> some View {
+        VStack(spacing: 6) {
+            ZStack {
+                Circle()
+                    .fill(badge.isUnlocked ? badge.type.primaryColor.opacity(0.15) : Color(.tertiarySystemBackground))
+                    .frame(width: 60, height: 60)
+                Image(systemName: badge.type.iconName)
+                    .font(.system(size: 24))
+                    .foregroundColor(badge.isUnlocked ? badge.type.primaryColor : .gray.opacity(0.3))
+            }
+            Text(badge.isUnlocked ? badge.title : "???")
+                .font(.system(size: 10, weight: .medium))
+                .foregroundColor(badge.isUnlocked ? .primary : .secondary)
+                .multilineTextAlignment(.center)
+                .lineLimit(2)
+            if badge.isUnlocked {
+                Text(badge.rarity.rawValue.capitalized)
+                    .font(.system(size: 8))
+                    .foregroundColor(streakRarityColor(badge.rarity))
+            }
+        }
+    }
+
+    private func streakRarityColor(_ rarity: BadgeRarity) -> Color {
+        switch rarity {
+        case .common: return .gray
+        case .rare: return .blue
+        case .epic: return .purple
+        case .legendary: return .orange
+        }
     }
 }

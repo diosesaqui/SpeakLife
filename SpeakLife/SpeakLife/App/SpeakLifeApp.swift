@@ -70,6 +70,7 @@ struct SpeakLifeApp: App {
     
     @State var isShowingLanding = true
     @State private var showDailyBurstOnLaunch = false
+    @State private var hasCheckedBurstThisSession = false
     
     // Notification handling state
     @State private var notificationJustReceived = false
@@ -148,11 +149,15 @@ struct SpeakLifeApp: App {
                             isShowingLanding = false
                         }
                         
-                        // Check if daily burst should be shown
-                        if appState.isOnboarded && !BurstCompletionTracker.shared.hasTodaysCompletion() {
-                            // Show daily burst popup after a short delay
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                                showDailyBurstOnLaunch = true
+                        // Check if daily burst should be shown — only once per session
+                        // (onAppear can fire more than once; guard prevents showing it again
+                        // after the user already completed or dismissed the burst)
+                        if !hasCheckedBurstThisSession {
+                            hasCheckedBurstThisSession = true
+                            if appState.isOnboarded && !BurstCompletionTracker.shared.hasTodaysCompletion() {
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                                    showDailyBurstOnLaunch = true
+                                }
                             }
                         }
                         
@@ -269,7 +274,22 @@ struct SpeakLifeApp: App {
     
     private func handleNotificationContent(_ content: UNNotificationContent) {
         // Processing notification
-        
+
+        // Prayer wall, streak-at-risk, and streak-complete notifications surface as banners only —
+        // never navigate away from whatever tab the user is on.
+        let notifType = content.userInfo["notificationType"] as? String
+        if notifType == "prayerWall" ||
+           notifType == "streakAtRisk" ||
+           notifType == "streakComplete" {
+            return
+        }
+
+        // Lifecycle notifications deep link directly to declarations tab
+        if let deepLink = content.userInfo["deepLink"] as? String, deepLink == "declarations" {
+            tabViewModel.selectedTab = 0
+            return
+        }
+
         // Mark that we just received a notification
         notificationJustReceived = true
         

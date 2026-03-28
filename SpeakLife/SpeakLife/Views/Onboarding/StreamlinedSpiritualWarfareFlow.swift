@@ -10,19 +10,18 @@ import FirebaseAnalytics
 import UserNotifications
 
 // MARK: - New Faith Growth Onboarding (8 slides + burst/subscription)
-// Ordering: personal selection early (slide 3) to capture investment before product pitch
+// Ordering: pain hook first → personal selection → teaching → paywall
 enum StreamlinedSpiritualTab: Int {
-    case patternInterrupt = 0     // Your Faith Grows Where Your Attention Goes
-    case authorityAnchor = 1      // Jesus Said It First (Mark 4:24)
-    case convictionGap = 2        // Most Believers Want Strong Faith
-    case personalSelection = 3    // What Do You Need Most? (early = higher investment)
+    case patternInterrupt = 0     // "You Pray. You Believe. And Still — Fear Shows Up First." (empathy hook)
+    case personalSelection = 1    // What Do You Need Most? (emotionally warm, now feels personal)
+    case authorityAnchor = 2      // Jesus Said It First (Mark 4:24)
+    case convictionGap = 3        // Most Believers Want Strong Faith
     case mindRenewalBridge = 4    // Transformation Starts in the Mind
     case introduceSystem = 5      // Train Your Faith Daily
-    case outcomeVisualization = 6 // Imagine Responding Like Jesus
-    case prePaywallClose = 7      // Start Increasing Today
-    case subscription = 8
-    case notification = 9
-    case rating = 10
+    case prePaywallClose = 6      // You don't have to wake up anxious anymore
+    case subscription = 7
+    case notification = 8
+    case rating = 9
 }
 
 // MARK: - Main View
@@ -42,25 +41,13 @@ struct StreamlinedSpiritualWarfareFlow: View {
         GeometryReader { geometry in
             TabView(selection: $selection) {
 
-                // Slide 1: Pattern Interrupt
+                // Slide 1: Pattern Interrupt — empathy hook, name their pain first
                 PatternInterruptScreen(size: geometry.size) {
                     advance()
                 }
                 .tag(StreamlinedSpiritualTab.patternInterrupt)
 
-                // Slide 2: Authority Anchor
-                AuthorityAnchorScreen(size: geometry.size) {
-                    advance()
-                }
-                .tag(StreamlinedSpiritualTab.authorityAnchor)
-
-                // Slide 3: Conviction Gap
-                ConvictionGapScreen(size: geometry.size) {
-                    advance()
-                }
-                .tag(StreamlinedSpiritualTab.convictionGap)
-
-                // Slide 4: Personal Selection (early to build investment)
+                // Slide 2: Personal Selection — emotionally primed, now feels personal not clinical
                 PersonalSelectionScreen(
                     size: geometry.size,
                     selectedCategories: $selectedCategories
@@ -69,6 +56,18 @@ struct StreamlinedSpiritualWarfareFlow: View {
                     advance()
                 }
                 .tag(StreamlinedSpiritualTab.personalSelection)
+
+                // Slide 3: Authority Anchor
+                AuthorityAnchorScreen(size: geometry.size) {
+                    advance()
+                }
+                .tag(StreamlinedSpiritualTab.authorityAnchor)
+
+                // Slide 4: Conviction Gap
+                ConvictionGapScreen(size: geometry.size) {
+                    advance()
+                }
+                .tag(StreamlinedSpiritualTab.convictionGap)
 
                 // Slide 5: Mind Renewal Bridge
                 MindRenewalBridgeScreen(size: geometry.size) {
@@ -82,13 +81,7 @@ struct StreamlinedSpiritualWarfareFlow: View {
                 }
                 .tag(StreamlinedSpiritualTab.introduceSystem)
 
-                // Slide 7: Outcome Visualization
-                OutcomeVisualizationScreen(size: geometry.size) {
-                    advance()
-                }
-                .tag(StreamlinedSpiritualTab.outcomeVisualization)
-
-                // Slide 8: Pre-Paywall Close
+                // Slide 7: Pre-Paywall Close
                 PrePaywallCloseScreen(size: geometry.size) {
                     advance()
                 }
@@ -127,18 +120,16 @@ struct StreamlinedSpiritualWarfareFlow: View {
         withAnimation {
             switch selection {
             case .patternInterrupt:
+                selection = .personalSelection
+            case .personalSelection:
                 selection = .authorityAnchor
             case .authorityAnchor:
                 selection = .convictionGap
             case .convictionGap:
-                selection = .personalSelection
-            case .personalSelection:
-                selection = .outcomeVisualization
+                selection = .mindRenewalBridge
             case .mindRenewalBridge:
-                selection = .outcomeVisualization  // skipped
+                selection = .introduceSystem
             case .introduceSystem:
-                selection = .outcomeVisualization  // skipped
-            case .outcomeVisualization:
                 selection = .prePaywallClose
             case .prePaywallClose:
                 selection = .subscription
@@ -239,12 +230,12 @@ struct PatternInterruptScreen: View {
                     .frame(height: size.height * 0.25)
 
                 VStack(spacing: 24) {
-                    Text("If anxiety hits before your feet touch the floor -")
+                    Text("You Pray. You Believe. And Still — Fear Shows Up First.")
                         .font(.system(size: 28, weight: .bold))
                         .foregroundColor(.white)
                         .multilineTextAlignment(.center)
 
-                    Text("your words have the power to change that.")
+                    Text("That's not a faith failure. That's an enemy who got there first.")
                         .font(.system(size: 20, weight: .medium))
                         .foregroundColor(.white.opacity(0.9))
                         .multilineTextAlignment(.center)
@@ -255,7 +246,7 @@ struct PatternInterruptScreen: View {
                 Spacer()
 
                 Button(action: onContinue) {
-                    Text("That's Me")
+                    Text("That's Exactly Where I Am")
                         .font(.system(size: 17, weight: .semibold))
                         .foregroundColor(.white)
                         .frame(width: size.width * 0.85, height: 50)
@@ -297,7 +288,7 @@ struct AuthorityAnchorScreen: View {
                     .frame(height: size.height * 0.20)
 
                 VStack(spacing: 30) {
-                    Text("God didn't design you to live in fear.")
+                    Text("Your Mind Is the Battlefield. And the Enemy Knows It.")
                         .font(.system(size: 28, weight: .bold))
                         .foregroundColor(.white)
                         .multilineTextAlignment(.center)
@@ -325,7 +316,7 @@ struct AuthorityAnchorScreen: View {
                 Spacer()
 
                 Button(action: onContinue) {
-                    Text("I Receive That")
+                    Text("I'm Ready to Fight Back")
                         .font(.system(size: 17, weight: .semibold))
                         .foregroundColor(.white)
                         .frame(width: size.width * 0.85, height: 50)
@@ -397,7 +388,7 @@ struct ConvictionGapScreen: View {
                 Spacer()
 
                 Button(action: onContinue) {
-                    Text("I'm Ready to Change That")
+                    Text("I Want What's Already Mine")
                         .font(.system(size: 17, weight: .semibold))
                         .foregroundColor(.white)
                         .frame(width: size.width * 0.85, height: 50)
@@ -467,7 +458,7 @@ struct MindRenewalBridgeScreen: View {
                 Spacer()
 
                 Button(action: onContinue) {
-                    Text("Keep Going")
+                    Text("Teach Me to Speak to My Mountains")
                         .font(.system(size: 17, weight: .semibold))
                         .foregroundColor(.white)
                         .frame(width: size.width * 0.85, height: 50)
@@ -493,13 +484,14 @@ struct IntroduceSystemScreen: View {
     let size: CGSize
     let onContinue: () -> Void
     @State private var contentOpacity = 0.0
-    @State private var featuresVisible: [Bool] = [false, false, false]
+    @State private var featuresVisible: [Bool] = [false, false, false, false]
     @EnvironmentObject var subscriptionStore: SubscriptionStore
 
     let features = [
-        ("7", "Scripture Declarations a Day"),
-        ("🎧", "Christ-Centered Audio Reinforcement"),
-        ("💪", "Daily Victory Conditioning")
+        ("🛡️", "Protection — speak God's shield over your life and family"),
+        ("❤️", "Health — declare healing over your body. Daily."),
+        ("☮️", "Peace — silence anxiety with the Word in under 5 minutes"),
+        ("✨", "Provision — speak abundance and breakthrough over your finances")
     ]
 
     var body: some View {
@@ -516,13 +508,13 @@ struct IntroduceSystemScreen: View {
                     .frame(height: size.height * 0.18)
 
                 VStack(spacing: 32) {
-                    Text("Train Your Faith Daily.")
+                    Text("That's Exactly What SpeakLife Is Built For.")
                         .font(.system(size: 26, weight: .bold))
                         .foregroundColor(.white)
                         .multilineTextAlignment(.center)
 
                     VStack(spacing: 18) {
-                        Text("SpeakLife helps you give God's Word\ndaily attention through:")
+                        Text("Faith is a skill. Every declaration you speak is a rep. The stronger you train, the less anything can shake you.")
                             .font(.system(size: 17))
                             .foregroundColor(.white.opacity(0.9))
                             .multilineTextAlignment(.center)
@@ -548,7 +540,7 @@ struct IntroduceSystemScreen: View {
                         }
                     }
 
-                    Text("Faith grows with repetition.")
+                    Text("Train daily. Level up. Become unshakable.")
                         .font(.system(size: 16))
                         .foregroundColor(.white.opacity(0.7))
                         .multilineTextAlignment(.center)
@@ -559,7 +551,7 @@ struct IntroduceSystemScreen: View {
                 Spacer()
 
                 Button(action: onContinue) {
-                    Text("This Is Powerful")
+                    Text("This Is What I Need")
                         .font(.system(size: 17, weight: .semibold))
                         .foregroundColor(.white)
                         .frame(width: size.width * 0.85, height: 50)
@@ -579,7 +571,7 @@ struct IntroduceSystemScreen: View {
 
             // Animate features appearing
             for i in 0..<features.count {
-                DispatchQueue.main.asyncAfter(deadline: .now() + Double(i) * 0.3 + 0.5) {
+                DispatchQueue.main.asyncAfter(deadline: .now() + Double(i) * 0.25 + 0.5) {
                     withAnimation(.spring()) {
                         featuresVisible[i] = true
                     }
@@ -597,7 +589,7 @@ struct OutcomeVisualizationScreen: View {
     @State private var outcomesVisible: [Bool] = [false, false, false]
     @EnvironmentObject var subscriptionStore: SubscriptionStore
 
-    let outcomes = ["Anxiety shrinks.", "Boldness grows.", "Peace becomes instinct."]
+    let outcomes = ["Anxiety doesn't own your mornings anymore.", "Your body, your peace, your finances — aligned with what God says.", "A renewed mind. An unshakable life. — Romans 12:2"]
 
     var body: some View {
         ZStack {
@@ -613,7 +605,7 @@ struct OutcomeVisualizationScreen: View {
                     .frame(height: size.height * 0.20)
 
                 VStack(spacing: 32) {
-                    Text("Imagine Responding Like Jesus\nUnder Pressure.")
+                    Text("30 Days From Now — Nothing Shakes You the Same Way.")
                         .font(.system(size: 24, weight: .bold))
                         .foregroundColor(.white)
                         .multilineTextAlignment(.center)
@@ -629,15 +621,7 @@ struct OutcomeVisualizationScreen: View {
                             }
                         }
 
-                        if outcomesVisible[2] {
-                            VStack(spacing: 12) {
-                                Text("Because truth is already in you.")
-                                    .font(.system(size: 17))
-                                    .foregroundColor(.white.opacity(0.8))
-                                    .multilineTextAlignment(.center)
-                                    .transition(.scale.combined(with: .opacity))
-                            }
-                        }
+
                     }
                 }
                 .padding(.horizontal, 30)
@@ -646,13 +630,13 @@ struct OutcomeVisualizationScreen: View {
                 Spacer()
 
                 Button(action: onContinue) {
-                    Text("I'm Ready")
+                    Text("I Want to Wake Up Like That")
                         .font(.system(size: 17, weight: .semibold))
                         .foregroundColor(.white)
                         .frame(width: size.width * 0.85, height: 50)
                         .background(
                             RoundedRectangle(cornerRadius: 25)
-                                .fill(Color(red: 0.3, green: 0.7, blue: 0.4))
+                                .fill(Color(red: 0.4, green: 0.5, blue: 0.9))
                         )
                 }
                 .padding(.bottom, 60)
@@ -720,7 +704,7 @@ struct PrePaywallCloseScreen: View {
                 Spacer()
                 
                 Button(action: onContinue) {
-                    Text("Take My Peace Back")
+                    Text("Become Unshakable →")
                         .font(.system(size: 17, weight: .semibold))
                         .foregroundColor(.white)
                         .frame(width: size.width * 0.85, height: 50)

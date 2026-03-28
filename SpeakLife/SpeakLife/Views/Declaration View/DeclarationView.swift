@@ -93,7 +93,7 @@ struct DeclarationView: View {
     @ViewBuilder
     private func topButtonsRow(_ geometry: GeometryProxy) -> some View {
         HStack {
-            loveLetterButton
+            //loveLetterButton
             dailyBurstButton
             
             speakAloudBannerSection(geometry)
