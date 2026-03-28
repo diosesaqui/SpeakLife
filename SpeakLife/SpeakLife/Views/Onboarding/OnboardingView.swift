@@ -38,19 +38,25 @@ struct OnboardingView: View {
                 }
                 .tag(Tab.categorySelect)
 
-                // SCREEN 3: Live Declaration Preview
+                // SCREEN 3: Live Declaration Preview (declaration + why to declare)
                 LiveDeclarationPreviewScreen(size: geometry.size) {
                     withAnimation { advance() }
                 }
                 .tag(Tab.livePreview)
 
-                // SCREEN 4: Social Proof
-                TransformationSocialProofScreen(size: geometry.size) {
+                // SCREEN 4: Audio Feature — Faith comes by hearing
+                AudioFeatureScreen(size: geometry.size) {
                     withAnimation { advance() }
                 }
-                .tag(Tab.socialProof)
+                .tag(Tab.audioFeature)
 
-                // SCREEN 5: Subscription / Paywall
+                // SCREEN 5: Daily Devotional Feature — God's love for you
+                DailyDevotionalFeatureScreen(size: geometry.size) {
+                    withAnimation { advance() }
+                }
+                .tag(Tab.devotionalFeature)
+
+                // SCREEN 6: Subscription / Paywall
                 subscriptionScene(size: geometry.size)
                     .tag(Tab.subscription)
 
@@ -123,15 +129,21 @@ struct OnboardingView: View {
 
         case .livePreview:
             impactMed.impactOccurred()
-            selection = .socialProof
+            selection = .audioFeature
             onboardingTab = selection.rawValue
             Analytics.logEvent("onboarding_preview_done", parameters: nil)
 
-        case .socialProof:
+        case .audioFeature:
+            impactMed.impactOccurred()
+            selection = .devotionalFeature
+            onboardingTab = selection.rawValue
+            Analytics.logEvent("onboarding_audio_feature_done", parameters: nil)
+
+        case .devotionalFeature:
             impactMed.impactOccurred()
             selection = .subscription
             onboardingTab = selection.rawValue
-            Analytics.logEvent("onboarding_social_proof_done", parameters: nil)
+            Analytics.logEvent("onboarding_devotional_feature_done", parameters: nil)
 
         case .subscription:
             impactMed.impactOccurred()
