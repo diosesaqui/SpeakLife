@@ -389,14 +389,36 @@ struct DeclarationContentView: View {
                 .shadow(color: .black, radius: themeViewModel.selectedTheme.blurEffect ? 10 : 0)
                 .id(animationResetTrigger) // Force QuoteLabel recreation when trigger changes
             
-            Text(viewModel.subtitle(declaration))
-                .foregroundColor(.white.opacity(0.9))
-                .font(themeViewModel.selectedFontForBook ?? .caption)
-                .shadow(color: .black, radius: themeViewModel.selectedTheme.blurEffect ? 10 : 0)
-                .opacity(completedAnimations.contains("\(declaration.id)-\(viewModel.showVerse)-\(animationResetTrigger)") ? 1.0 : 0.0)
-                .scaleEffect(completedAnimations.contains("\(declaration.id)-\(viewModel.showVerse)-\(animationResetTrigger)") ? 1.0 : 0.8)
-                .offset(y: completedAnimations.contains("\(declaration.id)-\(viewModel.showVerse)-\(animationResetTrigger)") ? 0 : 10)
-                .animation(.spring(response: 0.6, dampingFraction: 0.75, blendDuration: 0.1).delay(0.2), value: completedAnimations.contains("\(declaration.id)-\(viewModel.showVerse)-\(animationResetTrigger)"))
+            // Scripture reference — fades in after declaration animation completes
+            let animKey = "\(declaration.id)-\(viewModel.showVerse)-\(animationResetTrigger)"
+            let referenceVisible = completedAnimations.contains(animKey)
+            let subtitle = viewModel.subtitle(declaration)
+            
+            if !subtitle.isEmpty {
+                VStack(spacing: 6) {
+                    // Thin separator line — matches card aesthetic
+                    Rectangle()
+                        .fill(themeViewModel.selectedTheme.fontColor.opacity(0.35))
+                        .frame(width: 44, height: 1)
+                    
+                    // Scripture reference text — same font family as declaration, smaller, italic
+                    Text(subtitle)
+                        .font(themeViewModel.selectedFontForBook.map { font in
+                            // Italicize using Font modifier if possible
+                            font
+                        } ?? .system(size: 16, weight: .light, design: .serif))
+                        .italic()
+                        .foregroundColor(themeViewModel.selectedTheme.fontColor.opacity(0.85))
+                        .multilineTextAlignment(.center)
+                        .tracking(1.2) // Elegant letter-spacing for scripture refs
+                }
+                .shadow(color: .black.opacity(themeViewModel.selectedTheme.blurEffect ? 0.6 : 0.2), radius: themeViewModel.selectedTheme.blurEffect ? 8 : 2)
+                .opacity(referenceVisible ? 1.0 : 0.0)
+                .scaleEffect(referenceVisible ? 1.0 : 0.9)
+                .offset(y: referenceVisible ? 0 : 8)
+                .animation(.spring(response: 0.7, dampingFraction: 0.8, blendDuration: 0.1).delay(0.35), value: referenceVisible)
+                .padding(.top, 4)
+            }
             
             Spacer()
                 .frame(height: geometry.size.height * 0.34)

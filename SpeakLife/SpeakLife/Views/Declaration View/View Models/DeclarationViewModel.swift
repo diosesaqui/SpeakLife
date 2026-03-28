@@ -268,13 +268,15 @@ final class DeclarationViewModel: ObservableObject {
     }
     
     func subtitle(_ declaration: Declaration) -> String {
-        if DeclarationCategory.bibleCategories.contains(declaration.category) || showVerse  {
+        // Always show the Scripture reference when available — anchors every declaration in the Word
+        // Returns e.g. "Romans 8:28", "Philippians 4:13", etc.
+        // Returns "" for user-created declarations with no book reference (nil-safe)
+        if showVerse {
+            // In verse mode — show the book reference as the subtitle
             return declaration.book ?? ""
-        } else if !showVerse, declaration.book == "Jesus" {
-           return "Jesus"
-        } else {
-            return ""
         }
+        // In declaration mode — always show the reference underneath
+        return declaration.book ?? ""
     }
     
     
