@@ -111,6 +111,7 @@ struct EmotionalHookScreen: View {
             withAnimation(.easeOut(duration: 0.7)) { headlineVisible = true }
             withAnimation(.easeOut(duration: 0.7).delay(0.3)) { subVisible = true }
             withAnimation(.easeOut(duration: 0.5).delay(0.9)) { buttonVisible = true }
+            Analytics.logEvent("onboarding_hook_shown", parameters: nil)
         }
     }
 
@@ -1725,6 +1726,7 @@ struct LiveDeclarationPreviewScreen: View {
             withAnimation(.easeOut(duration: 0.5).delay(0.9)) {
                 buttonVisible = true
             }
+            Analytics.logEvent("onboarding_preview_shown", parameters: nil)
         }
     }
 
