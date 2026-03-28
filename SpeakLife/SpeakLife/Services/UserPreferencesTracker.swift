@@ -100,12 +100,13 @@ final class UserPreferencesTracker: ObservableObject {
                 headline: "Become Unshakable — One Declaration at a Time",
                 subheadline: "Replace anxiety with God's truth. Every single morning.",
                 valueProps: [
-                    "Replace every lie with what God says about you — daily",
-                    "Build a mind nothing can shake. Not fear. Not doubt. Nothing.",
-                    "Silence anxiety with the Word — in under 5 minutes",
-                    "Become who God said you are before you were born"
+                    "Replace Every Lie With God's Truth",
+                    "Build a Mind Nothing Can Shake",
+                    "Hear God's Word Daily",
+                    "Become Who God Said You Are",
+                    "Pray With 100,000+ Believers"
                 ],
-                ctaText: "Start My Free 7-Day Trial",
+                ctaText: "Begin My 7-Day Faith Reset",
                 urgencyText: "7 Days Free • Cancel Anytime"
             )
 
@@ -114,10 +115,11 @@ final class UserPreferencesTracker: ObservableObject {
                 headline: "Build a Faith Nothing Can Move",
                 subheadline: "Daily declarations rooted in God's Word to make you unshakable.",
                 valueProps: [
-                    "Replace every lie with what God says about you — daily",
-                    "Build a mind nothing can shake. Not fear. Not doubt. Nothing.",
-                    "Silence anxiety with the Word — in under 5 minutes",
-                    "Become who God said you are before you were born"
+                    "Replace Every Lie With God's Truth",
+                    "Build a Mind Nothing Can Shake",
+                    "Hear God's Word Daily",
+                    "Become Who God Said You Are",
+                    "Pray With 100,000+ Believers"
                 ],
                 ctaText: "Strengthen Your Faith Today",
                 urgencyText: "Start Free & Grow Stronger"
@@ -128,10 +130,11 @@ final class UserPreferencesTracker: ObservableObject {
                 headline: "Find a Joy the World Cannot Steal",
                 subheadline: "God's promises spoken daily build a happiness nothing can shake.",
                 valueProps: [
-                    "Replace every lie with what God says about you — daily",
-                    "Build a mind nothing can shake. Not fear. Not doubt. Nothing.",
-                    "Silence anxiety with the Word — in under 5 minutes",
-                    "Become who God said you are before you were born"
+                    "Replace Every Lie With God's Truth",
+                    "Build a Mind Nothing Can Shake",
+                    "Hear God's Word Daily",
+                    "Become Who God Said You Are",
+                    "Pray With 100,000+ Believers"
                 ],
                 ctaText: "Unlock Your Joy Today",
                 urgencyText: "Experience Joy in 3 Days"
@@ -142,10 +145,11 @@ final class UserPreferencesTracker: ObservableObject {
                 headline: "Rest Like Someone Whose God Never Sleeps",
                 subheadline: "Declarations that quiet your mind and anchor your soul at night.",
                 valueProps: [
-                    "Replace every lie with what God says about you — daily",
-                    "Build a mind nothing can shake. Not fear. Not doubt. Nothing.",
-                    "Silence anxiety with the Word — in under 5 minutes",
-                    "Become who God said you are before you were born"
+                    "Replace Every Lie With God's Truth",
+                    "Build a Mind Nothing Can Shake",
+                    "Hear God's Word Daily",
+                    "Become Who God Said You Are",
+                    "Pray With 100,000+ Believers"
                 ],
                 ctaText: "Sleep Peacefully Tonight",
                 urgencyText: "Better Sleep Starts Today"
@@ -156,10 +160,11 @@ final class UserPreferencesTracker: ObservableObject {
                 headline: "Speak Life Over Your Body — and Mean It",
                 subheadline: "God's Word over your health is the most powerful medicine there is.",
                 valueProps: [
-                    "Replace every lie with what God says about you — daily",
-                    "Build a mind nothing can shake. Not fear. Not doubt. Nothing.",
-                    "Silence anxiety with the Word — in under 5 minutes",
-                    "Become who God said you are before you were born"
+                    "Replace Every Lie With God's Truth",
+                    "Build a Mind Nothing Can Shake",
+                    "Hear God's Word Daily",
+                    "Become Who God Said You Are",
+                    "Pray With 100,000+ Believers"
                 ],
                 ctaText: "Claim Your Healing",
                 urgencyText: "Start Your Healing Journey"
@@ -170,10 +175,11 @@ final class UserPreferencesTracker: ObservableObject {
                 headline: "Walk Like You Know Who Made You",
                 subheadline: "Your identity in God is unshakable — start living like it.",
                 valueProps: [
-                    "Replace every lie with what God says about you — daily",
-                    "Build a mind nothing can shake. Not fear. Not doubt. Nothing.",
-                    "Silence anxiety with the Word — in under 5 minutes",
-                    "Become who God said you are before you were born"
+                    "Replace Every Lie With God's Truth",
+                    "Build a Mind Nothing Can Shake",
+                    "Hear God's Word Daily",
+                    "Become Who God Said You Are",
+                    "Pray With 100,000+ Believers"
                 ],
                 ctaText: "Unlock Bold Confidence",
                 urgencyText: "Transform in 3 Days Free"
@@ -184,10 +190,11 @@ final class UserPreferencesTracker: ObservableObject {
                 headline: "You Were Not Made to Be Afraid",
                 subheadline: "God's Word spoken daily dismantles fear at the root.",
                 valueProps: [
-                    "Replace every lie with what God says about you — daily",
-                    "Build a mind nothing can shake. Not fear. Not doubt. Nothing.",
-                    "Silence anxiety with the Word — in under 5 minutes",
-                    "Become who God said you are before you were born"
+                    "Replace Every Lie With God's Truth",
+                    "Build a Mind Nothing Can Shake",
+                    "Hear God's Word Daily",
+                    "Become Who God Said You Are",
+                    "Pray With 100,000+ Believers"
                 ],
                 ctaText: "Overcome Fear Today",
                 urgencyText: "Freedom Starts Now"
@@ -198,10 +205,11 @@ final class UserPreferencesTracker: ObservableObject {
                 headline: "A Marriage Built on the Word Does Not Break",
                 subheadline: "Speak God's promises over your relationship every day.",
                 valueProps: [
-                    "Replace every lie with what God says about you — daily",
-                    "Build a mind nothing can shake. Not fear. Not doubt. Nothing.",
-                    "Silence anxiety with the Word — in under 5 minutes",
-                    "Become who God said you are before you were born"
+                    "Replace Every Lie With God's Truth",
+                    "Build a Mind Nothing Can Shake",
+                    "Hear God's Word Daily",
+                    "Become Who God Said You Are",
+                    "Pray With 100,000+ Believers"
                 ],
                 ctaText: "Bless Your Marriage",
                 urgencyText: "Transform Your Marriage"
@@ -212,10 +220,11 @@ final class UserPreferencesTracker: ObservableObject {
                 headline: "Loved by God. Unshakable.",
                 subheadline: "When you know how God loves you, nothing else can define you.",
                 valueProps: [
-                    "Replace every lie with what God says about you — daily",
-                    "Build a mind nothing can shake. Not fear. Not doubt. Nothing.",
-                    "Silence anxiety with the Word — in under 5 minutes",
-                    "Become who God said you are before you were born"
+                    "Replace Every Lie With God's Truth",
+                    "Build a Mind Nothing Can Shake",
+                    "Hear God's Word Daily",
+                    "Become Who God Said You Are",
+                    "Pray With 100,000+ Believers"
                 ],
                 ctaText: "Receive Perfect Love",
                 urgencyText: "Love Transformation Awaits"
@@ -226,10 +235,11 @@ final class UserPreferencesTracker: ObservableObject {
                 headline: "Your Future Is Written by God, Not Your Past",
                 subheadline: "Daily declarations to reset your mind on what God says is possible.",
                 valueProps: [
-                    "Replace every lie with what God says about you — daily",
-                    "Build a mind nothing can shake. Not fear. Not doubt. Nothing.",
-                    "Silence anxiety with the Word — in under 5 minutes",
-                    "Become who God said you are before you were born"
+                    "Replace Every Lie With God's Truth",
+                    "Build a Mind Nothing Can Shake",
+                    "Hear God's Word Daily",
+                    "Become Who God Said You Are",
+                    "Pray With 100,000+ Believers"
                 ],
                 ctaText: "Reclaim Your Hope",
                 urgencyText: "Hope Starts Today"
@@ -240,12 +250,13 @@ final class UserPreferencesTracker: ObservableObject {
                 headline: "Become Unshakable — One Declaration at a Time",
                 subheadline: "Join 100,000+ believers who chose God's truth over their feelings.",
                 valueProps: [
-                    "Replace every lie with what God says about you — daily",
-                    "Build a mind nothing can shake. Not fear. Not doubt. Nothing.",
-                    "Silence anxiety with the Word — in under 5 minutes",
-                    "Become who God said you are before you were born"
+                    "Replace Every Lie With God's Truth",
+                    "Build a Mind Nothing Can Shake",
+                    "Hear God's Word Daily",
+                    "Become Who God Said You Are",
+                    "Pray With 100,000+ Believers"
                 ],
-                ctaText: "Start My Free 7-Day Trial",
+                ctaText: "Begin My 7-Day Faith Reset",
                 urgencyText: "7 Days Free • Cancel Anytime"
             )
         }
