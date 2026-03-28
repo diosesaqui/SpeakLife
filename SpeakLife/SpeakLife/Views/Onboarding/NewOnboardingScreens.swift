@@ -2153,7 +2153,7 @@ struct WarriorRoomFeatureScreen: View {
                         UIImpactFeedbackGenerator(style: .medium).impactOccurred()
                         onContinue()
                     }) {
-                        Text("Start my 7-Day Faith Reset")
+                        Text("I'm ready — show me how")
                             .font(.system(size: 17, weight: .semibold, design: .rounded))
                             .foregroundColor(.black)
                             .frame(maxWidth: .infinity)
