@@ -163,8 +163,8 @@ struct StreamlinedSpiritualWarfareFlow: View {
         }
 
         Analytics.logEvent("onboarding_categories_selected", parameters: [
-            "categories": categories.map { $0.rawValue }.joined(separator: ","),
-            "count": categories.count
+            "categories": categories.map { $0.rawValue }.joined(separator: ",") as NSString,
+            "count": NSNumber(value: categories.count)
         ])
     }
 

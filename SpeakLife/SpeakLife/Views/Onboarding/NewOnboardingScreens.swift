@@ -420,8 +420,8 @@ struct CategorySelectScreen: View {
                             let cats = Set(selectionVM.selectedExperiences)
                             appState.selectedNotificationCategories = cats.map { $0.rawValue }.joined(separator: ",")
                             Analytics.logEvent("onboarding_category_selected", parameters: [
-                                "count": selectionVM.selectedExperiences.count,
-                                "categories": selectionVM.selectedExperiences.map { $0.rawValue }.joined(separator: ",")
+                                "count": NSNumber(value: selectionVM.selectedExperiences.count),
+                                "categories": selectionVM.selectedExperiences.map { $0.rawValue }.joined(separator: ",") as NSString
                             ])
                             onContinue()
                         }) {
