@@ -286,104 +286,149 @@ struct CategorySelectScreen: View {
         .hope, .marriage, .wealth, .wisdom
     ]
 
+    // Transformation-framed display names for this screen
+    private func journeyLabel(for category: DeclarationCategory) -> String {
+        switch category {
+        case .anxiety:    return "Worry \u{2192} Peace"
+        case .identity:   return "Lost \u{2192} Identity"
+        case .fear:       return "Fear \u{2192} Freedom"
+        case .faith:      return "Doubt \u{2192} Bold Faith"
+        case .confidence: return "Shame \u{2192} Confidence"
+        case .rest:       return "Burnout \u{2192} Rest"
+        case .health:     return "Sickness \u{2192} Healing"
+        case .joy:        return "Sadness \u{2192} Joy"
+        case .hope:       return "Hopeless \u{2192} Hopeful"
+        case .marriage:   return "Conflict \u{2192} Breakthrough"
+        case .wealth:     return "Lack \u{2192} Provision"
+        case .wisdom:     return "Confusion \u{2192} Wisdom"
+        default:          return category.displayName
+        }
+    }
+
     var body: some View {
-        ZStack {
-            backgroundView
+        GeometryReader { proxy in
+            ZStack {
+                backgroundView
 
-            VStack(spacing: 0) {
-                Spacer().frame(height: 20)
+                VStack(spacing: 0) {
+                    // Safe area spacer — clears Dynamic Island / notch
+                    Spacer().frame(height: proxy.safeAreaInsets.top + 16)
 
-                // Header
-                VStack(spacing: 8) {
-                    Text("What are you believing\nGod for?")
-                        .font(.system(size: 30, weight: .bold, design: .rounded))
-                        .multilineTextAlignment(.center)
-                        .foregroundColor(.white)
-                        .opacity(titleVisible ? 1 : 0)
-                        .offset(y: titleVisible ? 0 : 20)
+                    // Header
+                    VStack(spacing: 6) {
+                        Text("What are you believing\nGod for?")
+                            .font(.system(size: size.height < 700 ? 26 : 30, weight: .bold, design: .rounded))
+                            .multilineTextAlignment(.center)
+                            .foregroundColor(.white)
+                            .opacity(titleVisible ? 1 : 0)
+                            .offset(y: titleVisible ? 0 : 16)
 
-                    Text("Your declarations will be personalized for your journey")
-                        .font(.system(size: 15, weight: .medium))
-                        .foregroundColor(.white.opacity(0.75))
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, 32)
-                        .opacity(titleVisible ? 1 : 0)
-                        .offset(y: titleVisible ? 0 : 12)
-                        .animation(.easeOut(duration: 0.6).delay(0.2), value: titleVisible)
+                        Text("Your declarations will be personalized for your journey")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(.white.opacity(0.7))
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, 32)
+                            .opacity(titleVisible ? 1 : 0)
+                            .offset(y: titleVisible ? 0 : 10)
+                            .animation(.easeOut(duration: 0.5).delay(0.15), value: titleVisible)
 
-                    Text("Select all that apply")
-                        .font(.system(size: 13))
-                        .foregroundColor(.white.opacity(0.5))
-                        .opacity(titleVisible ? 1 : 0)
-                        .animation(.easeOut(duration: 0.6).delay(0.3), value: titleVisible)
-                }
-                .padding(.horizontal, 20)
+                        Text("Select all that apply")
+                            .font(.system(size: 12))
+                            .foregroundColor(.white.opacity(0.45))
+                            .opacity(titleVisible ? 1 : 0)
+                            .animation(.easeOut(duration: 0.5).delay(0.25), value: titleVisible)
+                    }
+                    .padding(.horizontal, 20)
 
-                Spacer().frame(height: 24)
+                    Spacer().frame(height: size.height < 700 ? 14 : 20)
 
-                // Category grid
-                ScrollView(showsIndicators: false) {
+                    // Category grid — fills available space, no Spacer() gap
                     LazyVGrid(columns: [
                         GridItem(.flexible(), spacing: 8),
                         GridItem(.flexible(), spacing: 8)
-                    ], spacing: 8) {
+                    ], spacing: size.height < 700 ? 7 : 9) {
                         ForEach(topCategories, id: \.self) { category in
-                            CategoryPill(
-                                category: category,
-                                isSelected: selectionVM.selectedExperiences.contains(category),
-                                isCompact: size.height < 700
-                            ) {
+                            Button(action: {
                                 UIImpactFeedbackGenerator(style: .light).impactOccurred()
                                 selectionVM.selectExperience(category)
+                            }) {
+                                HStack(spacing: 7) {
+                                    Image(systemName: category.iconName)
+                                        .font(.system(size: size.height < 700 ? 15 : 17))
+                                        .frame(width: 20)
+                                    Text(journeyLabel(for: category))
+                                        .font(.system(size: size.height < 700 ? 13 : 14, weight: .medium, design: .rounded))
+                                        .lineLimit(1)
+                                        .minimumScaleFactor(0.75)
+                                        .multilineTextAlignment(.leading)
+                                }
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, size.height < 700 ? 11 : 13)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 24)
+                                        .fill(selectionVM.selectedExperiences.contains(category)
+                                              ? Color.blue : Color.white.opacity(0.13))
+                                        .overlay(RoundedRectangle(cornerRadius: 24)
+                                            .strokeBorder(
+                                                selectionVM.selectedExperiences.contains(category)
+                                                ? Color.blue : Color.white.opacity(0.25),
+                                                lineWidth: 1))
+                                )
+                                .foregroundColor(.white)
+                                .scaleEffect(selectionVM.selectedExperiences.contains(category) ? 1.02 : 1.0)
+                                .animation(.spring(response: 0.3, dampingFraction: 0.6),
+                                           value: selectionVM.selectedExperiences.contains(category))
                             }
+                            .buttonStyle(PlainButtonStyle())
                         }
                     }
                     .padding(.horizontal, 20)
                     .opacity(gridVisible ? 1 : 0)
                     .animation(.easeOut(duration: 0.5).delay(0.3), value: gridVisible)
-                }
 
-                Spacer()
+                    Spacer().frame(height: size.height < 700 ? 14 : 20)
 
-                // CTA
-                VStack(spacing: 10) {
-                    Button(action: {
-                        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-                        if selectionVM.selectedExperiences.isEmpty {
-                            selectionVM.selectedExperiences = [.faith]
+                    // CTA — sits directly below grid, no floating gap
+                    VStack(spacing: 10) {
+                        Button(action: {
+                            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                            if selectionVM.selectedExperiences.isEmpty {
+                                selectionVM.selectedExperiences = [.faith]
+                            }
+                            let cats = Set(selectionVM.selectedExperiences)
+                            appState.selectedNotificationCategories = cats.map { $0.rawValue }.joined(separator: ",")
+                            Analytics.logEvent("onboarding_category_selected", parameters: [
+                                "count": selectionVM.selectedExperiences.count,
+                                "categories": selectionVM.selectedExperiences.map { $0.rawValue }.joined(separator: ",")
+                            ])
+                            onContinue()
+                        }) {
+                            Text(selectionVM.selectedExperiences.isEmpty ? "Continue" : "Personalize My Experience")
+                                .font(.system(size: 17, weight: .semibold, design: .rounded))
+                                .foregroundColor(.black)
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 54)
+                                .background(Capsule().fill(Color.white))
                         }
-                        // Persist for notification setup
-                        let cats = Set(selectionVM.selectedExperiences)
-                        appState.selectedNotificationCategories = cats.map { $0.rawValue }.joined(separator: ",")
-                        Analytics.logEvent("onboarding_category_selected", parameters: [
-                            "count": selectionVM.selectedExperiences.count,
-                            "categories": selectionVM.selectedExperiences.map { $0.rawValue }.joined(separator: ",")
-                        ])
-                        onContinue()
-                    }) {
-                        Text(selectionVM.selectedExperiences.isEmpty ? "Continue" : "Personalize My Experience")
-                            .font(.system(size: 17, weight: .semibold, design: .rounded))
-                            .foregroundColor(.black)
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 56)
-                            .background(Capsule().fill(Color.white))
-                    }
 
-                    Button("Skip for now") {
-                        selectionVM.selectedExperiences = [.general]
-                        onContinue()
+                        Button("Skip for now") {
+                            selectionVM.selectedExperiences = [.general]
+                            onContinue()
+                        }
+                        .font(.system(size: 14))
+                        .foregroundColor(.white.opacity(0.4))
                     }
-                    .font(.system(size: 14))
-                    .foregroundColor(.white.opacity(0.45))
+                    .padding(.horizontal, 24)
+                    .padding(.bottom, proxy.safeAreaInsets.bottom + 20)
                 }
-                .padding(.horizontal, 28)
-                .padding(.bottom, 44)
             }
+            .ignoresSafeArea()
         }
         .ignoresSafeArea()
         .onAppear {
             withAnimation(.easeOut(duration: 0.7)) { titleVisible = true }
-            withAnimation(.easeOut(duration: 0.6).delay(0.4)) { gridVisible = true }
+            withAnimation(.easeOut(duration: 0.6).delay(0.35)) { gridVisible = true }
             Analytics.logEvent("onboarding_category_shown", parameters: nil)
         }
     }
