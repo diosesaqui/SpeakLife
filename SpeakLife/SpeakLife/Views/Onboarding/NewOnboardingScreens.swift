@@ -1609,6 +1609,21 @@ struct LiveDeclarationPreviewScreen: View {
 
                 Spacer()
 
+                // Why declarations work — scripture backing
+                HStack(spacing: 8) {
+                    Image(systemName: "text.book.closed.fill")
+                        .font(.system(size: 13))
+                        .foregroundColor(.white.opacity(0.55))
+                    Text("\u{201C}Death and life are in the power of the tongue.\u{201D} \u{2014} Prov 18:21")
+                        .font(.system(size: 13, weight: .medium, design: .rounded))
+                        .foregroundColor(.white.opacity(0.6))
+                        .italic()
+                        .multilineTextAlignment(.center)
+                }
+                .padding(.horizontal, 32)
+                .padding(.bottom, 12)
+                .opacity(scriptureVisible ? 1 : 0)
+
                 // CTA
                 VStack(spacing: 12) {
                     Button(action: {
@@ -1623,9 +1638,9 @@ struct LiveDeclarationPreviewScreen: View {
                             .background(Capsule().fill(Color.white))
                     }
 
-                    Text("Unlock unlimited declarations, audio devotionals & more")
+                    Text("See how SpeakLife builds your faith daily")
                         .font(.system(size: 13))
-                        .foregroundColor(.white.opacity(0.55))
+                        .foregroundColor(.white.opacity(0.5))
                         .multilineTextAlignment(.center)
                 }
                 .padding(.horizontal, 32)
@@ -1667,6 +1682,261 @@ struct LiveDeclarationPreviewScreen: View {
                 endPoint: .bottom
             )
             .ignoresSafeArea()
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .edgesIgnoringSafeArea(.all)
+    }
+}
+
+// MARK: - Audio Feature Screen
+struct AudioFeatureScreen: View {
+    @EnvironmentObject var subscriptionStore: SubscriptionStore
+    let size: CGSize
+    let onContinue: () -> Void
+
+    @State private var headerVisible = false
+    @State private var cardVisible = false
+    @State private var buttonVisible = false
+
+    var body: some View {
+        ZStack {
+            backgroundView
+
+            VStack(spacing: 0) {
+                Spacer()
+
+                VStack(spacing: 28) {
+                    // Scripture headline
+                    VStack(spacing: 12) {
+                        Text("\u{201C}Faith comes by hearing,\nand hearing by the\nWord of God.\u{201D}")
+                            .font(.system(size: 28, weight: .bold, design: .serif))
+                            .multilineTextAlignment(.center)
+                            .foregroundColor(.white)
+                            .lineSpacing(4)
+                            .opacity(headerVisible ? 1 : 0)
+                            .offset(y: headerVisible ? 0 : 20)
+
+                        Text("Romans 10:17")
+                            .font(.system(size: 15, weight: .semibold, design: .rounded))
+                            .foregroundColor(.white.opacity(0.6))
+                            .opacity(headerVisible ? 1 : 0)
+                            .animation(.easeOut(duration: 0.6).delay(0.2), value: headerVisible)
+                    }
+
+                    // Feature card
+                    VStack(alignment: .leading, spacing: 16) {
+                        HStack(spacing: 12) {
+                            ZStack {
+                                Circle()
+                                    .fill(Color.white.opacity(0.15))
+                                    .frame(width: 48, height: 48)
+                                Image(systemName: "headphones")
+                                    .font(.system(size: 22, weight: .medium))
+                                    .foregroundColor(.white)
+                            }
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text("Guided Audio Devotionals")
+                                    .font(.system(size: 17, weight: .bold, design: .rounded))
+                                    .foregroundColor(.white)
+                                Text("Hear God's Word spoken over your life")
+                                    .font(.system(size: 14, weight: .regular, design: .rounded))
+                                    .foregroundColor(.white.opacity(0.65))
+                            }
+                        }
+
+                        Rectangle()
+                            .fill(Color.white.opacity(0.12))
+                            .frame(height: 1)
+
+                        Text("SpeakLife's audio library puts Scripture in your ears — during your commute, before sleep, first thing in the morning. Hearing truth consistently is how faith grows.")
+                            .font(.system(size: 15, weight: .regular, design: .rounded))
+                            .foregroundColor(.white.opacity(0.8))
+                            .lineSpacing(4)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .padding(20)
+                    .background(
+                        RoundedRectangle(cornerRadius: 18, style: .continuous)
+                            .fill(Color.white.opacity(0.1))
+                            .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous)
+                                .strokeBorder(Color.white.opacity(0.18), lineWidth: 1))
+                    )
+                    .padding(.horizontal, 24)
+                    .opacity(cardVisible ? 1 : 0)
+                    .scaleEffect(cardVisible ? 1 : 0.95)
+                }
+
+                Spacer()
+
+                Button(action: {
+                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                    onContinue()
+                }) {
+                    Text("What else does SpeakLife do?")
+                        .font(.system(size: 17, weight: .semibold, design: .rounded))
+                        .foregroundColor(.black)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 56)
+                        .background(Capsule().fill(Color.white))
+                }
+                .padding(.horizontal, 32)
+                .padding(.bottom, 50)
+                .opacity(buttonVisible ? 1 : 0)
+                .offset(y: buttonVisible ? 0 : 20)
+            }
+        }
+        .ignoresSafeArea()
+        .onAppear {
+            withAnimation(.easeOut(duration: 0.8)) { headerVisible = true }
+            withAnimation(.spring(response: 0.6, dampingFraction: 0.8).delay(0.4)) { cardVisible = true }
+            withAnimation(.easeOut(duration: 0.5).delay(0.8)) { buttonVisible = true }
+            Analytics.logEvent("onboarding_audio_feature_shown", parameters: nil)
+        }
+    }
+
+    var backgroundView: some View {
+        ZStack {
+            Image(subscriptionStore.onboardingBGImage)
+                .resizable()
+                .aspectRatio(contentMode: .fill)
+                .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
+                .clipped()
+                .ignoresSafeArea()
+            LinearGradient(
+                gradient: Gradient(colors: [Color.black.opacity(0.75), Color.black.opacity(0.45), Color.black.opacity(0.6)]),
+                startPoint: .top, endPoint: .bottom
+            ).ignoresSafeArea()
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .edgesIgnoringSafeArea(.all)
+    }
+}
+
+// MARK: - Daily Devotional Feature Screen
+struct DailyDevotionalFeatureScreen: View {
+    @EnvironmentObject var subscriptionStore: SubscriptionStore
+    let size: CGSize
+    let onContinue: () -> Void
+
+    @State private var headerVisible = false
+    @State private var cardVisible = false
+    @State private var buttonVisible = false
+
+    var body: some View {
+        ZStack {
+            backgroundView
+
+            VStack(spacing: 0) {
+                Spacer()
+
+                VStack(spacing: 28) {
+                    // Scripture headline
+                    VStack(spacing: 12) {
+                        Text("\u{201C}See what great love the\nFather has lavished on us,\nthat we should be called\nchildren of God.\u{201D}")
+                            .font(.system(size: 24, weight: .bold, design: .serif))
+                            .multilineTextAlignment(.center)
+                            .foregroundColor(.white)
+                            .lineSpacing(4)
+                            .opacity(headerVisible ? 1 : 0)
+                            .offset(y: headerVisible ? 0 : 20)
+
+                        Text("1 John 3:1")
+                            .font(.system(size: 15, weight: .semibold, design: .rounded))
+                            .foregroundColor(.white.opacity(0.6))
+                            .opacity(headerVisible ? 1 : 0)
+                            .animation(.easeOut(duration: 0.6).delay(0.2), value: headerVisible)
+                    }
+
+                    // Feature card
+                    VStack(alignment: .leading, spacing: 16) {
+                        HStack(spacing: 12) {
+                            ZStack {
+                                Circle()
+                                    .fill(Color.white.opacity(0.15))
+                                    .frame(width: 48, height: 48)
+                                Image(systemName: "book.fill")
+                                    .font(.system(size: 22, weight: .medium))
+                                    .foregroundColor(.white)
+                            }
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text("Daily Devotionals")
+                                    .font(.system(size: 17, weight: .bold, design: .rounded))
+                                    .foregroundColor(.white)
+                                Text("Learn more about God's love for you")
+                                    .font(.system(size: 14, weight: .regular, design: .rounded))
+                                    .foregroundColor(.white.opacity(0.65))
+                            }
+                        }
+
+                        Rectangle()
+                            .fill(Color.white.opacity(0.12))
+                            .frame(height: 1)
+
+                        Text("Every day, a short devotional opens a new window into how deeply God loves you. Not religion — relationship. When you know how loved you are, fear loses its grip.")
+                            .font(.system(size: 15, weight: .regular, design: .rounded))
+                            .foregroundColor(.white.opacity(0.8))
+                            .lineSpacing(4)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .padding(20)
+                    .background(
+                        RoundedRectangle(cornerRadius: 18, style: .continuous)
+                            .fill(Color.white.opacity(0.1))
+                            .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous)
+                                .strokeBorder(Color.white.opacity(0.18), lineWidth: 1))
+                    )
+                    .padding(.horizontal, 24)
+                    .opacity(cardVisible ? 1 : 0)
+                    .scaleEffect(cardVisible ? 1 : 0.95)
+                }
+
+                Spacer()
+
+                VStack(spacing: 8) {
+                    Button(action: {
+                        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                        onContinue()
+                    }) {
+                        Text("Start my 7-Day Faith Reset")
+                            .font(.system(size: 17, weight: .semibold, design: .rounded))
+                            .foregroundColor(.black)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 56)
+                            .background(Capsule().fill(Color.white))
+                    }
+
+                    Text("7 days free \u{2022} 30-day guarantee \u{2022} Cancel anytime")
+                        .font(.system(size: 12))
+                        .foregroundColor(.white.opacity(0.45))
+                        .multilineTextAlignment(.center)
+                }
+                .padding(.horizontal, 32)
+                .padding(.bottom, 50)
+                .opacity(buttonVisible ? 1 : 0)
+                .offset(y: buttonVisible ? 0 : 20)
+            }
+        }
+        .ignoresSafeArea()
+        .onAppear {
+            withAnimation(.easeOut(duration: 0.8)) { headerVisible = true }
+            withAnimation(.spring(response: 0.6, dampingFraction: 0.8).delay(0.4)) { cardVisible = true }
+            withAnimation(.easeOut(duration: 0.5).delay(0.8)) { buttonVisible = true }
+            Analytics.logEvent("onboarding_devotional_feature_shown", parameters: nil)
+        }
+    }
+
+    var backgroundView: some View {
+        ZStack {
+            Image(subscriptionStore.onboardingBGImage)
+                .resizable()
+                .aspectRatio(contentMode: .fill)
+                .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
+                .clipped()
+                .ignoresSafeArea()
+            LinearGradient(
+                gradient: Gradient(colors: [Color.black.opacity(0.75), Color.black.opacity(0.45), Color.black.opacity(0.6)]),
+                startPoint: .top, endPoint: .bottom
+            ).ignoresSafeArea()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .edgesIgnoringSafeArea(.all)
