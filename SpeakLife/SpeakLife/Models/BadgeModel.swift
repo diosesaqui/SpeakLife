@@ -348,6 +348,10 @@ class BadgeManager: ObservableObject {
     }
     
     private func unlockBadge(_ badge: Badge) {
+        // Guard against double-unlock: check unlockedBadges directly (source of truth in UserDefaults)
+        // allBadges.isUnlocked can be stale if data failed to decode on launch
+        guard !unlockedBadges.contains(where: { $0.requirement == badge.requirement }) else { return }
+        
         let unlockedBadge = Badge(
             type: badge.type,
             rarity: badge.rarity,

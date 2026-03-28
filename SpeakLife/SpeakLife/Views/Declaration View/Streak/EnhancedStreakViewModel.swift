@@ -297,16 +297,26 @@ final class EnhancedStreakViewModel: ObservableObject {
         let today = Date()
         todayChecklist.completedAt = today
         
-        let previousStreak = streakStats.currentStreak
-        let wasNewRecord = streakStats.currentStreak >= streakStats.longestStreak
+        // Capture longestStreak BEFORE updateStreak modifies it (fixes isNewRecord always being false)
+        let longestStreakBefore = streakStats.longestStreak
         streakStats.updateStreak(for: today)
         
         // Update tasks for new streak milestone
         updateTasksForNewStreak()
         
-        // Capture the current streak after update for celebration
-        let currentStreakNumber = streakStats.currentStreak
-        let isNewRecord = wasNewRecord && currentStreakNumber > streakStats.longestStreak
+        // BurstCompletionTracker is the authoritative source of truth (calculates from actual history).
+        // streakStats can fall out of sync if checkStreakValidity() resets it incorrectly.
+        // Use whichever value is higher to ensure we never show a lower streak than reality.
+        let burstStreak = BurstCompletionTracker.shared.currentStreak
+        let currentStreakNumber = max(streakStats.currentStreak, burstStreak)
+        
+        // Sync streakStats if it fell behind
+        if currentStreakNumber > streakStats.currentStreak {
+            streakStats.currentStreak = currentStreakNumber
+            streakStats.longestStreak = max(streakStats.longestStreak, currentStreakNumber)
+        }
+        
+        let isNewRecord = currentStreakNumber > longestStreakBefore
         
         // Premium celebration for daily goal completion
         PremiumHaptics.dailyGoalCompleted()
