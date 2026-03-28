@@ -18,6 +18,7 @@ enum Tab: String {
     case application
     case microCommitment
     case positionSpeakLife
+    case livePreview
     case notification
     case subscription
     
