@@ -268,14 +268,8 @@ final class DeclarationViewModel: ObservableObject {
     }
     
     func subtitle(_ declaration: Declaration) -> String {
-        // Always show the Scripture reference when available — anchors every declaration in the Word
-        // Returns e.g. "Romans 8:28", "Philippians 4:13", etc.
-        // Returns "" for user-created declarations with no book reference (nil-safe)
-        if showVerse {
-            // In verse mode — show the book reference as the subtitle
-            return declaration.book ?? ""
-        }
-        // In declaration mode — always show the reference underneath
+        // Always show the Scripture reference (or "Jesus" for Jesus-perspective declarations)
+        // Returns "" only when declaration.book is nil (user-created with no reference)
         return declaration.book ?? ""
     }
     
