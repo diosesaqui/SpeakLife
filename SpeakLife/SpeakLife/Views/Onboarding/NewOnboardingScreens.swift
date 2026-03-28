@@ -958,31 +958,46 @@ struct PositionSpeakLifeScreen: View {
                 Spacer()
                     .frame(height: 50)
                 
-                VStack(spacing: 40) {
-                    Text("SpeakLife trains\nyour response.")
-                        .font(.system(size: 38, weight: .bold, design: .rounded))
+                VStack(spacing: 32) {
+                    Text("Here's how SpeakLife\nbuilds your faith.")
+                        .font(.system(size: 34, weight: .bold, design: .rounded))
                         .multilineTextAlignment(.center)
                         .lineSpacing(4)
                         .foregroundColor(.white)
                         .opacity(isContentVisible ? 1 : 0)
                         .offset(y: isContentVisible ? 0 : 20)
-                    
-                    Text("Daily audio declarations\nrooted in Scripture to help you\nspeak truth, believe boldly,\nand expect results.")
-                        .font(.system(size: 19, weight: .medium, design: .rounded))
-                        .multilineTextAlignment(.center)
-                        .lineSpacing(6)
-                        .foregroundColor(.white.opacity(0.9))
-                        .padding(.horizontal, 40)
-                        .opacity(isContentVisible ? 1 : 0)
-                        .offset(y: isContentVisible ? 0 : 20)
-                        .animation(.easeOut(duration: 0.8).delay(0.3), value: isContentVisible)
-                    
-                    Text("Faith isn't silent.")
-                        .font(.system(size: 17, weight: .semibold, design: .rounded))
-                        .foregroundColor(.white.opacity(0.8))
-                        .italic()
-                        .opacity(isContentVisible ? 1 : 0)
-                        .animation(.easeOut(duration: 0.8).delay(0.6), value: isContentVisible)
+
+                    VStack(spacing: 18) {
+                        FeatureScriptureRow(
+                            icon: "quote.bubble.fill",
+                            feature: "Daily Declarations",
+                            scripture: "\"Faith comes by hearing\" — Rom 10:17",
+                            delay: 0.3,
+                            isVisible: isContentVisible
+                        )
+                        FeatureScriptureRow(
+                            icon: "headphones",
+                            feature: "Guided Audio Devotionals",
+                            scripture: "\"Meditate on it day and night\" — Josh 1:8",
+                            delay: 0.5,
+                            isVisible: isContentVisible
+                        )
+                        FeatureScriptureRow(
+                            icon: "bell.fill",
+                            feature: "Daily Scripture Reminders",
+                            scripture: "\"Your word is a lamp\" — Ps 119:105",
+                            delay: 0.7,
+                            isVisible: isContentVisible
+                        )
+                        FeatureScriptureRow(
+                            icon: "flame.fill",
+                            feature: "Streak — Track Your Growth",
+                            scripture: "\"Press on toward the goal\" — Phil 3:14",
+                            delay: 0.9,
+                            isVisible: isContentVisible
+                        )
+                    }
+                    .padding(.horizontal, 32)
                 }
                 
                 Spacer()
@@ -1036,7 +1051,7 @@ struct PositionSpeakLifeScreen: View {
             UIImpactFeedbackGenerator(style: .light).impactOccurred()
             onContinue()
         }) {
-            Text("Show me how")
+            Text("Try your first declaration")
                 .font(.system(size: 17, weight: .semibold, design: .rounded))
                 .foregroundColor(.black)
                 .frame(maxWidth: .infinity)
@@ -1046,5 +1061,214 @@ struct PositionSpeakLifeScreen: View {
                         .fill(Color.white)
                 )
         }
+    }
+}
+
+// MARK: - Feature + Scripture Row
+struct FeatureScriptureRow: View {
+    let icon: String
+    let feature: String
+    let scripture: String
+    let delay: Double
+    let isVisible: Bool
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 14) {
+            Image(systemName: icon)
+                .font(.system(size: 18, weight: .semibold))
+                .foregroundColor(.white)
+                .frame(width: 36, height: 36)
+                .background(Circle().fill(Color.white.opacity(0.15)))
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text(feature)
+                    .font(.system(size: 16, weight: .semibold, design: .rounded))
+                    .foregroundColor(.white)
+                Text(scripture)
+                    .font(.system(size: 13, weight: .regular, design: .rounded))
+                    .foregroundColor(.white.opacity(0.65))
+                    .italic()
+            }
+            Spacer()
+        }
+        .opacity(isVisible ? 1 : 0)
+        .offset(y: isVisible ? 0 : 16)
+        .animation(.easeOut(duration: 0.6).delay(delay), value: isVisible)
+    }
+}
+
+// MARK: - Screen 10: Live Declaration Preview
+struct LiveDeclarationPreviewScreen: View {
+    @EnvironmentObject var subscriptionStore: SubscriptionStore
+    let size: CGSize
+    let onContinue: () -> Void
+
+    @State private var cardVisible = false
+    @State private var scriptureVisible = false
+    @State private var buttonVisible = false
+    @State private var pulseScale: CGFloat = 1.0
+
+    // Hardcoded preview declaration — feels personal without requiring data load
+    private let declarations: [(text: String, scripture: String, reference: String)] = [
+        (
+            "I am not moved by fear. I am moved by faith. God has not given me a spirit of fear, but of power, love, and a sound mind. I declare that I walk in peace today.",
+            "For God has not given us a spirit of fear, but of power and of love and of a sound mind.",
+            "2 Timothy 1:7"
+        ),
+        (
+            "I know who I am. I am chosen, redeemed, and called by name. My identity is not defined by my past — it is secured by Christ's finished work.",
+            "But you are a chosen generation, a royal priesthood, a holy nation, His own special people.",
+            "1 Peter 2:9"
+        ),
+        (
+            "I speak to every anxious thought and command it to go. The peace of God that surpasses all understanding guards my heart and my mind in Christ Jesus.",
+            "Be anxious for nothing, but in everything by prayer... the peace of God will guard your hearts.",
+            "Philippians 4:6-7"
+        )
+    ]
+
+    private var selected: (text: String, scripture: String, reference: String) {
+        // Rotate based on day of year so it feels fresh
+        let dayIndex = Calendar.current.ordinality(of: .day, in: .year, for: Date()) ?? 0
+        return declarations[dayIndex % declarations.count]
+    }
+
+    var body: some View {
+        ZStack {
+            backgroundView
+
+            VStack(spacing: 0) {
+                Spacer()
+
+                // Header
+                VStack(spacing: 8) {
+                    Text("Here's your first declaration.")
+                        .font(.system(size: 26, weight: .bold, design: .rounded))
+                        .foregroundColor(.white)
+                        .multilineTextAlignment(.center)
+                    Text("Read it aloud. Mean every word.")
+                        .font(.system(size: 16, weight: .medium, design: .rounded))
+                        .foregroundColor(.white.opacity(0.7))
+                }
+                .opacity(cardVisible ? 1 : 0)
+                .offset(y: cardVisible ? 0 : 20)
+                .padding(.horizontal, 32)
+
+                Spacer().frame(height: 36)
+
+                // Declaration Card
+                VStack(spacing: 20) {
+                    // Quotation mark
+                    Text("\u{201C}")
+                        .font(.system(size: 64, weight: .bold, design: .serif))
+                        .foregroundColor(.white.opacity(0.3))
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.leading, 8)
+                        .padding(.bottom, -30)
+
+                    Text(selected.text)
+                        .font(.system(size: 20, weight: .medium, design: .rounded))
+                        .foregroundColor(.white)
+                        .multilineTextAlignment(.center)
+                        .lineSpacing(6)
+                        .padding(.horizontal, 8)
+
+                    // Divider
+                    Rectangle()
+                        .fill(Color.white.opacity(0.25))
+                        .frame(height: 1)
+                        .padding(.horizontal, 16)
+
+                    // Scripture
+                    VStack(spacing: 4) {
+                        Text("\u{201C}\(selected.scripture)\u{201D}")
+                            .font(.system(size: 14, weight: .regular, design: .serif))
+                            .foregroundColor(.white.opacity(0.75))
+                            .multilineTextAlignment(.center)
+                            .italic()
+                        Text(selected.reference)
+                            .font(.system(size: 13, weight: .semibold, design: .rounded))
+                            .foregroundColor(.white.opacity(0.55))
+                    }
+                    .padding(.horizontal, 8)
+                    .opacity(scriptureVisible ? 1 : 0)
+                    .offset(y: scriptureVisible ? 0 : 10)
+                }
+                .padding(24)
+                .background(
+                    RoundedRectangle(cornerRadius: 20, style: .continuous)
+                        .fill(Color.white.opacity(0.12))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                                .strokeBorder(Color.white.opacity(0.2), lineWidth: 1)
+                        )
+                )
+                .padding(.horizontal, 24)
+                .scaleEffect(cardVisible ? 1 : 0.92)
+                .opacity(cardVisible ? 1 : 0)
+
+                Spacer()
+
+                // CTA
+                VStack(spacing: 12) {
+                    Button(action: {
+                        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                        onContinue()
+                    }) {
+                        Text("I want more of this")
+                            .font(.system(size: 17, weight: .semibold, design: .rounded))
+                            .foregroundColor(.black)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 56)
+                            .background(Capsule().fill(Color.white))
+                    }
+
+                    Text("Unlock unlimited declarations, audio devotionals & more")
+                        .font(.system(size: 13))
+                        .foregroundColor(.white.opacity(0.55))
+                        .multilineTextAlignment(.center)
+                }
+                .padding(.horizontal, 32)
+                .padding(.bottom, 50)
+                .opacity(buttonVisible ? 1 : 0)
+                .offset(y: buttonVisible ? 0 : 20)
+            }
+        }
+        .ignoresSafeArea()
+        .onAppear {
+            withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
+                cardVisible = true
+            }
+            withAnimation(.easeOut(duration: 0.6).delay(0.5)) {
+                scriptureVisible = true
+            }
+            withAnimation(.easeOut(duration: 0.5).delay(0.9)) {
+                buttonVisible = true
+            }
+        }
+    }
+
+    var backgroundView: some View {
+        ZStack {
+            Image(subscriptionStore.onboardingBGImage)
+                .resizable()
+                .aspectRatio(contentMode: .fill)
+                .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
+                .clipped()
+                .ignoresSafeArea()
+
+            LinearGradient(
+                gradient: Gradient(colors: [
+                    Color.black.opacity(0.75),
+                    Color.black.opacity(0.45),
+                    Color.black.opacity(0.55)
+                ]),
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .ignoresSafeArea()
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .edgesIgnoringSafeArea(.all)
     }
 }

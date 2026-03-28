@@ -96,7 +96,15 @@ struct OnboardingView: View  {
                     }
                 }
                 .tag(Tab.positionSpeakLife)
-                
+
+                // SCREEN 10: Live Declaration Preview
+                LiveDeclarationPreviewScreen(size: geometry.size) {
+                    withAnimation {
+                        advance()
+                    }
+                }
+                .tag(Tab.livePreview)
+
                 // Subscription Screen
                 subscriptionScene(size: geometry.size)
                     .tag(Tab.subscription)
@@ -219,10 +227,16 @@ struct OnboardingView: View  {
                     
                 case .positionSpeakLife:
                     impactMed.impactOccurred()
-                    selection = .subscription
+                    selection = .livePreview
                     onboardingTab = selection.rawValue
                     Analytics.logEvent("PositionSpeakLifeDone", parameters: nil)
-                    
+
+                case .livePreview:
+                    impactMed.impactOccurred()
+                    selection = .subscription
+                    onboardingTab = selection.rawValue
+                    Analytics.logEvent("LivePreviewDone", parameters: nil)
+
                 case .subscription:
                     impactMed.impactOccurred()
                     selection = .notification
