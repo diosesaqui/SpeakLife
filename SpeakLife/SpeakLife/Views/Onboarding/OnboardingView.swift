@@ -173,8 +173,16 @@ struct OnboardingView: View {
     private func askNotificationPermission() {
         let center = UNUserNotificationCenter.current()
         center.getNotificationSettings { settings in
-            guard (settings.authorizationStatus == .authorized) ||
-                    (settings.authorizationStatus == .provisional) else {
+            switch settings.authorizationStatus {
+            case .authorized, .provisional:
+                // Already granted — just advance
+                DispatchQueue.main.async {
+                    appState.notificationEnabled = true
+                    registerNotifications()
+                    withAnimation { advance() }
+                }
+            case .notDetermined:
+                // Ask for permission
                 center.requestAuthorization(options: [.alert, .sound, .badge]) { granted, _ in
                     DispatchQueue.main.async {
                         appState.notificationEnabled = granted
@@ -185,7 +193,11 @@ struct OnboardingView: View {
                         withAnimation { advance() }
                     }
                 }
-                return
+            default:
+                // Denied or restricted — advance anyway, don't block onboarding
+                DispatchQueue.main.async {
+                    withAnimation { advance() }
+                }
             }
         }
     }
