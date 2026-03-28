@@ -75,15 +75,20 @@ struct EmotionalHookScreen: View {
                     }
                     .padding(.horizontal, 36)
 
-                    // Bridge line — the solution
-                    Text("Daily declarations turn what you know into what you live.")
-                        .font(.system(size: 15, weight: .semibold, design: .rounded))
-                        .foregroundColor(.white.opacity(0.65))
-                        .multilineTextAlignment(.center)
-                        .italic()
-                        .padding(.horizontal, 36)
-                        .opacity(subVisible ? 1 : 0)
-                        .animation(.easeOut(duration: 0.5).delay(0.7), value: subVisible)
+                    // Bridge line — weapon frame
+                    VStack(spacing: 6) {
+                        Text("Spoken truth is your greatest weapon.")
+                            .font(.system(size: 17, weight: .bold, design: .rounded))
+                            .foregroundColor(.white)
+                            .multilineTextAlignment(.center)
+                        Text("It's exactly how Jesus defeated every attack.")
+                            .font(.system(size: 15, weight: .medium, design: .rounded))
+                            .foregroundColor(.white.opacity(0.7))
+                            .multilineTextAlignment(.center)
+                    }
+                    .padding(.horizontal, 32)
+                    .opacity(subVisible ? 1 : 0)
+                    .animation(.easeOut(duration: 0.5).delay(0.7), value: subVisible)
                 }
                 .padding(.horizontal, 16)
                 Spacer()
