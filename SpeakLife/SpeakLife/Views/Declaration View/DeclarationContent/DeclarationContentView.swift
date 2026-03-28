@@ -406,7 +406,7 @@ struct DeclarationContentView: View {
                         .font(themeViewModel.selectedFontForBook.map { font in
                             // Italicize using Font modifier if possible
                             font
-                        } ?? .system(size: 16, weight: .light, design: .serif))
+                        } ?? .system(size: 18, weight: .light, design: .serif))
                         .italic()
                         .foregroundColor(themeViewModel.selectedTheme.fontColor.opacity(0.85))
                         .multilineTextAlignment(.center)
