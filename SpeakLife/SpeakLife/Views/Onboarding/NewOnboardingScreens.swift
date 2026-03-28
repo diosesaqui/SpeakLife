@@ -18,12 +18,13 @@ struct EmotionalHookScreen: View {
     @State private var subVisible = false
     @State private var buttonVisible = false
 
+    // Pain confessions — the gap between what they believe and what they feel
     private let painPoints = [
-        "Anxiety that won't quit",
-        "Feeling lost or without purpose",
-        "Fear holding you back",
-        "Struggling with your identity",
-        "Carrying hurt you can't shake"
+        "You know God is real — but anxiety still wins some mornings",
+        "You believe His promises — but fear gets the first word",
+        "You've read the Word — but it hasn't become instinct yet",
+        "You know who God says you are — but you don't always feel it",
+        "You pray, you believe — but doubt creeps in when life gets hard"
     ]
 
     var body: some View {
@@ -31,49 +32,66 @@ struct EmotionalHookScreen: View {
             backgroundView
             VStack(spacing: 0) {
                 Spacer()
-                VStack(spacing: 24) {
-                    Text("You didn't download\nthis by accident.")
-                        .font(.system(size: 34, weight: .bold, design: .rounded))
-                        .multilineTextAlignment(.center)
-                        .foregroundColor(.white)
-                        .lineSpacing(4)
-                        .opacity(headlineVisible ? 1 : 0)
-                        .offset(y: headlineVisible ? 0 : 24)
-
-                    Text("Something brought you here.\nGod's Word has something to say about it.")
-                        .font(.system(size: 18, weight: .medium, design: .rounded))
-                        .multilineTextAlignment(.center)
-                        .foregroundColor(.white.opacity(0.8))
-                        .lineSpacing(4)
-                        .padding(.horizontal, 32)
-                        .opacity(subVisible ? 1 : 0)
-                        .offset(y: subVisible ? 0 : 16)
-
+                VStack(spacing: 28) {
+                    // Headline — honors their faith, names the gap
                     VStack(spacing: 10) {
+                        Text("You know God is real.")
+                            .font(.system(size: 32, weight: .bold, design: .rounded))
+                            .multilineTextAlignment(.center)
+                            .foregroundColor(.white)
+                            .opacity(headlineVisible ? 1 : 0)
+                            .offset(y: headlineVisible ? 0 : 20)
+
+                        Text("Now let His promises make you unshakable.")
+                            .font(.system(size: 22, weight: .medium, design: .rounded))
+                            .multilineTextAlignment(.center)
+                            .foregroundColor(.white.opacity(0.85))
+                            .lineSpacing(3)
+                            .padding(.horizontal, 28)
+                            .opacity(headlineVisible ? 1 : 0)
+                            .offset(y: headlineVisible ? 0 : 16)
+                            .animation(.easeOut(duration: 0.6).delay(0.15), value: headlineVisible)
+                    }
+
+                    // Pain confessions
+                    VStack(spacing: 13) {
                         ForEach(Array(painPoints.enumerated()), id: \.offset) { index, point in
-                            HStack(spacing: 10) {
-                                Image(systemName: "circle.fill")
-                                    .font(.system(size: 6))
-                                    .foregroundColor(.white.opacity(0.5))
+                            HStack(alignment: .top, spacing: 10) {
+                                Image(systemName: "minus")
+                                    .font(.system(size: 12, weight: .bold))
+                                    .foregroundColor(.white.opacity(0.4))
+                                    .padding(.top, 3)
                                 Text(point)
-                                    .font(.system(size: 16, weight: .medium, design: .rounded))
-                                    .foregroundColor(.white.opacity(0.85))
+                                    .font(.system(size: 15, weight: .regular, design: .rounded))
+                                    .foregroundColor(.white.opacity(0.8))
+                                    .fixedSize(horizontal: false, vertical: true)
+                                    .lineSpacing(2)
                             }
+                            .frame(maxWidth: .infinity, alignment: .leading)
                             .opacity(subVisible ? 1 : 0)
-                            .offset(x: subVisible ? 0 : -20)
-                            .animation(.easeOut(duration: 0.5).delay(0.3 + Double(index) * 0.08), value: subVisible)
+                            .offset(x: subVisible ? 0 : -18)
+                            .animation(.easeOut(duration: 0.45).delay(0.25 + Double(index) * 0.07), value: subVisible)
                         }
                     }
-                    .padding(.horizontal, 48)
-                    .padding(.top, 8)
+                    .padding(.horizontal, 36)
+
+                    // Bridge line — the solution
+                    Text("Daily declarations turn what you know into what you live.")
+                        .font(.system(size: 15, weight: .semibold, design: .rounded))
+                        .foregroundColor(.white.opacity(0.65))
+                        .multilineTextAlignment(.center)
+                        .italic()
+                        .padding(.horizontal, 36)
+                        .opacity(subVisible ? 1 : 0)
+                        .animation(.easeOut(duration: 0.5).delay(0.7), value: subVisible)
                 }
-                .padding(.horizontal, 24)
+                .padding(.horizontal, 16)
                 Spacer()
                 Button(action: {
                     UIImpactFeedbackGenerator(style: .light).impactOccurred()
                     onContinue()
                 }) {
-                    Text("Let's find what God says about it")
+                    Text("Show me how")
                         .font(.system(size: 17, weight: .semibold, design: .rounded))
                         .foregroundColor(.black)
                         .frame(maxWidth: .infinity)
@@ -88,9 +106,9 @@ struct EmotionalHookScreen: View {
         }
         .ignoresSafeArea()
         .onAppear {
-            withAnimation(.easeOut(duration: 0.8)) { headlineVisible = true }
-            withAnimation(.easeOut(duration: 0.8).delay(0.3)) { subVisible = true }
-            withAnimation(.easeOut(duration: 0.6).delay(0.8)) { buttonVisible = true }
+            withAnimation(.easeOut(duration: 0.7)) { headlineVisible = true }
+            withAnimation(.easeOut(duration: 0.7).delay(0.3)) { subVisible = true }
+            withAnimation(.easeOut(duration: 0.5).delay(0.9)) { buttonVisible = true }
         }
     }
 
