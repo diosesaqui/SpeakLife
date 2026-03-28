@@ -417,7 +417,7 @@ struct DeclarationContentView: View {
                 .scaleEffect(referenceVisible ? 1.0 : 0.9)
                 .offset(y: referenceVisible ? 0 : 8)
                 .animation(.spring(response: 0.7, dampingFraction: 0.8, blendDuration: 0.1).delay(0.35), value: referenceVisible)
-                .padding(.top, 4)
+                .padding(.top, 10)
             }
             
             Spacer()
