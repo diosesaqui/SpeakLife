@@ -2,8 +2,10 @@
 //  HowToUseSpeakLifeView.swift
 //  SpeakLife
 //
-//  Reuses the onboarding demo + 4 feature tutorial screens as a standalone
+//  Reuses the real onboarding screens as a standalone
 //  "How to Use SpeakLife" guide accessible from Settings.
+//
+//  Flow: LiveDeclarationPreview → AudioFeature → DailyDevotionalFeature → WarriorRoom
 //
 
 import SwiftUI
@@ -16,42 +18,35 @@ struct HowToUseSpeakLifeView: View {
 
     @State private var currentPage = 0
 
-    private let totalPages = 5
+    private let totalPages = 4
 
     var body: some View {
         GeometryReader { geometry in
             ZStack(alignment: .top) {
+
                 // Page content
                 Group {
                     switch currentPage {
                     case 0:
-                        DemoExperienceView(size: geometry.size) {
+                        LiveDeclarationPreviewScreen(size: geometry.size) {
                             advance()
                         }
                         .environmentObject(subscriptionStore)
-                        .environmentObject(appState)
-                        .environmentObject(viewModel)
 
                     case 1:
-                        AffirmationsTutorial(size: geometry.size) {
+                        AudioFeatureScreen(size: geometry.size) {
                             advance()
                         }
                         .environmentObject(subscriptionStore)
 
                     case 2:
-                        AudioDevotionalsTutorial(size: geometry.size) {
+                        DailyDevotionalFeatureScreen(size: geometry.size) {
                             advance()
                         }
                         .environmentObject(subscriptionStore)
 
                     case 3:
-                        DevotionalsTutorial(size: geometry.size) {
-                            advance()
-                        }
-                        .environmentObject(subscriptionStore)
-
-                    case 4:
-                        CreateYourOwnTutorial(size: geometry.size) {
+                        WarriorRoomFeatureScreen(size: geometry.size) {
                             dismiss()
                         }
                         .environmentObject(subscriptionStore)
@@ -80,14 +75,15 @@ struct HowToUseSpeakLifeView: View {
                         ForEach(0..<totalPages, id: \.self) { index in
                             Circle()
                                 .fill(index == currentPage ? Color.white : Color.white.opacity(0.35))
-                                .frame(width: index == currentPage ? 8 : 6, height: index == currentPage ? 8 : 6)
+                                .frame(width: index == currentPage ? 8 : 6,
+                                       height: index == currentPage ? 8 : 6)
                                 .animation(.spring(response: 0.3, dampingFraction: 0.7), value: currentPage)
                         }
                     }
 
                     Spacer()
 
-                    // Invisible balance for symmetry
+                    // Balance spacer
                     Image(systemName: "xmark.circle.fill")
                         .font(.system(size: 28))
                         .opacity(0)
