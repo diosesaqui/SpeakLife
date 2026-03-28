@@ -2252,12 +2252,17 @@ struct DailyCommitmentScreen: View {
 
                 Spacer().frame(height: 36)
 
-                // Subhead
-                Text("The world renews your mind constantly — through fear, noise, and bad news.\nSpeakLife makes sure God's truth gets there first.")
+                // Subhead — Matthew 7:24 rock metaphor
+                Text("Everyone who builds their life on His Word — when the storms hit, they stand.\nSpeakLife is how you build that foundation. Every single day.")
                     .font(.system(size: 15, design: .rounded))
                     .foregroundColor(.white.opacity(0.7))
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 32)
+                    .opacity(headerVisible ? 1 : 0)
+
+                Text("— Matthew 7:24")
+                    .font(.system(size: 13, weight: .regular, design: .rounded))
+                    .foregroundColor(.white.opacity(0.4))
                     .opacity(headerVisible ? 1 : 0)
 
                 Spacer().frame(height: 40)
@@ -2305,6 +2310,15 @@ struct DailyCommitmentScreen: View {
                     .opacity(timelinesVisible ? 1 : 0)
 
                 Spacer()
+
+                // First-time experience line
+                Text("The first time you speak God's Word to a fear and watch it move — you'll never face a battle the same way again. No matter how big or small.")
+                    .font(.system(size: 14, weight: .medium, design: .rounded))
+                    .foregroundColor(.white.opacity(0.75))
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 28)
+                    .padding(.bottom, 16)
+                    .opacity(buttonVisible ? 1 : 0)
 
                 // CTA
                 VStack(spacing: 10) {
