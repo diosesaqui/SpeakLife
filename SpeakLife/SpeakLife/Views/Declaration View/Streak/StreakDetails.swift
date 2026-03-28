@@ -35,7 +35,18 @@ final class StreakViewModel: ObservableObject {
     
     init() {
         loadFromUserDefaults()
+        healStreakIfNeeded()
         NotificationCenter.default.addObserver(self, selector: #selector(eventCompletedReceived), name: Notification.Name("StreakCompleted"), object: nil)
+    }
+    
+    /// BurstCompletionTracker calculates streak from actual history — use it to fix a corrupted currentStreak.
+    private func healStreakIfNeeded() {
+        let burstStreak = BurstCompletionTracker.shared.currentStreak
+        if burstStreak > currentStreak {
+            currentStreak = burstStreak
+            UserDefaults.standard.set(burstStreak, forKey: "currentStreak")
+            loadFromUserDefaults() // Refresh display strings
+        }
     }
     
     deinit {
