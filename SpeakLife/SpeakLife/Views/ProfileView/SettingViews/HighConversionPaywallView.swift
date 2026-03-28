@@ -146,16 +146,17 @@ struct HighConversionPaywallView: View {
 
     // MARK: - Benefits
     private var benefitsSection: some View {
-        let icons = ["bolt.fill","heart.fill","sun.max.fill","shield.fill"]
+        let icons = ["quote.bubble.fill", "shield.fill", "headphones", "person.circle.fill", "hands.and.sparkles.fill"]
         let descs = [
-            "Speak God's Word over anxiety every morning and retrain your default response",
-            "Access peace declarations in under 2 minutes - morning, night, or mid-panic",
-            "Devotionals, audio, and Bible plans that build calm daily momentum",
-            "Scripture that holds when fear, pressure, and overwhelm hit hardest"
+            "Daily declarations rewire your mind until God's Word becomes your first response.",
+            "Spoken truth is your greatest weapon. It's exactly how Jesus defeated every attack.",
+            "Faith comes by hearing. Audio devotionals put Scripture in your ears morning and night.",
+            "Know your identity in Christ so deeply that fear, doubt, and shame lose their grip.",
+            "The Warrior Room — share prayers, claim testimonies, and never fight alone."
         ]
-        let props = Array(copy.valueProps.prefix(4))
+        let props = Array(copy.valueProps.prefix(5))
         return VStack(alignment: .leading, spacing: 16) {
-            ForEach(0..<min(props.count, 4), id: \.self) { i in
+            ForEach(0..<min(props.count, 5), id: \.self) { i in
                 HCBenefitRow(icon: icons[i], title: props[i], description: descs[i])
             }
         }
@@ -305,7 +306,7 @@ struct HighConversionPaywallView: View {
             return "Start Monthly Plan"
         }
         if isEligibleForTrial {
-            return copy.ctaText // e.g. "Start My Free 3-Day Trial"
+            return "Begin My 7-Day Faith Reset"
         }
         return "Get Annual Access"
     }
