@@ -2007,3 +2007,176 @@ struct DailyDevotionalFeatureScreen: View {
         .edgesIgnoringSafeArea(.all)
     }
 }
+
+// MARK: - Warrior Room Feature Screen
+struct WarriorRoomFeatureScreen: View {
+    @EnvironmentObject var subscriptionStore: SubscriptionStore
+    let size: CGSize
+    let onContinue: () -> Void
+
+    @State private var headerVisible = false
+    @State private var cardVisible = false
+    @State private var postsVisible = false
+    @State private var buttonVisible = false
+
+    // Sample prayer posts mirroring the real UI
+    private let samplePosts: [(author: String, text: String, praying: Int, answered: Bool)] = [
+        ("A sister in Christ", "I've been struggling with anxiety and fear. Please stand with me in prayer.", 12, false),
+        ("A brother in Christ", "God is the greatest! Been through trials but His promises never failed!", 8, true)
+    ]
+
+    var body: some View {
+        ZStack {
+            backgroundView
+
+            VStack(spacing: 0) {
+                Spacer()
+
+                VStack(spacing: 24) {
+                    // Scripture headline
+                    VStack(spacing: 10) {
+                        Text("\u{201C}Pray for each other so\nthat you may be healed.\u{201D}")
+                            .font(.system(size: 26, weight: .bold, design: .serif))
+                            .multilineTextAlignment(.center)
+                            .foregroundColor(.white)
+                            .lineSpacing(4)
+                            .opacity(headerVisible ? 1 : 0)
+                            .offset(y: headerVisible ? 0 : 20)
+
+                        Text("James 5:16")
+                            .font(.system(size: 15, weight: .semibold, design: .rounded))
+                            .foregroundColor(.white.opacity(0.6))
+                            .opacity(headerVisible ? 1 : 0)
+                            .animation(.easeOut(duration: 0.5).delay(0.2), value: headerVisible)
+                    }
+
+                    // Feature label
+                    HStack(spacing: 10) {
+                        ZStack {
+                            Circle()
+                                .fill(Color.white.opacity(0.15))
+                                .frame(width: 42, height: 42)
+                            Image(systemName: "shield.fill")
+                                .font(.system(size: 19, weight: .medium))
+                                .foregroundColor(.white)
+                        }
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("The Warrior Room")
+                                .font(.system(size: 17, weight: .bold, design: .rounded))
+                                .foregroundColor(.white)
+                            Text("Community prayer & testimonies")
+                                .font(.system(size: 13, weight: .regular, design: .rounded))
+                                .foregroundColor(.white.opacity(0.6))
+                        }
+                        Spacer()
+                    }
+                    .padding(.horizontal, 28)
+                    .opacity(cardVisible ? 1 : 0)
+
+                    // Sample prayer posts
+                    VStack(spacing: 10) {
+                        ForEach(Array(samplePosts.enumerated()), id: \.offset) { index, post in
+                            VStack(alignment: .leading, spacing: 8) {
+                                HStack {
+                                    Text(post.author)
+                                        .font(.system(size: 12, weight: .semibold, design: .rounded))
+                                        .foregroundColor(.white.opacity(0.55))
+                                    if post.answered {
+                                        HStack(spacing: 3) {
+                                            Image(systemName: "checkmark.seal.fill")
+                                                .font(.system(size: 10))
+                                                .foregroundColor(.green.opacity(0.8))
+                                            Text("Answered")
+                                                .font(.system(size: 11, weight: .medium, design: .rounded))
+                                                .foregroundColor(.green.opacity(0.8))
+                                        }
+                                    }
+                                    Spacer()
+                                }
+
+                                Text(post.text)
+                                    .font(.system(size: 14, weight: .regular, design: .rounded))
+                                    .foregroundColor(.white.opacity(0.85))
+                                    .lineLimit(2)
+                                    .fixedSize(horizontal: false, vertical: true)
+
+                                HStack(spacing: 6) {
+                                    Image(systemName: "hands.and.sparkles.fill")
+                                        .font(.system(size: 11))
+                                        .foregroundColor(.white.opacity(0.5))
+                                    Text("Praying (\(post.praying))")
+                                        .font(.system(size: 12, weight: .medium, design: .rounded))
+                                        .foregroundColor(.white.opacity(0.5))
+                                }
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 5)
+                                .background(Capsule().fill(Color.white.opacity(0.08)))
+                            }
+                            .padding(14)
+                            .background(
+                                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                    .fill(Color.white.opacity(0.09))
+                                    .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                        .strokeBorder(Color.white.opacity(0.14), lineWidth: 1))
+                            )
+                            .opacity(postsVisible ? 1 : 0)
+                            .offset(y: postsVisible ? 0 : 16)
+                            .animation(.easeOut(duration: 0.5).delay(Double(index) * 0.12), value: postsVisible)
+                        }
+                    }
+                    .padding(.horizontal, 24)
+                }
+
+                Spacer()
+
+                VStack(spacing: 8) {
+                    Button(action: {
+                        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                        onContinue()
+                    }) {
+                        Text("Start my 7-Day Faith Reset")
+                            .font(.system(size: 17, weight: .semibold, design: .rounded))
+                            .foregroundColor(.black)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 56)
+                            .background(Capsule().fill(Color.white))
+                    }
+
+                    Text("7 days free \u{2022} 30-day guarantee \u{2022} Cancel anytime")
+                        .font(.system(size: 12))
+                        .foregroundColor(.white.opacity(0.4))
+                        .multilineTextAlignment(.center)
+                }
+                .padding(.horizontal, 32)
+                .padding(.bottom, 50)
+                .opacity(buttonVisible ? 1 : 0)
+                .offset(y: buttonVisible ? 0 : 20)
+            }
+        }
+        .ignoresSafeArea()
+        .onAppear {
+            withAnimation(.easeOut(duration: 0.7)) { headerVisible = true }
+            withAnimation(.easeOut(duration: 0.5).delay(0.35)) { cardVisible = true }
+            withAnimation(.easeOut(duration: 0.5).delay(0.5)) { postsVisible = true }
+            withAnimation(.easeOut(duration: 0.5).delay(0.85)) { buttonVisible = true }
+            Analytics.logEvent("onboarding_warrior_room_shown", parameters: nil)
+        }
+    }
+
+    var backgroundView: some View {
+        ZStack {
+            Image(subscriptionStore.onboardingBGImage)
+                .resizable()
+                .aspectRatio(contentMode: .fill)
+                .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
+                .clipped()
+                .ignoresSafeArea()
+            LinearGradient(
+                gradient: Gradient(colors: [Color.black.opacity(0.75), Color.black.opacity(0.45), Color.black.opacity(0.6)]),
+                startPoint: .top, endPoint: .bottom
+            ).ignoresSafeArea()
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .edgesIgnoringSafeArea(.all)
+    }
+}

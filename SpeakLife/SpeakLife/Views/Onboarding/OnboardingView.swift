@@ -56,7 +56,13 @@ struct OnboardingView: View {
                 }
                 .tag(Tab.devotionalFeature)
 
-                // SCREEN 6: Subscription / Paywall
+                // SCREEN 6: Warrior Room — community prayer & testimonies
+                WarriorRoomFeatureScreen(size: geometry.size) {
+                    withAnimation { advance() }
+                }
+                .tag(Tab.warriorRoom)
+
+                // SCREEN 7: Subscription / Paywall
                 subscriptionScene(size: geometry.size)
                     .tag(Tab.subscription)
 
@@ -141,9 +147,15 @@ struct OnboardingView: View {
 
         case .devotionalFeature:
             impactMed.impactOccurred()
-            selection = .subscription
+            selection = .warriorRoom
             onboardingTab = selection.rawValue
             Analytics.logEvent("onboarding_devotional_feature_done", parameters: nil)
+
+        case .warriorRoom:
+            impactMed.impactOccurred()
+            selection = .subscription
+            onboardingTab = selection.rawValue
+            Analytics.logEvent("onboarding_warrior_room_done", parameters: nil)
 
         case .subscription:
             impactMed.impactOccurred()
