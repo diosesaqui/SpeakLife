@@ -268,13 +268,9 @@ final class DeclarationViewModel: ObservableObject {
     }
     
     func subtitle(_ declaration: Declaration) -> String {
-        if DeclarationCategory.bibleCategories.contains(declaration.category) || showVerse  {
-            return declaration.book ?? ""
-        } else if !showVerse, declaration.book == "Jesus" {
-           return "Jesus"
-        } else {
-            return ""
-        }
+        // Always show the Scripture reference (or "Jesus" for Jesus-perspective declarations)
+        // Returns "" only when declaration.book is nil (user-created with no reference)
+        return declaration.book ?? ""
     }
     
     
