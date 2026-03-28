@@ -210,8 +210,8 @@ struct OptimizedSubscriptionViewV2: View {
             )
 
             ValuePropRow(
-                icon: "headphones",
-                title: "Hear God's Word Daily",
+                icon: "eye.fill",
+                title: "No More Fear of the Future — God Has a Promise for It",
                 description: "Faith comes by hearing. Audio devotionals put Scripture in your ears morning and night."
             )
 
