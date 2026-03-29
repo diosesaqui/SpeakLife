@@ -2271,7 +2271,7 @@ struct DailyCommitmentScreen: View {
                 // Timeline milestones
                 VStack(spacing: 16) {
                     ForEach(Array(milestones.enumerated()), id: \.offset) { index, milestone in
-                        HStack(alignment: .top, spacing: 16) {
+                        HStack(alignment: .center, spacing: 16) {
                             // Step indicator
                             ZStack {
                                 Circle()
@@ -2281,8 +2281,9 @@ struct DailyCommitmentScreen: View {
                                     .font(.system(size: 14, weight: .bold, design: .rounded))
                                     .foregroundColor(.white)
                             }
+                            .frame(width: 36)
 
-                            VStack(alignment: .leading, spacing: 4) {
+                            VStack(alignment: .leading, spacing: 3) {
                                 Text(milestone.1)
                                     .font(.system(size: 15, weight: .bold, design: .rounded))
                                     .foregroundColor(.white)
@@ -2292,8 +2293,9 @@ struct DailyCommitmentScreen: View {
                                     .fixedSize(horizontal: false, vertical: true)
                                     .lineLimit(nil)
                             }
+                            .frame(maxWidth: .infinity, alignment: .leading)
                         }
-                        .padding(.horizontal, 28)
+                        .padding(.horizontal, 32)
                         .opacity(timelinesVisible ? 1 : 0)
                         .offset(y: timelinesVisible ? 0 : 12)
                         .animation(.easeOut(duration: 0.45).delay(Double(index) * 0.15), value: timelinesVisible)
@@ -2312,15 +2314,6 @@ struct DailyCommitmentScreen: View {
                     .opacity(timelinesVisible ? 1 : 0)
 
                 Spacer()
-
-                // First-time experience line
-                Text("The first time you speak God's Word to a fear and watch it move — you'll never face a battle the same way again. No matter how big or small.")
-                    .font(.system(size: 14, weight: .medium, design: .rounded))
-                    .foregroundColor(.white.opacity(0.75))
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 28)
-                    .padding(.bottom, 16)
-                    .opacity(buttonVisible ? 1 : 0)
 
                 // CTA
                 VStack(spacing: 10) {
