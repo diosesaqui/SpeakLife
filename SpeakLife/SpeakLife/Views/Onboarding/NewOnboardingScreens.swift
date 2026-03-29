@@ -1974,7 +1974,7 @@ struct DailyDevotionalFeatureScreen: View {
                         UIImpactFeedbackGenerator(style: .medium).impactOccurred()
                         onContinue()
                     }) {
-                        Text("There\'s one more thing")
+                        Text("Jesus loves ME personally ✝️")
                             .font(.system(size: 17, weight: .semibold, design: .rounded))
                             .foregroundColor(.black)
                             .frame(maxWidth: .infinity)
@@ -2146,7 +2146,7 @@ struct WarriorRoomFeatureScreen: View {
                         UIImpactFeedbackGenerator(style: .medium).impactOccurred()
                         onContinue()
                     }) {
-                        Text("I'm ready — show me how")
+                        Text("Stand in agreement")
                             .font(.system(size: 17, weight: .semibold, design: .rounded))
                             .foregroundColor(.black)
                             .frame(maxWidth: .infinity)
