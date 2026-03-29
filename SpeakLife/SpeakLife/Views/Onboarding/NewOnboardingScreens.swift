@@ -2207,6 +2207,7 @@ struct DailyCommitmentScreen: View {
     let size: CGSize
     let onContinue: () -> Void
 
+    @EnvironmentObject var subscriptionStore: SubscriptionStore
     @State private var headerVisible = false
     @State private var timelinesVisible = false
     @State private var buttonVisible = false
@@ -2219,13 +2220,7 @@ struct DailyCommitmentScreen: View {
 
     var body: some View {
         ZStack {
-            // Background
-            LinearGradient(
-                gradient: Gradient(colors: [Color(red: 0.06, green: 0.08, blue: 0.18), Color(red: 0.1, green: 0.05, blue: 0.2)]),
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            .ignoresSafeArea()
+            backgroundView
 
             VStack(spacing: 0) {
                 Spacer()
@@ -2289,7 +2284,7 @@ struct DailyCommitmentScreen: View {
                 Spacer().frame(height: 32)
 
                 // Commitment note
-                Text("The bigger the battle, the more you need to speak it. Every single day.")
+                Text("Faith is a muscle. The more you hear and speak His Word, the stronger you become.")
                     .font(.system(size: 13, weight: .medium, design: .rounded))
                     .foregroundColor(.white.opacity(0.55))
                     .italic()
@@ -2333,5 +2328,22 @@ struct DailyCommitmentScreen: View {
                 withAnimation(.easeIn(duration: 0.5)) { buttonVisible = true }
             }
         }
+    }
+
+    var backgroundView: some View {
+        ZStack {
+            Image(subscriptionStore.onboardingBGImage)
+                .resizable()
+                .aspectRatio(contentMode: .fill)
+                .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
+                .clipped()
+                .ignoresSafeArea()
+            LinearGradient(
+                gradient: Gradient(colors: [Color.black.opacity(0.75), Color.black.opacity(0.45), Color.black.opacity(0.6)]),
+                startPoint: .top, endPoint: .bottom
+            ).ignoresSafeArea()
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .edgesIgnoringSafeArea(.all)
     }
 }
