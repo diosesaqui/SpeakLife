@@ -94,6 +94,7 @@ struct DeclarationView: View {
     private func topButtonsRow(_ geometry: GeometryProxy) -> some View {
         HStack {
             //loveLetterButton
+            devotionalButton
             dailyBurstButton
             
             speakAloudBannerSection(geometry)
@@ -184,6 +185,30 @@ struct DeclarationView: View {
                     )
             }
         }
+    }
+    
+    var devotionalButton: some View {
+        let title: String
+        if #available(iOS 17, *) {
+            title = "book.pages.fill"
+        } else {
+            title = "book.fill"
+        }
+        return CapsuleImageButton(title: title) {
+            handleDevotionalPresentation(true)
+            Selection.shared.selectionFeedback()
+        }
+//        .sheet(isPresented: $isPresentingDevotionalView) {
+//            self.isPresentingDevotionalView = false
+//            withAnimation {
+//                if appState.onBoardingTest {
+//                   // timerViewModel.loadRemainingTime()
+//                }
+//            }
+//        } content: {
+//            DevotionalView(viewModel: devotionalViewModel)
+//
+//        }
     }
     
     @ViewBuilder

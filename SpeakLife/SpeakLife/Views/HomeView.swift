@@ -43,10 +43,9 @@ class TabViewModel: ObservableObject {
         let tabNames = [
             0: "declarations",
             1: "audio",
-            2: "bible",
-            3: "create_your_own",
-            4: "community",
-            5: "profile"
+            2: "create_your_own",
+            3: "community",
+            4: "profile"
         ]
         
         guard let fromName = tabNames[previousTab],

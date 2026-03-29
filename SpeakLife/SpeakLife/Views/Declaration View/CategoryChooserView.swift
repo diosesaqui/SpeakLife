@@ -231,7 +231,8 @@ struct CategoryChooserView: View {
                                 
                                 viewModel.choose(category) { success in
                                     if success {
-                                        Analytics.logEvent(Event.categoryChooserTapped, parameters: ["category": category.rawValue])
+                                        Analytics.logEvent(Event.categoryChooserTapped, parameters: ["declaration_category": category.rawValue as NSString])
+                                        Analytics.logEvent(category.rawValue, parameters: nil)
                                         self.presentationMode.wrappedValue.dismiss()
                                     }
                                 }

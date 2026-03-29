@@ -99,28 +99,7 @@ struct IntentsBarView: View {
         }
     }
     
-    var devotionalButton: some View {
-        let title: String
-        if #available(iOS 17, *) {
-            title = "book.pages.fill"
-        } else {
-            title = "book.fill"
-        }
-        return CapsuleImageButton(title: title) {
-            presentDevotional()
-            Selection.shared.selectionFeedback()
-        }.sheet(isPresented: $isPresentingDevotionalView) {
-            self.isPresentingDevotionalView = false
-            withAnimation {
-                if appState.onBoardingTest {
-                   // timerViewModel.loadRemainingTime()
-                }
-            }
-        } content: {
-            DevotionalView(viewModel: devotionalViewModel)
-
-        }
-    }
+  
     
     
     // MARK: - Intent(s)
