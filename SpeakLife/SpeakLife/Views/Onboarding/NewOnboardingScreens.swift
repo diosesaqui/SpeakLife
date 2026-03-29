@@ -2273,7 +2273,7 @@ struct DailyCommitmentScreen: View {
                     }
                 }
 
-                Spacer().frame(height: 32)
+                Spacer()//.frame(height: 32)
 
                 // Commitment note
                 Text("Faith is a muscle. The more you hear and speak His Word, the stronger you become.")
