@@ -158,22 +158,33 @@ struct PrayerWallView: View {
                     )
                 }
 
-                // Load more (wall tab only)
-                // Hide Load More once we know there are no more pages.
-                if selectedTab == .wall && !viewModel.posts.isEmpty && viewModel.hasMore {
-                    Button {
-                        viewModel.fetchPosts(reset: false)
-                    } label: {
-                        if viewModel.isLoading {
-                            ProgressView().tint(.white)
-                        } else {
-                            Text("Load more…")
-                                .font(Font.custom("AppleSDGothicNeo-Regular", size: 14, relativeTo: .body))
-                                .foregroundColor(.white.opacity(0.5))
+                // Load more / end-of-feed (wall tab only)
+                if selectedTab == .wall && !viewModel.posts.isEmpty {
+                    if viewModel.hasMore {
+                        Button {
+                            viewModel.fetchPosts(reset: false)
+                        } label: {
+                            if viewModel.isLoading {
+                                ProgressView().tint(.white)
+                            } else {
+                                Text("Load more…")
+                                    .font(Font.custom("AppleSDGothicNeo-Regular", size: 14, relativeTo: .body))
+                                    .foregroundColor(.white.opacity(0.5))
+                            }
                         }
+                        .disabled(viewModel.isLoading)
+                        .padding(.vertical, 16)
+                    } else {
+                        // End of feed
+                        VStack(spacing: 6) {
+                            Text("🙏")
+                                .font(.title2)
+                            Text("You're all caught up")
+                                .font(Font.custom("AppleSDGothicNeo-Regular", size: 13, relativeTo: .body))
+                                .foregroundColor(.white.opacity(0.4))
+                        }
+                        .padding(.vertical, 20)
                     }
-                    .disabled(viewModel.isLoading)
-                    .padding(.vertical, 16)
                 }
             }
             .padding(.horizontal, 24)
