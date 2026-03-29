@@ -95,7 +95,13 @@ struct PrayerWallView: View {
             Text(viewModel.errorMessage ?? "")
         }
         .onAppear {
-            viewModel.fetchPosts(reset: true)
+            // Only reset-fetch if no live network fetch has completed yet.
+            // Prevents sheet dismissals (PostPrayerView, AppleSignInPromptView)
+            // from resetting the pagination cursor and causing Load More
+            // to re-fetch already-seen pages.
+            if !viewModel.hasFetchedFromNetwork {
+                viewModel.fetchPosts(reset: true)
+            }
             viewModel.fetchMyPosts()
             if appleSignIn.isSignedIn {
                 viewModel.registerForPrayerWallNotifications(
@@ -152,20 +158,33 @@ struct PrayerWallView: View {
                     )
                 }
 
-                // Load more (wall tab only)
+                // Load more / end-of-feed (wall tab only)
                 if selectedTab == .wall && !viewModel.posts.isEmpty {
-                    Button {
-                        viewModel.fetchPosts(reset: false)
-                    } label: {
-                        if viewModel.isLoading {
-                            ProgressView().tint(.white)
-                        } else {
-                            Text("Load more…")
-                                .font(Font.custom("AppleSDGothicNeo-Regular", size: 14, relativeTo: .body))
-                                .foregroundColor(.white.opacity(0.5))
+                    if viewModel.hasMore {
+                        Button {
+                            viewModel.fetchPosts(reset: false)
+                        } label: {
+                            if viewModel.isLoading {
+                                ProgressView().tint(.white)
+                            } else {
+                                Text("Load more…")
+                                    .font(Font.custom("AppleSDGothicNeo-Regular", size: 14, relativeTo: .body))
+                                    .foregroundColor(.white.opacity(0.5))
+                            }
                         }
+                        .disabled(viewModel.isLoading)
+                        .padding(.vertical, 16)
+                    } else {
+                        // End of feed
+                        VStack(spacing: 6) {
+                            Text("🙏")
+                                .font(.title2)
+                            Text("You're all caught up")
+                                .font(Font.custom("AppleSDGothicNeo-Regular", size: 13, relativeTo: .body))
+                                .foregroundColor(.white.opacity(0.4))
+                        }
+                        .padding(.vertical, 20)
                     }
-                    .padding(.vertical, 16)
                 }
             }
             .padding(.horizontal, 24)
