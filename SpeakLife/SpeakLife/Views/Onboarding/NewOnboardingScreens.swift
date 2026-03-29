@@ -2205,7 +2205,7 @@ struct DailyCommitmentScreen: View {
     @State private var buttonVisible = false
 
     private let milestones: [(String, String, String)] = [
-        ("✦", "Immediately", "Angels are activated in the spiritual realm on your behalf."),
+        ("✦", "Immediately", "God's power starts flowing through every word you speak."),
         ("1", "Week 1", "You start waking up with God's Word — not your worries."),
         ("2", "Month 1", "When fear hits, you speak before you spiral."),
         ("3", "Month 3", "A trial hits that would have broken you before. It doesn't.")
