@@ -14,6 +14,8 @@ import FacebookCore
 import SwiftUI
 import FirebaseRemoteConfig
 import RevenueCat
+import FirebaseAuth
+import FirebaseFirestore
 
 // Keep these typealiases only for the Product extension at the bottom of the file.
 // Transaction is no longer used directly — RC manages the transaction lifecycle.
@@ -280,12 +282,45 @@ final class SubscriptionStore: ObservableObject {
     }
 
     /// Fetches entitlements from RC and updates all published state.
+    /// Also checks Firestore for web purchases as a secondary source of truth.
     func updateEntitlementsFromRC() async {
         do {
             let info = try await RevenueCatManager.shared.customerInfo()
             await MainActor.run { applyCustomerInfo(info) }
         } catch {
             print("RC entitlement fetch failed: \(error)")
+        }
+
+        // Secondary check: web subscriptions stored in Firestore
+        // This covers users who subscribed via speaklife.app (bypassing Apple)
+        await checkWebSubscription()
+    }
+
+    /// Checks Firestore `webSubscriptions/{uid}` for active web purchases.
+    /// Sets isPremium = true if a valid web subscription exists.
+    private func checkWebSubscription() async {
+        guard let uid = Auth.auth().currentUser?.uid else { return }
+        do {
+            let doc = try await Firestore.firestore()
+                .collection("webSubscriptions")
+                .document(uid)
+                .getDocument()
+
+            guard doc.exists,
+                  let data = doc.data(),
+                  let isPremiumWeb = data["isPremium"] as? Bool, isPremiumWeb,
+                  let expiresAt = (data["expiresAt"] as? Timestamp)?.dateValue(),
+                  expiresAt > Date()
+            else { return }
+
+            await MainActor.run {
+                if !self.isPremium {
+                    self.isPremium = true
+                    print("✅ Web subscription active until \(expiresAt)")
+                }
+            }
+        } catch {
+            print("Firestore web subscription check failed: \(error)")
         }
     }
 

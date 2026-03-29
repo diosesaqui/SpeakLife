@@ -12,6 +12,7 @@ import AuthenticationServices
 import FirebaseAuth
 import FirebaseFirestore
 import CryptoKit
+import RevenueCat
 
 @MainActor
 final class AppleSignInService: NSObject, ObservableObject {
@@ -174,6 +175,9 @@ extension AppleSignInService: ASAuthorizationControllerDelegate {
                 self.displayName = name
                 self.isSignedIn = true
                 self.isLoading = false
+
+                // Tie RevenueCat customer to Firebase UID so web purchases sync automatically
+                try? await Purchases.shared.logIn(user.uid)
 
                 self.upsertUserDocument(uid: user.uid, displayName: name, email: appleCredential.email ?? user.email)
             } catch {
