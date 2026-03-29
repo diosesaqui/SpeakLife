@@ -107,10 +107,11 @@ final class AppDelegate: NSObject, MessagingDelegate {
         NotificationCenter.default.addObserver(self, selector: #selector(scheduleNotificationRequest), name: resyncNotification, object: nil)
         
         // Register FCM for onboarded users (including migration for existing users)
+        // On fresh install, skip requestAuthorization here — the notification onboarding
+        // screen handles the prompt at the right moment in the flow.
         let hasMigratedFCM = UserDefaults.standard.bool(forKey: "hasMigratedToFCM")
-        registerForPushNotifications()
         if appState?.isOnboarded ?? false {
-            
+            registerForPushNotifications()
             if !hasMigratedFCM {
                 UserDefaults.standard.set(true, forKey: "hasMigratedToFCM")
             }
