@@ -2224,12 +2224,12 @@ struct DailyCommitmentScreen: View {
                         .foregroundColor(.white)
                         .multilineTextAlignment(.center)
 
-                    Text("Everyone who builds their life on His Word — when the storms hit, they stand. SpeakLife is how you build that foundation. Every single day.")
+                    Text("The more you pour into His Word, the more He pours back into you — multiplied. SpeakLife is how you make that daily.")
                         .font(.system(size: 15, weight: .medium, design: .rounded))
                         .foregroundColor(.white.opacity(0.65))
                         .multilineTextAlignment(.center)
 
-                    Text("— Matthew 7:24")
+                    Text("— Mark 4:24")
                         .font(.system(size: 13, weight: .regular, design: .rounded))
                         .foregroundColor(.white.opacity(0.4))
                 }
