@@ -18,6 +18,9 @@ class PrayerWallViewModel: ObservableObject {
     @Published var errorMessage: String?
     @Published var submissionMessage: String?
     @Published var isShowingPostForm = false
+    /// False until we detect the last batch was smaller than batchSize,
+    /// meaning there are no more posts to page through.
+    @Published var hasMore = true
 
     private let db = Firestore.firestore()
     private let collection = "prayerWall"
@@ -30,6 +33,10 @@ class PrayerWallViewModel: ObservableObject {
     private let dailyCooldown: TimeInterval = 86400
 
     private var lastDocument: DocumentSnapshot?
+    /// True once at least one live network fetch has completed this session.
+    /// Used by the view to avoid resetting the pagination cursor on every
+    /// onAppear (e.g. after sheet dismissals).
+    private(set) var hasFetchedFromNetwork = false
     private let networkMonitor = NWPathMonitor()
     let deviceId: String
 
@@ -117,6 +124,15 @@ class PrayerWallViewModel: ObservableObject {
 
         if reset {
             lastDocument = nil
+            hasMore = true
+        }
+
+        // Guard: if there is no cursor and this is a "load more" request,
+        // the initial fetch hasn't completed yet. Bail out to avoid querying
+        // from the beginning and appending duplicates on top of cached data.
+        if !reset && lastDocument == nil {
+            isLoading = false
+            return
         }
 
         var query: Query = db.collection(collection)
@@ -156,13 +172,25 @@ class PrayerWallViewModel: ObservableObject {
                 }
 
                 let newPosts = documents.compactMap { try? $0.data(as: PrayerWallPost.self) }
+
                 if reset {
                     self.posts = newPosts
                 } else {
-                    self.posts.append(contentsOf: newPosts)
+                    // Deduplicate before appending — safety net against any
+                    // edge case where the same page could be fetched twice.
+                    let existingIds = Set(self.posts.compactMap { $0.id })
+                    let uniqueNew = newPosts.filter { $0.id == nil || !existingIds.contains($0.id!) }
+                    self.posts.append(contentsOf: uniqueNew)
                 }
+
                 self.cachePosts()
-                self.lastDocument = documents.last
+                // Only advance the cursor when documents actually came back.
+                if let last = documents.last {
+                    self.lastDocument = last
+                }
+                // If we got fewer documents than batchSize we've hit the end.
+                self.hasMore = documents.count >= self.batchSize
+                self.hasFetchedFromNetwork = true
             }
         }
     }
@@ -341,21 +369,15 @@ class PrayerWallViewModel: ObservableObject {
 
     // MARK: - FCM Registration
 
-    /// Call on Prayer Wall appear when the user is signed in.
-    /// - Saves the FCM token to Firestore `users/{uid}/fcmToken`
-    /// - Subscribes the device to the "prayerWall" FCM topic so the
-    ///   Cloud Function `onNewPrayerPost` can broadcast new prayer nudges.
     func registerForPrayerWallNotifications(uid: String, fcmToken: String) {
         guard !uid.isEmpty else { return }
 
-        // 1. Subscribe to topic for broadcast new-prayer notifications
         Messaging.messaging().subscribe(toTopic: "prayerWall") { error in
             if let error = error {
                 print("⚠️ PrayerWall: Failed to subscribe to FCM topic: \(error.localizedDescription)")
             }
         }
 
-        // 2. Persist FCM token to Firestore so Cloud Functions can look it up
         guard !fcmToken.isEmpty else { return }
         db.collection("users").document(uid).setData(
             ["fcmToken": fcmToken, "updatedAt": FieldValue.serverTimestamp()],
@@ -371,6 +393,7 @@ class PrayerWallViewModel: ObservableObject {
 
     func refresh() {
         lastDocument = nil
+        hasMore = true
         fetchPosts(reset: true)
         fetchMyPosts()
     }

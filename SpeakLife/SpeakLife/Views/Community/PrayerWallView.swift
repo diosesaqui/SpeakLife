@@ -95,7 +95,13 @@ struct PrayerWallView: View {
             Text(viewModel.errorMessage ?? "")
         }
         .onAppear {
-            viewModel.fetchPosts(reset: true)
+            // Only reset-fetch if no live network fetch has completed yet.
+            // Prevents sheet dismissals (PostPrayerView, AppleSignInPromptView)
+            // from resetting the pagination cursor and causing Load More
+            // to re-fetch already-seen pages.
+            if !viewModel.hasFetchedFromNetwork {
+                viewModel.fetchPosts(reset: true)
+            }
             viewModel.fetchMyPosts()
             if appleSignIn.isSignedIn {
                 viewModel.registerForPrayerWallNotifications(
@@ -153,7 +159,8 @@ struct PrayerWallView: View {
                 }
 
                 // Load more (wall tab only)
-                if selectedTab == .wall && !viewModel.posts.isEmpty {
+                // Hide Load More once we know there are no more pages.
+                if selectedTab == .wall && !viewModel.posts.isEmpty && viewModel.hasMore {
                     Button {
                         viewModel.fetchPosts(reset: false)
                     } label: {
@@ -165,6 +172,7 @@ struct PrayerWallView: View {
                                 .foregroundColor(.white.opacity(0.5))
                         }
                     }
+                    .disabled(viewModel.isLoading)
                     .padding(.vertical, 16)
                 }
             }
