@@ -2223,40 +2223,24 @@ struct DailyCommitmentScreen: View {
                 Spacer()
 
                 // Header
-                VStack(spacing: 16) {
+                VStack(spacing: 12) {
                     Text("Daily is the difference.")
                         .font(.system(size: 32, weight: .bold, design: .rounded))
                         .foregroundColor(.white)
                         .multilineTextAlignment(.center)
 
-                    Text("\"Be transformed by the renewing of your mind.\"")
+                    Text("Everyone who builds their life on His Word — when the storms hit, they stand. SpeakLife is how you build that foundation. Every single day.")
                         .font(.system(size: 15, weight: .medium, design: .rounded))
                         .foregroundColor(.white.opacity(0.65))
-                        .italic()
                         .multilineTextAlignment(.center)
 
-                    Text("— Romans 12:2")
+                    Text("— Matthew 7:24")
                         .font(.system(size: 13, weight: .regular, design: .rounded))
                         .foregroundColor(.white.opacity(0.4))
                 }
                 .padding(.horizontal, 32)
                 .opacity(headerVisible ? 1 : 0)
                 .offset(y: headerVisible ? 0 : 16)
-
-                Spacer().frame(height: 36)
-
-                // Subhead — Matthew 7:24 rock metaphor
-                Text("Everyone who builds their life on His Word — when the storms hit, they stand.\nSpeakLife is how you build that foundation. Every single day.")
-                    .font(.system(size: 15, design: .rounded))
-                    .foregroundColor(.white.opacity(0.7))
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 32)
-                    .opacity(headerVisible ? 1 : 0)
-
-                Text("— Matthew 7:24")
-                    .font(.system(size: 13, weight: .regular, design: .rounded))
-                    .foregroundColor(.white.opacity(0.4))
-                    .opacity(headerVisible ? 1 : 0)
 
                 Spacer().frame(height: 40)
 
