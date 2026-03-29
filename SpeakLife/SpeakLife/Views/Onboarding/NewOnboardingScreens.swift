@@ -1682,14 +1682,6 @@ struct LiveDeclarationPreviewScreen: View {
                         .foregroundColor(.white.opacity(0.55))
                         .multilineTextAlignment(.center)
                         .italic()
-//                    Image(systemName: "text.book.closed.fill")
-//                        .font(.system(size: 16))
-//                        .foregroundColor(.white.opacity(0.55))
-//                    Text("\u{201C}Death and life are in the power of the tongue.\u{201D} \u{2014} Prov 18:21")
-//                        .font(.system(size: 13, weight: .medium, design: .rounded))
-//                        .foregroundColor(.white.opacity(0.6))
-//                        .italic()
-//                        .multilineTextAlignment(.center)
                 }
                 .padding(.horizontal, 32)
                 .padding(.bottom, 12)
@@ -1701,7 +1693,7 @@ struct LiveDeclarationPreviewScreen: View {
                         UIImpactFeedbackGenerator(style: .medium).impactOccurred()
                         onContinue()
                     }) {
-                        Text("I want more of this")
+                        Text("I release Faith by Speaking 🗣️")
                             .font(.system(size: 17, weight: .semibold, design: .rounded))
                             .foregroundColor(.black)
                             .frame(maxWidth: .infinity)
@@ -1849,7 +1841,7 @@ struct AudioFeatureScreen: View {
                         UIImpactFeedbackGenerator(style: .light).impactOccurred()
                         onContinue()
                     }) {
-                        Text("What else does SpeakLife do?")
+                        Text("Faith comes by Hearing ✅")
                             .font(.system(size: 17, weight: .semibold, design: .rounded))
                             .foregroundColor(.black)
                             .frame(maxWidth: .infinity)
