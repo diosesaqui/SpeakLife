@@ -378,13 +378,23 @@ class PrayerWallViewModel: ObservableObject {
             }
         }
 
+        // 2. Persist FCM token to Firestore so Cloud Functions can look it up.
+        //    Save under BOTH the auth uid AND the local deviceId.
+        //    The milestone Cloud Function looks up users/{deviceId}, while
+        //    other auth-based lookups use users/{uid}.
         guard !fcmToken.isEmpty else { return }
-        db.collection("users").document(uid).setData(
-            ["fcmToken": fcmToken, "updatedAt": FieldValue.serverTimestamp()],
-            merge: true
-        ) { error in
+        let tokenData: [String: Any] = [
+            "fcmToken": fcmToken,
+            "updatedAt": FieldValue.serverTimestamp()
+        ]
+        db.collection("users").document(uid).setData(tokenData, merge: true) { error in
             if let error = error {
-                print("⚠️ PrayerWall: Failed to save FCM token: \(error.localizedDescription)")
+                print("⚠️ PrayerWall: Failed to save FCM token (uid): \(error.localizedDescription)")
+            }
+        }
+        db.collection("users").document(deviceId).setData(tokenData, merge: true) { error in
+            if let error = error {
+                print("⚠️ PrayerWall: Failed to save FCM token (deviceId): \(error.localizedDescription)")
             }
         }
     }
