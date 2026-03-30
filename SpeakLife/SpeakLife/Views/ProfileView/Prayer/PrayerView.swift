@@ -38,7 +38,7 @@ struct PrayerView: View {
                             }
                         }
                     }
-                    .navigationBarTitle("Powerful Prayers")
+                    .navigationTitle("Powerful Prayers")
                     .foregroundColor(.white)
                 }
                // .onAppear(perform: fetchPrayers)

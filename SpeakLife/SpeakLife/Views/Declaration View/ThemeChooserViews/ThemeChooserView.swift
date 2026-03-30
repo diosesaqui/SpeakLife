@@ -9,7 +9,7 @@ import SwiftUI
 
 struct ThemeChooserView: View {
     @EnvironmentObject var subscriptionStore: SubscriptionStore
-    @Environment(\.presentationMode) var presentationMode
+    @Environment(\.dismiss) private var dismiss
     @ObservedObject var themesViewModel: ThemeViewModel
     @Environment(\.colorScheme) var colorScheme
     @State private var showingImagePicker = false
@@ -61,7 +61,7 @@ struct ThemeChooserView: View {
                                             withAnimation(.easeInOut(duration: 0.3)) {
                                                 themesViewModel.choose(tappedTheme)
                                                 themesViewModel.save()
-                                                self.presentationMode.wrappedValue.dismiss()
+                                                dismiss()
                                             }
                                         }
                                     }

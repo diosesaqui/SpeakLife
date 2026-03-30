@@ -10,7 +10,7 @@ import SwiftUI
 import FirebaseAnalytics
 
 struct WarriorView: View {
-    @Environment(\.presentationMode) var presentationMode
+    @Environment(\.dismiss) private var dismiss
     
     
     var body: some View {

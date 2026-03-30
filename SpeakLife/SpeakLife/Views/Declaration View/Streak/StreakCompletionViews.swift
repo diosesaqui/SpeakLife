@@ -714,7 +714,7 @@ struct AppLogoView: View {
 
 struct CompletionCelebrationView: View {
     let celebration: CompletionCelebration
-    @Environment(\.presentationMode) var presentationMode
+    @Environment(\.dismiss) private var dismiss
     @State private var showContent = false
     @State private var showShareButton = false
     @State private var particleOffset: CGFloat = 0
@@ -798,7 +798,7 @@ struct CompletionCelebrationView: View {
                     
                     // Elegant continue button
                     ElegantContinueButton {
-                        presentationMode.wrappedValue.dismiss()
+                        dismiss()
                     }
                     .opacity(showShareButton ? 1 : 0)
                     .animation(.easeInOut(duration: 0.6).delay(1.5), value: showShareButton)

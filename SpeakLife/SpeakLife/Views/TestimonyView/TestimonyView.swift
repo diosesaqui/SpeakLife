@@ -122,7 +122,7 @@ struct TestimonyFormView: View {
     @State private var userName: String = ""
     @State private var testimonyText: String = ""
     @EnvironmentObject var viewModel: TestimonyViewModel
-    @Environment(\.presentationMode) var presentationMode
+    @Environment(\.dismiss) private var dismiss
     private let characterLimit = 500
     
     var body: some View {

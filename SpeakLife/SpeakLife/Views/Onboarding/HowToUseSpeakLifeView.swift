@@ -14,7 +14,7 @@ struct HowToUseSpeakLifeView: View {
     @EnvironmentObject var subscriptionStore: SubscriptionStore
     @EnvironmentObject var appState: AppState
     @EnvironmentObject var viewModel: DeclarationViewModel
-    @Environment(\.presentationMode) var presentationMode
+    @Environment(\.dismiss) private var dismiss
 
     @State private var currentPage = 0
 
@@ -109,7 +109,5 @@ struct HowToUseSpeakLifeView: View {
         }
     }
 
-    private func dismiss() {
-        presentationMode.wrappedValue.dismiss()
-    }
+
 }

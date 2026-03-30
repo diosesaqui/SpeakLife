@@ -238,7 +238,7 @@ struct HomeView: View {
                         .presentationDetents([.medium])
                         .presentationDragIndicator(.visible)
                 }
-                .accentColor(Constants.DAMidBlue)
+                .tint(Constants.DAMidBlue)
                 .onAppear {
                     checkForNewVersion()
                     if appState.firstOpen {

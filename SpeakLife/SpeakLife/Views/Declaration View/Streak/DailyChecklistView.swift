@@ -428,7 +428,7 @@ extension View {
 
 
 struct DailyChecklistInfoSheet: View {
-    @Environment(\.presentationMode) var presentationMode
+    @Environment(\.dismiss) private var dismiss
     
     var body: some View {
         NavigationView {
@@ -492,7 +492,7 @@ struct DailyChecklistInfoSheet: View {
             .navigationBarTitleDisplayMode(.inline)
             .navigationBarItems(
                 trailing: Button("Done") {
-                    presentationMode.wrappedValue.dismiss()
+                    dismiss()
                 }
                 .foregroundColor(.white)
             )

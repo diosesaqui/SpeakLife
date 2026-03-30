@@ -9,7 +9,7 @@ import SwiftUI
 
 struct DailyChecklistFullScreenView: View {
     @ObservedObject var viewModel: EnhancedStreakViewModel
-    @Environment(\.presentationMode) var presentationMode
+    @Environment(\.dismiss) private var dismiss
     
     var body: some View {
         ZStack {
@@ -28,7 +28,7 @@ struct DailyChecklistFullScreenView: View {
                     Spacer()
                     
                     Button(action: {
-                        presentationMode.wrappedValue.dismiss()
+                        dismiss()
                     }) {
                         Image(systemName: "xmark.circle.fill")
                             .font(.system(size: 28))

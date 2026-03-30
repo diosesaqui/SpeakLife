@@ -590,20 +590,20 @@ class BibleAuthManager: ObservableObject {
     }
     
     func saveCredentials(email: String, name: String? = nil, token: String) {
-        let _ = KeychainHelper.shared.save(email, forKey: emailKey)
+        _ = KeychainHelper.shared.save(email, forKey: emailKey)
         if let name = name {
-            let _ = KeychainHelper.shared.save(name, forKey: nameKey)
+            _ = KeychainHelper.shared.save(name, forKey: nameKey)
             userName = name
         }
-        let _ = KeychainHelper.shared.save(token, forKey: tokenKey)
+        _ = KeychainHelper.shared.save(token, forKey: tokenKey)
         isAuthenticated = true
         userEmail = email
     }
     
     func signOut() {
-        let _ = KeychainHelper.shared.delete(forKey: emailKey)
-        let _ = KeychainHelper.shared.delete(forKey: nameKey)
-        let _ = KeychainHelper.shared.delete(forKey: tokenKey)
+        _ = KeychainHelper.shared.delete(forKey: emailKey)
+        _ = KeychainHelper.shared.delete(forKey: nameKey)
+        _ = KeychainHelper.shared.delete(forKey: tokenKey)
         BibleAPIService.shared.clearAuthToken()
         isAuthenticated = false
         userEmail = nil

@@ -11,7 +11,8 @@ struct FirstView: View {
     var body: some View {
         Text("First View")
             .font(.largeTitle)
-            .navigationBarTitle("First", displayMode: .inline)
+            .navigationTitle("First")
+            .navigationBarTitleDisplayMode(.inline)
     }
 }
 
@@ -19,7 +20,8 @@ struct SecondView: View {
     var body: some View {
         Text("Second View")
             .font(.largeTitle)
-            .navigationBarTitle("Second", displayMode: .inline)
+            .navigationTitle("Second")
+            .navigationBarTitleDisplayMode(.inline)
     }
 }
 
@@ -27,7 +29,8 @@ struct ThirdView: View {
     var body: some View {
         Text("Third View")
             .font(.largeTitle)
-            .navigationBarTitle("Third", displayMode: .inline)
+            .navigationTitle("Third")
+            .navigationBarTitleDisplayMode(.inline)
     }
 }
 

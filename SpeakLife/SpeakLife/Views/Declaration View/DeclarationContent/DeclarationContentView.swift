@@ -748,7 +748,7 @@ class ImageSaver: NSObject {
 }
 
 func shareToInstagramStories(image: UIImage) {
-    let _ = PHPhotoLibrary.shared()
+    _ = PHPhotoLibrary.shared()
     
     PHPhotoLibrary.requestAuthorization { status in
         DispatchQueue.main.async {

@@ -103,7 +103,7 @@ struct CategoryCell: View {
 struct CategoryChooserView: View {
     
     @EnvironmentObject var subscriptionStore: SubscriptionStore
-    @Environment(\.presentationMode) var presentationMode
+    @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) var colorScheme
     
     @ObservedObject var viewModel: DeclarationViewModel
@@ -145,7 +145,7 @@ struct CategoryChooserView: View {
                 )
                 .onReceive(NotificationCenter.default.publisher(for: UIApplication.willResignActiveNotification)) { _ in
                     self.presentPremiumView = false
-                    self.presentationMode.wrappedValue.dismiss()
+                    dismiss()
                 }
             }
             .navigationViewStyle(.stack)
@@ -175,7 +175,7 @@ struct CategoryChooserView: View {
                                 viewModel.choose(category) { success in
                                     if success {
                                         Analytics.logEvent(Event.categoryChooserTapped, parameters: ["category": category.rawValue])
-                                        self.presentationMode.wrappedValue.dismiss()
+                                        dismiss()
                                     }
                                 }
                             }
@@ -203,7 +203,7 @@ struct CategoryChooserView: View {
                                 viewModel.choose(category) { success in
                                     if success {
                                         Analytics.logEvent(Event.categoryChooserTapped, parameters: ["category": category.rawValue])
-                                        self.presentationMode.wrappedValue.dismiss()
+                                        dismiss()
                                     }
                                 }
                             }
@@ -233,7 +233,7 @@ struct CategoryChooserView: View {
                                     if success {
                                         Analytics.logEvent(Event.categoryChooserTapped, parameters: ["declaration_category": category.rawValue as NSString])
                                         Analytics.logEvent(category.rawValue, parameters: nil)
-                                        self.presentationMode.wrappedValue.dismiss()
+                                        dismiss()
                                     }
                                 }
                             }

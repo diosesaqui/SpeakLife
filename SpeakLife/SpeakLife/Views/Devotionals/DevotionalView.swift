@@ -11,7 +11,7 @@ import FirebaseAnalytics
 struct DevotionalView: View {
     
     @EnvironmentObject var subscriptionStore: SubscriptionStore
-    @Environment(\.presentationMode) var presentationMode
+    @Environment(\.dismiss) private var dismiss
     @StateObject var viewModel: DevotionalViewModel
     @EnvironmentObject var declarationViewModel: DeclarationViewModel
     @EnvironmentObject var appState: AppState
@@ -26,7 +26,7 @@ struct DevotionalView: View {
     var body: some View {
         contentView
             .onReceive(NotificationCenter.default.publisher(for: UIApplication.willResignActiveNotification)) { _ in
-                self.presentationMode.wrappedValue.dismiss()
+                dismiss()
             }
             .onAppear {
                 // Track verses/devotionals read for badge system

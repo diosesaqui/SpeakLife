@@ -30,7 +30,8 @@ struct PodcastView: View {
     var body: some View {
         NavigationView {
             WebView(urlString: "https://podcasts.apple.com/us/podcast/joel-osteen-podcast/id137254859", allowedHosts: ["https://podcasts.apple.com/us/podcast/joel-osteen-podcast"])
-                .navigationBarTitle("Listen", displayMode: .inline)
+                .navigationTitle("Listen")
+                .navigationBarTitleDisplayMode(.inline)
         }
     }
 }

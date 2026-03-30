@@ -22,7 +22,7 @@ struct DeclarationView: View {
     @EnvironmentObject var devotionalViewModel: DevotionalViewModel
     @EnvironmentObject var appState: AppState
     @EnvironmentObject var streakViewModel: EnhancedStreakViewModel
-    @Environment(\.presentationMode) var presentationMode
+    @Environment(\.dismiss) private var dismiss
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
     private var isIPad: Bool { horizontalSizeClass == .regular }

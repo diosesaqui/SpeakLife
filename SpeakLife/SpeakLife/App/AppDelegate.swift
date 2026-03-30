@@ -179,7 +179,8 @@ final class AppDelegate: NSObject, MessagingDelegate {
     private func registerBGTask() {
         
         BGTaskScheduler.shared.register(forTaskWithIdentifier: "com.speaklife.updateNotificationContent", using: nil) { task in
-            self.updateNotificationContent(task: task as! BGAppRefreshTask)
+            guard let refreshTask = task as? BGAppRefreshTask else { return }
+            self.updateNotificationContent(task: refreshTask)
         }
     }
     

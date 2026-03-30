@@ -12,7 +12,7 @@ struct PersonalizedFeedSection: View {
     @StateObject private var categorizationService = ContentCategorizationService.shared
     @EnvironmentObject var declarationStore: DeclarationViewModel
     @EnvironmentObject var subscriptionStore: SubscriptionStore
-    @Environment(\.presentationMode) var presentationMode
+    @Environment(\.dismiss) private var dismiss
     
     @State private var personalizedCategories: [PersonalizedCategory] = []
     @State private var todayRecommendations: [Declaration] = []
@@ -224,7 +224,7 @@ struct PersonalCategoryCard: View {
 struct TodayRecommendationsSection: View {
     let recommendations: [Declaration]
     @EnvironmentObject var declarationStore: DeclarationViewModel
-    @Environment(\.presentationMode) var presentationMode
+    @Environment(\.dismiss) private var dismiss
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -283,8 +283,8 @@ struct TodayRecommendationsSection: View {
                     
                     // Try different dismissal methods
                     
-                    // Method 1: presentationMode
-                    self.presentationMode.wrappedValue.dismiss()
+                    // Method 1: dismiss
+                    self.dismiss()
                     
                     // Method 2: Try to dismiss via notification (for different presentation styles)
                     NotificationCenter.default.post(name: NSNotification.Name("DismissCategoryChooser"), object: nil)

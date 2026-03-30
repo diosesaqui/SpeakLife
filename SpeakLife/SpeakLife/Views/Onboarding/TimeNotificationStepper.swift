@@ -51,7 +51,7 @@ struct StepperNotificationCountView: View {
         }
     
     
-        .accentColor(Constants.DALightBlue)
+        .tint(Constants.DALightBlue)
                 .padding()
                 .overlay(RoundedRectangle(cornerRadius: 20)
                     .stroke(Constants.DAMidBlue, lineWidth: 1))
@@ -105,7 +105,7 @@ struct TimeNotificationCountView<Content: View> : View {
             valueIndex(value)
         }
         
-        .accentColor(Constants.DALightBlue)
+        .tint(Constants.DALightBlue)
         .padding()
         .overlay(RoundedRectangle(cornerRadius: 20)
         .stroke(Constants.DAMidBlue, lineWidth: 1))

@@ -173,7 +173,7 @@ struct AudioFavoritesView: View {
     @StateObject private var favoritesManager = AudioFavoritesManager()
     @EnvironmentObject var subscriptionStore: SubscriptionStore
     @Environment(\.colorScheme) var colorScheme
-    @Environment(\.presentationMode) var presentationMode
+    @Environment(\.dismiss) private var dismiss
     
     // Audio player integration
     @StateObject private var audioPlayerViewModel = AudioPlayerViewModel()
@@ -344,7 +344,7 @@ struct AudioFavoritesView: View {
             
             if searchText.isEmpty {
                 Button("Browse Audio") {
-                    presentationMode.wrappedValue.dismiss()
+                    dismiss()
                 }
                 .font(.headline)
                 .foregroundColor(.white)

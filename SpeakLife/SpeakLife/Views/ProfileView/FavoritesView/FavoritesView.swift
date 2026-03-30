@@ -198,7 +198,7 @@ struct FavoritesView: View {
     var body: some View {
         mainContent
             .foregroundColor(foregroundColor)
-            .navigationBarTitle(Text(LocalizedStringKey("Favorites")))
+            .navigationTitle(LocalizedStringKey("Favorites"))
             .onAppear(perform: trackScreenView)
     }
     
