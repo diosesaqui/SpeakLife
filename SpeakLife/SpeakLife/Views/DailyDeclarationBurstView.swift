@@ -61,7 +61,10 @@ struct DailyDeclarationBurstView: View {
                 } else if !showCompletionView {
                     // Power-release effect: active while declaration is fully visible
                     // and the user is actively speaking it (not mid-transition)
-                    SpeakingPowerEffect(isActive: declarationOpacity > 0.5 && !isTransitioning)
+                    SpeakingPowerEffect(
+                        isActive: declarationOpacity > 0.5 && !isTransitioning,
+                        message: "God's power flows when you speak"
+                    )
 
                     burstContentView(geometry: geometry)
                 } else {
