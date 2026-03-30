@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		01ED29F757107A93D56507E0 /* WidgetIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59BFF68BFA515EAC0AC88C85 /* WidgetIntents.swift */; };
+		0E1A8C97F61B9FB156F0F50F /* HowToUseSpeakLifeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74DAA35385DD02F8B0DCADE5 /* HowToUseSpeakLifeView.swift */; };
 		20F4D11E6F9CB2FA07540EE7 /* TrialExperienceService.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC73B2698B17B267C7A6F437 /* TrialExperienceService.swift */; };
 		2F740F6929D4017400E89E7F /* APIClientTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F740F6829D4017400E89E7F /* APIClientTests.swift */; };
 		3D80B3F476D5A3B34421898E /* PrayerWallPost.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0214EB35A67E7EF76115C40 /* PrayerWallPost.swift */; };
@@ -227,7 +228,6 @@
 		45F3E7582EAAAD38002B1F4E /* AffirmationsTutorial.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45F3E7552EAAAD38002B1F4E /* AffirmationsTutorial.swift */; };
 		45F3E75B2EAAAD41002B1F4E /* CreateYourOwnTutorial.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45F3E7592EAAAD41002B1F4E /* CreateYourOwnTutorial.swift */; };
 		45F3E75E2EAAB36B002B1F4E /* DevotionalsTutorial.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45F3E75D2EAAB36B002B1F4E /* DevotionalsTutorial.swift */; };
-		0E1A8C97F61B9FB156F0F50F /* HowToUseSpeakLifeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74DAA35385DD02F8B0DCADE5 /* HowToUseSpeakLifeView.swift */; };
 		45F3E7602EB426CA002B1F4E /* CombinedPersonalizationScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45F3E75F2EB426CA002B1F4E /* CombinedPersonalizationScene.swift */; };
 		45F3E7632EB43B8A002B1F4E /* AnimatedDeclarationText.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45F3E7612EB43B8A002B1F4E /* AnimatedDeclarationText.swift */; };
 		45F3E7642EB43B8A002B1F4E /* DeclarationAnimationSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45F3E7622EB43B8A002B1F4E /* DeclarationAnimationSettings.swift */; };
@@ -593,7 +593,6 @@
 		45F3E7562EAAAD38002B1F4E /* AudioDevotionalsTutorial.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioDevotionalsTutorial.swift; sourceTree = "<group>"; };
 		45F3E7592EAAAD41002B1F4E /* CreateYourOwnTutorial.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateYourOwnTutorial.swift; sourceTree = "<group>"; };
 		45F3E75D2EAAB36B002B1F4E /* DevotionalsTutorial.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DevotionalsTutorial.swift; sourceTree = "<group>"; };
-		74DAA35385DD02F8B0DCADE5 /* HowToUseSpeakLifeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HowToUseSpeakLifeView.swift; sourceTree = "<group>"; };
 		45F3E75F2EB426CA002B1F4E /* CombinedPersonalizationScene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CombinedPersonalizationScene.swift; sourceTree = "<group>"; };
 		45F3E7612EB43B8A002B1F4E /* AnimatedDeclarationText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnimatedDeclarationText.swift; sourceTree = "<group>"; };
 		45F3E7622EB43B8A002B1F4E /* DeclarationAnimationSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeclarationAnimationSettings.swift; sourceTree = "<group>"; };
@@ -609,6 +608,7 @@
 		66D0E43E7B9E3396848559EA /* TrialEndingBanner.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TrialEndingBanner.swift; sourceTree = "<group>"; };
 		6BA7EE898DF248C4EB6EDEB2 /* PrayerWallViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrayerWallViewModel.swift; sourceTree = "<group>"; };
 		6D920701A13775F49180D845 /* WldehBibleAPIService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WldehBibleAPIService.swift; sourceTree = "<group>"; };
+		74DAA35385DD02F8B0DCADE5 /* HowToUseSpeakLifeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HowToUseSpeakLifeView.swift; sourceTree = "<group>"; };
 		750128553E56408E9225277C /* AudioProgressStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioProgressStore.swift; sourceTree = "<group>"; };
 		7A00721728F8ED4A00965AF7 /* declarations.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = declarations.json; sourceTree = "<group>"; };
 		7A278F97288915DE0084BB57 /* SpeakLife.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SpeakLife.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -2400,7 +2400,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = SpeakLife/SpeakLife.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 980;
+				CURRENT_PROJECT_VERSION = 981;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_ASSET_PATHS = "\"SpeakLife/Preview Content\"";
 				DEVELOPMENT_TEAM = G7398P2856;
@@ -2421,7 +2421,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 3.1.81;
+				MARKETING_VERSION = 3.1.82;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Franchiz.SpeakLife;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -2442,7 +2442,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = SpeakLife/SpeakLife.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 980;
+				CURRENT_PROJECT_VERSION = 981;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_ASSET_PATHS = "\"SpeakLife/Preview Content\"";
 				DEVELOPMENT_TEAM = G7398P2856;
@@ -2463,7 +2463,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 3.1.81;
+				MARKETING_VERSION = 3.1.82;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Franchiz.SpeakLife;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
