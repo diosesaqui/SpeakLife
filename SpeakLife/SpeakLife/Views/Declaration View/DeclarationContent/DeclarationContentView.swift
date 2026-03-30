@@ -148,11 +148,7 @@ struct DeclarationContentView: View {
                         
                         intentVstack(declaration: declaration, geometry)
                             .rotationEffect(Angle(degrees: -degrees))
-
-                        // Power-release illustration — shown while TTS is speaking
-                        SpeakingPowerEffect(isActive: coordinator.isSpeaking)
-                            .rotationEffect(Angle(degrees: -degrees))
-
+                        
                         if isFavorite {
                             VStack {
                                 withAnimation(.spring(response: 0.34, dampingFraction: 0.8, blendDuration: 0.5)) {

@@ -59,6 +59,10 @@ struct DailyDeclarationBurstView: View {
                 if showIntroScreen {
                     introScreenView(geometry: geometry)
                 } else if !showCompletionView {
+                    // Power-release effect: active while declaration is fully visible
+                    // and the user is actively speaking it (not mid-transition)
+                    SpeakingPowerEffect(isActive: declarationOpacity > 0.5 && !isTransitioning)
+
                     burstContentView(geometry: geometry)
                 } else {
                     completionView(geometry: geometry)
