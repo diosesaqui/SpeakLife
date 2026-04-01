@@ -111,7 +111,7 @@ struct CancelInterventionView: View {
                         ForEach(CancelReason.allCases, id: \.self) { reason in
                             Button(action: {
                                 selectedReason = reason
-                                Analytics.logEvent("cancel_reason_selected", parameters: ["reason": reason.rawValue])
+                                Analytics.logEvent("cancel_reason_selected", parameters: ["reason": reason.rawValue as NSString])
                                 withAnimation { step = .retention }
                             }) {
                                 HStack {
