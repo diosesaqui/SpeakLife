@@ -18,10 +18,10 @@ struct EmotionalHookScreen: View {
     @State private var subVisible = false
     @State private var buttonVisible = false
 
-    // Pain confessions — 2 most powerful, most universal
+    // Pain confessions — identity angle (Option B)
     private let painPoints = [
-        "You know God is real — but fear still creeps in",
-        "You've read the Word — but it hasn't become first response yet"
+        "You know you're loved — but you don't always feel it",
+        "Doubt hits harder than your faith some days"
     ]
 
     var body: some View {
@@ -30,16 +30,16 @@ struct EmotionalHookScreen: View {
             VStack(spacing: 0) {
                 Spacer()
                 VStack(spacing: 28) {
-                    // Headline — honors their faith, names the gap
+                    // Headline — names the lie, points to truth
                     VStack(spacing: 10) {
-                        Text("You know God is real.")
+                        Text("The voice in your head\nis lying to you.")
                             .font(.system(size: 32, weight: .bold, design: .rounded))
                             .multilineTextAlignment(.center)
                             .foregroundColor(.white)
                             .opacity(headlineVisible ? 1 : 0)
                             .offset(y: headlineVisible ? 0 : 20)
 
-                        Text("Now let His promises make you unshakable.")
+                        Text("It's time to drown it out with what God actually says about you.")
                             .font(.system(size: 22, weight: .medium, design: .rounded))
                             .multilineTextAlignment(.center)
                             .foregroundColor(.white.opacity(0.85))
@@ -72,13 +72,13 @@ struct EmotionalHookScreen: View {
                     }
                     .padding(.horizontal, 36)
 
-                    // Bridge line — weapon frame
+                    // Bridge line — identity frame
                     VStack(spacing: 6) {
-                        Text("Spoken truth is your greatest weapon.")
+                        Text("Speak what God says until you believe it.")
                             .font(.system(size: 17, weight: .bold, design: .rounded))
                             .foregroundColor(.white)
                             .multilineTextAlignment(.center)
-                        Text("It's exactly how Jesus defeated every attack.")
+                        Text("That's how identity gets rebuilt from the inside out.")
                             .font(.system(size: 15, weight: .medium, design: .rounded))
                             .foregroundColor(.white.opacity(0.7))
                             .multilineTextAlignment(.center)
@@ -93,7 +93,7 @@ struct EmotionalHookScreen: View {
                     UIImpactFeedbackGenerator(style: .light).impactOccurred()
                     onContinue()
                 }) {
-                    Text("Show me how")
+                    Text("Speak truth over me")
                         .font(.system(size: 17, weight: .semibold, design: .rounded))
                         .foregroundColor(.black)
                         .frame(maxWidth: .infinity)
@@ -337,7 +337,7 @@ struct CategorySelectScreen: View {
 
                     // Header
                     VStack(spacing: 6) {
-                        Text("What are you believing\nGod for?")
+                        Text("Where do you need\nGod most?")
                             .font(.system(size: size.height < 700 ? 26 : 30, weight: .bold, design: .rounded))
                             .multilineTextAlignment(.center)
                             .foregroundColor(.white)
@@ -1594,9 +1594,8 @@ struct LiveDeclarationPreviewScreen: View {
     ]
 
     private var selected: (text: String, scripture: String, reference: String) {
-        // Rotate based on day of year so it feels fresh
-        let dayIndex = Calendar.current.ordinality(of: .day, in: .year, for: Date()) ?? 0
-        return declarations[dayIndex % declarations.count]
+        // Fixed to identity declaration — mirrors Screen 1's identity hook for narrative coherence
+        return declarations[1]
     }
 
     var body: some View {
@@ -1693,7 +1692,7 @@ struct LiveDeclarationPreviewScreen: View {
                         UIImpactFeedbackGenerator(style: .medium).impactOccurred()
                         onContinue()
                     }) {
-                        Text("I release Faith by Speaking 🗣️")
+                        Text("I declare this over my life")
                             .font(.system(size: 17, weight: .semibold, design: .rounded))
                             .foregroundColor(.black)
                             .frame(maxWidth: .infinity)
@@ -1841,7 +1840,7 @@ struct AudioFeatureScreen: View {
                         UIImpactFeedbackGenerator(style: .light).impactOccurred()
                         onContinue()
                     }) {
-                        Text("Faith comes by Hearing ✅")
+                        Text("I want to hear His Word daily")
                             .font(.system(size: 17, weight: .semibold, design: .rounded))
                             .foregroundColor(.black)
                             .frame(maxWidth: .infinity)
@@ -2146,18 +2145,13 @@ struct WarriorRoomFeatureScreen: View {
                         UIImpactFeedbackGenerator(style: .medium).impactOccurred()
                         onContinue()
                     }) {
-                        Text("Stand in agreement")
+                        Text("I want to stand with others")
                             .font(.system(size: 17, weight: .semibold, design: .rounded))
                             .foregroundColor(.black)
                             .frame(maxWidth: .infinity)
                             .frame(height: 56)
                             .background(Capsule().fill(Color.white))
                     }
-
-                    Text("7 days free \u{2022}\u{2022} Cancel anytime")
-                        .font(.system(size: 12))
-                        .foregroundColor(.white.opacity(0.4))
-                        .multilineTextAlignment(.center)
                 }
                 .padding(.horizontal, 32)
                 .padding(.bottom, 50)
@@ -2293,7 +2287,7 @@ struct DailyCommitmentScreen: View {
                         UIImpactFeedbackGenerator(style: .medium).impactOccurred()
                         onContinue()
                     }) {
-                        Text("Begin My 7-Day Faith Reset")
+                        Text("Start My Daily Practice")
                             .font(.system(size: 17, weight: .semibold, design: .rounded))
                             .foregroundColor(.black)
                             .frame(maxWidth: .infinity)
@@ -2301,7 +2295,7 @@ struct DailyCommitmentScreen: View {
                             .background(Capsule().fill(Color.white))
                     }
 
-                    Text("Daily practice builds an unshakable mind")
+                    Text("5 minutes a day. Real change.")
                         .font(.system(size: 12))
                         .foregroundColor(.white.opacity(0.4))
                         .multilineTextAlignment(.center)
