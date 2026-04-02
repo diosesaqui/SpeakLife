@@ -337,7 +337,7 @@ struct CategorySelectScreen: View {
 
                     // Header
                     VStack(spacing: 6) {
-                        Text("What are you believing\nGod for?")
+                        Text("Where do you need\nGod most?")
                             .font(.system(size: size.height < 700 ? 26 : 30, weight: .bold, design: .rounded))
                             .multilineTextAlignment(.center)
                             .foregroundColor(.white)
@@ -1594,9 +1594,8 @@ struct LiveDeclarationPreviewScreen: View {
     ]
 
     private var selected: (text: String, scripture: String, reference: String) {
-        // Rotate based on day of year so it feels fresh
-        let dayIndex = Calendar.current.ordinality(of: .day, in: .year, for: Date()) ?? 0
-        return declarations[dayIndex % declarations.count]
+        // Fixed to identity declaration — mirrors Screen 1's identity hook for narrative coherence
+        return declarations[1]
     }
 
     var body: some View {
@@ -1693,7 +1692,7 @@ struct LiveDeclarationPreviewScreen: View {
                         UIImpactFeedbackGenerator(style: .medium).impactOccurred()
                         onContinue()
                     }) {
-                        Text("I release Faith by Speaking 🗣️")
+                        Text("I declare this over my life")
                             .font(.system(size: 17, weight: .semibold, design: .rounded))
                             .foregroundColor(.black)
                             .frame(maxWidth: .infinity)
@@ -1841,7 +1840,7 @@ struct AudioFeatureScreen: View {
                         UIImpactFeedbackGenerator(style: .light).impactOccurred()
                         onContinue()
                     }) {
-                        Text("Faith comes by Hearing ✅")
+                        Text("I want to hear His Word daily")
                             .font(.system(size: 17, weight: .semibold, design: .rounded))
                             .foregroundColor(.black)
                             .frame(maxWidth: .infinity)
@@ -2146,18 +2145,13 @@ struct WarriorRoomFeatureScreen: View {
                         UIImpactFeedbackGenerator(style: .medium).impactOccurred()
                         onContinue()
                     }) {
-                        Text("Stand in agreement")
+                        Text("I want to stand with others")
                             .font(.system(size: 17, weight: .semibold, design: .rounded))
                             .foregroundColor(.black)
                             .frame(maxWidth: .infinity)
                             .frame(height: 56)
                             .background(Capsule().fill(Color.white))
                     }
-
-                    Text("7 days free \u{2022}\u{2022} Cancel anytime")
-                        .font(.system(size: 12))
-                        .foregroundColor(.white.opacity(0.4))
-                        .multilineTextAlignment(.center)
                 }
                 .padding(.horizontal, 32)
                 .padding(.bottom, 50)
@@ -2293,7 +2287,7 @@ struct DailyCommitmentScreen: View {
                         UIImpactFeedbackGenerator(style: .medium).impactOccurred()
                         onContinue()
                     }) {
-                        Text("Begin My 7-Day Faith Reset")
+                        Text("Start My Daily Practice")
                             .font(.system(size: 17, weight: .semibold, design: .rounded))
                             .foregroundColor(.black)
                             .frame(maxWidth: .infinity)
@@ -2301,7 +2295,7 @@ struct DailyCommitmentScreen: View {
                             .background(Capsule().fill(Color.white))
                     }
 
-                    Text("Daily practice builds an unshakable mind")
+                    Text("5 minutes a day. Real change.")
                         .font(.system(size: 12))
                         .foregroundColor(.white.opacity(0.4))
                         .multilineTextAlignment(.center)
