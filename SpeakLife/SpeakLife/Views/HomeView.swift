@@ -269,10 +269,10 @@ struct HomeView: View {
                 .ignoresSafeArea()
             
             // Trial ending banner (Day 3)
-            VStack {
-                TrialEndingBanner()
-                Spacer()
-            }
+//            VStack {
+//                TrialEndingBanner()
+//                Spacer()
+//            }
 
             // Global streak celebration overlay
             if showStreakCelebration {
