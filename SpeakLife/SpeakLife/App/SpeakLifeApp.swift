@@ -9,6 +9,7 @@ import SwiftUI
 import Combine
 import TipKit
 import AVFoundation
+import FirebaseAnalytics
 
 // MARK: - Notification Handling Documentation
 /*
@@ -155,8 +156,13 @@ struct SpeakLifeApp: App {
                         // after the user already completed or dismissed the burst)
                         if !hasCheckedBurstThisSession {
                             hasCheckedBurstThisSession = true
-                            if appState.isOnboarded && !StructuredDayLaunchTracker.hasShownToday() {
+                            if appState.isOnboarded
+                                && subscriptionStore.structuredDayAutoLaunchEnabled
+                                && !StructuredDayLaunchTracker.hasShownToday() {
                                 StructuredDayLaunchTracker.markShownToday()
+                                Analytics.logEvent("structured_day_auto_launched", parameters: [
+                                    "current_streak": enhancedStreakViewModel.streakStats.currentStreak as NSNumber
+                                ])
                                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                                     showDailyStructuredDayOnLaunch = true
                                 }

@@ -1,0 +1,420 @@
+import Foundation
+import FirebaseAnalytics
+import TikTokBusinessSDK
+import FacebookCore
+
+final class AnalyticsService {
+    
+    static let shared = AnalyticsService()
+    
+    private var sessionStartTime: Date?
+    private var currentScreen: String?
+    private var userProperties: [String: Any] = [:]
+    
+    private init() {
+        startSession()
+    }
+    
+    private func startSession() {
+        sessionStartTime = Date()
+        Analytics.logEvent("session_started", parameters: [
+            "timestamp": Date().iso8601String,
+            "platform": "ios"
+        ])
+    }
+    
+    func endSession() {
+        guard let startTime = sessionStartTime else { return }
+        let duration = Date().timeIntervalSince(startTime)
+        
+        Analytics.logEvent("session_ended", parameters: [
+            "session_duration": duration,
+            "timestamp": Date().iso8601String
+        ])
+    }
+    
+    func trackScreenView(_ screenName: String, metadata: [String: Any] = [:]) {
+        currentScreen = screenName
+        
+        var params: [String: Any] = [
+            "screen_name": screenName,
+            "timestamp": Date().iso8601String,
+            "previous_screen": currentScreen ?? "none"
+        ]
+        
+        params.merge(metadata) { (_, new) in new }
+        
+        Analytics.logEvent("screen_viewed", parameters: params)
+        
+        Event.trackTikTokContentView(contentType: "screen", contentId: screenName)
+    }
+    
+    func trackUserAction(_ action: String, category: String? = nil, metadata: [String: Any] = [:]) {
+        var params: [String: Any] = [
+            "action": action,
+            "screen": currentScreen ?? "unknown",
+            "timestamp": Date().iso8601String
+        ]
+        
+        if let category = category {
+            params["category"] = category
+        }
+        
+        params.merge(metadata) { (_, new) in new }
+        
+        Analytics.logEvent("user_action", parameters: params)
+    }
+    
+    func trackContentInteraction(
+        contentType: String,
+        contentId: String,
+        action: String,
+        metadata: [String: Any] = [:]
+    ) {
+        var params: [String: Any] = [
+            "content_type": contentType,
+            "content_id": contentId,
+            "action": action,
+            "screen": currentScreen ?? "unknown",
+            "timestamp": Date().iso8601String
+        ]
+        
+        params.merge(metadata) { (_, new) in new }
+        
+        Analytics.logEvent("content_interaction", parameters: params)
+        
+        Event.trackTikTokContentView(contentType: contentType, contentId: contentId)
+    }
+    
+    func trackAudioPlayback(
+        audioId: String,
+        audioTitle: String,
+        action: AudioPlaybackAction,
+        metadata: [String: Any] = [:]
+    ) {
+        var params: [String: Any] = [
+            "audio_id": audioId,
+            "audio_title": audioTitle,
+            "action": action.rawValue,
+            "screen": currentScreen ?? "unknown",
+            "timestamp": Date().iso8601String
+        ]
+        
+        params.merge(metadata) { (_, new) in new }
+        
+        Analytics.logEvent("audio_playback", parameters: params)
+        
+        ListenerMetricsService.shared.trackListen(contentId: audioId, contentType: .audio)
+    }
+    
+    func trackNavigation(from: String, to: String, method: NavigationMethod) {
+        Analytics.logEvent("navigation", parameters: [
+            "from_screen": from,
+            "to_screen": to,
+            "method": method.rawValue,
+            "timestamp": Date().iso8601String
+        ])
+    }
+    
+    func trackConversion(
+        event: String,
+        value: Double? = nil,
+        currency: String = "USD",
+        metadata: [String: Any] = [:]
+    ) {
+        var params: [String: Any] = [
+            "conversion_event": event,
+            "screen": currentScreen ?? "unknown",
+            "timestamp": Date().iso8601String
+        ]
+        
+        if let value = value {
+            params["value"] = value
+            params["currency"] = currency
+        }
+        
+        params.merge(metadata) { (_, new) in new }
+        
+        Analytics.logEvent("conversion", parameters: params)
+        
+        if event.contains("purchase") || event.contains("subscription") || event.contains("trial") {
+            if let value = value {
+                Event.trackTikTokPremiumPurchase(value: value, currency: currency)
+            }
+        }
+    }
+    
+    func trackShare(
+        contentType: String,
+        contentId: String,
+        shareMethod: String,
+        metadata: [String: Any] = [:]
+    ) {
+        var params: [String: Any] = [
+            "content_type": contentType,
+            "content_id": contentId,
+            "share_method": shareMethod,
+            "screen": currentScreen ?? "unknown",
+            "timestamp": Date().iso8601String
+        ]
+        
+        params.merge(metadata) { (_, new) in new }
+        
+        Analytics.logEvent("content_shared", parameters: params)
+        
+        Event.trackTikTokShare(contentType: contentType)
+    }
+    
+    func trackFeatureUsage(_ featureName: String, metadata: [String: Any] = [:]) {
+        var params: [String: Any] = [
+            "feature_name": featureName,
+            "screen": currentScreen ?? "unknown",
+            "timestamp": Date().iso8601String
+        ]
+        
+        params.merge(metadata) { (_, new) in new }
+        
+        Analytics.logEvent("feature_used", parameters: params)
+        
+        Event.trackTikTokEngagement(action: "feature_usage", category: featureName)
+    }
+    
+    func trackError(_ errorType: String, message: String, metadata: [String: Any] = [:]) {
+        var params: [String: Any] = [
+            "error_type": errorType,
+            "error_message": message,
+            "screen": currentScreen ?? "unknown",
+            "timestamp": Date().iso8601String
+        ]
+        
+        params.merge(metadata) { (_, new) in new }
+        
+        Analytics.logEvent("error_occurred", parameters: params)
+    }
+    
+    func setUserProperty(_ key: String, value: Any) {
+        userProperties[key] = value
+        
+        if let stringValue = value as? String {
+            Analytics.setUserProperty(stringValue, forName: key)
+        }
+    }
+    
+    func trackOnboarding(step: String, action: OnboardingAction, metadata: [String: Any] = [:]) {
+        var params: [String: Any] = [
+            "onboarding_step": step,
+            "action": action.rawValue,
+            "timestamp": Date().iso8601String
+        ]
+        
+        params.merge(metadata) { (_, new) in new }
+        
+        Analytics.logEvent("onboarding_event", parameters: params)
+    }
+    
+    func trackSearch(query: String, resultCount: Int, category: String? = nil) {
+        var params: [String: Any] = [
+            "search_query": query.lowercased(),
+            "result_count": resultCount,
+            "screen": currentScreen ?? "unknown",
+            "timestamp": Date().iso8601String
+        ]
+        
+        if let category = category {
+            params["category"] = category
+        }
+        
+        Analytics.logEvent("search_performed", parameters: params)
+    }
+    
+    func trackEngagementMetric(
+        metricType: EngagementMetric,
+        value: Double,
+        metadata: [String: Any] = [:]
+    ) {
+        var params: [String: Any] = [
+            "metric_type": metricType.rawValue,
+            "metric_value": value,
+            "screen": currentScreen ?? "unknown",
+            "timestamp": Date().iso8601String
+        ]
+        
+        params.merge(metadata) { (_, new) in new }
+        
+        Analytics.logEvent("engagement_metric", parameters: params)
+    }
+    
+    // MARK: - Subscription Events
+    
+    func trackTrialStarted(productId: String, price: Double? = nil, metadata: [String: Any] = [:]) {
+        var params: [String: Any] = [
+            "product_id": productId,
+            "screen": currentScreen ?? "unknown",
+            "timestamp": Date().iso8601String
+        ]
+        
+        if let price = price {
+            params["value"] = price
+            params["currency"] = "USD"
+        }
+        
+        params.merge(metadata) { (_, new) in new }
+        
+        // Firebase
+        Analytics.logEvent("trial_started", parameters: params)
+
+        // Meta — StartTrial is the primary optimization event for FB ad campaigns
+        AppEvents.shared.logEvent(
+            AppEvents.Name("StartTrial"),
+            valueToSum: 0.00,
+            parameters: [
+                AppEvents.ParameterName("product_id"): productId as NSString,
+                AppEvents.ParameterName("currency"): "USD" as NSString
+            ]
+        )
+
+        // TikTok
+        Event.trackTikTokEngagement(action: "trial_started", category: "subscription")
+    }
+    
+    func trackTrialActivated(productId: String, metadata: [String: Any] = [:]) {
+        var params: [String: Any] = [
+            "product_id": productId,
+            "screen": currentScreen ?? "unknown",
+            "timestamp": Date().iso8601String
+        ]
+        
+        params.merge(metadata) { (_, new) in new }
+        
+        // Firebase
+        Analytics.logEvent("trial_activated", parameters: params)
+
+        // Meta — trial converted to paid subscription
+        if let price = metadata["price"] as? Double {
+            AppEvents.shared.logEvent(
+                AppEvents.Name("Subscribe"),
+                valueToSum: price,
+                parameters: [
+                    AppEvents.ParameterName("product_id"): productId as NSString,
+                    AppEvents.ParameterName("currency"): "USD" as NSString,
+                    AppEvents.ParameterName("conversion_type"): "trial_to_paid" as NSString
+                ]
+            )
+            AppEvents.shared.logPurchase(amount: price, currency: "USD")
+        }
+
+        // TikTok
+        Event.trackTikTokEngagement(action: "trial_activated", category: "subscription")
+    }
+    
+    func trackPaywallImpression(paywallId: String, metadata: [String: Any] = [:]) {
+        var params: [String: Any] = [
+            "paywall_id": paywallId,
+            "screen": currentScreen ?? "unknown",
+            "timestamp": Date().iso8601String
+        ]
+        
+        params.merge(metadata) { (_, new) in new }
+        
+        Analytics.logEvent("paywall_impression", parameters: params)
+        Event.trackTikTokContentView(contentType: "paywall", contentId: paywallId)
+    }
+    
+    func trackPaywallConversion(productId: String, paywallId: String, price: Double? = nil, metadata: [String: Any] = [:]) {
+        var params: [String: Any] = [
+            "product_id": productId,
+            "paywall_id": paywallId,
+            "screen": currentScreen ?? "unknown",
+            "timestamp": Date().iso8601String
+        ]
+        
+        if let price = price {
+            params["price"] = price
+            params["currency"] = "USD"
+        }
+        
+        params.merge(metadata) { (_, new) in new }
+        
+        Analytics.logEvent("paywall_conversion", parameters: params)
+        
+        if let price = price {
+            Event.trackTikTokPremiumPurchase(value: price, currency: "USD")
+        }
+    }
+    
+    func trackSubscriptionRenewal(productId: String, price: Double? = nil, metadata: [String: Any] = [:]) {
+        var params: [String: Any] = [
+            "product_id": productId,
+            "screen": currentScreen ?? "unknown",
+            "timestamp": Date().iso8601String
+        ]
+        
+        if let price = price {
+            params["price"] = price
+            params["currency"] = "USD"
+        }
+        
+        params.merge(metadata) { (_, new) in new }
+        
+        // Firebase
+        Analytics.logEvent("subscription_renewal", parameters: params)
+
+        // Meta — log renewals as purchases for LTV tracking
+        if let price = price {
+            AppEvents.shared.logPurchase(amount: price, currency: "USD")
+        }
+    }
+    
+    func trackSubscriptionCancelled(productId: String, metadata: [String: Any] = [:]) {
+        var params: [String: Any] = [
+            "product_id": productId,
+            "screen": currentScreen ?? "unknown",
+            "timestamp": Date().iso8601String
+        ]
+        
+        params.merge(metadata) { (_, new) in new }
+        
+        Analytics.logEvent("subscription_cancelled", parameters: params)
+    }
+}
+
+enum AudioPlaybackAction: String {
+    case started = "started"
+    case paused = "paused"
+    case resumed = "resumed"
+    case completed = "completed"
+    case skipped = "skipped"
+    case seeked = "seeked"
+    case progressMilestone = "progress_milestone"
+    case stopped = "stopped"
+}
+
+enum NavigationMethod: String {
+    case tab = "tab"
+    case button = "button"
+    case swipe = "swipe"
+    case link = "link"
+    case deeplink = "deeplink"
+    case notification = "notification"
+}
+
+enum OnboardingAction: String {
+    case started = "started"
+    case completed = "completed"
+    case skipped = "skipped"
+    case viewed = "viewed"
+}
+
+enum EngagementMetric: String {
+    case timeSpent = "time_spent"
+    case scrollDepth = "scroll_depth"
+    case completionRate = "completion_rate"
+    case interactionCount = "interaction_count"
+}
+
+private extension Date {
+    var iso8601String: String {
+        let formatter = ISO8601DateFormatter()
+        return formatter.string(from: self)
+    }
+}

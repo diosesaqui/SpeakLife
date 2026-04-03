@@ -73,6 +73,7 @@ final class SubscriptionStore: ObservableObject {
     
     // MARK: - AI Feature Flag
     @Published var enableAIFeatures = false
+    @Published var structuredDayAutoLaunchEnabled = true
     
     // MARK: - High Conversion Paywall Flag
     @Published var useHighConversionPaywall = false
@@ -216,6 +217,10 @@ final class SubscriptionStore: ObservableObject {
         
         // Sync to UserDefaults for TaskLibrary access
         UserDefaults.standard.set(enableAIFeatures, forKey: "enableAIFeatures")
+        
+        // Structured Day Auto-Launch Kill Switch (defaults true — Remote Config can disable)
+        let rcStructuredDay = remoteConfig["structuredDayAutoLaunchEnabled"]
+        structuredDayAutoLaunchEnabled = rcStructuredDay.source == .default ? true : rcStructuredDay.boolValue
         
         // Declarations file name from Remote Config — only upgrade, never downgrade
         let remoteDeclarationsFileName = remoteConfig["declarationsFileName"].stringValue
