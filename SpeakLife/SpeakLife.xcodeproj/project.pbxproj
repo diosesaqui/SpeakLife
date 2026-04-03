@@ -333,6 +333,12 @@
 		7AF46FC52A41326100A45C01 /* AbbasLoveView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AF46FC42A41326100A45C01 /* AbbasLoveView.swift */; };
 		80C39CCCF6868B4C448E5D18 /* TrialEndingBanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66D0E43E7B9E3396848559EA /* TrialEndingBanner.swift */; };
 		81FE0DDC33BC402685CA44EE /* BurstCompletionModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81FE0DDC33BC402685CA44ED /* BurstCompletionModel.swift */; };
+		4767FEF5B39B4131B0C10B16 /* DeclarationsCounterService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31669349CCFF430DAC4DE404 /* DeclarationsCounterService.swift */; };
+		F17DAF3EA60C4A00BADDD2A7 /* DeclarationsCounterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8D634DB031A45B984B7A0FE /* DeclarationsCounterView.swift */; };
+		10E4345123FF460BAA1780D8 /* FaithJourneyModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9E7E7C8B1C148BA9C559C67 /* FaithJourneyModel.swift */; };
+		796D51C8D3544B0E952D25A1 /* FaithJourneyViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FEA3DC4427A484DB81299A9 /* FaithJourneyViewModel.swift */; };
+		3D3C3079BCA14E31A2710069 /* FaithJourneyMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B75C0F603E13441B8CCDB0CD /* FaithJourneyMapView.swift */; };
+		5618683F3C6E414A8825E892 /* FaithJourneyCategoryPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 547F8BBB62B642A28F7FD510 /* FaithJourneyCategoryPickerView.swift */; };
 		8C81294FE8FD42174F375CFB /* LifecycleNotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA221D745BD49CF6BCFEBAA1 /* LifecycleNotificationService.swift */; };
 		8D9D24C8C66A40D5AF502D31 /* AudioProgressStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 750128553E56408E9225277C /* AudioProgressStore.swift */; };
 		648AA3ADC45C405CBFB82934 /* AudioRecommendationEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0B7425FCF684D05A10C4758 /* AudioRecommendationEngine.swift */; };
@@ -709,6 +715,12 @@
 		7AF46FC42A41326100A45C01 /* AbbasLoveView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AbbasLoveView.swift; sourceTree = "<group>"; };
 		81FE0DDC33BC402685CA44ED /* BurstCompletionModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BurstCompletionModel.swift; sourceTree = "<group>"; };
 		918D0ED751C243E98A66C8E3 /* SpiritualGrowthView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpiritualGrowthView.swift; sourceTree = "<group>"; };
+		31669349CCFF430DAC4DE404 /* DeclarationsCounterService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeclarationsCounterService.swift; sourceTree = "<group>"; };
+		E8D634DB031A45B984B7A0FE /* DeclarationsCounterView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeclarationsCounterView.swift; sourceTree = "<group>"; };
+		C9E7E7C8B1C148BA9C559C67 /* FaithJourneyModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FaithJourneyModel.swift; sourceTree = "<group>"; };
+		2FEA3DC4427A484DB81299A9 /* FaithJourneyViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FaithJourneyViewModel.swift; sourceTree = "<group>"; };
+		B75C0F603E13441B8CCDB0CD /* FaithJourneyMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FaithJourneyMapView.swift; sourceTree = "<group>"; };
+		547F8BBB62B642A28F7FD510 /* FaithJourneyCategoryPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FaithJourneyCategoryPickerView.swift; sourceTree = "<group>"; };
 		A1B2C3D4E5F6A7B82026AA00 /* SpeakingPowerEffect.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeakingPowerEffect.swift; sourceTree = "<group>"; };
 		AC33C8C421764DF3961EA018 /* OnboardingDailyBurstScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingDailyBurstScreen.swift; sourceTree = "<group>"; };
 		B0214EB35A67E7EF76115C40 /* PrayerWallPost.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrayerWallPost.swift; sourceTree = "<group>"; };
@@ -1339,8 +1351,29 @@
 				45B5A8082DD30B7D006DE6AA /* SpeakLifeQuiz */,
 				456885252B390FF4007B1EBB /* WarriorView.swift */,
 				456585F22D4F62EE002F2709 /* DevotionalSubscriptionView.swift */,
+				E3EC572D229A458B96B144FA /* Gamification */,
+				D0084E2B8CF84974B320771E /* FaithJourney */,
 			);
 			path = Views;
+			sourceTree = "<group>";
+		};
+		E3EC572D229A458B96B144FA /* Gamification */ = {
+			isa = PBXGroup;
+			children = (
+				E8D634DB031A45B984B7A0FE /* DeclarationsCounterView.swift */,
+			);
+			path = Gamification;
+			sourceTree = "<group>";
+		};
+		D0084E2B8CF84974B320771E /* FaithJourney */ = {
+			isa = PBXGroup;
+			children = (
+				C9E7E7C8B1C148BA9C559C67 /* FaithJourneyModel.swift */,
+				2FEA3DC4427A484DB81299A9 /* FaithJourneyViewModel.swift */,
+				B75C0F603E13441B8CCDB0CD /* FaithJourneyMapView.swift */,
+				547F8BBB62B642A28F7FD510 /* FaithJourneyCategoryPickerView.swift */,
+			);
+			path = FaithJourney;
 			sourceTree = "<group>";
 		};
 		7AA8706628DACB3F00134ADB /* Models */ = {
@@ -1383,8 +1416,17 @@
 				F9A3081A52984B6AB0EECD7B /* StructuredDayLaunchTracker.swift */,
 				7AF18C9B2A0D99E5005A6E31 /* TimeTrackerViewModel.swift */,
 				DC73B2698B17B267C7A6F437 /* TrialExperienceService.swift */,
+				2F7B02CF1A694A7FB200349E /* Gamification */,
 			);
 			path = Services;
+			sourceTree = "<group>";
+		};
+		2F7B02CF1A694A7FB200349E /* Gamification */ = {
+			isa = PBXGroup;
+			children = (
+				31669349CCFF430DAC4DE404 /* DeclarationsCounterService.swift */,
+			);
+			path = Gamification;
 			sourceTree = "<group>";
 		};
 		7AA8706828DACB6100134ADB /* Core */ = {
@@ -2142,6 +2184,12 @@
 				7AA870CD28DACCB700134ADB /* ProfileView.swift in Sources */,
 				918D0ED751C243E98A66C8E4 /* SpiritualGrowthView.swift in Sources */,
 				81FE0DDC33BC402685CA44EE /* BurstCompletionModel.swift in Sources */,
+				4767FEF5B39B4131B0C10B16 /* DeclarationsCounterService.swift in Sources */,
+				F17DAF3EA60C4A00BADDD2A7 /* DeclarationsCounterView.swift in Sources */,
+				10E4345123FF460BAA1780D8 /* FaithJourneyModel.swift in Sources */,
+				796D51C8D3544B0E952D25A1 /* FaithJourneyViewModel.swift in Sources */,
+				3D3C3079BCA14E31A2710069 /* FaithJourneyMapView.swift in Sources */,
+				5618683F3C6E414A8825E892 /* FaithJourneyCategoryPickerView.swift in Sources */,
 				7AA870DC28DACCB700134ADB /* TimeSlots.swift in Sources */,
 				7ABA50CB29E63178002699F1 /* PrayerServiceClient.swift in Sources */,
 				4590BF9E2BCA4F1A00CF4F54 /* FeatureView.swift in Sources */,

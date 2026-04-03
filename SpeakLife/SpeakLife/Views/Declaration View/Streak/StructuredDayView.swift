@@ -218,6 +218,10 @@ struct DayCelebrationView: View {
                     .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color.orange.opacity(0.25), lineWidth: 1)))
                 .opacity(opacity)
             }
+
+            // Declarations counter (today + lifetime)
+            DeclarationsInlineStat()
+                .opacity(opacity)
             Spacer()
             Button(action: onDismiss) {
                 Text("Done").font(.system(size: 17, weight: .semibold)).foregroundColor(.white)
