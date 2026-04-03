@@ -13,6 +13,8 @@ struct ModernDailyChecklistView: View {
     @EnvironmentObject var appState: AppState
     @EnvironmentObject var subscriptionStore: SubscriptionStore
     @EnvironmentObject var devotionalViewModel: DevotionalViewModel
+    @EnvironmentObject var audioDeclarationViewModel: AudioDeclarationViewModel
+    @EnvironmentObject var tabViewModel: TabViewModel
     @Environment(\.dismiss) private var dismiss
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     private var isIPad: Bool { horizontalSizeClass == .regular }
@@ -23,7 +25,47 @@ struct ModernDailyChecklistView: View {
     @State private var celebrationScale: CGFloat = 1.0
     @State private var showCelebration = false
     var onClose: (() -> Void)? = nil
-    
+
+    // MARK: - Task Navigation
+
+    private func handleTaskNavigation(_ task: DailyTask) {
+        switch task.navigationDestination {
+        case .audioTab:
+            let userCategories = getUserTopCategories()
+            let availableFilterIds = audioDeclarationViewModel.dynamicFilters.map { $0.id }
+            let recommendation = AudioRecommendationEngine.recommend(
+                userCategories: userCategories,
+                contentByFilter: audioDeclarationViewModel.contentByFilter,
+                availableFilterIds: availableFilterIds
+            )
+            audioDeclarationViewModel.setSelectedFilter(recommendation.filterId)
+            audioDeclarationViewModel.checklistRecommendedEpisode = recommendation.episode
+            dismiss()
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                tabViewModel.goToAudio()
+            }
+        case .devotional:
+            showDevotional = true
+        case .burst:
+            dismiss()
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                NotificationCenter.default.post(name: Notification.Name("ShowDailyDeclarationBurst"), object: nil)
+            }
+        case .none:
+            viewModel.completeTask(taskId: task.id)
+        }
+    }
+
+    private func getUserTopCategories() -> [String] {
+        let defaults = UserDefaults.standard
+        if let data = defaults.data(forKey: "userSelectedCategories"),
+           let categories = try? JSONDecoder().decode([String].self, from: data) {
+            return Array(categories.prefix(2))
+        }
+        if let single = defaults.string(forKey: "selectedCategory") { return [single] }
+        return []
+    }
+
     private var motivationalText: String {
         let hour = Calendar.current.component(.hour, from: Date())
         let completed = viewModel.todayChecklist.completedTasksCount
@@ -169,34 +211,26 @@ struct ModernDailyChecklistView: View {
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 12) {
                         // Today's Tasks Section
-                        LazyVStack(spacing: 10) {
-                            ForEach(Array(viewModel.todayChecklist.tasks.enumerated()), id: \.element.id) { index, task in
-                                OptimizedTaskRow(
-                                    task: task,
-                                    onToggle: { taskId in
-                                        // Immediate state update - no async dispatch
-                                        if task.isCompleted {
-                                            viewModel.uncompleteTask(taskId: taskId)
-                                            completedTasks.remove(taskId)
-                                        } else {
-                                            viewModel.completeTask(taskId: taskId)
-                                            completedTasks.insert(taskId)
-                                            
-                                            // Quick celebration for counter
-                                            withAnimation(.easeOut(duration: 0.1)) {
-                                                celebrationScale = 1.15
-                                            }
-                                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                                                withAnimation(.easeOut(duration: 0.1)) {
-                                                    celebrationScale = 1.0
-                                                }
-                                            }
-                                        }
+                        StructuredDayView(
+                            tasks: viewModel.todayChecklist.tasks,
+                            streakCount: viewModel.streakStats.currentStreak,
+                            onToggle: { taskId in
+                                guard let task = viewModel.todayChecklist.tasks.first(where: { $0.id == taskId }) else { return }
+                                if task.isCompleted {
+                                    viewModel.uncompleteTask(taskId: taskId)
+                                    completedTasks.remove(taskId)
+                                } else {
+                                    viewModel.completeTask(taskId: taskId)
+                                    completedTasks.insert(taskId)
+                                    withAnimation(.easeOut(duration: 0.1)) { celebrationScale = 1.15 }
+                                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                                        withAnimation(.easeOut(duration: 0.1)) { celebrationScale = 1.0 }
                                     }
-                                )
-                                .allowsHitTesting(true) // Explicitly allow hit testing
-                            }
-                        }
+                                }
+                            },
+                            onNavigate: { task in handleTaskNavigation(task) },
+                            onAllComplete: { dismiss() }
+                        )
                         .padding(.horizontal, 20)
                         
                         // Only show upcoming tasks if current list isn't completed
