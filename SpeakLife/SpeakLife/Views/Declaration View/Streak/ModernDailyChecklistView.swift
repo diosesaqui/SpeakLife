@@ -29,6 +29,12 @@ struct ModernDailyChecklistView: View {
     // MARK: - Task Navigation
 
     private func handleTaskNavigation(_ task: DailyTask) {
+        Analytics.logEvent("structured_day_task_tapped", parameters: [
+            "task_id": task.id,
+            "task_title": task.title,
+            "destination": task.navigationDestination.rawValue,
+            "current_streak": viewModel.streakStats.currentStreak as NSNumber
+        ])
         switch task.navigationDestination {
         case .audioTab:
             // Pick the best filter based on onboarding categories.
@@ -355,14 +361,27 @@ struct ModernDailyChecklistView: View {
         }
         .animation(.spring(response: 0.4, dampingFraction: 0.8), value: viewModel.showFreezeUsedMessage)
         .onAppear {
-            Analytics.logEvent("daily_checklist_viewed", parameters: [
-                "current_streak": viewModel.streakStats.currentStreak,
-                "completed_tasks": viewModel.todayChecklist.completedTasksCount,
-                "total_tasks": viewModel.todayChecklist.tasks.count
+            Analytics.logEvent("structured_day_viewed", parameters: [
+                "current_streak": viewModel.streakStats.currentStreak as NSNumber,
+                "completed_tasks": viewModel.todayChecklist.completedTasksCount as NSNumber,
+                "total_tasks": viewModel.todayChecklist.tasks.count as NSNumber
             ])
+        }
+        .onDisappear {
+            if !viewModel.todayChecklist.isCompleted {
+                Analytics.logEvent("structured_day_dismissed", parameters: [
+                    "completed_tasks": viewModel.todayChecklist.completedTasksCount as NSNumber,
+                    "total_tasks": viewModel.todayChecklist.tasks.count as NSNumber,
+                    "streak_earned": viewModel.todayChecklist.isStreakEarned as NSNumber
+                ])
+            }
         }
         .onChange(of: viewModel.todayChecklist.isCompleted) { isCompleted in
             if isCompleted {
+                Analytics.logEvent("structured_day_all_complete", parameters: [
+                    "current_streak": viewModel.streakStats.currentStreak as NSNumber,
+                    "tasks_count": viewModel.todayChecklist.tasks.count as NSNumber
+                ])
                 // Show celebration immediately
                 showCelebration = true
                 
