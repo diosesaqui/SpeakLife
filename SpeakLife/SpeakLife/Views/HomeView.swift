@@ -79,6 +79,7 @@ struct HomeView: View {
     @EnvironmentObject var streakViewModel: EnhancedStreakViewModel
     @Binding var isShowingLanding: Bool
     @Binding var showDailyBurstOnLaunch: Bool
+    @Binding var showDailyStructuredDayOnLaunch: Bool
    
    
     @State var showGiftView = false
@@ -203,8 +204,15 @@ struct HomeView: View {
                                     .environmentObject(subscriptionStore)
                             }
                             .onReceive(NotificationCenter.default.publisher(for: Notification.Name("ShowDailyDeclarationBurst"))) { _ in
-                                // Show burst when notification is tapped
                                 showDailyBurstOnLaunch = true
+                            }
+                            .fullScreenCover(isPresented: $showDailyStructuredDayOnLaunch) {
+                                ModernDailyChecklistView(viewModel: streakViewModel)
+                                    .environmentObject(appState)
+                                    .environmentObject(subscriptionStore)
+                                    .environmentObject(devotionalViewModel)
+                                    .environmentObject(audioDeclarationViewModel)
+                                    .environmentObject(tabViewModel)
                             }
                   
                 } else {

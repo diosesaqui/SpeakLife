@@ -16,6 +16,7 @@ final class AudioDeclarationViewModel: ObservableObject {
     @Published var contentByFilter: [String: [AudioDeclaration]] = [:]  // All content organized by filter ID
     @Published var selectedFilterId: String = "speaklife"  // Selected filter ID (set dynamically from server)
     @Published var playedFilter: PlayedFilter = .all  // Played / Unplayed sub-filter
+    @Published var checklistRecommendedEpisode: AudioDeclaration? = nil  // Set by checklist deep-link
     
     private(set) var allAudioFiles: [AudioDeclaration] = []
     @Published var downloadProgress: [String: Double] = [:]
