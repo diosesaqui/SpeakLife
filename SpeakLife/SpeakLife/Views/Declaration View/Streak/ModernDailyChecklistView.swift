@@ -105,57 +105,57 @@ struct ModernDailyChecklistView: View {
                                     .font(.subheadline)
                                     .foregroundColor(.white.opacity(0.7))
                                 
-                                if viewModel.streakStats.currentStreak > 0 {
-                                    Text("•")
-                                        .foregroundColor(.white.opacity(0.5))
-                                    HStack(spacing: 4) {
-                                        Text("🔥")
-                                        Text("\(viewModel.streakStats.currentStreak) day streak")
-                                            .font(.subheadline)
-                                            .foregroundColor(.orange)
-                                    }
-                                }
+//                                if viewModel.streakStats.currentStreak > 0 {
+//                                    Text("•")
+//                                        .foregroundColor(.white.opacity(0.5))
+//                                    HStack(spacing: 4) {
+//                                        Text("🔥")
+//                                        Text("\(viewModel.streakStats.currentStreak) day streak")
+//                                            .font(.subheadline)
+//                                            .foregroundColor(.orange)
+//                                    }
+//                                }
                             }
                         }
                         
                         Spacer()
                         
                         // Task counter instead of percentage
-                        VStack(spacing: 4) {
-                            Text("\(viewModel.todayChecklist.completedTasksCount)")
-                                .font(.largeTitle)
-                                .fontWeight(.bold)
-                                .foregroundColor(.white)
-                                .scaleEffect(celebrationScale)
-                            Text("of \(viewModel.todayChecklist.tasks.count)")
-                                .font(.caption)
-                                .foregroundColor(.white.opacity(0.7))
-                        }
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 8)
-                        .background(
-                            RoundedRectangle(cornerRadius: 12)
-                                .fill(Color.white.opacity(0.1))
-                        )
-                        
-                        // Devotional button
-                        Button(action: { showDevotional = true }) {
-                            VStack(spacing: 4) {
-                                Image(systemName: "book.pages.fill")
-                                    .font(.title)
-                                    .fontWeight(.semibold)
-                                    .foregroundColor(.white)
-                                Text("Devotional")
-                                    .font(.caption)
-                                    .foregroundColor(.white.opacity(0.7))
-                            }
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 8)
-                            .background(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .fill(Color.white.opacity(0.1))
-                            )
-                        }
+//                        VStack(spacing: 4) {
+//                            Text("\(viewModel.todayChecklist.completedTasksCount)")
+//                                .font(.largeTitle)
+//                                .fontWeight(.bold)
+//                                .foregroundColor(.white)
+//                                .scaleEffect(celebrationScale)
+//                            Text("of \(viewModel.todayChecklist.tasks.count)")
+//                                .font(.caption)
+//                                .foregroundColor(.white.opacity(0.7))
+//                        }
+//                        .padding(.horizontal, 16)
+//                        .padding(.vertical, 8)
+//                        .background(
+//                            RoundedRectangle(cornerRadius: 12)
+//                                .fill(Color.white.opacity(0.1))
+//                        )
+//                        
+//                        // Devotional button
+//                        Button(action: { showDevotional = true }) {
+//                            VStack(spacing: 4) {
+//                                Image(systemName: "book.pages.fill")
+//                                    .font(.title)
+//                                    .fontWeight(.semibold)
+//                                    .foregroundColor(.white)
+//                                Text("Devotional")
+//                                    .font(.caption)
+//                                    .foregroundColor(.white.opacity(0.7))
+//                            }
+//                            .padding(.horizontal, 16)
+//                            .padding(.vertical, 8)
+//                            .background(
+//                                RoundedRectangle(cornerRadius: 12)
+//                                    .fill(Color.white.opacity(0.1))
+//                            )
+//                        }
                         
                         // On iPad: always show close button (fullScreenCover has no swipe-to-dismiss)
                         // On iPhone: only show if an onClose callback was explicitly passed
