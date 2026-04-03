@@ -15,6 +15,7 @@ struct AudioRecommendation {
 
 final class AudioRecommendationEngine {
 
+    // MARK: - Category → Filter Priority Map
     static let categoryToFilterPriority: [String: [String]] = [
         "anxiety":        ["meditation", "speaklife"],
         "fear":           ["meditation", "speaklife"],
@@ -55,13 +56,19 @@ final class AudioRecommendationEngine {
 
     // MARK: - Public API
 
-    /// Recommends the next audio episode, cycling through the user's categories as each is exhausted.
-    ///
-    /// Rotation logic:
-    ///   1. Look up the user's current category index (persisted in UserDefaults).
-    ///   2. Find the first unplayed episode in that category's filter.
-    ///   3. If all episodes in the current category are played → advance index → try next category.
-    ///   4. If all categories exhausted → wrap back to index 0.
+    /// Returns the best filter ID for the user's onboarding categories.
+    /// Used by the checklist to pre-set the filter before content loads.
+    static func bestFilterId(for userCategories: [String], availableFilterIds: [String]) -> String {
+        let available = Set(availableFilterIds)
+        for category in userCategories {
+            guard let preferred = categoryToFilterPriority[category.lowercased()] else { continue }
+            if let match = preferred.first(where: { available.contains($0) }) { return match }
+        }
+        return available.contains(defaultFilterId) ? defaultFilterId :
+               (availableFilterIds.first(where: { $0 != "favorites" }) ?? defaultFilterId)
+    }
+
+    /// Recommends the next episode, cycling through the user's categories as each is exhausted.
     static func recommend(
         userCategories: [String],
         contentByFilter: [String: [AudioDeclaration]],
@@ -69,62 +76,31 @@ final class AudioRecommendationEngine {
     ) -> AudioRecommendation {
         let categories = userCategories.isEmpty ? [defaultFilterId] : userCategories
         let savedIndex = UserDefaults.standard.integer(forKey: categoryIndexKey)
-        let startIndex = savedIndex % categories.count
+        let startIndex = min(savedIndex, categories.count - 1)
 
-        // Walk categories starting at current index, wrapping around
         for offset in 0..<categories.count {
             let index = (startIndex + offset) % categories.count
-            let category = categories[index]
-            let filterId = preferredFilterId(for: category, availableFilterIds: availableFilterIds)
+            let filterId = bestFilterId(for: [categories[index]], availableFilterIds: availableFilterIds)
             let content = contentByFilter[filterId] ?? []
-
             if let unplayed = content.first(where: { !AudioProgressStore.shared.isPlayed($0.id) }) {
-                // Found an unplayed episode — advance index if we moved to a new category
                 if index != startIndex {
                     UserDefaults.standard.set(index, forKey: categoryIndexKey)
                 }
                 return AudioRecommendation(filterId: filterId, episode: unplayed)
             }
-            // All played in this category → try the next one
         }
 
-        // All categories fully played — wrap to 0 and restart from the beginning
+        // All categories exhausted — reset and return first episode of first category
         UserDefaults.standard.set(0, forKey: categoryIndexKey)
-        let fallbackCategory = categories[0]
-        let fallbackFilter = preferredFilterId(for: fallbackCategory, availableFilterIds: availableFilterIds)
-        let fallbackContent = contentByFilter[fallbackFilter] ?? []
-        return AudioRecommendation(filterId: fallbackFilter, episode: fallbackContent.first)
+        let fallbackFilterId = bestFilterId(for: categories, availableFilterIds: availableFilterIds)
+        let fallbackContent = contentByFilter[fallbackFilterId] ?? []
+        return AudioRecommendation(filterId: fallbackFilterId, episode: fallbackContent.first)
     }
 
-    /// Manually advances to the next category (call when a category's content is fully completed).
+    /// Manually advances to the next category.
     static func advanceCategory(userCategories: [String]) {
         let categories = userCategories.isEmpty ? [defaultFilterId] : userCategories
         let current = UserDefaults.standard.integer(forKey: categoryIndexKey)
-        let next = (current + 1) % categories.count
-        UserDefaults.standard.set(next, forKey: categoryIndexKey)
-    }
-
-    // MARK: - Private Helpers
-
-    /// Public so ModernDailyChecklistView can set the filter before content loads.
-    static func bestFilterId(for userCategories: [String], availableFilterIds: [String]) -> String {
-        for category in userCategories {
-            if let filterId = preferredFilterId(for: category, availableFilterIds: availableFilterIds),
-               filterId != defaultFilterId || availableFilterIds.contains(defaultFilterId) {
-                return filterId
-            }
-        }
-        return availableFilterIds.contains(defaultFilterId) ? defaultFilterId :
-               (availableFilterIds.first(where: { $0 != "favorites" }) ?? defaultFilterId)
-    }
-
-    private static func preferredFilterId(for category: String, availableFilterIds: [String]) -> String? {
-        let availableSet = Set(availableFilterIds)
-        guard let preferred = categoryToFilterPriority[category.lowercased()] else { return nil }
-        return preferred.first(where: { availableSet.contains($0) })
-    }
-
-    private static func firstUnplayed(in content: [AudioDeclaration]) -> AudioDeclaration? {
-        content.first { !AudioProgressStore.shared.isPlayed($0.id) } ?? content.first
+        UserDefaults.standard.set((current + 1) % categories.count, forKey: categoryIndexKey)
     }
 }
