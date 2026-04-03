@@ -72,6 +72,14 @@ enum DifficultyLevel: Int, CaseIterable, Codable {
     }
 }
 
+// MARK: - Task Navigation Destination
+enum TaskNavigationDestination: String, Codable {
+    case none
+    case audioTab
+    case devotional
+    case burst
+}
+
 // MARK: - Enhanced Daily Task Model
 struct DailyTask: Identifiable, Codable {
     let id: String
@@ -86,11 +94,13 @@ struct DailyTask: Identifiable, Codable {
     var isCompleted: Bool = false
     var completedAt: Date?
     var isNewlyUnlocked: Bool = false
-    
-    init(id: String, title: String, description: String, icon: String, 
+    var navigationDestination: TaskNavigationDestination = .none
+
+    init(id: String, title: String, description: String, icon: String,
          category: TaskCategory, type: TaskType, difficulty: DifficultyLevel = .beginner,
          minimumStreakDay: Int = 1, estimatedMinutes: Int = 5,
-         isCompleted: Bool = false, completedAt: Date? = nil) {
+         isCompleted: Bool = false, completedAt: Date? = nil,
+         navigationDestination: TaskNavigationDestination = .none) {
         self.id = id
         self.title = title
         self.description = description
@@ -102,6 +112,7 @@ struct DailyTask: Identifiable, Codable {
         self.estimatedMinutes = estimatedMinutes
         self.isCompleted = isCompleted
         self.completedAt = completedAt
+        self.navigationDestination = navigationDestination
     }
 }
 
@@ -317,7 +328,8 @@ struct TaskLibrary {
             type: .speak,
             difficulty: .beginner,
             minimumStreakDay: 1,
-            estimatedMinutes: 3
+            estimatedMinutes: 3,
+            navigationDestination: .burst
         ),
         DailyTask(
             id: "read_devotional",
@@ -328,7 +340,8 @@ struct TaskLibrary {
             type: .read,
             difficulty: .beginner,
             minimumStreakDay: 1,
-            estimatedMinutes: 5
+            estimatedMinutes: 5,
+            navigationDestination: .devotional
         ),
         DailyTask(
             id: "listen_audio",
@@ -339,7 +352,8 @@ struct TaskLibrary {
             type: .listen,
             difficulty: .beginner,
             minimumStreakDay: 1,
-            estimatedMinutes: 4
+            estimatedMinutes: 4,
+            navigationDestination: .audioTab
         ),
         DailyTask(
             id: "gratitude_moment",
@@ -350,7 +364,8 @@ struct TaskLibrary {
             type: .reflect,
             difficulty: .beginner,
             minimumStreakDay: 2,
-            estimatedMinutes: 2
+            estimatedMinutes: 2,
+            navigationDestination: .none
         )
     ]
     

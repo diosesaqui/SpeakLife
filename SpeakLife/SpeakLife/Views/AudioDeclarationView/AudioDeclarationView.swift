@@ -299,6 +299,21 @@ struct AudioDeclarationView: View {
             .onAppear() {
                 Analytics.logEvent("AudioScreenLoaded", parameters: nil)
             }
+            // Auto-play when arriving from daily checklist.
+            // Uses onReceive on contentByFilter (a @Published dict) so it fires
+            // both when content is already loaded AND when it finishes loading
+            // for the first time — solving the empty-content timing issue.
+            .onReceive(viewModel.$contentByFilter) { byFilter in
+                guard viewModel.checklistAutoPlayPending else { return }
+                let content = byFilter[viewModel.selectedFilterId] ?? []
+                guard !content.isEmpty else { return } // wait for next emission
+                viewModel.checklistAutoPlayPending = false
+                let episode = content.first(where: { !AudioProgressStore.shared.isPlayed($0.id) }) ?? content.first
+                guard let ep = episode else { return }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    handleItemTap(ep)
+                }
+            }
             // Devotional Subscription Sheet
             .sheet(isPresented: $presentDevotionalSubscriptionView) {
                 DevotionalSubscriptionView {

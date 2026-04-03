@@ -70,6 +70,7 @@ struct SpeakLifeApp: App {
     
     @State var isShowingLanding = true
     @State private var showDailyBurstOnLaunch = false
+    @State private var showDailyStructuredDayOnLaunch = false
     @State private var hasCheckedBurstThisSession = false
     
     // Notification handling state
@@ -83,7 +84,7 @@ struct SpeakLifeApp: App {
     
     var body: some Scene {
         WindowGroup {
-            HomeView(isShowingLanding: $isShowingLanding, showDailyBurstOnLaunch: $showDailyBurstOnLaunch)
+            HomeView(isShowingLanding: $isShowingLanding, showDailyBurstOnLaunch: $showDailyBurstOnLaunch, showDailyStructuredDayOnLaunch: $showDailyStructuredDayOnLaunch)
                 .environment(\.managedObjectContext, persistenceController.container.viewContext)
                 .environmentObject(appState)
                 .environmentObject(declarationStore)
@@ -154,9 +155,10 @@ struct SpeakLifeApp: App {
                         // after the user already completed or dismissed the burst)
                         if !hasCheckedBurstThisSession {
                             hasCheckedBurstThisSession = true
-                            if appState.isOnboarded && !BurstCompletionTracker.shared.hasTodaysCompletion() {
+                            if appState.isOnboarded && !StructuredDayLaunchTracker.hasShownToday() {
+                                StructuredDayLaunchTracker.markShownToday()
                                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                                    showDailyBurstOnLaunch = true
+                                    showDailyStructuredDayOnLaunch = true
                                 }
                             }
                         }
