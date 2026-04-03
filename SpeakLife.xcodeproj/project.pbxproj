@@ -204,6 +204,7 @@
 		45BC76332EF8058E003AC964 /* GestureDelights.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45BC762C2EF8058E003AC964 /* GestureDelights.swift */; };
 		45BC76342EF8058E003AC964 /* MicroInteractions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45BC762D2EF8058E003AC964 /* MicroInteractions.swift */; };
 		45BC76422EFD1321003AC964 /* ModernDailyChecklistView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45BC76412EFD1321003AC964 /* ModernDailyChecklistView.swift */; };
+		63BFAA7702BD4A74B7B60D25 /* StructuredDayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F54505A7F8204E659571CE73 /* StructuredDayView.swift */; };
 		45BC76442EFD2775003AC964 /* ModernCelebrationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45BC76432EFD2775003AC964 /* ModernCelebrationView.swift */; };
 		45BC76762F04B284003AC964 /* FirstDeclarationGuideView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45BC76752F04B284003AC964 /* FirstDeclarationGuideView.swift */; };
 		45BCBA9A2C360245001F28C4 /* BibleStory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45BCBA992C360245001F28C4 /* BibleStory.swift */; };
@@ -334,6 +335,7 @@
 		81FE0DDC33BC402685CA44EE /* BurstCompletionModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81FE0DDC33BC402685CA44ED /* BurstCompletionModel.swift */; };
 		8C81294FE8FD42174F375CFB /* LifecycleNotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA221D745BD49CF6BCFEBAA1 /* LifecycleNotificationService.swift */; };
 		8D9D24C8C66A40D5AF502D31 /* AudioProgressStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 750128553E56408E9225277C /* AudioProgressStore.swift */; };
+		648AA3ADC45C405CBFB82934 /* AudioRecommendationEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0B7425FCF684D05A10C4758 /* AudioRecommendationEngine.swift */; };
 		918D0ED751C243E98A66C8E4 /* SpiritualGrowthView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 918D0ED751C243E98A66C8E3 /* SpiritualGrowthView.swift */; };
 		9A194914114F422786A1CE9F /* PersonalizationSummaryScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30FA3E7536DE40B2B311F43E /* PersonalizationSummaryScene.swift */; };
 		AC33C8C521764DF3961EA018 /* OnboardingDailyBurstScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC33C8C421764DF3961EA018 /* OnboardingDailyBurstScreen.swift */; };
@@ -573,6 +575,7 @@
 		45BC762D2EF8058E003AC964 /* MicroInteractions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MicroInteractions.swift; sourceTree = "<group>"; };
 		45BC762E2EF8058E003AC964 /* PremiumHaptics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PremiumHaptics.swift; sourceTree = "<group>"; };
 		45BC76412EFD1321003AC964 /* ModernDailyChecklistView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModernDailyChecklistView.swift; sourceTree = "<group>"; };
+		F54505A7F8204E659571CE73 /* StructuredDayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StructuredDayView.swift; sourceTree = "<group>"; };
 		45BC76432EFD2775003AC964 /* ModernCelebrationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModernCelebrationView.swift; sourceTree = "<group>"; };
 		45BC76752F04B284003AC964 /* FirstDeclarationGuideView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirstDeclarationGuideView.swift; sourceTree = "<group>"; };
 		45BCBA992C360245001F28C4 /* BibleStory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BibleStory.swift; sourceTree = "<group>"; };
@@ -612,6 +615,7 @@
 		6D920701A13775F49180D845 /* WldehBibleAPIService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WldehBibleAPIService.swift; sourceTree = "<group>"; };
 		74DAA35385DD02F8B0DCADE5 /* HowToUseSpeakLifeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HowToUseSpeakLifeView.swift; sourceTree = "<group>"; };
 		750128553E56408E9225277C /* AudioProgressStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioProgressStore.swift; sourceTree = "<group>"; };
+		F0B7425FCF684D05A10C4758 /* AudioRecommendationEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioRecommendationEngine.swift; sourceTree = "<group>"; };
 		7A00721728F8ED4A00965AF7 /* declarations.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = declarations.json; sourceTree = "<group>"; };
 		7A278F97288915DE0084BB57 /* SpeakLife.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SpeakLife.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7A278F9A288915DE0084BB57 /* SpeakLifeApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeakLifeApp.swift; sourceTree = "<group>"; };
@@ -990,6 +994,7 @@
 			isa = PBXGroup;
 			children = (
 				45BC76412EFD1321003AC964 /* ModernDailyChecklistView.swift */,
+				F54505A7F8204E659571CE73 /* StructuredDayView.swift */,
 				45567D622F29CD0D00382072 /* TimerStreakDetailView.swift */,
 				4548075B2E3F04C100B8C71B /* StreakCompletionViews.swift */,
 				454807592E3F04B300B8C71B /* StreakIntegrationManager.swift */,
@@ -1183,6 +1188,7 @@
 				4597E1E92E3FEC72009D6C66 /* AudioAnalytics.swift */,
 				4597E1EA2E3FEC72009D6C66 /* AudioFavoritesManager.swift */,
 				750128553E56408E9225277C /* AudioProgressStore.swift */,
+				F0B7425FCF684D05A10C4758 /* AudioRecommendationEngine.swift */,
 				45C7482F2B5BC4330011D8F6 /* AudioPlayer.swift */,
 			);
 			path = AudioPlayer;
@@ -2028,6 +2034,7 @@
 				4597E1EB2E3FEC72009D6C66 /* AudioAnalytics.swift in Sources */,
 				4597E1EC2E3FEC72009D6C66 /* AudioFavoritesManager.swift in Sources */,
 				8D9D24C8C66A40D5AF502D31 /* AudioProgressStore.swift in Sources */,
+				648AA3ADC45C405CBFB82934 /* AudioRecommendationEngine.swift in Sources */,
 				7AA8709228DACCA700134ADB /* ToggleStyle.swift in Sources */,
 				45567D652F29CE7700382072 /* BibleAuthenticationView.swift in Sources */,
 				458B6B1D2BA6D58D0001BEFE /* StreakView.swift in Sources */,
@@ -2109,6 +2116,7 @@
 				458510D92B159B0D00230EE5 /* LandingView.swift in Sources */,
 				4525D8E22F4AC18500571394 /* UnifiedFavoritesManager.swift in Sources */,
 				45BC76422EFD1321003AC964 /* ModernDailyChecklistView.swift in Sources */,
+				63BFAA7702BD4A74B7B60D25 /* StructuredDayView.swift in Sources */,
 				7AF18C7B29FD1A43005A6E31 /* GoogleAdMob.swift in Sources */,
 				457CD3402E7E735A00F435EC /* OptimizedSubscriptionViewV1.swift in Sources */,
 				45F6D8922F2AF45900C0B98D /* ClearBibleCache.swift in Sources */,
