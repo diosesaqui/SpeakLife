@@ -31,15 +31,19 @@ struct ModernDailyChecklistView: View {
     private func handleTaskNavigation(_ task: DailyTask) {
         switch task.navigationDestination {
         case .audioTab:
+            // Pick the best filter based on onboarding categories.
+            // We do NOT pick the episode here — audio content may not be loaded yet
+            // if the user hasn't visited the audio tab this session.
+            // AudioDeclarationView will pick and play the first unplayed episode
+            // via onReceive(contentByFilter) once the content finishes loading.
             let userCategories = getUserTopCategories()
             let availableFilterIds = audioDeclarationViewModel.dynamicFilters.map { $0.id }
-            let recommendation = AudioRecommendationEngine.recommend(
-                userCategories: userCategories,
-                contentByFilter: audioDeclarationViewModel.contentByFilter,
-                availableFilterIds: availableFilterIds
+            let filterId = AudioRecommendationEngine.bestFilterId(
+                for: userCategories,
+                availableFilterIds: availableFilterIds.isEmpty ? ["speaklife"] : availableFilterIds
             )
-            audioDeclarationViewModel.setSelectedFilter(recommendation.filterId)
-            audioDeclarationViewModel.checklistRecommendedEpisode = recommendation.episode
+            audioDeclarationViewModel.setSelectedFilter(filterId)
+            audioDeclarationViewModel.checklistAutoPlayPending = true
             dismiss()
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
                 tabViewModel.goToAudio()

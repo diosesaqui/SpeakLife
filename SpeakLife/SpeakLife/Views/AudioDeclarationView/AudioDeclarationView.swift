@@ -298,22 +298,20 @@ struct AudioDeclarationView: View {
             }
             .onAppear() {
                 Analytics.logEvent("AudioScreenLoaded", parameters: nil)
-                // Case: audio tab was not loaded when checklist set the episode.
-                // onChange won't fire for values already set before the view subscribed,
-                // so we also check here on every appear.
-                if let episode = viewModel.checklistRecommendedEpisode {
-                    viewModel.checklistRecommendedEpisode = nil
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                        handleItemTap(episode)
-                    }
-                }
             }
-            // Case: audio tab was already loaded (onChange fires on live subscription).
-            .onChange(of: viewModel.checklistRecommendedEpisode) { episode in
-                guard let episode = episode else { return }
-                viewModel.checklistRecommendedEpisode = nil
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
-                    handleItemTap(episode)
+            // Auto-play when arriving from daily checklist.
+            // Uses onReceive on contentByFilter (a @Published dict) so it fires
+            // both when content is already loaded AND when it finishes loading
+            // for the first time — solving the empty-content timing issue.
+            .onReceive(viewModel.$contentByFilter) { byFilter in
+                guard viewModel.checklistAutoPlayPending else { return }
+                let content = byFilter[viewModel.selectedFilterId] ?? []
+                guard !content.isEmpty else { return } // wait for next emission
+                viewModel.checklistAutoPlayPending = false
+                let episode = content.first(where: { !AudioProgressStore.shared.isPlayed($0.id) }) ?? content.first
+                guard let ep = episode else { return }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    handleItemTap(ep)
                 }
             }
             // Devotional Subscription Sheet
