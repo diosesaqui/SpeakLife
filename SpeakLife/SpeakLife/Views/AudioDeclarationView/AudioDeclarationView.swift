@@ -299,6 +299,17 @@ struct AudioDeclarationView: View {
             .onAppear() {
                 Analytics.logEvent("AudioScreenLoaded", parameters: nil)
             }
+            // Checklist deep-link: auto-play the recommended episode when arriving from the daily checklist.
+            // AudioRecommendationEngine picks the first unplayed episode in the user's preferred category.
+            // Cleared immediately after firing so it doesn't replay on subsequent appearances.
+            .onChange(of: viewModel.checklistRecommendedEpisode) { episode in
+                guard let episode = episode else { return }
+                viewModel.checklistRecommendedEpisode = nil
+                // Small delay to let the filter/tab switch animation settle first
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                    handleItemTap(episode)
+                }
+            }
             // Devotional Subscription Sheet
             .sheet(isPresented: $presentDevotionalSubscriptionView) {
                 DevotionalSubscriptionView {
