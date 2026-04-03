@@ -139,7 +139,10 @@ class BurstCompletionTracker: ObservableObject {
         updateStrengthLevel(score: strengthScore)
         generateWeeklyData()
         generateMonthlyTrend()
-        
+
+        // Track lifetime declarations spoken (Feature: Declarations Counter)
+        DeclarationsCounterService.shared.recordDeclarations(count: declarationCount)
+
         // Send notification for milestone achievements only on first completion of the day
         if isFirstCompletionToday {
             checkAndCelebrateMilestones()

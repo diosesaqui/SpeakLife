@@ -98,6 +98,10 @@ struct ProfileView: View {
                     Section(header: Text("Yours").font(.caption)) {
                         AbbasLoveRow
                         howToUseRow
+                        // Declarations Counter badge (lifetime + today)
+                        DeclarationsCounterBadge()
+                            .listRowBackground(Color.clear)
+                            .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
                         streakStatsRow
                       //  dailyBurstStatsRow
                             quizRow
