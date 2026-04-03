@@ -298,14 +298,20 @@ struct AudioDeclarationView: View {
             }
             .onAppear() {
                 Analytics.logEvent("AudioScreenLoaded", parameters: nil)
+                // Case: audio tab was not loaded when checklist set the episode.
+                // onChange won't fire for values already set before the view subscribed,
+                // so we also check here on every appear.
+                if let episode = viewModel.checklistRecommendedEpisode {
+                    viewModel.checklistRecommendedEpisode = nil
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        handleItemTap(episode)
+                    }
+                }
             }
-            // Checklist deep-link: auto-play the recommended episode when arriving from the daily checklist.
-            // AudioRecommendationEngine picks the first unplayed episode in the user's preferred category.
-            // Cleared immediately after firing so it doesn't replay on subsequent appearances.
+            // Case: audio tab was already loaded (onChange fires on live subscription).
             .onChange(of: viewModel.checklistRecommendedEpisode) { episode in
                 guard let episode = episode else { return }
                 viewModel.checklistRecommendedEpisode = nil
-                // Small delay to let the filter/tab switch animation settle first
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
                     handleItemTap(episode)
                 }
