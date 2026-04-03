@@ -226,38 +226,38 @@ struct ModernDailyChecklistView: View {
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 12) {
                         // Today's Tasks Section
-                        LazyVStack(spacing: 10) {
-                            ForEach(Array(viewModel.todayChecklist.tasks.enumerated()), id: \.element.id) { index, task in
-                                OptimizedTaskRow(
-                                    task: task,
-                                    onToggle: { taskId in
-                                        // Checkbox tap: toggle completion only
-                                        if task.isCompleted {
-                                            viewModel.uncompleteTask(taskId: taskId)
-                                            completedTasks.remove(taskId)
-                                        } else {
-                                            viewModel.completeTask(taskId: taskId)
-                                            completedTasks.insert(taskId)
-
-                                            // Quick celebration for counter
-                                            withAnimation(.easeOut(duration: 0.1)) {
-                                                celebrationScale = 1.15
-                                            }
-                                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                                                withAnimation(.easeOut(duration: 0.1)) {
-                                                    celebrationScale = 1.0
-                                                }
-                                            }
-                                        }
-                                    },
-                                    onNavigate: { tappedTask in
-                                        // Row body tap: navigate to the task's destination
-                                        handleTaskNavigation(tappedTask)
+                        // ── Structured Day View ──
+                        // Replaces the old LazyVStack of OptimizedTaskRows.
+                        // Uses a modern sequential card-based layout:
+                        //   • Progress ring at top
+                        //   • Hero "Next Up" card for first incomplete task
+                        //   • Dimmed upcoming tasks below
+                        //   • Collapsed completed tasks at bottom
+                        //   • Celebration screen when all done
+                        StructuredDayView(
+                            tasks: viewModel.todayChecklist.tasks,
+                            streakCount: viewModel.streakStats.currentStreak,
+                            onToggle: { taskId in
+                                guard let task = viewModel.todayChecklist.tasks.first(where: { $0.id == taskId }) else { return }
+                                if task.isCompleted {
+                                    viewModel.uncompleteTask(taskId: taskId)
+                                    completedTasks.remove(taskId)
+                                } else {
+                                    viewModel.completeTask(taskId: taskId)
+                                    completedTasks.insert(taskId)
+                                    withAnimation(.easeOut(duration: 0.1)) { celebrationScale = 1.15 }
+                                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                                        withAnimation(.easeOut(duration: 0.1)) { celebrationScale = 1.0 }
                                     }
-                                )
-                                .allowsHitTesting(true)
+                                }
+                            },
+                            onNavigate: { task in
+                                handleTaskNavigation(task)
+                            },
+                            onAllComplete: {
+                                dismiss()
                             }
-                        }
+                        )
                         .padding(.horizontal, 20)
                         
                         // Only show upcoming tasks if current list isn't completed
