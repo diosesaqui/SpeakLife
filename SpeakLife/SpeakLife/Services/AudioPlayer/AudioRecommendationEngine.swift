@@ -106,13 +106,22 @@ final class AudioRecommendationEngine {
 
     // MARK: - Private Helpers
 
-    private static func preferredFilterId(for category: String, availableFilterIds: [String]) -> String {
-        let availableSet = Set(availableFilterIds)
-        if let preferred = categoryToFilterPriority[category.lowercased()] {
-            for filterId in preferred where availableSet.contains(filterId) { return filterId }
+    /// Public so ModernDailyChecklistView can set the filter before content loads.
+    static func bestFilterId(for userCategories: [String], availableFilterIds: [String]) -> String {
+        for category in userCategories {
+            if let filterId = preferredFilterId(for: category, availableFilterIds: availableFilterIds),
+               filterId != defaultFilterId || availableFilterIds.contains(defaultFilterId) {
+                return filterId
+            }
         }
-        return availableSet.contains(defaultFilterId) ? defaultFilterId :
+        return availableFilterIds.contains(defaultFilterId) ? defaultFilterId :
                (availableFilterIds.first(where: { $0 != "favorites" }) ?? defaultFilterId)
+    }
+
+    private static func preferredFilterId(for category: String, availableFilterIds: [String]) -> String? {
+        let availableSet = Set(availableFilterIds)
+        guard let preferred = categoryToFilterPriority[category.lowercased()] else { return nil }
+        return preferred.first(where: { availableSet.contains($0) })
     }
 
     private static func firstUnplayed(in content: [AudioDeclaration]) -> AudioDeclaration? {
