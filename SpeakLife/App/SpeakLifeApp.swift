@@ -69,7 +69,8 @@ struct SpeakLifeApp: App {
     @StateObject var tabViewModel = TabViewModel()
     
     @State var isShowingLanding = true
-    @State private var showDailyBurstOnLaunch = false
+    @State private var showDailyBurstOnLaunch = false        // kept for notification-triggered burst
+    @State private var showDailyStructuredDayOnLaunch = false
     @State private var hasCheckedBurstThisSession = false
     
     // Notification handling state
@@ -83,7 +84,7 @@ struct SpeakLifeApp: App {
     
     var body: some Scene {
         WindowGroup {
-            HomeView(isShowingLanding: $isShowingLanding, showDailyBurstOnLaunch: $showDailyBurstOnLaunch)
+            HomeView(isShowingLanding: $isShowingLanding, showDailyBurstOnLaunch: $showDailyBurstOnLaunch, showDailyStructuredDayOnLaunch: $showDailyStructuredDayOnLaunch)
                 .environment(\.managedObjectContext, persistenceController.container.viewContext)
                 .environmentObject(appState)
                 .environmentObject(declarationStore)
@@ -149,14 +150,17 @@ struct SpeakLifeApp: App {
                             isShowingLanding = false
                         }
                         
-                        // Check if daily burst should be shown — only once per session
-                        // (onAppear can fire more than once; guard prevents showing it again
-                        // after the user already completed or dismissed the burst)
+                        // On first open of each new day: show the Structured Day checklist
+                        // so users get a guided plan before diving into the app.
+                        // The daily burst lives *inside* the checklist as a task — users
+                        // reach it naturally by tapping "Start Burst →".
+                        // The burst can still be triggered directly via notification tap.
                         if !hasCheckedBurstThisSession {
                             hasCheckedBurstThisSession = true
-                            if appState.isOnboarded && !BurstCompletionTracker.shared.hasTodaysCompletion() {
+                            if appState.isOnboarded && !StructuredDayLaunchTracker.hasShownToday() {
+                                StructuredDayLaunchTracker.markShownToday()
                                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                                    showDailyBurstOnLaunch = true
+                                    showDailyStructuredDayOnLaunch = true
                                 }
                             }
                         }

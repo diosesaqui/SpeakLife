@@ -79,6 +79,7 @@ struct HomeView: View {
     @EnvironmentObject var streakViewModel: EnhancedStreakViewModel
     @Binding var isShowingLanding: Bool
     @Binding var showDailyBurstOnLaunch: Bool
+    @Binding var showDailyStructuredDayOnLaunch: Bool
    
    
     @State var showGiftView = false
@@ -194,6 +195,7 @@ struct HomeView: View {
                                 showStreakCelebration = true
                                 // Global streak celebration triggered
                             }
+                            // Notification-triggered burst (push notification tap) — unchanged
                             .fullScreenCover(isPresented: $showDailyBurstOnLaunch) {
                                 DailyDeclarationBurstView()
                                     .environmentObject(declarationStore)
@@ -203,8 +205,17 @@ struct HomeView: View {
                                     .environmentObject(subscriptionStore)
                             }
                             .onReceive(NotificationCenter.default.publisher(for: Notification.Name("ShowDailyDeclarationBurst"))) { _ in
-                                // Show burst when notification is tapped
                                 showDailyBurstOnLaunch = true
+                            }
+                            // Daily first-open: show Structured Day plan instead of raw burst.
+                            // The burst task is inside the checklist — users reach it naturally.
+                            .fullScreenCover(isPresented: $showDailyStructuredDayOnLaunch) {
+                                ModernDailyChecklistView(viewModel: enhancedStreakViewModel)
+                                    .environmentObject(appState)
+                                    .environmentObject(subscriptionStore)
+                                    .environmentObject(devotionalViewModel)
+                                    .environmentObject(audioDeclarationViewModel)
+                                    .environmentObject(tabViewModel)
                             }
                   
                 } else {

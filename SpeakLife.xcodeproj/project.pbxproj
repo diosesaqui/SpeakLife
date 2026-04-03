@@ -26,6 +26,7 @@
 		4525D6852F37C0EB00571394 /* DailyDeclarationBurstView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4525D6842F37C0EB00571394 /* DailyDeclarationBurstView.swift */; };
 		4525D7D02F3DC7B400571394 /* PolishedCrossOnboardingFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4525D7CF2F3DC7B400571394 /* PolishedCrossOnboardingFlow.swift */; };
 		4525D7D22F3DC87E00571394 /* DailyDeclarationReminderService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4525D7D12F3DC87E00571394 /* DailyDeclarationReminderService.swift */; };
+		D2AD4D1C5D81425897424332 /* StructuredDayLaunchTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9A3081A52984B6AB0EECD7B /* StructuredDayLaunchTracker.swift */; };
 		4525D8D92F4AC12800571394 /* DeclarationFavoriteEntry+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4525D8D72F4AC12800571394 /* DeclarationFavoriteEntry+CoreDataClass.swift */; };
 		4525D8DA2F4AC12800571394 /* AudioFavoriteEntry+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4525D8D62F4AC12800571394 /* AudioFavoriteEntry+CoreDataProperties.swift */; };
 		4525D8DB2F4AC12800571394 /* AudioFavoriteEntry+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4525D8D52F4AC12800571394 /* AudioFavoriteEntry+CoreDataClass.swift */; };
@@ -401,6 +402,7 @@
 		4525D6842F37C0EB00571394 /* DailyDeclarationBurstView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyDeclarationBurstView.swift; sourceTree = "<group>"; };
 		4525D7CF2F3DC7B400571394 /* PolishedCrossOnboardingFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PolishedCrossOnboardingFlow.swift; sourceTree = "<group>"; };
 		4525D7D12F3DC87E00571394 /* DailyDeclarationReminderService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyDeclarationReminderService.swift; sourceTree = "<group>"; };
+		F9A3081A52984B6AB0EECD7B /* StructuredDayLaunchTracker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StructuredDayLaunchTracker.swift; sourceTree = "<group>"; };
 		4525D8D52F4AC12800571394 /* AudioFavoriteEntry+CoreDataClass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AudioFavoriteEntry+CoreDataClass.swift"; sourceTree = "<group>"; };
 		4525D8D62F4AC12800571394 /* AudioFavoriteEntry+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AudioFavoriteEntry+CoreDataProperties.swift"; sourceTree = "<group>"; };
 		4525D8D72F4AC12800571394 /* DeclarationFavoriteEntry+CoreDataClass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DeclarationFavoriteEntry+CoreDataClass.swift"; sourceTree = "<group>"; };
@@ -1378,6 +1380,7 @@
 				7AA8706F28DACC8200134ADB /* Networking */,
 				7AA8707428DACC8300134ADB /* Notification */,
 				4525D7D12F3DC87E00571394 /* DailyDeclarationReminderService.swift */,
+				F9A3081A52984B6AB0EECD7B /* StructuredDayLaunchTracker.swift */,
 				7AF18C9B2A0D99E5005A6E31 /* TimeTrackerViewModel.swift */,
 				DC73B2698B17B267C7A6F437 /* TrialExperienceService.swift */,
 			);
@@ -2169,6 +2172,7 @@
 				4597E2342E419CEA009D6C66 /* PersistenceController.swift in Sources */,
 				4597E2352E419CEA009D6C66 /* DataMigrationManager.swift in Sources */,
 				4525D7D22F3DC87E00571394 /* DailyDeclarationReminderService.swift in Sources */,
+				D2AD4D1C5D81425897424332 /* StructuredDayLaunchTracker.swift in Sources */,
 				4597E2362E419CEA009D6C66 /* AffirmationRepository.swift in Sources */,
 				4597E2372E419CEA009D6C66 /* SyncConflictResolver.swift in Sources */,
 				4597E2382E419CEA009D6C66 /* CoreDataAPIService.swift in Sources */,
