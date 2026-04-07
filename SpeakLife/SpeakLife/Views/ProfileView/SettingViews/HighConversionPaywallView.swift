@@ -295,7 +295,7 @@ struct HighConversionPaywallView: View {
     private var trialCallout: some View {
         HStack(spacing: 6) {
             Image(systemName: "checkmark.circle.fill").foregroundColor(.green).font(.system(size: 14))
-            Text(selectedPlan == .annual && isEligibleForTrial ? "7 days free - cancel anytime before trial ends" : "Start today - cancel anytime")
+            Text(selectedPlan == .annual && isEligibleForTrial ? "3 days free - cancel anytime before trial ends" : "Start today - cancel anytime")
                 .font(.system(size: 13, weight: .medium)).foregroundColor(.white.opacity(0.85))
         }
     }
@@ -306,7 +306,7 @@ struct HighConversionPaywallView: View {
             return "Start Monthly Plan"
         }
         if isEligibleForTrial {
-            return "Begin My 7-Day Faith Reset"
+            return "Begin My Faith Reset"
         }
         return "Get Annual Access"
     }

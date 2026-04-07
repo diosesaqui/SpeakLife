@@ -106,8 +106,8 @@ final class UserPreferencesTracker: ObservableObject {
                     "Become Who God Said You Are",
                     "Pray With 100,000+ Believers"
                 ],
-                ctaText: "Begin My 7-Day Faith Reset",
-                urgencyText: "7 Days Free • Cancel Anytime"
+                ctaText: "Begin My Faith Reset",
+                urgencyText: "3 Days Free • Cancel Anytime"
             )
 
         case .faith:
@@ -256,8 +256,8 @@ final class UserPreferencesTracker: ObservableObject {
                     "Become Who God Said You Are",
                     "Pray With 100,000+ Believers"
                 ],
-                ctaText: "Begin My 7-Day Faith Reset",
-                urgencyText: "7 Days Free • Cancel Anytime"
+                ctaText: "Begin My Faith Reset",
+                urgencyText: "3 Days Free • Cancel Anytime"
             )
         }
     }
