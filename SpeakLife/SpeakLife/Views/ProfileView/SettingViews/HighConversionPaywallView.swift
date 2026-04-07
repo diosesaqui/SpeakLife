@@ -56,9 +56,9 @@ struct HighConversionPaywallView: View {
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 0) {
                         headerSection
-                        socialProofBanner.padding(.top, 20)
-                        featuredTestimonial.padding(.top, 20)
-                        benefitsSection.padding(.top, 24)
+                        starsOnlyBanner.padding(.top, 20)
+                        benefitsSection.padding(.top, 20)
+                        featuredTestimonial.padding(.top, 24)
                         remainingTestimonialsSection.padding(.top, 24)
                         Spacer(minLength: 20)
                     }
@@ -110,37 +110,14 @@ struct HighConversionPaywallView: View {
         }
     }
 
-    // MARK: - Social Proof
-    private var socialProofBanner: some View {
-        VStack(spacing: 10) {
-            // Big stat
-            HStack(spacing: 6) {
-                Text("100,000+")
-                    .font(.system(size: 28, weight: .black))
-                    .foregroundColor(.white)
-                Text("believers\ntransformed")
-                    .font(.system(size: 13, weight: .medium))
-                    .foregroundColor(.white.opacity(0.75))
-                    .multilineTextAlignment(.leading)
+    // MARK: - Social Proof (stars only — headline already covers 100K stat)
+    private var starsOnlyBanner: some View {
+        HStack(spacing: 4) {
+            HStack(spacing: 2) {
+                ForEach(0..<5) { _ in Image(systemName: "star.fill").font(.system(size: 13)).foregroundColor(.yellow) }
             }
-            .padding(.horizontal, 20).padding(.vertical, 12)
-            .background(
-                RoundedRectangle(cornerRadius: 14)
-                    .fill(LinearGradient(
-                        colors: [Constants.DAMidBlue.opacity(0.35), Constants.DAMidBlue.opacity(0.15)],
-                        startPoint: .leading, endPoint: .trailing
-                    ))
-                    .overlay(RoundedRectangle(cornerRadius: 14).stroke(Constants.DAMidBlue.opacity(0.4), lineWidth: 1))
-            )
-
-            // Stars row
-            HStack(spacing: 4) {
-                HStack(spacing: 2) {
-                    ForEach(0..<5) { _ in Image(systemName: "star.fill").font(.system(size:12)).foregroundColor(.yellow) }
-                }
-                Text("4.9 rating · App Store")
-                    .font(.system(size: 13, weight: .medium)).foregroundColor(.white.opacity(0.7))
-            }
+            Text("4.9 rating · App Store")
+                .font(.system(size: 13, weight: .medium)).foregroundColor(.white.opacity(0.7))
         }
     }
 
@@ -172,7 +149,7 @@ struct HighConversionPaywallView: View {
                 .font(.system(size: 15, weight: .medium))
                 .foregroundColor(.white)
                 .fixedSize(horizontal: false, vertical: true)
-            Text("— Marcus T., verified subscriber")
+            Text("— Marcus T., App Store review")
                 .font(.system(size: 12, weight: .medium))
                 .foregroundColor(.white.opacity(0.5))
         }
@@ -251,7 +228,7 @@ struct HighConversionPaywallView: View {
             HStack(spacing: 10) {
                 planCard(plan: .monthly, topLabel: nil, title: "Monthly", price: monthlyPrice, sub: "per month")
                     .frame(width: cardWidth)
-                planCard(plan: .annual, topLabel: "BEST VALUE", title: "Annual", price: annualPrice, sub: "per month \(annualPerMonth)")
+                planCard(plan: .annual, topLabel: "BEST VALUE", title: "Annual", price: annualPerMonth + "/mo", sub: "billed \(annualPrice)/year")
                     .frame(width: cardWidth)
             }
         }
