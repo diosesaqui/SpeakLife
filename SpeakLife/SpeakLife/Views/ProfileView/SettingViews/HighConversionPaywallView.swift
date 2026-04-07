@@ -56,9 +56,9 @@ struct HighConversionPaywallView: View {
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 0) {
                         headerSection
-                        socialProofBanner.padding(.top, 20)
-                        featuredTestimonial.padding(.top, 20)
-                        benefitsSection.padding(.top, 24)
+                        starsOnlyBanner.padding(.top, 20)
+                        benefitsSection.padding(.top, 20)
+                        featuredTestimonial.padding(.top, 24)
                         remainingTestimonialsSection.padding(.top, 24)
                         Spacer(minLength: 20)
                     }
@@ -110,53 +110,29 @@ struct HighConversionPaywallView: View {
         }
     }
 
-    // MARK: - Social Proof
-    private var socialProofBanner: some View {
-        VStack(spacing: 10) {
-            // Big stat
-            HStack(spacing: 6) {
-                Text("100,000+")
-                    .font(.system(size: 28, weight: .black))
-                    .foregroundColor(.white)
-                Text("believers\ntransformed")
-                    .font(.system(size: 13, weight: .medium))
-                    .foregroundColor(.white.opacity(0.75))
-                    .multilineTextAlignment(.leading)
+    // MARK: - Social Proof (stars only — headline already covers 100K stat)
+    private var starsOnlyBanner: some View {
+        HStack(spacing: 4) {
+            HStack(spacing: 2) {
+                ForEach(0..<5) { _ in Image(systemName: "star.fill").font(.system(size: 13)).foregroundColor(.yellow) }
             }
-            .padding(.horizontal, 20).padding(.vertical, 12)
-            .background(
-                RoundedRectangle(cornerRadius: 14)
-                    .fill(LinearGradient(
-                        colors: [Constants.DAMidBlue.opacity(0.35), Constants.DAMidBlue.opacity(0.15)],
-                        startPoint: .leading, endPoint: .trailing
-                    ))
-                    .overlay(RoundedRectangle(cornerRadius: 14).stroke(Constants.DAMidBlue.opacity(0.4), lineWidth: 1))
-            )
-
-            // Stars row
-            HStack(spacing: 4) {
-                HStack(spacing: 2) {
-                    ForEach(0..<5) { _ in Image(systemName: "star.fill").font(.system(size:12)).foregroundColor(.yellow) }
-                }
-                Text("4.9 rating · App Store")
-                    .font(.system(size: 13, weight: .medium)).foregroundColor(.white.opacity(0.7))
-            }
+            Text("4.9 rating · App Store")
+                .font(.system(size: 13, weight: .medium)).foregroundColor(.white.opacity(0.7))
         }
     }
 
     // MARK: - Benefits
     private var benefitsSection: some View {
-        let icons = ["quote.bubble.fill", "shield.fill", "eye.fill", "person.circle.fill", "hands.and.sparkles.fill"]
+        let icons = ["quote.bubble.fill", "shield.fill", "eye.fill", "person.circle.fill"]
         let descs = [
             "Daily declarations rewire your mind until God's Word becomes your first response.",
             "Spoken truth is your greatest weapon. It's exactly how Jesus defeated every attack.",
             "Faith comes by hearing. Audio devotionals put Scripture in your ears morning and night.",
-            "Know your identity in Christ so deeply that fear, doubt, and shame lose their grip.",
-            "The Warrior Room — share prayers, claim testimonies, and never fight alone."
+            "Know your identity in Christ so deeply that fear, doubt, and shame lose their grip."
         ]
-        let props = Array(copy.valueProps.prefix(5))
+        let props = Array(copy.valueProps.prefix(4))
         return VStack(alignment: .leading, spacing: 16) {
-            ForEach(0..<min(props.count, 5), id: \.self) { i in
+            ForEach(0..<min(props.count, 4), id: \.self) { i in
                 HCBenefitRow(icon: icons[i], title: props[i], description: descs[i])
             }
         }
@@ -173,7 +149,7 @@ struct HighConversionPaywallView: View {
                 .font(.system(size: 15, weight: .medium))
                 .foregroundColor(.white)
                 .fixedSize(horizontal: false, vertical: true)
-            Text("— Marcus T., verified subscriber")
+            Text("— Marcus T., App Store review")
                 .font(.system(size: 12, weight: .medium))
                 .foregroundColor(.white.opacity(0.5))
         }

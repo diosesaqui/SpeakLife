@@ -18,10 +18,10 @@ struct EmotionalHookScreen: View {
     @State private var subVisible = false
     @State private var buttonVisible = false
 
-    // Pain confessions — identity angle (Option B)
-    private let painPoints = [
-        "You know you're loved — but you don't always feel it",
-        "Doubt hits harder than your faith some days"
+    // Attack → Declaration pairs — raw thought, then the Word
+    private let declarations: [(attack: String, speak: String)] = [
+        (attack: "\"What if I'm seriously sick?\"",       speak: "\"By His stripes, I am healed.\""),
+        (attack: "\"I just feel like something bad is going to happen.\"", speak: "\"God has not given me a spirit of fear.\"")
     ]
 
     var body: some View {
@@ -29,63 +29,77 @@ struct EmotionalHookScreen: View {
             backgroundView
             VStack(spacing: 0) {
                 Spacer()
-                VStack(spacing: 28) {
-                    // Headline — names the lie, points to truth
+                VStack(spacing: 24) {
+                    // Headline
                     VStack(spacing: 10) {
-                        Text("The voice in your head\nis lying to you.")
-                            .font(.system(size: 32, weight: .bold, design: .rounded))
+                        Text("A bad thought hits.\nYou don't have to take it.")
+                            .font(.system(size: 30, weight: .bold, design: .rounded))
                             .multilineTextAlignment(.center)
                             .foregroundColor(.white)
                             .opacity(headlineVisible ? 1 : 0)
                             .offset(y: headlineVisible ? 0 : 20)
 
-                        Text("It's time to drown it out with what God actually says about you.")
-                            .font(.system(size: 22, weight: .medium, design: .rounded))
+                        Text("God gave you a weapon. It's your voice.")
+                            .font(.system(size: 18, weight: .medium, design: .rounded))
                             .multilineTextAlignment(.center)
-                            .foregroundColor(.white.opacity(0.85))
-                            .lineSpacing(3)
+                            .foregroundColor(.white.opacity(0.8))
                             .padding(.horizontal, 28)
                             .opacity(headlineVisible ? 1 : 0)
                             .offset(y: headlineVisible ? 0 : 16)
                             .animation(.easeOut(duration: 0.6).delay(0.15), value: headlineVisible)
                     }
 
-                    // Pain confessions
-                    VStack(spacing: 13) {
-                        ForEach(Array(painPoints.enumerated()), id: \.offset) { index, point in
-                            HStack(alignment: .top, spacing: 10) {
-                                Image(systemName: "minus")
-                                    .font(.system(size: 12, weight: .bold))
-                                    .foregroundColor(.white.opacity(0.4))
-                                    .padding(.top, 3)
-                                Text(point)
-                                    .font(.system(size: 15, weight: .regular, design: .rounded))
-                                    .foregroundColor(.white.opacity(0.8))
+                    // Attack → Speak cards
+                    VStack(spacing: 10) {
+                        ForEach(Array(declarations.enumerated()), id: \.offset) { index, pair in
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text(pair.attack)
+                                    .font(.system(size: 14, weight: .regular, design: .rounded))
+                                    .foregroundColor(.white.opacity(0.5))
+                                    .italic()
                                     .fixedSize(horizontal: false, vertical: true)
-                                    .lineSpacing(2)
+
+                                HStack(alignment: .top, spacing: 8) {
+                                    Text("YOU SAY:")
+                                        .font(.system(size: 10, weight: .bold, design: .rounded))
+                                        .foregroundColor(.green.opacity(0.9))
+                                        .tracking(0.8)
+                                        .padding(.top, 2)
+                                    Text(pair.speak)
+                                        .font(.system(size: 15, weight: .semibold, design: .rounded))
+                                        .foregroundColor(.white)
+                                        .fixedSize(horizontal: false, vertical: true)
+                                }
                             }
+                            .padding(14)
                             .frame(maxWidth: .infinity, alignment: .leading)
+                            .background(
+                                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                    .fill(Color.white.opacity(0.08))
+                                    .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                        .strokeBorder(Color.white.opacity(0.15), lineWidth: 1))
+                            )
                             .opacity(subVisible ? 1 : 0)
-                            .offset(x: subVisible ? 0 : -18)
-                            .animation(.easeOut(duration: 0.45).delay(0.25 + Double(index) * 0.07), value: subVisible)
+                            .offset(y: subVisible ? 0 : 16)
+                            .animation(.easeOut(duration: 0.45).delay(0.3 + Double(index) * 0.15), value: subVisible)
                         }
                     }
-                    .padding(.horizontal, 36)
+                    .padding(.horizontal, 28)
 
-                    // Bridge line — identity frame
-                    VStack(spacing: 6) {
-                        Text("Speak what God says until you believe it.")
-                            .font(.system(size: 17, weight: .bold, design: .rounded))
-                            .foregroundColor(.white)
+                    // Proverbs 18:21 anchor
+                    VStack(spacing: 4) {
+                        Text("\"Death and life are in the power of the tongue.\"")
+                            .font(.system(size: 14, weight: .semibold, design: .serif))
+                            .foregroundColor(.white.opacity(0.9))
                             .multilineTextAlignment(.center)
-                        Text("That's how identity gets rebuilt from the inside out.")
-                            .font(.system(size: 15, weight: .medium, design: .rounded))
-                            .foregroundColor(.white.opacity(0.7))
-                            .multilineTextAlignment(.center)
+                            .italic()
+                        Text("Proverbs 18:21")
+                            .font(.system(size: 12, weight: .medium, design: .rounded))
+                            .foregroundColor(.white.opacity(0.45))
                     }
                     .padding(.horizontal, 32)
                     .opacity(subVisible ? 1 : 0)
-                    .animation(.easeOut(duration: 0.5).delay(0.7), value: subVisible)
+                    .animation(.easeOut(duration: 0.5).delay(0.65), value: subVisible)
                 }
                 .padding(.horizontal, 16)
                 Spacer()
@@ -93,7 +107,7 @@ struct EmotionalHookScreen: View {
                     UIImpactFeedbackGenerator(style: .light).impactOccurred()
                     onContinue()
                 }) {
-                    Text("Speak truth over me")
+                    Text("Start speaking life")
                         .font(.system(size: 17, weight: .semibold, design: .rounded))
                         .foregroundColor(.black)
                         .frame(maxWidth: .infinity)
@@ -221,6 +235,7 @@ struct TransformationSocialProofScreen: View {
             withAnimation(.easeOut(duration: 0.6).delay(0.4)) { card1Visible = true }
             withAnimation(.easeOut(duration: 0.6).delay(0.65)) { card2Visible = true }
             withAnimation(.easeOut(duration: 0.5).delay(0.9)) { buttonVisible = true }
+            Analytics.logEvent("onboarding_social_proof_shown", parameters: nil)
         }
     }
 
@@ -1566,6 +1581,7 @@ struct FeatureScriptureRow: View {
 // MARK: - Screen 10: Live Declaration Preview
 struct LiveDeclarationPreviewScreen: View {
     @EnvironmentObject var subscriptionStore: SubscriptionStore
+    @EnvironmentObject var appState: AppState
     let size: CGSize
     let onContinue: () -> Void
 
@@ -1574,28 +1590,79 @@ struct LiveDeclarationPreviewScreen: View {
     @State private var buttonVisible = false
     @State private var pulseScale: CGFloat = 1.0
 
-    // Hardcoded preview declaration — feels personal without requiring data load
-    private let declarations: [(text: String, scripture: String, reference: String)] = [
-        (
-            "I am not moved by fear. I am moved by faith. God has not given me a spirit of fear, but of power, love, and a sound mind. I declare that I walk in peace today.",
+    // Declarations keyed by category — personalized to what user selected in step 2
+    private let declarationsByCategory: [String: (text: String, scripture: String, reference: String)] = [
+        "anxiety": (
+            "I speak to every anxious thought and command it to go. The peace of God that surpasses all understanding guards my heart and my mind in Christ Jesus. I choose peace over panic.",
+            "Be anxious for nothing, but in everything by prayer and supplication... the peace of God will guard your hearts.",
+            "Philippians 4:6-7"
+        ),
+        "fear": (
+            "I am not moved by fear. God has not given me a spirit of fear, but of power, love, and a sound mind. Fear has no authority over my life. I walk in boldness today.",
             "For God has not given us a spirit of fear, but of power and of love and of a sound mind.",
             "2 Timothy 1:7"
         ),
-        (
-            "I know who I am. I am chosen, redeemed, and called by name. My identity is not defined by my past — it is secured by Christ's finished work.",
+        "identity": (
+            "I know who I am. I am chosen, redeemed, and called by name. My identity is not defined by my past — it is secured by Christ's finished work. I am enough because He says I am.",
             "But you are a chosen generation, a royal priesthood, a holy nation, His own special people.",
             "1 Peter 2:9"
         ),
-        (
-            "I speak to every anxious thought and command it to go. The peace of God that surpasses all understanding guards my heart and my mind in Christ Jesus.",
-            "Be anxious for nothing, but in everything by prayer... the peace of God will guard your hearts.",
-            "Philippians 4:6-7"
+        "faith": (
+            "My faith is stronger than my doubt. I believe what God said more than what I feel. His Word is my anchor and His promises are yes and amen in my life today.",
+            "Now faith is the substance of things hoped for, the evidence of things not seen.",
+            "Hebrews 11:1"
+        ),
+        "confidence": (
+            "I walk in God-given confidence. I am not less than. I am not overlooked. I am fully equipped for everything He has called me to. I step forward without shame today.",
+            "I can do all things through Christ who strengthens me.",
+            "Philippians 4:13"
+        ),
+        "joy": (
+            "The joy of the Lord is my strength. Sadness does not have the final word. I choose joy — not because everything is perfect, but because God is good and His plans for me are good.",
+            "The joy of the Lord is your strength.",
+            "Nehemiah 8:10"
+        ),
+        "hope": (
+            "I am not hopeless. God has a future and a plan for me — plans to prosper me, not to harm me. I hold on to His promises even when I cannot see the way forward.",
+            "For I know the plans I have for you, declares the Lord — plans to prosper you and not to harm you.",
+            "Jeremiah 29:11"
+        ),
+        "health": (
+            "I declare that I am healed by the stripes of Jesus. My body is a temple of the Holy Spirit. I speak life and wholeness over every part of me in the name of Jesus.",
+            "By His wounds you have been healed.",
+            "1 Peter 2:24"
+        ),
+        "marriage": (
+            "I speak restoration and breakthrough over my relationships. What God has joined together, no enemy can destroy. Love is patient, love is kind — and that love lives in my home.",
+            "Love is patient, love is kind. It does not envy, it does not boast, it is not proud.",
+            "1 Corinthians 13:4"
+        ),
+        "wealth": (
+            "God is my provider. He supplies all my needs according to His riches in glory. Lack does not define me — His abundance does. I am a good steward of what He has given me.",
+            "And my God will meet all your needs according to the riches of his glory in Christ Jesus.",
+            "Philippians 4:19"
+        ),
+        "rest": (
+            "I release the weight I was never meant to carry. God gives sleep to those He loves. I choose rest. I trust Him with what I cannot control. His yoke is easy and His burden is light.",
+            "He grants sleep to those he loves.",
+            "Psalm 127:2"
+        ),
+        "wisdom": (
+            "God has given me wisdom. When I lack it, I ask Him and He gives it generously. I make good decisions because I am led by the Spirit and anchored in His Word.",
+            "If any of you lacks wisdom, you should ask God, who gives generously to all.",
+            "James 1:5"
         )
     ]
 
+    // Pick declaration based on first selected category, fall back to identity
     private var selected: (text: String, scripture: String, reference: String) {
-        // Fixed to identity declaration — mirrors Screen 1's identity hook for narrative coherence
-        return declarations[1]
+        let cats = appState.selectedNotificationCategories
+            .split(separator: ",")
+            .map { String($0).trimmingCharacters(in: .whitespaces) }
+        for cat in cats {
+            if let match = declarationsByCategory[cat] { return match }
+        }
+        return declarationsByCategory["identity"]!
     }
 
     var body: some View {
