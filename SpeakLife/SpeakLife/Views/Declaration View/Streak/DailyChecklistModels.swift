@@ -642,10 +642,21 @@ struct TaskLibrary {
         return allTasks.filter { $0.minimumStreakDay <= streakDay }
     }
     
+    /// Ensures the Daily Burst task is always first so it's the hero "NEXT UP" card.
+    /// Burst is the only task that earns the streak — it must never be buried.
+    private static func burstFirst(_ tasks: [DailyTask]) -> [DailyTask] {
+        guard let burstIndex = tasks.firstIndex(where: { $0.id == "complete_daily_burst" }),
+              burstIndex != 0 else { return tasks }
+        var reordered = tasks
+        let burst = reordered.remove(at: burstIndex)
+        reordered.insert(burst, at: 0)
+        return reordered
+    }
+
     static func getCoreTasksForStreak(_ streakDay: Int, userCategories: [String] = []) -> [DailyTask] {
         // Check if AI features are enabled for enhanced task generation
         if isAIEnabled() {
-            return getAIEnhancedTasks(streakDay: streakDay, userCategories: userCategories)
+            return burstFirst(getAIEnhancedTasks(streakDay: streakDay, userCategories: userCategories))
         }
         
         // Standard task generation
@@ -678,6 +689,7 @@ struct TaskLibrary {
             let growth = Array(growthTasks.filter { $0.minimumStreakDay <= streakDay }.prefix(1))
             let impact = Array(impactTasks.filter { $0.minimumStreakDay <= streakDay }.prefix(1))
             let mastery = availableTasks.filter { $0.category == .mastery }
+
             tasks = foundation + growth + impact + Array(mastery.prefix(1))
         }
         
@@ -685,8 +697,9 @@ struct TaskLibrary {
         if !userCategories.isEmpty {
             tasks = tasks.map { personalizeTask($0, for: userCategories) }
         }
-        
-        return tasks
+
+        // Burst must always be first — it's the only streak-earning task
+        return burstFirst(tasks)
     }
     
     static func getNewlyUnlockedTasks(currentStreak: Int, previousStreak: Int) -> [DailyTask] {
