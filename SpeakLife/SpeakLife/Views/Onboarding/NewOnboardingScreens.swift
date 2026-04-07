@@ -59,10 +59,12 @@ struct EmotionalHookScreen: View {
                                     .italic()
                                     .fixedSize(horizontal: false, vertical: true)
 
-                                HStack(spacing: 8) {
-                                    Image(systemName: "speaker.wave.2.fill")
-                                        .font(.system(size: 12))
-                                        .foregroundColor(.green.opacity(0.85))
+                                HStack(alignment: .top, spacing: 8) {
+                                    Text("YOU SAY:")
+                                        .font(.system(size: 10, weight: .bold, design: .rounded))
+                                        .foregroundColor(.green.opacity(0.9))
+                                        .tracking(0.8)
+                                        .padding(.top, 2)
                                     Text(pair.speak)
                                         .font(.system(size: 15, weight: .semibold, design: .rounded))
                                         .foregroundColor(.white)
