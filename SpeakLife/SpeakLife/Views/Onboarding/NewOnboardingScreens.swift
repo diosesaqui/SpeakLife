@@ -18,10 +18,10 @@ struct EmotionalHookScreen: View {
     @State private var subVisible = false
     @State private var buttonVisible = false
 
-    // Pain confessions — identity angle (Option B)
+    // Visceral pain points — anxiety/fear angle
     private let painPoints = [
-        "You know you're loved — but you don't always feel it",
-        "Doubt hits harder than your faith some days"
+        "You've prayed — but the fear keeps coming back",
+        "You know God is good. Fear still gets the first word."
     ]
 
     var body: some View {
@@ -30,20 +30,20 @@ struct EmotionalHookScreen: View {
             VStack(spacing: 0) {
                 Spacer()
                 VStack(spacing: 28) {
-                    // Headline — names the lie, points to truth
+                    // Headline — acute, specific, visceral
                     VStack(spacing: 10) {
-                        Text("The voice in your head\nis lying to you.")
+                        Text("You're tired of waking up afraid.")
                             .font(.system(size: 32, weight: .bold, design: .rounded))
                             .multilineTextAlignment(.center)
                             .foregroundColor(.white)
                             .opacity(headlineVisible ? 1 : 0)
                             .offset(y: headlineVisible ? 0 : 20)
 
-                        Text("It's time to drown it out with what God actually says about you.")
-                            .font(.system(size: 22, weight: .medium, design: .rounded))
+                        Text("The worry starts before your feet hit the floor. And you're done letting it.")
+                            .font(.system(size: 20, weight: .medium, design: .rounded))
                             .multilineTextAlignment(.center)
                             .foregroundColor(.white.opacity(0.85))
-                            .lineSpacing(3)
+                            .lineSpacing(4)
                             .padding(.horizontal, 28)
                             .opacity(headlineVisible ? 1 : 0)
                             .offset(y: headlineVisible ? 0 : 16)
@@ -72,15 +72,15 @@ struct EmotionalHookScreen: View {
                     }
                     .padding(.horizontal, 36)
 
-                    // Bridge line — identity frame
+                    // Bridge — speaking is the weapon
                     VStack(spacing: 6) {
-                        Text("Speak what God says until you believe it.")
+                        Text("Jesus defeated every attack with spoken Word.")
                             .font(.system(size: 17, weight: .bold, design: .rounded))
                             .foregroundColor(.white)
                             .multilineTextAlignment(.center)
-                        Text("That's how identity gets rebuilt from the inside out.")
+                        Text("When you speak what God says, faith rises and fear has to go.")
                             .font(.system(size: 15, weight: .medium, design: .rounded))
-                            .foregroundColor(.white.opacity(0.7))
+                            .foregroundColor(.white.opacity(0.75))
                             .multilineTextAlignment(.center)
                     }
                     .padding(.horizontal, 32)
@@ -93,7 +93,7 @@ struct EmotionalHookScreen: View {
                     UIImpactFeedbackGenerator(style: .light).impactOccurred()
                     onContinue()
                 }) {
-                    Text("Speak truth over me")
+                    Text("Give me the words to speak")
                         .font(.system(size: 17, weight: .semibold, design: .rounded))
                         .foregroundColor(.black)
                         .frame(maxWidth: .infinity)
