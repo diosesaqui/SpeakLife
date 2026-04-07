@@ -18,10 +18,10 @@ struct EmotionalHookScreen: View {
     @State private var subVisible = false
     @State private var buttonVisible = false
 
-    // Visceral pain points — anxiety/fear angle
-    private let painPoints = [
-        "You've prayed — but the fear keeps coming back",
-        "You know God is good. Fear still gets the first word."
+    // Attack → Declaration pairs — shows the mechanism immediately
+    private let declarations: [(attack: String, speak: String)] = [
+        (attack: "A bad thought hits about your health...", speak: "\"By His stripes, I am healed.\""),
+        (attack: "Fear creeps in about your finances...",   speak: "\"My God shall supply all my needs.\"")
     ]
 
     var body: some View {
@@ -29,68 +29,74 @@ struct EmotionalHookScreen: View {
             backgroundView
             VStack(spacing: 0) {
                 Spacer()
-                VStack(spacing: 28) {
-                    // Headline — acute, specific, visceral
+                VStack(spacing: 24) {
+                    // Headline
                     VStack(spacing: 10) {
-                        Text("You're tired of waking up afraid.")
-                            .font(.system(size: 32, weight: .bold, design: .rounded))
+                        Text("A bad thought hits.\nYou don't have to take it.")
+                            .font(.system(size: 30, weight: .bold, design: .rounded))
                             .multilineTextAlignment(.center)
                             .foregroundColor(.white)
                             .opacity(headlineVisible ? 1 : 0)
                             .offset(y: headlineVisible ? 0 : 20)
 
-                        Text("The worry starts before your feet hit the floor. And you're done letting it.")
-                            .font(.system(size: 20, weight: .medium, design: .rounded))
+                        Text("God gave you a weapon. It's your voice.")
+                            .font(.system(size: 18, weight: .medium, design: .rounded))
                             .multilineTextAlignment(.center)
-                            .foregroundColor(.white.opacity(0.85))
-                            .lineSpacing(4)
+                            .foregroundColor(.white.opacity(0.8))
                             .padding(.horizontal, 28)
                             .opacity(headlineVisible ? 1 : 0)
                             .offset(y: headlineVisible ? 0 : 16)
                             .animation(.easeOut(duration: 0.6).delay(0.15), value: headlineVisible)
                     }
 
-                    // Pain confessions
-                    VStack(spacing: 13) {
-                        ForEach(Array(painPoints.enumerated()), id: \.offset) { index, point in
-                            HStack(alignment: .top, spacing: 10) {
-                                Image(systemName: "minus")
-                                    .font(.system(size: 12, weight: .bold))
-                                    .foregroundColor(.white.opacity(0.4))
-                                    .padding(.top, 3)
-                                Text(point)
-                                    .font(.system(size: 15, weight: .regular, design: .rounded))
-                                    .foregroundColor(.white.opacity(0.8))
+                    // Attack → Speak cards
+                    VStack(spacing: 10) {
+                        ForEach(Array(declarations.enumerated()), id: \.offset) { index, pair in
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text(pair.attack)
+                                    .font(.system(size: 13, weight: .regular, design: .rounded))
+                                    .foregroundColor(.white.opacity(0.55))
                                     .fixedSize(horizontal: false, vertical: true)
-                                    .lineSpacing(2)
+
+                                HStack(spacing: 8) {
+                                    Image(systemName: "speaker.wave.2.fill")
+                                        .font(.system(size: 12))
+                                        .foregroundColor(.green.opacity(0.85))
+                                    Text(pair.speak)
+                                        .font(.system(size: 15, weight: .semibold, design: .rounded))
+                                        .foregroundColor(.white)
+                                        .fixedSize(horizontal: false, vertical: true)
+                                }
                             }
+                            .padding(14)
                             .frame(maxWidth: .infinity, alignment: .leading)
+                            .background(
+                                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                    .fill(Color.white.opacity(0.08))
+                                    .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                        .strokeBorder(Color.white.opacity(0.15), lineWidth: 1))
+                            )
                             .opacity(subVisible ? 1 : 0)
-                            .offset(x: subVisible ? 0 : -18)
-                            .animation(.easeOut(duration: 0.45).delay(0.25 + Double(index) * 0.07), value: subVisible)
+                            .offset(y: subVisible ? 0 : 16)
+                            .animation(.easeOut(duration: 0.45).delay(0.3 + Double(index) * 0.15), value: subVisible)
                         }
                     }
-                    .padding(.horizontal, 36)
+                    .padding(.horizontal, 28)
 
-                    // Bridge — speaking life is the weapon
-                    VStack(spacing: 6) {
+                    // Proverbs 18:21 anchor
+                    VStack(spacing: 4) {
                         Text("\"Death and life are in the power of the tongue.\"")
-                            .font(.system(size: 16, weight: .semibold, design: .serif))
-                            .foregroundColor(.white)
+                            .font(.system(size: 14, weight: .semibold, design: .serif))
+                            .foregroundColor(.white.opacity(0.9))
                             .multilineTextAlignment(.center)
                             .italic()
                         Text("Proverbs 18:21")
-                            .font(.system(size: 13, weight: .medium, design: .rounded))
-                            .foregroundColor(.white.opacity(0.5))
-                        Text("You have the power to speak life over every fear.")
-                            .font(.system(size: 15, weight: .medium, design: .rounded))
-                            .foregroundColor(.white.opacity(0.75))
-                            .multilineTextAlignment(.center)
-                            .padding(.top, 4)
+                            .font(.system(size: 12, weight: .medium, design: .rounded))
+                            .foregroundColor(.white.opacity(0.45))
                     }
                     .padding(.horizontal, 32)
                     .opacity(subVisible ? 1 : 0)
-                    .animation(.easeOut(duration: 0.5).delay(0.7), value: subVisible)
+                    .animation(.easeOut(duration: 0.5).delay(0.65), value: subVisible)
                 }
                 .padding(.horizontal, 16)
                 Spacer()
