@@ -21,7 +21,7 @@ struct EmotionalHookScreen: View {
     // Attack → Declaration pairs — raw thought, then the Word
     private let declarations: [(attack: String, speak: String)] = [
         (attack: "\"What if I'm seriously sick?\"",       speak: "\"By His stripes, I am healed.\""),
-        (attack: "\"I can't stop this feeling of dread.\"", speak: "\"God has not given me a spirit of fear.\"")
+        (attack: "\"I just feel like something bad is going to happen.\"", speak: "\"God has not given me a spirit of fear.\"")
     ]
 
     var body: some View {
