@@ -221,11 +221,7 @@ struct OptimizedSubscriptionViewV2: View {
                 description: "Know your identity in Christ so deeply that fear, doubt, and shame lose their grip."
             )
 
-            ValuePropRow(
-                icon: "hands.and.sparkles.fill",
-                title: "Pray With 100,000+ Believers",
-                description: "The Warrior Room — share prayers, claim testimonies, and never fight alone."
-            )
+
         }
     }
     

@@ -161,20 +161,17 @@ struct ModernDailyChecklistView: View {
 //                            )
 //                        }
                         
-                        // On iPad: always show close button (fullScreenCover has no swipe-to-dismiss)
-                        // On iPhone: only show if an onClose callback was explicitly passed
-                        if isIPad || onClose != nil {
-                            Button(action: {
-                                if let onClose = onClose {
-                                    onClose()
-                                } else {
-                                    dismiss()
-                                }
-                            }) {
-                                Image(systemName: "xmark.circle.fill")
-                                    .font(.title3)
-                                    .foregroundColor(.white.opacity(0.5))
+                        // Always show close button — fullScreenCover has no swipe-to-dismiss
+                        Button(action: {
+                            if let onClose = onClose {
+                                onClose()
+                            } else {
+                                dismiss()
                             }
+                        }) {
+                            Image(systemName: "xmark.circle.fill")
+                                .font(.title3)
+                                .foregroundColor(.white.opacity(0.5))
                         }
                     }
                     

@@ -22,67 +22,82 @@ struct OnboardingView: View {
 
     let impactMed = UIImpactFeedbackGenerator(style: .soft)
 
+    // Progress mapping — only show dots on pre-paywall screens
+    private var progressStep: Int? {
+        switch selection {
+        case .emotionalHook:    return 1
+        case .categorySelect:   return 2
+        case .livePreview:      return 3
+        case .socialProof:      return 4
+        case .dailyCommitment:  return 5
+        default:                return nil
+        }
+    }
+    private let totalSteps = 5
+
     var body: some View {
         GeometryReader { geometry in
-            TabView(selection: $selection) {
+            ZStack(alignment: .top) {
+                TabView(selection: $selection) {
 
-                // SCREEN 1: Emotional Hook
-                EmotionalHookScreen(size: geometry.size) {
-                    withAnimation { advance() }
+                    // SCREEN 1: Emotional Hook
+                    EmotionalHookScreen(size: geometry.size) {
+                        withAnimation { advance() }
+                    }
+                    .tag(Tab.emotionalHook)
+
+                    // SCREEN 2: Category Selection
+                    CategorySelectScreen(size: geometry.size) {
+                        withAnimation { advance() }
+                    }
+                    .tag(Tab.categorySelect)
+
+                    // SCREEN 3: Live Declaration Preview — personalized to selected category
+                    LiveDeclarationPreviewScreen(size: geometry.size) {
+                        withAnimation { advance() }
+                    }
+                    .tag(Tab.livePreview)
+
+                    // SCREEN 4: Social Proof — before/after transformation stories
+                    TransformationSocialProofScreen(size: geometry.size) {
+                        withAnimation { advance() }
+                    }
+                    .tag(Tab.socialProof)
+
+                    // SCREEN 5: Daily Commitment — sets expectation before paywall
+                    DailyCommitmentScreen(size: geometry.size) {
+                        Analytics.logEvent("onboarding_commitment_done", parameters: nil)
+                        advance()
+                    }
+                    .tag(Tab.dailyCommitment)
+
+                    // SCREEN 6: Subscription / Paywall
+                    subscriptionScene(size: geometry.size)
+                        .tag(Tab.subscription)
+
+                    // POST-PAYWALL: Notification Permission
+                    NotificationOnboarding(size: geometry.size) {
+                        withAnimation { askNotificationPermission() }
+                    }
+                    .tag(Tab.notification)
                 }
-                .tag(Tab.emotionalHook)
+                .tabViewStyle(.page(indexDisplayMode: .never))
+                .font(.headline)
+                .ignoresSafeArea()
 
-                // SCREEN 2: Category Selection
-                CategorySelectScreen(size: geometry.size) {
-                    withAnimation { advance() }
+                // Progress dots — visible on pre-paywall screens only
+                if let step = progressStep {
+                    HStack(spacing: 6) {
+                        ForEach(1...totalSteps, id: \.self) { i in
+                            Capsule()
+                                .fill(i <= step ? Color.white : Color.white.opacity(0.25))
+                                .frame(width: i == step ? 20 : 6, height: 6)
+                                .animation(.spring(response: 0.4, dampingFraction: 0.7), value: step)
+                        }
+                    }
+                    .padding(.top, geometry.safeAreaInsets.top + 12)
                 }
-                .tag(Tab.categorySelect)
-
-                // SCREEN 3: Live Declaration Preview (declaration + why to declare)
-                LiveDeclarationPreviewScreen(size: geometry.size) {
-                    withAnimation { advance() }
-                }
-                .tag(Tab.livePreview)
-
-                // SCREEN 4: Audio Feature — Faith comes by hearing
-                AudioFeatureScreen(size: geometry.size) {
-                    withAnimation { advance() }
-                }
-                .tag(Tab.audioFeature)
-
-                // SCREEN 5: Daily Devotional Feature — God's love for you
-                DailyDevotionalFeatureScreen(size: geometry.size) {
-                    withAnimation { advance() }
-                }
-                .tag(Tab.devotionalFeature)
-
-                // SCREEN 6: Warrior Room — community prayer & testimonies
-                // Flow: emotionalHook → categorySelect → livePreview → audioFeature → devotionalFeature → warriorRoom → dailyCommitment → subscription → notification
-                WarriorRoomFeatureScreen(size: geometry.size) {
-                    withAnimation { advance() }
-                }
-                .tag(Tab.warriorRoom)
-
-                // SCREEN 7: Daily Commitment — sets expectation before paywall
-                DailyCommitmentScreen(size: geometry.size) {
-                    Analytics.logEvent("onboarding_commitment_done", parameters: nil)
-                    advance()
-                }
-                .tag(Tab.dailyCommitment)
-
-                // SCREEN 8: Subscription / Paywall
-                subscriptionScene(size: geometry.size)
-                    .tag(Tab.subscription)
-
-                // POST-PAYWALL: Notification Permission
-                NotificationOnboarding(size: geometry.size) {
-                    withAnimation { askNotificationPermission() }
-                }
-                .tag(Tab.notification)
             }
-            .tabViewStyle(.page(indexDisplayMode: .never))
-            .font(.headline)
-            .ignoresSafeArea()
         }
         .ignoresSafeArea()
         .preferredColorScheme(.light)
@@ -131,27 +146,15 @@ struct OnboardingView: View {
 
         case .livePreview:
             impactMed.impactOccurred()
-            selection = .audioFeature
+            selection = .socialProof
             onboardingTab = selection.rawValue
             Analytics.logEvent("onboarding_preview_done", parameters: nil)
 
-        case .audioFeature:
-            impactMed.impactOccurred()
-            selection = .devotionalFeature
-            onboardingTab = selection.rawValue
-            Analytics.logEvent("onboarding_audio_feature_done", parameters: nil)
-
-        case .devotionalFeature:
-            impactMed.impactOccurred()
-            selection = .warriorRoom
-            onboardingTab = selection.rawValue
-            Analytics.logEvent("onboarding_devotional_feature_done", parameters: nil)
-
-        case .warriorRoom:
+        case .socialProof:
             impactMed.impactOccurred()
             selection = .dailyCommitment
             onboardingTab = selection.rawValue
-            Analytics.logEvent("onboarding_warrior_room_done", parameters: nil)
+            Analytics.logEvent("onboarding_social_proof_done", parameters: nil)
 
         case .dailyCommitment:
             impactMed.impactOccurred()
