@@ -146,17 +146,16 @@ struct HighConversionPaywallView: View {
 
     // MARK: - Benefits
     private var benefitsSection: some View {
-        let icons = ["quote.bubble.fill", "shield.fill", "eye.fill", "person.circle.fill", "hands.and.sparkles.fill"]
+        let icons = ["quote.bubble.fill", "shield.fill", "eye.fill", "person.circle.fill"]
         let descs = [
             "Daily declarations rewire your mind until God's Word becomes your first response.",
             "Spoken truth is your greatest weapon. It's exactly how Jesus defeated every attack.",
             "Faith comes by hearing. Audio devotionals put Scripture in your ears morning and night.",
-            "Know your identity in Christ so deeply that fear, doubt, and shame lose their grip.",
-            "The Warrior Room — share prayers, claim testimonies, and never fight alone."
+            "Know your identity in Christ so deeply that fear, doubt, and shame lose their grip."
         ]
-        let props = Array(copy.valueProps.prefix(5))
+        let props = Array(copy.valueProps.prefix(4))
         return VStack(alignment: .leading, spacing: 16) {
-            ForEach(0..<min(props.count, 5), id: \.self) { i in
+            ForEach(0..<min(props.count, 4), id: \.self) { i in
                 HCBenefitRow(icon: icons[i], title: props[i], description: descs[i])
             }
         }
