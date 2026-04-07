@@ -18,10 +18,10 @@ struct EmotionalHookScreen: View {
     @State private var subVisible = false
     @State private var buttonVisible = false
 
-    // Attack → Declaration pairs — shows the mechanism immediately
+    // Attack → Declaration pairs — raw thought, then the Word
     private let declarations: [(attack: String, speak: String)] = [
-        (attack: "A bad thought hits about your health...", speak: "\"By His stripes, I am healed.\""),
-        (attack: "Fear creeps in about your finances...",   speak: "\"My God shall supply all my needs.\"")
+        (attack: "\"What if I'm seriously sick?\"",          speak: "\"By His stripes, I am healed.\""),
+        (attack: "\"I don't know how I'll make it this month.\"", speak: "\"My God shall supply all my needs.\"")
     ]
 
     var body: some View {
@@ -54,8 +54,9 @@ struct EmotionalHookScreen: View {
                         ForEach(Array(declarations.enumerated()), id: \.offset) { index, pair in
                             VStack(alignment: .leading, spacing: 8) {
                                 Text(pair.attack)
-                                    .font(.system(size: 13, weight: .regular, design: .rounded))
-                                    .foregroundColor(.white.opacity(0.55))
+                                    .font(.system(size: 14, weight: .regular, design: .rounded))
+                                    .foregroundColor(.white.opacity(0.5))
+                                    .italic()
                                     .fixedSize(horizontal: false, vertical: true)
 
                                 HStack(spacing: 8) {
