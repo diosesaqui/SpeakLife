@@ -72,16 +72,21 @@ struct EmotionalHookScreen: View {
                     }
                     .padding(.horizontal, 36)
 
-                    // Bridge — speaking is the weapon
+                    // Bridge — speaking life is the weapon
                     VStack(spacing: 6) {
-                        Text("Jesus defeated every attack with spoken Word.")
-                            .font(.system(size: 17, weight: .bold, design: .rounded))
+                        Text("\"Death and life are in the power of the tongue.\"")
+                            .font(.system(size: 16, weight: .semibold, design: .serif))
                             .foregroundColor(.white)
                             .multilineTextAlignment(.center)
-                        Text("When you speak what God says, faith rises and fear has to go.")
+                            .italic()
+                        Text("Proverbs 18:21")
+                            .font(.system(size: 13, weight: .medium, design: .rounded))
+                            .foregroundColor(.white.opacity(0.5))
+                        Text("You have the power to speak life over every fear.")
                             .font(.system(size: 15, weight: .medium, design: .rounded))
                             .foregroundColor(.white.opacity(0.75))
                             .multilineTextAlignment(.center)
+                            .padding(.top, 4)
                     }
                     .padding(.horizontal, 32)
                     .opacity(subVisible ? 1 : 0)
@@ -93,7 +98,7 @@ struct EmotionalHookScreen: View {
                     UIImpactFeedbackGenerator(style: .light).impactOccurred()
                     onContinue()
                 }) {
-                    Text("Give me the words to speak")
+                    Text("Start speaking life")
                         .font(.system(size: 17, weight: .semibold, design: .rounded))
                         .foregroundColor(.black)
                         .frame(maxWidth: .infinity)
