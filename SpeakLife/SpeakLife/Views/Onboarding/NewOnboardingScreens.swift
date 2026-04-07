@@ -221,6 +221,7 @@ struct TransformationSocialProofScreen: View {
             withAnimation(.easeOut(duration: 0.6).delay(0.4)) { card1Visible = true }
             withAnimation(.easeOut(duration: 0.6).delay(0.65)) { card2Visible = true }
             withAnimation(.easeOut(duration: 0.5).delay(0.9)) { buttonVisible = true }
+            Analytics.logEvent("onboarding_social_proof_shown", parameters: nil)
         }
     }
 
@@ -1566,6 +1567,7 @@ struct FeatureScriptureRow: View {
 // MARK: - Screen 10: Live Declaration Preview
 struct LiveDeclarationPreviewScreen: View {
     @EnvironmentObject var subscriptionStore: SubscriptionStore
+    @EnvironmentObject var appState: AppState
     let size: CGSize
     let onContinue: () -> Void
 
@@ -1574,28 +1576,79 @@ struct LiveDeclarationPreviewScreen: View {
     @State private var buttonVisible = false
     @State private var pulseScale: CGFloat = 1.0
 
-    // Hardcoded preview declaration — feels personal without requiring data load
-    private let declarations: [(text: String, scripture: String, reference: String)] = [
-        (
-            "I am not moved by fear. I am moved by faith. God has not given me a spirit of fear, but of power, love, and a sound mind. I declare that I walk in peace today.",
+    // Declarations keyed by category — personalized to what user selected in step 2
+    private let declarationsByCategory: [String: (text: String, scripture: String, reference: String)] = [
+        "anxiety": (
+            "I speak to every anxious thought and command it to go. The peace of God that surpasses all understanding guards my heart and my mind in Christ Jesus. I choose peace over panic.",
+            "Be anxious for nothing, but in everything by prayer and supplication... the peace of God will guard your hearts.",
+            "Philippians 4:6-7"
+        ),
+        "fear": (
+            "I am not moved by fear. God has not given me a spirit of fear, but of power, love, and a sound mind. Fear has no authority over my life. I walk in boldness today.",
             "For God has not given us a spirit of fear, but of power and of love and of a sound mind.",
             "2 Timothy 1:7"
         ),
-        (
-            "I know who I am. I am chosen, redeemed, and called by name. My identity is not defined by my past — it is secured by Christ's finished work.",
+        "identity": (
+            "I know who I am. I am chosen, redeemed, and called by name. My identity is not defined by my past — it is secured by Christ's finished work. I am enough because He says I am.",
             "But you are a chosen generation, a royal priesthood, a holy nation, His own special people.",
             "1 Peter 2:9"
         ),
-        (
-            "I speak to every anxious thought and command it to go. The peace of God that surpasses all understanding guards my heart and my mind in Christ Jesus.",
-            "Be anxious for nothing, but in everything by prayer... the peace of God will guard your hearts.",
-            "Philippians 4:6-7"
+        "faith": (
+            "My faith is stronger than my doubt. I believe what God said more than what I feel. His Word is my anchor and His promises are yes and amen in my life today.",
+            "Now faith is the substance of things hoped for, the evidence of things not seen.",
+            "Hebrews 11:1"
+        ),
+        "confidence": (
+            "I walk in God-given confidence. I am not less than. I am not overlooked. I am fully equipped for everything He has called me to. I step forward without shame today.",
+            "I can do all things through Christ who strengthens me.",
+            "Philippians 4:13"
+        ),
+        "joy": (
+            "The joy of the Lord is my strength. Sadness does not have the final word. I choose joy — not because everything is perfect, but because God is good and His plans for me are good.",
+            "The joy of the Lord is your strength.",
+            "Nehemiah 8:10"
+        ),
+        "hope": (
+            "I am not hopeless. God has a future and a plan for me — plans to prosper me, not to harm me. I hold on to His promises even when I cannot see the way forward.",
+            "For I know the plans I have for you, declares the Lord — plans to prosper you and not to harm you.",
+            "Jeremiah 29:11"
+        ),
+        "health": (
+            "I declare that I am healed by the stripes of Jesus. My body is a temple of the Holy Spirit. I speak life and wholeness over every part of me in the name of Jesus.",
+            "By His wounds you have been healed.",
+            "1 Peter 2:24"
+        ),
+        "marriage": (
+            "I speak restoration and breakthrough over my relationships. What God has joined together, no enemy can destroy. Love is patient, love is kind — and that love lives in my home.",
+            "Love is patient, love is kind. It does not envy, it does not boast, it is not proud.",
+            "1 Corinthians 13:4"
+        ),
+        "wealth": (
+            "God is my provider. He supplies all my needs according to His riches in glory. Lack does not define me — His abundance does. I am a good steward of what He has given me.",
+            "And my God will meet all your needs according to the riches of his glory in Christ Jesus.",
+            "Philippians 4:19"
+        ),
+        "rest": (
+            "I release the weight I was never meant to carry. God gives sleep to those He loves. I choose rest. I trust Him with what I cannot control. His yoke is easy and His burden is light.",
+            "He grants sleep to those he loves.",
+            "Psalm 127:2"
+        ),
+        "wisdom": (
+            "God has given me wisdom. When I lack it, I ask Him and He gives it generously. I make good decisions because I am led by the Spirit and anchored in His Word.",
+            "If any of you lacks wisdom, you should ask God, who gives generously to all.",
+            "James 1:5"
         )
     ]
 
+    // Pick declaration based on first selected category, fall back to identity
     private var selected: (text: String, scripture: String, reference: String) {
-        // Fixed to identity declaration — mirrors Screen 1's identity hook for narrative coherence
-        return declarations[1]
+        let cats = appState.selectedNotificationCategories
+            .split(separator: ",")
+            .map { String($0).trimmingCharacters(in: .whitespaces) }
+        for cat in cats {
+            if let match = declarationsByCategory[cat] { return match }
+        }
+        return declarationsByCategory["identity"]!
     }
 
     var body: some View {
