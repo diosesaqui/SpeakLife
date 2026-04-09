@@ -59,8 +59,10 @@ final class NotificationProcessor {
                 guard !shuffled.isEmpty else { return }
                 for number in 1...count {
                     let declaration = shuffled[number]
-                    let body = declaration.bibleVerseText ?? declaration.text
-                    let book = (declaration.bibleVerseText != nil) ? declaration.book ?? "" : ""
+                    // Send the declaration text (not the Bible verse) as the notification body.
+                    // The scripture reference (book) is kept as the subtitle for context.
+                    let body = declaration.text
+                    let book = declaration.book ?? ""
                     let notificationData = NotificationData(book: book, body: body, category: declaration.category.rawValue)
                     data.append(notificationData)
                 }
@@ -130,8 +132,10 @@ final class NotificationProcessor {
         
         while localCount < count  {
             let declaration = categoryReminders[localCount]
-            let body = declaration.bibleVerseText ?? declaration.text
-            let book = (declaration.bibleVerseText != nil) ? declaration.book ?? "" : ""
+            // Send the declaration text (not the Bible verse) as the notification body.
+            // The scripture reference (book) is kept as the subtitle for context.
+            let body = declaration.text
+            let book = declaration.book ?? ""
             let notificationData = NotificationData(book: book, body: body, category: declaration.category.rawValue)
             data.append(notificationData)
             localCount += 1
