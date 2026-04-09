@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://diosesaqui.github.io/SpeakLife/sitemap.xml
