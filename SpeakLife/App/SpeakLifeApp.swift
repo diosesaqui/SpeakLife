@@ -69,7 +69,7 @@ struct SpeakLifeApp: App {
     @StateObject var tabViewModel = TabViewModel()
     
     @State var isShowingLanding = true
-    @State private var showDailyBurstOnLaunch = false        // kept for notification-triggered burst
+    @State private var showDailyBurstOnLaunch = false
     @State private var showDailyStructuredDayOnLaunch = false
     @State private var hasCheckedBurstThisSession = false
     
@@ -150,11 +150,17 @@ struct SpeakLifeApp: App {
                             isShowingLanding = false
                         }
                         
-                        // On first open of each new day: show the Structured Day checklist
-                        // so users get a guided plan before diving into the app.
-                        // The daily burst lives *inside* the checklist as a task — users
-                        // reach it naturally by tapping "Start Burst →".
-                        // The burst can still be triggered directly via notification tap.
+                        // BUGFIX: Process any cold-launch notification tap now that the tab
+                        // view is visible. Doing this earlier (when callback is first set)
+                        // causes navigation to fire while the landing screen is still showing —
+                        // the tab state gets wiped when the landing hides.
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                            NotificationHandler.shared.processIfReady()
+                        }
+                        
+                        // Check if daily burst should be shown — only once per session
+                        // (onAppear can fire more than once; guard prevents showing it again
+                        // after the user already completed or dismissed the burst)
                         if !hasCheckedBurstThisSession {
                             hasCheckedBurstThisSession = true
                             if appState.isOnboarded && !StructuredDayLaunchTracker.hasShownToday() {
@@ -267,9 +273,10 @@ struct SpeakLifeApp: App {
     
     private func setupNotificationHandling() {
         // Setting up notification handling
-        
+        // NOTE: We intentionally do NOT call processIfReady() here. Any pending notification
+        // (cold launch tap) will be processed after the landing screen hides (see below),
+        // so the tab view is visible and navigation actually sticks.
         NotificationHandler.shared.callback = { content in
-            
             DispatchQueue.main.async {
                 self.handleNotificationContent(content)
             }
