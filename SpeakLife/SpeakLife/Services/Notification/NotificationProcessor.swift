@@ -67,52 +67,44 @@ final class NotificationProcessor {
                     data.append(notificationData)
                 }
             } else {
-                for category in categories! {
+                let categoryList = categories!
+                let categoryCount = categoryList.count
+
+                // Distribute `count` slots evenly across categories using proper integer math.
+                // baseSlots = floor(count / categoryCount) per category
+                // remainder categories each get one extra slot (round-robin top-up).
+                // Example: count=5, categories=3 → [2, 2, 1] instead of old [1, 1, 1].
+                let baseSlots = count / categoryCount          // integer floor division
+                let extraSlots = count % categoryCount         // first N categories get +1
+
+                for (index, category) in categoryList.enumerated() {
+                    let slots = baseSlots + (index < extraSlots ? 1 : 0)
+                    guard slots > 0 else { continue }
+
                     let categoryDeclarations = allDeclarations.filter { $0.category == category }
-                   // fetchDeclarations(for: category) { declarations in
-                        // Don't fail if category has fewer declarations, just use what's available
-                        guard !categoryDeclarations.isEmpty else { continue }
-                        
-                        let divisor = max(1, count/categories!.count)
-                        // Use all available declarations if needed, allowing repeats
-                        let availableCount = categoryDeclarations.count
-                        
-                        if availableCount >= divisor {
-                            // We have enough declarations, pick without replacement
-                            let endpoint = min(divisor, categoryDeclarations.count - 1)
-                            let notificationCategories = categoryDeclarations.shuffled()[0...endpoint]
-                            categoryReminders.append(contentsOf: notificationCategories)
-                        } else {
-                            // Not enough declarations, use all available and allow repeats if needed
-                            let shuffled = categoryDeclarations.shuffled()
-                            categoryReminders.append(contentsOf: shuffled)
-                            
-                            // If we still need more, repeat some declarations
-                            var remaining = divisor - availableCount
-                            while remaining > 0 && !shuffled.isEmpty {
-                                let toAdd = min(remaining, shuffled.count)
-                                categoryReminders.append(contentsOf: shuffled.prefix(toAdd))
-                                remaining -= toAdd
-                            }
-                        }
-                 //   }
+                    guard !categoryDeclarations.isEmpty else { continue }
+
+                    // Pick exactly `slots` items; repeat if the category has fewer.
+                    let shuffled = categoryDeclarations.shuffled()
+                    var picked: [Declaration] = []
+                    while picked.count < slots {
+                        let remaining = slots - picked.count
+                        picked.append(contentsOf: shuffled.prefix(remaining))
+                    }
+                    categoryReminders.append(contentsOf: picked)
                 }
-                
+
                 // Ensure we have at least some notifications
                 if categoryReminders.isEmpty {
-                    // Fall back to using all categories if selected ones are empty
                     let shuffled = allDeclarations.shuffled()
                     let fallbackCount = min(count, shuffled.count)
-                    for i in 0..<fallbackCount {
-                        categoryReminders.append(shuffled[i])
-                    }
+                    categoryReminders.append(contentsOf: shuffled.prefix(fallbackCount))
                 }
-                
-                if categoryReminders.count >= count {
-                    data = parse(categoryReminders, count: count)
-                }  else {
-                    data = parse(categoryReminders, count: categoryReminders.count)
-                }
+
+                // Shuffle the assembled list so categories interleave instead of
+                // appearing in blocks (fixes "same 1-2 categories every time" bug).
+                let finalList = categoryReminders.shuffled()
+                data = parse(finalList, count: min(count, finalList.count))
             }
             completion(data)
             return
