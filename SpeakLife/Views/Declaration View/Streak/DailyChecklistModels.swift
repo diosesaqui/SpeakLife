@@ -8,19 +8,6 @@
 import Foundation
 import SwiftUI
 
-// MARK: - Task Navigation Destination
-/// Where tapping a checklist task row should navigate the user.
-enum TaskNavigationDestination: String, Codable {
-    /// No navigation — tapping toggles completion inline (e.g. Gratitude)
-    case none
-    /// Switch to the Audio tab with a category-matched recommendation
-    case audioTab
-    /// Open the Devotional sheet
-    case devotional
-    /// Fire the Daily Declaration Burst full-screen experience
-    case burst
-}
-
 // MARK: - Task Categories & Types
 enum TaskCategory: String, CaseIterable, Codable {
     case foundation = "foundation"     // Core spiritual practices
@@ -85,6 +72,14 @@ enum DifficultyLevel: Int, CaseIterable, Codable {
     }
 }
 
+// MARK: - Task Navigation Destination
+enum TaskNavigationDestination: String, Codable {
+    case none
+    case audioTab
+    case devotional
+    case burst
+}
+
 // MARK: - Enhanced Daily Task Model
 struct DailyTask: Identifiable, Codable {
     let id: String
@@ -99,7 +94,6 @@ struct DailyTask: Identifiable, Codable {
     var isCompleted: Bool = false
     var completedAt: Date?
     var isNewlyUnlocked: Bool = false
-    /// Where tapping this task's row should navigate the user.
     var navigationDestination: TaskNavigationDestination = .none
 
     init(id: String, title: String, description: String, icon: String,
@@ -281,6 +275,10 @@ struct StreakStats: Codable {
                 streakFreezeUsedDate = Date()
                 // Notify the user next session that their freeze was used
                 UserDefaults.standard.set(true, forKey: "streakFreezeWasUsed")
+                // BUGFIX: Bridge lastCompletedDate to yesterday so that when the user
+                // completes their burst today, updateStreak() sees daysDifference == 1
+                // and correctly increments (instead of seeing 2+ days and resetting to 1).
+                lastCompletedDate = calendar.date(byAdding: .day, value: -1, to: today)
                 return  // Don't reset streak
             }
             let previousStreak = currentStreak
@@ -648,10 +646,21 @@ struct TaskLibrary {
         return allTasks.filter { $0.minimumStreakDay <= streakDay }
     }
     
+    /// Ensures the Daily Burst task is always first so it's the hero "NEXT UP" card.
+    /// Burst is the only task that earns the streak — it must never be buried.
+    private static func burstFirst(_ tasks: [DailyTask]) -> [DailyTask] {
+        guard let burstIndex = tasks.firstIndex(where: { $0.id == "complete_daily_burst" }),
+              burstIndex != 0 else { return tasks }
+        var reordered = tasks
+        let burst = reordered.remove(at: burstIndex)
+        reordered.insert(burst, at: 0)
+        return reordered
+    }
+
     static func getCoreTasksForStreak(_ streakDay: Int, userCategories: [String] = []) -> [DailyTask] {
         // Check if AI features are enabled for enhanced task generation
         if isAIEnabled() {
-            return getAIEnhancedTasks(streakDay: streakDay, userCategories: userCategories)
+            return burstFirst(getAIEnhancedTasks(streakDay: streakDay, userCategories: userCategories))
         }
         
         // Standard task generation
@@ -684,6 +693,7 @@ struct TaskLibrary {
             let growth = Array(growthTasks.filter { $0.minimumStreakDay <= streakDay }.prefix(1))
             let impact = Array(impactTasks.filter { $0.minimumStreakDay <= streakDay }.prefix(1))
             let mastery = availableTasks.filter { $0.category == .mastery }
+
             tasks = foundation + growth + impact + Array(mastery.prefix(1))
         }
         
@@ -691,8 +701,9 @@ struct TaskLibrary {
         if !userCategories.isEmpty {
             tasks = tasks.map { personalizeTask($0, for: userCategories) }
         }
-        
-        return tasks
+
+        // Burst must always be first — it's the only streak-earning task
+        return burstFirst(tasks)
     }
     
     static func getNewlyUnlockedTasks(currentStreak: Int, previousStreak: Int) -> [DailyTask] {
