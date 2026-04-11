@@ -324,8 +324,16 @@ struct SpeakLifeApp: App {
     }
     
     private func resetNotifications() {
-        let categories = Set(appState.selectedNotificationCategories.components(separatedBy: ",").compactMap({ DeclarationCategory($0) }))
-        NotificationManager.shared.registerNotifications(count: appState.notificationCount, startTime: appState.startTimeIndex, endTime: appState.endTimeIndex, categories: categories)
+        var categories = Set(appState.selectedNotificationCategories.components(separatedBy: ",").compactMap({ DeclarationCategory($0) }))
+        // Guard: empty Set is non-nil so it bypasses registerNotifications' nil-fallback and
+        // passes an empty array to NotificationProcessor, resulting in random unfiltered
+        // declarations. Pad with sensible defaults when the user has ≤1 category.
+        if categories.count <= 1 {
+            categories.insert(DeclarationCategory(rawValue: "destiny")!)
+            categories.insert(DeclarationCategory(rawValue: "love")!)
+        }
+        let selectedCategories: Set<DeclarationCategory>? = categories.isEmpty ? nil : categories
+        NotificationManager.shared.registerNotifications(count: appState.notificationCount, startTime: appState.startTimeIndex, endTime: appState.endTimeIndex, categories: selectedCategories)
         DispatchQueue.main.async {
             appState.lastNotificationSetDate = Date()
         }
