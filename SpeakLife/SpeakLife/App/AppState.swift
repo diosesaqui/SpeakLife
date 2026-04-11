@@ -80,7 +80,7 @@ final class AppState: ObservableObject {
     init() {
         // Force initialization of @AppStorage properties with defaults
         if UserDefaults.standard.object(forKey: "notificationCount") == nil {
-            UserDefaults.standard.set(10, forKey: "notificationCount")
+            UserDefaults.standard.set(5, forKey: "notificationCount")
         }
         if UserDefaults.standard.object(forKey: "startTimeIndex") == nil {
             UserDefaults.standard.set(12, forKey: "startTimeIndex")
