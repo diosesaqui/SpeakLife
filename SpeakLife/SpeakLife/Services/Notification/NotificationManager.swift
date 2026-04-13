@@ -10,6 +10,7 @@ import Foundation
 
 let resyncNotification = NSNotification.Name("NotificationsDone")
 let notificationNavigate = NSNotification.Name("NavigateToContent")
+let declarationsContentUpdated = NSNotification.Name("DeclarationsContentUpdated")
 
 final class NotificationManager: NSObject {
     
@@ -83,6 +84,35 @@ final class NotificationManager: NSObject {
         scheduleChecklistNotifications()
     }
     
+
+    /// Called when remote declaration content updates (version bump). Reschedules
+    /// notifications immediately using the user's current saved preferences so
+    /// pending notifications reflect the new content without waiting for the
+    /// next natural resync cycle (~24 h).
+    func rescheduleFromUserDefaults() {
+        let defaults = UserDefaults.standard
+        guard defaults.bool(forKey: "notificationEnabled") else { return }
+
+        let count     = defaults.integer(forKey: "notificationCount")
+        let startTime = defaults.integer(forKey: "startTimeIndex")
+        let endTime   = defaults.integer(forKey: "endTimeIndex")
+        let catString = defaults.string(forKey: "selectedNotificationCategories") ?? ""
+        let parsed    = Set(catString.components(separatedBy: ",").compactMap { DeclarationCategory($0) })
+        var categories: Set<DeclarationCategory> = parsed.isEmpty
+            ? [.destiny, .gratitude, .faith, .identity, .grace, .joy, .rest]
+            : parsed
+        if categories.count <= 1 {
+            categories.insert(.destiny)
+            categories.insert(.love)
+        }
+
+        registerNotifications(
+            count: max(count, 5),
+            startTime: startTime,
+            endTime: endTime,
+            categories: categories
+        )
+    }
 
     func checkForLowReminders() {
         UNUserNotificationCenter.current().getPendingNotificationRequests { requests in

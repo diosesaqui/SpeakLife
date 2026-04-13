@@ -248,6 +248,10 @@ final class LocalAPIClient: APIService {
                         self?.localVersion = self?.remoteVersion ?? 2
                         // Save to disk so fallback works on subsequent launches
                         self?.save(declarations: declarations) { _ in }
+                        // Notify observers so notifications are rescheduled with new content
+                        DispatchQueue.main.async {
+                            NotificationCenter.default.post(name: declarationsContentUpdated, object: nil)
+                        }
                         completion(declarations, nil, true)
                     } else {
                         self?.fallbackToLocal(completion: completion)
