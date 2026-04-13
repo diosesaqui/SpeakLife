@@ -105,6 +105,7 @@ final class AppDelegate: NSObject, MessagingDelegate {
         
         NotificationCenter.default.addObserver(self, selector: #selector(scheduleNotificationRequest), name: UIApplication.didEnterBackgroundNotification, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(scheduleNotificationRequest), name: resyncNotification, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(rescheduleNotificationsForNewContent), name: declarationsContentUpdated, object: nil)
         
         // Register FCM for onboarded users (including migration for existing users)
         let hasMigratedFCM = UserDefaults.standard.bool(forKey: "hasMigratedToFCM")
@@ -186,6 +187,13 @@ final class AppDelegate: NSObject, MessagingDelegate {
     @objc func scheduleNotificationRequest()  {
         scheduleNotificationRequestWithInterval(true)
         scheduleNotificationRequestWithInterval()
+    }
+
+    /// Fires when remote declarations are freshly downloaded due to a version bump.
+    /// Reschedules local notifications immediately so users get the new content
+    /// without waiting for the next natural ~24h resync cycle.
+    @objc func rescheduleNotificationsForNewContent() {
+        NotificationManager.shared.rescheduleFromUserDefaults()
     }
     
     func scheduleNotificationRequestWithInterval(_ resyncNow: Bool = false) {
