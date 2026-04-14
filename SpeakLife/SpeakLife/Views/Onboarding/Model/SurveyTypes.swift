@@ -135,11 +135,12 @@ enum NotificationTime: String, CaseIterable, Identifiable {
     case allDay  = "All day — I need constant anchoring right now"
 
     var startTimeIndex: Int {
+        // Index = 30-minute slots from midnight (e.g. index 24 = 12:00 PM)
         switch self {
-        case .morning: return 0
-        case .midday:  return 3
-        case .evening: return 7
-        case .allDay:  return 0
+        case .morning: return 12  // 6:00 AM
+        case .midday:  return 24  // 12:00 PM
+        case .evening: return 38  // 7:00 PM
+        case .allDay:  return 12  // 6:00 AM
         }
     }
 }
