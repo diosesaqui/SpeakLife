@@ -184,13 +184,13 @@ enum SurveyGoalWord: String, CaseIterable, Identifiable {
 
     var challengeName: String {
         switch self {
-        case .peace:      return "30-Day SpeakLife Challenge"
-        case .identity:   return "30-Day SpeakLife Challenge"
-        case .purpose:    return "30-Day SpeakLife Challenge"
-        case .joy:        return "30-Day SpeakLife Challenge"
-        case .confidence: return "30-Day SpeakLife Challenge"
-        case .healing:    return "30-Day SpeakLife Challenge"
-        case .prosperity: return "30-Day SpeakLife Challenge"
+        case .peace:      return "3-Day Peace Reset"
+        case .identity:   return "3-Day Identity Reset"
+        case .purpose:    return "3-Day Purpose Awakening"
+        case .joy:        return "3-Day Joy Challenge"
+        case .confidence: return "3-Day Confidence Builder"
+        case .healing:    return "3-Day Healing Journey"
+        case .prosperity: return "3-Day Abundance Declaration"
         }
     }
 

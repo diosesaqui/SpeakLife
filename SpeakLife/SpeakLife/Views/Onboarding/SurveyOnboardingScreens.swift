@@ -552,7 +552,7 @@ struct SurveyGoalRevealScreen: View {
                 .scaleEffect(chv ? 1 : 0.92).opacity(chv ? 1 : 0).animation(.spring(response: 0.5, dampingFraction: 0.7).delay(0.4), value: chv)
             }
             Spacer()
-            SurveyContinueButton(label: "Start My 30-Day SpeakLife Challenge") { onContinue() }
+            SurveyContinueButton(label: "Start My \(responses.resolvedGoalWord.challengeName)") { onContinue() }
                 .padding(.bottom, 52).opacity(chv ? 1 : 0).animation(.easeOut(duration: 0.4).delay(0.6), value: chv)
         }
         .onAppear {

@@ -285,15 +285,6 @@ struct HomeView: View {
                 Spacer()
             }
 
-            // 3-day challenge card — visible for first 3 days after onboarding
-            if ThreeDayChallengeManager.shared.isActive {
-                VStack {
-                    Spacer()
-                    ThreeDayChallengeCard(manager: ThreeDayChallengeManager.shared)
-                        .padding(.bottom, 90)
-                }
-            }
-
             // Global streak celebration overlay
             if showStreakCelebration {
                 ZStack {
