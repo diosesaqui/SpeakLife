@@ -82,12 +82,22 @@ struct OnboardingView: View {
     }
 
     // MARK: - Subscription Scene
+    // Mirrors the Remote Config flag used across all other onboarding flows.
+    // HighConversionPaywallView is the live variant when useHighConversionPaywall = true.
 
     private func subscriptionScene(size: CGSize) -> some View {
-        OptimizedSubscriptionView() {
-            advance()
+        Group {
+            if subscriptionStore.useHighConversionPaywall {
+                HighConversionPaywallView {
+                    advance()
+                }
+            } else {
+                OptimizedSubscriptionView() {
+                    advance()
+                }
+                .frame(height: UIScreen.main.bounds.height * 0.96)
+            }
         }
-        .frame(height: UIScreen.main.bounds.height * 0.96)
     }
 
     private func revealText() {
