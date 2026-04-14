@@ -29,7 +29,7 @@ struct SurveyOnboardingView: View {
                 case .intro:            SurveyIntroScreen(size: size) { advance() }
                 case .heaviestBurden:   SurveyQ1BurdenScreen(size: size, responses: responses) { advance() }
                 case .burdenDuration:   SurveyQ2DurationScreen(size: size, responses: responses) { advance() }
-                case .interstitialA:    SurveyInterstitialAScreen(size: size) { advance() }
+                case .interstitialA:    SurveyInterstitialAScreen(size: size, responses: responses) { advance() }
                 case .failedAttempts:   SurveyQ3AttemptsScreen(size: size, responses: responses) { advance() }
                 case .innerLie:         SurveyQ4LieScreen(size: size, responses: responses) { advance() }
                 case .interstitialB:    SurveyInterstitialBScreen(size: size) { advance() }

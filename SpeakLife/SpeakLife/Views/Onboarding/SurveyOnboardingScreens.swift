@@ -170,25 +170,100 @@ struct SurveyQ2DurationScreen: View {
 
 // MARK: - Interstitial A
 
+private struct Testimonial {
+    let quote: String
+    let author: String
+}
+
 struct SurveyInterstitialAScreen: View {
-    let size: CGSize; let onContinue: () -> Void
+    let size: CGSize
+    @ObservedObject var responses: SurveyResponses
+    let onContinue: () -> Void
     @State private var v = false
+
+    private var isAspirational: Bool {
+        responses.heaviestBurden == .prosperity || responses.heaviestBurden == .calling
+    }
+
+    private var headline: String {
+        isAspirational
+            ? "You're not building this alone."
+            : "You're not carrying this alone."
+    }
+
+    private var subtext: String {
+        isAspirational
+            ? "Over 100,000 people have opened SpeakLife hungry for more — more purpose, more abundance, more of what God promised.\n\nYou're in good company."
+            : "Over 100,000 women have opened SpeakLife carrying the same weight you just described.\n\nThe feelings are real. So is the way out."
+    }
+
+    private var testimonial: Testimonial {
+        switch responses.heaviestBurden {
+        case .anxiety:
+            return Testimonial(
+                quote: "\"I've had anxiety for 12 years. After 3 weeks of daily declarations, my mornings changed. I finally feel like myself.\"",
+                author: "— Sarah M., Texas"
+            )
+        case .purpose:
+            return Testimonial(
+                quote: "\"I felt lost for years — no direction, no clarity. SpeakLife helped me hear God's voice again. I finally know what I'm here for.\"",
+                author: "— Marcus T., Georgia"
+            )
+        case .worthiness:
+            return Testimonial(
+                quote: "\"I used to wake up every day feeling like I wasn't enough. After 30 days of declarations, I stopped apologizing for existing.\"",
+                author: "— Keisha R., Atlanta"
+            )
+        case .joyless:
+            return Testimonial(
+                quote: "\"I hadn't felt real joy in two years. I thought I just had to live that way. Then I started declaring God's Word every morning. Something shifted.\"",
+                author: "— Tanya B., Ohio"
+            )
+        case .hardSeason:
+            return Testimonial(
+                quote: "\"I was in the darkest season of my life — loss, grief, barely holding on. SpeakLife was the daily anchor that kept me standing.\"",
+                author: "— Rachel D., Florida"
+            )
+        case .distantGod:
+            return Testimonial(
+                quote: "\"I'd go to church and feel nothing. I started declaring God's Word daily and slowly, the closeness came back. He was never far.\"",
+                author: "— David M., Chicago"
+            )
+        case .prosperity:
+            return Testimonial(
+                quote: "\"I was stuck in a scarcity mindset for years. After speaking abundance declarations daily, my business doubled in 90 days. God's Word works.\"",
+                author: "— Angela W., Dallas"
+            )
+        case .calling:
+            return Testimonial(
+                quote: "\"I knew God called me to something bigger. I just couldn't step into it. Three weeks of purpose declarations gave me the courage to finally launch.\"",
+                author: "— James K., Houston"
+            )
+        case .none:
+            return Testimonial(
+                quote: "\"After 3 weeks of daily declarations, my mornings changed. I finally feel like myself.\"",
+                author: "— Sarah M., Texas"
+            )
+        }
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             Spacer()
             VStack(spacing: 32) {
                 VStack(spacing: 14) {
-                    Text("You're not carrying this alone.").font(.system(size: 28, weight: .bold, design: .rounded)).foregroundColor(.white).multilineTextAlignment(.center)
+                    Text(headline)
+                        .font(.system(size: 28, weight: .bold, design: .rounded)).foregroundColor(.white).multilineTextAlignment(.center)
                         .opacity(v ? 1 : 0).offset(y: v ? 0 : 20)
-                    Text("Over 100,000 women have opened SpeakLife carrying the same weight you just described.\n\nThe feelings are real. So is the way out.")
+                    Text(subtext)
                         .font(.system(size: 16, weight: .regular, design: .rounded)).foregroundColor(.white.opacity(0.75)).multilineTextAlignment(.center).padding(.horizontal, 32)
                         .opacity(v ? 1 : 0).offset(y: v ? 0 : 16).animation(.easeOut(duration: 0.5).delay(0.15), value: v)
                 }
                 VStack(alignment: .leading, spacing: 8) {
                     HStack(spacing: 2) { ForEach(0..<5, id: \.self) { _ in Image(systemName: "star.fill").font(.system(size: 11)).foregroundColor(.yellow) } }
-                    Text("\"I've had anxiety for 12 years. After 3 weeks of daily declarations, my mornings changed. I finally feel like myself.\"")
+                    Text(testimonial.quote)
                         .font(.system(size: 14, weight: .regular, design: .rounded)).foregroundColor(.white.opacity(0.85)).italic().fixedSize(horizontal: false, vertical: true)
-                    Text("— Sarah M., Texas").font(.system(size: 12, weight: .medium, design: .rounded)).foregroundColor(.white.opacity(0.5))
+                    Text(testimonial.author).font(.system(size: 12, weight: .medium, design: .rounded)).foregroundColor(.white.opacity(0.5))
                 }
                 .padding(18)
                 .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(Color.white.opacity(0.08))
