@@ -68,7 +68,7 @@ enum HeaviestBurden: String, CaseIterable, Identifiable {
         case .worthiness: return "not feeling enough"
         case .joyless:    return "lost joy"
         case .hardSeason: return "this season"
-        case .distantGod: return "distance from God"
+        case .distantGod: return "that feeling of distance from God"
         }
     }
 }

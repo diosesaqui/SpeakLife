@@ -308,7 +308,7 @@ struct SurveyQ6FutureScreen: View {
         ScrollView(showsIndicators: false) {
             VStack(spacing: 24) {
                 Spacer().frame(height: size.height * 0.12)
-                SurveyQuestionHeader("Imagine waking up free from \(responses.burdenShortLabel). What changes?", subtitle: "Choose up to 2.")
+                SurveyQuestionHeader("If this was no longer your battle — what would change first?", subtitle: "Choose up to 2.")
                 VStack(spacing: 10) {
                     ForEach(FutureChange.allCases) { o in
                         let sel = responses.futureChanges.contains(o)
@@ -387,7 +387,7 @@ struct SurveyQ9GoalWordScreen: View {
                                 Text(word.tagline).font(.system(size: 11, weight: .regular, design: .rounded)).foregroundColor(.white.opacity(0.6))
                                     .multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true)
                             }
-                            .padding(.vertical, 18).padding(.horizontal, 12).frame(maxWidth: .infinity)
+                            .padding(.vertical, 18).padding(.horizontal, 12).frame(maxWidth: .infinity, minHeight: 140)
                             .background(RoundedRectangle(cornerRadius: 18, style: .continuous)
                                 .fill(sel ? Color.white.opacity(0.18) : Color.white.opacity(0.06))
                                 .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous)
