@@ -195,6 +195,7 @@ struct HomeView: View {
                                 showStreakCelebration = true
                                 // Global streak celebration triggered
                             }
+                            // Notification-triggered burst (push notification tap) — unchanged
                             .fullScreenCover(isPresented: $showDailyBurstOnLaunch) {
                                 DailyDeclarationBurstView()
                                     .environmentObject(declarationStore)
@@ -206,8 +207,10 @@ struct HomeView: View {
                             .onReceive(NotificationCenter.default.publisher(for: Notification.Name("ShowDailyDeclarationBurst"))) { _ in
                                 showDailyBurstOnLaunch = true
                             }
+                            // Daily first-open: show Structured Day plan instead of raw burst.
+                            // The burst task is inside the checklist — users reach it naturally.
                             .fullScreenCover(isPresented: $showDailyStructuredDayOnLaunch) {
-                                ModernDailyChecklistView(viewModel: streakViewModel)
+                                ModernDailyChecklistView(viewModel: enhancedStreakViewModel)
                                     .environmentObject(appState)
                                     .environmentObject(subscriptionStore)
                                     .environmentObject(devotionalViewModel)
@@ -276,11 +279,20 @@ struct HomeView: View {
                 .environment(\.colorScheme, .dark)
                 .ignoresSafeArea()
             
-            // Trial ending banner (Day 3)
-//            VStack {
-//                TrialEndingBanner()
-//                Spacer()
-//            }
+            // Trial ending banner
+            VStack {
+                TrialEndingBanner()
+                Spacer()
+            }
+
+            // 3-day challenge card — visible for first 3 days after onboarding
+            if ThreeDayChallengeManager.shared.isActive {
+                VStack {
+                    Spacer()
+                    ThreeDayChallengeCard(manager: ThreeDayChallengeManager.shared)
+                        .padding(.bottom, 90)
+                }
+            }
 
             // Global streak celebration overlay
             if showStreakCelebration {

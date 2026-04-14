@@ -2,8 +2,9 @@
 //  OnboardingView.swift
 //  SpeakLife
 //
-//  5-screen high-conversion onboarding
-//  Flow: emotionalHook → categorySelect → livePreview → socialProof → subscription → notification
+//  Survey-led onboarding
+//  Flow: survey (9 questions + goal reveal) → subscription → notification
+//  Legacy pre-paywall screens preserved in Tab enum for A/B testing.
 //
 
 import SwiftUI
@@ -15,63 +16,29 @@ struct OnboardingView: View {
     @EnvironmentObject var viewModel: DeclarationViewModel
     @EnvironmentObject var streakViewModel: StreakViewModel
 
-    @State var selection: Tab = .emotionalHook
-    @AppStorage("onboardingTab") var onboardingTab = Tab.emotionalHook.rawValue
+    @State var selection: Tab = .survey
+    @AppStorage("onboardingTab") var onboardingTab = Tab.survey.rawValue
     @State private var isTextVisible = false
     @State private var selectedCategories: [DeclarationCategory] = []
 
     let impactMed = UIImpactFeedbackGenerator(style: .soft)
 
-    // Progress mapping — only show dots on pre-paywall screens
-    private var progressStep: Int? {
-        switch selection {
-        case .emotionalHook:    return 1
-        case .categorySelect:   return 2
-        case .livePreview:      return 3
-        case .socialProof:      return 4
-        case .dailyCommitment:  return 5
-        default:                return nil
-        }
-    }
-    private let totalSteps = 5
+    // Progress bar managed by SurveyOnboardingView internally
+    private var progressStep: Int? { nil }
+    private let totalSteps = 0
 
     var body: some View {
         GeometryReader { geometry in
             ZStack(alignment: .top) {
                 TabView(selection: $selection) {
 
-                    // SCREEN 1: Emotional Hook
-                    EmotionalHookScreen(size: geometry.size) {
+                    // SURVEY FLOW — 9 questions + goal reveal → subscription
+                    SurveyOnboardingView(size: geometry.size) {
                         withAnimation { advance() }
                     }
-                    .tag(Tab.emotionalHook)
+                    .tag(Tab.survey)
 
-                    // SCREEN 2: Category Selection
-                    CategorySelectScreen(size: geometry.size) {
-                        withAnimation { advance() }
-                    }
-                    .tag(Tab.categorySelect)
-
-                    // SCREEN 3: Live Declaration Preview — personalized to selected category
-                    LiveDeclarationPreviewScreen(size: geometry.size) {
-                        withAnimation { advance() }
-                    }
-                    .tag(Tab.livePreview)
-
-                    // SCREEN 4: Social Proof — before/after transformation stories
-                    TransformationSocialProofScreen(size: geometry.size) {
-                        withAnimation { advance() }
-                    }
-                    .tag(Tab.socialProof)
-
-                    // SCREEN 5: Daily Commitment — sets expectation before paywall
-                    DailyCommitmentScreen(size: geometry.size) {
-                        Analytics.logEvent("onboarding_commitment_done", parameters: nil)
-                        advance()
-                    }
-                    .tag(Tab.dailyCommitment)
-
-                    // SCREEN 6: Subscription / Paywall
+                    // SUBSCRIPTION / PAYWALL
                     subscriptionScene(size: geometry.size)
                         .tag(Tab.subscription)
 
@@ -114,10 +81,14 @@ struct OnboardingView: View {
     // MARK: - Subscription Scene
 
     private func subscriptionScene(size: CGSize) -> some View {
-        OptimizedSubscriptionView() {
-            advance()
+        Group {
+            if subscriptionStore.useHighConversionPaywall {
+                HighConversionPaywallView { advance() }
+            } else {
+                OptimizedSubscriptionView { advance() }
+                    .frame(height: UIScreen.main.bounds.height * 0.96)
+            }
         }
-        .frame(height: UIScreen.main.bounds.height * 0.96)
     }
 
     private func revealText() {
@@ -132,35 +103,11 @@ struct OnboardingView: View {
 
     private func advance() {
         switch selection {
-        case .emotionalHook:
-            impactMed.impactOccurred()
-            selection = .categorySelect
-            onboardingTab = selection.rawValue
-            Analytics.logEvent("onboarding_hook_done", parameters: nil)
-
-        case .categorySelect:
-            impactMed.impactOccurred()
-            selection = .livePreview
-            onboardingTab = selection.rawValue
-            Analytics.logEvent("onboarding_category_done", parameters: nil)
-
-        case .livePreview:
-            impactMed.impactOccurred()
-            selection = .socialProof
-            onboardingTab = selection.rawValue
-            Analytics.logEvent("onboarding_preview_done", parameters: nil)
-
-        case .socialProof:
-            impactMed.impactOccurred()
-            selection = .dailyCommitment
-            onboardingTab = selection.rawValue
-            Analytics.logEvent("onboarding_social_proof_done", parameters: nil)
-
-        case .dailyCommitment:
+        case .survey:
             impactMed.impactOccurred()
             selection = .subscription
             onboardingTab = selection.rawValue
-            Analytics.logEvent("onboarding_commitment_done", parameters: nil)
+            Analytics.logEvent("survey_onboarding_to_paywall", parameters: nil)
 
         case .subscription:
             impactMed.impactOccurred()
@@ -172,6 +119,18 @@ struct OnboardingView: View {
             impactMed.impactOccurred()
             Analytics.logEvent("onboarding_notification_done", parameters: nil)
             dismissOnboarding()
+
+        // Legacy screens — not in default flow, kept for A/B
+        case .emotionalHook:
+            impactMed.impactOccurred(); selection = .categorySelect; onboardingTab = selection.rawValue
+        case .categorySelect:
+            impactMed.impactOccurred(); selection = .livePreview; onboardingTab = selection.rawValue
+        case .livePreview:
+            impactMed.impactOccurred(); selection = .socialProof; onboardingTab = selection.rawValue
+        case .socialProof:
+            impactMed.impactOccurred(); selection = .dailyCommitment; onboardingTab = selection.rawValue
+        case .dailyCommitment:
+            impactMed.impactOccurred(); selection = .subscription; onboardingTab = selection.rawValue
         }
     }
 
@@ -179,7 +138,8 @@ struct OnboardingView: View {
 
     private func setSelection() {
         guard let tab = Tab(rawValue: onboardingTab) else { return }
-        selection = tab
+        let legacyTabs: Set<Tab> = [.emotionalHook, .categorySelect, .livePreview, .socialProof, .dailyCommitment]
+        selection = legacyTabs.contains(tab) ? .survey : tab
     }
 
     private func setupAppearance() {
@@ -235,8 +195,8 @@ struct OnboardingView: View {
     }
 
     private func dismissOnboarding() {
-        // Stop onboarding music — main app will restart it via SpeakLifeApp
         AudioPlayerService.shared.stopMusic()
+        ThreeDayChallengeManager.shared.startChallenge(goalWordRaw: appState.surveyGoalWord)
         withAnimation {
             appState.isOnboarded = true
             LifecycleNotificationService.shared.scheduleLifecycleNotifications()
