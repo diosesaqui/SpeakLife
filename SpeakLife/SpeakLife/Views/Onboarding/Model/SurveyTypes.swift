@@ -49,7 +49,7 @@ enum HeaviestBurden: String, CaseIterable, Identifiable {
     case joyless     = "I've lost my joy — life feels numb"
     case hardSeason  = "I'm fighting a health battle and need God's healing"
     case prosperity  = "I'm ready for financial breakthrough and abundance"
-    case calling     = "I want to step into my calling and reach my potential"
+    case calling     = "I want to build unshakeable faith and trust God at a deeper level"
 
     var goalWord: SurveyGoalWord {
         switch self {
