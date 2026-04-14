@@ -128,17 +128,21 @@ struct SurveyIntroScreen: View {
 struct SurveyQ1BurdenScreen: View {
     let size: CGSize; @ObservedObject var responses: SurveyResponses; let onContinue: () -> Void
     var body: some View {
-        ScrollView(showsIndicators: false) {
-            VStack(spacing: 24) {
-                Spacer().frame(height: size.height * 0.12)
-                SurveyQuestionHeader("What brought you to SpeakLife today?", subtitle: "Be honest. This is just between you and God.")
-                VStack(spacing: 10) {
-                    ForEach(HeaviestBurden.allCases) { o in
-                        SurveyOptionRow(text: o.rawValue, isSelected: responses.heaviestBurden == o) { responses.heaviestBurden = o }
-                    }
-                }.padding(.horizontal, 20)
-                SurveyContinueButton(isEnabled: responses.heaviestBurden != nil, action: onContinue).padding(.bottom, 40)
+        VStack(spacing: 0) {
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 24) {
+                    Spacer().frame(height: size.height * 0.12)
+                    SurveyQuestionHeader("What brought you to SpeakLife today?", subtitle: "Be honest. This is just between you and God.")
+                    VStack(spacing: 10) {
+                        ForEach(HeaviestBurden.allCases) { o in
+                            SurveyOptionRow(text: o.rawValue, isSelected: responses.heaviestBurden == o) { responses.heaviestBurden = o }
+                        }
+                    }.padding(.horizontal, 20)
+                    Spacer().frame(height: 8)
+                }
             }
+            SurveyContinueButton(isEnabled: responses.heaviestBurden != nil, action: onContinue)
+                .padding(.vertical, 16)
         }.onAppear { Analytics.logEvent("survey_q1_shown", parameters: nil) }
     }
 }
@@ -148,22 +152,26 @@ struct SurveyQ1BurdenScreen: View {
 struct SurveyQ2DurationScreen: View {
     let size: CGSize; @ObservedObject var responses: SurveyResponses; let onContinue: () -> Void
     var body: some View {
-        ScrollView(showsIndicators: false) {
-            VStack(spacing: 24) {
-                Spacer().frame(height: size.height * 0.12)
-                SurveyQuestionHeader("How long have you been carrying this?")
-                if responses.heaviestBurden != nil {
-                    Text("Thank you for being honest. That took courage.")
-                        .font(.system(size: 14, weight: .medium, design: .rounded)).foregroundColor(.white.opacity(0.55))
-                        .multilineTextAlignment(.center).padding(.horizontal, 32)
-                }
-                VStack(spacing: 10) {
-                    ForEach(BurdenDuration.allCases) { o in
-                        SurveyOptionRow(text: o.rawValue, isSelected: responses.burdenDuration == o) { responses.burdenDuration = o }
+        VStack(spacing: 0) {
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 24) {
+                    Spacer().frame(height: size.height * 0.12)
+                    SurveyQuestionHeader("How long have you been carrying this?")
+                    if responses.heaviestBurden != nil {
+                        Text("Thank you for being honest. That took courage.")
+                            .font(.system(size: 14, weight: .medium, design: .rounded)).foregroundColor(.white.opacity(0.55))
+                            .multilineTextAlignment(.center).padding(.horizontal, 32)
                     }
-                }.padding(.horizontal, 20)
-                SurveyContinueButton(isEnabled: responses.burdenDuration != nil, action: onContinue).padding(.bottom, 40)
+                    VStack(spacing: 10) {
+                        ForEach(BurdenDuration.allCases) { o in
+                            SurveyOptionRow(text: o.rawValue, isSelected: responses.burdenDuration == o) { responses.burdenDuration = o }
+                        }
+                    }.padding(.horizontal, 20)
+                    Spacer().frame(height: 8)
+                }
             }
+            SurveyContinueButton(isEnabled: responses.burdenDuration != nil, action: onContinue)
+                .padding(.vertical, 16)
         }.onAppear { Analytics.logEvent("survey_q2_shown", parameters: nil) }
     }
 }
@@ -278,20 +286,24 @@ struct SurveyInterstitialAScreen: View {
 struct SurveyQ3AttemptsScreen: View {
     let size: CGSize; @ObservedObject var responses: SurveyResponses; let onContinue: () -> Void
     var body: some View {
-        ScrollView(showsIndicators: false) {
-            VStack(spacing: 24) {
-                Spacer().frame(height: size.height * 0.12)
-                SurveyQuestionHeader("Have you tried to fight through this before?", subtitle: "Select all that apply.")
-                VStack(spacing: 10) {
-                    ForEach(PreviousAttempt.allCases) { o in
-                        SurveyCheckRow(text: o.rawValue, isSelected: responses.previousAttempts.contains(o)) {
-                            if responses.previousAttempts.contains(o) { responses.previousAttempts.remove(o) }
-                            else { responses.previousAttempts.insert(o) }
+        VStack(spacing: 0) {
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 24) {
+                    Spacer().frame(height: size.height * 0.12)
+                    SurveyQuestionHeader("Have you tried to fight through this before?", subtitle: "Select all that apply.")
+                    VStack(spacing: 10) {
+                        ForEach(PreviousAttempt.allCases) { o in
+                            SurveyCheckRow(text: o.rawValue, isSelected: responses.previousAttempts.contains(o)) {
+                                if responses.previousAttempts.contains(o) { responses.previousAttempts.remove(o) }
+                                else { responses.previousAttempts.insert(o) }
+                            }
                         }
-                    }
-                }.padding(.horizontal, 20)
-                SurveyContinueButton(isEnabled: !responses.previousAttempts.isEmpty, action: onContinue).padding(.bottom, 40)
+                    }.padding(.horizontal, 20)
+                    Spacer().frame(height: 8)
+                }
             }
+            SurveyContinueButton(isEnabled: !responses.previousAttempts.isEmpty, action: onContinue)
+                .padding(.vertical, 16)
         }.onAppear { Analytics.logEvent("survey_q3_shown", parameters: nil) }
     }
 }
@@ -301,17 +313,21 @@ struct SurveyQ3AttemptsScreen: View {
 struct SurveyQ4LieScreen: View {
     let size: CGSize; @ObservedObject var responses: SurveyResponses; let onContinue: () -> Void
     var body: some View {
-        ScrollView(showsIndicators: false) {
-            VStack(spacing: 24) {
-                Spacer().frame(height: size.height * 0.12)
-                SurveyQuestionHeader("When you're at your lowest — what's going through your mind?", subtitle: "Pick the one that hits closest to home.")
-                VStack(spacing: 10) {
-                    ForEach(InnerLie.allCases) { o in
-                        SurveyOptionRow(text: o.rawValue, isSelected: responses.innerLie == o) { responses.innerLie = o }
-                    }
-                }.padding(.horizontal, 20)
-                SurveyContinueButton(isEnabled: responses.innerLie != nil, action: onContinue).padding(.bottom, 40)
+        VStack(spacing: 0) {
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 24) {
+                    Spacer().frame(height: size.height * 0.12)
+                    SurveyQuestionHeader("When you're at your lowest — what's going through your mind?", subtitle: "Pick the one that hits closest to home.")
+                    VStack(spacing: 10) {
+                        ForEach(InnerLie.allCases) { o in
+                            SurveyOptionRow(text: o.rawValue, isSelected: responses.innerLie == o) { responses.innerLie = o }
+                        }
+                    }.padding(.horizontal, 20)
+                    Spacer().frame(height: 8)
+                }
             }
+            SurveyContinueButton(isEnabled: responses.innerLie != nil, action: onContinue)
+                .padding(.vertical, 16)
         }.onAppear { Analytics.logEvent("survey_q4_shown", parameters: nil) }
     }
 }
@@ -355,17 +371,21 @@ struct SurveyInterstitialBScreen: View {
 struct SurveyQ5DeclarationExpScreen: View {
     let size: CGSize; @ObservedObject var responses: SurveyResponses; let onContinue: () -> Void
     var body: some View {
-        ScrollView(showsIndicators: false) {
-            VStack(spacing: 24) {
-                Spacer().frame(height: size.height * 0.12)
-                SurveyQuestionHeader("Have you ever spoken God's Word out loud over your life — and felt something shift?")
-                VStack(spacing: 10) {
-                    ForEach(DeclarationExperience.allCases) { o in
-                        SurveyOptionRow(text: o.rawValue, isSelected: responses.declarationExperience == o) { responses.declarationExperience = o }
-                    }
-                }.padding(.horizontal, 20)
-                SurveyContinueButton(isEnabled: responses.declarationExperience != nil, action: onContinue).padding(.bottom, 40)
+        VStack(spacing: 0) {
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 24) {
+                    Spacer().frame(height: size.height * 0.12)
+                    SurveyQuestionHeader("Have you ever spoken God's Word out loud over your life — and felt something shift?")
+                    VStack(spacing: 10) {
+                        ForEach(DeclarationExperience.allCases) { o in
+                            SurveyOptionRow(text: o.rawValue, isSelected: responses.declarationExperience == o) { responses.declarationExperience = o }
+                        }
+                    }.padding(.horizontal, 20)
+                    Spacer().frame(height: 8)
+                }
             }
+            SurveyContinueButton(isEnabled: responses.declarationExperience != nil, action: onContinue)
+                .padding(.vertical, 16)
         }.onAppear { Analytics.logEvent("survey_q5_shown", parameters: nil) }
     }
 }
@@ -375,21 +395,25 @@ struct SurveyQ5DeclarationExpScreen: View {
 struct SurveyQ6FutureScreen: View {
     let size: CGSize; @ObservedObject var responses: SurveyResponses; let onContinue: () -> Void
     var body: some View {
-        ScrollView(showsIndicators: false) {
-            VStack(spacing: 24) {
-                Spacer().frame(height: size.height * 0.12)
-                SurveyQuestionHeader("If this was no longer your battle — what would change first?", subtitle: "Choose up to 2.")
-                VStack(spacing: 10) {
-                    ForEach(FutureChange.allCases) { o in
-                        let sel = responses.futureChanges.contains(o)
-                        SurveyCheckRow(text: o.rawValue, isSelected: sel) {
-                            if sel { responses.futureChanges.remove(o) }
-                            else if responses.futureChanges.count < 2 { responses.futureChanges.insert(o) }
+        VStack(spacing: 0) {
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 24) {
+                    Spacer().frame(height: size.height * 0.12)
+                    SurveyQuestionHeader("If this was no longer your battle — what would change first?", subtitle: "Choose up to 2.")
+                    VStack(spacing: 10) {
+                        ForEach(FutureChange.allCases) { o in
+                            let sel = responses.futureChanges.contains(o)
+                            SurveyCheckRow(text: o.rawValue, isSelected: sel) {
+                                if sel { responses.futureChanges.remove(o) }
+                                else if responses.futureChanges.count < 2 { responses.futureChanges.insert(o) }
+                            }
                         }
-                    }
-                }.padding(.horizontal, 20)
-                SurveyContinueButton(isEnabled: !responses.futureChanges.isEmpty, action: onContinue).padding(.bottom, 40)
+                    }.padding(.horizontal, 20)
+                    Spacer().frame(height: 8)
+                }
             }
+            SurveyContinueButton(isEnabled: !responses.futureChanges.isEmpty, action: onContinue)
+                .padding(.vertical, 16)
         }.onAppear { Analytics.logEvent("survey_q6_shown", parameters: nil) }
     }
 }
@@ -399,17 +423,21 @@ struct SurveyQ6FutureScreen: View {
 struct SurveyQ7ReadinessScreen: View {
     let size: CGSize; @ObservedObject var responses: SurveyResponses; let onContinue: () -> Void
     var body: some View {
-        ScrollView(showsIndicators: false) {
-            VStack(spacing: 24) {
-                Spacer().frame(height: size.height * 0.12)
-                SurveyQuestionHeader("How serious are you about making a change — starting today?")
-                VStack(spacing: 10) {
-                    ForEach(ReadinessLevel.allCases) { o in
-                        SurveyOptionRow(text: o.rawValue, isSelected: responses.readinessLevel == o) { responses.readinessLevel = o }
-                    }
-                }.padding(.horizontal, 20)
-                SurveyContinueButton(isEnabled: responses.readinessLevel != nil, action: onContinue).padding(.bottom, 40)
+        VStack(spacing: 0) {
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 24) {
+                    Spacer().frame(height: size.height * 0.12)
+                    SurveyQuestionHeader("How serious are you about making a change — starting today?")
+                    VStack(spacing: 10) {
+                        ForEach(ReadinessLevel.allCases) { o in
+                            SurveyOptionRow(text: o.rawValue, isSelected: responses.readinessLevel == o) { responses.readinessLevel = o }
+                        }
+                    }.padding(.horizontal, 20)
+                    Spacer().frame(height: 8)
+                }
             }
+            SurveyContinueButton(isEnabled: responses.readinessLevel != nil, action: onContinue)
+                .padding(.vertical, 16)
         }.onAppear { Analytics.logEvent("survey_q7_shown", parameters: nil) }
     }
 }
@@ -419,17 +447,21 @@ struct SurveyQ7ReadinessScreen: View {
 struct SurveyQ8NotificationScreen: View {
     let size: CGSize; @ObservedObject var responses: SurveyResponses; let onContinue: () -> Void
     var body: some View {
-        ScrollView(showsIndicators: false) {
-            VStack(spacing: 24) {
-                Spacer().frame(height: size.height * 0.12)
-                SurveyQuestionHeader("The people who break through don't skip days.", subtitle: "When do you need us standing with you?")
-                VStack(spacing: 10) {
-                    ForEach(NotificationTime.allCases) { o in
-                        SurveyOptionRow(text: o.rawValue, isSelected: responses.notificationTime == o) { responses.notificationTime = o }
-                    }
-                }.padding(.horizontal, 20)
-                SurveyContinueButton(isEnabled: responses.notificationTime != nil, action: onContinue).padding(.bottom, 40)
+        VStack(spacing: 0) {
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 24) {
+                    Spacer().frame(height: size.height * 0.12)
+                    SurveyQuestionHeader("The people who break through don't skip days.", subtitle: "When do you need us standing with you?")
+                    VStack(spacing: 10) {
+                        ForEach(NotificationTime.allCases) { o in
+                            SurveyOptionRow(text: o.rawValue, isSelected: responses.notificationTime == o) { responses.notificationTime = o }
+                        }
+                    }.padding(.horizontal, 20)
+                    Spacer().frame(height: 8)
+                }
             }
+            SurveyContinueButton(isEnabled: responses.notificationTime != nil, action: onContinue)
+                .padding(.vertical, 16)
         }.onAppear { Analytics.logEvent("survey_q8_shown", parameters: nil) }
     }
 }
@@ -440,34 +472,38 @@ struct SurveyQ9GoalWordScreen: View {
     let size: CGSize; @ObservedObject var responses: SurveyResponses; let onContinue: () -> Void
     private let columns = [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)]
     var body: some View {
-        ScrollView(showsIndicators: false) {
-            VStack(spacing: 28) {
-                Spacer().frame(height: size.height * 0.12)
-                SurveyQuestionHeader("One last thing.", subtitle: "Choose the word you're believing God for:")
-                LazyVGrid(columns: columns, spacing: 12) {
-                    ForEach(SurveyGoalWord.allCases) { word in
-                        let sel = responses.goalWord == word
-                        Button {
-                            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-                            responses.goalWord = word
-                        } label: {
-                            VStack(spacing: 10) {
-                                Image(systemName: word.icon).font(.system(size: 24)).foregroundColor(sel ? .white : .white.opacity(0.6))
-                                Text(word.rawValue).font(.system(size: 16, weight: .bold, design: .rounded)).foregroundColor(.white)
-                                Text(word.tagline).font(.system(size: 11, weight: .regular, design: .rounded)).foregroundColor(.white.opacity(0.6))
-                                    .multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true)
-                            }
-                            .padding(.vertical, 18).padding(.horizontal, 12).frame(maxWidth: .infinity, minHeight: 140)
-                            .background(RoundedRectangle(cornerRadius: 18, style: .continuous)
-                                .fill(sel ? Color.white.opacity(0.18) : Color.white.opacity(0.06))
-                                .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous)
-                                    .strokeBorder(sel ? Color.white.opacity(0.6) : Color.white.opacity(0.12), lineWidth: 1.5)))
-                            .scaleEffect(sel ? 1.03 : 1.0).animation(.spring(response: 0.3, dampingFraction: 0.7), value: sel)
-                        }.buttonStyle(PlainButtonStyle())
-                    }
-                }.padding(.horizontal, 20)
-                SurveyContinueButton(label: "This Is My Goal", isEnabled: responses.goalWord != nil, action: onContinue).padding(.bottom, 40)
+        VStack(spacing: 0) {
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 28) {
+                    Spacer().frame(height: size.height * 0.12)
+                    SurveyQuestionHeader("One last thing.", subtitle: "Choose the word you're believing God for:")
+                    LazyVGrid(columns: columns, spacing: 12) {
+                        ForEach(SurveyGoalWord.allCases) { word in
+                            let sel = responses.goalWord == word
+                            Button {
+                                UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                                responses.goalWord = word
+                            } label: {
+                                VStack(spacing: 10) {
+                                    Image(systemName: word.icon).font(.system(size: 24)).foregroundColor(sel ? .white : .white.opacity(0.6))
+                                    Text(word.rawValue).font(.system(size: 16, weight: .bold, design: .rounded)).foregroundColor(.white)
+                                    Text(word.tagline).font(.system(size: 11, weight: .regular, design: .rounded)).foregroundColor(.white.opacity(0.6))
+                                        .multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true)
+                                }
+                                .padding(.vertical, 18).padding(.horizontal, 12).frame(maxWidth: .infinity, minHeight: 140)
+                                .background(RoundedRectangle(cornerRadius: 18, style: .continuous)
+                                    .fill(sel ? Color.white.opacity(0.18) : Color.white.opacity(0.06))
+                                    .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous)
+                                        .strokeBorder(sel ? Color.white.opacity(0.6) : Color.white.opacity(0.12), lineWidth: 1.5)))
+                                .scaleEffect(sel ? 1.03 : 1.0).animation(.spring(response: 0.3, dampingFraction: 0.7), value: sel)
+                            }.buttonStyle(PlainButtonStyle())
+                        }
+                    }.padding(.horizontal, 20)
+                    Spacer().frame(height: 8)
+                }
             }
+            SurveyContinueButton(label: "This Is My Goal", isEnabled: responses.goalWord != nil, action: onContinue)
+                .padding(.vertical, 16)
         }
         .onAppear {
             if responses.goalWord == nil { responses.goalWord = responses.heaviestBurden?.goalWord }
