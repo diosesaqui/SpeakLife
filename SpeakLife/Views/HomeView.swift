@@ -210,7 +210,7 @@ struct HomeView: View {
                             // Daily first-open: show Structured Day plan instead of raw burst.
                             // The burst task is inside the checklist — users reach it naturally.
                             .fullScreenCover(isPresented: $showDailyStructuredDayOnLaunch) {
-                                ModernDailyChecklistView(viewModel: enhancedStreakViewModel)
+                                ModernDailyChecklistView(viewModel: streakViewModel)
                                     .environmentObject(appState)
                                     .environmentObject(subscriptionStore)
                                     .environmentObject(devotionalViewModel)
