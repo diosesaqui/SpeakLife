@@ -170,7 +170,7 @@ struct SurveyQ2DurationScreen: View {
 
 // MARK: - Interstitial A
 
-private struct Testimonial {
+private struct TestimonialReview {
     let quote: String
     let author: String
 }
@@ -197,50 +197,50 @@ struct SurveyInterstitialAScreen: View {
             : "Over 100,000 women have opened SpeakLife carrying the same weight you just described.\n\nThe feelings are real. So is the way out."
     }
 
-    private var testimonial: Testimonial {
+    private var testimonial: TestimonialReview {
         switch responses.heaviestBurden {
         case .anxiety:
-            return Testimonial(
+            return TestimonialReview(
                 quote: "\"I've had anxiety for 12 years. After 3 weeks of daily declarations, my mornings changed. I finally feel like myself.\"",
                 author: "— Sarah M., Texas"
             )
         case .purpose:
-            return Testimonial(
+            return TestimonialReview(
                 quote: "\"I felt lost for years — no direction, no clarity. SpeakLife helped me hear God's voice again. I finally know what I'm here for.\"",
                 author: "— Marcus T., Georgia"
             )
         case .worthiness:
-            return Testimonial(
+            return TestimonialReview(
                 quote: "\"I used to wake up every day feeling like I wasn't enough. After 30 days of declarations, I stopped apologizing for existing.\"",
                 author: "— Keisha R., Atlanta"
             )
         case .joyless:
-            return Testimonial(
+            return TestimonialReview(
                 quote: "\"I hadn't felt real joy in two years. I thought I just had to live that way. Then I started declaring God's Word every morning. Something shifted.\"",
                 author: "— Tanya B., Ohio"
             )
         case .hardSeason:
-            return Testimonial(
-                quote: "\"I was in the darkest season of my life — loss, grief, barely holding on. SpeakLife was the daily anchor that kept me standing.\"",
+            return TestimonialReview(
+                quote: "\"I was in the darkest season of my life, health issues, barely holding on. SpeakLife was the daily anchor that kept me standing.\"",
                 author: "— Rachel D., Florida"
             )
         case .distantGod:
-            return Testimonial(
+            return TestimonialReview(
                 quote: "\"I'd go to church and feel nothing. I started declaring God's Word daily and slowly, the closeness came back. He was never far.\"",
                 author: "— David M., Chicago"
             )
         case .prosperity:
-            return Testimonial(
+            return TestimonialReview(
                 quote: "\"I was stuck in a scarcity mindset for years. After speaking abundance declarations daily, my business doubled in 90 days. God's Word works.\"",
                 author: "— Angela W., Dallas"
             )
         case .calling:
-            return Testimonial(
+            return TestimonialReview(
                 quote: "\"I knew God called me to something bigger. I just couldn't step into it. Three weeks of purpose declarations gave me the courage to finally launch.\"",
                 author: "— James K., Houston"
             )
         case .none:
-            return Testimonial(
+            return TestimonialReview(
                 quote: "\"After 3 weeks of daily declarations, my mornings changed. I finally feel like myself.\"",
                 author: "— Sarah M., Texas"
             )
