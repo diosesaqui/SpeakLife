@@ -96,6 +96,10 @@ struct SurveyOnboardingView: View {
         if let notifTime = responses.notificationTime {
             appState.startTimeIndex = notifTime.startTimeIndex
         }
+        // Seed the declarations tab with the category that matches the user's goal word
+        let category = goalWord.declarationCategory
+        UserDefaults.standard.set(category.rawValue, forKey: "selectedCategory")
+        UserPreferencesTracker.shared.trackCategorySelection(category.rawValue)
         Analytics.logEvent("survey_onboarding_completed", parameters: [
             "goal_word": goalWord.rawValue,
             "burden": responses.heaviestBurden?.rawValue ?? "unknown"
