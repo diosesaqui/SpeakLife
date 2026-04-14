@@ -308,7 +308,7 @@ struct SurveyQ6FutureScreen: View {
         ScrollView(showsIndicators: false) {
             VStack(spacing: 24) {
                 Spacer().frame(height: size.height * 0.12)
-                SurveyQuestionHeader("Imagine waking up free from \(responses.burdenShortLabel). What changes?", subtitle: "Choose up to 2.")
+                SurveyQuestionHeader("If this was no longer your battle — what would change first?", subtitle: "Choose up to 2.")
                 VStack(spacing: 10) {
                     ForEach(FutureChange.allCases) { o in
                         let sel = responses.futureChanges.contains(o)
