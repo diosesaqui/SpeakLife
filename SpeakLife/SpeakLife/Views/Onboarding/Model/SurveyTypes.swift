@@ -54,7 +54,7 @@ enum HeaviestBurden: String, CaseIterable, Identifiable {
     var goalWord: SurveyGoalWord {
         switch self {
         case .anxiety:    return .peace
-        case .purpose:    return .purpose
+        case .purpose:    return .identity
         case .worthiness: return .identity
         case .joyless:    return .joy
         case .hardSeason: return .healing
@@ -252,7 +252,7 @@ enum SurveyGoalWord: String, CaseIterable, Identifiable {
         case .purpose:    return .destiny
         case .joy:        return .joy
         case .confidence: return .confidence
-        case .healing:    return .anxiety
+        case .healing:    return .health
         case .prosperity: return .wealth
         }
     }
