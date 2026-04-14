@@ -193,8 +193,8 @@ struct SurveyInterstitialAScreen: View {
 
     private var subtext: String {
         isAspirational
-            ? "Over 100,000 people have opened SpeakLife hungry for more — more purpose, more abundance, more of what God promised.\n\nYou're in good company."
-            : "Over 100,000 women have opened SpeakLife carrying the same weight you just described.\n\nThe feelings are real. So is the way out."
+            ? "Over 100,000 men and women have opened SpeakLife hungry for more — more purpose, more abundance, more of what God promised.\n\nYou're in good company."
+            : "Over 100,000 men and women have opened SpeakLife carrying the same weight you just described.\n\nThe feelings are real. So is the way out."
     }
 
     private var testimonial: TestimonialReview {
