@@ -420,14 +420,30 @@ struct SurveyQ5DeclarationExpScreen: View {
 
 struct SurveyQ6FutureScreen: View {
     let size: CGSize; @ObservedObject var responses: SurveyResponses; let onContinue: () -> Void
+
+    private var questionText: String {
+        switch responses.heaviestBurden {
+        case .prosperity: return "When you walk in financial abundance — what opens up?"
+        case .calling:    return "When you're fully walking in your calling — what changes?"
+        default:          return "If this was no longer your battle — what would change first?"
+        }
+    }
+    private var options: [FutureChange] {
+        switch responses.heaviestBurden {
+        case .prosperity: return FutureChange.prosperityOptions
+        case .calling:    return FutureChange.callingOptions
+        default:          return FutureChange.painOptions
+        }
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 24) {
                     Spacer().frame(height: size.height * 0.12)
-                    SurveyQuestionHeader("If this was no longer your battle — what would change first?", subtitle: "Choose up to 2.")
+                    SurveyQuestionHeader(questionText, subtitle: "Choose up to 2.")
                     VStack(spacing: 10) {
-                        ForEach(FutureChange.allCases) { o in
+                        ForEach(options) { o in
                             let sel = responses.futureChanges.contains(o)
                             SurveyCheckRow(text: o.rawValue, isSelected: sel) {
                                 if sel { responses.futureChanges.remove(o) }

@@ -144,12 +144,34 @@ enum DeclarationExperience: String, CaseIterable, Identifiable {
 
 enum FutureChange: String, CaseIterable, Identifiable {
     var id: String { rawValue }
+    // Pain-track
     case purpose        = "I step into my purpose with confidence"
     case family         = "I show up better for the people I love"
     case boldSteps      = "I stop doubting myself and take bold steps"
     case peaceInBody    = "I feel peace in my body — no more dread"
     case knowIdentity   = "I know who God says I am and I believe it"
     case livingChosen   = "I stop living small and start living like I'm chosen"
+    // Prosperity-track
+    case familyFree     = "My family is financially free and secure"
+    case buildLegacy    = "I build something that outlasts me"
+    case giveGenerously = "I give generously without holding back"
+    case overflow       = "I stop surviving and start walking in God's overflow"
+    case provisionDoors = "My obedience unlocks doors I couldn't open on my own"
+    // Calling-track
+    case finallyLaunch  = "I finally launch what I've been sitting on"
+    case boldRooms      = "I step into rooms I used to talk myself out of"
+    case realImpact     = "My work creates real impact in people's lives"
+    case giftsFully     = "I stop playing small with the gifts God gave me"
+
+    static var painOptions: [FutureChange] {
+        [.purpose, .family, .boldSteps, .peaceInBody, .knowIdentity, .livingChosen]
+    }
+    static var prosperityOptions: [FutureChange] {
+        [.familyFree, .buildLegacy, .giveGenerously, .overflow, .provisionDoors, .livingChosen]
+    }
+    static var callingOptions: [FutureChange] {
+        [.finallyLaunch, .boldRooms, .realImpact, .giftsFully, .buildLegacy, .livingChosen]
+    }
 }
 
 enum ReadinessLevel: String, CaseIterable, Identifiable {
