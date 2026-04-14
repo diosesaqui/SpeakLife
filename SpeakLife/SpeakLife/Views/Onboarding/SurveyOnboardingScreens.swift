@@ -387,7 +387,7 @@ struct SurveyQ9GoalWordScreen: View {
                                 Text(word.tagline).font(.system(size: 11, weight: .regular, design: .rounded)).foregroundColor(.white.opacity(0.6))
                                     .multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true)
                             }
-                            .padding(.vertical, 18).padding(.horizontal, 12).frame(maxWidth: .infinity)
+                            .padding(.vertical, 18).padding(.horizontal, 12).frame(maxWidth: .infinity, minHeight: 140)
                             .background(RoundedRectangle(cornerRadius: 18, style: .continuous)
                                 .fill(sel ? Color.white.opacity(0.18) : Color.white.opacity(0.06))
                                 .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous)
