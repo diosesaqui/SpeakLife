@@ -4,7 +4,15 @@
 //
 //  Data-driven paywall - Remote Config flag: useHighConversionPaywall
 //  Fixes: 70% abandon rate, missing price anchor, weak social proof
-//  Tracks: paywallVariant = "high_conversion_v1" on all events
+//  Tracks: paywallVariant = "high_conversion_v2" on all events
+//
+//  v2 changes (paywall/conversion-v2):
+//  - Per-month price anchoring on annual plan (big number = monthly cost)
+//  - Prominent "Save X%" badge on annual card
+//  - Trial toggle: "Free Trial" vs "Pay Now" — removes barrier for immediate converters
+//  - CTA pulse animation (+12-18% lift per Helium data)
+//  - Second-try paywall: softer offer shown on first dismiss instead of hard exit
+//  - Trust signals consolidated below CTA
 //
 
 import SwiftUI
@@ -25,9 +33,13 @@ struct HighConversionPaywallView: View {
     @State private var showCloseButton = false
     @State private var timeOnPaywall: Date = Date()
     @State private var isEligibleForTrial = false
+    @State private var wantsFreeTrial: Bool = true
+    @State private var ctaPulsing = false
+    @State private var showSecondTry = false
+    @State private var hasSeenSecondTry = false
 
     var callback: (() -> Void)?
-    private let paywallVariant = "high_conversion_v1"
+    private let paywallVariant = "high_conversion_v2"
 
     enum PlanType: String {
         case annual = "annual"
@@ -41,6 +53,15 @@ struct HighConversionPaywallView: View {
         guard let p = subscriptionStore.currentOfferedPremium,
               let d = Double(p.price.description) else { return "$3.33" }
         return String(format: "$%.2f", d / 12.0)
+    }
+    private var annualSavingsPercent: Int {
+        guard let annual = subscriptionStore.currentOfferedPremium,
+              let monthly = subscriptionStore.currentOfferedPremiumMonthly,
+              let annualD = Double(annual.price.description),
+              let monthlyD = Double(monthly.price.description) else { return 67 }
+        let annualizedMonthly = monthlyD * 12
+        let savings = (annualizedMonthly - annualD) / annualizedMonthly * 100
+        return max(0, Int(savings))
     }
     private var selectedProduct: Product? {
         selectedPlan == .annual ? subscriptionStore.currentOfferedPremium : subscriptionStore.currentOfferedPremiumMonthly
@@ -76,6 +97,18 @@ struct HighConversionPaywallView: View {
             Button("OK", role: .cancel) { }
         } message: { Text(errorMessage) }
         .sheet(isPresented: $showPrivacyPolicy) { PrivacyPolicyView() }
+        .sheet(isPresented: $showSecondTry) {
+            SecondTryPaywallView {
+                // User converted from second try — treat as normal callback
+                callback?(); dismiss()
+            } onSkip: {
+                // User skipped second try too — hard exit
+                callback?(); dismiss()
+            }
+            .environmentObject(appState)
+            .environmentObject(declarationStore)
+            .environmentObject(subscriptionStore)
+        }
     }
 
     // MARK: - Background
@@ -211,8 +244,12 @@ struct HighConversionPaywallView: View {
                 .frame(height: 20)
             VStack(spacing: 14) {
                 planSelectorSection
+                if isEligibleForTrial && selectedPlan == .annual {
+                    trialToggle
+                }
                 trialCallout
                 ctaButton
+                trustBadges
                 bottomLinks
             }
             .padding(.horizontal, 20).padding(.vertical, 16).padding(.bottom, 8)
@@ -226,9 +263,9 @@ struct HighConversionPaywallView: View {
         GeometryReader { geo in
             let cardWidth = (geo.size.width - 10) / 2
             HStack(spacing: 10) {
-                planCard(plan: .monthly, topLabel: nil, title: "Monthly", price: monthlyPrice, sub: "per month")
+                planCard(plan: .monthly, topLabel: nil, title: "Monthly", price: monthlyPrice, sub: "billed monthly")
                     .frame(width: cardWidth)
-                planCard(plan: .annual, topLabel: "BEST VALUE", title: "Annual", price: annualPrice, sub: "per month \(annualPerMonth)")
+                planCard(plan: .annual, topLabel: "SAVE \(annualSavingsPercent)%", title: "Annual", price: annualPerMonth, sub: "per mo · \(annualPrice)/yr")
                     .frame(width: cardWidth)
             }
         }
@@ -267,23 +304,57 @@ struct HighConversionPaywallView: View {
         .buttonStyle(PlainButtonStyle())
     }
 
+    // MARK: - Trial Toggle
+    private var trialToggle: some View {
+        HStack(spacing: 0) {
+            Button(action: { withAnimation(.easeInOut(duration: 0.2)) { wantsFreeTrial = true } }) {
+                Text("Free Trial")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(wantsFreeTrial ? .white : .white.opacity(0.45))
+                    .padding(.vertical, 6).padding(.horizontal, 16)
+                    .background(wantsFreeTrial ? Constants.DAMidBlue : Color.clear)
+                    .clipShape(Capsule())
+            }
+            .buttonStyle(PlainButtonStyle())
+
+            Button(action: { withAnimation(.easeInOut(duration: 0.2)) { wantsFreeTrial = false } }) {
+                Text("Pay Now")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(!wantsFreeTrial ? .white : .white.opacity(0.45))
+                    .padding(.vertical, 6).padding(.horizontal, 16)
+                    .background(!wantsFreeTrial ? Constants.DAMidBlue : Color.clear)
+                    .clipShape(Capsule())
+            }
+            .buttonStyle(PlainButtonStyle())
+        }
+        .padding(3)
+        .background(Capsule().fill(Color.white.opacity(0.1)))
+    }
+
     // MARK: - Trial Callout
     private var trialCallout: some View {
-        HStack(spacing: 6) {
+        let showTrial = selectedPlan == .annual && isEligibleForTrial && wantsFreeTrial
+        return HStack(spacing: 6) {
             Image(systemName: "checkmark.circle.fill").foregroundColor(.green).font(.system(size: 14))
-            Text(selectedPlan == .annual && isEligibleForTrial ? "3 days free - cancel anytime before trial ends" : "Start today - cancel anytime")
+            Text(showTrial ? "3 days free — cancel anytime before trial ends" : "Instant access — cancel anytime")
                 .font(.system(size: 13, weight: .medium)).foregroundColor(.white.opacity(0.85))
         }
     }
 
+    // MARK: - Trust Badges
+    private var trustBadges: some View {
+        HStack(spacing: 16) {
+            Label("No commitment", systemImage: "lock.open.fill")
+            Label("Secured by Apple", systemImage: "checkmark.shield.fill")
+        }
+        .font(.system(size: 11))
+        .foregroundColor(.white.opacity(0.45))
+    }
+
     // MARK: - CTA
     private var ctaText: String {
-        if selectedPlan == .monthly {
-            return "Start Monthly Plan"
-        }
-        if isEligibleForTrial {
-            return "Begin My Faith Reset"
-        }
+        if selectedPlan == .monthly { return "Start Monthly Plan" }
+        if isEligibleForTrial && wantsFreeTrial { return "Begin My Faith Reset" }
         return "Get Annual Access"
     }
 
@@ -300,6 +371,8 @@ struct HighConversionPaywallView: View {
             .frame(maxWidth: .infinity).padding(.vertical, 17)
             .background(RoundedRectangle(cornerRadius: 30).fill(LinearGradient(colors: [Constants.DAMidBlue, Constants.DAMidBlue.opacity(0.85)], startPoint: .leading, endPoint: .trailing)))
         }
+        .scaleEffect(ctaPulsing ? 1.015 : 1.0)
+        .animation(.easeInOut(duration: 1.4).repeatForever(autoreverses: true), value: ctaPulsing)
         .disabled(declarationStore.isPurchasing)
         .opacity(declarationStore.isPurchasing ? 0.7 : 1.0)
         .buttonStyle(PlainButtonStyle())
@@ -316,18 +389,12 @@ struct HighConversionPaywallView: View {
     }
 
     // MARK: - Close Button
+    // X is top-RIGHT on first try. After second-try is shown, we hard-dismiss.
     private var closeButton: some View {
         VStack {
             HStack {
                 Spacer()
-                Button(action: {
-                    Analytics.logEvent("paywall_dismissed", parameters: [
-                        "variant": paywallVariant,
-                        "plan_viewed": selectedPlan.rawValue,
-                        "seconds_on_paywall": Int(Date().timeIntervalSince(timeOnPaywall))
-                    ])
-                    callback?(); dismiss()
-                }) {
+                Button(action: handleDismiss) {
                     Image(systemName: "xmark.circle.fill").font(.system(size: 28))
                         .foregroundColor(.white.opacity(0.6)).background(Circle().fill(Color.black.opacity(0.2)))
                 }
@@ -338,6 +405,22 @@ struct HighConversionPaywallView: View {
         .transition(.opacity)
     }
 
+    private func handleDismiss() {
+        Analytics.logEvent("paywall_dismissed", parameters: [
+            "variant": paywallVariant,
+            "plan_viewed": selectedPlan.rawValue,
+            "seconds_on_paywall": Int(Date().timeIntervalSince(timeOnPaywall)),
+            "saw_second_try": hasSeenSecondTry
+        ])
+        // Show softer second-try offer on first close (if user is not already premium)
+        if !hasSeenSecondTry && !(appState.isPremium) {
+            hasSeenSecondTry = true
+            showSecondTry = true
+        } else {
+            callback?(); dismiss()
+        }
+    }
+
     // MARK: - Lifecycle
     private func onAppear() {
         timeOnPaywall = Date()
@@ -345,7 +428,10 @@ struct HighConversionPaywallView: View {
         // Check actual trial eligibility from Apple
         Task {
             let eligible = await subscriptionStore.currentOfferedPremium?.subscription?.isEligibleForIntroOffer ?? false
-            await MainActor.run { isEligibleForTrial = eligible }
+            await MainActor.run {
+                isEligibleForTrial = eligible
+                wantsFreeTrial = eligible // default toggle to match eligibility
+            }
         }
         AnalyticsService.shared.trackPaywallImpression(paywallId: paywallVariant, metadata: [
             "variant": paywallVariant,
@@ -354,6 +440,10 @@ struct HighConversionPaywallView: View {
         ])
         DispatchQueue.main.asyncAfter(deadline: .now() + 4) {
             withAnimation(.easeIn(duration: 0.4)) { showCloseButton = true }
+        }
+        // Start CTA pulse after slight delay so it feels natural
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+            ctaPulsing = true
         }
     }
 
@@ -377,13 +467,15 @@ struct HighConversionPaywallView: View {
                 let purchased = try await subscriptionStore.purchase(product, paywallName: paywallVariant)
                 if purchased {
                     let price = NSDecimalNumber(decimal: product.price).doubleValue
+                    let usedTrial = isEligibleForTrial && wantsFreeTrial && selectedPlan == .annual
                     AnalyticsService.shared.trackPaywallConversion(
                         productId: product.id, paywallId: paywallVariant, price: price,
                         metadata: ["variant": paywallVariant, "plan": selectedPlan.rawValue,
                                    "user_category": preferencesTracker.primaryCategory.rawValue,
-                                   "seconds_to_convert": Int(Date().timeIntervalSince(timeOnPaywall))]
+                                   "seconds_to_convert": Int(Date().timeIntervalSince(timeOnPaywall)),
+                                   "trial_used": usedTrial]
                     )
-                    if isEligibleForTrial {
+                    if usedTrial {
                         AnalyticsService.shared.trackTrialStarted(productId: product.id, metadata: ["variant": paywallVariant])
                     }
                     await MainActor.run { declarationStore.isPurchasing = false; callback?(); dismiss() }
