@@ -296,12 +296,9 @@ struct HighConversionPaywallView: View {
 
     // MARK: - CTA
     private var ctaText: String {
-        if selectedPlan == .monthly { return "Start Monthly Plan" }
-        if isEligibleForTrial {
-            if let challenge = resolvedChallengeName { return "Start My \(challenge)" }
-            return "Begin My Faith Reset"
-        }
-        return "Get Annual Access"
+        if selectedPlan == .monthly { return "Start Free Trial" }
+        if isEligibleForTrial { return "Start Free Trial" }
+        return "Start Free Trial"
     }
 
     private var ctaButton: some View {
