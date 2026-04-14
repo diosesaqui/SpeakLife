@@ -106,6 +106,10 @@ struct HomeView: View {
                                 showSubscription = subscriptionStore.showSubscription && !subscriptionStore.isPremium && !appState.firstOpen
                                 audioDeclarationViewModel.fetchAudio(version: subscriptionStore.audioRemoteVersion)
                                 declarationStore.setRemoteDeclarationVersion(version: subscriptionStore.remoteVersion)
+                                // Re-select the correct category seeded during onboarding.
+                                // DeclarationViewModel initialises before onboarding writes the
+                                // survey goal word to UserDefaults, so we need to pick it up here.
+                                declarationStore.choose(declarationStore.selectedCategory) { _ in }
                                 Task {
                                     if devotionalViewModel.shouldFetchNewDevotional() {
                                             // Fetching devotional with current version
