@@ -9,6 +9,7 @@ import FirebaseAnalytics
 struct SurveyOnboardingView: View {
     @EnvironmentObject var subscriptionStore: SubscriptionStore
     @EnvironmentObject var appState: AppState
+    @EnvironmentObject var declarationStore: DeclarationViewModel
     let size: CGSize
     let onComplete: () -> Void
 
@@ -100,6 +101,8 @@ struct SurveyOnboardingView: View {
         let category = goalWord.declarationCategory
         UserDefaults.standard.set(category.rawValue, forKey: "selectedCategory")
         UserPreferencesTracker.shared.trackCategorySelection(category.rawValue)
+        // Force the already-loaded DeclarationViewModel to switch to the new category immediately
+        declarationStore.choose(category) { _ in }
         Analytics.logEvent("survey_onboarding_completed", parameters: [
             "goal_word": goalWord.rawValue,
             "burden": responses.heaviestBurden?.rawValue ?? "unknown"
