@@ -53,9 +53,9 @@ struct SurveyPersonalizationEngine {
                     SurveyValueProp(icon: "brain.head.profile", title: "Mind Renewal Track", description: "A 21-day plan to replace fear-thinking with Kingdom-thinking."),
                     SurveyValueProp(icon: "person.2.fill", title: "100,000+ Believers Praying", description: "You are not fighting this alone. Never were.")
                 ],
-                ctaText: "Start My 3-Day Peace Reset",
+                ctaText: "Start My 30-Day SpeakLife Challenge",
                 urgencyText: "3 Days Free • Cancel Anytime",
-                challengeName: "3-Day Peace Reset"
+                challengeName: "30-Day SpeakLife Challenge"
             )
         case .identity:
             return SurveyPaywallCopy(
@@ -67,9 +67,9 @@ struct SurveyPersonalizationEngine {
                     SurveyValueProp(icon: "repeat.circle.fill", title: "21-Day Identity Reset", description: "A guided journey from self-doubt to unshakeable God-confidence."),
                     SurveyValueProp(icon: "person.2.fill", title: "100,000+ Believers Standing With You", description: "A community declaring truth over each other every single day.")
                 ],
-                ctaText: "Start My 3-Day Identity Reset",
+                ctaText: "Start My 30-Day SpeakLife Challenge",
                 urgencyText: "3 Days Free • Cancel Anytime",
-                challengeName: "3-Day Identity Reset"
+                challengeName: "30-Day SpeakLife Challenge"
             )
         case .purpose:
             return SurveyPaywallCopy(
@@ -81,9 +81,9 @@ struct SurveyPersonalizationEngine {
                     SurveyValueProp(icon: "arrow.up.forward.circle.fill", title: "Purpose Activation Track", description: "A 21-day plan for those stepping into their God-given assignment."),
                     SurveyValueProp(icon: "person.2.fill", title: "100,000+ Believers Pursuing Their Calling", description: "A community of people who refused to stay small.")
                 ],
-                ctaText: "Start My 3-Day Purpose Awakening",
+                ctaText: "Start My 30-Day SpeakLife Challenge",
                 urgencyText: "3 Days Free • Cancel Anytime",
-                challengeName: "3-Day Purpose Awakening"
+                challengeName: "30-Day SpeakLife Challenge"
             )
         case .joy:
             return SurveyPaywallCopy(
@@ -95,9 +95,9 @@ struct SurveyPersonalizationEngine {
                     SurveyValueProp(icon: "arrow.counterclockwise.circle.fill", title: "21-Day Joy Restoration", description: "A guided plan to reignite what grief, stress, or burnout took from you."),
                     SurveyValueProp(icon: "person.2.fill", title: "100,000+ Believers Choosing Joy Daily", description: "Proof that it's possible — and that you won't be doing it alone.")
                 ],
-                ctaText: "Start My 3-Day Joy Challenge",
+                ctaText: "Start My 30-Day SpeakLife Challenge",
                 urgencyText: "3 Days Free • Cancel Anytime",
-                challengeName: "3-Day Joy Challenge"
+                challengeName: "30-Day SpeakLife Challenge"
             )
         case .confidence:
             return SurveyPaywallCopy(
@@ -109,9 +109,9 @@ struct SurveyPersonalizationEngine {
                     SurveyValueProp(icon: "figure.stand", title: "Bold Living Devotionals", description: "Daily readings for those stepping into rooms they almost talked themselves out of."),
                     SurveyValueProp(icon: "person.2.fill", title: "100,000+ Believers Walking in Authority", description: "A community of people who decided to stop living small.")
                 ],
-                ctaText: "Start My 3-Day Confidence Builder",
+                ctaText: "Start My 30-Day SpeakLife Challenge",
                 urgencyText: "3 Days Free • Cancel Anytime",
-                challengeName: "3-Day Confidence Builder"
+                challengeName: "30-Day SpeakLife Challenge"
             )
         case .healing:
             return SurveyPaywallCopy(
@@ -123,9 +123,9 @@ struct SurveyPersonalizationEngine {
                     SurveyValueProp(icon: "waveform.path.ecg", title: "Healing Scriptures Track", description: "A 21-day journey through God's promises for wholeness."),
                     SurveyValueProp(icon: "person.2.fill", title: "100,000+ Believers Standing in Faith", description: "A community praying for healing and breakthrough — together.")
                 ],
-                ctaText: "Start My 3-Day Healing Journey",
+                ctaText: "Start My 30-Day SpeakLife Challenge",
                 urgencyText: "3 Days Free • Cancel Anytime",
-                challengeName: "3-Day Healing Journey"
+                challengeName: "30-Day SpeakLife Challenge"
             )
         case .prosperity:
             return SurveyPaywallCopy(
@@ -137,9 +137,9 @@ struct SurveyPersonalizationEngine {
                     SurveyValueProp(icon: "arrow.up.forward.circle.fill", title: "Kingdom Abundance Track", description: "A 21-day plan to renew your money mindset with what God actually says."),
                     SurveyValueProp(icon: "person.2.fill", title: "100,000+ Believers Walking in Blessing", description: "A community declaring abundance over each other every single day.")
                 ],
-                ctaText: "Start My 3-Day Abundance Declaration",
+                ctaText: "Start My 30-Day SpeakLife Challenge",
                 urgencyText: "3 Days Free • Cancel Anytime",
-                challengeName: "3-Day Abundance Declaration"
+                challengeName: "30-Day SpeakLife Challenge"
             )
         }
     }
