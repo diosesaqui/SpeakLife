@@ -225,6 +225,10 @@ struct OnboardingView: View {
     private func dismissOnboarding() {
         // Stop onboarding music — main app will restart it via SpeakLifeApp
         AudioPlayerService.shared.stopMusic()
+
+        // Start the 3-day challenge — schedules Day 2 + Day 3 push notifications
+        ThreeDayChallengeManager.shared.startChallenge(goalWordRaw: appState.surveyGoalWord)
+
         withAnimation {
             appState.isOnboarded = true
             LifecycleNotificationService.shared.scheduleLifecycleNotifications()
