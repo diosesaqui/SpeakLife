@@ -127,6 +127,20 @@ struct SurveyPersonalizationEngine {
                 urgencyText: "3 Days Free • Cancel Anytime",
                 challengeName: "3-Day Healing Journey"
             )
+        case .prosperity:
+            return SurveyPaywallCopy(
+                headline: "You Were Made to Walk in Overflow.",
+                subheadline: "God's Word has more to say about abundance than you've been taught. Start speaking it.",
+                valueProps: [
+                    SurveyValueProp(icon: "star.fill", title: "Wealth & Abundance Declarations", description: "Scripture-backed declarations over your finances, provision, and breakthrough."),
+                    SurveyValueProp(icon: "briefcase.fill", title: "Prosperity Devotionals", description: "Daily word for those building something — and believing God for increase."),
+                    SurveyValueProp(icon: "arrow.up.forward.circle.fill", title: "Kingdom Abundance Track", description: "A 21-day plan to renew your money mindset with what God actually says."),
+                    SurveyValueProp(icon: "person.2.fill", title: "100,000+ Believers Walking in Blessing", description: "A community declaring abundance over each other every single day.")
+                ],
+                ctaText: "Start My 3-Day Abundance Declaration",
+                urgencyText: "3 Days Free • Cancel Anytime",
+                challengeName: "3-Day Abundance Declaration"
+            )
         }
     }
 
@@ -175,6 +189,13 @@ struct SurveyPersonalizationEngine {
                 subheadline: "Healing takes time — and daily agreement with God's Word speeds the process. Don't miss a day.",
                 statLine: "Consistent declaration is the foundation of restoration",
                 ctaText: "Yes, Walk My Healing Journey"
+            )
+        case .prosperity:
+            return SurveyNotificationCopy(
+                headline: "Lock In Your \(challenge)",
+                subheadline: "Abundance starts in the mind before it shows up in the bank. Speak it every day.",
+                statLine: "Daily declarations over finances create new beliefs — and new decisions",
+                ctaText: "Yes, Declare My Abundance"
             )
         }
     }

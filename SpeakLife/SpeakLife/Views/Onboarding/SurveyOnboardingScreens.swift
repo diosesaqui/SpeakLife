@@ -131,7 +131,7 @@ struct SurveyQ1BurdenScreen: View {
         ScrollView(showsIndicators: false) {
             VStack(spacing: 24) {
                 Spacer().frame(height: size.height * 0.12)
-                SurveyQuestionHeader("Right now, what feels the heaviest?", subtitle: "Be honest. This is just between you and God.")
+                SurveyQuestionHeader("What brought you to SpeakLife today?", subtitle: "Be honest. This is just between you and God.")
                 VStack(spacing: 10) {
                     ForEach(HeaviestBurden.allCases) { o in
                         SurveyOptionRow(text: o.rawValue, isSelected: responses.heaviestBurden == o) { responses.heaviestBurden = o }

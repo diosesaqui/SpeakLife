@@ -49,6 +49,8 @@ enum HeaviestBurden: String, CaseIterable, Identifiable {
     case joyless     = "I've lost my joy — life feels numb"
     case hardSeason  = "I'm barely holding on through a painful season"
     case distantGod  = "I want to grow closer to God but feel distant"
+    case prosperity  = "I'm ready for financial breakthrough and abundance"
+    case calling     = "I want to step into my calling and reach my potential"
 
     var goalWord: SurveyGoalWord {
         switch self {
@@ -58,6 +60,8 @@ enum HeaviestBurden: String, CaseIterable, Identifiable {
         case .joyless:    return .joy
         case .hardSeason: return .healing
         case .distantGod: return .identity
+        case .prosperity: return .prosperity
+        case .calling:    return .purpose
         }
     }
 
@@ -69,6 +73,8 @@ enum HeaviestBurden: String, CaseIterable, Identifiable {
         case .joyless:    return "lost joy"
         case .hardSeason: return "this season"
         case .distantGod: return "that feeling of distance from God"
+        case .prosperity: return "financial limitation"
+        case .calling:    return "feeling stuck in your calling"
         }
     }
 }
@@ -153,6 +159,7 @@ enum SurveyGoalWord: String, CaseIterable, Identifiable {
     case joy        = "JOY"
     case confidence = "CONFIDENCE"
     case healing    = "HEALING"
+    case prosperity = "PROSPERITY"
 
     var tagline: String {
         switch self {
@@ -162,6 +169,7 @@ enum SurveyGoalWord: String, CaseIterable, Identifiable {
         case .joy:        return "Not happiness — deep, unshakeable joy."
         case .confidence: return "Step boldly into who you were made to be."
         case .healing:    return "What broke — God restores."
+        case .prosperity: return "Walk in overflow. God's blessing is your portion."
         }
     }
 
@@ -173,6 +181,7 @@ enum SurveyGoalWord: String, CaseIterable, Identifiable {
         case .joy:        return "sun.max.fill"
         case .confidence: return "bolt.fill"
         case .healing:    return "leaf.fill"
+        case .prosperity: return "star.fill"
         }
     }
 
@@ -184,6 +193,7 @@ enum SurveyGoalWord: String, CaseIterable, Identifiable {
         case .joy:        return "3-Day Joy Challenge"
         case .confidence: return "3-Day Confidence Builder"
         case .healing:    return "3-Day Healing Journey"
+        case .prosperity: return "3-Day Abundance Declaration"
         }
     }
 
@@ -195,6 +205,7 @@ enum SurveyGoalWord: String, CaseIterable, Identifiable {
         case .joy:        return .joy
         case .confidence: return .confidence
         case .healing:    return .anxiety
+        case .prosperity: return .wealth
         }
     }
 }
