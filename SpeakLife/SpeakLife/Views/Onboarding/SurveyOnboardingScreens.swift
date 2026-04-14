@@ -285,14 +285,27 @@ struct SurveyInterstitialAScreen: View {
 
 struct SurveyQ3AttemptsScreen: View {
     let size: CGSize; @ObservedObject var responses: SurveyResponses; let onContinue: () -> Void
+
+    private var isAspirational: Bool {
+        responses.heaviestBurden == .prosperity || responses.heaviestBurden == .calling
+    }
+    private var questionText: String {
+        isAspirational
+            ? "What have you already tried in pursuit of this?"
+            : "Have you tried to fight through this before?"
+    }
+    private var options: [PreviousAttempt] {
+        isAspirational ? PreviousAttempt.aspirationOptions : PreviousAttempt.painOptions
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 24) {
                     Spacer().frame(height: size.height * 0.12)
-                    SurveyQuestionHeader("Have you tried to fight through this before?", subtitle: "Select all that apply.")
+                    SurveyQuestionHeader(questionText, subtitle: "Select all that apply.")
                     VStack(spacing: 10) {
-                        ForEach(PreviousAttempt.allCases) { o in
+                        ForEach(options) { o in
                             SurveyCheckRow(text: o.rawValue, isSelected: responses.previousAttempts.contains(o)) {
                                 if responses.previousAttempts.contains(o) { responses.previousAttempts.remove(o) }
                                 else { responses.previousAttempts.insert(o) }
@@ -312,14 +325,27 @@ struct SurveyQ3AttemptsScreen: View {
 
 struct SurveyQ4LieScreen: View {
     let size: CGSize; @ObservedObject var responses: SurveyResponses; let onContinue: () -> Void
+
+    private var isAspirational: Bool {
+        responses.heaviestBurden == .prosperity || responses.heaviestBurden == .calling
+    }
+    private var questionText: String {
+        isAspirational
+            ? "What thought keeps you from believing this is really possible for you?"
+            : "When you're at your lowest — what's going through your mind?"
+    }
+    private var options: [InnerLie] {
+        isAspirational ? InnerLie.aspirationOptions : InnerLie.painOptions
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 24) {
                     Spacer().frame(height: size.height * 0.12)
-                    SurveyQuestionHeader("When you're at your lowest — what's going through your mind?", subtitle: "Pick the one that hits closest to home.")
+                    SurveyQuestionHeader(questionText, subtitle: "Pick the one that hits closest to home.")
                     VStack(spacing: 10) {
-                        ForEach(InnerLie.allCases) { o in
+                        ForEach(options) { o in
                             SurveyOptionRow(text: o.rawValue, isSelected: responses.innerLie == o) { responses.innerLie = o }
                         }
                     }.padding(.horizontal, 20)

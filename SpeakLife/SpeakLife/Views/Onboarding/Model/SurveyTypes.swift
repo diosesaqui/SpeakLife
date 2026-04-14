@@ -87,22 +87,51 @@ enum BurdenDuration: String, CaseIterable, Identifiable {
 
 enum PreviousAttempt: String, CaseIterable, Identifiable {
     var id: String { rawValue }
+    // Pain-track options
     case prayer       = "I pray, but the feelings keep coming back"
     case mediaContent = "Podcasts, books — helpful in the moment but nothing sticks"
     case people       = "Talking to people I trust — it helps, then fades"
     case willpower    = "I white-knuckle it and push through"
     case therapy      = "I've tried therapy or counseling"
     case noStart      = "I haven't really tried — I don't know where to start"
+    // Aspiration-track options
+    case faithContent        = "Faith-based content and books — inspiring but no breakthrough yet"
+    case prayedNoBreakthrough = "I've prayed and believed but haven't seen the results yet"
+    case goalsAndPlanning    = "I've set goals and plans but something always gets in the way"
+    case scarcityMindset     = "I've struggled with a scarcity or fear-based mindset"
+    case fearOfFailure       = "Fear of failure has held me back"
+    case justStartingOut     = "I'm just getting started — not sure where to begin"
+
+    static var painOptions: [PreviousAttempt] {
+        [.prayer, .mediaContent, .people, .willpower, .therapy, .noStart]
+    }
+    static var aspirationOptions: [PreviousAttempt] {
+        [.faithContent, .prayedNoBreakthrough, .goalsAndPlanning, .scarcityMindset, .fearOfFailure, .justStartingOut]
+    }
 }
 
 enum InnerLie: String, CaseIterable, Identifiable {
     var id: String { rawValue }
+    // Pain-track
     case failure      = "\"I can't do this. I'm going to fail.\""
     case notEnough    = "\"I'm not enough — I'll never be enough.\""
     case noChange     = "\"Nothing in my life will ever really change.\""
     case godFar       = "\"God is far away. I don't feel heard.\""
     case lostIdentity = "\"I don't know who I am anymore.\""
     case tired        = "\"I'm tired of fighting. I just want peace.\""
+    // Aspiration-track
+    case notForMe     = "\"Abundance/success is for other people — not me.\""
+    case dontDeserve  = "\"I don't deserve more than I have.\""
+    case tooLate      = "\"I've waited too long. I missed my window.\""
+    case godWontBless = "\"I don't know if God wants this for me specifically.\""
+    case notCapable   = "\"I don't have what it takes to reach this level.\""
+
+    static var painOptions: [InnerLie] {
+        [.failure, .notEnough, .noChange, .godFar, .lostIdentity, .tired]
+    }
+    static var aspirationOptions: [InnerLie] {
+        [.notForMe, .dontDeserve, .tooLate, .godWontBless, .notCapable]
+    }
 }
 
 enum DeclarationExperience: String, CaseIterable, Identifiable {
