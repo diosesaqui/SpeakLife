@@ -224,11 +224,6 @@ struct SurveyInterstitialAScreen: View {
                 quote: "\"I was in the darkest season of my life, health issues, barely holding on. SpeakLife was the daily anchor that kept me standing.\"",
                 author: "— Rachel D., Florida"
             )
-        case .distantGod:
-            return TestimonialReview(
-                quote: "\"I'd go to church and feel nothing. I started declaring God's Word daily and slowly, the closeness came back. He was never far.\"",
-                author: "— David M., Chicago"
-            )
         case .prosperity:
             return TestimonialReview(
                 quote: "\"I was stuck in a scarcity mindset for years. After speaking abundance declarations daily, my business doubled in 90 days. God's Word works.\"",

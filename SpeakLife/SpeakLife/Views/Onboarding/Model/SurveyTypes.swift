@@ -48,7 +48,6 @@ enum HeaviestBurden: String, CaseIterable, Identifiable {
     case worthiness  = "A deep feeling that I'm not enough"
     case joyless     = "I've lost my joy — life feels numb"
     case hardSeason  = "I'm fighting a health battle and need God's healing"
-    case distantGod  = "I want to grow closer to God but feel distant"
     case prosperity  = "I'm ready for financial breakthrough and abundance"
     case calling     = "I want to step into my calling and reach my potential"
 
@@ -59,7 +58,6 @@ enum HeaviestBurden: String, CaseIterable, Identifiable {
         case .worthiness: return .identity
         case .joyless:    return .joy
         case .hardSeason: return .healing
-        case .distantGod: return .identity
         case .prosperity: return .prosperity
         case .calling:    return .purpose
         }
@@ -72,7 +70,6 @@ enum HeaviestBurden: String, CaseIterable, Identifiable {
         case .worthiness: return "not feeling enough"
         case .joyless:    return "lost joy"
         case .hardSeason: return "this health battle"
-        case .distantGod: return "that feeling of distance from God"
         case .prosperity: return "financial limitation"
         case .calling:    return "feeling stuck in your calling"
         }
