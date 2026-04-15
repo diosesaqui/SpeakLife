@@ -150,52 +150,52 @@ struct SurveyPersonalizationEngine {
         switch word {
         case .peace:
             return SurveyNotificationCopy(
-                headline: "Lock In Your \(challenge)",
-                subheadline: "The people who break free from anxiety are the ones who show up every day. Let us show up with you.",
-                statLine: "Users who set daily reminders are 4x more likely to reach 21 days",
-                ctaText: "Yes, Protect My Peace Reset"
+                headline: "Protect Your 30-Day Habit",
+                subheadline: "Peace isn't found in a moment — it's built over 30 days of speaking God's truth louder than your fear. Don't miss a single day.",
+                statLine: "Users who set a daily reminder are 4x more likely to complete their 30-day reset",
+                ctaText: "Yes, Build My Peace Habit"
             )
         case .identity:
             return SurveyNotificationCopy(
-                headline: "Lock In Your \(challenge)",
-                subheadline: "Identity is built through repetition. Daily declarations replace the old story faster than you think.",
-                statLine: "Users who set daily reminders are 4x more likely to complete their challenge",
-                ctaText: "Yes, Start My Identity Reset"
+                headline: "Protect Your 30-Day Habit",
+                subheadline: "Identity is rebuilt through daily repetition. 30 days of declarations replaces the old story with what God actually says about you.",
+                statLine: "Users with daily reminders are 4x more likely to finish their 30-day reset",
+                ctaText: "Yes, Build My Identity Habit"
             )
         case .purpose:
             return SurveyNotificationCopy(
-                headline: "Protect Your \(challenge)",
-                subheadline: "Purpose unfolds one obedient step at a time. Daily reminders keep you moving toward your calling.",
-                statLine: "Consistent daily practice is the #1 predictor of breakthrough",
-                ctaText: "Yes, Walk Into My Purpose"
+                headline: "Protect Your 30-Day Habit",
+                subheadline: "Purpose is walked into one obedient day at a time. 30 days of daily declarations builds the momentum that changes your trajectory.",
+                statLine: "Consistency over 30 days is the #1 predictor of breakthrough",
+                ctaText: "Yes, Build My Purpose Habit"
             )
         case .joy:
             return SurveyNotificationCopy(
-                headline: "Guard Your \(challenge)",
-                subheadline: "Joy is a muscle. The more you declare it, the stronger it gets — even on the days it doesn't feel true yet.",
-                statLine: "92% of users who set reminders report noticeable mood shifts within 7 days",
-                ctaText: "Yes, Protect My Joy"
+                headline: "Protect Your 30-Day Habit",
+                subheadline: "Joy is a muscle. 30 days of declaring it daily — even when it doesn't feel true — is what makes it permanent.",
+                statLine: "92% of users who set reminders report lasting mood shifts within 30 days",
+                ctaText: "Yes, Build My Joy Habit"
             )
         case .confidence:
             return SurveyNotificationCopy(
-                headline: "Lock In Your \(challenge)",
-                subheadline: "Confidence is built brick by brick. Show up every day and watch who you become.",
-                statLine: "Daily declarations for 21 days create measurable shifts in self-perception",
-                ctaText: "Yes, Build My Confidence"
+                headline: "Protect Your 30-Day Habit",
+                subheadline: "Confidence isn't a feeling you wait for — it's a habit you build. 30 days of showing up daily is what changes who you are.",
+                statLine: "30 days of daily declarations creates measurable shifts in self-perception",
+                ctaText: "Yes, Build My Confidence Habit"
             )
         case .healing:
             return SurveyNotificationCopy(
-                headline: "Protect Your \(challenge)",
-                subheadline: "Healing takes time — and daily agreement with God's Word speeds the process. Don't miss a day.",
-                statLine: "Consistent declaration is the foundation of restoration",
-                ctaText: "Yes, Walk My Healing Journey"
+                headline: "Protect Your 30-Day Habit",
+                subheadline: "Healing happens in agreement with God's Word — daily, consistently, over time. 30 days builds the foundation restoration stands on.",
+                statLine: "Consistent daily declaration over 30 days is the foundation of restoration",
+                ctaText: "Yes, Build My Healing Habit"
             )
         case .prosperity:
             return SurveyNotificationCopy(
-                headline: "Lock In Your \(challenge)",
-                subheadline: "Abundance starts in the mind before it shows up in the bank. Speak it every day.",
-                statLine: "Daily declarations over finances create new beliefs — and new decisions",
-                ctaText: "Yes, Declare My Abundance"
+                headline: "Protect Your 30-Day Habit",
+                subheadline: "Abundance starts in the mind before it shows up in your life. 30 days of speaking it daily is what shifts your beliefs — and your decisions.",
+                statLine: "30 days of daily abundance declarations rewire your financial beliefs",
+                ctaText: "Yes, Build My Abundance Habit"
             )
         }
     }
@@ -218,10 +218,10 @@ struct SurveyPersonalizationEngine {
 
     private var defaultNotificationCopy: SurveyNotificationCopy {
         SurveyNotificationCopy(
-            headline: "Lock In Your Daily Transformation",
-            subheadline: "The people who see breakthrough are the ones who show up every single day.",
-            statLine: "92% of users who set reminders reach 21-day streaks",
-            ctaText: "Yes, I'm Committed to Change"
+            headline: "Protect Your 30-Day Habit",
+            subheadline: "Real change isn't a moment — it's 30 days of showing up. Set your daily reminder and don't miss a day.",
+            statLine: "Users with daily reminders are 4x more likely to complete their 30-day reset",
+            ctaText: "Yes, Build My Daily Habit"
         )
     }
 }

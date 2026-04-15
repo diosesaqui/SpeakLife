@@ -376,7 +376,7 @@ struct SurveyInterstitialBScreen: View {
                     Text("Every thought you just named?\nIt didn't come from God.").font(.system(size: 17, weight: .semibold, design: .rounded)).foregroundColor(.white.opacity(0.85))
                         .multilineTextAlignment(.center).padding(.horizontal, 28)
                         .opacity(v ? 1 : 0).offset(y: v ? 0 : 16).animation(.easeOut(duration: 0.5).delay(0.1), value: v)
-                    Text("Most people fight these thoughts with willpower — or silence. But the people who actually break free?\n\nThey learn to speak differently.")
+                    Text("Most people try willpower, motivation, or one-time decisions. But none of it sticks.\n\nThe people who actually change — they build a daily habit of speaking God's truth until it rewires everything.")
                         .font(.system(size: 15, weight: .regular, design: .rounded)).foregroundColor(.white.opacity(0.7))
                         .multilineTextAlignment(.center).padding(.horizontal, 32)
                         .opacity(v ? 1 : 0).offset(y: v ? 0 : 12).animation(.easeOut(duration: 0.5).delay(0.2), value: v)
@@ -388,7 +388,7 @@ struct SurveyInterstitialBScreen: View {
                 }.opacity(v ? 1 : 0).animation(.easeOut(duration: 0.5).delay(0.35), value: v)
             }
             Spacer()
-            SurveyContinueButton(label: "I Want That") { onContinue() }
+            SurveyContinueButton(label: "Build the Habit") { onContinue() }
                 .padding(.bottom, 52).opacity(v ? 1 : 0).animation(.easeOut(duration: 0.4).delay(0.5), value: v)
         }
         .onAppear { withAnimation(.easeOut(duration: 0.6)) { v = true } }
@@ -496,7 +496,7 @@ struct SurveyQ8NotificationScreen: View {
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 24) {
                     Spacer().frame(height: size.height * 0.12)
-                    SurveyQuestionHeader("The people who break through don't skip days.", subtitle: "When do you need us standing with you?")
+                    SurveyQuestionHeader("Habits are built at the same time every day.", subtitle: "When should we show up for you?")
                     VStack(spacing: 10) {
                         ForEach(NotificationTime.allCases) { o in
                             SurveyOptionRow(text: o.rawValue, isSelected: responses.notificationTime == o) { responses.notificationTime = o }
@@ -579,7 +579,7 @@ struct SurveyGoalRevealScreen: View {
                     VStack(spacing: 10) {
                         Text("You've been carrying \(responses.burdenShortLabel) — \(responses.durationLabel).")
                             .font(.system(size: 16, weight: .semibold, design: .rounded)).foregroundColor(.white).multilineTextAlignment(.center)
-                        Text("You've tried to push through. And for a moment things helped. But nothing stuck.\n\nWhat you haven't tried yet is this: speaking God's truth out loud — daily, over the exact lies you named.\n\nThat's what SpeakLife does. Starting now.")
+                        Text("You've tried to push through. Things helped for a moment. But nothing stuck.\n\nBecause real change isn't a moment — it's a habit.\n\n30 days of speaking God's Word out loud, every single day, over the exact thing you named. That's what rewires you. That's what SpeakLife builds.")
                             .font(.system(size: 15, weight: .regular, design: .rounded)).foregroundColor(.white.opacity(0.7)).multilineTextAlignment(.center).lineSpacing(3)
                     }
                     .opacity(cv ? 1 : 0).offset(y: cv ? 0 : 12).animation(.easeOut(duration: 0.5).delay(0.25), value: cv)
