@@ -189,20 +189,24 @@ struct SurveyInterstitialAScreen: View {
     let onContinue: () -> Void
     @State private var v = false
 
-    private var isAspirational: Bool {
-        responses.heaviestBurden == .prosperity || responses.heaviestBurden == .calling
-    }
-
     private var headline: String {
-        isAspirational
-            ? "You're not building this alone."
-            : "You're not carrying this alone."
+        switch responses.heaviestBurden {
+        case .prosperity:  return "You're not building this alone."
+        case .calling:     return "You're not walking this alone."
+        default:           return "You're not carrying this alone."
+        }
     }
 
     private var subtext: String {
-        isAspirational
-            ? "Over 100,000 men and women have opened SpeakLife hungry for more — more purpose, more abundance, more of what God promised.\n\nYou're in good company."
-            : "Over 100,000 men and women have opened SpeakLife carrying the same weight you just described.\n\nThe feelings are real. So is the way out."
+        switch responses.heaviestBurden {
+        case .prosperity:
+            return "Over 100,000 men and women have opened SpeakLife hungry for more — more abundance, more provision, more of what God promised.\n\nYou're in good company."
+        case .calling:
+            return "Over 100,000 believers have opened SpeakLife asking God to make their faith unshakeable — and found that daily declaration is what moved the needle.\n\nYou're in good company."
+        default:
+            return "Over 100,000 men and women have opened SpeakLife carrying the same weight you just described.\n\nThe feelings are real. So is the way out."
+        }
+    }
     }
 
     private var testimonial: TestimonialReview {
@@ -239,8 +243,8 @@ struct SurveyInterstitialAScreen: View {
             )
         case .calling:
             return TestimonialReview(
-                quote: "\"I knew God called me to something bigger. I just couldn't step into it. Three weeks of purpose declarations gave me the courage to finally launch.\"",
-                author: "— James K., Houston"
+                quote: "\"My faith used to crumble under pressure. After 30 days of declaring God's Word, I stopped doubting and started standing. My whole life shifted.\"",
+                author: "— Marcus T., Atlanta"
             )
         case .none:
             return TestimonialReview(
