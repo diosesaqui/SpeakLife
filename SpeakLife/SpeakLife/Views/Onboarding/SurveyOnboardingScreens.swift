@@ -433,7 +433,7 @@ struct SurveyQ6FutureScreen: View {
     private var questionText: String {
         switch responses.heaviestBurden {
         case .prosperity: return "When you walk in financial abundance — what opens up?"
-        case .calling:    return "When your faith is unshakeable — what shifts first?"
+        case .calling:    return "What would your life look like if you truly believed every promise God made you?"
         default:          return "If this was no longer your battle — what would change first?"
         }
     }
