@@ -108,6 +108,9 @@ enum PreviousAttempt: String, CaseIterable, Identifiable {
     static var aspirationOptions: [PreviousAttempt] {
         [.faithContent, .prayedNoBreakthrough, .goalsAndPlanning, .scarcityMindset, .fearOfFailure, .justStartingOut]
     }
+    static var faithOptions: [PreviousAttempt] {
+        [.prayer, .faithContent, .prayedNoBreakthrough, .mediaContent, .people, .noStart]
+    }
 }
 
 enum InnerLie: String, CaseIterable, Identifiable {
@@ -125,12 +128,21 @@ enum InnerLie: String, CaseIterable, Identifiable {
     case tooLate      = "\"I've waited too long. I missed my window.\""
     case godWontBless = "\"I don't know if God wants this for me specifically.\""
     case notCapable   = "\"I don't have what it takes to reach this level.\""
+    // Faith-track
+    case faithWeak    = "\"My faith is too weak. I keep doubting.\""
+    case godSilent    = "\"I pray but God feels silent. I don't know if He hears me.\""
+    case faithNotReal = "\"Faith works for others — but I can't seem to make it real.\""
+    case tooSinful    = "\"I've messed up too much. God can't fully use me.\""
+    case faithSmall   = "\"I believe — but not enough to actually trust Him with this.\""
 
     static var painOptions: [InnerLie] {
         [.failure, .notEnough, .noChange, .godFar, .lostIdentity, .tired]
     }
     static var aspirationOptions: [InnerLie] {
         [.notForMe, .dontDeserve, .tooLate, .godWontBless, .notCapable]
+    }
+    static var faithOptions: [InnerLie] {
+        [.faithWeak, .godSilent, .faithNotReal, .tooSinful, .faithSmall]
     }
 }
 

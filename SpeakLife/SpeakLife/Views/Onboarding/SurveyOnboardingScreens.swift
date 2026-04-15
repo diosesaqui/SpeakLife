@@ -289,16 +289,19 @@ struct SurveyInterstitialAScreen: View {
 struct SurveyQ3AttemptsScreen: View {
     let size: CGSize; @ObservedObject var responses: SurveyResponses; let onContinue: () -> Void
 
-    private var isAspirational: Bool {
-        responses.heaviestBurden == .prosperity || responses.heaviestBurden == .calling
-    }
     private var questionText: String {
-        isAspirational
-            ? "What have you already tried in pursuit of this?"
-            : "Have you tried to fight through this before?"
+        switch responses.heaviestBurden {
+        case .prosperity: return "What have you already tried in pursuit of this?"
+        case .calling:    return "What have you tried to grow your faith before?"
+        default:          return "Have you tried to fight through this before?"
+        }
     }
     private var options: [PreviousAttempt] {
-        isAspirational ? PreviousAttempt.aspirationOptions : PreviousAttempt.painOptions
+        switch responses.heaviestBurden {
+        case .prosperity: return PreviousAttempt.aspirationOptions
+        case .calling:    return PreviousAttempt.faithOptions
+        default:          return PreviousAttempt.painOptions
+        }
     }
 
     var body: some View {
@@ -329,16 +332,19 @@ struct SurveyQ3AttemptsScreen: View {
 struct SurveyQ4LieScreen: View {
     let size: CGSize; @ObservedObject var responses: SurveyResponses; let onContinue: () -> Void
 
-    private var isAspirational: Bool {
-        responses.heaviestBurden == .prosperity || responses.heaviestBurden == .calling
-    }
     private var questionText: String {
-        isAspirational
-            ? "What thought keeps you from believing this is really possible for you?"
-            : "When you're at your lowest — what's going through your mind?"
+        switch responses.heaviestBurden {
+        case .prosperity: return "What thought keeps you from believing this is really possible for you?"
+        case .calling:    return "What thought makes it hard to fully trust God and step into deeper faith?"
+        default:          return "When you're at your lowest — what's going through your mind?"
+        }
     }
     private var options: [InnerLie] {
-        isAspirational ? InnerLie.aspirationOptions : InnerLie.painOptions
+        switch responses.heaviestBurden {
+        case .prosperity: return InnerLie.aspirationOptions
+        case .calling:    return InnerLie.faithOptions
+        default:          return InnerLie.painOptions
+        }
     }
 
     var body: some View {
