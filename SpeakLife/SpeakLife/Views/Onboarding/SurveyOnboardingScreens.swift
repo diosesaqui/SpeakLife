@@ -99,14 +99,14 @@ struct SurveyIntroScreen: View {
             Spacer()
             VStack(spacing: 28) {
                 VStack(spacing: 12) {
-                    Text("Before we build your experience —").font(.system(size: 22, weight: .semibold, design: .rounded))
+                    Text("Before we build your 30-day plan —").font(.system(size: 22, weight: .semibold, design: .rounded))
                         .foregroundColor(.white.opacity(0.75)).multilineTextAlignment(.center)
                         .opacity(h ? 1 : 0).offset(y: h ? 0 : 16).animation(.easeOut(duration: 0.6), value: h)
-                    Text("we need to understand\nwhat you're carrying.").font(.system(size: 32, weight: .bold, design: .rounded))
+                    Text("tell us what you're\nbelieving God for.").font(.system(size: 32, weight: .bold, design: .rounded))
                         .foregroundColor(.white).multilineTextAlignment(.center)
                         .opacity(h ? 1 : 0).offset(y: h ? 0 : 16).animation(.easeOut(duration: 0.6).delay(0.1), value: h)
                 }
-                Text("9 questions. Your answers shape your declarations, your devotionals, and your first breakthrough.")
+                Text("9 questions. Your declarations, your devotionals, and your daily habit — all built around your answer.")
                     .font(.system(size: 16, weight: .regular, design: .rounded)).foregroundColor(.white.opacity(0.65))
                     .multilineTextAlignment(.center).padding(.horizontal, 36)
                     .opacity(s ? 1 : 0).offset(y: s ? 0 : 12).animation(.easeOut(duration: 0.5), value: s)
