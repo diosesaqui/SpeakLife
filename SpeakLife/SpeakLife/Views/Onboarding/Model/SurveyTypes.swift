@@ -59,7 +59,7 @@ enum HeaviestBurden: String, CaseIterable, Identifiable {
         case .joyless:    return .joy
         case .hardSeason: return .healing
         case .prosperity: return .prosperity
-        case .calling:    return .purpose
+        case .calling:    return .identity
         }
     }
 
@@ -71,7 +71,7 @@ enum HeaviestBurden: String, CaseIterable, Identifiable {
         case .joyless:    return "lost joy"
         case .hardSeason: return "this health battle"
         case .prosperity: return "financial limitation"
-        case .calling:    return "feeling stuck in your calling"
+        case .calling:    return "wanting to go deeper in faith"
         }
     }
 }
@@ -157,11 +157,12 @@ enum FutureChange: String, CaseIterable, Identifiable {
     case giveGenerously = "I give generously without holding back"
     case overflow       = "I stop surviving and start walking in God's overflow"
     case provisionDoors = "My obedience unlocks doors I couldn't open on my own"
-    // Calling-track
-    case finallyLaunch  = "I finally launch what I've been sitting on"
-    case boldRooms      = "I step into rooms I used to talk myself out of"
-    case realImpact     = "My work creates real impact in people's lives"
-    case giftsFully     = "I stop playing small with the gifts God gave me"
+    // Faith-track
+    case faithPrayers   = "My prayers shift from worry to belief"
+    case faithStand     = "I stop being moved by what I see and stand on what God said"
+    case faithFoundation = "My faith becomes the foundation every decision is built on"
+    case faithConfidence = "I wake up confident in God's promises over my life"
+    case faithObedience = "I step into what God is calling me to — without fear"
 
     static var painOptions: [FutureChange] {
         [.purpose, .family, .boldSteps, .peaceInBody, .knowIdentity, .livingChosen]
@@ -170,7 +171,7 @@ enum FutureChange: String, CaseIterable, Identifiable {
         [.familyFree, .buildLegacy, .giveGenerously, .overflow, .provisionDoors, .livingChosen]
     }
     static var callingOptions: [FutureChange] {
-        [.finallyLaunch, .boldRooms, .realImpact, .giftsFully, .buildLegacy, .livingChosen]
+        [.faithPrayers, .faithStand, .faithFoundation, .faithConfidence, .faithObedience, .knowIdentity]
     }
 }
 
