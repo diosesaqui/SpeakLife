@@ -29,6 +29,24 @@ struct HighConversionPaywallView: View {
     var callback: (() -> Void)?
     private let paywallVariant = "high_conversion_v1"
 
+    private var surveyEngine: SurveyPersonalizationEngine {
+        SurveyPersonalizationEngine(goalWordRaw: appState.surveyGoalWord)
+    }
+
+    /// Resolved copy: survey goal word first, category-based fallback second
+    private var resolvedHeadline: String {
+        surveyEngine.hasSurveyData ? surveyEngine.paywallCopy.headline : copy.headline
+    }
+    private var resolvedSubheadline: String {
+        surveyEngine.hasSurveyData ? surveyEngine.paywallCopy.subheadline : copy.subheadline
+    }
+    private var resolvedValueProps: [String] {
+        surveyEngine.hasSurveyData ? surveyEngine.paywallCopy.valueProps.map { $0.title } : copy.valueProps
+    }
+    private var resolvedChallengeName: String? {
+        surveyEngine.hasSurveyData ? surveyEngine.paywallCopy.challengeName : nil
+    }
+
     enum PlanType: String {
         case annual = "annual"
         case monthly = "monthly"
@@ -99,10 +117,10 @@ struct HighConversionPaywallView: View {
                     .resizable().frame(width: 64, height: 64)
                     .clipShape(RoundedRectangle(cornerRadius: 14))
                     .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.white.opacity(0.2), lineWidth: 1))
-                Text(copy.headline)
+                Text(resolvedHeadline)
                     .font(.system(size: 22, weight: .bold)).foregroundColor(.white)
                     .multilineTextAlignment(.center).padding(.horizontal, 24)
-                Text(copy.subheadline)
+                Text(resolvedSubheadline)
                     .font(.system(size: 14)).foregroundColor(.white.opacity(0.75))
                     .multilineTextAlignment(.center).padding(.horizontal, 32)
             }
@@ -130,7 +148,7 @@ struct HighConversionPaywallView: View {
             "Faith comes by hearing. Audio devotionals put Scripture in your ears morning and night.",
             "Know your identity in Christ so deeply that fear, doubt, and shame lose their grip."
         ]
-        let props = Array(copy.valueProps.prefix(4))
+        let props = Array(resolvedValueProps.prefix(4))
         return VStack(alignment: .leading, spacing: 16) {
             ForEach(0..<min(props.count, 4), id: \.self) { i in
                 HCBenefitRow(icon: icons[i], title: props[i], description: descs[i])
@@ -278,13 +296,9 @@ struct HighConversionPaywallView: View {
 
     // MARK: - CTA
     private var ctaText: String {
-        if selectedPlan == .monthly {
-            return "Start Monthly Plan"
-        }
-        if isEligibleForTrial {
-            return "Begin My Faith Reset"
-        }
-        return "Get Annual Access"
+        if selectedPlan == .monthly { return "Start Free Trial" }
+        if isEligibleForTrial { return "Start Free Trial" }
+        return "Start Free Trial"
     }
 
     private var ctaButton: some View {
