@@ -207,7 +207,6 @@ struct SurveyInterstitialAScreen: View {
             return "Over 100,000 men and women have opened SpeakLife carrying the same weight you just described.\n\nThe feelings are real. So is the way out."
         }
     }
-    }
 
     private var testimonial: TestimonialReview {
         switch responses.heaviestBurden {
