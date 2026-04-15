@@ -212,7 +212,7 @@ struct SurveyPersonalizationEngine {
             ],
             ctaText: "Begin My Faith Reset",
             urgencyText: "3 Days Free • Cancel Anytime",
-            challengeName: "3-Day Challenge"
+            challengeName: "30-Day SpeakLife Challenge"
         )
     }
 
