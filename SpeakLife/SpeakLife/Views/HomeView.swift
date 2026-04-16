@@ -106,6 +106,10 @@ struct HomeView: View {
                                 showSubscription = subscriptionStore.showSubscription && !subscriptionStore.isPremium && !appState.firstOpen
                                 audioDeclarationViewModel.fetchAudio(version: subscriptionStore.audioRemoteVersion)
                                 declarationStore.setRemoteDeclarationVersion(version: subscriptionStore.remoteVersion)
+                                // Re-select the correct category seeded during onboarding.
+                                // DeclarationViewModel initialises before onboarding writes the
+                                // survey goal word to UserDefaults, so we need to pick it up here.
+                                declarationStore.choose(declarationStore.selectedCategory) { _ in }
                                 Task {
                                     if devotionalViewModel.shouldFetchNewDevotional() {
                                             // Fetching devotional with current version
@@ -195,6 +199,7 @@ struct HomeView: View {
                                 showStreakCelebration = true
                                 // Global streak celebration triggered
                             }
+                            // Notification-triggered burst (push notification tap) — unchanged
                             .fullScreenCover(isPresented: $showDailyBurstOnLaunch) {
                                 DailyDeclarationBurstView()
                                     .environmentObject(declarationStore)
@@ -206,6 +211,8 @@ struct HomeView: View {
                             .onReceive(NotificationCenter.default.publisher(for: Notification.Name("ShowDailyDeclarationBurst"))) { _ in
                                 showDailyBurstOnLaunch = true
                             }
+                            // Daily first-open: show Structured Day plan instead of raw burst.
+                            // The burst task is inside the checklist — users reach it naturally.
                             .fullScreenCover(isPresented: $showDailyStructuredDayOnLaunch) {
                                 ModernDailyChecklistView(viewModel: streakViewModel)
                                     .environmentObject(appState)
@@ -276,11 +283,11 @@ struct HomeView: View {
                 .environment(\.colorScheme, .dark)
                 .ignoresSafeArea()
             
-            // Trial ending banner (Day 3)
-//            VStack {
-//                TrialEndingBanner()
-//                Spacer()
-//            }
+            // Trial ending banner
+            VStack {
+                TrialEndingBanner()
+                Spacer()
+            }
 
             // Global streak celebration overlay
             if showStreakCelebration {

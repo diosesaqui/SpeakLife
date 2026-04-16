@@ -1,20 +1,26 @@
 //
 //  NotificationScene.swift
-//  Dios Es Aqui
+//  SpeakLife
 //
-//  Created by Riccardo Washington on 3/29/22.
+//  Personalized notification onboarding — copy driven by SurveyPersonalizationEngine.
+//  Start time is pre-seeded from the user's survey Q8 answer.
 //
 
 import SwiftUI
 
-struct NotificationOnboarding:  View {
+struct NotificationOnboarding: View {
     @EnvironmentObject var subscriptionStore: SubscriptionStore
     @EnvironmentObject var appState: AppState
-    
+
     let size: CGSize
     let callBack: (() -> Void)
-    
-    var body: some View  {
+
+    private var engine: SurveyPersonalizationEngine {
+        SurveyPersonalizationEngine(goalWordRaw: appState.surveyGoalWord)
+    }
+    private var copy: SurveyNotificationCopy { engine.notificationCopy }
+
+    var body: some View {
         notificationSceneAlt(size: size)
     }
     
@@ -41,36 +47,33 @@ struct NotificationOnboarding:  View {
             }
             
             VStack {
-                Text("Lock In Your Daily Transformation", comment: "Notification onboarding title")
-                    .font(.system(size: 34, weight: .semibold, design: .rounded))
-                    .shadow(color: Color.white.opacity(0.6), radius: 4, x: 0, y: 2)
+                Text(copy.headline)
+                    .font(.system(size: 30, weight: .bold, design: .rounded))
                     .minimumScaleFactor(0.7)
                     .multilineTextAlignment(.center)
-                    .foregroundColor(appState.onBoardingTest ? .white : Constants.DEABlack)
-                
+                    .foregroundColor(.white)
+
+                Spacer().frame(height: 10)
+
+                Text(copy.subheadline)
+                    .font(.system(size: 15, weight: .regular, design: .rounded))
+                    .foregroundColor(.white.opacity(0.75))
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 24)
+
                 Spacer().frame(height: 16)
-                
+
                 VStack(spacing: 8) {
-//                    Text("Daily reminders are the #1 predictor of spiritual breakthrough", comment: "Setup notifications instructions")
-//                        .font(.system(size: 16, weight: .semibold, design: .rounded))
-//                        .foregroundColor(appState.onBoardingTest ? .white : Constants.DALightBlue)
-//                        .multilineTextAlignment(.center)
-//                        .lineSpacing(10)
-//                        .lineLimit(2)
-                    
-                    Text("92% of users who set reminders reach 21-day streaks")
-                        .font(.system(size: 14, weight: .medium, design: .rounded))
-                        .foregroundColor(appState.onBoardingTest ? .white.opacity(0.9) : Constants.DALightBlue.opacity(0.9))
-                        .multilineTextAlignment(.center)
-                        .lineLimit(2)
-                    
-                    HStack {
-                        Image(systemName: "bell.badge.fill")
-                            .foregroundColor(.yellow)
-                        Text("Your mind is renewed through consistency")
-                            .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(appState.onBoardingTest ? .white.opacity(0.8) : Constants.DALightBlue.opacity(0.8))
+                    HStack(spacing: 6) {
+                        Image(systemName: "chart.line.uptrend.xyaxis")
+                            .font(.system(size: 13, weight: .semibold)).foregroundColor(.green)
+                        Text(copy.statLine)
+                            .font(.system(size: 13, weight: .medium, design: .rounded))
+                            .foregroundColor(.white.opacity(0.85)).multilineTextAlignment(.center)
                     }
+                    .padding(.horizontal, 16).padding(.vertical, 10)
+                    .background(Capsule().fill(Color.white.opacity(0.1))
+                        .overlay(Capsule().strokeBorder(Color.white.opacity(0.15), lineWidth: 1)))
                 }
                 .frame(width: size.width * 0.85)
                 
@@ -115,7 +118,7 @@ struct NotificationOnboarding:  View {
             }
             
             VStack(spacing: 12) {
-                ShimmerButton(colors: [.blue], buttonTitle: "Yes, I'm Committed to Change 💪", action: callBack)
+                ShimmerButton(colors: [.blue], buttonTitle: copy.ctaText, action: callBack)
                 .frame(width: size.width * 0.87 ,height: 50)
                 
                 HStack(spacing: 4) {

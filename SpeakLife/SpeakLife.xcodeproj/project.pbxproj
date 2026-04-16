@@ -349,6 +349,12 @@
 		F3F466B4CB267BFBE4FD8CC8 /* WldehBibleAPIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D920701A13775F49180D845 /* WldehBibleAPIService.swift */; };
 		FCB7A8468DAA92844336D893 /* CancelInterventionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA6F23A3327C444669DC03A5 /* CancelInterventionView.swift */; };
 		RC00000001294E382700CD2103 /* RevenueCatManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = RC00000002294E382700CD2103 /* RevenueCatManager.swift */; };
+		61E21B2DDBA64B57961B13A6 /* SurveyTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F6CB1F4B5FC44AA9D138C13 /* SurveyTypes.swift */; };
+		70D2E7EDD3454944BA212D32 /* SurveyOnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2669BB4981D34261B74E2065 /* SurveyOnboardingView.swift */; };
+		3931FB83728A499BAFE217DF /* SurveyOnboardingScreens.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1310D1387F5D42A7ADCE36C0 /* SurveyOnboardingScreens.swift */; };
+		F273C9AC0BCE4181910E8D0F /* ThreeDayChallengeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D79869001794B7883249037 /* ThreeDayChallengeView.swift */; };
+		3881EBB6DB994F2FAF39BB9F /* SurveyPersonalizationEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18B55EDB6B3543BEB21EBBF3 /* SurveyPersonalizationEngine.swift */; };
+		C6A4C1D6FFDD4F07BB976A66 /* ThreeDayChallengeManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7730B45F0D749BF81BA2262 /* ThreeDayChallengeManager.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -718,6 +724,12 @@
 		F9A3081A52984B6AB0EECD7B /* StructuredDayLaunchTracker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StructuredDayLaunchTracker.swift; sourceTree = "<group>"; };
 		FA6F23A3327C444669DC03A5 /* CancelInterventionView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CancelInterventionView.swift; sourceTree = "<group>"; };
 		RC00000002294E382700CD2103 /* RevenueCatManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RevenueCatManager.swift; sourceTree = "<group>"; };
+		9F6CB1F4B5FC44AA9D138C13 /* SurveyTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SurveyTypes.swift; sourceTree = "<group>"; };
+		2669BB4981D34261B74E2065 /* SurveyOnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SurveyOnboardingView.swift; sourceTree = "<group>"; };
+		1310D1387F5D42A7ADCE36C0 /* SurveyOnboardingScreens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SurveyOnboardingScreens.swift; sourceTree = "<group>"; };
+		3D79869001794B7883249037 /* ThreeDayChallengeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThreeDayChallengeView.swift; sourceTree = "<group>"; };
+		18B55EDB6B3543BEB21EBBF3 /* SurveyPersonalizationEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SurveyPersonalizationEngine.swift; sourceTree = "<group>"; };
+		E7730B45F0D749BF81BA2262 /* ThreeDayChallengeManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThreeDayChallengeManager.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -1368,6 +1380,8 @@
 				45567D712F29F6FA00382072 /* Auth */,
 				45BC74622EDA4CB5003AC964 /* PaywallTriggerManager.swift */,
 				45BC74642EDA53FF003AC964 /* UserPreferencesTracker.swift */,
+				18B55EDB6B3543BEB21EBBF3 /* SurveyPersonalizationEngine.swift */,
+				E7730B45F0D749BF81BA2262 /* ThreeDayChallengeManager.swift */,
 				452F6AD22E87CD3F00A27856 /* ML */,
 				45FF71902E64293D0048C523 /* Analytics */,
 				45B02FCF2E57A48D00D12033 /* EmailMarketing */,
@@ -1645,6 +1659,9 @@
 				45F3E75D2EAAB36B002B1F4E /* DevotionalsTutorial.swift */,
 				45F3E7562EAAAD38002B1F4E /* AudioDevotionalsTutorial.swift */,
 				74DAA35385DD02F8B0DCADE5 /* HowToUseSpeakLifeView.swift */,
+								2669BB4981D34261B74E2065 /* SurveyOnboardingView.swift */,
+								1310D1387F5D42A7ADCE36C0 /* SurveyOnboardingScreens.swift */,
+								3D79869001794B7883249037 /* ThreeDayChallengeView.swift */,
 				7AA870B928DACCB700134ADB /* NotificationScene.swift */,
 				7AA870C128DACCB700134ADB /* WidgetScene.swift */,
 				453172B32B2D274800388AD4 /* BenefitScene.swift */,
@@ -1661,6 +1678,7 @@
 			isa = PBXGroup;
 			children = (
 				7AA870BB28DACCB700134ADB /* OnboardingTypes.swift */,
+				9F6CB1F4B5FC44AA9D138C13 /* SurveyTypes.swift */,
 				7AA870BC28DACCB700134ADB /* TimeSlots */,
 			);
 			path = Model;
@@ -2082,6 +2100,13 @@
 				45B02FD02E57A48D00D12033 /* EmailMarketingService.swift in Sources */,
 				45B02FD12E57A48D00D12033 /* EmailMarketingConfig.swift in Sources */,
 				45BC74652EDA53FF003AC964 /* UserPreferencesTracker.swift in Sources */,
+				61E21B2DDBA64B57961B13A6 /* SurveyTypes.swift in Sources */,
+				70D2E7EDD3454944BA212D32 /* SurveyOnboardingView.swift in Sources */,
+				3931FB83728A499BAFE217DF /* SurveyOnboardingScreens.swift in Sources */,
+				F273C9AC0BCE4181910E8D0F /* ThreeDayChallengeView.swift in Sources */,
+				3881EBB6DB994F2FAF39BB9F /* SurveyPersonalizationEngine.swift in Sources */,
+				C6A4C1D6FFDD4F07BB976A66 /* ThreeDayChallengeManager.swift in Sources */,
+
 				45A4A3D62D8917D600DFCEB7 /* TestimonyView.swift in Sources */,
 				7AA8709528DACCA800134ADB /* FontPickerController.swift in Sources */,
 				7AA8708028DACC8300134ADB /* NotificationHandler.swift in Sources */,
