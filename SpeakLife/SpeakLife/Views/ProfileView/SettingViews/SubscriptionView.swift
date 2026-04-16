@@ -333,7 +333,6 @@ struct SubscriptionView: View {
     let foregroundColor: Color = .white
     
     @State private var selectedPlan: SubscriptionPlan = .lifetime
-    @State private var showPayWhatYouCan = false
     
     enum SubscriptionPlan: String, CaseIterable {
         case monthly = "Monthly"
@@ -393,11 +392,6 @@ struct SubscriptionView: View {
                         "initial_plan": "premium"
                     ]
                 )
-            }
-            .sheet(isPresented: $showPayWhatYouCan) {
-                PayWhatYouCanView(callback: callback)
-                    .environmentObject(subscriptionStore)
-                    .environmentObject(declarationStore)
             }
             
             if declarationStore.isPurchasing {
@@ -612,14 +606,6 @@ struct SubscriptionView: View {
                     .underline()
                     .foregroundColor(.blue)
             }
-
-            Button(action: { showPayWhatYouCan = true }) {
-                Text("Can't afford it? Pay what you can →")
-                    .font(.system(size: 12))
-                    .foregroundColor(.white.opacity(0.40))
-                    .underline()
-            }
-            .padding(.top, 2)
         }
         .padding(.horizontal, 20)
     }

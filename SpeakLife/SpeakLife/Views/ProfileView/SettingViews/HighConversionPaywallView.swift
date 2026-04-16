@@ -22,6 +22,7 @@ struct HighConversionPaywallView: View {
     @State private var isShowingError = false
     @State private var errorMessage = ""
     @State private var showPrivacyPolicy = false
+    @State private var showPayWhatYouCan = false
     @State private var showCloseButton = false
     @State private var timeOnPaywall: Date = Date()
     @State private var isEligibleForTrial = false
@@ -94,6 +95,11 @@ struct HighConversionPaywallView: View {
             Button("OK", role: .cancel) { }
         } message: { Text(errorMessage) }
         .sheet(isPresented: $showPrivacyPolicy) { PrivacyPolicyView() }
+        .sheet(isPresented: $showPayWhatYouCan) {
+            PayWhatYouCanView(callback: callback)
+                .environmentObject(subscriptionStore)
+                .environmentObject(declarationStore)
+        }
     }
 
     // MARK: - Background
@@ -321,12 +327,21 @@ struct HighConversionPaywallView: View {
 
     // MARK: - Bottom Links
     private var bottomLinks: some View {
-        HStack(spacing: 24) {
-            Button("Restore", action: restore)
-            Link("Terms", destination: URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!)
-            Button("Privacy") { showPrivacyPolicy = true }
+        VStack(spacing: 8) {
+            HStack(spacing: 24) {
+                Button("Restore", action: restore)
+                Link("Terms", destination: URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!)
+                Button("Privacy") { showPrivacyPolicy = true }
+            }
+            .font(.system(size: 12)).foregroundColor(.white.opacity(0.4))
+
+            Button(action: { showPayWhatYouCan = true }) {
+                Text("Can't afford it? Pay what you can →")
+                    .font(.system(size: 12))
+                    .foregroundColor(.white.opacity(0.35))
+                    .underline()
+            }
         }
-        .font(.system(size: 12)).foregroundColor(.white.opacity(0.4))
     }
 
     // MARK: - Close Button
