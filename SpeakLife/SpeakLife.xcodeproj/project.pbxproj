@@ -110,6 +110,7 @@
 		4575C9492E46F25B007C14F3 /* SmartContentProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4575C9442E46F25B007C14F3 /* SmartContentProvider.swift */; };
 		4575C94A2E46F25B007C14F3 /* WidgetDataBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4575C9452E46F25B007C14F3 /* WidgetDataBridge.swift */; };
 		457CD3402E7E735A00F435EC /* OptimizedSubscriptionViewV1.swift in Sources */ = {isa = PBXBuildFile; fileRef = 457CD33F2E7E735A00F435EC /* OptimizedSubscriptionViewV1.swift */; };
+		E96B21807FE24BE0AFBED511 /* PayWhatYouCanView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E5DAAC03B6C48D0AD3AB168 /* PayWhatYouCanView.swift */; };
 		457CD38E2E84A11000F435EC /* TikTokBusinessSDK in Frameworks */ = {isa = PBXBuildFile; productRef = 457CD38D2E84A11000F435EC /* TikTokBusinessSDK */; };
 		457CD3962E84F88200F435EC /* SectionDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 457CD3932E84F88200F435EC /* SectionDetailView.swift */; };
 		457CD3972E84F88200F435EC /* OptimizedAudioCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 457CD3922E84F88200F435EC /* OptimizedAudioCell.swift */; };
@@ -490,6 +491,7 @@
 		4575C9442E46F25B007C14F3 /* SmartContentProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmartContentProvider.swift; sourceTree = "<group>"; };
 		4575C9452E46F25B007C14F3 /* WidgetDataBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetDataBridge.swift; sourceTree = "<group>"; };
 		457CD33F2E7E735A00F435EC /* OptimizedSubscriptionViewV1.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OptimizedSubscriptionViewV1.swift; sourceTree = "<group>"; };
+		6E5DAAC03B6C48D0AD3AB168 /* PayWhatYouCanView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PayWhatYouCanView.swift; sourceTree = "<group>"; };
 		457CD38F2E84F88200F435EC /* AudioSectionModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioSectionModel.swift; sourceTree = "<group>"; };
 		457CD3902E84F88200F435EC /* AudioSectionViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioSectionViewModel.swift; sourceTree = "<group>"; };
 		457CD3912E84F88200F435EC /* HorizontalAudioSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HorizontalAudioSection.swift; sourceTree = "<group>"; };
@@ -1594,6 +1596,7 @@
 				4525D9622F54EAE500571394 /* HighConversionPaywallView.swift */,
 				7AA870A528DACCB700134ADB /* SubscriptionView.swift */,
 				457CD33F2E7E735A00F435EC /* OptimizedSubscriptionViewV1.swift */,
+				6E5DAAC03B6C48D0AD3AB168 /* PayWhatYouCanView.swift */,
 				45C15A952F37064A006171F5 /* OptimizedSubscriptionViewV2.swift */,
 				4575C93F2E45AA00007C14F3 /* OptimizedSubscriptionView.swift */,
 				7AA870A628DACCB700134ADB /* PremiumView.swift */,
@@ -2147,6 +2150,7 @@
 				63BFAA7702BD4A74B7B60D25 /* StructuredDayView.swift in Sources */,
 				7AF18C7B29FD1A43005A6E31 /* GoogleAdMob.swift in Sources */,
 				457CD3402E7E735A00F435EC /* OptimizedSubscriptionViewV1.swift in Sources */,
+				E96B21807FE24BE0AFBED511 /* PayWhatYouCanView.swift in Sources */,
 				45F6D8922F2AF45900C0B98D /* ClearBibleCache.swift in Sources */,
 				7AF18C9A2A0D9884005A6E31 /* BlurView.swift in Sources */,
 				45ED72C42BA10B3500F5F5E3 /* ConfettiView.swift in Sources */,
