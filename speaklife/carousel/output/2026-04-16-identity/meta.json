@@ -1,0 +1,59 @@
+{
+  "date": "2026-04-16",
+  "pillar": "identity",
+  "label": "IDENTITY",
+  "hashtags": "#SpeakLife #IdentityInChrist #KnowWhoYouAre #NewCreation #RenewYourMind #SpeakingLife #DeclareIt #ChristianWomen #FaithOverFear #WordOfGod #ChosenByGod #InChrist #BibleTruths",
+  "slideCount": 10,
+  "slides": [
+    {
+      "index": 1,
+      "path": "/home/node/.openclaw/workspace/speaklife/carousel/output/2026-04-16-identity/slide-01.png",
+      "type": "hook"
+    },
+    {
+      "index": 2,
+      "path": "/home/node/.openclaw/workspace/speaklife/carousel/output/2026-04-16-identity/slide-02.png",
+      "type": "wound"
+    },
+    {
+      "index": 3,
+      "path": "/home/node/.openclaw/workspace/speaklife/carousel/output/2026-04-16-identity/slide-03.png",
+      "type": "deepen"
+    },
+    {
+      "index": 4,
+      "path": "/home/node/.openclaw/workspace/speaklife/carousel/output/2026-04-16-identity/slide-04.png",
+      "type": "turn"
+    },
+    {
+      "index": 5,
+      "path": "/home/node/.openclaw/workspace/speaklife/carousel/output/2026-04-16-identity/slide-05.png",
+      "type": "truth"
+    },
+    {
+      "index": 6,
+      "path": "/home/node/.openclaw/workspace/speaklife/carousel/output/2026-04-16-identity/slide-06.png",
+      "type": "truth"
+    },
+    {
+      "index": 7,
+      "path": "/home/node/.openclaw/workspace/speaklife/carousel/output/2026-04-16-identity/slide-07.png",
+      "type": "truth"
+    },
+    {
+      "index": 8,
+      "path": "/home/node/.openclaw/workspace/speaklife/carousel/output/2026-04-16-identity/slide-08.png",
+      "type": "truth"
+    },
+    {
+      "index": 9,
+      "path": "/home/node/.openclaw/workspace/speaklife/carousel/output/2026-04-16-identity/slide-09.png",
+      "type": "landing"
+    },
+    {
+      "index": 10,
+      "path": "/home/node/.openclaw/workspace/speaklife/carousel/output/2026-04-16-identity/slide-10.png",
+      "type": "cta"
+    }
+  ]
+}
