@@ -269,10 +269,3 @@ struct PayWhatYouCanView: View {
 
 // MARK: - Preview
 
-struct PayWhatYouCanView_Previews: PreviewProvider {
-    static var previews: some View {
-        PayWhatYouCanView()
-            .environmentObject(SubscriptionStore())
-            .environmentObject(DeclarationViewModel())
-    }
-}

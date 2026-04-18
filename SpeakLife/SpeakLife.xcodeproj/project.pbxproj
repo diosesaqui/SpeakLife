@@ -11,6 +11,8 @@
 		0E1A8C97F61B9FB156F0F50F /* HowToUseSpeakLifeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74DAA35385DD02F8B0DCADE5 /* HowToUseSpeakLifeView.swift */; };
 		20F4D11E6F9CB2FA07540EE7 /* TrialExperienceService.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC73B2698B17B267C7A6F437 /* TrialExperienceService.swift */; };
 		2F740F6929D4017400E89E7F /* APIClientTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F740F6829D4017400E89E7F /* APIClientTests.swift */; };
+		3881EBB6DB994F2FAF39BB9F /* SurveyPersonalizationEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18B55EDB6B3543BEB21EBBF3 /* SurveyPersonalizationEngine.swift */; };
+		3931FB83728A499BAFE217DF /* SurveyOnboardingScreens.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1310D1387F5D42A7ADCE36C0 /* SurveyOnboardingScreens.swift */; };
 		3D80B3F476D5A3B34421898E /* PrayerWallPost.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0214EB35A67E7EF76115C40 /* PrayerWallPost.swift */; };
 		4501F3912D8926CA00315902 /* TestimonyViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4501F3902D8926C500315902 /* TestimonyViewModel.swift */; };
 		450720DB2BAFFB4A0029EE2B /* TimerViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 450720DA2BAFFB4A0029EE2B /* TimerViewModelTests.swift */; };
@@ -110,7 +112,6 @@
 		4575C9492E46F25B007C14F3 /* SmartContentProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4575C9442E46F25B007C14F3 /* SmartContentProvider.swift */; };
 		4575C94A2E46F25B007C14F3 /* WidgetDataBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4575C9452E46F25B007C14F3 /* WidgetDataBridge.swift */; };
 		457CD3402E7E735A00F435EC /* OptimizedSubscriptionViewV1.swift in Sources */ = {isa = PBXBuildFile; fileRef = 457CD33F2E7E735A00F435EC /* OptimizedSubscriptionViewV1.swift */; };
-		E96B21807FE24BE0AFBED511 /* PayWhatYouCanView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E5DAAC03B6C48D0AD3AB168 /* PayWhatYouCanView.swift */; };
 		457CD38E2E84A11000F435EC /* TikTokBusinessSDK in Frameworks */ = {isa = PBXBuildFile; productRef = 457CD38D2E84A11000F435EC /* TikTokBusinessSDK */; };
 		457CD3962E84F88200F435EC /* SectionDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 457CD3932E84F88200F435EC /* SectionDetailView.swift */; };
 		457CD3972E84F88200F435EC /* OptimizedAudioCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 457CD3922E84F88200F435EC /* OptimizedAudioCell.swift */; };
@@ -240,8 +241,10 @@
 		45FF718E2E6294330048C523 /* declarationsv7_backup.json in Resources */ = {isa = PBXBuildFile; fileRef = 45FF718D2E6294330048C523 /* declarationsv7_backup.json */; };
 		45FF71912E64293D0048C523 /* ListenerMetricsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45FF718F2E64293D0048C523 /* ListenerMetricsService.swift */; };
 		503EFF467A63F444F830D175 /* PrayerWallView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E14CE42195E228734ACB9A2C /* PrayerWallView.swift */; };
+		61E21B2DDBA64B57961B13A6 /* SurveyTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F6CB1F4B5FC44AA9D138C13 /* SurveyTypes.swift */; };
 		63BFAA7702BD4A74B7B60D25 /* StructuredDayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F54505A7F8204E659571CE73 /* StructuredDayView.swift */; };
 		648AA3ADC45C405CBFB82934 /* AudioRecommendationEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0B7425FCF684D05A10C4758 /* AudioRecommendationEngine.swift */; };
+		70D2E7EDD3454944BA212D32 /* SurveyOnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2669BB4981D34261B74E2065 /* SurveyOnboardingView.swift */; };
 		7A00721828F8ED4A00965AF7 /* declarations.json in Resources */ = {isa = PBXBuildFile; fileRef = 7A00721728F8ED4A00965AF7 /* declarations.json */; };
 		7A00721D2908D50800965AF7 /* (null) in Frameworks */ = {isa = PBXBuildFile; };
 		7A278F9B288915DE0084BB57 /* SpeakLifeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A278F9A288915DE0084BB57 /* SpeakLifeApp.swift */; };
@@ -341,21 +344,18 @@
 		A1B2C3D4E5F6A7B82026AA01 /* SpeakingPowerEffect.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6A7B82026AA00 /* SpeakingPowerEffect.swift */; };
 		AC33C8C521764DF3961EA018 /* OnboardingDailyBurstScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC33C8C421764DF3961EA018 /* OnboardingDailyBurstScreen.swift */; };
 		C1A98C89749C94FF718F1980 /* AppleSignInPromptView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35B4B5074F8CB5AB1E2EA0DC /* AppleSignInPromptView.swift */; };
+		C6A4C1D6FFDD4F07BB976A66 /* ThreeDayChallengeManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7730B45F0D749BF81BA2262 /* ThreeDayChallengeManager.swift */; };
 		CF8E572E5459A038EEE73B3A /* PrayerWallViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BA7EE898DF248C4EB6EDEB2 /* PrayerWallViewModel.swift */; };
 		D2AD4D1C5D81425897424332 /* StructuredDayLaunchTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9A3081A52984B6AB0EECD7B /* StructuredDayLaunchTracker.swift */; };
 		D807A5FAC8CD4B79A92D4C57 /* EmailConfirmationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61721EDB270E45A784DF2A6C /* EmailConfirmationView.swift */; };
 		DA3182D477494E6A9E4F8AC4 /* AdaptiveSheetModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 067C652453504C60AD4342E8 /* AdaptiveSheetModifier.swift */; };
 		E0EA353D8043F358064AADB7 /* AppleSignInService.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC27319C7422AFA8C439B08F /* AppleSignInService.swift */; };
 		E260535F74194D8CB0442F40 /* HookScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46F66FE59AA649BFB7D06B09 /* HookScene.swift */; };
+		E96B21807FE24BE0AFBED511 /* PayWhatYouCanView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E5DAAC03B6C48D0AD3AB168 /* PayWhatYouCanView.swift */; };
+		F273C9AC0BCE4181910E8D0F /* ThreeDayChallengeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D79869001794B7883249037 /* ThreeDayChallengeView.swift */; };
 		F3F466B4CB267BFBE4FD8CC8 /* WldehBibleAPIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D920701A13775F49180D845 /* WldehBibleAPIService.swift */; };
 		FCB7A8468DAA92844336D893 /* CancelInterventionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA6F23A3327C444669DC03A5 /* CancelInterventionView.swift */; };
 		RC00000001294E382700CD2103 /* RevenueCatManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = RC00000002294E382700CD2103 /* RevenueCatManager.swift */; };
-		61E21B2DDBA64B57961B13A6 /* SurveyTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F6CB1F4B5FC44AA9D138C13 /* SurveyTypes.swift */; };
-		70D2E7EDD3454944BA212D32 /* SurveyOnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2669BB4981D34261B74E2065 /* SurveyOnboardingView.swift */; };
-		3931FB83728A499BAFE217DF /* SurveyOnboardingScreens.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1310D1387F5D42A7ADCE36C0 /* SurveyOnboardingScreens.swift */; };
-		F273C9AC0BCE4181910E8D0F /* ThreeDayChallengeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D79869001794B7883249037 /* ThreeDayChallengeView.swift */; };
-		3881EBB6DB994F2FAF39BB9F /* SurveyPersonalizationEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18B55EDB6B3543BEB21EBBF3 /* SurveyPersonalizationEngine.swift */; };
-		C6A4C1D6FFDD4F07BB976A66 /* ThreeDayChallengeManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7730B45F0D749BF81BA2262 /* ThreeDayChallengeManager.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -391,10 +391,14 @@
 
 /* Begin PBXFileReference section */
 		067C652453504C60AD4342E8 /* AdaptiveSheetModifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdaptiveSheetModifier.swift; sourceTree = "<group>"; };
+		1310D1387F5D42A7ADCE36C0 /* SurveyOnboardingScreens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SurveyOnboardingScreens.swift; sourceTree = "<group>"; };
+		18B55EDB6B3543BEB21EBBF3 /* SurveyPersonalizationEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SurveyPersonalizationEngine.swift; sourceTree = "<group>"; };
+		2669BB4981D34261B74E2065 /* SurveyOnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SurveyOnboardingView.swift; sourceTree = "<group>"; };
 		2F740F5E29D4014500E89E7F /* SpeakLifeTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SpeakLifeTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		2F740F6829D4017400E89E7F /* APIClientTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClientTests.swift; sourceTree = "<group>"; };
 		30FA3E7536DE40B2B311F43E /* PersonalizationSummaryScene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersonalizationSummaryScene.swift; sourceTree = "<group>"; };
 		35B4B5074F8CB5AB1E2EA0DC /* AppleSignInPromptView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleSignInPromptView.swift; sourceTree = "<group>"; };
+		3D79869001794B7883249037 /* ThreeDayChallengeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThreeDayChallengeView.swift; sourceTree = "<group>"; };
 		4501F3902D8926C500315902 /* TestimonyViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestimonyViewModel.swift; sourceTree = "<group>"; };
 		450720DA2BAFFB4A0029EE2B /* TimerViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerViewModelTests.swift; sourceTree = "<group>"; };
 		450901B12F630925008704F9 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
@@ -491,7 +495,6 @@
 		4575C9442E46F25B007C14F3 /* SmartContentProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmartContentProvider.swift; sourceTree = "<group>"; };
 		4575C9452E46F25B007C14F3 /* WidgetDataBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetDataBridge.swift; sourceTree = "<group>"; };
 		457CD33F2E7E735A00F435EC /* OptimizedSubscriptionViewV1.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OptimizedSubscriptionViewV1.swift; sourceTree = "<group>"; };
-		6E5DAAC03B6C48D0AD3AB168 /* PayWhatYouCanView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PayWhatYouCanView.swift; sourceTree = "<group>"; };
 		457CD38F2E84F88200F435EC /* AudioSectionModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioSectionModel.swift; sourceTree = "<group>"; };
 		457CD3902E84F88200F435EC /* AudioSectionViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioSectionViewModel.swift; sourceTree = "<group>"; };
 		457CD3912E84F88200F435EC /* HorizontalAudioSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HorizontalAudioSection.swift; sourceTree = "<group>"; };
@@ -620,6 +623,7 @@
 		66D0E43E7B9E3396848559EA /* TrialEndingBanner.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TrialEndingBanner.swift; sourceTree = "<group>"; };
 		6BA7EE898DF248C4EB6EDEB2 /* PrayerWallViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrayerWallViewModel.swift; sourceTree = "<group>"; };
 		6D920701A13775F49180D845 /* WldehBibleAPIService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WldehBibleAPIService.swift; sourceTree = "<group>"; };
+		6E5DAAC03B6C48D0AD3AB168 /* PayWhatYouCanView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PayWhatYouCanView.swift; sourceTree = "<group>"; };
 		74DAA35385DD02F8B0DCADE5 /* HowToUseSpeakLifeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HowToUseSpeakLifeView.swift; sourceTree = "<group>"; };
 		750128553E56408E9225277C /* AudioProgressStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioProgressStore.swift; sourceTree = "<group>"; };
 		7A00721728F8ED4A00965AF7 /* declarations.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = declarations.json; sourceTree = "<group>"; };
@@ -714,6 +718,7 @@
 		7AF46FC42A41326100A45C01 /* AbbasLoveView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AbbasLoveView.swift; sourceTree = "<group>"; };
 		81FE0DDC33BC402685CA44ED /* BurstCompletionModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BurstCompletionModel.swift; sourceTree = "<group>"; };
 		918D0ED751C243E98A66C8E3 /* SpiritualGrowthView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpiritualGrowthView.swift; sourceTree = "<group>"; };
+		9F6CB1F4B5FC44AA9D138C13 /* SurveyTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SurveyTypes.swift; sourceTree = "<group>"; };
 		A1B2C3D4E5F6A7B82026AA00 /* SpeakingPowerEffect.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeakingPowerEffect.swift; sourceTree = "<group>"; };
 		AC33C8C421764DF3961EA018 /* OnboardingDailyBurstScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingDailyBurstScreen.swift; sourceTree = "<group>"; };
 		B0214EB35A67E7EF76115C40 /* PrayerWallPost.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrayerWallPost.swift; sourceTree = "<group>"; };
@@ -721,17 +726,12 @@
 		DC27319C7422AFA8C439B08F /* AppleSignInService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleSignInService.swift; sourceTree = "<group>"; };
 		DC73B2698B17B267C7A6F437 /* TrialExperienceService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TrialExperienceService.swift; sourceTree = "<group>"; };
 		E14CE42195E228734ACB9A2C /* PrayerWallView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrayerWallView.swift; sourceTree = "<group>"; };
+		E7730B45F0D749BF81BA2262 /* ThreeDayChallengeManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThreeDayChallengeManager.swift; sourceTree = "<group>"; };
 		F0B7425FCF684D05A10C4758 /* AudioRecommendationEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioRecommendationEngine.swift; sourceTree = "<group>"; };
 		F54505A7F8204E659571CE73 /* StructuredDayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StructuredDayView.swift; sourceTree = "<group>"; };
 		F9A3081A52984B6AB0EECD7B /* StructuredDayLaunchTracker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StructuredDayLaunchTracker.swift; sourceTree = "<group>"; };
 		FA6F23A3327C444669DC03A5 /* CancelInterventionView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CancelInterventionView.swift; sourceTree = "<group>"; };
 		RC00000002294E382700CD2103 /* RevenueCatManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RevenueCatManager.swift; sourceTree = "<group>"; };
-		9F6CB1F4B5FC44AA9D138C13 /* SurveyTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SurveyTypes.swift; sourceTree = "<group>"; };
-		2669BB4981D34261B74E2065 /* SurveyOnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SurveyOnboardingView.swift; sourceTree = "<group>"; };
-		1310D1387F5D42A7ADCE36C0 /* SurveyOnboardingScreens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SurveyOnboardingScreens.swift; sourceTree = "<group>"; };
-		3D79869001794B7883249037 /* ThreeDayChallengeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThreeDayChallengeView.swift; sourceTree = "<group>"; };
-		18B55EDB6B3543BEB21EBBF3 /* SurveyPersonalizationEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SurveyPersonalizationEngine.swift; sourceTree = "<group>"; };
-		E7730B45F0D749BF81BA2262 /* ThreeDayChallengeManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThreeDayChallengeManager.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -1662,9 +1662,9 @@
 				45F3E75D2EAAB36B002B1F4E /* DevotionalsTutorial.swift */,
 				45F3E7562EAAAD38002B1F4E /* AudioDevotionalsTutorial.swift */,
 				74DAA35385DD02F8B0DCADE5 /* HowToUseSpeakLifeView.swift */,
-								2669BB4981D34261B74E2065 /* SurveyOnboardingView.swift */,
-								1310D1387F5D42A7ADCE36C0 /* SurveyOnboardingScreens.swift */,
-								3D79869001794B7883249037 /* ThreeDayChallengeView.swift */,
+				2669BB4981D34261B74E2065 /* SurveyOnboardingView.swift */,
+				1310D1387F5D42A7ADCE36C0 /* SurveyOnboardingScreens.swift */,
+				3D79869001794B7883249037 /* ThreeDayChallengeView.swift */,
 				7AA870B928DACCB700134ADB /* NotificationScene.swift */,
 				7AA870C128DACCB700134ADB /* WidgetScene.swift */,
 				453172B32B2D274800388AD4 /* BenefitScene.swift */,
@@ -2109,7 +2109,6 @@
 				F273C9AC0BCE4181910E8D0F /* ThreeDayChallengeView.swift in Sources */,
 				3881EBB6DB994F2FAF39BB9F /* SurveyPersonalizationEngine.swift in Sources */,
 				C6A4C1D6FFDD4F07BB976A66 /* ThreeDayChallengeManager.swift in Sources */,
-
 				45A4A3D62D8917D600DFCEB7 /* TestimonyView.swift in Sources */,
 				7AA8709528DACCA800134ADB /* FontPickerController.swift in Sources */,
 				7AA8708028DACC8300134ADB /* NotificationHandler.swift in Sources */,
@@ -2445,7 +2444,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = SpeakLife/SpeakLife.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 987;
+				CURRENT_PROJECT_VERSION = 988;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_ASSET_PATHS = "\"SpeakLife/Preview Content\"";
 				DEVELOPMENT_TEAM = G7398P2856;
@@ -2466,7 +2465,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 4.4;
+				MARKETING_VERSION = 4.5;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Franchiz.SpeakLife;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -2487,7 +2486,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = SpeakLife/SpeakLife.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 987;
+				CURRENT_PROJECT_VERSION = 988;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_ASSET_PATHS = "\"SpeakLife/Preview Content\"";
 				DEVELOPMENT_TEAM = G7398P2856;
@@ -2508,7 +2507,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 4.4;
+				MARKETING_VERSION = 4.5;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Franchiz.SpeakLife;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
