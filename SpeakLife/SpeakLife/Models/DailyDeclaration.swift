@@ -49,6 +49,8 @@ enum DeclarationCategory: String, CaseIterable, Identifiable, Codable,  Comparab
     case innerHealing
     case obedience
     case spiritualGrowth
+    case miracles
+    case friendship
     case blood
     case nameOfJesus
     case genesis, exodus, leviticus, numbers, deuteronomy
@@ -95,6 +97,7 @@ enum DeclarationCategory: String, CaseIterable, Identifiable, Codable,  Comparab
         // Tier 3 - Transformation & Victory
         .destiny,
         .warfare,
+        .miracles,
         .health,
         .innerHealing, // might get rid of these
         
@@ -107,6 +110,7 @@ enum DeclarationCategory: String, CaseIterable, Identifiable, Codable,  Comparab
         // Tier 5 - Relationships
         .marriage,
         .parenting,
+        .friendship,
         
         // Tier 6 - Provision & Protection
         .godsprotection,
@@ -225,6 +229,7 @@ enum DeclarationCategory: String, CaseIterable, Identifiable, Codable,  Comparab
         // Tier 3 - Transformation & Victory
         .destiny,
         .warfare,
+        .miracles,
         .health,
         .innerHealing,
         
@@ -237,6 +242,7 @@ enum DeclarationCategory: String, CaseIterable, Identifiable, Codable,  Comparab
         // Tier 5 - Relationships
         .marriage,
         .parenting,
+        .friendship,
         
         // Tier 6 - Provision & Protection
         .godsprotection,
@@ -270,6 +276,8 @@ enum DeclarationCategory: String, CaseIterable, Identifiable, Codable,  Comparab
         case .obedience: return "Surrender & Obedience"
         case .innerHealing: return "Emotional & Inner Healing"
         case .work: return "Work & Career"
+        case .miracles: return "Miracles & Breakthroughs"
+        case .friendship: return "Friendship & Support"
         case .favor: return "Favor & Blessings"
         case .anxiety: return "Anxiety & Worry"
         case .warfare: return "Warfare & Victory"
