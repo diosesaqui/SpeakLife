@@ -63,16 +63,38 @@ struct CategoryListView: View {
                 .ignoresSafeArea()
                 
                 VStack(spacing: 16) {
-                    Text("✨ Personalize your experience")
+                    Text("Notification Topics")
                         .font(.title2.bold())
                         .foregroundColor(.white)
                         .padding(.top)
-                    
-                    Text("Choose the categories that inspire and uplift you most.")
-                        .font(.subheadline)
-                        .foregroundColor(.white.opacity(0.85))
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal)
+
+                    // Notification context banner
+                    HStack(alignment: .top, spacing: 10) {
+                        Image(systemName: "bell.badge.fill")
+                            .foregroundColor(.yellow)
+                            .font(.system(size: 15, weight: .semibold))
+                            .padding(.top, 1)
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text("This controls your daily reminders")
+                                .font(.system(size: 13, weight: .semibold))
+                                .foregroundColor(.white)
+                            Text("The declarations sent to you every day are pulled from these topics. Select what you want God's Word to speak into.")
+                                .font(.system(size: 12, weight: .regular))
+                                .foregroundColor(.white.opacity(0.75))
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                    }
+                    .padding(12)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(Color.yellow.opacity(0.1))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .stroke(Color.yellow.opacity(0.25), lineWidth: 1)
+                            )
+                    )
+                    .padding(.horizontal)
+
                     List {
                         ForEach(categoryList.categories, id: \.id) { category in
                             CategoryListCard(category: category, isSelected: categoryList.selectedCategories.contains(category)) {
@@ -88,11 +110,12 @@ struct CategoryListView: View {
                     .padding(.bottom, 8)
                 }
             }
-            .navigationTitle("Choose Categories")
+            .navigationTitle("Notification Topics")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    EditButton()
+                    Text("\(categoryList.selectedCategories.count) selected")
+                        .font(.system(size: 13, weight: .semibold))
                         .foregroundColor(.blue)
                 }
             }
