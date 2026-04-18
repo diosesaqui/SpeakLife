@@ -384,7 +384,12 @@ struct EnhancedOnboardingViewRefactored: View {
     
     private func registerNotifications() {
         if appState.notificationEnabled {
-            let categories = Set(appState.selectedNotificationCategories.components(separatedBy: ",").compactMap({ DeclarationCategory($0) }))
+            var categories = Set(appState.selectedNotificationCategories.components(separatedBy: ",").compactMap({ DeclarationCategory($0) }))
+            // If this flow didn't populate categories, fall back to survey goal mapping
+            if categories.count <= 1 {
+                let engine = SurveyPersonalizationEngine(goalWordRaw: appState.surveyGoalWord)
+                categories = engine.goalWord?.notificationCategories ?? [.faith, .confidence, .wisdom, .destiny]
+            }
             NotificationManager.shared.registerNotifications(count: appState.notificationCount,
                                                              startTime: appState.startTimeIndex,
                                                              endTime: appState.endTimeIndex,
