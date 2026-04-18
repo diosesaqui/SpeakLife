@@ -181,7 +181,7 @@ struct OnboardingView: View {
 
     private func registerNotifications() {
         if appState.notificationEnabled {
-            let defaultCategories: Set<DeclarationCategory> = [.faith, .confidence, .wisdom, .speaklife]
+            let defaultCategories: Set<DeclarationCategory> = [.faith, .identity, .health, .peace, .wisdom, .speaklife]
             appState.selectedNotificationCategories = defaultCategories.map { $0.rawValue }.joined(separator: ",")
             viewModel.save(defaultCategories)
             NotificationManager.shared.registerNotifications(
