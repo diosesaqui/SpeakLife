@@ -266,6 +266,19 @@ enum SurveyGoalWord: String, CaseIterable, Identifiable {
         case .prosperity: return .wealth
         }
     }
+
+    /// Curated notification categories that match what the user said they need in the survey.
+    var notificationCategories: Set<DeclarationCategory> {
+        switch self {
+        case .peace:      return [.anxiety, .faith, .rest, .grace]
+        case .identity:   return [.identity, .grace, .confidence, .faith]
+        case .purpose:    return [.destiny, .faith, .confidence, .wisdom]
+        case .joy:        return [.joy, .gratitude, .praise, .faith]
+        case .confidence: return [.confidence, .identity, .faith, .wisdom]
+        case .healing:    return [.health, .faith, .grace, .rest]
+        case .prosperity: return [.wealth, .faith, .favor, .work]
+        }
+    }
 }
 
 class SurveyResponses: ObservableObject {

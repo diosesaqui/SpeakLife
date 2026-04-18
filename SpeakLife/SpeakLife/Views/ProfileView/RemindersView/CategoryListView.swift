@@ -31,9 +31,22 @@ final class CategoryListViewModel: ObservableObject {
     }
     
     func saveCategories(_ appState: AppState) {
-        let categoryString = selectedCategories.map { $0.name }.joined(separator: ",")
+        // Use rawValue (e.g. "anxiety") not .name (e.g. "Anxiety & Worry") —
+        // the parser in rescheduleFromUserDefaults uses DeclarationCategory(rawValue:).
+        let categoryString = selectedCategories.map { $0.rawValue }.joined(separator: ",")
         appState.selectedNotificationCategories = categoryString
         declarationStore.save(selectedCategories)
+
+        // Reschedule notifications immediately so content reflects the new category
+        // selection without waiting for the next natural resync cycle.
+        guard appState.notificationEnabled else { return }
+        NotificationManager.shared.registerNotifications(
+            count: max(appState.notificationCount, 5),
+            startTime: appState.startTimeIndex,
+            endTime: appState.endTimeIndex,
+            categories: selectedCategories
+        )
+        appState.lastNotificationSetDate = Date()
     }
     
     func toggleCategory(_ category: DeclarationCategory) {

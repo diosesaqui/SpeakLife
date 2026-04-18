@@ -181,7 +181,12 @@ struct OnboardingView: View {
 
     private func registerNotifications() {
         if appState.notificationEnabled {
-            let defaultCategories: Set<DeclarationCategory> = [.faith, .identity, .health, .peace, .wisdom, .speaklife]
+            // Derive categories from the user's survey goal word so notifications
+            // immediately reflect what they said they need. Falls back to a sensible
+            // default if the survey wasn't completed.
+            let engine = SurveyPersonalizationEngine(goalWordRaw: appState.surveyGoalWord)
+            let defaultCategories: Set<DeclarationCategory> = engine.goalWord?.notificationCategories
+                ?? [.faith, .confidence, .wisdom, .destiny]
             appState.selectedNotificationCategories = defaultCategories.map { $0.rawValue }.joined(separator: ",")
             viewModel.save(defaultCategories)
             NotificationManager.shared.registerNotifications(
