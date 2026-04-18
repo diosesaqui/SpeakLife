@@ -43,11 +43,9 @@ enum DeclarationCategory: String, CaseIterable, Identifiable, Codable,  Comparab
     case gratitude
     case warfare
     case anxiety
-    case miracles
     case favor
     case work
     case speaklife
-    case friendship
     case innerHealing
     case obedience
     case spiritualGrowth
@@ -97,7 +95,6 @@ enum DeclarationCategory: String, CaseIterable, Identifiable, Codable,  Comparab
         // Tier 3 - Transformation & Victory
         .destiny,
         .warfare,
-        //.miracles, // might get rid of these
         .health,
         .innerHealing, // might get rid of these
         
@@ -110,7 +107,6 @@ enum DeclarationCategory: String, CaseIterable, Identifiable, Codable,  Comparab
         // Tier 5 - Relationships
         .marriage,
         .parenting,
-       // .friendship, // might get rid of these
         
         // Tier 6 - Provision & Protection
         .godsprotection,
@@ -229,7 +225,6 @@ enum DeclarationCategory: String, CaseIterable, Identifiable, Codable,  Comparab
         // Tier 3 - Transformation & Victory
         .destiny,
         .warfare,
-        .miracles,
         .health,
         .innerHealing,
         
@@ -242,7 +237,6 @@ enum DeclarationCategory: String, CaseIterable, Identifiable, Codable,  Comparab
         // Tier 5 - Relationships
         .marriage,
         .parenting,
-        .friendship,
         
         // Tier 6 - Provision & Protection
         .godsprotection,
@@ -275,10 +269,8 @@ enum DeclarationCategory: String, CaseIterable, Identifiable, Codable,  Comparab
         case .spiritualGrowth: return "Spiritual Growth"
         case .obedience: return "Surrender & Obedience"
         case .innerHealing: return "Emotional & Inner Healing"
-        case .friendship: return "Friendship & Support"
         case .work: return "Work & Career"
         case .favor: return "Favor & Blessings"
-        case .miracles: return "Miracles & Breakthroughs"
         case .anxiety: return "Anxiety & Worry"
         case .warfare: return "Warfare & Victory"
         case .love: return "Love & Belonging"
