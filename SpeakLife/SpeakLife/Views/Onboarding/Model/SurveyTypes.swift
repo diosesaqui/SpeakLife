@@ -48,7 +48,6 @@ enum HeaviestBurden: String, CaseIterable, Identifiable {
     case worthiness  = "A deep feeling that I'm not enough"
     case joyless     = "I've lost my joy — life feels numb"
     case hardSeason  = "I'm fighting a health battle and need God's healing"
-    case prosperity  = "I'm ready for financial breakthrough and abundance"
     case calling     = "I want to build unshakeable faith and trust God at a deeper level"
 
     var goalWord: SurveyGoalWord {
@@ -58,7 +57,6 @@ enum HeaviestBurden: String, CaseIterable, Identifiable {
         case .worthiness: return .identity
         case .joyless:    return .joy
         case .hardSeason: return .healing
-        case .prosperity: return .prosperity
         case .calling:    return .identity
         }
     }
@@ -70,7 +68,6 @@ enum HeaviestBurden: String, CaseIterable, Identifiable {
         case .worthiness: return "not feeling enough"
         case .joyless:    return "lost joy"
         case .hardSeason: return "this health battle"
-        case .prosperity: return "financial limitation"
         case .calling:    return "wanting to go deeper in faith"
         }
     }

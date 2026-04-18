@@ -191,7 +191,6 @@ struct SurveyInterstitialAScreen: View {
 
     private var headline: String {
         switch responses.heaviestBurden {
-        case .prosperity:  return "You're not building this alone."
         case .calling:     return "You're not walking this alone."
         default:           return "You're not carrying this alone."
         }
@@ -199,8 +198,6 @@ struct SurveyInterstitialAScreen: View {
 
     private var subtext: String {
         switch responses.heaviestBurden {
-        case .prosperity:
-            return "Over 100,000 men and women have opened SpeakLife hungry for more — more abundance, more provision, more of what God promised.\n\nYou're in good company."
         case .calling:
             return "Over 100,000 believers have opened SpeakLife asking God to make their faith unshakeable — and found that daily declaration is what moved the needle.\n\nYou're in good company."
         default:
@@ -234,11 +231,6 @@ struct SurveyInterstitialAScreen: View {
             return TestimonialReview(
                 quote: "\"I was in the darkest season of my life, health issues, barely holding on. SpeakLife was the daily anchor that kept me standing.\"",
                 author: "— Rachel D., Florida"
-            )
-        case .prosperity:
-            return TestimonialReview(
-                quote: "\"I was stuck in a scarcity mindset for years. After speaking abundance declarations daily, my business doubled in 90 days. God's Word works.\"",
-                author: "— Angela W., Dallas"
             )
         case .calling:
             return TestimonialReview(
@@ -291,14 +283,12 @@ struct SurveyQ3AttemptsScreen: View {
 
     private var questionText: String {
         switch responses.heaviestBurden {
-        case .prosperity: return "What have you already tried in pursuit of this?"
         case .calling:    return "What have you tried to grow your faith before?"
         default:          return "Have you tried to fight through this before?"
         }
     }
     private var options: [PreviousAttempt] {
         switch responses.heaviestBurden {
-        case .prosperity: return PreviousAttempt.aspirationOptions
         case .calling:    return PreviousAttempt.faithOptions
         default:          return PreviousAttempt.painOptions
         }
@@ -334,14 +324,12 @@ struct SurveyQ4LieScreen: View {
 
     private var questionText: String {
         switch responses.heaviestBurden {
-        case .prosperity: return "What thought keeps you from believing this is really possible for you?"
         case .calling:    return "What thought makes it hard to fully trust God and step into deeper faith?"
         default:          return "When you're at your lowest — what's going through your mind?"
         }
     }
     private var options: [InnerLie] {
         switch responses.heaviestBurden {
-        case .prosperity: return InnerLie.aspirationOptions
         case .calling:    return InnerLie.faithOptions
         default:          return InnerLie.painOptions
         }
@@ -432,14 +420,12 @@ struct SurveyQ6FutureScreen: View {
 
     private var questionText: String {
         switch responses.heaviestBurden {
-        case .prosperity: return "When you walk in financial abundance — what opens up?"
         case .calling:    return "What would your life look like if you truly believed every promise God made you?"
         default:          return "If this was no longer your battle — what would change first?"
         }
     }
     private var options: [FutureChange] {
         switch responses.heaviestBurden {
-        case .prosperity: return FutureChange.prosperityOptions
         case .calling:    return FutureChange.callingOptions
         default:          return FutureChange.painOptions
         }
