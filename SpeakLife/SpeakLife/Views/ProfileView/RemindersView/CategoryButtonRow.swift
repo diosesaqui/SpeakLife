@@ -23,29 +23,54 @@ struct CategoryButtonRow: View  {
 
     @Binding var showConfirmation: Bool
 
+    /// Number of currently selected categories for the badge.
+    private var selectedCount: Int {
+        declarationStore.selectedCategories.count
+    }
+
     var body: some View {
         Button(action: displayCategoryView) {
+            VStack(alignment: .leading, spacing: 6) {
                 HStack {
-                    Image(systemName: "slider.horizontal.3")
+                    Image(systemName: "bell.badge.fill")
                         .foregroundColor(Constants.DAMidBlue)
                         .font(.system(size: 16, weight: .medium))
 
-                    Text("Categories", comment: "category button title")
+                    Text("Notification Topics")
                         .foregroundColor(.white)
                         .font(.system(size: 16, weight: .semibold))
 
                     Spacer()
 
+                    if selectedCount > 0 {
+                        Text("\(selectedCount) selected")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundColor(Constants.DAMidBlue)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 3)
+                            .background(
+                                Capsule().fill(Constants.DAMidBlue.opacity(0.15))
+                            )
+                    }
+
                     Image(systemName: "chevron.right")
                         .foregroundColor(.white.opacity(0.6))
                         .font(.system(size: 14, weight: .medium))
                 }
-                .padding(.horizontal, 16)
-                .frame(height: 50)
-                .overlay(RoundedRectangle(cornerRadius: 20)
-                .stroke(Constants.DAMidBlue, lineWidth: 1))// ✅ same as the rest of the input cells
+
+                Text("Choose which topics appear in your daily reminders")
+                    .font(.system(size: 12, weight: .regular))
+                    .foregroundColor(.white.opacity(0.55))
+                    .padding(.leading, 26)
             }
-            .buttonStyle(PlainButtonStyle())
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            .overlay(
+                RoundedRectangle(cornerRadius: 20)
+                    .stroke(Constants.DAMidBlue, lineWidth: 1)
+            )
+        }
+        .buttonStyle(PlainButtonStyle())
 
         .sheet(
             isPresented: subscriptionStore.isPremium ? $isPresentingCategoryList : $isPresentingPremiumView,
