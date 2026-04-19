@@ -44,9 +44,16 @@ final class DevotionalServiceClient: DevotionalService {
         } else {
             do {
                 let localDevotionals = try await loadDevotionalsFromFile()
-                return findTodayDevotional(from: localDevotionals)
+                let result = findTodayDevotional(from: localDevotionals)
+                if !result.isEmpty { return result }
+                // Cached file exists but today's entry is missing — fall through to bundle
             } catch {
-                print("Local load error: \(error)")
+                print("Local load error: \(error) — falling back to bundle")
+            }
+            // Fallback: load from bundle JSON (always has latest local data)
+            if let bundleData = await fetchData(needsSync: false),
+               let bundleDevotionals = try? decodeDevotionals(from: bundleData) {
+                return findTodayDevotional(from: bundleDevotionals)
             }
         }
         return []
