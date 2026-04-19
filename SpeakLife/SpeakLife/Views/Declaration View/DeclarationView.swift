@@ -363,6 +363,25 @@ struct DeclarationView: View {
                 .environmentObject(timerViewModel)
                 .environmentObject(streakViewModel)
         }
+        // Top-level cover — handles both "create first declaration" and "set new after breakthrough"
+        .fullScreenCover(isPresented: $showNewDeclarationSheet) {
+            GeometryReader { geo in
+                PersonalDeclarationOnboardingView(
+                    viewModel: DIContainer.shared.makePersonalDeclarationViewModel(),
+                    size: geo.size
+                ) { newDeclaration in
+                    if newDeclaration != nil {
+                        appState.hasPersonalDeclaration = true
+                    }
+                    showNewDeclarationSheet = false
+                    Task {
+                        loadedDeclaration = await DIContainer.shared.personalDeclarationRepository.load()
+                    }
+                }
+                .environmentObject(appState)
+            }
+            .ignoresSafeArea()
+        }
         .onAppear(perform: handleOnAppear)
         .onDisappear(perform: handleOnDisappear)
         //.setupNotificationObservers(timerViewModel: timerViewModel)
@@ -412,23 +431,7 @@ struct DeclarationView: View {
                         .environmentObject(appState)
                     }
                 }
-                .fullScreenCover(isPresented: $showNewDeclarationSheet) {
-                    GeometryReader { geo in
-                        PersonalDeclarationOnboardingView(
-                            viewModel: DIContainer.shared.makePersonalDeclarationViewModel(),
-                            size: geo.size
-                        ) { newDeclaration in
-                            if newDeclaration != nil {
-                                appState.hasPersonalDeclaration = true
-                            }
-                            showNewDeclarationSheet = false
-                            Task {
-                                loadedDeclaration = await DIContainer.shared.personalDeclarationRepository.load()
-                            }
-                        }
-                        .environmentObject(appState)
-                    }
-                }
+
             } else {
                 ProgressView().tint(.white)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
