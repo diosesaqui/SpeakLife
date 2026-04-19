@@ -352,6 +352,8 @@
 		B0001111111111111111BBBB /* PersonalDeclaration.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0001111111111111111AAAA /* PersonalDeclaration.swift */; };
 		B0002222222222222222BBBB /* DeclarationContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0002222222222222222AAAA /* DeclarationContent.swift */; };
 		B0003333333333333333BBBB /* DeclarationMatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0003333333333333333AAAA /* DeclarationMatcher.swift */; };
+		DECL0001VERIF00001BUILDF /* DeclarationVerificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = DECL0001VERIF00001FILEREF /* DeclarationVerificationService.swift */; };
+		HIGH0001DECL000001BUILDF /* HighlightedDeclarationText.swift in Sources */ = {isa = PBXBuildFile; fileRef = HIGH0001DECL000001FILEREF /* HighlightedDeclarationText.swift */; };
 		B0004444444444444444BBBB /* PersonalDeclarationRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0004444444444444444AAAA /* PersonalDeclarationRepository.swift */; };
 		B0005555555555555555BBBB /* DeclarationNotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0005555555555555555AAAA /* DeclarationNotificationService.swift */; };
 		B0006666666666666666BBBB /* SpeechTranscriptionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0006666666666666666AAAA /* SpeechTranscriptionService.swift */; };
@@ -743,6 +745,8 @@
 		A0001111111111111111AAAA /* PersonalDeclaration.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PersonalDeclaration.swift; sourceTree = "<group>"; };
 		A0002222222222222222AAAA /* DeclarationContent.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DeclarationContent.swift; sourceTree = "<group>"; };
 		A0003333333333333333AAAA /* DeclarationMatcher.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DeclarationMatcher.swift; sourceTree = "<group>"; };
+		DECL0001VERIF00001FILEREF /* DeclarationVerificationService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DeclarationVerificationService.swift; sourceTree = "<group>"; };
+		HIGH0001DECL000001FILEREF /* HighlightedDeclarationText.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HighlightedDeclarationText.swift; sourceTree = "<group>"; };
 		A0004444444444444444AAAA /* PersonalDeclarationRepository.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PersonalDeclarationRepository.swift; sourceTree = "<group>"; };
 		A0005555555555555555AAAA /* DeclarationNotificationService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DeclarationNotificationService.swift; sourceTree = "<group>"; };
 		A0006666666666666666AAAA /* SpeechTranscriptionService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SpeechTranscriptionService.swift; sourceTree = "<group>"; };
@@ -949,6 +953,7 @@
 				45567D682F29E3FF00382072 /* NotificationObserversModifier.swift */,
 				45567D692F29E3FF00382072 /* TimerButtonView.swift */,
 				A000EEEEEEEEEEEEEEEEEFFF /* PersonalDeclarationCard.swift */,
+				HIGH0001DECL000001FILEREF /* HighlightedDeclarationText.swift */,
 			);
 			path = Components;
 			sourceTree = "<group>";
@@ -1814,6 +1819,7 @@
 				A0004444444444444444AAAA /* PersonalDeclarationRepository.swift */,
 				A0005555555555555555AAAA /* DeclarationNotificationService.swift */,
 				A0006666666666666666AAAA /* SpeechTranscriptionService.swift */,
+				DECL0001VERIF00001FILEREF /* DeclarationVerificationService.swift */,
 				A1B2C3D4E5F60001A1B2C3D5 /* Protocols */,
 				A1B2C3D4E5F60002A1B2C3D6 /* UseCases */,
 			);
@@ -2306,6 +2312,8 @@
 				B0001111111111111111BBBB /* PersonalDeclaration.swift in Sources */,
 				B0002222222222222222BBBB /* DeclarationContent.swift in Sources */,
 				B0003333333333333333BBBB /* DeclarationMatcher.swift in Sources */,
+				DECL0001VERIF00001BUILDF /* DeclarationVerificationService.swift in Sources */,
+				HIGH0001DECL000001BUILDF /* HighlightedDeclarationText.swift in Sources */,
 				B0004444444444444444BBBB /* PersonalDeclarationRepository.swift in Sources */,
 				B0005555555555555555BBBB /* DeclarationNotificationService.swift in Sources */,
 				B0006666666666666666BBBB /* SpeechTranscriptionService.swift in Sources */,
