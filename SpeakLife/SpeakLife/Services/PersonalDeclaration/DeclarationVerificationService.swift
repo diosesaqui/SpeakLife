@@ -58,9 +58,9 @@ final class DeclarationVerificationService: ObservableObject {
         }
 
         // Microphone
-        if AVAudioApplication.recordPermission != .granted {
+        if AVAudioSession.sharedInstance().recordPermission != .granted {
             let granted = await withCheckedContinuation { cont in
-                AVAudioApplication.requestRecordPermission { cont.resume(returning: $0) }
+                AVAudioSession.sharedInstance().requestRecordPermission { cont.resume(returning: $0) }
             }
             guard granted else {
                 throw DeclarationVerificationError.microphonePermissionDenied
