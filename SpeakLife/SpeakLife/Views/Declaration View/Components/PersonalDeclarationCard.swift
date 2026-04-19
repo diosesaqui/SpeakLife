@@ -409,18 +409,26 @@ struct PersonalDeclarationCard: View {
         Task {
             do {
                 try await verifier.startRecording()
-                await MainActor.run {
-                    withAnimation(.spring()) { speakState = .recording }
-                    startPulseAnimation()
-                    // Auto-stop after 90s
-                    autoStopTimer = Timer.scheduledTimer(withTimeInterval: 90, repeats: false) { _ in
-                        DispatchQueue.main.async { finishRecording() }
-                    }
+                withAnimation(.spring()) { speakState = .recording }
+                startPulseAnimation()
+                autoStopTimer = Timer.scheduledTimer(withTimeInterval: 90, repeats: false) { _ in
+                    DispatchQueue.main.async { finishRecording() }
                 }
+            } catch DeclarationVerificationError.microphonePermissionDenied {
+                showPermissionAlert(for: "Microphone")
+            } catch DeclarationVerificationError.speechPermissionDenied {
+                showPermissionAlert(for: "Speech Recognition")
             } catch {
-                // Speech permission denied or unavailable — silently stay idle
+                // Engine failure — stay idle, don't crash
+                print("DeclarationVerificationService error: \(error)")
             }
         }
+    }
+
+    private func showPermissionAlert(for permission: String) {
+        // Open Settings so user can grant access
+        guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
+        UIApplication.shared.open(url)
     }
 
     private func finishRecording() {

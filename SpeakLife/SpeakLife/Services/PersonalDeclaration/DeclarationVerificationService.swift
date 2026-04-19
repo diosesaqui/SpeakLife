@@ -12,6 +12,12 @@ import Speech
 import AVFoundation
 import Combine
 
+enum DeclarationVerificationError: Error {
+    case microphonePermissionDenied
+    case speechPermissionDenied
+    case engineFailure
+}
+
 @MainActor
 final class DeclarationVerificationService: ObservableObject {
 
@@ -24,7 +30,6 @@ final class DeclarationVerificationService: ObservableObject {
     // MARK: - Private
 
     private(set) var declarationWords: [String] = []
-    // Fresh instance created per session — reusing a stopped AVAudioEngine is unreliable
     private var audioEngine: AVAudioEngine = AVAudioEngine()
     private var recognitionTask: SFSpeechRecognitionTask?
     private var recognitionRequest: SFSpeechAudioBufferRecognitionRequest?
@@ -38,14 +43,61 @@ final class DeclarationVerificationService: ObservableObject {
         matchPercentage = 0
     }
 
+    // MARK: - Permissions
+
+    func requestPermissions() async -> Bool {
+        // 1. Speech recognition
+        let speechStatus = await withCheckedContinuation { continuation in
+            SFSpeechRecognizer.requestAuthorization { status in
+                continuation.resume(returning: status)
+            }
+        }
+        guard speechStatus == .authorized else { return false }
+
+        // 2. Microphone
+        let micGranted = await withCheckedContinuation { continuation in
+            AVAudioApplication.requestRecordPermission { granted in
+                continuation.resume(returning: granted)
+            }
+        }
+        return micGranted
+    }
+
     // MARK: - Recording
 
     func startRecording() async throws {
+        // Check permissions FIRST — before touching AVAudioEngine
+        let speechOK = SFSpeechRecognizer.authorizationStatus() == .authorized
+        let micOK = AVAudioApplication.recordPermission == .granted
+
+        if !speechOK {
+            let granted = await withCheckedContinuation { continuation in
+                SFSpeechRecognizer.requestAuthorization { status in
+                    continuation.resume(returning: status == .authorized)
+                }
+            }
+            guard granted else { throw DeclarationVerificationError.speechPermissionDenied }
+        }
+
+        if !micOK {
+            let granted = await withCheckedContinuation { continuation in
+                AVAudioApplication.requestRecordPermission { g in
+                    continuation.resume(returning: g)
+                }
+            }
+            guard granted else { throw DeclarationVerificationError.microphonePermissionDenied }
+        }
+
         teardown()
-        // Always create a fresh engine — a stopped engine's tap state is unreliable
+        // Fresh engine every session — reusing a stopped engine is unreliable
         audioEngine = AVAudioEngine()
         matchedIndices = []
         matchPercentage = 0
+
+        // Set up audio session BEFORE accessing inputNode
+        let session = AVAudioSession.sharedInstance()
+        try session.setCategory(.record, mode: .measurement, options: .duckOthers)
+        try session.setActive(true, options: .notifyOthersOnDeactivation)
 
         let node = audioEngine.inputNode
 
@@ -74,16 +126,11 @@ final class DeclarationVerificationService: ObservableObject {
             self?.recognitionRequest?.append(buffer)
         }
 
-        let session = AVAudioSession.sharedInstance()
-        try session.setCategory(.record, mode: .measurement, options: .duckOthers)
-        try session.setActive(true, options: .notifyOthersOnDeactivation)
-
         audioEngine.prepare()
         try audioEngine.start()
         isRecording = true
     }
 
-    /// Stops recording and returns the final match percentage.
     func stopRecording() -> Double {
         let result = matchPercentage
         teardown()
@@ -92,7 +139,6 @@ final class DeclarationVerificationService: ObservableObject {
 
     // MARK: - Word Matching
 
-    /// Returns (matchPercentage, Set of matched word indices in declaration)
     private static func computeMatch(transcription: String,
                                      declarationWords: [String]) -> (Double, Set<Int>) {
         guard !declarationWords.isEmpty else { return (0, []) }
@@ -115,7 +161,6 @@ final class DeclarationVerificationService: ObservableObject {
 
     static func normalize(_ word: String) -> String {
         var w = word.lowercased()
-        // Expand common contractions so "I'm" matches "I am" etc.
         let contractions: [String: String] = [
             "i'm": "im", "i've": "ive", "i'll": "ill", "i'd": "id",
             "god's": "gods", "he's": "hes", "she's": "shes", "it's": "its",
@@ -130,11 +175,7 @@ final class DeclarationVerificationService: ObservableObject {
     // MARK: - Teardown
 
     private func teardown() {
-        if audioEngine.isRunning {
-            audioEngine.stop()
-        }
-        // Best-effort tap removal — may fail if engine is in bad state, which is fine
-        // since we create a new engine on next startRecording()
+        if audioEngine.isRunning { audioEngine.stop() }
         try? { audioEngine.inputNode.removeTap(onBus: 0) }()
         recognitionRequest?.endAudio()
         recognitionTask?.cancel()
