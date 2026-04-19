@@ -63,6 +63,10 @@ final class AppState: ObservableObject {
     
     @AppStorage("hasCompletedDemo") var hasCompletedDemo = false
     @AppStorage("hasCompletedEnhancedOnboarding") var hasCompletedEnhancedOnboarding = false
+
+    // Personal Declaration
+    @AppStorage("hasPersonalDeclaration") var hasPersonalDeclaration = false
+    @AppStorage("scrollToPersonalDeclaration") var scrollToPersonalDeclaration = false
     
     // Track when app was last backgrounded to prevent stale audio from restarting
     @AppStorage("lastBackgroundDate") var lastBackgroundDate: Date?

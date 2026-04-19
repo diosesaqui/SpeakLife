@@ -286,10 +286,19 @@ struct SpeakLifeApp: App {
             return
         }
 
-        // Lifecycle notifications deep link directly to declarations tab
-        if let deepLink = content.userInfo["deepLink"] as? String, deepLink == "declarations" {
-            tabViewModel.selectedTab = 0
-            return
+        // Deep link routing
+        if let deepLink = content.userInfo["deepLink"] as? String {
+            switch deepLink {
+            case "declarations":
+                tabViewModel.selectedTab = 0
+                return
+            case "personalDeclaration":
+                tabViewModel.selectedTab = 0
+                appState.scrollToPersonalDeclaration = true
+                return
+            default:
+                break
+            }
         }
 
         // Mark that we just received a notification

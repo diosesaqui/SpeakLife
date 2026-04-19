@@ -19,6 +19,8 @@ struct OnboardingView: View {
     @AppStorage("onboardingTab") var onboardingTab = Tab.emotionalHook.rawValue
     @State private var isTextVisible = false
     @State private var selectedCategories: [DeclarationCategory] = []
+    @State private var savedDeclaration: PersonalDeclaration? = nil
+    @State private var showNewDeclarationSheet = false
 
     let impactMed = UIImpactFeedbackGenerator(style: .soft)
 
@@ -71,7 +73,17 @@ struct OnboardingView: View {
                     }
                     .tag(Tab.dailyCommitment)
 
-                    // SCREEN 6: Subscription / Paywall
+                    // SCREEN 6: Personal Declaration — "What's one thing you're trusting God for?"
+                    PersonalDeclarationOnboardingView(
+                        viewModel: DIContainer.shared.makePersonalDeclarationViewModel(),
+                        size: geometry.size
+                    ) { declaration in
+                        savedDeclaration = declaration
+                        withAnimation { advance() }
+                    }
+                    .tag(Tab.personalDeclaration)
+
+                    // SCREEN 7: Subscription / Paywall
                     subscriptionScene(size: geometry.size)
                         .tag(Tab.subscription)
 
@@ -158,9 +170,15 @@ struct OnboardingView: View {
 
         case .dailyCommitment:
             impactMed.impactOccurred()
-            selection = .subscription
+            selection = .personalDeclaration
             onboardingTab = selection.rawValue
             Analytics.logEvent("onboarding_commitment_done", parameters: nil)
+
+        case .personalDeclaration:
+            impactMed.impactOccurred()
+            selection = .subscription
+            onboardingTab = selection.rawValue
+            Analytics.logEvent("onboarding_personal_declaration_done", parameters: nil)
 
         case .subscription:
             impactMed.impactOccurred()
