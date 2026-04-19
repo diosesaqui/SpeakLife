@@ -25,6 +25,14 @@ struct PersonalDeclarationCard: View {
 
     @Environment(\.dismiss) private var dismiss
 
+    // Spoken-today tracking
+    @AppStorage("personalDeclaration_lastSpokenDate") private var lastSpokenDateStr: String = ""
+
+    private var spokenToday: Bool {
+        let today = ISO8601DateFormatter().string(from: Calendar.current.startOfDay(for: Date()))
+        return lastSpokenDateStr == today
+    }
+
     // Recording state
     @State private var speakState: SpeakState = .idle
     @State private var audioLevel: CGFloat = 0
@@ -194,7 +202,7 @@ struct PersonalDeclarationCard: View {
     private var dayBadge: some View {
         HStack(spacing: 4) {
             Circle()
-                .fill(Color(red: 1, green: 0.82, blue: 0.28))
+                .fill(spokenToday ? Color(red: 0.3, green: 0.9, blue: 0.55) : Color(red: 1, green: 0.82, blue: 0.28))
                 .frame(width: 6, height: 6)
             Text("Day \(dayCount)")
                 .font(.system(size: 12, weight: .semibold, design: .rounded))
@@ -206,6 +214,7 @@ struct PersonalDeclarationCard: View {
             Capsule()
                 .fill(Color.white.opacity(0.08))
         )
+        .animation(.easeInOut(duration: 0.3), value: spokenToday)
     }
 
     // MARK: - Speak Button
@@ -380,6 +389,8 @@ struct PersonalDeclarationCard: View {
     }
 
     private func showSuccess() {
+        // Mark spoken today — dot turns green until midnight
+        lastSpokenDateStr = ISO8601DateFormatter().string(from: Calendar.current.startOfDay(for: Date()))
         withAnimation(.spring()) { speakState = .success }
         withAnimation(.spring(response: 0.5, dampingFraction: 0.6).delay(0.1)) {
             successScale = 1.0
