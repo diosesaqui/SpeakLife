@@ -47,7 +47,11 @@ struct SurveyOnboardingView: View {
                         size: size
                     ) { declaration in
                         savedDeclaration = declaration
-                        applyResponsesAndComplete()
+                        advance() // → paywall next, not completion
+                    }
+                case .paywall:
+                    OptimizedSubscriptionView {
+                        applyResponsesAndComplete() // paywall done → finish onboarding
                     }
                 }
             }
@@ -95,7 +99,11 @@ struct SurveyOnboardingView: View {
     private func advance() {
         UIImpactFeedbackGenerator(style: .soft).impactOccurred()
         Analytics.logEvent("survey_step_completed", parameters: ["step": currentStep.rawValue])
-        let nextRaw = currentStep.rawValue + 1
+        var nextRaw = currentStep.rawValue + 1
+        // Skip goalWord — category is inferred from Q1 (heaviestBurden)
+        if nextRaw == SurveyStep.goalWord.rawValue {
+            nextRaw += 1
+        }
         guard let next = SurveyStep(rawValue: nextRaw) else {
             applyResponsesAndComplete()
             return
