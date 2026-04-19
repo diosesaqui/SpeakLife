@@ -45,7 +45,7 @@ class TabViewModel: ObservableObject {
             0: "declarations",
             1: "audio",
             2: "create_your_own",
-            3: "community",
+            3: "bible",
             4: "profile"
         ]
         
@@ -248,10 +248,10 @@ struct HomeView: View {
             TabView(selection: $tabViewModel.selectedTab) {
                 declarationView
                 audioView
-                //🔴bibleView
+               // bibleView
                 // dailyChecklistView // Moved to DeclarationView
                 createYourOwnView
-                communityView
+                bibleView
                 profileView
                     
                 }
@@ -427,12 +427,26 @@ struct HomeView: View {
 //            }
 //    }
     
-    var communityView: some View {
-        PrayerWallView()
+//    var communityView: some View {
+//        PrayerWallView()
+//            .tag(4)
+//            .tabItem {
+//                if #available(iOS 17, *) {
+//                    Image(systemName: "hands.and.sparkles.fill")
+//                        .renderingMode(.original)
+//                } else {
+//                    Image(systemName: "person.2.fill")
+//                        .renderingMode(.original)
+//                }
+//            }
+//    }
+    
+    var bibleView: some View {
+        BibleView()
             .tag(4)
             .tabItem {
                 if #available(iOS 17, *) {
-                    Image(systemName: "hands.and.sparkles.fill")
+                    Image(systemName: "book.closed.fill")
                         .renderingMode(.original)
                 } else {
                     Image(systemName: "person.2.fill")
