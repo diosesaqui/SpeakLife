@@ -226,7 +226,7 @@ struct BreakthroughFlowView: View {
         VStack(spacing: 28) {
             Spacer()
 
-            Text(sharedToWall ? "\u{1F64C}" : "\u{1F389}")
+            Text(sharedByEmail ? "\u{1F64C}" : "\u{1F389}")
                 .font(.system(size: 80))
 
             VStack(spacing: 12) {
