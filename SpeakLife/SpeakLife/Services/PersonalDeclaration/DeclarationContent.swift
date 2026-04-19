@@ -45,7 +45,7 @@ enum DeclarationContent {
         case .wisdom:
             return "\"If any of you lacks wisdom, let him ask God, who gives generously to all without reproach, and it will be given him.\""
         case .love:
-            return "\"I am convinced that neither death nor life, neither angels nor demons, neither the present nor the future — nothing in all creation will be able to separate us from the love of God.\""
+            return "\"He who finds a wife finds a good thing and obtains favor from the Lord.\""
         case .work:
             return "\"Whatever you do, work at it with all your heart, as working for the Lord, not for human masters. It is the Lord Christ you are serving.\""
         case .innerHealing:
@@ -87,7 +87,7 @@ enum DeclarationContent {
         case .confidence:     return "Hebrews 4:16"
         case .fear:           return "2 Timothy 1:7"
         case .wisdom:         return "James 1:5"
-        case .love:           return "Romans 8:38–39"
+        case .love:           return "Proverbs 18:22"
         case .work:           return "Colossians 3:23–24"
         case .innerHealing:   return "Psalm 147:3"
         case .spiritualGrowth: return "2 Peter 3:18"
@@ -152,7 +152,7 @@ enum DeclarationContent {
             return "I declare that I have the wisdom of God on the inside of me. Every decision I make is guided by the Holy Spirit. I will not be confused. I will not be deceived. Clarity and discernment are mine and I know what to do."
 
         case .love:
-            return "I declare that I am fully and unconditionally loved by God — not because of what I have done, but because of who He is. His love does not fade, does not fail, and does not depend on my performance. I receive that love today and it flows through me to everyone around me."
+            return "I declare that God is writing a love story for my life. The right person — the one God has prepared for me — is coming. I will not settle, I will not rush, and I will not lose faith. God who is faithful in all things is faithful in this, and I trust His timing completely."
 
         case .work:
             return "I declare that God's hand is on my career. I am excellent at what I do because I do it for the Lord. The right opportunities are coming to me. My work is valued, my contributions are seen, and God is promoting me into everything He has prepared."

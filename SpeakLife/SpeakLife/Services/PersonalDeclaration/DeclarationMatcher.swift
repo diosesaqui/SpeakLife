@@ -95,8 +95,11 @@ struct MatchRule {
         // Fear (distinct from anxiety — phobias, spiritual fear)
         MatchRule(keywords: ["afraid", "scared", "terrif", "phobia", "fear of", "frightened", "coward", "too scared"], category: .fear),
 
-        // Marriage & romantic relationships
-        MatchRule(keywords: ["marriage", "husband", "wife", "spouse", "divorce", "partner", "relationship", "reconcil", "cheating", "infidelity", "separation", "wedding"], category: .marriage),
+        // Believing FOR a spouse (check BEFORE marriage rule — more specific)
+        MatchRule(keywords: ["a wife", "a husband", "future wife", "future husband", "future spouse", "find a partner", "meet someone", "right person", "still single", "want a wife", "want a husband", "send me a", "bring me a", "praying for a spouse", "godly wife", "godly husband", "my future partner"], category: .love),
+
+        // Protecting / restoring an existing marriage
+        MatchRule(keywords: ["my marriage", "my husband", "my wife", "our marriage", "my spouse", "save my marriage", "divorce", "reconcil", "cheating", "infidelity", "separation", "broken marriage", "my relationship"], category: .marriage),
 
         // Parenting & family
         MatchRule(keywords: ["child", "son", "daughter", "parent", "kids", "family", "children", "prodigal", "teen", "newborn", "grandchild", "motherhood", "fatherhood"], category: .parenting),
