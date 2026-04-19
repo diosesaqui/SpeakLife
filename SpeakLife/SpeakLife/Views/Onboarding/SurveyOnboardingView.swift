@@ -15,6 +15,7 @@ struct SurveyOnboardingView: View {
 
     @StateObject private var responses = SurveyResponses()
     @State private var currentStep: SurveyStep = .intro
+    @State private var savedDeclaration: PersonalDeclaration? = nil
 
     private var progressFraction: Double {
         guard let qi = currentStep.questionIndex else { return 0 }
@@ -39,7 +40,15 @@ struct SurveyOnboardingView: View {
                 case .readiness:        SurveyQ7ReadinessScreen(size: size, responses: responses) { advance() }
                 case .notificationTime: SurveyQ8NotificationScreen(size: size, responses: responses) { advance() }
                 case .goalWord:         SurveyQ9GoalWordScreen(size: size, responses: responses) { advance() }
-                case .goalReveal:       SurveyGoalRevealScreen(size: size, responses: responses) { applyResponsesAndComplete() }
+                case .goalReveal:       SurveyGoalRevealScreen(size: size, responses: responses) { advance() }
+                case .personalDeclaration:
+                    PersonalDeclarationOnboardingView(
+                        viewModel: DIContainer.shared.makePersonalDeclarationViewModel(),
+                        size: size
+                    ) { declaration in
+                        savedDeclaration = declaration
+                        applyResponsesAndComplete()
+                    }
                 }
             }
             .transition(.asymmetric(
@@ -85,9 +94,12 @@ struct SurveyOnboardingView: View {
 
     private func advance() {
         UIImpactFeedbackGenerator(style: .soft).impactOccurred()
-        let nextRaw = currentStep.rawValue + 1
-        guard let next = SurveyStep(rawValue: nextRaw) else { applyResponsesAndComplete(); return }
         Analytics.logEvent("survey_step_completed", parameters: ["step": currentStep.rawValue])
+        let nextRaw = currentStep.rawValue + 1
+        guard let next = SurveyStep(rawValue: nextRaw) else {
+            applyResponsesAndComplete()
+            return
+        }
         withAnimation(.easeInOut(duration: 0.35)) { currentStep = next }
     }
 
@@ -103,9 +115,14 @@ struct SurveyOnboardingView: View {
         UserPreferencesTracker.shared.trackCategorySelection(category.rawValue)
         // Force the already-loaded DeclarationViewModel to switch to the new category immediately
         declarationStore.choose(category) { _ in }
+        // Mark personal declaration active if user set one
+        if savedDeclaration != nil {
+            appState.hasPersonalDeclaration = true
+        }
         Analytics.logEvent("survey_onboarding_completed", parameters: [
             "goal_word": goalWord.rawValue,
-            "burden": responses.heaviestBurden?.rawValue ?? "unknown"
+            "burden": responses.heaviestBurden?.rawValue ?? "unknown",
+            "set_personal_declaration": (savedDeclaration != nil) as NSNumber
         ])
         onComplete()
     }

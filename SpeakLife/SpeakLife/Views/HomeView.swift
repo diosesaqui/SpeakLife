@@ -223,12 +223,21 @@ struct HomeView: View {
                             }
                   
                 } else {
-                        OnboardingView()
-                            .onAppear {
-                                viewModel.requestPermission { granted in
-                                    // ATT Permission handled
-                                }
+                    GeometryReader { geo in
+                        SurveyOnboardingView(size: geo.size) {
+                            withAnimation {
+                                appState.isOnboarded = true
+                                LifecycleNotificationService.shared.scheduleLifecycleNotifications()
+                                Analytics.logEvent("onBoardingFinished", parameters: nil)
                             }
+                        }
+                    }
+                    .ignoresSafeArea()
+                    .onAppear {
+                        viewModel.requestPermission { granted in
+                            // ATT Permission handled
+                        }
+                    }
                 }
             }
         

@@ -21,10 +21,11 @@ enum SurveyStep: Int, CaseIterable {
     case notificationTime   = 10
     case goalWord           = 11
     case goalReveal         = 12
+    case personalDeclaration = 13
 
     var isQuestion: Bool {
         switch self {
-        case .intro, .interstitialA, .interstitialB, .goalReveal: return false
+        case .intro, .interstitialA, .interstitialB, .goalReveal, .personalDeclaration: return false
         default: return true
         }
     }
