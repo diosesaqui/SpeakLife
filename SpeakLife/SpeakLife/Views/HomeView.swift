@@ -91,6 +91,9 @@ struct HomeView: View {
     @State private var showDeclarationPrompt = false
     @AppStorage("hasCreatedFirstDeclaration") private var hasCreatedFirstDeclaration = false
     @AppStorage("lastDeclarationPromptDate") private var lastDeclarationPromptDate: Double = 0
+    // Personal Declaration migration — show existing users the new feature on update
+    @AppStorage("pd_migrationPromptShown") private var pdMigrationPromptShown = false
+    @State private var showPDMigrationSheet = false
     @State private var showStreakCelebration = false
     @State private var celebrationStreakCount = 0
     
@@ -201,6 +204,22 @@ struct HomeView: View {
                                 // Global streak celebration triggered
                             }
                             // Notification-triggered burst (push notification tap) — unchanged
+                            // Personal Declaration migration — shown once to existing users on update
+                            .fullScreenCover(isPresented: $showPDMigrationSheet) {
+                                GeometryReader { geo in
+                                    PersonalDeclarationOnboardingView(
+                                        viewModel: DIContainer.shared.makePersonalDeclarationViewModel(),
+                                        size: geo.size
+                                    ) { declaration in
+                                        if declaration != nil {
+                                            appState.hasPersonalDeclaration = true
+                                        }
+                                        showPDMigrationSheet = false
+                                    }
+                                    .environmentObject(appState)
+                                }
+                                .ignoresSafeArea()
+                            }
                             .fullScreenCover(isPresented: $showDailyBurstOnLaunch) {
                                 DailyDeclarationBurstView()
                                     .environmentObject(declarationStore)
@@ -264,6 +283,7 @@ struct HomeView: View {
                 .accentColor(Constants.DAMidBlue)
                 .onAppear {
                     checkForNewVersion()
+                    checkForPersonalDeclarationMigration()
                     if appState.firstOpen {
                         appState.firstOpen = false
                     }
@@ -506,6 +526,21 @@ struct HomeView: View {
         }
     }
     
+    private func checkForPersonalDeclarationMigration() {
+        // Only for existing onboarded users who haven't set a personal declaration yet
+        guard appState.isOnboarded else { return }
+        guard !appState.hasPersonalDeclaration else { return }
+        guard !pdMigrationPromptShown else { return }
+        guard !showSubscription else { return }
+
+        // Delay slightly so the main app finishes loading first
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+            guard appState.isOnboarded && !showSubscription else { return }
+            pdMigrationPromptShown = true
+            showPDMigrationSheet = true
+        }
+    }
+
     private func checkForNewVersion() {
         let lastVersion = UserDefaults.standard.string(forKey: "lastVersion") ?? "0.0.0"
         if lastVersion != currentVersion && !appState.firstOpen {
