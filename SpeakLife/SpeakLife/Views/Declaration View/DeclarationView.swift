@@ -373,25 +373,15 @@ struct DeclarationView: View {
 
         case .personalDeclaration:
             if let declaration = loadedDeclaration {
-                ScrollView {
-                    VStack(spacing: 20) {
-                        Spacer().frame(height: 24)
-                        PersonalDeclarationCard(
-                            declaration: declaration,
-                            onSpeak: {
-                                speechSynthesizer.speakText(declaration.declarationText)
-                            },
-                            onMarkReceived: {
-                                activeSheet = nil
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                                    showBreakthroughFlow = true
-                                }
-                            }
-                        )
-                        Spacer()
+                PersonalDeclarationCard(
+                    declaration: declaration,
+                    onBreakthrough: {
+                        activeSheet = nil
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                            showBreakthroughFlow = true
+                        }
                     }
-                }
-                .background(Color(red: 0.06, green: 0.08, blue: 0.18))
+                )
                 .fullScreenCover(isPresented: $showBreakthroughFlow) {
                     if let d = loadedDeclaration {
                         BreakthroughFlowView(
