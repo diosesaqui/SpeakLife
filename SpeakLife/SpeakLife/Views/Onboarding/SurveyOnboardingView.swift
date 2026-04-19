@@ -50,9 +50,9 @@ struct SurveyOnboardingView: View {
                         advance() // → paywall next, not completion
                     }
                 case .paywall:
-                    OptimizedSubscriptionView {
+                    HighConversionPaywallView(callback: {
                         applyResponsesAndComplete() // paywall done → finish onboarding
-                    }
+                    })
                 }
             }
             .transition(.asymmetric(

@@ -156,13 +156,7 @@ struct PersonalDeclarationOnboardingView: View {
 
             Spacer()
 
-            Button("Skip for now") {
-                Analytics.logEvent("personal_declaration_skipped", parameters: nil)
-                onComplete(nil)
-            }
-            .font(.system(size: 13))
-            .foregroundColor(.white.opacity(0.25))
-            .padding(.bottom, size.height * 0.06)
+            Spacer().frame(height: size.height * 0.06)
         }
     }
 
