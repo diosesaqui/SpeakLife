@@ -95,10 +95,11 @@ struct DeclarationView: View {
         }
     }
     
-    // Personal Declaration compact button shown in top row
+    // Personal Declaration compact button shown in top row — always visible
     @ViewBuilder
     private var personalDeclarationButton: some View {
         if appState.hasPersonalDeclaration {
+            // Active declaration — gold filled hands icon
             Button {
                 Task {
                     loadedDeclaration = await DIContainer.shared.personalDeclarationRepository.load()
@@ -133,6 +134,25 @@ struct DeclarationView: View {
                     }
                 }
             }
+        } else {
+            // No active declaration — dimmed outline, tap to create
+            Button {
+                showNewDeclarationSheet = true
+            } label: {
+                Image(systemName: "hands.sparkles")
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundColor(.white.opacity(0.4))
+                    .frame(width: 44, height: 44)
+                    .background(
+                        Circle()
+                            .fill(Color.black.opacity(0.5))
+                            .overlay(
+                                Circle()
+                                    .stroke(Color.white.opacity(0.15), lineWidth: 1)
+                            )
+                    )
+            }
+            .buttonStyle(PlainButtonStyle())
         }
     }
 
