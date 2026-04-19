@@ -13,8 +13,10 @@ import AVFoundation
 // MARK: - Speak State
 
 private enum SpeakState {
-    case idle, recording, success
+    case idle, recording, success, tryAgain
 }
+
+private let kMatchThreshold = 0.75
 
 // MARK: - PersonalDeclarationCard
 
@@ -33,13 +35,19 @@ struct PersonalDeclarationCard: View {
         return lastSpokenDateStr == today
     }
 
+    // Verification service
+    @StateObject private var verifier = DeclarationVerificationService()
+
+    // Display words (original casing for UI, normalised handled by service)
+    private var displayWords: [String] {
+        declaration.declarationText.components(separatedBy: .whitespacesAndNewlines)
+            .filter { !$0.isEmpty }
+    }
+
     // Recording state
     @State private var speakState: SpeakState = .idle
-    @State private var audioLevel: CGFloat = 0
-    @State private var recorder: AVAudioRecorder?
-    @State private var levelTimer: Timer?
     @State private var autoStopTimer: Timer?
-    @State private var silenceSeconds: Double = 0
+    @State private var lastMatchPct: Double = 0
 
     // Animations
     @State private var successScale: CGFloat = 0.3
@@ -93,14 +101,14 @@ struct PersonalDeclarationCard: View {
                             .padding(.horizontal, 24)
                             .padding(.bottom, 32)
 
-                        // ── Declaration text ────────────────────────────
-                        Text(declaration.declarationText)
-                            .font(.system(size: 26, weight: .semibold, design: .rounded))
-                            .foregroundColor(.white)
-                            .lineSpacing(6)
-                            .multilineTextAlignment(.leading)
-                            .padding(.horizontal, 24)
-                            .padding(.bottom, 24)
+                        // ── Declaration text (highlights as user speaks) ─
+                        HighlightedDeclarationText(
+                            displayWords: displayWords,
+                            matchedIndices: verifier.matchedIndices,
+                            isRecording: speakState == .recording
+                        )
+                        .padding(.horizontal, 24)
+                        .padding(.bottom, 24)
 
                         // ── Verse reference ──────────────────────────────
                         HStack(spacing: 6) {
@@ -188,8 +196,14 @@ struct PersonalDeclarationCard: View {
             if speakState == .success {
                 successOverlay
             }
+
+            // ── Try Again overlay ─────────────────────────────────────
+            if speakState == .tryAgain {
+                tryAgainOverlay
+            }
         }
         .onAppear {
+            verifier.prepare(declarationText: declaration.declarationText)
             withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
                 cardAppear = true
             }
@@ -222,15 +236,13 @@ struct PersonalDeclarationCard: View {
     @ViewBuilder
     private var speakButton: some View {
         ZStack {
-            // Pulse rings (visible during recording)
+            // Pulse rings during recording
             if speakState == .recording {
                 ForEach(0..<3, id: \.self) { i in
                     Circle()
                         .strokeBorder(Color(red: 0.98, green: 0.36, blue: 0.35).opacity(ringOpacity[i]), lineWidth: 1.5)
-                        .frame(width: 72 + CGFloat(i) * 28 + audioLevel * 20,
-                               height: 72 + CGFloat(i) * 28 + audioLevel * 20)
+                        .frame(width: CGFloat(72 + i * 28), height: CGFloat(72 + i * 28))
                         .scaleEffect(ringScale[i])
-                        .animation(.easeInOut(duration: 0.1), value: audioLevel)
                 }
             }
 
@@ -238,7 +250,6 @@ struct PersonalDeclarationCard: View {
                 HStack(spacing: 10) {
                     Image(systemName: speakState == .recording ? "stop.fill" : "mic.fill")
                         .font(.system(size: 18, weight: .semibold))
-                        .symbolEffect(.bounce, value: speakState == .recording)
                     Text(speakState == .recording ? "Tap to Finish" : "Speak It")
                         .font(.system(size: 18, weight: .bold, design: .rounded))
                 }
@@ -248,20 +259,13 @@ struct PersonalDeclarationCard: View {
                 .background(
                     Group {
                         if speakState == .recording {
-                            RoundedRectangle(cornerRadius: 18)
-                                .fill(Color(red: 0.85, green: 0.22, blue: 0.22))
+                            RoundedRectangle(cornerRadius: 18).fill(Color(red: 0.85, green: 0.22, blue: 0.22))
                         } else {
                             RoundedRectangle(cornerRadius: 18)
-                                .fill(
-                                    LinearGradient(
-                                        colors: [
-                                            Color(red: 0.38, green: 0.35, blue: 0.95),
-                                            Color(red: 0.55, green: 0.35, blue: 0.95)
-                                        ],
-                                        startPoint: .leading,
-                                        endPoint: .trailing
-                                    )
-                                )
+                                .fill(LinearGradient(
+                                    colors: [Color(red: 0.38, green: 0.35, blue: 0.95),
+                                             Color(red: 0.55, green: 0.35, blue: 0.95)],
+                                    startPoint: .leading, endPoint: .trailing))
                         }
                     }
                 )
@@ -330,66 +334,115 @@ struct PersonalDeclarationCard: View {
         }
     }
 
+    // MARK: - Try Again Overlay
+
+    private var tryAgainOverlay: some View {
+        ZStack {
+            Color.black.opacity(0.72).ignoresSafeArea()
+
+            VStack(spacing: 20) {
+                ZStack {
+                    Circle()
+                        .fill(Color.orange.opacity(0.15))
+                        .frame(width: 110, height: 110)
+                    Circle()
+                        .fill(Color.orange.opacity(0.25))
+                        .frame(width: 90, height: 90)
+                    Image(systemName: "mic.slash.fill")
+                        .font(.system(size: 34, weight: .bold))
+                        .foregroundColor(.orange)
+                }
+                .scaleEffect(successScale)
+                .opacity(successOpacity)
+
+                VStack(spacing: 8) {
+                    Text("Almost There!")
+                        .font(.system(size: 26, weight: .bold, design: .rounded))
+                        .foregroundColor(.white)
+                    Text("You spoke \(Int(lastMatchPct * 100))% of the declaration.\nSpeak at least 75% to complete it.")
+                        .font(.system(size: 15, design: .rounded))
+                        .foregroundColor(.white.opacity(0.65))
+                        .multilineTextAlignment(.center)
+                        .lineSpacing(3)
+                }
+                .opacity(successOpacity)
+
+                Button {
+                    withAnimation(.easeOut(duration: 0.2)) {
+                        successOpacity = 0
+                        successScale = 0.85
+                    }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+                        speakState = .idle
+                        successScale = 0.3
+                        verifier.prepare(declarationText: declaration.declarationText)
+                    }
+                } label: {
+                    Text("Try Again")
+                        .font(.system(size: 16, weight: .semibold, design: .rounded))
+                        .foregroundColor(.white)
+                        .frame(width: 160, height: 48)
+                        .background(
+                            Capsule()
+                                .fill(Color.orange.opacity(0.25))
+                                .overlay(Capsule().strokeBorder(Color.orange.opacity(0.4), lineWidth: 1))
+                        )
+                }
+                .opacity(successOpacity)
+            }
+            .padding(32)
+        }
+    }
+
     // MARK: - Recording Logic
 
     private func handleSpeakTap() {
         switch speakState {
-        case .idle:   startRecording()
-        case .recording: stopRecording(); showSuccess()
+        case .idle:      startRecording()
+        case .recording: finishRecording()
         case .success:   dismissSuccess()
+        case .tryAgain:  break // handled by overlay button
         }
     }
 
     private func startRecording() {
-        let session = AVAudioSession.sharedInstance()
-        do {
-            try session.setCategory(.record, mode: .measurement, options: .duckOthers)
-            try session.setActive(true)
-        } catch { return }
-
-        let url = FileManager.default.temporaryDirectory.appendingPathComponent("pd_speak.m4a")
-        let settings: [String: Any] = [
-            AVFormatIDKey: Int(kAudioFormatMPEG4AAC),
-            AVSampleRateKey: 12000,
-            AVNumberOfChannelsKey: 1,
-            AVEncoderAudioQualityKey: AVAudioQuality.min.rawValue
-        ]
-        guard let rec = try? AVAudioRecorder(url: url, settings: settings) else { return }
-        rec.isMeteringEnabled = true
-        rec.record()
-        recorder = rec
-
-        withAnimation(.spring()) { speakState = .recording }
-        startPulseAnimation()
-
-        // Poll audio level
-        levelTimer = Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { _ in
-            rec.updateMeters()
-            let power = rec.averagePower(forChannel: 0) // dBFS, -160 to 0
-            let normalized = CGFloat(max(0, (power + 50) / 50)) // map -50…0 → 0…1
-            DispatchQueue.main.async { audioLevel = normalized }
-        }
-
-        // Auto-stop after 60s max
-        autoStopTimer = Timer.scheduledTimer(withTimeInterval: 60, repeats: false) { _ in
-            DispatchQueue.main.async {
-                stopRecording()
-                showSuccess()
+        Task {
+            do {
+                try await verifier.startRecording()
+                await MainActor.run {
+                    withAnimation(.spring()) { speakState = .recording }
+                    startPulseAnimation()
+                    // Auto-stop after 90s
+                    autoStopTimer = Timer.scheduledTimer(withTimeInterval: 90, repeats: false) { _ in
+                        DispatchQueue.main.async { finishRecording() }
+                    }
+                }
+            } catch {
+                // Speech permission denied or unavailable — silently stay idle
             }
         }
     }
 
+    private func finishRecording() {
+        autoStopTimer?.invalidate()
+        autoStopTimer = nil
+        let pct = verifier.stopRecording()
+        lastMatchPct = pct
+
+        if pct >= kMatchThreshold {
+            showSuccess()
+        } else {
+            showTryAgain()
+        }
+    }
+
     private func stopRecording() {
-        levelTimer?.invalidate(); levelTimer = nil
-        autoStopTimer?.invalidate(); autoStopTimer = nil
-        recorder?.stop()
-        recorder = nil
-        try? AVAudioSession.sharedInstance().setActive(false)
-        audioLevel = 0
+        autoStopTimer?.invalidate()
+        autoStopTimer = nil
+        _ = verifier.stopRecording()
     }
 
     private func showSuccess() {
-        // Mark spoken today — dot turns green until midnight
         lastSpokenDateStr = ISO8601DateFormatter().string(from: Calendar.current.startOfDay(for: Date()))
         withAnimation(.spring()) { speakState = .success }
         withAnimation(.spring(response: 0.5, dampingFraction: 0.6).delay(0.1)) {
@@ -397,6 +450,15 @@ struct PersonalDeclarationCard: View {
             successOpacity = 1.0
         }
         UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+    }
+
+    private func showTryAgain() {
+        withAnimation(.spring()) { speakState = .tryAgain }
+        withAnimation(.spring(response: 0.5, dampingFraction: 0.6).delay(0.1)) {
+            successScale = 1.0
+            successOpacity = 1.0
+        }
+        UINotificationFeedbackGenerator().notificationOccurred(.warning)
     }
 
     private func dismissSuccess() {
@@ -414,9 +476,7 @@ struct PersonalDeclarationCard: View {
         let delays: [Double] = [0, 0.15, 0.3]
         for i in 0..<3 {
             withAnimation(
-                .easeInOut(duration: 0.8)
-                .repeatForever(autoreverses: true)
-                .delay(delays[i])
+                .easeInOut(duration: 0.8).repeatForever(autoreverses: true).delay(delays[i])
             ) {
                 ringScale[i] = 1.12
                 ringOpacity[i] = 0.08
