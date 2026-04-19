@@ -119,8 +119,7 @@ final class DeclarationVerificationService: ObservableObject {
             "god's": "gods", "he's": "hes", "she's": "shes", "it's": "its",
             "that's": "thats", "there's": "theres", "don't": "dont",
             "can't": "cant", "won't": "wont", "isn't": "isnt",
-            "aren't": "arent", "wasn't": "wasnt", "didn't": "didnt",
-            "i'm": "im"
+            "aren't": "arent", "wasn't": "wasnt", "didn't": "didnt"
         ]
         for (k, v) in contractions { w = w.replacingOccurrences(of: k, with: v) }
         return w.filter { $0.isLetter }
