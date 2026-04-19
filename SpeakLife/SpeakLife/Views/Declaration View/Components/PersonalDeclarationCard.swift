@@ -306,10 +306,10 @@ struct PersonalDeclarationCard: View {
                 .opacity(successOpacity)
 
                 VStack(spacing: 8) {
-                    Text("Well Spoken! 🙌")
+                    Text("Well Done! 🙌")
                         .font(.system(size: 26, weight: .bold, design: .rounded))
                         .foregroundColor(.white)
-                    Text("Your faith is being built.\nKeep declaring this every day.")
+                    Text("The more you speak and meditate on this, the faster your results will come. Keep declaring it throughout your day.")
                         .font(.system(size: 15, weight: .regular, design: .rounded))
                         .foregroundColor(.white.opacity(0.65))
                         .multilineTextAlignment(.center)
