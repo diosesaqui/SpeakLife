@@ -25,10 +25,15 @@ final class SpeechTranscriptionService: SpeechTranscriptionProtocol {
     }
 
     func startRecording() async throws {
-        guard !isRecording else { return }
+        // Clean up any previous session that didn't stop cleanly
+        teardown()
         latestTranscription = ""
 
         let node = audioEngine.inputNode
+
+        // Remove any existing tap to prevent installTap crash on re-entry
+        node.removeTap(onBus: 0)
+
         recognitionRequest = SFSpeechAudioBufferRecognitionRequest()
         guard let request = recognitionRequest else { return }
         request.shouldReportPartialResults = true
@@ -36,6 +41,9 @@ final class SpeechTranscriptionService: SpeechTranscriptionProtocol {
         recognitionTask = recognizer?.recognitionTask(with: request) { [weak self] result, error in
             if let result = result {
                 self?.latestTranscription = result.bestTranscription.formattedString
+            }
+            if error != nil {
+                self?.teardown()
             }
         }
 
@@ -50,14 +58,20 @@ final class SpeechTranscriptionService: SpeechTranscriptionProtocol {
     }
 
     func stopRecording() async -> String {
-        guard isRecording else { return latestTranscription }
-        audioEngine.stop()
+        let result = latestTranscription
+        teardown()
+        return result
+    }
+
+    // MARK: - Teardown
+
+    private func teardown() {
+        if audioEngine.isRunning { audioEngine.stop() }
         audioEngine.inputNode.removeTap(onBus: 0)
         recognitionRequest?.endAudio()
-        recognitionTask?.finish()
+        recognitionTask?.cancel()
         recognitionTask = nil
         recognitionRequest = nil
         isRecording = false
-        return latestTranscription
     }
 }
