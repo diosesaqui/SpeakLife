@@ -170,11 +170,8 @@ struct BreakthroughFlowView: View {
                         if isSaving || testimonyViewModel.isSubmitting {
                             ProgressView().tint(.white)
                         } else {
-                            HStack(spacing: 8) {
-                                Image(systemName: "hands.sparkles.fill")
-                                Text(testimony.isEmpty ? "Continue" : "Share to Prayer Wall")
-                                    .font(.system(size: 17, weight: .bold))
-                            }
+                            Text(testimony.isEmpty ? "Continue" : "Share to Prayer Wall 🙏")
+                                .font(.system(size: 17, weight: .bold))
                         }
                     }
                     .frame(maxWidth: .infinity)
