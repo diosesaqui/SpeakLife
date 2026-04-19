@@ -25,7 +25,7 @@ struct AdaptiveSheetModifier<Item: Identifiable>: ViewModifier {
                 .sheet(item: $item) { item in
                     self.content(item)
                         .presentationDetents([.large])
-                        .presentationDragIndicator(.visible)
+                        .presentationDragIndicator(.hidden)
                 }
         }
     }
