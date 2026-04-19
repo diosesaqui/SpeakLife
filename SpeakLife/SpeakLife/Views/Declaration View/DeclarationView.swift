@@ -95,31 +95,29 @@ struct DeclarationView: View {
         }
     }
     
-    // Personal Declaration compact button shown in top row
+    // Personal Declaration compact button shown in top row — always visible
     @ViewBuilder
     private var personalDeclarationButton: some View {
         if appState.hasPersonalDeclaration {
+            // Active declaration — gold filled hands icon
             Button {
                 Task {
                     loadedDeclaration = await DIContainer.shared.personalDeclarationRepository.load()
                     activeSheet = .personalDeclaration
                 }
             } label: {
-                HStack(spacing: 5) {
-                    Image(systemName: "hands.sparkles.fill")
-                        .font(.system(size: 12))
-                    if let d = loadedDeclaration {
-                        Text("Day \(d.dayCount)")
-                            .font(.system(size: 12, weight: .semibold))
-                    }
-                }
-                .foregroundColor(.yellow)
-                .padding(.horizontal, 10)
-                .padding(.vertical, 6)
-                .background(
-                    Capsule().fill(Color.black.opacity(0.3))
-                        .overlay(Capsule().stroke(Color.yellow.opacity(0.4), lineWidth: 1))
-                )
+                Image(systemName: "hands.sparkles.fill")
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundColor(.yellow)
+                    .frame(width: 44, height: 44)
+                    .background(
+                        Circle()
+                            .fill(Color.black.opacity(0.7))
+                            .overlay(
+                                Circle()
+                                    .stroke(Color.yellow.opacity(0.4), lineWidth: 1)
+                            )
+                    )
             }
             .buttonStyle(PlainButtonStyle())
             .onAppear {
@@ -136,6 +134,25 @@ struct DeclarationView: View {
                     }
                 }
             }
+        } else {
+            // No active declaration — dimmed outline, tap to create
+            Button {
+                showNewDeclarationSheet = true
+            } label: {
+                Image(systemName: "hands.sparkles")
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundColor(.white.opacity(0.4))
+                    .frame(width: 44, height: 44)
+                    .background(
+                        Circle()
+                            .fill(Color.black.opacity(0.5))
+                            .overlay(
+                                Circle()
+                                    .stroke(Color.white.opacity(0.15), lineWidth: 1)
+                            )
+                    )
+            }
+            .buttonStyle(PlainButtonStyle())
         }
     }
 

@@ -63,11 +63,25 @@ final class PersonalDeclarationViewModel: ObservableObject {
         let transcribed = await speechService.stopRecording()
         isRecording = false
         inputText = transcribed
-        await runMatch(input: transcribed)
+        do {
+            try DeclarationInputValidator.validate(transcribed)
+            await runMatch(input: transcribed)
+        } catch let error as DeclarationInputError {
+            errorMessage = error.prompt
+        } catch {
+            errorMessage = "We couldn't understand that. Try again."
+        }
     }
 
     func submitTextInput() async {
-        await runMatch(input: inputText)
+        do {
+            try DeclarationInputValidator.validate(inputText)
+            await runMatch(input: inputText)
+        } catch let error as DeclarationInputError {
+            errorMessage = error.prompt
+        } catch {
+            errorMessage = "Please tell us more about what you're believing for."
+        }
     }
 
     func saveAndContinue(startTimeIndex: Int) async throws -> PersonalDeclaration {
