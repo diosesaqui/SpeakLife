@@ -248,10 +248,16 @@ struct PersonalDeclarationCard: View {
 
             Button(action: handleSpeakTap) {
                 HStack(spacing: 10) {
-                    Image(systemName: speakState == .recording ? "stop.fill" : "mic.fill")
-                        .font(.system(size: 18, weight: .semibold))
-                    Text(speakState == .recording ? "Tap to Finish" : "Speak It")
-                        .font(.system(size: 18, weight: .bold, design: .rounded))
+                    if verifier.isTranscribing {
+                        ProgressView().tint(.white).scaleEffect(0.85)
+                        Text("Analyzing...")
+                            .font(.system(size: 18, weight: .bold, design: .rounded))
+                    } else {
+                        Image(systemName: speakState == .recording ? "stop.fill" : "mic.fill")
+                            .font(.system(size: 18, weight: .semibold))
+                        Text(speakState == .recording ? "Tap to Finish" : "Speak It")
+                            .font(.system(size: 18, weight: .bold, design: .rounded))
+                    }
                 }
                 .foregroundColor(.white)
                 .frame(maxWidth: .infinity)
@@ -434,20 +440,22 @@ struct PersonalDeclarationCard: View {
     private func finishRecording() {
         autoStopTimer?.invalidate()
         autoStopTimer = nil
-        let pct = verifier.stopRecording()
-        lastMatchPct = pct
-
-        if pct >= kMatchThreshold {
-            showSuccess()
-        } else {
-            showTryAgain()
+        withAnimation { speakState = .idle } // stop pulse rings while transcribing
+        Task {
+            let pct = await verifier.stopAndTranscribe()
+            lastMatchPct = pct
+            if pct >= kMatchThreshold {
+                showSuccess()
+            } else {
+                showTryAgain()
+            }
         }
     }
 
     private func stopRecording() {
         autoStopTimer?.invalidate()
         autoStopTimer = nil
-        _ = verifier.stopRecording()
+        Task { _ = await verifier.stopAndTranscribe() }
     }
 
     private func showSuccess() {

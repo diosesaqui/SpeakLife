@@ -2,9 +2,9 @@
 //  DeclarationVerificationService.swift
 //  SpeakLife
 //
-//  Real-time speech verification for personal declarations.
-//  Listens as user speaks, matches words against the declaration text,
-//  and publishes live match state for karaoke-style highlighting.
+//  Verifies that the user spoke their declaration.
+//  Records via AVAudioRecorder (no installTap — avoids AVFAudio NSException crash),
+//  then transcribes the file with SFSpeechRecognizer after recording stops.
 //
 
 import Foundation
@@ -15,24 +15,25 @@ import Combine
 enum DeclarationVerificationError: Error {
     case microphonePermissionDenied
     case speechPermissionDenied
-    case engineFailure
 }
 
 @MainActor
 final class DeclarationVerificationService: ObservableObject {
 
-    // MARK: - Published state (drives UI)
+    // MARK: - Published state
 
     @Published var matchedIndices: Set<Int> = []
     @Published var matchPercentage: Double = 0
     @Published var isRecording = false
+    @Published var isTranscribing = false
 
     // MARK: - Private
 
     private(set) var declarationWords: [String] = []
-    private var audioEngine: AVAudioEngine = AVAudioEngine()
-    private var recognitionTask: SFSpeechRecognitionTask?
-    private var recognitionRequest: SFSpeechAudioBufferRecognitionRequest?
+    private var recorder: AVAudioRecorder?
+    private var recordingURL: URL {
+        FileManager.default.temporaryDirectory.appendingPathComponent("declaration_verify.m4a")
+    }
     private let recognizer = SFSpeechRecognizer(locale: Locale.current)
 
     // MARK: - Setup
@@ -45,96 +46,94 @@ final class DeclarationVerificationService: ObservableObject {
 
     // MARK: - Permissions
 
-    func requestPermissions() async -> Bool {
-        // 1. Speech recognition
-        let speechStatus = await withCheckedContinuation { continuation in
-            SFSpeechRecognizer.requestAuthorization { status in
-                continuation.resume(returning: status)
+    private func checkAndRequestPermissions() async throws {
+        // Speech recognition
+        if SFSpeechRecognizer.authorizationStatus() != .authorized {
+            let status = await withCheckedContinuation { cont in
+                SFSpeechRecognizer.requestAuthorization { cont.resume(returning: $0) }
+            }
+            guard status == .authorized else {
+                throw DeclarationVerificationError.speechPermissionDenied
             }
         }
-        guard speechStatus == .authorized else { return false }
 
-        // 2. Microphone
-        let micGranted = await withCheckedContinuation { continuation in
-            AVAudioApplication.requestRecordPermission { granted in
-                continuation.resume(returning: granted)
+        // Microphone
+        if AVAudioApplication.recordPermission != .granted {
+            let granted = await withCheckedContinuation { cont in
+                AVAudioApplication.requestRecordPermission { cont.resume(returning: $0) }
+            }
+            guard granted else {
+                throw DeclarationVerificationError.microphonePermissionDenied
             }
         }
-        return micGranted
     }
 
-    // MARK: - Recording
+    // MARK: - Recording (AVAudioRecorder — no installTap)
 
     func startRecording() async throws {
-        // Check permissions FIRST — before touching AVAudioEngine
-        let speechOK = SFSpeechRecognizer.authorizationStatus() == .authorized
-        let micOK = AVAudioApplication.recordPermission == .granted
+        try await checkAndRequestPermissions()
 
-        if !speechOK {
-            let granted = await withCheckedContinuation { continuation in
-                SFSpeechRecognizer.requestAuthorization { status in
-                    continuation.resume(returning: status == .authorized)
-                }
-            }
-            guard granted else { throw DeclarationVerificationError.speechPermissionDenied }
-        }
-
-        if !micOK {
-            let granted = await withCheckedContinuation { continuation in
-                AVAudioApplication.requestRecordPermission { g in
-                    continuation.resume(returning: g)
-                }
-            }
-            guard granted else { throw DeclarationVerificationError.microphonePermissionDenied }
-        }
-
-        teardown()
-        // Fresh engine every session — reusing a stopped engine is unreliable
-        audioEngine = AVAudioEngine()
-        matchedIndices = []
-        matchPercentage = 0
-
-        // Set up audio session BEFORE accessing inputNode
         let session = AVAudioSession.sharedInstance()
         try session.setCategory(.record, mode: .measurement, options: .duckOthers)
         try session.setActive(true, options: .notifyOthersOnDeactivation)
 
-        let node = audioEngine.inputNode
+        let settings: [String: Any] = [
+            AVFormatIDKey: Int(kAudioFormatMPEG4AAC),
+            AVSampleRateKey: 44100,
+            AVNumberOfChannelsKey: 1,
+            AVEncoderAudioQualityKey: AVAudioQuality.high.rawValue
+        ]
 
-        recognitionRequest = SFSpeechAudioBufferRecognitionRequest()
-        guard let request = recognitionRequest else { return }
-        request.shouldReportPartialResults = true
+        let rec = try AVAudioRecorder(url: recordingURL, settings: settings)
+        rec.record()
+        recorder = rec
+        matchedIndices = []
+        matchPercentage = 0
+        isRecording = true
+    }
+
+    /// Stops recording, transcribes the audio, and returns the match percentage.
+    func stopAndTranscribe() async -> Double {
+        recorder?.stop()
+        recorder = nil
+        isRecording = false
+        try? AVAudioSession.sharedInstance().setActive(false,
+            options: .notifyOthersOnDeactivation)
+
+        isTranscribing = true
+        defer { isTranscribing = false }
+
+        let pct = await transcribeRecording()
+        matchPercentage = pct
+        return pct
+    }
+
+    // MARK: - Transcription
+
+    private func transcribeRecording() async -> Double {
+        guard FileManager.default.fileExists(atPath: recordingURL.path) else { return 0 }
+        guard let recognizer = recognizer, recognizer.isAvailable else { return 0 }
+
+        let request = SFSpeechURLRecognitionRequest(url: recordingURL)
+        request.shouldReportPartialResults = false
 
         let capturedWords = declarationWords
 
-        recognitionTask = recognizer?.recognitionTask(with: request) { [weak self] result, error in
-            guard let self else { return }
-            if let result = result {
-                let transcription = result.bestTranscription.formattedString
+        return await withCheckedContinuation { continuation in
+            recognizer.recognitionTask(with: request) { [weak self] result, error in
+                guard let final = result, final.isFinal else {
+                    if error != nil { continuation.resume(returning: 0) }
+                    return
+                }
+                let transcription = final.bestTranscription.formattedString
                 let (pct, indices) = Self.computeMatch(transcription: transcription,
                                                        declarationWords: capturedWords)
                 Task { @MainActor [weak self] in
                     self?.matchedIndices = indices
-                    self?.matchPercentage = pct
                 }
+                continuation.resume(returning: pct)
             }
-            if error != nil { Task { @MainActor [weak self] in self?.teardown() } }
         }
-
-        let format = node.outputFormat(forBus: 0)
-        node.installTap(onBus: 0, bufferSize: 1024, format: format) { [weak self] buffer, _ in
-            self?.recognitionRequest?.append(buffer)
-        }
-
-        audioEngine.prepare()
-        try audioEngine.start()
-        isRecording = true
-    }
-
-    func stopRecording() -> Double {
-        let result = matchPercentage
-        teardown()
-        return result
     }
 
     // MARK: - Word Matching
@@ -170,19 +169,5 @@ final class DeclarationVerificationService: ObservableObject {
         ]
         for (k, v) in contractions { w = w.replacingOccurrences(of: k, with: v) }
         return w.filter { $0.isLetter }
-    }
-
-    // MARK: - Teardown
-
-    private func teardown() {
-        if audioEngine.isRunning { audioEngine.stop() }
-        try? { audioEngine.inputNode.removeTap(onBus: 0) }()
-        recognitionRequest?.endAudio()
-        recognitionTask?.cancel()
-        recognitionTask = nil
-        recognitionRequest = nil
-        isRecording = false
-        try? AVAudioSession.sharedInstance().setActive(false,
-            options: .notifyOthersOnDeactivation)
     }
 }
