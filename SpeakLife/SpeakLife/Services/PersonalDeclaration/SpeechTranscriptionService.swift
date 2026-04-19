@@ -27,12 +27,11 @@ final class SpeechTranscriptionService: SpeechTranscriptionProtocol {
     func startRecording() async throws {
         // Clean up any previous session that didn't stop cleanly
         teardown()
+        // Create a fresh engine — reusing a stopped AVAudioEngine is unreliable
+        audioEngine = AVAudioEngine()
         latestTranscription = ""
 
         let node = audioEngine.inputNode
-
-        // Remove any existing tap to prevent installTap crash on re-entry
-        node.removeTap(onBus: 0)
 
         recognitionRequest = SFSpeechAudioBufferRecognitionRequest()
         guard let request = recognitionRequest else { return }
@@ -67,7 +66,7 @@ final class SpeechTranscriptionService: SpeechTranscriptionProtocol {
 
     private func teardown() {
         if audioEngine.isRunning { audioEngine.stop() }
-        audioEngine.inputNode.removeTap(onBus: 0)
+        try? { audioEngine.inputNode.removeTap(onBus: 0) }()
         recognitionRequest?.endAudio()
         recognitionTask?.cancel()
         recognitionTask = nil

@@ -24,7 +24,8 @@ final class DeclarationVerificationService: ObservableObject {
     // MARK: - Private
 
     private(set) var declarationWords: [String] = []
-    private var audioEngine = AVAudioEngine()
+    // Fresh instance created per session — reusing a stopped AVAudioEngine is unreliable
+    private var audioEngine: AVAudioEngine = AVAudioEngine()
     private var recognitionTask: SFSpeechRecognitionTask?
     private var recognitionRequest: SFSpeechAudioBufferRecognitionRequest?
     private let recognizer = SFSpeechRecognizer(locale: Locale.current)
@@ -41,11 +42,12 @@ final class DeclarationVerificationService: ObservableObject {
 
     func startRecording() async throws {
         teardown()
+        // Always create a fresh engine — a stopped engine's tap state is unreliable
+        audioEngine = AVAudioEngine()
         matchedIndices = []
         matchPercentage = 0
 
         let node = audioEngine.inputNode
-        node.removeTap(onBus: 0)
 
         recognitionRequest = SFSpeechAudioBufferRecognitionRequest()
         guard let request = recognitionRequest else { return }
@@ -128,8 +130,12 @@ final class DeclarationVerificationService: ObservableObject {
     // MARK: - Teardown
 
     private func teardown() {
-        if audioEngine.isRunning { audioEngine.stop() }
-        audioEngine.inputNode.removeTap(onBus: 0)
+        if audioEngine.isRunning {
+            audioEngine.stop()
+        }
+        // Best-effort tap removal — may fail if engine is in bad state, which is fine
+        // since we create a new engine on next startRecording()
+        try? { audioEngine.inputNode.removeTap(onBus: 0) }()
         recognitionRequest?.endAudio()
         recognitionTask?.cancel()
         recognitionTask = nil
