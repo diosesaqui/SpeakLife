@@ -1033,13 +1033,211 @@ Add "My Declaration" row showing:
 
 ---
 
+## Gap Closures — Required Before Ship
+
+These four gaps must be closed for the feature loop to be complete.
+
+---
+
+### Gap 1 — Notification Deep Link Handling
+
+**Problem:** The notification fires with `userInfo["deepLink"] = "personalDeclaration"` but `SpeakLifeApp.handleNotificationContent()` has no handler for it. Tapping the notification opens the app but nothing navigates to the card.
+
+**File:** `App/SpeakLifeApp.swift` — `handleNotificationContent()`
+
+```swift
+private func handleNotificationContent(_ content: UNNotificationContent) {
+
+    let notifType = content.userInfo["notificationType"] as? String
+    if notifType == "prayerWall" || notifType == "streakAtRisk" || notifType == "streakComplete" {
+        return
+    }
+
+    if let deepLink = content.userInfo["deepLink"] as? String {
+        switch deepLink {
+        case "declarations":
+            tabViewModel.selectedTab = 0
+            return
+
+        case "personalDeclaration":          // ← ADD THIS
+            tabViewModel.selectedTab = 0     // home tab
+            appState.scrollToPersonalDeclaration = true  // home screen observes this flag
+            return
+
+        default:
+            break
+        }
+    }
+
+    // ... rest of existing handling unchanged
+}
+```
+
+**`AppState.swift` — add:**
+```swift
+@AppStorage("scrollToPersonalDeclaration") var scrollToPersonalDeclaration: Bool = false
+```
+
+**Home screen** — observe this flag. When true, scroll to and briefly highlight the `PersonalDeclarationCard`, then reset to false.
+
+---
+
+### Gap 2 — Notification Time Uses User's Setting
+
+**Problem:** `DeclarationNotificationService` hardcodes 8am. The user just chose their notification time. These must match.
+
+**Update protocol:**
+```swift
+protocol DeclarationNotificationServiceProtocol {
+    func schedule(for declaration: PersonalDeclaration, startTimeIndex: Int)
+    func cancel()
+}
+```
+
+**Update `DeclarationNotificationService.schedule(for:startTimeIndex:)`:**
+```swift
+func schedule(for declaration: PersonalDeclaration, startTimeIndex: Int) {
+    center.removePendingNotificationRequests(withIdentifiers: [notificationId])
+
+    let content = UNMutableNotificationContent()
+    content.title = "Don't forget what you're believing for 🙏"
+    content.body = String(declaration.declarationText.prefix(120)) + "..."
+    content.sound = .default
+    content.userInfo = ["deepLink": "personalDeclaration"]
+
+    // startTimeIndex = 30-min slots from midnight
+    // e.g. index 12 = 6:00 AM, index 16 = 8:00 AM, index 24 = 12:00 PM
+    let totalMinutes = startTimeIndex * 30
+    var components = DateComponents()
+    components.hour = (totalMinutes / 60) % 24
+    components.minute = totalMinutes % 60
+
+    let trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: true)
+    center.add(UNNotificationRequest(identifier: notificationId, content: content, trigger: trigger),
+               withCompletionHandler: nil)
+}
+```
+
+**Update `SavePersonalDeclarationUseCase.execute()`** to accept `startTimeIndex: Int` and pass it to `notificationService.schedule(for:startTimeIndex:)`.
+
+**Update `PersonalDeclarationViewModel.saveAndContinue()`** to accept and forward `startTimeIndex: Int`.
+
+**Update call site in result view:**
+```swift
+ShimmerButton(colors: [.blue], buttonTitle: "Speak This Every Day →") {
+    Task {
+        do {
+            let declaration = try await viewModel.saveAndContinue(startTimeIndex: appState.startTimeIndex)
+            appState.hasPersonalDeclaration = true
+            onComplete(declaration)
+        } catch {
+            viewModel.errorMessage = "Something went wrong. Please try again."
+        }
+    }
+}
+```
+
+---
+
+### Gap 3 — "Speak It" TTS Owner
+
+**Problem:** `PersonalDeclarationCard` has an `onSpeak` callback but nothing owns the speech synthesizer.
+
+**Solution:** The app already has `SpeechSynthesizer.swift` at `Core/Components/SpeechSynthesizer.swift` with `speakText(_ text: String)`. No new service needed.
+
+In the **parent view that renders `PersonalDeclarationCard`** (the declarations home feed):
+
+```swift
+@StateObject private var speechSynthesizer = SpeechSynthesizer()
+
+PersonalDeclarationCard(
+    declaration: declaration,
+    onSpeak: {
+        speechSynthesizer.speakText(declaration.declarationText)
+    },
+    onMarkReceived: {
+        showBreakthroughFlow = true
+    }
+)
+```
+
+No new files. No new protocols. Reuse what already exists.
+
+---
+
+### Gap 4 — Paywall Integration
+
+**Problem:** Both paywall views (`HighConversionPaywallView` and `OptimizedSubscriptionView`) read copy from `UserPreferencesTracker.getDynamicPaywallCopy()`. The personal declaration belief isn't wired in, so the conversion uplift is lost.
+
+**Cleanest path:** Set a transient value on `UserPreferencesTracker` before advancing — no view signature changes required.
+
+**Step 1 — Add to `UserPreferencesTracker`:**
+```swift
+// In-memory only — only needed during onboarding session
+var personalDeclarationBelief: String? = nil
+```
+
+**Step 2 — Add override at top of `getDynamicPaywallCopy()`:**
+```swift
+func getDynamicPaywallCopy() -> PaywallCopy {
+    if let belief = personalDeclarationBelief, !belief.isEmpty {
+        return PaywallCopy(
+            headline: "You just declared what you're trusting God for.",
+            subheadline: "SpeakLife will send you this declaration every single day until it comes to pass. Don't miss a day.",
+            urgencyText: "3 Days Free • Cancel Anytime"
+        )
+    }
+    // ... existing survey-based logic unchanged below
+}
+```
+
+**Step 3 — Set it in `OnboardingView` after save:**
+```swift
+PersonalDeclarationOnboardingView(
+    viewModel: DIContainer.shared.makePersonalDeclarationViewModel(),
+    size: geometry.size
+) { declaration in
+    if let declaration {
+        appState.hasPersonalDeclaration = true
+        UserPreferencesTracker.shared.personalDeclarationBelief = declaration.beliefText
+    }
+    advance()  // → .subscription (paywall now reads personalized copy)
+}
+.tag(Tab.personalDeclaration)
+```
+
+---
+
+## Complete Feature Loop (all gaps closed)
+
+```
+[Onboarding]
+User speaks/types → matched verse + declaration shown
+       ↓
+Saves → notification scheduled at user's chosen time ✓ Gap 2
+Advances → paywall shows personalized copy ✓ Gap 4
+       ↓
+[Daily habit]
+Notification fires at user's time → user taps
+       ↓
+Deep links to home → scrolls to card ✓ Gap 1
+       ↓
+Taps "Speak It" → SpeechSynthesizer.speakText() ✓ Gap 3
+       ↓
+[Breakthrough]
+Taps "It Came to Pass" → testimony → celebration
+       ↓
+"Set a New Declaration" → loop restarts as sheet
+```
+
+---
+
 ## Out of Scope — v1
 
 - AI-powered matching (keyword matching ships first)
 - CloudKit / cross-device sync (UserDefaults is sufficient for MVP)
 - Social testimony sharing
 - Multiple simultaneous declarations
-- Push notification deep-link routing into card
 - Analytics events (add after validating feature retention impact)
 
 ---
