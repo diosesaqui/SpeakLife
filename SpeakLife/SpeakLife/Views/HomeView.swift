@@ -7,6 +7,7 @@
 
 import SwiftUI
 import FacebookCore
+import FirebaseAnalytics
 let resources: [MusicResources] = [.sethpiano, .washed, .rainstorm, .everpresent]
 
 struct MusicResources {
@@ -223,13 +224,11 @@ struct HomeView: View {
                             }
                   
                 } else {
-                    GeometryReader { geo in
-                        SurveyOnboardingView(size: geo.size) {
-                            withAnimation {
-                                appState.isOnboarded = true
-                                LifecycleNotificationService.shared.scheduleLifecycleNotifications()
-                                Analytics.logEvent("onBoardingFinished", parameters: nil)
-                            }
+                    SurveyOnboardingView(size: UIScreen.main.bounds.size) {
+                        withAnimation {
+                            appState.isOnboarded = true
+                            LifecycleNotificationService.shared.scheduleLifecycleNotifications()
+                            Analytics.logEvent("onBoardingFinished", parameters: nil)
                         }
                     }
                     .ignoresSafeArea()
