@@ -339,21 +339,9 @@
 		9A194914114F422786A1CE9F /* PersonalizationSummaryScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30FA3E7536DE40B2B311F43E /* PersonalizationSummaryScene.swift */; };
 		A1B2C3D4E5F6A7B82026AA01 /* SpeakingPowerEffect.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6A7B82026AA00 /* SpeakingPowerEffect.swift */; };
 		AC33C8C521764DF3961EA018 /* OnboardingDailyBurstScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC33C8C421764DF3961EA018 /* OnboardingDailyBurstScreen.swift */; };
-		C1A98C89749C94FF718F1980 /* AppleSignInPromptView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35B4B5074F8CB5AB1E2EA0DC /* AppleSignInPromptView.swift */; };
-		CF8E572E5459A038EEE73B3A /* PrayerWallViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BA7EE898DF248C4EB6EDEB2 /* PrayerWallViewModel.swift */; };
-		D2AD4D1C5D81425897424332 /* StructuredDayLaunchTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9A3081A52984B6AB0EECD7B /* StructuredDayLaunchTracker.swift */; };
-		D807A5FAC8CD4B79A92D4C57 /* EmailConfirmationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61721EDB270E45A784DF2A6C /* EmailConfirmationView.swift */; };
-		DA3182D477494E6A9E4F8AC4 /* AdaptiveSheetModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 067C652453504C60AD4342E8 /* AdaptiveSheetModifier.swift */; };
-		E0EA353D8043F358064AADB7 /* AppleSignInService.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC27319C7422AFA8C439B08F /* AppleSignInService.swift */; };
-		E260535F74194D8CB0442F40 /* HookScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46F66FE59AA649BFB7D06B09 /* HookScene.swift */; };
-		F3F466B4CB267BFBE4FD8CC8 /* WldehBibleAPIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D920701A13775F49180D845 /* WldehBibleAPIService.swift */; };
-		FCB7A8468DAA92844336D893 /* CancelInterventionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA6F23A3327C444669DC03A5 /* CancelInterventionView.swift */; };
-		RC00000001294E382700CD2103 /* RevenueCatManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = RC00000002294E382700CD2103 /* RevenueCatManager.swift */; };
 		B0001111111111111111BBBB /* PersonalDeclaration.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0001111111111111111AAAA /* PersonalDeclaration.swift */; };
 		B0002222222222222222BBBB /* DeclarationContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0002222222222222222AAAA /* DeclarationContent.swift */; };
 		B0003333333333333333BBBB /* DeclarationMatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0003333333333333333AAAA /* DeclarationMatcher.swift */; };
-		DECL0001VERIF00001BUILDF /* DeclarationVerificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = DECL0001VERIF00001FILEREF /* DeclarationVerificationService.swift */; };
-		HIGH0001DECL000001BUILDF /* HighlightedDeclarationText.swift in Sources */ = {isa = PBXBuildFile; fileRef = HIGH0001DECL000001FILEREF /* HighlightedDeclarationText.swift */; };
 		B0004444444444444444BBBB /* PersonalDeclarationRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0004444444444444444AAAA /* PersonalDeclarationRepository.swift */; };
 		B0005555555555555555BBBB /* DeclarationNotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0005555555555555555AAAA /* DeclarationNotificationService.swift */; };
 		B0006666666666666666BBBB /* SpeechTranscriptionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0006666666666666666AAAA /* SpeechTranscriptionService.swift */; };
@@ -366,6 +354,8 @@
 		B000DDDDDDDDDDDDDDDDEEEE /* PersonalDeclarationOnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A000DDDDDDDDDDDDDDDDEEEE /* PersonalDeclarationOnboardingView.swift */; };
 		B000EEEEEEEEEEEEEEEEEFFF /* PersonalDeclarationCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = A000EEEEEEEEEEEEEEEEEFFF /* PersonalDeclarationCard.swift */; };
 		B000FFFFFFFFFFFFFFFFFFFF /* BreakthroughFlowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A000FFFFFFFFFFFFFFFFFFFF /* BreakthroughFlowView.swift */; };
+		C1A98C89749C94FF718F1980 /* AppleSignInPromptView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35B4B5074F8CB5AB1E2EA0DC /* AppleSignInPromptView.swift */; };
+		CF8E572E5459A038EEE73B3A /* PrayerWallViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BA7EE898DF248C4EB6EDEB2 /* PrayerWallViewModel.swift */; };
 		D0010000000000000001BBBB /* SurveyPersonalizationEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0010000000000000001AAAA /* SurveyPersonalizationEngine.swift */; };
 		D0020000000000000002BBBB /* ThreeDayChallengeManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0020000000000000002AAAA /* ThreeDayChallengeManager.swift */; };
 		D0030000000000000003BBBB /* SurveyOnboardingScreens.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0030000000000000003AAAA /* SurveyOnboardingScreens.swift */; };
@@ -373,6 +363,16 @@
 		D0050000000000000005BBBB /* ThreeDayChallengeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0050000000000000005AAAA /* ThreeDayChallengeView.swift */; };
 		D0060000000000000006BBBB /* PayWhatYouCanView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0060000000000000006AAAA /* PayWhatYouCanView.swift */; };
 		D0070000000000000007BBBB /* SurveyTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0070000000000000007AAAA /* SurveyTypes.swift */; };
+		D2AD4D1C5D81425897424332 /* StructuredDayLaunchTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9A3081A52984B6AB0EECD7B /* StructuredDayLaunchTracker.swift */; };
+		D807A5FAC8CD4B79A92D4C57 /* EmailConfirmationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61721EDB270E45A784DF2A6C /* EmailConfirmationView.swift */; };
+		DA3182D477494E6A9E4F8AC4 /* AdaptiveSheetModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 067C652453504C60AD4342E8 /* AdaptiveSheetModifier.swift */; };
+		DECL0001VERIF00001BUILDF /* DeclarationVerificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = DECL0001VERIF00001FILEREF /* DeclarationVerificationService.swift */; };
+		E0EA353D8043F358064AADB7 /* AppleSignInService.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC27319C7422AFA8C439B08F /* AppleSignInService.swift */; };
+		E260535F74194D8CB0442F40 /* HookScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46F66FE59AA649BFB7D06B09 /* HookScene.swift */; };
+		F3F466B4CB267BFBE4FD8CC8 /* WldehBibleAPIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D920701A13775F49180D845 /* WldehBibleAPIService.swift */; };
+		FCB7A8468DAA92844336D893 /* CancelInterventionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA6F23A3327C444669DC03A5 /* CancelInterventionView.swift */; };
+		HIGH0001DECL000001BUILDF /* HighlightedDeclarationText.swift in Sources */ = {isa = PBXBuildFile; fileRef = HIGH0001DECL000001FILEREF /* HighlightedDeclarationText.swift */; };
+		RC00000001294E382700CD2103 /* RevenueCatManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = RC00000002294E382700CD2103 /* RevenueCatManager.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -730,23 +730,9 @@
 		7AF46FC42A41326100A45C01 /* AbbasLoveView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AbbasLoveView.swift; sourceTree = "<group>"; };
 		81FE0DDC33BC402685CA44ED /* BurstCompletionModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BurstCompletionModel.swift; sourceTree = "<group>"; };
 		918D0ED751C243E98A66C8E3 /* SpiritualGrowthView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpiritualGrowthView.swift; sourceTree = "<group>"; };
-		A1B2C3D4E5F6A7B82026AA00 /* SpeakingPowerEffect.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeakingPowerEffect.swift; sourceTree = "<group>"; };
-		AC33C8C421764DF3961EA018 /* OnboardingDailyBurstScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingDailyBurstScreen.swift; sourceTree = "<group>"; };
-		B0214EB35A67E7EF76115C40 /* PrayerWallPost.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrayerWallPost.swift; sourceTree = "<group>"; };
-		BA221D745BD49CF6BCFEBAA1 /* LifecycleNotificationService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LifecycleNotificationService.swift; sourceTree = "<group>"; };
-		DC27319C7422AFA8C439B08F /* AppleSignInService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleSignInService.swift; sourceTree = "<group>"; };
-		DC73B2698B17B267C7A6F437 /* TrialExperienceService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TrialExperienceService.swift; sourceTree = "<group>"; };
-		E14CE42195E228734ACB9A2C /* PrayerWallView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrayerWallView.swift; sourceTree = "<group>"; };
-		F0B7425FCF684D05A10C4758 /* AudioRecommendationEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioRecommendationEngine.swift; sourceTree = "<group>"; };
-		F54505A7F8204E659571CE73 /* StructuredDayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StructuredDayView.swift; sourceTree = "<group>"; };
-		F9A3081A52984B6AB0EECD7B /* StructuredDayLaunchTracker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StructuredDayLaunchTracker.swift; sourceTree = "<group>"; };
-		FA6F23A3327C444669DC03A5 /* CancelInterventionView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CancelInterventionView.swift; sourceTree = "<group>"; };
-		RC00000002294E382700CD2103 /* RevenueCatManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RevenueCatManager.swift; sourceTree = "<group>"; };
 		A0001111111111111111AAAA /* PersonalDeclaration.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PersonalDeclaration.swift; sourceTree = "<group>"; };
 		A0002222222222222222AAAA /* DeclarationContent.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DeclarationContent.swift; sourceTree = "<group>"; };
 		A0003333333333333333AAAA /* DeclarationMatcher.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DeclarationMatcher.swift; sourceTree = "<group>"; };
-		DECL0001VERIF00001FILEREF /* DeclarationVerificationService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DeclarationVerificationService.swift; sourceTree = "<group>"; };
-		HIGH0001DECL000001FILEREF /* HighlightedDeclarationText.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HighlightedDeclarationText.swift; sourceTree = "<group>"; };
 		A0004444444444444444AAAA /* PersonalDeclarationRepository.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PersonalDeclarationRepository.swift; sourceTree = "<group>"; };
 		A0005555555555555555AAAA /* DeclarationNotificationService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DeclarationNotificationService.swift; sourceTree = "<group>"; };
 		A0006666666666666666AAAA /* SpeechTranscriptionService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SpeechTranscriptionService.swift; sourceTree = "<group>"; };
@@ -759,6 +745,10 @@
 		A000DDDDDDDDDDDDDDDDEEEE /* PersonalDeclarationOnboardingView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PersonalDeclarationOnboardingView.swift; sourceTree = "<group>"; };
 		A000EEEEEEEEEEEEEEEEEFFF /* PersonalDeclarationCard.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PersonalDeclarationCard.swift; sourceTree = "<group>"; };
 		A000FFFFFFFFFFFFFFFFFFFF /* BreakthroughFlowView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BreakthroughFlowView.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F6A7B82026AA00 /* SpeakingPowerEffect.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeakingPowerEffect.swift; sourceTree = "<group>"; };
+		AC33C8C421764DF3961EA018 /* OnboardingDailyBurstScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingDailyBurstScreen.swift; sourceTree = "<group>"; };
+		B0214EB35A67E7EF76115C40 /* PrayerWallPost.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrayerWallPost.swift; sourceTree = "<group>"; };
+		BA221D745BD49CF6BCFEBAA1 /* LifecycleNotificationService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LifecycleNotificationService.swift; sourceTree = "<group>"; };
 		C0010000000000000001AAAA /* SurveyPersonalizationEngine.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SurveyPersonalizationEngine.swift; sourceTree = "<group>"; };
 		C0020000000000000002AAAA /* ThreeDayChallengeManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ThreeDayChallengeManager.swift; sourceTree = "<group>"; };
 		C0030000000000000003AAAA /* SurveyOnboardingScreens.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SurveyOnboardingScreens.swift; sourceTree = "<group>"; };
@@ -766,6 +756,16 @@
 		C0050000000000000005AAAA /* ThreeDayChallengeView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ThreeDayChallengeView.swift; sourceTree = "<group>"; };
 		C0060000000000000006AAAA /* PayWhatYouCanView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PayWhatYouCanView.swift; sourceTree = "<group>"; };
 		C0070000000000000007AAAA /* SurveyTypes.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SurveyTypes.swift; sourceTree = "<group>"; };
+		DC27319C7422AFA8C439B08F /* AppleSignInService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleSignInService.swift; sourceTree = "<group>"; };
+		DC73B2698B17B267C7A6F437 /* TrialExperienceService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TrialExperienceService.swift; sourceTree = "<group>"; };
+		DECL0001VERIF00001FILEREF /* DeclarationVerificationService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DeclarationVerificationService.swift; sourceTree = "<group>"; };
+		E14CE42195E228734ACB9A2C /* PrayerWallView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrayerWallView.swift; sourceTree = "<group>"; };
+		F0B7425FCF684D05A10C4758 /* AudioRecommendationEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioRecommendationEngine.swift; sourceTree = "<group>"; };
+		F54505A7F8204E659571CE73 /* StructuredDayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StructuredDayView.swift; sourceTree = "<group>"; };
+		F9A3081A52984B6AB0EECD7B /* StructuredDayLaunchTracker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StructuredDayLaunchTracker.swift; sourceTree = "<group>"; };
+		FA6F23A3327C444669DC03A5 /* CancelInterventionView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CancelInterventionView.swift; sourceTree = "<group>"; };
+		HIGH0001DECL000001FILEREF /* HighlightedDeclarationText.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HighlightedDeclarationText.swift; sourceTree = "<group>"; };
+		RC00000002294E382700CD2103 /* RevenueCatManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RevenueCatManager.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -1773,6 +1773,39 @@
 			path = Tracker;
 			sourceTree = "<group>";
 		};
+		A1B2C3D4E5F60000A1B2C3D4 /* PersonalDeclaration */ = {
+			isa = PBXGroup;
+			children = (
+				A0002222222222222222AAAA /* DeclarationContent.swift */,
+				A0003333333333333333AAAA /* DeclarationMatcher.swift */,
+				A0004444444444444444AAAA /* PersonalDeclarationRepository.swift */,
+				A0005555555555555555AAAA /* DeclarationNotificationService.swift */,
+				A0006666666666666666AAAA /* SpeechTranscriptionService.swift */,
+				DECL0001VERIF00001FILEREF /* DeclarationVerificationService.swift */,
+				A1B2C3D4E5F60001A1B2C3D5 /* Protocols */,
+				A1B2C3D4E5F60002A1B2C3D6 /* UseCases */,
+			);
+			path = PersonalDeclaration;
+			sourceTree = "<group>";
+		};
+		A1B2C3D4E5F60001A1B2C3D5 /* Protocols */ = {
+			isa = PBXGroup;
+			children = (
+				A0007777777777777777AAAA /* PersonalDeclarationProtocols.swift */,
+			);
+			path = Protocols;
+			sourceTree = "<group>";
+		};
+		A1B2C3D4E5F60002A1B2C3D6 /* UseCases */ = {
+			isa = PBXGroup;
+			children = (
+				A0008888888888888888AAAA /* MatchDeclarationUseCase.swift */,
+				A0009999999999999999AAAA /* SavePersonalDeclarationUseCase.swift */,
+				A000AAAAAAAAAAAAAAAAABBB /* MarkDeclarationReceivedUseCase.swift */,
+			);
+			path = UseCases;
+			sourceTree = "<group>";
+		};
 		B12A5F08994181473DD5B48A /* Community */ = {
 			isa = PBXGroup;
 			children = (
@@ -1792,41 +1825,7 @@
 			name = PerformanceOptimization;
 			sourceTree = "<group>";
 		};
-
-		A1B2C3D4E5F60001A1B2C3D5 /* Protocols */ = {
-			isa = PBXGroup;
-			children = (
-				A0007777777777777777AAAA /* PersonalDeclarationProtocols.swift */,
-			);
-			path = Protocols;
-			sourceTree = "<group>";
-		};
-		A1B2C3D4E5F60002A1B2C3D6 /* UseCases */ = {
-			isa = PBXGroup;
-			children = (
-				A0008888888888888888AAAA /* MatchDeclarationUseCase.swift */,
-				A0009999999999999999AAAA /* SavePersonalDeclarationUseCase.swift */,
-				A000AAAAAAAAAAAAAAAAABBB /* MarkDeclarationReceivedUseCase.swift */,
-			);
-			path = UseCases;
-			sourceTree = "<group>";
-		};
-		A1B2C3D4E5F60000A1B2C3D4 /* PersonalDeclaration */ = {
-			isa = PBXGroup;
-			children = (
-				A0002222222222222222AAAA /* DeclarationContent.swift */,
-				A0003333333333333333AAAA /* DeclarationMatcher.swift */,
-				A0004444444444444444AAAA /* PersonalDeclarationRepository.swift */,
-				A0005555555555555555AAAA /* DeclarationNotificationService.swift */,
-				A0006666666666666666AAAA /* SpeechTranscriptionService.swift */,
-				DECL0001VERIF00001FILEREF /* DeclarationVerificationService.swift */,
-				A1B2C3D4E5F60001A1B2C3D5 /* Protocols */,
-				A1B2C3D4E5F60002A1B2C3D6 /* UseCases */,
-			);
-			path = PersonalDeclaration;
-			sourceTree = "<group>";
-		};
-		/* End PBXGroup section */
+/* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
 		2F740F5D29D4014400E89E7F /* SpeakLifeTests */ = {
@@ -2537,7 +2536,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = SpeakLife/SpeakLife.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 986;
+				CURRENT_PROJECT_VERSION = 988;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_ASSET_PATHS = "\"SpeakLife/Preview Content\"";
 				DEVELOPMENT_TEAM = G7398P2856;
@@ -2558,7 +2557,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 4.3;
+				MARKETING_VERSION = 4.5;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Franchiz.SpeakLife;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -2579,7 +2578,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = SpeakLife/SpeakLife.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 986;
+				CURRENT_PROJECT_VERSION = 988;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_ASSET_PATHS = "\"SpeakLife/Preview Content\"";
 				DEVELOPMENT_TEAM = G7398P2856;
@@ -2600,7 +2599,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 4.3;
+				MARKETING_VERSION = 4.5;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Franchiz.SpeakLife;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
