@@ -64,11 +64,9 @@ final class AppState: ObservableObject {
     @AppStorage("hasCompletedDemo") var hasCompletedDemo = false
     @AppStorage("hasCompletedEnhancedOnboarding") var hasCompletedEnhancedOnboarding = false
 
-    // Survey onboarding — goal word selected during survey ("PEACE", "IDENTITY", etc.)
-    @AppStorage("surveyGoalWord") var surveyGoalWord = ""
-
-    // 3-day challenge state
-    var showChallengeCard: Bool { ThreeDayChallengeManager.shared.isActive }
+    // Personal Declaration
+    @AppStorage("hasPersonalDeclaration") var hasPersonalDeclaration = false
+    @AppStorage("scrollToPersonalDeclaration") var scrollToPersonalDeclaration = false
     
     // Track when app was last backgrounded to prevent stale audio from restarting
     @AppStorage("lastBackgroundDate") var lastBackgroundDate: Date?
