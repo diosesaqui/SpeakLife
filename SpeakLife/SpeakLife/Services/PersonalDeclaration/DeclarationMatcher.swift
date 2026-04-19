@@ -80,22 +80,83 @@ struct MatchRule {
     let category: DeclarationCategory
 
     static let defaults: [MatchRule] = [
-        MatchRule(keywords: ["heal", "sick", "health", "body", "cancer", "pain", "disease", "recover", "ill", "chronic"], category: .health),
-        MatchRule(keywords: ["job", "money", "financ", "debt", "provid", "business", "wealth", "income", "broke", "bills", "afford"], category: .wealth),
-        MatchRule(keywords: ["anxiet", "anxious", "fear", "panic", "worry", "stress", "overwhelm", "dread", "nervous"], category: .anxiety),
-        MatchRule(keywords: ["marriage", "husband", "wife", "spouse", "relationship", "divorce", "partner"], category: .marriage),
-        MatchRule(keywords: ["child", "son", "daughter", "parent", "kids", "family", "children"], category: .parenting),
-        MatchRule(keywords: ["purpose", "calling", "destiny", "direction", "lost", "confus", "mission", "next step"], category: .destiny),
-        MatchRule(keywords: ["identity", "worth", "enough", "value", "belong", "who am i", "self"], category: .identity),
-        MatchRule(keywords: ["peace", "rest", "sleep", "calm", "still", "quiet"], category: .rest),
-        MatchRule(keywords: ["joy", "happy", "depress", "sad", "grief", "mourn", "hopeless"], category: .joy),
-        MatchRule(keywords: ["favor", "door", "opportunit", "promot", "open", "bless", "breakthrough"], category: .favor),
-        MatchRule(keywords: ["forgiv", "guilt", "shame", "past", "mistake", "failure", "condemn"], category: .grace),
-        MatchRule(keywords: ["protect", "safe", "danger", "enemy", "attack", "warfare"], category: .godsprotection),
-        MatchRule(keywords: ["addict", "substance", "alcohol", "porn", "habit", "free", "chain"], category: .addiction),
-        MatchRule(keywords: ["confiden", "bold", "courage", "timid", "shy", "afraid to"], category: .confidence),
-        MatchRule(keywords: ["wisdom", "decision", "clarity", "guidance", "know what to do", "unsure"], category: .wisdom),
-        MatchRule(keywords: ["love", "lonely", "alone", "belong", "accepted", "rejected"], category: .love),
+        // Physical healing
+        MatchRule(keywords: ["heal", "sick", "health", "body", "cancer", "pain", "disease", "recover", "ill", "chronic", "diagnosis", "surgery", "hospital", "medicine", "condition", "symptom"], category: .health),
+
+        // Finances & provision
+        MatchRule(keywords: ["money", "financ", "debt", "provid", "wealth", "income", "broke", "bills", "afford", "rent", "mortgage", "loan", "savings", "invest", "poverty", "need money", "can't pay"], category: .wealth),
+
+        // Work & career (before wealth so "job" routes here specifically)
+        MatchRule(keywords: ["job", "career", "work", "boss", "cowork", "fired", "unemploy", "promot", "interview", "business", "entrepren", "client", "office", "laid off", "profession"], category: .work),
+
+        // Anxiety & stress
+        MatchRule(keywords: ["anxiet", "anxious", "panic", "worry", "stress", "overwhelm", "dread", "nervous", "tension", "spiral", "racing thoughts", "can't stop thinking"], category: .anxiety),
+
+        // Fear (distinct from anxiety — phobias, spiritual fear)
+        MatchRule(keywords: ["afraid", "scared", "terrif", "phobia", "fear of", "frightened", "coward", "too scared"], category: .fear),
+
+        // Marriage & romantic relationships
+        MatchRule(keywords: ["marriage", "husband", "wife", "spouse", "divorce", "partner", "relationship", "reconcil", "cheating", "infidelity", "separation", "wedding"], category: .marriage),
+
+        // Parenting & family
+        MatchRule(keywords: ["child", "son", "daughter", "parent", "kids", "family", "children", "prodigal", "teen", "newborn", "grandchild", "motherhood", "fatherhood"], category: .parenting),
+
+        // Purpose & calling
+        MatchRule(keywords: ["purpose", "calling", "destiny", "direction", "lost", "confus", "mission", "next step", "what am i supposed", "don't know what", "unfulfilled", "stuck", "stagnant", "wasted"], category: .destiny),
+
+        // Identity & self-worth
+        MatchRule(keywords: ["identity", "worth", "enough", "value", "who am i", "self-worth", "self-esteem", "insecure", "inadequate", "not good enough", "imposter", "ugly", "unlovable"], category: .identity),
+
+        // Peace & rest
+        MatchRule(keywords: ["peace", "rest", "sleep", "calm", "still", "quiet", "burnout", "exhausted", "tired of fighting", "worn out", "no rest", "can't sleep", "weary"], category: .rest),
+
+        // Joy & depression
+        MatchRule(keywords: ["joy", "happy", "depress", "sad", "grief", "mourn", "hopeless", "joyless", "empty", "numb", "dark season", "no hope", "crying", "tears", "sorrow"], category: .joy),
+
+        // Favor & open doors
+        MatchRule(keywords: ["favor", "opportunit", "promot", "door", "open door", "breakthrough", "bless", "advance", "recognition", "seen", "overlooked", "passed over"], category: .favor),
+
+        // Grace, forgiveness of self, shame
+        MatchRule(keywords: ["forgiv", "guilt", "shame", "past", "mistake", "failure", "condemn", "regret", "mess", "not worthy", "too far gone", "can't forgive myself"], category: .grace),
+
+        // God's protection
+        MatchRule(keywords: ["protect", "safe", "danger", "enemy", "attack", "threat", "unsafe", "fear for family", "accident", "harm"], category: .godsprotection),
+
+        // Spiritual warfare
+        MatchRule(keywords: ["warfare", "demonic", "spiritual battle", "under attack", "oppression", "darkness", "curse", "witchcraft", "bound", "torment"], category: .warfare),
+
+        // Addiction & freedom
+        MatchRule(keywords: ["addict", "substance", "alcohol", "drug", "porn", "pornograph", "compulsion", "habit", "chain", "enslaved", "can't stop", "relapse"], category: .addiction),
+
+        // Confidence & boldness
+        MatchRule(keywords: ["confiden", "bold", "courage", "timid", "shy", "speak up", "afraid to speak", "introvert", "public speaking", "feel small", "hold back"], category: .confidence),
+
+        // Wisdom & decisions
+        MatchRule(keywords: ["wisdom", "decision", "clarity", "guidance", "know what to do", "unsure", "which way", "crossroads", "confused about", "discernment", "direction"], category: .wisdom),
+
+        // Inner healing & emotional wounds
+        MatchRule(keywords: ["trauma", "wounded", "broken heart", "hurt", "betrayed", "abandon", "abuse", "rejection", "inner healing", "childhood", "emotional pain", "trust issues", "heartbreak"], category: .innerHealing),
+
+        // Spiritual growth
+        MatchRule(keywords: ["grow", "closer to god", "spiritual", "faith weak", "doubt", "believe more", "prayer life", "read bible", "know god", "deeper", "on fire", "lukewarm", "backslid"], category: .spiritualGrowth),
+
+        // Miracles
+        MatchRule(keywords: ["miracle", "impossible", "need a miracle", "supernatural", "nothing else worked", "last hope", "no natural answer", "only god can"], category: .miracles),
+
+        // Hard times & perseverance
+        MatchRule(keywords: ["suffering", "trial", "hard season", "going through", "difficult", "storm", "valley", "don't understand why", "why is this happening", "losing faith", "giving up"], category: .hardtimes),
+
+        // Loneliness & friendship
+        MatchRule(keywords: ["lonely", "alone", "no friends", "isolated", "community", "friend", "belong", "outcas", "social", "disconnected", "no one understands"], category: .friendship),
+
+        // Purity
+        MatchRule(keywords: ["purity", "lust", "sexual", "temptation", "clean", "holiness", "holy", "impure", "struggle with sin", "moral failure"], category: .purity),
+
+        // Hope
+        MatchRule(keywords: ["hope", "hopeless", "give up", "lost hope", "no point", "future", "things will get better", "waiting", "patience", "delayed", "not yet"], category: .hope),
+
+        // Love (God's love, feeling unloved)
+        MatchRule(keywords: ["love", "unloved", "unworthy of love", "god loves me", "does god care", "feel forgotten", "feel invisible", "accepted", "unconditional"], category: .love),
     ]
 }
 
