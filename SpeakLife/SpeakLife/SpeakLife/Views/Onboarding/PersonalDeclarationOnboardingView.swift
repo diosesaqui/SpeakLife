@@ -257,9 +257,27 @@ struct PersonalDeclarationOnboardingView: View {
                     .foregroundColor(.white.opacity(viewModel.isRecording ? 0.9 : 0.6))
                     .animation(.easeInOut(duration: 0.3), value: viewModel.isRecording)
 
+                // Validation error
+                if let error = viewModel.errorMessage, !viewModel.isRecording {
+                    Text(error)
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(Color(red: 1.0, green: 0.45, blue: 0.45))
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 32)
+                        .padding(.top, 4)
+                        .transition(.opacity.combined(with: .move(edge: .bottom)))
+                        .onAppear {
+                            // Auto-clear after 4s so they can try again
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 4) {
+                                viewModel.errorMessage = nil
+                            }
+                        }
+                }
+
                 if !viewModel.isRecording {
                     Button("Type instead") {
                         viewModel.showTextInput = true
+                        viewModel.errorMessage = nil
                     }
                     .font(.system(size: 14))
                     .foregroundColor(.white.opacity(0.35))
@@ -298,10 +316,20 @@ struct PersonalDeclarationOnboardingView: View {
             .frame(height: 110)
             .padding(.horizontal, 24)
 
+            if let error = viewModel.errorMessage {
+                Text(error)
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(Color(red: 1.0, green: 0.45, blue: 0.45))
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 32)
+                    .transition(.opacity)
+            }
+
             ShimmerButton(
                 colors: [Color(red: 0.2, green: 0.5, blue: 1.0), Color(red: 0.4, green: 0.3, blue: 1.0)],
                 buttonTitle: "Find My Declaration"
             ) {
+                viewModel.errorMessage = nil
                 Task { await viewModel.submitTextInput() }
             }
             .frame(width: size.width * 0.87, height: 54)
@@ -369,6 +397,27 @@ struct PersonalDeclarationOnboardingView: View {
                 Spacer().frame(height: 28)
 
                 if let match = viewModel.match {
+                    // Low-confidence nudge — no keywords matched, defaulted to faith
+                    if !match.isConfident {
+                        HStack(spacing: 8) {
+                            Image(systemName: "info.circle.fill")
+                                .foregroundColor(.yellow.opacity(0.7))
+                                .font(.system(size: 14))
+                            Text("We gave you a general declaration. Tap below to be more specific.")
+                                .font(.system(size: 13))
+                                .foregroundColor(.white.opacity(0.6))
+                        }
+                        .padding(.horizontal, 28)
+                        .padding(.bottom, 12)
+
+                        Button("Try Again — Be More Specific") {
+                            withAnimation { viewModel.step = .input }
+                        }
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(Color(red: 0.4, green: 0.7, blue: 1.0))
+                        .padding(.bottom, 20)
+                    }
+
                     // Verse block
                     VStack(spacing: 10) {
                         Text(match.verse)
