@@ -5,6 +5,7 @@
 
 import SwiftUI
 import FirebaseAnalytics
+import MessageUI
 
 struct BreakthroughFlowView: View {
     @EnvironmentObject var appState: AppState
@@ -16,6 +17,9 @@ struct BreakthroughFlowView: View {
     @State private var step: BreakthroughStep = .confirm
     @State private var testimony: String = ""
     @State private var isSaving = false
+    @State private var sharedByEmail = false
+    @State private var showMailView = false
+    @State private var mailResult: Result<MFMailComposeResult, Error>? = nil
 
     private let markReceivedUseCase = DIContainer.shared.makeMarkReceivedUseCase()
 
@@ -108,7 +112,7 @@ struct BreakthroughFlowView: View {
                     .font(.system(size: 24, weight: .bold, design: .rounded))
                     .foregroundColor(.white)
 
-                Text("Share your testimony (optional)")
+                Text("Encourage others on the Prayer Wall")
                     .font(.system(size: 15))
                     .foregroundColor(.white.opacity(0.55))
             }
@@ -135,17 +139,34 @@ struct BreakthroughFlowView: View {
             }
             .padding(.horizontal, 24)
 
+            // Character count
+            if !testimony.isEmpty {
+                Text("\(testimony.count)/500")
+                    .font(.system(size: 12))
+                    .foregroundColor(testimony.count > 500 ? .red : .white.opacity(0.35))
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+                    .padding(.horizontal, 28)
+            }
+
             Spacer()
 
             VStack(spacing: 14) {
+                // Primary CTA — email testimony to team
                 Button {
-                    saveAndCelebrate(testimony: testimony.isEmpty ? nil : testimony)
+                    guard !testimony.isEmpty else {
+                        saveAndCelebrate(testimony: nil)
+                        return
+                    }
+                    saveAndCelebrate(testimony: testimony)
+                    if MFMailComposeViewController.canSendMail() {
+                        showMailView = true
+                    }
                 } label: {
                     Group {
                         if isSaving {
                             ProgressView().tint(.white)
                         } else {
-                            Text("Save My Testimony")
+                            Text(testimony.isEmpty ? "Continue" : "Send Us Your Testimony 🙏")
                                 .font(.system(size: 17, weight: .bold))
                         }
                     }
@@ -153,23 +174,49 @@ struct BreakthroughFlowView: View {
                     .frame(height: 56)
                     .background(
                         RoundedRectangle(cornerRadius: 16)
-                            .fill(Color.green.opacity(0.85))
+                            .fill(testimony.isEmpty ? Color.white.opacity(0.15) : Color.green.opacity(0.85))
                     )
                     .foregroundColor(.white)
                     .padding(.horizontal, 24)
                 }
                 .buttonStyle(PlainButtonStyle())
-                .disabled(isSaving)
+                .disabled(isSaving || testimony.count > 500)
+
+                if !testimony.isEmpty {
+                    Button {
+                        saveAndCelebrate(testimony: testimony)
+                    } label: {
+                        Text("Keep Private")
+                            .font(.system(size: 15, weight: .medium))
+                            .foregroundColor(.white.opacity(0.4))
+                    }
+                    .disabled(isSaving)
+                }
 
                 Button {
                     saveAndCelebrate(testimony: nil)
                 } label: {
                     Text("Skip")
-                        .font(.system(size: 15, weight: .medium))
-                        .foregroundColor(.white.opacity(0.4))
+                        .font(.system(size: 14))
+                        .foregroundColor(.white.opacity(0.25))
                 }
+                .disabled(isSaving)
             }
             .padding(.bottom, 48)
+            .sheet(isPresented: $showMailView) {
+                MailView(
+                    isShowing: $showMailView,
+                    result: $mailResult,
+                    origin: .testimony,
+                    prefillBody: testimony,
+                    isSubscribed: false
+                )
+                .onDisappear {
+                    if case .success(_) = mailResult {
+                        sharedByEmail = true
+                    }
+                }
+            }
         }
     }
 
@@ -179,7 +226,7 @@ struct BreakthroughFlowView: View {
         VStack(spacing: 28) {
             Spacer()
 
-            Text("\u{1F389}")
+            Text(sharedToWall ? "\u{1F64C}" : "\u{1F389}")
                 .font(.system(size: 80))
 
             VStack(spacing: 12) {
@@ -192,6 +239,17 @@ struct BreakthroughFlowView: View {
                     .font(.system(size: 16))
                     .foregroundColor(.white.opacity(0.7))
                     .multilineTextAlignment(.center)
+
+                if sharedByEmail {
+                    HStack(spacing: 6) {
+                        Image(systemName: "checkmark.circle.fill")
+                            .foregroundColor(.green)
+                        Text("Your testimony is on its way to us. Thank you.")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(.white.opacity(0.65))
+                    }
+                    .padding(.top, 4)
+                }
             }
             .padding(.horizontal, 32)
 
@@ -235,7 +293,8 @@ struct BreakthroughFlowView: View {
             await MainActor.run {
                 appState.hasPersonalDeclaration = false
                 Analytics.logEvent("personal_declaration_received", parameters: [
-                    "days_believed": declaration.dayCount as NSNumber
+                    "days_believed": declaration.dayCount as NSNumber,
+                    "has_testimony": (testimony != nil) as NSNumber
                 ])
                 isSaving = false
                 withAnimation { step = .celebration }
