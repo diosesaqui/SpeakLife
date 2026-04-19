@@ -14,12 +14,14 @@ struct MailView: UIViewControllerRepresentable {
         case review
         case newFeatures
         case prayer
+        case testimony
     }
 
     @Binding var isShowing: Bool
     @Binding var result: Result<MFMailComposeResult, Error>?
     
     let origin: Origin
+    var prefillBody: String? = nil
     private let appVersion = "App version: \(APP.Version.stringNumber)"
     let isSubscribed: Bool
     
@@ -30,6 +32,7 @@ struct MailView: UIViewControllerRepresentable {
         case .review: return "Prayer Request / Report an issue \(appVersion), \(isSubscribed)"
         case .newFeatures: return "Request new feature"
         case .prayer: return "Prayer request"
+        case .testimony: return "My Testimony 🙌"
         }
     }
 
@@ -68,6 +71,8 @@ struct MailView: UIViewControllerRepresentable {
         vc.setSubject(NSLocalizedString(title, comment: "mail title"))
         if origin == .profile {
             vc.setMessageBody("I would like to try a free year of SpeakLife!", isHTML: false)
+        } else if let body = prefillBody {
+            vc.setMessageBody(body, isHTML: false)
         }
         vc.setToRecipients(["speaklife@diosesaqui.com"])
         vc.mailComposeDelegate = context.coordinator
