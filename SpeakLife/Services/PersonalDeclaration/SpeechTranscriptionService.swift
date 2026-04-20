@@ -23,11 +23,21 @@ final class SpeechTranscriptionService: SpeechTranscriptionProtocol {
     // MARK: - Permission
 
     func requestPermission() async -> Bool {
-        await withCheckedContinuation { continuation in
+        // 1. Speech recognition
+        let speechGranted = await withCheckedContinuation { continuation in
             SFSpeechRecognizer.requestAuthorization { status in
                 continuation.resume(returning: status == .authorized)
             }
         }
+        guard speechGranted else { return false }
+
+        // 2. Microphone — must be granted before AVAudioRecorder will record
+        let micGranted = await withCheckedContinuation { continuation in
+            AVAudioApplication.requestRecordPermission { granted in
+                continuation.resume(returning: granted)
+            }
+        }
+        return micGranted
     }
 
     // MARK: - Recording

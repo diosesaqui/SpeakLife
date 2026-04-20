@@ -16,11 +16,9 @@ final class AudioDeclarationViewModel: ObservableObject {
     @Published var contentByFilter: [String: [AudioDeclaration]] = [:]  // All content organized by filter ID
     @Published var selectedFilterId: String = "speaklife"  // Selected filter ID (set dynamically from server)
     @Published var playedFilter: PlayedFilter = .all  // Played / Unplayed sub-filter
-
-    // Checklist deep-link: the specific episode the checklist recommends for today.
-    // Set by AudioRecommendationEngine when the user taps "Listen to Audio" in the daily checklist.
-    // The AudioDeclarationView can observe this to highlight / auto-scroll to the episode.
-    @Published var checklistRecommendedEpisode: AudioDeclaration? = nil
+    // Set by checklist deep-link. AudioDeclarationView observes contentByFilter and
+    // auto-plays the first unplayed episode once content is loaded.
+    @Published var checklistAutoPlayPending: Bool = false
     
     private(set) var allAudioFiles: [AudioDeclaration] = []
     @Published var downloadProgress: [String: Double] = [:]
