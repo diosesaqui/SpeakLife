@@ -5,7 +5,6 @@
 
 import SwiftUI
 import FirebaseAnalytics
-import MessageUI
 
 struct BreakthroughFlowView: View {
     @EnvironmentObject var appState: AppState
@@ -17,11 +16,10 @@ struct BreakthroughFlowView: View {
     @State private var step: BreakthroughStep = .confirm
     @State private var testimony: String = ""
     @State private var isSaving = false
-    @State private var sharedByEmail = false
-    @State private var showMailView = false
-    @State private var mailResult: Result<MFMailComposeResult, Error>? = nil
+    @State private var sharedToWall = false
 
     private let markReceivedUseCase = DIContainer.shared.makeMarkReceivedUseCase()
+    @StateObject private var testimonyViewModel = TestimonyViewModel()
 
     enum BreakthroughStep {
         case confirm
@@ -148,25 +146,31 @@ struct BreakthroughFlowView: View {
                     .padding(.horizontal, 28)
             }
 
+            // Error from Firestore
+            if let error = testimonyViewModel.errorMessage {
+                Text(error)
+                    .font(.system(size: 13))
+                    .foregroundColor(.red.opacity(0.85))
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 24)
+            }
+
             Spacer()
 
             VStack(spacing: 14) {
-                // Primary CTA — email testimony to team
+                // Primary CTA — share to Prayer Wall
                 Button {
                     guard !testimony.isEmpty else {
-                        saveAndCelebrate(testimony: nil)
+                        saveAndCelebrate(testimony: nil, shareToWall: false)
                         return
                     }
-                    saveAndCelebrate(testimony: testimony)
-                    if MFMailComposeViewController.canSendMail() {
-                        showMailView = true
-                    }
+                    saveAndCelebrate(testimony: testimony, shareToWall: true)
                 } label: {
                     Group {
-                        if isSaving {
+                        if isSaving || testimonyViewModel.isSubmitting {
                             ProgressView().tint(.white)
                         } else {
-                            Text(testimony.isEmpty ? "Continue" : "Send Us Your Testimony 🙏")
+                            Text(testimony.isEmpty ? "Continue" : "Share to Prayer Wall 🙏")
                                 .font(.system(size: 17, weight: .bold))
                         }
                     }
@@ -180,43 +184,30 @@ struct BreakthroughFlowView: View {
                     .padding(.horizontal, 24)
                 }
                 .buttonStyle(PlainButtonStyle())
-                .disabled(isSaving || testimony.count > 500)
+                .disabled(isSaving || testimonyViewModel.isSubmitting || testimony.count > 500)
 
+                // Keep Private — saves locally, doesn't post
                 if !testimony.isEmpty {
                     Button {
-                        saveAndCelebrate(testimony: testimony)
+                        saveAndCelebrate(testimony: testimony, shareToWall: false)
                     } label: {
                         Text("Keep Private")
                             .font(.system(size: 15, weight: .medium))
                             .foregroundColor(.white.opacity(0.4))
                     }
-                    .disabled(isSaving)
+                    .disabled(isSaving || testimonyViewModel.isSubmitting)
                 }
 
                 Button {
-                    saveAndCelebrate(testimony: nil)
+                    saveAndCelebrate(testimony: nil, shareToWall: false)
                 } label: {
                     Text("Skip")
                         .font(.system(size: 14))
                         .foregroundColor(.white.opacity(0.25))
                 }
-                .disabled(isSaving)
+                .disabled(isSaving || testimonyViewModel.isSubmitting)
             }
             .padding(.bottom, 48)
-            .sheet(isPresented: $showMailView) {
-                MailView(
-                    isShowing: $showMailView,
-                    result: $mailResult,
-                    origin: .testimony,
-                    prefillBody: testimony,
-                    isSubscribed: false
-                )
-                .onDisappear {
-                    if case .success(_) = mailResult {
-                        sharedByEmail = true
-                    }
-                }
-            }
         }
     }
 
@@ -226,7 +217,7 @@ struct BreakthroughFlowView: View {
         VStack(spacing: 28) {
             Spacer()
 
-            Text(sharedByEmail ? "\u{1F64C}" : "\u{1F389}")
+            Text(sharedToWall ? "\u{1F64C}" : "\u{1F389}")
                 .font(.system(size: 80))
 
             VStack(spacing: 12) {
@@ -240,11 +231,11 @@ struct BreakthroughFlowView: View {
                     .foregroundColor(.white.opacity(0.7))
                     .multilineTextAlignment(.center)
 
-                if sharedByEmail {
+                if sharedToWall {
                     HStack(spacing: 6) {
                         Image(systemName: "checkmark.circle.fill")
                             .foregroundColor(.green)
-                        Text("Your testimony is on its way to us. Thank you.")
+                        Text("Your testimony is on the Prayer Wall.")
                             .font(.system(size: 14, weight: .medium))
                             .foregroundColor(.white.opacity(0.65))
                     }
@@ -286,16 +277,24 @@ struct BreakthroughFlowView: View {
 
     // MARK: - Save
 
-    private func saveAndCelebrate(testimony: String?) {
+    private func saveAndCelebrate(testimony: String?, shareToWall: Bool) {
         isSaving = true
         Task {
+            // Save locally
             try? await markReceivedUseCase.execute(id: declaration.id, testimony: testimony)
+
+            // Post to Prayer Wall if user opted in
+            if shareToWall, let text = testimony, !text.isEmpty {
+                testimonyViewModel.addTestimony(user: "Anonymous", text: text)
+            }
+
             await MainActor.run {
                 appState.hasPersonalDeclaration = false
                 Analytics.logEvent("personal_declaration_received", parameters: [
                     "days_believed": declaration.dayCount as NSNumber,
-                    "has_testimony": (testimony != nil) as NSNumber
+                    "shared_to_wall": shareToWall as NSNumber
                 ])
+                sharedToWall = shareToWall && !(testimony?.isEmpty ?? true)
                 isSaving = false
                 withAnimation { step = .celebration }
             }
