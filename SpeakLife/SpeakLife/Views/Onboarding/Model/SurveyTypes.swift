@@ -45,12 +45,13 @@ enum SurveyStep: Int, CaseIterable {
 
 enum HeaviestBurden: String, CaseIterable, Identifiable {
     var id: String { rawValue }
-    case anxiety     = "Anxiety and fear that won't shut off"
-    case purpose     = "I don't know who I am or what I'm here for"
-    case worthiness  = "A deep feeling that I'm not enough"
-    case joyless     = "I've lost my joy — life feels numb"
-    case hardSeason  = "I'm fighting a health battle and need God's healing"
-    case calling     = "I want to build unshakeable faith and trust God at a deeper level"
+    case anxiety     = "Anxiety or fear that just won't go away"
+    case purpose     = "I feel lost — unsure of who I am or why I'm here"
+    case worthiness  = "A deep feeling that I'm just not enough"
+    case joyless     = "I've lost my joy — life feels empty or numb"
+    case hardSeason  = "I'm going through a health battle and need God's healing"
+    case calling     = "I want deeper faith — to really trust God, not just believe in Him"
+    case thriving    = "Life is good — I just want to make speaking God's Word a daily habit"
 
     var goalWord: SurveyGoalWord {
         switch self {
@@ -60,6 +61,7 @@ enum HeaviestBurden: String, CaseIterable, Identifiable {
         case .joyless:    return .joy
         case .hardSeason: return .healing
         case .calling:    return .identity
+        case .thriving:   return .purpose
         }
     }
 
@@ -71,7 +73,13 @@ enum HeaviestBurden: String, CaseIterable, Identifiable {
         case .joyless:    return "lost joy"
         case .hardSeason: return "this health battle"
         case .calling:    return "wanting to go deeper in faith"
+        case .thriving:   return "growing in God"
         }
+    }
+
+    /// True when the user is in a growth/thriving track rather than a pain/struggle track
+    var isGrowthTrack: Bool {
+        self == .thriving || self == .calling
     }
 }
 
@@ -87,19 +95,26 @@ enum BurdenDuration: String, CaseIterable, Identifiable {
 enum PreviousAttempt: String, CaseIterable, Identifiable {
     var id: String { rawValue }
     // Pain-track options
-    case prayer       = "I pray, but the feelings keep coming back"
-    case mediaContent = "Podcasts, books — helpful in the moment but nothing sticks"
+    case prayer       = "I pray — but the feelings keep coming back"
+    case mediaContent = "Podcasts and books help in the moment, but nothing sticks"
     case people       = "Talking to people I trust — it helps, then fades"
-    case willpower    = "I white-knuckle it and push through"
+    case willpower    = "I push through on willpower alone"
     case therapy      = "I've tried therapy or counseling"
     case noStart      = "I haven't really tried — I don't know where to start"
     // Aspiration-track options
-    case faithContent        = "Faith-based content and books — inspiring but no breakthrough yet"
+    case faithContent        = "Faith content and books — inspiring, but no real breakthrough yet"
     case prayedNoBreakthrough = "I've prayed and believed but haven't seen the results yet"
-    case goalsAndPlanning    = "I've set goals and plans but something always gets in the way"
-    case scarcityMindset     = "I've struggled with a scarcity or fear-based mindset"
-    case fearOfFailure       = "Fear of failure has held me back"
+    case goalsAndPlanning    = "I've set goals but something always gets in the way"
+    case scarcityMindset     = "I've struggled with fear or a scarcity mindset"
+    case fearOfFailure       = "Fear of failure keeps holding me back"
     case justStartingOut     = "I'm just getting started — not sure where to begin"
+    // Growth-track options (thriving users)
+    case readsBible          = "I read my Bible but want a stronger daily habit"
+    case sermons             = "I listen to sermons and faith content — want to go deeper"
+    case praysDailyWantsMore = "I pray every day but want my faith to be more active"
+    case triedDeclarations   = "I've tried declarations before — just wasn't consistent"
+    case allInButMissing     = "I do all the things but something still feels like it's missing"
+    case newToDeclarations   = "This is new to me — I'm just getting started"
 
     static var painOptions: [PreviousAttempt] {
         [.prayer, .mediaContent, .people, .willpower, .therapy, .noStart]
@@ -110,6 +125,9 @@ enum PreviousAttempt: String, CaseIterable, Identifiable {
     static var faithOptions: [PreviousAttempt] {
         [.prayer, .faithContent, .prayedNoBreakthrough, .mediaContent, .people, .noStart]
     }
+    static var growthOptions: [PreviousAttempt] {
+        [.readsBible, .sermons, .praysDailyWantsMore, .triedDeclarations, .allInButMissing, .newToDeclarations]
+    }
 }
 
 enum InnerLie: String, CaseIterable, Identifiable {
@@ -117,22 +135,28 @@ enum InnerLie: String, CaseIterable, Identifiable {
     // Pain-track
     case failure      = "\"I can't do this. I'm going to fail.\""
     case notEnough    = "\"I'm not enough — I'll never be enough.\""
-    case noChange     = "\"Nothing in my life will ever really change.\""
-    case godFar       = "\"God is far away. I don't feel heard.\""
-    case lostIdentity = "\"I don't know who I am anymore.\""
-    case tired        = "\"I'm tired of fighting. I just want peace.\""
+    case noChange     = "\"Nothing in my life is ever really going to change.\""
+    case godFar       = "\"God feels far away. I don't feel heard.\""
+    case lostIdentity = "\"I don't even know who I am anymore.\""
+    case tired        = "\"I'm so tired of fighting. I just want peace.\""
     // Aspiration-track
-    case notForMe     = "\"Abundance/success is for other people — not me.\""
-    case dontDeserve  = "\"I don't deserve more than I have.\""
+    case notForMe     = "\"That kind of life is for other people — not me.\""
+    case dontDeserve  = "\"I don't deserve more than what I have.\""
     case tooLate      = "\"I've waited too long. I missed my window.\""
-    case godWontBless = "\"I don't know if God wants this for me specifically.\""
-    case notCapable   = "\"I don't have what it takes to reach this level.\""
+    case godWontBless = "\"I don't know if God actually wants this for me.\""
+    case notCapable   = "\"I don't have what it takes.\""
     // Faith-track
     case faithWeak    = "\"My faith is too weak. I keep doubting.\""
-    case godSilent    = "\"I pray but God feels silent. I don't know if He hears me.\""
-    case faithNotReal = "\"Faith works for others — but I can't seem to make it real.\""
-    case tooSinful    = "\"I've messed up too much. God can't fully use me.\""
-    case faithSmall   = "\"I believe — but not enough to actually trust Him with this.\""
+    case godSilent    = "\"I pray, but God feels silent. I wonder if He hears me.\""
+    case faithNotReal = "\"Faith works for other people — I just can't seem to make it real.\""
+    case tooSinful    = "\"I've messed up too much. I don't know if God can fully use me.\""
+    case faithSmall   = "\"I believe — but not enough to actually trust Him completely.\""
+    // Growth-track (thriving users — what they want to build, not a lie)
+    case wantSpeakConfidence  = "Speaking God's word with real confidence and conviction"
+    case wantTrustMore        = "Trusting God with the things I'm still waiting on"
+    case wantUnshakeableFaith = "Building faith that doesn't waver when things get hard"
+    case wantPurpose          = "Walking clearly in my God-given purpose"
+    case wantPrayerLife       = "A deeper, more consistent prayer and declaration life"
 
     static var painOptions: [InnerLie] {
         [.failure, .notEnough, .noChange, .godFar, .lostIdentity, .tired]
@@ -142,6 +166,9 @@ enum InnerLie: String, CaseIterable, Identifiable {
     }
     static var faithOptions: [InnerLie] {
         [.faithWeak, .godSilent, .faithNotReal, .tooSinful, .faithSmall]
+    }
+    static var growthOptions: [InnerLie] {
+        [.wantSpeakConfidence, .wantTrustMore, .wantUnshakeableFaith, .wantPurpose, .wantPrayerLife]
     }
 }
 

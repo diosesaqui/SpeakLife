@@ -77,9 +77,13 @@ final class DeclarationVerificationService: ObservableObject {
         try session.setCategory(.record, mode: .measurement, options: .duckOthers)
         try session.setActive(true, options: .notifyOthersOnDeactivation)
 
+        // Use the session's actual sample rate — never hardcode 44100.
+        // On iOS 26+ the hardware may negotiate a different rate and
+        // AVAudioRecorder will crash during format init if they don't match.
+        let sampleRate = session.sampleRate > 0 ? session.sampleRate : 44100.0
         let settings: [String: Any] = [
             AVFormatIDKey: Int(kAudioFormatMPEG4AAC),
-            AVSampleRateKey: 44100,
+            AVSampleRateKey: sampleRate,
             AVNumberOfChannelsKey: 1,
             AVEncoderAudioQualityKey: AVAudioQuality.high.rawValue
         ]

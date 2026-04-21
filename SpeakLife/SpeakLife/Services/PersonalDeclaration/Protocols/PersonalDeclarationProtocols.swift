@@ -9,6 +9,7 @@ import Foundation
 
 protocol DeclarationMatcherProtocol {
     func match(input: String) -> DeclarationMatch
+    func matchAll(input: String) -> [DeclarationCategory]
 }
 
 // MARK: - Speech

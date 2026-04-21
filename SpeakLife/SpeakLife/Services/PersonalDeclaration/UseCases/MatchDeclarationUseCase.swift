@@ -19,4 +19,10 @@ final class MatchDeclarationUseCase {
         }
         return matcher.match(input: sanitized)
     }
+
+    func matchAll(input: String) -> [DeclarationCategory] {
+        let sanitized = input.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !sanitized.isEmpty else { return [] }
+        return matcher.matchAll(input: sanitized)
+    }
 }

@@ -89,7 +89,6 @@ final class AudioDelightManager: ObservableObject {
             forResource: soundFile.rawValue,
             withExtension: soundFile.fileExtension
         ) else {
-            // Warning: 
             print("⚠️ Audio file not found: \(soundFile.rawValue)")
             return
         }
@@ -119,7 +118,6 @@ final class AudioDelightManager: ObservableObject {
         guard isEnabled && isAudioEnabled() else { return }
         
         guard let player = audioPlayers[soundFile.rawValue] else {
-            // Warning: 
             print("⚠️ Audio player not found for: \(soundFile.rawValue)")
             return
         }
@@ -345,81 +343,6 @@ class BreathingSoundGenerator: ObservableObject {
         isBreathing = false
         breathingTimer?.invalidate()
         breathingTimer = nil
-    }
-}
-
-// MARK: - Spatial Audio Effects
-
-class SpatialAudioManager: ObservableObject {
-    private var audioEngine: AVAudioEngine
-    private var environmentNode: AVAudioEnvironmentNode
-    private var playerNodes: [AVAudioPlayerNode] = []
-    
-    init() {
-        audioEngine = AVAudioEngine()
-        environmentNode = AVAudioEnvironmentNode()
-        setupSpatialAudio()
-    }
-    
-    private func setupSpatialAudio() {
-        // Attach environment node
-        audioEngine.attach(environmentNode)
-        
-        // Connect to output
-        audioEngine.connect(
-            environmentNode,
-            to: audioEngine.mainMixerNode,
-            format: nil
-        )
-        
-        // Configure 3D environment
-        environmentNode.listenerPosition = AVAudio3DPoint(x: 0, y: 0, z: 0)
-        environmentNode.listenerVectorOrientation = AVAudio3DVectorOrientation(
-            forward: AVAudio3DVector(x: 0, y: 0, z: -1),
-            up: AVAudio3DVector(x: 0, y: 1, z: 0)
-        )
-        
-        do {
-            try audioEngine.start()
-        } catch {
-            print("❌ Failed to start spatial audio engine: \(error)")
-        }
-    }
-    
-    func playPositionalSound(
-        fileName: String,
-        position: AVAudio3DPoint = AVAudio3DPoint(x: 0, y: 0, z: 0),
-        volume: Float = 1.0
-    ) {
-        guard let url = Bundle.main.url(forResource: fileName, withExtension: "wav") else {
-            return
-        }
-        
-        do {
-            let audioFile = try AVAudioFile(forReading: url)
-            let playerNode = AVAudioPlayerNode()
-            
-            audioEngine.attach(playerNode)
-            audioEngine.connect(playerNode, to: environmentNode, format: audioFile.processingFormat)
-            
-            playerNode.position = position
-            playerNode.volume = volume
-            
-            playerNode.scheduleFile(audioFile, at: nil) {
-                DispatchQueue.main.async {
-                    self.audioEngine.detach(playerNode)
-                    if let index = self.playerNodes.firstIndex(of: playerNode) {
-                        self.playerNodes.remove(at: index)
-                    }
-                }
-            }
-            
-            playerNodes.append(playerNode)
-            playerNode.play()
-            
-        } catch {
-            print("❌ Failed to play spatial audio: \(error)")
-        }
     }
 }
 

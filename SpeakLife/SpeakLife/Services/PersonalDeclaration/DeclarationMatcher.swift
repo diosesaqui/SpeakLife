@@ -86,8 +86,11 @@ struct MatchRule {
         // Finances & provision
         MatchRule(keywords: ["money", "financ", "debt", "provid", "wealth", "income", "broke", "bills", "afford", "rent", "mortgage", "loan", "savings", "invest", "poverty", "need money", "can't pay"], category: .wealth),
 
-        // Work & career (before wealth so "job" routes here specifically)
-        MatchRule(keywords: ["job", "career", "work", "boss", "cowork", "fired", "unemploy", "promot", "interview", "business", "entrepren", "client", "office", "laid off", "profession"], category: .work),
+        // Entrepreneurship & own business (check BEFORE career — more specific)
+        MatchRule(keywords: ["my own business", "own business", "start a business", "starting a business", "entrepren", "founder", "startup", "my business", "build a business", "run a business", "business owner", "self-employ", "side business", "brand", "my company", "launch a"], category: .business),
+
+        // Work & career — employment, job-seeking, corporate advancement
+        MatchRule(keywords: ["job", "career", "work", "boss", "cowork", "fired", "unemploy", "promot", "interview", "office", "laid off", "profession", "employment", "9 to 5", "corporate", "workplace", "salary", "raise"], category: .work),
 
         // Anxiety & stress
         MatchRule(keywords: ["anxiet", "anxious", "panic", "worry", "stress", "overwhelm", "dread", "nervous", "tension", "spiral", "racing thoughts", "can't stop thinking"], category: .anxiety),
@@ -160,6 +163,45 @@ struct MatchRule {
 
         // Love (God's love, feeling unloved)
         MatchRule(keywords: ["love", "unloved", "unworthy of love", "god loves me", "does god care", "feel forgotten", "feel invisible", "accepted", "unconditional"], category: .love),
+
+        // Grief & loss
+        MatchRule(keywords: ["grief", "griev", "mourn", "mourning", "lost someone", "passed away", "death of", "died", "widow", "widower", "losing a loved one", "lost my mom", "lost my dad", "lost my child", "lost my husband", "lost my wife", "lost my friend", "funeral", "bereavement", "miss them so much", "someone i love died"], category: .grief),
+
+        // Fertility & pregnancy
+        MatchRule(keywords: ["fertil", "infertil", "pregnant", "pregnancy", "conceive", "conception", "trying to have a baby", "trying for a baby", "ivf", "miscarriage", "womb", "barren", "no children yet", "want a baby", "believing for a child", "surrogacy", "stillbirth", "ectopic"], category: .fertility),
+
+        // Salvation of loved ones / prodigal (check BEFORE parenting — more specific)
+        MatchRule(keywords: ["prodigal", "unsaved", "not saved", "my son left the church", "my daughter left", "walked away from god", "walked away from faith", "left the faith", "backslid", "come back to god", "praying for my family", "praying for my husband to be saved", "praying for my wife to be saved", "praying for my child to be saved", "accept jesus", "come to christ", "lost sheep", "wandering from god", "salvation of", "doesn't believe", "doesn't believe in god", "atheist family", "non-christian spouse"], category: .salvation),
+
+        // Debt (specific — check BEFORE wealth rule to catch debt-specific terms)
+        MatchRule(keywords: ["debt", "in debt", "drowning in debt", "credit card", "student loan", "student debt", "owe money", "creditor", "bankruptcy", "can't pay back", "loan shark", "collection agency", "wage garnish", "past due", "behind on payments", "financial bondage"], category: .debt),
+
+        // Education & school
+        MatchRule(keywords: ["school", "college", "university", "exam", "test score", "grades", "graduate", "graduation", "scholarship", "studying", "degree", "pass my test", "pass my exam", "academic", "dissertation", "thesis", "finals", "bar exam", "medical school", "law school", "fail school", "drop out", "student"], category: .education),
+
+        // Housing & home
+        MatchRule(keywords: ["house", "home", "housing", "evict", "eviction", "homeless", "apartment", "need a place to live", "need a home", "landlord", "can't afford rent", "no place to stay", "buy a house", "own a home", "mortgage approval", "closing on a house"], category: .housing),
+
+        // Divorce recovery
+        MatchRule(keywords: ["divorce", "divorced", "going through a divorce", "separation", "co-parenting", "ex-husband", "ex-wife", "ex-spouse", "single again", "broken marriage that ended", "after my marriage ended", "starting over after divorce"], category: .divorce),
+
+        // Body / wellness / health habits
+        MatchRule(keywords: ["weight", "lose weight", "overweight", "obese", "body image", "eating disorder", "binge eating", "food addiction", "diet", "fitness", "healthy habits", "temple of the holy spirit", "can't stop eating", "emotional eating", "body confidence", "self-image"], category: .wellness),
+
+        // Clinical mental health
+        MatchRule(keywords: ["bipolar", "ptsd", "schizophrenia", "mental illness", "ocd", "borderline", "personality disorder", "psychiatric", "on medication for", "clinical depression", "clinically depressed", "trauma response", "flashback", "dissociat", "mental health diagnosis", "panic disorder"], category: .mentalHealth),
+
+        // Forgiving others / bitterness (check BEFORE grace to avoid overlap)
+        MatchRule(keywords: ["can't forgive them", "can't forgive him", "can't forgive her", "bitter", "bitterness", "resentment", "unforgiveness", "holding a grudge", "rage toward", "angry at them", "angry at him", "angry at her", "what they did to me", "betrayed by", "hurt by", "offended"], category: .forgiveness),
+
+        // New season / fresh start
+        MatchRule(keywords: ["fresh start", "new beginning", "starting over", "new chapter", "second chance", "new season", "moving forward", "leaving the past behind", "next chapter", "reinvent", "blank slate", "do-over", "restart my life"], category: .newSeason),
+
+        // Single parenting
+        MatchRule(keywords: ["single mom", "single dad", "single parent", "raising kids alone", "raising children alone", "doing it alone", "no father", "no mother", "abandoned with kids", "co-parenting alone", "my kids have no father", "my kids have no mother"], category: .singleParent),
+
+        // Anger & temper
+        MatchRule(keywords: ["anger", "angry all the time", "rage", "temper", "short fuse", "explosive", "can't control anger", "outburst", "yelling", "violent", "lose my temper", "hot-headed", "fury", "wrathful"], category: .anger),
     ]
 }
 
@@ -184,5 +226,19 @@ final class KeywordDeclarationMatcher: DeclarationMatcherProtocol {
             verseReference: DeclarationContent.verseReference(for: category),
             isConfident: matchedRule != nil
         )
+    }
+
+    /// Returns all distinct matched categories — used to detect when someone named multiple needs.
+    func matchAll(input: String) -> [DeclarationCategory] {
+        let lower = input.lowercased()
+        var seen = Set<DeclarationCategory>()
+        var results: [DeclarationCategory] = []
+        for rule in rules {
+            guard rule.keywords.contains(where: { lower.contains($0) }) else { continue }
+            if seen.insert(rule.category).inserted {
+                results.append(rule.category)
+            }
+        }
+        return results
     }
 }
