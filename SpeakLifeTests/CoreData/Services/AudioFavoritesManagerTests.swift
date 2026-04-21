@@ -1,0 +1,628 @@
+//
+//  AudioFavoritesManagerTests.swift
+//  SpeakLifeTests
+//
+//  Unit tests for AudioFavoritesManager
+//
+
+import XCTest
+import CoreData
+import Combine
+@testable import SpeakLife
+
+// Mock Repository for Testing
+class MockAudioFavoriteRepository: AudioFavoriteRepositoryProtocol {
+    
+    var entries: [AudioFavoriteEntry] = []
+    var createCalled = false
+    var deleteCalled = false
+    var fetchCalled = false
+    var shouldThrowError = false
+    var observePublisher = PassthroughSubject<[AudioFavoriteEntry], Never>()
+    
+    private let context = PersistenceController(inMemory: true).container.viewContext
+    
+    func create(_ entity: AudioFavoriteEntry) async throws {
+        createCalled = true
+        if shouldThrowError {
+            throw NSError(domain: "MockError", code: 1, userInfo: nil)
+        }
+        entries.append(entity)
+        observePublisher.send(entries)
+    }
+    
+    func update(_ entity: AudioFavoriteEntry) async throws {
+        if shouldThrowError {
+            throw NSError(domain: "MockError", code: 1, userInfo: nil)
+        }
+    }
+    
+    func delete(_ entity: AudioFavoriteEntry) async throws {
+        deleteCalled = true
+        if shouldThrowError {
+            throw NSError(domain: "MockError", code: 1, userInfo: nil)
+        }
+        entries.removeAll { $0.audioId == entity.audioId }
+        observePublisher.send(entries)
+    }
+    
+    func fetch(predicate: NSPredicate?) async throws -> [AudioFavoriteEntry] {
+        fetchCalled = true
+        if shouldThrowError {
+            throw NSError(domain: "MockError", code: 1, userInfo: nil)
+        }
+        return entries
+    }
+    
+    func fetchById(_ id: UUID) async throws -> AudioFavoriteEntry? {
+        return entries.first { $0.id == id }
+    }
+    
+    func findByAudioId(_ audioId: String) async throws -> AudioFavoriteEntry? {
+        if shouldThrowError {
+            throw NSError(domain: "MockError", code: 1, userInfo: nil)
+        }
+        return entries.first { $0.audioId == audioId }
+    }
+    
+    func fetchByTag(_ tag: String) async throws -> [AudioFavoriteEntry] {
+        return entries.filter { $0.tag == tag }
+    }
+    
+    func deleteByAudioId(_ audioId: String) async throws {
+        deleteCalled = true
+        if shouldThrowError {
+            throw NSError(domain: "MockError", code: 1, userInfo: nil)
+        }
+        entries.removeAll { $0.audioId == audioId }
+        observePublisher.send(entries)
+    }
+    
+    func createFromAudioDeclaration(_ audio: AudioDeclaration) async throws -> AudioFavoriteEntry {
+        let entry = AudioFavoriteEntry(context: context)
+        entry.audioId = audio.id
+        entry.title = audio.title
+        entry.subtitle = audio.subtitle
+        entry.duration = audio.duration
+        entry.imageUrl = audio.imageUrl
+        entry.isPremium = audio.isPremium
+        entry.tag = audio.tag
+        entry.id = UUID()
+        entry.createdAt = Date()
+        try await create(entry)
+        return entry
+    }
+    
+    func toAudioDeclaration(_ entry: AudioFavoriteEntry) -> AudioDeclaration {
+        return AudioDeclaration(
+            id: entry.audioId,
+            title: entry.title,
+            subtitle: entry.subtitle,
+            duration: entry.duration,
+            imageUrl: entry.imageUrl,
+            isPremium: entry.isPremium,
+            tag: entry.tag,
+            season: Int(entry.season),
+            episode: Int(entry.episode),
+            isFavorite: true,
+            favoriteId: entry.id?.uuidString,
+            dateFavorited: entry.createdAt
+        )
+    }
+    
+    func observeAll() -> AnyPublisher<[AudioFavoriteEntry], Never> {
+        observePublisher
+            .prepend(entries)
+            .eraseToAnyPublisher()
+    }
+}
+
+final class AudioFavoritesManagerTests: XCTestCase {
+    
+    var manager: AudioFavoritesManager!
+    var mockRepository: MockAudioFavoriteRepository!
+    var cancellables: Set<AnyCancellable>!
+    
+    override func setUp() {
+        super.setUp()
+        mockRepository = MockAudioFavoriteRepository()
+        manager = AudioFavoritesManager(repository: mockRepository)
+        cancellables = Set<AnyCancellable>()
+    }
+    
+    override func tearDown() {
+        cancellables = nil
+        manager = nil
+        mockRepository = nil
+        super.tearDown()
+    }
+    
+    // MARK: - Toggle Favorite Tests
+    
+    func testToggleFavoriteAdd() async throws {
+        // Given
+        let audio = AudioDeclaration(
+            id: "audio-1",
+            title: "Test Audio",
+            subtitle: "Subtitle",
+            duration: "5:00",
+            imageUrl: "https://example.com/image.jpg",
+            isPremium: false,
+            tag: "faith"
+        )
+        
+        // When
+        manager.toggleFavorite(audio)
+        
+        // Wait for async operation
+        try await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
+        
+        // Then
+        XCTAssertTrue(mockRepository.createCalled)
+        XCTAssertTrue(manager.isFavorite(audio))
+    }
+    
+    func testToggleFavoriteRemove() async throws {
+        // Given
+        let audio = AudioDeclaration(
+            id: "audio-2",
+            title: "Test Audio 2",
+            subtitle: "Subtitle 2",
+            duration: "3:00",
+            imageUrl: "https://example.com/image2.jpg",
+            isPremium: true,
+            tag: "prayer"
+        )
+        
+        // First add it
+        manager.toggleFavorite(audio)
+        try await Task.sleep(nanoseconds: 100_000_000)
+        XCTAssertTrue(manager.isFavorite(audio))
+        
+        // When - Toggle again to remove
+        manager.toggleFavorite(audio)
+        try await Task.sleep(nanoseconds: 100_000_000)
+        
+        // Then
+        XCTAssertTrue(mockRepository.deleteCalled)
+        XCTAssertFalse(manager.isFavorite(audio))
+    }
+    
+    func testToggleFavoriteWithRetry() async throws {
+        // Given
+        let audio = AudioDeclaration(
+            id: "retry-test",
+            title: "Retry Test",
+            subtitle: "Retry",
+            duration: "1:00",
+            imageUrl: "",
+            isPremium: false,
+            tag: "faith"
+        )
+        
+        // Simulate first attempt failure
+        mockRepository.shouldThrowError = true
+        
+        // When
+        manager.toggleFavorite(audio, retryCount: 1)
+        
+        // Wait for retry
+        try await Task.sleep(nanoseconds: 200_000_000)
+        
+        // Then - Should have error message after failure
+        XCTAssertNotNil(manager.errorMessage)
+        XCTAssertFalse(manager.isFavorite(audio))
+    }
+    
+    // MARK: - Favorite Check Tests
+    
+    func testIsFavorite() async throws {
+        // Given
+        let audio1 = AudioDeclaration(
+            id: "fav-1",
+            title: "Favorite 1",
+            subtitle: "Sub 1",
+            duration: "2:00",
+            imageUrl: "",
+            isPremium: false,
+            tag: "faith"
+        )
+        
+        let audio2 = AudioDeclaration(
+            id: "fav-2",
+            title: "Favorite 2",
+            subtitle: "Sub 2",
+            duration: "3:00",
+            imageUrl: "",
+            isPremium: false,
+            tag: "prayer"
+        )
+        
+        // When
+        manager.toggleFavorite(audio1)
+        try await Task.sleep(nanoseconds: 100_000_000)
+        
+        // Then
+        XCTAssertTrue(manager.isFavorite(audio1))
+        XCTAssertFalse(manager.isFavorite(audio2))
+    }
+    
+    func testIsFavoriteAsync() async throws {
+        // Given
+        let audio = AudioDeclaration(
+            id: "async-fav",
+            title: "Async Favorite",
+            subtitle: "Async",
+            duration: "4:00",
+            imageUrl: "",
+            isPremium: true,
+            tag: "worship"
+        )
+        
+        manager.toggleFavorite(audio)
+        try await Task.sleep(nanoseconds: 100_000_000)
+        
+        // When
+        let isFavorite = await manager.isFavoriteAsync(audio)
+        
+        // Then
+        XCTAssertTrue(isFavorite)
+    }
+    
+    // MARK: - Sorting Tests
+    
+    func testGetFavoritesSortedByDate() async throws {
+        // Given
+        let now = Date()
+        for i in 0..<3 {
+            let audio = AudioDeclaration(
+                id: "date-\(i)",
+                title: "Audio \(i)",
+                subtitle: "Sub \(i)",
+                duration: "\(i):00",
+                imageUrl: "",
+                isPremium: false,
+                tag: "faith",
+                dateFavorited: now.addingTimeInterval(Double(i * 3600))
+            )
+            manager.toggleFavorite(audio)
+        }
+        
+        try await Task.sleep(nanoseconds: 200_000_000)
+        
+        // When
+        let sorted = manager.getFavoritesSortedByDate()
+        
+        // Then
+        XCTAssertEqual(sorted.count, 3)
+        // Should be in reverse chronological order
+        if sorted.count >= 2 {
+            XCTAssertTrue(sorted[0].dateFavorited! > sorted[1].dateFavorited!)
+        }
+    }
+    
+    func testGetFavoritesSortedAlphabetically() async throws {
+        // Given
+        let titles = ["Zebra", "Apple", "Mango"]
+        for title in titles {
+            let audio = AudioDeclaration(
+                id: "alpha-\(title)",
+                title: title,
+                subtitle: "Sub",
+                duration: "1:00",
+                imageUrl: "",
+                isPremium: false,
+                tag: "faith"
+            )
+            manager.toggleFavorite(audio)
+        }
+        
+        try await Task.sleep(nanoseconds: 200_000_000)
+        
+        // When
+        let sorted = manager.getFavoritesSortedAlphabetically()
+        
+        // Then
+        XCTAssertEqual(sorted.count, 3)
+        if sorted.count == 3 {
+            XCTAssertEqual(sorted[0].title, "Apple")
+            XCTAssertEqual(sorted[1].title, "Mango")
+            XCTAssertEqual(sorted[2].title, "Zebra")
+        }
+    }
+    
+    func testGetFavoritesByTag() async throws {
+        // Given
+        let tags = ["faith", "prayer", "faith", "worship"]
+        for (i, tag) in tags.enumerated() {
+            let audio = AudioDeclaration(
+                id: "tag-\(i)",
+                title: "Audio \(i)",
+                subtitle: "Sub",
+                duration: "1:00",
+                imageUrl: "",
+                isPremium: false,
+                tag: tag
+            )
+            manager.toggleFavorite(audio)
+        }
+        
+        try await Task.sleep(nanoseconds: 200_000_000)
+        
+        // When
+        let faithFavorites = manager.getFavorites(byTag: "faith")
+        
+        // Then
+        XCTAssertEqual(faithFavorites.count, 2)
+        XCTAssertTrue(faithFavorites.allSatisfy { $0.tag == "faith" })
+    }
+    
+    // MARK: - Remove Favorites Tests
+    
+    func testRemoveFavoriteById() async throws {
+        // Given
+        let audio = AudioDeclaration(
+            id: "remove-1",
+            title: "To Remove",
+            subtitle: "Sub",
+            duration: "1:00",
+            imageUrl: "",
+            isPremium: false,
+            tag: "faith"
+        )
+        
+        manager.toggleFavorite(audio)
+        try await Task.sleep(nanoseconds: 100_000_000)
+        XCTAssertTrue(manager.isFavorite(audio))
+        
+        // When
+        manager.removeFavorite(withId: "remove-1")
+        try await Task.sleep(nanoseconds: 100_000_000)
+        
+        // Then
+        XCTAssertTrue(mockRepository.deleteCalled)
+        XCTAssertFalse(manager.isFavorite(audio))
+    }
+    
+    func testRemoveFavoritesAtIndexSet() async throws {
+        // Given
+        for i in 0..<5 {
+            let audio = AudioDeclaration(
+                id: "batch-\(i)",
+                title: "Audio \(i)",
+                subtitle: "Sub",
+                duration: "1:00",
+                imageUrl: "",
+                isPremium: false,
+                tag: "faith"
+            )
+            manager.toggleFavorite(audio)
+        }
+        
+        try await Task.sleep(nanoseconds: 200_000_000)
+        XCTAssertEqual(manager.favorites.count, 5)
+        
+        // When - Remove indices 1 and 3
+        let indexSet = IndexSet([1, 3])
+        manager.removeFavorites(at: indexSet)
+        try await Task.sleep(nanoseconds: 200_000_000)
+        
+        // Then
+        XCTAssertEqual(manager.favorites.count, 3)
+    }
+    
+    func testClearAllFavorites() async throws {
+        // Given
+        for i in 0..<3 {
+            let audio = AudioDeclaration(
+                id: "clear-\(i)",
+                title: "Audio \(i)",
+                subtitle: "Sub",
+                duration: "1:00",
+                imageUrl: "",
+                isPremium: false,
+                tag: "faith"
+            )
+            manager.toggleFavorite(audio)
+        }
+        
+        try await Task.sleep(nanoseconds: 200_000_000)
+        XCTAssertEqual(manager.favorites.count, 3)
+        
+        // When
+        manager.clearAllFavorites()
+        try await Task.sleep(nanoseconds: 200_000_000)
+        
+        // Then
+        XCTAssertEqual(manager.favorites.count, 0)
+    }
+    
+    // MARK: - Import/Export Tests
+    
+    func testExportFavorites() async throws {
+        // Given
+        let audio = AudioDeclaration(
+            id: "export-1",
+            title: "Export Test",
+            subtitle: "Export",
+            duration: "2:30",
+            imageUrl: "https://example.com/export.jpg",
+            isPremium: true,
+            tag: "faith"
+        )
+        
+        manager.toggleFavorite(audio)
+        try await Task.sleep(nanoseconds: 100_000_000)
+        
+        // When
+        let exportData = manager.exportFavorites()
+        
+        // Then
+        XCTAssertNotNil(exportData)
+        
+        if let data = exportData {
+            let decoder = JSONDecoder()
+            decoder.dateDecodingStrategy = .iso8601
+            let decoded = try decoder.decode([AudioDeclaration].self, from: data)
+            XCTAssertEqual(decoded.count, 1)
+            XCTAssertEqual(decoded.first?.id, "export-1")
+        }
+    }
+    
+    func testImportFavoritesMerge() async throws {
+        // Given - Add one existing favorite
+        let existing = AudioDeclaration(
+            id: "existing-1",
+            title: "Existing",
+            subtitle: "Sub",
+            duration: "1:00",
+            imageUrl: "",
+            isPremium: false,
+            tag: "faith"
+        )
+        
+        manager.toggleFavorite(existing)
+        try await Task.sleep(nanoseconds: 100_000_000)
+        
+        // Create import data with new favorites
+        let toImport = [
+            AudioDeclaration(
+                id: "import-1",
+                title: "Import 1",
+                subtitle: "Sub",
+                duration: "2:00",
+                imageUrl: "",
+                isPremium: false,
+                tag: "prayer"
+            ),
+            AudioDeclaration(
+                id: "import-2",
+                title: "Import 2",
+                subtitle: "Sub",
+                duration: "3:00",
+                imageUrl: "",
+                isPremium: true,
+                tag: "worship"
+            )
+        ]
+        
+        let encoder = JSONEncoder()
+        encoder.dateEncodingStrategy = .iso8601
+        let importData = try encoder.encode(toImport)
+        
+        // When
+        let success = try await manager.importFavorites(from: importData, mergeWithExisting: true)
+        try await Task.sleep(nanoseconds: 200_000_000)
+        
+        // Then
+        XCTAssertTrue(success)
+        XCTAssertEqual(manager.favorites.count, 3) // 1 existing + 2 imported
+    }
+    
+    func testImportFavoritesReplace() async throws {
+        // Given - Add existing favorites
+        for i in 0..<2 {
+            let audio = AudioDeclaration(
+                id: "old-\(i)",
+                title: "Old \(i)",
+                subtitle: "Sub",
+                duration: "1:00",
+                imageUrl: "",
+                isPremium: false,
+                tag: "faith"
+            )
+            manager.toggleFavorite(audio)
+        }
+        
+        try await Task.sleep(nanoseconds: 200_000_000)
+        XCTAssertEqual(manager.favorites.count, 2)
+        
+        // Create import data
+        let toImport = [
+            AudioDeclaration(
+                id: "new-1",
+                title: "New 1",
+                subtitle: "Sub",
+                duration: "2:00",
+                imageUrl: "",
+                isPremium: false,
+                tag: "prayer"
+            )
+        ]
+        
+        let encoder = JSONEncoder()
+        let importData = try encoder.encode(toImport)
+        
+        // When
+        let success = try await manager.importFavorites(from: importData, mergeWithExisting: false)
+        try await Task.sleep(nanoseconds: 200_000_000)
+        
+        // Then
+        XCTAssertTrue(success)
+        XCTAssertEqual(manager.favorites.count, 1)
+        XCTAssertEqual(manager.favorites.first?.id, "new-1")
+    }
+    
+    // MARK: - Error Handling Tests
+    
+    func testErrorHandlingOnToggle() async throws {
+        // Given
+        mockRepository.shouldThrowError = true
+        let audio = AudioDeclaration(
+            id: "error-test",
+            title: "Error Test",
+            subtitle: "Error",
+            duration: "1:00",
+            imageUrl: "",
+            isPremium: false,
+            tag: "faith"
+        )
+        
+        // When
+        manager.toggleFavorite(audio, retryCount: 1)
+        try await Task.sleep(nanoseconds: 300_000_000) // Wait for retries
+        
+        // Then
+        XCTAssertNotNil(manager.errorMessage)
+        XCTAssertTrue(manager.errorMessage?.contains("Failed to toggle favorite") ?? false)
+    }
+    
+    // MARK: - Analytics Tests
+    
+    func testGetFavoritesStats() async throws {
+        // Given
+        let audioItems = [
+            ("faith", 3),
+            ("prayer", 2),
+            ("worship", 1)
+        ]
+        
+        for (tag, count) in audioItems {
+            for i in 0..<count {
+                let audio = AudioDeclaration(
+                    id: "\(tag)-\(i)",
+                    title: "\(tag) \(i)",
+                    subtitle: "Sub",
+                    duration: "1:00",
+                    imageUrl: "",
+                    isPremium: false,
+                    tag: tag,
+                    dateFavorited: Date()
+                )
+                manager.toggleFavorite(audio)
+            }
+        }
+        
+        try await Task.sleep(nanoseconds: 200_000_000)
+        
+        // When
+        let stats = manager.getFavoritesStats()
+        
+        // Then
+        XCTAssertEqual(stats.totalCount, 6)
+        XCTAssertEqual(stats.byCategory["faith"], 3)
+        XCTAssertEqual(stats.byCategory["prayer"], 2)
+        XCTAssertEqual(stats.byCategory["worship"], 1)
+        XCTAssertGreaterThanOrEqual(stats.averagePerWeek, 0)
+    }
+}

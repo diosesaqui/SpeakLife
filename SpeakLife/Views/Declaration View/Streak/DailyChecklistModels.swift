@@ -275,10 +275,6 @@ struct StreakStats: Codable {
                 streakFreezeUsedDate = Date()
                 // Notify the user next session that their freeze was used
                 UserDefaults.standard.set(true, forKey: "streakFreezeWasUsed")
-                // BUGFIX: Bridge lastCompletedDate to yesterday so that when the user
-                // completes their burst today, updateStreak() sees daysDifference == 1
-                // and correctly increments (instead of seeing 2+ days and resetting to 1).
-                lastCompletedDate = calendar.date(byAdding: .day, value: -1, to: today)
                 return  // Don't reset streak
             }
             let previousStreak = currentStreak
