@@ -63,7 +63,9 @@ struct PersonalDeclarationCard: View {
 
     var body: some View {
         ZStack {
-            // Background
+            // Background — solid black first to block any sheet translucency,
+            // then the dark navy on top so the card colour is consistent.
+            Color.black.ignoresSafeArea()
             Color(red: 0.07, green: 0.08, blue: 0.14)
                 .ignoresSafeArea()
 
