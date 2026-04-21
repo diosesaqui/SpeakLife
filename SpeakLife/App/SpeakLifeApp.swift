@@ -150,6 +150,14 @@ struct SpeakLifeApp: App {
                             isShowingLanding = false
                         }
                         
+                        // BUGFIX: Process any cold-launch notification tap now that the tab
+                        // view is visible. Doing this earlier (when callback is first set)
+                        // causes navigation to fire while the landing screen is still showing —
+                        // the tab state gets wiped when the landing hides.
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                            NotificationHandler.shared.processIfReady()
+                        }
+                        
                         // Check if daily burst should be shown — only once per session
                         // (onAppear can fire more than once; guard prevents showing it again
                         // after the user already completed or dismissed the burst)
@@ -265,9 +273,10 @@ struct SpeakLifeApp: App {
     
     private func setupNotificationHandling() {
         // Setting up notification handling
-        
+        // NOTE: We intentionally do NOT call processIfReady() here. Any pending notification
+        // (cold launch tap) will be processed after the landing screen hides (see below),
+        // so the tab view is visible and navigation actually sticks.
         NotificationHandler.shared.callback = { content in
-            
             DispatchQueue.main.async {
                 self.handleNotificationContent(content)
             }
@@ -286,19 +295,10 @@ struct SpeakLifeApp: App {
             return
         }
 
-        // Deep link routing
-        if let deepLink = content.userInfo["deepLink"] as? String {
-            switch deepLink {
-            case "declarations":
-                tabViewModel.selectedTab = 0
-                return
-            case "personalDeclaration":
-                tabViewModel.selectedTab = 0
-                appState.scrollToPersonalDeclaration = true
-                return
-            default:
-                break
-            }
+        // Lifecycle notifications deep link directly to declarations tab
+        if let deepLink = content.userInfo["deepLink"] as? String, deepLink == "declarations" {
+            tabViewModel.selectedTab = 0
+            return
         }
 
         // Mark that we just received a notification
@@ -324,8 +324,16 @@ struct SpeakLifeApp: App {
     }
     
     private func resetNotifications() {
-        let categories = Set(appState.selectedNotificationCategories.components(separatedBy: ",").compactMap({ DeclarationCategory($0) }))
-        NotificationManager.shared.registerNotifications(count: appState.notificationCount, startTime: appState.startTimeIndex, endTime: appState.endTimeIndex, categories: categories)
+        var categories = Set(appState.selectedNotificationCategories.components(separatedBy: ",").compactMap({ DeclarationCategory($0) }))
+        // Guard: empty Set is non-nil so it bypasses registerNotifications' nil-fallback and
+        // passes an empty array to NotificationProcessor, resulting in random unfiltered
+        // declarations. Pad with sensible defaults when the user has ≤1 category.
+        if categories.count <= 1 {
+            categories.insert(DeclarationCategory(rawValue: "destiny")!)
+            categories.insert(DeclarationCategory(rawValue: "love")!)
+        }
+        let selectedCategories: Set<DeclarationCategory>? = categories.isEmpty ? nil : categories
+        NotificationManager.shared.registerNotifications(count: appState.notificationCount, startTime: appState.startTimeIndex, endTime: appState.endTimeIndex, categories: selectedCategories)
         DispatchQueue.main.async {
             appState.lastNotificationSetDate = Date()
         }
