@@ -204,29 +204,38 @@ class VoiceInputManager: NSObject, ObservableObject {
                 request.taskHint = .dictation
             }
 
+            // resumed guards against double-resume (crash) and never-resume (hang).
+            // SFSpeechRecognitionTask can fire multiple partial callbacks even when
+            // shouldReportPartialResults = false on some OS versions.
+            var resumed = false
+
             recognizer.recognitionTask(with: request) { result, error in
-                guard let result = result, result.isFinal else {
-                    if error != nil {
-                        continuation.resume(returning: TranscriptionResult(text: "", confidence: 0, alternatives: []))
-                    }
-                    return
+                guard !resumed else { return }
+
+                if let result = result, result.isFinal {
+                    resumed = true
+
+                    let best = result.bestTranscription
+                    var totalConf: Float = 0
+                    for seg in best.segments { totalConf += seg.confidence }
+                    let avgConf = best.segments.isEmpty ? 0 : totalConf / Float(best.segments.count)
+
+                    let alts = result.transcriptions
+                        .prefix(3)
+                        .map { $0.formattedString }
+                        .filter { $0 != best.formattedString }
+
+                    continuation.resume(returning: TranscriptionResult(
+                        text: self.enhanceTranscription(best.formattedString),
+                        confidence: avgConf,
+                        alternatives: Array(alts)
+                    ))
+                } else if error != nil {
+                    // Recognition failed — return empty rather than hang.
+                    resumed = true
+                    continuation.resume(returning: TranscriptionResult(text: "", confidence: 0, alternatives: []))
                 }
-
-                let best = result.bestTranscription
-                var totalConf: Float = 0
-                for seg in best.segments { totalConf += seg.confidence }
-                let avgConf = best.segments.isEmpty ? 0 : totalConf / Float(best.segments.count)
-
-                let alts = result.transcriptions
-                    .prefix(3)
-                    .map { $0.formattedString }
-                    .filter { $0 != best.formattedString }
-
-                continuation.resume(returning: TranscriptionResult(
-                    text: self.enhanceTranscription(best.formattedString),
-                    confidence: avgConf,
-                    alternatives: Array(alts)
-                ))
+                // Non-final partial with no error — wait for final result.
             }
         }
     }

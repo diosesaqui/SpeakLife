@@ -101,12 +101,26 @@ final class SpeechTranscriptionService: SpeechTranscriptionProtocol {
             let request = SFSpeechURLRecognitionRequest(url: url)
             request.shouldReportPartialResults = false
 
+            // resumed tracks whether we've already called continuation.resume().
+            // SFSpeechRecognitionTask can fire the callback multiple times with
+            // partial results (even with shouldReportPartialResults = false on
+            // some OS versions). Calling resume() twice crashes, and never calling
+            // it hangs the caller forever — so we guard both cases.
+            var resumed = false
+
             recognizer.recognitionTask(with: request) { result, error in
+                guard !resumed else { return }
+
                 if let result = result, result.isFinal {
+                    resumed = true
                     continuation.resume(returning: result.bestTranscription.formattedString)
                 } else if error != nil {
+                    // Recognition failed — return empty rather than hang.
+                    resumed = true
                     continuation.resume(returning: "")
                 }
+                // If result is non-final and error is nil this is a partial
+                // callback — do nothing and wait for the final result.
             }
         }
     }

@@ -83,8 +83,11 @@ struct MatchRule {
         // Physical healing
         MatchRule(keywords: ["heal", "sick", "health", "body", "cancer", "pain", "disease", "recover", "ill", "chronic", "diagnosis", "surgery", "hospital", "medicine", "condition", "symptom"], category: .health),
 
-        // Finances & provision
-        MatchRule(keywords: ["money", "financ", "debt", "provid", "wealth", "income", "broke", "bills", "afford", "rent", "mortgage", "loan", "savings", "invest", "poverty", "need money", "can't pay"], category: .wealth),
+        // Debt (specific — MUST be before wealth so "debt", "loan", "credit card" route here, not .wealth)
+        MatchRule(keywords: ["in debt", "drowning in debt", "credit card", "student loan", "student debt", "owe money", "creditor", "bankruptcy", "can't pay back", "loan shark", "collection agency", "wage garnish", "past due", "behind on payments", "financial bondage", "debt free", "get out of debt"], category: .debt),
+
+        // Finances & provision (general — "debt" keyword removed to avoid stealing from .debt rule above)
+        MatchRule(keywords: ["money", "financ", "provid", "wealth", "income", "broke", "bills", "afford", "rent", "mortgage", "loan", "savings", "invest", "poverty", "need money", "can't pay"], category: .wealth),
 
         // Entrepreneurship & own business (check BEFORE career — more specific)
         MatchRule(keywords: ["my own business", "own business", "start a business", "starting a business", "entrepren", "founder", "startup", "my business", "build a business", "run a business", "business owner", "self-employ", "side business", "brand", "my company", "launch a"], category: .business),
@@ -172,9 +175,6 @@ struct MatchRule {
 
         // Salvation of loved ones / prodigal (check BEFORE parenting — more specific)
         MatchRule(keywords: ["prodigal", "unsaved", "not saved", "my son left the church", "my daughter left", "walked away from god", "walked away from faith", "left the faith", "backslid", "come back to god", "praying for my family", "praying for my husband to be saved", "praying for my wife to be saved", "praying for my child to be saved", "accept jesus", "come to christ", "lost sheep", "wandering from god", "salvation of", "doesn't believe", "doesn't believe in god", "atheist family", "non-christian spouse"], category: .salvation),
-
-        // Debt (specific — check BEFORE wealth rule to catch debt-specific terms)
-        MatchRule(keywords: ["debt", "in debt", "drowning in debt", "credit card", "student loan", "student debt", "owe money", "creditor", "bankruptcy", "can't pay back", "loan shark", "collection agency", "wage garnish", "past due", "behind on payments", "financial bondage"], category: .debt),
 
         // Education & school
         MatchRule(keywords: ["school", "college", "university", "exam", "test score", "grades", "graduate", "graduation", "scholarship", "studying", "degree", "pass my test", "pass my exam", "academic", "dissertation", "thesis", "finals", "bar exam", "medical school", "law school", "fail school", "drop out", "student"], category: .education),
