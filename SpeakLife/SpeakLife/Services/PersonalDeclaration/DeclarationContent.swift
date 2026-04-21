@@ -66,6 +66,32 @@ enum DeclarationContent {
             return "\"Create in me a clean heart, O God, and renew a right spirit within me.\""
         case .hope:
             return "\"May the God of hope fill you with all joy and peace as you trust in him, so that you may overflow with hope by the power of the Holy Spirit.\""
+        case .grief:
+            return "\"Blessed are those who mourn, for they will be comforted.\""
+        case .fertility:
+            return "\"He settles the childless woman in her home as a happy mother of children. Praise the Lord.\""
+        case .salvation:
+            return "\"The Lord is not slow in keeping his promise... not wanting anyone to perish, but everyone to come to repentance.\""
+        case .debt:
+            return "\"You will lend to many nations but will borrow from none. The Lord will make you the head, not the tail.\""
+        case .education:
+            return "\"The Lord gives wisdom; from his mouth come knowledge and understanding.\""
+        case .housing:
+            return "\"My people will live in peaceful dwelling places, in secure homes, in undisturbed places of rest.\""
+        case .divorce:
+            return "\"The Lord is close to the brokenhearted and saves those who are crushed in spirit.\""
+        case .wellness:
+            return "\"Do you not know that your bodies are temples of the Holy Spirit, who is in you, whom you have received from God? You are not your own.\""
+        case .mentalHealth:
+            return "\"He restores my soul. He leads me in paths of righteousness for his name's sake.\""
+        case .forgiveness:
+            return "\"Bear with each other and forgive one another if any of you has a grievance against someone. Forgive as the Lord forgave you.\""
+        case .newSeason:
+            return "\"See, I am doing a new thing! Now it springs up; do you not perceive it? I am making a way in the wilderness and streams in the wasteland.\""
+        case .singleParent:
+            return "\"A father to the fatherless, a defender of widows, is God in his holy dwelling. God sets the lonely in families.\""
+        case .anger:
+            return "\"Whoever is slow to anger is better than the mighty, and he who rules his spirit than he who takes a city.\""
         default:
             return "\"Being confident of this, that he who began a good work in you will carry it on to completion until the day of Christ Jesus.\""
         }
@@ -100,6 +126,19 @@ enum DeclarationContent {
         case .friendship:     return "Psalm 68:6"
         case .purity:         return "Psalm 51:10"
         case .hope:           return "Romans 15:13"
+        case .grief:          return "Matthew 5:4"
+        case .fertility:      return "Psalm 113:9"
+        case .salvation:      return "2 Peter 3:9"
+        case .debt:           return "Deuteronomy 28:12–13"
+        case .education:      return "Proverbs 2:6"
+        case .housing:        return "Isaiah 32:18"
+        case .divorce:        return "Psalm 34:18"
+        case .wellness:       return "1 Corinthians 6:19"
+        case .mentalHealth:   return "Psalm 23:3"
+        case .forgiveness:    return "Colossians 3:13"
+        case .newSeason:      return "Isaiah 43:19"
+        case .singleParent:   return "Psalm 68:5–6"
+        case .anger:          return "Proverbs 16:32"
         default:              return "Philippians 1:6"
         }
     }
@@ -186,6 +225,45 @@ enum DeclarationContent {
 
         case .hope:
             return "I declare that hope is alive in me because the God of all hope lives in me. What was deferred, what was delayed, and what seemed lost is not gone — it is on its way. I will not lose hope. My expectation is in the Lord and He will not disappoint me."
+
+        case .grief:
+            return "I declare that God is close to me in this grief. He is not distant — He is the God who draws near to the brokenhearted. My pain is real and He sees every tear. I will not grieve without hope. The same God who conquered death walks through this loss with me, and His comfort will reach places no human comfort ever could. I am held."
+
+        case .fertility:
+            return "I declare that my body was designed by God and He has the final word over my womb. I choose to believe the report of the Lord over the report of any doctor or test. I am not defined by a diagnosis — I am defined by the God who opens wombs, who gave Sarah a child past the age of reason and blessed Hannah after years of tears. My miracle is coming, and I will not stop expecting it."
+
+        case .salvation:
+            return "I declare that my loved one is not lost — they are known by God, seen by God, and pursued by God. His Word never returns void, and every seed of faith ever planted in them is still alive. The same Spirit that raised Christ from the dead can raise their faith. The prodigal always has a father waiting at the end of the road. I will pray without ceasing and I will believe without wavering — they are coming home."
+
+        case .debt:
+            return "I declare that the chain of debt over my life is being broken. God is giving me wisdom, creative strategy, and supernatural favor in my finances. Every door that needs to open for my financial freedom is opening. I am moving from debt to lender, from barely surviving to walking in God's overflow. No financial mountain is too big for the God who multiplied five loaves to feed thousands. My turnaround is here."
+
+        case .education:
+            return "I declare that God's wisdom is in me and working through me. My mind is sharp, my understanding is clear, and I retain what I study with supernatural clarity. The God who gave Daniel and his friends ten times the wisdom of those around them has anointed me to excel. No exam, no obstacle, and no moment of doubt will stand between me and what God has called me to achieve. I am prepared, I am capable, and I will succeed."
+
+        case .housing:
+            return "I declare that God is securing a home for me and my family. He makes a way where there is no way. The right doors are opening, the right resources are arriving, and no setback is final. The God who provided manna in the wilderness, who sent ravens to feed Elijah, and who has never once let His children go without — He is providing for me right now in ways I cannot yet see. Stable, safe housing is mine."
+
+        case .divorce:
+            return "I declare that God is putting me back together. What this season broke in me — He is healing. My identity is not in my marital status; it is in Christ alone. I am not less loved, less worthy, or less called because of what happened. God is writing the next chapter of my life and it is filled with peace, purpose, and restoration. What was meant to destroy me has become a doorway. I am not starting over — I am starting forward."
+
+        case .wellness:
+            return "I declare that my body is the temple of the Holy Spirit and I honor it as such. God is giving me discipline, wisdom, and genuine desire to steward my health well. I break every cycle of defeat, shame, and starting over that has kept me stuck. His grace reaches this area of my life too — not just my soul. I am making real, sustainable progress and I will not give up on the body God gave me."
+
+        case .mentalHealth:
+            return "I declare that God is the restorer of my mind and my soul. I am not defined by a diagnosis — I am defined by whose I am. I receive every resource God provides for my healing — natural and supernatural — and I reject every ounce of shame attached to my struggle. The God who said He has not given me a spirit of fear but of power, love, and a sound mind is speaking that over me right now. I am not what I feel. I am not what I fight. I am His, I am held, and I am healing."
+
+        case .forgiveness:
+            return "I declare that I choose to forgive. Not because what happened was okay — it was not. But because bitterness is a prison I refuse to stay in any longer. I release this person and this wound into the hands of God. I will not let what they did rob me of one more day of my peace, my joy, or my future. God is my vindicator. He sees what happened. And He is turning what was meant to destroy me into something I cannot yet imagine. I am free."
+
+        case .newSeason:
+            return "I declare that God is doing a new thing in my life and I perceive it. What is behind me is behind me — fully. The old chapter is closed and a new one is open. God wastes nothing — not the pain, not the failure, not the time I thought was lost. Every experience was preparation for where I am going. I step into this new beginning with bold faith, not with fear, trusting the God who says He makes all things new. My best days are not behind me."
+
+        case .singleParent:
+            return "I declare that God is the co-parent I need. He covers what I cannot carry alone — the gaps, the exhaustion, the fear, and the provision. My children are not at a disadvantage — they are covered by the same God who parted the Red Sea and provided for widows with nothing but a jar of oil. I am enough because God is more than enough, and He is with us. My household is blessed, my children are protected, and we will not lack any good thing."
+
+        case .anger:
+            return "I declare that I have been given a spirit of power, love, and a sound mind — not a spirit of rage. The fruit of the Holy Spirit is growing in me, and that fruit includes self-control. God is healing the wound underneath this anger so I can respond to life instead of react to it. I will not be mastered by what rises up in me. I am slow to anger and mighty in spirit, and I walk in peace that does not make sense to those around me."
 
         default:
             return "I declare that God who started this good work in me will bring it to completion. What He promised, He will perform. I will not stop believing. Every delay has been a setup and my breakthrough is on its way."

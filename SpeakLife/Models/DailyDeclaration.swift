@@ -45,7 +45,20 @@ enum DeclarationCategory: String, CaseIterable, Identifiable, Codable,  Comparab
     case anxiety
     case favor
     case work
-    case business   // entrepreneur / own business (distinct from career/employment)
+    case business       // entrepreneur / own business
+    case grief          // loss / bereavement
+    case fertility      // infertility / believing for a child
+    case salvation      // praying for unsaved or prodigal loved ones
+    case debt           // specific crushing debt / financial bondage
+    case education      // school / exams / degree
+    case housing        // home / rent / eviction / housing need
+    case divorce        // divorce recovery / going through divorce
+    case wellness       // body / weight / health habits / body image
+    case mentalHealth   // clinical mental health / PTSD / bipolar / OCD
+    case forgiveness    // forgiving others / bitterness / resentment
+    case newSeason      // fresh start / new chapter / starting over
+    case singleParent   // raising kids alone
+    case anger          // anger / rage / temper
     case speaklife
     case innerHealing
     case obedience
@@ -470,6 +483,19 @@ extension DeclarationCategory {
         case .purity:         return "🕊️"
         case .hope:           return "🌅"
         case .anxiety:        return "🫁"
+        case .grief:          return "🕊️"
+        case .fertility:      return "🌱"
+        case .salvation:      return "🙏"
+        case .debt:           return "⛓️"
+        case .education:      return "📚"
+        case .housing:        return "🏠"
+        case .divorce:        return "💔"
+        case .wellness:       return "💪"
+        case .mentalHealth:   return "🧠"
+        case .forgiveness:    return "🤍"
+        case .newSeason:      return "🌅"
+        case .singleParent:   return "👪"
+        case .anger:          return "🔥"
         default:              return "🙏"
         }
     }
@@ -503,17 +529,43 @@ extension DeclarationCategory {
         case .purity:         return "Purity & Holiness"
         case .hope:           return "Hope & Expectation"
         case .anxiety:        return "Peace Over Anxiety"
+        case .grief:          return "Grief & Loss"
+        case .fertility:      return "Fertility & Pregnancy"
+        case .salvation:      return "Salvation of a Loved One"
+        case .debt:           return "Breaking Out of Debt"
+        case .education:      return "School & Education"
+        case .housing:        return "A Home"
+        case .divorce:        return "Divorce Recovery"
+        case .wellness:       return "Body & Health Habits"
+        case .mentalHealth:   return "Mental Health"
+        case .forgiveness:    return "Forgiving Someone"
+        case .newSeason:      return "A Fresh Start"
+        case .singleParent:   return "Single Parenting"
+        case .anger:          return "Anger & Temper"
         default:              return "My Belief"
         }
     }
 
     var focusSubtitle: String {
         switch self {
-        case .work:     return "Career, promotion, employment"
-        case .business: return "Starting or growing your own business"
-        case .love:     return "Believing for a godly spouse"
-        case .marriage: return "Protecting or restoring your marriage"
-        default:        return "Declare God's word over this area"
+        case .work:         return "Career, promotion, employment"
+        case .business:     return "Starting or growing your own business"
+        case .love:         return "Believing for a godly spouse"
+        case .marriage:     return "Protecting or restoring your marriage"
+        case .grief:        return "Loss of a loved one"
+        case .fertility:    return "Infertility, pregnancy, believing for a child"
+        case .salvation:    return "Praying for a prodigal or unsaved loved one"
+        case .debt:         return "Breaking free from financial bondage"
+        case .education:    return "School, exams, graduation"
+        case .housing:      return "Finding or keeping a home"
+        case .divorce:      return "Healing and rebuilding after divorce"
+        case .wellness:     return "Weight, body image, healthy habits"
+        case .mentalHealth: return "Clinical mental health, PTSD, diagnosis"
+        case .forgiveness:  return "Releasing bitterness toward someone who hurt you"
+        case .newSeason:    return "Starting over, new chapter, fresh beginning"
+        case .singleParent: return "Raising children alone"
+        case .anger:        return "Controlling anger, rage, or temper"
+        default:            return "Declare God's word over this area"
         }
     }
 }
