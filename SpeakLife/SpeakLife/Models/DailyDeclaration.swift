@@ -45,6 +45,7 @@ enum DeclarationCategory: String, CaseIterable, Identifiable, Codable,  Comparab
     case anxiety
     case favor
     case work
+    case business   // entrepreneur / own business (distinct from career/employment)
     case speaklife
     case innerHealing
     case obedience
@@ -434,5 +435,85 @@ struct Declaration: Codable, Identifiable, Hashable {
         self.isFavorite = isFavorite
         self.contentType = contentType
         self.lastEdit = lastEdit
+    }
+}
+
+// MARK: - Personal Declaration Focus Choice Labels
+
+extension DeclarationCategory {
+    var focusEmoji: String {
+        switch self {
+        case .health:         return "🙏"
+        case .wealth:         return "💰"
+        case .work:           return "💼"
+        case .business:       return "🚀"
+        case .love:           return "💍"
+        case .marriage:       return "👫"
+        case .parenting:      return "👶"
+        case .destiny:        return "🌟"
+        case .identity:       return "🪞"
+        case .rest:           return "😌"
+        case .joy:            return "☀️"
+        case .favor:          return "🚪"
+        case .grace:          return "🕊️"
+        case .godsprotection: return "🛡️"
+        case .addiction:      return "⛓️"
+        case .confidence:     return "💪"
+        case .fear:           return "🧠"
+        case .wisdom:         return "💡"
+        case .innerHealing:   return "❤️‍🩹"
+        case .spiritualGrowth: return "🌱"
+        case .miracles:       return "✨"
+        case .hardtimes:      return "⛰️"
+        case .warfare:        return "⚔️"
+        case .friendship:     return "🤝"
+        case .purity:         return "🕊️"
+        case .hope:           return "🌅"
+        case .anxiety:        return "🫁"
+        default:              return "🙏"
+        }
+    }
+
+    var focusTitle: String {
+        switch self {
+        case .health:         return "My Healing"
+        case .wealth:         return "Financial Breakthrough"
+        case .work:           return "My Career"
+        case .business:       return "My Business"
+        case .love:           return "Finding a Spouse"
+        case .marriage:       return "My Marriage"
+        case .parenting:      return "My Children"
+        case .destiny:        return "My Purpose & Calling"
+        case .identity:       return "My Identity in God"
+        case .rest:           return "Peace & Rest"
+        case .joy:            return "Joy & Freedom from Depression"
+        case .favor:          return "God's Favor & Open Doors"
+        case .grace:          return "Forgiveness & Freedom from Shame"
+        case .godsprotection: return "God's Protection"
+        case .addiction:      return "Freedom from Addiction"
+        case .confidence:     return "Boldness & Confidence"
+        case .fear:           return "Freedom from Fear"
+        case .wisdom:         return "Wisdom & Clarity"
+        case .innerHealing:   return "Inner Healing"
+        case .spiritualGrowth: return "Growing Closer to God"
+        case .miracles:       return "A Miracle"
+        case .hardtimes:      return "Strength Through Hard Times"
+        case .warfare:        return "Spiritual Victory"
+        case .friendship:     return "Community & Friendship"
+        case .purity:         return "Purity & Holiness"
+        case .hope:           return "Hope & Expectation"
+        case .anxiety:        return "Peace Over Anxiety"
+        default:              return "My Belief"
+        }
+    }
+
+    var focusSubtitle: String {
+        switch self {
+        case .work:     return "Career, promotion, employment"
+        case .business: return "Starting or growing your own business"
+        case .love:     return "Believing for a godly spouse"
+        case .marriage: return "Protecting or restoring your marriage"
+        default:        return "Declare God's word over this area"
+        }
     }
 }

@@ -7,9 +7,10 @@ import Foundation
 import SwiftUI
 
 enum PersonalDeclarationStep {
-    case input      // mic / text entry
-    case matching   // 1.5s loading — builds anticipation
-    case result     // shows matched verse + declaration
+    case input                              // mic / text entry
+    case focusChoice([DeclarationCategory]) // user named >1 thing — ask them to pick one
+    case matching                           // 1.5s loading — builds anticipation
+    case result                             // shows matched verse + declaration
 }
 
 enum PersonalDeclarationError: Error {
@@ -93,13 +94,41 @@ final class PersonalDeclarationViewModel: ObservableObject {
         )
     }
 
+    // MARK: - Focus Choice
+
+    /// Called when user taps one of the focus-choice cards.
+    func selectFocus(category: DeclarationCategory) async {
+        await runMatchForCategory(input: inputText, category: category)
+    }
+
     // MARK: - Private
 
     private func runMatch(input: String) async {
+        // Check if the user named multiple distinct things
+        let allMatches = matchUseCase.matchAll(input: input)
+        if allMatches.count >= 2 {
+            // Pause briefly so it doesn't feel instant
+            try? await Task.sleep(nanoseconds: 400_000_000)
+            step = .focusChoice(allMatches)
+            return
+        }
+        await runMatchForCategory(input: input, category: nil)
+    }
+
+    private func runMatchForCategory(input: String, category: DeclarationCategory?) async {
         step = .matching
-        // Brief intentional pause — builds anticipation, feels more personal
         try? await Task.sleep(nanoseconds: 1_500_000_000)
-        match = matchUseCase.execute(input: input)
+        if let category {
+            match = DeclarationMatch(
+                category: category,
+                declarationText: DeclarationContent.declaration(for: category),
+                verse: DeclarationContent.verse(for: category),
+                verseReference: DeclarationContent.verseReference(for: category),
+                isConfident: true
+            )
+        } else {
+            match = matchUseCase.execute(input: input)
+        }
         step = .result
     }
 }

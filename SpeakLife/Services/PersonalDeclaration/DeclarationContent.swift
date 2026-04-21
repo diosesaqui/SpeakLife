@@ -48,6 +48,8 @@ enum DeclarationContent {
             return "\"He who finds a wife finds a good thing and obtains favor from the Lord.\""
         case .work:
             return "\"Whatever you do, work at it with all your heart, as working for the Lord, not for human masters. It is the Lord Christ you are serving.\""
+        case .business:
+            return "\"The blessing of the Lord makes rich, and he adds no sorrow with it.\""
         case .innerHealing:
             return "\"He heals the brokenhearted and binds up their wounds.\""
         case .spiritualGrowth:
@@ -89,6 +91,7 @@ enum DeclarationContent {
         case .wisdom:         return "James 1:5"
         case .love:           return "Proverbs 18:22"
         case .work:           return "Colossians 3:23–24"
+        case .business:       return "Proverbs 10:22"
         case .innerHealing:   return "Psalm 147:3"
         case .spiritualGrowth: return "2 Peter 3:18"
         case .miracles:       return "Mark 9:23"
@@ -156,6 +159,9 @@ enum DeclarationContent {
 
         case .work:
             return "I declare that God's hand is on my career. I am excellent at what I do because I do it for the Lord. The right opportunities are coming to me. My work is valued, my contributions are seen, and God is promoting me into everything He has prepared."
+
+        case .business:
+            return "I declare that my business is blessed because God is my business partner. He gives me creative ideas, divine connections, and strategies the world cannot teach. My doors of opportunity are opening, my clients are coming, my revenue is growing, and every product and service I offer carries the favor of God. I do not just build a business — I build a Kingdom assignment."
 
         case .innerHealing:
             return "I declare that God is healing every wound in my heart — every hurt, every trauma, every place that was broken. He is gentle with my pain and He will not leave any part of me unhealed. I am being restored from the inside out."

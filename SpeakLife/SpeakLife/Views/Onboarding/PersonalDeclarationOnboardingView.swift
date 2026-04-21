@@ -96,9 +96,10 @@ struct PersonalDeclarationOnboardingView: View {
 
             // ── Step content ─────────────────────────────────────────────
             switch viewModel.step {
-            case .input:    inputView
-            case .matching: matchingView
-            case .result:   resultView
+            case .input:                        inputView
+            case .focusChoice(let categories):  focusChoiceView(categories: categories)
+            case .matching:                     matchingView
+            case .result:                       resultView
             }
         }
         .frame(width: size.width, height: size.height)
@@ -156,13 +157,7 @@ struct PersonalDeclarationOnboardingView: View {
 
             Spacer()
 
-            Button("Skip for now") {
-                Analytics.logEvent("personal_declaration_skipped", parameters: nil)
-                onComplete(nil)
-            }
-            .font(.system(size: 13))
-            .foregroundColor(.white.opacity(0.25))
-            .padding(.bottom, size.height * 0.06)
+            Spacer().frame(height: size.height * 0.06)
         }
     }
 
@@ -333,6 +328,84 @@ struct PersonalDeclarationOnboardingView: View {
                 Task { await viewModel.submitTextInput() }
             }
             .frame(width: size.width * 0.87, height: 54)
+        }
+    }
+
+    // MARK: - Focus Choice View
+
+    private func focusChoiceView(categories: [DeclarationCategory]) -> some View {
+        VStack(spacing: 0) {
+            Spacer().frame(height: size.height * 0.10)
+
+            VStack(spacing: 12) {
+                Text("🙏")
+                    .font(.system(size: 40))
+
+                Text("Let's put our faith into\none thing right now.")
+                    .font(.system(size: 26, weight: .bold, design: .rounded))
+                    .foregroundColor(.white)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 24)
+
+                Text("Which one is God putting on your heart most?")
+                    .font(.system(size: 15))
+                    .foregroundColor(.white.opacity(0.55))
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 32)
+            }
+
+            Spacer().frame(height: 36)
+
+            VStack(spacing: 14) {
+                ForEach(categories, id: \.self) { category in
+                    Button {
+                        Task { await viewModel.selectFocus(category: category) }
+                    } label: {
+                        HStack(spacing: 14) {
+                            Text(category.focusEmoji)
+                                .font(.system(size: 22))
+
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(category.focusTitle)
+                                    .font(.system(size: 16, weight: .semibold, design: .rounded))
+                                    .foregroundColor(.white)
+                                Text(category.focusSubtitle)
+                                    .font(.system(size: 13))
+                                    .foregroundColor(.white.opacity(0.5))
+                            }
+
+                            Spacer()
+
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 13, weight: .semibold))
+                                .foregroundColor(.white.opacity(0.3))
+                        }
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 16)
+                        .background(
+                            RoundedRectangle(cornerRadius: 16)
+                                .fill(Color.white.opacity(0.08))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 16)
+                                        .stroke(Color.white.opacity(0.12), lineWidth: 1)
+                                )
+                        )
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                    .padding(.horizontal, 24)
+                }
+            }
+
+            Spacer().frame(height: 24)
+
+            Button("Start over") {
+                viewModel.inputText = ""
+                viewModel.step = .input
+            }
+            .font(.system(size: 14))
+            .foregroundColor(.white.opacity(0.3))
+
+            Spacer()
         }
     }
 

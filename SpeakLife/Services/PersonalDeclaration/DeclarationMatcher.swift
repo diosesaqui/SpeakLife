@@ -86,8 +86,11 @@ struct MatchRule {
         // Finances & provision
         MatchRule(keywords: ["money", "financ", "debt", "provid", "wealth", "income", "broke", "bills", "afford", "rent", "mortgage", "loan", "savings", "invest", "poverty", "need money", "can't pay"], category: .wealth),
 
-        // Work & career (before wealth so "job" routes here specifically)
-        MatchRule(keywords: ["job", "career", "work", "boss", "cowork", "fired", "unemploy", "promot", "interview", "business", "entrepren", "client", "office", "laid off", "profession"], category: .work),
+        // Entrepreneurship & own business (check BEFORE career — more specific)
+        MatchRule(keywords: ["my own business", "own business", "start a business", "starting a business", "entrepren", "founder", "startup", "my business", "build a business", "run a business", "business owner", "self-employ", "side business", "brand", "my company", "launch a"], category: .business),
+
+        // Work & career — employment, job-seeking, corporate advancement
+        MatchRule(keywords: ["job", "career", "work", "boss", "cowork", "fired", "unemploy", "promot", "interview", "office", "laid off", "profession", "employment", "9 to 5", "corporate", "workplace", "salary", "raise"], category: .work),
 
         // Anxiety & stress
         MatchRule(keywords: ["anxiet", "anxious", "panic", "worry", "stress", "overwhelm", "dread", "nervous", "tension", "spiral", "racing thoughts", "can't stop thinking"], category: .anxiety),
@@ -184,5 +187,19 @@ final class KeywordDeclarationMatcher: DeclarationMatcherProtocol {
             verseReference: DeclarationContent.verseReference(for: category),
             isConfident: matchedRule != nil
         )
+    }
+
+    /// Returns all distinct matched categories — used to detect when someone named multiple needs.
+    func matchAll(input: String) -> [DeclarationCategory] {
+        let lower = input.lowercased()
+        var seen = Set<DeclarationCategory>()
+        var results: [DeclarationCategory] = []
+        for rule in rules {
+            guard rule.keywords.contains(where: { lower.contains($0) }) else { continue }
+            if seen.insert(rule.category).inserted {
+                results.append(rule.category)
+            }
+        }
+        return results
     }
 }
