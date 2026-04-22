@@ -445,7 +445,7 @@ struct PersonalDeclarationOnboardingView: View {
                     )
 
                 if viewModel.inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                    Text("e.g. "I'm anxious about losing my job and can't sleep…"")
+                    Text("e.g. I'm anxious about losing my job and can't sleep...")
                         .font(.system(size: 15))
                         .foregroundColor(.white.opacity(0.3))
                         .padding(16)
