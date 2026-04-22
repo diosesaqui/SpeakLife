@@ -151,19 +151,34 @@ struct SurveyQ1BurdenScreen: View {
 
 struct SurveyQ2DurationScreen: View {
     let size: CGSize; @ObservedObject var responses: SurveyResponses; let onContinue: () -> Void
+
+    private var questionText: String {
+        responses.heaviestBurden?.isGrowthTrack == true
+            ? "How long have you been walking with God?"
+            : "How long have you been carrying this?"
+    }
+    private var subtitle: String {
+        responses.heaviestBurden?.isGrowthTrack == true
+            ? "Good to know where you're starting from."
+            : "Thank you for being honest. That took courage."
+    }
+    private var options: [BurdenDuration] {
+        responses.heaviestBurden?.isGrowthTrack == true
+            ? [.newlyStarted, .fewMonths, .overAYear, .mostOfMyLife, .asLongAsRemember]
+            : BurdenDuration.allCases
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 24) {
                     Spacer().frame(height: size.height * 0.12)
-                    SurveyQuestionHeader("How long have you been carrying this?")
-                    if responses.heaviestBurden != nil {
-                        Text("Thank you for being honest. That took courage.")
-                            .font(.system(size: 14, weight: .medium, design: .rounded)).foregroundColor(.white.opacity(0.55))
-                            .multilineTextAlignment(.center).padding(.horizontal, 32)
-                    }
+                    SurveyQuestionHeader(questionText)
+                    Text(subtitle)
+                        .font(.system(size: 14, weight: .medium, design: .rounded)).foregroundColor(.white.opacity(0.55))
+                        .multilineTextAlignment(.center).padding(.horizontal, 32)
                     VStack(spacing: 10) {
-                        ForEach(BurdenDuration.allCases) { o in
+                        ForEach(options) { o in
                             SurveyOptionRow(text: o.rawValue, isSelected: responses.burdenDuration == o) { responses.burdenDuration = o }
                         }
                     }.padding(.horizontal, 20)
@@ -191,6 +206,7 @@ struct SurveyInterstitialAScreen: View {
 
     private var headline: String {
         switch responses.heaviestBurden {
+        case .thriving:    return "You're already ahead of most people."
         case .calling:     return "You're not walking this alone."
         default:           return "You're not carrying this alone."
         }
@@ -198,10 +214,12 @@ struct SurveyInterstitialAScreen: View {
 
     private var subtext: String {
         switch responses.heaviestBurden {
+        case .thriving:
+            return "Most people only turn to God's Word when things fall apart. You're here because you want to stay rooted — even when life is good.\n\nThat's what rare faith looks like."
         case .calling:
-            return "Over 100,000 believers have opened SpeakLife asking God to make their faith unshakeable — and found that daily declaration is what moved the needle.\n\nYou're in good company."
+            return "Over 100,000 believers have opened SpeakLife wanting their faith to be unshakeable — and found that daily declaration is what moved the needle.\n\nYou're in good company."
         default:
-            return "Over 100,000 men and women have opened SpeakLife carrying the same weight you just described.\n\nThe feelings are real. So is the way out."
+            return "Over 100,000 men and women have opened SpeakLife carrying the same weight you just described.\n\nWhat you're feeling is real. So is the way through it."
         }
     }
 
@@ -236,6 +254,11 @@ struct SurveyInterstitialAScreen: View {
             return TestimonialReview(
                 quote: "\"My faith used to crumble under pressure. After 30 days of declaring God's Word, I stopped doubting and started standing. My whole life shifted.\"",
                 author: "— Marcus T., Atlanta"
+            )
+        case .thriving:
+            return TestimonialReview(
+                quote: "\"I wasn't in a crisis — I just wanted to be more intentional with God. SpeakLife made declaring His Word a real daily habit. My faith is so much stronger now.\"",
+                author: "— Dominique L., North Carolina"
             )
         case .none:
             return TestimonialReview(
@@ -283,12 +306,20 @@ struct SurveyQ3AttemptsScreen: View {
 
     private var questionText: String {
         switch responses.heaviestBurden {
+        case .thriving:   return "How have you been building your faith so far?"
         case .calling:    return "What have you tried to grow your faith before?"
-        default:          return "Have you tried to fight through this before?"
+        default:          return "What have you tried to get through this?"
+        }
+    }
+    private var questionSubtitle: String {
+        switch responses.heaviestBurden {
+        case .thriving, .calling: return "Select all that apply."
+        default:                  return "Be real. Select all that apply."
         }
     }
     private var options: [PreviousAttempt] {
         switch responses.heaviestBurden {
+        case .thriving:   return PreviousAttempt.growthOptions
         case .calling:    return PreviousAttempt.faithOptions
         default:          return PreviousAttempt.painOptions
         }
@@ -299,7 +330,7 @@ struct SurveyQ3AttemptsScreen: View {
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 24) {
                     Spacer().frame(height: size.height * 0.12)
-                    SurveyQuestionHeader(questionText, subtitle: "Select all that apply.")
+                    SurveyQuestionHeader(questionText, subtitle: questionSubtitle)
                     VStack(spacing: 10) {
                         ForEach(options) { o in
                             SurveyCheckRow(text: o.rawValue, isSelected: responses.previousAttempts.contains(o)) {
@@ -324,12 +355,20 @@ struct SurveyQ4LieScreen: View {
 
     private var questionText: String {
         switch responses.heaviestBurden {
-        case .calling:    return "What thought makes it hard to fully trust God and step into deeper faith?"
-        default:          return "When you're at your lowest — what's going through your mind?"
+        case .thriving:   return "What do you most want to grow in?"
+        case .calling:    return "What makes it hardest to fully trust God?"
+        default:          return "When you're at your lowest — what's the thought that hits hardest?"
+        }
+    }
+    private var questionSubtitle: String {
+        switch responses.heaviestBurden {
+        case .thriving:   return "Pick the one that matters most to you right now."
+        default:          return "Pick the one that hits closest to home."
         }
     }
     private var options: [InnerLie] {
         switch responses.heaviestBurden {
+        case .thriving:   return InnerLie.growthOptions
         case .calling:    return InnerLie.faithOptions
         default:          return InnerLie.painOptions
         }
@@ -340,7 +379,7 @@ struct SurveyQ4LieScreen: View {
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 24) {
                     Spacer().frame(height: size.height * 0.12)
-                    SurveyQuestionHeader(questionText, subtitle: "Pick the one that hits closest to home.")
+                    SurveyQuestionHeader(questionText, subtitle: questionSubtitle)
                     VStack(spacing: 10) {
                         ForEach(options) { o in
                             SurveyOptionRow(text: o.rawValue, isSelected: responses.innerLie == o) { responses.innerLie = o }
@@ -420,14 +459,15 @@ struct SurveyQ6FutureScreen: View {
 
     private var questionText: String {
         switch responses.heaviestBurden {
+        case .thriving:   return "What would your life look like if you declared God's Word every single day without missing?"
         case .calling:    return "What would your life look like if you truly believed every promise God made you?"
-        default:          return "If this was no longer your battle — what would change first?"
+        default:          return "If this was no longer your battle — what would be different first?"
         }
     }
     private var options: [FutureChange] {
         switch responses.heaviestBurden {
-        case .calling:    return FutureChange.callingOptions
-        default:          return FutureChange.painOptions
+        case .thriving, .calling: return FutureChange.callingOptions
+        default:                  return FutureChange.painOptions
         }
     }
 

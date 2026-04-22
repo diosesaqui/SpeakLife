@@ -35,6 +35,7 @@ enum DeclarationCategory: String, CaseIterable, Identifiable, Codable,  Comparab
     case parenting
     case identity
     case marriage
+    case relationship   // dating / courting / pre-marriage relationship
     case general
     case praise
     case heaven
@@ -45,6 +46,20 @@ enum DeclarationCategory: String, CaseIterable, Identifiable, Codable,  Comparab
     case anxiety
     case favor
     case work
+    case business       // entrepreneur / own business
+    case grief          // loss / bereavement
+    case fertility      // infertility / believing for a child
+    case salvation      // praying for unsaved or prodigal loved ones
+    case debt           // specific crushing debt / financial bondage
+    case education      // school / exams / degree
+    case housing        // home / rent / eviction / housing need
+    case divorce        // divorce recovery / going through divorce
+    case wellness       // body / weight / health habits / body image
+    case mentalHealth   // clinical mental health / PTSD / bipolar / OCD
+    case forgiveness    // forgiving others / bitterness / resentment
+    case newSeason      // fresh start / new chapter / starting over
+    case singleParent   // raising kids alone
+    case anger          // anger / rage / temper
     case speaklife
     case innerHealing
     case obedience
@@ -434,5 +449,127 @@ struct Declaration: Codable, Identifiable, Hashable {
         self.isFavorite = isFavorite
         self.contentType = contentType
         self.lastEdit = lastEdit
+    }
+}
+
+// MARK: - Personal Declaration Focus Choice Labels
+
+extension DeclarationCategory {
+    var focusEmoji: String {
+        switch self {
+        case .health:         return "🙏"
+        case .wealth:         return "💰"
+        case .work:           return "💼"
+        case .business:       return "🚀"
+        case .love:           return "💍"
+        case .relationship:   return "💛"
+        case .marriage:       return "👫"
+        case .parenting:      return "👶"
+        case .destiny:        return "🌟"
+        case .identity:       return "🪞"
+        case .rest:           return "😌"
+        case .joy:            return "☀️"
+        case .favor:          return "🚪"
+        case .grace:          return "🕊️"
+        case .godsprotection: return "🛡️"
+        case .addiction:      return "⛓️"
+        case .confidence:     return "💪"
+        case .fear:           return "🧠"
+        case .wisdom:         return "💡"
+        case .innerHealing:   return "❤️‍🩹"
+        case .spiritualGrowth: return "🌱"
+        case .miracles:       return "✨"
+        case .hardtimes:      return "⛰️"
+        case .warfare:        return "⚔️"
+        case .friendship:     return "🤝"
+        case .purity:         return "🕊️"
+        case .hope:           return "🌅"
+        case .anxiety:        return "🫁"
+        case .grief:          return "🕊️"
+        case .fertility:      return "🌱"
+        case .salvation:      return "🙏"
+        case .debt:           return "⛓️"
+        case .education:      return "📚"
+        case .housing:        return "🏠"
+        case .divorce:        return "💔"
+        case .wellness:       return "💪"
+        case .mentalHealth:   return "🧠"
+        case .forgiveness:    return "🤍"
+        case .newSeason:      return "🌅"
+        case .singleParent:   return "👪"
+        case .anger:          return "🔥"
+        default:              return "🙏"
+        }
+    }
+
+    var focusTitle: String {
+        switch self {
+        case .health:         return "My Healing"
+        case .wealth:         return "Financial Breakthrough"
+        case .work:           return "My Career"
+        case .business:       return "My Business"
+        case .love:           return "Finding a Spouse"
+        case .relationship:   return "My Relationship"
+        case .marriage:       return "My Marriage"
+        case .parenting:      return "My Children"
+        case .destiny:        return "My Purpose & Calling"
+        case .identity:       return "My Identity in God"
+        case .rest:           return "Peace & Rest"
+        case .joy:            return "Joy & Freedom from Depression"
+        case .favor:          return "God's Favor & Open Doors"
+        case .grace:          return "Forgiveness & Freedom from Shame"
+        case .godsprotection: return "God's Protection"
+        case .addiction:      return "Freedom from Addiction"
+        case .confidence:     return "Boldness & Confidence"
+        case .fear:           return "Freedom from Fear"
+        case .wisdom:         return "Wisdom & Clarity"
+        case .innerHealing:   return "Inner Healing"
+        case .spiritualGrowth: return "Growing Closer to God"
+        case .miracles:       return "A Miracle"
+        case .hardtimes:      return "Strength Through Hard Times"
+        case .warfare:        return "Spiritual Victory"
+        case .friendship:     return "Community & Friendship"
+        case .purity:         return "Purity & Holiness"
+        case .hope:           return "Hope & Expectation"
+        case .anxiety:        return "Peace Over Anxiety"
+        case .grief:          return "Grief & Loss"
+        case .fertility:      return "Fertility & Pregnancy"
+        case .salvation:      return "Salvation of a Loved One"
+        case .debt:           return "Breaking Out of Debt"
+        case .education:      return "School & Education"
+        case .housing:        return "A Home"
+        case .divorce:        return "Divorce Recovery"
+        case .wellness:       return "Body & Health Habits"
+        case .mentalHealth:   return "Mental Health"
+        case .forgiveness:    return "Forgiving Someone"
+        case .newSeason:      return "A Fresh Start"
+        case .singleParent:   return "Single Parenting"
+        case .anger:          return "Anger & Temper"
+        default:              return "My Belief"
+        }
+    }
+
+    var focusSubtitle: String {
+        switch self {
+        case .work:         return "Career, promotion, employment"
+        case .business:     return "Starting or growing your own business"
+        case .love:         return "Believing for a godly spouse"
+        case .relationship: return "Dating, courting, or a relationship you're in"
+        case .marriage:     return "Protecting or restoring your marriage"
+        case .grief:        return "Loss of a loved one"
+        case .fertility:    return "Infertility, pregnancy, believing for a child"
+        case .salvation:    return "Praying for a prodigal or unsaved loved one"
+        case .debt:         return "Breaking free from financial bondage"
+        case .education:    return "School, exams, graduation"
+        case .housing:      return "Finding or keeping a home"
+        case .divorce:      return "Healing and rebuilding after divorce"
+        case .wellness:     return "Weight, body image, healthy habits"
+        case .mentalHealth: return "Clinical mental health, PTSD, diagnosis"
+        case .forgiveness:  return "Releasing bitterness toward someone who hurt you"
+        case .newSeason:    return "Starting over, new chapter, fresh beginning"
+        case .singleParent: return "Raising children alone"
+        case .anger:        return "Controlling anger, rage, or temper"
+        default:            return "Declare God's word over this area"
+        }
     }
 }

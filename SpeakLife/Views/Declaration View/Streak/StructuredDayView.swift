@@ -2,16 +2,9 @@
 //  StructuredDayView.swift
 //  SpeakLife
 //
-//  A modern, retention-focused redesign of the daily checklist.
-//  Replaces the old LazyVStack task list inside ModernDailyChecklistView.
-//
-//  Design principles (inspired by Fabulous, Duolingo, Headspace, Apple Fitness+):
-//  1. ONE hero "Next Up" card — not 4 equal rows. Reduces cognitive load.
-//  2. Sequential flow — complete task → next one becomes the hero.
-//  3. Progress ring — visual closing of the ring = dopamine.
-//  4. Celebration state — meaningful screen when all tasks done.
-//  5. Compact completed tasks — done = collapsed, no visual noise.
-//  6. Card-based, not list-based — each task is tappable, immersive.
+//  Modern sequential card-based daily checklist.
+//  Inspired by: Fabulous (hero card), Duolingo (progress ring),
+//  Headspace (featured content), Apple Activity Rings (ring close = dopamine).
 //
 
 import SwiftUI
@@ -24,32 +17,22 @@ struct DayProgressRing: View {
     let streakCount: Int
     @State private var animatedProgress: CGFloat = 0
 
-    private var progress: CGFloat {
-        total > 0 ? CGFloat(completed) / CGFloat(total) : 0
-    }
+    private var progress: CGFloat { total > 0 ? CGFloat(completed) / CGFloat(total) : 0 }
 
     var body: some View {
         VStack(spacing: 6) {
             ZStack {
-                // Background track
                 Circle()
                     .stroke(Color.white.opacity(0.12), lineWidth: 8)
                     .frame(width: 88, height: 88)
-
-                // Animated progress arc
                 Circle()
                     .trim(from: 0, to: animatedProgress)
                     .stroke(
-                        AngularGradient(
-                            gradient: Gradient(colors: [Color.green.opacity(0.7), Color.green]),
-                            center: .center
-                        ),
+                        AngularGradient(gradient: Gradient(colors: [Color.green.opacity(0.7), Color.green]), center: .center),
                         style: StrokeStyle(lineWidth: 8, lineCap: .round)
                     )
                     .frame(width: 88, height: 88)
                     .rotationEffect(.degrees(-90))
-
-                // Centre content
                 VStack(spacing: 1) {
                     Text("\(completed)")
                         .font(.system(size: 26, weight: .bold, design: .rounded))
@@ -59,35 +42,25 @@ struct DayProgressRing: View {
                         .foregroundColor(.white.opacity(0.6))
                 }
             }
-
-            // Streak badge
             if streakCount > 0 {
                 HStack(spacing: 4) {
-                    Text("🔥")
-                        .font(.system(size: 13))
+                    Text("🔥").font(.system(size: 13))
                     Text("\(streakCount) day streak")
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundColor(.orange)
                 }
-                .padding(.horizontal, 10)
-                .padding(.vertical, 4)
+                .padding(.horizontal, 10).padding(.vertical, 4)
                 .background(Capsule().fill(Color.orange.opacity(0.12)))
             }
         }
-        .onAppear {
-            withAnimation(.easeOut(duration: 0.9)) {
-                animatedProgress = progress
-            }
-        }
+        .onAppear { withAnimation(.easeOut(duration: 0.9)) { animatedProgress = progress } }
         .onChange(of: completed) { _ in
-            withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
-                animatedProgress = progress
-            }
+            withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) { animatedProgress = progress }
         }
     }
 }
 
-// MARK: - Hero "Next Up" Card
+// MARK: - Hero Card
 
 struct NextUpTaskCard: View {
     let task: DailyTask
@@ -108,185 +81,114 @@ struct NextUpTaskCard: View {
 
     private var ctaLabel: String {
         switch task.navigationDestination {
-        case .burst:       return "Start Burst →"
-        case .devotional:  return "Open Devotional →"
-        case .audioTab:    return "Listen Now →"
-        case .none:        return "Complete →"
+        case .burst:      return "Start Burst →"
+        case .devotional: return "Open Devotional →"
+        case .audioTab:   return "Listen Now →"
+        case .none:       return "Complete →"
         }
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            // Header
             HStack {
                 Text("NEXT UP")
-                    .font(.system(size: 10, weight: .bold))
-                    .tracking(1.5)
+                    .font(.system(size: 10, weight: .bold)).tracking(1.5)
                     .foregroundColor(.white.opacity(0.7))
-
                 Spacer()
-
                 Text("\(task.estimatedMinutes) min")
                     .font(.system(size: 11, weight: .medium))
                     .foregroundColor(.white.opacity(0.7))
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 3)
+                    .padding(.horizontal, 8).padding(.vertical, 3)
                     .background(Capsule().fill(Color.white.opacity(0.12)))
             }
-            .padding(.horizontal, 20)
-            .padding(.top, 18)
+            .padding(.horizontal, 20).padding(.top, 18)
 
-            // Icon + Title
             HStack(spacing: 14) {
                 ZStack {
-                    Circle()
-                        .fill(Color.white.opacity(0.15))
-                        .frame(width: 52, height: 52)
-                    Image(systemName: task.icon)
-                        .font(.system(size: 24))
-                        .foregroundColor(.white)
+                    Circle().fill(Color.white.opacity(0.15)).frame(width: 52, height: 52)
+                    Image(systemName: task.icon).font(.system(size: 24)).foregroundColor(.white)
                 }
-
                 VStack(alignment: .leading, spacing: 4) {
                     Text(task.title)
-                        .font(.system(size: 19, weight: .bold))
-                        .foregroundColor(.white)
-                        .lineLimit(2)
+                        .font(.system(size: 19, weight: .bold)).foregroundColor(.white).lineLimit(2)
                     Text(task.description)
-                        .font(.system(size: 13))
-                        .foregroundColor(.white.opacity(0.75))
-                        .lineLimit(2)
+                        .font(.system(size: 13)).foregroundColor(.white.opacity(0.75)).lineLimit(2)
                 }
             }
-            .padding(.horizontal, 20)
-            .padding(.top, 14)
+            .padding(.horizontal, 20).padding(.top, 14)
 
             Spacer(minLength: 16)
 
-            // CTA row
             HStack {
-                Button(action: {
-                    UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-                    onNavigate(task)
-                }) {
+                Button(action: { UIImpactFeedbackGenerator(style: .medium).impactOccurred(); onNavigate(task) }) {
                     Text(ctaLabel)
-                        .font(.system(size: 15, weight: .semibold))
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 20)
-                        .padding(.vertical, 11)
-                        .background(
-                            Capsule()
-                                .fill(Color.white.opacity(0.2))
-                        )
+                        .font(.system(size: 15, weight: .semibold)).foregroundColor(.white)
+                        .padding(.horizontal, 20).padding(.vertical, 11)
+                        .background(Capsule().fill(Color.white.opacity(0.2)))
                 }
-
                 Spacer()
-
-                // Tap-to-complete checkbox (secondary action)
                 Button(action: { onToggle(task.id) }) {
                     Image(systemName: "checkmark.circle")
-                        .font(.system(size: 26))
-                        .foregroundColor(.white.opacity(0.5))
+                        .font(.system(size: 26)).foregroundColor(.white.opacity(0.5))
                 }
             }
-            .padding(.horizontal, 20)
-            .padding(.bottom, 18)
+            .padding(.horizontal, 20).padding(.bottom, 18)
         }
         .frame(maxWidth: .infinity, minHeight: 160)
         .background(cardGradient)
         .clipShape(RoundedRectangle(cornerRadius: 20))
-        .shadow(color: cardGradient.colorAtCenter.opacity(0.35), radius: 12, x: 0, y: 6)
         .scaleEffect(isPressed ? 0.97 : 1.0)
         .animation(.easeOut(duration: 0.12), value: isPressed)
-        .onLongPressGesture(minimumDuration: 0, maximumDistance: .infinity, pressing: { pressing in
-            isPressed = pressing
-        }, perform: {})
     }
 }
 
-// MARK: - Compact Completed Task Row
+// MARK: - Compact Rows
 
 struct CompletedTaskRow: View {
     let task: DailyTask
-
     var body: some View {
         HStack(spacing: 12) {
-            // Done indicator
             ZStack {
                 Circle().fill(Color.green.opacity(0.15)).frame(width: 36, height: 36)
-                Image(systemName: "checkmark")
-                    .font(.system(size: 14, weight: .bold))
-                    .foregroundColor(.green)
+                Image(systemName: "checkmark").font(.system(size: 14, weight: .bold)).foregroundColor(.green)
             }
-
             VStack(alignment: .leading, spacing: 2) {
                 Text(task.title)
                     .font(.system(size: 14, weight: .medium))
                     .foregroundColor(.white.opacity(0.5))
                     .strikethrough(true, color: .white.opacity(0.3))
-
                 if let completedAt = task.completedAt {
                     Text("Done at \(DateFormatter.timeFormatter.string(from: completedAt))")
-                        .font(.system(size: 11))
-                        .foregroundColor(.white.opacity(0.3))
+                        .font(.system(size: 11)).foregroundColor(.white.opacity(0.3))
                 }
             }
-
             Spacer()
-
-            Text(task.category.emoji)
-                .font(.system(size: 16))
-                .opacity(0.5)
+            Text(task.category.emoji).font(.system(size: 16)).opacity(0.5)
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 10)
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color.white.opacity(0.03))
-        )
+        .padding(.horizontal, 16).padding(.vertical, 10)
+        .background(RoundedRectangle(cornerRadius: 12).fill(Color.white.opacity(0.03)))
     }
 }
-
-// MARK: - Upcoming (not-yet-active) Task Row
 
 struct UpcomingTaskRow: View {
     let task: DailyTask
-
     var body: some View {
         HStack(spacing: 12) {
             ZStack {
-                RoundedRectangle(cornerRadius: 8)
-                    .fill(Color.white.opacity(0.06))
-                    .frame(width: 36, height: 36)
-                Image(systemName: task.icon)
-                    .font(.system(size: 14))
-                    .foregroundColor(.white.opacity(0.4))
+                RoundedRectangle(cornerRadius: 8).fill(Color.white.opacity(0.06)).frame(width: 36, height: 36)
+                Image(systemName: task.icon).font(.system(size: 14)).foregroundColor(.white.opacity(0.4))
             }
-
-            Text(task.title)
-                .font(.system(size: 14, weight: .medium))
-                .foregroundColor(.white.opacity(0.4))
-
+            Text(task.title).font(.system(size: 14, weight: .medium)).foregroundColor(.white.opacity(0.4))
             Spacer()
-
-            Text("\(task.estimatedMinutes)m")
-                .font(.system(size: 11))
-                .foregroundColor(.white.opacity(0.3))
+            Text("\(task.estimatedMinutes)m").font(.system(size: 11)).foregroundColor(.white.opacity(0.3))
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 10)
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color.white.opacity(0.02))
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.white.opacity(0.06), lineWidth: 1)
-        )
+        .padding(.horizontal, 16).padding(.vertical, 10)
+        .background(RoundedRectangle(cornerRadius: 12).fill(Color.white.opacity(0.02)))
+        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.white.opacity(0.06), lineWidth: 1))
     }
 }
 
-// MARK: - Celebration View (all tasks done)
+// MARK: - Celebration
 
 struct DayCelebrationView: View {
     let streakCount: Int
@@ -297,74 +199,35 @@ struct DayCelebrationView: View {
     var body: some View {
         VStack(spacing: 24) {
             Spacer()
-
-            // Celebration emoji + animation
-            Text("🙌")
-                .font(.system(size: 72))
-                .scaleEffect(scale)
-                .opacity(opacity)
-
+            Text("🙌").font(.system(size: 72)).scaleEffect(scale).opacity(opacity)
             VStack(spacing: 8) {
-                Text("Day Complete!")
-                    .font(.system(size: 28, weight: .bold))
-                    .foregroundColor(.white)
-
+                Text("Day Complete!").font(.system(size: 28, weight: .bold)).foregroundColor(.white)
                 Text("You showed up for your faith today.")
-                    .font(.system(size: 16))
-                    .foregroundColor(.white.opacity(0.7))
-                    .multilineTextAlignment(.center)
-            }
-            .opacity(opacity)
-
-            // Streak display
+                    .font(.system(size: 16)).foregroundColor(.white.opacity(0.7)).multilineTextAlignment(.center)
+            }.opacity(opacity)
             if streakCount > 0 {
                 HStack(spacing: 8) {
-                    Text("🔥")
-                        .font(.system(size: 24))
+                    Text("🔥").font(.system(size: 24))
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("\(streakCount) day streak")
-                            .font(.system(size: 20, weight: .bold))
-                            .foregroundColor(.orange)
-                        Text("Keep going tomorrow")
-                            .font(.system(size: 13))
-                            .foregroundColor(.white.opacity(0.6))
+                        Text("\(streakCount) day streak").font(.system(size: 20, weight: .bold)).foregroundColor(.orange)
+                        Text("Keep going tomorrow").font(.system(size: 13)).foregroundColor(.white.opacity(0.6))
                     }
                 }
                 .padding(16)
-                .background(
-                    RoundedRectangle(cornerRadius: 16)
-                        .fill(Color.orange.opacity(0.12))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 16)
-                                .stroke(Color.orange.opacity(0.25), lineWidth: 1)
-                        )
-                )
+                .background(RoundedRectangle(cornerRadius: 16).fill(Color.orange.opacity(0.12))
+                    .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color.orange.opacity(0.25), lineWidth: 1)))
                 .opacity(opacity)
             }
-
             Spacer()
-
             Button(action: onDismiss) {
-                Text("Done")
-                    .font(.system(size: 17, weight: .semibold))
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 16)
-                    .background(
-                        RoundedRectangle(cornerRadius: 16)
-                            .fill(Color.green.opacity(0.3))
-                    )
+                Text("Done").font(.system(size: 17, weight: .semibold)).foregroundColor(.white)
+                    .frame(maxWidth: .infinity).padding(.vertical, 16)
+                    .background(RoundedRectangle(cornerRadius: 16).fill(Color.green.opacity(0.3)))
                     .padding(.horizontal, 24)
-            }
-            .opacity(opacity)
-            .padding(.bottom, 32)
+            }.opacity(opacity).padding(.bottom, 32)
         }
         .onAppear {
-            withAnimation(.spring(response: 0.5, dampingFraction: 0.6)) {
-                scale = 1.0
-                opacity = 1.0
-            }
-            // Haptic celebration
+            withAnimation(.spring(response: 0.5, dampingFraction: 0.6)) { scale = 1.0; opacity = 1.0 }
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                 UINotificationFeedbackGenerator().notificationOccurred(.success)
             }
@@ -372,10 +235,8 @@ struct DayCelebrationView: View {
     }
 }
 
-// MARK: - Main Structured Day View
+// MARK: - Main View
 
-/// Drop-in replacement for the task list inside ModernDailyChecklistView.
-/// Provides a modern, sequential, card-based daily routine experience.
 struct StructuredDayView: View {
     let tasks: [DailyTask]
     let streakCount: Int
@@ -392,65 +253,40 @@ struct StructuredDayView: View {
     var body: some View {
         VStack(spacing: 16) {
             if allDone {
-                // ── All done → celebration ──
                 DayCelebrationView(streakCount: streakCount, onDismiss: onAllComplete)
                     .transition(.asymmetric(
                         insertion: .scale(scale: 0.9).combined(with: .opacity),
-                        removal: .opacity
-                    ))
+                        removal: .opacity))
             } else {
-                // ── Progress ring ──
-                DayProgressRing(
-                    completed: completedTasks.count,
-                    total: tasks.count,
-                    streakCount: streakCount
-                )
-                .padding(.top, 8)
+                DayProgressRing(completed: completedTasks.count, total: tasks.count, streakCount: streakCount)
+                    .padding(.top, 8)
 
-                // ── Hero "Next Up" card ──
                 if let next = nextTask {
-                    NextUpTaskCard(
-                        task: next,
-                        onNavigate: onNavigate,
-                        onToggle: onToggle
-                    )
-                    .transition(.asymmetric(
-                        insertion: .scale(scale: 0.95).combined(with: .opacity),
-                        removal: .move(edge: .leading).combined(with: .opacity)
-                    ))
-                    .id(next.id) // Forces transition on task change
+                    NextUpTaskCard(task: next, onNavigate: onNavigate, onToggle: onToggle)
+                        .transition(.asymmetric(
+                            insertion: .scale(scale: 0.95).combined(with: .opacity),
+                            removal: .move(edge: .leading).combined(with: .opacity)))
+                        .id(next.id)
                 }
 
-                // ── Upcoming tasks (dimmed) ──
                 if !upcomingTasks.isEmpty {
                     VStack(spacing: 6) {
                         HStack {
-                            Text("UP NEXT")
-                                .font(.system(size: 10, weight: .bold))
-                                .tracking(1.5)
+                            Text("UP NEXT").font(.system(size: 10, weight: .bold)).tracking(1.5)
                                 .foregroundColor(.white.opacity(0.35))
                             Spacer()
-                        }
-                        .padding(.horizontal, 4)
-
-                        ForEach(upcomingTasks) { task in
-                            UpcomingTaskRow(task: task)
-                        }
+                        }.padding(.horizontal, 4)
+                        ForEach(upcomingTasks) { UpcomingTaskRow(task: $0) }
                     }
                 }
 
-                // ── Completed tasks (collapsed) ──
                 if !completedTasks.isEmpty {
                     VStack(spacing: 6) {
                         HStack {
-                            Text("COMPLETED")
-                                .font(.system(size: 10, weight: .bold))
-                                .tracking(1.5)
+                            Text("COMPLETED").font(.system(size: 10, weight: .bold)).tracking(1.5)
                                 .foregroundColor(.white.opacity(0.35))
                             Spacer()
-                        }
-                        .padding(.horizontal, 4)
-
+                        }.padding(.horizontal, 4)
                         ForEach(completedTasks) { task in
                             CompletedTaskRow(task: task)
                                 .transition(.move(edge: .trailing).combined(with: .opacity))
@@ -462,17 +298,3 @@ struct StructuredDayView: View {
         .animation(.spring(response: 0.45, dampingFraction: 0.8), value: tasks.map { $0.isCompleted })
     }
 }
-
-// MARK: - Color Helpers
-
-extension LinearGradient {
-    /// Returns an approximate center color for shadow usage.
-    var colorAtCenter: Color {
-        // We can't extract colors from LinearGradient directly in SwiftUI,
-        // so this is a workaround: return a neutral dark color.
-        // Shadows are subtle, so this doesn't need to be exact.
-        Color.black
-    }
-}
-
-// Color(hex:) is defined in BibleReaderView.swift (project-wide extension)

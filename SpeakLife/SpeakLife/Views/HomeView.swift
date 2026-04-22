@@ -7,6 +7,7 @@
 
 import SwiftUI
 import FacebookCore
+import FirebaseAnalytics
 let resources: [MusicResources] = [.sethpiano, .washed, .rainstorm, .everpresent]
 
 struct MusicResources {
@@ -44,7 +45,7 @@ class TabViewModel: ObservableObject {
             0: "declarations",
             1: "audio",
             2: "create_your_own",
-            3: "community",
+            3: "bible",
             4: "profile"
         ]
         
@@ -90,6 +91,9 @@ struct HomeView: View {
     @State private var showDeclarationPrompt = false
     @AppStorage("hasCreatedFirstDeclaration") private var hasCreatedFirstDeclaration = false
     @AppStorage("lastDeclarationPromptDate") private var lastDeclarationPromptDate: Double = 0
+    // Personal Declaration migration — show existing users the new feature on update
+    @AppStorage("pd_migrationPromptShown") private var pdMigrationPromptShown = false
+    @State private var showPDMigrationSheet = false
     @State private var showStreakCelebration = false
     @State private var celebrationStreakCount = 0
     
@@ -200,6 +204,22 @@ struct HomeView: View {
                                 // Global streak celebration triggered
                             }
                             // Notification-triggered burst (push notification tap) — unchanged
+                            // Personal Declaration migration — shown once to existing users on update
+                            .fullScreenCover(isPresented: $showPDMigrationSheet) {
+                                GeometryReader { geo in
+                                    PersonalDeclarationOnboardingView(
+                                        viewModel: DIContainer.shared.makePersonalDeclarationViewModel(),
+                                        size: geo.size
+                                    ) { declaration in
+                                        if declaration != nil {
+                                            appState.hasPersonalDeclaration = true
+                                        }
+                                        showPDMigrationSheet = false
+                                    }
+                                    .environmentObject(appState)
+                                }
+                                .ignoresSafeArea()
+                            }
                             .fullScreenCover(isPresented: $showDailyBurstOnLaunch) {
                                 DailyDeclarationBurstView()
                                     .environmentObject(declarationStore)
@@ -223,12 +243,19 @@ struct HomeView: View {
                             }
                   
                 } else {
-                        OnboardingView()
-                            .onAppear {
-                                viewModel.requestPermission { granted in
-                                    // ATT Permission handled
-                                }
-                            }
+                    SurveyOnboardingView(size: UIScreen.main.bounds.size) {
+                        withAnimation {
+                            appState.isOnboarded = true
+                            LifecycleNotificationService.shared.scheduleLifecycleNotifications()
+                            Analytics.logEvent("onBoardingFinished", parameters: nil)
+                        }
+                    }
+                    .ignoresSafeArea()
+                    .onAppear {
+                        viewModel.requestPermission { granted in
+                            // ATT Permission handled
+                        }
+                    }
                 }
             }
         
@@ -240,10 +267,10 @@ struct HomeView: View {
             TabView(selection: $tabViewModel.selectedTab) {
                 declarationView
                 audioView
-                //🔴bibleView
+               // bibleView
                 // dailyChecklistView // Moved to DeclarationView
                 createYourOwnView
-                communityView
+                bibleView
                 profileView
                     
                 }
@@ -256,6 +283,7 @@ struct HomeView: View {
                 .accentColor(Constants.DAMidBlue)
                 .onAppear {
                     checkForNewVersion()
+                    checkForPersonalDeclarationMigration()
                     if appState.firstOpen {
                         appState.firstOpen = false
                     }
@@ -351,6 +379,7 @@ struct HomeView: View {
             .tabItem {
                 Image(systemName: "quote.bubble.fill")
                     .renderingMode(.original)
+                Text("Home")
                 
             }
     }
@@ -370,6 +399,7 @@ struct HomeView: View {
                 if #available(iOS 17, *) {
                     Image(systemName: "waveform")
                         .renderingMode(.original)
+                    Text("Audio")
                 } else {
                     Image(systemName: "waveform")
                         .renderingMode(.original)
@@ -384,6 +414,7 @@ struct HomeView: View {
             .tabItem {
                 Image(systemName: "plus.bubble.fill")
                     .renderingMode(.original)
+                Text("Yours")
             }
     }
     
@@ -419,13 +450,28 @@ struct HomeView: View {
 //            }
 //    }
     
-    var communityView: some View {
-        PrayerWallView()
+//    var communityView: some View {
+//        PrayerWallView()
+//            .tag(4)
+//            .tabItem {
+//                if #available(iOS 17, *) {
+//                    Image(systemName: "hands.and.sparkles.fill")
+//                        .renderingMode(.original)
+//                } else {
+//                    Image(systemName: "person.2.fill")
+//                        .renderingMode(.original)
+//                }
+//            }
+//    }
+    
+    var bibleView: some View {
+        BibleView()
             .tag(4)
             .tabItem {
                 if #available(iOS 17, *) {
-                    Image(systemName: "hands.and.sparkles.fill")
+                    Image(systemName: "book.closed.fill")
                         .renderingMode(.original)
+                    Text("Bible")
                 } else {
                     Image(systemName: "person.2.fill")
                         .renderingMode(.original)
@@ -439,6 +485,7 @@ struct HomeView: View {
             .tabItem {
                 Image(systemName: "line.3.horizontal")
                     .renderingMode(.original)
+                Text("Profile")
             }
     }
     
@@ -484,6 +531,21 @@ struct HomeView: View {
         }
     }
     
+    private func checkForPersonalDeclarationMigration() {
+        // Only for existing onboarded users who haven't set a personal declaration yet
+        guard appState.isOnboarded else { return }
+        guard !appState.hasPersonalDeclaration else { return }
+        guard !pdMigrationPromptShown else { return }
+        guard !showSubscription else { return }
+
+        // Delay slightly so the main app finishes loading first
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+            guard appState.isOnboarded && !showSubscription else { return }
+            pdMigrationPromptShown = true
+            showPDMigrationSheet = true
+        }
+    }
+
     private func checkForNewVersion() {
         let lastVersion = UserDefaults.standard.string(forKey: "lastVersion") ?? "0.0.0"
         if lastVersion != currentVersion && !appState.firstOpen {

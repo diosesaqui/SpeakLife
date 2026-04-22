@@ -22,11 +22,13 @@ final class NotificationHandler: NSObject, ObservableObject, UNUserNotificationC
     static let shared = NotificationHandler()
     
     /// Callback to process notification content
-    /// Set by SpeakLifeApp on initial launch.
-    /// NOTE: We do NOT auto-process pending notifications in didSet anymore.
-    /// SpeakLifeApp.processIfReady() is called explicitly after the landing screen
-    /// hides so that navigation commands land on a visible tab view.
-    var callback: ((UNNotificationContent) -> Void)?
+    /// Set by SpeakLifeApp on initial launch
+    var callback: ((UNNotificationContent) -> Void)? {
+        didSet {
+            // Process any pending notification when callback is set
+            processPendingNotificationIfNeeded()
+        }
+    }
     
     /// Stores notification content if received before callback is set (cold launch scenario)
     private var pendingNotificationContent: UNNotificationContent?
@@ -64,13 +66,7 @@ final class NotificationHandler: NSObject, ObservableObject, UNUserNotificationC
         completionHandler()
     }
     
-    // MARK: - Pending Notification Processing
-    
-    /// Call this once the app UI is fully ready (landing screen hidden, tab view visible).
-    /// Processes any notification that arrived before the UI was ready (cold launch scenario).
-    func processIfReady() {
-        processPendingNotificationIfNeeded()
-    }
+    // MARK: - Private Methods
     
     private func processPendingNotificationIfNeeded() {
         guard let pending = pendingNotificationContent,
@@ -100,11 +96,7 @@ final class NotificationHandler: NSObject, ObservableObject, UNUserNotificationC
             }
         }
 
-        // BUGFIX: Do NOT call callback here. willPresent fires when a notification arrives
-        // while the app is in the foreground — the user hasn't tapped anything yet.
-        // Calling callback here would silently navigate/change app state without user intent,
-        // and then fire again via didReceive when they actually tap, causing double-processing
-        // and broken navigation. Navigation should only happen on explicit tap (didReceive).
+        callback?(content)
         completionHandler([.banner, .sound])
     }
     

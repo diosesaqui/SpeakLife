@@ -93,7 +93,28 @@ final class UserPreferencesTracker: ObservableObject {
         saveTopCategories()
     }
 
+    /// Set during onboarding after Personal Declaration is saved.
+    /// In-memory only — needed for paywall personalization in that session.
+    var personalDeclarationBelief: String? = nil
+
     func getDynamicPaywallCopy() -> PaywallCopy {
+        // Personal Declaration overrides all other copy — highest personalization signal
+        if let belief = personalDeclarationBelief, !belief.isEmpty {
+            return PaywallCopy(
+                headline: "You just declared what you're trusting God for.",
+                subheadline: "SpeakLife will send you this declaration every single day until it comes to pass. Don't miss a day.",
+                valueProps: [
+                    "Your Personal Declaration Delivered Daily",
+                    "Speak God's Word Over Your Situation Every Morning",
+                    "Notifications Tuned to What You're Believing For",
+                    "Pray With 100,000+ Believers",
+                    "Unlimited Declarations Across All Categories"
+                ],
+                ctaText: "Start Believing Every Day",
+                urgencyText: "3 Days Free \u{2022} Cancel Anytime"
+            )
+        }
+
         switch primaryCategory {
         case .anxiety:
             return PaywallCopy(

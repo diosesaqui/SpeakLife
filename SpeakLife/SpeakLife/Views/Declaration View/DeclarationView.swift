@@ -55,11 +55,16 @@ struct DeclarationView: View {
         case loveLetter
         case dailyChecklist
         case timerStreak
+        case personalDeclaration
        // case mail
         
         var id: Int { hashValue }
     }
     @State private var showSpeakAloudBanner = false
+    @State private var showBreakthroughFlow = false
+    @State private var showNewDeclarationSheet = false
+    @StateObject private var speechSynthesizer = SpeechSynthesizer()
+    @State private var loadedDeclaration: PersonalDeclaration? = nil
     
     private var cancellables = Set<AnyCancellable>()
     
@@ -90,12 +95,74 @@ struct DeclarationView: View {
         }
     }
     
+    // Personal Declaration compact button shown in top row — always visible
+    @ViewBuilder
+    private var personalDeclarationButton: some View {
+        if appState.hasPersonalDeclaration {
+            // Active declaration — gold filled hands icon
+            Button {
+                Task {
+                    loadedDeclaration = await DIContainer.shared.personalDeclarationRepository.load()
+                    activeSheet = .personalDeclaration
+                }
+            } label: {
+                Image(systemName: "hands.sparkles.fill")
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundColor(.yellow)
+                    .frame(width: 44, height: 44)
+                    .background(
+                        Circle()
+                            .fill(Color.black.opacity(0.7))
+                            .overlay(
+                                Circle()
+                                    .stroke(Color.yellow.opacity(0.4), lineWidth: 1)
+                            )
+                    )
+            }
+            .buttonStyle(PlainButtonStyle())
+            .onAppear {
+                Task {
+                    loadedDeclaration = await DIContainer.shared.personalDeclarationRepository.load()
+                }
+            }
+            .onChange(of: appState.scrollToPersonalDeclaration) { shouldScroll in
+                if shouldScroll {
+                    Task {
+                        loadedDeclaration = await DIContainer.shared.personalDeclarationRepository.load()
+                        activeSheet = .personalDeclaration
+                        appState.scrollToPersonalDeclaration = false
+                    }
+                }
+            }
+        } else {
+            // No active declaration — dimmed outline, tap to create
+            Button {
+                showNewDeclarationSheet = true
+            } label: {
+                Image(systemName: "hands.sparkles")
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundColor(.white.opacity(0.4))
+                    .frame(width: 44, height: 44)
+                    .background(
+                        Circle()
+                            .fill(Color.black.opacity(0.5))
+                            .overlay(
+                                Circle()
+                                    .stroke(Color.white.opacity(0.15), lineWidth: 1)
+                            )
+                    )
+            }
+            .buttonStyle(PlainButtonStyle())
+        }
+    }
+
     @ViewBuilder
     private func topButtonsRow(_ geometry: GeometryProxy) -> some View {
         HStack {
             //loveLetterButton
             devotionalButton
             dailyBurstButton
+            personalDeclarationButton
             
             speakAloudBannerSection(geometry)
             if !showSpeakAloudBanner {
@@ -296,6 +363,25 @@ struct DeclarationView: View {
                 .environmentObject(timerViewModel)
                 .environmentObject(streakViewModel)
         }
+        // Top-level cover — handles both "create first declaration" and "set new after breakthrough"
+        .fullScreenCover(isPresented: $showNewDeclarationSheet) {
+            GeometryReader { geo in
+                PersonalDeclarationOnboardingView(
+                    viewModel: DIContainer.shared.makePersonalDeclarationViewModel(),
+                    size: geo.size
+                ) { newDeclaration in
+                    if newDeclaration != nil {
+                        appState.hasPersonalDeclaration = true
+                    }
+                    showNewDeclarationSheet = false
+                    Task {
+                        loadedDeclaration = await DIContainer.shared.personalDeclarationRepository.load()
+                    }
+                }
+                .environmentObject(appState)
+            }
+            .ignoresSafeArea()
+        }
         .onAppear(perform: handleOnAppear)
         .onDisappear(perform: handleOnDisappear)
         //.setupNotificationObservers(timerViewModel: timerViewModel)
@@ -320,8 +406,37 @@ struct DeclarationView: View {
                 .environmentObject(streakViewModel)
         case .timerStreak:
             TimerStreakDetailView(timerViewModel: timerViewModel)
-//            StreakSheet(isShown: $isPresentingBottomSheet, streakViewModel: streakViewModel)
-//                .environmentObject(streakViewModel)
+
+        case .personalDeclaration:
+            if let declaration = loadedDeclaration {
+                PersonalDeclarationCard(
+                    declaration: declaration,
+                    onBreakthrough: {
+                        activeSheet = nil
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                            showBreakthroughFlow = true
+                        }
+                    }
+                )
+                .fullScreenCover(isPresented: $showBreakthroughFlow) {
+                    if let d = loadedDeclaration {
+                        BreakthroughFlowView(
+                            declaration: d,
+                            onDismiss: { showBreakthroughFlow = false },
+                            onSetNew: {
+                                showBreakthroughFlow = false
+                                showNewDeclarationSheet = true
+                            }
+                        )
+                        .environmentObject(appState)
+                    }
+                }
+
+            } else {
+                ProgressView().tint(.white)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(Color(red: 0.06, green: 0.08, blue: 0.18))
+            }
         }
     }
     

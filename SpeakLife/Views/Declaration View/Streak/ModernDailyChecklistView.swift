@@ -28,59 +28,48 @@ struct ModernDailyChecklistView: View {
 
     // MARK: - Task Navigation
 
-    /// Routes user to the correct in-app destination when they tap a checklist task row.
     private func handleTaskNavigation(_ task: DailyTask) {
         switch task.navigationDestination {
-
         case .audioTab:
-            // 1. Compute the best audio recommendation based on onboarding categories
+            // Pick the best filter based on onboarding categories.
+            // We do NOT pick the episode here — audio content may not be loaded yet
+            // if the user hasn't visited the audio tab this session.
+            // AudioDeclarationView will pick and play the first unplayed episode
+            // via onReceive(contentByFilter) once the content finishes loading.
             let userCategories = getUserTopCategories()
             let availableFilterIds = audioDeclarationViewModel.dynamicFilters.map { $0.id }
-            let recommendation = AudioRecommendationEngine.recommend(
-                userCategories: userCategories,
-                contentByFilter: audioDeclarationViewModel.contentByFilter,
-                availableFilterIds: availableFilterIds
+            let filterId = AudioRecommendationEngine.bestFilterId(
+                for: userCategories,
+                availableFilterIds: availableFilterIds.isEmpty ? ["speaklife"] : availableFilterIds
             )
-            // 2. Pre-configure the audio tab
-            audioDeclarationViewModel.setSelectedFilter(recommendation.filterId)
-            audioDeclarationViewModel.checklistRecommendedEpisode = recommendation.episode
-            // 3. Dismiss checklist sheet, then switch to audio tab
+            audioDeclarationViewModel.setSelectedFilter(filterId)
+            audioDeclarationViewModel.checklistAutoPlayPending = true
             dismiss()
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
                 tabViewModel.goToAudio()
             }
-
         case .devotional:
             showDevotional = true
-
         case .burst:
             dismiss()
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                NotificationCenter.default.post(
-                    name: Notification.Name("ShowDailyDeclarationBurst"),
-                    object: nil
-                )
+                NotificationCenter.default.post(name: Notification.Name("ShowDailyDeclarationBurst"), object: nil)
             }
-
         case .none:
-            // No navigation — treat as a simple toggle
             viewModel.completeTask(taskId: task.id)
         }
     }
 
-    /// Reads the user's top 2 onboarding categories from UserDefaults.
     private func getUserTopCategories() -> [String] {
         let defaults = UserDefaults.standard
         if let data = defaults.data(forKey: "userSelectedCategories"),
            let categories = try? JSONDecoder().decode([String].self, from: data) {
             return Array(categories.prefix(2))
         }
-        if let single = defaults.string(forKey: "selectedCategory") {
-            return [single]
-        }
+        if let single = defaults.string(forKey: "selectedCategory") { return [single] }
         return []
     }
-    
+
     private var motivationalText: String {
         let hour = Calendar.current.component(.hour, from: Date())
         let completed = viewModel.todayChecklist.completedTasksCount
@@ -120,72 +109,69 @@ struct ModernDailyChecklistView: View {
                                     .font(.subheadline)
                                     .foregroundColor(.white.opacity(0.7))
                                 
-                                if viewModel.streakStats.currentStreak > 0 {
-                                    Text("•")
-                                        .foregroundColor(.white.opacity(0.5))
-                                    HStack(spacing: 4) {
-                                        Text("🔥")
-                                        Text("\(viewModel.streakStats.currentStreak) day streak")
-                                            .font(.subheadline)
-                                            .foregroundColor(.orange)
-                                    }
-                                }
+//                                if viewModel.streakStats.currentStreak > 0 {
+//                                    Text("•")
+//                                        .foregroundColor(.white.opacity(0.5))
+//                                    HStack(spacing: 4) {
+//                                        Text("🔥")
+//                                        Text("\(viewModel.streakStats.currentStreak) day streak")
+//                                            .font(.subheadline)
+//                                            .foregroundColor(.orange)
+//                                    }
+//                                }
                             }
                         }
                         
                         Spacer()
                         
                         // Task counter instead of percentage
-                        VStack(spacing: 4) {
-                            Text("\(viewModel.todayChecklist.completedTasksCount)")
-                                .font(.largeTitle)
-                                .fontWeight(.bold)
-                                .foregroundColor(.white)
-                                .scaleEffect(celebrationScale)
-                            Text("of \(viewModel.todayChecklist.tasks.count)")
-                                .font(.caption)
-                                .foregroundColor(.white.opacity(0.7))
-                        }
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 8)
-                        .background(
-                            RoundedRectangle(cornerRadius: 12)
-                                .fill(Color.white.opacity(0.1))
-                        )
+//                        VStack(spacing: 4) {
+//                            Text("\(viewModel.todayChecklist.completedTasksCount)")
+//                                .font(.largeTitle)
+//                                .fontWeight(.bold)
+//                                .foregroundColor(.white)
+//                                .scaleEffect(celebrationScale)
+//                            Text("of \(viewModel.todayChecklist.tasks.count)")
+//                                .font(.caption)
+//                                .foregroundColor(.white.opacity(0.7))
+//                        }
+//                        .padding(.horizontal, 16)
+//                        .padding(.vertical, 8)
+//                        .background(
+//                            RoundedRectangle(cornerRadius: 12)
+//                                .fill(Color.white.opacity(0.1))
+//                        )
+//                        
+//                        // Devotional button
+//                        Button(action: { showDevotional = true }) {
+//                            VStack(spacing: 4) {
+//                                Image(systemName: "book.pages.fill")
+//                                    .font(.title)
+//                                    .fontWeight(.semibold)
+//                                    .foregroundColor(.white)
+//                                Text("Devotional")
+//                                    .font(.caption)
+//                                    .foregroundColor(.white.opacity(0.7))
+//                            }
+//                            .padding(.horizontal, 16)
+//                            .padding(.vertical, 8)
+//                            .background(
+//                                RoundedRectangle(cornerRadius: 12)
+//                                    .fill(Color.white.opacity(0.1))
+//                            )
+//                        }
                         
-                        // Devotional button
-                        Button(action: { showDevotional = true }) {
-                            VStack(spacing: 4) {
-                                Image(systemName: "book.pages.fill")
-                                    .font(.title)
-                                    .fontWeight(.semibold)
-                                    .foregroundColor(.white)
-                                Text("Devotional")
-                                    .font(.caption)
-                                    .foregroundColor(.white.opacity(0.7))
+                        // Always show close button — fullScreenCover has no swipe-to-dismiss
+                        Button(action: {
+                            if let onClose = onClose {
+                                onClose()
+                            } else {
+                                dismiss()
                             }
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 8)
-                            .background(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .fill(Color.white.opacity(0.1))
-                            )
-                        }
-                        
-                        // On iPad: always show close button (fullScreenCover has no swipe-to-dismiss)
-                        // On iPhone: only show if an onClose callback was explicitly passed
-                        if isIPad || onClose != nil {
-                            Button(action: {
-                                if let onClose = onClose {
-                                    onClose()
-                                } else {
-                                    dismiss()
-                                }
-                            }) {
-                                Image(systemName: "xmark.circle.fill")
-                                    .font(.title3)
-                                    .foregroundColor(.white.opacity(0.5))
-                            }
+                        }) {
+                            Image(systemName: "xmark.circle.fill")
+                                .font(.title3)
+                                .foregroundColor(.white.opacity(0.5))
                         }
                     }
                     
@@ -226,14 +212,6 @@ struct ModernDailyChecklistView: View {
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 12) {
                         // Today's Tasks Section
-                        // ── Structured Day View ──
-                        // Replaces the old LazyVStack of OptimizedTaskRows.
-                        // Uses a modern sequential card-based layout:
-                        //   • Progress ring at top
-                        //   • Hero "Next Up" card for first incomplete task
-                        //   • Dimmed upcoming tasks below
-                        //   • Collapsed completed tasks at bottom
-                        //   • Celebration screen when all done
                         StructuredDayView(
                             tasks: viewModel.todayChecklist.tasks,
                             streakCount: viewModel.streakStats.currentStreak,
@@ -251,12 +229,8 @@ struct ModernDailyChecklistView: View {
                                     }
                                 }
                             },
-                            onNavigate: { task in
-                                handleTaskNavigation(task)
-                            },
-                            onAllComplete: {
-                                dismiss()
-                            }
+                            onNavigate: { task in handleTaskNavigation(task) },
+                            onAllComplete: { dismiss() }
                         )
                         .padding(.horizontal, 20)
                         
@@ -522,36 +496,35 @@ struct ModernTaskRow: View {
     }
 }
 
-// MARK: - Optimized Task Row (Deep-Link Aware)
+// MARK: - Optimized Task Row (Super Responsive)
 struct OptimizedTaskRow: View {
     let task: DailyTask
     let onToggle: (String) -> Void
-    /// Called when the user taps the row body (not the checkbox). Use for navigation.
-    let onNavigate: (DailyTask) -> Void
     @State private var isPressed = false
-
-    /// True when this task has a destination to navigate to.
-    private var isNavigable: Bool {
-        task.navigationDestination != .none
-    }
-
+    
     var body: some View {
         HStack(spacing: 16) {
-            // ── Checkbox ── (tap = toggle only)
+            // Ultra-responsive checkbox - maximum tap area
             ZStack {
+                // Maximum invisible tap area
                 Rectangle()
                     .fill(Color.clear)
                     .frame(width: 80, height: 80)
                     .contentShape(Rectangle())
                     .onTapGesture {
                         UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                        withAnimation(.easeOut(duration: 0.1)) { isPressed = true }
+                        withAnimation(.easeOut(duration: 0.1)) {
+                            isPressed = true
+                        }
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                            withAnimation(.easeOut(duration: 0.1)) { isPressed = false }
+                            withAnimation(.easeOut(duration: 0.1)) {
+                                isPressed = false
+                            }
                         }
                         onToggle(task.id)
                     }
-
+                
+                // Visual checkbox
                 RoundedRectangle(cornerRadius: 12)
                     .fill(task.isCompleted ? Color.green : Color.clear)
                     .frame(width: 44, height: 44)
@@ -560,93 +533,78 @@ struct OptimizedTaskRow: View {
                             .stroke(task.isCompleted ? Color.green : Color.white.opacity(0.6), lineWidth: 2)
                     )
                     .scaleEffect(isPressed ? 0.9 : 1.0)
-
+                
                 if task.isCompleted {
                     Image(systemName: "checkmark")
                         .font(.system(size: 20, weight: .bold))
                         .foregroundColor(.white)
                 }
             }
-
-            // ── Task content ── (tap = navigate if destination exists, else toggle)
-            Button(action: {
-                UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                onNavigate(task)
-            }) {
-                HStack {
-                    VStack(alignment: .leading, spacing: 6) {
-                        HStack {
-                            Text(task.title)
-                                .font(.headline)
-                                .fontWeight(.semibold)
-                                .foregroundColor(.white)
-                                .strikethrough(task.isCompleted)
-                                .multilineTextAlignment(.leading)
-
-                            Spacer()
-
-                            // Time badge
-                            Text("\(task.estimatedMinutes)m")
-                                .font(.caption2)
-                                .fontWeight(.medium)
-                                .foregroundColor(.white.opacity(0.8))
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 4)
-                                .background(Capsule().fill(Color.white.opacity(0.1)))
-                        }
-
-                        Text(task.description)
-                            .font(.subheadline)
-                            .foregroundColor(.white.opacity(0.7))
-                            .lineLimit(2)
+            
+            // Task content (read-only, not tappable to avoid conflicts)
+            HStack {
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack {
+                        Text(task.title)
+                            .font(.headline)
+                            .fontWeight(.semibold)
+                            .foregroundColor(.white)
+                            .strikethrough(task.isCompleted)
                             .multilineTextAlignment(.leading)
-
-                        HStack(spacing: 6) {
-                            // Category badge
-                            HStack(spacing: 4) {
-                                Text(task.category.emoji).font(.caption)
-                                Text(task.category.displayName)
-                                    .font(.caption)
-                                    .fontWeight(.medium)
-                                    .foregroundColor(task.category.color)
-                            }
+                        
+                        Spacer()
+                        
+                        // Time badge
+                        Text("\(task.estimatedMinutes)m")
+                            .font(.caption2)
+                            .fontWeight(.medium)
+                            .foregroundColor(.white.opacity(0.8))
                             .padding(.horizontal, 8)
-                            .padding(.vertical, 3)
+                            .padding(.vertical, 4)
                             .background(
-                                RoundedRectangle(cornerRadius: 6)
-                                    .fill(task.category.color.opacity(0.15))
+                                Capsule()
+                                    .fill(Color.white.opacity(0.1))
                             )
-
-                            // "Tap to open" affordance for navigable tasks
-                            if isNavigable && !task.isCompleted {
-                                HStack(spacing: 3) {
-                                    Image(systemName: "arrow.right.circle")
-                                        .font(.caption2)
-                                    Text("Open")
-                                        .font(.caption2)
-                                }
-                                .foregroundColor(.white.opacity(0.45))
-                            }
-                        }
                     }
-
-                    // Completion star
-                    if task.isCompleted {
-                        VStack(spacing: 2) {
-                            Image(systemName: "star.fill")
-                                .font(.caption)
-                                .foregroundColor(.yellow)
-
-                            if let completedAt = task.completedAt {
-                                Text(DateFormatter.timeFormatter.string(from: completedAt))
-                                    .font(.system(size: 9))
-                                    .foregroundColor(.white.opacity(0.5))
-                            }
+                    
+                    Text(task.description)
+                        .font(.subheadline)
+                        .foregroundColor(.white.opacity(0.7))
+                        .lineLimit(2)
+                        .multilineTextAlignment(.leading)
+                    
+                    // Simple category badge
+                    HStack(spacing: 4) {
+                        Text(task.category.emoji)
+                            .font(.caption)
+                        Text(task.category.displayName)
+                            .font(.caption)
+                            .fontWeight(.medium)
+                            .foregroundColor(task.category.color)
+                    }
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 3)
+                    .background(
+                        RoundedRectangle(cornerRadius: 6)
+                            .fill(task.category.color.opacity(0.15))
+                    )
+                }
+                
+                // Completion indicator
+                if task.isCompleted {
+                    VStack(spacing: 2) {
+                        Image(systemName: "star.fill")
+                            .font(.caption)
+                            .foregroundColor(.yellow)
+                        
+                        if let completedAt = task.completedAt {
+                            Text(DateFormatter.timeFormatter.string(from: completedAt))
+                                .font(.system(size: 9))
+                                .foregroundColor(.white.opacity(0.5))
                         }
                     }
                 }
             }
-            .buttonStyle(PlainButtonStyle())
         }
         .padding(16)
         .background(

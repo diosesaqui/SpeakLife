@@ -114,8 +114,8 @@
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>SpeakLife saves your streak achievements to Photos so you can easily share them on Instagram and other social media platforms.</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>SpeakLife uses your microphone to convert your spoken words into text for journal entries and affirmations. This helps you capture your spiritual thoughts more naturally and efficiently.</string>
+	<string>SpeakLife uses your microphone to record your personal declarations.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
-	<string>SpeakLife uses speech recognition to convert your spoken words into text for your spiritual journal and affirmations. This feature allows you to express your thoughts more naturally and capture inspiration as it comes.</string>
+	<string>SpeakLife uses speech recognition to transcribe your personal declarations.</string>
 </dict>
 </plist>
