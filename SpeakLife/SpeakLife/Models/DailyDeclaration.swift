@@ -35,6 +35,7 @@ enum DeclarationCategory: String, CaseIterable, Identifiable, Codable,  Comparab
     case parenting
     case identity
     case marriage
+    case relationship   // dating / courting / pre-marriage relationship
     case general
     case praise
     case heaven
@@ -461,6 +462,7 @@ extension DeclarationCategory {
         case .work:           return "💼"
         case .business:       return "🚀"
         case .love:           return "💍"
+        case .relationship:   return "💛"
         case .marriage:       return "👫"
         case .parenting:      return "👶"
         case .destiny:        return "🌟"
@@ -507,6 +509,7 @@ extension DeclarationCategory {
         case .work:           return "My Career"
         case .business:       return "My Business"
         case .love:           return "Finding a Spouse"
+        case .relationship:   return "My Relationship"
         case .marriage:       return "My Marriage"
         case .parenting:      return "My Children"
         case .destiny:        return "My Purpose & Calling"
@@ -551,6 +554,7 @@ extension DeclarationCategory {
         case .work:         return "Career, promotion, employment"
         case .business:     return "Starting or growing your own business"
         case .love:         return "Believing for a godly spouse"
+        case .relationship: return "Dating, courting, or a relationship you're in"
         case .marriage:     return "Protecting or restoring your marriage"
         case .grief:        return "Loss of a loved one"
         case .fertility:    return "Infertility, pregnancy, believing for a child"

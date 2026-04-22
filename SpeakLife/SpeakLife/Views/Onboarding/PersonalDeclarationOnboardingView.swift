@@ -98,6 +98,7 @@ struct PersonalDeclarationOnboardingView: View {
             switch viewModel.step {
             case .input:                        inputView
             case .focusChoice(let categories):  focusChoiceView(categories: categories)
+            case .clarify:                      clarifyView
             case .matching:                     matchingView
             case .result:                       resultView
             }
@@ -397,6 +398,88 @@ struct PersonalDeclarationOnboardingView: View {
             }
 
             Spacer().frame(height: 24)
+
+            Button("Start over") {
+                viewModel.inputText = ""
+                viewModel.step = .input
+            }
+            .font(.system(size: 14))
+            .foregroundColor(.white.opacity(0.3))
+
+            Spacer()
+        }
+    }
+
+    // MARK: - Clarify View
+
+    private var clarifyView: some View {
+        VStack(spacing: 0) {
+            Spacer().frame(height: size.height * 0.12)
+
+            VStack(spacing: 12) {
+                Text("🤔")
+                    .font(.system(size: 40))
+
+                Text("Can you tell us\na little more?")
+                    .font(.system(size: 26, weight: .bold, design: .rounded))
+                    .foregroundColor(.white)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 24)
+
+                Text("The more specific you are, the more personal your declaration will be.")
+                    .font(.system(size: 15))
+                    .foregroundColor(.white.opacity(0.55))
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 32)
+            }
+
+            Spacer().frame(height: 32)
+
+            // Editable text field pre-filled with what they already said
+            ZStack(alignment: .topLeading) {
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(Color.white.opacity(0.08))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 16)
+                            .stroke(Color.white.opacity(0.15), lineWidth: 1)
+                    )
+
+                if viewModel.inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    Text("e.g. "I'm anxious about losing my job and can't sleep…"")
+                        .font(.system(size: 15))
+                        .foregroundColor(.white.opacity(0.3))
+                        .padding(16)
+                }
+
+                TextEditor(text: $viewModel.inputText)
+                    .font(.system(size: 15))
+                    .foregroundColor(.white)
+                    .scrollContentBackground(.hidden)
+                    .background(Color.clear)
+                    .padding(12)
+                    .frame(minHeight: 120, maxHeight: 160)
+            }
+            .frame(minHeight: 120)
+            .padding(.horizontal, 24)
+
+            Spacer().frame(height: 24)
+
+            Button {
+                Task { await viewModel.submitClarification() }
+            } label: {
+                Text("Generate My Declaration")
+                    .font(.system(size: 17, weight: .semibold, design: .rounded))
+                    .foregroundColor(.black)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 18)
+                    .background(Color.white)
+                    .cornerRadius(16)
+                    .padding(.horizontal, 24)
+            }
+            .disabled(viewModel.inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            .opacity(viewModel.inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? 0.4 : 1)
+
+            Spacer().frame(height: 16)
 
             Button("Start over") {
                 viewModel.inputText = ""

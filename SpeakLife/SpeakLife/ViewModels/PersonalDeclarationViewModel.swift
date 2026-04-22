@@ -9,6 +9,7 @@ import SwiftUI
 enum PersonalDeclarationStep {
     case input                              // mic / text entry
     case focusChoice([DeclarationCategory]) // user named >1 thing — ask them to pick one
+    case clarify                            // input too vague — ask for a little more detail
     case matching                           // 1.5s loading — builds anticipation
     case result                             // shows matched verse + declaration
 }
@@ -107,12 +108,25 @@ final class PersonalDeclarationViewModel: ObservableObject {
         // Check if the user named multiple distinct things
         let allMatches = matchUseCase.matchAll(input: input)
         if allMatches.count >= 2 {
-            // Pause briefly so it doesn't feel instant
             try? await Task.sleep(nanoseconds: 400_000_000)
             step = .focusChoice(allMatches)
             return
         }
+
+        // Check if input was too vague to match anything confidently
+        let result = matchUseCase.execute(input: input)
+        if !result.isConfident {
+            try? await Task.sleep(nanoseconds: 400_000_000)
+            step = .clarify
+            return
+        }
+
         await runMatchForCategory(input: input, category: nil)
+    }
+
+    /// Called when the user submits refined input from the clarify screen.
+    func submitClarification() async {
+        await runMatchForCategory(input: inputText, category: nil)
     }
 
     private func runMatchForCategory(input: String, category: DeclarationCategory?) async {

@@ -104,8 +104,11 @@ struct MatchRule {
         // Believing FOR a spouse (check BEFORE marriage rule — more specific)
         MatchRule(keywords: ["a wife", "a husband", "future wife", "future husband", "future spouse", "find a partner", "meet someone", "right person", "still single", "want a wife", "want a husband", "send me a", "bring me a", "praying for a spouse", "godly wife", "godly husband", "my future partner"], category: .love),
 
-        // Protecting / restoring an existing marriage
-        MatchRule(keywords: ["my marriage", "my husband", "my wife", "our marriage", "my spouse", "save my marriage", "divorce", "reconcil", "cheating", "infidelity", "separation", "broken marriage", "my relationship"], category: .marriage),
+        // Dating / courtship / pre-marriage relationship (check BEFORE marriage — more specific)
+        MatchRule(keywords: ["my boyfriend", "my girlfriend", "we're dating", "i'm dating", "person i'm dating", "the guy i'm dating", "the girl i'm dating", "courting", "courtship", "my relationship", "fix my relationship", "in a relationship", "romantic relationship", "my partner and i", "person i like", "someone i'm seeing", "we're not married", "relationship i'm in", "situationship"], category: .relationship),
+
+        // Protecting / restoring an existing marriage ("my relationship" removed — now routes to .relationship)
+        MatchRule(keywords: ["my marriage", "my husband", "my wife", "our marriage", "my spouse", "save my marriage", "reconcil", "cheating", "infidelity", "broken marriage", "my marriage is"], category: .marriage),
 
         // Parenting & family
         MatchRule(keywords: ["child", "son", "daughter", "parent", "kids", "family", "children", "prodigal", "teen", "newborn", "grandchild", "motherhood", "fatherhood"], category: .parenting),

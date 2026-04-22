@@ -18,6 +18,8 @@ enum DeclarationContent {
             return "\"My God will supply every need of yours according to his riches in glory in Christ Jesus.\""
         case .anxiety:
             return "\"Do not be anxious about anything, but in every situation, by prayer and petition, with thanksgiving, present your requests to God. And the peace of God, which transcends all understanding, will guard your hearts and your minds.\""
+        case .relationship:
+            return "\"Above all else, guard your heart, for everything you do flows from it.\""
         case .marriage:
             return "\"Two are better than one, because they have a good return for their labor. If either of them falls down, one can help the other up.\""
         case .parenting:
@@ -102,6 +104,7 @@ enum DeclarationContent {
         case .health:         return "Isaiah 53:5"
         case .wealth:         return "Philippians 4:19"
         case .anxiety:        return "Philippians 4:6–7"
+        case .relationship:   return "Proverbs 4:23"
         case .marriage:       return "Ecclesiastes 4:9–10"
         case .parenting:      return "Proverbs 22:6"
         case .destiny:        return "Jeremiah 29:11"
@@ -153,6 +156,9 @@ enum DeclarationContent {
 
         case .anxiety:
             return "I declare that the peace of God that surpasses all understanding guards my heart and mind right now. I cast every worry, every fear, and every anxious thought at the feet of Jesus. I am not moved by what I see — I am anchored by what I know."
+
+        case .relationship:
+            return "I declare that God is at the center of this relationship. I will not rush what He wants to build, and I will not settle for less than what He has prepared. I guard my heart wisely, love with intention, and trust His timing completely. If this relationship is meant to go further, God will make it clear. If it isn't, He will protect me from what isn't mine. Either way, I am trusting Him — not my feelings, not the pressure, not the timeline."
 
         case .marriage:
             return "I declare that my marriage is covered by the blood of Jesus. Unconditional love, deep friendship, and unbreakable covenant define this relationship. What God has joined together, no force on earth can tear apart. We are growing stronger every day."
