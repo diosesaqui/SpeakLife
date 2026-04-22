@@ -379,7 +379,7 @@ struct HomeView: View {
             .tabItem {
                 Image(systemName: "quote.bubble.fill")
                     .renderingMode(.original)
-                
+                Text("Home")
             }
     }
     
@@ -398,6 +398,7 @@ struct HomeView: View {
                 if #available(iOS 17, *) {
                     Image(systemName: "waveform")
                         .renderingMode(.original)
+                    Text("Audio")
                 } else {
                     Image(systemName: "waveform")
                         .renderingMode(.original)
@@ -412,6 +413,7 @@ struct HomeView: View {
             .tabItem {
                 Image(systemName: "plus.bubble.fill")
                     .renderingMode(.original)
+                Text("Yours")
             }
     }
     
@@ -468,6 +470,7 @@ struct HomeView: View {
                 if #available(iOS 17, *) {
                     Image(systemName: "book.closed.fill")
                         .renderingMode(.original)
+                    Text("Bible")
                 } else {
                     Image(systemName: "person.2.fill")
                         .renderingMode(.original)
@@ -481,6 +484,7 @@ struct HomeView: View {
             .tabItem {
                 Image(systemName: "line.3.horizontal")
                     .renderingMode(.original)
+                Text("Profile")
             }
     }
     
