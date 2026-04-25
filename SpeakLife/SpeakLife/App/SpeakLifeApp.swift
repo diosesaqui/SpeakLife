@@ -232,15 +232,16 @@ struct SpeakLifeApp: App {
                 DailyDeclarationReminderService.shared.refreshEveningReminderIfNeeded()
                 
                
-                // Reschedule only when the existing batch is running low (< 4 days remaining).
-                // Previous condition was `lastNotificationSetDate < lastNotificationSetDate + 4days`
-                // which is always true and caused notifications to be wiped and rescheduled on
-                // every app open — pushing future notifications to tomorrow if opened after the
-                // last time slot had passed.
-                if Date() > appState.lastNotificationSetDate.addingTimeInterval(-fourDaysInSeconds), appState.notificationEnabled {
-
-                    resetNotifications()
-
+                // Reschedule only when the batch is within 4 days of running out.
+                // Uses NotificationManager.lastScheduledNotificationDate which is set to
+                // now+9days after each batch, so this only fires ~day 6 of 10 (or on
+                // first launch when it's nil). Prevents wiping future notifications on every
+                // app open.
+                if appState.notificationEnabled {
+                    let batchEnd = NotificationManager.shared.lastScheduledNotificationDate ?? .distantPast
+                    if Date() > batchEnd.addingTimeInterval(-fourDaysInSeconds) {
+                        resetNotifications()
+                    }
                 }
             case .inactive:
                 // Inactive state happens briefly when transitioning
@@ -328,7 +329,11 @@ struct SpeakLifeApp: App {
     }
     
     private func resetNotifications() {
-        let categories = Set(appState.selectedNotificationCategories.components(separatedBy: ",").compactMap({ DeclarationCategory($0) }))
+        let parsed = Set(appState.selectedNotificationCategories.components(separatedBy: ",").compactMap({ DeclarationCategory($0) }))
+        // If the user hasn't selected any categories yet, pass nil so NotificationManager
+        // uses its default curated set (faith, destiny, identity, etc.) rather than
+        // pulling from all declarations indiscriminately.
+        let categories: Set<DeclarationCategory>? = parsed.isEmpty ? nil : parsed
         NotificationManager.shared.registerNotifications(count: appState.notificationCount, startTime: appState.startTimeIndex, endTime: appState.endTimeIndex, categories: categories)
         DispatchQueue.main.async {
             appState.lastNotificationSetDate = Date()
