@@ -54,11 +54,15 @@ final class NotificationProcessor {
             var data = [NotificationData]()
             var categoryReminders: [Declaration] = []
             
-            if categories == nil  {
+            // Treat nil or empty category list the same — fall back to all declarations.
+            let resolvedCategories = categories?.isEmpty == false ? categories : nil
+
+            if resolvedCategories == nil {
                 let shuffled = allDeclarations.shuffled()
                 guard !shuffled.isEmpty else { return }
-                for number in 1...count {
-                    let declaration = shuffled[number]
+                // Use 0-based indexing (was 1...count which caused an off-by-one crash)
+                for index in 0..<min(count, shuffled.count) {
+                    let declaration = shuffled[index]
                     // Send the declaration text (not the Bible verse) as the notification body.
                     // The scripture reference (book) is kept as the subtitle for context.
                     let body = declaration.text
@@ -67,8 +71,8 @@ final class NotificationProcessor {
                     data.append(notificationData)
                 }
             } else {
-                let categoryList = categories!
-                let categoryCount = categoryList.count
+                let categoryList = resolvedCategories!
+                let categoryCount = categoryList.count  // guaranteed > 0 by resolvedCategories check above
 
                 // Distribute `count` slots evenly across categories using proper integer math.
                 // baseSlots = floor(count / categoryCount) per category
