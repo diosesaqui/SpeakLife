@@ -269,95 +269,65 @@ final class NotificationManager: NSObject {
                                       endTime: Int,
                                       count: Int,
                                       callback: (() -> Void)? = nil) {
-    
-        
+
         let hourMinute = distributeTimes(startTime: startTime, endTime: endTime, count: count)
-        
-        guard hourMinute.count > 1 else { callback?()
-            return }
-        guard declarations.count >= count else { callback?()
-            return }
-        
-        for (idx, declaration) in declarations.enumerated() {
-            let id = UUID().uuidString
-            var body = declaration.body
-            if declaration.book.count > 1 {
-                body += " ~ " + declaration.book
-            }
-            let content = UNMutableNotificationContent()
-            content.title = "SpeakLife"
-            content.body = body
-            content.sound = UNNotificationSound.default
-            content.userInfo = ["category": declaration.category]
-            
-            var dateComponents = DateComponents()
-            dateComponents.calendar = Calendar.autoupdatingCurrent
-            dateComponents.timeZone = TimeZone.autoupdatingCurrent
-        
-            dateComponents.hour = hourMinute[idx].hour
-            dateComponents.minute = hourMinute[idx].minute
-            
-            // Debug logging - current time
-            let now = Date()
-            let formatter = DateFormatter()
-            formatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
-            formatter.timeZone = TimeZone.autoupdatingCurrent
-            print("   Scheduling notification \(idx + 1) for \(hourMinute[idx].hour):\(String(format: "%02d", hourMinute[idx].minute))")
-            
-            let calendar = Calendar.autoupdatingCurrent
-            
-            // Create a date for today at the target time
-            var targetDate = calendar.date(bySettingHour: hourMinute[idx].hour, 
-                                          minute: hourMinute[idx].minute, 
-                                          second: 0, 
-                                          of: now)!
-            
-            print("   Current time: \(formatter.string(from: now))")
-            print("   Target time today: \(formatter.string(from: targetDate))")
-            
-            // If the target time has already passed today, schedule for tomorrow
-            if targetDate <= now {
-                targetDate = calendar.date(byAdding: .day, value: 1, to: targetDate)!
-                print("   ⏭️ Time already passed today, scheduling for tomorrow")
-            } else {
-                print("   ✅ Scheduling for later today")
-            }
-            
-            // Extract the date components from the calculated target date
-            let finalComponents = calendar.dateComponents([.year, .month, .day, .hour, .minute], 
-                                                         from: targetDate)
-            dateComponents.year = finalComponents.year
-            dateComponents.month = finalComponents.month
-            dateComponents.day = finalComponents.day
-            
-            print("   📆 Final scheduled date/time: \(formatter.string(from: targetDate))")
-            
-            // Create the trigger as a repeating event.
-            let trigger = UNCalendarNotificationTrigger(
-                dateMatching: dateComponents, repeats: false)
-            
-            
-            let request = UNNotificationRequest(identifier: id, content: content, trigger: trigger)
-            notificationCenter.add(request) { (error) in
-                if let error = error {
-                    print("❌ Failed to schedule notification \(idx + 1): \(error.localizedDescription)")
-                } else {
-                    print("✅ Scheduled notification \(idx + 1)/\(count) at \(hourMinute[idx].hour):\(String(format: "%02d", hourMinute[idx].minute))")
+
+        guard hourMinute.count > 1 else { callback?(); return }
+        guard declarations.count >= count else { callback?(); return }
+
+        // Schedule notifications across the next N days so they survive without
+        // the app being opened daily. iOS allows up to 64 pending notifications;
+        // daysAhead * count must stay well under that limit.
+        let daysAhead = 10 // 10 days × 5 notifications = 50 (safely under the 64-notification OS limit)
+        let now = Date()
+        let calendar = Calendar.autoupdatingCurrent
+
+        for day in 0..<daysAhead {
+            for (idx, declaration) in declarations.enumerated() {
+                // For variety, cycle through all available declarations across days
+                let declarationIndex = (idx + day * count) % declarations.count
+                let decl = declarations[declarationIndex]
+
+                var body = decl.body
+                if decl.book.count > 1 {
+                    body += " ~ " + decl.book
+                }
+
+                // Calculate the exact fire date for this day + time slot
+                let baseDate = calendar.date(byAdding: .day, value: day, to: now)!
+                let targetDate = calendar.date(bySettingHour: hourMinute[idx].hour,
+                                               minute: hourMinute[idx].minute,
+                                               second: 0,
+                                               of: baseDate)!
+
+                // Skip slots that have already passed (only relevant for day 0)
+                guard targetDate > now else { continue }
+
+                let content = UNMutableNotificationContent()
+                content.title = "SpeakLife"
+                content.body = body
+                content.sound = UNNotificationSound.default
+                content.userInfo = ["category": decl.category]
+
+                let finalComponents = calendar.dateComponents(
+                    [.year, .month, .day, .hour, .minute], from: targetDate)
+                let trigger = UNCalendarNotificationTrigger(
+                    dateMatching: finalComponents, repeats: false)
+
+                let request = UNNotificationRequest(
+                    identifier: UUID().uuidString, content: content, trigger: trigger)
+                notificationCenter.add(request) { error in
+                    if let error = error {
+                        print("❌ Failed to schedule notification (day \(day), slot \(idx)): \(error.localizedDescription)")
+                    }
                 }
             }
-            
-            if idx == (count - 1) {
-                let now = Date()
-                let modifiedDate = Calendar.current.date(byAdding: .day, value: -1, to: now)
-                
-                lastScheduledNotificationDate = modifiedDate
-                
-                // Verify notifications were actually scheduled
-//                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-//                    self.verifyNotificationsScheduled()
-//                }
-            }
         }
+
+        // Record the schedule date so the app knows when to refresh (in ~10 days)
+        let refreshDate = calendar.date(byAdding: .day, value: daysAhead - 1, to: now)
+        lastScheduledNotificationDate = refreshDate
+        callback?()
     }
     
     @objc func postResyncNotifcation() {

@@ -232,12 +232,16 @@ struct SpeakLifeApp: App {
                 DailyDeclarationReminderService.shared.refreshEveningReminderIfNeeded()
                 
                
-                // update for next four days
-                if appState.lastNotificationSetDate < appState.lastNotificationSetDate.addingTimeInterval(fourDaysInSeconds), appState.notificationEnabled {
-                    
+                // Reschedule only when the existing batch is running low (< 4 days remaining).
+                // Previous condition was `lastNotificationSetDate < lastNotificationSetDate + 4days`
+                // which is always true and caused notifications to be wiped and rescheduled on
+                // every app open — pushing future notifications to tomorrow if opened after the
+                // last time slot had passed.
+                if Date() > appState.lastNotificationSetDate.addingTimeInterval(-fourDaysInSeconds), appState.notificationEnabled {
+
                     resetNotifications()
-        
-                    }
+
+                }
             case .inactive:
                 // Inactive state happens briefly when transitioning
                 // Don't pause here - wait for actual background state
