@@ -7,6 +7,7 @@
 
 import UserNotifications
 import Foundation
+import BackgroundTasks
 
 let resyncNotification = NSNotification.Name("NotificationsDone")
 let notificationNavigate = NSNotification.Name("NavigateToContent")
@@ -25,7 +26,7 @@ final class NotificationManager: NSObject {
                 return
             }
             UserDefaults.standard.set(newValue, forKey: "lastScheduledNotificationDate")
-            scheduleNotificationResync(newValue)
+            scheduleBatchRefresh(batchEndsAt: newValue)
         }
     }
     
@@ -330,18 +331,31 @@ final class NotificationManager: NSObject {
         callback?()
     }
     
-    @objc func postResyncNotifcation() {
-        NotificationCenter.default.post(name: resyncNotification, object: nil)
-    }
-    
-    private func scheduleNotificationResync(_ resyncDate: Date?) {
-        guard let resyncDate = resyncDate else { return }
-        
-        Timer.scheduledTimer(timeInterval: resyncDate.timeIntervalSinceNow,
-                             target: self,
-                             selector: #selector(postResyncNotifcation),
-                             userInfo: nil,
-                             repeats: false)
+    /// Submits a BGAppRefreshTask to fire when the notification batch is 4 days
+    /// from running out. iOS will wake the app in the background, call
+    /// `updateNotificationContent`, which runs `UpdateNotificationsOperation`
+    /// → `registerNotifications` → schedules a fresh 10-day batch.
+    /// This means users get continuous notifications even without opening the app.
+    private func scheduleBatchRefresh(batchEndsAt endDate: Date) {
+        // Aim to refresh when 4 days of notifications remain (buffer for iOS delays)
+        let refreshBuffer: TimeInterval = 4 * 24 * 60 * 60
+        let refreshDate = endDate.addingTimeInterval(-refreshBuffer)
+
+        // If refresh date is already past (e.g. small batch), fire as soon as possible
+        let fireDate = max(refreshDate, Date(timeIntervalSinceNow: 60))
+
+        let request = BGAppRefreshTaskRequest(identifier: "com.speaklife.updateNotificationContent")
+        request.earliestBeginDate = fireDate
+
+        do {
+            try BGTaskScheduler.shared.submit(request)
+            let formatter = DateFormatter()
+            formatter.dateStyle = .short
+            formatter.timeStyle = .short
+            print("✅ BGAppRefreshTask scheduled for \(formatter.string(from: fireDate))")
+        } catch {
+            print("⚠️ Could not schedule notification batch refresh: \(error.localizedDescription)")
+        }
     }
     
     private func morningAffirmationReminder() {

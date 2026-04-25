@@ -184,32 +184,19 @@ final class AppDelegate: NSObject, MessagingDelegate {
         }
     }
     
-    @objc func scheduleNotificationRequest()  {
-        scheduleNotificationRequestWithInterval(true)
-        scheduleNotificationRequestWithInterval()
+    /// Called when `resyncNotification` fires (e.g. content version bump or
+    /// other in-app trigger). Immediately reschedules a fresh notification batch
+    /// via UserDefaults preferences; `NotificationManager` will then submit a
+    /// new BGAppRefreshTask for the next refresh window automatically.
+    @objc func scheduleNotificationRequest() {
+        NotificationManager.shared.rescheduleFromUserDefaults()
     }
 
     /// Fires when remote declarations are freshly downloaded due to a version bump.
     /// Reschedules local notifications immediately so users get the new content
-    /// without waiting for the next natural ~24h resync cycle.
+    /// without waiting for the next natural batch-refresh window.
     @objc func rescheduleNotificationsForNewContent() {
         NotificationManager.shared.rescheduleFromUserDefaults()
-    }
-    
-    func scheduleNotificationRequestWithInterval(_ resyncNow: Bool = false) {
-    
-        let now = TimeInterval(1)
-        let sixHours = TimeInterval(6 * 60 * 60)
-        
-        let request = BGAppRefreshTaskRequest(identifier: "com.speaklife.updateNotificationContent")
-        request.earliestBeginDate = Date(timeIntervalSinceNow: resyncNow ? now : sixHours)
-
-        do {
-            try BGTaskScheduler.shared.submit(request)
-        } catch {
-            print("Could not schedule notification cleaning: \(error)")
-        }
-
     }
     
     private func updateNotificationContent(task: BGAppRefreshTask)  {
