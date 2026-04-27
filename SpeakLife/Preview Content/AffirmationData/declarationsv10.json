@@ -1,5 +1,5 @@
 {
-  "count": 3373,
+  "count": 2637,
   "version": 10,
   "declarations": [
     {
@@ -19,10 +19,6 @@
       "category": "love"
     },
     {
-      "text": "I am confident of God's love for me.",
-      "category": "love"
-    },
-    {
       "text": "I am called to love my neighbors as myself.",
       "category": "love"
     },
@@ -32,10 +28,6 @@
     },
     {
       "text": "Because Jesus loves me, I forgive those who have hurt me.",
-      "category": "love"
-    },
-    {
-      "text": "Because Jesus loves me, I spread joy and positivity wherever I go.",
       "category": "love"
     },
     {
@@ -59,19 +51,11 @@
       "category": "love"
     },
     {
-      "text": "Because Jesus loves me, I am committed to living a life of love.",
-      "category": "love"
-    },
-    {
       "text": "Because Jesus loves me, I find joy in serving others.",
       "category": "love"
     },
     {
       "text": "Because Jesus loves me, I treat others with kindness and respect.",
-      "category": "love"
-    },
-    {
-      "text": "Because Jesus loves me, I uplift those around me.",
       "category": "love"
     },
     {
@@ -83,10 +67,6 @@
       "category": "love"
     },
     {
-      "text": "Because Jesus loves me, I invest in my relationships with love.",
-      "category": "love"
-    },
-    {
       "text": "Because Jesus loves me, I express my love openly and honestly.",
       "category": "love"
     },
@@ -95,27 +75,11 @@
       "category": "love"
     },
     {
-      "text": "Because Jesus loves me, I show empathy and understanding to all.",
-      "category": "love"
-    },
-    {
       "text": "Thank you Jesus for loving me with an everlasting, victorious love.",
       "category": "love"
     },
     {
-      "text": "I am deeply loved by God with an everlasting love.",
-      "category": "love"
-    },
-    {
-      "text": "Nothing can separate me from God's love.",
-      "category": "love"
-    },
-    {
       "text": "I am chosen and dearly loved by God.",
-      "category": "love"
-    },
-    {
-      "text": "God's love for me never fails.",
       "category": "love"
     },
     {
@@ -163,19 +127,11 @@
       "category": "love"
     },
     {
-      "text": "God rejoices over me with singing.",
-      "category": "love"
-    },
-    {
       "text": "God's love covers all my sins.",
       "category": "love"
     },
     {
       "text": "God's love for me is greater than the heavens.",
-      "category": "love"
-    },
-    {
-      "text": "I am rooted in Jesus's love, which gives me strength and joy.",
       "category": "love"
     },
     {
@@ -187,19 +143,11 @@
       "category": "love"
     },
     {
-      "text": "I am treasured and dearly loved by God.",
-      "category": "love"
-    },
-    {
       "text": "I am secure in Jesus's love, which never changes or fails.",
       "category": "love"
     },
     {
       "text": "I am sustained by the perfect love of Jesus every day.",
-      "category": "love"
-    },
-    {
-      "text": "Nothing can separate me from the love of Christ.",
       "category": "love"
     },
     {
@@ -219,27 +167,7 @@
       "category": "love"
     },
     {
-      "text": "I am deeply rooted and grounded in Christ's love.",
-      "category": "love"
-    },
-    {
-      "text": "God's love has been poured into my heart through the Holy Spirit.",
-      "category": "love"
-    },
-    {
       "text": "The Lord quiets my heart with His love and rejoices over me.",
-      "category": "love"
-    },
-    {
-      "text": "I am fully loved by Jesus with an everlasting love.",
-      "category": "love"
-    },
-    {
-      "text": "I am inseparable from the love of Christ; it is my foundation.",
-      "category": "love"
-    },
-    {
-      "text": "I am secure in the love of Christ, and nothing can shake it.",
       "category": "love"
     },
     {
@@ -264,10 +192,6 @@
     },
     {
       "text": "I am never abandoned, for the Lord goes before me and is with me.",
-      "category": "love"
-    },
-    {
-      "text": "The Lord is gracious and compassionate towards me.",
       "category": "love"
     },
     {
@@ -375,10 +299,6 @@
       "category": "identity"
     },
     {
-      "text": "I am a new creation in Christ, free from my old self.",
-      "category": "identity"
-    },
-    {
       "text": "I am God's masterpiece, created for good works in Christ.",
       "category": "identity"
     },
@@ -387,27 +307,7 @@
       "category": "identity"
     },
     {
-      "text": "In Christ, I am free from condemnation and walk in His righteousness.",
-      "category": "identity"
-    },
-    {
-      "text": "I am a child of God, loved and accepted by Him.",
-      "category": "identity"
-    },
-    {
-      "text": "I am a light in the world, shining God's love and truth.",
-      "category": "identity"
-    },
-    {
-      "text": "I have been redeemed by Christ and belong to Him.",
-      "category": "identity"
-    },
-    {
       "text": "I am a new person, created to be like God in true righteousness and holiness.",
-      "category": "identity"
-    },
-    {
-      "text": "I am a co-heir with Christ, sharing in His inheritance.",
       "category": "identity"
     },
     {
@@ -439,15 +339,7 @@
       "category": "identity"
     },
     {
-      "text": "I am clothed in Christ, living in His righteousness and grace.",
-      "category": "identity"
-    },
-    {
       "text": "In Christ, I am complete, lacking nothing in Him.",
-      "category": "identity"
-    },
-    {
-      "text": "I am free in Christ, walking in His truth and grace daily.",
       "category": "identity"
     },
     {
@@ -463,27 +355,7 @@
       "category": "identity"
     },
     {
-      "text": "I am alive in Christ, made new by His grace and love.",
-      "category": "identity"
-    },
-    {
-      "text": "I am a child of the King.",
-      "category": "identity"
-    },
-    {
-      "text": "I am a new creation in Christ, born anew in Christ's love and purpose.",
-      "category": "identity"
-    },
-    {
-      "text": "I am redeemed and forgiven through Christ.",
-      "category": "identity"
-    },
-    {
       "text": "I am the righteousness of God in Christ Jesus.",
-      "category": "identity"
-    },
-    {
-      "text": "I am a chosen and royal priesthood, set apart for God.",
       "category": "identity"
     },
     {
@@ -492,10 +364,6 @@
     },
     {
       "text": "I am the light of the world, shining for Christ.",
-      "category": "identity"
-    },
-    {
-      "text": "I am set free in Christ, and I walk in freedom.",
       "category": "identity"
     },
     {
@@ -512,14 +380,6 @@
     },
     {
       "text": "I am filled with the Spirit and empowered by God.",
-      "category": "identity"
-    },
-    {
-      "text": "I am a temple of the Holy Spirit, and God dwells in me.",
-      "category": "identity"
-    },
-    {
-      "text": "I am victorious in Christ and walk in His triumph.",
       "category": "identity"
     },
     {
@@ -559,19 +419,7 @@
       "category": "identity"
     },
     {
-      "text": "I am God's masterpiece, created in Christ for good works.",
-      "category": "identity"
-    },
-    {
       "text": "I am free in Christ, no longer a slave to sin.",
-      "category": "identity"
-    },
-    {
-      "text": "I am a citizen of heaven, set apart for God's kingdom.",
-      "category": "identity"
-    },
-    {
-      "text": "I am God's temple, and His Spirit lives in me.",
       "category": "identity"
     },
     {
@@ -591,19 +439,11 @@
       "category": "identity"
     },
     {
-      "text": "I am complete in Christ, lacking nothing.",
-      "category": "identity"
-    },
-    {
       "text": "I am filled with resurrection power through Christ.",
       "category": "identity"
     },
     {
       "text": "I am delivered from the domain of darkness and transferred to God's kingdom.",
-      "category": "identity"
-    },
-    {
-      "text": "I am transformed by the renewing of my mind.",
       "category": "identity"
     },
     {
@@ -619,115 +459,103 @@
       "category": "identity"
     },
     {
-      "text": "I am justified and made right with God through faith.",
+      "text": "You did not earn your way in. You were received. God gave you the RIGHT to be called His child. That is not small. That is everything.",
       "category": "identity"
     },
     {
-      "text": "I am a child of God, chosen and dearly loved.",
+      "text": "You were not thrown together. God made you fearfully and WONDERFULLY. His works are wonderful and you are one of them.",
       "category": "identity"
     },
     {
-      "text": "I am called to shine as a light in this world.",
+      "text": "Jesus did not say you will be the light. He said you ARE. You cannot be hidden. Stop shrinking. You were built to shine.",
       "category": "identity"
     },
     {
-      "text": "You did not earn your way in. You were received.\nGod gave you the RIGHT to be called His child.\nThat is not small. That is everything.",
+      "text": "You were not given a spirit of slavery. You were given a spirit of SONSHIP. You have a Father. Walk like His child.",
       "category": "identity"
     },
     {
-      "text": "You were not thrown together.\nGod made you fearfully and WONDERFULLY.\nHis works are wonderful and you are one of them.",
+      "text": "You are not common. You are chosen. Royal. Holy. God's own possession. The world won't always understand that. Walk in it anyway.",
       "category": "identity"
     },
     {
-      "text": "Jesus did not say you will be the light. He said you ARE.\nYou cannot be hidden.\nStop shrinking. You were built to shine.",
+      "text": "Your righteousness was not earned. It was exchanged. Christ took your sin. You received His righteousness. That trade is final.",
       "category": "identity"
     },
     {
-      "text": "You were not given a spirit of slavery.\nYou were given a spirit of SONSHIP.\nYou have a Father. Walk like His child.",
+      "text": "Do you know what lives inside you? The Holy Spirit of God calls your body HOME. That changes everything about how you carry yourself.",
       "category": "identity"
     },
     {
-      "text": "You are not common. You are chosen.\nRoyal. Holy. God's own possession.\nThe world won't always understand that. Walk in it anyway.",
+      "text": "Not barely a winner. MORE than a conqueror. Through the One who loved you, not through your own strength. The fight is real but the outcome is settled.",
       "category": "identity"
     },
     {
-      "text": "Your righteousness was not earned. It was exchanged.\nChrist took your sin. You received His righteousness.\nThat trade is final.",
+      "text": "You are God's handiwork. His craftwork. Created in Christ Jesus for works He already prepared. You are not an accident. You are a PURPOSE.",
       "category": "identity"
     },
     {
-      "text": "Do you know what lives inside you?\nThe Holy Spirit of God calls your body HOME.\nThat changes everything about how you carry yourself.",
+      "text": "Being a child of God means more than forgiveness. You are an HEIR. Co-heir with Christ. Everything that belongs to Him belongs to you.",
       "category": "identity"
     },
     {
-      "text": "Not barely a winner. MORE than a conqueror.\nThrough the One who loved you, not through your own strength.\nThe fight is real but the outcome is settled.",
+      "text": "Your old life is gone. Your new life is hidden with Christ in God. Nothing this world throws at you can reach what God has locked away.",
       "category": "identity"
     },
     {
-      "text": "You are God's handiwork. His craftwork.\nCreated in Christ Jesus for works He already prepared.\nYou are not an accident. You are a PURPOSE.",
+      "text": "God did not design you for the bottom. He called you the head. Not the tail. The top. Not the bottom. Stop settling for the position the enemy assigned you.",
       "category": "identity"
     },
     {
-      "text": "Being a child of God means more than forgiveness.\nYou are an HEIR. Co-heir with Christ.\nEverything that belongs to Him belongs to you.",
+      "text": "You are not just a believer. You are an AMBASSADOR. Christ is making His appeal to the world through you. Carry that authority. Walk like it.",
       "category": "identity"
     },
     {
-      "text": "Your old life is gone.\nYour new life is hidden with Christ in God.\nNothing this world throws at you can reach what God has locked away.",
+      "text": "The verdict is already in. No condemnation. Not because you were perfect. Because Christ was. You are free. Walk out of the courtroom.",
       "category": "identity"
     },
     {
-      "text": "God did not design you for the bottom.\nHe called you the head. Not the tail. The top. Not the bottom.\nStop settling for the position the enemy assigned you.",
+      "text": "Jesus did not say you would be salt someday. You ARE the salt of the earth. Right now. You change the flavor of every room you walk into.",
       "category": "identity"
     },
     {
-      "text": "You are not just a believer. You are an AMBASSADOR.\nChrist is making His appeal to the world through you.\nCarry that authority. Walk like it.",
+      "text": "This world is not your home country. Your citizenship is in HEAVEN. What this world rejects does not define what heaven claims.",
       "category": "identity"
     },
     {
-      "text": "The verdict is already in. No condemnation.\nNot because you were perfect. Because Christ was.\nYou are free. Walk out of the courtroom.",
+      "text": "Jesus did not keep you at servant level. He called you FRIEND. He chose that word. He shares what He hears from the Father with you.",
       "category": "identity"
     },
     {
-      "text": "Jesus did not say you would be salt someday.\nYou ARE the salt of the earth. Right now.\nYou change the flavor of every room you walk into.",
+      "text": "God marked you with a seal that cannot be broken. The promised Holy Spirit is the stamp of ownership. You are His. Permanently.",
       "category": "identity"
     },
     {
-      "text": "This world is not your home country.\nYour citizenship is in HEAVEN.\nWhat this world rejects does not define what heaven claims.",
+      "text": "Before you were formed, God knew you. Before you were born, He set you apart. Your identity was not assigned by people. It was given by God.",
       "category": "identity"
     },
     {
-      "text": "Jesus did not keep you at servant level.\nHe called you FRIEND. He chose that word.\nHe shares what He hears from the Father with you.",
+      "text": "God does not lie. He does not change His mind. Every word He spoke over you still stands. What He called you, you are.",
       "category": "identity"
     },
     {
-      "text": "God marked you with a seal that cannot be broken.\nThe promised Holy Spirit is the stamp of ownership.\nYou are His. Permanently.",
+      "text": "Your worth was not set by your performance. You were bought at a price. The cross settled it. Honor what God paid for.",
       "category": "identity"
     },
     {
-      "text": "Before you were formed, God knew you.\nBefore you were born, He set you apart.\nYour identity was not assigned by people. It was given by God.",
+      "text": "God's power already gave you EVERYTHING you need. Not someday. Already done. You are not waiting to be equipped. You already are.",
       "category": "identity"
     },
     {
-      "text": "God does not lie. He does not change His mind.\nEvery word He spoke over you still stands.\nWhat He called you, you are.",
+      "text": "Shame builds its case on what you did. The blood of Jesus clears ALL of it. Shame has no case where the blood already spoke.",
       "category": "identity"
     },
     {
-      "text": "Your worth was not set by your performance.\nYou were bought at a price. The cross settled it.\nHonor what God paid for.",
+      "text": "God called you by name. Not by your title. Not by your reputation. By NAME. He said: you are MINE. That word still stands.",
       "category": "identity"
     },
     {
-      "text": "God's power already gave you EVERYTHING you need.\nNot someday. Already done.\nYou are not waiting to be equipped. You already are.",
-      "category": "identity"
-    },
-    {
-      "text": "Shame builds its case on what you did.\nThe blood of Jesus clears ALL of it.\nShame has no case where the blood already spoke.",
-      "category": "identity"
-    },
-    {
-      "text": "God called you by name.\nNot by your title. Not by your reputation. By NAME.\nHe said: you are MINE. That word still stands.",
-      "category": "identity"
-    },
-    {
-      "text": "You are not incomplete. You are not waiting to be whole.\nIn Christ you have been brought to FULLNESS.\nNothing missing. Nothing broken.",
+      "text": "You are not incomplete. You are not waiting to be whole. In Christ you have been brought to FULLNESS. Nothing missing. Nothing broken.",
       "category": "identity"
     },
     {
@@ -751,35 +579,11 @@
       "category": "faith"
     },
     {
-      "text": "I am bold in my faith, for Jesus is the author of my strength.",
-      "category": "faith"
-    },
-    {
-      "text": "I declare that my faith is strong because Jesus is my anchor.",
-      "category": "faith"
-    },
-    {
-      "text": "I declare that no fear can hold me because Jesus is my confidence.",
-      "category": "faith"
-    },
-    {
-      "text": "I declare that I live by faith, trusting in Jesus's perfect plan for me.",
-      "category": "faith"
-    },
-    {
-      "text": "I declare that my faith is unshakable, grounded in Jesus's love for me.",
-      "category": "faith"
-    },
-    {
       "text": "I stand firm in my faith, staying courageous and strong in the Lord.",
       "category": "faith"
     },
     {
       "text": "I trust in the Lord with all my heart and rely on His understanding, not my own.",
-      "category": "faith"
-    },
-    {
-      "text": "With faith, I believe that all things are possible for me.",
       "category": "faith"
     },
     {
@@ -823,23 +627,11 @@
       "category": "faith"
     },
     {
-      "text": "I am shielded by God's power, my faith extinguishing all the flaming arrows of the evil one.",
-      "category": "faith"
-    },
-    {
       "text": "I am running with endurance the race set before me, fixing my eyes on Jesus, the author and perfecter of my faith.",
       "category": "faith"
     },
     {
-      "text": "I walk by faith, not by sight.",
-      "category": "faith"
-    },
-    {
       "text": "God has not given me a spirit of fear, but of power, love, and a sound mind.",
-      "category": "faith"
-    },
-    {
-      "text": "I trust in the Lord with all my heart and do not lean on my understanding.",
       "category": "faith"
     },
     {
@@ -848,10 +640,6 @@
     },
     {
       "text": "My faith is my victory over the world.",
-      "category": "faith"
-    },
-    {
-      "text": "I fix my eyes on Jesus, the author and finisher of my faith.",
       "category": "faith"
     },
     {
@@ -871,27 +659,11 @@
       "category": "faith"
     },
     {
-      "text": "I fight the good fight of faith and hold on to eternal life.",
-      "category": "faith"
-    },
-    {
-      "text": "I am walking boldly in faith, trusting God's power within me.",
-      "category": "faith"
-    },
-    {
       "text": "I have faith that God makes a way where there is no way.",
       "category": "faith"
     },
     {
-      "text": "I am fearless because my faith is anchored in Christ.",
-      "category": "faith"
-    },
-    {
       "text": "I have faith that God's power within me can conquer all things.",
-      "category": "faith"
-    },
-    {
-      "text": "I am filled with faith, knowing God is faithful to His Word.",
       "category": "faith"
     },
     {
@@ -911,23 +683,11 @@
       "category": "faith"
     },
     {
-      "text": "I have peace knowing God is in control.",
-      "category": "faith"
-    },
-    {
       "text": "I believe that God's plans for me are greater than I can imagine.",
       "category": "faith"
     },
     {
       "text": "Faith is my foundation—the evidence of what I hope for and the certainty of what I cannot see.",
-      "category": "faith"
-    },
-    {
-      "text": "Even faith as small as a mustard seed gives me the power to move mountains.",
-      "category": "faith"
-    },
-    {
-      "text": "I stand firm in faith, remain courageous, and walk in strength.",
       "category": "faith"
     },
     {
@@ -939,35 +699,11 @@
       "category": "faith"
     },
     {
-      "text": "I am strengthened by Christ—my faith makes me unshakable.",
-      "category": "faith"
-    },
-    {
-      "text": "I am clothed with the shield of faith.",
-      "category": "faith"
-    },
-    {
       "text": "I trust that God is working all things for my good.",
       "category": "faith"
     },
     {
       "text": "I stand firm on God's promises, knowing they will not fail.",
-      "category": "faith"
-    },
-    {
-      "text": "I overcome the world by faith in Jesus.",
-      "category": "faith"
-    },
-    {
-      "text": "I am justified by faith in Jesus Christ.",
-      "category": "faith"
-    },
-    {
-      "text": "I am strong in faith, giving glory to God.",
-      "category": "faith"
-    },
-    {
-      "text": "I hold fast to my confession of faith.",
       "category": "faith"
     },
     {
@@ -992,10 +728,6 @@
     },
     {
       "text": "My faith in Jesus opens doors of divine favor and breakthrough.",
-      "category": "faith"
-    },
-    {
-      "text": "I walk in victory because I have faith in Jesus.",
       "category": "faith"
     },
     {
@@ -1203,131 +935,7 @@
       "category": "grace"
     },
     {
-      "text": "Jesus' grace is always with me.",
-      "category": "grace"
-    },
-    {
-      "text": "I am blessed by Jesus' grace.",
-      "category": "grace"
-    },
-    {
-      "text": "I am joyful because of grace.",
-      "category": "grace"
-    },
-    {
-      "text": "I am brave because of grace.",
-      "category": "grace"
-    },
-    {
-      "text": "I can be strong with grace.",
-      "category": "grace"
-    },
-    {
-      "text": "I can be calm because of grace.",
-      "category": "grace"
-    },
-    {
-      "text": "Grace helps me follow Jesus.",
-      "category": "grace"
-    },
-    {
-      "text": "Grace helps me love others.",
-      "category": "grace"
-    },
-    {
-      "text": "Grace helps me love Jesus more.",
-      "category": "grace"
-    },
-    {
-      "text": "Grace helps me grow in faith and character.",
-      "category": "grace"
-    },
-    {
-      "text": "Grace helps me be honest.",
-      "category": "grace"
-    },
-    {
-      "text": "Grace helps me be thankful.",
-      "category": "grace"
-    },
-    {
-      "text": "Grace helps me feel loved.",
-      "category": "grace"
-    },
-    {
-      "text": "Grace makes me feel safe and cared for.",
-      "category": "grace"
-    },
-    {
-      "text": "Jesus' grace gives me hope.",
-      "category": "grace"
-    },
-    {
-      "text": "Jesus' grace helps me grow.",
-      "category": "grace"
-    },
-    {
-      "text": "I can do great things with grace.",
-      "category": "grace"
-    },
-    {
-      "text": "Grace helps me be helpful to others.",
-      "category": "grace"
-    },
-    {
-      "text": "Grace helps me share what I have.",
-      "category": "grace"
-    },
-    {
-      "text": "Jesus' grace makes me feel seen and special.",
-      "category": "grace"
-    },
-    {
-      "text": "Grace helps me be happy in any season.",
-      "category": "grace"
-    },
-    {
-      "text": "I am covered and kept by the grace of Jesus.",
-      "category": "grace"
-    },
-    {
-      "text": "Grace helps me choose what is right.",
-      "category": "grace"
-    },
-    {
       "text": "Jesus' grace is the reason I keep going.",
-      "category": "grace"
-    },
-    {
-      "text": "God's grace is sufficient for me in all things.",
-      "category": "grace"
-    },
-    {
-      "text": "I am saved by grace through faith, not by my works.",
-      "category": "grace"
-    },
-    {
-      "text": "I live under the abundance of God's grace.",
-      "category": "grace"
-    },
-    {
-      "text": "I am justified freely by God's grace through Jesus.",
-      "category": "grace"
-    },
-    {
-      "text": "God's grace empowers me to reign in life.",
-      "category": "grace"
-    },
-    {
-      "text": "I am accepted in the Beloved because of grace.",
-      "category": "grace"
-    },
-    {
-      "text": "I approach God's throne boldly because of grace.",
-      "category": "grace"
-    },
-    {
-      "text": "I am forgiven and redeemed by the riches of God's grace.",
       "category": "grace"
     },
     {
@@ -1343,31 +951,11 @@
       "category": "grace"
     },
     {
-      "text": "I receive mercy and grace every day.",
-      "category": "grace"
-    },
-    {
       "text": "God's grace abounds in my life and overflows to others.",
       "category": "grace"
     },
     {
-      "text": "I am completely forgiven by God's boundless grace.",
-      "category": "grace"
-    },
-    {
-      "text": "I am free from guilt and shame, embraced by God's mercy.",
-      "category": "grace"
-    },
-    {
-      "text": "I am not condemned, but held in the embrace of God's forgiveness.",
-      "category": "grace"
-    },
-    {
       "text": "I am forever forgiven, sealed in the eternal grace of Jesus Christ.",
-      "category": "grace"
-    },
-    {
-      "text": "I walk in freedom through God's grace.",
       "category": "grace"
     },
     {
@@ -1383,23 +971,11 @@
       "category": "grace"
     },
     {
-      "text": "I am not defined by my past choices, but by God's grace and mercy.",
-      "category": "grace"
-    },
-    {
       "text": "I stand firm in God's grace daily.",
       "category": "grace"
     },
     {
       "text": "I am renewed each day, as God's grace covers all my shortcomings.",
-      "category": "grace"
-    },
-    {
-      "text": "There is no condemnation for me in Christ Jesus.",
-      "category": "grace"
-    },
-    {
-      "text": "I am saved by grace, not by my works.",
       "category": "grace"
     },
     {
@@ -1412,14 +988,6 @@
     },
     {
       "text": "God's mercy is new every morning for me.",
-      "category": "grace"
-    },
-    {
-      "text": "My sins are removed as far as the east is from the west.",
-      "category": "grace"
-    },
-    {
-      "text": "My past does not define me; God's grace does.",
       "category": "grace"
     },
     {
@@ -1451,23 +1019,7 @@
       "category": "grace"
     },
     {
-      "text": "There is no condemnation in Christ—I rest in His complete forgiveness.",
-      "category": "grace"
-    },
-    {
       "text": "Jesus' sacrifice has cleansed me—I stand righteous before God.",
-      "category": "grace"
-    },
-    {
-      "text": "I am made righteous through Jesus' perfect sacrifice.",
-      "category": "grace"
-    },
-    {
-      "text": "I walk in freedom, released from the weight of past mistakes through Christ.",
-      "category": "grace"
-    },
-    {
-      "text": "I live under the freedom of God's grace.",
       "category": "grace"
     },
     {
@@ -1599,10 +1151,6 @@
       "category": "rest"
     },
     {
-      "text": "I surrender my burdens to God, for He will sustain me.",
-      "category": "rest"
-    },
-    {
       "text": "I am filled with peace that surpasses all understanding, guarding my heart and mind.",
       "category": "rest"
     },
@@ -1612,10 +1160,6 @@
     },
     {
       "text": "I let go of worry and anxiety, for God fights my battles.",
-      "category": "rest"
-    },
-    {
-      "text": "I am at peace, knowing God's watchful eye never leaves me.",
       "category": "rest"
     },
     {
@@ -1631,19 +1175,7 @@
       "category": "rest"
     },
     {
-      "text": "I am drawing strength from quiet times spent in God's presence.",
-      "category": "rest"
-    },
-    {
-      "text": "I am surrendering all fears as I rest in God's perfect love.",
-      "category": "rest"
-    },
-    {
       "text": "I am comforted and cared for as I rest in God's compassionate arms.",
-      "category": "rest"
-    },
-    {
-      "text": "I wait for the Lord, He is my hope and my salvation.",
       "category": "rest"
     },
     {
@@ -1659,10 +1191,6 @@
       "category": "rest"
     },
     {
-      "text": "Because Jesus loves me, I release my burdens and worries.",
-      "category": "rest"
-    },
-    {
       "text": "Because Jesus loves me, I trust that He is in control of my life.",
       "category": "rest"
     },
@@ -1672,14 +1200,6 @@
     },
     {
       "text": "Because Jesus loves me, I quiet my mind and heart in His presence.",
-      "category": "rest"
-    },
-    {
-      "text": "Because Jesus loves me, I am restored by His grace.",
-      "category": "rest"
-    },
-    {
-      "text": "Because Jesus loves me, I surrender my worries to Him.",
       "category": "rest"
     },
     {
@@ -1695,15 +1215,7 @@
       "category": "rest"
     },
     {
-      "text": "I lie down in peace, for the Lord makes me dwell in safety.",
-      "category": "rest"
-    },
-    {
       "text": "I trust in the Lord and remain in perfect peace.",
-      "category": "rest"
-    },
-    {
-      "text": "I rest in the shadow of the Almighty.",
       "category": "rest"
     },
     {
@@ -1719,19 +1231,7 @@
       "category": "rest"
     },
     {
-      "text": "I rest in God's presence and He gives me joy.",
-      "category": "rest"
-    },
-    {
-      "text": "God's peace rules in my heart.",
-      "category": "rest"
-    },
-    {
       "text": "I cease from striving and rest in God's grace.",
-      "category": "rest"
-    },
-    {
-      "text": "The Lord is my shepherd, I lack nothing.",
       "category": "rest"
     },
     {
@@ -1755,19 +1255,7 @@
       "category": "rest"
     },
     {
-      "text": "I surrender all my burdens to the Lord.",
-      "category": "rest"
-    },
-    {
       "text": "God is my refuge, and I rest in His strength.",
-      "category": "rest"
-    },
-    {
-      "text": "I am at peace because my heart trusts in God.",
-      "category": "rest"
-    },
-    {
-      "text": "The Lord grants me rest from all my troubles.",
       "category": "rest"
     },
     {
@@ -1783,19 +1271,7 @@
       "category": "rest"
     },
     {
-      "text": "The peace of Christ rules in my heart.",
-      "category": "rest"
-    },
-    {
-      "text": "I cast all my anxieties on the Lord and receive His peace.",
-      "category": "rest"
-    },
-    {
       "text": "Jesus has given me His peace, and my heart is not troubled.",
-      "category": "rest"
-    },
-    {
-      "text": "I lie down and sleep in peace, for the Lord keeps me safe.",
       "category": "rest"
     },
     {
@@ -1803,23 +1279,7 @@
       "category": "rest"
     },
     {
-      "text": "I fix my eyes on Jesus and live in His perfect peace.",
-      "category": "rest"
-    },
-    {
-      "text": "The Lord is my shepherd, and I lack nothing, including peace.",
-      "category": "rest"
-    },
-    {
-      "text": "I let the peace of Christ fill my thoughts and actions.",
-      "category": "rest"
-    },
-    {
       "text": "I am filled with peace because I trust in God's promises.",
-      "category": "rest"
-    },
-    {
-      "text": "I rest in the Lord's presence, where true peace is found.",
       "category": "rest"
     },
     {
@@ -1827,35 +1287,7 @@
       "category": "rest"
     },
     {
-      "text": "I have peace that surpasses all understanding through Christ Jesus.",
-      "category": "rest"
-    },
-    {
-      "text": "God's peace guards my heart and mind in Christ Jesus.",
-      "category": "rest"
-    },
-    {
-      "text": "I dwell in perfect peace because I trust in the Lord.",
-      "category": "rest"
-    },
-    {
-      "text": "I am still and know that He is God; His peace surrounds me.",
-      "category": "rest"
-    },
-    {
-      "text": "I let the peace of God rule in my heart daily.",
-      "category": "rest"
-    },
-    {
-      "text": "Jesus has overcome the world, so I walk in His peace.",
-      "category": "rest"
-    },
-    {
       "text": "I am led forth in peace, walking in God's guidance.",
-      "category": "rest"
-    },
-    {
-      "text": "I rest in God's perfect peace, free from anxiety and fear.",
       "category": "rest"
     },
     {
@@ -1939,10 +1371,6 @@
       "category": "rest"
     },
     {
-      "text": "Resting is not giving up. It is trusting.\nGod is your strength AND your shield.\nYou do not have to carry what He is already holding.",
-      "category": "rest"
-    },
-    {
       "text": "There is a rest still available for you. God designed it.\nSabbath rest is not optional. It is your inheritance.\nStop running until you break. Enter the rest He prepared.",
       "category": "rest"
     },
@@ -1975,19 +1403,11 @@
       "category": "rest"
     },
     {
-      "text": "I am filled with hope because God is my refuge.",
-      "category": "hope"
-    },
-    {
       "text": "My hope in the Lord is unwavering, for He is always faithful.",
       "category": "hope"
     },
     {
       "text": "I place my hope in God's word, knowing His promises never fail.",
-      "category": "hope"
-    },
-    {
-      "text": "I overflow with hope because God's love fills my heart.",
       "category": "hope"
     },
     {
@@ -2011,23 +1431,7 @@
       "category": "hope"
     },
     {
-      "text": "Hope rises within me because God is my protector.",
-      "category": "hope"
-    },
-    {
-      "text": "I will not be shaken because my hope is in the Lord.",
-      "category": "hope"
-    },
-    {
       "text": "My hope is eternal, rooted in the promises of God.",
-      "category": "hope"
-    },
-    {
-      "text": "I trust in the Lord, and my hope is steadfast in Him.",
-      "category": "hope"
-    },
-    {
-      "text": "My hope is in the Lord, and He will never fail me.",
       "category": "hope"
     },
     {
@@ -2035,19 +1439,7 @@
       "category": "hope"
     },
     {
-      "text": "I wait for the Lord, my whole being waits, and in his word I put my hope.",
-      "category": "hope"
-    },
-    {
-      "text": "We have this hope as an anchor for the soul, firm and secure.",
-      "category": "hope"
-    },
-    {
       "text": "I will always hope, for God's plans for me are good and full of promise.",
-      "category": "hope"
-    },
-    {
-      "text": "Hope fills my spirit, for God is my ever-present help.",
       "category": "hope"
     },
     {
@@ -2067,27 +1459,7 @@
       "category": "hope"
     },
     {
-      "text": "Because Jesus loves me, I have hope for a brighter tomorrow.",
-      "category": "hope"
-    },
-    {
-      "text": "Because Jesus loves me, I trust that all things work together for my good.",
-      "category": "hope"
-    },
-    {
-      "text": "My hope is in the Lord, and He renews my strength.",
-      "category": "hope"
-    },
-    {
       "text": "God's plans for me are good, and my future is full of hope.",
-      "category": "hope"
-    },
-    {
-      "text": "I have hope because God is faithful to His promises.",
-      "category": "hope"
-    },
-    {
-      "text": "God fills me with hope, joy, and peace through faith.",
       "category": "hope"
     },
     {
@@ -2099,23 +1471,7 @@
       "category": "hope"
     },
     {
-      "text": "I have an anchor for my soul—God's unshakable hope.",
-      "category": "hope"
-    },
-    {
       "text": "Even in trials, I have hope because God is with me.",
-      "category": "hope"
-    },
-    {
-      "text": "I will see God's goodness in my life.",
-      "category": "hope"
-    },
-    {
-      "text": "I have hope because God is working all things for my good.",
-      "category": "hope"
-    },
-    {
-      "text": "The Lord is my portion, and I place my hope in Him.",
       "category": "hope"
     },
     {
@@ -2127,14 +1483,6 @@
       "category": "hope"
     },
     {
-      "text": "I do not lose heart because my hope is in the Lord.",
-      "category": "hope"
-    },
-    {
-      "text": "I have hope in Christ, and I will not be moved.",
-      "category": "hope"
-    },
-    {
       "text": "I wait with expectation, for God's promises will come to pass.",
       "category": "hope"
     },
@@ -2143,27 +1491,11 @@
       "category": "hope"
     },
     {
-      "text": "I expect to see God's promises fulfilled in my life daily.",
-      "category": "hope"
-    },
-    {
-      "text": "I remain strong and persevere through every challenge with God's help.",
-      "category": "hope"
-    },
-    {
       "text": "I trust God's timing and keep moving forward in faith.",
       "category": "hope"
     },
     {
       "text": "I run the race with endurance, knowing God is my strength.",
-      "category": "hope"
-    },
-    {
-      "text": "I keep my hope alive through every trial because God is faithful.",
-      "category": "hope"
-    },
-    {
-      "text": "I keep pressing forward, knowing that God's plan is perfect.",
       "category": "hope"
     },
     {
@@ -2287,10 +1619,6 @@
       "category": "joy"
     },
     {
-      "text": "God's love brings me joy, no matter what I face in life.",
-      "category": "joy"
-    },
-    {
       "text": "I rejoice because God has done great things in my life.",
       "category": "joy"
     },
@@ -2307,15 +1635,7 @@
       "category": "joy"
     },
     {
-      "text": "I choose joy in every circumstance, knowing God is in control.",
-      "category": "joy"
-    },
-    {
       "text": "I delight in the Lord, and He gives me the desires of my heart.",
-      "category": "joy"
-    },
-    {
-      "text": "My heart overflows with joy because I live in God's love.",
       "category": "joy"
     },
     {
@@ -2335,31 +1655,7 @@
       "category": "joy"
     },
     {
-      "text": "The joy of the LORD is my strength.",
-      "category": "joy"
-    },
-    {
-      "text": "I choose joy as my response to every trial, knowing God is working for my good.",
-      "category": "joy"
-    },
-    {
-      "text": "Because Jesus loves me, I choose joy in every circumstance.",
-      "category": "joy"
-    },
-    {
       "text": "Because Jesus loves me, I find happiness in the little things.",
-      "category": "joy"
-    },
-    {
-      "text": "Because Jesus loves me, joy fills my heart every day.",
-      "category": "joy"
-    },
-    {
-      "text": "Because Jesus loves me, I embrace joy as my strength.",
-      "category": "joy"
-    },
-    {
-      "text": "Because Jesus loves me, I find joy in His presence.",
       "category": "joy"
     },
     {
@@ -2367,31 +1663,11 @@
       "category": "joy"
     },
     {
-      "text": "I rejoice in the Lord always, no matter the circumstance.",
-      "category": "joy"
-    },
-    {
-      "text": "I choose joy because God is my salvation.",
-      "category": "joy"
-    },
-    {
       "text": "I am anointed with the oil of joy.",
       "category": "joy"
     },
     {
-      "text": "God fills me with joy in His presence.",
-      "category": "joy"
-    },
-    {
       "text": "I have joy because my name is written in heaven.",
-      "category": "joy"
-    },
-    {
-      "text": "I count it all joy when I face trials because they produce endurance.",
-      "category": "joy"
-    },
-    {
-      "text": "I sing for joy because God has done great things for me.",
       "category": "joy"
     },
     {
@@ -2403,15 +1679,7 @@
       "category": "joy"
     },
     {
-      "text": "My joy is complete in Christ.",
-      "category": "joy"
-    },
-    {
       "text": "I rejoice in hope, patient in affliction, and faithful in prayer.",
-      "category": "joy"
-    },
-    {
-      "text": "I am clothed with joy instead of mourning.",
       "category": "joy"
     },
     {
@@ -2443,31 +1711,7 @@
       "category": "joy"
     },
     {
-      "text": "I am filled with joy because God is always with me and He never fails.",
-      "category": "joy"
-    },
-    {
-      "text": "I rejoice in the Lord always, and His joy fills my heart.",
-      "category": "joy"
-    },
-    {
-      "text": "God's presence fills me with fullness of joy.",
-      "category": "joy"
-    },
-    {
-      "text": "My heart leaps with joy because the Lord has done great things for me.",
-      "category": "joy"
-    },
-    {
-      "text": "I count it all joy, knowing trials produce endurance in me.",
-      "category": "joy"
-    },
-    {
       "text": "I am clothed with joy, for God has turned my mourning into dancing.",
-      "category": "joy"
-    },
-    {
-      "text": "I sing for joy because the Lord is my refuge and strength.",
       "category": "joy"
     },
     {
@@ -2479,23 +1723,11 @@
       "category": "joy"
     },
     {
-      "text": "I am anointed with the oil of joy by my loving Father.",
-      "category": "joy"
-    },
-    {
       "text": "I rejoice in the Lord's great love and mercy.",
       "category": "joy"
     },
     {
-      "text": "I have joy even in trials, for God is refining my faith.",
-      "category": "joy"
-    },
-    {
       "text": "My heart is glad, and my whole being rejoices in the Lord.",
-      "category": "joy"
-    },
-    {
-      "text": "My joy is complete in the presence of Jesus.",
       "category": "joy"
     },
     {
@@ -2547,10 +1779,6 @@
       "category": "joy"
     },
     {
-      "text": "Not rejoice when things go right. ALWAYS.\nPaul said it twice because he knew how hard it is.\nRejoice in the Lord. He is worthy of it even now.",
-      "category": "joy"
-    },
-    {
       "text": "The kingdom you live in is not about your circumstances.\nIt is righteousness. Peace. JOY in the Holy Spirit.\nJoy is not a reward for good days. It is part of your kingdom address.",
       "category": "joy"
     },
@@ -2580,10 +1808,6 @@
     },
     {
       "text": "God satisfies the thirsty. Fills the hungry with good things.\nYou do not have to stay empty.\nCome thirsty. Leave full. That is how God works.",
-      "category": "joy"
-    },
-    {
-      "text": "Joy in God's presence is not just a feeling. It is fullness.\nThe path of life leads to that fullness.\nYou are already on the way.",
       "category": "joy"
     },
     {
@@ -2623,10 +1847,6 @@
       "category": "wisdom"
     },
     {
-      "text": "I ask for wisdom in every situation, knowing God will guide me.",
-      "category": "wisdom"
-    },
-    {
       "text": "I speak wisely and bring healing to those around me.",
       "category": "wisdom"
     },
@@ -2643,39 +1863,7 @@
       "category": "wisdom"
     },
     {
-      "text": "I choose wisdom over wealth, for wisdom is life-giving.",
-      "category": "wisdom"
-    },
-    {
-      "text": "I seek wisdom in every decision I make, trusting God's guidance.",
-      "category": "wisdom"
-    },
-    {
-      "text": "I receive wisdom from above, and it guides my heart and actions.",
-      "category": "wisdom"
-    },
-    {
-      "text": "I am wise and slow to speak, knowing my words carry power.",
-      "category": "wisdom"
-    },
-    {
-      "text": "I walk in wisdom, avoiding foolishness in my life.",
-      "category": "wisdom"
-    },
-    {
       "text": "God's wisdom brings me safety and protection in every situation.",
-      "category": "wisdom"
-    },
-    {
-      "text": "In all my ways I submit to Him, and He makes my paths straight.",
-      "category": "wisdom"
-    },
-    {
-      "text": "The fear of the Lord is the beginning of wisdom, and knowledge of the Holy One is understanding.",
-      "category": "wisdom"
-    },
-    {
-      "text": "I am wise, understanding the Lord's will in all situations.",
       "category": "wisdom"
     },
     {
@@ -2688,26 +1876,6 @@
     },
     {
       "text": "Because Jesus loves me, I am open to receiving God's wisdom.",
-      "category": "wisdom"
-    },
-    {
-      "text": "Because Jesus loves me, I seek His understanding in every decision.",
-      "category": "wisdom"
-    },
-    {
-      "text": "Because Jesus loves me, I am guided by His truth and love.",
-      "category": "wisdom"
-    },
-    {
-      "text": "Because Jesus loves me, I grow wiser through my experiences.",
-      "category": "wisdom"
-    },
-    {
-      "text": "I have the wisdom of God guiding my steps.",
-      "category": "wisdom"
-    },
-    {
-      "text": "I ask God for wisdom, and He gives it generously.",
       "category": "wisdom"
     },
     {
@@ -2727,27 +1895,7 @@
       "category": "wisdom"
     },
     {
-      "text": "God teaches me and leads me in the way I should go.",
-      "category": "wisdom"
-    },
-    {
-      "text": "I am discerning and understand God’s will.",
-      "category": "wisdom"
-    },
-    {
-      "text": "I speak words of wisdom, filled with God’s insight.",
-      "category": "wisdom"
-    },
-    {
-      "text": "I make wise decisions because I seek the Lord.",
-      "category": "wisdom"
-    },
-    {
       "text": "I apply my heart to wisdom and live with discernment.",
-      "category": "wisdom"
-    },
-    {
-      "text": "I am quick to listen, slow to speak, and slow to anger.",
       "category": "wisdom"
     },
     {
@@ -2755,27 +1903,11 @@
       "category": "wisdom"
     },
     {
-      "text": "I guard my heart, for it determines the course of my life.",
-      "category": "wisdom"
-    },
-    {
       "text": "I discern good from evil by growing in God’s Word.",
       "category": "wisdom"
     },
     {
-      "text": "God’s wisdom is at work in my life daily.",
-      "category": "wisdom"
-    },
-    {
       "text": "I have insight because I meditate on God’s Word.",
-      "category": "wisdom"
-    },
-    {
-      "text": "I choose wisdom and live with peace and security.",
-      "category": "wisdom"
-    },
-    {
-      "text": "I guard my words with wisdom and speak life.",
       "category": "wisdom"
     },
     {
@@ -2787,39 +1919,7 @@
       "category": "wisdom"
     },
     {
-      "text": "I seek God's wisdom above all earthly understanding.",
-      "category": "wisdom"
-    },
-    {
-      "text": "God fills me with wisdom that is pure and peaceable.",
-      "category": "wisdom"
-    },
-    {
-      "text": "I am discerning and walk in God's perfect will.",
-      "category": "wisdom"
-    },
-    {
-      "text": "My words are filled with wisdom and life.",
-      "category": "wisdom"
-    },
-    {
-      "text": "I guard my heart, for wisdom flows from it.",
-      "category": "wisdom"
-    },
-    {
-      "text": "I walk in wisdom, distinguishing between good and evil.",
-      "category": "wisdom"
-    },
-    {
-      "text": "God gives me wisdom that leads to success.",
-      "category": "wisdom"
-    },
-    {
       "text": "I seek counsel and avoid foolish decisions.",
-      "category": "wisdom"
-    },
-    {
-      "text": "I meditate on God's Word and gain wisdom.",
       "category": "wisdom"
     },
     {
@@ -2827,19 +1927,7 @@
       "category": "wisdom"
     },
     {
-      "text": "I choose wisdom, and it protects and preserves my life.",
-      "category": "wisdom"
-    },
-    {
-      "text": "I value wisdom more than riches, for wisdom is my true treasure.",
-      "category": "wisdom"
-    },
-    {
       "text": "I live wisely, shining God's light in all I do.",
-      "category": "wisdom"
-    },
-    {
-      "text": "I delight in wisdom and walk in understanding.",
       "category": "wisdom"
     },
     {
@@ -2943,10 +2031,6 @@
       "category": "wisdom"
     },
     {
-      "text": "I praise the Lord for His unfailing love and faithfulness.",
-      "category": "praise"
-    },
-    {
       "text": "I will bless the Lord at all times, He is always faithful.",
       "category": "praise"
     },
@@ -2955,39 +2039,11 @@
       "category": "praise"
     },
     {
-      "text": "I will sing praises to the Lord, He is worthy of all honor and glory.",
-      "category": "praise"
-    },
-    {
       "text": "I give thanks to the Lord with all my heart, His love endures forever.",
       "category": "praise"
     },
     {
-      "text": "I praise God for His faithfulness, which remains through all generations.",
-      "category": "praise"
-    },
-    {
-      "text": "I praise God with all my being, for His love and mercy never end.",
-      "category": "praise"
-    },
-    {
       "text": "I sing praises to God, for He has rescued me and set me free.",
-      "category": "praise"
-    },
-    {
-      "text": "I come before the Lord with thanksgiving and praise.",
-      "category": "praise"
-    },
-    {
-      "text": "I sing for joy and praise the Lord with all my heart.",
-      "category": "praise"
-    },
-    {
-      "text": "Great is the Lord, and He is worthy of all praise.",
-      "category": "praise"
-    },
-    {
-      "text": "My soul praises the Lord and His holy name.",
       "category": "praise"
     },
     {
@@ -3003,19 +2059,11 @@
       "category": "praise"
     },
     {
-      "text": "Every day I bless and praise the Lord's name forever.",
-      "category": "praise"
-    },
-    {
       "text": "The Lord is my strength and salvation, and I praise Him.",
       "category": "praise"
     },
     {
       "text": "I rejoice and am glad in the day the Lord has made.",
-      "category": "praise"
-    },
-    {
-      "text": "I praise the Lord and sing of Him to all nations.",
       "category": "praise"
     },
     {
@@ -3027,14 +2075,6 @@
       "category": "praise"
     },
     {
-      "text": "I will hope continually and praise the Lord more and more.",
-      "category": "praise"
-    },
-    {
-      "text": "Because Jesus loves me, I give God praise for His endless love.",
-      "category": "praise"
-    },
-    {
       "text": "Because Jesus loves me, I lift my voice in gratitude and praise.",
       "category": "praise"
     },
@@ -3043,15 +2083,7 @@
       "category": "praise"
     },
     {
-      "text": "I glorify the Lord for His goodness and praise His name forever.",
-      "category": "praise"
-    },
-    {
       "text": "I lift up my hands and sing praises to you Lord for your great mercy.",
-      "category": "praise"
-    },
-    {
-      "text": "I give thanks to the Lord, for His love is everlasting and His grace abounds.",
       "category": "praise"
     },
     {
@@ -3060,10 +2092,6 @@
     },
     {
       "text": "I thank You, Jesus, for ruling with grace and truth in my life.",
-      "category": "praise"
-    },
-    {
-      "text": "I praise and exalt the Lord, for He is my God.",
       "category": "praise"
     },
     {
@@ -3091,27 +2119,11 @@
       "category": "praise"
     },
     {
-      "text": "I rejoice in the Lord and praise Him for His goodness and grace.",
-      "category": "praise"
-    },
-    {
       "text": "The Lord is my strength and shield. My heart trusts in Him, and I find help. My spirit overflows with joy, and I will sing His praise!",
       "category": "praise"
     },
     {
       "text": "I seek the Lord and His strength every day.",
-      "category": "praise"
-    },
-    {
-      "text": "I praise the Lord with all my heart for His marvelous deeds.",
-      "category": "praise"
-    },
-    {
-      "text": "I praise the Lord, for He is good and His love endures forever.",
-      "category": "praise"
-    },
-    {
-      "text": "I will bless the Lord at all times; His praise is always on my lips.",
       "category": "praise"
     },
     {
@@ -3251,35 +2263,7 @@
       "category": "destiny"
     },
     {
-      "text": "I am guided by God's wisdom in every step of my journey.",
-      "category": "destiny"
-    },
-    {
-      "text": "I am walking confidently in the path God has set before me.",
-      "category": "destiny"
-    },
-    {
-      "text": "I am empowered by the Holy Spirit to accomplish my destiny.",
-      "category": "destiny"
-    },
-    {
-      "text": "I am surrounded by God's favor as I pursue my calling.",
-      "category": "destiny"
-    },
-    {
       "text": "I am protected by God's hand, no harm will deter me from my destiny.",
-      "category": "destiny"
-    },
-    {
-      "text": "I am filled with God's peace, trusting in His perfect plan for my life.",
-      "category": "destiny"
-    },
-    {
-      "text": "I am equipped with everything I need to fulfill God's purpose for me.",
-      "category": "destiny"
-    },
-    {
-      "text": "I am growing in faith, moving boldly toward my God-given destiny.",
       "category": "destiny"
     },
     {
@@ -3347,10 +2331,6 @@
       "category": "destiny"
     },
     {
-      "text": "No weapon formed against me will prosper.",
-      "category": "destiny"
-    },
-    {
       "text": "There is power in my words, so I carefully choose what I say.",
       "category": "destiny"
     },
@@ -3363,10 +2343,6 @@
       "category": "destiny"
     },
     {
-      "text": "I am equipped by God to accomplish great things.",
-      "category": "destiny"
-    },
-    {
       "text": "I embrace the promises of God, aligning my life with His word.",
       "category": "destiny"
     },
@@ -3376,10 +2352,6 @@
     },
     {
       "text": "I declare my generational curses are now broken in Jesus' name.",
-      "category": "destiny"
-    },
-    {
-      "text": "I speak life into my future.",
       "category": "destiny"
     },
     {
@@ -3399,23 +2371,7 @@
       "category": "destiny"
     },
     {
-      "text": "I am chosen by God for a great purpose.",
-      "category": "destiny"
-    },
-    {
-      "text": "God’s plans for me are good and full of hope.",
-      "category": "destiny"
-    },
-    {
       "text": "I was created for good works in Christ.",
-      "category": "destiny"
-    },
-    {
-      "text": "God directs my steps and leads me into purpose.",
-      "category": "destiny"
-    },
-    {
-      "text": "My gifts make room for me and bring me before great people.",
       "category": "destiny"
     },
     {
@@ -3423,15 +2379,7 @@
       "category": "destiny"
     },
     {
-      "text": "God is working all things for my good.",
-      "category": "destiny"
-    },
-    {
       "text": "I run my race with endurance, fulfilling my calling.",
-      "category": "destiny"
-    },
-    {
-      "text": "God has anointed me to do great things for His kingdom.",
       "category": "destiny"
     },
     {
@@ -3443,31 +2391,7 @@
       "category": "destiny"
     },
     {
-      "text": "God’s grace empowers me to fulfill my calling.",
-      "category": "destiny"
-    },
-    {
       "text": "I do all things with excellence for God’s glory.",
-      "category": "destiny"
-    },
-    {
-      "text": "God’s favor surrounds me and advances my purpose.",
-      "category": "destiny"
-    },
-    {
-      "text": "I rise up with boldness to fulfill God’s assignment.",
-      "category": "destiny"
-    },
-    {
-      "text": "God’s purpose for me will stand and cannot be stopped.",
-      "category": "destiny"
-    },
-    {
-      "text": "I am created for God’s glory and purpose.",
-      "category": "destiny"
-    },
-    {
-      "text": "I am set apart for a divine purpose.",
       "category": "destiny"
     },
     {
@@ -3476,14 +2400,6 @@
     },
     {
       "text": "I am an ambassador of Christ, representing God’s kingdom.",
-      "category": "destiny"
-    },
-    {
-      "text": "I am called to bear lasting fruit.",
-      "category": "destiny"
-    },
-    {
-      "text": "I am walking boldly in God’s purpose for my life.",
       "category": "destiny"
     },
     {
@@ -3503,15 +2419,7 @@
       "category": "destiny"
     },
     {
-      "text": "I am chosen by God and set apart for His purpose.",
-      "category": "destiny"
-    },
-    {
       "text": "God's purpose for my life will be fully accomplished through me.",
-      "category": "destiny"
-    },
-    {
-      "text": "I am anointed to proclaim the good news.",
       "category": "destiny"
     },
     {
@@ -3543,10 +2451,6 @@
       "category": "destiny"
     },
     {
-      "text": "I am a vessel for God's glory, fulfilling His divine will.",
-      "category": "destiny"
-    },
-    {
       "text": "God is aligning opportunities that perfectly fit my calling and destiny.",
       "category": "destiny"
     },
@@ -3556,10 +2460,6 @@
     },
     {
       "text": "I am fulfilling my calling with joy and perseverance.",
-      "category": "destiny"
-    },
-    {
-      "text": "I walk in God's perfect will for my life.",
       "category": "destiny"
     },
     {
@@ -3687,10 +2587,6 @@
       "category": "warfare"
     },
     {
-      "text": "God's favor surrounds me like a shield.",
-      "category": "warfare"
-    },
-    {
       "text": "I am seated with Christ in heavenly places, far above every power of darkness.",
       "category": "warfare"
     },
@@ -3715,31 +2611,11 @@
       "category": "warfare"
     },
     {
-      "text": "I have been given power over all the works of the enemy.",
-      "category": "warfare"
-    },
-    {
       "text": "I am victorious in Christ, and nothing can separate me from His love.",
       "category": "warfare"
     },
     {
-      "text": "I am the temple of the Holy Spirit, and I walk in His power.",
-      "category": "warfare"
-    },
-    {
-      "text": "I have peace in my heart because Jesus has overcome the world.",
-      "category": "warfare"
-    },
-    {
       "text": "I have been made righteous through Jesus, and I stand boldly before God.",
-      "category": "warfare"
-    },
-    {
-      "text": "I have been given every spiritual blessing in Christ.",
-      "category": "warfare"
-    },
-    {
-      "text": "I am called to be bold and fearless because God is with me.",
       "category": "warfare"
     },
     {
@@ -3751,19 +2627,7 @@
       "category": "warfare"
     },
     {
-      "text": "I am a co-heir with Christ, and I share in His inheritance.",
-      "category": "warfare"
-    },
-    {
-      "text": "I walk in divine wisdom, and God directs my steps.",
-      "category": "warfare"
-    },
-    {
       "text": "I am called to walk in love, and His love casts out all fear.",
-      "category": "warfare"
-    },
-    {
-      "text": "I am filled with God's peace, and I will not let my heart be troubled.",
       "category": "warfare"
     },
     {
@@ -3835,19 +2699,11 @@
       "category": "warfare"
     },
     {
-      "text": "God did not give you a spirit of fear. He gave you power, love, and a sound mind.",
-      "category": "warfare"
-    },
-    {
       "text": "The name of the Lord is a fortified tower. Run to it. Safety is already inside.",
       "category": "warfare"
     },
     {
       "text": "The wicked run when no one chases them. The righteous stand bold as a lion. Know which one you are.",
-      "category": "warfare"
-    },
-    {
-      "text": "Passive faith is not faith. Put on the full armor. God expects you to advance, not wait.",
       "category": "warfare"
     },
     {
@@ -3887,10 +2743,6 @@
       "category": "miracles"
     },
     {
-      "text": "God is turning things around for my good.",
-      "category": "miracles"
-    },
-    {
       "text": "I have favor with God and people, and doors of opportunity open for me.",
       "category": "miracles"
     },
@@ -3904,10 +2756,6 @@
     },
     {
       "text": "I am an heir of God, and every promise in Christ is mine.",
-      "category": "miracles"
-    },
-    {
-      "text": "God is opening doors no one can shut in my life.",
       "category": "miracles"
     },
     {
@@ -3927,35 +2775,11 @@
       "category": "miracles"
     },
     {
-      "text": "The Lord is making all things new in my life.",
-      "category": "miracles"
-    },
-    {
       "text": "God is multiplying what I have and providing beyond measure.",
       "category": "miracles"
     },
     {
-      "text": "God is working behind the scenes for my breakthrough.",
-      "category": "miracles"
-    },
-    {
-      "text": "God is healing my body and renewing my strength.",
-      "category": "miracles"
-    },
-    {
-      "text": "I trust in the Lord, and He makes my path straight.",
-      "category": "miracles"
-    },
-    {
-      "text": "God is leading me into greater things, and I trust His path.",
-      "category": "miracles"
-    },
-    {
       "text": "I have been set free, and nothing can hold me back.",
-      "category": "miracles"
-    },
-    {
-      "text": "God is restoring my relationships and bringing unity.",
       "category": "miracles"
     },
     {
@@ -3983,31 +2807,11 @@
       "category": "health"
     },
     {
-      "text": "I believe God is filling me with energy, vitality, and a renewed spirit of health.",
-      "category": "health"
-    },
-    {
-      "text": "I declare my body must align with divine health and wholeness.",
-      "category": "health"
-    },
-    {
       "text": "I declare every cell in my body functions perfectly as God intended.",
       "category": "health"
     },
     {
-      "text": "I declare that my body is renewed, restored, and filled with life.",
-      "category": "health"
-    },
-    {
-      "text": "I declare that God's healing power flows through every part of me.",
-      "category": "health"
-    },
-    {
       "text": "I declare my mind is clear, my spirit is strong, and my body is whole.",
-      "category": "health"
-    },
-    {
-      "text": "I declare my immune system is fortified, healthy, and resilient.",
       "category": "health"
     },
     {
@@ -4020,10 +2824,6 @@
     },
     {
       "text": "By Jesus's stripes, I am healed, and my body is whole.",
-      "category": "health"
-    },
-    {
-      "text": "I walk in divine health because Jesus has made me whole.",
       "category": "health"
     },
     {
@@ -4047,35 +2847,11 @@
       "category": "health"
     },
     {
-      "text": "I am confident in the Lord's promise to heal all my diseases.",
-      "category": "health"
-    },
-    {
       "text": "I declare that healing is my inheritance, and I receive it now.",
       "category": "health"
     },
     {
-      "text": "I declare that I am free from pain and discomfort.",
-      "category": "health"
-    },
-    {
-      "text": "He forgives all my sins and heals all my diseases.",
-      "category": "health"
-    },
-    {
       "text": "I will not die, I will live to tell what God has done.",
-      "category": "health"
-    },
-    {
-      "text": "I am healed by the stripes of Jesus.",
-      "category": "health"
-    },
-    {
-      "text": "God restores my health and heals my wounds.",
-      "category": "health"
-    },
-    {
-      "text": "The Lord is my healer, and I walk in divine health.",
       "category": "health"
     },
     {
@@ -4084,18 +2860,6 @@
     },
     {
       "text": "God’s Word brings health to my body and strength to my bones.",
-      "category": "health"
-    },
-    {
-      "text": "God satisfies me with long life and shows me His salvation.",
-      "category": "health"
-    },
-    {
-      "text": "I prosper in health as my soul prospers.",
-      "category": "health"
-    },
-    {
-      "text": "The same Spirit that raised Jesus from the dead gives life to my body.",
       "category": "health"
     },
     {
@@ -4111,15 +2875,7 @@
       "category": "health"
     },
     {
-      "text": "I live in divine health because my body is the temple of the Holy Spirit.",
-      "category": "health"
-    },
-    {
       "text": "My bones are strong, and my flesh is renewed daily.",
-      "category": "health"
-    },
-    {
-      "text": "The Lord heals all my diseases and renews my youth.",
       "category": "health"
     },
     {
@@ -4135,31 +2891,7 @@
       "category": "health"
     },
     {
-      "text": "I walk in divine peace, and my body is filled with strength.",
-      "category": "health"
-    },
-    {
-      "text": "Jesus bore my sickness and carried my pain.",
-      "category": "health"
-    },
-    {
-      "text": "I walk in divine health because I belong to Jesus.",
-      "category": "health"
-    },
-    {
       "text": "I am redeemed from sickness and disease.",
-      "category": "health"
-    },
-    {
-      "text": "The Word of God brings life and healing to my body.",
-      "category": "health"
-    },
-    {
-      "text": "I have been made whole in Christ.",
-      "category": "health"
-    },
-    {
-      "text": "My body is the temple of the Holy Spirit, and it is filled with His life.",
       "category": "health"
     },
     {
@@ -4167,51 +2899,11 @@
       "category": "health"
     },
     {
-      "text": "God's power is working in my body to bring full restoration.",
-      "category": "health"
-    },
-    {
-      "text": "I speak life and healing over my body in Jesus' name.",
-      "category": "health"
-    },
-    {
-      "text": "The Lord renews my youth like the eagle's.",
-      "category": "health"
-    },
-    {
       "text": "No sickness can stand against the power of Jesus in me.",
       "category": "health"
     },
     {
-      "text": "God's healing power flows through my body, restoring me to perfect health.",
-      "category": "health"
-    },
-    {
-      "text": "Every cell in my body functions perfectly according to God's design.",
-      "category": "health"
-    },
-    {
-      "text": "My body is continually renewed, restored, and filled with divine life.",
-      "category": "health"
-    },
-    {
-      "text": "My immune system is strong and powerful, covered by God's healing touch.",
-      "category": "health"
-    },
-    {
-      "text": "My mind is clear, my spirit is strong, and my body is whole in Jesus' name.",
-      "category": "health"
-    },
-    {
-      "text": "By His wounds, I am healed—Jesus bore my pain so I could walk in divine health.",
-      "category": "health"
-    },
-    {
       "text": "I am vibrant, energetic, and filled with divine life and purpose.",
-      "category": "health"
-    },
-    {
-      "text": "God fills me with energy, vitality, and renewed strength each day.",
       "category": "health"
     },
     {
@@ -4224,10 +2916,6 @@
     },
     {
       "text": "God sent His word and healed them. Not some of them. ALL of them. His word is medicine for your body. Speak it. Take it. Receive the healing it carries.",
-      "category": "health"
-    },
-    {
-      "text": "You will not die. You will LIVE. You will live and proclaim what God has done. Your life is not over. It is a testimony in progress.",
       "category": "health"
     },
     {
@@ -4260,10 +2948,6 @@
     },
     {
       "text": "Jesus took up your pain on purpose. He bore your suffering so you would not have to bear it alone. His healing power is not far from you. It is IN you.",
-      "category": "health"
-    },
-    {
-      "text": "God's word brings life to those who find it. And health to their whole body. Pay attention to what He says. Your body depends on it.",
       "category": "health"
     },
     {
@@ -4355,14 +3039,6 @@
       "category": "innerHealing"
     },
     {
-      "text": "I am valuable and precious in God's eyes.",
-      "category": "innerHealing"
-    },
-    {
-      "text": "I am an overcomer through Christ, and my past does not control me.",
-      "category": "innerHealing"
-    },
-    {
       "text": "I am covered in God's love, which casts out all fear.",
       "category": "innerHealing"
     },
@@ -4372,18 +3048,6 @@
     },
     {
       "text": "I walk in freedom because Jesus has set me free.",
-      "category": "innerHealing"
-    },
-    {
-      "text": "I forgive those who hurt me, and I receive God's peace.",
-      "category": "innerHealing"
-    },
-    {
-      "text": "I am not defined by my past; I am a child of God.",
-      "category": "innerHealing"
-    },
-    {
-      "text": "I have a future filled with hope and joy.",
       "category": "innerHealing"
     },
     {
@@ -4419,10 +3083,6 @@
       "category": "obedience"
     },
     {
-      "text": "I cast all my worries on God because He cares for me.",
-      "category": "obedience"
-    },
-    {
       "text": "I surrender my plans to the Lord, and He establishes my steps.",
       "category": "obedience"
     },
@@ -4431,23 +3091,7 @@
       "category": "obedience"
     },
     {
-      "text": "I am free from fear because God is in control.",
-      "category": "obedience"
-    },
-    {
-      "text": "I rest in God's promises, knowing He will never fail me.",
-      "category": "obedience"
-    },
-    {
-      "text": "I let go of my worries, and God fills me with His peace.",
-      "category": "obedience"
-    },
-    {
       "text": "I am fully surrendered to God's will, and He leads me in righteousness.",
-      "category": "obedience"
-    },
-    {
-      "text": "I release my burdens, and Jesus gives me rest.",
       "category": "obedience"
     },
     {
@@ -4459,35 +3103,11 @@
       "category": "obedience"
     },
     {
-      "text": "I am still and know that God is in control.",
-      "category": "obedience"
-    },
-    {
       "text": "God's ways are higher than mine, and I trust His wisdom.",
       "category": "obedience"
     },
     {
-      "text": "I let go of my past and embrace God's new beginnings.",
-      "category": "obedience"
-    },
-    {
-      "text": "I am not alone; God goes before me and prepares my way.",
-      "category": "obedience"
-    },
-    {
       "text": "I surrender my desires to God, and He gives me what I truly need.",
-      "category": "obedience"
-    },
-    {
-      "text": "I trust in God's strength, and He upholds me.",
-      "category": "obedience"
-    },
-    {
-      "text": "I let go of my need to understand and rest in God's peace.",
-      "category": "obedience"
-    },
-    {
-      "text": "God is my provider, and I do not worry about tomorrow.",
       "category": "obedience"
     },
     {
@@ -4500,10 +3120,6 @@
     },
     {
       "text": "I walk in obedience, and God blesses my path.",
-      "category": "obedience"
-    },
-    {
-      "text": "I let go of fear and fully trust in God's love.",
       "category": "obedience"
     },
     {
@@ -4575,10 +3191,6 @@
       "category": "obedience"
     },
     {
-      "text": "Whoever keeps God's commands is the one who loves Him. Love is not just words. It is action.",
-      "category": "obedience"
-    },
-    {
       "text": "Be willing and obedient. The good of the land is the reward. That is a promise worth chasing.",
       "category": "obedience"
     },
@@ -4611,35 +3223,7 @@
       "category": "obedience"
     },
     {
-      "text": "Blessed are the pure in heart, for they will see God.",
-      "category": "purity"
-    },
-    {
-      "text": "You were bought at a price. Therefore honor God with your bodies.",
-      "category": "purity"
-    },
-    {
-      "text": "Do you not know that your bodies are temples of the Holy Spirit, who is in you, whom you have received from God? You are not your own.",
-      "category": "purity"
-    },
-    {
-      "text": "Run from sexual immorality. All other sins a person commits are outside the body, but whoever sins sexually, sins against their own body.",
-      "category": "purity"
-    },
-    {
       "text": "Do not conform to the pattern of this world, but be transformed by the renewing of your mind. Then you will be able to test and approve what God's will is—his good, pleasing, and perfect will.",
-      "category": "purity"
-    },
-    {
-      "text": "For you were once darkness, but now you are light in the Lord. Walk as children of light.",
-      "category": "purity"
-    },
-    {
-      "text": "Whoever walks in integrity walks securely, but whoever takes crooked paths will be found out.",
-      "category": "purity"
-    },
-    {
-      "text": "Turn from evil and do good, seek peace and pursue it.",
       "category": "purity"
     },
     {
@@ -4648,10 +3232,6 @@
     },
     {
       "text": "Because Jesus loves me, I choose to wait until marriage for intimacy.",
-      "category": "purity"
-    },
-    {
-      "text": "Because Jesus loves me, I understand that my purity is a precious gift.",
       "category": "purity"
     },
     {
@@ -4679,10 +3259,6 @@
       "category": "purity"
     },
     {
-      "text": "Because Jesus loves me, I focus on building emotional intimacy.",
-      "category": "purity"
-    },
-    {
       "text": "Because Jesus loves me, I honor the sanctity of marriage.",
       "category": "purity"
     },
@@ -4695,23 +3271,7 @@
       "category": "purity"
     },
     {
-      "text": "Because Jesus loves me, I hold onto hope for a future filled with love.",
-      "category": "purity"
-    },
-    {
-      "text": "Because Jesus loves me, I am grateful for the opportunity to wait.",
-      "category": "purity"
-    },
-    {
       "text": "Because Jesus loves me, I see waiting as an act of love and commitment.",
-      "category": "purity"
-    },
-    {
-      "text": "Because Jesus loves me, I believe that true love waits.",
-      "category": "purity"
-    },
-    {
-      "text": "I honor God with my body and keep it pure.",
       "category": "purity"
     },
     {
@@ -4740,10 +3300,6 @@
     },
     {
       "text": "I am pure in heart, and I see God in my life.",
-      "category": "purity"
-    },
-    {
-      "text": "I am renewed in my mind and walk in holiness.",
       "category": "purity"
     },
     {
@@ -4776,10 +3332,6 @@
     },
     {
       "text": "I am a vessel of honor, set apart for God's use.",
-      "category": "purity"
-    },
-    {
-      "text": "I keep my body holy and honorable before God.",
       "category": "purity"
     },
     {
@@ -4831,10 +3383,6 @@
       "category": "purity"
     },
     {
-      "text": "Clean hands and a pure heart. That is who receives blessing from the Lord. Be that person.",
-      "category": "purity"
-    },
-    {
       "text": "Stop fitting in with this world. Be transformed. Renew your mind. Know what God actually wants.",
       "category": "purity"
     },
@@ -4844,10 +3392,6 @@
     },
     {
       "text": "You have hope in Christ. That hope purifies you. Act like someone who belongs to Him.",
-      "category": "purity"
-    },
-    {
-      "text": "Everyone born of God overcomes the world. Your faith is the victory. Use it like it is real.",
       "category": "purity"
     },
     {
@@ -4871,47 +3415,15 @@
       "category": "purity"
     },
     {
-      "text": "A pure heart and gracious words bring favor with the most powerful people in the room.",
-      "category": "purity"
-    },
-    {
       "text": "Integrity is your safety. Walk in it and you walk securely. Hide from it and you will be found out.",
       "category": "purity"
-    },
-    {
-      "text": "This hope in Christ is working on you. It is making you clean. Let it do its work.",
-      "category": "purity"
-    },
-    {
-      "text": "Give thanks to the LORD and proclaim his greatness. Let the whole world know what he has done.",
-      "category": "gratitude"
     },
     {
       "text": "I will praise you, LORD, with all my heart, I will tell of all the marvelous things you have done.",
       "category": "gratitude"
     },
     {
-      "text": "Give thanks to the LORD, for he is good! His faithful love endures forever.",
-      "category": "gratitude"
-    },
-    {
-      "text": "Always be joyful. Never stop praying. Be thankful in all circumstances, for this is God's will for you who belong to Christ Jesus.",
-      "category": "gratitude"
-    },
-    {
-      "text": "Enter his gates with thanksgiving, go into his courts with praise. Give thanks to him and praise his name.",
-      "category": "gratitude"
-    },
-    {
-      "text": "I am thankful in all circumstances.",
-      "category": "gratitude"
-    },
-    {
       "text": "I am filled with gratitude for the unchanging nature of God.",
-      "category": "gratitude"
-    },
-    {
-      "text": "I am always giving thanks to God for everything.",
       "category": "gratitude"
     },
     {
@@ -4924,10 +3436,6 @@
     },
     {
       "text": "Thank you Jesus for the strength you provide in challenging times.",
-      "category": "gratitude"
-    },
-    {
-      "text": "Thank you Jesus for the peace that surpasses understanding.",
       "category": "gratitude"
     },
     {
@@ -4955,10 +3463,6 @@
       "category": "gratitude"
     },
     {
-      "text": "Thank you Jesus for the love that surrounds me constantly.",
-      "category": "gratitude"
-    },
-    {
       "text": "Thank you Jesus for the hope that keeps me moving forward.",
       "category": "gratitude"
     },
@@ -4975,27 +3479,7 @@
       "category": "gratitude"
     },
     {
-      "text": "Because Jesus loves me, I express my gratitude every day.",
-      "category": "gratitude"
-    },
-    {
       "text": "Because Jesus loves me, I embrace each day with a grateful heart.",
-      "category": "gratitude"
-    },
-    {
-      "text": "I am grateful for God's abundant blessings in my life.",
-      "category": "gratitude"
-    },
-    {
-      "text": "I am thankful for every breath, a gift from God's grace.",
-      "category": "gratitude"
-    },
-    {
-      "text": "I am filled with gratitude, for God's love surrounds me always.",
-      "category": "gratitude"
-    },
-    {
-      "text": "I am grateful for today, trusting God's plan for my life.",
       "category": "gratitude"
     },
     {
@@ -5003,15 +3487,11 @@
       "category": "gratitude"
     },
     {
+      "text": "I am grateful for today, trusting God's plan for my life.",
+      "category": "gratitude"
+    },
+    {
       "text": "I am grateful for God's peace that guards my heart and mind.",
-      "category": "gratitude"
-    },
-    {
-      "text": "I am thankful for God's wisdom, leading me through every challenge.",
-      "category": "gratitude"
-    },
-    {
-      "text": "I am thankful for God's presence in my life, constant and true.",
       "category": "gratitude"
     },
     {
@@ -5040,14 +3520,6 @@
     },
     {
       "text": "I am grateful for God's joy, which renews my strength daily.",
-      "category": "gratitude"
-    },
-    {
-      "text": "I am thankful for God's hope, lifting me up in every situation.",
-      "category": "gratitude"
-    },
-    {
-      "text": "I am filled with gratitude for God's comfort in times of sorrow.",
       "category": "gratitude"
     },
     {
@@ -5087,19 +3559,11 @@
       "category": "gratitude"
     },
     {
-      "text": "I am thankful for God’s strength within me, guiding every step.",
+      "text": "I am thankful for God's strength within me, guiding every step.",
       "category": "gratitude"
     },
     {
-      "text": "I am blessed beyond measure, and my heart overflows with gratitude.",
-      "category": "gratitude"
-    },
-    {
-      "text": "God’s peace guards my heart and mind, and I am grateful for it.",
-      "category": "gratitude"
-    },
-    {
-      "text": "I give thanks for God’s wisdom that lights my path in every season.",
+      "text": "I give thanks for God's wisdom that lights my path in every season.",
       "category": "gratitude"
     },
     {
@@ -5107,27 +3571,11 @@
       "category": "gratitude"
     },
     {
-      "text": "I rejoice in God’s faithful presence, which never leaves me.",
+      "text": "I rejoice in God's faithful presence, which never leaves me.",
       "category": "gratitude"
     },
     {
-      "text": "The Lord is my provider, and I am grateful that He meets all my needs.",
-      "category": "gratitude"
-    },
-    {
-      "text": "I am thankful for the gift of faith that keeps me rooted in God’s love.",
-      "category": "gratitude"
-    },
-    {
-      "text": "God’s mercy is new every morning, and my heart overflows with gratitude.",
-      "category": "gratitude"
-    },
-    {
-      "text": "I am blessed and covered by God’s unending grace.",
-      "category": "gratitude"
-    },
-    {
-      "text": "God’s promises are my foundation, and I am grateful for their certainty.",
+      "text": "I am blessed and covered by God's unending grace.",
       "category": "gratitude"
     },
     {
@@ -5135,19 +3583,7 @@
       "category": "gratitude"
     },
     {
-      "text": "Every new day is a gift from God, and I embrace it with thanksgiving.",
-      "category": "gratitude"
-    },
-    {
-      "text": "God’s joy strengthens me daily, and I give thanks for it.",
-      "category": "gratitude"
-    },
-    {
       "text": "I overflow with gratitude for the grace of God that carries me.",
-      "category": "gratitude"
-    },
-    {
-      "text": "God’s comfort strengthens me in every trial, and I praise Him for it.",
       "category": "gratitude"
     },
     {
@@ -5183,10 +3619,6 @@
       "category": "gratitude"
     },
     {
-      "text": "Walk through His gates with thanks. Every person in your life is a gift. Treat them that way.",
-      "category": "gratitude"
-    },
-    {
       "text": "Anxiety breaks when gratitude enters. Bring your worries to God with thanksgiving. Every time.",
       "category": "gratitude"
     },
@@ -5219,10 +3651,6 @@
       "category": "gratitude"
     },
     {
-      "text": "God is your shield and your strength. He covers what you cannot. Trust that today.",
-      "category": "gratitude"
-    },
-    {
       "text": "God is good. His love never ends. That is enough reason to praise Him right now.",
       "category": "gratitude"
     },
@@ -5251,16 +3679,12 @@
       "category": "gratitude"
     },
     {
-      "text": "You are not consumed. God's compassions did not run out today. That is mercy. Thank Him.",
+      "text": "You are not consumed. God’s compassions did not run out today. That is mercy. Thank Him.",
       "category": "gratitude"
     },
     {
       "text": "Your situation may not be perfect. God is. Walk into His presence with that truth.",
       "category": "gratitude"
-    },
-    {
-      "text": "God strengthens our marriage, and together we reflect His love.",
-      "category": "marriage"
     },
     {
       "text": "With God at the center, our love grows deeper every day.",
@@ -5283,23 +3707,11 @@
       "category": "marriage"
     },
     {
-      "text": "With God's guidance, we grow together in love and unity.",
-      "category": "marriage"
-    },
-    {
-      "text": "Our love for each other reflects God's endless love for us.",
-      "category": "marriage"
-    },
-    {
       "text": "We speak words of love and encouragement to build each other up.",
       "category": "marriage"
     },
     {
       "text": "Our marriage flourishes because we pray together and seek God's will.",
-      "category": "marriage"
-    },
-    {
-      "text": "Our love for each other grows deeper as we follow God's path.",
       "category": "marriage"
     },
     {
@@ -5323,23 +3735,7 @@
       "category": "marriage"
     },
     {
-      "text": "Our love is patient and kind, reflecting God's perfect love.",
-      "category": "marriage"
-    },
-    {
-      "text": "We trust in God's plan for our marriage and follow His lead.",
-      "category": "marriage"
-    },
-    {
       "text": "We put each other first, just as Christ put us first in His love.",
-      "category": "marriage"
-    },
-    {
-      "text": "God strengthens our marriage as we pray and seek Him together.",
-      "category": "marriage"
-    },
-    {
-      "text": "Our marriage is a reflection of God's perfect love and grace.",
       "category": "marriage"
     },
     {
@@ -5348,10 +3744,6 @@
     },
     {
       "text": "I am nurturing and protecting the love that binds us together.",
-      "category": "marriage"
-    },
-    {
-      "text": "Because Jesus loves me, I cherish the moments we share together.",
       "category": "marriage"
     },
     {
@@ -5371,23 +3763,11 @@
       "category": "marriage"
     },
     {
-      "text": "My marriage is filled with love, patience, and kindness.",
-      "category": "marriage"
-    },
-    {
-      "text": "God blesses my marriage with peace and unity.",
-      "category": "marriage"
-    },
-    {
       "text": "I speak life and blessings over my marriage every day.",
       "category": "marriage"
     },
     {
       "text": "My spouse and I are one in Christ, and we walk in harmony.",
-      "category": "marriage"
-    },
-    {
-      "text": "My marriage is rooted in love, faith, and trust in God.",
       "category": "marriage"
     },
     {
@@ -5415,10 +3795,6 @@
       "category": "marriage"
     },
     {
-      "text": "God's love binds my spouse and me together forever.",
-      "category": "marriage"
-    },
-    {
       "text": "God's peace rules in our home, and we are thankful for each other.",
       "category": "marriage"
     },
@@ -5427,15 +3803,7 @@
       "category": "marriage"
     },
     {
-      "text": "I trust in the Lord, and He strengthens my marriage daily.",
-      "category": "marriage"
-    },
-    {
       "text": "God fights for my marriage and gives us victory over challenges.",
-      "category": "marriage"
-    },
-    {
-      "text": "In Jesus’ name, our love grows every day, built on trust and respect.",
       "category": "marriage"
     },
     {
@@ -5547,15 +3915,7 @@
       "category": "parenting"
     },
     {
-      "text": "My children will receive divine favor and strength to accomplish their God-given assignments.",
-      "category": "parenting"
-    },
-    {
       "text": "God's hand is upon my children, guiding them toward their destiny.",
-      "category": "parenting"
-    },
-    {
-      "text": "My children will walk in God's purpose for their lives and bring glory to His name.",
       "category": "parenting"
     },
     {
@@ -5563,23 +3923,7 @@
       "category": "parenting"
     },
     {
-      "text": "God will protect my children and ensure they fulfill their divine destiny.",
-      "category": "parenting"
-    },
-    {
-      "text": "My children are filled with the wisdom and strength to carry out God's plans.",
-      "category": "parenting"
-    },
-    {
-      "text": "My children will always rely on God's guidance and strength in everything they do.",
-      "category": "parenting"
-    },
-    {
       "text": "God will provide all resources my children need to fulfill their purpose.",
-      "category": "parenting"
-    },
-    {
-      "text": "My children will walk in wisdom and fulfill their God-given purpose.",
       "category": "parenting"
     },
     {
@@ -5595,14 +3939,6 @@
       "category": "parenting"
     },
     {
-      "text": "My children will live in health, guarded by God's protection.",
-      "category": "parenting"
-    },
-    {
-      "text": "My children are shielded by God, and they will grow strong and healthy.",
-      "category": "parenting"
-    },
-    {
       "text": "Because Jesus loves me, I raise my kids with love and compassion.",
       "category": "parenting"
     },
@@ -5611,27 +3947,11 @@
       "category": "parenting"
     },
     {
-      "text": "Because Jesus loves me, I nurture my children's hearts and minds.",
-      "category": "parenting"
-    },
-    {
       "text": "Because Jesus loves me, I guide my kids with patience and understanding.",
       "category": "parenting"
     },
     {
       "text": "Because Jesus loves me, I instill confidence in my children.",
-      "category": "parenting"
-    },
-    {
-      "text": "Because Jesus loves me, I prioritize quality time with my kids.",
-      "category": "parenting"
-    },
-    {
-      "text": "Because Jesus loves me, I listen actively to my children's needs.",
-      "category": "parenting"
-    },
-    {
-      "text": "Because Jesus loves me, I pray for my children's well-being.",
       "category": "parenting"
     },
     {
@@ -5651,18 +3971,6 @@
       "category": "parenting"
     },
     {
-      "text": "My children will always look to God for guidance, and He will direct their paths.",
-      "category": "parenting"
-    },
-    {
-      "text": "God will give my children the wisdom to carry out His purpose.",
-      "category": "parenting"
-    },
-    {
-      "text": "My children will seek and follow God's will in every decision.",
-      "category": "parenting"
-    },
-    {
       "text": "God's word will guide my children, and they will make great decisions.",
       "category": "parenting"
     },
@@ -5671,15 +3979,7 @@
       "category": "parenting"
     },
     {
-      "text": "My children will be established in the will of God and flourish in their calling.",
-      "category": "parenting"
-    },
-    {
       "text": "God will use my children to fulfill great works for His kingdom.",
-      "category": "parenting"
-    },
-    {
-      "text": "God watches over my children, and no harm will come near them.",
       "category": "parenting"
     },
     {
@@ -5688,14 +3988,6 @@
     },
     {
       "text": "God will prosper my children in all their endeavors for His kingdom.",
-      "category": "parenting"
-    },
-    {
-      "text": "My children are blessed and protected by the Lord.",
-      "category": "parenting"
-    },
-    {
-      "text": "My children have a bright future filled with God’s goodness.",
       "category": "parenting"
     },
     {
@@ -5743,10 +4035,6 @@
       "category": "parenting"
     },
     {
-      "text": "My children are a blessing from the Lord and will fulfill His purpose.",
-      "category": "parenting"
-    },
-    {
       "text": "My children walk in integrity and truth all their days.",
       "category": "parenting"
     },
@@ -5775,10 +4063,6 @@
       "category": "friendship"
     },
     {
-      "text": "I cherish my friendships and relationships, knowing they are gifts from God.",
-      "category": "friendship"
-    },
-    {
       "text": "I walk in integrity, keeping my commitments and honoring my word.",
       "category": "friendship"
     },
@@ -5791,27 +4075,11 @@
       "category": "friendship"
     },
     {
-      "text": "I pursue peace and unity in all my relationships.",
-      "category": "friendship"
-    },
-    {
-      "text": "I am faithful in my friendships, bringing loyalty and trust.",
-      "category": "friendship"
-    },
-    {
-      "text": "I reflect Christ’s love in all my relationships, serving others selflessly.",
-      "category": "friendship"
-    },
-    {
-      "text": "I am wise in choosing my companions, walking with those who follow Christ.",
+      "text": "I reflect Christ's love in all my relationships, serving others selflessly.",
       "category": "friendship"
     },
     {
       "text": "I have godly friends who encourage and strengthen my faith.",
-      "category": "friendship"
-    },
-    {
-      "text": "I choose friends who lead me closer to Jesus.",
       "category": "friendship"
     },
     {
@@ -5831,32 +4099,16 @@
       "category": "friendship"
     },
     {
-      "text": "I show kindness and compassion to everyone I meet.",
-      "category": "friendship"
-    },
-    {
       "text": "My friendships are built on love, honesty, and encouragement.",
       "category": "friendship"
     },
     {
-      "text": "I remain faithful and true to my friends in all seasons.",
-      "category": "friendship"
-    },
-    {
-      "text": "God’s love flows through me, making me a blessing to my friends.",
-      "category": "friendship"
-    },
-    {
-      "text": "I am surrounded by godly friends who build me up in Christ.",
+      "text": "God's love flows through me, making me a blessing to my friends.",
       "category": "friendship"
     },
     {
       "text": "I am a peacemaker, and I speak life into my friendships.",
       "category": "friendship"
-    },
-    {
-      "text": "I am safe and protected at all times.",
-      "category": "godsprotection"
     },
     {
       "text": "God is always watching over me and my family.",
@@ -5875,15 +4127,7 @@
       "category": "godsprotection"
     },
     {
-      "text": "The Lord will keep me from all harm.",
-      "category": "godsprotection"
-    },
-    {
       "text": "God is faithful, and he will strengthen me and protect me from the evil one.",
-      "category": "godsprotection"
-    },
-    {
-      "text": "I am safe when I run to the Lord.",
       "category": "godsprotection"
     },
     {
@@ -5895,19 +4139,7 @@
       "category": "godsprotection"
     },
     {
-      "text": "The LORD is my rock, my fortress, and my savior, my God is my rock, in whom I find protection.",
-      "category": "godsprotection"
-    },
-    {
-      "text": "Those who live in the shelter of the Most High will find rest in the shadow of the Almighty.",
-      "category": "godsprotection"
-    },
-    {
       "text": "No weapon formed against me will prosper, and every tongue which rises against me I will condemn.",
-      "category": "godsprotection"
-    },
-    {
-      "text": "The angel of the LORD encamps around those who fear him, and he rescues them.",
       "category": "godsprotection"
     },
     {
@@ -5927,22 +4159,6 @@
       "category": "godsprotection"
     },
     {
-      "text": "In Jesus's name, I am safe from all danger, for He is my rock and my salvation.",
-      "category": "godsprotection"
-    },
-    {
-      "text": "Because Jesus loves me, I am safe under His protective care.",
-      "category": "godsprotection"
-    },
-    {
-      "text": "Because Jesus loves me, I walk confidently in His security.",
-      "category": "godsprotection"
-    },
-    {
-      "text": "Because Jesus loves me, I rest in His assurance of safety.",
-      "category": "godsprotection"
-    },
-    {
       "text": "Because Jesus loves me, I trust His angels to guard my family.",
       "category": "godsprotection"
     },
@@ -5951,51 +4167,11 @@
       "category": "godsprotection"
     },
     {
-      "text": "Because Jesus loves me, I find comfort in His promises of protection.",
-      "category": "godsprotection"
-    },
-    {
-      "text": "I am covered by God's unfailing love.",
-      "category": "godsprotection"
-    },
-    {
-      "text": "I am secure under the covering of my Savior.",
-      "category": "godsprotection"
-    },
-    {
       "text": "I thrive under the shelter of God's presence.",
       "category": "godsprotection"
     },
     {
-      "text": "I have no reason to worry, for I am kept by God.",
-      "category": "godsprotection"
-    },
-    {
-      "text": "I am surrounded by divine strength and security.",
-      "category": "godsprotection"
-    },
-    {
-      "text": "I am shielded from harm by divine promises.",
-      "category": "godsprotection"
-    },
-    {
-      "text": "I walk in unwavering confidence, knowing I am safe.",
-      "category": "godsprotection"
-    },
-    {
       "text": "I trust that I will enjoy a long, blessed life.",
-      "category": "godsprotection"
-    },
-    {
-      "text": "I have complete assurance of divine care every day.",
-      "category": "godsprotection"
-    },
-    {
-      "text": "I am shielded by God's unfailing protection and love.",
-      "category": "godsprotection"
-    },
-    {
-      "text": "I am safe and secure, for God surrounds me with His angels.",
       "category": "godsprotection"
     },
     {
@@ -6008,14 +4184,6 @@
     },
     {
       "text": "I am protected, for God's hand guides and guards my every step.",
-      "category": "godsprotection"
-    },
-    {
-      "text": "I am safe in God's care, and His peace fills my heart.",
-      "category": "godsprotection"
-    },
-    {
-      "text": "I am surrounded by God's shield of favor and protection.",
       "category": "godsprotection"
     },
     {
@@ -6035,19 +4203,7 @@
       "category": "godsprotection"
     },
     {
-      "text": "I am safe and secure in God's protection, no matter what life brings.",
-      "category": "godsprotection"
-    },
-    {
       "text": "I am covered by the blood of Jesus, and I trust in His constant protection.",
-      "category": "godsprotection"
-    },
-    {
-      "text": "I am surrounded by God's angels, and His protection is my shield in all circumstances.",
-      "category": "godsprotection"
-    },
-    {
-      "text": "I am confident that no weapon formed against me shall prosper, for God is my protector.",
       "category": "godsprotection"
     },
     {
@@ -6063,27 +4219,7 @@
       "category": "godsprotection"
     },
     {
-      "text": "I am safe because God is my refuge and strength.",
-      "category": "godsprotection"
-    },
-    {
-      "text": "No weapon formed against me shall prosper.",
-      "category": "godsprotection"
-    },
-    {
-      "text": "The Lord is my shield; I will not be afraid.",
-      "category": "godsprotection"
-    },
-    {
       "text": "I dwell in the secret place of the Most High and am safe.",
-      "category": "godsprotection"
-    },
-    {
-      "text": "I am never alone; God is always watching over me.",
-      "category": "godsprotection"
-    },
-    {
-      "text": "I am hidden in Christ, safe from every attack.",
       "category": "godsprotection"
     },
     {
@@ -6231,27 +4367,11 @@
       "category": "favor"
     },
     {
-      "text": "I am highly favored and deeply loved by God.",
-      "category": "favor"
-    },
-    {
       "text": "I walk in the blessing of Abraham through Christ Jesus.",
       "category": "favor"
     },
     {
-      "text": "God’s favor gives me strength and peace.",
-      "category": "favor"
-    },
-    {
       "text": "I am an heir of God, and every spiritual blessing is mine.",
-      "category": "favor"
-    },
-    {
-      "text": "God’s favor makes a way for me, even in difficult situations.",
-      "category": "favor"
-    },
-    {
-      "text": "I receive wisdom and understanding from the Lord.",
       "category": "favor"
     },
     {
@@ -6275,10 +4395,6 @@
       "category": "favor"
     },
     {
-      "text": "I am chosen and called to walk in God’s favor.",
-      "category": "favor"
-    },
-    {
       "text": "I am crowned with glory and honor through Christ.",
       "category": "favor"
     },
@@ -6288,14 +4404,6 @@
     },
     {
       "text": "I receive God’s favor in the sight of kings and leaders.",
-      "category": "favor"
-    },
-    {
-      "text": "God wraps His favor around you like a shield. You don't earn it. You walk in it.",
-      "category": "favor"
-    },
-    {
-      "text": "When God opens a door for you, no human can shut it. Stop asking people for permission.",
       "category": "favor"
     },
     {
@@ -6335,15 +4443,7 @@
       "category": "favor"
     },
     {
-      "text": "You didn't create your gifts. You RECEIVED them. Walk in humility and let God get the credit.",
-      "category": "favor"
-    },
-    {
       "text": "God is a restorer. Every year the enemy stole, God will pay BACK. Your restoration is coming.",
-      "category": "favor"
-    },
-    {
-      "text": "You don't chase the blessing. The blessing chases YOU. God's goodness follows you all your days.",
       "category": "favor"
     },
     {
@@ -6363,19 +4463,11 @@
       "category": "favor"
     },
     {
-      "text": "Hard seasons last a moment. God's favor lasts a LIFETIME. The math is in your favor.",
-      "category": "favor"
-    },
-    {
       "text": "God said He would make your name GREAT. Not small. Not average. Great. Believe it.",
       "category": "favor"
     },
     {
       "text": "Your gift makes room for you at the right table. Use it well. Great doors are waiting.",
-      "category": "favor"
-    },
-    {
-      "text": "This is a year of the Lord's favor. Not one area. ALL areas. Declare it and step into it.",
       "category": "favor"
     },
     {
@@ -6387,35 +4479,11 @@
       "category": "favor"
     },
     {
-      "text": "The same God who was with Joseph is with you. Everywhere. In every season. In every place.",
-      "category": "favor"
-    },
-    {
       "text": "I honor the Lord with my wealth and He blesses me abundantly.",
       "category": "wealth"
     },
     {
-      "text": "God's blessings bring abundance into my life.",
-      "category": "wealth"
-    },
-    {
-      "text": "I trust in God's endless supply for my every need.",
-      "category": "wealth"
-    },
-    {
-      "text": "I am growing in prosperity through God's grace.",
-      "category": "wealth"
-    },
-    {
       "text": "God provides me with wisdom to create and sustain wealth.",
-      "category": "wealth"
-    },
-    {
-      "text": "I trust God's plan for my prosperity and well-being.",
-      "category": "wealth"
-    },
-    {
-      "text": "I give generously and receive abundantly.",
       "category": "wealth"
     },
     {
@@ -6431,23 +4499,11 @@
       "category": "wealth"
     },
     {
-      "text": "I am blessed and fruitful in everything I do.",
-      "category": "wealth"
-    },
-    {
       "text": "I bring my tithes to God, and He opens the windows of heaven for me.",
       "category": "wealth"
     },
     {
       "text": "I delight in God's Word, and He gives me the desires of my heart.",
-      "category": "wealth"
-    },
-    {
-      "text": "I am generous, and I am blessed with even more.",
-      "category": "wealth"
-    },
-    {
-      "text": "I have everything I need because God supplies all my needs.",
       "category": "wealth"
     },
     {
@@ -6460,42 +4516,6 @@
     },
     {
       "text": "I am bearing fruit in every season, my leaf does not wither, and whatever I do prospers.",
-      "category": "wealth"
-    },
-    {
-      "text": "God desires for me to live in abundance and fullness.",
-      "category": "wealth"
-    },
-    {
-      "text": "I declare that prosperity is mine through Christ Jesus.",
-      "category": "wealth"
-    },
-    {
-      "text": "I am wise with my time and resources.",
-      "category": "wealth"
-    },
-    {
-      "text": "God delights in my prosperity.",
-      "category": "wealth"
-    },
-    {
-      "text": "I trust in the Lord to provide for all my needs, knowing I am cared for and will never lack anything essential.",
-      "category": "wealth"
-    },
-    {
-      "text": "Because Jesus loves me, I am a good steward of the blessings I receive.",
-      "category": "wealth"
-    },
-    {
-      "text": "Because Jesus loves me, I trust that God will provide for all my needs.",
-      "category": "wealth"
-    },
-    {
-      "text": "God gives me the power to create wealth.",
-      "category": "wealth"
-    },
-    {
-      "text": "I seek God first, and all things are added to me.",
       "category": "wealth"
     },
     {
@@ -6515,27 +4535,11 @@
       "category": "wealth"
     },
     {
-      "text": "I honor the Lord with my wealth and He blesses my increase.",
-      "category": "wealth"
-    },
-    {
-      "text": "God supplies all my needs according to His riches.",
-      "category": "wealth"
-    },
-    {
-      "text": "I sow generously and reap abundantly.",
-      "category": "wealth"
-    },
-    {
       "text": "I meditate on God's Word and prosper in all I do.",
       "category": "wealth"
     },
     {
       "text": "God makes my way prosperous and gives me success.",
-      "category": "wealth"
-    },
-    {
-      "text": "I am like a tree planted by streams of water, bearing fruit in every season.",
       "category": "wealth"
     },
     {
@@ -6555,23 +4559,11 @@
       "category": "wealth"
     },
     {
-      "text": "I trust in the Lord, and He makes me flourish like a tree by the river.",
-      "category": "wealth"
-    },
-    {
-      "text": "I obey God's word, and He prospers me in all I do.",
-      "category": "wealth"
-    },
-    {
       "text": "I am rich in every way and generous on every occasion.",
       "category": "wealth"
     },
     {
       "text": "The Lord blesses me and makes me rich without sorrow.",
-      "category": "wealth"
-    },
-    {
-      "text": "I am blessed, prosperous and favored by God.",
       "category": "wealth"
     },
     {
@@ -6583,39 +4575,11 @@
       "category": "wealth"
     },
     {
-      "text": "My prosperity blesses others around me.",
-      "category": "wealth"
-    },
-    {
       "text": "I do not lack any good thing because I seek the Lord.",
       "category": "wealth"
     },
     {
-      "text": "God grants me wisdom to handle my finances wisely.",
-      "category": "wealth"
-    },
-    {
-      "text": "I trust God’s financial provision even in tough times.",
-      "category": "wealth"
-    },
-    {
       "text": "God’s abundance flows into my life so I can fulfill my purpose.",
-      "category": "wealth"
-    },
-    {
-      "text": "I prosper in everything I do.",
-      "category": "wealth"
-    },
-    {
-      "text": "Everything I do prospers because I delight in God’s Word.",
-      "category": "wealth"
-    },
-    {
-      "text": "I am fruitful and multiply in every area of my life.",
-      "category": "wealth"
-    },
-    {
-      "text": "I lend to many and borrow from none.",
       "category": "wealth"
     },
     {
@@ -6775,23 +4739,7 @@
       "category": "work"
     },
     {
-      "text": "I operate with integrity, and my reputation is blessed.",
-      "category": "work"
-    },
-    {
-      "text": "God’s favor promotes me at the right time.",
-      "category": "work"
-    },
-    {
       "text": "I am a kingdom ambassador in my workplace, reflecting Christ.",
-      "category": "work"
-    },
-    {
-      "text": "God fills me with knowledge and skill to excel in my work.",
-      "category": "work"
-    },
-    {
-      "text": "I am blessed in my workplace, and everything I touch prospers.",
       "category": "work"
     },
     {
@@ -6799,15 +4747,7 @@
       "category": "work"
     },
     {
-      "text": "I excel in all I do because God’s wisdom guides me.",
-      "category": "work"
-    },
-    {
       "text": "I am bold and confident in the workplace because God is with me.",
-      "category": "work"
-    },
-    {
-      "text": "I am diligent and hardworking, and my efforts produce great results.",
       "category": "work"
     },
     {
@@ -6843,14 +4783,6 @@
       "category": "anxiety"
     },
     {
-      "text": "I give my burdens to the Lord, and He sustains me.",
-      "category": "anxiety"
-    },
-    {
-      "text": "I am not troubled, for Jesus gives me His peace.",
-      "category": "anxiety"
-    },
-    {
       "text": "I am safe in God’s hands, and no one can snatch me away.",
       "category": "anxiety"
     },
@@ -6867,14 +4799,6 @@
       "category": "anxiety"
     },
     {
-      "text": "I am secure because the Lord is my shepherd.",
-      "category": "anxiety"
-    },
-    {
-      "text": "I am at peace because God is in control.",
-      "category": "anxiety"
-    },
-    {
       "text": "I trust in the Lord and do not lean on my own understanding.",
       "category": "anxiety"
     },
@@ -6884,10 +4808,6 @@
     },
     {
       "text": "God has good plans for my life, and I have a hope and a future.",
-      "category": "anxiety"
-    },
-    {
-      "text": "I will not let my heart be troubled, for I trust in God.",
       "category": "anxiety"
     },
     {
@@ -6907,23 +4827,7 @@
       "category": "anxiety"
     },
     {
-      "text": "God’s peace rules my heart, and I am not afraid.",
-      "category": "anxiety"
-    },
-    {
-      "text": "I trust in the Lord, and He makes my path straight.",
-      "category": "anxiety"
-    },
-    {
-      "text": "I am fearless because I am filled with God’s love.",
-      "category": "anxiety"
-    },
-    {
       "text": "Fear says you are alone. God says HE IS WITH YOU. His strength shows up exactly where yours runs out. Do not fear. Do not be dismayed. He is your God.",
-      "category": "anxiety"
-    },
-    {
-      "text": "Fear is not from God. It never was. God gave you POWER, love, and a sound mind. Use what you were actually given.",
       "category": "anxiety"
     },
     {
@@ -6979,10 +4883,6 @@
       "category": "anxiety"
     },
     {
-      "text": "Submit to God first. Then resist. The enemy does not stand when God is in front. He will flee. That is a promise.",
-      "category": "anxiety"
-    },
-    {
       "text": "Say it with confidence: the Lord is your helper. What can any human threat do against that? Speak it until you believe it.",
       "category": "anxiety"
     },
@@ -7011,10 +4911,6 @@
       "category": "anxiety"
     },
     {
-      "text": "God is not far and He is not busy. He is near to all who call on Him in truth. Call. He will answer.",
-      "category": "anxiety"
-    },
-    {
       "text": "Worry does not add a single solution. Bring every request to God with thanksgiving. Prayer is how anxiety loses.",
       "category": "anxiety"
     },
@@ -7024,10 +4920,6 @@
     },
     {
       "text": "The Lord is my light and salvation, I have no reason to fear.",
-      "category": "fear"
-    },
-    {
-      "text": "I do not fear because God is with me and strengthens me.",
       "category": "fear"
     },
     {
@@ -7079,10 +4971,6 @@
       "category": "fear"
     },
     {
-      "text": "I stand firm in my faith with courage and strength.",
-      "category": "fear"
-    },
-    {
       "text": "God is my refuge and strength, always ready to help me in trouble.",
       "category": "fear"
     },
@@ -7103,18 +4991,6 @@
       "category": "fear"
     },
     {
-      "text": "Because Jesus loves me, I have no fear of the future.",
-      "category": "fear"
-    },
-    {
-      "text": "Because Jesus loves me, I face challenges with courage.",
-      "category": "fear"
-    },
-    {
-      "text": "Because Jesus loves me, I trust in His perfect love to cast out fear.",
-      "category": "fear"
-    },
-    {
       "text": "Because Jesus loves me, I choose faith over fear.",
       "category": "fear"
     },
@@ -7131,10 +5007,6 @@
       "category": "fear"
     },
     {
-      "text": "I am courageous because Jesus stands with me in every situation.",
-      "category": "fear"
-    },
-    {
       "text": "I am free from fear, secure in my identity as a child of God.",
       "category": "fear"
     },
@@ -7143,15 +5015,7 @@
       "category": "fear"
     },
     {
-      "text": "I am safe in Christ, with no need to fear the unknown.",
-      "category": "fear"
-    },
-    {
       "text": "I am anchored in faith, untouched by the power of fear.",
-      "category": "fear"
-    },
-    {
-      "text": "I am strong, standing firm in the faithfulness of Jesus.",
       "category": "fear"
     },
     {
@@ -7171,10 +5035,6 @@
       "category": "fear"
     },
     {
-      "text": "I declare I am free from fear of the future because God is in control.",
-      "category": "fear"
-    },
-    {
       "text": "I declare that my future is secure, held in God's faithful hands.",
       "category": "fear"
     },
@@ -7184,10 +5044,6 @@
     },
     {
       "text": "I declare I am filled with courage, for God is the author of my story.",
-      "category": "fear"
-    },
-    {
-      "text": "I am strong and courageous because the Lord is with me.",
       "category": "fear"
     },
     {
@@ -7211,23 +5067,7 @@
       "category": "fear"
     },
     {
-      "text": "I stand unshaken, rooted in Christ’s love for me.",
-      "category": "fear"
-    },
-    {
       "text": "I am free from worry, trusting in God’s perfect will.",
-      "category": "fear"
-    },
-    {
-      "text": "I am fearless, for Jesus is with me and strengthens me.",
-      "category": "fear"
-    },
-    {
-      "text": "I am victorious over fear, standing firm in my Savior’s power.",
-      "category": "fear"
-    },
-    {
-      "text": "I declare I am free from fear, for God is in control of my future.",
       "category": "fear"
     },
     {
@@ -7235,31 +5075,7 @@
       "category": "fear"
     },
     {
-      "text": "I will not fear, for God is with me.",
-      "category": "fear"
-    },
-    {
       "text": "God has not given me a spirit of fear, but of power, love, and a sound mind.",
-      "category": "fear"
-    },
-    {
-      "text": "I am strong and courageous in Christ.",
-      "category": "fear"
-    },
-    {
-      "text": "Perfect love casts out all fear from my heart.",
-      "category": "fear"
-    },
-    {
-      "text": "I will not be anxious; I give my worries to God.",
-      "category": "fear"
-    },
-    {
-      "text": "God is my refuge and strength, so I will not fear.",
-      "category": "fear"
-    },
-    {
-      "text": "I trust in the Lord and have no fear.",
       "category": "fear"
     },
     {
@@ -7283,10 +5099,6 @@
       "category": "fear"
     },
     {
-      "text": "I cast all my fears on Jesus because He cares for me.",
-      "category": "fear"
-    },
-    {
       "text": "I keep my mind on God and He fills me with peace.",
       "category": "fear"
     },
@@ -7295,19 +5107,7 @@
       "category": "hardtimes"
     },
     {
-      "text": "I am strong and safe because God is always with me.",
-      "category": "hardtimes"
-    },
-    {
       "text": "I release my worries to God, who cares deeply for me.",
-      "category": "hardtimes"
-    },
-    {
-      "text": "I am strong in God's power and overcome every challenge.",
-      "category": "hardtimes"
-    },
-    {
-      "text": "God strengthens me for every battle I face.",
       "category": "hardtimes"
     },
     {
@@ -7319,19 +5119,7 @@
       "category": "hardtimes"
     },
     {
-      "text": "I overcome every obstacle with God's power.",
-      "category": "hardtimes"
-    },
-    {
-      "text": "I am fearless because God is with me.",
-      "category": "hardtimes"
-    },
-    {
       "text": "I stand firm in faith, knowing God will deliver me.",
-      "category": "hardtimes"
-    },
-    {
-      "text": "I will not fear, for the Lord is with me in battle.",
       "category": "hardtimes"
     },
     {
@@ -7340,10 +5128,6 @@
     },
     {
       "text": "I cast my cares on the Lord, and He sustains me through every challenge.",
-      "category": "hardtimes"
-    },
-    {
-      "text": "I walk by faith, not by sight, knowing God guides me.",
       "category": "hardtimes"
     },
     {
@@ -7363,15 +5147,7 @@
       "category": "hardtimes"
     },
     {
-      "text": "The Lord is faithful. He strengthens and protects me from evil.",
-      "category": "hardtimes"
-    },
-    {
       "text": "God's grace is enough for me. His power is made perfect in my weakness.",
-      "category": "hardtimes"
-    },
-    {
-      "text": "I am strong in the Lord and in His mighty power.",
       "category": "hardtimes"
     },
     {
@@ -7380,14 +5156,6 @@
     },
     {
       "text": "God works all things for my good because I love Him and am called to His purpose.",
-      "category": "hardtimes"
-    },
-    {
-      "text": "Thank you Jesus for being my strength when I feel weak.",
-      "category": "hardtimes"
-    },
-    {
-      "text": "Thank you Jesus for turning my trials into triumphs.",
       "category": "hardtimes"
     },
     {
@@ -7403,19 +5171,11 @@
       "category": "hardtimes"
     },
     {
-      "text": "I am resilient, for Jesus empowers me to rise above all challenges.",
-      "category": "hardtimes"
-    },
-    {
       "text": "I am fearless, moving forward with Jesus as my defender and guide.",
       "category": "hardtimes"
     },
     {
       "text": "I am an overcomer, equipped by God to conquer every struggle.",
-      "category": "hardtimes"
-    },
-    {
-      "text": "I am fortified by faith, knowing Jesus holds me through the storm.",
       "category": "hardtimes"
     },
     {
@@ -7431,27 +5191,7 @@
       "category": "hardtimes"
     },
     {
-      "text": "I am armed with God's strength, unafraid of the battles I face.",
-      "category": "hardtimes"
-    },
-    {
-      "text": "I am victorious over trials, knowing Jesus fights alongside me.",
-      "category": "hardtimes"
-    },
-    {
-      "text": "I am rooted in faith, able to persevere through any storm with Jesus.",
-      "category": "hardtimes"
-    },
-    {
-      "text": "The Lord strengthens me in every trial.",
-      "category": "hardtimes"
-    },
-    {
       "text": "Thank you Jesus for the peace you provide in the midst of storms.",
-      "category": "hardtimes"
-    },
-    {
-      "text": "Thank you Jesus for the courage to face every challenge.",
       "category": "hardtimes"
     },
     {
@@ -7467,15 +5207,7 @@
       "category": "hardtimes"
     },
     {
-      "text": "Jesus is with me in every trial; I am never alone.",
-      "category": "hardtimes"
-    },
-    {
       "text": "My pain is not wasted; Jesus is working it for my good.",
-      "category": "hardtimes"
-    },
-    {
-      "text": "I am strong, for Christ’s power is made perfect in my weakness.",
       "category": "hardtimes"
     },
     {
@@ -7491,15 +5223,7 @@
       "category": "hardtimes"
     },
     {
-      "text": "I am powerful, because Jesus is with me, making every mountain movable.",
-      "category": "hardtimes"
-    },
-    {
       "text": "I face many troubles, the Lord rescues me each time.",
-      "category": "hardtimes"
-    },
-    {
-      "text": "The Lord is my strength and my shield; my heart trusts in him, and he helps me.",
       "category": "hardtimes"
     },
     {
@@ -7607,31 +5331,11 @@
       "category": "addiction"
     },
     {
-      "text": "In Jesus's name, I claim victory over the temptations that seek to bind me.",
-      "category": "addiction"
-    },
-    {
-      "text": "In Jesus's name, I walk in freedom, my spirit unshackled and strong.",
-      "category": "addiction"
-    },
-    {
       "text": "In Jesus's name, I am healed from the inside out, addiction has no hold on me.",
       "category": "addiction"
     },
     {
       "text": "In Jesus's name, I embrace a life of sobriety, filled with His peace and joy.",
-      "category": "addiction"
-    },
-    {
-      "text": "In Jesus's name, I am empowered to break free from the cycles that entrap me.",
-      "category": "addiction"
-    },
-    {
-      "text": "In Jesus's name, every craving and desire that does not serve me is dissolved.",
-      "category": "addiction"
-    },
-    {
-      "text": "In Jesus's name, I am a conqueror, my past does not define my future.",
       "category": "addiction"
     },
     {
@@ -7679,18 +5383,6 @@
       "category": "addiction"
     },
     {
-      "text": "I am delivered by Christ's grace from every addiction.",
-      "category": "addiction"
-    },
-    {
-      "text": "I am empowered by the Holy Spirit to conquer addiction.",
-      "category": "addiction"
-    },
-    {
-      "text": "Because Jesus loves me, I am free from the chains of addiction.",
-      "category": "addiction"
-    },
-    {
       "text": "Because Jesus loves me, I have the strength to overcome temptation.",
       "category": "addiction"
     },
@@ -7699,19 +5391,7 @@
       "category": "addiction"
     },
     {
-      "text": "Because Jesus loves me, I am renewed in His grace every day.",
-      "category": "addiction"
-    },
-    {
-      "text": "I declare I am free from all addiction through the power of Christ.",
-      "category": "addiction"
-    },
-    {
       "text": "I declare that Jesus has broken every chain holding me captive.",
-      "category": "addiction"
-    },
-    {
-      "text": "I declare my mind is renewed and my body is restored in God's strength.",
       "category": "addiction"
     },
     {
@@ -7719,15 +5399,7 @@
       "category": "addiction"
     },
     {
-      "text": "I declare that God's grace empowers me to overcome every temptation.",
-      "category": "addiction"
-    },
-    {
       "text": "I declare my heart and mind are filled with peace, not dependency.",
-      "category": "addiction"
-    },
-    {
-      "text": "I declare that I am strong in Christ and resistant to all cravings.",
       "category": "addiction"
     },
     {
@@ -7735,27 +5407,11 @@
       "category": "addiction"
     },
     {
-      "text": "I declare that God's love frees me from every destructive habit.",
-      "category": "addiction"
-    },
-    {
       "text": "I declare I am focused on God's purpose for my life, not addiction.",
       "category": "addiction"
     },
     {
-      "text": "I declare that I am cleansed and my body is a temple of the Holy Spirit.",
-      "category": "addiction"
-    },
-    {
-      "text": "I declare that I walk in freedom, unbound by the chains of the past.",
-      "category": "addiction"
-    },
-    {
       "text": "I declare that God's power within me is greater than any temptation.",
-      "category": "addiction"
-    },
-    {
-      "text": "I declare that I am victorious, living in the freedom Christ has given me.",
       "category": "addiction"
     },
     {
@@ -7771,19 +5427,7 @@
       "category": "addiction"
     },
     {
-      "text": "I expect to walk in victory, knowing I am made new in Christ.",
-      "category": "addiction"
-    },
-    {
       "text": "I expect clarity and purpose as I embrace my true identity in Christ.",
-      "category": "addiction"
-    },
-    {
-      "text": "I expect God's power to fill me with self-control and resilience daily.",
-      "category": "addiction"
-    },
-    {
-      "text": "I expect freedom from all cravings as I grow stronger in my faith.",
       "category": "addiction"
     },
     {
@@ -7791,15 +5435,7 @@
       "category": "addiction"
     },
     {
-      "text": "I am free in Christ, and I no longer serve the chains of addiction.",
-      "category": "addiction"
-    },
-    {
       "text": "I am victorious in Jesus over every addiction that has held me captive.",
-      "category": "addiction"
-    },
-    {
-      "text": "I am more than a conqueror in Christ, and addiction has no hold over me.",
       "category": "addiction"
     },
     {
@@ -7807,55 +5443,11 @@
       "category": "addiction"
     },
     {
-      "text": "I am no longer bound by addiction—I am a child of God’s freedom.",
-      "category": "addiction"
-    },
-    {
-      "text": "God’s grace empowers me to overcome every temptation and stronghold.",
-      "category": "addiction"
-    },
-    {
-      "text": "My heart and mind are filled with peace—I am free from dependency.",
-      "category": "addiction"
-    },
-    {
-      "text": "In Christ, I am strong and resistant to all cravings and addictions.",
-      "category": "addiction"
-    },
-    {
       "text": "The Holy Spirit fills me with self-control, power, and divine strength.",
       "category": "addiction"
     },
     {
-      "text": "God’s love has freed me from every destructive habit and stronghold.",
-      "category": "addiction"
-    },
-    {
-      "text": "I am focused on God’s purpose for my life—I leave addiction behind.",
-      "category": "addiction"
-    },
-    {
-      "text": "My body is a temple of the Holy Spirit, cleansed and renewed.",
-      "category": "addiction"
-    },
-    {
-      "text": "I walk in freedom—no longer bound by the chains of the past.",
-      "category": "addiction"
-    },
-    {
-      "text": "God’s power in me is greater than any temptation or addiction.",
-      "category": "addiction"
-    },
-    {
       "text": "My heart and mind are fixed on God’s truth—I reject addiction.",
-      "category": "addiction"
-    },
-    {
-      "text": "I live in victory—Christ has given me freedom from every stronghold.",
-      "category": "addiction"
-    },
-    {
-      "text": "My thoughts are aligned with God’s truth—I am free from addiction.",
       "category": "addiction"
     },
     {
@@ -7884,10 +5476,6 @@
     },
     {
       "text": "My old self is crucified with Christ—I am no longer a slave to sin.",
-      "category": "addiction"
-    },
-    {
-      "text": "I am no longer controlled by sin—I walk in holiness and life.",
       "category": "addiction"
     },
     {
@@ -7924,10 +5512,6 @@
     },
     {
       "text": "Christ set you free. Do not go back to the chains. Freedom is not something you beg for. It was already won. Stand firm. The enemy wants you to forget who you are.",
-      "category": "addiction"
-    },
-    {
-      "text": "You are not just surviving temptation. You are CONQUERING it. The one who loves you made sure of that. You are more than enough through Christ.",
       "category": "addiction"
     },
     {
@@ -7975,10 +5559,6 @@
       "category": "addiction"
     },
     {
-      "text": "That shame you have carried? It was nailed to the cross. Christ did not come to condemn you. He came to free you. Put down what He already paid for.",
-      "category": "addiction"
-    },
-    {
       "text": "You are not defined by what held you. You are defined by who freed you. The Son set you free. That is your identity. Stop letting the past name you.",
       "category": "addiction"
     },
@@ -8007,10 +5587,6 @@
       "category": "heaven"
     },
     {
-      "text": "I cannot be defeated, for my ultimate victory lies in reaching heaven.",
-      "category": "heaven"
-    },
-    {
       "text": "Every good deed is a treasure stored in heaven, building my inheritance.",
       "category": "heaven"
     },
@@ -8023,23 +5599,7 @@
       "category": "heaven"
     },
     {
-      "text": "I embrace challenges as stepping stones, leading me closer to my heavenly home.",
-      "category": "heaven"
-    },
-    {
-      "text": "I radiate hope, for my future shines bright with the promise of heaven.",
-      "category": "heaven"
-    },
-    {
-      "text": "I overcome fear, for my eternal destination is one of perfect love.",
-      "category": "heaven"
-    },
-    {
       "text": "I live with purpose, for my journey on earth prepares me for the wonders of heaven.",
-      "category": "heaven"
-    },
-    {
-      "text": "I choose love over negativity, for heaven is built on the foundation of God's love.",
       "category": "heaven"
     },
     {
@@ -8059,27 +5619,11 @@
       "category": "heaven"
     },
     {
-      "text": "I am living with courage, knowing my future is secure in heaven.",
-      "category": "heaven"
-    },
-    {
       "text": "I am a reflection of heaven's light in this world.",
       "category": "heaven"
     },
     {
-      "text": "I am secure in God's love, with heaven as my ultimate destination.",
-      "category": "heaven"
-    },
-    {
-      "text": "I live on earth with an eternal perspective, knowing my true citizenship is in heaven.",
-      "category": "heaven"
-    },
-    {
       "text": "Because Jesus loves me, I have the hope of eternal life in heaven.",
-      "category": "heaven"
-    },
-    {
-      "text": "Because Jesus loves me, I am assured of my place in heaven.",
       "category": "heaven"
     },
     {
@@ -8092,18 +5636,6 @@
     },
     {
       "text": "Because Jesus loves me, I anticipate the joy of being with Him forever.",
-      "category": "heaven"
-    },
-    {
-      "text": "I have eternal life through Jesus Christ.",
-      "category": "heaven"
-    },
-    {
-      "text": "I am a citizen of heaven, and my home is with the Lord.",
-      "category": "heaven"
-    },
-    {
-      "text": "Jesus has prepared a place for me in heaven.",
       "category": "heaven"
     },
     {
@@ -8143,15 +5675,7 @@
       "category": "heaven"
     },
     {
-      "text": "I will live forever in perfect peace and joy.",
-      "category": "heaven"
-    },
-    {
       "text": "I will drink from the water of life, freely given by Jesus.",
-      "category": "heaven"
-    },
-    {
-      "text": "My treasure is stored in heaven, where it can never be stolen.",
       "category": "heaven"
     },
     {
@@ -8175,10 +5699,6 @@
       "category": "heaven"
     },
     {
-      "text": "I am saved by grace and have a glorious future in heaven.",
-      "category": "heaven"
-    },
-    {
       "text": "I am eagerly awaiting the second coming of Jesus and the glory of Heaven that awaits me.",
       "category": "heaven"
     },
@@ -8187,673 +5707,304 @@
       "category": "heaven"
     },
     {
-      "text": "I am destined for greatness because heaven awaits me.",
-      "category": "heaven"
-    },
-    {
       "text": "God's wings cover you. His faithfulness is your shield. You are protected.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 91:4",
-      "bibleVerseText": "He will cover you with his feathers, and under his wings you will find refuge; his faithfulness will be your shield and rampart."
-    },
-    {
-      "text": "Stay close to God. That is where the enemy cannot reach you.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 91:1",
-      "bibleVerseText": "Whoever dwells in the shelter of the Most High will rest in the shadow of the Almighty."
+      "category": "psalms"
     },
     {
       "text": "God is a shield around you. He lifts your head when life pushes it down.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 3:3",
-      "bibleVerseText": "But you, Lord, are a shield around me, my glory, the One who lifts my head high."
+      "category": "psalms"
     },
     {
       "text": "God commands His angels to guard you. You are not walking through this alone.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 91:11",
-      "bibleVerseText": "For he will command his angels concerning you to guard you in all your ways."
+      "category": "psalms"
     },
     {
       "text": "God is your rock. Storms come. He does not move. Neither should you.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 18:2",
-      "bibleVerseText": "The Lord is my rock, my fortress and my deliverer; my God is my rock, in whom I take refuge, my shield and the horn of my salvation, my stronghold."
-    },
-    {
-      "text": "God is your strength and your shield. Trust Him. He helps you.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 28:7",
-      "bibleVerseText": "The Lord is my strength and my shield; my heart trusts in him, and he helps me. My heart leaps for joy, and with my song I praise him."
+      "category": "psalms"
     },
     {
       "text": "Your own strength has limits. God's does not. His power is what carries you.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 68:35",
-      "bibleVerseText": "You are awesome, O God, in your sanctuary; the God of Israel gives power and strength to his people. Praise be to God!"
+      "category": "psalms"
     },
     {
       "text": "The earth can shake. God does not. Fear has no hold on you when He is your anchor.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 46:2-3",
-      "bibleVerseText": "Therefore we will not fear, though the earth give way and the mountains fall into the heart of the sea, though its waters roar and foam and the mountains quake with their surging."
+      "category": "psalms"
     },
     {
       "text": "With God you can face any army. You can scale any wall. Nothing blocks what He opens.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 18:29",
-      "bibleVerseText": "With your help I can advance against a troop; with my God I can scale a wall."
+      "category": "psalms"
     },
     {
       "text": "God has never lost a war. That means your victory is already secured. Shout now.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 20:5",
-      "bibleVerseText": "May we shout for joy over your victory and lift up our banners in the name of our God."
+      "category": "psalms"
     },
     {
       "text": "God gives His people strength. He blesses them with peace. That is yours today.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 29:11",
-      "bibleVerseText": "The Lord gives strength to his people; the Lord blesses his people with peace."
+      "category": "psalms"
     },
     {
       "text": "Your soul was not made for chaos. Return to rest. God has been good to you.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 116:7",
-      "bibleVerseText": "Return to your rest, my soul, for the Lord has been good to you."
+      "category": "psalms"
     },
     {
       "text": "God leads you to still waters. He restores your soul. Let Him lead.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 23:2",
-      "bibleVerseText": "He makes me lie down in green pastures, he leads me beside quiet waters."
+      "category": "psalms"
     },
     {
       "text": "You can lay down tonight without fear. God keeps watch. Sleep in peace.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 4:8",
-      "bibleVerseText": "In peace I will lie down and sleep, for you alone, Lord, make me dwell in safety."
+      "category": "psalms"
     },
     {
       "text": "Quiet yourself. God is enough. Be still like a child resting in its mother's arms.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 131:2",
-      "bibleVerseText": "But I have calmed and quieted myself, I am like a weaned child with its mother; like a weaned child I am content."
+      "category": "psalms"
     },
     {
       "text": "God sets a table for you in front of your enemies. Your cup does not just fill. It overflows.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 23:5",
-      "bibleVerseText": "You prepare a table before me in the presence of my enemies. You anoint my head with oil; my cup overflows."
+      "category": "psalms"
     },
     {
       "text": "Even the strong go hungry. Those who seek God lack NOTHING. Seek Him first.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 34:10",
-      "bibleVerseText": "The lions may grow weak and hungry, but those who seek the Lord lack no good thing."
+      "category": "psalms"
     },
     {
       "text": "God has never abandoned His people. He will not start with you. His provision is certain.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 37:25",
-      "bibleVerseText": "I was young and now I am old, yet I have never seen the righteous forsaken or their children begging bread."
+      "category": "psalms"
     },
     {
       "text": "God's goodness is not behind you. It is CHASING you. Every day of your life.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 23:6",
-      "bibleVerseText": "Surely your goodness and love will follow me all the days of my life, and I will dwell in the house of the Lord forever."
+      "category": "psalms"
     },
     {
       "text": "God withholds no good thing from those who walk with Him. He is your sun and shield.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 84:11",
-      "bibleVerseText": "For the Lord God is a sun and shield; the Lord bestows favor and honor; no good thing does he withhold from those whose walk is blameless."
-    },
-    {
-      "text": "Do not forget what God has done. He forgives. He heals. Every disease. Every sin.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 103:2-3",
-      "bibleVerseText": "Praise the Lord, my soul, and forget not all his benefits who forgives all your sins and heals all your diseases."
+      "category": "psalms"
     },
     {
       "text": "God spoke and it was done. He sent His word to heal you. Receive it.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 107:20",
-      "bibleVerseText": "He sent out his word and healed them; he rescued them from the grave."
-    },
-    {
-      "text": "Call to God. He heals. Wholeness is His answer to your cry.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 30:2",
-      "bibleVerseText": "Lord my God, I called to you for help, and you healed me."
+      "category": "psalms"
     },
     {
       "text": "God heals broken hearts. He binds every wound. Your pain is not the end of your story.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 147:3",
-      "bibleVerseText": "He heals the brokenhearted and binds up their wounds."
+      "category": "psalms"
     },
     {
       "text": "God satisfies your hunger. He renews your strength. Rise up like an eagle.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 103:5",
-      "bibleVerseText": "Who satisfies your desires with good things so that your youth is renewed like the eagle's."
+      "category": "psalms"
     },
     {
       "text": "Real joy lives in God's presence. Not in your comfort. In HIM. Go to the source.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 16:11",
-      "bibleVerseText": "You make known to me the path of life; you will fill me with joy in your presence, with eternal pleasures at your right hand."
+      "category": "psalms"
     },
     {
       "text": "Fill your mouth with praise. What you declare all day shapes your day.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 71:8",
-      "bibleVerseText": "My mouth is filled with your praise, declaring your splendor all day long."
+      "category": "psalms"
     },
     {
       "text": "God has done great things for you. Let that sink in. That is where real joy comes from.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 126:3",
-      "bibleVerseText": "The Lord has done great things for us, and we are filled with joy."
+      "category": "psalms"
     },
     {
       "text": "Enter God's gates with thanks. Enter His courts with praise. This is how you get close to Him.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 100:4",
-      "bibleVerseText": "Enter his gates with thanksgiving and his courts with praise; give thanks to him and praise his name."
-    },
-    {
-      "text": "Praise God with everything in you. No shame. No holding back. He is worth it.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 149:3",
-      "bibleVerseText": "Let them praise his name with dancing and make music to him with timbrel and harp."
+      "category": "psalms"
     },
     {
       "text": "You do not need to see the whole road. God's word lights your next step. That is enough.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 119:105",
-      "bibleVerseText": "Your word is a lamp for my feet, a light on my path."
+      "category": "psalms"
     },
     {
       "text": "God is your Shepherd. Today, if you hear His voice, do not harden your heart. Follow.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 95:7",
-      "bibleVerseText": "For he is our God and we are the people of his pasture, the flock under his care. Today, if only you would hear his voice."
+      "category": "psalms"
     },
     {
       "text": "God orders your steps. Not fate. Not luck. God. Trust where He is taking you.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 37:23",
-      "bibleVerseText": "The steps of a good man are ordered by the Lord, and He delights in his way."
+      "category": "psalms"
     },
     {
       "text": "God promises to guide you. He teaches you. He watches over you. You will not wander alone.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 32:8",
-      "bibleVerseText": "I will instruct you and teach you in the way you should go; I will counsel you with my loving eye on you."
-    },
-    {
-      "text": "Ask God to send His light. It leads to places your own wisdom cannot find.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 43:3",
-      "bibleVerseText": "Send me your light and your faithful care, let them lead me; let them bring me to your holy mountain, to the place where you dwell."
+      "category": "psalms"
     },
     {
       "text": "Through God you push back every enemy. Through His name you trample every foe.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 44:5",
-      "bibleVerseText": "Through you we push back our enemies; through your name we trample our foes."
+      "category": "psalms"
     },
     {
       "text": "God brings people out of darkness. He breaks chains. Your chains are not stronger than His hand.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 107:14",
-      "bibleVerseText": "He brought them out of darkness, the utter darkness, and broke away their chains."
+      "category": "psalms"
     },
     {
       "text": "God's precepts are not a prison. They are the path to freedom. Walk in them.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 119:45",
-      "bibleVerseText": "I will walk about in freedom, for I have sought out your precepts."
-    },
-    {
-      "text": "With God you gain the victory. Human help runs out. God never does.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 60:12",
-      "bibleVerseText": "With God we will gain the victory, and he will trample down our enemies."
+      "category": "psalms"
     },
     {
       "text": "Your enemy is too strong for you. But not for God. He rescues. Call on Him.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 18:17",
-      "bibleVerseText": "He rescued me from my powerful enemy, from my foes, who were too strong for me."
+      "category": "psalms"
     },
     {
       "text": "Those who trust God cannot be shaken. Trust is not a feeling. It is a decision. Make it.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 125:1",
-      "bibleVerseText": "Those who trust in the Lord are like Mount Zion, which cannot be shaken but endures forever."
+      "category": "psalms"
     },
     {
       "text": "Your timing is not the issue. God holds your times in His hands. Rest in that.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 31:15",
-      "bibleVerseText": "My times are in your hands; deliver me from the hands of my enemies, from those who pursue me."
+      "category": "psalms"
     },
     {
       "text": "Fear is real. So is God. When fear comes, choose trust. That is the only move.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 56:3",
-      "bibleVerseText": "When I am afraid, I put my trust in you."
+      "category": "psalms"
     },
     {
       "text": "Let the army come. Your heart does not have to fear. God is your stronghold. Not your feelings.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 27:3",
-      "bibleVerseText": "Though an army besiege me, my heart will not fear; though war break out against me, even then I will be confident."
+      "category": "psalms"
     },
     {
       "text": "Walk by God's faithfulness. Not by what you see. His love never fails.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 26:3",
-      "bibleVerseText": "For I have always been mindful of your unfailing love and have lived in reliance on your faithfulness."
-    },
-    {
-      "text": "Trust God and His love surrounds you. Not sometimes. Always. On every side.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 32:10",
-      "bibleVerseText": "Many are the woes of the wicked, but the Lord's unfailing love surrounds the one who trusts in him."
+      "category": "psalms"
     },
     {
       "text": "You are loved by God. He fights for those He loves. You are not forgotten.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 108:6",
-      "bibleVerseText": "Save us and help us with your right hand, that those you love may be delivered."
+      "category": "psalms"
     },
     {
       "text": "God surrounds the righteous with favor like a shield. Walk with Him. Watch doors open.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 5:12",
-      "bibleVerseText": "Surely, Lord, you bless the righteous; you surround them with your favor as with a shield."
+      "category": "psalms"
     },
     {
       "text": "God's love has no expiration date. It goes from forever to forever. That includes your worst days.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 103:17",
-      "bibleVerseText": "But from everlasting to everlasting the Lord's love is with those who fear him, and his righteousness with their children's children."
+      "category": "psalms"
     },
     {
       "text": "God pulls you out of the pit. Then He crowns you. That is what redemption looks like.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 103:4",
-      "bibleVerseText": "Who redeems your life from the pit and crowns you with love and compassion."
+      "category": "psalms"
     },
     {
       "text": "God's works are wonderful. You are one of them. Believe what your Maker says about you.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 139:14",
-      "bibleVerseText": "I praise you because I am fearfully and wonderfully made; your works are wonderful, I know that full well."
+      "category": "psalms"
     },
     {
       "text": "You are a son of the Most High. Stop living like an orphan. You have a Father.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 82:6",
-      "bibleVerseText": "I said, 'You are gods; you are all sons of the Most High.'"
+      "category": "psalms"
     },
     {
       "text": "God knit you together. He knew you before anyone else did. You are not an accident. You are on purpose.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 139:13-14",
-      "bibleVerseText": "For you created my inmost being; you knit me together in my mother's womb. I praise you because I am fearfully and wonderfully made."
+      "category": "psalms"
     },
     {
       "text": "God will complete what He started in you. His love endures forever. Your purpose is safe in His hands.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 138:8",
-      "bibleVerseText": "The Lord will vindicate me; your love, Lord, endures forever do not abandon the works of your hands."
+      "category": "psalms"
     },
     {
       "text": "God chose you and brought you near. That is not luck. That is calling. Live like it.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 65:4",
-      "bibleVerseText": "Blessed are those you choose and bring near to live in your courts! We are filled with the good things of your house, of your holy temple."
+      "category": "psalms"
     },
     {
       "text": "God turns your darkness into light. Your darkest season is not the final chapter.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 18:28",
-      "bibleVerseText": "You, Lord, keep my lamp burning; my God turns my darkness into light."
+      "category": "psalms"
     },
     {
       "text": "Look to God. Shame disappears. Your face becomes radiant. That is what He does.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 34:5",
-      "bibleVerseText": "Those who look to him are radiant; their faces are never covered with shame."
-    },
-    {
-      "text": "Choose faithfulness. Set your heart on God's truth. That is the path that leads to freedom.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 119:30",
-      "bibleVerseText": "I have chosen the way of faithfulness; I have set my heart on your laws."
-    },
-    {
-      "text": "Learn to praise God. Walk in His light. Those who do are called blessed.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 89:15",
-      "bibleVerseText": "Blessed are those who have learned to acclaim you, who walk in the light of your presence, Lord."
+      "category": "psalms"
     },
     {
       "text": "God's word gives light. It brings understanding to those who open it. Open it. Let it change you.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 119:130",
-      "bibleVerseText": "The unfolding of your words gives light; it gives understanding to the simple."
-    },
-    {
-      "text": "God deals with you according to righteousness. Walk in integrity. His reward is real.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 18:20",
-      "bibleVerseText": "The Lord has dealt with me according to my righteousness; according to the cleanness of my hands he has rewarded me."
-    },
-    {
-      "text": "God's word stands firm. Holiness is not a burden. It is what adorns His house. Wear it.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 93:5",
-      "bibleVerseText": "Your statutes, Lord, stand firm; holiness adorns your house for endless days."
+      "category": "psalms"
     },
     {
       "text": "God will make your righteousness shine like the dawn. Hold on. Justice is coming.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 37:6",
-      "bibleVerseText": "He will make your righteous reward shine like the dawn, your vindication like the noonday sun."
+      "category": "psalms"
     },
     {
       "text": "Clean hands and a pure heart. That is the kind of person God draws near. Be that person.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 24:4",
-      "bibleVerseText": "The one who has clean hands and a pure heart, who does not trust in an idol or swear by a false god."
+      "category": "psalms"
     },
     {
       "text": "God calls you to walk blameless. Not perfect by your own strength. Blameless through His covering.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 18:23",
-      "bibleVerseText": "I have been blameless before him and have kept myself from sin."
+      "category": "psalms"
     },
     {
       "text": "God is faithful in ALL He does. Every promise. Every time. He does not break His word.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 145:13",
-      "bibleVerseText": "The Lord is trustworthy in all he promises and faithful in all he does."
+      "category": "psalms"
     },
     {
       "text": "The meek inherit the land. Humility before God is not weakness. It is the path to your inheritance.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 37:11",
-      "bibleVerseText": "But the meek will inherit the land and enjoy peace and prosperity."
-    },
-    {
-      "text": "God withholds no good thing from those who walk with integrity. Walk right. Watch what opens.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 84:11",
-      "bibleVerseText": "For the Lord God is a sun and shield; the Lord bestows favor and honor; no good thing does he withhold from those whose walk is blameless."
-    },
-    {
-      "text": "Hope in God. Don't settle for less. Those who wait on Him inherit the land.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 37:9",
-      "bibleVerseText": "For those who are evil will be destroyed, but those who hope in the Lord will inherit the land."
+      "category": "psalms"
     },
     {
       "text": "Wealth and riches are in the house of the one who walks with God. This is not luck. This is a promise.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 112:3",
-      "bibleVerseText": "Wealth and riches are in their houses, and their righteousness endures forever."
+      "category": "psalms"
     },
     {
       "text": "The righteous live in God's presence. That is your home. Not your problems. His presence.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 140:13",
-      "bibleVerseText": "Surely the righteous will praise your name, and the upright will live in your presence."
+      "category": "psalms"
     },
     {
       "text": "God's Spirit in you is not a comfort. It is a power. Do not take that for granted.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 51:11",
-      "bibleVerseText": "Do not cast me from your presence or take your Holy Spirit from me."
+      "category": "psalms"
     },
     {
       "text": "Your soul craves God. Not comfort. Not approval. GOD. Go to the only source that truly satisfies.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 42:1-2",
-      "bibleVerseText": "As the deer pants for streams of water, so my soul pants for you, my God. My soul thirsts for God, for the living God."
+      "category": "psalms"
     },
     {
       "text": "God is in front of you. He is behind you. His hand is on you. You cannot go where He is not.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 139:5",
-      "bibleVerseText": "You hem me in behind and before, and you lay your hand upon me."
-    },
-    {
-      "text": "You cannot run from God's presence. Not to the highest place. Not to the deepest. He is everywhere you are.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 139:7-10",
-      "bibleVerseText": "Where can I go from your Spirit? Where can I flee from your presence? If I go up to the heavens, you are there; if I make my bed in the depths, you are there."
+      "category": "psalms"
     },
     {
       "text": "God made you a ruler. Not a victim. Not a survivor. A ruler. Walk in what He gave you.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 8:6",
-      "bibleVerseText": "You made them rulers over the works of your hands; you put everything under their feet."
+      "category": "psalms"
     },
     {
       "text": "Power belongs to God. He does not hoard it. He releases it through those who trust Him. Be that vessel.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 62:11",
-      "bibleVerseText": "One thing God has spoken, two things I have heard: Power belongs to you, God."
-    },
-    {
-      "text": "Rejoice in God's strength. Not yours. His victories come from His power. Find your joy there.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 21:1",
-      "bibleVerseText": "The king rejoices in your strength, Lord. How great is his joy in the victories you give!"
+      "category": "psalms"
     },
     {
       "text": "God put everything under your feet. That is not pride. That is your design. Walk in it.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 8:6-8",
-      "bibleVerseText": "You made them rulers over the works of your hands; you put everything under their feet: all flocks and herds, and the animals of the wild, the birds in the sky, and the fish in the sea."
+      "category": "psalms"
     },
     {
       "text": "God spoke and the world came to be. Your words carry power too. Speak what He says. Watch it stand.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 33:9",
-      "bibleVerseText": "For he spoke, and it came to be; he commanded, and it stood firm."
-    },
-    {
-      "text": "God is your Shepherd. That means you lack NOTHING. Believe that today.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 23:1",
-      "bibleVerseText": "The Lord is my shepherd, I lack nothing."
-    },
-    {
-      "text": "God's goodness and love are not ahead of you. They are following you. Every single day.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 23:6",
-      "bibleVerseText": "Surely your goodness and love will follow me all the days of my life, and I will dwell in the house of the Lord forever."
+      "category": "psalms"
     },
     {
       "text": "Stop looking at the problem. Look up. Your help comes from God. Nowhere else.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 121:1",
-      "bibleVerseText": "I lift up my eyes to the mountains where does my help come from? My help comes from the Lord, the Maker of heaven and earth."
-    },
-    {
-      "text": "God watches over every step you take. Every place you go. Now and forever. You are not on your own.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 121:8",
-      "bibleVerseText": "The Lord will watch over your coming and going both now and forevermore."
+      "category": "psalms"
     },
     {
       "text": "Be still. Not passive. Still. Know that HE is God. That changes everything.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 46:10",
-      "bibleVerseText": "He says, 'Be still, and know that I am God; I will be exalted among the nations, I will be exalted in the earth.'"
+      "category": "psalms"
     },
     {
       "text": "God is your light. God is your salvation. Fear has no answer to that. None.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 27:1",
-      "bibleVerseText": "The Lord is my light and my salvation whom shall I fear? The Lord is the stronghold of my life of whom shall I be afraid?"
+      "category": "psalms"
     },
     {
       "text": "God is your refuge. He is your strength. He is ALWAYS present in trouble. Run to Him.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 46:1",
-      "bibleVerseText": "God is our refuge and strength, an ever-present help in trouble."
+      "category": "psalms"
     },
     {
       "text": "Plant yourself in God. A tree by water never dries out. Your fruit comes in every season.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 1:3",
-      "bibleVerseText": "That person is like a tree planted by streams of water, which yields its fruit in season and whose leaf does not wither whatever they do prospers."
+      "category": "psalms"
     },
     {
       "text": "God forgives ALL your sins. He heals ALL your diseases. Not some. All. Receive it.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 103:3",
-      "bibleVerseText": "Who forgives all your sins and heals all your diseases."
-    },
-    {
-      "text": "God lifts you out of the pit. Then He crowns you. That is what it means to be redeemed.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 103:4",
-      "bibleVerseText": "Who redeems your life from the pit and crowns you with love and compassion."
+      "category": "psalms"
     },
     {
       "text": "Ask God for a clean heart. He creates what you cannot. A new spirit starts with His work in you.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 51:10",
-      "bibleVerseText": "Create in me a pure heart, O God, and renew a steadfast spirit within me."
+      "category": "psalms"
     },
     {
       "text": "The night is not your final answer. Joy comes in the morning. God's favor lasts a lifetime.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 30:5",
-      "bibleVerseText": "For his anger lasts only a moment, but his favor lasts a lifetime; weeping may stay for the night, but rejoicing comes in the morning."
+      "category": "psalms"
     },
     {
       "text": "Keep your eyes on God. Not the storm. Not the problem. HIM. With Him you will not be shaken.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 16:8",
-      "bibleVerseText": "I keep my eyes always on the Lord. With him at my right hand, I will not be shaken."
+      "category": "psalms"
     },
     {
       "text": "Praise God with everything in you. Not just your words. Your whole soul. Give Him all of it.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 103:1",
-      "bibleVerseText": "Praise the Lord, my soul; all my inmost being, praise his holy name."
+      "category": "psalms"
     },
     {
       "text": "God is your strength. God is your shield. Trust Him with your heart. He will help you.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 28:7",
-      "bibleVerseText": "The Lord is my strength and my shield; my heart trusts in him, and he helps me."
+      "category": "psalms"
     },
     {
       "text": "Jesus does not change. What He did then He can do now. Same power. Same love. Same God.",
@@ -12580,671 +9731,6 @@
       "book": "Proverbs 16:18-19",
       "category": "proverbs",
       "isFavorite": false
-    },
-    {
-      "text": "God's wings cover you. His faithfulness is your shield. You are protected.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 91:4",
-      "bibleVerseText": "He will cover you with his feathers, and under his wings you will find refuge; his faithfulness will be your shield and rampart."
-    },
-    {
-      "text": "Stay close to God. That is where the enemy cannot reach you.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 91:1",
-      "bibleVerseText": "Whoever dwells in the shelter of the Most High will rest in the shadow of the Almighty."
-    },
-    {
-      "text": "God is a shield around you. He lifts your head when life pushes it down.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 3:3",
-      "bibleVerseText": "But you, Lord, are a shield around me, my glory, the One who lifts my head high."
-    },
-    {
-      "text": "God commands His angels to guard you. You are not walking through this alone.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 91:11",
-      "bibleVerseText": "For he will command his angels concerning you to guard you in all your ways."
-    },
-    {
-      "text": "God is your rock. Storms come. He does not move. Neither should you.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 18:2",
-      "bibleVerseText": "The Lord is my rock, my fortress and my deliverer; my God is my rock, in whom I take refuge, my shield and the horn of my salvation, my stronghold."
-    },
-    {
-      "text": "God is your strength and your shield. Trust Him. He helps you.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 28:7",
-      "bibleVerseText": "The Lord is my strength and my shield; my heart trusts in him, and he helps me. My heart leaps for joy, and with my song I praise him."
-    },
-    {
-      "text": "Your own strength has limits. God's does not. His power is what carries you.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 68:35",
-      "bibleVerseText": "You are awesome, O God, in your sanctuary; the God of Israel gives power and strength to his people. Praise be to God!"
-    },
-    {
-      "text": "The earth can shake. God does not. Fear has no hold on you when He is your anchor.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 46:2-3",
-      "bibleVerseText": "Therefore we will not fear, though the earth give way and the mountains fall into the heart of the sea, though its waters roar and foam and the mountains quake with their surging."
-    },
-    {
-      "text": "With God you can face any army. You can scale any wall. Nothing blocks what He opens.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 18:29",
-      "bibleVerseText": "With your help I can advance against a troop; with my God I can scale a wall."
-    },
-    {
-      "text": "God has never lost a war. That means your victory is already secured. Shout now.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 20:5",
-      "bibleVerseText": "May we shout for joy over your victory and lift up our banners in the name of our God."
-    },
-    {
-      "text": "God gives His people strength. He blesses them with peace. That is yours today.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 29:11",
-      "bibleVerseText": "The Lord gives strength to his people; the Lord blesses his people with peace."
-    },
-    {
-      "text": "Your soul was not made for chaos. Return to rest. God has been good to you.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 116:7",
-      "bibleVerseText": "Return to your rest, my soul, for the Lord has been good to you."
-    },
-    {
-      "text": "God leads you to still waters. He restores your soul. Let Him lead.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 23:2",
-      "bibleVerseText": "He makes me lie down in green pastures, he leads me beside quiet waters."
-    },
-    {
-      "text": "You can lay down tonight without fear. God keeps watch. Sleep in peace.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 4:8",
-      "bibleVerseText": "In peace I will lie down and sleep, for you alone, Lord, make me dwell in safety."
-    },
-    {
-      "text": "Quiet yourself. God is enough. Be still like a child resting in its mother's arms.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 131:2",
-      "bibleVerseText": "But I have calmed and quieted myself, I am like a weaned child with its mother; like a weaned child I am content."
-    },
-    {
-      "text": "God sets a table for you in front of your enemies. Your cup does not just fill. It overflows.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 23:5",
-      "bibleVerseText": "You prepare a table before me in the presence of my enemies. You anoint my head with oil; my cup overflows."
-    },
-    {
-      "text": "Even the strong go hungry. Those who seek God lack NOTHING. Seek Him first.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 34:10",
-      "bibleVerseText": "The lions may grow weak and hungry, but those who seek the Lord lack no good thing."
-    },
-    {
-      "text": "God has never abandoned His people. He will not start with you. His provision is certain.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 37:25",
-      "bibleVerseText": "I was young and now I am old, yet I have never seen the righteous forsaken or their children begging bread."
-    },
-    {
-      "text": "God's goodness is not behind you. It is CHASING you. Every day of your life.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 23:6",
-      "bibleVerseText": "Surely your goodness and love will follow me all the days of my life, and I will dwell in the house of the Lord forever."
-    },
-    {
-      "text": "God withholds no good thing from those who walk with Him. He is your sun and shield.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 84:11",
-      "bibleVerseText": "For the Lord God is a sun and shield; the Lord bestows favor and honor; no good thing does he withhold from those whose walk is blameless."
-    },
-    {
-      "text": "Do not forget what God has done. He forgives. He heals. Every disease. Every sin.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 103:2-3",
-      "bibleVerseText": "Praise the Lord, my soul, and forget not all his benefits who forgives all your sins and heals all your diseases."
-    },
-    {
-      "text": "God spoke and it was done. He sent His word to heal you. Receive it.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 107:20",
-      "bibleVerseText": "He sent out his word and healed them; he rescued them from the grave."
-    },
-    {
-      "text": "Call to God. He heals. Wholeness is His answer to your cry.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 30:2",
-      "bibleVerseText": "Lord my God, I called to you for help, and you healed me."
-    },
-    {
-      "text": "God heals broken hearts. He binds every wound. Your pain is not the end of your story.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 147:3",
-      "bibleVerseText": "He heals the brokenhearted and binds up their wounds."
-    },
-    {
-      "text": "God satisfies your hunger. He renews your strength. Rise up like an eagle.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 103:5",
-      "bibleVerseText": "Who satisfies your desires with good things so that your youth is renewed like the eagle's."
-    },
-    {
-      "text": "Real joy lives in God's presence. Not in your comfort. In HIM. Go to the source.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 16:11",
-      "bibleVerseText": "You make known to me the path of life; you will fill me with joy in your presence, with eternal pleasures at your right hand."
-    },
-    {
-      "text": "Fill your mouth with praise. What you declare all day shapes your day.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 71:8",
-      "bibleVerseText": "My mouth is filled with your praise, declaring your splendor all day long."
-    },
-    {
-      "text": "God has done great things for you. Let that sink in. That is where real joy comes from.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 126:3",
-      "bibleVerseText": "The Lord has done great things for us, and we are filled with joy."
-    },
-    {
-      "text": "Enter God's gates with thanks. Enter His courts with praise. This is how you get close to Him.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 100:4",
-      "bibleVerseText": "Enter his gates with thanksgiving and his courts with praise; give thanks to him and praise his name."
-    },
-    {
-      "text": "Praise God with everything in you. No shame. No holding back. He is worth it.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 149:3",
-      "bibleVerseText": "Let them praise his name with dancing and make music to him with timbrel and harp."
-    },
-    {
-      "text": "You do not need to see the whole road. God's word lights your next step. That is enough.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 119:105",
-      "bibleVerseText": "Your word is a lamp for my feet, a light on my path."
-    },
-    {
-      "text": "God is your Shepherd. Today, if you hear His voice, do not harden your heart. Follow.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 95:7",
-      "bibleVerseText": "For he is our God and we are the people of his pasture, the flock under his care. Today, if only you would hear his voice."
-    },
-    {
-      "text": "God orders your steps. Not fate. Not luck. God. Trust where He is taking you.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 37:23",
-      "bibleVerseText": "The steps of a good man are ordered by the Lord, and He delights in his way."
-    },
-    {
-      "text": "God promises to guide you. He teaches you. He watches over you. You will not wander alone.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 32:8",
-      "bibleVerseText": "I will instruct you and teach you in the way you should go; I will counsel you with my loving eye on you."
-    },
-    {
-      "text": "Ask God to send His light. It leads to places your own wisdom cannot find.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 43:3",
-      "bibleVerseText": "Send me your light and your faithful care, let them lead me; let them bring me to your holy mountain, to the place where you dwell."
-    },
-    {
-      "text": "Through God you push back every enemy. Through His name you trample every foe.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 44:5",
-      "bibleVerseText": "Through you we push back our enemies; through your name we trample our foes."
-    },
-    {
-      "text": "God brings people out of darkness. He breaks chains. Your chains are not stronger than His hand.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 107:14",
-      "bibleVerseText": "He brought them out of darkness, the utter darkness, and broke away their chains."
-    },
-    {
-      "text": "God's precepts are not a prison. They are the path to freedom. Walk in them.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 119:45",
-      "bibleVerseText": "I will walk about in freedom, for I have sought out your precepts."
-    },
-    {
-      "text": "With God you gain the victory. Human help runs out. God never does.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 60:12",
-      "bibleVerseText": "With God we will gain the victory, and he will trample down our enemies."
-    },
-    {
-      "text": "Your enemy is too strong for you. But not for God. He rescues. Call on Him.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 18:17",
-      "bibleVerseText": "He rescued me from my powerful enemy, from my foes, who were too strong for me."
-    },
-    {
-      "text": "Those who trust God cannot be shaken. Trust is not a feeling. It is a decision. Make it.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 125:1",
-      "bibleVerseText": "Those who trust in the Lord are like Mount Zion, which cannot be shaken but endures forever."
-    },
-    {
-      "text": "Your timing is not the issue. God holds your times in His hands. Rest in that.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 31:15",
-      "bibleVerseText": "My times are in your hands; deliver me from the hands of my enemies, from those who pursue me."
-    },
-    {
-      "text": "Fear is real. So is God. When fear comes, choose trust. That is the only move.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 56:3",
-      "bibleVerseText": "When I am afraid, I put my trust in you."
-    },
-    {
-      "text": "Let the army come. Your heart does not have to fear. God is your stronghold. Not your feelings.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 27:3",
-      "bibleVerseText": "Though an army besiege me, my heart will not fear; though war break out against me, even then I will be confident."
-    },
-    {
-      "text": "Walk by God's faithfulness. Not by what you see. His love never fails.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 26:3",
-      "bibleVerseText": "For I have always been mindful of your unfailing love and have lived in reliance on your faithfulness."
-    },
-    {
-      "text": "Trust God and His love surrounds you. Not sometimes. Always. On every side.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 32:10",
-      "bibleVerseText": "Many are the woes of the wicked, but the Lord's unfailing love surrounds the one who trusts in him."
-    },
-    {
-      "text": "You are loved by God. He fights for those He loves. You are not forgotten.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 108:6",
-      "bibleVerseText": "Save us and help us with your right hand, that those you love may be delivered."
-    },
-    {
-      "text": "God surrounds the righteous with favor like a shield. Walk with Him. Watch doors open.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 5:12",
-      "bibleVerseText": "Surely, Lord, you bless the righteous; you surround them with your favor as with a shield."
-    },
-    {
-      "text": "God's love has no expiration date. It goes from forever to forever. That includes your worst days.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 103:17",
-      "bibleVerseText": "But from everlasting to everlasting the Lord's love is with those who fear him, and his righteousness with their children's children."
-    },
-    {
-      "text": "God pulls you out of the pit. Then He crowns you. That is what redemption looks like.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 103:4",
-      "bibleVerseText": "Who redeems your life from the pit and crowns you with love and compassion."
-    },
-    {
-      "text": "God's works are wonderful. You are one of them. Believe what your Maker says about you.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 139:14",
-      "bibleVerseText": "I praise you because I am fearfully and wonderfully made; your works are wonderful, I know that full well."
-    },
-    {
-      "text": "You are a son of the Most High. Stop living like an orphan. You have a Father.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 82:6",
-      "bibleVerseText": "I said, 'You are gods; you are all sons of the Most High.'"
-    },
-    {
-      "text": "God knit you together. He knew you before anyone else did. You are not an accident. You are on purpose.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 139:13-14",
-      "bibleVerseText": "For you created my inmost being; you knit me together in my mother's womb. I praise you because I am fearfully and wonderfully made."
-    },
-    {
-      "text": "God will complete what He started in you. His love endures forever. Your purpose is safe in His hands.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 138:8",
-      "bibleVerseText": "The Lord will vindicate me; your love, Lord, endures forever do not abandon the works of your hands."
-    },
-    {
-      "text": "God chose you and brought you near. That is not luck. That is calling. Live like it.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 65:4",
-      "bibleVerseText": "Blessed are those you choose and bring near to live in your courts! We are filled with the good things of your house, of your holy temple."
-    },
-    {
-      "text": "God turns your darkness into light. Your darkest season is not the final chapter.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 18:28",
-      "bibleVerseText": "You, Lord, keep my lamp burning; my God turns my darkness into light."
-    },
-    {
-      "text": "Look to God. Shame disappears. Your face becomes radiant. That is what He does.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 34:5",
-      "bibleVerseText": "Those who look to him are radiant; their faces are never covered with shame."
-    },
-    {
-      "text": "Choose faithfulness. Set your heart on God's truth. That is the path that leads to freedom.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 119:30",
-      "bibleVerseText": "I have chosen the way of faithfulness; I have set my heart on your laws."
-    },
-    {
-      "text": "Learn to praise God. Walk in His light. Those who do are called blessed.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 89:15",
-      "bibleVerseText": "Blessed are those who have learned to acclaim you, who walk in the light of your presence, Lord."
-    },
-    {
-      "text": "God's word gives light. It brings understanding to those who open it. Open it. Let it change you.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 119:130",
-      "bibleVerseText": "The unfolding of your words gives light; it gives understanding to the simple."
-    },
-    {
-      "text": "God deals with you according to righteousness. Walk in integrity. His reward is real.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 18:20",
-      "bibleVerseText": "The Lord has dealt with me according to my righteousness; according to the cleanness of my hands he has rewarded me."
-    },
-    {
-      "text": "God's word stands firm. Holiness is not a burden. It is what adorns His house. Wear it.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 93:5",
-      "bibleVerseText": "Your statutes, Lord, stand firm; holiness adorns your house for endless days."
-    },
-    {
-      "text": "God will make your righteousness shine like the dawn. Hold on. Justice is coming.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 37:6",
-      "bibleVerseText": "He will make your righteous reward shine like the dawn, your vindication like the noonday sun."
-    },
-    {
-      "text": "Clean hands and a pure heart. That is the kind of person God draws near. Be that person.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 24:4",
-      "bibleVerseText": "The one who has clean hands and a pure heart, who does not trust in an idol or swear by a false god."
-    },
-    {
-      "text": "God calls you to walk blameless. Not perfect by your own strength. Blameless through His covering.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 18:23",
-      "bibleVerseText": "I have been blameless before him and have kept myself from sin."
-    },
-    {
-      "text": "God is faithful in ALL He does. Every promise. Every time. He does not break His word.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 145:13",
-      "bibleVerseText": "The Lord is trustworthy in all he promises and faithful in all he does."
-    },
-    {
-      "text": "The meek inherit the land. Humility before God is not weakness. It is the path to your inheritance.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 37:11",
-      "bibleVerseText": "But the meek will inherit the land and enjoy peace and prosperity."
-    },
-    {
-      "text": "God withholds no good thing from those who walk with integrity. Walk right. Watch what opens.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 84:11",
-      "bibleVerseText": "For the Lord God is a sun and shield; the Lord bestows favor and honor; no good thing does he withhold from those whose walk is blameless."
-    },
-    {
-      "text": "Hope in God. Don't settle for less. Those who wait on Him inherit the land.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 37:9",
-      "bibleVerseText": "For those who are evil will be destroyed, but those who hope in the Lord will inherit the land."
-    },
-    {
-      "text": "Wealth and riches are in the house of the one who walks with God. This is not luck. This is a promise.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 112:3",
-      "bibleVerseText": "Wealth and riches are in their houses, and their righteousness endures forever."
-    },
-    {
-      "text": "The righteous live in God's presence. That is your home. Not your problems. His presence.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 140:13",
-      "bibleVerseText": "Surely the righteous will praise your name, and the upright will live in your presence."
-    },
-    {
-      "text": "God's Spirit in you is not a comfort. It is a power. Do not take that for granted.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 51:11",
-      "bibleVerseText": "Do not cast me from your presence or take your Holy Spirit from me."
-    },
-    {
-      "text": "Your soul craves God. Not comfort. Not approval. GOD. Go to the only source that truly satisfies.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 42:1-2",
-      "bibleVerseText": "As the deer pants for streams of water, so my soul pants for you, my God. My soul thirsts for God, for the living God."
-    },
-    {
-      "text": "God is in front of you. He is behind you. His hand is on you. You cannot go where He is not.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 139:5",
-      "bibleVerseText": "You hem me in behind and before, and you lay your hand upon me."
-    },
-    {
-      "text": "You cannot run from God's presence. Not to the highest place. Not to the deepest. He is everywhere you are.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 139:7-10",
-      "bibleVerseText": "Where can I go from your Spirit? Where can I flee from your presence? If I go up to the heavens, you are there; if I make my bed in the depths, you are there."
-    },
-    {
-      "text": "God made you a ruler. Not a victim. Not a survivor. A ruler. Walk in what He gave you.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 8:6",
-      "bibleVerseText": "You made them rulers over the works of your hands; you put everything under their feet."
-    },
-    {
-      "text": "Power belongs to God. He does not hoard it. He releases it through those who trust Him. Be that vessel.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 62:11",
-      "bibleVerseText": "One thing God has spoken, two things I have heard: Power belongs to you, God."
-    },
-    {
-      "text": "Rejoice in God's strength. Not yours. His victories come from His power. Find your joy there.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 21:1",
-      "bibleVerseText": "The king rejoices in your strength, Lord. How great is his joy in the victories you give!"
-    },
-    {
-      "text": "God put everything under your feet. That is not pride. That is your design. Walk in it.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 8:6-8",
-      "bibleVerseText": "You made them rulers over the works of your hands; you put everything under their feet: all flocks and herds, and the animals of the wild, the birds in the sky, and the fish in the sea."
-    },
-    {
-      "text": "God spoke and the world came to be. Your words carry power too. Speak what He says. Watch it stand.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 33:9",
-      "bibleVerseText": "For he spoke, and it came to be; he commanded, and it stood firm."
-    },
-    {
-      "text": "God is your Shepherd. That means you lack NOTHING. Believe that today.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 23:1",
-      "bibleVerseText": "The Lord is my shepherd, I lack nothing."
-    },
-    {
-      "text": "God's goodness and love are not ahead of you. They are following you. Every single day.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 23:6",
-      "bibleVerseText": "Surely your goodness and love will follow me all the days of my life, and I will dwell in the house of the Lord forever."
-    },
-    {
-      "text": "Stop looking at the problem. Look up. Your help comes from God. Nowhere else.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 121:1",
-      "bibleVerseText": "I lift up my eyes to the mountains where does my help come from? My help comes from the Lord, the Maker of heaven and earth."
-    },
-    {
-      "text": "God watches over every step you take. Every place you go. Now and forever. You are not on your own.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 121:8",
-      "bibleVerseText": "The Lord will watch over your coming and going both now and forevermore."
-    },
-    {
-      "text": "Be still. Not passive. Still. Know that HE is God. That changes everything.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 46:10",
-      "bibleVerseText": "He says, 'Be still, and know that I am God; I will be exalted among the nations, I will be exalted in the earth.'"
-    },
-    {
-      "text": "God is your light. God is your salvation. Fear has no answer to that. None.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 27:1",
-      "bibleVerseText": "The Lord is my light and my salvation whom shall I fear? The Lord is the stronghold of my life of whom shall I be afraid?"
-    },
-    {
-      "text": "God is your refuge. He is your strength. He is ALWAYS present in trouble. Run to Him.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 46:1",
-      "bibleVerseText": "God is our refuge and strength, an ever-present help in trouble."
-    },
-    {
-      "text": "Plant yourself in God. A tree by water never dries out. Your fruit comes in every season.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 1:3",
-      "bibleVerseText": "That person is like a tree planted by streams of water, which yields its fruit in season and whose leaf does not wither whatever they do prospers."
-    },
-    {
-      "text": "God forgives ALL your sins. He heals ALL your diseases. Not some. All. Receive it.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 103:3",
-      "bibleVerseText": "Who forgives all your sins and heals all your diseases."
-    },
-    {
-      "text": "God lifts you out of the pit. Then He crowns you. That is what it means to be redeemed.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 103:4",
-      "bibleVerseText": "Who redeems your life from the pit and crowns you with love and compassion."
-    },
-    {
-      "text": "Ask God for a clean heart. He creates what you cannot. A new spirit starts with His work in you.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 51:10",
-      "bibleVerseText": "Create in me a pure heart, O God, and renew a steadfast spirit within me."
-    },
-    {
-      "text": "The night is not your final answer. Joy comes in the morning. God's favor lasts a lifetime.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 30:5",
-      "bibleVerseText": "For his anger lasts only a moment, but his favor lasts a lifetime; weeping may stay for the night, but rejoicing comes in the morning."
-    },
-    {
-      "text": "Keep your eyes on God. Not the storm. Not the problem. HIM. With Him you will not be shaken.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 16:8",
-      "bibleVerseText": "I keep my eyes always on the Lord. With him at my right hand, I will not be shaken."
-    },
-    {
-      "text": "Praise God with everything in you. Not just your words. Your whole soul. Give Him all of it.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 103:1",
-      "bibleVerseText": "Praise the Lord, my soul; all my inmost being, praise his holy name."
-    },
-    {
-      "text": "God is your strength. God is your shield. Trust Him with your heart. He will help you.",
-      "isFavorite": false,
-      "category": "psalms",
-      "book": "Psalms 28:7",
-      "bibleVerseText": "The Lord is my strength and my shield; my heart trusts in him, and he helps me."
     },
     {
       "text": "Jesus does not change. What He did then He can do now. Same power. Same love. Same God.",
