@@ -39,7 +39,13 @@ final class DevotionalServiceClient: DevotionalService {
                     
                     return findTodayDevotional(from: decodedDevotionals)
                 } catch {
+                    print("DevotionalService: decode failed — falling back to bundle")
                 }
+            }
+            // Fallback for needsSync path: try bundle if remote download/decode failed
+            if let bundleData = await fetchData(needsSync: false),
+               let bundleDevotionals = try? decodeDevotionals(from: bundleData) {
+                return findTodayDevotional(from: bundleDevotionals)
             }
         } else {
             do {
@@ -101,6 +107,7 @@ final class DevotionalServiceClient: DevotionalService {
 
     private func decodeDevotionals(from data: Data) throws -> [Devotional] {
         let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
         formatter.dateFormat = "dd-MM"
 
         let decoder = JSONDecoder()

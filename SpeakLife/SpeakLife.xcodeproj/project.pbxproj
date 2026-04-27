@@ -183,6 +183,7 @@
 		4597E2572E41C181009D6C66 /* CloudKitSyncMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4597E2562E41C181009D6C66 /* CloudKitSyncMonitor.swift */; };
 		4597E25A2E41C1AC009D6C66 /* CloudKitSyncBadge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4597E2582E41C1AC009D6C66 /* CloudKitSyncBadge.swift */; };
 		45A4A3A52D7BF62600DFCEB7 /* declarationsv7.json in Resources */ = {isa = PBXBuildFile; fileRef = 45A4A3A32D7BD2A000DFCEB7 /* declarationsv7.json */; };
+		45F9D2A22F8B3C1100AB4E92 /* devotionals.json in Resources */ = {isa = PBXBuildFile; fileRef = 45F9D2A12F8B3C1100AB4E92 /* devotionals.json */; };
 		45A4A3CB2D869D2700DFCEB7 /* sethpiano.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 45A4A3CA2D869D2700DFCEB7 /* sethpiano.mp3 */; };
 		45A4A3CF2D86B81900DFCEB7 /* everpresent.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 45A4A3CE2D86B81900DFCEB7 /* everpresent.mp3 */; };
 		45A4A3D12D86B86100DFCEB7 /* washed.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 45A4A3D02D86B86100DFCEB7 /* washed.mp3 */; };
@@ -580,6 +581,7 @@
 		4597E2562E41C181009D6C66 /* CloudKitSyncMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CloudKitSyncMonitor.swift; path = SpeakLife/Services/CoreData/CloudKitSyncMonitor.swift; sourceTree = SOURCE_ROOT; };
 		4597E2582E41C1AC009D6C66 /* CloudKitSyncBadge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudKitSyncBadge.swift; sourceTree = "<group>"; };
 		45A4A3A32D7BD2A000DFCEB7 /* declarationsv7.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = declarationsv7.json; sourceTree = "<group>"; };
+		45F9D2A12F8B3C1100AB4E92 /* devotionals.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = devotionals.json; sourceTree = "<group>"; };
 		45A4A3CA2D869D2700DFCEB7 /* sethpiano.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = sethpiano.mp3; sourceTree = "<group>"; };
 		45A4A3CE2D86B81900DFCEB7 /* everpresent.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = everpresent.mp3; sourceTree = "<group>"; };
 		45A4A3D02D86B86100DFCEB7 /* washed.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = washed.mp3; sourceTree = "<group>"; };
@@ -1202,6 +1204,7 @@
 			isa = PBXGroup;
 			children = (
 				45A4A3A32D7BD2A000DFCEB7 /* declarationsv7.json */,
+				45F9D2A12F8B3C1100AB4E92 /* devotionals.json */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -1961,6 +1964,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				45A4A3A52D7BF62600DFCEB7 /* declarationsv7.json in Resources */,
+				45F9D2A22F8B3C1100AB4E92 /* devotionals.json in Resources */,
 				45D6402B2CD218AE006F05AD /* declarationsv5.json in Resources */,
 				45A4A3D12D86B86100DFCEB7 /* washed.mp3 in Resources */,
 				4517D1D42F26CCFA00CB1245 /* declarationsv9.json in Resources */,
