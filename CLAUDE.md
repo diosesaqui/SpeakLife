@@ -34,7 +34,18 @@ Each declaration must clearly connect to its category theme. A generic declarati
 - Short punchy sentences are powerful — use them.
 - Avoid filler phrases. Every word must earn its place.
 
-### 7. JSON Structure (never change these field names)
+### 7. No Dashes
+Never use em dashes (—) or en dashes (–) in declaration text. They create run-on compound thoughts. Break into two clean sentences instead.
+- ❌ "God's banner over me is love—I live under His unfailing claim on my life."
+- ✅ "God's banner over me is love. I live under His unfailing, unbreakable claim on my life."
+
+### 8. Vocabulary Depth
+Language must be spiritually rich, resonant, and precise. Declarations should feel weighty and specific — not flat or generic.
+- ❌ "God loves me and things are good." → flat
+- ✅ Words that carry weight: *rooted, sealed, unshakeable, commissioned, anchored, redeemed, established, radiant, dwelling*
+- Each declaration should feel like it cost something to write.
+
+### 9. JSON Structure (never change these field names)
 ```json
 {
   "text": "Declaration text here.",
@@ -44,7 +55,7 @@ Each declaration must clearly connect to its category theme. A generic declarati
 }
 ```
 
-### 8. Declaration Count
+### 10. Declaration Count
 Do not reduce the count of any category. If you replace a declaration, the total number stays the same.
 
 ---
