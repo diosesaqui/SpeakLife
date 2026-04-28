@@ -705,7 +705,7 @@ struct SurveyProductPositioningScreen: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            Spacer()
+            Spacer().frame(maxHeight: size.height * 0.08)
 
             VStack(spacing: 24) {
                 // Headline block
@@ -974,6 +974,7 @@ struct SurveyStyleProofScreen: View {
                 "You're choosing what 100,000 believers chose.",
                 subtitle: "Here's what our community is declaring daily.\nYou can update this anytime."
             )
+            .padding(.top, size.height * 0.12)
 
             ScrollView {
                 VStack(spacing: 20) {
