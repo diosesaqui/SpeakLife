@@ -73,9 +73,10 @@ struct BibleChatView: View {
     }
 
     private var searchBar: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: 10) {
             Image(systemName: "magnifyingglass")
-                .foregroundColor(.white.opacity(0.6))
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundColor(.white.opacity(0.55))
             TextField("", text: $viewModel.searchText, prompt: Text("Search topics").foregroundColor(.white.opacity(0.4)))
                 .foregroundColor(.white)
                 .autocorrectionDisabled()
@@ -88,12 +89,15 @@ struct BibleChatView: View {
                 }
             }
         }
-        .padding(.vertical, 10)
+        .padding(.vertical, 12)
         .padding(.horizontal, 14)
         .background(
-            RoundedRectangle(cornerRadius: 14)
-                .fill(.ultraThinMaterial)
-                .opacity(0.6)
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(Color.white.opacity(0.07))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .stroke(Color.white.opacity(0.12), lineWidth: 1)
+                )
         )
         .padding(.horizontal, 20)
         .padding(.bottom, 14)
@@ -132,45 +136,91 @@ private struct TopicCardView: View {
 
     var body: some View {
         Button(action: action) {
-            VStack(alignment: .leading, spacing: 10) {
-                ZStack {
-                    Circle()
-                        .fill(topic.accentColor.opacity(0.18))
-                        .frame(width: 42, height: 42)
-                    Image(systemName: topic.icon)
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(topic.accentColor)
-                }
+            VStack(alignment: .leading, spacing: 12) {
+                iconBadge
 
                 Text(topic.title)
-                    .font(.system(size: 16, weight: .bold, design: .serif))
+                    .font(.system(size: 17, weight: .bold, design: .serif))
                     .foregroundColor(.white)
                     .multilineTextAlignment(.leading)
                     .lineLimit(2)
                     .minimumScaleFactor(0.9)
+                    .fixedSize(horizontal: false, vertical: true)
 
-                Text(topic.question)
-                    .font(.system(size: 12))
-                    .foregroundColor(.white.opacity(0.6))
-                    .lineLimit(2)
+                Text(topic.summary)
+                    .font(.system(size: 12, weight: .regular))
+                    .foregroundColor(.white.opacity(0.72))
+                    .lineLimit(3)
                     .multilineTextAlignment(.leading)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                Spacer(minLength: 0)
             }
-            .frame(maxWidth: .infinity, minHeight: 130, alignment: .topLeading)
-            .padding(14)
-            .background(
-                RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    .fill(.ultraThinMaterial)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 18, style: .continuous)
-                            .stroke(topic.accentColor.opacity(0.35), lineWidth: 1)
-                    )
-                    .shadow(color: topic.accentColor.opacity(0.18), radius: 12, x: 0, y: 6)
-            )
+            .frame(maxWidth: .infinity, minHeight: 152, alignment: .topLeading)
+            .padding(16)
+            .background(cardBackground)
             .scaleEffect(pressed ? 0.97 : 1)
         }
         .buttonStyle(.plain)
         .onLongPressGesture(minimumDuration: 0, maximumDistance: .infinity, pressing: { isPressing in
             withAnimation(.easeOut(duration: 0.12)) { pressed = isPressing }
         }, perform: {})
+    }
+
+    private var iconBadge: some View {
+        ZStack {
+            Circle()
+                .fill(
+                    LinearGradient(
+                        colors: [
+                            topic.accentColor,
+                            topic.accentColor.opacity(0.55)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .frame(width: 44, height: 44)
+                .shadow(color: topic.accentColor.opacity(0.55), radius: 10, x: 0, y: 4)
+            Image(systemName: topic.icon)
+                .font(.system(size: 19, weight: .semibold))
+                .foregroundColor(.white)
+        }
+    }
+
+    private var cardBackground: some View {
+        RoundedRectangle(cornerRadius: 22, style: .continuous)
+            .fill(
+                LinearGradient(
+                    colors: [
+                        topic.accentColor.opacity(0.30),
+                        topic.accentColor.opacity(0.08),
+                        Color.black.opacity(0.35)
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 22, style: .continuous)
+                    .stroke(
+                        LinearGradient(
+                            colors: [
+                                topic.accentColor.opacity(0.75),
+                                topic.accentColor.opacity(0.15)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        lineWidth: 1.2
+                    )
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 22, style: .continuous)
+                    .stroke(Color.white.opacity(0.08), lineWidth: 0.5)
+                    .blendMode(.plusLighter)
+            )
+            .shadow(color: topic.accentColor.opacity(0.40), radius: 18, x: 0, y: 10)
+            .shadow(color: Color.black.opacity(0.45), radius: 14, x: 0, y: 6)
     }
 }

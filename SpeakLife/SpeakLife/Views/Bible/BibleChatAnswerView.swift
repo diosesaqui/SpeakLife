@@ -127,11 +127,22 @@ struct BibleChatAnswerView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(
                 RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    .fill(.ultraThinMaterial)
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                topic.accentColor.opacity(0.18),
+                                Color.white.opacity(0.04),
+                                Color.black.opacity(0.30)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
                     .overlay(
                         RoundedRectangle(cornerRadius: 18, style: .continuous)
-                            .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                            .stroke(topic.accentColor.opacity(0.30), lineWidth: 1)
                     )
+                    .shadow(color: Color.black.opacity(0.35), radius: 10, x: 0, y: 4)
             )
     }
 
@@ -288,11 +299,21 @@ private struct VerseCard: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
             RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(Color.white.opacity(0.05))
+                .fill(
+                    LinearGradient(
+                        colors: [
+                            accent.opacity(0.16),
+                            Color.black.opacity(0.30)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
                 .overlay(
                     RoundedRectangle(cornerRadius: 14, style: .continuous)
-                        .stroke(accent.opacity(0.35), lineWidth: 1)
+                        .stroke(accent.opacity(0.45), lineWidth: 1)
                 )
+                .shadow(color: accent.opacity(0.20), radius: 8, x: 0, y: 4)
         )
     }
 }

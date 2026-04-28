@@ -554,19 +554,30 @@ struct BibleChatEntryCard: View {
             .padding(14)
             .background(
                 RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    .fill(.ultraThinMaterial)
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                Constants.DAMidBlue.opacity(0.32),
+                                Color(hex: "#9DA5FF").opacity(0.14),
+                                Color.black.opacity(0.30)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
                     .overlay(
                         RoundedRectangle(cornerRadius: 18, style: .continuous)
                             .stroke(
                                 LinearGradient(
-                                    colors: [Constants.DAMidBlue.opacity(0.6), Color(hex: "#9DA5FF").opacity(0.4)],
+                                    colors: [Constants.DAMidBlue.opacity(0.75), Color(hex: "#9DA5FF").opacity(0.25)],
                                     startPoint: .leading,
                                     endPoint: .trailing
                                 ),
-                                lineWidth: 1
+                                lineWidth: 1.2
                             )
                     )
-                    .shadow(color: Constants.DAMidBlue.opacity(0.25), radius: 12, x: 0, y: 6)
+                    .shadow(color: Constants.DAMidBlue.opacity(0.45), radius: 16, x: 0, y: 8)
+                    .shadow(color: Color.black.opacity(0.40), radius: 10, x: 0, y: 4)
             )
         }
         .buttonStyle(.plain)
