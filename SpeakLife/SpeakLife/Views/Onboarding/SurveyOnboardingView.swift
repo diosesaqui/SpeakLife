@@ -61,7 +61,6 @@ struct SurveyOnboardingView: View {
         case .intro:             SurveyIntroScreen(size: size) { advance() }
         case .heaviestBurden:    SurveyQ1BurdenScreen(size: size, responses: responses) { advance() }
         case .productPositioning: SurveyProductPositioningScreen(size: size) { advance() }
-        case .declarationStyle:  SurveyDeclarationStyleScreen(size: size, responses: responses) { advance() }
         case .burdenDuration:    SurveyQ2DurationScreen(size: size, responses: responses) { advance() }
         case .interstitialA:     SurveyInterstitialAScreen(size: size, responses: responses) { advance() }
         case .mergedBarriers:    SurveyMergedBarriersScreen(size: size, responses: responses) { advance() }
@@ -126,7 +125,9 @@ struct SurveyOnboardingView: View {
     private func applyResponsesAndComplete() {
         let goalWord = responses.resolvedGoalWord
         appState.surveyGoalWord = goalWord.rawValue
-        appState.selectedDeclarationStyles = responses.declarationStyles.map { $0.rawValue }
+        if let style = responses.primaryDeclarationStyle {
+            appState.selectedDeclarationStyles = [style.rawValue]
+        }
         if let notifTime = responses.notificationTime {
             appState.startTimeIndex = notifTime.startTimeIndex
         }

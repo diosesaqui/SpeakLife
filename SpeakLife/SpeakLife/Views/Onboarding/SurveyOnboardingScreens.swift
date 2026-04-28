@@ -219,7 +219,64 @@ struct SurveyIntroScreen: View {
     }
 }
 
-// MARK: - Q1: Heaviest Burden
+// MARK: - Q1: Territory (merged Burden + DeclarationStyle)
+
+private struct TerritoryOptionRow: View {
+    let burden: HeaviestBurden
+    let isSelected: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: {
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            action()
+        }) {
+            HStack(spacing: 14) {
+                Text(burden.icon)
+                    .font(.system(size: 24))
+                    .frame(width: 32)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(burden.rawValue)
+                        .font(.system(size: 16, weight: .semibold, design: .rounded))
+                        .foregroundColor(.white)
+                    Text(burden.description)
+                        .font(.system(size: 13, weight: .regular, design: .rounded))
+                        .foregroundColor(.white.opacity(0.55))
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                Spacer()
+                ZStack {
+                    Circle()
+                        .strokeBorder(
+                            isSelected ? Color.white : Color.white.opacity(0.35),
+                            lineWidth: 1.5
+                        )
+                        .frame(width: 22, height: 22)
+                    if isSelected {
+                        Circle()
+                            .fill(Color.white)
+                            .frame(width: 12, height: 12)
+                    }
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 14)
+            .background(
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .fill(isSelected ? Color.white.opacity(0.15) : Color.white.opacity(0.06))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                            .strokeBorder(
+                                isSelected ? Color.white.opacity(0.5) : Color.white.opacity(0.12),
+                                lineWidth: 1
+                            )
+                    )
+            )
+            .animation(.spring(response: 0.3, dampingFraction: 0.75), value: isSelected)
+        }
+        .buttonStyle(PlainButtonStyle())
+    }
+}
 
 struct SurveyQ1BurdenScreen: View {
     let size: CGSize
@@ -233,12 +290,12 @@ struct SurveyQ1BurdenScreen: View {
                     Spacer().frame(height: size.height * 0.12)
                     SurveyQuestionHeader(
                         "What has the enemy been stealing from you?",
-                        subtitle: "\"The thief comes to steal, kill, and destroy.\" — John 10:10\nName what he's taken. Then we take it back."
+                        subtitle: "Pick your territory. We'll build your declarations around it."
                     )
                     VStack(spacing: 10) {
                         ForEach(HeaviestBurden.allCases) { option in
-                            SurveyOptionRow(
-                                text: option.rawValue,
+                            TerritoryOptionRow(
+                                burden: option,
                                 isSelected: responses.heaviestBurden == option
                             ) {
                                 responses.heaviestBurden = option
@@ -654,10 +711,10 @@ struct SurveyQ8NotificationScreen: View {
     var onContinue: () -> Void
 
     private var subtitle: String {
-        if let style = responses.primaryDeclarationStyle {
-            return "When should we send you your \(style.rawValue.lowercased()) declaration?"
+        if let burden = responses.heaviestBurden {
+            return "When should we send your \(burden.shortLabel) declaration?"
         } else {
-            return "When should we send you your daily declaration?"
+            return "When should we send your daily declaration?"
         }
     }
 
@@ -820,112 +877,6 @@ struct SurveyProductPositioningScreen: View {
     }
 }
 
-struct SurveyDeclarationStyleScreen: View {
-    let size: CGSize
-    @ObservedObject var responses: SurveyResponses
-    let onContinue: () -> Void
-
-    private struct StyleRow: View {
-        let style: DeclarationStyle
-        let isSelected: Bool
-        let action: () -> Void
-
-        private var checkboxFill: Color {
-            isSelected ? Color.white.opacity(0.25) : Color.white.opacity(0.06)
-        }
-        private var checkboxStroke: Color {
-            isSelected ? Color.white.opacity(0.8) : Color.white.opacity(0.2)
-        }
-        private var rowFill: Color {
-            isSelected ? Color.white.opacity(0.15) : Color.white.opacity(0.06)
-        }
-        private var rowStroke: Color {
-            isSelected ? Color.white.opacity(0.5) : Color.white.opacity(0.12)
-        }
-
-        private var checkbox: some View {
-            ZStack {
-                RoundedRectangle(cornerRadius: 6)
-                    .fill(checkboxFill)
-                    .frame(width: 22, height: 22)
-                    .overlay(RoundedRectangle(cornerRadius: 6).stroke(checkboxStroke, lineWidth: 1))
-                if isSelected {
-                    Image(systemName: "checkmark")
-                        .font(.system(size: 12, weight: .bold))
-                        .foregroundColor(.white)
-                }
-            }
-        }
-
-        private var label: some View {
-            HStack(spacing: 12) {
-                Text(style.icon).font(.system(size: 24))
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(style.rawValue)
-                        .font(.system(size: 15, weight: .semibold, design: .rounded))
-                        .foregroundColor(.white)
-                    Text(style.description)
-                        .font(.system(size: 13, weight: .regular, design: .rounded))
-                        .foregroundColor(.white.opacity(0.55))
-                }
-                Spacer()
-                checkbox
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 14)
-            .background(
-                RoundedRectangle(cornerRadius: 14)
-                    .fill(rowFill)
-                    .overlay(RoundedRectangle(cornerRadius: 14).stroke(rowStroke, lineWidth: 1))
-            )
-        }
-
-        var body: some View {
-            Button(action: {
-                UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                action()
-            }) { label }
-            .buttonStyle(PlainButtonStyle())
-        }
-    }
-
-    var body: some View {
-        VStack(spacing: 0) {
-            ScrollView(showsIndicators: false) {
-                VStack(spacing: 24) {
-                    Spacer().frame(height: size.height * 0.12)
-                    SurveyQuestionHeader(
-                        "What does your spirit need most right now?",
-                        subtitle: "We'll build your daily declarations around this.\nSelect all that apply."
-                    )
-                    VStack(spacing: 10) {
-                        ForEach(DeclarationStyle.allCases, id: \.self) { style in
-                            StyleRow(
-                                style: style,
-                                isSelected: responses.declarationStyles.contains(style),
-                                action: {
-                                    if responses.declarationStyles.contains(style) {
-                                        responses.declarationStyles.remove(style)
-                                    } else {
-                                        responses.declarationStyles.insert(style)
-                                    }
-                                }
-                            )
-                        }
-                    }
-                    .padding(.horizontal, 20)
-                    Spacer().frame(height: 8)
-                }
-            }
-
-            SurveyContinueButton(label: "Build My Plan →", isEnabled: !responses.declarationStyles.isEmpty, action: onContinue)
-                .padding(.vertical, 16)
-        }
-        .onAppear {
-            Analytics.logEvent("survey_declaration_style_shown", parameters: nil)
-        }
-    }
-}
 
 struct SurveyStyleProofScreen: View {
     let size: CGSize
@@ -985,7 +936,7 @@ struct SurveyStyleProofScreen: View {
                         ForEach(DeclarationStyle.allCases, id: \.self) { style in
                             StyleBarRow(
                                 style: style,
-                                isSelected: responses.declarationStyles.contains(style),
+                                isSelected: responses.primaryDeclarationStyle == style,
                                 barsVisible: barsVisible
                             )
                         }
@@ -1005,7 +956,7 @@ struct SurveyStyleProofScreen: View {
                     // Dynamic callout
                     if let primary = responses.primaryDeclarationStyle {
                         VStack(alignment: .leading, spacing: 0) {
-                            Text("You chose \(primary.rawValue). You're with \(primary.communityCount) believers speaking the same truth every single day.")
+                            Text("You're one of \(primary.communityCount) believers declaring \(primary.chartLabel) every single day.")
                                 .font(.system(size: 14, weight: .regular, design: .rounded))
                                 .foregroundColor(.white.opacity(0.85))
                                 .multilineTextAlignment(.leading)
@@ -1045,15 +996,20 @@ struct SurveyCommitmentHoldScreen: View {
 
     @StateObject private var verifier = DeclarationVerificationService()
     @State private var appeared = false
-    @State private var showContinue = false
+    @State private var phase: CommitmentPhase = .idle
     @State private var ringScale: CGFloat = 1.0
     @State private var glowOpacity: Double = 0
+    @State private var celebrationScale: CGFloat = 0.6
+
+    private enum CommitmentPhase { case idle, complete, retry }
 
     private let declarationText = "I am not a settler. I am a possessor. I advance. I don't retreat. I am grateful for every breakthrough and I am never satisfied with less than my full inheritance.\n\nHealth. Peace. Joy. Purpose. Abundance. All of it. Not some of it.\n\nThe enemy will not steal another day from me. Starting today I speak, I declare, I take more ground.\n\nHoly Spirit, use SpeakLife to make Your Word the first thing I speak and the last thing standing."
 
+    private let matchThreshold = 0.15
+
     var body: some View {
         ZStack {
-            // Pulsing glow while speaking
+            // White glow while recording
             if verifier.isRecording {
                 RadialGradient(
                     gradient: Gradient(colors: [Color.white.opacity(0.18), Color.clear]),
@@ -1067,57 +1023,27 @@ struct SurveyCommitmentHoldScreen: View {
                 .transition(.opacity)
             }
 
-            VStack(spacing: 0) {
-                Spacer().frame(height: size.height * 0.08)
-
-                ScrollView(showsIndicators: false) {
-                    VStack(spacing: 16) {
-                        Text("🤝")
-                            .font(.system(size: 36))
-                        Text("My Declaration as a Ground-Taker")
-                            .font(.system(size: 17, weight: .bold, design: .rounded))
-                            .foregroundColor(.white)
-                            .multilineTextAlignment(.center)
-                        Text(declarationText)
-                            .font(.system(size: 15, weight: .regular, design: .rounded))
-                            .foregroundColor(.white.opacity(0.85))
-                            .multilineTextAlignment(.center)
-                            .lineSpacing(5)
-                    }
-                    .padding(24)
-                    .background(
-                        RoundedRectangle(cornerRadius: 24)
-                            .fill(Color.white.opacity(0.08))
-                            .overlay(RoundedRectangle(cornerRadius: 24).stroke(Color.white.opacity(0.18), lineWidth: 1))
-                    )
-                    .padding(.horizontal, 28)
-                }
-
-                Spacer()
-
-                Text(statusText)
-                    .font(.system(size: 14, weight: .regular, design: .rounded))
-                    .foregroundColor(.white.opacity(0.6))
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 32)
-                    .animation(.easeInOut, value: verifier.isRecording)
-
-                Spacer().frame(height: 24)
-
-                if showContinue {
-                    SurveyContinueButton(label: "I Spoke It. Let's Go →") {
-                        Analytics.logEvent("survey_commitment_spoken", parameters: ["match_pct": Int(verifier.matchPercentage * 100)])
-                        onContinue()
-                    }
-                    .transition(.opacity.combined(with: .scale(scale: 0.95)))
-                } else {
-                    micButtonView
-                }
-
-                Spacer().frame(height: 52)
+            // Gold glow on completion
+            if phase == .complete {
+                RadialGradient(
+                    gradient: Gradient(colors: [Color(red: 1.0, green: 0.82, blue: 0.25).opacity(0.3), Color.clear]),
+                    center: .center,
+                    startRadius: 60,
+                    endRadius: size.height * 0.65
+                )
+                .ignoresSafeArea()
+                .allowsHitTesting(false)
+                .transition(.opacity)
             }
-            .opacity(appeared ? 1 : 0)
-            .offset(y: appeared ? 0 : 20)
+
+            if phase == .complete {
+                celebrationView
+                    .opacity(appeared ? 1 : 0)
+            } else {
+                declarationView
+                    .opacity(appeared ? 1 : 0)
+                    .offset(y: appeared ? 0 : 20)
+            }
         }
         .onAppear {
             Analytics.logEvent("survey_commitment_hold_shown", parameters: nil)
@@ -1135,10 +1061,93 @@ struct SurveyCommitmentHoldScreen: View {
         }
     }
 
+    @ViewBuilder
+    private var declarationView: some View {
+        VStack(spacing: 0) {
+            Spacer().frame(height: size.height * 0.08)
+
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 16) {
+                    Text("🤝")
+                        .font(.system(size: 36))
+                    Text("My Declaration as a Ground-Taker")
+                        .font(.system(size: 17, weight: .bold, design: .rounded))
+                        .foregroundColor(.white)
+                        .multilineTextAlignment(.center)
+                    Text(declarationText)
+                        .font(.system(size: 15, weight: .regular, design: .rounded))
+                        .foregroundColor(.white.opacity(0.85))
+                        .multilineTextAlignment(.center)
+                        .lineSpacing(5)
+                }
+                .padding(24)
+                .background(
+                    RoundedRectangle(cornerRadius: 24)
+                        .fill(Color.white.opacity(0.08))
+                        .overlay(RoundedRectangle(cornerRadius: 24).stroke(Color.white.opacity(0.18), lineWidth: 1))
+                )
+                .padding(.horizontal, 28)
+            }
+
+            Spacer()
+
+            Text(statusText)
+                .font(.system(size: 14, weight: .regular, design: .rounded))
+                .foregroundColor(phase == .retry ? Color(red: 1.0, green: 0.65, blue: 0.4) : .white.opacity(0.6))
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 32)
+                .animation(.easeInOut, value: verifier.isRecording)
+
+            Spacer().frame(height: 24)
+
+            micButtonView
+
+            Spacer().frame(height: 52)
+        }
+    }
+
+    @ViewBuilder
+    private var celebrationView: some View {
+        VStack(spacing: 0) {
+            Spacer()
+
+            VStack(spacing: 20) {
+                Text("🔥")
+                    .font(.system(size: 72))
+                    .scaleEffect(celebrationScale)
+                    .onAppear {
+                        withAnimation(.spring(response: 0.5, dampingFraction: 0.55)) {
+                            celebrationScale = 1.0
+                        }
+                    }
+
+                Text("Ground Taken.")
+                    .font(.system(size: 34, weight: .black, design: .rounded))
+                    .foregroundColor(.white)
+                    .multilineTextAlignment(.center)
+
+                Text("The enemy heard that.\nAnd so did heaven.")
+                    .font(.system(size: 18, weight: .regular, design: .rounded))
+                    .foregroundColor(.white.opacity(0.8))
+                    .multilineTextAlignment(.center)
+                    .lineSpacing(4)
+            }
+            .padding(.horizontal, 28)
+
+            Spacer()
+
+            SurveyContinueButton(label: "Let's Go →") {
+                Analytics.logEvent("survey_commitment_spoken", parameters: ["match_pct": Int(verifier.matchPercentage * 100)])
+                onContinue()
+            }
+            .padding(.bottom, 52)
+        }
+    }
+
     private var statusText: String {
-        if verifier.isTranscribing { return "Processing..." }
-        if showContinue { return "You declared it." }
-        if verifier.isRecording { return "Speak it out. Tap mic when you're done." }
+        if verifier.isTranscribing { return "Processing your declaration..." }
+        if phase == .retry { return "We didn't catch that clearly. Speak out loud and tap mic again." }
+        if verifier.isRecording { return "Speak it out. Tap the mic when you're done." }
         return "Read it. Then tap the mic and speak it aloud."
     }
 
@@ -1177,10 +1186,17 @@ struct SurveyCommitmentHoldScreen: View {
         UIImpactFeedbackGenerator(style: .medium).impactOccurred()
         if verifier.isRecording {
             Task {
-                let _ = await verifier.stopAndTranscribe()
-                withAnimation(.spring(response: 0.4, dampingFraction: 0.75)) { showContinue = true }
+                let matchPct = await verifier.stopAndTranscribe()
+                if matchPct >= matchThreshold {
+                    UINotificationFeedbackGenerator().notificationOccurred(.success)
+                    withAnimation(.easeInOut(duration: 0.45)) { phase = .complete }
+                } else {
+                    UINotificationFeedbackGenerator().notificationOccurred(.warning)
+                    withAnimation(.easeInOut(duration: 0.3)) { phase = .retry }
+                }
             }
         } else {
+            phase = .idle
             Task { try? await verifier.startRecording() }
         }
     }

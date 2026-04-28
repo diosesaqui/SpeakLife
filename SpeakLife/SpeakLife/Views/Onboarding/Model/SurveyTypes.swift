@@ -11,18 +11,17 @@ enum SurveyStep: Int, CaseIterable {
     case intro              = 0
     case heaviestBurden     = 1
     case productPositioning = 2
-    case declarationStyle   = 3   // MOVED: earlier so downstream screens can personalize
-    case burdenDuration     = 4
-    case interstitialA      = 5
-    case mergedBarriers     = 6   // MERGED: failedAttempts + innerLie
-    case interstitialB      = 7
-    case declarationExp     = 8
-    case styleProof         = 9
-    case goalReveal         = 10
-    case personalDeclaration = 11
-    case commitmentHold     = 12
-    case paywall            = 13
-    case notificationTime   = 14  // post-paywall
+    case burdenDuration     = 3
+    case interstitialA      = 4
+    case mergedBarriers     = 5   // MERGED: failedAttempts + innerLie
+    case interstitialB      = 6
+    case declarationExp     = 7
+    case styleProof         = 8
+    case goalReveal         = 9
+    case personalDeclaration = 10
+    case commitmentHold     = 11
+    case paywall            = 12
+    case notificationTime   = 13  // post-paywall
 
     var isQuestion: Bool {
         switch self {
@@ -35,57 +34,86 @@ enum SurveyStep: Int, CaseIterable {
 
     var questionIndex: Int? {
         let questions: [SurveyStep] = [
-            .heaviestBurden, .declarationStyle, .burdenDuration,
-            .mergedBarriers, .declarationExp
+            .heaviestBurden, .burdenDuration, .mergedBarriers, .declarationExp
         ]
         return questions.firstIndex(of: self).map { $0 + 1 }
     }
 
-    static let totalQuestions = 5
+    static let totalQuestions = 4
 }
 
 // What the enemy has stolen — kingdom advancement framing
 enum HeaviestBurden: String, CaseIterable, Identifiable {
     var id: String { rawValue }
-    case peace      = "My peace — anxiety and fear have taken over my mind"
-    case health     = "My health — my body isn't walking in the healing God promised me"
-    case joy        = "My joy — life feels empty and I know that's not God's plan"
-    case identity   = "My identity — I've lost sight of who God says I am"
-    case purpose    = "My purpose — I'm not walking in the calling placed on my life"
-    case abundance  = "My abundance — I'm not experiencing the provision God prepared"
-    case thriving   = "I'm not in crisis — I just know there's MORE and I refuse to settle"
+    case healing    = "My healing"
+    case identity   = "My identity"
+    case calling    = "My calling"
+    case peace      = "My peace"
+    case abundance  = "My abundance"
+    case allOfIt    = "All of it"
+
+    var icon: String {
+        switch self {
+        case .healing:   return "🌿"
+        case .identity:  return "👑"
+        case .calling:   return "🧭"
+        case .peace:     return "🕊"
+        case .abundance: return "💰"
+        case .allOfIt:   return "⚡"
+        }
+    }
+
+    var description: String {
+        switch self {
+        case .healing:   return "My body isn't walking in what Christ already paid for"
+        case .identity:  return "I've lost sight of who God says I am"
+        case .calling:   return "I'm not walking in the purpose placed on my life"
+        case .peace:     return "Anxiety and fear have taken over my mind"
+        case .abundance: return "I'm not experiencing the provision God prepared"
+        case .allOfIt:   return "I'm not leaving any of my inheritance on the table"
+        }
+    }
 
     var goalWord: SurveyGoalWord {
         switch self {
-        case .peace:     return .peace
-        case .health:    return .healing
-        case .joy:       return .joy
+        case .healing:   return .healing
         case .identity:  return .identity
-        case .purpose:   return .purpose
+        case .calling:   return .purpose
+        case .peace:     return .peace
         case .abundance: return .prosperity
-        case .thriving:  return .confidence
+        case .allOfIt:   return .confidence
+        }
+    }
+
+    var declarationStyle: DeclarationStyle {
+        switch self {
+        case .healing:   return .healing
+        case .identity:  return .identity
+        case .calling:   return .destiny
+        case .peace:     return .peace
+        case .abundance: return .prosperity
+        case .allOfIt:   return .warfare
         }
     }
 
     var shortLabel: String {
         switch self {
-        case .peace:     return "your peace"
-        case .health:    return "your health"
-        case .joy:       return "your joy"
-        case .identity:  return "your identity"
-        case .purpose:   return "your purpose"
-        case .abundance: return "your abundance"
-        case .thriving:  return "your next level"
+        case .healing:   return "healing"
+        case .identity:  return "identity"
+        case .calling:   return "calling"
+        case .peace:     return "peace"
+        case .abundance: return "abundance"
+        case .allOfIt:   return "full inheritance"
         }
     }
 
-    var isGrowthTrack: Bool { self == .thriving }
+    var isGrowthTrack: Bool { self == .allOfIt }
 
     var testimonialGroup: TestimonialGroup {
         switch self {
-        case .peace, .health:             return .fearAndHealth
-        case .identity, .joy, .purpose:   return .identityAndPurpose
-        case .abundance, .thriving:       return .defaultGrowth
+        case .peace, .healing:            return .fearAndHealth
+        case .identity, .calling:         return .identityAndPurpose
+        case .abundance, .allOfIt:        return .defaultGrowth
         }
     }
 }
@@ -313,17 +341,14 @@ class SurveyResponses: ObservableObject {
     @Published var burdenDuration: BurdenDuration? = nil
     @Published var barriers: Set<BarrierOption> = []
     @Published var declarationExperience: DeclarationExperience? = nil
-    @Published var declarationStyles: Set<DeclarationStyle> = []
     @Published var notificationTime: NotificationTime? = nil
 
-    // Priority: explicit style > pain point > default
     var resolvedGoalWord: SurveyGoalWord {
-        if let style = primaryDeclarationStyle { return style.goalWord }
-        return heaviestBurden?.goalWord ?? .peace
+        heaviestBurden?.goalWord ?? .peace
     }
 
     var primaryDeclarationStyle: DeclarationStyle? {
-        DeclarationStyle.allCases.first { declarationStyles.contains($0) }
+        heaviestBurden?.declarationStyle
     }
 
     var burdenShortLabel: String {
