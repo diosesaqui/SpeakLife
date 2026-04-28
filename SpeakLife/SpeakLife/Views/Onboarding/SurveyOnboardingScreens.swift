@@ -923,14 +923,14 @@ struct SurveyStyleProofScreen: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            SurveyQuestionHeader(
-                "You're choosing what 100,000 believers chose.",
-                subtitle: "Here's what our community is declaring daily.\nYou can update this anytime."
-            )
-            .padding(.top, size.height * 0.12)
-
-            ScrollView {
+            ScrollView(showsIndicators: false) {
                 VStack(spacing: 20) {
+                    Spacer().frame(height: size.height * 0.12)
+                    SurveyQuestionHeader(
+                        "You're choosing what 100,000 believers chose.",
+                        subtitle: "Here's what our community is declaring daily.\nYou can update this anytime."
+                    )
+
                     // Bar chart
                     VStack(spacing: 14) {
                         ForEach(DeclarationStyle.allCases, id: \.self) { style in
@@ -973,11 +973,13 @@ struct SurveyStyleProofScreen: View {
                         )
                         .padding(.horizontal, 28)
                     }
+
+                    Spacer().frame(height: 8)
                 }
-                .padding(.vertical, 16)
             }
 
             SurveyContinueButton(label: "I'm Ready →", action: onContinue)
+                .padding(.vertical, 16)
         }
         .onAppear {
             Analytics.logEvent("survey_style_proof_shown", parameters: nil)
