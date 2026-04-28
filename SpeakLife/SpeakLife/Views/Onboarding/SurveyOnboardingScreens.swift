@@ -940,9 +940,10 @@ struct SurveyProductPositioningScreen: View {
             .opacity(v ? 1 : 0)
             .offset(y: v ? 0 : 20)
 
-            Spacer()
+            Spacer().frame(maxHeight: 40)
 
             SurveyContinueButton(label: "I'm ready to take what's mine →", action: onContinue)
+                .padding(.bottom, 36)
         }
         .onAppear {
             Analytics.logEvent("survey_product_positioning_shown", parameters: nil)
