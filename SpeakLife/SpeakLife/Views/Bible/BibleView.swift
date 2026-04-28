@@ -350,15 +350,8 @@ struct BookCardView: View {
 
     var body: some View {
         Button(action: action) {
-            VStack(alignment: .leading, spacing: 8) {
-                HStack {
-                    iconBadge
-                    Spacer(minLength: 0)
-                    Text(book.displayAbbreviation.uppercased())
-                        .font(.system(size: 10, weight: .heavy))
-                        .tracking(0.6)
-                        .foregroundColor(.white.opacity(0.55))
-                }
+            VStack(alignment: .leading, spacing: 10) {
+                iconBadge
 
                 Spacer(minLength: 0)
 
