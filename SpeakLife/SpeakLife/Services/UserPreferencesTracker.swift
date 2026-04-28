@@ -101,13 +101,13 @@ final class UserPreferencesTracker: ObservableObject {
         // Personal Declaration overrides all other copy — highest personalization signal
         if let belief = personalDeclarationBelief, !belief.isEmpty {
             return PaywallCopy(
-                headline: "You just declared what you're trusting God for.",
-                subheadline: "SpeakLife will send you this declaration every single day until it comes to pass. Don't miss a day.",
+                headline: "You just declared what you're taking back.",
+                subheadline: "SpeakLife will send you this declaration every single day until it comes to pass. Don't let a day go unclaimed.",
                 valueProps: [
-                    "Your Personal Declaration Delivered Daily",
-                    "Speak God's Word Over Your Situation Every Morning",
-                    "Notifications Tuned to What You're Believing For",
-                    "Pray With 100,000+ Believers",
+                    "Your personal declaration — delivered every morning until it's fully received.",
+                    "Speak first. Possess first. The ground is yours — claim it daily.",
+                    "28 territories of inheritance — healing, identity, destiny, abundance, and more. Every area God prepared.",
+                    "100,000 ground-takers advancing together right now. You're not doing this alone.",
                     "Unlimited Declarations Across All Categories"
                 ],
                 ctaText: "Start Believing Every Day",

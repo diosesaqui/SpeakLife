@@ -67,6 +67,16 @@ final class AppState: ObservableObject {
     // Survey personalization — set by SurveyOnboardingView, read by NotificationScene, paywalls, ThreeDayChallengeView
     @AppStorage("surveyGoalWord") var surveyGoalWord: String = ""
 
+    var selectedDeclarationStyles: [String] {
+        get {
+            let raw = UserDefaults.standard.string(forKey: "selectedDeclarationStyles") ?? ""
+            return raw.isEmpty ? [] : raw.components(separatedBy: ",")
+        }
+        set {
+            UserDefaults.standard.set(newValue.joined(separator: ","), forKey: "selectedDeclarationStyles")
+        }
+    }
+
     // Personal Declaration
     @AppStorage("hasPersonalDeclaration") var hasPersonalDeclaration = false
     @AppStorage("scrollToPersonalDeclaration") var scrollToPersonalDeclaration = false
