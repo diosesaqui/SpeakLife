@@ -1043,164 +1043,145 @@ struct SurveyCommitmentHoldScreen: View {
     let size: CGSize
     let onContinue: () -> Void
 
-    @State private var isHolding = false
-    @State private var holdProgress: Double = 0
-    @State private var holdTimer: Timer? = nil
+    @StateObject private var verifier = DeclarationVerificationService()
     @State private var appeared = false
+    @State private var showContinue = false
+    @State private var ringScale: CGFloat = 1.0
+    @State private var glowOpacity: Double = 0
 
-    private let holdDuration: Double = 1.5
-    private let brandBlue = Color(red: 0.2, green: 0.4, blue: 1.0)
+    private let declarationText = "I am not a settler. I am a possessor. I advance. I don't retreat. I am grateful for every breakthrough and I am never satisfied with less than my full inheritance.\n\nHealth. Peace. Joy. Purpose. Abundance. All of it. Not some of it.\n\nThe enemy will not steal another day from me. Starting today I speak, I declare, I take more ground.\n\nHoly Spirit, use SpeakLife to make Your Word the first thing I speak and the last thing standing."
 
     var body: some View {
         ZStack {
-            if !isHolding {
-                VStack(spacing: 0) {
-                    Spacer()
+            // Pulsing glow while speaking
+            if verifier.isRecording {
+                RadialGradient(
+                    gradient: Gradient(colors: [Color.white.opacity(0.18), Color.clear]),
+                    center: .bottom,
+                    startRadius: 40,
+                    endRadius: size.height * 0.65
+                )
+                .opacity(glowOpacity)
+                .ignoresSafeArea()
+                .allowsHitTesting(false)
+                .transition(.opacity)
+            }
 
-                    // Declaration card
-                    VStack(spacing: 20) {
+            VStack(spacing: 0) {
+                Spacer().frame(height: size.height * 0.08)
+
+                ScrollView(showsIndicators: false) {
+                    VStack(spacing: 16) {
                         Text("🤝")
-                            .font(.system(size: 40))
-
+                            .font(.system(size: 36))
                         Text("My Declaration as a Ground-Taker")
-                            .font(.system(size: 18, weight: .bold, design: .rounded))
+                            .font(.system(size: 17, weight: .bold, design: .rounded))
                             .foregroundColor(.white)
                             .multilineTextAlignment(.center)
-
-                        Text("I am not a settler — I am a possessor.\nI advance, I don't retreat.\nI am grateful for every breakthrough —\nand I am never satisfied with less than my full inheritance.\n\nHealth. Peace. Joy. Purpose. Abundance.\nAll of it. Not some of it.\n\nThe enemy will not steal another day from me.\nStarting today — I speak, I declare, I take more ground.\n\nHoly Spirit, use SpeakLife to make Your Word\nthe first thing I speak — and the last thing standing.")
+                        Text(declarationText)
                             .font(.system(size: 15, weight: .regular, design: .rounded))
-                            .foregroundColor(.white.opacity(0.8))
+                            .foregroundColor(.white.opacity(0.85))
                             .multilineTextAlignment(.center)
-                            .lineSpacing(4)
+                            .lineSpacing(5)
                     }
                     .padding(24)
                     .background(
                         RoundedRectangle(cornerRadius: 24)
                             .fill(Color.white.opacity(0.08))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 24)
-                                    .stroke(Color.white.opacity(0.18), lineWidth: 1)
-                            )
+                            .overlay(RoundedRectangle(cornerRadius: 24).stroke(Color.white.opacity(0.18), lineWidth: 1))
                     )
                     .padding(.horizontal, 28)
-
-                    Text("Hold to make it yours.")
-                        .font(.system(size: 14, weight: .regular, design: .rounded))
-                        .foregroundColor(.white.opacity(0.5))
-                        .padding(.top, 16)
-
-                    // Hold button
-                    ZStack {
-                        Circle()
-                            .fill(brandBlue)
-                            .frame(width: 80, height: 80)
-
-                        Circle()
-                            .trim(from: 0, to: holdProgress)
-                            .stroke(Color.white, style: StrokeStyle(lineWidth: 3, lineCap: .round))
-                            .frame(width: 86, height: 86)
-                            .rotationEffect(.degrees(-90))
-
-                        Image(systemName: "mic.fill")
-                            .font(.system(size: 28))
-                            .foregroundColor(.white)
-                    }
-                    .gesture(
-                        DragGesture(minimumDistance: 0)
-                            .onChanged { _ in
-                                if !isHolding { startHold() }
-                            }
-                            .onEnded { _ in
-                                if holdProgress < 1.0 { cancelHold() }
-                            }
-                    )
-                    .padding(.top, 24)
-
-                    Spacer()
                 }
-                .opacity(appeared ? 1 : 0)
-                .offset(y: appeared ? 0 : 20)
-            }
 
-            // State B overlay
-            if isHolding {
-                brandBlue
-                    .ignoresSafeArea()
-                    .transition(.opacity)
+                Spacer()
 
-                VStack(spacing: 16) {
-                    Spacer()
+                Text(statusText)
+                    .font(.system(size: 14, weight: .regular, design: .rounded))
+                    .foregroundColor(.white.opacity(0.6))
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 32)
+                    .animation(.easeInOut, value: verifier.isRecording)
 
-                    Text("I'm Taking Ground —\nStarting Now.")
-                        .font(.system(size: 32, weight: .bold, design: .rounded))
-                        .foregroundColor(.white)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, 32)
+                Spacer().frame(height: 24)
 
-                    Text("Keep holding...")
-                        .font(.system(size: 16, weight: .regular, design: .rounded))
-                        .foregroundColor(.white.opacity(0.7))
-
-                    Spacer()
-
-                    ZStack {
-                        Circle()
-                            .stroke(Color.white.opacity(0.25), lineWidth: 3)
-                            .frame(width: 86, height: 86)
-
-                        Circle()
-                            .trim(from: 0, to: holdProgress)
-                            .stroke(Color.white, style: StrokeStyle(lineWidth: 3, lineCap: .round))
-                            .frame(width: 86, height: 86)
-                            .rotationEffect(.degrees(-90))
-
-                        Image(systemName: "mic.fill")
-                            .font(.system(size: 28))
-                            .foregroundColor(.white)
+                if showContinue {
+                    SurveyContinueButton(label: "I Spoke It. Let's Go →") {
+                        Analytics.logEvent("survey_commitment_spoken", parameters: ["match_pct": Int(verifier.matchPercentage * 100)])
+                        onContinue()
                     }
-                    .gesture(
-                        DragGesture(minimumDistance: 0)
-                            .onChanged { _ in
-                                if !isHolding { startHold() }
-                            }
-                            .onEnded { _ in
-                                if holdProgress < 1.0 { cancelHold() }
-                            }
-                    )
-
-                    Spacer().frame(height: 60)
+                    .transition(.opacity.combined(with: .scale(scale: 0.95)))
+                } else {
+                    micButtonView
                 }
+
+                Spacer().frame(height: 52)
             }
+            .opacity(appeared ? 1 : 0)
+            .offset(y: appeared ? 0 : 20)
         }
         .onAppear {
             Analytics.logEvent("survey_commitment_hold_shown", parameters: nil)
-            withAnimation(.easeOut(duration: 0.6)) {
-                appeared = true
+            verifier.prepare(declarationText: declarationText)
+            withAnimation(.easeOut(duration: 0.6)) { appeared = true }
+        }
+        .onChange(of: verifier.isRecording) { isNowRecording in
+            if isNowRecording {
+                withAnimation(.easeInOut(duration: 0.5)) { glowOpacity = 1.0 }
+                withAnimation(.easeInOut(duration: 1.4).repeatForever(autoreverses: true)) { ringScale = 1.2 }
+            } else {
+                withAnimation(.easeOut(duration: 0.4)) { glowOpacity = 0 }
+                withAnimation(.easeOut(duration: 0.3)) { ringScale = 1.0 }
             }
         }
     }
 
-    private func startHold() {
-        withAnimation(.easeIn(duration: 0.2)) { isHolding = true }
-        holdTimer = Timer.scheduledTimer(withTimeInterval: 1.0 / 60.0, repeats: true) { _ in
-            DispatchQueue.main.async {
-                holdProgress += (1.0 / 60.0) / holdDuration
-                if holdProgress >= 1.0 {
-                    holdProgress = 1.0
-                    holdTimer?.invalidate()
-                    holdTimer = nil
-                    onContinue()
+    private var statusText: String {
+        if verifier.isTranscribing { return "Processing..." }
+        if showContinue { return "You declared it." }
+        if verifier.isRecording { return "Speak it out. Tap mic when you're done." }
+        return "Read it. Then tap the mic and speak it aloud."
+    }
+
+    @ViewBuilder
+    private var micButtonView: some View {
+        ZStack {
+            if verifier.isRecording {
+                ForEach(0..<3, id: \.self) { i in
+                    Circle()
+                        .stroke(Color.white.opacity(max(0, 0.28 - Double(i) * 0.08)), lineWidth: 1.5)
+                        .frame(width: 90 + CGFloat(i * 32), height: 90 + CGFloat(i * 32))
+                        .scaleEffect(ringScale)
                 }
             }
+            Button(action: handleMicTap) {
+                ZStack {
+                    Circle()
+                        .fill(verifier.isRecording ? Color.red.opacity(0.85) : Color.white.opacity(0.2))
+                        .frame(width: 80, height: 80)
+                    if verifier.isTranscribing {
+                        ProgressView().progressViewStyle(CircularProgressViewStyle(tint: .white))
+                    } else {
+                        Image(systemName: verifier.isRecording ? "stop.fill" : "mic.fill")
+                            .font(.system(size: 28))
+                            .foregroundColor(.white)
+                    }
+                }
+                .animation(.easeInOut(duration: 0.25), value: verifier.isRecording)
+            }
+            .disabled(verifier.isTranscribing)
         }
+        .frame(height: 160)
     }
 
-    private func cancelHold() {
-        holdTimer?.invalidate()
-        holdTimer = nil
-        withAnimation(.spring()) {
-            isHolding = false
-            holdProgress = 0
+    private func handleMicTap() {
+        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+        if verifier.isRecording {
+            Task {
+                let _ = await verifier.stopAndTranscribe()
+                withAnimation(.spring(response: 0.4, dampingFraction: 0.75)) { showContinue = true }
+            }
+        } else {
+            Task { try? await verifier.startRecording() }
         }
     }
 }
