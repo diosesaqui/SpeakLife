@@ -6,16 +6,22 @@
 //
 
 import SwiftUI
+import MessageUI
 
 struct BibleChatView: View {
     @StateObject private var viewModel = BibleChatViewModel()
+    @EnvironmentObject var subscriptionStore: SubscriptionStore
     @Environment(\.dismiss) private var dismiss
     @Namespace private var topicNamespace
+    @State private var showMailSheet = false
+    @State private var mailResult: Result<MFMailComposeResult, Error>? = nil
 
     private let columns = [
         GridItem(.flexible(), spacing: 14),
         GridItem(.flexible(), spacing: 14)
     ]
+
+    private let suggestPrefillBody = "Hi SpeakLife team,\n\nI'd love to see a Bible Chat topic about:\n\n"
 
     var body: some View {
         NavigationView {
@@ -48,6 +54,15 @@ struct BibleChatView: View {
             }
             .sheet(item: $viewModel.selectedTopic) { topic in
                 BibleChatAnswerView(topic: topic)
+            }
+            .sheet(isPresented: $showMailSheet) {
+                MailView(
+                    isShowing: $showMailSheet,
+                    result: $mailResult,
+                    origin: .bibleChatTopic,
+                    prefillBody: suggestPrefillBody,
+                    isSubscribed: subscriptionStore.isPremium
+                )
             }
         }
         .navigationViewStyle(.stack)
@@ -122,7 +137,82 @@ struct BibleChatView: View {
                 }
             }
             .padding(.horizontal, 20)
-            .padding(.bottom, 32)
+            .padding(.top, 4)
+
+            suggestTopicButton
+                .padding(.horizontal, 20)
+                .padding(.top, 24)
+                .padding(.bottom, 32)
+        }
+    }
+
+    private var suggestTopicButton: some View {
+        Button {
+            let generator = UIImpactFeedbackGenerator(style: .light)
+            generator.impactOccurred()
+            AnalyticsService.shared.trackUserAction(
+                "bible_chat_suggest_topic_tap",
+                category: "bible_chat"
+            )
+            if MFMailComposeViewController.canSendMail() {
+                showMailSheet = true
+            } else {
+                openSuggestTopicMailto()
+            }
+        } label: {
+            HStack(spacing: 10) {
+                Image(systemName: "envelope.fill")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(Constants.gold)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Don't see your topic?")
+                        .font(.system(size: 14, weight: .semibold, design: .serif))
+                        .foregroundColor(.white)
+                    Text("Email us your idea — we'll add it.")
+                        .font(.system(size: 12))
+                        .foregroundColor(.white.opacity(0.65))
+                }
+                Spacer(minLength: 0)
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.5))
+            }
+            .padding(.vertical, 14)
+            .padding(.horizontal, 16)
+            .background(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                Constants.gold.opacity(0.18),
+                                Color.black.opacity(0.30)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .stroke(Constants.gold.opacity(0.45), lineWidth: 1)
+                    )
+                    .shadow(color: Constants.gold.opacity(0.20), radius: 10, x: 0, y: 4)
+            )
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func openSuggestTopicMailto() {
+        let subject = "Bible Chat: Topic Request 🙏"
+        let body = suggestPrefillBody
+        var components = URLComponents()
+        components.scheme = "mailto"
+        components.path = "speaklife@diosesaqui.com"
+        components.queryItems = [
+            URLQueryItem(name: "subject", value: subject),
+            URLQueryItem(name: "body", value: body)
+        ]
+        if let url = components.url {
+            UIApplication.shared.open(url)
         }
     }
 }
