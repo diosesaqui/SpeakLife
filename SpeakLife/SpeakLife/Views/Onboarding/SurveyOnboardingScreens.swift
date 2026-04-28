@@ -1005,7 +1005,7 @@ struct SurveyCommitmentHoldScreen: View {
 
     private let declarationText = "I am not a settler. I am a possessor. I advance. I don't retreat. I am grateful for every breakthrough and I am never satisfied with less than my full inheritance.\n\nHealth. Peace. Joy. Purpose. Abundance. All of it. Not some of it.\n\nThe enemy will not steal another day from me. Starting today I speak, I declare, I take more ground.\n\nHoly Spirit, use SpeakLife to make Your Word the first thing I speak and the last thing standing."
 
-    private let matchThreshold = 0.15
+    private let matchThreshold = 0.50
 
     var body: some View {
         ZStack {
