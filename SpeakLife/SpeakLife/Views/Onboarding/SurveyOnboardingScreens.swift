@@ -691,80 +691,83 @@ struct SurveyGoalRevealScreen: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            Spacer()
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 20) {
+                    Spacer().frame(height: size.height * 0.1)
 
-            VStack(spacing: 28) {
-                ZStack {
-                    Circle()
-                        .fill(Color.white.opacity(0.1))
-                        .frame(width: 72, height: 72)
+                    ZStack {
+                        Circle()
+                            .fill(Color.white.opacity(0.1))
+                            .frame(width: 72, height: 72)
 
-                    Image(systemName: goalWord.icon)
-                        .font(.system(size: 32))
-                        .foregroundColor(.white)
-                }
-                .scaleEffect(cv ? 1 : 0.6)
-                .opacity(cv ? 1 : 0)
-                .animation(.spring(response: 0.5, dampingFraction: 0.65).delay(0), value: cv)
-
-                Text("Here's your inheritance activation plan.")
-                    .font(.system(size: 22, weight: .semibold, design: .rounded))
-                    .foregroundColor(.white.opacity(0.7))
-                    .multilineTextAlignment(.center)
-                    .opacity(cv ? 1 : 0)
-                    .offset(y: cv ? 0 : 10)
-                    .animation(.easeOut(duration: 0.45).delay(0.15), value: cv)
-
-                Text("God didn't put a limit on what He prepared for you.\nYou're not here to survive — you're here to possess.\n\nFor 30 days, you'll declare God's Word over the exact\ninheritance you named. Every declaration is a step forward.\nEvery day you show up is ground taken.\n\nThe enemy loses ground. You gain it. That's how this works.")
-                    .font(.system(size: 15, weight: .regular))
-                    .foregroundColor(.white.opacity(0.7))
-                    .lineSpacing(3)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 28)
-                    .opacity(cv ? 1 : 0)
-                    .offset(y: cv ? 0 : 10)
-                    .animation(.easeOut(duration: 0.45).delay(0.25), value: cv)
-
-                ZStack {
-                    RoundedRectangle(cornerRadius: 20)
-                        .fill(Color.white.opacity(0.1))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 20)
-                                .stroke(Color.white.opacity(0.25), lineWidth: 1)
-                        )
-
-                    VStack(spacing: 8) {
-                        Text("YOUR INHERITANCE")
-                            .font(.system(size: 12, weight: .bold, design: .rounded))
-                            .foregroundColor(.white.opacity(0.5))
-                            .kerning(1.2)
-
-                        Text(goalWord.rawValue)
-                            .font(.system(size: 28, weight: .black, design: .rounded))
+                        Image(systemName: goalWord.icon)
+                            .font(.system(size: 32))
                             .foregroundColor(.white)
-
-                        Text(goalWord.challengeName)
-                            .font(.system(size: 15, weight: .semibold, design: .rounded))
-                            .foregroundColor(.white.opacity(0.75))
-
-                        Text("Built for You")
-                            .font(.system(size: 13, weight: .regular, design: .rounded))
-                            .foregroundColor(.white.opacity(0.5))
                     }
-                    .padding(.vertical, 24)
-                }
-                .padding(.horizontal, 28)
-                .scaleEffect(chv ? 1 : 0.92)
-                .opacity(chv ? 1 : 0)
-                .animation(.spring(response: 0.5, dampingFraction: 0.7).delay(0.4), value: chv)
-            }
+                    .scaleEffect(cv ? 1 : 0.6)
+                    .opacity(cv ? 1 : 0)
+                    .animation(.spring(response: 0.5, dampingFraction: 0.65), value: cv)
 
-            Spacer()
+                    Text("Here's your inheritance activation plan.")
+                        .font(.system(size: 22, weight: .semibold, design: .rounded))
+                        .foregroundColor(.white.opacity(0.7))
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 28)
+                        .opacity(cv ? 1 : 0)
+                        .offset(y: cv ? 0 : 10)
+                        .animation(.easeOut(duration: 0.45).delay(0.15), value: cv)
+
+                    Text("God didn't put a limit on what He prepared for you. You're not here to survive — you're here to possess.\n\nFor 30 days, declare God's Word over the exact inheritance you named. Every declaration is a step forward. Every day you show up is ground taken.\n\nThe enemy loses ground. You gain it. That's how this works.")
+                        .font(.system(size: 15, weight: .regular))
+                        .foregroundColor(.white.opacity(0.7))
+                        .lineSpacing(3)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 28)
+                        .opacity(cv ? 1 : 0)
+                        .offset(y: cv ? 0 : 10)
+                        .animation(.easeOut(duration: 0.45).delay(0.25), value: cv)
+
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 20)
+                            .fill(Color.white.opacity(0.1))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 20)
+                                    .stroke(Color.white.opacity(0.25), lineWidth: 1)
+                            )
+
+                        VStack(spacing: 8) {
+                            Text("YOUR INHERITANCE")
+                                .font(.system(size: 12, weight: .bold, design: .rounded))
+                                .foregroundColor(.white.opacity(0.5))
+                                .kerning(1.2)
+
+                            Text(goalWord.rawValue)
+                                .font(.system(size: 28, weight: .black, design: .rounded))
+                                .foregroundColor(.white)
+
+                            Text(goalWord.challengeName)
+                                .font(.system(size: 15, weight: .semibold, design: .rounded))
+                                .foregroundColor(.white.opacity(0.75))
+
+                            Text("Built for You")
+                                .font(.system(size: 13, weight: .regular, design: .rounded))
+                                .foregroundColor(.white.opacity(0.5))
+                        }
+                        .padding(.vertical, 24)
+                    }
+                    .padding(.horizontal, 28)
+                    .scaleEffect(chv ? 1 : 0.92)
+                    .opacity(chv ? 1 : 0)
+                    .animation(.spring(response: 0.5, dampingFraction: 0.7).delay(0.4), value: chv)
+
+                    Spacer().frame(height: 16)
+                }
+            }
 
             SurveyContinueButton(label: "Start Taking Ground →", isEnabled: true) {
                 onContinue()
             }
-            .padding(.bottom, 52)
+            .padding(.bottom, 36)
             .opacity(chv ? 1 : 0)
             .animation(.easeOut(duration: 0.4).delay(0.6), value: chv)
         }
@@ -1029,6 +1032,7 @@ struct SurveyDeclarationStyleScreen: View {
                 "What does your spirit need most right now?",
                 subtitle: "We'll build your daily declarations around this.\nSelect all that apply."
             )
+            .padding(.top, size.height * 0.12)
 
             ScrollView {
                 VStack(spacing: 10) {
