@@ -26,57 +26,12 @@ struct SurveyOnboardingView: View {
         ZStack(alignment: .top) {
             backgroundView
 
-            Group {
-                switch currentStep {
-                case .intro:
-                    SurveyIntroScreen(size: size) { advance() }
-                case .heaviestBurden:
-                    SurveyQ1BurdenScreen(size: size, responses: responses) { advance() }
-                case .productPositioning:
-                    SurveyProductPositioningScreen(size: size) { advance() }
-                case .burdenDuration:
-                    SurveyQ2DurationScreen(size: size, responses: responses) { advance() }
-                case .interstitialA:
-                    SurveyInterstitialAScreen(size: size, responses: responses) { advance() }
-                case .failedAttempts:
-                    SurveyQ3AttemptsScreen(size: size, responses: responses) { advance() }
-                case .innerLie:
-                    SurveyQ4LieScreen(size: size, responses: responses) { advance() }
-                case .interstitialB:
-                    SurveyInterstitialBScreen(size: size) { advance() }
-                case .declarationExp:
-                    SurveyQ5DeclarationExpScreen(size: size, responses: responses) { advance() }
-                case .futurePacing:
-                    SurveyQ6FutureScreen(size: size, responses: responses) { advance() }
-                case .readiness:
-                    SurveyQ7ReadinessScreen(size: size, responses: responses) { advance() }
-                case .declarationStyle:
-                    SurveyDeclarationStyleScreen(size: size, responses: responses) { advance() }
-                case .styleProof:
-                    SurveyStyleProofScreen(size: size, responses: responses) { advance() }
-                case .goalReveal:
-                    SurveyGoalRevealScreen(size: size, responses: responses) { advance() }
-                case .personalDeclaration:
-                    PersonalDeclarationOnboardingView(
-                        viewModel: DIContainer.shared.makePersonalDeclarationViewModel(),
-                        size: size
-                    ) { declaration in
-                        savedDeclaration = declaration
-                        advance()
-                    }
-                case .commitmentHold:
-                    SurveyCommitmentHoldScreen(size: size) { advance() }
-                case .paywall:
-                    HighConversionPaywallView(callback: { advance() })
-                case .notificationTime:
-                    SurveyQ8NotificationScreen(size: size, responses: responses) { advance() }
-                }
-            }
-            .transition(.asymmetric(
-                insertion: .opacity.combined(with: .offset(x: 0, y: 24)),
-                removal: .opacity.combined(with: .offset(x: 0, y: -16))
-            ))
-            .id(currentStep.rawValue)
+            currentStepView
+                .transition(.asymmetric(
+                    insertion: .opacity.combined(with: .offset(x: 0, y: 24)),
+                    removal: .opacity.combined(with: .offset(x: 0, y: -16))
+                ))
+                .id(currentStep.rawValue)
 
             if currentStep.questionIndex != nil {
                 VStack {
@@ -97,6 +52,65 @@ struct SurveyOnboardingView: View {
         }
         .ignoresSafeArea()
         .onAppear { Analytics.logEvent("survey_onboarding_started", parameters: nil) }
+    }
+
+    // Split into two @ViewBuilder properties to stay within SwiftUI's 10-branch ViewBuilder limit
+    @ViewBuilder
+    private var currentStepView: some View {
+        switch currentStep {
+        case .intro:                 SurveyIntroScreen(size: size) { advance() }
+        case .heaviestBurden:        SurveyQ1BurdenScreen(size: size, responses: responses) { advance() }
+        case .productPositioning:    SurveyProductPositioningScreen(size: size) { advance() }
+        case .burdenDuration:        SurveyQ2DurationScreen(size: size, responses: responses) { advance() }
+        case .interstitialA:         SurveyInterstitialAScreen(size: size, responses: responses) { advance() }
+        case .failedAttempts:        SurveyQ3AttemptsScreen(size: size, responses: responses) { advance() }
+        case .innerLie:              SurveyQ4LieScreen(size: size, responses: responses) { advance() }
+        case .interstitialB:         SurveyInterstitialBScreen(size: size) { advance() }
+        case .declarationExp:        lateStepView
+        case .futurePacing:          lateStepView
+        case .readiness:             lateStepView
+        case .declarationStyle:      lateStepView
+        case .styleProof:            lateStepView
+        case .goalReveal:            lateStepView
+        case .personalDeclaration:   lateStepView
+        case .commitmentHold:        lateStepView
+        case .paywall:               lateStepView
+        case .notificationTime:      lateStepView
+        }
+    }
+
+    @ViewBuilder
+    private var lateStepView: some View {
+        switch currentStep {
+        case .declarationExp:
+            SurveyQ5DeclarationExpScreen(size: size, responses: responses) { advance() }
+        case .futurePacing:
+            SurveyQ6FutureScreen(size: size, responses: responses) { advance() }
+        case .readiness:
+            SurveyQ7ReadinessScreen(size: size, responses: responses) { advance() }
+        case .declarationStyle:
+            SurveyDeclarationStyleScreen(size: size, responses: responses) { advance() }
+        case .styleProof:
+            SurveyStyleProofScreen(size: size, responses: responses) { advance() }
+        case .goalReveal:
+            SurveyGoalRevealScreen(size: size, responses: responses) { advance() }
+        case .personalDeclaration:
+            PersonalDeclarationOnboardingView(
+                viewModel: DIContainer.shared.makePersonalDeclarationViewModel(),
+                size: size
+            ) { declaration in
+                savedDeclaration = declaration
+                advance()
+            }
+        case .commitmentHold:
+            SurveyCommitmentHoldScreen(size: size) { advance() }
+        case .paywall:
+            HighConversionPaywallView(callback: { advance() })
+        case .notificationTime:
+            SurveyQ8NotificationScreen(size: size, responses: responses) { advance() }
+        default:
+            EmptyView()
+        }
     }
 
     private var backgroundView: some View {

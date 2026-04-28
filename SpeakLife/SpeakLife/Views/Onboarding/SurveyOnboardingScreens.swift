@@ -482,6 +482,7 @@ struct SurveyQ4LieScreen: View {
 }
 
 struct SurveyInterstitialBScreen: View {
+    let size: CGSize
     var onContinue: () -> Void
     @State private var v = false
 
@@ -553,6 +554,7 @@ struct SurveyInterstitialBScreen: View {
 }
 
 struct SurveyQ5DeclarationExpScreen: View {
+    let size: CGSize
     @ObservedObject var responses: SurveyResponses
     var onContinue: () -> Void
 
@@ -592,6 +594,7 @@ struct SurveyQ5DeclarationExpScreen: View {
 }
 
 struct SurveyQ6FutureScreen: View {
+    let size: CGSize
     @ObservedObject var responses: SurveyResponses
     var onContinue: () -> Void
 
@@ -635,6 +638,7 @@ struct SurveyQ6FutureScreen: View {
 }
 
 struct SurveyQ7ReadinessScreen: View {
+    let size: CGSize
     @ObservedObject var responses: SurveyResponses
     var onContinue: () -> Void
 
@@ -674,6 +678,7 @@ struct SurveyQ7ReadinessScreen: View {
 }
 
 struct SurveyGoalRevealScreen: View {
+    let size: CGSize
     @ObservedObject var responses: SurveyResponses
     var onContinue: () -> Void
     @State private var cv = false
@@ -775,6 +780,7 @@ struct SurveyGoalRevealScreen: View {
 }
 
 struct SurveyQ8NotificationScreen: View {
+    let size: CGSize
     @ObservedObject var responses: SurveyResponses
     var onContinue: () -> Void
 
