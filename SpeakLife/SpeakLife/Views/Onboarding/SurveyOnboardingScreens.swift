@@ -994,28 +994,28 @@ struct SurveyCommitmentHoldScreen: View {
     let size: CGSize
     let onContinue: () -> Void
 
-    @StateObject private var verifier = DeclarationVerificationService()
     @State private var appeared = false
     @State private var phase: CommitmentPhase = .idle
-    @State private var ringScale: CGFloat = 1.0
+    @State private var holdProgress: Double = 0
+    @State private var holdTimer: Timer? = nil
     @State private var glowOpacity: Double = 0
+    @State private var ringScale: CGFloat = 1.0
     @State private var celebrationScale: CGFloat = 0.6
 
-    private enum CommitmentPhase { case idle, complete, retry }
+    private enum CommitmentPhase { case idle, holding, complete }
 
-    private let declarationText = "I am not a settler. I am a possessor. I advance. I don't retreat. I am grateful for every breakthrough and I am never satisfied with less than my full inheritance.\n\nHealth. Peace. Joy. Purpose. Abundance. All of it. Not some of it.\n\nThe enemy will not steal another day from me. Starting today I speak, I declare, I take more ground.\n\nHoly Spirit, use SpeakLife to make Your Word the first thing I speak and the last thing standing."
+    private let holdDuration: Double = 4.0
 
-    private let matchThreshold = 0.50
+    private let declarationText = "I will show up daily.\nI will open my mouth and declare God's Word\nover my life — every single day.\n\nI will not settle. I will not retreat.\nI will take more ground tomorrow than I took today.\n\nThe enemy will not steal another day from me.\nHealth. Peace. Joy. Purpose. Abundance.\nAll of it belongs to me in Christ — and I am taking it.\n\nHoly Spirit, use SpeakLife to make Your Word\nthe first thing I speak every morning\nand the last thing standing over my life."
 
     var body: some View {
         ZStack {
-            // White glow while recording
-            if verifier.isRecording {
+            if phase == .holding {
                 RadialGradient(
-                    gradient: Gradient(colors: [Color.white.opacity(0.18), Color.clear]),
+                    gradient: Gradient(colors: [Color.white.opacity(0.22), Color.clear]),
                     center: .bottom,
                     startRadius: 40,
-                    endRadius: size.height * 0.65
+                    endRadius: size.height * 0.7
                 )
                 .opacity(glowOpacity)
                 .ignoresSafeArea()
@@ -1023,7 +1023,6 @@ struct SurveyCommitmentHoldScreen: View {
                 .transition(.opacity)
             }
 
-            // Gold glow on completion
             if phase == .complete {
                 RadialGradient(
                     gradient: Gradient(colors: [Color(red: 1.0, green: 0.82, blue: 0.25).opacity(0.3), Color.clear]),
@@ -1047,17 +1046,7 @@ struct SurveyCommitmentHoldScreen: View {
         }
         .onAppear {
             Analytics.logEvent("survey_commitment_hold_shown", parameters: nil)
-            verifier.prepare(declarationText: declarationText)
             withAnimation(.easeOut(duration: 0.6)) { appeared = true }
-        }
-        .onChange(of: verifier.isRecording) { isNowRecording in
-            if isNowRecording {
-                withAnimation(.easeInOut(duration: 0.5)) { glowOpacity = 1.0 }
-                withAnimation(.easeInOut(duration: 1.4).repeatForever(autoreverses: true)) { ringScale = 1.2 }
-            } else {
-                withAnimation(.easeOut(duration: 0.4)) { glowOpacity = 0 }
-                withAnimation(.easeOut(duration: 0.3)) { ringScale = 1.0 }
-            }
         }
     }
 
@@ -1068,9 +1057,7 @@ struct SurveyCommitmentHoldScreen: View {
 
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 16) {
-                    Text("🤝")
-                        .font(.system(size: 36))
-                    Text("My Declaration as a Ground-Taker")
+                    Text("My Daily Commitment as a Ground-Taker")
                         .font(.system(size: 17, weight: .bold, design: .rounded))
                         .foregroundColor(.white)
                         .multilineTextAlignment(.center)
@@ -1091,19 +1078,62 @@ struct SurveyCommitmentHoldScreen: View {
 
             Spacer()
 
-            Text(statusText)
-                .font(.system(size: 14, weight: .regular, design: .rounded))
-                .foregroundColor(phase == .retry ? Color(red: 1.0, green: 0.65, blue: 0.4) : .white.opacity(0.6))
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 32)
-                .animation(.easeInOut, value: verifier.isRecording)
+            VStack(spacing: 4) {
+                Text("I commit to every word above.")
+                    .font(.system(size: 14, weight: .semibold, design: .rounded))
+                    .foregroundColor(.white.opacity(0.85))
+                Text(phase == .holding ? "I'm Showing Up. Starting Now." : "Hold to seal it.")
+                    .font(.system(size: 13, weight: .regular, design: .rounded))
+                    .foregroundColor(phase == .holding ? .white : .white.opacity(0.5))
+                    .animation(.easeInOut(duration: 0.25), value: phase == .holding)
+            }
+            .multilineTextAlignment(.center)
+            .padding(.horizontal, 32)
 
             Spacer().frame(height: 24)
 
-            micButtonView
+            holdButtonView
 
             Spacer().frame(height: 52)
         }
+    }
+
+    @ViewBuilder
+    private var holdButtonView: some View {
+        ZStack {
+            if phase == .holding {
+                ForEach(0..<3, id: \.self) { i in
+                    Circle()
+                        .stroke(Color.white.opacity(max(0, 0.25 - Double(i) * 0.07)), lineWidth: 1.5)
+                        .frame(width: 90 + CGFloat(i * 32), height: 90 + CGFloat(i * 32))
+                        .scaleEffect(ringScale)
+                }
+            }
+
+            Circle()
+                .trim(from: 0, to: holdProgress)
+                .stroke(Color.white, style: StrokeStyle(lineWidth: 3, lineCap: .round))
+                .frame(width: 88, height: 88)
+                .rotationEffect(.degrees(-90))
+                .animation(.linear(duration: 0.05), value: holdProgress)
+
+            Circle()
+                .fill(phase == .holding ? Color.white.opacity(0.25) : Color.white.opacity(0.12))
+                .frame(width: 80, height: 80)
+                .animation(.easeInOut(duration: 0.2), value: phase == .holding)
+
+            Image(systemName: phase == .holding ? "hand.raised.fill" : "hand.raised")
+                .font(.system(size: 28))
+                .foregroundColor(.white)
+                .animation(.easeInOut(duration: 0.2), value: phase == .holding)
+        }
+        .frame(width: 160, height: 160)
+        .contentShape(Rectangle())
+        .gesture(
+            DragGesture(minimumDistance: 0)
+                .onChanged { _ in startHold() }
+                .onEnded { _ in cancelHold() }
+        )
     }
 
     @ViewBuilder
@@ -1137,67 +1167,44 @@ struct SurveyCommitmentHoldScreen: View {
             Spacer()
 
             SurveyContinueButton(label: "Let's Go →") {
-                Analytics.logEvent("survey_commitment_spoken", parameters: ["match_pct": Int(verifier.matchPercentage * 100)])
+                Analytics.logEvent("survey_commitment_sealed", parameters: nil)
                 onContinue()
             }
             .padding(.bottom, 52)
         }
     }
 
-    private var statusText: String {
-        if verifier.isTranscribing { return "Processing your declaration..." }
-        if phase == .retry { return "We didn't catch that clearly. Speak out loud and tap mic again." }
-        if verifier.isRecording { return "Speak it out. Tap the mic when you're done." }
-        return "Read it. Then tap the mic and speak it aloud."
-    }
-
-    @ViewBuilder
-    private var micButtonView: some View {
-        ZStack {
-            if verifier.isRecording {
-                ForEach(0..<3, id: \.self) { i in
-                    Circle()
-                        .stroke(Color.white.opacity(max(0, 0.28 - Double(i) * 0.08)), lineWidth: 1.5)
-                        .frame(width: 90 + CGFloat(i * 32), height: 90 + CGFloat(i * 32))
-                        .scaleEffect(ringScale)
-                }
-            }
-            Button(action: handleMicTap) {
-                ZStack {
-                    Circle()
-                        .fill(verifier.isRecording ? Color.red.opacity(0.85) : Color.white.opacity(0.2))
-                        .frame(width: 80, height: 80)
-                    if verifier.isTranscribing {
-                        ProgressView().progressViewStyle(CircularProgressViewStyle(tint: .white))
-                    } else {
-                        Image(systemName: verifier.isRecording ? "stop.fill" : "mic.fill")
-                            .font(.system(size: 28))
-                            .foregroundColor(.white)
-                    }
-                }
-                .animation(.easeInOut(duration: 0.25), value: verifier.isRecording)
-            }
-            .disabled(verifier.isTranscribing)
-        }
-        .frame(height: 160)
-    }
-
-    private func handleMicTap() {
+    private func startHold() {
+        guard phase == .idle else { return }
         UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-        if verifier.isRecording {
-            Task {
-                let matchPct = await verifier.stopAndTranscribe()
-                if matchPct >= matchThreshold {
-                    UINotificationFeedbackGenerator().notificationOccurred(.success)
-                    withAnimation(.easeInOut(duration: 0.45)) { phase = .complete }
-                } else {
-                    UINotificationFeedbackGenerator().notificationOccurred(.warning)
-                    withAnimation(.easeInOut(duration: 0.3)) { phase = .retry }
+        withAnimation(.easeInOut(duration: 0.3)) { phase = .holding }
+        withAnimation(.easeInOut(duration: 0.5)) { glowOpacity = 1.0 }
+        withAnimation(.easeInOut(duration: 1.4).repeatForever(autoreverses: true)) { ringScale = 1.15 }
+
+        let start = Date()
+        holdTimer = Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { timer in
+            let elapsed = Date().timeIntervalSince(start)
+            holdProgress = min(elapsed / holdDuration, 1.0)
+            if holdProgress >= 1.0 {
+                timer.invalidate()
+                holdTimer = nil
+                UINotificationFeedbackGenerator().notificationOccurred(.success)
+                withAnimation(.easeInOut(duration: 0.45)) {
+                    glowOpacity = 0
+                    phase = .complete
                 }
             }
-        } else {
-            phase = .idle
-            Task { try? await verifier.startRecording() }
         }
+    }
+
+    private func cancelHold() {
+        guard phase == .holding else { return }
+        holdTimer?.invalidate()
+        holdTimer = nil
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        withAnimation(.easeOut(duration: 0.3)) { phase = .idle }
+        withAnimation(.easeOut(duration: 0.4)) { glowOpacity = 0 }
+        withAnimation(.easeOut(duration: 0.3)) { ringScale = 1.0 }
+        withAnimation(.linear(duration: 0.2)) { holdProgress = 0 }
     }
 }
