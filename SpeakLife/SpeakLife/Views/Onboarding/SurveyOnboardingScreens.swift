@@ -963,54 +963,61 @@ struct SurveyDeclarationStyleScreen: View {
         let isSelected: Bool
         let action: () -> Void
 
+        private var checkboxFill: Color {
+            isSelected ? Color.white.opacity(0.25) : Color.white.opacity(0.06)
+        }
+        private var checkboxStroke: Color {
+            isSelected ? Color.white.opacity(0.8) : Color.white.opacity(0.2)
+        }
+        private var rowFill: Color {
+            isSelected ? Color.white.opacity(0.15) : Color.white.opacity(0.06)
+        }
+        private var rowStroke: Color {
+            isSelected ? Color.white.opacity(0.5) : Color.white.opacity(0.12)
+        }
+
+        private var checkbox: some View {
+            ZStack {
+                RoundedRectangle(cornerRadius: 6)
+                    .fill(checkboxFill)
+                    .frame(width: 22, height: 22)
+                    .overlay(RoundedRectangle(cornerRadius: 6).stroke(checkboxStroke, lineWidth: 1))
+                if isSelected {
+                    Image(systemName: "checkmark")
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundColor(.white)
+                }
+            }
+        }
+
+        private var label: some View {
+            HStack(spacing: 12) {
+                Text(style.icon).font(.system(size: 24))
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(style.rawValue)
+                        .font(.system(size: 15, weight: .semibold, design: .rounded))
+                        .foregroundColor(.white)
+                    Text(style.description)
+                        .font(.system(size: 13, weight: .regular, design: .rounded))
+                        .foregroundColor(.white.opacity(0.55))
+                }
+                Spacer()
+                checkbox
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 14)
+            .background(
+                RoundedRectangle(cornerRadius: 14)
+                    .fill(rowFill)
+                    .overlay(RoundedRectangle(cornerRadius: 14).stroke(rowStroke, lineWidth: 1))
+            )
+        }
+
         var body: some View {
             Button(action: {
-                let generator = UIImpactFeedbackGenerator(style: .light)
-                generator.impactOccurred()
+                UIImpactFeedbackGenerator(style: .light).impactOccurred()
                 action()
-            }) {
-                HStack(spacing: 12) {
-                    Text(style.icon)
-                        .font(.system(size: 24))
-
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(style.rawValue)
-                            .font(.system(size: 15, weight: .semibold, design: .rounded))
-                            .foregroundColor(.white)
-                        Text(style.description)
-                            .font(.system(size: 13, weight: .regular, design: .rounded))
-                            .foregroundColor(.white.opacity(0.55))
-                    }
-
-                    Spacer()
-
-                    // Checkbox
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 6)
-                            .fill(isSelected ? Color.white.opacity(0.25) : Color.white.opacity(0.06))
-                            .frame(width: 22, height: 22)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 6)
-                                    .stroke(isSelected ? Color.white.opacity(0.8) : Color.white.opacity(0.2), lineWidth: 1)
-                            )
-                        if isSelected {
-                            Image(systemName: "checkmark")
-                                .font(.system(size: 12, weight: .bold))
-                                .foregroundColor(.white)
-                        }
-                    }
-                }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 14)
-                .background(
-                    RoundedRectangle(cornerRadius: 14)
-                        .fill(isSelected ? Color.white.opacity(0.15) : Color.white.opacity(0.06))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 14)
-                                .stroke(isSelected ? Color.white.opacity(0.5) : Color.white.opacity(0.12), lineWidth: 1)
-                        )
-                )
-            }
+            }) { label }
             .buttonStyle(PlainButtonStyle())
         }
     }
