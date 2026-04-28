@@ -15,6 +15,7 @@ struct MailView: UIViewControllerRepresentable {
         case newFeatures
         case prayer
         case testimony
+        case bibleChatTopic
     }
 
     @Binding var isShowing: Bool
@@ -33,6 +34,7 @@ struct MailView: UIViewControllerRepresentable {
         case .newFeatures: return "Request new feature"
         case .prayer: return "Prayer request"
         case .testimony: return "My Testimony 🙌"
+        case .bibleChatTopic: return "Bible Chat: Topic Request 🙏"
         }
     }
 

@@ -16,6 +16,7 @@ struct BibleView: View {
     @State private var showAuthSheet = false
     @State private var selectedTab = 0
     @State private var showDailyVerseDetail = false
+    @State private var showBibleChat = false
     
     var body: some View {
         NavigationView {
@@ -31,7 +32,8 @@ struct BibleView: View {
                     } else {
                         BibleBookSelectionView(
                             viewModel: viewModel,
-                            showDailyVerseDetail: $showDailyVerseDetail
+                            showDailyVerseDetail: $showDailyVerseDetail,
+                            showBibleChat: $showBibleChat
                         )
                     }
                 } else if viewModel.showChapterGrid {
@@ -132,6 +134,9 @@ struct BibleView: View {
                         }
                     }
                 }
+            }
+            .sheet(isPresented: $showBibleChat) {
+                BibleChatView()
             }
             .sheet(isPresented: $showSearch) {
                 BibleSearchView(viewModel: viewModel)
@@ -279,8 +284,9 @@ struct BibleView: View {
 struct BibleBookSelectionView: View {
     @ObservedObject var viewModel: BibleViewModel
     @Binding var showDailyVerseDetail: Bool
+    @Binding var showBibleChat: Bool
     @State private var selectedTestament = 0
-    
+
     var body: some View {
         VStack(spacing: 0) {
             // Testament Picker
@@ -293,7 +299,7 @@ struct BibleBookSelectionView: View {
             .pickerStyle(SegmentedPickerStyle())
             .padding()
             .background(Color(UIColor.systemBackground))
-            
+
             if viewModel.isLoading {
                 Spacer()
                 ProgressView("Loading books...")
@@ -301,6 +307,14 @@ struct BibleBookSelectionView: View {
                 Spacer()
             } else if !viewModel.testamentSections.isEmpty {
                 ScrollView {
+                    BibleChatEntryCard {
+                        let generator = UIImpactFeedbackGenerator(style: .light)
+                        generator.impactOccurred()
+                        showBibleChat = true
+                    }
+                    .padding(.horizontal)
+                    .padding(.top, 12)
+
                     LazyVGrid(columns: [
                         GridItem(.flexible()),
                         GridItem(.flexible()),
@@ -331,41 +345,86 @@ struct BibleBookSelectionView: View {
 struct BookCardView: View {
     let book: BookDisplayModel
     let action: () -> Void
-    
+
+    @State private var pressed = false
+
     var body: some View {
         Button(action: action) {
-            VStack(spacing: 8) {
-                Image(systemName: book.icon)
-                    .font(.system(size: 24))
-                    .foregroundColor(book.testamentColor)
-                
-                Text(book.abbreviation)
-                    .font(.system(size: 14, weight: .bold, design: .serif))
-                    .foregroundColor(.primary)
-                
+            VStack(alignment: .leading, spacing: 10) {
+                iconBadge
+
+                Spacer(minLength: 0)
+
                 Text(book.name)
-                    .font(.system(size: 11))
-                    .foregroundColor(.secondary)
+                    .font(.system(size: 16, weight: .bold, design: .serif))
+                    .foregroundColor(.white)
                     .lineLimit(2)
-                    .multilineTextAlignment(.center)
-                    .minimumScaleFactor(0.8)
-                
+                    .multilineTextAlignment(.leading)
+                    .minimumScaleFactor(0.7)
+                    .fixedSize(horizontal: false, vertical: true)
+
                 Text(book.chapterRange)
-                    .font(.system(size: 9))
-                   // .foregroundColor(.tertiary)
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundColor(book.accentColor)
             }
-            .frame(maxWidth: .infinity)
-            .frame(height: 120)
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(Color(UIColor.secondarySystemBackground))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(book.testamentColor.opacity(0.3), lineWidth: 1)
+            .padding(12)
+            .frame(maxWidth: .infinity, minHeight: 130, alignment: .topLeading)
+            .background(cardBackground)
+            .scaleEffect(pressed ? 0.97 : 1)
+        }
+        .buttonStyle(.plain)
+        .onLongPressGesture(minimumDuration: 0, maximumDistance: .infinity, pressing: { isPressing in
+            withAnimation(.easeOut(duration: 0.12)) { pressed = isPressing }
+        }, perform: {})
+    }
+
+    private var iconBadge: some View {
+        ZStack {
+            Circle()
+                .fill(
+                    LinearGradient(
+                        colors: [book.accentColor, book.accentColor.opacity(0.55)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .frame(width: 32, height: 32)
+                .shadow(color: book.accentColor.opacity(0.55), radius: 6, x: 0, y: 3)
+            Image(systemName: book.icon)
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundColor(.white)
+        }
+    }
+
+    private var cardBackground: some View {
+        RoundedRectangle(cornerRadius: 18, style: .continuous)
+            .fill(
+                LinearGradient(
+                    colors: [
+                        book.accentColor.opacity(0.28),
+                        book.accentColor.opacity(0.08),
+                        Color.black.opacity(0.35)
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .stroke(
+                        LinearGradient(
+                            colors: [
+                                book.accentColor.opacity(0.65),
+                                book.accentColor.opacity(0.15)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        lineWidth: 1.1
                     )
             )
-        }
-        //.buttonStyle(ScaleButtonStyle())
+            .shadow(color: book.accentColor.opacity(0.30), radius: 14, x: 0, y: 7)
+            .shadow(color: Color.black.opacity(0.40), radius: 10, x: 0, y: 4)
     }
 }
 
@@ -487,6 +546,86 @@ struct DailyVerseCard: View {
             )
         }
         .buttonStyle(PlainButtonStyle())
+    }
+}
+
+// MARK: - Bible Chat Entry Card
+struct BibleChatEntryCard: View {
+    let onTap: () -> Void
+    @State private var shimmer = false
+
+    var body: some View {
+        Button(action: onTap) {
+            HStack(spacing: 14) {
+                ZStack {
+                    Circle()
+                        .fill(
+                            LinearGradient(
+                                colors: [Constants.DAMidBlue, Color(hex: "#9DA5FF")],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 46, height: 46)
+                    Image(systemName: "sparkles")
+                        .font(.system(size: 20, weight: .semibold))
+                        .foregroundColor(.white)
+                }
+
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack(spacing: 6) {
+                        Text("Ask the Bible")
+                            .font(.system(size: 16, weight: .bold, design: .serif))
+                            .foregroundColor(.white)
+                        Text("New")
+                            .font(.system(size: 9, weight: .heavy))
+                            .foregroundColor(.black)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(Capsule().fill(Constants.gold))
+                    }
+                    Text("What does the Bible say about love, anxiety, money…")
+                        .font(.system(size: 12))
+                        .foregroundColor(.white.opacity(0.7))
+                        .lineLimit(1)
+                }
+
+                Spacer(minLength: 0)
+
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.6))
+            }
+            .padding(14)
+            .background(
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                Constants.DAMidBlue.opacity(0.32),
+                                Color(hex: "#9DA5FF").opacity(0.14),
+                                Color.black.opacity(0.30)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 18, style: .continuous)
+                            .stroke(
+                                LinearGradient(
+                                    colors: [Constants.DAMidBlue.opacity(0.75), Color(hex: "#9DA5FF").opacity(0.25)],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                ),
+                                lineWidth: 1.2
+                            )
+                    )
+                    .shadow(color: Constants.DAMidBlue.opacity(0.45), radius: 16, x: 0, y: 8)
+                    .shadow(color: Color.black.opacity(0.40), radius: 10, x: 0, y: 4)
+            )
+        }
+        .buttonStyle(.plain)
     }
 }
 
