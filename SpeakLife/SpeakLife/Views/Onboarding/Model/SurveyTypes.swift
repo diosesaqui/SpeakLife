@@ -50,7 +50,7 @@ enum HeaviestBurden: String, CaseIterable, Identifiable {
     case calling    = "My calling"
     case peace      = "My peace"
     case abundance  = "My abundance"
-    case allOfIt    = "Nothing"
+    case allOfIt    = "All of it"
 
     var icon: String {
         switch self {
@@ -70,7 +70,7 @@ enum HeaviestBurden: String, CaseIterable, Identifiable {
         case .calling:   return "I'm not walking in the purpose placed on my life"
         case .peace:     return "Anxiety and fear have taken over my mind"
         case .abundance: return "I'm not experiencing the provision God prepared"
-        case .allOfIt:   return "I'm just not leaving any of my inheritance on the table"
+        case .allOfIt:   return "I'm not leaving any of my inheritance on the table"
         }
     }
 
