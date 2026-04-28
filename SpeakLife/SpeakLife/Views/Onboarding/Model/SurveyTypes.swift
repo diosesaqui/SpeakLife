@@ -266,6 +266,14 @@ enum DeclarationStyle: String, CaseIterable, Identifiable {
         case .prosperity: return "21%"
         }
     }
+
+    var chartLabel: String {
+        switch self {
+        case .identity:   return "Identity"
+        case .prosperity: return "Prosperity"
+        default:          return rawValue
+        }
+    }
 }
 
 enum NotificationTime: String, CaseIterable, Identifiable {

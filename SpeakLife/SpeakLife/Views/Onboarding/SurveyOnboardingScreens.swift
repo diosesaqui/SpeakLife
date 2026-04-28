@@ -564,6 +564,7 @@ struct SurveyQ5DeclarationExpScreen: View {
                 "Have you ever declared God's Word out loud — and felt something in the atmosphere shift?",
                 subtitle: "This is the moment most believers realize the Word isn't just to be read. It's to be released."
             )
+            .padding(.top, size.height * 0.12)
 
             ScrollView {
                 VStack(spacing: 12) {
@@ -604,6 +605,7 @@ struct SurveyQ6FutureScreen: View {
                 "What inheritance are you taking back first?",
                 subtitle: "God already prepared it. The question isn't whether it's available — it's whether you'll go get it.\n\nChoose up to 2."
             )
+            .padding(.top, size.height * 0.12)
 
             ScrollView {
                 VStack(spacing: 12) {
@@ -648,6 +650,7 @@ struct SurveyQ7ReadinessScreen: View {
                 "Where are you with God right now — really?",
                 subtitle: "No right answer. Just be honest."
             )
+            .padding(.top, size.height * 0.12)
 
             ScrollView {
                 VStack(spacing: 12) {
@@ -798,6 +801,7 @@ struct SurveyQ8NotificationScreen: View {
                 "Habits are built at the same time every day.",
                 subtitle: subtitle
             )
+            .padding(.top, size.height * 0.12)
 
             ScrollView {
                 VStack(spacing: 12) {
@@ -877,14 +881,10 @@ struct SurveyProductPositioningScreen: View {
                     .padding(16)
 
                     // Divider + arrow
-                    VStack {
-                        Spacer()
-                        Text("→")
-                            .font(.system(size: 20))
-                            .foregroundColor(.white.opacity(0.6))
-                        Spacer()
-                    }
-                    .frame(width: 32)
+                    Text("→")
+                        .font(.system(size: 20))
+                        .foregroundColor(.white.opacity(0.6))
+                        .frame(width: 32)
 
                     // RIGHT panel
                     VStack(spacing: 8) {
@@ -1074,10 +1074,11 @@ struct SurveyStyleProofScreen: View {
                 Text(style.icon)
                     .font(.system(size: 16))
 
-                Text(style.rawValue)
+                Text(style.chartLabel)
                     .font(.system(size: 13, weight: isSelected ? .semibold : .regular, design: .rounded))
                     .foregroundColor(isSelected ? .white : .white.opacity(0.7))
-                    .frame(width: 120, alignment: .leading)
+                    .frame(width: 110, alignment: .leading)
+                    .lineLimit(1)
 
                 GeometryReader { geo in
                     ZStack(alignment: .leading) {
