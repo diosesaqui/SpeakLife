@@ -22,13 +22,15 @@ struct BookDisplayModel: Identifiable {
     let id: String
     let name: String
     let abbreviation: String
+    let displayAbbreviation: String
     let author: String
     let chapters: Int
     let testament: String
     let testamentColor: Color
+    let accentColor: Color
     let groupName: String
     let icon: String
-    
+
     var chapterRange: String {
         chapters == 1 ? "1 chapter" : "\(chapters) chapters"
     }
@@ -101,15 +103,19 @@ final class BiblePresenter: BiblePresenterProtocol {
     func formatBookForDisplay(_ book: BibleBook) -> BookDisplayModel {
         let testamentColor = book.testament == .old ? Color.purple.opacity(0.8) : Color.blue.opacity(0.8)
         let icon = getBookIcon(for: book.group)
-        
+        let accent = accentColor(for: book.group, testament: book.testament)
+        let displayAbbrev = englishAbbreviation(for: book.name) ?? book.abbrev.en.uppercased()
+
         return BookDisplayModel(
             id: book.id,
             name: book.name,
             abbreviation: book.abbrev.en.uppercased(),
+            displayAbbreviation: displayAbbrev,
             author: book.author,
             chapters: book.chapters,
             testament: book.testament.displayName,
             testamentColor: testamentColor,
+            accentColor: accent,
             groupName: book.group,
             icon: icon
         )
@@ -225,25 +231,91 @@ final class BiblePresenter: BiblePresenterProtocol {
     private func getBookIcon(for group: String) -> String {
         switch group.lowercased() {
         case "pentateuco", "pentateuch":
-            return "scroll.fill"  // Torah/Law scrolls
+            return "scroll.fill"
         case "históricos", "historical", "history":
-            return "building.columns.fill"  // Ancient temples/historical buildings
+            return "building.columns.fill"
         case "poéticos", "poetry", "wisdom":
-            return "lightbulb.fill"  // Wisdom and insight
+            return "sparkles"
         case "profetas maiores", "major prophets":
-            return "megaphone.fill"  // Major prophetic voice
+            return "megaphone.fill"
         case "profetas menores", "minor prophets":
-            return "speaker.wave.2.fill"  // Minor prophetic voice
+            return "bell.fill"
         case "evangelhos", "gospels":
-            return "heart.fill"  // Good news/love of Christ
+            return "sun.max.fill"
         case "cartas", "epistles", "letters", "pauline epistles", "pastoral epistles", "general epistles":
-            return "envelope.fill"  // Letters/correspondence
+            return "envelope.fill"
         case "revelação", "revelation", "apocalypse", "prophecy":
-            return "eye.fill"  // Vision/revelation
+            return "eye.fill"
         default:
             return "book.fill"
         }
     }
+
+    private func accentColor(for group: String, testament: BibleBook.Testament) -> Color {
+        switch group.lowercased() {
+        case "pentateuco", "pentateuch":
+            return Color(hex: "#E0A85C")     // amber — foundational law
+        case "históricos", "historical", "history":
+            return Color(hex: "#C97B5C")     // copper — kingdoms
+        case "poéticos", "poetry", "wisdom":
+            return Color(hex: "#5DBFA8")     // teal — wisdom
+        case "profetas maiores", "major prophets":
+            return Color(hex: "#A06FD8")     // deep violet — major voices
+        case "profetas menores", "minor prophets":
+            return Color(hex: "#C57FB8")     // plum — minor voices
+        case "evangelhos", "gospels":
+            return Color(hex: "#F08A8A")     // rose — good news
+        case "cartas", "epistles", "letters", "pauline epistles", "pastoral epistles", "general epistles":
+            return Color(hex: "#5C9DE0")     // cobalt — letters
+        case "revelação", "revelation", "apocalypse", "prophecy":
+            return Color(hex: "#7B6FE8")     // indigo — apocalyptic
+        default:
+            return testament == .old ? Color(hex: "#A06FD8") : Color(hex: "#5C9DE0")
+        }
+    }
+
+    private func englishAbbreviation(for name: String) -> String? {
+        Self.englishAbbreviations[name.lowercased()]
+    }
+
+    private static let englishAbbreviations: [String: String] = [
+        // Pentateuch
+        "genesis": "Gen", "exodus": "Exod", "leviticus": "Lev",
+        "numbers": "Num", "deuteronomy": "Deut",
+        // Historical
+        "joshua": "Josh", "judges": "Judg", "ruth": "Ruth",
+        "1 samuel": "1 Sam", "2 samuel": "2 Sam",
+        "1 kings": "1 Kgs", "2 kings": "2 Kgs",
+        "1 chronicles": "1 Chr", "2 chronicles": "2 Chr",
+        "ezra": "Ezra", "nehemiah": "Neh", "esther": "Esth",
+        // Wisdom / Poetry
+        "job": "Job", "psalms": "Ps", "psalm": "Ps",
+        "proverbs": "Prov", "ecclesiastes": "Eccl",
+        "song of solomon": "Song", "song of songs": "Song",
+        // Major Prophets
+        "isaiah": "Isa", "jeremiah": "Jer", "lamentations": "Lam",
+        "ezekiel": "Ezek", "daniel": "Dan",
+        // Minor Prophets
+        "hosea": "Hos", "joel": "Joel", "amos": "Amos", "obadiah": "Obad",
+        "jonah": "Jonah", "micah": "Mic", "nahum": "Nah", "habakkuk": "Hab",
+        "zephaniah": "Zeph", "haggai": "Hag", "zechariah": "Zech", "malachi": "Mal",
+        // Gospels
+        "matthew": "Matt", "mark": "Mark", "luke": "Luke", "john": "John",
+        // Acts
+        "acts": "Acts", "acts of the apostles": "Acts",
+        // Pauline Epistles
+        "romans": "Rom", "1 corinthians": "1 Cor", "2 corinthians": "2 Cor",
+        "galatians": "Gal", "ephesians": "Eph", "philippians": "Phil",
+        "colossians": "Col", "1 thessalonians": "1 Thess", "2 thessalonians": "2 Thess",
+        "1 timothy": "1 Tim", "2 timothy": "2 Tim", "titus": "Titus", "philemon": "Phlm",
+        // General Epistles
+        "hebrews": "Heb", "james": "Jas",
+        "1 peter": "1 Pet", "2 peter": "2 Pet",
+        "1 john": "1 John", "2 john": "2 John", "3 john": "3 John",
+        "jude": "Jude",
+        // Revelation
+        "revelation": "Rev", "revelation of john": "Rev"
+    ]
     
     private func getHighlightColor(_ color: BibleHighlight.HighlightColor) -> Color {
         switch color {
