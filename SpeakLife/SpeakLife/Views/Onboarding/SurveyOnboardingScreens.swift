@@ -561,8 +561,8 @@ struct SurveyQ5DeclarationExpScreen: View {
     var body: some View {
         VStack(spacing: 0) {
             SurveyQuestionHeader(
-                headline: "Have you ever declared God's Word out loud — and felt something in the atmosphere shift?",
-                subheadline: "This is the moment most believers realize the Word isn't just to be read. It's to be released."
+                "Have you ever declared God's Word out loud — and felt something in the atmosphere shift?",
+                subtitle: "This is the moment most believers realize the Word isn't just to be read. It's to be released."
             )
 
             ScrollView {
@@ -601,8 +601,8 @@ struct SurveyQ6FutureScreen: View {
     var body: some View {
         VStack(spacing: 0) {
             SurveyQuestionHeader(
-                headline: "What inheritance are you taking back first?",
-                subheadline: "God already prepared it. The question isn't whether it's available — it's whether you'll go get it.\n\nChoose up to 2."
+                "What inheritance are you taking back first?",
+                subtitle: "God already prepared it. The question isn't whether it's available — it's whether you'll go get it.\n\nChoose up to 2."
             )
 
             ScrollView {
@@ -645,8 +645,8 @@ struct SurveyQ7ReadinessScreen: View {
     var body: some View {
         VStack(spacing: 0) {
             SurveyQuestionHeader(
-                headline: "Where are you with God right now — really?",
-                subheadline: "No right answer. Just be honest."
+                "Where are you with God right now — really?",
+                subtitle: "No right answer. Just be honest."
             )
 
             ScrollView {
@@ -784,7 +784,7 @@ struct SurveyQ8NotificationScreen: View {
     @ObservedObject var responses: SurveyResponses
     var onContinue: () -> Void
 
-    private var subheadline: String {
+    private var subtitle: String {
         if let style = responses.primaryDeclarationStyle {
             return "When should we send you your \(style.rawValue.lowercased()) declaration?"
         } else {
@@ -795,8 +795,8 @@ struct SurveyQ8NotificationScreen: View {
     var body: some View {
         VStack(spacing: 0) {
             SurveyQuestionHeader(
-                headline: "Habits are built at the same time every day.",
-                subheadline: subheadline
+                "Habits are built at the same time every day.",
+                subtitle: subheadline
             )
 
             ScrollView {
@@ -1018,8 +1018,8 @@ struct SurveyDeclarationStyleScreen: View {
     var body: some View {
         VStack(spacing: 0) {
             SurveyQuestionHeader(
-                headline: "What does your spirit need most right now?",
-                subheadline: "We'll build your daily declarations around this.\nSelect all that apply."
+                "What does your spirit need most right now?",
+                subtitle: "We'll build your daily declarations around this.\nSelect all that apply."
             )
 
             ScrollView {
@@ -1099,8 +1099,8 @@ struct SurveyStyleProofScreen: View {
     var body: some View {
         VStack(spacing: 0) {
             SurveyQuestionHeader(
-                headline: "You're choosing what 100,000 believers chose.",
-                subheadline: "Here's what our community is declaring daily.\nYou can update this anytime."
+                "You're choosing what 100,000 believers chose.",
+                subtitle: "Here's what our community is declaring daily.\nYou can update this anytime."
             )
 
             ScrollView {
