@@ -388,9 +388,9 @@ struct SurveyInterstitialAScreen: View {
     }
 }
 
-// MARK: - Q3: Previous Attempts
+// MARK: - Merged Barriers (was Q3 + Q4)
 
-struct SurveyQ3AttemptsScreen: View {
+struct SurveyMergedBarriersScreen: View {
     let size: CGSize
     @ObservedObject var responses: SurveyResponses
     let onContinue: () -> Void
@@ -401,19 +401,19 @@ struct SurveyQ3AttemptsScreen: View {
                 VStack(spacing: 24) {
                     Spacer().frame(height: size.height * 0.12)
                     SurveyQuestionHeader(
-                        "What have you tried before — and why hasn't it stuck?",
-                        subtitle: "Select all that apply. Be real."
+                        "What's been getting in the way — be real.",
+                        subtitle: "Select all that apply."
                     )
                     VStack(spacing: 10) {
-                        ForEach(PreviousAttempt.allCases) { option in
+                        ForEach(BarrierOption.allCases) { option in
                             SurveyCheckRow(
                                 text: option.rawValue,
-                                isSelected: responses.previousAttempts.contains(option)
+                                isSelected: responses.barriers.contains(option)
                             ) {
-                                if responses.previousAttempts.contains(option) {
-                                    responses.previousAttempts.remove(option)
+                                if responses.barriers.contains(option) {
+                                    responses.barriers.remove(option)
                                 } else {
-                                    responses.previousAttempts.insert(option)
+                                    responses.barriers.insert(option)
                                 }
                             }
                         }
@@ -422,62 +422,10 @@ struct SurveyQ3AttemptsScreen: View {
                     Spacer().frame(height: 8)
                 }
             }
-            SurveyContinueButton(isEnabled: !responses.previousAttempts.isEmpty, action: onContinue)
+            SurveyContinueButton(isEnabled: !responses.barriers.isEmpty, action: onContinue)
                 .padding(.vertical, 16)
         }
-        .onAppear { Analytics.logEvent("survey_q3_shown", parameters: nil) }
-    }
-}
-
-// MARK: - Q4: Inner Lie / Growth Goal
-
-struct SurveyQ4LieScreen: View {
-    let size: CGSize
-    @ObservedObject var responses: SurveyResponses
-    let onContinue: () -> Void
-
-    private var questionText: String {
-        responses.heaviestBurden == .thriving
-            ? "What do you most want to grow in?"
-            : "When you're at your lowest — what's the thought that hits hardest?"
-    }
-
-    private var questionSubtitle: String {
-        responses.heaviestBurden == .thriving
-            ? "Pick the one that matters most to you right now."
-            : "Pick the one that hits closest to home."
-    }
-
-    private var options: [InnerLie] {
-        responses.heaviestBurden == .thriving
-            ? InnerLie.growthOptions
-            : InnerLie.painOptions
-    }
-
-    var body: some View {
-        VStack(spacing: 0) {
-            ScrollView(showsIndicators: false) {
-                VStack(spacing: 24) {
-                    Spacer().frame(height: size.height * 0.12)
-                    SurveyQuestionHeader(questionText, subtitle: questionSubtitle)
-                    VStack(spacing: 10) {
-                        ForEach(options) { option in
-                            SurveyOptionRow(
-                                text: option.rawValue,
-                                isSelected: responses.innerLie == option
-                            ) {
-                                responses.innerLie = option
-                            }
-                        }
-                    }
-                    .padding(.horizontal, 20)
-                    Spacer().frame(height: 8)
-                }
-            }
-            SurveyContinueButton(isEnabled: responses.innerLie != nil, action: onContinue)
-                .padding(.vertical, 16)
-        }
-        .onAppear { Analytics.logEvent("survey_q4_shown", parameters: nil) }
+        .onAppear { Analytics.logEvent("survey_merged_barriers_shown", parameters: nil) }
     }
 }
 
@@ -594,91 +542,6 @@ struct SurveyQ5DeclarationExpScreen: View {
     }
 }
 
-struct SurveyQ6FutureScreen: View {
-    let size: CGSize
-    @ObservedObject var responses: SurveyResponses
-    var onContinue: () -> Void
-
-    var body: some View {
-        VStack(spacing: 0) {
-            SurveyQuestionHeader(
-                "What inheritance are you taking back first?",
-                subtitle: "God already prepared it. The question isn't whether it's available — it's whether you'll go get it.\n\nChoose up to 2."
-            )
-            .padding(.top, size.height * 0.12)
-
-            ScrollView {
-                VStack(spacing: 12) {
-                    ForEach(FutureChange.allCases, id: \.self) { option in
-                        SurveyCheckRow(
-                            text: option.rawValue,
-                            isSelected: responses.futureChanges.contains(option)
-                        ) {
-                            if responses.futureChanges.contains(option) {
-                                responses.futureChanges.remove(option)
-                            } else if responses.futureChanges.count < 2 {
-                                responses.futureChanges.insert(option)
-                            }
-                        }
-                    }
-                }
-                .padding(.horizontal, 20)
-                .padding(.top, 8)
-            }
-
-            Spacer()
-
-            SurveyContinueButton(label: "Continue", isEnabled: !responses.futureChanges.isEmpty) {
-                onContinue()
-            }
-            .padding(.bottom, 52)
-        }
-        .onAppear {
-            Analytics.logEvent("survey_q6_shown", parameters: nil)
-        }
-    }
-}
-
-struct SurveyQ7ReadinessScreen: View {
-    let size: CGSize
-    @ObservedObject var responses: SurveyResponses
-    var onContinue: () -> Void
-
-    var body: some View {
-        VStack(spacing: 0) {
-            SurveyQuestionHeader(
-                "Where are you with God right now — really?",
-                subtitle: "No right answer. Just be honest."
-            )
-            .padding(.top, size.height * 0.12)
-
-            ScrollView {
-                VStack(spacing: 12) {
-                    ForEach(ReadinessLevel.allCases, id: \.self) { option in
-                        SurveyOptionRow(
-                            text: option.rawValue,
-                            isSelected: responses.readinessLevel == option
-                        ) {
-                            responses.readinessLevel = option
-                        }
-                    }
-                }
-                .padding(.horizontal, 20)
-                .padding(.top, 8)
-            }
-
-            Spacer()
-
-            SurveyContinueButton(label: "Continue", isEnabled: responses.readinessLevel != nil) {
-                onContinue()
-            }
-            .padding(.bottom, 52)
-        }
-        .onAppear {
-            Analytics.logEvent("survey_q7_shown", parameters: nil)
-        }
-    }
-}
 
 struct SurveyGoalRevealScreen: View {
     let size: CGSize

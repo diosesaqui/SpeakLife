@@ -58,24 +58,15 @@ struct SurveyOnboardingView: View {
     @ViewBuilder
     private var currentStepView: some View {
         switch currentStep {
-        case .intro:                 SurveyIntroScreen(size: size) { advance() }
-        case .heaviestBurden:        SurveyQ1BurdenScreen(size: size, responses: responses) { advance() }
-        case .productPositioning:    SurveyProductPositioningScreen(size: size) { advance() }
-        case .burdenDuration:        SurveyQ2DurationScreen(size: size, responses: responses) { advance() }
-        case .interstitialA:         SurveyInterstitialAScreen(size: size, responses: responses) { advance() }
-        case .failedAttempts:        SurveyQ3AttemptsScreen(size: size, responses: responses) { advance() }
-        case .innerLie:              SurveyQ4LieScreen(size: size, responses: responses) { advance() }
-        case .interstitialB:         SurveyInterstitialBScreen(size: size) { advance() }
-        case .declarationExp:        lateStepView
-        case .futurePacing:          lateStepView
-        case .readiness:             lateStepView
-        case .declarationStyle:      lateStepView
-        case .styleProof:            lateStepView
-        case .goalReveal:            lateStepView
-        case .personalDeclaration:   lateStepView
-        case .commitmentHold:        lateStepView
-        case .paywall:               lateStepView
-        case .notificationTime:      lateStepView
+        case .intro:             SurveyIntroScreen(size: size) { advance() }
+        case .heaviestBurden:    SurveyQ1BurdenScreen(size: size, responses: responses) { advance() }
+        case .productPositioning: SurveyProductPositioningScreen(size: size) { advance() }
+        case .declarationStyle:  SurveyDeclarationStyleScreen(size: size, responses: responses) { advance() }
+        case .burdenDuration:    SurveyQ2DurationScreen(size: size, responses: responses) { advance() }
+        case .interstitialA:     SurveyInterstitialAScreen(size: size, responses: responses) { advance() }
+        case .mergedBarriers:    SurveyMergedBarriersScreen(size: size, responses: responses) { advance() }
+        case .interstitialB:     SurveyInterstitialBScreen(size: size) { advance() }
+        default: lateStepView
         }
     }
 
@@ -84,12 +75,6 @@ struct SurveyOnboardingView: View {
         switch currentStep {
         case .declarationExp:
             SurveyQ5DeclarationExpScreen(size: size, responses: responses) { advance() }
-        case .futurePacing:
-            SurveyQ6FutureScreen(size: size, responses: responses) { advance() }
-        case .readiness:
-            SurveyQ7ReadinessScreen(size: size, responses: responses) { advance() }
-        case .declarationStyle:
-            SurveyDeclarationStyleScreen(size: size, responses: responses) { advance() }
         case .styleProof:
             SurveyStyleProofScreen(size: size, responses: responses) { advance() }
         case .goalReveal:
