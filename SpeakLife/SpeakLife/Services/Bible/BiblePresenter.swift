@@ -252,6 +252,11 @@ final class BiblePresenter: BiblePresenterProtocol {
     }
 
     private func accentColor(for group: String, testament: BibleBook.Testament) -> Color {
+        // NT-only override: Acts ships in the "historical" API group, but visually
+        // belongs with the rest of the NT instead of the OT copper kingdoms palette.
+        if testament == .new, group.lowercased().contains("histor") {
+            return Color(hex: "#5C9DE0")     // cobalt — bridges into the epistles
+        }
         switch group.lowercased() {
         case "pentateuco", "pentateuch":
             return Color(hex: "#E0A85C")     // amber — foundational law
