@@ -891,33 +891,35 @@ struct SurveyDeclarationStyleScreen: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            SurveyQuestionHeader(
-                "What does your spirit need most right now?",
-                subtitle: "We'll build your daily declarations around this.\nSelect all that apply."
-            )
-            .padding(.top, size.height * 0.12)
-
-            ScrollView {
-                VStack(spacing: 10) {
-                    ForEach(DeclarationStyle.allCases, id: \.self) { style in
-                        StyleRow(
-                            style: style,
-                            isSelected: responses.declarationStyles.contains(style),
-                            action: {
-                                if responses.declarationStyles.contains(style) {
-                                    responses.declarationStyles.remove(style)
-                                } else {
-                                    responses.declarationStyles.insert(style)
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 24) {
+                    Spacer().frame(height: size.height * 0.12)
+                    SurveyQuestionHeader(
+                        "What does your spirit need most right now?",
+                        subtitle: "We'll build your daily declarations around this.\nSelect all that apply."
+                    )
+                    VStack(spacing: 10) {
+                        ForEach(DeclarationStyle.allCases, id: \.self) { style in
+                            StyleRow(
+                                style: style,
+                                isSelected: responses.declarationStyles.contains(style),
+                                action: {
+                                    if responses.declarationStyles.contains(style) {
+                                        responses.declarationStyles.remove(style)
+                                    } else {
+                                        responses.declarationStyles.insert(style)
+                                    }
                                 }
-                            }
-                        )
+                            )
+                        }
                     }
+                    .padding(.horizontal, 20)
+                    Spacer().frame(height: 8)
                 }
-                .padding(.horizontal, 20)
-                .padding(.vertical, 16)
             }
 
             SurveyContinueButton(label: "Build My Plan →", isEnabled: !responses.declarationStyles.isEmpty, action: onContinue)
+                .padding(.vertical, 16)
         }
         .onAppear {
             Analytics.logEvent("survey_declaration_style_shown", parameters: nil)
