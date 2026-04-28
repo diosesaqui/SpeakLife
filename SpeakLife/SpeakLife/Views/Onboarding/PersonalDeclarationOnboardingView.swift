@@ -141,6 +141,14 @@ struct PersonalDeclarationOnboardingView: View {
                     .animation(.easeOut(duration: 0.6).delay(0.12), value: titleAppeared)
             }
 
+            Text("Don't filter it. Don't make it sound \"right.\"\nJust speak what's on your heart.")
+                .font(.system(size: 14, weight: .regular, design: .rounded))
+                .foregroundColor(.white.opacity(0.5))
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 40)
+                .opacity(titleAppeared ? 1 : 0)
+                .animation(.easeOut(duration: 0.6).delay(0.25), value: titleAppeared)
+
             Spacer()
 
             if viewModel.showTextInput {
@@ -637,9 +645,22 @@ struct PersonalDeclarationOnboardingView: View {
 
                     Spacer().frame(height: 32)
 
+                    VStack(spacing: 6) {
+                        Text("Read it out loud right now.")
+                            .font(.system(size: 15, weight: .semibold, design: .rounded))
+                            .foregroundColor(.white)
+                            .multilineTextAlignment(.center)
+                        Text("Don't just read it — say it.\nThis is the moment it goes from words on a screen\nto a word in the atmosphere.")
+                            .font(.system(size: 14, weight: .regular, design: .rounded))
+                            .foregroundColor(.white.opacity(0.6))
+                            .multilineTextAlignment(.center)
+                    }
+                    .padding(.horizontal, 32)
+                    .padding(.bottom, 8)
+
                     ShimmerButton(
                         colors: [Color(red: 0.2, green: 0.5, blue: 1.0), Color(red: 0.4, green: 0.3, blue: 1.0)],
-                        buttonTitle: "Speak This Every Day →"
+                        buttonTitle: "I Spoke It. Send It to Me Every Day."
                     ) {
                         Task {
                             do {

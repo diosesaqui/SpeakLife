@@ -10,7 +10,7 @@ import Foundation
 enum SurveyStep: Int, CaseIterable {
     case intro              = 0
     case heaviestBurden     = 1
-    case productPositioning = 2   // NEW: "read vs speak"
+    case productPositioning = 2   // NEW: treasure chest — "take what's yours"
     case burdenDuration     = 3
     case interstitialA      = 4
     case failedAttempts     = 5
@@ -48,43 +48,59 @@ enum SurveyStep: Int, CaseIterable {
     static let totalQuestions = 8
 }
 
+// What the enemy has stolen — kingdom advancement framing
 enum HeaviestBurden: String, CaseIterable, Identifiable {
     var id: String { rawValue }
-    case anxiety     = "Anxiety or fear that just won't go away"
-    case purpose     = "I feel lost — unsure of who I am or why I'm here"
-    case worthiness  = "I know God loves me — but I don't feel it. Something's blocking me."
-    case joyless     = "I've lost my joy — life feels empty or numb"
-    case hardSeason  = "I'm going through a health battle and need God's healing"
-    case calling     = "I believe in God — but my life doesn't look like I believe His promises."
-    case thriving    = "Life is good — I just want to make speaking God's Word a daily habit"
+    case peace      = "My peace — anxiety and fear have taken over my mind"
+    case health     = "My health — my body isn't walking in the healing God promised me"
+    case joy        = "My joy — life feels empty and I know that's not God's plan"
+    case identity   = "My identity — I've lost sight of who God says I am"
+    case purpose    = "My purpose — I'm not walking in the calling placed on my life"
+    case abundance  = "My abundance — I'm not experiencing the provision God prepared"
+    case thriving   = "I'm not in crisis — I just know there's MORE and I refuse to settle"
 
     var goalWord: SurveyGoalWord {
         switch self {
-        case .anxiety:    return .peace
-        case .purpose:    return .identity
-        case .worthiness: return .identity
-        case .joyless:    return .joy
-        case .hardSeason: return .healing
-        case .calling:    return .identity
-        case .thriving:   return .purpose
+        case .peace:     return .peace
+        case .health:    return .healing
+        case .joy:       return .joy
+        case .identity:  return .identity
+        case .purpose:   return .purpose
+        case .abundance: return .prosperity
+        case .thriving:  return .confidence
         }
     }
 
     var shortLabel: String {
         switch self {
-        case .anxiety:    return "anxiety"
-        case .purpose:    return "feeling lost"
-        case .worthiness: return "not feeling God's love"
-        case .joyless:    return "lost joy"
-        case .hardSeason: return "this health battle"
-        case .calling:    return "wanting to walk in God's promises"
-        case .thriving:   return "growing in God"
+        case .peace:     return "your peace"
+        case .health:    return "your health"
+        case .joy:       return "your joy"
+        case .identity:  return "your identity"
+        case .purpose:   return "your purpose"
+        case .abundance: return "your abundance"
+        case .thriving:  return "your next level"
         }
     }
 
     var isGrowthTrack: Bool {
-        self == .thriving || self == .calling
+        self == .thriving
     }
+
+    // Testimonial bucket for interstitial A
+    var testimonialGroup: TestimonialGroup {
+        switch self {
+        case .peace, .health:             return .fearAndHealth
+        case .identity, .joy, .purpose:   return .identityAndPurpose
+        case .abundance, .thriving:       return .defaultGrowth
+        }
+    }
+}
+
+enum TestimonialGroup {
+    case fearAndHealth
+    case identityAndPurpose
+    case defaultGrowth
 }
 
 enum BurdenDuration: String, CaseIterable, Identifiable {
@@ -104,10 +120,6 @@ enum PreviousAttempt: String, CaseIterable, Identifiable {
     case worship               = "Worship and sermons lift me up — then Monday hits and it's gone"
     case people                = "I've talked to people I trust — it helps for a moment, then fades"
     case noStart               = "Honestly, I don't know where to start — I've never had a real practice"
-
-    static var allOptions: [PreviousAttempt] {
-        [.prayer, .readBible, .prayedNoBreakthrough, .worship, .people, .noStart]
-    }
 }
 
 enum InnerLie: String, CaseIterable, Identifiable {
@@ -151,25 +163,33 @@ enum DeclarationExperience: String, CaseIterable, Identifiable {
     case brandNew           = "No — this is brand new to me. Show me how."
 }
 
+// Inheritance possession options — Screen 9
 enum FutureChange: String, CaseIterable, Identifiable {
     var id: String { rawValue }
-    case fearMornings    = "\"Fear doesn't run my mornings anymore.\""
-    case speakHealing    = "\"I speak healing over my body — and I believe it.\""
-    case knowIdentity    = "\"I know exactly who God says I am. And I'm walking in it.\""
-    case stepCalling     = "\"I step into my calling without shrinking back.\""
-    case prayerShift     = "\"My prayers shifted from begging to declaring.\""
-    case wakeInPeace     = "\"I wake up in peace — not dread.\""
+    case healing    = "\"My healing — I take my body back in Jesus' name\""
+    case peace      = "\"My peace — fear doesn't get to live in my mind anymore\""
+    case identity   = "\"My identity — I know who God says I am and I walk in it\""
+    case calling    = "\"My calling — I step into my purpose and take the land\""
+    case abundance  = "\"My abundance — I receive the full provision God already prepared\""
+    case allOfIt    = "\"All of it — I'm not leaving any of my inheritance on the table\""
 
-    static var allOptions: [FutureChange] {
-        [.fearMornings, .speakHealing, .knowIdentity, .stepCalling, .prayerShift, .wakeInPeace]
+    var goalWord: SurveyGoalWord {
+        switch self {
+        case .healing:   return .healing
+        case .peace:     return .peace
+        case .identity:  return .identity
+        case .calling:   return .purpose
+        case .abundance: return .prosperity
+        case .allOfIt:   return .confidence
+        }
     }
 }
 
 enum ReadinessLevel: String, CaseIterable, Identifiable {
     var id: String { rawValue }
-    case ready     = "I'm ready. Something in me knows this is the moment."
-    case open      = "I'm open — I just need a place to start and someone to walk with me."
-    case unsure    = "I'm not fully sure yet — but something brought me here and I want to find out why."
+    case ready  = "I'm ready. Something in me knows this is the moment."
+    case open   = "I'm open — I just need a place to start and someone to walk with me."
+    case unsure = "I'm not fully sure yet — but something brought me here and I want to find out why."
 }
 
 enum DeclarationStyle: String, CaseIterable, Identifiable {
@@ -301,13 +321,13 @@ enum SurveyGoalWord: String, CaseIterable, Identifiable {
 
     var challengeName: String {
         switch self {
-        case .peace:      return "30-Day Peace Reset"
-        case .identity:   return "30-Day Identity Reset"
-        case .purpose:    return "30-Day Purpose Awakening"
-        case .joy:        return "30-Day Joy Challenge"
-        case .confidence: return "30-Day Confidence Builder"
-        case .healing:    return "30-Day Healing Journey"
-        case .prosperity: return "30-Day Abundance Declaration"
+        case .peace:      return "30-Day Peace Possession"
+        case .identity:   return "30-Day Identity Possession"
+        case .purpose:    return "30-Day Purpose Possession"
+        case .joy:        return "30-Day Joy Possession"
+        case .confidence: return "30-Day Confidence Possession"
+        case .healing:    return "30-Day Healing Possession"
+        case .prosperity: return "30-Day Abundance Possession"
         }
     }
 
@@ -319,7 +339,7 @@ enum SurveyGoalWord: String, CaseIterable, Identifiable {
         case .joy:        return "Joy"
         case .confidence: return "Confidence"
         case .healing:    return "Healing"
-        case .prosperity: return "Prosperity"
+        case .prosperity: return "Abundance"
         }
     }
 
@@ -359,16 +379,23 @@ class SurveyResponses: ObservableObject {
     @Published var declarationStyles: Set<DeclarationStyle> = []
     @Published var notificationTime: NotificationTime? = nil
 
+    // Priority: explicit style > vision casting > pain point > default
     var resolvedGoalWord: SurveyGoalWord {
-        primaryDeclarationStyle?.goalWord ?? heaviestBurden?.goalWord ?? .peace
+        if let style = primaryDeclarationStyle { return style.goalWord }
+        if let future = primaryFutureChange { return future.goalWord }
+        return heaviestBurden?.goalWord ?? .peace
     }
 
     var primaryDeclarationStyle: DeclarationStyle? {
         DeclarationStyle.allCases.first { declarationStyles.contains($0) }
     }
 
+    var primaryFutureChange: FutureChange? {
+        FutureChange.allCases.first { futureChanges.contains($0) }
+    }
+
     var burdenShortLabel: String {
-        heaviestBurden?.shortLabel ?? "this struggle"
+        heaviestBurden?.shortLabel ?? "your inheritance"
     }
 
     var durationLabel: String {
