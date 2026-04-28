@@ -537,7 +537,7 @@ struct SurveyInterstitialBScreen: View {
 
             Spacer()
 
-            SurveyContinueButton(title: "I'm Ready to Take More Ground →", isEnabled: true) {
+            SurveyContinueButton(label: "I'm Ready to Take More Ground →", isEnabled: true) {
                 onContinue()
             }
             .padding(.bottom, 52)
@@ -569,7 +569,7 @@ struct SurveyQ5DeclarationExpScreen: View {
                 VStack(spacing: 12) {
                     ForEach(DeclarationExperience.allCases, id: \.self) { option in
                         SurveyOptionRow(
-                            title: option.rawValue,
+                            text: option.rawValue,
                             isSelected: responses.declarationExperience == option
                         ) {
                             responses.declarationExperience = option
@@ -582,7 +582,7 @@ struct SurveyQ5DeclarationExpScreen: View {
 
             Spacer()
 
-            SurveyContinueButton(title: "Continue", isEnabled: responses.declarationExperience != nil) {
+            SurveyContinueButton(label: "Continue", isEnabled: responses.declarationExperience != nil) {
                 onContinue()
             }
             .padding(.bottom, 52)
@@ -609,7 +609,7 @@ struct SurveyQ6FutureScreen: View {
                 VStack(spacing: 12) {
                     ForEach(FutureChange.allCases, id: \.self) { option in
                         SurveyCheckRow(
-                            title: option.rawValue,
+                            text: option.rawValue,
                             isSelected: responses.futureChanges.contains(option)
                         ) {
                             if responses.futureChanges.contains(option) {
@@ -626,7 +626,7 @@ struct SurveyQ6FutureScreen: View {
 
             Spacer()
 
-            SurveyContinueButton(title: "Continue", isEnabled: !responses.futureChanges.isEmpty) {
+            SurveyContinueButton(label: "Continue", isEnabled: !responses.futureChanges.isEmpty) {
                 onContinue()
             }
             .padding(.bottom, 52)
@@ -653,7 +653,7 @@ struct SurveyQ7ReadinessScreen: View {
                 VStack(spacing: 12) {
                     ForEach(ReadinessLevel.allCases, id: \.self) { option in
                         SurveyOptionRow(
-                            title: option.rawValue,
+                            text: option.rawValue,
                             isSelected: responses.readinessLevel == option
                         ) {
                             responses.readinessLevel = option
@@ -666,7 +666,7 @@ struct SurveyQ7ReadinessScreen: View {
 
             Spacer()
 
-            SurveyContinueButton(title: "Continue", isEnabled: responses.readinessLevel != nil) {
+            SurveyContinueButton(label: "Continue", isEnabled: responses.readinessLevel != nil) {
                 onContinue()
             }
             .padding(.bottom, 52)
@@ -758,7 +758,7 @@ struct SurveyGoalRevealScreen: View {
 
             Spacer()
 
-            SurveyContinueButton(title: "Start Taking Ground →", isEnabled: true) {
+            SurveyContinueButton(label: "Start Taking Ground →", isEnabled: true) {
                 onContinue()
             }
             .padding(.bottom, 52)
@@ -796,14 +796,14 @@ struct SurveyQ8NotificationScreen: View {
         VStack(spacing: 0) {
             SurveyQuestionHeader(
                 "Habits are built at the same time every day.",
-                subtitle: subheadline
+                subtitle: subtitle
             )
 
             ScrollView {
                 VStack(spacing: 12) {
                     ForEach(NotificationTime.allCases, id: \.self) { option in
                         SurveyOptionRow(
-                            title: option.rawValue,
+                            text: option.rawValue,
                             isSelected: responses.notificationTime == option
                         ) {
                             responses.notificationTime = option
@@ -816,7 +816,7 @@ struct SurveyQ8NotificationScreen: View {
 
             Spacer()
 
-            SurveyContinueButton(title: "Continue", isEnabled: responses.notificationTime != nil) {
+            SurveyContinueButton(label: "Continue", isEnabled: responses.notificationTime != nil) {
                 onContinue()
             }
             .padding(.bottom, 52)
@@ -942,7 +942,7 @@ struct SurveyProductPositioningScreen: View {
 
             Spacer()
 
-            SurveyContinueButton(title: "I'm ready to take what's mine →", action: onContinue)
+            SurveyContinueButton(label: "I'm ready to take what's mine →", action: onContinue)
         }
         .onAppear {
             Analytics.logEvent("survey_product_positioning_shown", parameters: nil)
@@ -1042,11 +1042,7 @@ struct SurveyDeclarationStyleScreen: View {
                 .padding(.vertical, 16)
             }
 
-            SurveyContinueButton(
-                title: "Build My Plan →",
-                action: onContinue,
-                isDisabled: responses.declarationStyles.isEmpty
-            )
+            SurveyContinueButton(label: "Build My Plan →", isEnabled: !responses.declarationStyles.isEmpty, action: onContinue)
         }
         .onAppear {
             Analytics.logEvent("survey_declaration_style_shown", parameters: nil)
@@ -1151,7 +1147,7 @@ struct SurveyStyleProofScreen: View {
                 .padding(.vertical, 16)
             }
 
-            SurveyContinueButton(title: "I'm Ready →", action: onContinue)
+            SurveyContinueButton(label: "I'm Ready →", action: onContinue)
         }
         .onAppear {
             Analytics.logEvent("survey_style_proof_shown", parameters: nil)
