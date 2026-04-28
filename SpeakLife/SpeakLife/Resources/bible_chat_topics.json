@@ -1,0 +1,345 @@
+{
+  "version": 1,
+  "topics": [
+    {
+      "id": "anxiety",
+      "title": "Anxiety & Worry",
+      "question": "What does the Bible say about anxiety?",
+      "icon": "wind",
+      "accentHex": "#7BA7FF",
+      "summary": "God invites you to trade worry for His peace.",
+      "answer": "The Bible never shames you for feeling anxious. It calls you to a Father who can hold what you cannot. Scripture's prescription for worry is not denial, it is transfer: you cast your cares onto God because He cares for you, you bring your requests to Him with thanksgiving, and His peace, which is bigger than your understanding, becomes the guard around your mind. Anxiety shrinks when God grows. Take the spiraling thought, name it before Him, and let His Word answer it.",
+      "verses": [
+        { "reference": "Philippians 4:6-7", "text": "Do not be anxious about anything, but in every situation, by prayer and petition, with thanksgiving, present your requests to God. And the peace of God, which transcends all understanding, will guard your hearts and your minds in Christ Jesus.", "translation": "NIV" },
+        { "reference": "1 Peter 5:7", "text": "Cast all your anxiety on him because he cares for you.", "translation": "NIV" },
+        { "reference": "Matthew 6:34", "text": "Therefore do not worry about tomorrow, for tomorrow will worry about itself. Each day has enough trouble of its own.", "translation": "NIV" },
+        { "reference": "Isaiah 41:10", "text": "So do not fear, for I am with you; do not be dismayed, for I am your God. I will strengthen you and help you; I will uphold you with my righteous right hand.", "translation": "NIV" },
+        { "reference": "John 14:27", "text": "Peace I leave with you; my peace I give you. I do not give to you as the world gives. Do not let your hearts be troubled and do not be afraid.", "translation": "NIV" }
+      ],
+      "reflection": "Name one worry you are carrying right now and pray it back to God by speaking Philippians 4:6-7 over it."
+    },
+    {
+      "id": "fear",
+      "title": "Fear",
+      "question": "What does the Bible say about fear?",
+      "icon": "shield.lefthalf.filled",
+      "accentHex": "#9CB4FF",
+      "summary": "Fear loses its grip in the presence of God.",
+      "answer": "Fear is the body sounding an alarm; faith is the soul answering with God's voice. Scripture does not tell you to feel nothing. It tells you that you are not alone. God commands courage because He gives Himself. The Spirit He has placed in you is not a spirit of fear but of power, love, and a sound mind. When fear rises, you do not silence it by willpower, you crowd it out with the presence of the One who is with you.",
+      "verses": [
+        { "reference": "2 Timothy 1:7", "text": "For the Spirit God gave us does not make us timid, but gives us power, love and self-discipline.", "translation": "NIV" },
+        { "reference": "Joshua 1:9", "text": "Have I not commanded you? Be strong and courageous. Do not be afraid; do not be discouraged, for the Lord your God will be with you wherever you go.", "translation": "NIV" },
+        { "reference": "Psalm 23:4", "text": "Even though I walk through the darkest valley, I will fear no evil, for you are with me; your rod and your staff, they comfort me.", "translation": "NIV" },
+        { "reference": "1 John 4:18", "text": "There is no fear in love. But perfect love drives out fear, because fear has to do with punishment. The one who fears is not made perfect in love.", "translation": "NIV" },
+        { "reference": "Psalm 27:1", "text": "The Lord is my light and my salvation—whom shall I fear? The Lord is the stronghold of my life—of whom shall I be afraid?", "translation": "NIV" }
+      ],
+      "reflection": "Speak this aloud: “God has not given me a spirit of fear. He is with me right here, right now.”"
+    },
+    {
+      "id": "love",
+      "title": "Love",
+      "question": "What does the Bible say about love?",
+      "icon": "heart.fill",
+      "accentHex": "#FF8FA3",
+      "summary": "Love is who God is, and how He calls us to live.",
+      "answer": "The Bible's deepest claim about love is that God is its source. He did not begin to love when you became lovable; He defined love by giving His Son for you while you were still far from Him. From that fountain we love others: not as a feeling we manufacture, but as an outpouring of what we have received. Real love is patient and kind, slow to take offense, quick to forgive, honest about sin, faithful in suffering. It is shaped like a cross.",
+      "verses": [
+        { "reference": "1 John 4:7-8", "text": "Dear friends, let us love one another, for love comes from God. Everyone who loves has been born of God and knows God. Whoever does not love does not know God, because God is love.", "translation": "NIV" },
+        { "reference": "John 3:16", "text": "For God so loved the world that he gave his one and only Son, that whoever believes in him shall not perish but have eternal life.", "translation": "NIV" },
+        { "reference": "Romans 5:8", "text": "But God demonstrates his own love for us in this: While we were still sinners, Christ died for us.", "translation": "NIV" },
+        { "reference": "1 Corinthians 13:4-7", "text": "Love is patient, love is kind. It does not envy, it does not boast, it is not proud. It does not dishonor others, it is not self-seeking, it is not easily angered, it keeps no record of wrongs. Love does not delight in evil but rejoices with the truth. It always protects, always trusts, always hopes, always perseveres.", "translation": "NIV" },
+        { "reference": "John 13:34-35", "text": "A new command I give you: Love one another. As I have loved you, so you must love one another. By this everyone will know that you are my disciples, if you love one another.", "translation": "NIV" }
+      ],
+      "reflection": "Name one person God is asking you to love today—not in word only, but in action."
+    },
+    {
+      "id": "marriage",
+      "title": "Marriage",
+      "question": "What does the Bible say about marriage?",
+      "icon": "rings.couple",
+      "accentHex": "#FFB870",
+      "summary": "A covenant between one man and one woman that mirrors Christ and the church.",
+      "answer": "Marriage in scripture is not invented by people, it is given by God. From the beginning, He designed it as the lifelong covenant between one man and one woman, two becoming one flesh. The New Testament reveals what this picture has been pointing to all along: the love of Christ for His bride, the church. That is why marriage is meant to be marked by sacrificial love, mutual respect, faithfulness, and grace. It is hard, holy, and worth fighting for. If marriage feels broken, the gospel still offers hope: Christ restores what we cannot.",
+      "verses": [
+        { "reference": "Genesis 2:24", "text": "That is why a man leaves his father and mother and is united to his wife, and they become one flesh.", "translation": "NIV" },
+        { "reference": "Matthew 19:6", "text": "So they are no longer two, but one flesh. Therefore what God has joined together, let no one separate.", "translation": "NIV" },
+        { "reference": "Ephesians 5:25", "text": "Husbands, love your wives, just as Christ loved the church and gave himself up for her.", "translation": "NIV" },
+        { "reference": "Ephesians 5:31-32", "text": "‘For this reason a man will leave his father and mother and be united to his wife, and the two will become one flesh.’ This is a profound mystery—but I am talking about Christ and the church.", "translation": "NIV" },
+        { "reference": "1 Corinthians 13:4-5", "text": "Love is patient, love is kind. It does not envy, it does not boast, it is not proud. It does not dishonor others, it is not self-seeking, it is not easily angered, it keeps no record of wrongs.", "translation": "NIV" }
+      ],
+      "reflection": "Pray over your marriage (or future marriage) by name today—thanking God for it and inviting Him to lead it."
+    },
+    {
+      "id": "forgiveness",
+      "title": "Forgiveness",
+      "question": "What does the Bible say about forgiveness?",
+      "icon": "hands.sparkles.fill",
+      "accentHex": "#B58CFF",
+      "summary": "We forgive because we have been forgiven.",
+      "answer": "Forgiveness is not pretending the wound did not happen. It is releasing the right to repay, because Christ has already paid. The cross is the ground of every act of forgiveness: God forgave you a debt you could not pay, so you do not get to hold a smaller one over someone else. Forgiving does not always mean reconciling, and it does not undo wisdom about safety, but it does break the chain that ties your soul to the offense. Bring the wound to Jesus first; let Him soften you before you face them.",
+      "verses": [
+        { "reference": "Ephesians 4:32", "text": "Be kind and compassionate to one another, forgiving each other, just as in Christ God forgave you.", "translation": "NIV" },
+        { "reference": "Colossians 3:13", "text": "Bear with each other and forgive one another if any of you has a grievance against someone. Forgive as the Lord forgave you.", "translation": "NIV" },
+        { "reference": "Matthew 6:14-15", "text": "For if you forgive other people when they sin against you, your heavenly Father will also forgive you. But if you do not forgive others their sins, your Father will not forgive your sins.", "translation": "NIV" },
+        { "reference": "1 John 1:9", "text": "If we confess our sins, he is faithful and just and will forgive us our sins and purify us from all unrighteousness.", "translation": "NIV" },
+        { "reference": "Matthew 18:21-22", "text": "Then Peter came to Jesus and asked, ‘Lord, how many times shall I forgive my brother or sister who sins against me? Up to seven times?’ Jesus answered, ‘I tell you, not seven times, but seventy-seven times.’", "translation": "NIV" }
+      ],
+      "reflection": "Is there a name God is bringing to mind right now? Tell Him: “I release them to You, because You have released me.”"
+    },
+    {
+      "id": "money",
+      "title": "Money & Finances",
+      "question": "What does the Bible say about money?",
+      "icon": "dollarsign.circle.fill",
+      "accentHex": "#7BD389",
+      "summary": "Money is a tool for stewardship, not a master to serve.",
+      "answer": "The Bible never calls money evil, but it warns sharply that the love of money is a root of all kinds of evil. The issue is the throne, not the wallet. God owns everything; we are stewards. He calls us to work diligently, give generously, save wisely, avoid the trap of greed, and refuse to anchor our identity in net worth. When you trust the Provider, you can hold provision loosely. Generosity is the surest way to break money's grip on your heart.",
+      "verses": [
+        { "reference": "1 Timothy 6:10", "text": "For the love of money is a root of all kinds of evil. Some people, eager for money, have wandered from the faith and pierced themselves with many griefs.", "translation": "NIV" },
+        { "reference": "Matthew 6:24", "text": "No one can serve two masters. Either you will hate the one and love the other, or you will be devoted to the one and despise the other. You cannot serve both God and money.", "translation": "NIV" },
+        { "reference": "Proverbs 3:9-10", "text": "Honor the Lord with your wealth, with the firstfruits of all your crops; then your barns will be filled to overflowing, and your vats will brim over with new wine.", "translation": "NIV" },
+        { "reference": "Philippians 4:19", "text": "And my God will meet all your needs according to the riches of his glory in Christ Jesus.", "translation": "NIV" },
+        { "reference": "2 Corinthians 9:7", "text": "Each of you should give what you have decided in your heart to give, not reluctantly or under compulsion, for God loves a cheerful giver.", "translation": "NIV" }
+      ],
+      "reflection": "Ask God: “Where is money sitting on the throne in my life? What would generosity look like this week?”"
+    },
+    {
+      "id": "healing",
+      "title": "Healing",
+      "question": "What does the Bible say about healing?",
+      "icon": "cross.case.fill",
+      "accentHex": "#7BD0D6",
+      "summary": "God is a Healer—of body, mind, and soul.",
+      "answer": "Scripture shows a God who heals. Sometimes He heals through miracles, sometimes through medicine, sometimes through long faithfulness in suffering, and ultimately through resurrection. Jesus' wounds bought your wholeness, even when the timing of your healing is hidden in His wisdom. Bring your body and your sorrow to Him without pretending. Pray boldly. Trust Him with the answer. He is good whether the healing comes today, later, or on the other side of glory.",
+      "verses": [
+        { "reference": "Isaiah 53:5", "text": "But he was pierced for our transgressions, he was crushed for our iniquities; the punishment that brought us peace was on him, and by his wounds we are healed.", "translation": "NIV" },
+        { "reference": "James 5:14-15", "text": "Is anyone among you sick? Let them call the elders of the church to pray over them and anoint them with oil in the name of the Lord. And the prayer offered in faith will make the sick person well; the Lord will raise them up.", "translation": "NIV" },
+        { "reference": "Psalm 103:2-3", "text": "Praise the Lord, my soul, and forget not all his benefits—who forgives all your sins and heals all your diseases.", "translation": "NIV" },
+        { "reference": "Jeremiah 17:14", "text": "Heal me, Lord, and I will be healed; save me and I will be saved, for you are the one I praise.", "translation": "NIV" },
+        { "reference": "Matthew 4:23", "text": "Jesus went throughout Galilee, teaching in their synagogues, proclaiming the good news of the kingdom, and healing every disease and sickness among the people.", "translation": "NIV" }
+      ],
+      "reflection": "Bring one place that needs healing—physical, mental, or relational—to Jesus by name and ask Him to touch it."
+    },
+    {
+      "id": "identity",
+      "title": "Identity",
+      "question": "Who does the Bible say I am?",
+      "icon": "person.crop.circle.badge.checkmark",
+      "accentHex": "#FFC560",
+      "summary": "In Christ, your identity is settled, sealed, and beloved.",
+      "answer": "The world tells you to find your identity by looking inward, performing well, or being approved. The Bible tells you to receive your identity from your Maker. You are created in God's image, fearfully and wonderfully made. If you are in Christ, you are a new creation—forgiven, adopted, righteous, chosen, sealed by the Spirit, deeply loved. Your identity is not something you build; it is something you receive. The mirror lies. The Word tells the truth.",
+      "verses": [
+        { "reference": "2 Corinthians 5:17", "text": "Therefore, if anyone is in Christ, the new creation has come: The old has gone, the new is here!", "translation": "NIV" },
+        { "reference": "Genesis 1:27", "text": "So God created mankind in his own image, in the image of God he created them; male and female he created them.", "translation": "NIV" },
+        { "reference": "Psalm 139:13-14", "text": "For you created my inmost being; you knit me together in my mother's womb. I praise you because I am fearfully and wonderfully made; your works are wonderful, I know that full well.", "translation": "NIV" },
+        { "reference": "Ephesians 1:4-5", "text": "For he chose us in him before the creation of the world to be holy and blameless in his sight. In love he predestined us for adoption to sonship through Jesus Christ.", "translation": "NIV" },
+        { "reference": "1 John 3:1", "text": "See what great love the Father has lavished on us, that we should be called children of God! And that is what we are!", "translation": "NIV" }
+      ],
+      "reflection": "Speak it aloud: “I am God's. Created in His image. Forgiven. Adopted. Loved. That is who I am.”"
+    },
+    {
+      "id": "purpose",
+      "title": "Purpose & Calling",
+      "question": "What does the Bible say about my purpose?",
+      "icon": "scope",
+      "accentHex": "#9DA5FF",
+      "summary": "You were made for God, and made on purpose.",
+      "answer": "Your life is not an accident. God formed you, He has good works prepared for you, and your highest calling is to know Him, love Him, and make Him known. Vocation matters; gifting matters; but purpose runs deeper than career. You are here to glorify God and to bless others with the unique combination of who He made you to be. Faithfulness in small things often unlocks the bigger story God is writing.",
+      "verses": [
+        { "reference": "Jeremiah 29:11", "text": "For I know the plans I have for you, declares the Lord, plans to prosper you and not to harm you, plans to give you hope and a future.", "translation": "NIV" },
+        { "reference": "Ephesians 2:10", "text": "For we are God's handiwork, created in Christ Jesus to do good works, which God prepared in advance for us to do.", "translation": "NIV" },
+        { "reference": "Romans 8:28", "text": "And we know that in all things God works for the good of those who love him, who have been called according to his purpose.", "translation": "NIV" },
+        { "reference": "Matthew 22:37-39", "text": "Jesus replied: ‘Love the Lord your God with all your heart and with all your soul and with all your mind.’ This is the first and greatest commandment. And the second is like it: ‘Love your neighbor as yourself.’", "translation": "NIV" },
+        { "reference": "1 Corinthians 10:31", "text": "So whether you eat or drink or whatever you do, do it all for the glory of God.", "translation": "NIV" }
+      ],
+      "reflection": "Ask God: “What is the next faithful step you are calling me to take?”"
+    },
+    {
+      "id": "suffering",
+      "title": "Suffering",
+      "question": "What does the Bible say about suffering?",
+      "icon": "leaf.fill",
+      "accentHex": "#A0D396",
+      "summary": "God is near in pain, and not wasting any of it.",
+      "answer": "The Bible never minimizes pain. It enters in. Jesus wept. Psalmists screamed. Job demanded answers. And through it all, scripture insists that God is close to the brokenhearted, that suffering is not the end of your story, and that He works it for good in those who love Him. He does not always tell us why; He always offers Himself. Lament is a form of worship. Hope is the muscle that suffering builds. Resurrection has the final word.",
+      "verses": [
+        { "reference": "Psalm 34:18", "text": "The Lord is close to the brokenhearted and saves those who are crushed in spirit.", "translation": "NIV" },
+        { "reference": "Romans 8:18", "text": "I consider that our present sufferings are not worth comparing with the glory that will be revealed in us.", "translation": "NIV" },
+        { "reference": "2 Corinthians 4:17", "text": "For our light and momentary troubles are achieving for us an eternal glory that far outweighs them all.", "translation": "NIV" },
+        { "reference": "James 1:2-4", "text": "Consider it pure joy, my brothers and sisters, whenever you face trials of many kinds, because you know that the testing of your faith produces perseverance. Let perseverance finish its work so that you may be mature and complete, not lacking anything.", "translation": "NIV" },
+        { "reference": "Revelation 21:4", "text": "He will wipe every tear from their eyes. There will be no more death or mourning or crying or pain, for the old order of things has passed away.", "translation": "NIV" }
+      ],
+      "reflection": "Tell God exactly what hurts. Then ask Him to meet you in it, not just remove it."
+    },
+    {
+      "id": "prayer",
+      "title": "Prayer",
+      "question": "What does the Bible say about prayer?",
+      "icon": "hands.and.sparkles.fill",
+      "accentHex": "#C49DFF",
+      "summary": "Prayer is the door God has already opened.",
+      "answer": "Prayer is not a performance. It is conversation with the God who is closer than your breath. Jesus taught us to pray honestly and persistently—asking, seeking, knocking. Scripture tells us to pray about everything, to pray for one another, to pray in the Spirit, and to keep praying when answers are slow. God hears the unpolished prayer. He answers in His timing and His wisdom. The point of prayer is not to inform God but to be transformed by Him.",
+      "verses": [
+        { "reference": "Matthew 7:7-8", "text": "Ask and it will be given to you; seek and you will find; knock and the door will be opened to you. For everyone who asks receives; the one who seeks finds; and to the one who knocks, the door will be opened.", "translation": "NIV" },
+        { "reference": "1 Thessalonians 5:16-18", "text": "Rejoice always, pray continually, give thanks in all circumstances; for this is God's will for you in Christ Jesus.", "translation": "NIV" },
+        { "reference": "James 5:16", "text": "Therefore confess your sins to each other and pray for each other so that you may be healed. The prayer of a righteous person is powerful and effective.", "translation": "NIV" },
+        { "reference": "Philippians 4:6", "text": "Do not be anxious about anything, but in every situation, by prayer and petition, with thanksgiving, present your requests to God.", "translation": "NIV" },
+        { "reference": "Matthew 6:6", "text": "But when you pray, go into your room, close the door and pray to your Father, who is unseen. Then your Father, who sees what is done in secret, will reward you.", "translation": "NIV" }
+      ],
+      "reflection": "Set a timer for two minutes. Say nothing impressive—just talk to God like He is right there."
+    },
+    {
+      "id": "faith",
+      "title": "Faith",
+      "question": "What does the Bible say about faith?",
+      "icon": "mountain.2.fill",
+      "accentHex": "#8AB6FF",
+      "summary": "Faith trusts the character of God when you cannot see the path.",
+      "answer": "Faith is not pretending you have no doubts. It is choosing to anchor your trust in God's character even when life is unclear. Scripture defines faith as confidence in what we hope for and assurance about what we cannot see. It comes by hearing God's Word. It grows in the soil of obedience. Without faith, it is impossible to please Him; with even mustard-seed faith, mountains move. Feed your faith with God's Word; starve your fear with God's promises.",
+      "verses": [
+        { "reference": "Hebrews 11:1", "text": "Now faith is confidence in what we hope for and assurance about what we do not see.", "translation": "NIV" },
+        { "reference": "Hebrews 11:6", "text": "And without faith it is impossible to please God, because anyone who comes to him must believe that he exists and that he rewards those who earnestly seek him.", "translation": "NIV" },
+        { "reference": "Romans 10:17", "text": "Consequently, faith comes from hearing the message, and the message is heard through the word about Christ.", "translation": "NIV" },
+        { "reference": "Mark 11:22-24", "text": "‘Have faith in God,’ Jesus answered. ‘Truly I tell you, if anyone says to this mountain, \"Go, throw yourself into the sea,\" and does not doubt in their heart but believes that what they say will happen, it will be done for them. Therefore I tell you, whatever you ask for in prayer, believe that you have received it, and it will be yours.’", "translation": "NIV" },
+        { "reference": "2 Corinthians 5:7", "text": "For we live by faith, not by sight.", "translation": "NIV" }
+      ],
+      "reflection": "Where is God asking you to take a step before you can see the whole staircase?"
+    },
+    {
+      "id": "wisdom",
+      "title": "Wisdom",
+      "question": "What does the Bible say about wisdom?",
+      "icon": "brain.head.profile",
+      "accentHex": "#FFD56B",
+      "summary": "Wisdom begins with the fear of the Lord.",
+      "answer": "Wisdom is not the same as information. It is skill in living—seeing reality the way God sees it and choosing accordingly. Scripture says the fear of the Lord is the beginning of wisdom, and that anyone who lacks it can ask God, who gives generously without finding fault. Wisdom is found in God's Word, refined through godly counsel, and proven over time. Pride blocks it. Humility unlocks it. Pray for it daily and read Proverbs slowly.",
+      "verses": [
+        { "reference": "Proverbs 9:10", "text": "The fear of the Lord is the beginning of wisdom, and knowledge of the Holy One is understanding.", "translation": "NIV" },
+        { "reference": "James 1:5", "text": "If any of you lacks wisdom, you should ask God, who gives generously to all without finding fault, and it will be given to you.", "translation": "NIV" },
+        { "reference": "Proverbs 3:5-6", "text": "Trust in the Lord with all your heart and lean not on your own understanding; in all your ways submit to him, and he will make your paths straight.", "translation": "NIV" },
+        { "reference": "Proverbs 11:14", "text": "For lack of guidance a nation falls, but victory is won through many advisers.", "translation": "NIV" },
+        { "reference": "Colossians 2:2-3", "text": "My goal is that they may be encouraged in heart and united in love, so that they may have the full riches of complete understanding, in order that they may know the mystery of God, namely, Christ, in whom are hidden all the treasures of wisdom and knowledge.", "translation": "NIV" }
+      ],
+      "reflection": "Ask: “Lord, give me wisdom for the next decision I face today.”"
+    },
+    {
+      "id": "anger",
+      "title": "Anger",
+      "question": "What does the Bible say about anger?",
+      "icon": "flame.fill",
+      "accentHex": "#FF8A6B",
+      "summary": "Slow your anger; surrender it before it owns you.",
+      "answer": "Anger itself is not always sin. Even Jesus was angry at hardness of heart. But unchecked anger becomes a doorway for the enemy. Scripture tells us to be slow to it, to refuse to let the sun go down on it, to put it off like dirty clothes, and to bring it to God before it spills onto the people we love. Anger usually points to a deeper hurt or fear; let God meet you there. Vengeance is His. Your job is to entrust yourself to the One who judges justly.",
+      "verses": [
+        { "reference": "Ephesians 4:26-27", "text": "‘In your anger do not sin’: Do not let the sun go down while you are still angry, and do not give the devil a foothold.", "translation": "NIV" },
+        { "reference": "James 1:19-20", "text": "My dear brothers and sisters, take note of this: Everyone should be quick to listen, slow to speak and slow to become angry, because human anger does not produce the righteousness that God desires.", "translation": "NIV" },
+        { "reference": "Proverbs 15:1", "text": "A gentle answer turns away wrath, but a harsh word stirs up anger.", "translation": "NIV" },
+        { "reference": "Romans 12:19", "text": "Do not take revenge, my dear friends, but leave room for God's wrath, for it is written: ‘It is mine to avenge; I will repay,’ says the Lord.", "translation": "NIV" },
+        { "reference": "Colossians 3:8", "text": "But now you must also rid yourselves of all such things as these: anger, rage, malice, slander, and filthy language from your lips.", "translation": "NIV" }
+      ],
+      "reflection": "Take the anger to God before you take it to anyone else. Tell Him what is really underneath it."
+    },
+    {
+      "id": "salvation",
+      "title": "Salvation",
+      "question": "What does the Bible say about salvation?",
+      "icon": "cross.fill",
+      "accentHex": "#FFE08A",
+      "summary": "Salvation is a gift, paid for by Jesus, received by faith.",
+      "answer": "Salvation is the heart of the Bible. We are all sinners, separated from a holy God, unable to save ourselves. So God sent His Son. Jesus lived the life we could not live, died the death we deserved, and rose again, defeating sin and death. Salvation is not a wage you earn; it is a gift you receive by faith. Whoever calls on the name of the Lord will be saved. If you have never said yes to Jesus, today you can: trust Him, surrender to Him, and follow Him.",
+      "verses": [
+        { "reference": "John 3:16-17", "text": "For God so loved the world that he gave his one and only Son, that whoever believes in him shall not perish but have eternal life. For God did not send his Son into the world to condemn the world, but to save the world through him.", "translation": "NIV" },
+        { "reference": "Romans 10:9-10", "text": "If you declare with your mouth, ‘Jesus is Lord,’ and believe in your heart that God raised him from the dead, you will be saved. For it is with your heart that you believe and are justified, and it is with your mouth that you profess your faith and are saved.", "translation": "NIV" },
+        { "reference": "Ephesians 2:8-9", "text": "For it is by grace you have been saved, through faith—and this is not from yourselves, it is the gift of God—not by works, so that no one can boast.", "translation": "NIV" },
+        { "reference": "Acts 4:12", "text": "Salvation is found in no one else, for there is no other name under heaven given to mankind by which we must be saved.", "translation": "NIV" },
+        { "reference": "Titus 3:5", "text": "He saved us, not because of righteous things we had done, but because of his mercy. He saved us through the washing of rebirth and renewal by the Holy Spirit.", "translation": "NIV" }
+      ],
+      "reflection": "If you have never trusted Jesus, pray now: “Jesus, I need You. Forgive my sin. I trust You as my Savior and follow You as my Lord.”"
+    },
+    {
+      "id": "heaven",
+      "title": "Heaven",
+      "question": "What does the Bible say about heaven?",
+      "icon": "sparkle",
+      "accentHex": "#A6D9FF",
+      "summary": "Heaven is real, prepared by Jesus, and it is home.",
+      "answer": "Heaven is not metaphor. Jesus spoke of it plainly and went to prepare a place for those who trust Him. Scripture describes a renewed creation where God dwells with His people, every tear is wiped away, death is undone, and joy is uninterrupted. The center of heaven is not gold streets but the face of God. Eternity changes how you live now: it loosens your grip on what is passing and steadies your heart on what is forever.",
+      "verses": [
+        { "reference": "John 14:2-3", "text": "My Father's house has many rooms; if that were not so, would I have told you that I am going there to prepare a place for you? And if I go and prepare a place for you, I will come back and take you to be with me that you also may be where I am.", "translation": "NIV" },
+        { "reference": "Revelation 21:3-4", "text": "And I heard a loud voice from the throne saying, ‘Look! God's dwelling place is now among the people, and he will dwell with them. They will be his people, and God himself will be with them and be their God. He will wipe every tear from their eyes. There will be no more death or mourning or crying or pain, for the old order of things has passed away.’", "translation": "NIV" },
+        { "reference": "2 Corinthians 5:1", "text": "For we know that if the earthly tent we live in is destroyed, we have a building from God, an eternal house in heaven, not built by human hands.", "translation": "NIV" },
+        { "reference": "Philippians 3:20", "text": "But our citizenship is in heaven. And we eagerly await a Savior from there, the Lord Jesus Christ.", "translation": "NIV" },
+        { "reference": "1 Corinthians 2:9", "text": "However, as it is written: ‘What no eye has seen, what no ear has heard, and what no human mind has conceived’—the things God has prepared for those who love him.", "translation": "NIV" }
+      ],
+      "reflection": "What in your life would change today if you really believed eternity was that close?"
+    },
+    {
+      "id": "holy_spirit",
+      "title": "The Holy Spirit",
+      "question": "What does the Bible say about the Holy Spirit?",
+      "icon": "wind.circle.fill",
+      "accentHex": "#FFCB6B",
+      "summary": "God Himself, living in you, leading you, empowering you.",
+      "answer": "The Holy Spirit is not a force or a feeling. He is God—third Person of the Trinity—sent by the Father through the Son to live inside everyone who belongs to Jesus. He convicts, comforts, teaches, leads, empowers, gifts, and produces fruit in you that you could never produce on your own. The Christian life is not white-knuckled effort; it is keeping in step with the Spirit. Listen for His voice through scripture, prayer, and a quieted heart.",
+      "verses": [
+        { "reference": "John 14:26", "text": "But the Advocate, the Holy Spirit, whom the Father will send in my name, will teach you all things and will remind you of everything I have said to you.", "translation": "NIV" },
+        { "reference": "Acts 1:8", "text": "But you will receive power when the Holy Spirit comes on you; and you will be my witnesses in Jerusalem, and in all Judea and Samaria, and to the ends of the earth.", "translation": "NIV" },
+        { "reference": "Galatians 5:22-23", "text": "But the fruit of the Spirit is love, joy, peace, forbearance, kindness, goodness, faithfulness, gentleness and self-control. Against such things there is no law.", "translation": "NIV" },
+        { "reference": "Romans 8:14", "text": "For those who are led by the Spirit of God are the children of God.", "translation": "NIV" },
+        { "reference": "1 Corinthians 6:19", "text": "Do you not know that your bodies are temples of the Holy Spirit, who is in you, whom you have received from God? You are not your own.", "translation": "NIV" }
+      ],
+      "reflection": "Pray: “Holy Spirit, fill me afresh today. Lead me, teach me, and grow Your fruit in me.”"
+    },
+    {
+      "id": "family",
+      "title": "Family",
+      "question": "What does the Bible say about family?",
+      "icon": "house.fill",
+      "accentHex": "#FFB0A0",
+      "summary": "Family is God's idea—and His grace can heal even broken ones.",
+      "answer": "Family is God's first community. Scripture calls parents to raise children with love, instruction, and discipline; calls children to honor their parents; calls spouses to mutual love and respect; and calls every member to put on patience, kindness, and forgiveness. But the Bible is honest about broken families too. Jesus did not come from a perfect home, and He invites every weary household into His grace. The church becomes a wider family for the lonely, and God Himself is a Father to the fatherless.",
+      "verses": [
+        { "reference": "Deuteronomy 6:6-7", "text": "These commandments that I give you today are to be on your hearts. Impress them on your children. Talk about them when you sit at home and when you walk along the road, when you lie down and when you get up.", "translation": "NIV" },
+        { "reference": "Ephesians 6:1-4", "text": "Children, obey your parents in the Lord, for this is right. ‘Honor your father and mother’—which is the first commandment with a promise—‘so that it may go well with you and that you may enjoy long life on the earth.’ Fathers, do not exasperate your children; instead, bring them up in the training and instruction of the Lord.", "translation": "NIV" },
+        { "reference": "Proverbs 22:6", "text": "Start children off on the way they should go, and even when they are old they will not turn from it.", "translation": "NIV" },
+        { "reference": "Psalm 68:5-6", "text": "A father to the fatherless, a defender of widows, is God in his holy dwelling. God sets the lonely in families, he leads out the prisoners with singing.", "translation": "NIV" },
+        { "reference": "Joshua 24:15", "text": "But as for me and my household, we will serve the Lord.", "translation": "NIV" }
+      ],
+      "reflection": "Pray each member of your family by name today—even the hard ones. Ask God for grace to lead, love, and forgive."
+    },
+    {
+      "id": "work",
+      "title": "Work",
+      "question": "What does the Bible say about work?",
+      "icon": "hammer.fill",
+      "accentHex": "#90CFB0",
+      "summary": "Work is a gift, a calling, and worship when done unto the Lord.",
+      "answer": "Work is not a curse; it was given before the Fall. God works, and He made us to work. Scripture honors diligence, integrity, fair pay, and rest. Whatever you do—seen or unseen—work at it with all your heart, as for the Lord and not for people, knowing that He is the one who rewards. Work is not your identity, and it is not your god, but it is a sacred space where you reflect the Maker by making, serving, building, and blessing others.",
+      "verses": [
+        { "reference": "Colossians 3:23-24", "text": "Whatever you do, work at it with all your heart, as working for the Lord, not for human masters, since you know that you will receive an inheritance from the Lord as a reward. It is the Lord Christ you are serving.", "translation": "NIV" },
+        { "reference": "Genesis 2:15", "text": "The Lord God took the man and put him in the Garden of Eden to work it and take care of it.", "translation": "NIV" },
+        { "reference": "Proverbs 16:3", "text": "Commit to the Lord whatever you do, and he will establish your plans.", "translation": "NIV" },
+        { "reference": "2 Thessalonians 3:10", "text": "For even when we were with you, we gave you this rule: ‘The one who is unwilling to work shall not eat.’", "translation": "NIV" },
+        { "reference": "Ecclesiastes 9:10", "text": "Whatever your hand finds to do, do it with all your might, for in the realm of the dead, where you are going, there is neither working nor planning nor knowledge nor wisdom.", "translation": "NIV" }
+      ],
+      "reflection": "Before the next thing you do today, whisper: “Lord, I do this for You.”"
+    },
+    {
+      "id": "government",
+      "title": "Government & Authority",
+      "question": "What does the Bible say about government?",
+      "icon": "building.columns.fill",
+      "accentHex": "#A0B0FF",
+      "summary": "Honor authority, pray for leaders, obey God above all.",
+      "answer": "Scripture teaches that God is sovereign over the rise and fall of every nation and that earthly authority is established by Him for justice and order. We are called to pray for leaders, pay taxes, honor those in office, and live as good citizens—even when we disagree. But our ultimate allegiance belongs to God. When human authority commands what God forbids, we must obey God rather than people. Christians can engage politically with conviction and humility, holding strong views without letting any party become an idol.",
+      "verses": [
+        { "reference": "Romans 13:1-2", "text": "Let everyone be subject to the governing authorities, for there is no authority except that which God has established. The authorities that exist have been established by God. Consequently, whoever rebels against the authority is rebelling against what God has instituted.", "translation": "NIV" },
+        { "reference": "1 Timothy 2:1-2", "text": "I urge, then, first of all, that petitions, prayers, intercession and thanksgiving be made for all people—for kings and all those in authority, that we may live peaceful and quiet lives in all godliness and holiness.", "translation": "NIV" },
+        { "reference": "Acts 5:29", "text": "Peter and the other apostles replied: ‘We must obey God rather than human beings!’", "translation": "NIV" },
+        { "reference": "1 Peter 2:13-17", "text": "Submit yourselves for the Lord's sake to every human authority… Show proper respect to everyone, love the family of believers, fear God, honor the emperor.", "translation": "NIV" },
+        { "reference": "Proverbs 21:1", "text": "In the Lord's hand the king's heart is a stream of water that he channels toward all who please him.", "translation": "NIV" }
+      ],
+      "reflection": "Pray for one leader by name today—for wisdom, humility, and a heart that bends toward God."
+    }
+  ]
+}

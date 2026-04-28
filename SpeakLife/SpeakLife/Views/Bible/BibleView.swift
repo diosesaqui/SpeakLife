@@ -16,6 +16,7 @@ struct BibleView: View {
     @State private var showAuthSheet = false
     @State private var selectedTab = 0
     @State private var showDailyVerseDetail = false
+    @State private var showBibleChat = false
     
     var body: some View {
         NavigationView {
@@ -31,7 +32,8 @@ struct BibleView: View {
                     } else {
                         BibleBookSelectionView(
                             viewModel: viewModel,
-                            showDailyVerseDetail: $showDailyVerseDetail
+                            showDailyVerseDetail: $showDailyVerseDetail,
+                            showBibleChat: $showBibleChat
                         )
                     }
                 } else if viewModel.showChapterGrid {
@@ -132,6 +134,9 @@ struct BibleView: View {
                         }
                     }
                 }
+            }
+            .sheet(isPresented: $showBibleChat) {
+                BibleChatView()
             }
             .sheet(isPresented: $showSearch) {
                 BibleSearchView(viewModel: viewModel)
@@ -279,8 +284,9 @@ struct BibleView: View {
 struct BibleBookSelectionView: View {
     @ObservedObject var viewModel: BibleViewModel
     @Binding var showDailyVerseDetail: Bool
+    @Binding var showBibleChat: Bool
     @State private var selectedTestament = 0
-    
+
     var body: some View {
         VStack(spacing: 0) {
             // Testament Picker
@@ -293,7 +299,7 @@ struct BibleBookSelectionView: View {
             .pickerStyle(SegmentedPickerStyle())
             .padding()
             .background(Color(UIColor.systemBackground))
-            
+
             if viewModel.isLoading {
                 Spacer()
                 ProgressView("Loading books...")
@@ -301,6 +307,14 @@ struct BibleBookSelectionView: View {
                 Spacer()
             } else if !viewModel.testamentSections.isEmpty {
                 ScrollView {
+                    BibleChatEntryCard {
+                        let generator = UIImpactFeedbackGenerator(style: .light)
+                        generator.impactOccurred()
+                        showBibleChat = true
+                    }
+                    .padding(.horizontal)
+                    .padding(.top, 12)
+
                     LazyVGrid(columns: [
                         GridItem(.flexible()),
                         GridItem(.flexible()),
@@ -487,6 +501,75 @@ struct DailyVerseCard: View {
             )
         }
         .buttonStyle(PlainButtonStyle())
+    }
+}
+
+// MARK: - Bible Chat Entry Card
+struct BibleChatEntryCard: View {
+    let onTap: () -> Void
+    @State private var shimmer = false
+
+    var body: some View {
+        Button(action: onTap) {
+            HStack(spacing: 14) {
+                ZStack {
+                    Circle()
+                        .fill(
+                            LinearGradient(
+                                colors: [Constants.DAMidBlue, Color(hex: "#9DA5FF")],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 46, height: 46)
+                    Image(systemName: "sparkles")
+                        .font(.system(size: 20, weight: .semibold))
+                        .foregroundColor(.white)
+                }
+
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack(spacing: 6) {
+                        Text("Ask the Bible")
+                            .font(.system(size: 16, weight: .bold, design: .serif))
+                            .foregroundColor(.white)
+                        Text("New")
+                            .font(.system(size: 9, weight: .heavy))
+                            .foregroundColor(.black)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(Capsule().fill(Constants.gold))
+                    }
+                    Text("What does the Bible say about love, anxiety, money…")
+                        .font(.system(size: 12))
+                        .foregroundColor(.white.opacity(0.7))
+                        .lineLimit(1)
+                }
+
+                Spacer(minLength: 0)
+
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.6))
+            }
+            .padding(14)
+            .background(
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .fill(.ultraThinMaterial)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 18, style: .continuous)
+                            .stroke(
+                                LinearGradient(
+                                    colors: [Constants.DAMidBlue.opacity(0.6), Color(hex: "#9DA5FF").opacity(0.4)],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                ),
+                                lineWidth: 1
+                            )
+                    )
+                    .shadow(color: Constants.DAMidBlue.opacity(0.25), radius: 12, x: 0, y: 6)
+            )
+        }
+        .buttonStyle(.plain)
     }
 }
 
