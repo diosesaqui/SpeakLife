@@ -878,6 +878,87 @@ struct SurveyProductPositioningScreen: View {
 }
 
 
+// MARK: - The Seed (Screen 3)
+
+struct SurveyTheSeedScreen: View {
+    let size: CGSize
+    let onContinue: () -> Void
+
+    @State private var v = false
+    @State private var appearTime = Date()
+
+    var body: some View {
+        VStack(spacing: 0) {
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 20) {
+                    Spacer().frame(height: size.height * 0.07)
+
+                    Image("seed-icon")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 200, height: 200)
+
+                    Text("The Word of God is a seed.")
+                        .font(.system(size: 28, weight: .bold, design: .rounded))
+                        .foregroundColor(.white)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 28)
+
+                    VStack(alignment: .leading, spacing: 14) {
+                        Group {
+                            Text("The harvest is already prepared.\nThe inheritance is already secured.")
+
+                            Text("But Jesus said it like this — His Word is a seed.\nYou plant it in your heart by hearing it.\nYou water it with your mouth by declaring it.")
+
+                            Text("And what your Father already paid for\nrises up in your life.")
+                        }
+                        .font(.system(size: 16, weight: .regular, design: .rounded))
+                        .foregroundColor(.white.opacity(0.85))
+                        .fixedSize(horizontal: false, vertical: true)
+
+                        Text("Health. Peace. Joy. Purpose. Abundance.\nAll of it. Not some of it.")
+                            .font(.system(size: 16, weight: .semibold, design: .rounded))
+                            .foregroundColor(.white)
+                            .fixedSize(horizontal: false, vertical: true)
+
+                        Text("You're not earning a blessing.\nYou're activating an inheritance.")
+                            .font(.system(size: 16, weight: .regular, design: .rounded))
+                            .foregroundColor(.white.opacity(0.85))
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .padding(.horizontal, 28)
+
+                    Text("\"The seed is the word of God.\" — Luke 8:11")
+                        .font(.system(size: 13, weight: .regular, design: .serif))
+                        .italic()
+                        .foregroundColor(.red.opacity(0.8))
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 28)
+
+                    Spacer().frame(height: 8)
+                }
+                .opacity(v ? 1 : 0)
+                .offset(y: v ? 0 : 20)
+                .animation(.easeOut(duration: 0.6), value: v)
+            }
+
+            SurveyContinueButton(label: "I'm Ready to Plant →", action: {
+                let dwell = Date().timeIntervalSince(appearTime)
+                Analytics.logEvent("onboarding_screen_3_cta_tap", parameters: [
+                    "dwell_time_seconds": dwell as NSNumber
+                ])
+                onContinue()
+            })
+            .padding(.top, 8).padding(.bottom, 36)
+        }
+        .onAppear {
+            appearTime = Date()
+            Analytics.logEvent("onboarding_screen_3_view", parameters: nil)
+            withAnimation { v = true }
+        }
+    }
+}
+
 struct SurveyStyleProofScreen: View {
     let size: CGSize
     @ObservedObject var responses: SurveyResponses

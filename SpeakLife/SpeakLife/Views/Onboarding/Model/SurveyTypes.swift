@@ -11,21 +11,22 @@ enum SurveyStep: Int, CaseIterable {
     case intro              = 0
     case heaviestBurden     = 1
     case productPositioning = 2
-    case burdenDuration     = 3
-    case interstitialA      = 4
-    case mergedBarriers     = 5   // MERGED: failedAttempts + innerLie
-    case interstitialB      = 6
-    case declarationExp     = 7
-    case styleProof         = 8
-    case goalReveal         = 9
-    case personalDeclaration = 10
-    case commitmentHold     = 11
-    case paywall            = 12
-    case notificationTime   = 13  // post-paywall
+    case theSeed            = 3   // "The Word is a seed" — activates the mechanism
+    case burdenDuration     = 4
+    case interstitialA      = 5
+    case mergedBarriers     = 6   // MERGED: failedAttempts + innerLie
+    case interstitialB      = 7
+    case declarationExp     = 8
+    case styleProof         = 9
+    case goalReveal         = 10
+    case personalDeclaration = 11
+    case commitmentHold     = 12
+    case paywall            = 13
+    case notificationTime   = 14  // post-paywall
 
     var isQuestion: Bool {
         switch self {
-        case .intro, .productPositioning, .interstitialA, .interstitialB,
+        case .intro, .productPositioning, .theSeed, .interstitialA, .interstitialB,
              .styleProof, .goalReveal, .personalDeclaration, .commitmentHold,
              .paywall, .notificationTime: return false
         default: return true

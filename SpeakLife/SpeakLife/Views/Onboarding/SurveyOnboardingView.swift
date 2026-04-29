@@ -61,6 +61,7 @@ struct SurveyOnboardingView: View {
         case .intro:             SurveyIntroScreen(size: size) { advance() }
         case .heaviestBurden:    SurveyQ1BurdenScreen(size: size, responses: responses) { advance() }
         case .productPositioning: SurveyProductPositioningScreen(size: size) { advance() }
+        case .theSeed:           SurveyTheSeedScreen(size: size) { advance() }
         case .burdenDuration:    SurveyQ2DurationScreen(size: size, responses: responses) { advance() }
         case .interstitialA:     SurveyInterstitialAScreen(size: size, responses: responses) { advance() }
         case .mergedBarriers:    SurveyMergedBarriersScreen(size: size, responses: responses) { advance() }
