@@ -105,22 +105,13 @@ final class PersonalDeclarationViewModel: ObservableObject {
     // MARK: - Private
 
     private func runMatch(input: String) async {
-        // Check if the user named multiple distinct things
+        // Keyword scan to detect multiple distinct topics before calling AI
         let allMatches = matchUseCase.matchAll(input: input)
         if allMatches.count >= 2 {
             try? await Task.sleep(nanoseconds: 400_000_000)
             step = .focusChoice(allMatches)
             return
         }
-
-        // Check if input was too vague to match anything confidently
-        let result = matchUseCase.execute(input: input)
-        if !result.isConfident {
-            try? await Task.sleep(nanoseconds: 400_000_000)
-            step = .clarify
-            return
-        }
-
         await runMatchForCategory(input: input, category: nil)
     }
 
@@ -141,7 +132,7 @@ final class PersonalDeclarationViewModel: ObservableObject {
                 isConfident: true
             )
         } else {
-            match = matchUseCase.execute(input: input)
+            match = await matchUseCase.execute(input: input)
         }
         step = .result
     }

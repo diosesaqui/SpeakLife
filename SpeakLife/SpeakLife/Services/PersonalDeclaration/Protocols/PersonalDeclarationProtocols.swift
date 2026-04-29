@@ -8,7 +8,7 @@ import Foundation
 // MARK: - Matcher
 
 protocol DeclarationMatcherProtocol {
-    func match(input: String) -> DeclarationMatch
+    func match(input: String) async -> DeclarationMatch
     func matchAll(input: String) -> [DeclarationCategory]
 }
 

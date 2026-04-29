@@ -215,7 +215,7 @@ final class KeywordDeclarationMatcher: DeclarationMatcherProtocol {
         self.rules = rules
     }
 
-    func match(input: String) -> DeclarationMatch {
+    func match(input: String) async -> DeclarationMatch {
         let lower = input.lowercased()
         let matchedRule = rules.first(where: { rule in
             rule.keywords.contains(where: { lower.contains($0) })

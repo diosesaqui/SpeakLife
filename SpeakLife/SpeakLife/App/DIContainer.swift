@@ -14,7 +14,7 @@ final class DIContainer {
 
     // MARK: - Personal Declaration
 
-    lazy var declarationMatcher: DeclarationMatcherProtocol = KeywordDeclarationMatcher()
+    lazy var declarationMatcher: DeclarationMatcherProtocol = ClaudeDeclarationMatcher()
     lazy var personalDeclarationRepository: PersonalDeclarationRepositoryProtocol = PersonalDeclarationRepository()
     lazy var declarationNotificationService: DeclarationNotificationServiceProtocol = DeclarationNotificationService()
     lazy var speechTranscriptionService: SpeechTranscriptionProtocol = SpeechTranscriptionService()
