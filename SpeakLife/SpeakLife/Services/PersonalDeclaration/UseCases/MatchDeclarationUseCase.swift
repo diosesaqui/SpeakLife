@@ -12,12 +12,12 @@ final class MatchDeclarationUseCase {
         self.matcher = matcher
     }
 
-    func execute(input: String) -> DeclarationMatch {
+    func execute(input: String) async -> DeclarationMatch {
         let sanitized = input.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !sanitized.isEmpty else {
-            return matcher.match(input: "faith")
+            return await matcher.match(input: "faith")
         }
-        return matcher.match(input: sanitized)
+        return await matcher.match(input: sanitized)
     }
 
     func matchAll(input: String) -> [DeclarationCategory] {
