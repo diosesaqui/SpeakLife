@@ -12,23 +12,21 @@ enum SurveyStep: Int, CaseIterable {
     case heaviestBurden     = 1
     case productPositioning = 2
     case theSeed            = 3
-    case declarationStyle   = 4   // "Pick the sound of your sword"
-    case styleProof         = 5   // immediately validates the sword choice
-    case burdenDuration     = 6
-    case mergedBarriers     = 7   // MERGED: failedAttempts + innerLie
-    case interstitialB      = 8
-    case declarationExp     = 9
-    case goalReveal         = 10
-    case personalDeclaration = 11
-    case takeAStand         = 12  // auto-advance transition — breath before commitment
-    case commitmentHold     = 13
-    case paywall            = 14
-    case notificationTime   = 15  // post-paywall
+    case burdenDuration     = 4
+    case mergedBarriers     = 5   // MERGED: failedAttempts + innerLie
+    case interstitialB      = 6
+    case declarationExp     = 7
+    case goalReveal         = 8
+    case personalDeclaration = 9
+    case takeAStand         = 10  // auto-advance transition — breath before commitment
+    case commitmentHold     = 11
+    case paywall            = 12
+    case notificationTime   = 13  // post-paywall
 
     var isQuestion: Bool {
         switch self {
-        case .intro, .productPositioning, .theSeed, .declarationStyle, .interstitialB,
-             .styleProof, .goalReveal, .personalDeclaration, .takeAStand, .commitmentHold,
+        case .intro, .productPositioning, .theSeed, .interstitialB,
+             .goalReveal, .personalDeclaration, .takeAStand, .commitmentHold,
              .paywall, .notificationTime: return false
         default: return true
         }
@@ -383,17 +381,13 @@ class SurveyResponses: ObservableObject {
     @Published var barriers: Set<BarrierOption> = []
     @Published var declarationExperience: DeclarationExperience? = nil
     @Published var notificationTime: NotificationTime? = nil
-    @Published var selectedDeclarationStyle: DeclarationStyle? = nil
 
-    // Sword selection (Screen 4) is the explicit intent — use it first.
-    // Territory (Screen 1) is the fallback when no sword was picked.
     var resolvedGoalWord: SurveyGoalWord {
-        selectedDeclarationStyle?.goalWord ?? heaviestBurden?.goalWord ?? .peace
+        heaviestBurden?.goalWord ?? .peace
     }
 
-    // Explicit sword selection takes precedence over territory inference
     var primaryDeclarationStyle: DeclarationStyle? {
-        selectedDeclarationStyle ?? heaviestBurden?.declarationStyle
+        heaviestBurden?.declarationStyle
     }
 
     var burdenShortLabel: String {
