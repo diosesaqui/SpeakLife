@@ -7,7 +7,10 @@ import Foundation
 
 enum AnthropicConfig {
     static var apiKey: String {
-        Bundle.main.object(forInfoDictionaryKey: "ANTHROPIC_API_KEY") as? String ?? ""
+        let value = Bundle.main.object(forInfoDictionaryKey: "ANTHROPIC_API_KEY") as? String ?? ""
+        // Guard against an un-substituted Xcode placeholder left in the Release build
+        guard !value.isEmpty, !value.hasPrefix("$(") else { return "" }
+        return value
     }
 
     static let apiURL = URL(string: "https://api.anthropic.com/v1/messages")!
