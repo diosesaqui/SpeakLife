@@ -161,7 +161,7 @@ struct DeclarationView: View {
         HStack {
             //loveLetterButton
             devotionalButton
-            dailyBurstButton
+            //dailyBurstButton
             personalDeclarationButton
             
             speakAloudBannerSection(geometry)
