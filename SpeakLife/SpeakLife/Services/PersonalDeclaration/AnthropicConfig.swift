@@ -6,12 +6,8 @@
 import Foundation
 
 enum AnthropicConfig {
-    static var apiKey: String {
-        let value = Bundle.main.object(forInfoDictionaryKey: "ANTHROPIC_API_KEY") as? String ?? ""
-        // Guard against an un-substituted Xcode placeholder left in the Release build
-        guard !value.isEmpty, !value.hasPrefix("$(") else { return "" }
-        return value
-    }
+    // Set by SubscriptionStore on app launch from Firebase Remote Config.
+    static var apiKey: String = ""
 
     static let apiURL = URL(string: "https://api.anthropic.com/v1/messages")!
     static let model = "claude-haiku-4-5-20251001"

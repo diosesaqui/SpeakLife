@@ -213,6 +213,9 @@ final class SubscriptionStore: ObservableObject {
         
         // AI Feature Flag from Remote Config
         enableAIFeatures = remoteConfig["enableAIFeatures"].boolValue
+
+        // Anthropic API key from Remote Config
+        AnthropicConfig.apiKey = remoteConfig["anthropic_api_key"].stringValue
         
         // Sync to UserDefaults for TaskLibrary access
         UserDefaults.standard.set(enableAIFeatures, forKey: "enableAIFeatures")
