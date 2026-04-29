@@ -24,11 +24,17 @@ final class ClaudeDeclarationMatcher: DeclarationMatcherProtocol {
     func match(input: String) async -> DeclarationMatch {
         let apiKey = AnthropicConfig.apiKey
         guard !apiKey.isEmpty else {
+            print("🔑 [Claude] API key is empty — falling back to keyword matcher")
+            print("🔑 [Claude] Set ANTHROPIC_API_KEY as a User-Defined Build Setting in Xcode (not a scheme env var)")
             return await fallback.match(input: input)
         }
+        print("🔑 [Claude] API key found, prefix: \(String(apiKey.prefix(12)))...")
         do {
-            return try await callClaude(input: input, apiKey: apiKey)
+            let result = try await callClaude(input: input, apiKey: apiKey)
+            print("✅ [Claude] Match succeeded, category: \(result.category.rawValue)")
+            return result
         } catch {
+            print("❌ [Claude] Error: \(error) — falling back to keyword matcher")
             return await fallback.match(input: input)
         }
     }
@@ -57,7 +63,13 @@ final class ClaudeDeclarationMatcher: DeclarationMatcherProtocol {
         request.httpBody = try JSONEncoder().encode(body)
 
         let (data, response) = try await session.data(for: request)
-        guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
+        if let http = response as? HTTPURLResponse {
+            print("📡 [Claude] HTTP status: \(http.statusCode)")
+            if http.statusCode != 200, let body = String(data: data, encoding: .utf8) {
+                print("📡 [Claude] Error body: \(body.prefix(400))")
+            }
+            guard http.statusCode == 200 else { throw ClaudeError.httpError }
+        } else {
             throw ClaudeError.httpError
         }
 
