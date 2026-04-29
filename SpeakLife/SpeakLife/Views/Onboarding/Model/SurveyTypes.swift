@@ -385,8 +385,10 @@ class SurveyResponses: ObservableObject {
     @Published var notificationTime: NotificationTime? = nil
     @Published var selectedDeclarationStyle: DeclarationStyle? = nil
 
+    // Sword selection (Screen 4) is the explicit intent — use it first.
+    // Territory (Screen 1) is the fallback when no sword was picked.
     var resolvedGoalWord: SurveyGoalWord {
-        heaviestBurden?.goalWord ?? .peace
+        selectedDeclarationStyle?.goalWord ?? heaviestBurden?.goalWord ?? .peace
     }
 
     // Explicit sword selection takes precedence over territory inference
