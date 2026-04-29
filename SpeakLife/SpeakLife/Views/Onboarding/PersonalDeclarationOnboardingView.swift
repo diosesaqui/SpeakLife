@@ -131,14 +131,14 @@ struct PersonalDeclarationOnboardingView: View {
                     .offset(y: titleAppeared ? 0 : 18)
                     .animation(.easeOut(duration: 0.6), value: titleAppeared)
 
-                Text("Speak it out. This becomes your daily declaration\nuntil it comes to pass.")
-                    .font(.system(size: 15))
-                    .foregroundColor(.white.opacity(0.6))
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 32)
-                    .opacity(titleAppeared ? 1 : 0)
-                    .offset(y: titleAppeared ? 0 : 12)
-                    .animation(.easeOut(duration: 0.6).delay(0.12), value: titleAppeared)
+//                Text("Speak it out. This becomes your daily declaration\nuntil it comes to pass.")
+//                    .font(.system(size: 15))
+//                    .foregroundColor(.white.opacity(0.6))
+//                    .multilineTextAlignment(.center)
+//                    .padding(.horizontal, 32)
+//                    .opacity(titleAppeared ? 1 : 0)
+//                    .offset(y: titleAppeared ? 0 : 12)
+//                    .animation(.easeOut(duration: 0.6).delay(0.12), value: titleAppeared)
             }
 
             Text("Don't filter it. Don't make it sound \"right.\"\nJust speak what's on your heart.")

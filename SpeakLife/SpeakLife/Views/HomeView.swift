@@ -270,7 +270,7 @@ struct HomeView: View {
                // bibleView
                 // dailyChecklistView // Moved to DeclarationView
                 createYourOwnView
-                bibleView
+                communityView
                 profileView
                     
                 }
@@ -450,19 +450,20 @@ struct HomeView: View {
 //            }
 //    }
     
-//    var communityView: some View {
-//        PrayerWallView()
-//            .tag(4)
-//            .tabItem {
-//                if #available(iOS 17, *) {
-//                    Image(systemName: "hands.and.sparkles.fill")
-//                        .renderingMode(.original)
-//                } else {
-//                    Image(systemName: "person.2.fill")
-//                        .renderingMode(.original)
-//                }
-//            }
-//    }
+    var communityView: some View {
+        PrayerWallView()
+            .tag(4)
+            .tabItem {
+                if #available(iOS 17, *) {
+                    Image(systemName: "hands.and.sparkles.fill")
+                        .renderingMode(.original)
+                    Text("Warrior Room")
+                } else {
+                    Image(systemName: "person.2.fill")
+                        .renderingMode(.original)
+                }
+            }
+    }
     
     var bibleView: some View {
         BibleView()
