@@ -86,12 +86,6 @@
 		45567D542F29C9FC00382072 /* BiblePresenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45567D522F29C9FC00382072 /* BiblePresenter.swift */; };
 		45567D552F29C9FC00382072 /* BibleCacheManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45567D502F29C9FC00382072 /* BibleCacheManager.swift */; };
 		45567D562F29C9FC00382072 /* BibleInteractor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45567D512F29C9FC00382072 /* BibleInteractor.swift */; };
-		BCC8A7200000000000000001 /* BibleChatTopic.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCC8A7100000000000000001 /* BibleChatTopic.swift */; };
-		BCC8A7200000000000000002 /* BibleChatService.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCC8A7100000000000000002 /* BibleChatService.swift */; };
-		BCC8A7200000000000000003 /* BibleChatViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCC8A7100000000000000003 /* BibleChatViewModel.swift */; };
-		BCC8A7200000000000000004 /* BibleChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCC8A7100000000000000004 /* BibleChatView.swift */; };
-		BCC8A7200000000000000005 /* BibleChatAnswerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCC8A7100000000000000005 /* BibleChatAnswerView.swift */; };
-		BCC8A7200000000000000006 /* bible_chat_topics.json in Resources */ = {isa = PBXBuildFile; fileRef = BCC8A7100000000000000006 /* bible_chat_topics.json */; };
 		45567D582F29CA2700382072 /* BibleViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45567D572F29CA2700382072 /* BibleViewModel.swift */; };
 		45567D5E2F29CA5D00382072 /* BibleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45567D5C2F29CA5D00382072 /* BibleView.swift */; };
 		45567D5F2F29CA5D00382072 /* BibleBookmarksView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45567D592F29CA5D00382072 /* BibleBookmarksView.swift */; };
@@ -360,6 +354,12 @@
 		B000DDDDDDDDDDDDDDDDEEEE /* PersonalDeclarationOnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A000DDDDDDDDDDDDDDDDEEEE /* PersonalDeclarationOnboardingView.swift */; };
 		B000EEEEEEEEEEEEEEEEEFFF /* PersonalDeclarationCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = A000EEEEEEEEEEEEEEEEEFFF /* PersonalDeclarationCard.swift */; };
 		B000FFFFFFFFFFFFFFFFFFFF /* BreakthroughFlowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A000FFFFFFFFFFFFFFFFFFFF /* BreakthroughFlowView.swift */; };
+		BCC8A7200000000000000001 /* BibleChatTopic.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCC8A7100000000000000001 /* BibleChatTopic.swift */; };
+		BCC8A7200000000000000002 /* BibleChatService.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCC8A7100000000000000002 /* BibleChatService.swift */; };
+		BCC8A7200000000000000003 /* BibleChatViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCC8A7100000000000000003 /* BibleChatViewModel.swift */; };
+		BCC8A7200000000000000004 /* BibleChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCC8A7100000000000000004 /* BibleChatView.swift */; };
+		BCC8A7200000000000000005 /* BibleChatAnswerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCC8A7100000000000000005 /* BibleChatAnswerView.swift */; };
+		BCC8A7200000000000000006 /* bible_chat_topics.json in Resources */ = {isa = PBXBuildFile; fileRef = BCC8A7100000000000000006 /* bible_chat_topics.json */; };
 		C1A98C89749C94FF718F1980 /* AppleSignInPromptView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35B4B5074F8CB5AB1E2EA0DC /* AppleSignInPromptView.swift */; };
 		CF8E572E5459A038EEE73B3A /* PrayerWallViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BA7EE898DF248C4EB6EDEB2 /* PrayerWallViewModel.swift */; };
 		D0010000000000000001BBBB /* SurveyPersonalizationEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0010000000000000001AAAA /* SurveyPersonalizationEngine.swift */; };
@@ -489,12 +489,6 @@
 		45567D502F29C9FC00382072 /* BibleCacheManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BibleCacheManager.swift; sourceTree = "<group>"; };
 		45567D512F29C9FC00382072 /* BibleInteractor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BibleInteractor.swift; sourceTree = "<group>"; };
 		45567D522F29C9FC00382072 /* BiblePresenter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BiblePresenter.swift; sourceTree = "<group>"; };
-		BCC8A7100000000000000001 /* BibleChatTopic.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BibleChatTopic.swift; sourceTree = "<group>"; };
-		BCC8A7100000000000000002 /* BibleChatService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BibleChatService.swift; sourceTree = "<group>"; };
-		BCC8A7100000000000000003 /* BibleChatViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BibleChatViewModel.swift; sourceTree = "<group>"; };
-		BCC8A7100000000000000004 /* BibleChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BibleChatView.swift; sourceTree = "<group>"; };
-		BCC8A7100000000000000005 /* BibleChatAnswerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BibleChatAnswerView.swift; sourceTree = "<group>"; };
-		BCC8A7100000000000000006 /* bible_chat_topics.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = bible_chat_topics.json; sourceTree = "<group>"; };
 		45567D572F29CA2700382072 /* BibleViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BibleViewModel.swift; sourceTree = "<group>"; };
 		45567D592F29CA5D00382072 /* BibleBookmarksView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BibleBookmarksView.swift; sourceTree = "<group>"; };
 		45567D5A2F29CA5D00382072 /* BibleReaderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BibleReaderView.swift; sourceTree = "<group>"; };
@@ -761,6 +755,12 @@
 		AC33C8C421764DF3961EA018 /* OnboardingDailyBurstScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingDailyBurstScreen.swift; sourceTree = "<group>"; };
 		B0214EB35A67E7EF76115C40 /* PrayerWallPost.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrayerWallPost.swift; sourceTree = "<group>"; };
 		BA221D745BD49CF6BCFEBAA1 /* LifecycleNotificationService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LifecycleNotificationService.swift; sourceTree = "<group>"; };
+		BCC8A7100000000000000001 /* BibleChatTopic.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BibleChatTopic.swift; sourceTree = "<group>"; };
+		BCC8A7100000000000000002 /* BibleChatService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BibleChatService.swift; sourceTree = "<group>"; };
+		BCC8A7100000000000000003 /* BibleChatViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BibleChatViewModel.swift; sourceTree = "<group>"; };
+		BCC8A7100000000000000004 /* BibleChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BibleChatView.swift; sourceTree = "<group>"; };
+		BCC8A7100000000000000005 /* BibleChatAnswerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BibleChatAnswerView.swift; sourceTree = "<group>"; };
+		BCC8A7100000000000000006 /* bible_chat_topics.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = bible_chat_topics.json; sourceTree = "<group>"; };
 		C0010000000000000001AAAA /* SurveyPersonalizationEngine.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SurveyPersonalizationEngine.swift; sourceTree = "<group>"; };
 		C0020000000000000002AAAA /* ThreeDayChallengeManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ThreeDayChallengeManager.swift; sourceTree = "<group>"; };
 		C0030000000000000003AAAA /* SurveyOnboardingScreens.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SurveyOnboardingScreens.swift; sourceTree = "<group>"; };
@@ -2581,7 +2581,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 4.8;
+				MARKETING_VERSION = 4.9;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Franchiz.SpeakLife;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -2623,7 +2623,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 4.8;
+				MARKETING_VERSION = 4.9;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Franchiz.SpeakLife;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
