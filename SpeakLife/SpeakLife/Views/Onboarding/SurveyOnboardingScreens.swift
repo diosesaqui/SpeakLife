@@ -239,6 +239,7 @@ private struct TerritoryOptionRow: View {
                     Text(burden.rawValue)
                         .font(.system(size: 16, weight: .semibold, design: .rounded))
                         .foregroundColor(.white)
+                        .fixedSize(horizontal: false, vertical: true)
                     Text(burden.description)
                         .font(.system(size: 13, weight: .regular, design: .rounded))
                         .foregroundColor(.white.opacity(0.55))
@@ -287,11 +288,31 @@ struct SurveyQ1BurdenScreen: View {
         VStack(spacing: 0) {
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 24) {
-                    Spacer().frame(height: size.height * 0.12)
-                    SurveyQuestionHeader(
-                        "What has the enemy been stealing from you?",
-                        subtitle: "Pick your territory. We'll build your declarations around it."
-                    )
+                    Spacer().frame(height: size.height * 0.10)
+
+                    // Revelation header — inline to support scripture + bridge
+                    VStack(spacing: 12) {
+                        Text("What you've been struggling with?\nIt's not from God.")
+                            .font(.system(size: 28, weight: .bold, design: .rounded))
+                            .foregroundColor(.white)
+                            .multilineTextAlignment(.center)
+                            .fixedSize(horizontal: false, vertical: true)
+
+                        Text("\"The thief comes to steal, kill, and destroy.\nI came that they may have life — and have it abundantly.\"\n— John 10:10")
+                            .font(.system(size: 14, weight: .regular, design: .serif))
+                            .italic()
+                            .foregroundColor(.red.opacity(0.8))
+                            .multilineTextAlignment(.center)
+                            .fixedSize(horizontal: false, vertical: true)
+
+                        Text("The enemy has been blocking your inheritance.\nName what he's been after. Then we take it back.")
+                            .font(.system(size: 15, weight: .regular, design: .rounded))
+                            .foregroundColor(.white.opacity(0.7))
+                            .multilineTextAlignment(.center)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .padding(.horizontal, 28)
+
                     VStack(spacing: 10) {
                         ForEach(HeaviestBurden.allCases) { option in
                             TerritoryOptionRow(
@@ -313,7 +334,116 @@ struct SurveyQ1BurdenScreen: View {
     }
 }
 
-// MARK: - Q2: Duration
+// MARK: - Screen 4: Sword Selection
+
+private struct SwordOptionRow: View {
+    let style: DeclarationStyle
+    let isSelected: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: {
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            action()
+        }) {
+            HStack(spacing: 14) {
+                Text(style.swordIcon)
+                    .font(.system(size: 24))
+                    .frame(width: 32)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(style.swordLabel)
+                        .font(.system(size: 16, weight: .semibold, design: .rounded))
+                        .foregroundColor(.white)
+                    Text(style.swordScripture)
+                        .font(.system(size: 13, weight: .regular, design: .rounded))
+                        .foregroundColor(.white.opacity(0.55))
+                        .italic()
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                Spacer()
+                ZStack {
+                    Circle()
+                        .strokeBorder(
+                            isSelected ? Color.white : Color.white.opacity(0.35),
+                            lineWidth: 1.5
+                        )
+                        .frame(width: 22, height: 22)
+                    if isSelected {
+                        Circle()
+                            .fill(Color.white)
+                            .frame(width: 12, height: 12)
+                    }
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 14)
+            .background(
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .fill(isSelected ? Color.white.opacity(0.15) : Color.white.opacity(0.06))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                            .strokeBorder(
+                                isSelected ? Color.white.opacity(0.5) : Color.white.opacity(0.12),
+                                lineWidth: 1
+                            )
+                    )
+            )
+            .animation(.spring(response: 0.3, dampingFraction: 0.75), value: isSelected)
+        }
+        .buttonStyle(PlainButtonStyle())
+    }
+}
+
+struct SurveyDeclarationStyleScreen: View {
+    let size: CGSize
+    @ObservedObject var responses: SurveyResponses
+    let onContinue: () -> Void
+
+    var body: some View {
+        VStack(spacing: 0) {
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 24) {
+                    Spacer().frame(height: size.height * 0.10)
+                    VStack(spacing: 10) {
+                        Text("Pick the sound of your sword.")
+                            .font(.system(size: 28, weight: .bold, design: .rounded))
+                            .foregroundColor(.white)
+                            .multilineTextAlignment(.center)
+                        VStack(spacing: 6) {
+                            Text("The Word of God is \"the sword of the Spirit.\" (Ephesians 6:17)")
+                                .font(.system(size: 14, weight: .regular, design: .serif))
+                                .italic()
+                                .foregroundColor(.red.opacity(0.8))
+                                .multilineTextAlignment(.center)
+                            Text("Different battles need different swords.\nWhat kind do you need to swing first?")
+                                .font(.system(size: 15, weight: .regular, design: .rounded))
+                                .foregroundColor(.white.opacity(0.7))
+                                .multilineTextAlignment(.center)
+                        }
+                    }
+                    .padding(.horizontal, 28)
+                    VStack(spacing: 10) {
+                        ForEach(DeclarationStyle.allCases) { style in
+                            SwordOptionRow(
+                                style: style,
+                                isSelected: responses.selectedDeclarationStyle == style
+                            ) {
+                                responses.selectedDeclarationStyle = style
+                            }
+                        }
+                    }
+                    .padding(.horizontal, 20)
+                    Spacer().frame(height: 8)
+                }
+            }
+            SurveyContinueButton(isEnabled: responses.selectedDeclarationStyle != nil, action: onContinue)
+                .padding(.top, 8).padding(.bottom, 36)
+        }
+        .onAppear { Analytics.logEvent("survey_sword_style_shown", parameters: nil) }
+    }
+}
+
+// MARK: - Q2: Wherever You Are With God
 
 struct SurveyQ2DurationScreen: View {
     let size: CGSize
@@ -325,10 +455,26 @@ struct SurveyQ2DurationScreen: View {
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 24) {
                     Spacer().frame(height: size.height * 0.12)
-                    SurveyQuestionHeader(
-                        "How long have you been walking with God?",
-                        subtitle: "No matter where you've been — what matters is where you're going."
-                    )
+                    VStack(spacing: 10) {
+                        Text("Wherever you are with God right now — your inheritance is already secured.")
+                            .font(.system(size: 26, weight: .bold, design: .rounded))
+                            .foregroundColor(.white)
+                            .multilineTextAlignment(.center)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .padding(.horizontal, 28)
+                        Text("Tell us where you are so we meet you there.\nBut know this: the chest doesn't get fuller for the mature or emptier for the new.")
+                            .font(.system(size: 15, weight: .regular, design: .rounded))
+                            .foregroundColor(.white.opacity(0.65))
+                            .multilineTextAlignment(.center)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .padding(.horizontal, 28)
+                        Text("It's been full since the cross.")
+                            .font(.system(size: 15, weight: .regular, design: .serif))
+                            .italic()
+                            .foregroundColor(.white.opacity(0.75))
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, 28)
+                    }
                     VStack(spacing: 10) {
                         ForEach(BurdenDuration.allCases) { option in
                             SurveyOptionRow(
@@ -347,101 +493,6 @@ struct SurveyQ2DurationScreen: View {
                 .padding(.top, 8).padding(.bottom, 36)
         }
         .onAppear { Analytics.logEvent("survey_q2_shown", parameters: nil) }
-    }
-}
-
-// MARK: - Interstitial A
-
-private struct TestimonialReview {
-    let quote: String
-    let author: String
-}
-
-struct SurveyInterstitialAScreen: View {
-    let size: CGSize
-    @ObservedObject var responses: SurveyResponses
-    let onContinue: () -> Void
-
-    @State private var v = false
-
-    private var testimonial: TestimonialReview {
-        switch responses.heaviestBurden?.testimonialGroup {
-        case .fearAndHealth:
-            return TestimonialReview(
-                quote: "\"I used to wake up every morning in anxiety. 21 days of healing declarations later — I wake up in peace. I didn't change my circumstances. I changed what I was speaking over them.\"",
-                author: "— Jasmine R., Houston"
-            )
-        case .identityAndPurpose:
-            return TestimonialReview(
-                quote: "\"I spent years asking God to show me my purpose. SpeakLife taught me to stop asking and start declaring. Within 60 days, doors opened that I'd been knocking on for years.\"",
-                author: "— David M., Atlanta"
-            )
-        default:
-            return TestimonialReview(
-                quote: "\"My faith used to crumble under pressure. After 30 days of declaring God's Word, I stopped doubting and started standing. God's Word became my first response — not my last resort.\"",
-                author: "— Marcus T., Atlanta"
-            )
-        }
-    }
-
-    var body: some View {
-        VStack(spacing: 0) {
-            Spacer()
-            VStack(spacing: 32) {
-                VStack(spacing: 14) {
-                    Text("You're not walking this alone.")
-                        .font(.system(size: 28, weight: .bold, design: .rounded))
-                        .foregroundColor(.white)
-                        .multilineTextAlignment(.center)
-                        .opacity(v ? 1 : 0)
-                        .offset(y: v ? 0 : 20)
-                    Text("Over 100,000 believers have opened SpeakLife and discovered that speaking God's Word out loud daily doesn't just build faith — it rewires what you believe about yourself.")
-                        .font(.system(size: 16, weight: .regular, design: .rounded))
-                        .foregroundColor(.white.opacity(0.75))
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, 32)
-                        .opacity(v ? 1 : 0)
-                        .offset(y: v ? 0 : 16)
-                        .animation(.easeOut(duration: 0.5).delay(0.15), value: v)
-                }
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack(spacing: 2) {
-                        ForEach(0..<5, id: \.self) { _ in
-                            Image(systemName: "star.fill")
-                                .font(.system(size: 11))
-                                .foregroundColor(.yellow)
-                        }
-                    }
-                    Text(testimonial.quote)
-                        .font(.system(size: 14, weight: .regular, design: .rounded))
-                        .foregroundColor(.white.opacity(0.85))
-                        .italic()
-                        .fixedSize(horizontal: false, vertical: true)
-                    Text(testimonial.author)
-                        .font(.system(size: 12, weight: .medium, design: .rounded))
-                        .foregroundColor(.white.opacity(0.5))
-                }
-                .padding(18)
-                .background(
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .fill(Color.white.opacity(0.08))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                .strokeBorder(Color.white.opacity(0.14), lineWidth: 1)
-                        )
-                )
-                .padding(.horizontal, 28)
-                .opacity(v ? 1 : 0)
-                .offset(y: v ? 0 : 12)
-                .animation(.easeOut(duration: 0.5).delay(0.3), value: v)
-            }
-            Spacer()
-            SurveyContinueButton(label: "Keep Going →") { onContinue() }
-                .padding(.bottom, 36)
-                .opacity(v ? 1 : 0)
-                .animation(.easeOut(duration: 0.4).delay(0.5), value: v)
-        }
-        .onAppear { withAnimation(.easeOut(duration: 0.6)) { v = true } }
     }
 }
 
@@ -877,6 +928,74 @@ struct SurveyProductPositioningScreen: View {
     }
 }
 
+
+// MARK: - Take a Stand (Screen 13 — auto-advance transition)
+
+struct SurveyTakeAStandScreen: View {
+    let onContinue: () -> Void
+
+    @State private var line1Opacity: Double = 0
+    @State private var line2Opacity: Double = 0
+    @State private var bgBrightness: Double = 0
+    @State private var hasAdvanced = false
+
+    var body: some View {
+        ZStack {
+            Color.white.opacity(bgBrightness)
+                .ignoresSafeArea()
+                .animation(.easeInOut(duration: 2.0), value: bgBrightness)
+
+            VStack(spacing: 20) {
+                Text("You just heard what God says\nabout your battle.")
+                    .font(.system(size: 26, weight: .semibold, design: .rounded))
+                    .foregroundColor(.white)
+                    .multilineTextAlignment(.center)
+                    .opacity(line1Opacity)
+                    .animation(.easeOut(duration: 0.6), value: line1Opacity)
+
+                Text("Now it's time to take a stand.")
+                    .font(.system(size: 20, weight: .regular, design: .rounded))
+                    .italic()
+                    .foregroundColor(.white.opacity(0.75))
+                    .multilineTextAlignment(.center)
+                    .opacity(line2Opacity)
+                    .animation(.easeOut(duration: 0.6), value: line2Opacity)
+            }
+            .padding(.horizontal, 36)
+
+            // VoiceOver users get a tappable Continue that sighted users can't see
+            VStack {
+                Spacer()
+                Button("Continue") { advance(isSkip: true) }
+                    .opacity(0)
+                    .frame(height: 1)
+                    .accessibilityLabel("Continue")
+                    .padding(.bottom, 8)
+            }
+        }
+        .contentShape(Rectangle())
+        .onTapGesture { advance(isSkip: true) }
+        .onAppear {
+            Analytics.logEvent("onboarding_takeAStand_view", parameters: nil)
+            withAnimation { line1Opacity = 1 }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                withAnimation { line2Opacity = 1 }
+            }
+            withAnimation(.easeInOut(duration: 2.0)) { bgBrightness = 0.12 }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+                advance(isSkip: false)
+            }
+        }
+    }
+
+    private func advance(isSkip: Bool) {
+        guard !hasAdvanced else { return }
+        hasAdvanced = true
+        let event = isSkip ? "onboarding_takeAStand_skip" : "onboarding_takeAStand_advance"
+        Analytics.logEvent(event, parameters: nil)
+        onContinue()
+    }
+}
 
 // MARK: - The Seed (Screen 3)
 
