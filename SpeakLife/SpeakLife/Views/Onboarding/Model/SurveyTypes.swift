@@ -13,11 +13,11 @@ enum SurveyStep: Int, CaseIterable {
     case productPositioning = 2
     case theSeed            = 3
     case declarationStyle   = 4   // "Pick the sound of your sword"
-    case burdenDuration     = 5
-    case mergedBarriers     = 6   // MERGED: failedAttempts + innerLie
-    case interstitialB      = 7
-    case declarationExp     = 8
-    case styleProof         = 9
+    case styleProof         = 5   // immediately validates the sword choice
+    case burdenDuration     = 6
+    case mergedBarriers     = 7   // MERGED: failedAttempts + innerLie
+    case interstitialB      = 8
+    case declarationExp     = 9
     case goalReveal         = 10
     case personalDeclaration = 11
     case takeAStand         = 12  // auto-advance transition — breath before commitment
