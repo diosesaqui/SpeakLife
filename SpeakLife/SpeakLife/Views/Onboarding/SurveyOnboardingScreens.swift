@@ -863,7 +863,7 @@ struct SurveyProductPositioningScreen: View {
             .opacity(v ? 1 : 0)
             .offset(y: v ? 0 : 20)
 
-            Spacer().frame(maxHeight: 40)
+            Spacer()
 
             SurveyContinueButton(label: "I'm ready to take what's mine →", action: onContinue)
                 .padding(.bottom, 36)
