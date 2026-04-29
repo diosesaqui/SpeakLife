@@ -58,13 +58,13 @@ struct SurveyOnboardingView: View {
     @ViewBuilder
     private var currentStepView: some View {
         switch currentStep {
-        case .intro:             SurveyIntroScreen(size: size) { advance() }
-        case .heaviestBurden:    SurveyQ1BurdenScreen(size: size, responses: responses) { advance() }
+        case .intro:              SurveyIntroScreen(size: size) { advance() }
+        case .heaviestBurden:     SurveyQ1BurdenScreen(size: size, responses: responses) { advance() }
         case .productPositioning: SurveyProductPositioningScreen(size: size) { advance() }
-        case .burdenDuration:    SurveyQ2DurationScreen(size: size, responses: responses) { advance() }
-        case .interstitialA:     SurveyInterstitialAScreen(size: size, responses: responses) { advance() }
-        case .mergedBarriers:    SurveyMergedBarriersScreen(size: size, responses: responses) { advance() }
-        case .interstitialB:     SurveyInterstitialBScreen(size: size) { advance() }
+        case .theSeed:            SurveyTheSeedScreen(size: size) { advance() }
+        case .burdenDuration:     SurveyQ2DurationScreen(size: size, responses: responses) { advance() }
+        case .mergedBarriers:     SurveyMergedBarriersScreen(size: size, responses: responses) { advance() }
+        case .interstitialB:      SurveyInterstitialBScreen(size: size) { advance() }
         default: lateStepView
         }
     }
@@ -74,8 +74,6 @@ struct SurveyOnboardingView: View {
         switch currentStep {
         case .declarationExp:
             SurveyQ5DeclarationExpScreen(size: size, responses: responses) { advance() }
-        case .styleProof:
-            SurveyStyleProofScreen(size: size, responses: responses) { advance() }
         case .goalReveal:
             SurveyGoalRevealScreen(size: size, responses: responses) { advance() }
         case .personalDeclaration:
@@ -86,6 +84,8 @@ struct SurveyOnboardingView: View {
                 savedDeclaration = declaration
                 advance()
             }
+        case .takeAStand:
+            SurveyTakeAStandScreen { advance() }
         case .commitmentHold:
             SurveyCommitmentHoldScreen(size: size) { advance() }
         case .paywall:

@@ -11,22 +11,22 @@ enum SurveyStep: Int, CaseIterable {
     case intro              = 0
     case heaviestBurden     = 1
     case productPositioning = 2
-    case burdenDuration     = 3
-    case interstitialA      = 4
+    case theSeed            = 3
+    case burdenDuration     = 4
     case mergedBarriers     = 5   // MERGED: failedAttempts + innerLie
     case interstitialB      = 6
     case declarationExp     = 7
-    case styleProof         = 8
-    case goalReveal         = 9
-    case personalDeclaration = 10
+    case goalReveal         = 8
+    case personalDeclaration = 9
+    case takeAStand         = 10  // auto-advance transition — breath before commitment
     case commitmentHold     = 11
     case paywall            = 12
     case notificationTime   = 13  // post-paywall
 
     var isQuestion: Bool {
         switch self {
-        case .intro, .productPositioning, .interstitialA, .interstitialB,
-             .styleProof, .goalReveal, .personalDeclaration, .commitmentHold,
+        case .intro, .productPositioning, .theSeed, .interstitialB,
+             .goalReveal, .personalDeclaration, .takeAStand, .commitmentHold,
              .paywall, .notificationTime: return false
         default: return true
         }
@@ -45,19 +45,21 @@ enum SurveyStep: Int, CaseIterable {
 // What the enemy has stolen — kingdom advancement framing
 enum HeaviestBurden: String, CaseIterable, Identifiable {
     var id: String { rawValue }
-    case healing    = "My healing"
-    case identity   = "My identity"
-    case calling    = "My calling"
     case peace      = "My peace"
+    case health     = "My health"
+    case joy        = "My joy"
+    case identity   = "My identity"
+    case purpose    = "My purpose"
     case abundance  = "My abundance"
-    case allOfIt    = "All of it"
+    case allOfIt    = "I'm not in crisis — I just know there's MORE and I refuse to settle"
 
     var icon: String {
         switch self {
-        case .healing:   return "🌿"
-        case .identity:  return "👑"
-        case .calling:   return "🧭"
         case .peace:     return "🕊"
+        case .health:    return "🌿"
+        case .joy:       return "☀️"
+        case .identity:  return "👑"
+        case .purpose:   return "🧭"
         case .abundance: return "💰"
         case .allOfIt:   return "⚡"
         }
@@ -65,21 +67,23 @@ enum HeaviestBurden: String, CaseIterable, Identifiable {
 
     var description: String {
         switch self {
-        case .healing:   return "My body isn't walking in what Christ already paid for"
-        case .identity:  return "I've lost sight of who God says I am"
-        case .calling:   return "I'm not walking in the purpose placed on my life"
         case .peace:     return "Anxiety and fear have taken over my mind"
+        case .health:    return "My body isn't walking in the healing God promised me"
+        case .joy:       return "Life feels empty and I know that's not God's plan"
+        case .identity:  return "I've lost sight of who God says I am"
+        case .purpose:   return "I'm not walking in the calling placed on my life"
         case .abundance: return "I'm not experiencing the provision God prepared"
-        case .allOfIt:   return "I'm not leaving any of my inheritance on the table"
+        case .allOfIt:   return ""
         }
     }
 
     var goalWord: SurveyGoalWord {
         switch self {
-        case .healing:   return .healing
-        case .identity:  return .identity
-        case .calling:   return .purpose
         case .peace:     return .peace
+        case .health:    return .healing
+        case .joy:       return .joy
+        case .identity:  return .identity
+        case .purpose:   return .purpose
         case .abundance: return .prosperity
         case .allOfIt:   return .confidence
         }
@@ -87,10 +91,11 @@ enum HeaviestBurden: String, CaseIterable, Identifiable {
 
     var declarationStyle: DeclarationStyle {
         switch self {
-        case .healing:   return .healing
-        case .identity:  return .identity
-        case .calling:   return .destiny
         case .peace:     return .peace
+        case .health:    return .healing
+        case .joy:       return .peace
+        case .identity:  return .identity
+        case .purpose:   return .destiny
         case .abundance: return .prosperity
         case .allOfIt:   return .warfare
         }
@@ -98,12 +103,13 @@ enum HeaviestBurden: String, CaseIterable, Identifiable {
 
     var shortLabel: String {
         switch self {
-        case .healing:   return "healing"
-        case .identity:  return "identity"
-        case .calling:   return "calling"
         case .peace:     return "peace"
+        case .health:    return "health"
+        case .joy:       return "joy"
+        case .identity:  return "identity"
+        case .purpose:   return "purpose"
         case .abundance: return "abundance"
-        case .allOfIt:   return "full inheritance"
+        case .allOfIt:   return "more"
         }
     }
 
@@ -111,8 +117,8 @@ enum HeaviestBurden: String, CaseIterable, Identifiable {
 
     var testimonialGroup: TestimonialGroup {
         switch self {
-        case .peace, .healing:            return .fearAndHealth
-        case .identity, .calling:         return .identityAndPurpose
+        case .peace, .health:             return .fearAndHealth
+        case .joy, .identity, .purpose:   return .identityAndPurpose
         case .abundance, .allOfIt:        return .defaultGrowth
         }
     }
@@ -126,11 +132,10 @@ enum TestimonialGroup {
 
 enum BurdenDuration: String, CaseIterable, Identifiable {
     var id: String { rawValue }
-    case newlyStarted      = "This is new — just started exploring faith"
-    case fewMonths         = "A few months — finding my footing"
-    case overAYear         = "Over a year — I know God but want to go deeper"
-    case mostOfMyLife      = "Most of my adult life — but something feels missing"
-    case asLongAsRemember  = "As long as I can remember — ready to go to the next level"
+    case justStarting = "Just starting out"
+    case fewYears     = "A few years in"
+    case longTime     = "Walking with Him for a long time"
+    case drifted      = "I've drifted and I'm coming back"
 }
 
 // Merged barriers screen — best of old Screens 5 + 6
@@ -180,6 +185,40 @@ enum DeclarationStyle: String, CaseIterable, Identifiable {
         case .destiny:    return "Call forth my calling and step into it"
         case .peace:      return "Quiet the fear and anchor my mind in truth"
         case .prosperity: return "Open doors, speak abundance, and receive favor"
+        }
+    }
+
+    // Sword-selection framing (Screen 4)
+    var swordLabel: String {
+        switch self {
+        case .peace:      return "Gentle & restoring"
+        case .warfare:    return "Bold & warfare"
+        case .healing:    return "Healing-focused"
+        case .identity:   return "Identity-anchored"
+        case .destiny:    return "Calling-forward"
+        case .prosperity: return "All of it"
+        }
+    }
+
+    var swordScripture: String {
+        switch self {
+        case .peace:      return "\"Be still and know that I am God.\""
+        case .warfare:    return "\"It is written — the enemy must flee.\""
+        case .healing:    return "\"By His stripes, I am healed.\""
+        case .identity:   return "\"I am who God says I am.\""
+        case .destiny:    return "\"I step into what He prepared for me.\""
+        case .prosperity: return "I'm taking ground in every direction."
+        }
+    }
+
+    var swordIcon: String {
+        switch self {
+        case .peace:      return "🕊"
+        case .warfare:    return "⚔️"
+        case .healing:    return "💚"
+        case .identity:   return "👑"
+        case .destiny:    return "🧭"
+        case .prosperity: return "✨"
         }
     }
 
