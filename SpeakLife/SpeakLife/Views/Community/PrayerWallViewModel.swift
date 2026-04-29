@@ -2,7 +2,7 @@
 //  PrayerWallViewModel.swift
 //  SpeakLife
 //
-//  ViewModel for the community Prayer Wall feed.
+//  ViewModel for the community Warrior Room (Prayer Wall) feed.
 //
 
 import SwiftUI
@@ -22,6 +22,13 @@ class PrayerWallViewModel: ObservableObject {
     /// meaning there are no more posts to page through.
     @Published var hasMore = true
 
+    /// Active feed filter — nil = "All". Persists for the session only.
+    @Published var categoryFilter: WarriorRoomCategory?
+
+    /// Agreements loaded per post, keyed by post.id. Loaded lazily on expand.
+    @Published var agreementsByPost: [String: [Agreement]] = [:]
+    @Published var loadingAgreementsForPost: Set<String> = []
+
     private let db = Firestore.firestore()
     private let collection = "prayerWall"
     private let batchSize = 15
@@ -40,20 +47,37 @@ class PrayerWallViewModel: ObservableObject {
     private let networkMonitor = NWPathMonitor()
     let deviceId: String
 
-    // MARK: - Prayed Post IDs
-    private let prayedPostIdsKey = "prayedPostIds"
-    private var prayedPostIds: Set<String> {
+    // MARK: - Local user state
+
+    /// Maps post.id → reaction raw value for the current user's chosen reaction.
+    /// Backed by UserDefaults so it survives app restarts.
+    private let userReactionsKey = "warriorRoomUserReactions"
+    private let legacyPrayedPostIdsKey = "prayedPostIds"
+
+    private var userReactions: [String: String] {
         get {
-            let array = UserDefaults.standard.stringArray(forKey: prayedPostIdsKey) ?? []
+            UserDefaults.standard.dictionary(forKey: userReactionsKey) as? [String: String] ?? [:]
+        }
+        set {
+            UserDefaults.standard.set(newValue, forKey: userReactionsKey)
+        }
+    }
+
+    /// Posts the current user has already added an agreement to.
+    private let userAgreementPostIdsKey = "warriorRoomUserAgreements"
+    private var userAgreementPostIds: Set<String> {
+        get {
+            let array = UserDefaults.standard.stringArray(forKey: userAgreementPostIdsKey) ?? []
             return Set(array)
         }
         set {
-            UserDefaults.standard.set(Array(newValue), forKey: prayedPostIdsKey)
+            UserDefaults.standard.set(Array(newValue), forKey: userAgreementPostIdsKey)
         }
     }
 
     init() {
         self.deviceId = PrayerWallViewModel.getDeviceId()
+        migrateLegacyPrayedPostIdsIfNeeded()
         loadCachedPosts()
         monitorNetwork()
         fetchPostsIfNeeded()
@@ -70,6 +94,25 @@ class PrayerWallViewModel: ObservableObject {
             UserDefaults.standard.set(newId, forKey: key)
             return newId
         }
+    }
+
+    // MARK: - Migration
+
+    /// One-shot migration: every post the user previously prayed for becomes
+    /// a "standing" reaction so their selection state survives the upgrade.
+    private func migrateLegacyPrayedPostIdsIfNeeded() {
+        let defaults = UserDefaults.standard
+        guard !defaults.bool(forKey: "warriorRoomUserReactionsMigrated") else { return }
+
+        let legacyIds = defaults.stringArray(forKey: legacyPrayedPostIdsKey) ?? []
+        if !legacyIds.isEmpty {
+            var migrated = userReactions
+            for id in legacyIds where migrated[id] == nil {
+                migrated[id] = WarriorRoomReaction.standing.rawValue
+            }
+            userReactions = migrated
+        }
+        defaults.set(true, forKey: "warriorRoomUserReactionsMigrated")
     }
 
     // MARK: - Cache
@@ -213,15 +256,24 @@ class PrayerWallViewModel: ObservableObject {
             }
     }
 
+    // MARK: - Filtered feed
+
+    /// `posts` filtered by the active category. Returns all posts if no filter
+    /// is selected. Posts without a category are only shown under "All".
+    var filteredPosts: [PrayerWallPost] {
+        guard let filter = categoryFilter else { return posts }
+        return posts.filter { $0.category == filter.rawValue }
+    }
+
     // MARK: - Add Post
 
-    func addPost(text: String, isSister: Bool) {
+    func addPost(text: String, isSister: Bool, category: WarriorRoomCategory) {
         guard networkMonitor.currentPath.status != .unsatisfied else {
             errorMessage = "You are offline. Please connect to the internet to post."
             return
         }
         guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            errorMessage = "Prayer request cannot be empty."
+            errorMessage = "Declaration cannot be empty."
             return
         }
 
@@ -230,18 +282,21 @@ class PrayerWallViewModel: ObservableObject {
             guard let self = self else { return }
             if count >= 1 {
                 DispatchQueue.main.async {
-                    self.errorMessage = "You've already shared a prayer today. Come back tomorrow!"
+                    self.errorMessage = "You've already declared today. Come back tomorrow to take more ground."
                 }
                 return
             }
-            self.submitPost(text: text, isSister: isSister)
+            self.submitPost(text: text, isSister: isSister, category: category)
         }
     }
 
-    private func submitPost(text: String, isSister: Bool) {
+    private func submitPost(text: String, isSister: Bool, category: WarriorRoomCategory) {
         isSubmitting = true
         let displayName = isSister ? "A sister in Christ" : "A brother in Christ"
-        let newPost = PrayerWallPost(text: text, displayName: displayName, deviceId: deviceId)
+        let newPost = PrayerWallPost(text: text,
+                                     displayName: displayName,
+                                     deviceId: deviceId,
+                                     category: category)
 
         do {
             _ = try db.collection(collection).addDocument(from: newPost) { [weak self] error in
@@ -249,9 +304,9 @@ class PrayerWallViewModel: ObservableObject {
                     guard let self = self else { return }
                     self.isSubmitting = false
                     if let error = error {
-                        self.errorMessage = "Error posting prayer: \(error.localizedDescription)"
+                        self.errorMessage = "Error posting declaration: \(error.localizedDescription)"
                     } else {
-                        self.submissionMessage = "Your prayer has been shared 🙏"
+                        self.submissionMessage = "Your declaration is on the wall \u{1F525}"
                         self.fetchPosts(reset: true)
                         self.fetchMyPosts()
                     }
@@ -286,37 +341,121 @@ class PrayerWallViewModel: ObservableObject {
             }
     }
 
-    // MARK: - Pray For Post
+    // MARK: - Legacy compatibility shims
+    //
+    // Kept so the existing PrayerWallView (single 🙏 button, no category)
+    // continues to compile and run while the v2 UI is built out. Both shims
+    // delegate to the new reaction / category APIs and are safe to remove
+    // once the View has been migrated.
 
+    /// Old single-reaction API. Treats a tap as a "standing" reaction.
+    /// Idempotent — does nothing if the user already reacted.
     func prayForPost(_ post: PrayerWallPost) {
+        guard reaction(for: post) == nil else { return }
+        toggleReaction(.standing, on: post)
+    }
+
+    /// Old composer API — defaults the category to `.faith` for posts created
+    /// before the category selector ships in the UI.
+    func addPost(text: String, isSister: Bool) {
+        addPost(text: text, isSister: isSister, category: .faith)
+    }
+
+    // MARK: - Reactions
+
+    /// The current user's reaction on a post, if any.
+    func reaction(for post: PrayerWallPost) -> WarriorRoomReaction? {
+        guard let id = post.id, let raw = userReactions[id] else { return nil }
+        return WarriorRoomReaction(rawValue: raw)
+    }
+
+    /// Backwards-compat shim for any caller that still asks "did the user pray
+    /// for this post?". Returns true if any reaction is set.
+    func hasPrayed(for post: PrayerWallPost) -> Bool {
+        reaction(for: post) != nil
+    }
+
+    /// Toggle a reaction on a post. Tapping the currently-selected reaction
+    /// clears it; tapping a different reaction switches to it.
+    func toggleReaction(_ reaction: WarriorRoomReaction, on post: PrayerWallPost) {
         guard let id = post.id else { return }
-        guard !hasPrayed(for: post) else { return }
+        let existing = self.reaction(for: post)
 
-        var updated = prayedPostIds
-        updated.insert(id)
-        prayedPostIds = updated
-
-        // Update local state immediately
-        if let idx = posts.firstIndex(where: { $0.id == id }) {
-            posts[idx].prayerCount += 1
+        if existing == reaction {
+            // Toggle off
+            applyReactionDelta(postId: id, remove: existing, add: nil)
+        } else {
+            // Switch / add
+            applyReactionDelta(postId: id, remove: existing, add: reaction)
         }
-        if let idx = myPosts.firstIndex(where: { $0.id == id }) {
-            myPosts[idx].prayerCount += 1
+    }
+
+    /// Mutates local state, persists user state, and writes denormalised
+    /// counts to Firestore. `prayerCount` is kept in sync with the running
+    /// total so the existing milestone Cloud Function continues to fire.
+    private func applyReactionDelta(postId: String,
+                                    remove: WarriorRoomReaction?,
+                                    add: WarriorRoomReaction?) {
+        // Local state
+        var reactions = userReactions
+        if add != nil {
+            reactions[postId] = add!.rawValue
+        } else {
+            reactions.removeValue(forKey: postId)
+        }
+        userReactions = reactions
+
+        let mutate: (inout PrayerWallPost) -> Void = { post in
+            var counts = post.reactionCounts ?? [:]
+
+            // Migrate legacy posts: hydrate counts from the old prayerCount
+            // before we start mutating, so we don't lose existing taps.
+            if post.reactionCounts == nil && post.prayerCount > 0 {
+                counts[WarriorRoomReaction.standing.rawValue] = post.prayerCount
+            }
+
+            if let r = remove {
+                counts[r.rawValue] = max(0, (counts[r.rawValue] ?? 0) - 1)
+            }
+            if let a = add {
+                counts[a.rawValue] = (counts[a.rawValue] ?? 0) + 1
+            }
+            post.reactionCounts = counts
+            post.prayerCount = counts.values.reduce(0, +)
         }
 
-        db.collection(collection).document(id)
-            .updateData(["prayerCount": FieldValue.increment(Int64(1))]) { [weak self] error in
+        if let idx = posts.firstIndex(where: { $0.id == postId }) {
+            mutate(&posts[idx])
+        }
+        if let idx = myPosts.firstIndex(where: { $0.id == postId }) {
+            mutate(&myPosts[idx])
+        }
+
+        // Firestore: denormalised increment per reaction key + total prayerCount.
+        // Using FieldValue.increment keeps writes commutative and conflict-free.
+        var updates: [String: Any] = [:]
+        var totalDelta: Int64 = 0
+        if let r = remove {
+            updates["reactionCounts.\(r.rawValue)"] = FieldValue.increment(Int64(-1))
+            totalDelta -= 1
+        }
+        if let a = add {
+            updates["reactionCounts.\(a.rawValue)"] = FieldValue.increment(Int64(1))
+            totalDelta += 1
+        }
+        if totalDelta != 0 {
+            updates["prayerCount"] = FieldValue.increment(totalDelta)
+        }
+
+        guard !updates.isEmpty else { return }
+        db.collection(collection).document(postId)
+            .updateData(updates) { [weak self] error in
                 if let error = error {
                     DispatchQueue.main.async {
-                        self?.errorMessage = "Error saving prayer: \(error.localizedDescription)"
+                        self?.errorMessage = "Error saving reaction: \(error.localizedDescription)"
                     }
                 }
             }
-    }
-
-    func hasPrayed(for post: PrayerWallPost) -> Bool {
-        guard let id = post.id else { return false }
-        return prayedPostIds.contains(id)
     }
 
     // MARK: - Mark As Answered
@@ -363,6 +502,88 @@ class PrayerWallViewModel: ObservableObject {
                         }
                     }
                 }
+            }
+        }
+    }
+
+    // MARK: - Agreements
+
+    /// Whether the current user has already added an agreement to this post.
+    func hasAgreed(on post: PrayerWallPost) -> Bool {
+        guard let id = post.id else { return false }
+        return userAgreementPostIds.contains(id)
+    }
+
+    /// Lazily load the agreements subcollection for a post on expand.
+    func loadAgreements(for post: PrayerWallPost) {
+        guard let id = post.id else { return }
+        guard !loadingAgreementsForPost.contains(id) else { return }
+        loadingAgreementsForPost.insert(id)
+
+        db.collection(collection).document(id).collection("agreements")
+            .order(by: "timestamp", descending: false)
+            .getDocuments { [weak self] snapshot, error in
+                DispatchQueue.main.async {
+                    guard let self = self else { return }
+                    self.loadingAgreementsForPost.remove(id)
+                    if let error = error {
+                        print("⚠️ WarriorRoom: Failed to load agreements: \(error.localizedDescription)")
+                        return
+                    }
+                    let items = (snapshot?.documents ?? []).compactMap {
+                        try? $0.data(as: Agreement.self)
+                    }
+                    self.agreementsByPost[id] = items
+                }
+            }
+    }
+
+    /// Add an agreement to a post. Enforces one per user per post and 150-char cap.
+    /// Fire-and-forget per spec — caller treats this as non-blocking.
+    func addAgreement(to post: PrayerWallPost,
+                      reaction: WarriorRoomReaction,
+                      text: String,
+                      userId: String,
+                      displayName: String) {
+        guard let postId = post.id else { return }
+        guard !userAgreementPostIds.contains(postId) else { return }
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        let capped = String(trimmed.prefix(Agreement.maxLength))
+
+        // Mark locally first so the UI reflects the action immediately.
+        var ids = userAgreementPostIds
+        ids.insert(postId)
+        userAgreementPostIds = ids
+
+        let agreement = Agreement(
+            id: nil,
+            userId: userId,
+            displayName: displayName,
+            reactionType: reaction.rawValue,
+            text: capped,
+            timestamp: Timestamp()
+        )
+
+        // Optimistic local insert
+        var existing = agreementsByPost[postId] ?? []
+        existing.append(agreement)
+        agreementsByPost[postId] = existing
+
+        do {
+            // Document id = userId enforces "max 1 agreement per user per post".
+            try db.collection(collection).document(postId)
+                .collection("agreements").document(userId)
+                .setData(from: agreement) { [weak self] error in
+                    if let error = error {
+                        DispatchQueue.main.async {
+                            self?.errorMessage = "Error saving agreement: \(error.localizedDescription)"
+                        }
+                    }
+                }
+        } catch {
+            DispatchQueue.main.async {
+                self.errorMessage = "Unexpected error saving agreement."
             }
         }
     }
