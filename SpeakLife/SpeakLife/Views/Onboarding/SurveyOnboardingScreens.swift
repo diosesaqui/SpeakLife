@@ -813,9 +813,15 @@ struct SurveyProductPositioningScreen: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            Spacer().frame(maxHeight: size.height * 0.08)
+            Spacer().frame(maxHeight: size.height * 0.06)
 
             VStack(spacing: 24) {
+                // Treasure chest illustration
+                Image("treasure-chest-icon")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 180, height: 180)
+
                 // Headline block
                 VStack(spacing: 8) {
                     Text("God already filled\nyour treasure chest.")
