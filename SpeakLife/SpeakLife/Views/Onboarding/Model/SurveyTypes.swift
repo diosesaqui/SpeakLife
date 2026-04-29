@@ -196,12 +196,12 @@ enum DeclarationStyle: String, CaseIterable, Identifiable {
 
     var communityCount: String {
         switch self {
-        case .healing:    return "41,000"
-        case .peace:      return "38,000"
-        case .identity:   return "34,000"
-        case .destiny:    return "29,000"
-        case .warfare:    return "24,000"
-        case .prosperity: return "21,000"
+        case .healing:    return "41,278"
+        case .peace:      return "38,322"
+        case .identity:   return "34,902"
+        case .destiny:    return "29,023"
+        case .warfare:    return "24,290"
+        case .prosperity: return "21,790"
         }
     }
 
