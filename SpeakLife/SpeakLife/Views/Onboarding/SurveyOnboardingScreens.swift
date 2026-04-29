@@ -206,7 +206,7 @@ struct SurveyIntroScreen: View {
             }
             Spacer()
             SurveyContinueButton(label: "Let's Take It Back") { onContinue() }
-                .padding(.bottom, 52)
+                .padding(.bottom, 36)
                 .opacity(b ? 1 : 0)
                 .offset(y: b ? 0 : 20)
                 .animation(.easeOut(duration: 0.5), value: b)
@@ -307,7 +307,7 @@ struct SurveyQ1BurdenScreen: View {
                 }
             }
             SurveyContinueButton(isEnabled: responses.heaviestBurden != nil, action: onContinue)
-                .padding(.vertical, 16)
+                .padding(.top, 8).padding(.bottom, 36)
         }
         .onAppear { Analytics.logEvent("survey_q1_shown", parameters: nil) }
     }
@@ -344,7 +344,7 @@ struct SurveyQ2DurationScreen: View {
                 }
             }
             SurveyContinueButton(isEnabled: responses.burdenDuration != nil, action: onContinue)
-                .padding(.vertical, 16)
+                .padding(.top, 8).padding(.bottom, 36)
         }
         .onAppear { Analytics.logEvent("survey_q2_shown", parameters: nil) }
     }
@@ -437,7 +437,7 @@ struct SurveyInterstitialAScreen: View {
             }
             Spacer()
             SurveyContinueButton(label: "Keep Going →") { onContinue() }
-                .padding(.bottom, 52)
+                .padding(.bottom, 36)
                 .opacity(v ? 1 : 0)
                 .animation(.easeOut(duration: 0.4).delay(0.5), value: v)
         }
@@ -480,7 +480,7 @@ struct SurveyMergedBarriersScreen: View {
                 }
             }
             SurveyContinueButton(isEnabled: !responses.barriers.isEmpty, action: onContinue)
-                .padding(.vertical, 16)
+                .padding(.top, 8).padding(.bottom, 36)
         }
         .onAppear { Analytics.logEvent("survey_merged_barriers_shown", parameters: nil) }
     }
@@ -545,7 +545,7 @@ struct SurveyInterstitialBScreen: View {
             SurveyContinueButton(label: "I'm Ready to Take More Ground →", isEnabled: true) {
                 onContinue()
             }
-            .padding(.bottom, 52)
+            .padding(.bottom, 36)
             .opacity(v ? 1 : 0)
             .animation(.easeOut(duration: 0.5).delay(0.35), value: v)
         }
@@ -591,7 +591,7 @@ struct SurveyQ5DeclarationExpScreen: View {
             SurveyContinueButton(label: "Continue", isEnabled: responses.declarationExperience != nil) {
                 onContinue()
             }
-            .padding(.bottom, 52)
+            .padding(.bottom, 36)
         }
         .onAppear {
             Analytics.logEvent("survey_q5_shown", parameters: nil)
@@ -687,7 +687,7 @@ struct SurveyGoalRevealScreen: View {
             SurveyContinueButton(label: "Start Taking Ground →", isEnabled: true) {
                 onContinue()
             }
-            .padding(.bottom, 36)
+            .padding(.top, 8).padding(.bottom, 36)
             .opacity(chv ? 1 : 0)
             .animation(.easeOut(duration: 0.4).delay(0.6), value: chv)
         }
@@ -746,7 +746,7 @@ struct SurveyQ8NotificationScreen: View {
             SurveyContinueButton(label: "Continue", isEnabled: responses.notificationTime != nil) {
                 onContinue()
             }
-            .padding(.bottom, 52)
+            .padding(.bottom, 36)
         }
         .onAppear {
             Analytics.logEvent("survey_q8_shown", parameters: nil)
@@ -979,7 +979,7 @@ struct SurveyStyleProofScreen: View {
             }
 
             SurveyContinueButton(label: "I'm Ready →", action: onContinue)
-                .padding(.vertical, 16)
+                .padding(.top, 8).padding(.bottom, 36)
         }
         .onAppear {
             Analytics.logEvent("survey_style_proof_shown", parameters: nil)
@@ -1172,7 +1172,7 @@ struct SurveyCommitmentHoldScreen: View {
                 Analytics.logEvent("survey_commitment_sealed", parameters: nil)
                 onContinue()
             }
-            .padding(.bottom, 52)
+            .padding(.bottom, 36)
         }
     }
 
