@@ -44,6 +44,16 @@ struct HighConversionPaywallView: View {
     private var resolvedValueProps: [String] {
         surveyEngine.hasSurveyData ? surveyEngine.paywallCopy.valueProps.map { $0.title } : copy.valueProps
     }
+    private var resolvedDescriptions: [String] {
+        surveyEngine.hasSurveyData
+            ? surveyEngine.paywallCopy.valueProps.map { $0.description }
+            : [
+                "Daily declarations rewire your mind until God's Word becomes your first response.",
+                "Spoken truth is your greatest weapon. It is exactly how Jesus defeated every attack.",
+                "Faith comes by hearing. Audio devotionals put Scripture in your ears morning and night.",
+                "Know your identity in Christ so deeply that fear, doubt, and shame lose their grip."
+              ]
+    }
     private var resolvedChallengeName: String? {
         surveyEngine.hasSurveyData ? surveyEngine.paywallCopy.challengeName : nil
     }
@@ -148,16 +158,11 @@ struct HighConversionPaywallView: View {
     // MARK: - Benefits
     private var benefitsSection: some View {
         let icons = ["quote.bubble.fill", "shield.fill", "eye.fill", "person.circle.fill"]
-        let descs = [
-            "Daily declarations rewire your mind until God's Word becomes your first response.",
-            "Spoken truth is your greatest weapon. It's exactly how Jesus defeated every attack.",
-            "Faith comes by hearing. Audio devotionals put Scripture in your ears morning and night.",
-            "Know your identity in Christ so deeply that fear, doubt, and shame lose their grip."
-        ]
+        let descs = Array(resolvedDescriptions.prefix(4))
         let props = Array(resolvedValueProps.prefix(4))
         return VStack(alignment: .leading, spacing: 16) {
             ForEach(0..<min(props.count, 4), id: \.self) { i in
-                HCBenefitRow(icon: icons[i], title: props[i], description: descs[i])
+                HCBenefitRow(icon: icons[i], title: props[i], description: i < descs.count ? descs[i] : "")
             }
         }
         .padding(.horizontal, 24)
@@ -236,6 +241,7 @@ struct HighConversionPaywallView: View {
             VStack(spacing: 14) {
                 planSelectorSection
                 trialCallout
+                closingLine
                 ctaButton
                 bottomLinks
             }
@@ -300,11 +306,21 @@ struct HighConversionPaywallView: View {
         }
     }
 
+    // MARK: - Closing Line
+    private var closingLine: some View {
+        Text("God prepared the treasure chest.\nSpeakLife helps you open it — every single day.")
+            .font(.system(size: 14, weight: .regular, design: .rounded))
+            .foregroundColor(.white.opacity(0.7))
+            .multilineTextAlignment(.center)
+            .padding(.horizontal, 32)
+            .padding(.vertical, 12)
+    }
+
     // MARK: - CTA
     private var ctaText: String {
-        if selectedPlan == .monthly { return "Subscribe Now" }
+        if selectedPlan == .monthly { return "Start Taking Ground →" }
         if isEligibleForTrial { return "Start Free Trial" }
-        return "Subscribe Now"
+        return "Start Taking Ground →"
     }
 
     private var ctaButton: some View {

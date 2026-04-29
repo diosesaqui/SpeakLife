@@ -26,40 +26,12 @@ struct SurveyOnboardingView: View {
         ZStack(alignment: .top) {
             backgroundView
 
-            Group {
-                switch currentStep {
-                case .intro:            SurveyIntroScreen(size: size) { advance() }
-                case .heaviestBurden:   SurveyQ1BurdenScreen(size: size, responses: responses) { advance() }
-                case .burdenDuration:   SurveyQ2DurationScreen(size: size, responses: responses) { advance() }
-                case .interstitialA:    SurveyInterstitialAScreen(size: size, responses: responses) { advance() }
-                case .failedAttempts:   SurveyQ3AttemptsScreen(size: size, responses: responses) { advance() }
-                case .innerLie:         SurveyQ4LieScreen(size: size, responses: responses) { advance() }
-                case .interstitialB:    SurveyInterstitialBScreen(size: size) { advance() }
-                case .declarationExp:   SurveyQ5DeclarationExpScreen(size: size, responses: responses) { advance() }
-                case .futurePacing:     SurveyQ6FutureScreen(size: size, responses: responses) { advance() }
-                case .readiness:        SurveyQ7ReadinessScreen(size: size, responses: responses) { advance() }
-                case .notificationTime: SurveyQ8NotificationScreen(size: size, responses: responses) { advance() }
-                case .goalWord:         SurveyQ9GoalWordScreen(size: size, responses: responses) { advance() }
-                case .goalReveal:       SurveyGoalRevealScreen(size: size, responses: responses) { advance() }
-                case .personalDeclaration:
-                    PersonalDeclarationOnboardingView(
-                        viewModel: DIContainer.shared.makePersonalDeclarationViewModel(),
-                        size: size
-                    ) { declaration in
-                        savedDeclaration = declaration
-                        advance() // → paywall next, not completion
-                    }
-                case .paywall:
-                    HighConversionPaywallView(callback: {
-                        applyResponsesAndComplete() // paywall done → finish onboarding
-                    })
-                }
-            }
-            .transition(.asymmetric(
-                insertion: .opacity.combined(with: .offset(x: 0, y: 24)),
-                removal: .opacity.combined(with: .offset(x: 0, y: -16))
-            ))
-            .id(currentStep.rawValue)
+            currentStepView
+                .transition(.asymmetric(
+                    insertion: .opacity.combined(with: .offset(x: 0, y: 24)),
+                    removal: .opacity.combined(with: .offset(x: 0, y: -16))
+                ))
+                .id(currentStep.rawValue)
 
             if currentStep.questionIndex != nil {
                 VStack {
@@ -82,6 +54,49 @@ struct SurveyOnboardingView: View {
         .onAppear { Analytics.logEvent("survey_onboarding_started", parameters: nil) }
     }
 
+    // Split into two @ViewBuilder properties to stay within SwiftUI's 10-branch ViewBuilder limit
+    @ViewBuilder
+    private var currentStepView: some View {
+        switch currentStep {
+        case .intro:             SurveyIntroScreen(size: size) { advance() }
+        case .heaviestBurden:    SurveyQ1BurdenScreen(size: size, responses: responses) { advance() }
+        case .productPositioning: SurveyProductPositioningScreen(size: size) { advance() }
+        case .burdenDuration:    SurveyQ2DurationScreen(size: size, responses: responses) { advance() }
+        case .interstitialA:     SurveyInterstitialAScreen(size: size, responses: responses) { advance() }
+        case .mergedBarriers:    SurveyMergedBarriersScreen(size: size, responses: responses) { advance() }
+        case .interstitialB:     SurveyInterstitialBScreen(size: size) { advance() }
+        default: lateStepView
+        }
+    }
+
+    @ViewBuilder
+    private var lateStepView: some View {
+        switch currentStep {
+        case .declarationExp:
+            SurveyQ5DeclarationExpScreen(size: size, responses: responses) { advance() }
+        case .styleProof:
+            SurveyStyleProofScreen(size: size, responses: responses) { advance() }
+        case .goalReveal:
+            SurveyGoalRevealScreen(size: size, responses: responses) { advance() }
+        case .personalDeclaration:
+            PersonalDeclarationOnboardingView(
+                viewModel: DIContainer.shared.makePersonalDeclarationViewModel(),
+                size: size
+            ) { declaration in
+                savedDeclaration = declaration
+                advance()
+            }
+        case .commitmentHold:
+            SurveyCommitmentHoldScreen(size: size) { advance() }
+        case .paywall:
+            HighConversionPaywallView(callback: { advance() })
+        case .notificationTime:
+            SurveyQ8NotificationScreen(size: size, responses: responses) { advance() }
+        default:
+            EmptyView()
+        }
+    }
+
     private var backgroundView: some View {
         ZStack {
             Image(subscriptionStore.onboardingBGImage)
@@ -99,11 +114,7 @@ struct SurveyOnboardingView: View {
     private func advance() {
         UIImpactFeedbackGenerator(style: .soft).impactOccurred()
         Analytics.logEvent("survey_step_completed", parameters: ["step": currentStep.rawValue])
-        var nextRaw = currentStep.rawValue + 1
-        // Skip goalWord — category is inferred from Q1 (heaviestBurden)
-        if nextRaw == SurveyStep.goalWord.rawValue {
-            nextRaw += 1
-        }
+        let nextRaw = currentStep.rawValue + 1
         guard let next = SurveyStep(rawValue: nextRaw) else {
             applyResponsesAndComplete()
             return
@@ -114,22 +125,23 @@ struct SurveyOnboardingView: View {
     private func applyResponsesAndComplete() {
         let goalWord = responses.resolvedGoalWord
         appState.surveyGoalWord = goalWord.rawValue
+        if let style = responses.primaryDeclarationStyle {
+            appState.selectedDeclarationStyles = [style.rawValue]
+        }
         if let notifTime = responses.notificationTime {
             appState.startTimeIndex = notifTime.startTimeIndex
         }
-        // Seed the declarations tab with the category that matches the user's goal word
         let category = goalWord.declarationCategory
         UserDefaults.standard.set(category.rawValue, forKey: "selectedCategory")
         UserPreferencesTracker.shared.trackCategorySelection(category.rawValue)
-        // Force the already-loaded DeclarationViewModel to switch to the new category immediately
         declarationStore.choose(category) { _ in }
-        // Mark personal declaration active if user set one
         if savedDeclaration != nil {
             appState.hasPersonalDeclaration = true
         }
         Analytics.logEvent("survey_onboarding_completed", parameters: [
             "goal_word": goalWord.rawValue,
             "burden": responses.heaviestBurden?.rawValue ?? "unknown",
+            "declaration_style": responses.primaryDeclarationStyle?.rawValue ?? "none",
             "set_personal_declaration": (savedDeclaration != nil) as NSNumber
         ])
         onComplete()
