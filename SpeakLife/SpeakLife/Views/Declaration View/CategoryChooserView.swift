@@ -101,16 +101,17 @@ struct CategoryCell: View {
 
 
 struct CategoryChooserView: View {
-    
+
     @EnvironmentObject var subscriptionStore: SubscriptionStore
     @Environment(\.presentationMode) var presentationMode
     @Environment(\.colorScheme) var colorScheme
-    
+
     @ObservedObject var viewModel: DeclarationViewModel
     @State private var presentPremiumView  = false
-    
+    @State private var showBibleChat = false
+
     var twoColumnGrid = [GridItem(.flexible()), GridItem(.flexible())]
-    
+
     var body: some View {
         GeometryReader { geometry in
             NavigationView {
@@ -125,12 +126,60 @@ struct CategoryChooserView: View {
                             .padding()
                             .background(BlurView(style: .systemUltraThinMaterialDark))
                             .cornerRadius(8)
-                        
+
+                        // Ask the Bible button
+                        Button { showBibleChat = true } label: {
+                            HStack(spacing: 14) {
+                                ZStack {
+                                    Circle()
+                                        .fill(LinearGradient(
+                                            colors: [Color(red: 0.55, green: 0.35, blue: 1.0), Color(red: 0.3, green: 0.15, blue: 0.85)],
+                                            startPoint: .topLeading, endPoint: .bottomTrailing
+                                        ))
+                                        .frame(width: 48, height: 48)
+                                    Image(systemName: "book.pages.fill")
+                                        .font(.system(size: 20, weight: .semibold))
+                                        .foregroundColor(.white)
+                                }
+                                VStack(alignment: .leading, spacing: 3) {
+                                    Text("Ask the Bible")
+                                        .font(.system(size: 17, weight: .bold, design: .rounded))
+                                        .foregroundColor(.white)
+                                    Text("Get a scripture-backed answer for what you're facing")
+                                        .font(.system(size: 13, weight: .regular, design: .rounded))
+                                        .foregroundColor(.white.opacity(0.65))
+                                        .lineLimit(2)
+                                        .fixedSize(horizontal: false, vertical: true)
+                                }
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .font(.system(size: 14, weight: .semibold))
+                                    .foregroundColor(.white.opacity(0.5))
+                            }
+                            .padding(.horizontal, 18)
+                            .padding(.vertical, 14)
+                            .background(
+                                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                    .fill(Color.white.opacity(0.10))
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                            .strokeBorder(Color.white.opacity(0.18), lineWidth: 1)
+                                    )
+                            )
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                        .padding(.horizontal, 16)
+                        .padding(.top, 4)
+                        .sheet(isPresented: $showBibleChat) {
+                            BibleChatView()
+                                .environmentObject(subscriptionStore)
+                        }
+
                         // 🚀 AI Personalized Feed Section
                         if subscriptionStore.isAIEnabled {
                             PersonalizedFeedSection()
                         }
-                        
+
                         generalList(geometry: geometry)
                         categoryList(geometry: geometry)
                        // bibleBookList(geometry: geometry)
