@@ -8,6 +8,7 @@
 //
 
 import Foundation
+import FirebaseAnalytics
 
 final class ClaudeDeclarationMatcher: DeclarationMatcherProtocol {
     private let fallback: KeywordDeclarationMatcher
@@ -25,16 +26,18 @@ final class ClaudeDeclarationMatcher: DeclarationMatcherProtocol {
         let apiKey = AnthropicConfig.apiKey
         guard !apiKey.isEmpty else {
             print("🔑 [Claude] API key is empty — falling back to keyword matcher")
-            print("🔑 [Claude] Set ANTHROPIC_API_KEY as a User-Defined Build Setting in Xcode (not a scheme env var)")
+            Analytics.logEvent("claude_fallback", parameters: ["reason": "no_key"])
             return await fallback.match(input: input)
         }
         print("🔑 [Claude] API key found, prefix: \(String(apiKey.prefix(12)))...")
         do {
             let result = try await callClaude(input: input, apiKey: apiKey)
             print("✅ [Claude] Match succeeded, category: \(result.category.rawValue)")
+            Analytics.logEvent("claude_success", parameters: ["category": result.category.rawValue])
             return result
         } catch {
             print("❌ [Claude] Error: \(error) — falling back to keyword matcher")
+            Analytics.logEvent("claude_fallback", parameters: ["reason": "\(error)"])
             return await fallback.match(input: input)
         }
     }
@@ -65,12 +68,14 @@ final class ClaudeDeclarationMatcher: DeclarationMatcherProtocol {
         let (data, response) = try await session.data(for: request)
         if let http = response as? HTTPURLResponse {
             print("📡 [Claude] HTTP status: \(http.statusCode)")
-            if http.statusCode != 200, let body = String(data: data, encoding: .utf8) {
+            if http.statusCode != 200 {
+                let body = String(data: data, encoding: .utf8) ?? ""
                 print("📡 [Claude] Error body: \(body.prefix(400))")
+                Analytics.logEvent("claude_http_error", parameters: ["status": http.statusCode, "body": String(body.prefix(100))])
+                throw ClaudeError.httpError(statusCode: http.statusCode)
             }
-            guard http.statusCode == 200 else { throw ClaudeError.httpError }
         } else {
-            throw ClaudeError.httpError
+            throw ClaudeError.httpError(statusCode: 0)
         }
 
         let claude = try JSONDecoder().decode(ClaudeResponse.self, from: data)
@@ -107,7 +112,7 @@ final class ClaudeDeclarationMatcher: DeclarationMatcherProtocol {
 // MARK: - Supporting Types
 
 private enum ClaudeError: Error {
-    case httpError
+    case httpError(statusCode: Int)
     case emptyResponse
     case invalidJSON
 }
