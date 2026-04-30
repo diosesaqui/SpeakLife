@@ -37,7 +37,7 @@ final class AppState: ObservableObject {
     @AppStorage("notificationCount") var notificationCount = 10
     @AppStorage("startTimeNotification") var startTimeNotification = ""
     @AppStorage("endTimeNotification") var endTimeNotification = ""
-    @AppStorage("startTimeIndex") var startTimeIndex = 0
+    @AppStorage("startTimeIndex") var startTimeIndex = 14
     @AppStorage("endTimeIndex") var endTimeIndex = 47
     @AppStorage("selectedNotificationCategories") var selectedNotificationCategories: String = ""
     @AppStorage("abbasLoveLetterIndex") var loveLetterIndex = 0
@@ -115,7 +115,7 @@ final class AppState: ObservableObject {
             defaults.set(10, forKey: "notificationCount")
         }
         if defaults.object(forKey: "startTimeIndex") == nil {
-            defaults.set(0, forKey: "startTimeIndex")
+            defaults.set(14, forKey: "startTimeIndex") // 7:00 AM (index = hour × 2)
         }
         if defaults.object(forKey: "endTimeIndex") == nil {
             defaults.set(47, forKey: "endTimeIndex")
@@ -125,8 +125,8 @@ final class AppState: ObservableObject {
         // Their preferences are overwritten once, then the flag is set so this never repeats.
         if needsV2Migration {
             defaults.set(10, forKey: "notificationCount")
-            defaults.set(0, forKey: "startTimeIndex")
-            defaults.set(47, forKey: "endTimeIndex")
+            defaults.set(14, forKey: "startTimeIndex") // 7:00 AM
+            defaults.set(47, forKey: "endTimeIndex")   // 11:30 PM
             // Force the next foreground tick in SpeakLifeApp to reschedule notifications
             // with the new window instead of waiting for the existing batch to expire.
             defaults.removeObject(forKey: "lastScheduledNotificationDate")
@@ -144,9 +144,10 @@ final class AppState: ObservableObject {
             notificationCount = 10
         }
 
-        // Fix time indices — default window is the full day (00:00 to 23:30).
+        // Fix time indices — default window starts at 7:00 AM and runs to 11:30 PM
+        // so reminders never wake users overnight.
         if startTimeIndex < 0 || startTimeIndex >= 48 {
-            startTimeIndex = 0
+            startTimeIndex = 14 // 7:00 AM
         }
 
         if endTimeIndex <= startTimeIndex || endTimeIndex >= 48 {
