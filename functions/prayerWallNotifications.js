@@ -144,20 +144,28 @@ exports.onPrayerCountIncremented = onDocumentUpdated(
 );
 
 // ═══════════════════════════════════════════════════════════════════════════
-// 2. dailyPrayerDigest
-//    Runs daily at 10:00 AM UTC. Counts new prayer posts from the last
-//    24 hours. If any exist, sends ONE push to the prayerWall topic.
-//    No push at all if there were no new posts that day.
+// 2. dailyPrayerDigest — PAUSED
+//
+//    This function used to run daily at 10:00 AM UTC and broadcast a
+//    "X prayer requests today" digest to all `prayerWall` topic subscribers.
+//    It was paused because the copy assumed every new post is a prayer
+//    request, which is wrong now that the Warrior Room hosts both prayer
+//    declarations and testimonies. The wrong framing was misleading users.
+//
+//    The export is commented out below and the deployed function has been
+//    deleted from production (firebase functions:delete dailyPrayerDigest).
+//    To resume, uncomment the export and run:
+//        firebase deploy --only functions:dailyPrayerDigest
 //
 //    NOTE: There's also an `onNewPrayerPost` Cloud Function deployed in
 //    production that broadcasts on every new post creation. Its source is
-//    not in this file — it's intentionally kept out of source for now and
-//    runs alongside this digest. When deploying, scope to the specific
-//    function you're changing (e.g. `firebase deploy --only
-//    functions:onPrayerCountIncremented`) so the CLI doesn't try to
-//    reconcile the orphan and prompt for a delete.
+//    not in this file — it's intentionally kept out of source for now.
+//    When deploying, scope to the specific function you're changing
+//    (e.g. `firebase deploy --only functions:onPrayerCountIncremented`)
+//    so the CLI doesn't try to reconcile the orphan and prompt for a delete.
 // ═══════════════════════════════════════════════════════════════════════════
 
+/*
 exports.dailyPrayerDigest = onSchedule(
   { schedule: '0 10 * * *', timeZone: 'UTC' },
   async () => {
@@ -193,6 +201,7 @@ exports.dailyPrayerDigest = onSchedule(
     console.log(`dailyPrayerDigest: sent digest for ${count} post(s).`);
   }
 );
+*/
 
 // ═══════════════════════════════════════════════════════════════════════════
 // 3. onPrayerAnswered
