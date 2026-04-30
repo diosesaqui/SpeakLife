@@ -145,10 +145,17 @@ exports.onPrayerCountIncremented = onDocumentUpdated(
 
 // ═══════════════════════════════════════════════════════════════════════════
 // 2. dailyPrayerDigest
-//    Replaces per-post broadcasts (which became spam as the wall grew).
 //    Runs daily at 10:00 AM UTC. Counts new prayer posts from the last
 //    24 hours. If any exist, sends ONE push to the prayerWall topic.
 //    No push at all if there were no new posts that day.
+//
+//    NOTE: There's also an `onNewPrayerPost` Cloud Function deployed in
+//    production that broadcasts on every new post creation. Its source is
+//    not in this file — it's intentionally kept out of source for now and
+//    runs alongside this digest. When deploying, scope to the specific
+//    function you're changing (e.g. `firebase deploy --only
+//    functions:onPrayerCountIncremented`) so the CLI doesn't try to
+//    reconcile the orphan and prompt for a delete.
 // ═══════════════════════════════════════════════════════════════════════════
 
 exports.dailyPrayerDigest = onSchedule(
