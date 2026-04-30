@@ -179,13 +179,14 @@ final class NotificationManager: NSObject {
         guard hourMinute.count > 1 else { callback?(); return }
         guard declarations.count >= count else { callback?(); return }
 
-        // iOS allows up to 64 pending notifications per app. We aim for ≤60 to leave
-        // headroom for checklist + system-scheduled notifications. daysAhead therefore
-        // shrinks as count grows so we never exceed the OS cap and silently drop sends.
-        //   count=5  → 10 days (50 notifications)
-        //   count=10 → 6 days (60 notifications)
-        //   count=20 → 3 days (60 notifications)
-        let maxPendingPerBatch = 60
+        // iOS allows up to 64 pending notifications per app. We share that budget with
+        // 7 lifecycle pushes (D1-D30) + 14 daily burst weekday triggers (7 morning +
+        // 7 evening) + a few streak/lapsed slots. 40 leaves ~24 slots of headroom for
+        // those, keeping us under the OS cap so iOS never silently drops sends.
+        //   count=5  → 8 days (40 notifications) + ~21 system = 61 total
+        //   count=10 → 4 days (40 notifications) + ~21 system = 61 total
+        //   count=20 → 2 days (40 notifications) + ~21 system = 61 total
+        let maxPendingPerBatch = 40
         let daysAhead = max(1, min(10, maxPendingPerBatch / max(count, 1)))
         let now = Date()
         let calendar = Calendar.autoupdatingCurrent

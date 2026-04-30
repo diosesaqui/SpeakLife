@@ -360,6 +360,14 @@ final class EnhancedStreakViewModel: ObservableObject {
         // Fix 2: Cancel streak-at-risk notification since day is complete
         LifecycleNotificationService.shared.cancelStreakAtRiskNotification()
 
+        // Celebrate streak milestones (3/7/30/100) with a next-morning push.
+        // previousStreak = today's streak minus 1 (the value before today incremented it)
+        // — covers fresh starts (1 - 1 = 0), consecutive days, and post-break rebuilds.
+        LifecycleNotificationService.shared.scheduleStreakMilestoneIfNeeded(
+            currentStreak: currentStreakNumber,
+            previousStreak: currentStreakNumber - 1
+        )
+
         // Check for badges AFTER completing the day to ensure proper timing
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
             self.checkForNewBadges()

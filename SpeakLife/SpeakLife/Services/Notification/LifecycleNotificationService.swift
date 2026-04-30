@@ -128,6 +128,80 @@ final class LifecycleNotificationService {
         center.removePendingNotificationRequests(withIdentifiers: ["streak_at_risk"])
     }
 
+    // MARK: - Streak Milestones
+
+    /// Celebrates 3/7/30/100-day streak crossings. Scheduled for the next morning at
+    /// 9 AM so the user wakes up to a win — a same-day push would just duplicate the
+    /// in-app celebration animation that fires on completion. Each milestone has a
+    /// stable ID, so re-hitting after a break (e.g. building back to 3) refires the
+    /// celebration without stacking.
+    ///
+    /// Returns true if a milestone push was scheduled.
+    @discardableResult
+    func scheduleStreakMilestoneIfNeeded(currentStreak: Int, previousStreak: Int) -> Bool {
+        // Only fire on the exact crossing — not every subsequent day past the milestone.
+        let milestones = [3, 7, 30, 100]
+        guard milestones.contains(currentStreak), previousStreak < currentStreak else {
+            return false
+        }
+
+        let copy = streakMilestoneCopy(for: currentStreak)
+        let id = "streak_milestone_\(currentStreak)"
+
+        center.getNotificationSettings { [weak self] settings in
+            guard let self = self else { return }
+            guard settings.authorizationStatus == .authorized else { return }
+
+            self.center.removePendingNotificationRequests(withIdentifiers: [id])
+
+            let content = UNMutableNotificationContent()
+            content.title = copy.title
+            content.body = copy.body
+            content.sound = .default
+            content.userInfo = ["lifecycle_id": id, "deepLink": "declarations"]
+
+            let calendar = Calendar.current
+            let tomorrow = calendar.date(byAdding: .day, value: 1, to: Date()) ?? Date()
+            let fireDate = calendar.date(bySettingHour: 9, minute: 0, second: 0, of: tomorrow) ?? tomorrow
+            let comps = calendar.dateComponents([.year, .month, .day, .hour, .minute], from: fireDate)
+            let trigger = UNCalendarNotificationTrigger(dateMatching: comps, repeats: false)
+            let request = UNNotificationRequest(identifier: id, content: content, trigger: trigger)
+            self.center.add(request, withCompletionHandler: nil)
+        }
+        Analytics.logEvent("streak_milestone_scheduled", parameters: ["streak": currentStreak])
+        return true
+    }
+
+    private func streakMilestoneCopy(for streak: Int) -> (title: String, body: String) {
+        switch streak {
+        case 3:
+            return (
+                title: "Three. Days. In a row 🔥",
+                body: "You're official now. The first 3 days are where most quit — and you didn't. Keep going."
+            )
+        case 7:
+            return (
+                title: "ONE. WEEK. 💪",
+                body: "Seven days of speaking life. You're not someone who tries — you're someone who shows up. Day 8 starts now."
+            )
+        case 30:
+            return (
+                title: "30 days. You changed your life 🙌",
+                body: "A month of declarations. This isn't motivation anymore. This is who you are. Don't stop here."
+            )
+        case 100:
+            return (
+                title: "100 days, you absolute monster 👑",
+                body: "100 days of consistency. That's rare air. You've built something most people only talk about. Keep building."
+            )
+        default:
+            return (
+                title: "\(streak)-day streak 🔥",
+                body: "Keep going."
+            )
+        }
+    }
+
     // MARK: - Streak Break Notification
 
     /// Call when a streak is broken (streak resets to 0). Fires the next morning at 9am

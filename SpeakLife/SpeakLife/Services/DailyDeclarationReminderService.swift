@@ -25,6 +25,14 @@ class DailyDeclarationReminderService: ObservableObject {
     
     private let reminderIdentifier = "daily_declaration_reminder"
     private let eveningReminderIdentifier = "daily_declaration_evening_reminder"
+
+    /// One repeating trigger per weekday for both morning and evening so the copy
+    /// rotates day-of-week instead of the user seeing the same line every morning.
+    /// Sunday=1 ... Saturday=7 per UNCalendarNotificationTrigger's weekday convention.
+    private static func morningReminderID(weekday: Int) -> String { "daily_burst_morning_w\(weekday)" }
+    private static func eveningReminderID(weekday: Int) -> String { "daily_burst_evening_w\(weekday)" }
+    private static var allMorningReminderIDs: [String] { (1...7).map { morningReminderID(weekday: $0) } }
+    private static var allEveningReminderIDs: [String] { (1...7).map { eveningReminderID(weekday: $0) } }
     
     private init() {
         // Check if this is the first time - if key doesn't exist, default to true
@@ -56,46 +64,161 @@ class DailyDeclarationReminderService: ObservableObject {
     
     private func scheduleDailyDeclarationReminder() {
         // Cancel any stale instances first so we don't double-schedule when the
-        // user toggles the reminder off and on.
-        UNUserNotificationCenter.current().removePendingNotificationRequests(
-            withIdentifiers: [reminderIdentifier, eveningReminderIdentifier]
-        )
-        scheduleMorningReminder()
-        scheduleEveningReminder()
+        // user toggles the reminder off and on. Includes the legacy single-trigger
+        // IDs from before the weekday-rotated rewrite.
+        let center = UNUserNotificationCenter.current()
+        center.removePendingNotificationRequests(withIdentifiers: [
+            reminderIdentifier,
+            eveningReminderIdentifier
+        ])
+        center.removePendingNotificationRequests(withIdentifiers: Self.allMorningReminderIDs)
+        center.removePendingNotificationRequests(withIdentifiers: Self.allEveningReminderIDs)
+        scheduleMorningReminders()
+        scheduleEveningReminders()
     }
 
-    private func scheduleMorningReminder() {
-        let content = UNMutableNotificationContent()
-        content.title = "Your Daily Burst is ready! ⚡"
-        content.body = "7 powerful declarations to ignite your morning. Tap to start your victory burst."
-        content.sound = UNNotificationSound.default
-        content.categoryIdentifier = "DAILY_DECLARATION"
-        content.userInfo = ["action": "daily_declaration_burst"]
+    /// Schedule one repeating weekly trigger per weekday so the morning copy rotates
+    /// instead of every day reading "Your Daily Burst is ready!" until the user starts
+    /// banner-blinding past it.
+    private func scheduleMorningReminders() {
+        for (weekday, copy) in Self.morningCopyByWeekday.enumerated() {
+            let content = UNMutableNotificationContent()
+            content.title = copy.title
+            content.body = copy.body
+            content.sound = UNNotificationSound.default
+            content.categoryIdentifier = "DAILY_DECLARATION"
+            content.userInfo = ["action": "daily_declaration_burst"]
 
-        // 7:30 AM — sits between the user's first content declaration (~7am)
-        // and the lifecycle pushes (8-9am) so it has its own moment.
-        var dateComponents = DateComponents()
-        dateComponents.hour = 7
-        dateComponents.minute = 30
+            var dateComponents = DateComponents()
+            dateComponents.hour = 7
+            dateComponents.minute = 30
+            dateComponents.weekday = weekday + 1 // Sunday=1 in DateComponents
 
-        let trigger = UNCalendarNotificationTrigger(dateMatching: dateComponents, repeats: true)
-        let request = UNNotificationRequest(
-            identifier: reminderIdentifier,
-            content: content,
-            trigger: trigger
-        )
-
-        UNUserNotificationCenter.current().add(request) { error in
-            if let error = error {
-                print("❌ Error scheduling morning burst reminder: \(error.localizedDescription)")
+            let trigger = UNCalendarNotificationTrigger(dateMatching: dateComponents, repeats: true)
+            let request = UNNotificationRequest(
+                identifier: Self.morningReminderID(weekday: weekday + 1),
+                content: content,
+                trigger: trigger
+            )
+            UNUserNotificationCenter.current().add(request) { error in
+                if let error = error {
+                    print("❌ Error scheduling morning burst (weekday \(weekday + 1)): \(error.localizedDescription)")
+                }
             }
         }
     }
-    
-    private func scheduleEveningReminder() {
-        // This will be a smart reminder that checks if burst was completed
-        scheduleConditionalEveningReminder()
+
+    private func scheduleEveningReminders() {
+        for (weekday, copy) in Self.eveningCopyByWeekday.enumerated() {
+            let content = UNMutableNotificationContent()
+            content.title = copy.title
+            content.body = copy.body
+            content.sound = UNNotificationSound.default
+            content.categoryIdentifier = "DAILY_DECLARATION"
+            content.userInfo = ["action": "daily_declaration_burst", "type": "evening_reminder"]
+
+            var dateComponents = DateComponents()
+            dateComponents.hour = 20  // 8:00 PM
+            dateComponents.minute = 0
+            dateComponents.weekday = weekday + 1
+
+            let trigger = UNCalendarNotificationTrigger(dateMatching: dateComponents, repeats: true)
+            let request = UNNotificationRequest(
+                identifier: Self.eveningReminderID(weekday: weekday + 1),
+                content: content,
+                trigger: trigger
+            )
+            UNUserNotificationCenter.current().add(request) { error in
+                if let error = error {
+                    print("❌ Error scheduling evening burst (weekday \(weekday + 1)): \(error.localizedDescription)")
+                }
+            }
+        }
     }
+
+    // MARK: - Rotated Copy
+
+    /// 7 morning variants — one per weekday (Sunday-indexed at 0 to match our
+    /// `weekday + 1` math when scheduling). Designed to vary tone across the week:
+    /// Sunday is reflective, Monday is reset, mid-week is momentum, Friday is
+    /// finish-strong, Saturday is celebratory.
+    private static let morningCopyByWeekday: [(title: String, body: String)] = [
+        // Sunday
+        (
+            title: "Sunday reset 🕊",
+            body: "Set the tone for your week. 60 seconds of declarations now shapes the next 7 days."
+        ),
+        // Monday
+        (
+            title: "Monday — set the tone ⚡",
+            body: "How you start Monday is how the week goes. Speak life over yours before the noise arrives."
+        ),
+        // Tuesday
+        (
+            title: "Tuesday: small reps, big results 💪",
+            body: "Day two of the week, day N of your habit. Open SpeakLife and put the words in your mouth."
+        ),
+        // Wednesday
+        (
+            title: "Halfway there — keep declaring 🔥",
+            body: "Mid-week is where most people coast. You don't coast. Speak life over today."
+        ),
+        // Thursday
+        (
+            title: "Thursday momentum 🚀",
+            body: "Two days from the weekend. Two minutes from a decree. Open SpeakLife now."
+        ),
+        // Friday
+        (
+            title: "Finish strong, friend 🏁",
+            body: "Don't let Friday slip into autopilot. Declare what you want before the day owns you."
+        ),
+        // Saturday
+        (
+            title: "Saturday — own it ✨",
+            body: "Weekends are where habits die. Yours doesn't. 60 seconds of speaking life. Tap in."
+        )
+    ]
+
+    /// 7 evening variants — one per weekday. Tone: Sunday reflective, Monday "you
+    /// did it", mid-week consistency, Friday week-cap, Saturday closing the loop.
+    private static let eveningCopyByWeekday: [(title: String, body: String)] = [
+        // Sunday
+        (
+            title: "Close the week declaring 🕊",
+            body: "Don't end Sunday in noise. Take 2 minutes to speak truth and step into the new week clean."
+        ),
+        // Monday
+        (
+            title: "End Monday strong 💪",
+            body: "You set the tone this morning — finish the way you started. Today's burst is still waiting."
+        ),
+        // Tuesday
+        (
+            title: "Don't break the chain 🔗",
+            body: "You showed up yesterday. Show up tonight. Two minutes between you and a kept promise to yourself."
+        ),
+        // Wednesday
+        (
+            title: "Half the week down — finish today 🔥",
+            body: "Mid-week win available. Open SpeakLife and speak before bed."
+        ),
+        // Thursday
+        (
+            title: "One more declaration before bed ✨",
+            body: "Tomorrow's Friday — you already feel it. Anchor tonight in truth, not vibes."
+        ),
+        // Friday
+        (
+            title: "Don't drop the rope on Friday 🏁",
+            body: "The streak isn't worth nothing — it's worth more than you think. Two minutes saves it."
+        ),
+        // Saturday
+        (
+            title: "Saturday isn't a day off ⚡",
+            body: "Habits die on weekends because nobody says it out loud: you can rest and still show up. Open SpeakLife."
+        )
+    ]
     
     /// Call this when the user completes the daily burst so the evening reminder is cancelled.
     func cancelEveningReminderAfterBurstCompletion() {
@@ -105,51 +228,21 @@ class DailyDeclarationReminderService: ObservableObject {
         #endif
     }
     
-    private func scheduleConditionalEveningReminder() {
-        // Schedule for 8:00 PM, repeating daily. The "skip if already completed"
-        // path runs when the user finishes the burst — see
-        // `cancelEveningReminderAfterBurstCompletion()`. With a non-repeating
-        // trigger the reminder dies after one fire and depends on the user
-        // foregrounding the app in the evening to ever come back, which makes
-        // it unreliable for users who only check in mornings.
-        var dateComponents = DateComponents()
-        dateComponents.hour = 20  // 8:00 PM
-        dateComponents.minute = 0
-
-        let trigger = UNCalendarNotificationTrigger(dateMatching: dateComponents, repeats: true)
-        let content = createEveningReminderContent()
-
-        let request = UNNotificationRequest(
-            identifier: eveningReminderIdentifier,
-            content: content,
-            trigger: trigger
-        )
-
-        UNUserNotificationCenter.current().add(request) { error in
-            if let error = error {
-                print("❌ Error scheduling evening reminder: \(error.localizedDescription)")
-            }
-        }
-    }
-    
+    /// Used by the immediate-fire smart-evening-reminder path
+    /// (`scheduleImmediateEveningReminder` -> when the app is foregrounded in the
+    /// 7-8 PM window and the user hasn't completed today's burst). Pulls from the
+    /// same weekday-rotated copy pool the scheduled evening triggers use, so we
+    /// never drift back into a single hardcoded line.
     private func createEveningReminderContent() -> UNMutableNotificationContent {
+        let rawWeekday = Calendar.current.component(.weekday, from: Date()) - 1
+        let weekdayIndex = max(0, min(rawWeekday, Self.eveningCopyByWeekday.count - 1))
+        let copy = Self.eveningCopyByWeekday[weekdayIndex]
         let content = UNMutableNotificationContent()
-        
-        let messages = [
-            ("Don't break your streak! 🔥", "Your daily burst is waiting. Takes just 2 minutes to declare victory."),
-            ("End strong, warrior! 💪", "Complete your daily burst before bed and keep your streak alive."),
-            ("Quick reminder ⚡", "You haven't completed today's burst. Don't let the day end without declaring truth!"),
-            ("Keep the momentum! 🚀", "Your \(UserDefaults.standard.integer(forKey: "currentStreak") + 1) day streak is calling. Complete your burst now."),
-            ("Finish what you started! 🎯", "Just 7 declarations between you and today's victory.")
-        ]
-        
-        let randomMessage = messages.randomElement() ?? messages[0]
-        content.title = randomMessage.0
-        content.body = randomMessage.1
+        content.title = copy.title
+        content.body = copy.body
         content.sound = UNNotificationSound.default
         content.categoryIdentifier = "DAILY_DECLARATION"
         content.userInfo = ["action": "daily_declaration_burst", "type": "evening_reminder"]
-        
         return content
     }
     
