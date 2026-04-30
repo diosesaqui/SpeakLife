@@ -34,14 +34,19 @@ final class AppState: ObservableObject {
     @AppStorage("lastNotificationSetDate") var lastNotificationSetDate = Date()
     @AppStorage("lastSharedAttemptDate") var lastSharedAttemptDate = Date()
     @AppStorage("notificationEnabled") var notificationEnabled = false
-    @AppStorage("notificationCount") var notificationCount = 5
+    @AppStorage("notificationCount") var notificationCount = 10
     @AppStorage("startTimeNotification") var startTimeNotification = ""
     @AppStorage("endTimeNotification") var endTimeNotification = ""
-    @AppStorage("startTimeIndex") var startTimeIndex = 12
-    @AppStorage("endTimeIndex") var endTimeIndex = 40
+    @AppStorage("startTimeIndex") var startTimeIndex = 0
+    @AppStorage("endTimeIndex") var endTimeIndex = 47
     @AppStorage("selectedNotificationCategories") var selectedNotificationCategories: String = ""
     @AppStorage("abbasLoveLetterIndex") var loveLetterIndex = 0
     @AppStorage("resetNotifications") var resetNotifications = true
+    // Migration flag: set false in 4.10 so existing users get reset to all-day window + 10 reminders.
+    // Default value here is "true" so brand-new installs (no key in defaults) skip the reset since
+    // they already start with the new defaults above. The migration code below explicitly checks
+    // for the key being absent vs. false to know whether this is a fresh install or a pre-4.10 user.
+    @AppStorage("notificationDefaultsMigratedV2") var notificationDefaultsMigratedV2 = true
     @AppStorage("lastReviewRequestSetDatev1") var lastReviewRequestSetDate: Date?
     @AppStorage("offerDiscount") var offerDiscount = false
     @AppStorage("offerDiscountTry") var offerDiscountTry = 0
@@ -95,74 +100,76 @@ final class AppState: ObservableObject {
     @AppStorage("eveningCheckInMinute") var eveningCheckInMinute = 0
     
     init() {
+        let defaults = UserDefaults.standard
+
+        // Detect a pre-4.10 user: they have notification keys saved from a prior version
+        // but no migration flag yet. Brand-new installs have neither, so they skip the reset.
+        let hasExistingNotificationPrefs = defaults.object(forKey: "notificationCount") != nil
+            || defaults.object(forKey: "startTimeIndex") != nil
+            || defaults.object(forKey: "endTimeIndex") != nil
+        let migrationFlagPresent = defaults.object(forKey: "notificationDefaultsMigratedV2") != nil
+        let needsV2Migration = hasExistingNotificationPrefs && !migrationFlagPresent
+
         // Force initialization of @AppStorage properties with defaults
-        if UserDefaults.standard.object(forKey: "notificationCount") == nil {
-            UserDefaults.standard.set(5, forKey: "notificationCount")
+        if defaults.object(forKey: "notificationCount") == nil {
+            defaults.set(10, forKey: "notificationCount")
         }
-        if UserDefaults.standard.object(forKey: "startTimeIndex") == nil {
-            UserDefaults.standard.set(12, forKey: "startTimeIndex")
+        if defaults.object(forKey: "startTimeIndex") == nil {
+            defaults.set(0, forKey: "startTimeIndex")
         }
-        if UserDefaults.standard.object(forKey: "endTimeIndex") == nil {
-            UserDefaults.standard.set(40, forKey: "endTimeIndex")
+        if defaults.object(forKey: "endTimeIndex") == nil {
+            defaults.set(47, forKey: "endTimeIndex")
         }
-//        if UserDefaults.standard.object(forKey: "notificationEnabled") == nil {
-//            UserDefaults.standard.set(false, forKey: "notificationEnabled")
-//        }
-        
+
+        // 4.10 reset: existing users get the new all-day window with max 10 reminders.
+        // Their preferences are overwritten once, then the flag is set so this never repeats.
+        if needsV2Migration {
+            defaults.set(10, forKey: "notificationCount")
+            defaults.set(0, forKey: "startTimeIndex")
+            defaults.set(47, forKey: "endTimeIndex")
+            // Force the next foreground tick in SpeakLifeApp to reschedule notifications
+            // with the new window instead of waiting for the existing batch to expire.
+            defaults.removeObject(forKey: "lastScheduledNotificationDate")
+            defaults.removeObject(forKey: "nextRescheduleDate")
+        }
+        defaults.set(true, forKey: "notificationDefaultsMigratedV2")
+
         // Validate and fix any invalid existing values
         validateAndFixNotificationSettings()
     }
     
     private func validateAndFixNotificationSettings() {
-        var fixed = false
-        
         // Fix notification count
         if notificationCount <= 0 {
-            // Fixed notification count to 5
-            notificationCount = 5
-            fixed = true
+            notificationCount = 10
         }
-        
-        // Fix time indices
+
+        // Fix time indices — default window is the full day (00:00 to 23:30).
         if startTimeIndex < 0 || startTimeIndex >= 48 {
-            // Fixed invalid start time index to 12
-            startTimeIndex = 12 // 6 AM
-            fixed = true
+            startTimeIndex = 0
         }
-        
+
         if endTimeIndex <= startTimeIndex || endTimeIndex >= 48 {
-            let newEndIndex = min(startTimeIndex + 16, 47)
-            // Fixed invalid end time index
-            endTimeIndex = newEndIndex
-            fixed = true
+            endTimeIndex = 47
         }
-        
+
         // Ensure minimum window of 2 hours
         if (endTimeIndex - startTimeIndex) < 4 { // 4 = 2 hours (30min intervals)
-            let newEndIndex = min(startTimeIndex + 4, 47)
-            // Fixed insufficient time window
-            endTimeIndex = newEndIndex
-            fixed = true
+            endTimeIndex = min(startTimeIndex + 4, 47)
         }
-        
-        if !fixed {
-            // Notification settings validated
-        }
-        
-        // Final notification settings configured
     }
-    
+
     // Call this method when user changes start/end times to ensure validity
     func validateTimeRange() {
         if endTimeIndex <= startTimeIndex {
             endTimeIndex = min(startTimeIndex + 4, 47) // Minimum 2 hour window
         }
     }
-    
+
     // Call this method to ensure notification count is valid
     func validateNotificationCount() {
         if notificationCount <= 0 {
-            notificationCount = 5
+            notificationCount = 10
         }
     }
     

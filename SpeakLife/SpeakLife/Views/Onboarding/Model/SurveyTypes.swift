@@ -21,13 +21,12 @@ enum SurveyStep: Int, CaseIterable {
     case takeAStand         = 10  // auto-advance transition — breath before commitment
     case commitmentHold     = 11
     case paywall            = 12
-    case notificationTime   = 13  // post-paywall
 
     var isQuestion: Bool {
         switch self {
         case .intro, .productPositioning, .theSeed, .interstitialB,
              .goalReveal, .personalDeclaration, .takeAStand, .commitmentHold,
-             .paywall, .notificationTime: return false
+             .paywall: return false
         default: return true
         }
     }
