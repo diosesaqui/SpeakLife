@@ -126,6 +126,13 @@ struct SurveyOnboardingView: View {
         if let style = responses.primaryDeclarationStyle {
             appState.selectedDeclarationStyles = [style.rawValue]
         }
+        // Persist the goal-word's curated notification mix so SpeakLifeApp.resetNotifications
+        // schedules personalized content instead of falling back to NotificationManager's
+        // generic [destiny, gratitude, faith, identity, grace, joy, rest] default.
+        let notificationCategories = goalWord.notificationCategories
+        appState.selectedNotificationCategories = notificationCategories
+            .map { $0.rawValue }
+            .joined(separator: ",")
         let category = goalWord.declarationCategory
         UserDefaults.standard.set(category.rawValue, forKey: "selectedCategory")
         UserPreferencesTracker.shared.trackCategorySelection(category.rawValue)
