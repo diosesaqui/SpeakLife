@@ -90,8 +90,6 @@ struct SurveyOnboardingView: View {
             SurveyCommitmentHoldScreen(size: size) { advance() }
         case .paywall:
             HighConversionPaywallView(callback: { advance() })
-        case .notificationTime:
-            SurveyQ8NotificationScreen(size: size, responses: responses) { advance() }
         default:
             EmptyView()
         }
@@ -127,9 +125,6 @@ struct SurveyOnboardingView: View {
         appState.surveyGoalWord = goalWord.rawValue
         if let style = responses.primaryDeclarationStyle {
             appState.selectedDeclarationStyles = [style.rawValue]
-        }
-        if let notifTime = responses.notificationTime {
-            appState.startTimeIndex = notifTime.startTimeIndex
         }
         let category = goalWord.declarationCategory
         UserDefaults.standard.set(category.rawValue, forKey: "selectedCategory")
