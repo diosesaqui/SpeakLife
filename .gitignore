@@ -1,1 +1,6 @@
 SpeakLife/Secrets.xcconfig
+
+# Firebase CLI diagnostic output
+firebase-debug.log
+firebase-debug.*.log
+.firebase/
