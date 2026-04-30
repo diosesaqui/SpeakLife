@@ -276,10 +276,14 @@ final class NotificationManager: NSObject {
         guard hourMinute.count > 1 else { callback?(); return }
         guard declarations.count >= count else { callback?(); return }
 
-        // Schedule notifications across the next N days so they survive without
-        // the app being opened daily. iOS allows up to 64 pending notifications;
-        // daysAhead * count must stay well under that limit.
-        let daysAhead = 10 // 10 days × 5 notifications = 50 (safely under the 64-notification OS limit)
+        // iOS allows up to 64 pending notifications per app. We aim for ≤60 to leave
+        // headroom for checklist + system-scheduled notifications. daysAhead therefore
+        // shrinks as count grows so we never exceed the OS cap and silently drop sends.
+        //   count=5  → 10 days (50 notifications)
+        //   count=10 → 6 days (60 notifications)
+        //   count=20 → 3 days (60 notifications)
+        let maxPendingPerBatch = 60
+        let daysAhead = max(1, min(10, maxPendingPerBatch / max(count, 1)))
         let now = Date()
         let calendar = Calendar.autoupdatingCurrent
 
@@ -325,10 +329,38 @@ final class NotificationManager: NSObject {
             }
         }
 
-        // Record the schedule date so the app knows when to refresh (in ~10 days)
+        // Record the batch end so the app knows when this batch's last notification fires.
         let refreshDate = calendar.date(byAdding: .day, value: daysAhead - 1, to: now)
         lastScheduledNotificationDate = refreshDate
+
+        // Also record when to start trying to reschedule. Buffer scales with batch length:
+        // a 10-day batch reschedules with 4 days of slack, a 6-day batch with 2, a 3-day
+        // batch with 1. Keeps short batches from triggering reschedule on every launch.
+        let bufferDays = max(1, min(4, daysAhead / 2))
+        nextRescheduleDate = calendar.date(byAdding: .day, value: max(0, daysAhead - 1 - bufferDays), to: now)
         callback?()
+    }
+
+    /// The earliest date at which the foreground lifecycle handler should re-register
+    /// notifications. Set inside `prepareNotifications` based on the current batch length.
+    /// Falls back to `.distantPast` when missing so a stale install reschedules immediately.
+    var nextRescheduleDate: Date? {
+        get {
+            UserDefaults.standard.object(forKey: "nextRescheduleDate") as? Date
+        }
+        set {
+            if let newValue {
+                UserDefaults.standard.set(newValue, forKey: "nextRescheduleDate")
+            } else {
+                UserDefaults.standard.removeObject(forKey: "nextRescheduleDate")
+            }
+        }
+    }
+
+    /// True when the app should reschedule the notification batch on the next foreground.
+    var shouldRescheduleBatch: Bool {
+        guard let threshold = nextRescheduleDate else { return true }
+        return Date() >= threshold
     }
     
     /// Submits a BGAppRefreshTask to fire when the notification batch is 4 days

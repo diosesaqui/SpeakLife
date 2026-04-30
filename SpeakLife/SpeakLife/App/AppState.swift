@@ -129,7 +129,8 @@ final class AppState: ObservableObject {
             defaults.set(47, forKey: "endTimeIndex")
             // Force the next foreground tick in SpeakLifeApp to reschedule notifications
             // with the new window instead of waiting for the existing batch to expire.
-            UserDefaults.standard.removeObject(forKey: "lastScheduledNotificationDate")
+            defaults.removeObject(forKey: "lastScheduledNotificationDate")
+            defaults.removeObject(forKey: "nextRescheduleDate")
         }
         defaults.set(true, forKey: "notificationDefaultsMigratedV2")
 

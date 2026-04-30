@@ -80,8 +80,6 @@ struct SpeakLifeApp: App {
     // Track if this is the very first launch of the app
     @AppStorage("hasLaunchedBefore") private var hasLaunchedBefore = false
     
-    private let fourDaysInSeconds: Double = 345600
-    
     var body: some Scene {
         WindowGroup {
             HomeView(isShowingLanding: $isShowingLanding, showDailyBurstOnLaunch: $showDailyBurstOnLaunch, showDailyStructuredDayOnLaunch: $showDailyStructuredDayOnLaunch)
@@ -232,16 +230,15 @@ struct SpeakLifeApp: App {
                 DailyDeclarationReminderService.shared.refreshEveningReminderIfNeeded()
                 
                
-                // Reschedule only when the batch is within 4 days of running out.
-                // Uses NotificationManager.lastScheduledNotificationDate which is set to
-                // now+9days after each batch, so this only fires ~day 6 of 10 (or on
-                // first launch when it's nil). Prevents wiping future notifications on every
-                // app open.
-                if appState.notificationEnabled {
-                    let batchEnd = NotificationManager.shared.lastScheduledNotificationDate ?? .distantPast
-                    if Date() > batchEnd.addingTimeInterval(-fourDaysInSeconds) {
-                        resetNotifications()
-                    }
+                // Reschedule only when the current batch is close to running out.
+                // NotificationManager owns the threshold (it scales with the actual batch
+                // length, since count=10 fits ≤6 days of notifications under iOS's 64-pending
+                // cap whereas count=5 fits 10 days). Avoids wiping future notifications on
+                // every app open while still keeping the schedule continuous for users who
+                // open the app daily.
+                if appState.notificationEnabled,
+                   NotificationManager.shared.shouldRescheduleBatch {
+                    resetNotifications()
                 }
             case .inactive:
                 // Inactive state happens briefly when transitioning
