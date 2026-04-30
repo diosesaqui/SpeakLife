@@ -14,6 +14,9 @@
 		3D80B3F476D5A3B34421898E /* PrayerWallPost.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0214EB35A67E7EF76115C40 /* PrayerWallPost.swift */; };
 		4501F3A12F840A01008704F9 /* WarriorRoomTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4501F3A22F840A01008704F9 /* WarriorRoomTypes.swift */; };
 		4501F3A32F840A01008704F9 /* Agreement.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4501F3A42F840A01008704F9 /* Agreement.swift */; };
+		4501F3A52F840A01008704F9 /* WarriorRoomTypesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4501F3A62F840A01008704F9 /* WarriorRoomTypesTests.swift */; };
+		4501F3A72F840A01008704F9 /* PrayerWallPostTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4501F3A82F840A01008704F9 /* PrayerWallPostTests.swift */; };
+		4501F3A92F840A01008704F9 /* PrayerWallViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4501F3AA2F840A01008704F9 /* PrayerWallViewModelTests.swift */; };
 		4501F3912D8926CA00315902 /* TestimonyViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4501F3902D8926C500315902 /* TestimonyViewModel.swift */; };
 		450720DB2BAFFB4A0029EE2B /* TimerViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 450720DA2BAFFB4A0029EE2B /* TimerViewModelTests.swift */; };
 		450901B22F630925008704F9 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 450901B12F630925008704F9 /* GoogleService-Info.plist */; };
@@ -762,6 +765,9 @@
 		B0214EB35A67E7EF76115C40 /* PrayerWallPost.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrayerWallPost.swift; sourceTree = "<group>"; };
 		4501F3A22F840A01008704F9 /* WarriorRoomTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WarriorRoomTypes.swift; sourceTree = "<group>"; };
 		4501F3A42F840A01008704F9 /* Agreement.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Agreement.swift; sourceTree = "<group>"; };
+		4501F3A62F840A01008704F9 /* WarriorRoomTypesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WarriorRoomTypesTests.swift; sourceTree = "<group>"; };
+		4501F3A82F840A01008704F9 /* PrayerWallPostTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrayerWallPostTests.swift; sourceTree = "<group>"; };
+		4501F3AA2F840A01008704F9 /* PrayerWallViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrayerWallViewModelTests.swift; sourceTree = "<group>"; };
 		BA221D745BD49CF6BCFEBAA1 /* LifecycleNotificationService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LifecycleNotificationService.swift; sourceTree = "<group>"; };
 		BCC8A7100000000000000001 /* BibleChatTopic.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BibleChatTopic.swift; sourceTree = "<group>"; };
 		BCC8A7100000000000000002 /* BibleChatService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BibleChatService.swift; sourceTree = "<group>"; };
@@ -848,6 +854,9 @@
 		2F740F5F29D4014500E89E7F /* SpeakLifeTests */ = {
 			isa = PBXGroup;
 			children = (
+				4501F3A62F840A01008704F9 /* WarriorRoomTypesTests.swift */,
+				4501F3A82F840A01008704F9 /* PrayerWallPostTests.swift */,
+				4501F3AA2F840A01008704F9 /* PrayerWallViewModelTests.swift */,
 				45B5A82F2DDC14B4006DE6AA /* DevotionalTests.swift */,
 				4597E1E12E3FDC5C009D6C66 /* DailyChecklistTests.swift */,
 				2F740F6829D4017400E89E7F /* APIClientTests.swift */,
@@ -2032,6 +2041,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4501F3A52F840A01008704F9 /* WarriorRoomTypesTests.swift in Sources */,
+				4501F3A72F840A01008704F9 /* PrayerWallPostTests.swift in Sources */,
+				4501F3A92F840A01008704F9 /* PrayerWallViewModelTests.swift in Sources */,
 				4597E24E2E419DDF009D6C66 /* AffirmationRepositoryTests.swift in Sources */,
 				4597E24F2E419DDF009D6C66 /* JournalRepositoryTests.swift in Sources */,
 				4597E2502E419DDF009D6C66 /* PersistenceControllerTests.swift in Sources */,

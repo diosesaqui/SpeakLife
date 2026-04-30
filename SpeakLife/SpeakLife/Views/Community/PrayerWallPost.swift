@@ -49,22 +49,32 @@ struct PrayerWallPost: Identifiable, Codable {
 // MARK: - Reactions / Category helpers
 
 extension PrayerWallPost {
-    /// Total reactions across all four types. Falls back to the legacy
-    /// `prayerCount` for posts created before reactionCounts existed.
+    /// Total reactions across all four types. `prayerCount` is kept in sync
+    /// with the running total by the ViewModel on every reaction write, so
+    /// it's the authoritative total for both legacy and v2 posts.
     var totalReactions: Int {
-        if let counts = reactionCounts {
-            return counts.values.reduce(0, +)
-        }
-        return prayerCount
+        prayerCount
     }
 
-    /// Count for a specific reaction type. Legacy posts attribute every prior
-    /// "Praying with you" tap to the new "standing" reaction.
+    /// Count for a specific reaction type.
+    ///
+    /// For legacy posts (`reactionCounts == nil`) every prior 🙏 tap is
+    /// attributed to `.standing`.
+    ///
+    /// For posts that crossed the v2 boundary mid-life (some legacy 🙏 taps,
+    /// then later a non-`.standing` reaction was added), `prayerCount` will
+    /// be higher than the sum of `reactionCounts`. We attribute that gap to
+    /// `.standing` so the legacy taps still appear in the per-reaction
+    /// breakdown.
     func count(for reaction: WarriorRoomReaction) -> Int {
-        if let counts = reactionCounts {
-            return counts[reaction.rawValue] ?? 0
+        guard let counts = reactionCounts else {
+            return reaction == .standing ? prayerCount : 0
         }
-        return reaction == .standing ? prayerCount : 0
+        let raw = max(0, counts[reaction.rawValue] ?? 0)
+        guard reaction == .standing else { return raw }
+        let sum = counts.values.map { max(0, $0) }.reduce(0, +)
+        let gap = max(0, prayerCount - sum)
+        return raw + gap
     }
 
     /// Reactions present on the post sorted by count descending.

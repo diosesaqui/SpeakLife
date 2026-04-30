@@ -101,18 +101,27 @@ class PrayerWallViewModel: ObservableObject {
     /// One-shot migration: every post the user previously prayed for becomes
     /// a "standing" reaction so their selection state survives the upgrade.
     private func migrateLegacyPrayedPostIdsIfNeeded() {
-        let defaults = UserDefaults.standard
-        guard !defaults.bool(forKey: "warriorRoomUserReactionsMigrated") else { return }
+        PrayerWallViewModel.migrateLegacyPrayedPostIds(in: .standard)
+    }
 
-        let legacyIds = defaults.stringArray(forKey: legacyPrayedPostIdsKey) ?? []
+    /// Pure-logic migration extracted for testability. Idempotent: subsequent
+    /// calls are no-ops once the migration flag is set.
+    static func migrateLegacyPrayedPostIds(in defaults: UserDefaults) {
+        let migrationFlagKey = "warriorRoomUserReactionsMigrated"
+        let legacyKey = "prayedPostIds"
+        let reactionsKey = "warriorRoomUserReactions"
+
+        guard !defaults.bool(forKey: migrationFlagKey) else { return }
+
+        let legacyIds = defaults.stringArray(forKey: legacyKey) ?? []
         if !legacyIds.isEmpty {
-            var migrated = userReactions
+            var migrated = (defaults.dictionary(forKey: reactionsKey) as? [String: String]) ?? [:]
             for id in legacyIds where migrated[id] == nil {
                 migrated[id] = WarriorRoomReaction.standing.rawValue
             }
-            userReactions = migrated
+            defaults.set(migrated, forKey: reactionsKey)
         }
-        defaults.set(true, forKey: "warriorRoomUserReactionsMigrated")
+        defaults.set(true, forKey: migrationFlagKey)
     }
 
     // MARK: - Cache
@@ -546,6 +555,9 @@ class PrayerWallViewModel: ObservableObject {
                       userId: String,
                       displayName: String) {
         guard let postId = post.id else { return }
+        // userId becomes the document id, so an empty userId would write to
+        // an invalid Firestore path. Treat sign-out races as a no-op.
+        guard !userId.isEmpty else { return }
         guard !userAgreementPostIds.contains(postId) else { return }
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
