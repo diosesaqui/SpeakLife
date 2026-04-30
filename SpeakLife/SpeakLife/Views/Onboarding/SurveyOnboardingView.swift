@@ -5,6 +5,8 @@
 
 import SwiftUI
 import FirebaseAnalytics
+import UserNotifications
+import UIKit
 
 struct SurveyOnboardingView: View {
     @EnvironmentObject var subscriptionStore: SubscriptionStore
@@ -129,8 +131,8 @@ struct SurveyOnboardingView: View {
         // Persist the goal-word's curated notification mix so SpeakLifeApp.resetNotifications
         // schedules personalized content instead of falling back to NotificationManager's
         // generic [destiny, gratitude, faith, identity, grace, joy, rest] default.
-        let notificationCategories = goalWord.notificationCategories
-        appState.selectedNotificationCategories = notificationCategories
+        let notificationCategoriesSet = goalWord.notificationCategories
+        appState.selectedNotificationCategories = notificationCategoriesSet
             .map { $0.rawValue }
             .joined(separator: ",")
         let category = goalWord.declarationCategory
@@ -146,6 +148,34 @@ struct SurveyOnboardingView: View {
             "declaration_style": responses.primaryDeclarationStyle?.rawValue ?? "none",
             "set_personal_declaration": (savedDeclaration != nil) as NSNumber
         ])
-        onComplete()
+
+        // Ask for notification permission BEFORE handing off to onComplete (which
+        // schedules lifecycle pushes + content batch). Without this, every survey
+        // user lands with notificationEnabled=false and gets zero pushes until
+        // they manually toggle Reminders on.
+        requestNotificationPermissionThenComplete(categories: notificationCategoriesSet)
+    }
+
+    private func requestNotificationPermissionThenComplete(categories: Set<DeclarationCategory>) {
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { granted, _ in
+            Analytics.logEvent("notification_permission", parameters: ["granted": granted, "source": "survey_onboarding"])
+            DispatchQueue.main.async {
+                appState.notificationEnabled = granted
+                if granted {
+                    UIApplication.shared.registerForRemoteNotifications()
+                    // Register the daily declaration batch immediately so the user starts
+                    // receiving content notifications today rather than waiting for the
+                    // next cold launch's foreground reschedule.
+                    NotificationManager.shared.registerNotifications(
+                        count: appState.notificationCount,
+                        startTime: appState.startTimeIndex,
+                        endTime: appState.endTimeIndex,
+                        categories: categories
+                    )
+                    appState.lastNotificationSetDate = Date()
+                }
+                onComplete()
+            }
+        }
     }
 }

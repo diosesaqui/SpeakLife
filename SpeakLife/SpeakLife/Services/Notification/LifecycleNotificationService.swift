@@ -31,14 +31,17 @@ final class LifecycleNotificationService {
 
         let installDate = Date()
         UserDefaults.standard.set(installDate, forKey: kInstallDate)
-        UserDefaults.standard.set(true, forKey: kLifecycleScheduled)
 
         center.getNotificationSettings { [weak self] settings in
+            guard let self = self else { return }
+            // Only mark as scheduled once we successfully add the requests.
+            // If permission isn't granted yet, leave the flag unset so the
+            // next call (e.g. after user enables in settings) can retry.
             guard settings.authorizationStatus == .authorized else { return }
-            self?.scheduleAll(from: installDate)
+            self.scheduleAll(from: installDate)
+            UserDefaults.standard.set(true, forKey: self.kLifecycleScheduled)
+            Analytics.logEvent("lifecycle_notifications_scheduled", parameters: [:])
         }
-
-        Analytics.logEvent("lifecycle_notifications_scheduled", parameters: [:])
     }
 
     /// Call on every app open (session_start)
@@ -60,6 +63,13 @@ final class LifecycleNotificationService {
                 hour: 8,
                 title: "Your mind is being renewed ✨",
                 body: "One day in. Keep declaring — repetition is how truth sticks. Open SpeakLife and speak 3 declarations right now."
+            ),
+            (
+                id: "lifecycle_d2",
+                days: 2,
+                hour: 18,
+                title: "Day 2 — don't break the chain 🔗",
+                body: "The enemy fights hardest right before breakthrough. Open SpeakLife and speak one declaration over yourself tonight."
             ),
             (
                 id: "lifecycle_d3",

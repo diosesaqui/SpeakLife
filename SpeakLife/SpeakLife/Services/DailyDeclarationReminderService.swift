@@ -55,14 +55,15 @@ class DailyDeclarationReminderService: ObservableObject {
     }
     
     private func scheduleDailyDeclarationReminder() {
-        // Daily burst reminders removed — too noisy on top of user-configured
-        // declaration reminders. Only streak-at-risk fires as a system daily push.
-        // Cancel any previously scheduled ones.
+        // Cancel any stale instances first so we don't double-schedule when the
+        // user toggles the reminder off and on.
         UNUserNotificationCenter.current().removePendingNotificationRequests(
             withIdentifiers: [reminderIdentifier, eveningReminderIdentifier]
         )
+        scheduleMorningReminder()
+        scheduleEveningReminder()
     }
-    
+
     private func scheduleMorningReminder() {
         let content = UNMutableNotificationContent()
         content.title = "Your Daily Burst is ready! ⚡"
@@ -70,25 +71,23 @@ class DailyDeclarationReminderService: ObservableObject {
         content.sound = UNNotificationSound.default
         content.categoryIdentifier = "DAILY_DECLARATION"
         content.userInfo = ["action": "daily_declaration_burst"]
-        
-        // Schedule for 7:00 AM — moved from 8am to avoid collision with
-        // PersonalizedMorningNotification (checklist system) which fires at 8am.
+
+        // 7:30 AM — sits between the user's first content declaration (~7am)
+        // and the lifecycle pushes (8-9am) so it has its own moment.
         var dateComponents = DateComponents()
         dateComponents.hour = 7
-        dateComponents.minute = 0
-        
+        dateComponents.minute = 30
+
         let trigger = UNCalendarNotificationTrigger(dateMatching: dateComponents, repeats: true)
         let request = UNNotificationRequest(
             identifier: reminderIdentifier,
             content: content,
             trigger: trigger
         )
-        
+
         UNUserNotificationCenter.current().add(request) { error in
             if let error = error {
-                print("❌ Error scheduling morning reminder: \(error.localizedDescription)")
-            } else {
-                print("✅ Morning reminder scheduled for 8:00 AM")
+                print("❌ Error scheduling morning burst reminder: \(error.localizedDescription)")
             }
         }
     }
@@ -107,35 +106,28 @@ class DailyDeclarationReminderService: ObservableObject {
     }
     
     private func scheduleConditionalEveningReminder() {
-        // Skip scheduling if the user already completed today's burst
-        guard !BurstCompletionTracker.shared.hasTodaysCompletion() else {
-            #if DEBUG
-            print("🔔 Evening burst reminder skipped — burst already completed today")
-            #endif
-            return
-        }
-        
-        // Schedule for 8:00 PM every day
+        // Schedule for 8:00 PM, repeating daily. The "skip if already completed"
+        // path runs when the user finishes the burst — see
+        // `cancelEveningReminderAfterBurstCompletion()`. With a non-repeating
+        // trigger the reminder dies after one fire and depends on the user
+        // foregrounding the app in the evening to ever come back, which makes
+        // it unreliable for users who only check in mornings.
         var dateComponents = DateComponents()
         dateComponents.hour = 20  // 8:00 PM
         dateComponents.minute = 0
-        
-        let trigger = UNCalendarNotificationTrigger(dateMatching: dateComponents, repeats: false)
-        
-        // We'll schedule this daily and check if burst was completed before showing
+
+        let trigger = UNCalendarNotificationTrigger(dateMatching: dateComponents, repeats: true)
         let content = createEveningReminderContent()
-        
+
         let request = UNNotificationRequest(
             identifier: eveningReminderIdentifier,
             content: content,
             trigger: trigger
         )
-        
+
         UNUserNotificationCenter.current().add(request) { error in
             if let error = error {
                 print("❌ Error scheduling evening reminder: \(error.localizedDescription)")
-            } else {
-                print("✅ Evening reminder scheduled for 8:00 PM")
             }
         }
     }

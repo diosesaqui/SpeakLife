@@ -464,6 +464,16 @@ final class SubscriptionStore: ObservableObject {
             "is_trial": isTrialProduct
         ])
 
+        // Hook into the trial experience push sequence. Without this the D2/D3
+        // trial-conversion pushes coded in TrialExperienceService never fire.
+        if isTrialProduct {
+            TrialExperienceService.shared.onTrialStarted()
+        } else if TrialExperienceService.shared.isTrialActive {
+            // Trial-active user just bought a paid product → mark converted so
+            // we cancel the still-pending trial pushes and stop nagging them.
+            TrialExperienceService.shared.onTrialConverted()
+        }
+
         // Post-purchase email capture (unchanged)
         let hasShownEmailCapture = UserDefaults.standard.bool(forKey: "hasShownEmailCapture")
         if !hasShownEmailCapture {

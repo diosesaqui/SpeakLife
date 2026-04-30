@@ -225,7 +225,12 @@ struct SpeakLifeApp: App {
                     // Ensure checklist notifications are scheduled (they repeat daily)
                     NotificationManager.shared.scheduleChecklistNotifications()
                 }
-                
+
+                // Reset the lapsed re-engagement timer on every foreground (not just
+                // cold launch). Without this, a user who background/foregrounds for
+                // days never resets lapsed_d5/lapsed_d10, so they fire incorrectly.
+                LifecycleNotificationService.shared.onAppOpen()
+
                 // Check if we should show evening reminder for daily burst
                 DailyDeclarationReminderService.shared.refreshEveningReminderIfNeeded()
                 
