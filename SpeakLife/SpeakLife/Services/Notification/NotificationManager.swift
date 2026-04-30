@@ -33,8 +33,21 @@ final class NotificationManager: NSObject {
     func notificationCategories() -> Set<DeclarationCategory> {
         [DeclarationCategory.destiny, .gratitude, .faith, .identity, .grace, .joy, .rest]
     }
-    
-    
+
+    /// Rotated through the daily declaration batch so the notification list
+    /// doesn't read like 50 identical "SpeakLife" rows. Each slot picks a
+    /// different framing for the same declaration, which keeps banner-glance
+    /// engagement up over a 10-day batch.
+    fileprivate static let rotatingNotificationTitles: [String] = [
+        "Speak this over your day",
+        "60 seconds. Your turn.",
+        "A promise for you ✨",
+        "From the Word",
+        "Your declaration is ready",
+        "Truth, on demand",
+        "Speak life now"
+    ]
+
     private override init() {}
     
     private let notificationProcessor = NotificationProcessor(service: LocalAPIClient())
@@ -198,8 +211,13 @@ final class NotificationManager: NSObject {
                 // Skip slots that have already passed (only relevant for day 0)
                 guard targetDate > now else { continue }
 
+                // Rotate the title across the batch so users don't see "SpeakLife"
+                // 50 times in a row (banner blindness). Title changes are tied to the
+                // declaration index so each slot in a day gets a different angle.
                 let content = UNMutableNotificationContent()
-                content.title = "SpeakLife"
+                content.title = Self.rotatingNotificationTitles[
+                    (idx + day) % Self.rotatingNotificationTitles.count
+                ]
                 content.body = body
                 content.sound = UNNotificationSound.default
                 content.userInfo = ["category": decl.category]

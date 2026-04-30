@@ -2,9 +2,18 @@
 //  LifecycleNotificationService.swift
 //  SpeakLife
 //
-//  Lifecycle push sequence — D1, D3, D7, D14, D30 + lapsed user re-engagement.
-//  Call LifecycleNotificationService.shared.scheduleLifecycleNotifications() on first launch.
-//  Call .onAppOpen() every session_start to reset lapsed timer.
+//  Retention-engineered push sequence personalized by survey goal word.
+//
+//  Lifecycle (install-anchored, one-time):
+//      D1 8am, D2 6pm, D3 9am, D4 9am, D7 8am, D14 8am, D30 9am
+//  Streak:
+//      streak_at_risk daily 6:30pm (replaces old 9pm; 9pm is too late for action)
+//      streak_break next morning 9am (replaces old +2h; comeback > guilt)
+//  Lapsed:
+//      lapsed_d5, lapsed_d10 — soft re-engagement based on no app open
+//
+//  Call .scheduleLifecycleNotifications() once after onboarding completes.
+//  Call .onAppOpen() on every cold launch + warm foreground to reset lapsed timers.
 //
 
 import Foundation
@@ -18,10 +27,9 @@ final class LifecycleNotificationService {
     private let center = UNUserNotificationCenter.current()
 
     // UserDefaults keys
-    private let kInstallDate       = "lifecycle_install_date"
-    private let kLastOpenDate      = "lifecycle_last_open_date"
+    private let kInstallDate        = "lifecycle_install_date"
+    private let kLastOpenDate       = "lifecycle_last_open_date"
     private let kLifecycleScheduled = "lifecycle_notifications_scheduled"
-    private let kStreakKey         = "currentStreak"
 
     // MARK: - Entry Points
 
@@ -44,7 +52,7 @@ final class LifecycleNotificationService {
         }
     }
 
-    /// Call on every app open (session_start)
+    /// Call on every app open (cold launch + warm foreground)
     func onAppOpen() {
         UserDefaults.standard.set(Date(), forKey: kLastOpenDate)
         // Cancel any pending lapsed re-engagement since user came back
@@ -56,66 +64,42 @@ final class LifecycleNotificationService {
     // MARK: - Schedule All Lifecycle Notifications
 
     private func scheduleAll(from installDate: Date) {
-        let messages: [(id: String, days: Int, hour: Int, title: String, body: String)] = [
-            (
-                id: "lifecycle_d1",
-                days: 1,
-                hour: 8,
-                title: "Your mind is being renewed ✨",
-                body: "One day in. Keep declaring — repetition is how truth sticks. Open SpeakLife and speak 3 declarations right now."
-            ),
-            (
-                id: "lifecycle_d2",
-                days: 2,
-                hour: 18,
-                title: "Day 2 — don't break the chain 🔗",
-                body: "The enemy fights hardest right before breakthrough. Open SpeakLife and speak one declaration over yourself tonight."
-            ),
-            (
-                id: "lifecycle_d3",
-                days: 3,
-                hour: 9,
-                title: "3 days of speaking life 🔥",
-                body: "Research says it takes 21 days to build a habit. You're 14% there. Don't stop now — your breakthrough is ahead."
-            ),
-            (
-                id: "lifecycle_d7",
-                days: 7,
-                hour: 8,
-                title: "One week strong 💪",
-                body: "7 days of declaring God's Word. You're rewiring your mind. Open today's declarations and keep the momentum going."
-            ),
-            (
-                id: "lifecycle_d14",
-                days: 14,
-                hour: 8,
-                title: "Two weeks of transformation 👑",
-                body: "Your mind thinks differently than it did 2 weeks ago — even if you can't see it yet. Trust the process. Declare today."
-            ),
-            (
-                id: "lifecycle_d30",
-                days: 30,
-                hour: 9,
-                title: "30 days. That's a new you. 🙌",
-                body: "A month of speaking life. This is where real transformation lives. You've built something — don't walk away from it."
-            ),
+        // Pull personalization context once. Goal word drives copy, name when available.
+        let goal = SurveyGoalWord(rawValue: UserDefaults.standard.string(forKey: "surveyGoalWord") ?? "")
+        let nameRaw = UserDefaults.standard.string(forKey: "userName") ?? ""
+        let name = nameRaw.isEmpty ? nil : nameRaw
+
+        let messages: [(id: String, days: Int, hour: Int, minute: Int, copy: LifecycleCopy)] = [
+            (id: "lifecycle_d1",  days: 1,  hour: 8,  minute: 0,  copy: copyD1(goal: goal,  name: name)),
+            (id: "lifecycle_d2",  days: 2,  hour: 18, minute: 0,  copy: copyD2(goal: goal,  name: name)),
+            (id: "lifecycle_d3",  days: 3,  hour: 9,  minute: 0,  copy: copyD3(goal: goal,  name: name)),
+            // D4 fills the real day-3-to-7 cliff. Mixpanel/Amplitude data on
+            // habit-formation apps shows day 4 is where users either commit or quit.
+            (id: "lifecycle_d4",  days: 4,  hour: 9,  minute: 0,  copy: copyD4(goal: goal,  name: name)),
+            (id: "lifecycle_d7",  days: 7,  hour: 8,  minute: 0,  copy: copyD7(goal: goal,  name: name)),
+            (id: "lifecycle_d14", days: 14, hour: 8,  minute: 0,  copy: copyD14(goal: goal, name: name)),
+            (id: "lifecycle_d30", days: 30, hour: 9,  minute: 0,  copy: copyD30(goal: goal, name: name)),
         ]
 
         for msg in messages {
             schedule(
                 id: msg.id,
-                title: msg.title,
-                body: msg.body,
+                title: msg.copy.title,
+                body: msg.copy.body,
                 daysFromNow: msg.days,
                 hour: msg.hour,
+                minute: msg.minute,
                 from: installDate
             )
         }
     }
 
-    // MARK: - Streak At-Risk Notification (Fix 2)
+    // MARK: - Streak At-Risk Notification
 
-    /// Schedule a daily 9pm notification that fires when tasks aren't done yet.
+    /// Schedule a daily 6:30pm notification reminding the user their streak is on the line.
+    /// 6:30pm is intentional: late enough that the user has had a workday, early enough that
+    /// there's still a meaningful evening window to come back. 9pm (the old time) lands when
+    /// people are winding down with phones face-down.
     func scheduleStreakAtRiskNotification(currentStreak: Int) {
         // Cancel first to avoid duplicates
         center.removePendingNotificationRequests(withIdentifiers: ["streak_at_risk"])
@@ -127,13 +111,13 @@ final class LifecycleNotificationService {
 
             let content = UNMutableNotificationContent()
             content.title = "Your \(currentStreak)-day streak ends tonight 🔥"
-            content.body = "Don't let it slip. 60 seconds is all it takes — open SpeakLife before midnight."
+            content.body = "You've come too far to lose it. 60 seconds saves it — open SpeakLife and speak one declaration before midnight."
             content.sound = .default
             content.userInfo = ["notificationType": "streakAtRisk"]
 
             var components = DateComponents()
-            components.hour = 21  // 9pm
-            components.minute = 0
+            components.hour = 18
+            components.minute = 30
             let trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: true)
             let request = UNNotificationRequest(identifier: "streak_at_risk", content: content, trigger: trigger)
             self?.center.add(request, withCompletionHandler: nil)
@@ -146,17 +130,31 @@ final class LifecycleNotificationService {
 
     // MARK: - Streak Break Notification
 
-    /// Call when a streak is broken (streak resets to 0)
+    /// Call when a streak is broken (streak resets to 0). Fires the next morning at 9am
+    /// instead of two hours after the break — comeback framing outperforms guilt framing
+    /// for habit re-engagement (Duolingo's research on streak revival).
     func scheduleStreakBreakNotification(previousStreak: Int) {
         guard previousStreak >= 3 else { return } // Only notify if streak was meaningful
         center.getNotificationSettings { [weak self] settings in
+            guard let self = self else { return }
             guard settings.authorizationStatus == .authorized else { return }
-            self?.scheduleImmediate(
-                id: "streak_break",
-                title: "Your \(previousStreak)-day streak ended 😔",
-                body: "You were on fire. Come back today and restart — every champion has a comeback story.",
-                delayHours: 2
-            )
+
+            self.center.removePendingNotificationRequests(withIdentifiers: ["streak_break"])
+
+            let content = UNMutableNotificationContent()
+            content.title = "Yesterday slipped. Today's clean."
+            content.body = "Your \(previousStreak)-day streak broke. Champions break streaks. The ones who win come back the next morning. Restart today."
+            content.sound = .default
+            content.userInfo = ["lifecycle_id": "streak_break", "deepLink": "declarations"]
+
+            // Fire tomorrow at 9 AM regardless of when the break happened.
+            let calendar = Calendar.current
+            let tomorrow = calendar.date(byAdding: .day, value: 1, to: Date()) ?? Date()
+            let fireDate = calendar.date(bySettingHour: 9, minute: 0, second: 0, of: tomorrow) ?? tomorrow
+            let comps = calendar.dateComponents([.year, .month, .day, .hour, .minute], from: fireDate)
+            let trigger = UNCalendarNotificationTrigger(dateMatching: comps, repeats: false)
+            let request = UNNotificationRequest(identifier: "streak_break", content: content, trigger: trigger)
+            self.center.add(request, withCompletionHandler: nil)
         }
         Analytics.logEvent("streak_break_notification_scheduled", parameters: ["previous_streak": previousStreak])
     }
@@ -183,7 +181,7 @@ final class LifecycleNotificationService {
 
     // MARK: - Helpers
 
-    private func schedule(id: String, title: String, body: String, daysFromNow: Int, hour: Int, from date: Date) {
+    private func schedule(id: String, title: String, body: String, daysFromNow: Int, hour: Int, minute: Int = 0, from date: Date) {
         let content = UNMutableNotificationContent()
         content.title = title
         content.body = body
@@ -191,7 +189,7 @@ final class LifecycleNotificationService {
         content.userInfo = ["lifecycle_id": id, "deepLink": "declarations"]
 
         var triggerDate = Calendar.current.date(byAdding: .day, value: daysFromNow, to: date) ?? date
-        triggerDate = Calendar.current.date(bySettingHour: hour, minute: 0, second: 0, of: triggerDate) ?? triggerDate
+        triggerDate = Calendar.current.date(bySettingHour: hour, minute: minute, second: 0, of: triggerDate) ?? triggerDate
         let components = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute], from: triggerDate)
         let trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: false)
 
@@ -215,5 +213,141 @@ final class LifecycleNotificationService {
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: delayHours * 3600, repeats: false)
         let request = UNNotificationRequest(identifier: id, content: content, trigger: trigger)
         center.add(request, withCompletionHandler: nil)
+    }
+}
+
+// MARK: - Personalized Copy
+
+/// Lifecycle copy is goal-word-aware so a user pursuing peace doesn't get the same
+/// generic D1 push as a user pursuing healing or prosperity. Iterable's 2023 push
+/// data showed 4× engagement lift on personalized vs. generic body copy.
+private struct LifecycleCopy {
+    let title: String
+    let body: String
+}
+
+private func nameToken(_ name: String?) -> String {
+    name.map { ", \($0)" } ?? ""
+}
+
+// MARK: D1 — morning after install. Reinforce yesterday's commitment.
+private func copyD1(goal: SurveyGoalWord?, name: String?) -> LifecycleCopy {
+    let n = nameToken(name)
+    switch goal {
+    case .peace:
+        return LifecycleCopy(
+            title: "Day 1 of taking back your peace ✨",
+            body: "Yesterday you said anxiety was running your mornings. Today is where that changes\(n). 60 seconds. Speak."
+        )
+    case .identity:
+        return LifecycleCopy(
+            title: "Day 1 — who God says you are 👑",
+            body: "You said you'd lost sight of your identity. The Word remembers. Open SpeakLife and let it speak who you really are."
+        )
+    case .purpose:
+        return LifecycleCopy(
+            title: "Day 1 of stepping into your calling 🧭",
+            body: "Yesterday you owned that you weren't walking in your purpose\(n). Today's declarations call it forward. Speak."
+        )
+    case .joy:
+        return LifecycleCopy(
+            title: "Day 1 of choosing joy ☀️",
+            body: "Joy isn't a feeling you wait for — it's a truth you declare. Open SpeakLife and speak it over today."
+        )
+    case .confidence:
+        return LifecycleCopy(
+            title: "Day 1 of becoming bold ⚡",
+            body: "Yesterday you said you wanted confidence. Confidence is built one declaration at a time\(n). Open and speak."
+        )
+    case .healing:
+        return LifecycleCopy(
+            title: "Day 1 of speaking healing 🌿",
+            body: "Healing scriptures are weapons\(n). Today is day 1 of putting them in your mouth. Open SpeakLife now."
+        )
+    case .prosperity:
+        return LifecycleCopy(
+            title: "Day 1 of walking in overflow 💰",
+            body: "Provision is your portion\(n). Today's declarations align your words with what God already said. Open and speak."
+        )
+    case .none:
+        return LifecycleCopy(
+            title: "Day 1 — your mind is being renewed ✨",
+            body: "One day in. Repetition is how truth sticks\(n). Open SpeakLife and speak 3 declarations right now."
+        )
+    }
+}
+
+// MARK: D2 — 6 PM. Anti-fade. Day 2 is where most quit.
+private func copyD2(goal: SurveyGoalWord?, name: String?) -> LifecycleCopy {
+    let n = nameToken(name)
+    let goalLabel = goal?.shortGoalLabel ?? "the change you want"
+    return LifecycleCopy(
+        title: "Day 2 is where most quit\(n)",
+        body: "The enemy of \(goalLabel) isn't your circumstances — it's forgetting tomorrow what you knew today. 60 seconds. Speak."
+    )
+}
+
+// MARK: D3 — 9 AM. Identity emergence (replaces gimmicky "14% there").
+private func copyD3(goal: SurveyGoalWord?, name: String?) -> LifecycleCopy {
+    let n = nameToken(name)
+    return LifecycleCopy(
+        title: "3 mornings of speaking life 🔥",
+        body: "You're not the same person who downloaded this on day 1\(n). Three mornings have shifted your default. Don't drop the rope today."
+    )
+}
+
+// MARK: D4 — 9 AM. Past-the-cliff. NEW.
+private func copyD4(goal: SurveyGoalWord?, name: String?) -> LifecycleCopy {
+    let n = nameToken(name)
+    return LifecycleCopy(
+        title: "You're past the hardest part\(n)",
+        body: "Most quit by day 4. You didn't. That's who you are now — someone who shows up. Speak today's declarations."
+    )
+}
+
+// MARK: D7 — 8 AM. Week milestone. Goal-personalized payoff.
+private func copyD7(goal: SurveyGoalWord?, name: String?) -> LifecycleCopy {
+    let n = nameToken(name)
+    let goalLabel = goal?.shortGoalLabel ?? "what you wanted"
+    return LifecycleCopy(
+        title: "One week of speaking life 💪",
+        body: "Seven days ago you wanted \(goalLabel)\(n). Now you're walking toward it. Don't stop here — week two is where it sticks."
+    )
+}
+
+// MARK: D14 — 8 AM. Compounding payoff.
+private func copyD14(goal: SurveyGoalWord?, name: String?) -> LifecycleCopy {
+    let n = nameToken(name)
+    return LifecycleCopy(
+        title: "Two weeks. You feel it yet\(n)?",
+        body: "Even when the change is invisible, your default is shifting. Open and feel it."
+    )
+}
+
+// MARK: D30 — 9 AM. Identity confirmation.
+private func copyD30(goal: SurveyGoalWord?, name: String?) -> LifecycleCopy {
+    let n = nameToken(name)
+    let goalLabel = goal?.shortGoalLabel ?? "who you wanted to be"
+    return LifecycleCopy(
+        title: "30 days. You changed your life\(n).",
+        body: "A month ago you wanted \(goalLabel). Today, that's who you are. Keep going — this is just the beginning."
+    )
+}
+
+// MARK: - SurveyGoalWord helper
+
+private extension SurveyGoalWord {
+    /// Short, lowercase, in-sentence label of the goal. Used in body copy
+    /// like "the change you want / your peace / your healing".
+    var shortGoalLabel: String {
+        switch self {
+        case .peace:      return "your peace"
+        case .identity:   return "knowing who you are"
+        case .purpose:    return "your calling"
+        case .joy:        return "your joy"
+        case .confidence: return "your confidence"
+        case .healing:    return "your healing"
+        case .prosperity: return "your overflow"
+        }
     }
 }

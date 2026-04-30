@@ -34,7 +34,7 @@ final class AppState: ObservableObject {
     @AppStorage("lastNotificationSetDate") var lastNotificationSetDate = Date()
     @AppStorage("lastSharedAttemptDate") var lastSharedAttemptDate = Date()
     @AppStorage("notificationEnabled") var notificationEnabled = false
-    @AppStorage("notificationCount") var notificationCount = 10
+    @AppStorage("notificationCount") var notificationCount = 5
     @AppStorage("startTimeNotification") var startTimeNotification = ""
     @AppStorage("endTimeNotification") var endTimeNotification = ""
     @AppStorage("startTimeIndex") var startTimeIndex = 14
@@ -51,6 +51,12 @@ final class AppState: ObservableObject {
     // which sent reminders overnight. This flag bumps those users to 7:00 AM (index 14).
     // Defaults to true so brand-new installs (no existing pref keys) skip the reset.
     @AppStorage("notificationDefaultsMigratedV3") var notificationDefaultsMigratedV3 = true
+    // V4 migration: drops notificationCount default from 10 to 5. 10/day was above
+    // the industry-best-practice ceiling for habit-formation apps and was driving
+    // users to disable the toggle entirely. Resets count to 5 unless the user
+    // explicitly wanted more (we can't distinguish, so this is a hard reset —
+    // users who actually wanted more can bump it back up in Reminders).
+    @AppStorage("notificationDefaultsMigratedV4") var notificationDefaultsMigratedV4 = true
     @AppStorage("lastReviewRequestSetDatev1") var lastReviewRequestSetDate: Date?
     @AppStorage("offerDiscount") var offerDiscount = false
     @AppStorage("offerDiscountTry") var offerDiscountTry = 0
@@ -116,7 +122,7 @@ final class AppState: ObservableObject {
 
         // Force initialization of @AppStorage properties with defaults
         if defaults.object(forKey: "notificationCount") == nil {
-            defaults.set(10, forKey: "notificationCount")
+            defaults.set(5, forKey: "notificationCount")
         }
         if defaults.object(forKey: "startTimeIndex") == nil {
             defaults.set(14, forKey: "startTimeIndex") // 7:00 AM (index = hour × 2)
@@ -125,10 +131,10 @@ final class AppState: ObservableObject {
             defaults.set(47, forKey: "endTimeIndex")
         }
 
-        // 4.10 reset: existing users get the new all-day window with max 10 reminders.
+        // 4.10 reset: existing users get the new all-day window.
         // Their preferences are overwritten once, then the flag is set so this never repeats.
         if needsV2Migration {
-            defaults.set(10, forKey: "notificationCount")
+            defaults.set(5, forKey: "notificationCount")
             defaults.set(14, forKey: "startTimeIndex") // 7:00 AM
             defaults.set(47, forKey: "endTimeIndex")   // 11:30 PM
             // Force the next foreground tick in SpeakLifeApp to reschedule notifications
@@ -149,6 +155,16 @@ final class AppState: ObservableObject {
         }
         defaults.set(true, forKey: "notificationDefaultsMigratedV3")
 
+        // V4 fix-up: drop count from 10 to 5 for everyone who hasn't migrated yet.
+        // Volume above 5/day was the #1 cause of users disabling notifications entirely.
+        if hasExistingNotificationPrefs,
+           defaults.object(forKey: "notificationDefaultsMigratedV4") == nil {
+            defaults.set(5, forKey: "notificationCount")
+            defaults.removeObject(forKey: "lastScheduledNotificationDate")
+            defaults.removeObject(forKey: "nextRescheduleDate")
+        }
+        defaults.set(true, forKey: "notificationDefaultsMigratedV4")
+
         // Validate and fix any invalid existing values
         validateAndFixNotificationSettings()
     }
@@ -156,7 +172,7 @@ final class AppState: ObservableObject {
     private func validateAndFixNotificationSettings() {
         // Fix notification count
         if notificationCount <= 0 {
-            notificationCount = 10
+            notificationCount = 5
         }
 
         // Fix time indices — default window starts at 7:00 AM and runs to 11:30 PM
@@ -185,7 +201,7 @@ final class AppState: ObservableObject {
     // Call this method to ensure notification count is valid
     func validateNotificationCount() {
         if notificationCount <= 0 {
-            notificationCount = 10
+            notificationCount = 5
         }
     }
     
