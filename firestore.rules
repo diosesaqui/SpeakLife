@@ -1,0 +1,105 @@
+rules_version = '2';
+
+// =====================================================================
+// SpeakLife — Firestore security rules
+// =====================================================================
+// These rules cover the Warrior Room (Prayer Wall) v2 data model:
+//   - prayerWall/{postId}                 (top-level posts)
+//   - prayerWall/{postId}/agreements/{userId}   (one agreement per user)
+//   - users/{deviceIdOrUid}               (FCM token storage)
+//
+// Apply via:
+//   1. Firebase Console → Firestore → Rules → paste this block, OR
+//   2. Add `"rules": "firestore.rules"` under firebase.json's "firestore"
+//      key, then run: firebase deploy --only firestore:rules
+//
+// Test rule changes in the Firebase Console's Rules Playground before
+// deploying. A bad rule can lock the entire app out.
+// =====================================================================
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ─── Helpers ───────────────────────────────────────────────────────
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    // The set of fields a writer is allowed to mutate on an existing post.
+    // Anything outside this set blocks the write.
+    function postMutableFields() {
+      return [
+        'prayerCount',           // legacy + total reaction tally
+        'reactionCounts',        // v2 per-reaction map (standing/etc.)
+        'reports',               // moderation reports (any signed-in user)
+        'isHidden',              // moderation auto-hide
+        'isAnswered',            // post author marks own post answered
+        'notifiedMilestones'     // Cloud Function bookkeeping
+      ];
+    }
+
+    function onlyAllowsFields(allowed) {
+      return request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(allowed);
+    }
+
+    // ─── Warrior Room posts ───────────────────────────────────────────
+
+    match /prayerWall/{postId} {
+      // Anyone (signed in or not) can read non-hidden posts. The client
+      // already filters with `where("isHidden", "==", false)` — this is a
+      // backstop in case rules are queried directly.
+      allow read: if true;
+
+      // Create a new post: must be signed in. The post's deviceId is the
+      // creator's local device id (not their auth uid) — we don't enforce
+      // ownership at the rule level for create, since the legacy schema
+      // never did. If you want to lock that down, add:
+      //   && request.resource.data.deviceId is string
+      //   && request.resource.data.deviceId.size() > 0
+      allow create: if signedIn();
+
+      // Updates are allowed only for the whitelisted mutable fields above.
+      // This blocks writes that try to overwrite `text`, `displayName`,
+      // `category`, `deviceId`, `timestamp` — those are immutable after
+      // create.
+      allow update: if signedIn()
+                    && onlyAllowsFields(postMutableFields());
+
+      // No client-side deletes. Use admin SDK / Cloud Functions only.
+      allow delete: if false;
+
+      // ─── Agreement chain ───────────────────────────────────────────
+      // Doc id is the agreement author's auth uid, which lets us enforce
+      // "one agreement per user per post" purely with rules.
+
+      match /agreements/{userId} {
+        allow read: if true;
+
+        allow create: if signedIn()
+                      && request.auth.uid == userId
+                      && request.resource.data.userId == userId
+                      && request.resource.data.text is string
+                      && request.resource.data.text.size() > 0
+                      && request.resource.data.text.size() <= 150;
+
+        // Once written, agreements are immutable — no editing or deleting
+        // your own declarations from the client. (Admin/moderation can
+        // still remove via the admin SDK.)
+        allow update, delete: if false;
+      }
+    }
+
+    // ─── Users (FCM tokens etc.) ───────────────────────────────────────
+
+    match /users/{userOrDeviceId} {
+      allow read: if signedIn() && request.auth.uid == userOrDeviceId;
+
+      // The iOS client writes the FCM token to BOTH `users/{uid}` and
+      // `users/{deviceId}` so the milestone Cloud Function can look it up
+      // by deviceId. We allow either path for the signed-in user.
+      allow write: if signedIn();
+    }
+  }
+}

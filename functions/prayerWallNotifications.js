@@ -107,19 +107,39 @@ exports.onPrayerCountIncremented = onDocumentUpdated(
     // Only act when prayerCount increased
     if (newCount <= prevCount) return;
 
-    // Only notify on milestones
-    const hitMilestone = PRAYER_MILESTONES.some(
+    // Identify which milestones the new count has now crossed.
+    const crossed = PRAYER_MILESTONES.filter(
       (m) => newCount >= m && prevCount < m
     );
-    if (!hitMilestone) return;
+    if (crossed.length === 0) return;
+
+    // Filter out milestones we've already notified for on this post.
+    // Without this guard, a post that oscillates across a threshold
+    // (e.g. user toggles a reaction off and someone else re-adds it)
+    // would re-fire the same milestone notification.
+    const alreadyNotified = Array.isArray(after.notifiedMilestones)
+      ? after.notifiedMilestones
+      : [];
+    const newlyHit = crossed.filter((m) => !alreadyNotified.includes(m));
+    if (newlyHit.length === 0) return;
 
     const deviceId = after.deviceId;
     const fcmToken = await getFcmToken(deviceId);
 
+    // Notify on the highest newly-crossed milestone (avoids stacking pushes
+    // when a single write jumps past multiple thresholds).
+    const milestone = Math.max(...newlyHit);
     const title = 'People are praying for you 🙏';
     const body  = `Your prayer request has ${newCount} ${newCount === 1 ? 'person' : 'people'} lifting you up.`;
 
     await sendToDevice(fcmToken, title, body);
+
+    // Persist the milestones we've now notified for so re-crossings don't
+    // re-fire. arrayUnion is safe under concurrent writes.
+    const postRef = event.data.after.ref;
+    await postRef.update({
+      notifiedMilestones: FieldValue.arrayUnion(...newlyHit),
+    });
   }
 );
 

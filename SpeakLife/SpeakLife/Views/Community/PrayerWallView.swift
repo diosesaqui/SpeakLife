@@ -170,7 +170,8 @@ struct PrayerWallView: View {
                     }
                 }
             }
-            .padding(.horizontal, 20)
+            .padding(.leading, 24)
+            .padding(.trailing, 24)
         }
     }
 
@@ -513,10 +514,14 @@ struct PrayerPostCard: View {
                         .progressViewStyle(CircularProgressViewStyle(tint: .white.opacity(0.5)))
                         .scaleEffect(0.8)
                 } else if agreements.isEmpty {
-                    Text("Be the first to declare in agreement.")
-                        .font(Font.custom("AppleSDGothicNeo-Regular", size: 12, relativeTo: .caption))
-                        .foregroundColor(.white.opacity(0.4))
-                        .italic()
+                    if canAddAgreement {
+                        addAgreementButton
+                    } else {
+                        Text(emptyAgreementHint)
+                            .font(Font.custom("AppleSDGothicNeo-Regular", size: 12, relativeTo: .caption))
+                            .foregroundColor(.white.opacity(0.4))
+                            .italic()
+                    }
                 } else {
                     let preview = Array(agreements.prefix(3))
                     ForEach(preview) { agreement in
@@ -527,9 +532,53 @@ struct PrayerPostCard: View {
                             .font(Font.custom("AppleSDGothicNeo-Regular", size: 11, relativeTo: .caption2))
                             .foregroundColor(.white.opacity(0.4))
                     }
+                    if canAddAgreement {
+                        addAgreementButton
+                    }
                 }
             }
         }
+    }
+
+    private var canAddAgreement: Bool {
+        appleSignIn.isSignedIn && !viewModel.hasAgreed(on: post)
+    }
+
+    private var emptyAgreementHint: String {
+        appleSignIn.isSignedIn
+            ? "You've already declared agreement here."
+            : "Sign in to declare in agreement."
+    }
+
+    private var addAgreementButton: some View {
+        Button {
+            startAgreementFlow()
+        } label: {
+            HStack(spacing: 4) {
+                Image(systemName: "plus.circle")
+                    .font(.system(size: 11))
+                Text("Stand in agreement")
+                    .font(Font.custom("AppleSDGothicNeo-Regular", size: 12, relativeTo: .caption))
+            }
+            .foregroundColor(Color(hex: "A78BFA"))
+            .padding(.top, 2)
+        }
+    }
+
+    /// Opens the agreement prompt. If the user has no current reaction yet,
+    /// registers a `.standing` reaction first so the agreement always carries
+    /// a reaction context.
+    private func startAgreementFlow() {
+        guard appleSignIn.isSignedIn else { return }
+        guard !viewModel.hasAgreed(on: post) else { return }
+
+        if let current = viewModel.reaction(for: post) {
+            pendingAgreementReaction = current
+        } else {
+            viewModel.toggleReaction(.standing, on: post)
+            pendingAgreementReaction = .standing
+        }
+        showAgreementSheet = true
     }
 
     // MARK: - Time Ago Helper
