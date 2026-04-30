@@ -47,6 +47,10 @@ final class AppState: ObservableObject {
     // they already start with the new defaults above. The migration code below explicitly checks
     // for the key being absent vs. false to know whether this is a fresh install or a pre-4.10 user.
     @AppStorage("notificationDefaultsMigratedV2") var notificationDefaultsMigratedV2 = true
+    // V3 migration: the first 4.10 build's V2 migration wrote startTimeIndex=0 (midnight),
+    // which sent reminders overnight. This flag bumps those users to 7:00 AM (index 14).
+    // Defaults to true so brand-new installs (no existing pref keys) skip the reset.
+    @AppStorage("notificationDefaultsMigratedV3") var notificationDefaultsMigratedV3 = true
     @AppStorage("lastReviewRequestSetDatev1") var lastReviewRequestSetDate: Date?
     @AppStorage("offerDiscount") var offerDiscount = false
     @AppStorage("offerDiscountTry") var offerDiscountTry = 0
@@ -133,6 +137,17 @@ final class AppState: ObservableObject {
             defaults.removeObject(forKey: "nextRescheduleDate")
         }
         defaults.set(true, forKey: "notificationDefaultsMigratedV2")
+
+        // V3 fix-up: anyone who already ran the earlier V2 migration got startTimeIndex=0
+        // (midnight) and is now stuck there because @AppStorage defaults don't override
+        // existing UserDefaults values. Bump them to 7:00 AM exactly once.
+        if hasExistingNotificationPrefs,
+           defaults.object(forKey: "notificationDefaultsMigratedV3") == nil {
+            defaults.set(14, forKey: "startTimeIndex") // 7:00 AM
+            defaults.removeObject(forKey: "lastScheduledNotificationDate")
+            defaults.removeObject(forKey: "nextRescheduleDate")
+        }
+        defaults.set(true, forKey: "notificationDefaultsMigratedV3")
 
         // Validate and fix any invalid existing values
         validateAndFixNotificationSettings()
