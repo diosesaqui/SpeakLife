@@ -340,6 +340,41 @@
         { "reference": "Proverbs 21:1", "text": "In the Lord's hand the king's heart is a stream of water that he channels toward all who please him.", "translation": "NIV" }
       ],
       "reflection": "Pray for one leader by name today—for wisdom, humility, and a heart that bends toward God."
+    },
+    {
+      "id": "lust",
+      "title": "Lust",
+      "question": "What does the Bible say about lust?",
+      "icon": "eye.slash.fill",
+      "accentHex": "#E07B6B",
+      "summary": "Lust is a heart battle, and the gospel offers real freedom.",
+      "answer": "Jesus took lust seriously. He said the issue is not just the body, it is the heart. Looking at someone with lust is already adultery in the unseen places. That truth is not meant to crush you, it is meant to free you. Sin grows where it stays hidden and shrinks where it is brought into the light. Scripture's prescription for lust is not white-knuckled willpower, it is daily surrender: walking by the Spirit, guarding what your eyes feed on, and remembering that you were bought at a price. Confess specifically. Flee, do not negotiate. Get into the light with a trusted believer. The same grace that forgives you also rewires you.",
+      "verses": [
+        { "reference": "Matthew 5:27-28", "text": "You have heard that it was said, 'You shall not commit adultery.' But I tell you that anyone who looks at a woman lustfully has already committed adultery with her in his heart.", "translation": "NIV" },
+        { "reference": "1 Corinthians 6:18-20", "text": "Flee from sexual immorality. All other sins a person commits are outside the body, but whoever sins sexually, sins against their own body. Do you not know that your bodies are temples of the Holy Spirit, who is in you, whom you have received from God? You are not your own; you were bought at a price. Therefore honor God with your bodies.", "translation": "NIV" },
+        { "reference": "Galatians 5:16", "text": "So I say, walk by the Spirit, and you will not gratify the desires of the flesh.", "translation": "NIV" },
+        { "reference": "Job 31:1", "text": "I made a covenant with my eyes not to look lustfully at a young woman.", "translation": "NIV" },
+        { "reference": "James 1:14-15", "text": "But each person is tempted when they are dragged away by their own evil desire and enticed. Then, after desire has conceived, it gives birth to sin; and sin, when it is full-grown, gives birth to death.", "translation": "NIV" },
+        { "reference": "1 John 1:9", "text": "If we confess our sins, he is faithful and just and will forgive us our sins and purify us from all unrighteousness.", "translation": "NIV" }
+      ],
+      "reflection": "Bring it into the light. Confess one specific area to God right now, and consider naming it to a trusted believer this week."
+    },
+    {
+      "id": "sex",
+      "title": "Sex",
+      "question": "What does the Bible say about sex?",
+      "icon": "heart.circle.fill",
+      "accentHex": "#FF92AB",
+      "summary": "Sex is God's gift, designed to be honored and protected inside marriage.",
+      "answer": "Sex is not the church's embarrassed secret, it is God's idea. He created it, He called it good, and He gave it as a gift inside the covenant of marriage between a husband and a wife. There it is meant to be unifying, life-giving, and unhurried—a picture of belonging that says, 'I am yours, completely.' Outside that covenant, scripture is honest that sex always costs more than it promises, because the body and the soul cannot really be separated. None of this is meant to shame you. If your story includes pain, abuse, or regret, Jesus is not finished. He restores what we broke and what was broken in us. Bring all of it to Him and walk forward in freedom.",
+      "verses": [
+        { "reference": "Genesis 2:24", "text": "That is why a man leaves his father and mother and is united to his wife, and they become one flesh.", "translation": "NIV" },
+        { "reference": "Hebrews 13:4", "text": "Marriage should be honored by all, and the marriage bed kept pure, for God will judge the adulterer and all the sexually immoral.", "translation": "NIV" },
+        { "reference": "1 Corinthians 6:18-20", "text": "Flee from sexual immorality. All other sins a person commits are outside the body, but whoever sins sexually, sins against their own body. Do you not know that your bodies are temples of the Holy Spirit, who is in you, whom you have received from God? You are not your own; you were bought at a price. Therefore honor God with your bodies.", "translation": "NIV" },
+        { "reference": "1 Thessalonians 4:3-5", "text": "It is God's will that you should be sanctified: that you should avoid sexual immorality; that each of you should learn to control your own body in a way that is holy and honorable, not in passionate lust like the pagans, who do not know God.", "translation": "NIV" },
+        { "reference": "Song of Songs 4:9-10", "text": "You have stolen my heart, my sister, my bride; you have stolen my heart with one glance of your eyes, with one jewel of your necklace. How delightful is your love, my sister, my bride! How much more pleasing is your love than wine, and the fragrance of your perfume than any spice!", "translation": "NIV" }
+      ],
+      "reflection": "Tell God honestly where you are in this area, and ask Him to align your heart with His design—offering both your story and your future to Him."
     }
   ]
 }
