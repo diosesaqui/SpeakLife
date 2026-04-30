@@ -758,6 +758,7 @@ struct PostPrayerView: View {
     @State private var isSister = true
     @State private var text = ""
     @State private var selectedCategory: WarriorRoomCategory?
+    @State private var isTestimony = false
     private let maxChars = 280
     private let minWords = 5
 
@@ -770,8 +771,13 @@ struct PostPrayerView: View {
     }
 
     private var placeholderText: String {
-        selectedCategory?.composerPlaceholder
-            ?? "What are you declaring and taking ground on?"
+        if isTestimony {
+            return selectedCategory == nil
+                ? "Share what God did. Tell the room."
+                : "Share what God did in this area. Tell the room."
+        }
+        return selectedCategory?.composerPlaceholder
+            ?? "What do you need prayer for? Share it with the room."
     }
 
     var body: some View {
@@ -787,16 +793,32 @@ struct PostPrayerView: View {
                         .padding(.top, 12)
 
                     VStack(spacing: 4) {
-                        Text("Add your declaration to the Warrior Room")
+                        Text(isTestimony
+                             ? "Share what God did"
+                             : "Share with the Warrior Room")
                             .font(Font.custom("AppleSDGothicNeo-Bold", size: 20, relativeTo: .title2))
                             .foregroundColor(.white)
                             .multilineTextAlignment(.center)
-                        Text("Speak it out. The whole room stands with you.")
+                        Text(isTestimony
+                             ? "Your testimony builds someone's faith."
+                             : "The whole room is here to stand with you.")
                             .font(Font.custom("AppleSDGothicNeo-Regular", size: 13, relativeTo: .caption))
                             .foregroundColor(.white.opacity(0.6))
                             .italic()
                             .multilineTextAlignment(.center)
                     }
+
+                    // Type toggle: Prayer Request / Testimony
+                    HStack(spacing: 0) {
+                        typePill("🙏 Prayer Request", isSelected: !isTestimony) {
+                            isTestimony = false
+                        }
+                        typePill("🏆 Testimony", isSelected: isTestimony) {
+                            isTestimony = true
+                        }
+                    }
+                    .background(Color.white.opacity(0.1))
+                    .clipShape(RoundedRectangle(cornerRadius: 22))
 
                     // Gender toggle
                     HStack(spacing: 0) {
@@ -887,10 +909,13 @@ struct PostPrayerView: View {
                 .padding(.bottom, 16)
             }
 
-            // Declare button — sits below scroll, lifts with keyboard naturally
+            // Submit button — sits below scroll, lifts with keyboard naturally
             Button {
                 guard let category = selectedCategory else { return }
-                viewModel.addPost(text: text, isSister: isSister, category: category)
+                viewModel.addPost(text: text,
+                                  isSister: isSister,
+                                  category: category,
+                                  isTestimony: isTestimony)
                 if viewModel.errorMessage == nil {
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
                         dismiss()
@@ -901,7 +926,7 @@ struct PostPrayerView: View {
                     if viewModel.isSubmitting {
                         ProgressView().tint(.white)
                     } else {
-                        Text("Declare It")
+                        Text(isTestimony ? "Post Testimony" : "Post Prayer Request")
                             .font(Font.custom("AppleSDGothicNeo-Bold", size: 16, relativeTo: .body))
                             .foregroundColor(.white)
                     }
@@ -936,6 +961,18 @@ struct PostPrayerView: View {
                 .frame(width: 100)
                 .padding(.vertical, 8)
                 .background(isSelected ? Color.white : Color.clear)
+                .clipShape(RoundedRectangle(cornerRadius: 22))
+        }
+    }
+
+    private func typePill(_ label: String, isSelected: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(label)
+                .font(Font.custom("AppleSDGothicNeo-Regular", size: 14, relativeTo: .body))
+                .foregroundColor(isSelected ? .white : .white.opacity(0.65))
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 9)
+                .background(isSelected ? Color(hex: "7C3AED") : Color.clear)
                 .clipShape(RoundedRectangle(cornerRadius: 22))
         }
     }

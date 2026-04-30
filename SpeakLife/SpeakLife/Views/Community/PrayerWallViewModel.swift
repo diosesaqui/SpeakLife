@@ -276,13 +276,16 @@ class PrayerWallViewModel: ObservableObject {
 
     // MARK: - Add Post
 
-    func addPost(text: String, isSister: Bool, category: WarriorRoomCategory) {
+    func addPost(text: String,
+                 isSister: Bool,
+                 category: WarriorRoomCategory,
+                 isTestimony: Bool = false) {
         guard networkMonitor.currentPath.status != .unsatisfied else {
             errorMessage = "You are offline. Please connect to the internet to post."
             return
         }
         guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            errorMessage = "Declaration cannot be empty."
+            errorMessage = "Post cannot be empty."
             return
         }
 
@@ -291,21 +294,31 @@ class PrayerWallViewModel: ObservableObject {
             guard let self = self else { return }
             if count >= 1 {
                 DispatchQueue.main.async {
-                    self.errorMessage = "You've already declared today. Come back tomorrow to take more ground."
+                    self.errorMessage = "You've already posted today. Come back tomorrow."
                 }
                 return
             }
-            self.submitPost(text: text, isSister: isSister, category: category)
+            self.submitPost(text: text,
+                            isSister: isSister,
+                            category: category,
+                            isTestimony: isTestimony)
         }
     }
 
-    private func submitPost(text: String, isSister: Bool, category: WarriorRoomCategory) {
+    private func submitPost(text: String,
+                            isSister: Bool,
+                            category: WarriorRoomCategory,
+                            isTestimony: Bool) {
         isSubmitting = true
         let displayName = isSister ? "A sister in Christ" : "A brother in Christ"
-        let newPost = PrayerWallPost(text: text,
+        var newPost = PrayerWallPost(text: text,
                                      displayName: displayName,
                                      deviceId: deviceId,
                                      category: category)
+        // Posts created as a testimony go to the wall already marked as
+        // answered, so the feed and the per-post Cloud Function copy can
+        // treat them as praise reports rather than prayer requests.
+        newPost.isAnswered = isTestimony
 
         do {
             _ = try db.collection(collection).addDocument(from: newPost) { [weak self] error in
@@ -313,9 +326,11 @@ class PrayerWallViewModel: ObservableObject {
                     guard let self = self else { return }
                     self.isSubmitting = false
                     if let error = error {
-                        self.errorMessage = "Error posting declaration: \(error.localizedDescription)"
+                        self.errorMessage = "Error posting: \(error.localizedDescription)"
                     } else {
-                        self.submissionMessage = "Your declaration is on the wall \u{1F525}"
+                        self.submissionMessage = isTestimony
+                            ? "Testimony shared. God gets all the glory \u{1F3C6}"
+                            : "Your prayer request is on the wall \u{1F64F}"
                         self.fetchPosts(reset: true)
                         self.fetchMyPosts()
                     }

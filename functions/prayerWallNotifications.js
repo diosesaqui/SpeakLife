@@ -129,8 +129,17 @@ exports.onPrayerCountIncremented = onDocumentUpdated(
     // Notify on the highest newly-crossed milestone (avoids stacking pushes
     // when a single write jumps past multiple thresholds).
     const milestone = Math.max(...newlyHit);
-    const title = 'People are praying for you 🙏';
-    const body  = `Your prayer request has ${newCount} ${newCount === 1 ? 'person' : 'people'} lifting you up.`;
+
+    // Copy adapts to the post type. Testimonies (posts created with or later
+    // marked as isAnswered=true) frame reactions as celebration, not prayer.
+    const isTestimony = after.isAnswered === true;
+    const peoplePhrase = `${newCount} ${newCount === 1 ? 'person' : 'people'}`;
+    const title = isTestimony
+      ? 'People are celebrating with you 🙌'
+      : 'People are praying with you 🙏';
+    const body = isTestimony
+      ? `${peoplePhrase} stood with you on this testimony.`
+      : `${peoplePhrase} ${newCount === 1 ? 'is' : 'are'} standing with you in prayer.`;
 
     await sendToDevice(fcmToken, title, body);
 
@@ -229,3 +238,44 @@ exports.onPrayerAnswered = onDocumentUpdated(
     await sendToDevice(fcmToken, title, body);
   }
 );
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 4. onNewPrayerPost
+//    Fires when a new prayerWall document is created. Sends a topic
+//    broadcast to all `prayerWall` subscribers. Copy adapts based on the
+//    post type:
+//      - Testimony (isAnswered: true at creation) → celebration framing
+//      - Prayer request (isAnswered: false / unset) → prayer framing
+//    The poster's own device suppresses the notification client-side using
+//    the `posterDeviceId` payload key (NotificationHandler.swift).
+// ═══════════════════════════════════════════════════════════════════════════
+
+exports.onNewPrayerPost = onDocumentCreated(
+  'prayerWall/{postId}',
+  async (event) => {
+    const data = event.data && event.data.data ? event.data.data() : null;
+    if (!data) return;
+    if (data.isHidden === true) return;
+
+    const isTestimony = data.isAnswered === true;
+    const posterDeviceId = data.deviceId || '';
+    const postId = event.params.postId;
+
+    let title, body;
+    if (isTestimony) {
+      title = '🏆 New testimony in the Warrior Room';
+      body  = 'A brother or sister just shared what God did. Celebrate with them.';
+    } else {
+      title = '🙏 Someone needs prayer in the Warrior Room';
+      body  = 'A brother or sister just asked for prayer. Stand with them.';
+    }
+
+    await sendToTopicWithData(NEW_POST_TOPIC, title, body, {
+      notificationType: 'prayerWall',
+      postId,
+      posterDeviceId,
+      isTestimony: String(isTestimony),
+    });
+  }
+);
+
