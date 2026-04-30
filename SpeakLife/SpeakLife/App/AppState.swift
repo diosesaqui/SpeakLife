@@ -73,7 +73,7 @@ final class AppState: ObservableObject {
     @AppStorage("hasCompletedDemo") var hasCompletedDemo = false
     @AppStorage("hasCompletedEnhancedOnboarding") var hasCompletedEnhancedOnboarding = false
 
-    // Survey personalization — set by SurveyOnboardingView, read by NotificationScene, paywalls, ThreeDayChallengeView
+    // Survey personalization — set by SurveyOnboardingView, read by NotificationScene and paywalls
     @AppStorage("surveyGoalWord") var surveyGoalWord: String = ""
 
     var selectedDeclarationStyles: [String] {

@@ -342,33 +342,4 @@ struct SpeakLifeApp: App {
         }
     }
     
-    func scheduleReminderNotification() {
-        // Step 1: Cancel existing notification
-        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ["appReminder"])
-        
-        // refresh these every 3 months - next april 2024 RWRW
-        
-        let title: [String] = ["Nurture Your Mind Garden!", "Time for Mental Fitness!", "Daily Dose of Positivity!", "Set Your Mind's Intention!", "Paint Today with Positivity!", "Recipe for a Great Day!", "Building a Positive Day!", "Elevate Your Day!", "Unleash Your Inner Strength!", "Focus Your Positivity Lens!"]
-        
-        let body: [String] = ["Just like a garden needs daily watering to grow, your mind needs positive affirmations to flourish. Nurture your thoughts today!", "Think of affirmations as mental push-ups. They strengthen your mind just like exercises strengthen your body. Time for your daily mental workout!", "Affirmations are like vitamins for your soul, providing essential nutrients for a healthy mindset. Don't forget your daily dose of positivity!", "Every great song needs a repeat to become a favorite. Repeat your affirmations like a catchy chorus to make positivity stick in your mind.", "Affirmations are the compass of your mind, guiding you through the day. Set your course with some positive direction this morning!", "Your mind is a canvas, and affirmations are the brushstrokes of positivity. Paint a beautiful picture for your day ahead!", "Affirmations are like ingredients for a successful day. Mix in some positivity to cook up a great day ahead!", "Just as a house needs a solid foundation, your day needs a base of positive affirmations. Build your day on a strong, positive note!", "Affirmations are like focusing a camera lens. They help clear the blur and bring the positive into focus. Time to get your mind in focus with today’s affirmation!"]
-
-        // Step 2: Create new content for the notification
-        let content = UNMutableNotificationContent()
-        content.title = title.randomElement()!
-        content.body = body.randomElement()!
-
-        // Set the trigger for 4 days (96 hours)
-        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: (96 * 60 * 60), repeats: false)
-
-        // Create the request with the same identifier
-        let request = UNNotificationRequest(identifier: "appReminder", content: content, trigger: trigger)
-
-        // Schedule the new request with the system
-        UNUserNotificationCenter.current().add(request) { error in
-            if let error = error {
-                // Handle any errors.
-                // Error scheduling notification: \(error)
-            }
-        }
-    }
 }

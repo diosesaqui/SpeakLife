@@ -365,10 +365,8 @@
 		C1A98C89749C94FF718F1980 /* AppleSignInPromptView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35B4B5074F8CB5AB1E2EA0DC /* AppleSignInPromptView.swift */; };
 		CF8E572E5459A038EEE73B3A /* PrayerWallViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BA7EE898DF248C4EB6EDEB2 /* PrayerWallViewModel.swift */; };
 		D0010000000000000001BBBB /* SurveyPersonalizationEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0010000000000000001AAAA /* SurveyPersonalizationEngine.swift */; };
-		D0020000000000000002BBBB /* ThreeDayChallengeManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0020000000000000002AAAA /* ThreeDayChallengeManager.swift */; };
 		D0030000000000000003BBBB /* SurveyOnboardingScreens.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0030000000000000003AAAA /* SurveyOnboardingScreens.swift */; };
 		D0040000000000000004BBBB /* SurveyOnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0040000000000000004AAAA /* SurveyOnboardingView.swift */; };
-		D0050000000000000005BBBB /* ThreeDayChallengeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0050000000000000005AAAA /* ThreeDayChallengeView.swift */; };
 		D0060000000000000006BBBB /* PayWhatYouCanView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0060000000000000006AAAA /* PayWhatYouCanView.swift */; };
 		D0070000000000000007BBBB /* SurveyTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0070000000000000007AAAA /* SurveyTypes.swift */; };
 		D2AD4D1C5D81425897424332 /* StructuredDayLaunchTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9A3081A52984B6AB0EECD7B /* StructuredDayLaunchTracker.swift */; };
@@ -766,10 +764,8 @@
 		BCC8A7100000000000000005 /* BibleChatAnswerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BibleChatAnswerView.swift; sourceTree = "<group>"; };
 		BCC8A7100000000000000006 /* bible_chat_topics.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = bible_chat_topics.json; sourceTree = "<group>"; };
 		C0010000000000000001AAAA /* SurveyPersonalizationEngine.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SurveyPersonalizationEngine.swift; sourceTree = "<group>"; };
-		C0020000000000000002AAAA /* ThreeDayChallengeManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ThreeDayChallengeManager.swift; sourceTree = "<group>"; };
 		C0030000000000000003AAAA /* SurveyOnboardingScreens.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SurveyOnboardingScreens.swift; sourceTree = "<group>"; };
 		C0040000000000000004AAAA /* SurveyOnboardingView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SurveyOnboardingView.swift; sourceTree = "<group>"; };
-		C0050000000000000005AAAA /* ThreeDayChallengeView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ThreeDayChallengeView.swift; sourceTree = "<group>"; };
 		C0060000000000000006AAAA /* PayWhatYouCanView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PayWhatYouCanView.swift; sourceTree = "<group>"; };
 		C0070000000000000007AAAA /* SurveyTypes.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SurveyTypes.swift; sourceTree = "<group>"; };
 		DC27319C7422AFA8C439B08F /* AppleSignInService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleSignInService.swift; sourceTree = "<group>"; };
@@ -1461,7 +1457,6 @@
 				DC73B2698B17B267C7A6F437 /* TrialExperienceService.swift */,
 				A1B2C3D4E5F60000A1B2C3D4 /* PersonalDeclaration */,
 				C0010000000000000001AAAA /* SurveyPersonalizationEngine.swift */,
-				C0020000000000000002AAAA /* ThreeDayChallengeManager.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -1736,7 +1731,6 @@
 				A000DDDDDDDDDDDDDDDDEEEE /* PersonalDeclarationOnboardingView.swift */,
 				C0030000000000000003AAAA /* SurveyOnboardingScreens.swift */,
 				C0040000000000000004AAAA /* SurveyOnboardingView.swift */,
-				C0050000000000000005AAAA /* ThreeDayChallengeView.swift */,
 			);
 			path = Onboarding;
 			sourceTree = "<group>";
@@ -2358,10 +2352,8 @@
 				B000EEEEEEEEEEEEEEEEEFFF /* PersonalDeclarationCard.swift in Sources */,
 				B000FFFFFFFFFFFFFFFFFFFF /* BreakthroughFlowView.swift in Sources */,
 				D0010000000000000001BBBB /* SurveyPersonalizationEngine.swift in Sources */,
-				D0020000000000000002BBBB /* ThreeDayChallengeManager.swift in Sources */,
 				D0030000000000000003BBBB /* SurveyOnboardingScreens.swift in Sources */,
 				D0040000000000000004BBBB /* SurveyOnboardingView.swift in Sources */,
-				D0050000000000000005BBBB /* ThreeDayChallengeView.swift in Sources */,
 				D0060000000000000006BBBB /* PayWhatYouCanView.swift in Sources */,
 				D0070000000000000007BBBB /* SurveyTypes.swift in Sources */,
 			);
