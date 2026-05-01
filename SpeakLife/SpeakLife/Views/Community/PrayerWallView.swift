@@ -41,6 +41,12 @@ struct PrayerWallView: View {
                         .padding(.top, 8)
                         .padding(.bottom, 12)
 
+                    if selectedTab == .wall {
+                        categoryFilterBar
+                            .padding(.leading, 20)
+                            .padding(.bottom, 8)
+                    }
+
                     if viewModel.isLoading && currentPosts.isEmpty {
                         Spacer()
                         ProgressView()
@@ -147,6 +153,51 @@ struct PrayerWallView: View {
         selectedTab == .wall ? viewModel.posts : viewModel.myPosts
     }
 
+    // MARK: - Category Filter Bar
+
+    private var categoryFilterBar: some View {
+        // Leading padding lives on the parent (`.padding(.leading, 20)` at
+        // the call site) — applying it to the inner HStack here doesn't
+        // render reliably across iOS versions when the ScrollView clips
+        // its content. Trailing padding inside the HStack still works for
+        // the last-pill-scroll-bleed.
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                Spacer().frame(width: 8)
+                filterPill(label: "All",
+                           isSelected: viewModel.categoryFilter == nil) {
+                    viewModel.categoryFilter = nil
+                }
+                ForEach(WarriorRoomCategory.allCases) { category in
+                    filterPill(
+                        label: "\(category.emoji) \(category.label)",
+                        isSelected: viewModel.categoryFilter == category
+                    ) {
+                        viewModel.categoryFilter = category
+                    }
+                }
+                Spacer().frame(width: 8)
+            }
+            .padding(.trailing, 20)
+        }
+    }
+
+    private func filterPill(label: String,
+                            isSelected: Bool,
+                            action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(label)
+                .font(Font.custom("AppleSDGothicNeo-Regular", size: 13, relativeTo: .body))
+                .foregroundColor(isSelected ? .white : .white.opacity(0.7))
+                .padding(.horizontal, 14)
+                .padding(.vertical, 7)
+                .background(
+                    Capsule()
+                        .fill(isSelected ? Color(hex: "7C3AED") : Color.white.opacity(0.12))
+                )
+        }
+    }
+
     private var postList: some View {
         ScrollView {
             LazyVStack(spacing: 14) {
@@ -158,7 +209,10 @@ struct PrayerWallView: View {
                     )
                 }
 
-                // Load more / end-of-feed (wall tab only)
+                // Load more / end-of-feed (wall tab). Works under category
+                // filters too — the server-side query in fetchPosts adds the
+                // category constraint and the cursor advances within that
+                // filtered slice.
                 if selectedTab == .wall && !viewModel.posts.isEmpty {
                     if viewModel.hasMore {
                         Button {
@@ -198,15 +252,23 @@ struct PrayerWallView: View {
 
     // MARK: - Empty State
 
+    private var emptyStateMessage: String {
+        if selectedTab == .mine {
+            return "You haven't shared anything yet.\nThis room is waiting on you."
+        }
+        if let filter = viewModel.categoryFilter {
+            return "No posts in \(filter.label) yet.\nBe the first to share."
+        }
+        return "No posts yet. Be the first to share.\nThis room is waiting on you."
+    }
+
     private var emptyState: some View {
         VStack(spacing: 16) {
             Spacer()
             Image(systemName: "hands.and.sparkles.fill")
                 .font(.system(size: 48))
                 .foregroundColor(Color(hex: "A78BFA").opacity(0.7))
-            Text(selectedTab == .wall
-                 ? "No prayers yet. Be the first to ask.\nSomeone here will show up for you."
-                 : "You haven't shared any prayer requests yet.")
+            Text(emptyStateMessage)
                 .font(Font.custom("AppleSDGothicNeo-Regular", size: 16, relativeTo: .body))
                 .foregroundColor(.white.opacity(0.65))
                 .multilineTextAlignment(.center)
@@ -223,11 +285,25 @@ struct PrayerPostCard: View {
     let post: PrayerWallPost
     let isMyPost: Bool
     @ObservedObject var viewModel: PrayerWallViewModel
+    @ObservedObject private var appleSignIn = AppleSignInService.shared
+
     @State private var showReportAlert = false
     @State private var showAnsweredGlow = false
+    @State private var isAgreementsExpanded = false
+    @State private var pendingAgreementReaction: WarriorRoomReaction?
+    @State private var showAgreementSheet = false
+
+    private var postId: String { post.id ?? "" }
+    private var agreements: [Agreement] { viewModel.agreementsByPost[postId] ?? [] }
+    private var agreementsLoading: Bool { viewModel.loadingAgreementsForPost.contains(postId) }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
+            // Category pill (top)
+            if let category = post.categoryEnum {
+                categoryPill(category)
+            }
+
             // Header row
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 2) {
@@ -245,44 +321,30 @@ struct PrayerPostCard: View {
 
                 Spacer()
 
-                // Time ago
                 Text(timeAgo(from: post.timestamp))
                     .font(Font.custom("AppleSDGothicNeo-Regular", size: 11, relativeTo: .caption2))
                     .foregroundColor(.white.opacity(0.35))
             }
 
-            // Prayer text
+            // Post text
             Text(post.text)
                 .font(Font.custom("AppleSDGothicNeo-Regular", size: 15, relativeTo: .body))
                 .foregroundColor(.white)
                 .fixedSize(horizontal: false, vertical: true)
 
-            // Action row
-            HStack(spacing: 14) {
-                // Pray button
-                Button {
-                    viewModel.prayForPost(post)
-                } label: {
-                    HStack(spacing: 6) {
-                        Text("🙏")
-                            .font(.system(size: 14))
-                        Text("Praying (\(post.prayerCount))")
-                            .font(Font.custom("AppleSDGothicNeo-Regular", size: 13, relativeTo: .body))
-                    }
-                    .foregroundColor(viewModel.hasPrayed(for: post) ? Color(hex: "A78BFA") : .white.opacity(0.8))
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 7)
-                    .background(
-                        RoundedRectangle(cornerRadius: 20)
-                            .stroke(
-                                viewModel.hasPrayed(for: post) ? Color(hex: "A78BFA") : Color.white.opacity(0.3),
-                                lineWidth: 1.2
-                            )
-                    )
-                }
-                .disabled(viewModel.hasPrayed(for: post))
+            // Reaction row
+            reactionRow
 
-                // "Mark as Answered" — only on My Prayers tab, only if not yet answered
+            // Reaction summary
+            if post.totalReactions > 0 {
+                reactionSummaryRow
+            }
+
+            // Agreement chain
+            agreementChainRow
+
+            // Footer actions: Mark as Answered (own posts) + Report (community)
+            HStack(spacing: 14) {
                 if isMyPost && !post.isAnswered {
                     Button {
                         withAnimation(.spring(response: 0.4, dampingFraction: 0.6)) {
@@ -304,7 +366,6 @@ struct PrayerPostCard: View {
 
                 Spacer()
 
-                // Report button (community tab only)
                 if !isMyPost {
                     Button {
                         showReportAlert = true
@@ -313,9 +374,9 @@ struct PrayerPostCard: View {
                             .font(.system(size: 12))
                             .foregroundColor(.white.opacity(0.3))
                     }
-                    .alert("Report this prayer?", isPresented: $showReportAlert) {
+                    .alert("Report this post?", isPresented: $showReportAlert) {
                         Button("Report", role: .destructive) {
-                            viewModel.reportPost(post)
+                            viewModel.reportPost(post, reporterUid: appleSignIn.uid)
                         }
                         Button("Cancel", role: .cancel) {}
                     } message: {
@@ -331,6 +392,202 @@ struct PrayerPostCard: View {
                 .shadow(color: showAnsweredGlow ? Color(hex: "FBBF24").opacity(0.45) : .clear, radius: 12)
         )
         .animation(.easeOut(duration: 0.6), value: showAnsweredGlow)
+        .sheet(isPresented: $showAgreementSheet) {
+            if let reaction = pendingAgreementReaction {
+                AgreementPromptSheet(
+                    post: post,
+                    reaction: reaction,
+                    viewModel: viewModel
+                )
+                .presentationDetentsCompat()
+            }
+        }
+    }
+
+    // MARK: - Subviews
+
+    private func categoryPill(_ category: WarriorRoomCategory) -> some View {
+        HStack(spacing: 4) {
+            Text(category.emoji)
+            Text(category.label)
+        }
+        .font(Font.custom("AppleSDGothicNeo-Regular", size: 11, relativeTo: .caption))
+        .foregroundColor(.white)
+        .padding(.horizontal, 8)
+        .padding(.vertical, 3)
+        .background(
+            RoundedRectangle(cornerRadius: 10)
+                .fill(Color.white.opacity(0.18))
+        )
+    }
+
+    private var reactionRow: some View {
+        HStack(spacing: 8) {
+            ForEach(WarriorRoomReaction.allCases) { reaction in
+                reactionButton(reaction)
+            }
+            Spacer(minLength: 0)
+        }
+    }
+
+    private func reactionButton(_ reaction: WarriorRoomReaction) -> some View {
+        let isSelected = viewModel.reaction(for: post) == reaction
+        let count = post.count(for: reaction)
+        return Button {
+            handleReactionTap(reaction)
+        } label: {
+            HStack(spacing: 4) {
+                Text(reaction.emoji)
+                    .font(.system(size: 13))
+                if count > 0 {
+                    Text("\(count)")
+                        .font(Font.custom("AppleSDGothicNeo-Regular", size: 12, relativeTo: .caption))
+                }
+            }
+            .foregroundColor(isSelected ? .white : .white.opacity(0.85))
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .background(
+                Capsule()
+                    .fill(isSelected ? Color(hex: "7C3AED") : Color.white.opacity(0.10))
+            )
+        }
+    }
+
+    private func handleReactionTap(_ reaction: WarriorRoomReaction) {
+        let priorReaction = viewModel.reaction(for: post)
+        viewModel.toggleReaction(reaction, on: post)
+
+        // Only prompt for an agreement when this is a NEW reaction selection
+        // (not toggle-off, not switching), the user is signed in, and they
+        // haven't already added an agreement to this post.
+        let didAddNewReaction = priorReaction == nil
+        guard didAddNewReaction,
+              appleSignIn.isSignedIn,
+              !viewModel.hasAgreed(on: post) else { return }
+        pendingAgreementReaction = reaction
+        showAgreementSheet = true
+    }
+
+    private var reactionSummaryRow: some View {
+        let top = post.topReactions.prefix(2).map { $0.reaction.emoji }.joined()
+        let total = post.totalReactions
+        let suffix = total == 1
+            ? "1 believer standing with you"
+            : "\(total) believers standing with you"
+        return HStack(spacing: 6) {
+            if !top.isEmpty {
+                Text(top)
+                    .font(.system(size: 13))
+            }
+            Text(suffix)
+                .font(Font.custom("AppleSDGothicNeo-Regular", size: 12, relativeTo: .caption))
+                .foregroundColor(.white.opacity(0.55))
+        }
+    }
+
+    @ViewBuilder
+    private var agreementChainRow: some View {
+        let count = agreements.count
+        let title: String = {
+            if count > 0 {
+                return count == 1
+                    ? "1 voice in agreement"
+                    : "\(count) voices in agreement"
+            }
+            return "View those standing in agreement"
+        }()
+
+        VStack(alignment: .leading, spacing: 6) {
+            Button {
+                if !isAgreementsExpanded && agreements.isEmpty {
+                    viewModel.loadAgreements(for: post)
+                }
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    isAgreementsExpanded.toggle()
+                }
+            } label: {
+                HStack(spacing: 4) {
+                    Text(title)
+                        .font(Font.custom("AppleSDGothicNeo-Regular", size: 12, relativeTo: .caption))
+                        .foregroundColor(.white.opacity(0.55))
+                    Image(systemName: isAgreementsExpanded ? "chevron.up" : "chevron.down")
+                        .font(.system(size: 10))
+                        .foregroundColor(.white.opacity(0.45))
+                }
+            }
+
+            if isAgreementsExpanded {
+                if agreementsLoading && agreements.isEmpty {
+                    ProgressView()
+                        .progressViewStyle(CircularProgressViewStyle(tint: .white.opacity(0.5)))
+                        .scaleEffect(0.8)
+                } else if agreements.isEmpty {
+                    if canAddAgreement {
+                        addAgreementButton
+                    } else {
+                        Text(emptyAgreementHint)
+                            .font(Font.custom("AppleSDGothicNeo-Regular", size: 12, relativeTo: .caption))
+                            .foregroundColor(.white.opacity(0.4))
+                            .italic()
+                    }
+                } else {
+                    let preview = Array(agreements.prefix(3))
+                    ForEach(preview) { agreement in
+                        AgreementRow(agreement: agreement)
+                    }
+                    if agreements.count > 3 {
+                        Text("+ \(agreements.count - 3) more")
+                            .font(Font.custom("AppleSDGothicNeo-Regular", size: 11, relativeTo: .caption2))
+                            .foregroundColor(.white.opacity(0.4))
+                    }
+                    if canAddAgreement {
+                        addAgreementButton
+                    }
+                }
+            }
+        }
+    }
+
+    private var canAddAgreement: Bool {
+        appleSignIn.isSignedIn && !viewModel.hasAgreed(on: post)
+    }
+
+    private var emptyAgreementHint: String {
+        appleSignIn.isSignedIn
+            ? "You're already standing in agreement here."
+            : "Sign in to stand in agreement."
+    }
+
+    private var addAgreementButton: some View {
+        Button {
+            startAgreementFlow()
+        } label: {
+            HStack(spacing: 4) {
+                Image(systemName: "plus.circle")
+                    .font(.system(size: 11))
+                Text("Stand in agreement")
+                    .font(Font.custom("AppleSDGothicNeo-Regular", size: 12, relativeTo: .caption))
+            }
+            .foregroundColor(Color(hex: "A78BFA"))
+            .padding(.top, 2)
+        }
+    }
+
+    /// Opens the agreement prompt. If the user has no current reaction yet,
+    /// registers a `.standing` reaction first so the agreement always carries
+    /// a reaction context.
+    private func startAgreementFlow() {
+        guard appleSignIn.isSignedIn else { return }
+        guard !viewModel.hasAgreed(on: post) else { return }
+
+        if let current = viewModel.reaction(for: post) {
+            pendingAgreementReaction = current
+        } else {
+            viewModel.toggleReaction(.standing, on: post)
+            pendingAgreementReaction = .standing
+        }
+        showAgreementSheet = true
     }
 
     // MARK: - Time Ago Helper
@@ -351,15 +608,167 @@ struct PrayerPostCard: View {
     }
 }
 
+// MARK: - AgreementRow
+
+private struct AgreementRow: View {
+    let agreement: Agreement
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 6) {
+            Text(agreement.reaction?.emoji ?? "🔥")
+                .font(.system(size: 12))
+            (Text(agreement.displayName + ": ").foregroundColor(.white.opacity(0.55))
+                + Text(agreement.text).foregroundColor(.white.opacity(0.85)))
+                .font(Font.custom("AppleSDGothicNeo-Regular", size: 12, relativeTo: .caption))
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+}
+
+// MARK: - AgreementPromptSheet
+
+private struct AgreementPromptSheet: View {
+    let post: PrayerWallPost
+    let reaction: WarriorRoomReaction
+    @ObservedObject var viewModel: PrayerWallViewModel
+    @ObservedObject private var appleSignIn = AppleSignInService.shared
+    @EnvironmentObject var subscriptionStore: SubscriptionStore
+    @Environment(\.dismiss) private var dismiss
+
+    @State private var text: String = ""
+
+    private var trimmed: String { text.trimmingCharacters(in: .whitespacesAndNewlines) }
+    private var canStand: Bool { !trimmed.isEmpty }
+    private var remaining: Int { Agreement.maxLength - text.count }
+
+    var body: some View {
+        VStack(spacing: 18) {
+            Capsule()
+                .fill(Color.white.opacity(0.25))
+                .frame(width: 40, height: 4)
+                .padding(.top, 10)
+
+            Text("Stand in agreement?")
+                .font(Font.custom("AppleSDGothicNeo-Bold", size: 18, relativeTo: .title3))
+                .foregroundColor(.white)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 24)
+
+            HStack(spacing: 6) {
+                Text(reaction.emoji)
+                Text(reaction.label)
+                    .font(Font.custom("AppleSDGothicNeo-Regular", size: 13, relativeTo: .body))
+                    .foregroundColor(.white.opacity(0.7))
+            }
+
+            ZStack(alignment: .topLeading) {
+                if text.isEmpty {
+                    Text(reaction.agreementPlaceholder)
+                        .font(Font.custom("AppleSDGothicNeo-Regular", size: 14, relativeTo: .body))
+                        .foregroundColor(.white.opacity(0.35))
+                        .padding(.top, 12)
+                        .padding(.leading, 14)
+                        .allowsHitTesting(false)
+                }
+                TextEditor(text: $text)
+                    .font(Font.custom("AppleSDGothicNeo-Regular", size: 14, relativeTo: .body))
+                    .foregroundColor(.white)
+                    .scrollContentBackground(.hidden)
+                    .background(Color.clear)
+                    .frame(height: 90)
+                    .onChange(of: text) { newValue in
+                        if newValue.count > Agreement.maxLength {
+                            text = String(newValue.prefix(Agreement.maxLength))
+                        }
+                    }
+            }
+            .padding(.horizontal, 4)
+            .background(Color.white.opacity(0.10))
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .padding(.horizontal, 24)
+
+            HStack {
+                Spacer()
+                Text("\(text.count) / \(Agreement.maxLength)")
+                    .font(Font.custom("AppleSDGothicNeo-Regular", size: 11, relativeTo: .caption2))
+                    .foregroundColor(remaining <= 15 ? Color(hex: "F87171") : .white.opacity(0.4))
+            }
+            .padding(.horizontal, 28)
+
+            HStack(spacing: 12) {
+                Button("Skip") { dismiss() }
+                    .font(Font.custom("AppleSDGothicNeo-Regular", size: 14, relativeTo: .body))
+                    .foregroundColor(.white.opacity(0.6))
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 46)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Color.white.opacity(0.25), lineWidth: 1)
+                    )
+
+                Button {
+                    viewModel.addAgreement(
+                        to: post,
+                        reaction: reaction,
+                        text: trimmed,
+                        userId: appleSignIn.uid,
+                        displayName: appleSignIn.displayName
+                    )
+                    dismiss()
+                } label: {
+                    Text("Stand With Them →")
+                        .font(Font.custom("AppleSDGothicNeo-Bold", size: 14, relativeTo: .body))
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 46)
+                        .background(canStand ? Color(hex: "7C3AED") : Color.gray.opacity(0.4))
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                }
+                .disabled(!canStand)
+            }
+            .padding(.horizontal, 24)
+            .padding(.bottom, 24)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background {
+            ZStack {
+                Image(subscriptionStore.onboardingBGImage)
+                    .resizable()
+                    .scaledToFill()
+                    .ignoresSafeArea()
+                Color.black.opacity(0.7)
+                    .ignoresSafeArea()
+            }
+        }
+    }
+}
+
+// MARK: - Detents helper
+
+private extension View {
+    /// Applies `.medium` detents on iOS 16+, no-op on earlier versions.
+    @ViewBuilder
+    func presentationDetentsCompat() -> some View {
+        if #available(iOS 16.0, *) {
+            self.presentationDetents([.medium])
+        } else {
+            self
+        }
+    }
+}
+
 // MARK: - PostPrayerView (Sheet)
 
 struct PostPrayerView: View {
     @EnvironmentObject var subscriptionStore: SubscriptionStore
     @ObservedObject var viewModel: PrayerWallViewModel
+    @ObservedObject private var appleSignIn = AppleSignInService.shared
     @Environment(\.dismiss) private var dismiss
 
     @State private var isSister = true
     @State private var text = ""
+    @State private var selectedCategory: WarriorRoomCategory?
+    @State private var isTestimony = false
     private let maxChars = 280
     private let minWords = 5
 
@@ -368,7 +777,17 @@ struct PostPrayerView: View {
     }
 
     private var canPost: Bool {
-        wordCount >= minWords && !viewModel.isSubmitting
+        wordCount >= minWords && selectedCategory != nil && !viewModel.isSubmitting
+    }
+
+    private var placeholderText: String {
+        if isTestimony {
+            return selectedCategory == nil
+                ? "Share what God did. Tell the room."
+                : "Share what God did in this area. Tell the room."
+        }
+        return selectedCategory?.composerPlaceholder
+            ?? "What do you need prayer for? Share it with the room."
     }
 
     var body: some View {
@@ -383,9 +802,33 @@ struct PostPrayerView: View {
                         .frame(width: 40, height: 4)
                         .padding(.top, 12)
 
-                    Text("Share Your Prayer Request")
-                        .font(Font.custom("AppleSDGothicNeo-Bold", size: 20, relativeTo: .title2))
-                        .foregroundColor(.white)
+                    VStack(spacing: 4) {
+                        Text(isTestimony
+                             ? "Share what God did"
+                             : "Share with the Warrior Room")
+                            .font(Font.custom("AppleSDGothicNeo-Bold", size: 20, relativeTo: .title2))
+                            .foregroundColor(.white)
+                            .multilineTextAlignment(.center)
+                        Text(isTestimony
+                             ? "Your testimony builds someone's faith."
+                             : "The whole room is here to stand with you.")
+                            .font(Font.custom("AppleSDGothicNeo-Regular", size: 13, relativeTo: .caption))
+                            .foregroundColor(.white.opacity(0.6))
+                            .italic()
+                            .multilineTextAlignment(.center)
+                    }
+
+                    // Type toggle: Prayer Request / Testimony
+                    HStack(spacing: 0) {
+                        typePill("🙏 Prayer Request", isSelected: !isTestimony) {
+                            isTestimony = false
+                        }
+                        typePill("🏆 Testimony", isSelected: isTestimony) {
+                            isTestimony = true
+                        }
+                    }
+                    .background(Color.white.opacity(0.1))
+                    .clipShape(RoundedRectangle(cornerRadius: 22))
 
                     // Gender toggle
                     HStack(spacing: 0) {
@@ -396,14 +839,30 @@ struct PostPrayerView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 22))
                     .frame(width: 200)
 
+                    // Category selector
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Choose your ground:")
+                            .font(Font.custom("AppleSDGothicNeo-Regular", size: 12, relativeTo: .caption))
+                            .foregroundColor(.white.opacity(0.5))
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 8) {
+                                ForEach(WarriorRoomCategory.allCases) { category in
+                                    categoryPickerPill(category)
+                                }
+                            }
+                        }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
                     // Text editor
                     ZStack(alignment: .topLeading) {
                         if text.isEmpty {
-                            Text("Share your prayer request…")
+                            Text(placeholderText)
                                 .font(Font.custom("AppleSDGothicNeo-Regular", size: 15, relativeTo: .body))
                                 .foregroundColor(.white.opacity(0.35))
                                 .padding(.top, 14)
                                 .padding(.leading, 18)
+                                .padding(.trailing, 18)
                                 .allowsHitTesting(false)
                         }
 
@@ -460,9 +919,14 @@ struct PostPrayerView: View {
                 .padding(.bottom, 16)
             }
 
-            // Post button — sits below scroll, lifts with keyboard naturally
+            // Submit button — sits below scroll, lifts with keyboard naturally
             Button {
-                viewModel.addPost(text: text, isSister: isSister)
+                guard let category = selectedCategory else { return }
+                viewModel.addPost(text: text,
+                                  isSister: isSister,
+                                  category: category,
+                                  authorUid: appleSignIn.uid,
+                                  isTestimony: isTestimony)
                 if viewModel.errorMessage == nil {
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
                         dismiss()
@@ -473,7 +937,7 @@ struct PostPrayerView: View {
                     if viewModel.isSubmitting {
                         ProgressView().tint(.white)
                     } else {
-                        Text("Post Request")
+                        Text(isTestimony ? "Post Testimony" : "Post Prayer Request")
                             .font(Font.custom("AppleSDGothicNeo-Bold", size: 16, relativeTo: .body))
                             .foregroundColor(.white)
                     }
@@ -509,6 +973,38 @@ struct PostPrayerView: View {
                 .padding(.vertical, 8)
                 .background(isSelected ? Color.white : Color.clear)
                 .clipShape(RoundedRectangle(cornerRadius: 22))
+        }
+    }
+
+    private func typePill(_ label: String, isSelected: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(label)
+                .font(Font.custom("AppleSDGothicNeo-Regular", size: 14, relativeTo: .body))
+                .foregroundColor(isSelected ? .white : .white.opacity(0.65))
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 9)
+                .background(isSelected ? Color(hex: "7C3AED") : Color.clear)
+                .clipShape(RoundedRectangle(cornerRadius: 22))
+        }
+    }
+
+    private func categoryPickerPill(_ category: WarriorRoomCategory) -> some View {
+        let isSelected = selectedCategory == category
+        return Button {
+            selectedCategory = category
+        } label: {
+            HStack(spacing: 4) {
+                Text(category.emoji)
+                Text(category.label)
+            }
+            .font(Font.custom("AppleSDGothicNeo-Regular", size: 13, relativeTo: .body))
+            .foregroundColor(isSelected ? .white : .white.opacity(0.7))
+            .padding(.horizontal, 14)
+            .padding(.vertical, 7)
+            .background(
+                Capsule()
+                    .fill(isSelected ? Color(hex: "7C3AED") : Color.white.opacity(0.12))
+            )
         }
     }
 }

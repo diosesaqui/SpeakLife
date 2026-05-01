@@ -34,14 +34,23 @@ const messaging = getMessaging();
 
 const PRAYER_MILESTONES = [5, 10, 25, 50, 100];
 const NEW_POST_TOPIC    = 'prayerWall';
+const REPORT_THRESHOLD  = 3;
 
 // ─── Helper: look up FCM token for a deviceId ────────────────────────────────
-
+//
+// We query the `users` collection for a document whose `deviceId` field
+// matches. The token is no longer stored at `users/{deviceId}` — that path
+// was a security hole because the rule had no way to require the writer
+// own that deviceId. Now tokens live on `users/{uid}` with a `deviceId`
+// field, and only the auth-uid owner can write the document.
 async function getFcmToken(deviceId) {
   if (!deviceId) return null;
-  const snap = await db.collection('users').doc(deviceId).get();
-  if (!snap.exists) return null;
-  return snap.data().fcmToken || null;
+  const snap = await db.collection('users')
+    .where('deviceId', '==', deviceId)
+    .limit(1)
+    .get();
+  if (snap.empty) return null;
+  return snap.docs[0].data().fcmToken || null;
 }
 
 // ─── Helper: send a single-device FCM message ────────────────────────────────
@@ -107,30 +116,74 @@ exports.onPrayerCountIncremented = onDocumentUpdated(
     // Only act when prayerCount increased
     if (newCount <= prevCount) return;
 
-    // Only notify on milestones
-    const hitMilestone = PRAYER_MILESTONES.some(
+    // Identify which milestones the new count has now crossed.
+    const crossed = PRAYER_MILESTONES.filter(
       (m) => newCount >= m && prevCount < m
     );
-    if (!hitMilestone) return;
+    if (crossed.length === 0) return;
+
+    // Filter out milestones we've already notified for on this post.
+    // Without this guard, a post that oscillates across a threshold
+    // (e.g. user toggles a reaction off and someone else re-adds it)
+    // would re-fire the same milestone notification.
+    const alreadyNotified = Array.isArray(after.notifiedMilestones)
+      ? after.notifiedMilestones
+      : [];
+    const newlyHit = crossed.filter((m) => !alreadyNotified.includes(m));
+    if (newlyHit.length === 0) return;
 
     const deviceId = after.deviceId;
     const fcmToken = await getFcmToken(deviceId);
 
-    const title = 'People are praying for you 🙏';
-    const body  = `Your prayer request has ${newCount} ${newCount === 1 ? 'person' : 'people'} lifting you up.`;
+    // Notify on the highest newly-crossed milestone (avoids stacking pushes
+    // when a single write jumps past multiple thresholds).
+    const milestone = Math.max(...newlyHit);
+
+    // Copy adapts to the post type. Testimonies (posts created with or later
+    // marked as isAnswered=true) frame reactions as celebration, not prayer.
+    const isTestimony = after.isAnswered === true;
+    const peoplePhrase = `${newCount} ${newCount === 1 ? 'person' : 'people'}`;
+    const title = isTestimony
+      ? 'People are celebrating with you 🙌'
+      : 'People are praying with you 🙏';
+    const body = isTestimony
+      ? `${peoplePhrase} stood with you on this testimony.`
+      : `${peoplePhrase} ${newCount === 1 ? 'is' : 'are'} standing with you in prayer.`;
 
     await sendToDevice(fcmToken, title, body);
+
+    // Persist the milestones we've now notified for so re-crossings don't
+    // re-fire. arrayUnion is safe under concurrent writes.
+    const postRef = event.data.after.ref;
+    await postRef.update({
+      notifiedMilestones: FieldValue.arrayUnion(...newlyHit),
+    });
   }
 );
 
 // ═══════════════════════════════════════════════════════════════════════════
-// 2. dailyPrayerDigest
-//    Replaces per-post broadcasts (which became spam as the wall grew).
-//    Runs daily at 10:00 AM UTC. Counts new prayer posts from the last
-//    24 hours. If any exist, sends ONE push to the prayerWall topic.
-//    No push at all if there were no new posts that day.
+// 2. dailyPrayerDigest — PAUSED
+//
+//    This function used to run daily at 10:00 AM UTC and broadcast a
+//    "X prayer requests today" digest to all `prayerWall` topic subscribers.
+//    It was paused because the copy assumed every new post is a prayer
+//    request, which is wrong now that the Warrior Room hosts both prayer
+//    declarations and testimonies. The wrong framing was misleading users.
+//
+//    The export is commented out below and the deployed function has been
+//    deleted from production (firebase functions:delete dailyPrayerDigest).
+//    To resume, uncomment the export and run:
+//        firebase deploy --only functions:dailyPrayerDigest
+//
+//    NOTE: There's also an `onNewPrayerPost` Cloud Function deployed in
+//    production that broadcasts on every new post creation. Its source is
+//    not in this file — it's intentionally kept out of source for now.
+//    When deploying, scope to the specific function you're changing
+//    (e.g. `firebase deploy --only functions:onPrayerCountIncremented`)
+//    so the CLI doesn't try to reconcile the orphan and prompt for a delete.
 // ═══════════════════════════════════════════════════════════════════════════
 
+/*
 exports.dailyPrayerDigest = onSchedule(
   { schedule: '0 10 * * *', timeZone: 'UTC' },
   async () => {
@@ -166,6 +219,7 @@ exports.dailyPrayerDigest = onSchedule(
     console.log(`dailyPrayerDigest: sent digest for ${count} post(s).`);
   }
 );
+*/
 
 // ═══════════════════════════════════════════════════════════════════════════
 // 3. onPrayerAnswered
@@ -193,3 +247,79 @@ exports.onPrayerAnswered = onDocumentUpdated(
     await sendToDevice(fcmToken, title, body);
   }
 );
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 4. onNewPrayerPost
+//    Fires when a new prayerWall document is created. Sends a topic
+//    broadcast to all `prayerWall` subscribers. Copy adapts based on the
+//    post type:
+//      - Testimony (isAnswered: true at creation) → celebration framing
+//      - Prayer request (isAnswered: false / unset) → prayer framing
+//    The poster's own device suppresses the notification client-side using
+//    the `posterDeviceId` payload key (NotificationHandler.swift).
+// ═══════════════════════════════════════════════════════════════════════════
+
+exports.onNewPrayerPost = onDocumentCreated(
+  'prayerWall/{postId}',
+  async (event) => {
+    const data = event.data && event.data.data ? event.data.data() : null;
+    if (!data) return;
+    if (data.isHidden === true) return;
+
+    const isTestimony = data.isAnswered === true;
+    const posterDeviceId = data.deviceId || '';
+    const postId = event.params.postId;
+
+    let title, body;
+    if (isTestimony) {
+      title = '🏆 New testimony in the Warrior Room';
+      body  = 'A brother or sister just shared what God did. Celebrate with them.';
+    } else {
+      title = '🙏 Someone needs prayer in the Warrior Room';
+      body  = 'A brother or sister just asked for prayer. Stand with them.';
+    }
+
+    await sendToTopicWithData(NEW_POST_TOPIC, title, body, {
+      notificationType: 'prayerWall',
+      postId,
+      posterDeviceId,
+      isTestimony: String(isTestimony),
+    });
+  }
+);
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 5. onPostFlagged
+//    Fires when a flag document is created at
+//    `prayerWall/{postId}/flags/{userId}`. The flag doc id is the reporter's
+//    auth uid, so the rules layer guarantees one flag per user per post.
+//
+//    This function is the source of truth for the post's `reports` count
+//    and the auto-hide flip. The previous implementation trusted the iOS
+//    client to increment `reports` and flip `isHidden`, which let any
+//    signed-in user censor any post.
+// ═══════════════════════════════════════════════════════════════════════════
+
+exports.onPostFlagged = onDocumentCreated(
+  'prayerWall/{postId}/flags/{userId}',
+  async (event) => {
+    const postId = event.params.postId;
+    const postRef = db.collection('prayerWall').doc(postId);
+
+    // Authoritative count: read all flag docs for this post. This is
+    // resilient to deletes/replays — `reports` always matches reality.
+    const flagsSnap = await postRef.collection('flags').get();
+    const reports = flagsSnap.size;
+
+    const updates = { reports };
+    if (reports >= REPORT_THRESHOLD) {
+      updates.isHidden = true;
+    }
+
+    await postRef.update(updates);
+    console.log(`onPostFlagged: post ${postId} now has ${reports} flag(s)` +
+                (updates.isHidden ? ' — hidden.' : '.'));
+  }
+);
+
+
