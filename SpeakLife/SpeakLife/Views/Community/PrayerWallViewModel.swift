@@ -423,12 +423,6 @@ class PrayerWallViewModel: ObservableObject {
         let mutate: (inout PrayerWallPost) -> Void = { post in
             var counts = post.reactionCounts ?? [:]
 
-            // Migrate legacy posts: hydrate counts from the old prayerCount
-            // before we start mutating, so we don't lose existing taps.
-            if post.reactionCounts == nil && post.prayerCount > 0 {
-                counts[WarriorRoomReaction.standing.rawValue] = post.prayerCount
-            }
-
             if let r = remove {
                 counts[r.rawValue] = max(0, (counts[r.rawValue] ?? 0) - 1)
             }
@@ -436,7 +430,19 @@ class PrayerWallViewModel: ObservableObject {
                 counts[a.rawValue] = (counts[a.rawValue] ?? 0) + 1
             }
             post.reactionCounts = counts
-            post.prayerCount = counts.values.reduce(0, +)
+
+            // Mirror the server's prayerCount delta locally instead of
+            // recomputing from sum(counts). On legacy posts (pre-v2 🙏 taps)
+            // `reactionCounts` only stores v2 increments — the legacy taps
+            // live in the gap between `prayerCount` and that sum, and
+            // `count(for: .standing)` attributes the gap back to standing
+            // for display. Recomputing prayerCount from sum here would
+            // collapse the gap and make legacy counts disappear until a
+            // refresh repopulates state from the server.
+            var delta = 0
+            if remove != nil { delta -= 1 }
+            if add != nil { delta += 1 }
+            post.prayerCount = max(0, post.prayerCount + delta)
         }
 
         if let idx = posts.firstIndex(where: { $0.id == postId }) {

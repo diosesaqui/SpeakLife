@@ -130,6 +130,28 @@ final class PrayerWallPostTests: XCTestCase {
         XCTAssertEqual(post.totalReactions, 11)
     }
 
+    func testCountStaysCorrectAfterSwitchingReactionsOnLegacyPost() {
+        // Regression for the "count went away" bug. A legacy post arrives
+        // with reactionCounts only containing v2 increments (no `.standing`
+        // entry); the legacy 🙏 taps live in the prayerCount gap. After
+        // switching reactions, the local-state delta must preserve that
+        // gap — recomputing prayerCount from sum(counts) would drop it.
+        //
+        // Simulating the local state right after a switch from
+        // .standing → .takingGround on a legacy post that had 5 prior
+        // 🙏 taps: server-side prayerCount stays at 6 (5 legacy + 1 new
+        // standing tap, then -1+1 on switch), reactionCounts has standing=0
+        // and takingGround=1.
+        var post = v2Post(counts: [.standing: 0, .takingGround: 1])
+        post.prayerCount = 6 // legacy gap of 5 + the new takingGround
+
+        XCTAssertEqual(post.count(for: .standing), 5,
+                       "Legacy 🙏 gap must persist after a reaction switch")
+        XCTAssertEqual(post.count(for: .takingGround), 1)
+        XCTAssertEqual(post.totalReactions, 6,
+                       "Total must equal prayerCount, not sum(reactionCounts)")
+    }
+
     func testGapAttributionDoesNotGoNegative() {
         // Defensive: if reactionCounts sum > prayerCount somehow (out-of-order
         // writes), the gap clamps to 0 — no negative counts shown.
