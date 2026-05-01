@@ -291,7 +291,6 @@ struct PrayerPostCard: View {
     @State private var showAnsweredGlow = false
     @State private var isAgreementsExpanded = false
     @State private var pendingAgreementReaction: WarriorRoomReaction?
-    @State private var showAgreementSheet = false
 
     private var postId: String { post.id ?? "" }
     private var agreements: [Agreement] { viewModel.agreementsByPost[postId] ?? [] }
@@ -392,15 +391,18 @@ struct PrayerPostCard: View {
                 .shadow(color: showAnsweredGlow ? Color(hex: "FBBF24").opacity(0.45) : .clear, radius: 12)
         )
         .animation(.easeOut(duration: 0.6), value: showAnsweredGlow)
-        .sheet(isPresented: $showAgreementSheet) {
-            if let reaction = pendingAgreementReaction {
-                AgreementPromptSheet(
-                    post: post,
-                    reaction: reaction,
-                    viewModel: viewModel
-                )
-                .presentationDetentsCompat()
-            }
+        // Use `.sheet(item:)` so the unwrapped reaction is guaranteed to be
+        // present when the body runs. With `.sheet(isPresented:)` + an
+        // inner `if let`, SwiftUI sometimes captures the closure before the
+        // state assignment propagates, producing a blank sheet.
+        .sheet(item: $pendingAgreementReaction) { reaction in
+            AgreementPromptSheet(
+                post: post,
+                reaction: reaction,
+                viewModel: viewModel
+            )
+            .environmentObject(subscriptionStore)
+            .presentationDetentsCompat()
         }
     }
 
@@ -465,8 +467,9 @@ struct PrayerPostCard: View {
         guard didAddNewReaction,
               appleSignIn.isSignedIn,
               !viewModel.hasAgreed(on: post) else { return }
+        // Setting this triggers the .sheet(item:) modifier and presents
+        // the agreement prompt. SwiftUI auto-resets it to nil on dismiss.
         pendingAgreementReaction = reaction
-        showAgreementSheet = true
     }
 
     private var reactionSummaryRow: some View {
@@ -581,13 +584,14 @@ struct PrayerPostCard: View {
         guard appleSignIn.isSignedIn else { return }
         guard !viewModel.hasAgreed(on: post) else { return }
 
+        // Setting `pendingAgreementReaction` triggers the .sheet(item:)
+        // modifier and presents the prompt.
         if let current = viewModel.reaction(for: post) {
             pendingAgreementReaction = current
         } else {
             viewModel.toggleReaction(.standing, on: post)
             pendingAgreementReaction = .standing
         }
-        showAgreementSheet = true
     }
 
     // MARK: - Time Ago Helper
