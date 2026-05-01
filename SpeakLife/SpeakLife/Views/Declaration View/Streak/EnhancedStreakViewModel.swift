@@ -1211,11 +1211,15 @@ final class EnhancedStreakViewModel: ObservableObject {
             let delay: Double = (showFireAnimation || showCompletionCelebration) ? 6.0 : 1.0
             
             DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+                guard self.badgeManager.recentlyUnlocked != nil else { return }
                 if !self.showFireAnimation && !self.showCompletionCelebration {
                     self.showBadgeUnlock = true
                 } else {
-                    // Wait a bit more if celebrations are still showing
+                    // Wait a bit more if celebrations are still showing.
+                    // Guard against re-firing after the popup was already shown and dismissed
+                    // (e.g. via the burst view's own 1.5 s trigger).
                     DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                        guard self.badgeManager.recentlyUnlocked != nil else { return }
                         self.showBadgeUnlock = true
                     }
                 }
