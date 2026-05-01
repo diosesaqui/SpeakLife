@@ -29,10 +29,17 @@ struct PrayerWallPost: Identifiable, Codable {
     /// Nil on legacy posts — UI falls back to `prayerCount` as the "standing" count.
     var reactionCounts: [String: Int]?
 
+    /// The auth uid of the post creator. Required for rules-based ownership
+    /// gating (only the author can mark `isAnswered`). Optional for backwards
+    /// compat — legacy posts have nil and are owned by no one (rules deny
+    /// all owner-gated mutations on them).
+    var authorUid: String?
+
     init(text: String,
          displayName: String,
          deviceId: String,
-         category: WarriorRoomCategory? = nil) {
+         category: WarriorRoomCategory? = nil,
+         authorUid: String? = nil) {
         self.text = text
         self.displayName = displayName
         self.deviceId = deviceId
@@ -43,6 +50,7 @@ struct PrayerWallPost: Identifiable, Codable {
         self.isAnswered = false
         self.category = category?.rawValue
         self.reactionCounts = nil
+        self.authorUid = authorUid
     }
 }
 

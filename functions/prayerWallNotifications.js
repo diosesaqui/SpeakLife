@@ -34,14 +34,23 @@ const messaging = getMessaging();
 
 const PRAYER_MILESTONES = [5, 10, 25, 50, 100];
 const NEW_POST_TOPIC    = 'prayerWall';
+const REPORT_THRESHOLD  = 3;
 
 // ─── Helper: look up FCM token for a deviceId ────────────────────────────────
-
+//
+// We query the `users` collection for a document whose `deviceId` field
+// matches. The token is no longer stored at `users/{deviceId}` — that path
+// was a security hole because the rule had no way to require the writer
+// own that deviceId. Now tokens live on `users/{uid}` with a `deviceId`
+// field, and only the auth-uid owner can write the document.
 async function getFcmToken(deviceId) {
   if (!deviceId) return null;
-  const snap = await db.collection('users').doc(deviceId).get();
-  if (!snap.exists) return null;
-  return snap.data().fcmToken || null;
+  const snap = await db.collection('users')
+    .where('deviceId', '==', deviceId)
+    .limit(1)
+    .get();
+  if (snap.empty) return null;
+  return snap.docs[0].data().fcmToken || null;
 }
 
 // ─── Helper: send a single-device FCM message ────────────────────────────────
@@ -278,4 +287,39 @@ exports.onNewPrayerPost = onDocumentCreated(
     });
   }
 );
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 5. onPostFlagged
+//    Fires when a flag document is created at
+//    `prayerWall/{postId}/flags/{userId}`. The flag doc id is the reporter's
+//    auth uid, so the rules layer guarantees one flag per user per post.
+//
+//    This function is the source of truth for the post's `reports` count
+//    and the auto-hide flip. The previous implementation trusted the iOS
+//    client to increment `reports` and flip `isHidden`, which let any
+//    signed-in user censor any post.
+// ═══════════════════════════════════════════════════════════════════════════
+
+exports.onPostFlagged = onDocumentCreated(
+  'prayerWall/{postId}/flags/{userId}',
+  async (event) => {
+    const postId = event.params.postId;
+    const postRef = db.collection('prayerWall').doc(postId);
+
+    // Authoritative count: read all flag docs for this post. This is
+    // resilient to deletes/replays — `reports` always matches reality.
+    const flagsSnap = await postRef.collection('flags').get();
+    const reports = flagsSnap.size;
+
+    const updates = { reports };
+    if (reports >= REPORT_THRESHOLD) {
+      updates.isHidden = true;
+    }
+
+    await postRef.update(updates);
+    console.log(`onPostFlagged: post ${postId} now has ${reports} flag(s)` +
+                (updates.isHidden ? ' — hidden.' : '.'));
+  }
+);
+
 

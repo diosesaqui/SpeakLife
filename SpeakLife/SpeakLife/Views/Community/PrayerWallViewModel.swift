@@ -311,10 +311,15 @@ class PrayerWallViewModel: ObservableObject {
                             isTestimony: Bool) {
         isSubmitting = true
         let displayName = isSister ? "A sister in Christ" : "A brother in Christ"
+        // The composer is gated behind sign-in, so the author uid is
+        // expected to be set here. Empty-string fallback keeps the write
+        // structurally valid; rules deny owner-gated mutations on it.
+        let authorUid = AppleSignInService.shared.uid
         var newPost = PrayerWallPost(text: text,
                                      displayName: displayName,
                                      deviceId: deviceId,
-                                     category: category)
+                                     category: category,
+                                     authorUid: authorUid.isEmpty ? nil : authorUid)
         // Posts created as a testimony go to the wall already marked as
         // answered, so the feed and the per-post Cloud Function copy can
         // treat them as praise reports rather than prayer requests.
@@ -507,27 +512,36 @@ class PrayerWallViewModel: ObservableObject {
 
     // MARK: - Report Post
 
-    func reportPost(_ post: PrayerWallPost) {
-        guard let id = post.id else { return }
-        let ref = db.collection(collection).document(id)
+    /// Reports a post as inappropriate. Writes one document into
+    /// `prayerWall/{postId}/flags/{userId}`. The doc id == auth uid so a
+    /// single user can only flag a given post once. The Cloud Function
+    /// `onPostFlagged` increments the post's `reports` count and sets
+    /// `isHidden` once the threshold is met — the client is no longer
+    /// trusted with either the count or the auto-hide flip.
+    func reportPost(_ post: PrayerWallPost, reason: String = "inappropriate") {
+        guard let postId = post.id else { return }
+        let uid = AppleSignInService.shared.uid
+        guard !uid.isEmpty else {
+            errorMessage = "Sign in to report a post."
+            return
+        }
 
-        ref.updateData(["reports": FieldValue.increment(Int64(1))]) { [weak self] error in
-            DispatchQueue.main.async {
-                guard let self = self else { return }
-                if let error = error {
-                    self.errorMessage = "Error reporting prayer: \(error.localizedDescription)"
-                } else {
-                    let newReports = post.reports + 1
-                    if newReports >= self.reportThreshold {
-                        ref.updateData(["isHidden": true]) { _ in
-                            DispatchQueue.main.async {
-                                self.fetchPosts(reset: true)
-                            }
-                        }
+        let payload: [String: Any] = [
+            "userId": uid,
+            "reason": reason,
+            "createdAt": FieldValue.serverTimestamp(),
+        ]
+
+        db.collection(collection).document(postId)
+            .collection("flags").document(uid)
+            .setData(payload) { [weak self] error in
+                DispatchQueue.main.async {
+                    guard let self = self else { return }
+                    if let error = error {
+                        self.errorMessage = "Error reporting post: \(error.localizedDescription)"
                     }
                 }
             }
-        }
     }
 
     // MARK: - Agreements
@@ -617,6 +631,16 @@ class PrayerWallViewModel: ObservableObject {
 
     // MARK: - FCM Registration
 
+    /// Subscribes the device to the `prayerWall` topic and persists the
+    /// FCM token to Firestore so Cloud Functions can look it up.
+    ///
+    /// The token + `deviceId` are stored as fields on a single user document
+    /// at `users/{uid}` rather than across two parallel docs. This lets the
+    /// security rules require `request.auth.uid == userOrDeviceId` on every
+    /// write — closing the prior hole where any signed-in user could
+    /// overwrite anyone else's FCM token via the deviceId-keyed path.
+    /// The milestone Cloud Function now resolves a deviceId to its FCM
+    /// token by querying the `users` collection.
     func registerForPrayerWallNotifications(uid: String, fcmToken: String) {
         guard !uid.isEmpty else { return }
 
@@ -626,23 +650,16 @@ class PrayerWallViewModel: ObservableObject {
             }
         }
 
-        // 2. Persist FCM token to Firestore so Cloud Functions can look it up.
-        //    Save under BOTH the auth uid AND the local deviceId.
-        //    The milestone Cloud Function looks up users/{deviceId}, while
-        //    other auth-based lookups use users/{uid}.
         guard !fcmToken.isEmpty else { return }
-        let tokenData: [String: Any] = [
+        let userData: [String: Any] = [
+            "uid": uid,
             "fcmToken": fcmToken,
-            "updatedAt": FieldValue.serverTimestamp()
+            "deviceId": deviceId,
+            "updatedAt": FieldValue.serverTimestamp(),
         ]
-        db.collection("users").document(uid).setData(tokenData, merge: true) { error in
+        db.collection("users").document(uid).setData(userData, merge: true) { error in
             if let error = error {
-                print("⚠️ PrayerWall: Failed to save FCM token (uid): \(error.localizedDescription)")
-            }
-        }
-        db.collection("users").document(deviceId).setData(tokenData, merge: true) { error in
-            if let error = error {
-                print("⚠️ PrayerWall: Failed to save FCM token (deviceId): \(error.localizedDescription)")
+                print("⚠️ PrayerWall: Failed to save FCM token: \(error.localizedDescription)")
             }
         }
     }

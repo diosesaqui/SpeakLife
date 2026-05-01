@@ -3,18 +3,18 @@ rules_version = '2';
 // =====================================================================
 // SpeakLife — Firestore security rules
 // =====================================================================
-// These rules cover the Warrior Room (Prayer Wall) v2 data model:
-//   - prayerWall/{postId}                 (top-level posts)
+// Covers the Warrior Room (Prayer Wall) v2 data model:
+//   - prayerWall/{postId}                       (top-level posts)
 //   - prayerWall/{postId}/agreements/{userId}   (one agreement per user)
-//   - users/{deviceIdOrUid}               (FCM token storage)
+//   - prayerWall/{postId}/flags/{userId}        (one moderation flag per user)
+//   - users/{uid}                               (FCM token + deviceId field)
 //
 // Apply via:
 //   1. Firebase Console → Firestore → Rules → paste this block, OR
-//   2. Add `"rules": "firestore.rules"` under firebase.json's "firestore"
-//      key, then run: firebase deploy --only firestore:rules
+//   2. firebase deploy --only firestore:rules
 //
-// Test rule changes in the Firebase Console's Rules Playground before
-// deploying. A bad rule can lock the entire app out.
+// Always use the Console's Rules Playground before deploying — a bad rule
+// can lock the entire app out.
 // =====================================================================
 
 service cloud.firestore {
@@ -26,17 +26,37 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    // The set of fields a writer is allowed to mutate on an existing post.
-    // Anything outside this set blocks the write.
-    function postMutableFields() {
+    function isPostOwner(postData) {
+      // Posts created before authorUid was added (legacy v1 posts) have
+      // no recorded owner — owner-gated writes are denied on those.
+      return signedIn()
+             && 'authorUid' in postData
+             && postData.authorUid == request.auth.uid;
+    }
+
+    function isValidReactionType(value) {
+      return value in ['standing', 'taking_ground',
+                       'breakthrough_coming', 'already_done'];
+    }
+
+    // Fields a non-owner signed-in user may mutate on an existing post.
+    // Crucially, this list does NOT include isHidden, isAnswered, or
+    // reports — those are server- or owner-controlled now.
+    function nonOwnerMutableFields() {
       return [
-        'prayerCount',           // legacy + total reaction tally
-        'reactionCounts',        // v2 per-reaction map (standing/etc.)
-        'reports',               // moderation reports (any signed-in user)
-        'isHidden',              // moderation auto-hide
-        'isAnswered',            // post author marks own post answered
-        'notifiedMilestones'     // Cloud Function bookkeeping
+        'prayerCount',          // total reaction tally (kept in sync with map)
+        'reactionCounts',       // v2 per-reaction map
+        'notifiedMilestones'    // Cloud Function bookkeeping (writeable by
+                                // the function via the admin SDK; no rule
+                                // exception needed there since admin bypasses)
       ];
+    }
+
+    // Owner-only fields. The author can flip `isAnswered` to mark a
+    // prayer request as answered; everything else they can also touch
+    // (they can react to their own post, etc.).
+    function ownerOnlyMutableFields() {
+      return nonOwnerMutableFields().concat(['isAnswered']);
     }
 
     function onlyAllowsFields(allowed) {
@@ -47,32 +67,39 @@ service cloud.firestore {
     // ─── Warrior Room posts ───────────────────────────────────────────
 
     match /prayerWall/{postId} {
-      // Anyone (signed in or not) can read non-hidden posts. The client
-      // already filters with `where("isHidden", "==", false)` — this is a
-      // backstop in case rules are queried directly.
+      // Public read of non-hidden posts is fine. The hidden filter is
+      // belt-and-suspenders; clients already filter with
+      // `where("isHidden", "==", false)`.
       allow read: if true;
 
-      // Create a new post: must be signed in. The post's deviceId is the
-      // creator's local device id (not their auth uid) — we don't enforce
-      // ownership at the rule level for create, since the legacy schema
-      // never did. If you want to lock that down, add:
-      //   && request.resource.data.deviceId is string
-      //   && request.resource.data.deviceId.size() > 0
-      allow create: if signedIn();
+      // Create: signed-in users only. We require authorUid to match the
+      // signed-in user so the post has an enforceable owner from day one.
+      allow create: if signedIn()
+                    && request.resource.data.authorUid == request.auth.uid
+                    && request.resource.data.text is string
+                    && request.resource.data.text.size() > 0
+                    && request.resource.data.text.size() <= 280;
 
-      // Updates are allowed only for the whitelisted mutable fields above.
-      // This blocks writes that try to overwrite `text`, `displayName`,
-      // `category`, `deviceId`, `timestamp` — those are immutable after
-      // create.
+      // Update splits into two paths:
+      //   1. Post owner — may change isAnswered (mark as testimony) plus
+      //      anything in the non-owner set.
+      //   2. Non-owner signed-in user — may only touch reaction counts.
+      // Neither path may touch isHidden or reports — those are
+      // exclusively driven by the onPostFlagged Cloud Function via the
+      // admin SDK (which bypasses these rules).
       allow update: if signedIn()
-                    && onlyAllowsFields(postMutableFields());
+                    && (
+                      (isPostOwner(resource.data)
+                       && onlyAllowsFields(ownerOnlyMutableFields()))
+                      || onlyAllowsFields(nonOwnerMutableFields())
+                    );
 
-      // No client-side deletes. Use admin SDK / Cloud Functions only.
+      // Client-side deletes are not allowed.
       allow delete: if false;
 
       // ─── Agreement chain ───────────────────────────────────────────
-      // Doc id is the agreement author's auth uid, which lets us enforce
-      // "one agreement per user per post" purely with rules.
+      // Doc id is the agreement author's auth uid → "one agreement per
+      // user per post" is enforced by the rule layer.
 
       match /agreements/{userId} {
         allow read: if true;
@@ -80,26 +107,51 @@ service cloud.firestore {
         allow create: if signedIn()
                       && request.auth.uid == userId
                       && request.resource.data.userId == userId
+                      && request.resource.data.displayName is string
+                      && request.resource.data.displayName.size() > 0
+                      && request.resource.data.displayName.size() <= 80
                       && request.resource.data.text is string
                       && request.resource.data.text.size() > 0
-                      && request.resource.data.text.size() <= 150;
+                      && request.resource.data.text.size() <= 150
+                      && request.resource.data.reactionType is string
+                      && isValidReactionType(request.resource.data.reactionType)
+                      && request.resource.data.timestamp == request.time;
 
-        // Once written, agreements are immutable — no editing or deleting
-        // your own declarations from the client. (Admin/moderation can
-        // still remove via the admin SDK.)
+        // Agreements are immutable from the client. Moderation removes
+        // via the admin SDK if needed.
+        allow update, delete: if false;
+      }
+
+      // ─── Moderation flags ──────────────────────────────────────────
+      // Doc id is the reporter's auth uid → one flag per user per post.
+      // The onPostFlagged Cloud Function counts these and updates the
+      // post's `reports` / `isHidden` fields. Clients never touch
+      // `reports` or `isHidden` directly anymore.
+
+      match /flags/{userId} {
+        // Reporters cannot list other reports. Hidden surface area for
+        // moderation: a future admin tool reads via admin SDK.
+        allow read: if signedIn() && request.auth.uid == userId;
+
+        allow create: if signedIn()
+                      && request.auth.uid == userId
+                      && request.resource.data.userId == userId
+                      && request.resource.data.reason is string
+                      && request.resource.data.reason.size() > 0
+                      && request.resource.data.reason.size() <= 64;
+
         allow update, delete: if false;
       }
     }
 
     // ─── Users (FCM tokens etc.) ───────────────────────────────────────
+    // The doc id is the auth uid. The deviceId is a FIELD on this doc so
+    // Cloud Functions can resolve a deviceId → fcmToken via a query
+    // (`where('deviceId', '==', ...)`). Previously we also wrote tokens
+    // to `users/{deviceId}` which had no auth gate — that path is closed.
 
-    match /users/{userOrDeviceId} {
-      allow read: if signedIn() && request.auth.uid == userOrDeviceId;
-
-      // The iOS client writes the FCM token to BOTH `users/{uid}` and
-      // `users/{deviceId}` so the milestone Cloud Function can look it up
-      // by deviceId. We allow either path for the signed-in user.
-      allow write: if signedIn();
+    match /users/{uid} {
+      allow read, write: if signedIn() && request.auth.uid == uid;
     }
   }
 }

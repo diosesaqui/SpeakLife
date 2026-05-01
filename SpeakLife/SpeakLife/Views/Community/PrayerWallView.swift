@@ -43,6 +43,7 @@ struct PrayerWallView: View {
 
                     if selectedTab == .wall {
                         categoryFilterBar
+                            .padding(.leading, 20)
                             .padding(.bottom, 8)
                     }
 
@@ -155,6 +156,11 @@ struct PrayerWallView: View {
     // MARK: - Category Filter Bar
 
     private var categoryFilterBar: some View {
+        // Leading padding lives on the parent (`.padding(.leading, 20)` at
+        // the call site) — applying it to the inner HStack here doesn't
+        // render reliably across iOS versions when the ScrollView clips
+        // its content. Trailing padding inside the HStack still works for
+        // the last-pill-scroll-bleed.
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
                 filterPill(label: "All",
@@ -170,8 +176,7 @@ struct PrayerWallView: View {
                     }
                 }
             }
-            .padding(.leading, 24)
-            .padding(.trailing, 24)
+            .padding(.trailing, 20)
         }
     }
 
