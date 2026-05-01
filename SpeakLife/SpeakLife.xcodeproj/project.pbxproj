@@ -12,12 +12,12 @@
 		20F4D11E6F9CB2FA07540EE7 /* TrialExperienceService.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC73B2698B17B267C7A6F437 /* TrialExperienceService.swift */; };
 		2F740F6929D4017400E89E7F /* APIClientTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F740F6829D4017400E89E7F /* APIClientTests.swift */; };
 		3D80B3F476D5A3B34421898E /* PrayerWallPost.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0214EB35A67E7EF76115C40 /* PrayerWallPost.swift */; };
+		4501F3912D8926CA00315902 /* TestimonyViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4501F3902D8926C500315902 /* TestimonyViewModel.swift */; };
 		4501F3A12F840A01008704F9 /* WarriorRoomTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4501F3A22F840A01008704F9 /* WarriorRoomTypes.swift */; };
 		4501F3A32F840A01008704F9 /* Agreement.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4501F3A42F840A01008704F9 /* Agreement.swift */; };
 		4501F3A52F840A01008704F9 /* WarriorRoomTypesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4501F3A62F840A01008704F9 /* WarriorRoomTypesTests.swift */; };
 		4501F3A72F840A01008704F9 /* PrayerWallPostTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4501F3A82F840A01008704F9 /* PrayerWallPostTests.swift */; };
 		4501F3A92F840A01008704F9 /* PrayerWallViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4501F3AA2F840A01008704F9 /* PrayerWallViewModelTests.swift */; };
-		4501F3912D8926CA00315902 /* TestimonyViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4501F3902D8926C500315902 /* TestimonyViewModel.swift */; };
 		450720DB2BAFFB4A0029EE2B /* TimerViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 450720DA2BAFFB4A0029EE2B /* TimerViewModelTests.swift */; };
 		450901B22F630925008704F9 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 450901B12F630925008704F9 /* GoogleService-Info.plist */; };
 		450901C12F640000008704F9 /* EmailConfig.plist in Resources */ = {isa = PBXBuildFile; fileRef = 450901C02F640000008704F9 /* EmailConfig.plist */; };
@@ -350,8 +350,6 @@
 		B0004444444444444444BBBB /* PersonalDeclarationRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0004444444444444444AAAA /* PersonalDeclarationRepository.swift */; };
 		B0005555555555555555BBBB /* DeclarationNotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0005555555555555555AAAA /* DeclarationNotificationService.swift */; };
 		B0006666666666666666BBBB /* SpeechTranscriptionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0006666666666666666AAAA /* SpeechTranscriptionService.swift */; };
-		CL00DE00000000003333BBBB /* ClaudeDeclarationMatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = CL00DE00000000001111AAAA /* ClaudeDeclarationMatcher.swift */; };
-		CL00DE00000000004444BBBB /* AnthropicConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = CL00DE00000000002222AAAA /* AnthropicConfig.swift */; };
 		B0007777777777777777BBBB /* PersonalDeclarationProtocols.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0007777777777777777AAAA /* PersonalDeclarationProtocols.swift */; };
 		B0008888888888888888BBBB /* MatchDeclarationUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0008888888888888888AAAA /* MatchDeclarationUseCase.swift */; };
 		B0009999999999999999BBBB /* SavePersonalDeclarationUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0009999999999999999AAAA /* SavePersonalDeclarationUseCase.swift */; };
@@ -369,6 +367,8 @@
 		BCC8A7200000000000000006 /* bible_chat_topics.json in Resources */ = {isa = PBXBuildFile; fileRef = BCC8A7100000000000000006 /* bible_chat_topics.json */; };
 		C1A98C89749C94FF718F1980 /* AppleSignInPromptView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35B4B5074F8CB5AB1E2EA0DC /* AppleSignInPromptView.swift */; };
 		CF8E572E5459A038EEE73B3A /* PrayerWallViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BA7EE898DF248C4EB6EDEB2 /* PrayerWallViewModel.swift */; };
+		CL00DE00000000003333BBBB /* ClaudeDeclarationMatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = CL00DE00000000001111AAAA /* ClaudeDeclarationMatcher.swift */; };
+		CL00DE00000000004444BBBB /* AnthropicConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = CL00DE00000000002222AAAA /* AnthropicConfig.swift */; };
 		D0010000000000000001BBBB /* SurveyPersonalizationEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0010000000000000001AAAA /* SurveyPersonalizationEngine.swift */; };
 		D0030000000000000003BBBB /* SurveyOnboardingScreens.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0030000000000000003AAAA /* SurveyOnboardingScreens.swift */; };
 		D0040000000000000004BBBB /* SurveyOnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0040000000000000004AAAA /* SurveyOnboardingView.swift */; };
@@ -424,6 +424,11 @@
 		30FA3E7536DE40B2B311F43E /* PersonalizationSummaryScene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersonalizationSummaryScene.swift; sourceTree = "<group>"; };
 		35B4B5074F8CB5AB1E2EA0DC /* AppleSignInPromptView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleSignInPromptView.swift; sourceTree = "<group>"; };
 		4501F3902D8926C500315902 /* TestimonyViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestimonyViewModel.swift; sourceTree = "<group>"; };
+		4501F3A22F840A01008704F9 /* WarriorRoomTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WarriorRoomTypes.swift; sourceTree = "<group>"; };
+		4501F3A42F840A01008704F9 /* Agreement.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Agreement.swift; sourceTree = "<group>"; };
+		4501F3A62F840A01008704F9 /* WarriorRoomTypesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WarriorRoomTypesTests.swift; sourceTree = "<group>"; };
+		4501F3A82F840A01008704F9 /* PrayerWallPostTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrayerWallPostTests.swift; sourceTree = "<group>"; };
+		4501F3AA2F840A01008704F9 /* PrayerWallViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrayerWallViewModelTests.swift; sourceTree = "<group>"; };
 		450720DA2BAFFB4A0029EE2B /* TimerViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerViewModelTests.swift; sourceTree = "<group>"; };
 		450901B12F630925008704F9 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		450901C02F640000008704F9 /* EmailConfig.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = EmailConfig.plist; sourceTree = "<group>"; };
@@ -747,8 +752,6 @@
 		A0004444444444444444AAAA /* PersonalDeclarationRepository.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PersonalDeclarationRepository.swift; sourceTree = "<group>"; };
 		A0005555555555555555AAAA /* DeclarationNotificationService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DeclarationNotificationService.swift; sourceTree = "<group>"; };
 		A0006666666666666666AAAA /* SpeechTranscriptionService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SpeechTranscriptionService.swift; sourceTree = "<group>"; };
-		CL00DE00000000001111AAAA /* ClaudeDeclarationMatcher.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ClaudeDeclarationMatcher.swift; sourceTree = "<group>"; };
-		CL00DE00000000002222AAAA /* AnthropicConfig.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AnthropicConfig.swift; sourceTree = "<group>"; };
 		A0007777777777777777AAAA /* PersonalDeclarationProtocols.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PersonalDeclarationProtocols.swift; sourceTree = "<group>"; };
 		A0008888888888888888AAAA /* MatchDeclarationUseCase.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MatchDeclarationUseCase.swift; sourceTree = "<group>"; };
 		A0009999999999999999AAAA /* SavePersonalDeclarationUseCase.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SavePersonalDeclarationUseCase.swift; sourceTree = "<group>"; };
@@ -761,11 +764,6 @@
 		A1B2C3D4E5F6A7B82026AA00 /* SpeakingPowerEffect.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeakingPowerEffect.swift; sourceTree = "<group>"; };
 		AC33C8C421764DF3961EA018 /* OnboardingDailyBurstScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingDailyBurstScreen.swift; sourceTree = "<group>"; };
 		B0214EB35A67E7EF76115C40 /* PrayerWallPost.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrayerWallPost.swift; sourceTree = "<group>"; };
-		4501F3A22F840A01008704F9 /* WarriorRoomTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WarriorRoomTypes.swift; sourceTree = "<group>"; };
-		4501F3A42F840A01008704F9 /* Agreement.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Agreement.swift; sourceTree = "<group>"; };
-		4501F3A62F840A01008704F9 /* WarriorRoomTypesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WarriorRoomTypesTests.swift; sourceTree = "<group>"; };
-		4501F3A82F840A01008704F9 /* PrayerWallPostTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrayerWallPostTests.swift; sourceTree = "<group>"; };
-		4501F3AA2F840A01008704F9 /* PrayerWallViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrayerWallViewModelTests.swift; sourceTree = "<group>"; };
 		BA221D745BD49CF6BCFEBAA1 /* LifecycleNotificationService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LifecycleNotificationService.swift; sourceTree = "<group>"; };
 		BCC8A7100000000000000001 /* BibleChatTopic.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BibleChatTopic.swift; sourceTree = "<group>"; };
 		BCC8A7100000000000000002 /* BibleChatService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BibleChatService.swift; sourceTree = "<group>"; };
@@ -778,6 +776,8 @@
 		C0040000000000000004AAAA /* SurveyOnboardingView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SurveyOnboardingView.swift; sourceTree = "<group>"; };
 		C0060000000000000006AAAA /* PayWhatYouCanView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PayWhatYouCanView.swift; sourceTree = "<group>"; };
 		C0070000000000000007AAAA /* SurveyTypes.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SurveyTypes.swift; sourceTree = "<group>"; };
+		CL00DE00000000001111AAAA /* ClaudeDeclarationMatcher.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ClaudeDeclarationMatcher.swift; sourceTree = "<group>"; };
+		CL00DE00000000002222AAAA /* AnthropicConfig.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AnthropicConfig.swift; sourceTree = "<group>"; };
 		DC27319C7422AFA8C439B08F /* AppleSignInService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleSignInService.swift; sourceTree = "<group>"; };
 		DC73B2698B17B267C7A6F437 /* TrialExperienceService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TrialExperienceService.swift; sourceTree = "<group>"; };
 		DECL0001VERIF00001FILEREF /* DeclarationVerificationService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DeclarationVerificationService.swift; sourceTree = "<group>"; };
@@ -2601,7 +2601,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 4.10;
+				MARKETING_VERSION = 4.11;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Franchiz.SpeakLife;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -2643,7 +2643,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 4.10;
+				MARKETING_VERSION = 4.11;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Franchiz.SpeakLife;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
