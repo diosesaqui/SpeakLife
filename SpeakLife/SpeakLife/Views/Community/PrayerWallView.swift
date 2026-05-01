@@ -150,7 +150,7 @@ struct PrayerWallView: View {
     // MARK: - Post List
 
     private var currentPosts: [PrayerWallPost] {
-        selectedTab == .wall ? viewModel.filteredPosts : viewModel.myPosts
+        selectedTab == .wall ? viewModel.posts : viewModel.myPosts
     }
 
     // MARK: - Category Filter Bar
@@ -209,9 +209,11 @@ struct PrayerWallView: View {
                     )
                 }
 
-                // Load more / end-of-feed (wall tab, no active filter only —
-                // pagination is server-side chronological and isn't filterable here)
-                if selectedTab == .wall && viewModel.categoryFilter == nil && !viewModel.posts.isEmpty {
+                // Load more / end-of-feed (wall tab). Works under category
+                // filters too — the server-side query in fetchPosts adds the
+                // category constraint and the cursor advances within that
+                // filtered slice.
+                if selectedTab == .wall && !viewModel.posts.isEmpty {
                     if viewModel.hasMore {
                         Button {
                             viewModel.fetchPosts(reset: false)

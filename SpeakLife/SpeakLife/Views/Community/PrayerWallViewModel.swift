@@ -23,7 +23,14 @@ class PrayerWallViewModel: ObservableObject {
     @Published var hasMore = true
 
     /// Active feed filter — nil = "All". Persists for the session only.
-    @Published var categoryFilter: WarriorRoomCategory?
+    /// Setting this triggers a server-side refetch with the category
+    /// constraint applied so pagination works correctly under filters.
+    @Published var categoryFilter: WarriorRoomCategory? {
+        didSet {
+            guard oldValue != categoryFilter else { return }
+            fetchPosts(reset: true)
+        }
+    }
 
     /// Agreements loaded per post, keyed by post.id. Loaded lazily on expand.
     @Published var agreementsByPost: [String: [Agreement]] = [:]
@@ -134,6 +141,10 @@ class PrayerWallViewModel: ObservableObject {
     }
 
     private func cachePosts() {
+        // Only cache the unfiltered feed. If a category filter is active
+        // the in-memory `posts` array is the filtered slice — caching it
+        // would leak across sessions and confuse users on next launch.
+        guard categoryFilter == nil else { return }
         if let encoded = try? JSONEncoder().encode(posts) {
             UserDefaults.standard.set(encoded, forKey: cacheKey)
             UserDefaults.standard.set(Date().timeIntervalSince1970, forKey: lastFetchKey)
@@ -189,6 +200,10 @@ class PrayerWallViewModel: ObservableObject {
 
         var query: Query = db.collection(collection)
             .whereField("isHidden", isEqualTo: false)
+        if let filter = categoryFilter {
+            query = query.whereField("category", isEqualTo: filter.rawValue)
+        }
+        query = query
             .order(by: "timestamp", descending: true)
             .limit(to: batchSize)
 
@@ -265,14 +280,8 @@ class PrayerWallViewModel: ObservableObject {
             }
     }
 
-    // MARK: - Filtered feed
-
-    /// `posts` filtered by the active category. Returns all posts if no filter
-    /// is selected. Posts without a category are only shown under "All".
-    var filteredPosts: [PrayerWallPost] {
-        guard let filter = categoryFilter else { return posts }
-        return posts.filter { $0.category == filter.rawValue }
-    }
+    // Filtering is now performed server-side inside `fetchPosts` based on
+    // `categoryFilter`. The View consumes `posts` directly.
 
     // MARK: - Add Post
 
