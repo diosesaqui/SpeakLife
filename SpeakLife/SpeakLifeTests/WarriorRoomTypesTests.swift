@@ -37,8 +37,8 @@ final class WarriorRoomTypesTests: XCTestCase {
                            "Reaction \(reaction) is missing a label")
             XCTAssertFalse(reaction.shortLabel.isEmpty,
                            "Reaction \(reaction) is missing a short label")
-            XCTAssertFalse(reaction.declarationPlaceholder.isEmpty,
-                           "Reaction \(reaction) is missing a declaration placeholder")
+            XCTAssertFalse(reaction.agreementPlaceholder.isEmpty,
+                           "Reaction \(reaction) is missing an agreement placeholder")
         }
     }
 

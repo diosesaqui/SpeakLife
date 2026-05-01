@@ -245,12 +245,12 @@ struct PrayerWallView: View {
 
     private var emptyStateMessage: String {
         if selectedTab == .mine {
-            return "You haven't declared anything yet.\nTake your ground."
+            return "You haven't shared anything yet.\nThis room is waiting on you."
         }
         if let filter = viewModel.categoryFilter {
-            return "No declarations in \(filter.label) yet.\nBe the first to take this ground."
+            return "No posts in \(filter.label) yet.\nBe the first to share."
         }
-        return "No declarations yet. Be the first to take ground.\nThis room rises with you."
+        return "No posts yet. Be the first to share.\nThis room is waiting on you."
     }
 
     private var emptyState: some View {
@@ -317,7 +317,7 @@ struct PrayerPostCard: View {
                     .foregroundColor(.white.opacity(0.35))
             }
 
-            // Declaration text
+            // Post text
             Text(post.text)
                 .font(Font.custom("AppleSDGothicNeo-Regular", size: 15, relativeTo: .body))
                 .foregroundColor(.white)
@@ -365,7 +365,7 @@ struct PrayerPostCard: View {
                             .font(.system(size: 12))
                             .foregroundColor(.white.opacity(0.3))
                     }
-                    .alert("Report this declaration?", isPresented: $showReportAlert) {
+                    .alert("Report this post?", isPresented: $showReportAlert) {
                         Button("Report", role: .destructive) {
                             viewModel.reportPost(post)
                         }
@@ -465,7 +465,7 @@ struct PrayerPostCard: View {
         let total = post.totalReactions
         let suffix = total == 1
             ? "1 believer standing with you"
-            : "\(total) believers standing with this declaration"
+            : "\(total) believers standing with you"
         return HStack(spacing: 6) {
             if !top.isEmpty {
                 Text(top)
@@ -483,10 +483,10 @@ struct PrayerPostCard: View {
         let title: String = {
             if count > 0 {
                 return count == 1
-                    ? "1 declaration of agreement"
-                    : "\(count) declarations of agreement"
+                    ? "1 voice in agreement"
+                    : "\(count) voices in agreement"
             }
-            return "View declarations of agreement"
+            return "View those standing in agreement"
         }()
 
         VStack(alignment: .leading, spacing: 6) {
@@ -546,8 +546,8 @@ struct PrayerPostCard: View {
 
     private var emptyAgreementHint: String {
         appleSignIn.isSignedIn
-            ? "You've already declared agreement here."
-            : "Sign in to declare in agreement."
+            ? "You're already standing in agreement here."
+            : "Sign in to stand in agreement."
     }
 
     private var addAgreementButton: some View {
@@ -629,7 +629,7 @@ private struct AgreementPromptSheet: View {
     @State private var text: String = ""
 
     private var trimmed: String { text.trimmingCharacters(in: .whitespacesAndNewlines) }
-    private var canDeclare: Bool { !trimmed.isEmpty }
+    private var canStand: Bool { !trimmed.isEmpty }
     private var remaining: Int { Agreement.maxLength - text.count }
 
     var body: some View {
@@ -639,7 +639,7 @@ private struct AgreementPromptSheet: View {
                 .frame(width: 40, height: 4)
                 .padding(.top, 10)
 
-            Text("Add your declaration over this?")
+            Text("Stand in agreement?")
                 .font(Font.custom("AppleSDGothicNeo-Bold", size: 18, relativeTo: .title3))
                 .foregroundColor(.white)
                 .multilineTextAlignment(.center)
@@ -654,7 +654,7 @@ private struct AgreementPromptSheet: View {
 
             ZStack(alignment: .topLeading) {
                 if text.isEmpty {
-                    Text(reaction.declarationPlaceholder)
+                    Text(reaction.agreementPlaceholder)
                         .font(Font.custom("AppleSDGothicNeo-Regular", size: 14, relativeTo: .body))
                         .foregroundColor(.white.opacity(0.35))
                         .padding(.top, 12)
@@ -707,15 +707,15 @@ private struct AgreementPromptSheet: View {
                     )
                     dismiss()
                 } label: {
-                    Text("Declare It →")
+                    Text("Stand With Them →")
                         .font(Font.custom("AppleSDGothicNeo-Bold", size: 14, relativeTo: .body))
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
                         .frame(height: 46)
-                        .background(canDeclare ? Color(hex: "7C3AED") : Color.gray.opacity(0.4))
+                        .background(canStand ? Color(hex: "7C3AED") : Color.gray.opacity(0.4))
                         .clipShape(RoundedRectangle(cornerRadius: 12))
                 }
-                .disabled(!canDeclare)
+                .disabled(!canStand)
             }
             .padding(.horizontal, 24)
             .padding(.bottom, 24)

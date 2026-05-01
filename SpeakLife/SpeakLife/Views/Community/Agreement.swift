@@ -2,9 +2,9 @@
 //  Agreement.swift
 //  SpeakLife
 //
-//  A short corporate agreement declaration that another believer adds
-//  over a Warrior Room post. One agreement per user per post — these
-//  form a chain below the original post and are not themselves reactable.
+//  A short statement of agreement another believer adds over a Warrior
+//  Room post. One agreement per user per post — these form a chain below
+//  the original post and are not themselves reactable.
 //
 
 import Foundation

@@ -46,12 +46,12 @@ enum WarriorRoomReaction: String, Codable, CaseIterable, Identifiable {
         }
     }
 
-    var declarationPlaceholder: String {
+    var agreementPlaceholder: String {
         switch self {
-        case .standing:           return "I stand with you and declare…"
-        case .takingGround:       return "I'm in this fight with you. I declare…"
+        case .standing:           return "I'm standing with you. Tell them…"
+        case .takingGround:       return "I'm in this fight with you…"
         case .breakthroughComing: return "I'm believing with you for the full thing…"
-        case .alreadyDone:        return "It is finished in Jesus' name. I declare…"
+        case .alreadyDone:        return "It is finished in Jesus' name…"
         }
     }
 }
@@ -102,21 +102,21 @@ enum WarriorRoomCategory: String, Codable, CaseIterable, Identifiable {
     var composerPlaceholder: String {
         switch self {
         case .healing:
-            return "Declare your healing. What is Christ's payment covering today?"
+            return "What healing do you need? Share it with the room."
         case .identity:
-            return "Declare who God says you are. Speak it like you own it."
+            return "Where do you need prayer to walk in who God says you are?"
         case .calling:
-            return "Declare your calling. What territory are you stepping into?"
+            return "What is God calling you to that you need prayer for?"
         case .peace:
-            return "Declare your peace. What is fear losing authority over right now?"
+            return "What is stealing your peace? Bring it here."
         case .breakthrough:
-            return "Declare your breakthrough. What door is God opening?"
+            return "What breakthrough are you praying for?"
         case .warfare:
-            return "What ground are you taking back? Declare it."
+            return "What ground are you fighting for? Where do you need backup?"
         case .relationships:
-            return "Declare what God is doing in your relationships. Speak it."
+            return "What's happening in your relationships?"
         case .faith:
-            return "Declare what you are believing God for. Say it boldly."
+            return "What are you believing God for?"
         }
     }
 }
