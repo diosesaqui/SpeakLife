@@ -29,11 +29,24 @@ struct PersonalDeclarationCard: View {
 
     // Spoken-today tracking
     @AppStorage("personalDeclaration_lastSpokenDate") private var lastSpokenDateStr: String = ""
+    /// How many times the user has spoken this declaration today. Resets to
+    /// 1 on first speak of a new day, increments on subsequent speaks.
+    /// Drives the tiered visual reward in `dayBadge`.
+    @AppStorage("personalDeclaration_dailySpeakCount") private var dailySpeakCount: Int = 0
 
     private var spokenToday: Bool {
         let today = ISO8601DateFormatter().string(from: Calendar.current.startOfDay(for: Date()))
         return lastSpokenDateStr == today
     }
+
+    /// The number of speaks recorded for *today* — zero if the stored count
+    /// is from a previous day (the badge view normalises this on render).
+    private var todaySpeakCount: Int {
+        spokenToday ? dailySpeakCount : 0
+    }
+
+    // Pulse animation for the highest streak tier.
+    @State private var dayBadgePulse = false
 
     // Verification service
     @StateObject private var verifier = DeclarationVerificationService()
@@ -214,23 +227,98 @@ struct PersonalDeclarationCard: View {
     }
 
     // MARK: - Day Badge
+    //
+    // Tiered progression — the more times the user speaks today, the
+    // richer the visual reward:
+    //   0  → muted ember (not spoken yet today)
+    //   1× → green ✓ (first speak — completion)
+    //   2× → 🔥 single flame, warm orange (momentum)
+    //   3× → 🔥🔥 double flame, deeper orange (fire)
+    //   4+ → 👑 crown, gold, glow + pulse (warrior tier)
+    //
+    // The intent is to make every additional declaration feel like it
+    // earned the user something visible, instead of "spoken/not spoken"
+    // being the only signal.
+
+    private struct StreakTier {
+        let symbol: String          // emoji rendered to the badge's left
+        let primaryColor: Color     // foreground colour for "Day N · Nx"
+        let backgroundOpacity: Double
+        let glowColor: Color
+        let glowRadius: CGFloat
+    }
+
+    private var streakTier: StreakTier {
+        switch todaySpeakCount {
+        case 0:
+            return StreakTier(
+                symbol: "·",
+                primaryColor: Color(red: 1, green: 0.82, blue: 0.28),  // ember yellow
+                backgroundOpacity: 0.08,
+                glowColor: .clear,
+                glowRadius: 0
+            )
+        case 1:
+            return StreakTier(
+                symbol: "✓",
+                primaryColor: Color(red: 0.3, green: 0.9, blue: 0.55),  // green
+                backgroundOpacity: 0.14,
+                glowColor: Color(red: 0.3, green: 0.9, blue: 0.55).opacity(0.35),
+                glowRadius: 6
+            )
+        case 2:
+            return StreakTier(
+                symbol: "🔥",
+                primaryColor: Color(red: 1, green: 0.62, blue: 0.25),  // warm orange
+                backgroundOpacity: 0.18,
+                glowColor: Color(red: 1, green: 0.55, blue: 0.2).opacity(0.4),
+                glowRadius: 8
+            )
+        case 3:
+            return StreakTier(
+                symbol: "🔥🔥",
+                primaryColor: Color(red: 1, green: 0.45, blue: 0.2),   // deep orange
+                backgroundOpacity: 0.22,
+                glowColor: Color(red: 1, green: 0.4, blue: 0.15).opacity(0.5),
+                glowRadius: 10
+            )
+        default:  // 4+
+            return StreakTier(
+                symbol: "👑",
+                primaryColor: Color(red: 1, green: 0.84, blue: 0.36),  // gold
+                backgroundOpacity: 0.28,
+                glowColor: Color(red: 1, green: 0.78, blue: 0.3).opacity(0.7),
+                glowRadius: 14
+            )
+        }
+    }
 
     private var dayBadge: some View {
-        HStack(spacing: 4) {
-            Circle()
-                .fill(spokenToday ? Color(red: 0.3, green: 0.9, blue: 0.55) : Color(red: 1, green: 0.82, blue: 0.28))
-                .frame(width: 6, height: 6)
-            Text("Day \(dayCount)")
+        let tier = streakTier
+        let countSuffix = todaySpeakCount >= 2 ? " · \(todaySpeakCount)×" : ""
+
+        return HStack(spacing: 5) {
+            Text(tier.symbol)
+                .font(.system(size: tier.symbol == "·" ? 14 : 11))
+            Text("Day \(dayCount)\(countSuffix)")
                 .font(.system(size: 12, weight: .semibold, design: .rounded))
-                .foregroundColor(.white.opacity(0.7))
+                .foregroundColor(tier.primaryColor.opacity(0.95))
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 5)
         .background(
             Capsule()
-                .fill(Color.white.opacity(0.08))
+                .fill(Color.white.opacity(tier.backgroundOpacity))
         )
-        .animation(.easeInOut(duration: 0.3), value: spokenToday)
+        .overlay(
+            Capsule()
+                .stroke(tier.primaryColor.opacity(0.35), lineWidth: 0.8)
+        )
+        .shadow(color: tier.glowColor, radius: tier.glowRadius)
+        // Brief spring pulse fires from showSuccess() when a new speak is
+        // recorded, drawing the eye to the upgraded tier.
+        .scaleEffect(dayBadgePulse ? 1.12 : 1.0)
+        .animation(.easeInOut(duration: 0.3), value: todaySpeakCount)
     }
 
     // MARK: - Speak Button
@@ -461,11 +549,28 @@ struct PersonalDeclarationCard: View {
     }
 
     private func showSuccess() {
-        lastSpokenDateStr = ISO8601DateFormatter().string(from: Calendar.current.startOfDay(for: Date()))
+        let today = ISO8601DateFormatter().string(from: Calendar.current.startOfDay(for: Date()))
+        // First speak of the day resets the counter to 1; subsequent speaks
+        // increment so the day badge can give richer visual rewards for
+        // repeated declaration ("the more you speak, the better the visual").
+        if lastSpokenDateStr == today {
+            dailySpeakCount += 1
+        } else {
+            dailySpeakCount = 1
+        }
+        lastSpokenDateStr = today
+
         withAnimation(.spring()) { speakState = .success }
         withAnimation(.spring(response: 0.5, dampingFraction: 0.6).delay(0.1)) {
             successScale = 1.0
             successOpacity = 1.0
+        }
+        // Brief pulse on the day badge to draw the eye to the streak tier.
+        withAnimation(.spring(response: 0.4, dampingFraction: 0.5)) {
+            dayBadgePulse = true
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+            withAnimation(.easeOut(duration: 0.3)) { dayBadgePulse = false }
         }
         UIImpactFeedbackGenerator(style: .medium).impactOccurred()
     }
