@@ -62,6 +62,14 @@ final class AppState: ObservableObject {
     // or stuck at the pre-V3 midnight start time. The trigger is repeats=true,
     // so a one-time heal is enough — iOS handles the daily re-fire from there.
     @AppStorage("personalDeclarationRescheduledV1") var personalDeclarationRescheduledV1 = true
+
+    // Time the personal declaration daily push fires at. Independent of
+    // startTimeIndex (which is the content batch window start) so the user can
+    // adjust their content window without moving their personal declaration.
+    // 30-minute slots from midnight; 16 = 8:00 AM. Once set at save time the
+    // declaration push stays at that time regardless of other notification
+    // settings changes.
+    @AppStorage("personalDeclarationTimeIndex") var personalDeclarationTimeIndex = 16
     @AppStorage("lastReviewRequestSetDatev1") var lastReviewRequestSetDate: Date?
     @AppStorage("offerDiscount") var offerDiscount = false
     @AppStorage("offerDiscountTry") var offerDiscountTry = 0
@@ -170,18 +178,29 @@ final class AppState: ObservableObject {
         }
         defaults.set(true, forKey: "notificationDefaultsMigratedV4")
 
-        // V5 heal: re-schedule the personal declaration daily push once at the
-        // current startTimeIndex. The trigger is repeats=true so this is the only
-        // re-schedule we need — heals stale midnight-time schedules from pre-V3
-        // and silently-dropped schedules from pre-permission saves. Runs async on
-        // the next runloop tick so the repository is fully wired by then.
+        // V5 heal: the personal declaration push has its own time setting now —
+        // independent of startTimeIndex (content batch window). For existing users
+        // we seed personalDeclarationTimeIndex to 8:00 AM (default) and re-schedule
+        // once. The trigger is repeats=true, so this one-time heal restores users
+        // whose schedule was silently dropped (pre-permission save) or stuck at
+        // the pre-V3 midnight time. Runs async so the repository is wired by then.
         let needsPersonalDeclarationHeal = defaults.bool(forKey: "hasPersonalDeclaration")
             && defaults.object(forKey: "personalDeclarationRescheduledV1") == nil
         if needsPersonalDeclarationHeal {
-            let healStartTimeIndex = defaults.integer(forKey: "startTimeIndex")
+            // Seed the new dedicated time setting once. If the user's current
+            // startTimeIndex is reasonable (not the pre-V3 midnight slot) reuse
+            // it so users whose declaration was already firing at the right time
+            // (e.g. 7 AM) don't get yanked to a new hour. Otherwise default to
+            // 8 AM (index 16). 12 = 6 AM is the lowest "reasonable" morning.
+            if defaults.object(forKey: "personalDeclarationTimeIndex") == nil {
+                let currentStart = defaults.integer(forKey: "startTimeIndex")
+                let seed = (currentStart >= 12) ? currentStart : 16
+                defaults.set(seed, forKey: "personalDeclarationTimeIndex")
+            }
+            let healTimeIndex = defaults.integer(forKey: "personalDeclarationTimeIndex")
             DispatchQueue.main.async {
                 DIContainer.shared.rescheduleActivePersonalDeclarationIfNeeded(
-                    startTimeIndex: healStartTimeIndex
+                    startTimeIndex: healTimeIndex
                 )
             }
         }

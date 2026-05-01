@@ -668,8 +668,10 @@ struct PersonalDeclarationOnboardingView: View {
         ) {
             Task {
                 do {
+                    // Personal declaration push has its own dedicated time setting,
+                    // independent of the content batch window (startTimeIndex).
                     let declaration = try await viewModel.saveAndContinue(
-                        startTimeIndex: appState.startTimeIndex
+                        startTimeIndex: appState.personalDeclarationTimeIndex
                     )
                     appState.hasPersonalDeclaration = true
                     UserPreferencesTracker.shared.personalDeclarationBelief = declaration.beliefText
