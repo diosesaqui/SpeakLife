@@ -37,4 +37,22 @@ final class DIContainer {
             notificationService: declarationNotificationService
         )
     }
+
+    /// Re-schedules the personal declaration daily push using the user's current
+    /// `startTimeIndex`. Needed because `schedule(for:startTimeIndex:)` only runs at
+    /// save time — if the user saved before granting iOS permission, or before our
+    /// V3 migration moved their startTimeIndex out of the midnight slot, the push
+    /// either never landed or has been firing at the old (stale) time. Idempotent:
+    /// if no active declaration exists, this is a no-op.
+    func rescheduleActivePersonalDeclarationIfNeeded(startTimeIndex: Int) {
+        Task { [personalDeclarationRepository, declarationNotificationService] in
+            guard let active = await personalDeclarationRepository.load(),
+                  !active.isReceived else {
+                return
+            }
+            await MainActor.run {
+                declarationNotificationService.schedule(for: active, startTimeIndex: startTimeIndex)
+            }
+        }
+    }
 }
