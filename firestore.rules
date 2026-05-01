@@ -114,8 +114,13 @@ service cloud.firestore {
                       && request.resource.data.text.size() > 0
                       && request.resource.data.text.size() <= 150
                       && request.resource.data.reactionType is string
-                      && isValidReactionType(request.resource.data.reactionType)
-                      && request.resource.data.timestamp == request.time;
+                      && isValidReactionType(request.resource.data.reactionType);
+                      // Note: we don't pin `timestamp == request.time` —
+                      // the iOS client writes a Timestamp() captured on
+                      // its own clock, which never matches the server's
+                      // wall-clock exactly. If timestamp tampering ever
+                      // becomes a real abuse vector, switch the model to
+                      // @ServerTimestamp and re-enable that check.
 
         // Agreements are immutable from the client. Moderation removes
         // via the admin SDK if needed.
