@@ -163,6 +163,7 @@ struct PrayerWallView: View {
         // the last-pill-scroll-bleed.
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
+                Spacer().frame(width: 8)
                 filterPill(label: "All",
                            isSelected: viewModel.categoryFilter == nil) {
                     viewModel.categoryFilter = nil
@@ -175,6 +176,7 @@ struct PrayerWallView: View {
                         viewModel.categoryFilter = category
                     }
                 }
+                Spacer().frame(width: 8)
             }
             .padding(.trailing, 20)
         }
