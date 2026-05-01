@@ -12,6 +12,15 @@ import UIKit
 import FirebaseAnalytics
 import Combine
 
+/// Identifiable wrapper for the prefill text passed to the Warrior Room
+/// testimony composer. Setting it on a parent's @State drives a
+/// `.sheet(item:)` that presents `WarriorRoomTestimonyComposer`.
+struct WarriorRoomTestimonyPrefill: Identifiable {
+    let id = UUID()
+    let text: String
+}
+
+
 struct DeclarationView: View {
     
     // MARK: - Properties
@@ -63,6 +72,10 @@ struct DeclarationView: View {
     @State private var showSpeakAloudBanner = false
     @State private var showBreakthroughFlow = false
     @State private var showNewDeclarationSheet = false
+    /// Identifiable prefill for the Warrior Room testimony composer.
+    /// Set when the Breakthrough flow's "Share Testimony" button fires —
+    /// presenting the prefilled composer is how we celebrate.
+    @State private var warriorRoomTestimonyPrefill: WarriorRoomTestimonyPrefill?
     @StateObject private var speechSynthesizer = SpeechSynthesizer()
     @State private var loadedDeclaration: PersonalDeclaration? = nil
     
@@ -426,10 +439,24 @@ struct DeclarationView: View {
                             onSetNew: {
                                 showBreakthroughFlow = false
                                 showNewDeclarationSheet = true
+                            },
+                            onShareToWarriorRoom: { prefill in
+                                // The flow already fires onDismiss after
+                                // this callback. Present the Warrior Room
+                                // composer prefilled — that's the share
+                                // step now (no separate celebration view).
+                                warriorRoomTestimonyPrefill = WarriorRoomTestimonyPrefill(text: prefill)
                             }
                         )
                         .environmentObject(appState)
                     }
+                }
+                .sheet(item: $warriorRoomTestimonyPrefill) { prefill in
+                    WarriorRoomTestimonyComposer(
+                        initialText: prefill.text,
+                        initialIsTestimony: true
+                    )
+                    .environmentObject(subscriptionStore)
                 }
 
             } else {

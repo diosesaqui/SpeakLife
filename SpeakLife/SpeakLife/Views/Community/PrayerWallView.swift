@@ -854,11 +854,32 @@ struct PostPrayerView: View {
     /// Persisted across sessions so the agreement sheet defaults to the
     /// same salutation the user picked the last time they posted.
     @AppStorage("warriorRoomIsSister") private var isSister = true
-    @State private var text = ""
+    @State private var text: String
     @State private var selectedCategory: WarriorRoomCategory?
-    @State private var isTestimony = false
+    @State private var isTestimony: Bool
     private let maxChars = 280
     private let minWords = 5
+
+    /// Default initialiser for normal Warrior Room composer entries.
+    init(viewModel: PrayerWallViewModel) {
+        self.init(viewModel: viewModel,
+                  initialText: "",
+                  initialIsTestimony: false,
+                  initialCategory: nil)
+    }
+
+    /// Initialiser for prefilled launches — e.g. the Personal Declaration
+    /// breakthrough flow lands here with the declaration as starter text
+    /// and `isTestimony` already toggled on.
+    init(viewModel: PrayerWallViewModel,
+         initialText: String,
+         initialIsTestimony: Bool,
+         initialCategory: WarriorRoomCategory?) {
+        self.viewModel = viewModel
+        self._text = State(initialValue: initialText)
+        self._isTestimony = State(initialValue: initialIsTestimony)
+        self._selectedCategory = State(initialValue: initialCategory)
+    }
 
     private var wordCount: Int {
         text.split(whereSeparator: \.isWhitespace).count
@@ -1094,5 +1115,28 @@ struct PostPrayerView: View {
                     .fill(isSelected ? Color(hex: "7C3AED") : Color.white.opacity(0.12))
             )
         }
+    }
+}
+
+// MARK: - WarriorRoomTestimonyComposer
+
+/// Lightweight wrapper around `PostPrayerView` that owns its own
+/// `PrayerWallViewModel`. Used when the composer needs to be presented
+/// from outside the Warrior Room tab (e.g. the Personal Declaration
+/// breakthrough flow). Because the @StateObject is created inside this
+/// wrapper, it lives only as long as the sheet is on screen.
+struct WarriorRoomTestimonyComposer: View {
+    let initialText: String
+    let initialIsTestimony: Bool
+
+    @StateObject private var viewModel = PrayerWallViewModel()
+
+    var body: some View {
+        PostPrayerView(
+            viewModel: viewModel,
+            initialText: initialText,
+            initialIsTestimony: initialIsTestimony,
+            initialCategory: nil
+        )
     }
 }

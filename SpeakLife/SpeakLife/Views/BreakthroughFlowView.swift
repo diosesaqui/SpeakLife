@@ -12,6 +12,12 @@ struct BreakthroughFlowView: View {
     let declaration: PersonalDeclaration
     let onDismiss: () -> Void
     let onSetNew: () -> Void
+    /// Called when the user opts to share the breakthrough as a testimony
+    /// in the Warrior Room. The parent view dismisses this flow and
+    /// presents the Warrior Room post composer prefilled with this text
+    /// and `isTestimony=true`. Optional — if omitted, the share button
+    /// falls back to the legacy in-flow `testimonies` collection write.
+    var onShareToWarriorRoom: ((String) -> Void)? = nil
 
     @State private var step: BreakthroughStep = .confirm
     @State private var testimony: String = ""
@@ -20,6 +26,15 @@ struct BreakthroughFlowView: View {
 
     private let markReceivedUseCase = DIContainer.shared.makeMarkReceivedUseCase()
     @StateObject private var testimonyViewModel = TestimonyViewModel()
+
+    /// The prefill text passed to the Warrior Room composer. Uses what the
+    /// user typed in this flow if non-empty; otherwise generates a starter
+    /// testimony from the declaration text.
+    private var warriorRoomPrefill: String {
+        let typed = testimony.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !typed.isEmpty { return typed }
+        return "God came through. I had been declaring: \"\(declaration.declarationText)\" — praise Him!"
+    }
 
     enum BreakthroughStep {
         case confirm
@@ -158,19 +173,26 @@ struct BreakthroughFlowView: View {
             Spacer()
 
             VStack(spacing: 14) {
-                // Primary CTA — share to Prayer Wall
+                // Primary CTA — share testimony in the Warrior Room.
+                // When `onShareToWarriorRoom` is wired (the modern path),
+                // we mark received locally then hand off to the parent so
+                // it can present the Warrior Room composer prefilled with
+                // a starter testimony. Falls back to the legacy in-flow
+                // `testimonies` collection write if the callback is nil.
                 Button {
-                    guard !testimony.isEmpty else {
+                    if let onShareToWarriorRoom {
+                        shareToWarriorRoom(via: onShareToWarriorRoom)
+                    } else if testimony.isEmpty {
                         saveAndCelebrate(testimony: nil, shareToWall: false)
-                        return
+                    } else {
+                        saveAndCelebrate(testimony: testimony, shareToWall: true)
                     }
-                    saveAndCelebrate(testimony: testimony, shareToWall: true)
                 } label: {
                     Group {
                         if isSaving || testimonyViewModel.isSubmitting {
                             ProgressView().tint(.white)
                         } else {
-                            Text(testimony.isEmpty ? "Continue" : "Share to Prayer Wall 🙏")
+                            Text("Share Testimony 🏆")
                                 .font(.system(size: 17, weight: .bold))
                         }
                     }
@@ -178,7 +200,7 @@ struct BreakthroughFlowView: View {
                     .frame(height: 56)
                     .background(
                         RoundedRectangle(cornerRadius: 16)
-                            .fill(testimony.isEmpty ? Color.white.opacity(0.15) : Color.green.opacity(0.85))
+                            .fill(Color.green.opacity(0.85))
                     )
                     .foregroundColor(.white)
                     .padding(.horizontal, 24)
@@ -276,6 +298,31 @@ struct BreakthroughFlowView: View {
     }
 
     // MARK: - Save
+
+    /// Marks the personal declaration as received locally, then hands off
+    /// to the parent to present the Warrior Room composer. Skips the
+    /// in-flow celebration screen — posting the testimony in the Warrior
+    /// Room is the celebration.
+    private func shareToWarriorRoom(via callback: @escaping (String) -> Void) {
+        let prefill = warriorRoomPrefill
+        isSaving = true
+        Task {
+            try? await markReceivedUseCase.execute(
+                id: declaration.id,
+                testimony: testimony.isEmpty ? nil : testimony
+            )
+            await MainActor.run {
+                appState.hasPersonalDeclaration = false
+                Analytics.logEvent("personal_declaration_received", parameters: [
+                    "days_believed": declaration.dayCount as NSNumber,
+                    "shared_to_wall": true as NSNumber,
+                ])
+                isSaving = false
+                callback(prefill)
+                onDismiss()
+            }
+        }
+    }
 
     private func saveAndCelebrate(testimony: String?, shareToWall: Bool) {
         isSaving = true
