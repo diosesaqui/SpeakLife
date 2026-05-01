@@ -42,18 +42,6 @@ final class PrayerWallViewModelTests: XCTestCase {
         super.tearDown()
     }
 
-    private func makePost(id: String,
-                          category: WarriorRoomCategory? = nil,
-                          prayerCount: Int = 0) -> PrayerWallPost {
-        var post = PrayerWallPost(text: "I declare it.",
-                                  displayName: "A sister in Christ",
-                                  deviceId: "device",
-                                  category: category)
-        post.id = id
-        post.prayerCount = prayerCount
-        return post
-    }
-
     // MARK: - Migration
 
     func testMigrationFromLegacyPrayedPostIdsToStandingReactions() {
@@ -106,54 +94,31 @@ final class PrayerWallViewModelTests: XCTestCase {
         XCTAssertEqual(migrated?["post-shared"], "breakthrough_coming")
     }
 
-    // MARK: - filteredPosts
+    // MARK: - Category filter
+    //
+    // Category filtering is now performed server-side: setting
+    // `categoryFilter` triggers a Firestore refetch that includes the
+    // category constraint in the query. There's no longer a pure-logic
+    // `filteredPosts` to assert against — that path is integration
+    // territory. We can still test that `posts` is the View's source of
+    // truth and that the filter setter doesn't crash on no-op assignment.
 
-    func testFilteredPostsReturnsAllWhenNoFilter() {
+    func testFilterDefaultsToNil() {
         let viewModel = PrayerWallViewModel()
-        let postA = makePost(id: "a", category: .healing)
-        let postB = makePost(id: "b", category: .warfare)
-        let postC = makePost(id: "c", category: nil)
-        viewModel.posts = [postA, postB, postC]
-
         XCTAssertNil(viewModel.categoryFilter)
-        XCTAssertEqual(viewModel.filteredPosts.map(\.id), ["a", "b", "c"])
     }
 
-    func testFilteredPostsReturnsOnlyMatchingCategoryWhenFiltered() {
+    func testSettingFilterToSameValueIsANoOp() {
+        // didSet on categoryFilter triggers fetchPosts, but only when the
+        // value actually changes — this guards against re-fetch storms
+        // when the View re-renders and re-applies the same filter.
         let viewModel = PrayerWallViewModel()
-        viewModel.posts = [
-            makePost(id: "a", category: .healing),
-            makePost(id: "b", category: .warfare),
-            makePost(id: "c", category: .healing),
-        ]
+        viewModel.categoryFilter = nil // same as initial; no-op
         viewModel.categoryFilter = .healing
-
-        XCTAssertEqual(viewModel.filteredPosts.map(\.id), ["a", "c"])
-    }
-
-    func testFilteredPostsExcludesPostsWithoutCategoryWhenFiltered() {
-        // Legacy posts (no category) should NOT appear under any filter,
-        // only under "All".
-        let viewModel = PrayerWallViewModel()
-        viewModel.posts = [
-            makePost(id: "a", category: .healing),
-            makePost(id: "legacy", category: nil),
-        ]
-        viewModel.categoryFilter = .healing
-
-        XCTAssertEqual(viewModel.filteredPosts.map(\.id), ["a"])
-    }
-
-    func testFilteredPostsClearsBackToAllWhenFilterRemoved() {
-        let viewModel = PrayerWallViewModel()
-        viewModel.posts = [
-            makePost(id: "a", category: .healing),
-            makePost(id: "b", category: .warfare),
-        ]
-        viewModel.categoryFilter = .warfare
-        XCTAssertEqual(viewModel.filteredPosts.map(\.id), ["b"])
-
-        viewModel.categoryFilter = nil
-        XCTAssertEqual(viewModel.filteredPosts.map(\.id), ["a", "b"])
+        viewModel.categoryFilter = .healing // same; no-op
+        // No assertion target — we just want the test to not crash, and
+        // the implementation's `guard oldValue != categoryFilter` keeps
+        // this side-effect free in a way that's hard to assert without DI.
+        XCTAssertEqual(viewModel.categoryFilter, .healing)
     }
 }
