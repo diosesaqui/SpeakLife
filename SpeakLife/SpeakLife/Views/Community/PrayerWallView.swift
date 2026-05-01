@@ -12,6 +12,16 @@ import AuthenticationServices
 
 // MARK: - PrayerWallView
 
+/// A request from a card to present the agreement prompt sheet.
+/// Identifiable so it can drive `.sheet(item:)` at the parent level —
+/// a single sheet in the hierarchy avoids the per-card race where two
+/// cards' sheet modifiers can clash when posts re-render.
+private struct AgreementPresentationRequest: Identifiable {
+    let post: PrayerWallPost
+    let reaction: WarriorRoomReaction
+    var id: String { (post.id ?? "no-id") + ":" + reaction.rawValue }
+}
+
 struct PrayerWallView: View {
     @EnvironmentObject var subscriptionStore: SubscriptionStore
     @StateObject private var viewModel = PrayerWallViewModel()
@@ -20,6 +30,7 @@ struct PrayerWallView: View {
     @State private var selectedTab: PrayerTab = .wall
     @State private var showPostForm = false
     @State private var showSignInPrompt = false
+    @State private var agreementRequest: AgreementPresentationRequest?
 
     enum PrayerTab { case wall, mine }
 
@@ -91,6 +102,15 @@ struct PrayerWallView: View {
         .sheet(isPresented: $showSignInPrompt) {
             AppleSignInPromptView(appleSignIn: appleSignIn)
                 .environmentObject(subscriptionStore)
+        }
+        .sheet(item: $agreementRequest) { request in
+            AgreementPromptSheet(
+                post: request.post,
+                reaction: request.reaction,
+                viewModel: viewModel
+            )
+            .environmentObject(subscriptionStore)
+            .presentationDetentsCompat()
         }
         .alert("Error", isPresented: Binding(
             get: { viewModel.errorMessage != nil },
@@ -205,7 +225,13 @@ struct PrayerWallView: View {
                     PrayerPostCard(
                         post: post,
                         isMyPost: selectedTab == .mine,
-                        viewModel: viewModel
+                        viewModel: viewModel,
+                        onPresentAgreement: { reaction in
+                            agreementRequest = AgreementPresentationRequest(
+                                post: post,
+                                reaction: reaction
+                            )
+                        }
                     )
                 }
 
@@ -285,12 +311,16 @@ struct PrayerPostCard: View {
     let post: PrayerWallPost
     let isMyPost: Bool
     @ObservedObject var viewModel: PrayerWallViewModel
+    /// Called by the card when the user should be prompted to add an
+    /// agreement. The parent owns the sheet and presents it — we don't
+    /// host one per card because per-card sheets race each other when
+    /// the post list re-renders after a reaction publishes a change.
+    let onPresentAgreement: (WarriorRoomReaction) -> Void
     @ObservedObject private var appleSignIn = AppleSignInService.shared
 
     @State private var showReportAlert = false
     @State private var showAnsweredGlow = false
     @State private var isAgreementsExpanded = false
-    @State private var pendingAgreementReaction: WarriorRoomReaction?
 
     private var postId: String { post.id ?? "" }
     private var agreements: [Agreement] { viewModel.agreementsByPost[postId] ?? [] }
@@ -391,19 +421,6 @@ struct PrayerPostCard: View {
                 .shadow(color: showAnsweredGlow ? Color(hex: "FBBF24").opacity(0.45) : .clear, radius: 12)
         )
         .animation(.easeOut(duration: 0.6), value: showAnsweredGlow)
-        // Use `.sheet(item:)` so the unwrapped reaction is guaranteed to be
-        // present when the body runs. With `.sheet(isPresented:)` + an
-        // inner `if let`, SwiftUI sometimes captures the closure before the
-        // state assignment propagates, producing a blank sheet.
-        .sheet(item: $pendingAgreementReaction) { reaction in
-            AgreementPromptSheet(
-                post: post,
-                reaction: reaction,
-                viewModel: viewModel
-            )
-            .environmentObject(subscriptionStore)
-            .presentationDetentsCompat()
-        }
     }
 
     // MARK: - Subviews
@@ -467,9 +484,9 @@ struct PrayerPostCard: View {
         guard didAddNewReaction,
               appleSignIn.isSignedIn,
               !viewModel.hasAgreed(on: post) else { return }
-        // Setting this triggers the .sheet(item:) modifier and presents
-        // the agreement prompt. SwiftUI auto-resets it to nil on dismiss.
-        pendingAgreementReaction = reaction
+        // The parent owns the sheet — handing it the reaction we want to
+        // prompt for. Single-sheet-at-the-top avoids the per-card race.
+        onPresentAgreement(reaction)
     }
 
     private var reactionSummaryRow: some View {
@@ -584,14 +601,15 @@ struct PrayerPostCard: View {
         guard appleSignIn.isSignedIn else { return }
         guard !viewModel.hasAgreed(on: post) else { return }
 
-        // Setting `pendingAgreementReaction` triggers the .sheet(item:)
-        // modifier and presents the prompt.
+        // Capture the reaction we want to prompt for; the parent presents.
+        let reaction: WarriorRoomReaction
         if let current = viewModel.reaction(for: post) {
-            pendingAgreementReaction = current
+            reaction = current
         } else {
             viewModel.toggleReaction(.standing, on: post)
-            pendingAgreementReaction = .standing
+            reaction = .standing
         }
+        onPresentAgreement(reaction)
     }
 
     // MARK: - Time Ago Helper
@@ -733,7 +751,11 @@ private struct AgreementPromptSheet: View {
             .padding(.horizontal, 24)
             .padding(.bottom, 24)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        // Width fills the sheet; height fits content. Combining
+        // `maxHeight: .infinity` with the `.medium` detent caused the
+        // sheet to occasionally collapse to zero height — letting the
+        // VStack size to its intrinsic content fixes that.
+        .frame(maxWidth: .infinity)
         .background {
             ZStack {
                 Image(subscriptionStore.onboardingBGImage)
