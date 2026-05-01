@@ -537,6 +537,37 @@ class PrayerWallViewModel: ObservableObject {
             }
     }
 
+    // MARK: - Delete Post
+
+    /// Deletes a post the signed-in user authored. Removes from local feed
+    /// state immediately for snappy UX, then sends the Firestore delete.
+    /// Subcollections (reactions/agreements/flags) become orphaned — their
+    /// parent doc is gone so they're no longer reachable via any feed
+    /// query, and a cascade-clean Cloud Function can be layered later.
+    func deletePost(_ post: PrayerWallPost) {
+        guard let postId = post.id else { return }
+
+        // Optimistic local removal. If the Firestore delete fails the user
+        // sees an error and a refresh restores the post. Acceptable
+        // tradeoff for a destructive action that's expected to succeed.
+        posts.removeAll { $0.id == postId }
+        myPosts.removeAll { $0.id == postId }
+        agreementsByPost.removeValue(forKey: postId)
+
+        db.collection(collection).document(postId).delete { [weak self] error in
+            DispatchQueue.main.async {
+                guard let self = self else { return }
+                if let error = error {
+                    self.errorMessage = "Couldn't delete the post: \(error.localizedDescription)"
+                    // Server still has it; force a refetch so the UI
+                    // reconciles back to the truth.
+                    self.fetchPosts(reset: true)
+                    self.fetchMyPosts()
+                }
+            }
+        }
+    }
+
     // MARK: - Agreements
 
     /// Whether the current user has already added an agreement to this post.
@@ -565,6 +596,33 @@ class PrayerWallViewModel: ObservableObject {
                         try? $0.data(as: Agreement.self)
                     }
                     self.agreementsByPost[id] = items
+                }
+            }
+    }
+
+    /// Deletes the signed-in user's own agreement on a post. Doc id ==
+    /// auth uid → exactly one agreement per user. Clears the local
+    /// "has agreed" lock so the user can stand again afterward.
+    func deleteAgreement(from post: PrayerWallPost, userId: String) {
+        guard let postId = post.id, !userId.isEmpty else { return }
+
+        // Optimistic local removal — feed updates immediately.
+        agreementsByPost[postId]?.removeAll { $0.userId == userId }
+        var ids = userAgreementPostIds
+        ids.remove(postId)
+        userAgreementPostIds = ids
+
+        db.collection(collection).document(postId)
+            .collection("agreements").document(userId)
+            .delete { [weak self] error in
+                DispatchQueue.main.async {
+                    guard let self = self else { return }
+                    if let error = error {
+                        self.errorMessage = "Couldn't delete agreement: \(error.localizedDescription)"
+                        // Reload agreements for the post so local state
+                        // reconciles to whatever's still on the server.
+                        self.loadAgreements(for: post)
+                    }
                 }
             }
     }

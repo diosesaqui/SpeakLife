@@ -94,8 +94,13 @@ service cloud.firestore {
                       || onlyAllowsFields(nonOwnerMutableFields())
                     );
 
-      // Client-side deletes are not allowed.
-      allow delete: if false;
+      // The post author may delete their own post. Subcollections
+      // (reactions/agreements/flags) become orphaned in storage — they're
+      // no longer visible to anyone since the parent doc is gone, and a
+      // cascade cleanup Cloud Function can be added later if storage cost
+      // becomes a concern. Legacy posts (no authorUid) deny: rules-level
+      // ownership cannot be established for them.
+      allow delete: if isPostOwner(resource.data);
 
       // ─── Agreement chain ───────────────────────────────────────────
       // Doc id is the agreement author's auth uid → "one agreement per
@@ -122,9 +127,10 @@ service cloud.firestore {
                       // becomes a real abuse vector, switch the model to
                       // @ServerTimestamp and re-enable that check.
 
-        // Agreements are immutable from the client. Moderation removes
-        // via the admin SDK if needed.
-        allow update, delete: if false;
+        // Agreement text is immutable — no edits — but the author may
+        // delete their own agreement (doc id == auth uid → simple match).
+        allow update: if false;
+        allow delete: if signedIn() && request.auth.uid == userId;
       }
 
       // ─── Moderation flags ──────────────────────────────────────────
