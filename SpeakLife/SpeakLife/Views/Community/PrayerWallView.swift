@@ -319,6 +319,7 @@ struct PrayerPostCard: View {
     @ObservedObject private var appleSignIn = AppleSignInService.shared
 
     @State private var showReportAlert = false
+    @State private var showDeleteAlert = false
     @State private var showAnsweredGlow = false
     @State private var isAgreementsExpanded = false
 
@@ -403,22 +404,42 @@ struct PrayerPostCard: View {
 
                 Spacer()
 
-                if !isMyPost {
-                    Button {
-                        showReportAlert = true
-                    } label: {
-                        Image(systemName: "flag")
-                            .font(.system(size: 12))
-                            .foregroundColor(.white.opacity(0.3))
-                    }
-                    .alert("Report this post?", isPresented: $showReportAlert) {
-                        Button("Report", role: .destructive) {
-                            viewModel.reportPost(post, reporterUid: appleSignIn.uid)
+                Menu {
+                    if isMyPost {
+                        Button(role: .destructive) {
+                            showDeleteAlert = true
+                        } label: {
+                            Label("Delete post", systemImage: "trash")
                         }
-                        Button("Cancel", role: .cancel) {}
-                    } message: {
-                        Text("Flag this post if it's inappropriate or spam.")
+                    } else {
+                        Button(role: .destructive) {
+                            showReportAlert = true
+                        } label: {
+                            Label("Report", systemImage: "flag")
+                        }
                     }
+                } label: {
+                    Image(systemName: "ellipsis")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(.white.opacity(0.35))
+                        .padding(.horizontal, 4)
+                        .padding(.vertical, 4)
+                }
+                .alert("Delete this post?", isPresented: $showDeleteAlert) {
+                    Button("Delete", role: .destructive) {
+                        viewModel.deletePost(post)
+                    }
+                    Button("Cancel", role: .cancel) {}
+                } message: {
+                    Text("This can't be undone.")
+                }
+                .alert("Report this post?", isPresented: $showReportAlert) {
+                    Button("Report", role: .destructive) {
+                        viewModel.reportPost(post, reporterUid: appleSignIn.uid)
+                    }
+                    Button("Cancel", role: .cancel) {}
+                } message: {
+                    Text("Flag this post if it's inappropriate or spam.")
                 }
             }
         }
@@ -550,7 +571,12 @@ struct PrayerPostCard: View {
                 } else {
                     let preview = Array(agreements.prefix(3))
                     ForEach(preview) { agreement in
-                        AgreementRow(agreement: agreement)
+                        AgreementRow(
+                            agreement: agreement,
+                            onDelete: agreement.userId == appleSignIn.uid
+                                ? { viewModel.deleteAgreement(from: post, userId: appleSignIn.uid) }
+                                : nil
+                        )
                     }
                     if agreements.count > 3 {
                         Text("+ \(agreements.count - 3) more")
@@ -630,6 +656,9 @@ struct PrayerPostCard: View {
 
 private struct AgreementRow: View {
     let agreement: Agreement
+    /// Set when the row is the signed-in user's own agreement, so it can
+    /// be deleted via long-press. Nil disables the delete affordance.
+    var onDelete: (() -> Void)?
 
     var body: some View {
         HStack(alignment: .top, spacing: 6) {
@@ -639,6 +668,14 @@ private struct AgreementRow: View {
                 + Text(agreement.text).foregroundColor(.white.opacity(0.85)))
                 .font(Font.custom("AppleSDGothicNeo-Regular", size: 12, relativeTo: .caption))
                 .fixedSize(horizontal: false, vertical: true)
+        }
+        .contentShape(Rectangle())
+        .contextMenu {
+            if let onDelete {
+                Button(role: .destructive, action: onDelete) {
+                    Label("Delete", systemImage: "trash")
+                }
+            }
         }
     }
 }
