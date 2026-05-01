@@ -77,6 +77,12 @@ struct DailyDeclarationBurstView: View {
         .onAppear {
             loadDynamicDeclarations()
         }
+        .fullScreenCover(isPresented: $streakViewModel.showBadgeUnlock) {
+            if let badge = streakViewModel.badgeManager.recentlyUnlocked {
+                BadgeUnlockView(badge: badge, isPresented: $streakViewModel.showBadgeUnlock)
+                    .onDisappear { streakViewModel.dismissBadgeUnlock() }
+            }
+        }
     }
     
     // MARK: - Dynamic Declaration Selection
@@ -830,7 +836,15 @@ struct DailyDeclarationBurstView: View {
             
             // Automatically complete the daily burst task
             streakViewModel.completeTask(taskId: "complete_daily_burst")
-            
+
+            // The badge popup is wired to ModernDailyChecklistView which isn't visible here.
+            // Directly trigger it after a short delay so it appears on the completion screen.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                if streakViewModel.badgeManager.recentlyUnlocked != nil, !streakViewModel.showBadgeUnlock {
+                    streakViewModel.showBadgeUnlock = true
+                }
+            }
+
             withAnimation(.spring()) {
                 showCompletionView = true
             }
@@ -848,12 +862,13 @@ struct DailyDeclarationBurstView: View {
         let impactFeedback = UIImpactFeedbackGenerator(style: .light)
         impactFeedback.prepare()
         impactFeedback.impactOccurred()
-        
+
+        // The burst view has its own completion UI, so the streak view model's
+        // celebration covers were never shown. Reset the flags so they don't
+        // leak into the next session or block future badge checks.
+        streakViewModel.showFireAnimation = false
+        streakViewModel.showCompletionCelebration = false
+
         dismiss()
-        
-        // Update streak if needed
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            // Streak will update automatically through BurstCompletionTracker
-        }
     }
 }
