@@ -654,9 +654,17 @@ private struct AgreementPromptSheet: View {
     @Environment(\.dismiss) private var dismiss
 
     @State private var text: String = ""
+    /// Shared with the post composer via @AppStorage — defaults to whatever
+    /// the user last picked there. Drives the anonymous displayName written
+    /// to Firestore so agreements match the wall's "A sister/brother in
+    /// Christ" anonymity instead of leaking the user's real Apple name.
+    @AppStorage("warriorRoomIsSister") private var isSister = true
 
     private var trimmed: String { text.trimmingCharacters(in: .whitespacesAndNewlines) }
     private var canStand: Bool { !trimmed.isEmpty }
+    private var anonymousDisplayName: String {
+        isSister ? "A sister in Christ" : "A brother in Christ"
+    }
     private var remaining: Int { Agreement.maxLength - text.count }
 
     var body: some View {
@@ -678,6 +686,16 @@ private struct AgreementPromptSheet: View {
                     .font(Font.custom("AppleSDGothicNeo-Regular", size: 13, relativeTo: .body))
                     .foregroundColor(.white.opacity(0.7))
             }
+
+            // Anonymous salutation toggle — mirrors the post composer.
+            // The wall is anonymous, so agreements should be too.
+            HStack(spacing: 0) {
+                anonymousPill("Sister", isSelected: isSister) { isSister = true }
+                anonymousPill("Brother", isSelected: !isSister) { isSister = false }
+            }
+            .background(Color.white.opacity(0.10))
+            .clipShape(RoundedRectangle(cornerRadius: 22))
+            .frame(width: 200)
 
             ZStack(alignment: .topLeading) {
                 if text.isEmpty {
@@ -722,7 +740,9 @@ private struct AgreementPromptSheet: View {
                     reaction: reaction,
                     text: trimmed,
                     userId: appleSignIn.uid,
-                    displayName: appleSignIn.displayName
+                    // Anonymous salutation (matches post wall's pattern).
+                    // Apple's full name is intentionally NOT used here.
+                    displayName: anonymousDisplayName
                 )
                 dismiss()
             } label: {
@@ -754,6 +774,20 @@ private struct AgreementPromptSheet: View {
             }
         }
     }
+
+    private func anonymousPill(_ label: String,
+                               isSelected: Bool,
+                               action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(label)
+                .font(Font.custom("AppleSDGothicNeo-Regular", size: 13, relativeTo: .body))
+                .foregroundColor(isSelected ? .black : .white.opacity(0.65))
+                .frame(width: 100)
+                .padding(.vertical, 7)
+                .background(isSelected ? Color.white : Color.clear)
+                .clipShape(RoundedRectangle(cornerRadius: 22))
+        }
+    }
 }
 
 // MARK: - Detents helper
@@ -778,7 +812,9 @@ struct PostPrayerView: View {
     @ObservedObject private var appleSignIn = AppleSignInService.shared
     @Environment(\.dismiss) private var dismiss
 
-    @State private var isSister = true
+    /// Persisted across sessions so the agreement sheet defaults to the
+    /// same salutation the user picked the last time they posted.
+    @AppStorage("warriorRoomIsSister") private var isSister = true
     @State private var text = ""
     @State private var selectedCategory: WarriorRoomCategory?
     @State private var isTestimony = false
