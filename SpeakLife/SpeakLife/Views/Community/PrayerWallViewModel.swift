@@ -279,6 +279,7 @@ class PrayerWallViewModel: ObservableObject {
     func addPost(text: String,
                  isSister: Bool,
                  category: WarriorRoomCategory,
+                 authorUid: String,
                  isTestimony: Bool = false) {
         guard networkMonitor.currentPath.status != .unsatisfied else {
             errorMessage = "You are offline. Please connect to the internet to post."
@@ -286,6 +287,10 @@ class PrayerWallViewModel: ObservableObject {
         }
         guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
             errorMessage = "Post cannot be empty."
+            return
+        }
+        guard !authorUid.isEmpty else {
+            errorMessage = "Sign in to post."
             return
         }
 
@@ -301,6 +306,7 @@ class PrayerWallViewModel: ObservableObject {
             self.submitPost(text: text,
                             isSister: isSister,
                             category: category,
+                            authorUid: authorUid,
                             isTestimony: isTestimony)
         }
     }
@@ -308,18 +314,15 @@ class PrayerWallViewModel: ObservableObject {
     private func submitPost(text: String,
                             isSister: Bool,
                             category: WarriorRoomCategory,
+                            authorUid: String,
                             isTestimony: Bool) {
         isSubmitting = true
         let displayName = isSister ? "A sister in Christ" : "A brother in Christ"
-        // The composer is gated behind sign-in, so the author uid is
-        // expected to be set here. Empty-string fallback keeps the write
-        // structurally valid; rules deny owner-gated mutations on it.
-        let authorUid = AppleSignInService.shared.uid
         var newPost = PrayerWallPost(text: text,
                                      displayName: displayName,
                                      deviceId: deviceId,
                                      category: category,
-                                     authorUid: authorUid.isEmpty ? nil : authorUid)
+                                     authorUid: authorUid)
         // Posts created as a testimony go to the wall already marked as
         // answered, so the feed and the per-post Cloud Function copy can
         // treat them as praise reports rather than prayer requests.
@@ -370,38 +373,12 @@ class PrayerWallViewModel: ObservableObject {
             }
     }
 
-    // MARK: - Legacy compatibility shims
-    //
-    // Kept so the existing PrayerWallView (single 🙏 button, no category)
-    // continues to compile and run while the v2 UI is built out. Both shims
-    // delegate to the new reaction / category APIs and are safe to remove
-    // once the View has been migrated.
-
-    /// Old single-reaction API. Treats a tap as a "standing" reaction.
-    /// Idempotent — does nothing if the user already reacted.
-    func prayForPost(_ post: PrayerWallPost) {
-        guard reaction(for: post) == nil else { return }
-        toggleReaction(.standing, on: post)
-    }
-
-    /// Old composer API — defaults the category to `.faith` for posts created
-    /// before the category selector ships in the UI.
-    func addPost(text: String, isSister: Bool) {
-        addPost(text: text, isSister: isSister, category: .faith)
-    }
-
     // MARK: - Reactions
 
     /// The current user's reaction on a post, if any.
     func reaction(for post: PrayerWallPost) -> WarriorRoomReaction? {
         guard let id = post.id, let raw = userReactions[id] else { return nil }
         return WarriorRoomReaction(rawValue: raw)
-    }
-
-    /// Backwards-compat shim for any caller that still asks "did the user pray
-    /// for this post?". Returns true if any reaction is set.
-    func hasPrayed(for post: PrayerWallPost) -> Bool {
-        reaction(for: post) != nil
     }
 
     /// Toggle a reaction on a post. Tapping the currently-selected reaction
@@ -518,22 +495,23 @@ class PrayerWallViewModel: ObservableObject {
     /// `onPostFlagged` increments the post's `reports` count and sets
     /// `isHidden` once the threshold is met — the client is no longer
     /// trusted with either the count or the auto-hide flip.
-    func reportPost(_ post: PrayerWallPost, reason: String = "inappropriate") {
+    func reportPost(_ post: PrayerWallPost,
+                    reporterUid: String,
+                    reason: String = "inappropriate") {
         guard let postId = post.id else { return }
-        let uid = AppleSignInService.shared.uid
-        guard !uid.isEmpty else {
+        guard !reporterUid.isEmpty else {
             errorMessage = "Sign in to report a post."
             return
         }
 
         let payload: [String: Any] = [
-            "userId": uid,
+            "userId": reporterUid,
             "reason": reason,
             "createdAt": FieldValue.serverTimestamp(),
         ]
 
         db.collection(collection).document(postId)
-            .collection("flags").document(uid)
+            .collection("flags").document(reporterUid)
             .setData(payload) { [weak self] error in
                 DispatchQueue.main.async {
                     guard let self = self else { return }

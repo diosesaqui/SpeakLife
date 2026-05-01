@@ -372,7 +372,7 @@ struct PrayerPostCard: View {
                     }
                     .alert("Report this post?", isPresented: $showReportAlert) {
                         Button("Report", role: .destructive) {
-                            viewModel.reportPost(post)
+                            viewModel.reportPost(post, reporterUid: appleSignIn.uid)
                         }
                         Button("Cancel", role: .cancel) {}
                     } message: {
@@ -758,6 +758,7 @@ private extension View {
 struct PostPrayerView: View {
     @EnvironmentObject var subscriptionStore: SubscriptionStore
     @ObservedObject var viewModel: PrayerWallViewModel
+    @ObservedObject private var appleSignIn = AppleSignInService.shared
     @Environment(\.dismiss) private var dismiss
 
     @State private var isSister = true
@@ -920,6 +921,7 @@ struct PostPrayerView: View {
                 viewModel.addPost(text: text,
                                   isSister: isSister,
                                   category: category,
+                                  authorUid: appleSignIn.uid,
                                   isTestimony: isTestimony)
                 if viewModel.errorMessage == nil {
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
