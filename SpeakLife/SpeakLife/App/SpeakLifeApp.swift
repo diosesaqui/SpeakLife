@@ -231,18 +231,6 @@ struct SpeakLifeApp: App {
                 // days never resets lapsed_d5/lapsed_d10, so they fire incorrectly.
                 LifecycleNotificationService.shared.onAppOpen()
 
-                // Re-schedule the personal declaration daily push using the current
-                // startTimeIndex. Heals two known states: (1) users who saved their
-                // declaration before granting iOS permission so the original schedule
-                // call was silently dropped, and (2) users whose declaration was
-                // scheduled at the pre-V3 midnight time and never moved with their
-                // updated start time. Idempotent — no-op if no active declaration.
-                if appState.notificationEnabled {
-                    DIContainer.shared.rescheduleActivePersonalDeclarationIfNeeded(
-                        startTimeIndex: appState.startTimeIndex
-                    )
-                }
-
                 // Check if we should show evening reminder for daily burst
                 DailyDeclarationReminderService.shared.refreshEveningReminderIfNeeded()
                 

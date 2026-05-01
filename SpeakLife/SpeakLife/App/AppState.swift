@@ -57,6 +57,11 @@ final class AppState: ObservableObject {
     // explicitly wanted more (we can't distinguish, so this is a hard reset —
     // users who actually wanted more can bump it back up in Reminders).
     @AppStorage("notificationDefaultsMigratedV4") var notificationDefaultsMigratedV4 = true
+    // V5 migration: heals the personal declaration daily push for users whose
+    // schedule call was silently dropped (saved before iOS permission was granted)
+    // or stuck at the pre-V3 midnight start time. The trigger is repeats=true,
+    // so a one-time heal is enough — iOS handles the daily re-fire from there.
+    @AppStorage("personalDeclarationRescheduledV1") var personalDeclarationRescheduledV1 = true
     @AppStorage("lastReviewRequestSetDatev1") var lastReviewRequestSetDate: Date?
     @AppStorage("offerDiscount") var offerDiscount = false
     @AppStorage("offerDiscountTry") var offerDiscountTry = 0
@@ -164,6 +169,23 @@ final class AppState: ObservableObject {
             defaults.removeObject(forKey: "nextRescheduleDate")
         }
         defaults.set(true, forKey: "notificationDefaultsMigratedV4")
+
+        // V5 heal: re-schedule the personal declaration daily push once at the
+        // current startTimeIndex. The trigger is repeats=true so this is the only
+        // re-schedule we need — heals stale midnight-time schedules from pre-V3
+        // and silently-dropped schedules from pre-permission saves. Runs async on
+        // the next runloop tick so the repository is fully wired by then.
+        let needsPersonalDeclarationHeal = defaults.bool(forKey: "hasPersonalDeclaration")
+            && defaults.object(forKey: "personalDeclarationRescheduledV1") == nil
+        if needsPersonalDeclarationHeal {
+            let healStartTimeIndex = defaults.integer(forKey: "startTimeIndex")
+            DispatchQueue.main.async {
+                DIContainer.shared.rescheduleActivePersonalDeclarationIfNeeded(
+                    startTimeIndex: healStartTimeIndex
+                )
+            }
+        }
+        defaults.set(true, forKey: "personalDeclarationRescheduledV1")
 
         // Validate and fix any invalid existing values
         validateAndFixNotificationSettings()
