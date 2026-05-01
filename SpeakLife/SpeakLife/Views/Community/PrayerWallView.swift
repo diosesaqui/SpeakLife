@@ -542,7 +542,9 @@ struct PrayerPostCard: View {
         VStack(alignment: .leading, spacing: 6) {
             Button {
                 if !isAgreementsExpanded && agreements.isEmpty {
-                    viewModel.loadAgreements(for: post)
+                    // Pass uid so loadAgreements can self-heal local
+                    // "I agreed" state if there's no matching server doc.
+                    viewModel.loadAgreements(for: post, currentUserId: appleSignIn.uid)
                 }
                 withAnimation(.easeInOut(duration: 0.2)) {
                     isAgreementsExpanded.toggle()

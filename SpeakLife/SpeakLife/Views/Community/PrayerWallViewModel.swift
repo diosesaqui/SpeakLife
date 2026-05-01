@@ -577,7 +577,14 @@ class PrayerWallViewModel: ObservableObject {
     }
 
     /// Lazily load the agreements subcollection for a post on expand.
-    func loadAgreements(for post: PrayerWallPost) {
+    ///
+    /// Pass `currentUserId` to enable self-healing: if local state thinks
+    /// the user has already agreed (`userAgreementPostIds.contains(id)`)
+    /// but the server has no matching agreement doc, the local flag is
+    /// cleared. This recovers from the optimistic-update bug where a
+    /// failed Firestore write left local state stuck in "agreed" with
+    /// no server doc, hiding the Stand-in-agreement button forever.
+    func loadAgreements(for post: PrayerWallPost, currentUserId: String = "") {
         guard let id = post.id else { return }
         guard !loadingAgreementsForPost.contains(id) else { return }
         loadingAgreementsForPost.insert(id)
@@ -596,6 +603,18 @@ class PrayerWallViewModel: ObservableObject {
                         try? $0.data(as: Agreement.self)
                     }
                     self.agreementsByPost[id] = items
+
+                    // Self-heal: reconcile the local "I agreed" flag
+                    // against what's actually on the server.
+                    if !currentUserId.isEmpty {
+                        let serverHasMine = items.contains { $0.userId == currentUserId }
+                        let localThinksMine = self.userAgreementPostIds.contains(id)
+                        if localThinksMine && !serverHasMine {
+                            var ids = self.userAgreementPostIds
+                            ids.remove(id)
+                            self.userAgreementPostIds = ids
+                        }
+                    }
                 }
             }
     }
@@ -621,7 +640,7 @@ class PrayerWallViewModel: ObservableObject {
                         self.errorMessage = "Couldn't delete agreement: \(error.localizedDescription)"
                         // Reload agreements for the post so local state
                         // reconciles to whatever's still on the server.
-                        self.loadAgreements(for: post)
+                        self.loadAgreements(for: post, currentUserId: userId)
                     }
                 }
             }
@@ -667,13 +686,30 @@ class PrayerWallViewModel: ObservableObject {
             try db.collection(collection).document(postId)
                 .collection("agreements").document(userId)
                 .setData(from: agreement) { [weak self] error in
-                    if let error = error {
-                        DispatchQueue.main.async {
-                            self?.errorMessage = "Error saving agreement: \(error.localizedDescription)"
+                    DispatchQueue.main.async {
+                        guard let self = self else { return }
+                        if let error = error {
+                            // Roll back the optimistic local state so the
+                            // user can retry. Without this, a failed write
+                            // leaves them stuck — UI thinks they agreed,
+                            // server has no doc, button stays hidden.
+                            var ids = self.userAgreementPostIds
+                            ids.remove(postId)
+                            self.userAgreementPostIds = ids
+                            var current = self.agreementsByPost[postId] ?? []
+                            current.removeAll { $0.userId == userId && $0.id == nil }
+                            self.agreementsByPost[postId] = current
+
+                            self.errorMessage = "Couldn't save your agreement: \(error.localizedDescription)"
                         }
                     }
                 }
         } catch {
+            // Encoding failure — roll back too.
+            var ids = userAgreementPostIds
+            ids.remove(postId)
+            userAgreementPostIds = ids
+            agreementsByPost[postId]?.removeAll { $0.userId == userId && $0.id == nil }
             DispatchQueue.main.async {
                 self.errorMessage = "Unexpected error saving agreement."
             }
