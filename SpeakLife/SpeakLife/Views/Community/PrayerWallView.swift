@@ -369,6 +369,14 @@ struct PrayerPostCard: View {
                 reactionSummaryRow
             }
 
+            // Always-visible "Stand in agreement" button — no auto-pop
+            // after reactions; users add their voice explicitly here.
+            // Hidden once the user has already added an agreement (and
+            // for non-signed-in users, who'd hit a sign-in hint instead).
+            if canAddAgreement {
+                addAgreementButton
+            }
+
             // Agreement chain
             agreementChainRow
 
@@ -474,19 +482,11 @@ struct PrayerPostCard: View {
     }
 
     private func handleReactionTap(_ reaction: WarriorRoomReaction) {
-        let priorReaction = viewModel.reaction(for: post)
         viewModel.toggleReaction(reaction, on: post)
-
-        // Only prompt for an agreement when this is a NEW reaction selection
-        // (not toggle-off, not switching), the user is signed in, and they
-        // haven't already added an agreement to this post.
-        let didAddNewReaction = priorReaction == nil
-        guard didAddNewReaction,
-              appleSignIn.isSignedIn,
-              !viewModel.hasAgreed(on: post) else { return }
-        // The parent owns the sheet — handing it the reaction we want to
-        // prompt for. Single-sheet-at-the-top avoids the per-card race.
-        onPresentAgreement(reaction)
+        // Reactions no longer auto-open the agreement sheet. The user opts
+        // in explicitly via the always-visible "Stand in agreement" button
+        // below the reaction summary — the auto-pop was pushy and forced
+        // users to dismiss a modal after every reaction.
     }
 
     private var reactionSummaryRow: some View {
@@ -543,14 +543,10 @@ struct PrayerPostCard: View {
                         .progressViewStyle(CircularProgressViewStyle(tint: .white.opacity(0.5)))
                         .scaleEffect(0.8)
                 } else if agreements.isEmpty {
-                    if canAddAgreement {
-                        addAgreementButton
-                    } else {
-                        Text(emptyAgreementHint)
-                            .font(Font.custom("AppleSDGothicNeo-Regular", size: 12, relativeTo: .caption))
-                            .foregroundColor(.white.opacity(0.4))
-                            .italic()
-                    }
+                    Text(emptyAgreementHint)
+                        .font(Font.custom("AppleSDGothicNeo-Regular", size: 12, relativeTo: .caption))
+                        .foregroundColor(.white.opacity(0.4))
+                        .italic()
                 } else {
                     let preview = Array(agreements.prefix(3))
                     ForEach(preview) { agreement in
@@ -560,9 +556,6 @@ struct PrayerPostCard: View {
                         Text("+ \(agreements.count - 3) more")
                             .font(Font.custom("AppleSDGothicNeo-Regular", size: 11, relativeTo: .caption2))
                             .foregroundColor(.white.opacity(0.4))
-                    }
-                    if canAddAgreement {
-                        addAgreementButton
                     }
                 }
             }
@@ -574,8 +567,11 @@ struct PrayerPostCard: View {
     }
 
     private var emptyAgreementHint: String {
+        // Shown only when the chain is expanded and there are no
+        // agreements yet. The "Stand in agreement" CTA is always visible
+        // above the chain — this row just explains the empty state.
         appleSignIn.isSignedIn
-            ? "You're already standing in agreement here."
+            ? "Be the first to stand in agreement."
             : "Sign in to stand in agreement."
     }
 
@@ -717,37 +713,28 @@ private struct AgreementPromptSheet: View {
             }
             .padding(.horizontal, 28)
 
-            HStack(spacing: 12) {
-                Button("Skip") { dismiss() }
-                    .font(Font.custom("AppleSDGothicNeo-Regular", size: 14, relativeTo: .body))
-                    .foregroundColor(.white.opacity(0.6))
+            // Single primary action. Swipe-down dismisses the sheet
+            // (iOS default) — no Skip button, since the user opened this
+            // sheet specifically to stand in agreement.
+            Button {
+                viewModel.addAgreement(
+                    to: post,
+                    reaction: reaction,
+                    text: trimmed,
+                    userId: appleSignIn.uid,
+                    displayName: appleSignIn.displayName
+                )
+                dismiss()
+            } label: {
+                Text("Stand With Them →")
+                    .font(Font.custom("AppleSDGothicNeo-Bold", size: 14, relativeTo: .body))
+                    .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
                     .frame(height: 46)
-                    .background(
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(Color.white.opacity(0.25), lineWidth: 1)
-                    )
-
-                Button {
-                    viewModel.addAgreement(
-                        to: post,
-                        reaction: reaction,
-                        text: trimmed,
-                        userId: appleSignIn.uid,
-                        displayName: appleSignIn.displayName
-                    )
-                    dismiss()
-                } label: {
-                    Text("Stand With Them →")
-                        .font(Font.custom("AppleSDGothicNeo-Bold", size: 14, relativeTo: .body))
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 46)
-                        .background(canStand ? Color(hex: "7C3AED") : Color.gray.opacity(0.4))
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
-                }
-                .disabled(!canStand)
+                    .background(canStand ? Color(hex: "7C3AED") : Color.gray.opacity(0.4))
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
             }
+            .disabled(!canStand)
             .padding(.horizontal, 24)
             .padding(.bottom, 24)
         }
