@@ -9,6 +9,7 @@
 
 import SwiftUI
 import FirebaseAnalytics
+import StoreKit
 
 struct CancelInterventionView: View {
     @Binding var isPresented: Bool
@@ -18,8 +19,10 @@ struct CancelInterventionView: View {
 
     @State private var step: Step = .reason
     @State private var selectedReason: CancelReason? = nil
+    @State private var isPurchasing = false
+    @State private var purchaseError: String? = nil
 
-    enum Step { case reason, retention, confirm }
+    enum Step { case reason, retention, discount, confirm }
 
     enum CancelReason: String, CaseIterable {
         case tooExpensive   = "It's too expensive"
@@ -61,9 +64,10 @@ struct CancelInterventionView: View {
 
                 VStack(spacing: 0) {
                     switch step {
-                    case .reason:   reasonStep
+                    case .reason:    reasonStep
                     case .retention: retentionStep
-                    case .confirm:  confirmStep
+                    case .discount:  discountStep
+                    case .confirm:   confirmStep
                     }
                 }
             }
@@ -195,10 +199,10 @@ struct CancelInterventionView: View {
                     }
                     .buttonStyle(PlainButtonStyle())
 
-                    // Proceed to cancel
+                    // Proceed to discount offers
                     Button(action: {
                         Analytics.logEvent("cancel_intervention_not_retained", parameters: ["reason": reason.rawValue])
-                        withAnimation { step = .confirm }
+                        withAnimation { step = .discount }
                     }) {
                         Text("I still want to cancel")
                             .font(.system(size: 13))
@@ -211,7 +215,7 @@ struct CancelInterventionView: View {
         )
     }
 
-    // MARK: - Step 3: Confirm
+    // MARK: - Step 4: Confirm
     private var confirmStep: some View {
         VStack(spacing: 28) {
             Spacer()
@@ -256,6 +260,159 @@ struct CancelInterventionView: View {
             }
             .padding(.horizontal, 24).padding(.bottom, 32)
         }
+    }
+
+    // MARK: - Step 3: Discount Offer
+
+    private var discountProducts: [(product: Product, label: String)] {
+        let candidates: [(Product?, String)] = [
+            (subscriptionStore.currentOfferedDiscount,        "Best Deal"),
+            (subscriptionStore.currentOfferedPremium,         "Annual"),
+            (subscriptionStore.currentOfferedPremiumMonthly,  "Premium"),
+            (subscriptionStore.currentOfferedMonthly,         "Monthly"),
+            (subscriptionStore.currentOfferedWeekly,          "Weekly"),
+            (subscriptionStore.currentOfferedLifetime,        "Lifetime"),
+        ]
+        var seen = Set<String>()
+        return candidates.compactMap { product, label -> (Product, String)? in
+            guard let p = product, seen.insert(p.id).inserted else { return nil }
+            return (p, label)
+        }
+    }
+
+    private var discountStep: some View {
+        let products = discountProducts
+        return VStack(spacing: 0) {
+            ScrollView {
+                VStack(spacing: 24) {
+                    VStack(spacing: 12) {
+                        Text("🎁")
+                            .font(.system(size: 48))
+                            .padding(.top, 32)
+                        Text("Before you go — a better deal")
+                            .font(.system(size: 22, weight: .bold))
+                            .foregroundColor(.white)
+                            .multilineTextAlignment(.center)
+                        Text("Switch to a plan that fits your budget and keep everything you've built.")
+                            .font(.system(size: 15))
+                            .foregroundColor(.white.opacity(0.65))
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, 24)
+                    }
+
+                    if products.isEmpty {
+                        Text("No alternative plans available right now.")
+                            .font(.system(size: 14))
+                            .foregroundColor(.white.opacity(0.5))
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, 24)
+                    } else {
+                        VStack(spacing: 12) {
+                            ForEach(products, id: \.product.id) { item in
+                                discountProductCard(product: item.product, label: item.label)
+                            }
+                        }
+                        .padding(.horizontal, 20)
+                    }
+
+                    if let error = purchaseError {
+                        Text(error)
+                            .font(.system(size: 13))
+                            .foregroundColor(.red.opacity(0.85))
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, 24)
+                    }
+
+                    Spacer(minLength: 20)
+                }
+            }
+
+            Button(action: {
+                Analytics.logEvent("cancel_intervention_declined_discount", parameters: [:])
+                withAnimation { step = .confirm }
+            }) {
+                Text("No thanks, cancel my subscription")
+                    .font(.system(size: 13))
+                    .foregroundColor(.white.opacity(0.35))
+                    .padding(.vertical, 16)
+            }
+            .padding(.bottom, 8)
+        }
+    }
+
+    private func discountProductCard(product: Product, label: String) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(product.displayName)
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundColor(.white)
+                    Text(product.description)
+                        .font(.system(size: 12))
+                        .foregroundColor(.white.opacity(0.55))
+                        .fixedSize(horizontal: false, vertical: true)
+                        .lineLimit(2)
+                }
+                Spacer()
+                VStack(alignment: .trailing, spacing: 4) {
+                    Text(label)
+                        .font(.system(size: 10, weight: .semibold))
+                        .foregroundColor(Constants.DAMidBlue)
+                        .padding(.horizontal, 8).padding(.vertical, 3)
+                        .background(RoundedRectangle(cornerRadius: 6).fill(Constants.DAMidBlue.opacity(0.15)))
+                    Text(product.displayPrice)
+                        .font(.system(size: 18, weight: .bold))
+                        .foregroundColor(.white)
+                }
+            }
+
+            Button(action: {
+                Task { await purchaseProduct(product) }
+            }) {
+                HStack(spacing: 8) {
+                    if isPurchasing {
+                        ProgressView()
+                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                            .scaleEffect(0.85)
+                    }
+                    Text(isPurchasing ? "Processing..." : "Switch to this plan")
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundColor(.white)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 13)
+                .background(RoundedRectangle(cornerRadius: 10).fill(Constants.DAMidBlue))
+            }
+            .buttonStyle(PlainButtonStyle())
+            .disabled(isPurchasing)
+        }
+        .padding(16)
+        .background(
+            RoundedRectangle(cornerRadius: 14)
+                .fill(Color.white.opacity(0.06))
+                .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.white.opacity(0.12), lineWidth: 1))
+        )
+    }
+
+    @MainActor
+    private func purchaseProduct(_ product: Product) async {
+        isPurchasing = true
+        purchaseError = nil
+        do {
+            let success = try await subscriptionStore.purchase(product, paywallName: "cancel_intervention")
+            if success {
+                Analytics.logEvent("cancel_intervention_discount_purchased", parameters: [
+                    "product_id": product.id as NSString
+                ])
+                isPresented = false
+            }
+        } catch {
+            purchaseError = "Purchase failed. Please try again."
+            Analytics.logEvent("cancel_intervention_discount_failed", parameters: [
+                "product_id": product.id as NSString
+            ])
+        }
+        isPurchasing = false
     }
 
     // MARK: - Streak Reminder Card
