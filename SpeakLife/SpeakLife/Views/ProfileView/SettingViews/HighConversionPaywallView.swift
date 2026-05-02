@@ -351,11 +351,13 @@ struct HighConversionPaywallView: View {
             }
             .font(.system(size: 12)).foregroundColor(.white.opacity(0.4))
 
-            Button(action: { showPayWhatYouCan = true }) {
-                Text("Can't afford it? Pay what you can →")
-                    .font(.system(size: 12))
-                    .foregroundColor(.white.opacity(0.35))
-                    .underline()
+            if subscriptionStore.showPayWhatYouCanLink {
+                Button(action: { showPayWhatYouCan = true }) {
+                    Text("Can't afford it? Pay what you can →")
+                        .font(.system(size: 12))
+                        .foregroundColor(.white.opacity(0.35))
+                        .underline()
+                }
             }
         }
     }
