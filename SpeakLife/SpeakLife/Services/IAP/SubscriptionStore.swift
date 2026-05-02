@@ -76,6 +76,7 @@ final class SubscriptionStore: ObservableObject {
     
     // MARK: - High Conversion Paywall Flag
     @Published var useHighConversionPaywall = false
+    @Published var showPayWhatYouCanLink = true
     
     @Published var yearlySubscription = ""
     @Published var monthlySubscription = ""
@@ -210,6 +211,7 @@ final class SubscriptionStore: ObservableObject {
         
         // High Conversion Paywall Flag
         useHighConversionPaywall = remoteConfig["useHighConversionPaywall"].boolValue
+        showPayWhatYouCanLink = remoteConfig["showPayWhatYouCanLink"].boolValue
         
         // AI Feature Flag from Remote Config
         enableAIFeatures = remoteConfig["enableAIFeatures"].boolValue
