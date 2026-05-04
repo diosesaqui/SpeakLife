@@ -137,19 +137,21 @@ struct ReminderView: View {
     }
     
     private func askNotificationPermission(completion: @escaping(Bool) -> Void) {
-        
-        let center = UNUserNotificationCenter.current()
-        center.getNotificationSettings { settings in
-            guard (settings.authorizationStatus == .authorized) ||
-                    (settings.authorizationStatus == .provisional) else {
-                DispatchQueue.main.async {
-                    appState.notificationEnabled = true
-                    completion(true)
+        UNUserNotificationCenter.current().getNotificationSettings { settings in
+            DispatchQueue.main.async {
+                let authorized = settings.authorizationStatus == .authorized
+                    || settings.authorizationStatus == .provisional
+                if authorized {
+                    // OS permission is live — make sure the toggle reflects it
+                    if !appState.notificationEnabled {
+                        appState.notificationEnabled = true
+                        DailyDeclarationReminderService.shared.isEnabled = true
+                    }
+                    completion(false) // no alert needed
+                } else {
+                    completion(true) // show "go to Settings" alert
                 }
-                return
             }
-            completion(false)
-            return
         }
     }
 }
