@@ -16,7 +16,7 @@ private enum SpeakState {
     case idle, recording, success, tryAgain
 }
 
-private let kMatchThreshold = 0.75
+private let kMatchThreshold = 0.65
 
 // MARK: - PersonalDeclarationCard
 
@@ -455,7 +455,7 @@ struct PersonalDeclarationCard: View {
                     Text("Almost There!")
                         .font(.system(size: 26, weight: .bold, design: .rounded))
                         .foregroundColor(.white)
-                    Text("You spoke \(Int(lastMatchPct * 100))% of the declaration.\nSpeak at least 75% to complete it.")
+                    Text("You spoke \(Int(lastMatchPct * 100))% of the declaration.\nSpeak at least 65% to complete it.")
                         .font(.system(size: 15, design: .rounded))
                         .foregroundColor(.white.opacity(0.65))
                         .multilineTextAlignment(.center)
