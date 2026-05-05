@@ -205,9 +205,9 @@ struct SurveyPersonalizationEngine {
             headline: "Become Unshakable — One Declaration at a Time",
             subheadline: "Join 100,000+ believers who chose God's truth over their feelings.",
             valueProps: [
+                SurveyValueProp(icon: "book.fill", title: "28 territories of inheritance — healing, identity, destiny, abundance, and more. Every area God prepared.", description: "Faith comes by hearing. Audio devotionals put Scripture in your ears morning and night."),
                 SurveyValueProp(icon: "bolt.fill", title: "Your personal declaration — delivered every morning until it's fully received.", description: "God's Word spoken over your exact situation, every morning."),
                 SurveyValueProp(icon: "headphones", title: "Speak first. Possess first. The ground is yours — claim it daily.", description: "Spoken truth is your greatest weapon. It is exactly how Jesus defeated every attack."),
-                SurveyValueProp(icon: "book.fill", title: "28 territories of inheritance — healing, identity, destiny, abundance, and more. Every area God prepared.", description: "Faith comes by hearing. Audio devotionals put Scripture in your ears morning and night."),
                 SurveyValueProp(icon: "person.2.fill", title: "100,000 ground-takers advancing together right now. You're not doing this alone.", description: "Know your identity in Christ so deeply that fear, doubt, and shame lose their grip.")
             ],
             ctaText: "Begin My Faith Reset",
