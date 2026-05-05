@@ -10,6 +10,7 @@ import SwiftUI
 extension Notification.Name {
     static let audioVersionUpdated = Notification.Name("audioVersionUpdated")
     static let devotionalVersionUpdated = Notification.Name("devotionalVersionUpdated")
+    static let declarationsVersionUpdated = Notification.Name("declarationsVersionUpdated")
 }
 
 /// Handles all notification-related events for the app

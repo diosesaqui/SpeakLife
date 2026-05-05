@@ -192,6 +192,11 @@ struct HomeView: View {
                                     }
                                 }
                             }
+                            .onReceive(NotificationCenter.default.publisher(for: .declarationsVersionUpdated)) { notification in
+                                if let version = notification.userInfo?["version"] as? Int {
+                                    declarationStore.setRemoteDeclarationVersion(version: version)
+                                }
+                            }
                             .onChange(of: paywallTrigger.shouldShowPaywall) { newValue in
                                 if newValue && !subscriptionStore.isPremium {
                                     showTriggeredPaywall = true
