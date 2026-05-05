@@ -211,7 +211,7 @@
 		45BC76442EFD2775003AC964 /* ModernCelebrationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45BC76432EFD2775003AC964 /* ModernCelebrationView.swift */; };
 		45BC76762F04B284003AC964 /* FirstDeclarationGuideView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45BC76752F04B284003AC964 /* FirstDeclarationGuideView.swift */; };
 		45BCBA9A2C360245001F28C4 /* BibleStory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45BCBA992C360245001F28C4 /* BibleStory.swift */; };
-		45C15A782F2E9B27006171F5 /* declarationsv10.json in Sources */ = {isa = PBXBuildFile; fileRef = 45C15A772F2E9B21006171F5 /* declarationsv10.json */; };
+		45C15A782F2E9B27006171F5 /* declarationsv10.json in Resources */ = {isa = PBXBuildFile; fileRef = 45C15A772F2E9B21006171F5 /* declarationsv10.json */; };
 		45C15A7A2F3084F7006171F5 /* WldehBibleAPIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45C15A792F3084F7006171F5 /* WldehBibleAPIService.swift */; };
 		45C15A8C2F31BEB7006171F5 /* NewOnboardingScreens.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45C15A8B2F31BEB7006171F5 /* NewOnboardingScreens.swift */; };
 		45C15A8E2F35751A006171F5 /* TestimonialsOnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45C15A8D2F35751A006171F5 /* TestimonialsOnboardingView.swift */; };
@@ -1997,6 +1997,7 @@
 				45D6402B2CD218AE006F05AD /* declarationsv5.json in Resources */,
 				45A4A3D12D86B86100DFCEB7 /* washed.mp3 in Resources */,
 				4517D1D42F26CCFA00CB1245 /* declarationsv9.json in Resources */,
+				45C15A782F2E9B27006171F5 /* declarationsv10.json in Resources */,
 				BCC8A7200000000000000006 /* bible_chat_topics.json in Resources */,
 				457CD3A72E8508F300F435EC /* README.md in Resources */,
 				456885282B395F66007B1EBB /* declarationsv3.json in Resources */,
@@ -2208,7 +2209,6 @@
 				4568BE8F2B60EB1300678565 /* LoadingView.swift in Sources */,
 				7ABA50C729E4D996002699F1 /* PrayerViewModel.swift in Sources */,
 				7AA870C828DACCB700134ADB /* FontChooserView.swift in Sources */,
-				45C15A782F2E9B27006171F5 /* declarationsv10.json in Sources */,
 				45F6D8962F2AFCE700C0B98D /* HelloAOBibleAPIServiceTest.swift in Sources */,
 				7AA8709028DACCA700134ADB /* SelectionFeedback.swift in Sources */,
 				7AA870CC28DACCB700134ADB /* SettingsRow.swift in Sources */,
