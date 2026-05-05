@@ -197,6 +197,15 @@ struct HomeView: View {
                                     declarationStore.setRemoteDeclarationVersion(version: version)
                                 }
                             }
+                            // Cold-launch fix: subscriptionStore.remoteVersion is 0 at view-appear
+                            // because RC.fetchAndActivate is async. The original .onAppear above
+                            // fires too early, and updateConfigValues doesn't post the live notification
+                            // so DeclarationViewModel never picks up the version. Observing the
+                            // @Published property here catches the moment RC actually returns.
+                            .onChange(of: subscriptionStore.remoteVersion) { newVersion in
+                                guard newVersion > 0 else { return }
+                                declarationStore.setRemoteDeclarationVersion(version: newVersion)
+                            }
                             .onChange(of: paywallTrigger.shouldShowPaywall) { newValue in
                                 if newValue && !subscriptionStore.isPremium {
                                     showTriggeredPaywall = true
