@@ -33,6 +33,12 @@ final class LocalAPIClient: APIService {
     
     private var remoteConfig = RemoteConfig.remoteConfig()
     
+    static func clearCache() {
+        loadingQueue.sync {
+            cachedDeclarations = nil
+        }
+    }
+
     // Public init allowed but uses static cache
     init() {
     }
@@ -230,11 +236,8 @@ final class LocalAPIClient: APIService {
             // Always fetch remote on fresh install
             shouldFetchFromRemote = true
         } else if localVersion < remoteVersion {
-            if let lastFetchDate = lastRemoteFetchDate {
-                shouldFetchFromRemote = lastFetchDate <= twentyFourHoursAgo
-            } else {
-                shouldFetchFromRemote = true // no fetch has happened yet
-            }
+            // New version available — always fetch immediately, no throttle
+            shouldFetchFromRemote = true
         } else {
             shouldFetchFromRemote = false
         }

@@ -157,10 +157,12 @@ final class SubscriptionStore: ObservableObject {
                 DispatchQueue.main.async {
                     let oldAudioVersion = self?.audioRemoteVersion ?? 0
                     let oldDevotionalVersion = self?.currentDevotionalVersion ?? 0
+                    let oldRemoteVersion = self?.remoteVersion ?? 0
                     self?.updateConfigValues {}
                     let newAudioVersion = self?.audioRemoteVersion ?? 0
                     let newDevotionalVersion = self?.currentDevotionalVersion ?? 0
-                    
+                    let newRemoteVersion = self?.remoteVersion ?? 0
+
                     // If audio version changed, notify the app
                     if newAudioVersion > oldAudioVersion && newAudioVersion > 0 {
                         NotificationCenter.default.post(
@@ -169,13 +171,22 @@ final class SubscriptionStore: ObservableObject {
                             userInfo: ["version": newAudioVersion]
                         )
                     }
-                    
+
                     // If devotional version changed, notify the app
                     if newDevotionalVersion > oldDevotionalVersion && newDevotionalVersion > 0 {
                         NotificationCenter.default.post(
                             name: .devotionalVersionUpdated,
                             object: nil,
                             userInfo: ["version": newDevotionalVersion]
+                        )
+                    }
+
+                    // If declarations version changed, notify the app
+                    if newRemoteVersion > oldRemoteVersion && newRemoteVersion > 0 {
+                        NotificationCenter.default.post(
+                            name: .declarationsVersionUpdated,
+                            object: nil,
+                            userInfo: ["version": newRemoteVersion]
                         )
                     }
                 }

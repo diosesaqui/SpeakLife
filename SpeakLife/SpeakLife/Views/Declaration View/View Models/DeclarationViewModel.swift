@@ -712,7 +712,13 @@ final class DeclarationViewModel: ObservableObject {
     }
     
     func setRemoteDeclarationVersion(version: Int) {
+        guard version > service.localVersion else {
+            service.remoteVersion = version
+            return
+        }
+        LocalAPIClient.clearCache()
         service.remoteVersion = version
+        fetchDeclarations()
     }
     
     // MARK: - Smart Widget Category Integration
