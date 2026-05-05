@@ -52,6 +52,31 @@ final class LifecycleNotificationService {
         }
     }
 
+    /// One-time heal for users whose lifecycle pushes (D1-D30) were wiped by
+    /// the legacy `removeAllPendingNotificationRequests()` bug in
+    /// NotificationManager. Re-schedules from the original install date so
+    /// already-passed days don't fire. Idempotent: only runs once via the
+    /// `lifecycle_repaired_v1` flag, and a no-op if the user never had a
+    /// lifecycle batch scheduled in the first place (fresh installs).
+    func repairLifecycleIfNeeded() {
+        let healFlag = "lifecycle_repaired_v1"
+        guard !UserDefaults.standard.bool(forKey: healFlag) else { return }
+        guard UserDefaults.standard.bool(forKey: kLifecycleScheduled),
+              let installDate = UserDefaults.standard.object(forKey: kInstallDate) as? Date else {
+            // Mark as repaired so brand-new installs don't keep retrying this branch.
+            UserDefaults.standard.set(true, forKey: healFlag)
+            return
+        }
+
+        center.getNotificationSettings { [weak self] settings in
+            guard let self = self else { return }
+            guard settings.authorizationStatus == .authorized else { return }
+            self.scheduleAll(from: installDate)
+            UserDefaults.standard.set(true, forKey: healFlag)
+            Analytics.logEvent("lifecycle_notifications_repaired", parameters: [:])
+        }
+    }
+
     /// Call on every app open (cold launch + warm foreground)
     func onAppOpen() {
         UserDefaults.standard.set(Date(), forKey: kLastOpenDate)

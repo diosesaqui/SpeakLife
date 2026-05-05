@@ -228,8 +228,16 @@ final class NotificationManager: NSObject {
                 let trigger = UNCalendarNotificationTrigger(
                     dateMatching: finalComponents, repeats: false)
 
+                // Stable ID per (day, slot) so re-registering replaces the prior
+                // batch in place — without nuking the entire pending list (which
+                // would also wipe lifecycle/streak/burst/personal-declaration
+                // pushes, all of which we own elsewhere). iOS auto-replaces a
+                // pending request when add() is called with the same identifier.
                 let request = UNNotificationRequest(
-                    identifier: UUID().uuidString, content: content, trigger: trigger)
+                    identifier: Self.contentBatchID(day: day, slot: idx),
+                    content: content,
+                    trigger: trigger
+                )
                 notificationCenter.add(request) { error in
                     if let error = error {
                         print("❌ Failed to schedule notification (day \(day), slot \(idx)): \(error.localizedDescription)")
@@ -412,8 +420,37 @@ final class NotificationManager: NSObject {
     }
     
     private func removeNotifications() {
-        notificationCenter.removeAllPendingNotificationRequests()
+        // Remove ONLY content batch notifications. Previously this called
+        // removeAllPendingNotificationRequests() which nuked lifecycle pushes
+        // (D1-D30), streak at-risk/milestones, daily burst rotations, lapsed
+        // pushes, and the personal declaration reminder on every reschedule —
+        // breaking the entire retention system. Now we use stable IDs and
+        // remove only ours.
+        notificationCenter.removePendingNotificationRequests(
+            withIdentifiers: Self.allPossibleContentBatchIDs
+        )
     }
+
+    /// Stable ID format for one slot in the content batch. Swapping from UUIDs
+    /// to these means iOS de-duplicates on re-add (same ID replaces in place)
+    /// and we can clean up only the batch instead of the entire pending list.
+    fileprivate static func contentBatchID(day: Int, slot: Int) -> String {
+        "content_batch_d\(day)_s\(slot)"
+    }
+
+    /// Every ID we could possibly have scheduled. Computed across the worst-case
+    /// batch shape (10 days × 30 slots = 300 IDs) so a shrinking batch (e.g.
+    /// count grew so daysAhead dropped) properly clears stale slots from prior
+    /// runs. Cheap — iOS handles 300 string lookups easily.
+    fileprivate static let allPossibleContentBatchIDs: [String] = {
+        var ids: [String] = []
+        for day in 0..<10 {
+            for slot in 0..<30 {
+                ids.append(contentBatchID(day: day, slot: slot))
+            }
+        }
+        return ids
+    }()
     
     private func verifyNotificationsScheduled() {
         notificationCenter.getPendingNotificationRequests { requests in

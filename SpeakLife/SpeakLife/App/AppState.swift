@@ -206,6 +206,13 @@ final class AppState: ObservableObject {
         }
         defaults.set(true, forKey: "personalDeclarationRescheduledV1")
 
+        // Heal lifecycle pushes (D1-D30) that were wiped by the legacy
+        // removeAllPendingNotificationRequests() bug in NotificationManager.
+        // Service-side flag (lifecycle_repaired_v1) keeps it one-shot.
+        DispatchQueue.main.async {
+            LifecycleNotificationService.shared.repairLifecycleIfNeeded()
+        }
+
         // Validate and fix any invalid existing values
         validateAndFixNotificationSettings()
     }
