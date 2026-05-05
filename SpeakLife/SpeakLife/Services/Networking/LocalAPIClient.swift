@@ -223,43 +223,45 @@ final class LocalAPIClient: APIService {
     }
     
     private func loadFromBackEnd(completion: @escaping([Declaration], APIError?, Bool) -> Void) {
-        let now = Date()
-        let twentyFourHoursAgo = now.addingTimeInterval(-86400)
-
         let shouldFetchFromRemote: Bool
-        
+
         // Check if this is a fresh install
         let isFreshInstall = lastRemoteFetchDate == nil && firstInstallDate != nil
-        
+
+        print("🔍 loadFromBackEnd: localVersion=\(localVersion), remoteVersion=\(remoteVersion), declarationsFileName=\(declarationsFileName), isFreshInstall=\(isFreshInstall)")
 
         if isFreshInstall {
-            // Always fetch remote on fresh install
             shouldFetchFromRemote = true
+            print("🔍 Decision: fetch (fresh install)")
         } else if localVersion < remoteVersion {
-            // New version available — always fetch immediately, no throttle
             shouldFetchFromRemote = true
+            print("🔍 Decision: fetch (version bump \(localVersion) → \(remoteVersion))")
         } else {
             shouldFetchFromRemote = false
+            print("🔍 Decision: fall back to disk (no version change, localVersion=\(localVersion) >= remoteVersion=\(remoteVersion))")
         }
 
         if shouldFetchFromRemote {
+            print("🔍 Downloading \(declarationsFileName) from Firebase Storage...")
             fetchDeclarationData(tryLocal: false) { [weak self] data in
                 self?.lastRemoteFetchDate = Date()
                 if let data = data {
+                    print("🔍 Download succeeded: \(data.count) bytes")
                     let declarations = self?.decodeDeclarationsSafely(from: data)
                     if let declarations = declarations, !declarations.isEmpty {
+                        print("🔍 Decoded \(declarations.count) declarations. Setting localVersion=\(self?.remoteVersion ?? -1).")
                         self?.localVersion = self?.remoteVersion ?? 2
-                        // Save to disk so fallback works on subsequent launches
                         self?.save(declarations: declarations) { _ in }
-                        // Notify observers so notifications are rescheduled with new content
                         DispatchQueue.main.async {
                             NotificationCenter.default.post(name: declarationsContentUpdated, object: nil)
                         }
                         completion(declarations, nil, true)
                     } else {
+                        print("⚠️ Download succeeded but decode returned empty — falling back to disk.")
                         self?.fallbackToLocal(completion: completion)
                     }
                 } else {
+                    print("⚠️ Download returned nil data — falling back to disk.")
                     self?.fallbackToLocal(completion: completion)
                 }
             }

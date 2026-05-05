@@ -712,10 +712,13 @@ final class DeclarationViewModel: ObservableObject {
     }
     
     func setRemoteDeclarationVersion(version: Int) {
+        print("📥 setRemoteDeclarationVersion called with version=\(version), service.localVersion=\(service.localVersion), service.remoteVersion=\(service.remoteVersion)")
         guard version > service.localVersion else {
+            print("📥 Skipping fetch — version (\(version)) <= localVersion (\(service.localVersion)). Just updating remoteVersion.")
             service.remoteVersion = version
             return
         }
+        print("📥 Version bump detected. Clearing cache and re-fetching.")
         LocalAPIClient.clearCache()
         service.remoteVersion = version
         fetchDeclarations()
