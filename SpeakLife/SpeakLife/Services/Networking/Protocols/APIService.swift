@@ -10,6 +10,7 @@ import Combine
 
 protocol APIService {
     var remoteVersion: Int { get set }
+    var localVersion: Int { get set }
     func declarations(completion: @escaping([Declaration], APIError?, Bool) -> Void)// -> AnyPublisher<[Declaration], APIError>
     func save(declarations: [Declaration], completion: @escaping(Bool) -> Void)
     func declarationCategories(completion: @escaping(Set<DeclarationCategory>, APIError?) -> Void)

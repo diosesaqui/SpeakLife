@@ -11,9 +11,10 @@ import Combine
 import FirebaseAnalytics
 
 final class CoreDataAPIService: APIService {
-    
+
     var remoteVersion: Int = 1
-    
+    var localVersion: Int = 0
+
     private let journalRepository: any JournalRepositoryProtocol
     private let affirmationRepository: any AffirmationRepositoryProtocol
     private let legacyAPIService: APIService
