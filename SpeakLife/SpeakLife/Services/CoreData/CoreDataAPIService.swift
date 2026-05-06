@@ -12,8 +12,20 @@ import FirebaseAnalytics
 
 final class CoreDataAPIService: APIService {
 
-    var remoteVersion: Int = 1
-    var localVersion: Int = 0
+    // Delegate version state to the underlying legacy service. CoreDataAPIService
+    // forwards all declaration fetches through legacyAPIService (LocalAPIClient),
+    // which is where the @AppStorage-backed remote/local version actually lives.
+    // Without these forwarders, DeclarationViewModel.setRemoteDeclarationVersion
+    // would write to an in-memory placeholder while loadFromBackEnd read a
+    // completely different storage — making version bumps a no-op.
+    var remoteVersion: Int {
+        get { legacyAPIService.remoteVersion }
+        set { legacyAPIService.remoteVersion = newValue }
+    }
+    var localVersion: Int {
+        get { legacyAPIService.localVersion }
+        set { legacyAPIService.localVersion = newValue }
+    }
 
     private let journalRepository: any JournalRepositoryProtocol
     private let affirmationRepository: any AffirmationRepositoryProtocol
