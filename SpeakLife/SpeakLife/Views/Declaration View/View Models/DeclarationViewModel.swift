@@ -712,7 +712,7 @@ final class DeclarationViewModel: ObservableObject {
     }
     
     func setRemoteDeclarationVersion(version: Int) {
-        print("📥 setRemoteDeclarationVersion called with version=\(version), service.localVersion=\(service.localVersion), service.remoteVersion=\(service.remoteVersion)")
+        print("📥 rwrw setRemoteDeclarationVersion called with version=\(version), service.localVersion=\(service.localVersion), service.remoteVersion=\(service.remoteVersion)")
         // Guard: ignore zero/negative calls. They come from HomeView.onAppear
         // running before SubscriptionStore's async RC fetch has populated
         // remoteVersion. Without this guard the early-return below clobbers a
@@ -720,11 +720,11 @@ final class DeclarationViewModel: ObservableObject {
         // back to 0, and loadFromBackEnd then decides 0>=0 → no fetch → users
         // are stuck on stale on-disk content for the rest of the session.
         guard version > 0 else {
-            print("📥 Ignoring version=0 (RC not ready yet). Keeping service.remoteVersion=\(service.remoteVersion).")
+            print("📥 rwrw Ignoring version=0 (RC not ready yet). Keeping service.remoteVersion=\(service.remoteVersion).")
             return
         }
         guard version > service.localVersion else {
-            print("📥 Skipping fetch — version (\(version)) <= localVersion (\(service.localVersion)). Just updating remoteVersion.")
+            print("📥 rwrw Skipping fetch — version (\(version)) <= localVersion (\(service.localVersion)). Just updating remoteVersion.")
             // Only update if it's actually higher than what's stored, so a
             // stale call can't downgrade the saved value.
             if version > service.remoteVersion {
@@ -732,7 +732,7 @@ final class DeclarationViewModel: ObservableObject {
             }
             return
         }
-        print("📥 Version bump detected. Clearing cache and re-fetching.")
+        print("📥 rwrw Version bump detected. Clearing cache and re-fetching.")
         LocalAPIClient.clearCache()
         service.remoteVersion = version
         fetchDeclarations()

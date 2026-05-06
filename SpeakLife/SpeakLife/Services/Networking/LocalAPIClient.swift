@@ -228,28 +228,28 @@ final class LocalAPIClient: APIService {
         // Check if this is a fresh install
         let isFreshInstall = lastRemoteFetchDate == nil && firstInstallDate != nil
 
-        print("🔍 loadFromBackEnd: localVersion=\(localVersion), remoteVersion=\(remoteVersion), declarationsFileName=\(declarationsFileName), isFreshInstall=\(isFreshInstall)")
+        print("🔍 rwrw loadFromBackEnd: localVersion=\(localVersion), remoteVersion=\(remoteVersion), declarationsFileName=\(declarationsFileName), isFreshInstall=\(isFreshInstall)")
 
         if isFreshInstall {
             shouldFetchFromRemote = true
-            print("🔍 Decision: fetch (fresh install)")
+            print("🔍 rwrw Decision: fetch (fresh install)")
         } else if localVersion < remoteVersion {
             shouldFetchFromRemote = true
-            print("🔍 Decision: fetch (version bump \(localVersion) → \(remoteVersion))")
+            print("🔍 rwrw Decision: fetch (version bump \(localVersion) → \(remoteVersion))")
         } else {
             shouldFetchFromRemote = false
-            print("🔍 Decision: fall back to disk (no version change, localVersion=\(localVersion) >= remoteVersion=\(remoteVersion))")
+            print("🔍 rwrw Decision: fall back to disk (no version change, localVersion=\(localVersion) >= remoteVersion=\(remoteVersion))")
         }
 
         if shouldFetchFromRemote {
-            print("🔍 Downloading \(declarationsFileName) from Firebase Storage...")
+            print("🔍 rwrw Downloading \(declarationsFileName) from Firebase Storage...")
             fetchDeclarationData(tryLocal: false) { [weak self] data in
                 self?.lastRemoteFetchDate = Date()
                 if let data = data {
-                    print("🔍 Download succeeded: \(data.count) bytes")
+                    print("🔍 rwrw Download succeeded: \(data.count) bytes")
                     let declarations = self?.decodeDeclarationsSafely(from: data)
                     if let declarations = declarations, !declarations.isEmpty {
-                        print("🔍 Decoded \(declarations.count) declarations. Setting localVersion=\(self?.remoteVersion ?? -1).")
+                        print("🔍 rwrw Decoded \(declarations.count) declarations. Setting localVersion=\(self?.remoteVersion ?? -1).")
                         self?.localVersion = self?.remoteVersion ?? 2
                         self?.save(declarations: declarations) { _ in }
                         DispatchQueue.main.async {
@@ -257,11 +257,11 @@ final class LocalAPIClient: APIService {
                         }
                         completion(declarations, nil, true)
                     } else {
-                        print("⚠️ Download succeeded but decode returned empty — falling back to disk.")
+                        print("⚠️ rwrw Download succeeded but decode returned empty — falling back to disk.")
                         self?.fallbackToLocal(completion: completion)
                     }
                 } else {
-                    print("⚠️ Download returned nil data — falling back to disk.")
+                    print("⚠️ rwrw Download returned nil data — falling back to disk.")
                     self?.fallbackToLocal(completion: completion)
                 }
             }
