@@ -206,6 +206,28 @@ final class AppState: ObservableObject {
         }
         defaults.set(true, forKey: "personalDeclarationRescheduledV1")
 
+        // V6 heal: declarations content was stuck on stale buggy-era state for
+        // users where prior versions of CoreDataAPIService (in-memory remoteVersion
+        // not forwarding to LocalAPIClient's @AppStorage) and setRemoteDeclarationVersion
+        // (clobbering UserDefaults back to 0) left localVersion at some value but
+        // disk content was never refreshed. Reset localVersion=0 and wipe the on-disk
+        // declarations file so the next loadFromBackEnd is forced to re-fetch from
+        // Firebase Storage (or fall back to the freshly-bundled v10). Idempotent:
+        // sentinel flag keeps it one-shot.
+        if defaults.object(forKey: "declarationsHealedAfterBugFixV1") == nil {
+            print("🩹 rwrw V6 heal: resetting localVersion and clearing on-disk declarations cache")
+            defaults.set(0, forKey: "localVersion")
+            // Don't touch remoteVersion — let RC drive it on next async fetch.
+            // Don't touch lastRemoteFetchDate — preserves the legitimate fresh-install
+            // distinction for any future logic.
+            let docDir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
+            if let url = docDir?.appendingPathComponent("declarations").appendingPathExtension("txt") {
+                try? FileManager.default.removeItem(at: url)
+            }
+            LocalAPIClient.clearCache()
+            defaults.set(true, forKey: "declarationsHealedAfterBugFixV1")
+        }
+
         // Heal lifecycle pushes (D1-D30) that were wiped by the legacy
         // removeAllPendingNotificationRequests() bug in NotificationManager.
         // Service-side flag (lifecycle_repaired_v1) keeps it one-shot.
