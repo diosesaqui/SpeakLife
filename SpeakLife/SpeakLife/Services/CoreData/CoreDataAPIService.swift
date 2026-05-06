@@ -29,7 +29,11 @@ final class CoreDataAPIService: APIService {
 
     private let journalRepository: any JournalRepositoryProtocol
     private let affirmationRepository: any AffirmationRepositoryProtocol
-    private let legacyAPIService: APIService
+    // 'var' (not 'let') so the protocol-typed property's setter is reachable
+    // through the computed remoteVersion/localVersion forwarders above.
+    // APIService isn't AnyObject-constrained, so Swift can't guarantee the
+    // conformer is a class without a mutable binding here.
+    private var legacyAPIService: APIService
     private let migrationManager: DataMigrationManager
     
     init(journalRepository: any JournalRepositoryProtocol = JournalRepository(),
