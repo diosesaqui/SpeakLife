@@ -190,6 +190,8 @@ final class DataMigrationManagerTests: XCTestCase {
 
 // MARK: - Mock API Service
 class MockAPIService: APIService {
+    var localVersion: Int = 0
+    
     var remoteVersion: Int = 1
     var mockDeclarations: [Declaration] = []
     var shouldReturnError = false
