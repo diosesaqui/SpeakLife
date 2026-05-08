@@ -9,13 +9,29 @@ import SwiftUI
 
 
 final class CategoryListViewModel: ObservableObject {
-    
+
     init(_ declarationStore: DeclarationViewModel) {
         self.declarationStore = declarationStore
-        self.categories = declarationStore.allcategories
-        self.selectedCategories = declarationStore.selectedCategories
+        // Bible-book categories (Genesis, Matthew, Psalms, etc.) belong on the
+        // declaration feed picker but not on the notification topics list.
+        // Notifications are a curated set of life themes (peace, identity, faith,
+        // etc.); flooding the picker with 50+ Bible books is overwhelming and
+        // doesn't map to how users think about reminders.
+        self.categories = declarationStore.allcategories.filter { !$0.isBibleBook }
+
+        // Selected state must read from appState.selectedNotificationCategories
+        // (where the survey wrote during onboarding), NOT from declarationStore.
+        // selectedCategories — that's the feed selection, a different storage.
+        // Both end up holding category sets but the survey only writes the
+        // notification one, so reading the feed showed "0 selected" even when
+        // the user had completed onboarding and was getting reminders.
+        let raw = UserDefaults.standard.string(forKey: "selectedNotificationCategories") ?? ""
+        let parsed = raw
+            .split(separator: ",")
+            .compactMap { DeclarationCategory(rawValue: String($0)) }
+        self.selectedCategories = Set(parsed)
     }
-    
+
     private let declarationStore: DeclarationViewModel
     
     @Published var selectedCategories: Set<DeclarationCategory>
