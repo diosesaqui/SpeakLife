@@ -60,32 +60,30 @@ Language must be spiritually rich, resonant, and precise. Declarations should fe
 Do not reduce the count of any category. If you replace a declaration, the total number stays the same.
 
 ### 11. Brevity and Sentence Economy
-**2 sentences is ideal. 3 is the maximum. Never 4+.**
+**1 sentence is ideal. 2 sentences is the maximum. Never 3+.**
 
-Every sentence must declare a distinct truth. If two sentences say the same thing in different words, cut one.
+A single, perfectly landed declaration hits harder than two sentences that dilute each other. If you need two sentences, each must declare a completely distinct truth — not explain, restate, or extend the first.
 
-Never write setup or explanation sentences — declarations assert, they do not explain.
+Never write explanation sentences — declarations assert, they do not explain why.
 
-The final sentence must be the most powerful. It is the landing punch, not a trailing thought.
+If using 2 sentences, the second must be stronger than the first.
 
 **Bad patterns (cut these):**
 - Explanatory clauses: "He bore my suffering *so I do not carry it alone*." → the "so" explains; just declare
-- Restatements: "His power is in me. I carry it. It lives in me." → three sentences, one truth
-- Weak endings: "...and I walk in that." / "...and I receive it fully." / "...His power is mine."
-- Four-sentence declarations where two would be twice as strong
+- Restatements: "His power is in me. It lives in me." → two sentences, one truth
+- Weak second sentences: "...and I walk in it." / "...and I receive it fully." / "...and I stand on His word." — these bleed the power out; cut them
+- Any declaration that needs 3+ sentences to make its point is explaining, not declaring
 
-**Examples of the problem and the fix:**
-- ❌ "I fix my eyes on the Healer, not the sickness. What I focus on fills my whole body. I am filled with His light and His life and I thrive in His presence."
-  → Sentence 2 explains sentence 1. Sentence 3 is weak.
-- ✅ "I fix my eyes on the Healer, not the sickness. I am filled with His light and His life."
+**Examples:**
+- ❌ "I fix my eyes on the Healer, not the sickness. What I focus on fills my whole body. I am filled with His light and His life and I thrive in His presence." → 3 sentences, sentence 2 explains sentence 1, sentence 3 is weak
+- ✅ "I fix my eyes on the Healer, not the sickness — I am filled with His light and His life." → or even better: one sentence
+- ✅ "My eyes are fixed on the Healer. I am filled with His light."
 
-- ❌ "Jesus took up my pain on purpose. He bore my suffering so I do not carry it alone. His healing power is not distant. It is IN me, active and thorough."
-  → 4 sentences. Sentences 1–2 say the same thing. Sentences 3–4 say the same thing.
-- ✅ "Jesus bore my pain at the cross. His healing power is active in me right now."
+- ❌ "Jesus took up my pain on purpose. He bore my suffering so I do not carry it alone. His healing power is not distant. It is IN me, active and thorough." → 4 sentences saying 2 things
+- ✅ "Jesus bore my pain. His healing power is active in me right now."
 
-- ❌ "I am diligent in all I do and my hands produce abundance. Diligence is my consecrated work ethic and it yields increase."
-  → Both sentences say: diligence produces results.
-- ✅ "I am diligent in all I do. My hands are anointed and what I build stands."
+- ❌ "I am diligent in all I do and my hands produce abundance. Diligence is my consecrated work ethic and it yields increase." → both sentences say the same thing
+- ✅ "I am diligent and my hands produce abundance."
 
 ---
 
