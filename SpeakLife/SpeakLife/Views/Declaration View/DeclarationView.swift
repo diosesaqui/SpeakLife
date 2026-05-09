@@ -72,6 +72,9 @@ struct DeclarationView: View {
     @State private var showSpeakAloudBanner = false
     @State private var showBreakthroughFlow = false
     @State private var showNewDeclarationSheet = false
+    /// Drives the pulse animation on the checklist icon when the user has
+    /// pending tasks for the day. Toggled by the autoreverse animation below.
+    @State private var checklistPulse = false
     /// Identifiable prefill for the Warrior Room testimony composer.
     /// Set when the Breakthrough flow's "Share Testimony" button fires —
     /// presenting the prefilled composer is how we celebrate.
@@ -216,22 +219,55 @@ struct DeclarationView: View {
     @ViewBuilder
     private var dailyChecklistButton: some View {
         if !showSpeakAloudBanner {
+            // Replaces the old launch popup: when the user has incomplete tasks
+            // for the day, the icon gently pulses + glows gold so they notice
+            // there's something waiting for them. Otherwise it sits calm.
+            let hasPendingTasks = streakViewModel.todayChecklist.completedTasksCount
+                < streakViewModel.todayChecklist.tasks.count
             Button(action: {
                 activeSheet = .dailyChecklist
                 Analytics.logEvent("checkList_opened", parameters: nil)
             }) {
                 Image(systemName: "checklist")
                     .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(.white)
+                    .foregroundColor(hasPendingTasks ? Constants.gold : .white)
                     .frame(width: 44, height: 44)
                     .background(
                         Circle()
                             .fill(Color.black.opacity(0.7))
                             .overlay(
                                 Circle()
-                                    .stroke(Constants.DAMidBlue.opacity(0.6), lineWidth: 1)
+                                    .stroke(
+                                        hasPendingTasks
+                                            ? Constants.gold.opacity(0.8)
+                                            : Constants.DAMidBlue.opacity(0.6),
+                                        lineWidth: hasPendingTasks ? 1.5 : 1
+                                    )
                             )
                     )
+                    .shadow(
+                        color: hasPendingTasks
+                            ? Constants.gold.opacity(checklistPulse ? 0.55 : 0.15)
+                            : .clear,
+                        radius: hasPendingTasks ? (checklistPulse ? 10 : 4) : 0
+                    )
+                    .scaleEffect(hasPendingTasks && checklistPulse ? 1.08 : 1.0)
+            }
+            .animation(
+                hasPendingTasks
+                    ? .easeInOut(duration: 1.1).repeatForever(autoreverses: true)
+                    : .default,
+                value: checklistPulse
+            )
+            .onAppear {
+                if hasPendingTasks {
+                    // Kick the autoreverse loop. Defer one runloop so the
+                    // animation modifier is in place before the value flips.
+                    DispatchQueue.main.async { checklistPulse = true }
+                }
+            }
+            .onChange(of: hasPendingTasks) { newValue in
+                checklistPulse = newValue
             }
         }
     }
