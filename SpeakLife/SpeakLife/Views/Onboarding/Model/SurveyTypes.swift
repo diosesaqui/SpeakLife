@@ -10,23 +10,23 @@ import Foundation
 enum SurveyStep: Int, CaseIterable {
     case intro              = 0
     case heaviestBurden     = 1
-    case productPositioning = 2
-    case theSeed            = 3
-    case burdenDuration     = 4
-    case mergedBarriers     = 5   // MERGED: failedAttempts + innerLie
-    case interstitialB      = 6
-    case declarationExp     = 7
-    case goalReveal         = 8
-    case personalDeclaration = 9
-    case takeAStand         = 10  // auto-advance transition — breath before commitment
-    case commitmentHold     = 11
+    case productPositioning = 2   // merged with The Seed
+    case burdenDuration     = 3
+    case mergedBarriers     = 4
+    case interstitialB      = 5
+    case declarationExp     = 6
+    case goalReveal         = 7
+    case personalDeclaration = 8
+    case takeAStand         = 9
+    case commitmentHold     = 10
+    case firstDeclaration   = 11  // taste before paywall
     case paywall            = 12
 
     var isQuestion: Bool {
         switch self {
-        case .intro, .productPositioning, .theSeed, .interstitialB,
-             .goalReveal, .personalDeclaration, .takeAStand, .commitmentHold,
-             .paywall: return false
+        case .intro, .productPositioning, .interstitialB,
+             .goalReveal, .personalDeclaration, .takeAStand,
+             .commitmentHold, .firstDeclaration, .paywall, .notificationTime: return false
         default: return true
         }
     }
@@ -121,6 +121,54 @@ enum HeaviestBurden: String, CaseIterable, Identifiable {
         case .abundance, .allOfIt:        return .defaultGrowth
         }
     }
+
+    // One curated declaration per burden — shown on the "taste before paywall" screen
+    var previewDeclaration: (text: String, verse: String, reference: String) {
+        switch self {
+        case .peace:
+            return (
+                "I walk in perfect peace. My mind is stayed on God and He keeps me in a stillness the world cannot shake.",
+                "You will keep in perfect peace those whose minds are steadfast, because they trust in you.",
+                "Isaiah 26:3"
+            )
+        case .health:
+            return (
+                "I am healed. By the stripes of Jesus every part of my body walks in the restoration God already paid for.",
+                "By his wounds you have been healed.",
+                "1 Peter 2:24"
+            )
+        case .joy:
+            return (
+                "The joy of the Lord is my strength. I carry deep, unshakeable joy that no circumstance can touch or take from me.",
+                "The joy of the Lord is your strength.",
+                "Nehemiah 8:10"
+            )
+        case .identity:
+            return (
+                "I am chosen, holy, and dearly loved. I know exactly who God says I am — and that settled truth is enough.",
+                "You are a chosen people, a royal priesthood, a holy nation, God's special possession.",
+                "1 Peter 2:9"
+            )
+        case .purpose:
+            return (
+                "I am called and commissioned. My steps are ordered by God and my destiny cannot be delayed, stolen, or denied.",
+                "For we are God's handiwork, created in Christ Jesus to do good works, which God prepared in advance for us to do.",
+                "Ephesians 2:10"
+            )
+        case .abundance:
+            return (
+                "God supplies all my needs according to His riches in glory. I walk in provision, favor, and overflow — not lack.",
+                "And my God will meet all your needs according to the riches of his glory in Christ Jesus.",
+                "Philippians 4:19"
+            )
+        case .allOfIt:
+            return (
+                "I am more than a conqueror through Christ who loves me. I take more ground today than I took yesterday.",
+                "In all these things we are more than conquerors through him who loved us.",
+                "Romans 8:37"
+            )
+        }
+    }
 }
 
 enum TestimonialGroup {
@@ -137,14 +185,14 @@ enum BurdenDuration: String, CaseIterable, Identifiable {
     case drifted      = "I've drifted and I'm coming back"
 }
 
-// Merged barriers screen — best of old Screens 5 + 6
+// Merged barriers screen — most emotionally charged options listed first
 enum BarrierOption: String, CaseIterable, Identifiable {
     var id: String { rawValue }
+    case mountains    = "\"I see other people's faith move mountains. Mine feels like it barely moves me.\""
+    case promises     = "\"I've messed up too much. Part of me wonders if God's promises are really for someone like me.\""
     case prayer       = "I pray — but the fear and doubt come right back"
     case readBible    = "I read the Bible — but it stays in my head, not my heart"
     case mondayHits   = "Worship and sermons lift me up — then Monday hits and it's gone"
-    case mountains    = "\"I see other people's faith move mountains. Mine feels like it barely moves me.\""
-    case promises     = "\"I've messed up too much. Part of me wonders if God's promises are really for someone like me.\""
     case cantTrust    = "\"I believe — but not enough to actually trust Him completely.\""
 }
 
@@ -187,7 +235,6 @@ enum DeclarationStyle: String, CaseIterable, Identifiable {
         }
     }
 
-    // Sword-selection framing (Screen 4)
     var swordLabel: String {
         switch self {
         case .peace:      return "Gentle & restoring"
@@ -287,6 +334,15 @@ enum NotificationTime: String, CaseIterable, Identifiable {
         case .midday:  return 24
         case .evening: return 38
         case .allDay:  return 12
+        }
+    }
+
+    var previewTime: String {
+        switch self {
+        case .morning: return "7:00 AM"
+        case .midday:  return "12:30 PM"
+        case .evening: return "8:00 PM"
+        case .allDay:  return "Throughout the day"
         }
     }
 }

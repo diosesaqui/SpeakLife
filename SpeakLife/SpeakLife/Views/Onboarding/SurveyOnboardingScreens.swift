@@ -195,7 +195,7 @@ struct SurveyIntroScreen: View {
                         .offset(y: h ? 0 : 16)
                         .animation(.easeOut(duration: 0.6).delay(0.1), value: h)
                 }
-                Text("8 questions. Your declarations, your daily plan, and your inheritance — all built around your answer.")
+                Text("A few questions. Your declarations, your daily plan, and your inheritance — all built around your answer.")
                     .font(.system(size: 16, weight: .regular, design: .rounded))
                     .foregroundColor(.white.opacity(0.65))
                     .multilineTextAlignment(.center)
@@ -456,15 +456,28 @@ struct SurveyInterstitialBScreen: View {
                         .animation(.easeOut(duration: 0.5).delay(0.1), value: v)
                 }
 
-                Text("He doesn't want you healthy. He doesn't want you walking in your calling. He doesn't want you experiencing God's full abundance. That's John 10:10 — steal, kill, destroy.\n\nBut here's what 100,000 believers have discovered:\nWhen you open your mouth and declare God's Word, you don't just cope. You advance. You take ground. You receive what was already prepared and paid for in Christ.")
-                    .font(.system(size: 15, weight: .regular))
-                    .foregroundColor(.white.opacity(0.7))
-                    .multilineTextAlignment(.center)
-                    .lineSpacing(4)
-                    .padding(.horizontal, 32)
-                    .opacity(v ? 1 : 0)
-                    .offset(y: v ? 0 : 12)
-                    .animation(.easeOut(duration: 0.5).delay(0.2), value: v)
+                VStack(spacing: 16) {
+                    Text("He doesn't want you healthy. He doesn't want you walking in your calling. He doesn't want you experiencing God's full abundance.\nThat's John 10:10 — steal, kill, destroy.")
+                        .font(.system(size: 15, weight: .regular))
+                        .foregroundColor(.white.opacity(0.7))
+                        .multilineTextAlignment(.center)
+                        .lineSpacing(4)
+
+                    Text("But here's what 1,000,000 believers have discovered:")
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundColor(.white.opacity(0.85))
+                        .multilineTextAlignment(.center)
+
+                    Text("When you open your mouth and declare God's Word, you don't just cope.\nYou advance. You take ground.\nYou receive what was already prepared and paid for in Christ.")
+                        .font(.system(size: 15, weight: .regular))
+                        .foregroundColor(.white.opacity(0.7))
+                        .multilineTextAlignment(.center)
+                        .lineSpacing(4)
+                }
+                .padding(.horizontal, 32)
+                .opacity(v ? 1 : 0)
+                .offset(y: v ? 0 : 12)
+                .animation(.easeOut(duration: 0.5).delay(0.2), value: v)
 
                 VStack(spacing: 6) {
                     Text("\"Death and life are in the power of the tongue.\"")
@@ -508,8 +521,8 @@ struct SurveyQ5DeclarationExpScreen: View {
     var body: some View {
         VStack(spacing: 0) {
             SurveyQuestionHeader(
-                "Have you ever declared God's Word out loud — and felt something in the atmosphere shift?",
-                subtitle: "This is the moment most believers realize the Word isn't just to be read. It's to be released."
+                "Have you ever declared God's Word out loud — and felt something shift?",
+                subtitle: "The Word isn't just to be read. It's to be released."
             )
             .padding(.top, size.height * 0.12)
 
@@ -521,6 +534,9 @@ struct SurveyQ5DeclarationExpScreen: View {
                             isSelected: responses.declarationExperience == option
                         ) {
                             responses.declarationExperience = option
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) {
+                                onContinue()
+                            }
                         }
                     }
                 }
@@ -529,11 +545,6 @@ struct SurveyQ5DeclarationExpScreen: View {
             }
 
             Spacer()
-
-            SurveyContinueButton(label: "Continue", isEnabled: responses.declarationExperience != nil) {
-                onContinue()
-            }
-            .padding(.bottom, 36)
         }
         .onAppear {
             Analytics.logEvent("survey_q5_shown", parameters: nil)
@@ -570,7 +581,7 @@ struct SurveyGoalRevealScreen: View {
                     .opacity(cv ? 1 : 0)
                     .animation(.spring(response: 0.5, dampingFraction: 0.65), value: cv)
 
-                    Text("Here's your inheritance activation plan.")
+                    Text("Here's your 30-day war plan.")
                         .font(.system(size: 22, weight: .semibold, design: .rounded))
                         .foregroundColor(.white.opacity(0.7))
                         .multilineTextAlignment(.center)
@@ -579,7 +590,7 @@ struct SurveyGoalRevealScreen: View {
                         .offset(y: cv ? 0 : 10)
                         .animation(.easeOut(duration: 0.45).delay(0.15), value: cv)
 
-                    Text("God didn't put a limit on what He prepared for you. You're not here to survive — you're here to possess.\n\nFor 30 days, declare God's Word over the exact inheritance you named. Every declaration is a step forward. Every day you show up is ground taken.\n\nThe enemy loses ground. You gain it. That's how this works.")
+                    Text("Declare God's Word over your \(responses.burdenShortLabel) every single day. The enemy loses ground. You gain it.")
                         .font(.system(size: 15, weight: .regular))
                         .foregroundColor(.white.opacity(0.7))
                         .lineSpacing(3)
@@ -611,7 +622,7 @@ struct SurveyGoalRevealScreen: View {
                                 .font(.system(size: 15, weight: .semibold, design: .rounded))
                                 .foregroundColor(.white.opacity(0.75))
 
-                            Text("Built for You")
+                            Text("Your 30-day war plan")
                                 .font(.system(size: 13, weight: .regular, design: .rounded))
                                 .foregroundColor(.white.opacity(0.5))
                         }
@@ -652,6 +663,8 @@ struct SurveyQ8NotificationScreen: View {
     @ObservedObject var responses: SurveyResponses
     var onContinue: () -> Void
 
+    @State private var showPreview = false
+
     private var subtitle: String {
         if let burden = responses.heaviestBurden {
             return "When should we send your \(burden.shortLabel) declaration?"
@@ -676,16 +689,26 @@ struct SurveyQ8NotificationScreen: View {
                             isSelected: responses.notificationTime == option
                         ) {
                             responses.notificationTime = option
+                            withAnimation(.spring(response: 0.4, dampingFraction: 0.75)) {
+                                showPreview = true
+                            }
                         }
+                    }
+
+                    if showPreview, let time = responses.notificationTime {
+                        notificationPreview(time: time)
+                            .transition(.opacity.combined(with: .offset(x: 0, y: 10)))
+                            .padding(.top, 4)
                     }
                 }
                 .padding(.horizontal, 20)
                 .padding(.top, 8)
+                .padding(.bottom, 16)
             }
 
             Spacer()
 
-            SurveyContinueButton(label: "Continue", isEnabled: responses.notificationTime != nil) {
+            SurveyContinueButton(label: "Lock It In →", isEnabled: responses.notificationTime != nil) {
                 onContinue()
             }
             .padding(.bottom, 36)
@@ -694,13 +717,148 @@ struct SurveyQ8NotificationScreen: View {
             Analytics.logEvent("survey_q8_shown", parameters: nil)
         }
     }
+
+    private func notificationPreview(time: NotificationTime) -> some View {
+        let preview = responses.heaviestBurden?.previewDeclaration
+        return HStack(spacing: 12) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 10)
+                    .fill(Color.white.opacity(0.15))
+                    .frame(width: 40, height: 40)
+                Image(systemName: "bell.fill")
+                    .font(.system(size: 18))
+                    .foregroundColor(.white)
+            }
+            VStack(alignment: .leading, spacing: 3) {
+                HStack {
+                    Text("SpeakLife")
+                        .font(.system(size: 13, weight: .semibold, design: .rounded))
+                        .foregroundColor(.white)
+                    Spacer()
+                    Text(time.previewTime)
+                        .font(.system(size: 12, weight: .regular, design: .rounded))
+                        .foregroundColor(.white.opacity(0.5))
+                }
+                Text(preview?.text ?? "Your daily declaration is ready.")
+                    .font(.system(size: 12, weight: .regular, design: .rounded))
+                    .foregroundColor(.white.opacity(0.7))
+                    .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .padding(14)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color.white.opacity(0.08))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16)
+                        .stroke(Color.white.opacity(0.15), lineWidth: 1)
+                )
+        )
+    }
+}
+
+// MARK: - First Declaration (taste before paywall)
+
+struct SurveyFirstDeclarationScreen: View {
+    let size: CGSize
+    @ObservedObject var responses: SurveyResponses
+    let onContinue: () -> Void
+
+    @State private var labelShown = false
+    @State private var cardShown = false
+
+    private var preview: (text: String, verse: String, reference: String) {
+        responses.heaviestBurden?.previewDeclaration ?? HeaviestBurden.peace.previewDeclaration
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            Spacer()
+
+            VStack(spacing: 24) {
+                Text("Speak this. Out loud. Right now.")
+                    .font(.system(size: 13, weight: .semibold, design: .rounded))
+                    .foregroundColor(.white.opacity(0.5))
+                    .kerning(0.8)
+                    .multilineTextAlignment(.center)
+                    .opacity(labelShown ? 1 : 0)
+                    .animation(.easeOut(duration: 0.4), value: labelShown)
+
+                VStack(spacing: 20) {
+                    Text(preview.text)
+                        .font(.system(size: 21, weight: .semibold, design: .rounded))
+                        .foregroundColor(.white)
+                        .multilineTextAlignment(.center)
+                        .lineSpacing(5)
+                        .fixedSize(horizontal: false, vertical: true)
+
+                    VStack(spacing: 4) {
+                        Text("\"\(preview.verse)\"")
+                            .font(.system(size: 14, weight: .regular, design: .serif))
+                            .italic()
+                            .foregroundColor(.white.opacity(0.55))
+                            .multilineTextAlignment(.center)
+                        Text(preview.reference)
+                            .font(.system(size: 12, weight: .medium, design: .rounded))
+                            .foregroundColor(.white.opacity(0.35))
+                    }
+                }
+                .padding(28)
+                .background(
+                    RoundedRectangle(cornerRadius: 24, style: .continuous)
+                        .fill(Color.white.opacity(0.09))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                                .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                        )
+                )
+                .padding(.horizontal, 24)
+                .scaleEffect(cardShown ? 1 : 0.94)
+                .opacity(cardShown ? 1 : 0)
+                .animation(.spring(response: 0.5, dampingFraction: 0.75).delay(0.15), value: cardShown)
+
+                Text("That's one declaration. You get 30 more — built for your exact battle.")
+                    .font(.system(size: 14, weight: .regular, design: .rounded))
+                    .foregroundColor(.white.opacity(0.5))
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 36)
+                    .opacity(cardShown ? 1 : 0)
+                    .animation(.easeOut(duration: 0.4).delay(0.4), value: cardShown)
+            }
+
+            Spacer()
+
+            SurveyContinueButton(label: "I Want All 30 →") {
+                Analytics.logEvent("survey_first_declaration_continue", parameters: nil)
+                onContinue()
+            }
+            .padding(.bottom, 36)
+            .opacity(cardShown ? 1 : 0)
+            .animation(.easeOut(duration: 0.4).delay(0.55), value: cardShown)
+        }
+        .onAppear {
+            Analytics.logEvent("survey_first_declaration_shown", parameters: [
+                "burden": responses.heaviestBurden?.rawValue ?? "unknown"
+            ])
+            withAnimation { labelShown = true }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                withAnimation { cardShown = true }
+            }
+        }
+    }
 }
 
 struct SurveyProductPositioningScreen: View {
     let size: CGSize
+    @ObservedObject var responses: SurveyResponses
     let onContinue: () -> Void
 
     @State private var v = false
+
+    private var burdenLabel: String {
+        responses.heaviestBurden?.shortLabel.capitalized ?? "your inheritance"
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -711,26 +869,21 @@ struct SurveyProductPositioningScreen: View {
                 Image("treasure-chest-icon")
                     .resizable()
                     .scaledToFit()
-                    .frame(width: 180, height: 180)
+                    .frame(width: 160, height: 160)
 
-                // Headline block
+                // Personalized headline block
                 VStack(spacing: 8) {
-                    Text("God already filled\nyour treasure chest.")
+                    Text("Your \(burdenLabel) is already\nin the treasure chest.")
                         .font(.system(size: 28, weight: .bold, design: .rounded))
                         .foregroundColor(.white)
                         .multilineTextAlignment(.center)
 
-                    Text("Health. Peace. Joy. Abundance. Purpose.")
-                        .font(.system(size: 18, weight: .semibold, design: .rounded))
-                        .foregroundColor(.white.opacity(0.75))
-                        .multilineTextAlignment(.center)
-
-                    Text("It's prepared. It has your name on it.")
+                    Text("The harvest was prepared before you were born.\nThe inheritance has your name on it.")
                         .font(.system(size: 16, weight: .regular, design: .rounded))
-                        .foregroundColor(.white.opacity(0.6))
+                        .foregroundColor(.white.opacity(0.65))
                         .multilineTextAlignment(.center)
 
-                    Text("SpeakLife is how you reach in\nand take what's yours.")
+                    Text("God's Word is the key.\nWhen you speak it, your \(burdenLabel.lowercased()) rises up in your life.")
                         .font(.system(size: 16, weight: .semibold, design: .rounded))
                         .foregroundColor(.white)
                         .multilineTextAlignment(.center)
@@ -751,7 +904,6 @@ struct SurveyProductPositioningScreen: View {
                     .frame(maxWidth: .infinity)
                     .padding(16)
 
-                    // Divider + arrow
                     Text("→")
                         .font(.system(size: 20))
                         .foregroundColor(.white.opacity(0.6))
@@ -784,15 +936,14 @@ struct SurveyProductPositioningScreen: View {
                 )
                 .padding(.horizontal, 28)
 
-                // Scripture chip
+                // Seed + scripture
                 VStack(spacing: 4) {
-                    Text("\"Every spiritual blessing in the heavenly places is already yours in Christ.\"")
+                    Text("\"The seed is the word of God.\"")
                         .font(.system(size: 14, weight: .regular, design: .serif))
                         .italic()
-                        .foregroundColor(.white.opacity(0.8))
+                        .foregroundColor(.red.opacity(0.8))
                         .multilineTextAlignment(.center)
-
-                    Text("Ephesians 1:3")
+                    Text("Luke 8:11")
                         .font(.system(size: 12, weight: .medium, design: .rounded))
                         .foregroundColor(.white.opacity(0.45))
                 }
@@ -829,6 +980,7 @@ struct SurveyProductPositioningScreen: View {
 // MARK: - Take a Stand (Screen 13 — auto-advance transition)
 
 struct SurveyTakeAStandScreen: View {
+    @ObservedObject var responses: SurveyResponses
     let onContinue: () -> Void
 
     @State private var line1Opacity: Double = 0
@@ -843,14 +995,14 @@ struct SurveyTakeAStandScreen: View {
                 .animation(.easeInOut(duration: 2.0), value: bgBrightness)
 
             VStack(spacing: 20) {
-                Text("You just heard what God says\nabout your battle.")
+                Text("God has already spoken over your \(responses.resolvedGoalWord.rawValue.capitalized).")
                     .font(.system(size: 26, weight: .semibold, design: .rounded))
                     .foregroundColor(.white)
                     .multilineTextAlignment(.center)
                     .opacity(line1Opacity)
                     .animation(.easeOut(duration: 0.6), value: line1Opacity)
 
-                Text("Now it's time to take a stand.")
+                Text("Now it's time to stand in it.")
                     .font(.system(size: 20, weight: .regular, design: .rounded))
                     .italic()
                     .foregroundColor(.white.opacity(0.75))
@@ -894,86 +1046,6 @@ struct SurveyTakeAStandScreen: View {
     }
 }
 
-// MARK: - The Seed (Screen 3)
-
-struct SurveyTheSeedScreen: View {
-    let size: CGSize
-    let onContinue: () -> Void
-
-    @State private var v = false
-    @State private var appearTime = Date()
-
-    var body: some View {
-        VStack(spacing: 0) {
-            ScrollView(showsIndicators: false) {
-                VStack(spacing: 20) {
-                    Spacer().frame(height: size.height * 0.07)
-
-                    Image("seed-icon")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 200, height: 200)
-
-                    Text("The Word of God is a seed.")
-                        .font(.system(size: 28, weight: .bold, design: .rounded))
-                        .foregroundColor(.white)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, 28)
-
-                    VStack(alignment: .leading, spacing: 14) {
-                        Group {
-                            Text("The harvest is already prepared.\nThe inheritance is already secured.")
-
-                            Text("But Jesus said it like this — His Word is a seed.\nYou plant it in your heart by hearing it.\nYou water it with your mouth by declaring it.")
-
-                            Text("And what your Father already paid for\nrises up in your life.")
-                        }
-                        .font(.system(size: 16, weight: .regular, design: .rounded))
-                        .foregroundColor(.white.opacity(0.85))
-                        .fixedSize(horizontal: false, vertical: true)
-
-                        Text("Health. Peace. Joy. Purpose. Abundance.\nAll of it. Not some of it.")
-                            .font(.system(size: 16, weight: .semibold, design: .rounded))
-                            .foregroundColor(.white)
-                            .fixedSize(horizontal: false, vertical: true)
-
-                        Text("You're not earning a blessing.\nYou're activating an inheritance.")
-                            .font(.system(size: 16, weight: .regular, design: .rounded))
-                            .foregroundColor(.white.opacity(0.85))
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                    .padding(.horizontal, 28)
-
-                    Text("\"The seed is the word of God.\" — Luke 8:11")
-                        .font(.system(size: 13, weight: .regular, design: .serif))
-                        .italic()
-                        .foregroundColor(.red.opacity(0.8))
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, 28)
-
-                    Spacer().frame(height: 8)
-                }
-                .opacity(v ? 1 : 0)
-                .offset(y: v ? 0 : 20)
-                .animation(.easeOut(duration: 0.6), value: v)
-            }
-
-            SurveyContinueButton(label: "I'm Ready to Plant →", action: {
-                let dwell = Date().timeIntervalSince(appearTime)
-                Analytics.logEvent("onboarding_screen_3_cta_tap", parameters: [
-                    "dwell_time_seconds": dwell as NSNumber
-                ])
-                onContinue()
-            })
-            .padding(.top, 8).padding(.bottom, 36)
-        }
-        .onAppear {
-            appearTime = Date()
-            Analytics.logEvent("onboarding_screen_3_view", parameters: nil)
-            withAnimation { v = true }
-        }
-    }
-}
 
 struct SurveyCommitmentHoldScreen: View {
     let size: CGSize
@@ -1167,9 +1239,15 @@ struct SurveyCommitmentHoldScreen: View {
         withAnimation(.easeInOut(duration: 1.4).repeatForever(autoreverses: true)) { ringScale = 1.15 }
 
         let start = Date()
+        var lastHapticSecond = -1
         holdTimer = Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { timer in
             let elapsed = Date().timeIntervalSince(start)
             holdProgress = min(elapsed / holdDuration, 1.0)
+            let currentSecond = Int(elapsed)
+            if currentSecond != lastHapticSecond && currentSecond > 0 && holdProgress < 1.0 {
+                lastHapticSecond = currentSecond
+                UIImpactFeedbackGenerator(style: .rigid).impactOccurred()
+            }
             if holdProgress >= 1.0 {
                 timer.invalidate()
                 holdTimer = nil

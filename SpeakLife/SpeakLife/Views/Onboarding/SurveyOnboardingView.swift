@@ -62,8 +62,7 @@ struct SurveyOnboardingView: View {
         switch currentStep {
         case .intro:              SurveyIntroScreen(size: size) { advance() }
         case .heaviestBurden:     SurveyQ1BurdenScreen(size: size, responses: responses) { advance() }
-        case .productPositioning: SurveyProductPositioningScreen(size: size) { advance() }
-        case .theSeed:            SurveyTheSeedScreen(size: size) { advance() }
+        case .productPositioning: SurveyProductPositioningScreen(size: size, responses: responses) { advance() }
         case .burdenDuration:     SurveyQ2DurationScreen(size: size, responses: responses) { advance() }
         case .mergedBarriers:     SurveyMergedBarriersScreen(size: size, responses: responses) { advance() }
         case .interstitialB:      SurveyInterstitialBScreen(size: size) { advance() }
@@ -76,6 +75,8 @@ struct SurveyOnboardingView: View {
         switch currentStep {
         case .declarationExp:
             SurveyQ5DeclarationExpScreen(size: size, responses: responses) { advance() }
+        case .firstDeclaration:
+            SurveyFirstDeclarationScreen(size: size, responses: responses) { advance() }
         case .goalReveal:
             SurveyGoalRevealScreen(size: size, responses: responses) { advance() }
         case .personalDeclaration:
@@ -87,7 +88,7 @@ struct SurveyOnboardingView: View {
                 advance()
             }
         case .takeAStand:
-            SurveyTakeAStandScreen { advance() }
+            SurveyTakeAStandScreen(responses: responses) { advance() }
         case .commitmentHold:
             SurveyCommitmentHoldScreen(size: size) { advance() }
         case .paywall:
