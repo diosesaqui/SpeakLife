@@ -258,7 +258,7 @@ struct DeclarationView: View {
                 value: checklistPulse
             )
             .onAppear {
-                DispatchQueue.main.async { checklistPulse = !isDone }
+                checklistPulse = !isDone
             }
             .onDisappear { checklistPulse = false }
             .onChange(of: isDone) { done in

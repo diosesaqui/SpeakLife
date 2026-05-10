@@ -146,9 +146,7 @@ struct SurveyOnboardingView: View {
             appState.startTimeIndex = notifTime.startTimeIndex
             appState.endTimeIndex   = notifTime.endTimeIndex
         }
-        if savedDeclaration != nil {
-            appState.hasPersonalDeclaration = true
-        }
+        appState.hasPersonalDeclaration = savedDeclaration != nil
         Analytics.logEvent("survey_onboarding_completed", parameters: [
             "goal_word": goalWord.rawValue,
             "burden": responses.heaviestBurden?.rawValue ?? "unknown",
