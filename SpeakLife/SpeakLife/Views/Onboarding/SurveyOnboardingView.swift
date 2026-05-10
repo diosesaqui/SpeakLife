@@ -93,6 +93,8 @@ struct SurveyOnboardingView: View {
             SurveyCommitmentHoldScreen(size: size) { advance() }
         case .paywall:
             HighConversionPaywallView(callback: { advance() })
+        case .notificationTime:
+            SurveyQ8NotificationScreen(size: size, responses: responses) { advance() }
         default:
             EmptyView()
         }
