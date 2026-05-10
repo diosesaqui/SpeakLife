@@ -33,6 +33,10 @@ struct PersonalDeclarationCard: View {
     /// 1 on first speak of a new day, increments on subsequent speaks.
     /// Drives the tiered visual reward in `dayBadge`.
     @AppStorage("personalDeclaration_dailySpeakCount") private var dailySpeakCount: Int = 0
+    /// Count of unique calendar days the user has successfully spoken this
+    /// declaration. Drives the "Day N" label so the number reflects work done,
+    /// not calendar drift since the declaration was created.
+    @AppStorage("personalDeclaration_completedDayCount") private var completedDayCount: Int = 0
 
     private var spokenToday: Bool {
         let today = ISO8601DateFormatter().string(from: Calendar.current.startOfDay(for: Date()))
@@ -70,8 +74,7 @@ struct PersonalDeclarationCard: View {
     @State private var cardAppear = false
 
     private var dayCount: Int {
-        let days = Calendar.current.dateComponents([.day], from: declaration.startDate, to: Date()).day ?? 0
-        return max(1, days + 1)
+        max(1, completedDayCount)
     }
 
     var body: some View {
@@ -553,10 +556,13 @@ struct PersonalDeclarationCard: View {
         // First speak of the day resets the counter to 1; subsequent speaks
         // increment so the day badge can give richer visual rewards for
         // repeated declaration ("the more you speak, the better the visual").
+        // First speak on a new day also bumps `completedDayCount` so "Day N"
+        // tracks unique completion days, not calendar drift since save.
         if lastSpokenDateStr == today {
             dailySpeakCount += 1
         } else {
             dailySpeakCount = 1
+            completedDayCount += 1
         }
         lastSpokenDateStr = today
 

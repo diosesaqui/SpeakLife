@@ -71,8 +71,7 @@ struct SpeakLifeApp: App {
     @State var isShowingLanding = true
     @State private var showDailyBurstOnLaunch = false
     @State private var showDailyStructuredDayOnLaunch = false
-    @State private var hasCheckedBurstThisSession = false
-    
+
     // Notification handling state
     @State private var notificationJustReceived = false
     @State private var isFirstAppear = true
@@ -147,20 +146,12 @@ struct SpeakLifeApp: App {
                         withAnimation {
                             isShowingLanding = false
                         }
-                        
-                        // Check if daily burst should be shown — only once per session
-                        // (onAppear can fire more than once; guard prevents showing it again
-                        // after the user already completed or dismissed the burst)
-                        if !hasCheckedBurstThisSession {
-                            hasCheckedBurstThisSession = true
-                            if appState.isOnboarded && !StructuredDayLaunchTracker.hasShownToday() {
-                                StructuredDayLaunchTracker.markShownToday()
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                                    showDailyStructuredDayOnLaunch = true
-                                }
-                            }
-                        }
-                        
+
+                        // Daily checklist no longer auto-presents on launch — it was
+                        // racing notification-tap routing (the popup landed on top of
+                        // the deep-linked declaration). Users get a pulsing icon on
+                        // the home screen instead, so they can open it on their terms.
+
                         // Auto-select category for non-onboarded users
                         // Skip if notification was just received
                         if !appState.isOnboarded && !notificationJustReceived {
@@ -230,6 +221,18 @@ struct SpeakLifeApp: App {
                 // cold launch). Without this, a user who background/foregrounds for
                 // days never resets lapsed_d5/lapsed_d10, so they fire incorrectly.
                 LifecycleNotificationService.shared.onAppOpen()
+
+                // Re-queue the personal declaration daily push every foreground.
+                // The trigger is repeats=true, but we've seen iOS drop the request
+                // (force-quit, throttling, time-zone change, OS state resets), so
+                // a defensive idempotent reschedule on each open guarantees the user
+                // gets it daily. Stable identifier means iOS replaces in place — no
+                // duplicates queued.
+                if appState.notificationEnabled {
+                    DIContainer.shared.rescheduleActivePersonalDeclarationIfNeeded(
+                        startTimeIndex: appState.personalDeclarationTimeIndex
+                    )
+                }
 
                 // Check if we should show evening reminder for daily burst
                 DailyDeclarationReminderService.shared.refreshEveningReminderIfNeeded()
