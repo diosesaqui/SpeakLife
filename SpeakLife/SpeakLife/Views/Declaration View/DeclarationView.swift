@@ -260,6 +260,11 @@ struct DeclarationView: View {
                 // Defer one runloop so the animation modifier is in place first.
                 DispatchQueue.main.async { checklistPulse = true }
             }
+            .onDisappear {
+                // Reset so the false→true transition re-triggers the animation
+                // when this view is recreated (e.g. after banner is dismissed).
+                checklistPulse = false
+            }
         }
     }
     
