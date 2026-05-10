@@ -331,10 +331,19 @@ enum NotificationTime: String, CaseIterable, Identifiable {
 
     var startTimeIndex: Int {
         switch self {
-        case .morning: return 12
-        case .midday:  return 24
-        case .evening: return 38
-        case .allDay:  return 12
+        case .morning: return 12   // 6:00 AM
+        case .midday:  return 24   // 12:00 PM
+        case .evening: return 38   // 7:00 PM
+        case .allDay:  return 12   // 6:00 AM
+        }
+    }
+
+    var endTimeIndex: Int {
+        switch self {
+        case .morning: return 18   // 9:00 AM
+        case .midday:  return 28   // 2:00 PM
+        case .evening: return 42   // 9:00 PM
+        case .allDay:  return 44   // 10:00 PM
         }
     }
 

@@ -142,6 +142,10 @@ struct SurveyOnboardingView: View {
         UserDefaults.standard.set(category.rawValue, forKey: "selectedCategory")
         UserPreferencesTracker.shared.trackCategorySelection(category.rawValue)
         declarationStore.choose(category) { _ in }
+        if let notifTime = responses.notificationTime {
+            appState.startTimeIndex = notifTime.startTimeIndex
+            appState.endTimeIndex   = notifTime.endTimeIndex
+        }
         if savedDeclaration != nil {
             appState.hasPersonalDeclaration = true
         }
