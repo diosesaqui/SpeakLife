@@ -72,6 +72,9 @@ struct DeclarationView: View {
     @State private var showSpeakAloudBanner = false
     @State private var showBreakthroughFlow = false
     @State private var showNewDeclarationSheet = false
+    /// Drives the pulse animation on the checklist icon when the user has
+    /// pending tasks for the day. Toggled by the autoreverse animation below.
+    @State private var checklistPulse = false
     /// Identifiable prefill for the Warrior Room testimony composer.
     /// Set when the Breakthrough flow's "Share Testimony" button fires —
     /// presenting the prefilled composer is how we celebrate.
@@ -216,22 +219,46 @@ struct DeclarationView: View {
     @ViewBuilder
     private var dailyChecklistButton: some View {
         if !showSpeakAloudBanner {
+            let hasPendingTasks = streakViewModel.todayChecklist.completedTasksCount
+                < streakViewModel.todayChecklist.tasks.count
             Button(action: {
                 activeSheet = .dailyChecklist
                 Analytics.logEvent("checkList_opened", parameters: nil)
             }) {
                 Image(systemName: "checklist")
                     .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(.white)
+                    .foregroundColor(hasPendingTasks ? Constants.gold : .white)
                     .frame(width: 44, height: 44)
                     .background(
                         Circle()
                             .fill(Color.black.opacity(0.7))
                             .overlay(
                                 Circle()
-                                    .stroke(Constants.DAMidBlue.opacity(0.6), lineWidth: 1)
+                                    .stroke(
+                                        hasPendingTasks
+                                            ? Constants.gold.opacity(0.8)
+                                            : Constants.DAMidBlue.opacity(0.6),
+                                        lineWidth: hasPendingTasks ? 1.5 : 1
+                                    )
                             )
                     )
+                    // Gate glow + scale entirely on hasPendingTasks so streak
+                    // completion immediately kills the effect — the pulse cycle
+                    // keeps running invisibly so we never fight repeatForever.
+                    .shadow(
+                        color: hasPendingTasks
+                            ? Constants.gold.opacity(checklistPulse ? 0.6 : 0.0)
+                            : .clear,
+                        radius: hasPendingTasks ? (checklistPulse ? 12 : 0) : 0
+                    )
+                    .scaleEffect(hasPendingTasks && checklistPulse ? 1.09 : 1.0)
+            }
+            // Always run the repeatForever cycle; hasPendingTasks gates visibility.
+            .animation(.easeInOut(duration: 1.1).repeatForever(autoreverses: true),
+                       value: checklistPulse)
+            .onAppear {
+                // Defer one runloop so the animation modifier is in place first.
+                DispatchQueue.main.async { checklistPulse = true }
             }
         }
     }
@@ -278,17 +305,6 @@ struct DeclarationView: View {
             handleDevotionalPresentation(true)
             Selection.shared.selectionFeedback()
         }
-//        .sheet(isPresented: $isPresentingDevotionalView) {
-//            self.isPresentingDevotionalView = false
-//            withAnimation {
-//                if appState.onBoardingTest {
-//                   // timerViewModel.loadRemainingTime()
-//                }
-//            }
-//        } content: {
-//            DevotionalView(viewModel: devotionalViewModel)
-//
-//        }
     }
     
     @ViewBuilder
@@ -357,8 +373,6 @@ struct DeclarationView: View {
             }
         }
         .background(backgroundContent)
-        // On iPad use fullScreenCover so sheets fill the whole screen.
-        // On iPhone keep the standard bottom sheet behaviour.
         .modifier(AdaptiveSheetModifier(item: $activeSheet, isIPad: isIPad) { sheet in
             AnyView(sheetContent(sheet))
         })
@@ -376,7 +390,6 @@ struct DeclarationView: View {
                 .environmentObject(timerViewModel)
                 .environmentObject(streakViewModel)
         }
-        // Top-level cover — handles both "create first declaration" and "set new after breakthrough"
         .fullScreenCover(isPresented: $showNewDeclarationSheet) {
             GeometryReader { geo in
                 PersonalDeclarationOnboardingView(
@@ -397,7 +410,6 @@ struct DeclarationView: View {
         }
         .onAppear(perform: handleOnAppear)
         .onDisappear(perform: handleOnDisappear)
-        //.setupNotificationObservers(timerViewModel: timerViewModel)
     }
     
     // MARK: - Sheet Management
@@ -419,7 +431,6 @@ struct DeclarationView: View {
                 .environmentObject(streakViewModel)
         case .timerStreak:
             TimerStreakDetailView(timerViewModel: timerViewModel)
-
         case .personalDeclaration:
             if let declaration = loadedDeclaration {
                 PersonalDeclarationCard(
@@ -441,10 +452,6 @@ struct DeclarationView: View {
                                 showNewDeclarationSheet = true
                             },
                             onShareToWarriorRoom: { prefill in
-                                // The flow already fires onDismiss after
-                                // this callback. Present the Warrior Room
-                                // composer prefilled — that's the share
-                                // step now (no separate celebration view).
                                 warriorRoomTestimonyPrefill = WarriorRoomTestimonyPrefill(text: prefill)
                             }
                         )
@@ -458,7 +465,6 @@ struct DeclarationView: View {
                     )
                     .environmentObject(subscriptionStore)
                 }
-
             } else {
                 ProgressView().tint(.white)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -511,11 +517,6 @@ struct DeclarationView: View {
         shareCounter += 1
         premiumCount += 1
         shareApp()
-     //   timerViewModel.loadRemainingTime()
-        
-        // Debug streak info
-        
-        // Try to fix broken streak state
         timerViewModel.debugFixStreak()
     }
     
@@ -526,33 +527,24 @@ struct DeclarationView: View {
     // MARK: - Sheet Actions
     
     private func createYourOwnView() {
-        
-        // Timer continues running - don't save
-        
-        // Clear any existing sheet first
         activeSheet = nil
-        
-        // Use consolidated sheet approach with delay to ensure clean state
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
             self.activeSheet = .createYourOwn
         }
-        
         Analytics.logEvent(Event.tryPremiumTapped, parameters: nil)
     }
-    private func premiumView()  {
-        // Timer continues running - don't save
+
+    private func premiumView() {
         activeSheet = .premium
         Analytics.logEvent(Event.tryPremiumTapped, parameters: nil)
     }
     
-    private func loveLetter()  {
-        // Timer continues running - don't save
+    private func loveLetter() {
         activeSheet = .loveLetter
         Analytics.logEvent(Event.tryPremiumTapped, parameters: nil)
     }
     
     private func dailyChecklist() {
-        // Timer continues running - don't save
         activeSheet = .dailyChecklist
         Analytics.logEvent("daily_checklist_opened", parameters: nil)
     }
@@ -571,9 +563,7 @@ struct DeclarationView: View {
     }
     
     private func checkAndShowBanner() {
-        // Check if this is a first install by checking if banner has been shown
         @AppStorage("hasShownSpeakAloudBanner") var hasShownBanner = false
-        
         if !hasShownBanner {
             DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
                 withAnimation(.easeInOut(duration: 0.5)) {
@@ -583,15 +573,12 @@ struct DeclarationView: View {
         }
     }
     
-    
-    
-    private func shareSpeakLife()  {
+    private func shareSpeakLife() {
         DispatchQueue.main.async {
             if let scene = UIApplication.shared.connectedScenes
                 .first(where: { $0.activationState == .foregroundActive })
                 as? UIWindowScene {
                 let url = URL(string: "\(APP.Product.urlID)")!
-                
                 let activityVC = UIActivityViewController(activityItems: ["Check out Speak Life - Bible Meditation app that'll transform your life!", url], applicationActivities: nil)
                 let window = scene.windows.first
                 window?.rootViewController?.present(activityVC, animated: true)
@@ -605,7 +592,6 @@ struct DeclarationView: View {
     }
     
     private func showReview() {
-     
         let currentDate = Date()
         if reviewTry <= 3 && appState.lastReviewRequestSetDate == nil {
             DispatchQueue.main.async {
@@ -613,11 +599,9 @@ struct DeclarationView: View {
                     .first(where: { $0.activationState == .foregroundActive })
                     as? UIWindowScene {
                     SKStoreReviewController.requestReview(in: scene)
-                   
                     reviewTry += 1
                     appState.lastReviewRequestSetDate = Date()
                     Analytics.logEvent(Event.leaveReviewShown, parameters: nil)
-                    
                 }
             }
         } else if reviewTry <= 1, let lastReviewSetDate = appState.lastReviewRequestSetDate, currentDate.timeIntervalSince(lastReviewSetDate) >= 60 * 1 {
@@ -631,8 +615,7 @@ struct DeclarationView: View {
                     Analytics.logEvent(Event.leaveReviewShown, parameters: nil)
                 }
             }
-        }
-            else if let lastReviewSetDate = appState.lastReviewRequestSetDate,
+        } else if let lastReviewSetDate = appState.lastReviewRequestSetDate,
                   currentDate.timeIntervalSince(lastReviewSetDate) >= 60 * 60 * 24 * 5,
                   reviewTry < 3 {
             DispatchQueue.main.async {
