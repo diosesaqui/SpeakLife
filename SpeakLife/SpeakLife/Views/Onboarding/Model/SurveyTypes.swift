@@ -21,6 +21,7 @@ enum SurveyStep: Int, CaseIterable {
     case commitmentHold     = 10
     case firstDeclaration   = 11  // taste before paywall
     case paywall            = 12
+    case notificationTime   = 13  // post-paywall
 
     var isQuestion: Bool {
         switch self {
