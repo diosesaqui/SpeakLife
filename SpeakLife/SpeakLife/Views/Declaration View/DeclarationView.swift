@@ -219,15 +219,14 @@ struct DeclarationView: View {
     @ViewBuilder
     private var dailyChecklistButton: some View {
         if !showSpeakAloudBanner {
-            let hasPendingTasks = streakViewModel.todayChecklist.completedTasksCount
-                < streakViewModel.todayChecklist.tasks.count
+            let isDone = streakViewModel.todayChecklist.isCompleted
             Button(action: {
                 activeSheet = .dailyChecklist
                 Analytics.logEvent("checkList_opened", parameters: nil)
             }) {
                 Image(systemName: "checklist")
                     .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(hasPendingTasks ? Constants.gold : .white)
+                    .foregroundColor(isDone ? .white : Constants.gold)
                     .frame(width: 44, height: 44)
                     .background(
                         Circle()
@@ -235,35 +234,37 @@ struct DeclarationView: View {
                             .overlay(
                                 Circle()
                                     .stroke(
-                                        hasPendingTasks
-                                            ? Constants.gold.opacity(0.8)
-                                            : Constants.DAMidBlue.opacity(0.6),
-                                        lineWidth: hasPendingTasks ? 1.5 : 1
+                                        isDone
+                                            ? Constants.DAMidBlue.opacity(0.6)
+                                            : Constants.gold.opacity(0.8),
+                                        lineWidth: isDone ? 1 : 1.5
                                     )
                             )
                     )
-                    // Gate glow + scale entirely on hasPendingTasks so streak
-                    // completion immediately kills the effect — the pulse cycle
-                    // keeps running invisibly so we never fight repeatForever.
                     .shadow(
-                        color: hasPendingTasks
-                            ? Constants.gold.opacity(checklistPulse ? 0.6 : 0.0)
-                            : .clear,
-                        radius: hasPendingTasks ? (checklistPulse ? 12 : 0) : 0
+                        color: Constants.gold.opacity(checklistPulse ? 0.6 : 0.0),
+                        radius: checklistPulse ? 12 : 0
                     )
-                    .scaleEffect(hasPendingTasks && checklistPulse ? 1.09 : 1.0)
+                    .scaleEffect(checklistPulse ? 1.09 : 1.0)
             }
-            // Always run the repeatForever cycle; hasPendingTasks gates visibility.
-            .animation(.easeInOut(duration: 1.1).repeatForever(autoreverses: true),
-                       value: checklistPulse)
+            // Animation modifier switches between repeatForever (pending) and a
+            // one-shot easeInOut (done). Changing the modifier AND the value
+            // together lets SwiftUI stop the repeating cycle cleanly on completion,
+            // and restart it when tasks reset the next day.
+            .animation(
+                isDone
+                    ? .easeInOut(duration: 0.4)
+                    : .easeInOut(duration: 1.1).repeatForever(autoreverses: true),
+                value: checklistPulse
+            )
             .onAppear {
-                // Defer one runloop so the animation modifier is in place first.
-                DispatchQueue.main.async { checklistPulse = true }
+                DispatchQueue.main.async { checklistPulse = !isDone }
             }
-            .onDisappear {
-                // Reset so the false→true transition re-triggers the animation
-                // when this view is recreated (e.g. after banner is dismissed).
-                checklistPulse = false
+            .onDisappear { checklistPulse = false }
+            .onChange(of: isDone) { done in
+                // Drive checklistPulse explicitly so the right animation modifier
+                // is active at the moment the value changes.
+                checklistPulse = !done
             }
         }
     }
