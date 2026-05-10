@@ -260,6 +260,11 @@ struct DeclarationView: View {
                 // Defer one runloop so the animation modifier is in place first.
                 DispatchQueue.main.async { checklistPulse = true }
             }
+            .onDisappear {
+                // Reset so the false→true transition re-triggers the animation
+                // when this view is recreated (e.g. after banner is dismissed).
+                checklistPulse = false
+            }
         }
     }
     
@@ -373,6 +378,8 @@ struct DeclarationView: View {
             }
         }
         .background(backgroundContent)
+        // On iPad use fullScreenCover so sheets fill the whole screen.
+        // On iPhone keep the standard bottom sheet behaviour.
         .modifier(AdaptiveSheetModifier(item: $activeSheet, isIPad: isIPad) { sheet in
             AnyView(sheetContent(sheet))
         })
@@ -390,6 +397,7 @@ struct DeclarationView: View {
                 .environmentObject(timerViewModel)
                 .environmentObject(streakViewModel)
         }
+        // Top-level cover — handles both "create first declaration" and "set new after breakthrough"
         .fullScreenCover(isPresented: $showNewDeclarationSheet) {
             GeometryReader { geo in
                 PersonalDeclarationOnboardingView(
@@ -431,6 +439,7 @@ struct DeclarationView: View {
                 .environmentObject(streakViewModel)
         case .timerStreak:
             TimerStreakDetailView(timerViewModel: timerViewModel)
+
         case .personalDeclaration:
             if let declaration = loadedDeclaration {
                 PersonalDeclarationCard(
@@ -465,6 +474,7 @@ struct DeclarationView: View {
                     )
                     .environmentObject(subscriptionStore)
                 }
+
             } else {
                 ProgressView().tint(.white)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -533,13 +543,12 @@ struct DeclarationView: View {
         }
         Analytics.logEvent(Event.tryPremiumTapped, parameters: nil)
     }
-
-    private func premiumView() {
+    private func premiumView()  {
         activeSheet = .premium
         Analytics.logEvent(Event.tryPremiumTapped, parameters: nil)
     }
     
-    private func loveLetter() {
+    private func loveLetter()  {
         activeSheet = .loveLetter
         Analytics.logEvent(Event.tryPremiumTapped, parameters: nil)
     }
@@ -564,6 +573,7 @@ struct DeclarationView: View {
     
     private func checkAndShowBanner() {
         @AppStorage("hasShownSpeakAloudBanner") var hasShownBanner = false
+        
         if !hasShownBanner {
             DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
                 withAnimation(.easeInOut(duration: 0.5)) {
@@ -573,12 +583,13 @@ struct DeclarationView: View {
         }
     }
     
-    private func shareSpeakLife() {
+    private func shareSpeakLife()  {
         DispatchQueue.main.async {
             if let scene = UIApplication.shared.connectedScenes
                 .first(where: { $0.activationState == .foregroundActive })
                 as? UIWindowScene {
                 let url = URL(string: "\(APP.Product.urlID)")!
+                
                 let activityVC = UIActivityViewController(activityItems: ["Check out Speak Life - Bible Meditation app that'll transform your life!", url], applicationActivities: nil)
                 let window = scene.windows.first
                 window?.rootViewController?.present(activityVC, animated: true)
@@ -592,6 +603,7 @@ struct DeclarationView: View {
     }
     
     private func showReview() {
+     
         let currentDate = Date()
         if reviewTry <= 3 && appState.lastReviewRequestSetDate == nil {
             DispatchQueue.main.async {
@@ -599,9 +611,11 @@ struct DeclarationView: View {
                     .first(where: { $0.activationState == .foregroundActive })
                     as? UIWindowScene {
                     SKStoreReviewController.requestReview(in: scene)
+                   
                     reviewTry += 1
                     appState.lastReviewRequestSetDate = Date()
                     Analytics.logEvent(Event.leaveReviewShown, parameters: nil)
+                    
                 }
             }
         } else if reviewTry <= 1, let lastReviewSetDate = appState.lastReviewRequestSetDate, currentDate.timeIntervalSince(lastReviewSetDate) >= 60 * 1 {
@@ -615,7 +629,8 @@ struct DeclarationView: View {
                     Analytics.logEvent(Event.leaveReviewShown, parameters: nil)
                 }
             }
-        } else if let lastReviewSetDate = appState.lastReviewRequestSetDate,
+        }
+            else if let lastReviewSetDate = appState.lastReviewRequestSetDate,
                   currentDate.timeIntervalSince(lastReviewSetDate) >= 60 * 60 * 24 * 5,
                   reviewTry < 3 {
             DispatchQueue.main.async {
