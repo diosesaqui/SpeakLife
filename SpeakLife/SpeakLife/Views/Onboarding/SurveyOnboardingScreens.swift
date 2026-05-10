@@ -463,7 +463,7 @@ struct SurveyInterstitialBScreen: View {
                         .multilineTextAlignment(.center)
                         .lineSpacing(4)
 
-                    Text("But here's what 1,000,000 believers have discovered:")
+                    Text("But here's what 100,000 believers have discovered:")
                         .font(.system(size: 15, weight: .semibold))
                         .foregroundColor(.white.opacity(0.85))
                         .multilineTextAlignment(.center)
