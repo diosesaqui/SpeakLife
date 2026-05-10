@@ -219,7 +219,7 @@ struct DeclarationView: View {
     @ViewBuilder
     private var dailyChecklistButton: some View {
         if !showSpeakAloudBanner {
-            let isDone = streakViewModel.todayChecklist.isCompleted
+            let isDone = streakViewModel.todayChecklist.isStreakEarned
             Button(action: {
                 activeSheet = .dailyChecklist
                 Analytics.logEvent("checkList_opened", parameters: nil)
