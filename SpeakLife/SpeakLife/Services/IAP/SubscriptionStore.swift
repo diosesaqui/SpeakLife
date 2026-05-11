@@ -77,6 +77,11 @@ final class SubscriptionStore: ObservableObject {
     // MARK: - High Conversion Paywall Flag
     @Published var useHighConversionPaywall = false
     @Published var showPayWhatYouCanLink = true
+
+    // MARK: - Paywall Value Props A/B Test
+    // false = benefit-based personalized props (high_conversion_v1)
+    // true  = succinct feature-based props (high_conversion_succinct_v1)
+    @Published var useSuccinctPaywallValueProps = false
     
     @Published var yearlySubscription = ""
     @Published var monthlySubscription = ""
@@ -223,6 +228,9 @@ final class SubscriptionStore: ObservableObject {
         // High Conversion Paywall Flag
         useHighConversionPaywall = remoteConfig["useHighConversionPaywall"].boolValue
         showPayWhatYouCanLink = remoteConfig["showPayWhatYouCanLink"].boolValue
+
+        // Paywall Value Props A/B Test
+        useSuccinctPaywallValueProps = remoteConfig["useSuccinctPaywallValueProps"].boolValue
         
         // AI Feature Flag from Remote Config
         enableAIFeatures = remoteConfig["enableAIFeatures"].boolValue
