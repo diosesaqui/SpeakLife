@@ -4,7 +4,10 @@
 //
 //  Data-driven paywall - Remote Config flag: useHighConversionPaywall
 //  Fixes: 70% abandon rate, missing price anchor, weak social proof
-//  Tracks: paywallVariant = "high_conversion_v1" on all events
+//  Tracks paywallVariant on all events:
+//    - "high_conversion_v1"          (benefit-based personalized props)
+//    - "high_conversion_succinct_v1" (succinct feature-based props, A/B via
+//      Remote Config flag useSuccinctPaywallValueProps)
 //
 
 import SwiftUI
@@ -28,7 +31,28 @@ struct HighConversionPaywallView: View {
     @State private var isEligibleForTrial = false
 
     var callback: (() -> Void)?
-    private let paywallVariant = "high_conversion_v1"
+
+    /// Variant string sent to Firebase Analytics on every paywall event so the
+    /// A/B between benefit-based and feature-based copy can be compared.
+    private var paywallVariant: String {
+        subscriptionStore.useSuccinctPaywallValueProps ? "high_conversion_succinct_v1" : "high_conversion_v1"
+    }
+
+    /// Succinct feature-based value props (Variant B). Plain, scannable list.
+    private static let succinctValueProps: [String] = [
+        "Access to all declaration categories",
+        "Access to all devotionals",
+        "Access to all mind-renewing audios",
+        "Unlimited Create-Your-Own declarations & private journal entries",
+        "Access to all themes"
+    ]
+    private static let succinctIcons: [String] = [
+        "quote.bubble.fill",
+        "book.fill",
+        "headphones",
+        "square.and.pencil",
+        "paintbrush.fill"
+    ]
 
     private var surveyEngine: SurveyPersonalizationEngine {
         SurveyPersonalizationEngine(goalWordRaw: appState.surveyGoalWord)
@@ -156,13 +180,33 @@ struct HighConversionPaywallView: View {
     }
 
     // MARK: - Benefits
+    @ViewBuilder
     private var benefitsSection: some View {
+        if subscriptionStore.useSuccinctPaywallValueProps {
+            succinctBenefitsSection
+        } else {
+            personalizedBenefitsSection
+        }
+    }
+
+    private var personalizedBenefitsSection: some View {
         let icons = ["quote.bubble.fill", "shield.fill", "eye.fill", "person.circle.fill"]
         let descs = Array(resolvedDescriptions.prefix(4))
         let props = Array(resolvedValueProps.prefix(4))
         return VStack(alignment: .leading, spacing: 16) {
             ForEach(0..<min(props.count, 4), id: \.self) { i in
                 HCBenefitRow(icon: icons[i], title: props[i], description: i < descs.count ? descs[i] : "")
+            }
+        }
+        .padding(.horizontal, 24)
+    }
+
+    private var succinctBenefitsSection: some View {
+        let props = Self.succinctValueProps
+        let icons = Self.succinctIcons
+        return VStack(alignment: .leading, spacing: 14) {
+            ForEach(0..<props.count, id: \.self) { i in
+                HCSuccinctBenefitRow(icon: icons[i], title: props[i])
             }
         }
         .padding(.horizontal, 24)
@@ -468,6 +512,22 @@ private struct HCBenefitRow: View {
                 Text(title).font(.system(size: 14, weight: .semibold)).foregroundColor(.white)
                 Text(description).font(.system(size: 12)).foregroundColor(.white.opacity(0.65)).fixedSize(horizontal: false, vertical: true)
             }
+            Spacer()
+        }
+    }
+}
+
+// MARK: - Succinct Benefit Row (Variant B)
+private struct HCSuccinctBenefitRow: View {
+    let icon: String; let title: String
+    var body: some View {
+        HStack(alignment: .center, spacing: 14) {
+            Image(systemName: icon).font(.system(size: 18, weight: .medium))
+                .foregroundColor(Constants.DAMidBlue).frame(width: 26)
+            Text(title)
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundColor(.white)
+                .fixedSize(horizontal: false, vertical: true)
             Spacer()
         }
     }
