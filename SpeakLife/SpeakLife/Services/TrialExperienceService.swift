@@ -68,7 +68,7 @@ final class TrialExperienceService: ObservableObject {
     /// Call when user converts (premium_succeeded)
     func onTrialConverted() {
         UserDefaults.standard.set(false, forKey: kTrialActive)
-        center.removePendingNotificationRequests(withIdentifiers: ["trial_d2", "trial_d3"])
+        center.removePendingNotificationRequests(withIdentifiers: ["trial_d2", "trial_d3", "trial_24h_reminder"])
         Analytics.logEvent("trial_experience_converted", parameters: [
             "declarations_during_trial": declarationCountDuringTrial,
             "trial_day": trialDay
@@ -82,6 +82,7 @@ final class TrialExperienceService: ObservableObject {
             guard settings.authorizationStatus == .authorized else { return }
             self?.scheduleDay2Push(from: startDate)
             self?.scheduleDay3Push(from: startDate)
+            self?.schedule24HourReminder(from: startDate)
         }
     }
 
@@ -122,6 +123,33 @@ final class TrialExperienceService: ObservableObject {
 
         center.add(UNNotificationRequest(
             identifier: "trial_d3",
+            content: content,
+            trigger: UNCalendarNotificationTrigger(dateMatching: comps, repeats: false)
+        ))
+    }
+
+    /// Honors the paywall's "We'll remind you 24 hours before your trial ends" promise.
+    /// 3-day trial converts at startDate + 72h, so this fires at startDate + 48h.
+    /// Falls back to 9am that morning if T+48h lands between midnight and 8am.
+    private func schedule24HourReminder(from startDate: Date) {
+        let content = UNMutableNotificationContent()
+        content.title = "Heads up: your trial ends in 24 hours"
+        content.body = "Your SpeakLife trial converts to a paid subscription tomorrow. Cancel anytime in Settings → Apple ID → Subscriptions, or keep going — your declarations are working."
+        content.sound = .default
+        content.userInfo = ["lifecycle_id": "trial_24h_reminder"]
+
+        guard let target = Calendar.current.date(byAdding: .hour, value: 48, to: startDate) else { return }
+        let hour = Calendar.current.component(.hour, from: target)
+        let fireDate: Date = {
+            if hour < 8 {
+                return Calendar.current.date(bySettingHour: 9, minute: 0, second: 0, of: target) ?? target
+            }
+            return target
+        }()
+        let comps = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute], from: fireDate)
+
+        center.add(UNNotificationRequest(
+            identifier: "trial_24h_reminder",
             content: content,
             trigger: UNCalendarNotificationTrigger(dateMatching: comps, repeats: false)
         ))

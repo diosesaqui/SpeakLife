@@ -48,9 +48,9 @@ struct HighConversionPaywallView: View {
         surveyEngine.hasSurveyData
             ? surveyEngine.paywallCopy.valueProps.map { $0.description }
             : [
-                "Daily declarations rewire your mind until God's Word becomes your first response.",
-                "Spoken truth is your greatest weapon. It is exactly how Jesus defeated every attack.",
-                "Faith comes by hearing. Audio devotionals put Scripture in your ears morning and night.",
+                "Healing. Peace. Identity. Provision. Open one each morning and watch it show up in your day.",
+                "Jesus did it. Paul did it. Your voice agreeing with God's Word is how the storm shifts.",
+                "A 60-second declaration each morning rewires what your mind defaults to.",
                 "Know your identity in Christ so deeply that fear, doubt, and shame lose their grip."
               ]
     }
@@ -70,6 +70,17 @@ struct HighConversionPaywallView: View {
         guard let p = subscriptionStore.currentOfferedPremium,
               let d = Double(p.price.description) else { return "$3.33" }
         return String(format: "$%.2f", d / 12.0)
+    }
+    private var savingsPercent: Int? {
+        guard let annual = subscriptionStore.currentOfferedPremium,
+              let monthly = subscriptionStore.currentOfferedPremiumMonthly else { return 67 }
+        let annualVal = NSDecimalNumber(decimal: annual.price).doubleValue
+        let monthlyVal = NSDecimalNumber(decimal: monthly.price).doubleValue
+        guard monthlyVal > 0 else { return nil }
+        let monthlyAnnualized = monthlyVal * 12.0
+        guard monthlyAnnualized > annualVal else { return nil }
+        let savings = (monthlyAnnualized - annualVal) / monthlyAnnualized
+        return Int((savings * 100).rounded())
     }
     private var selectedProduct: Product? {
         selectedPlan == .annual ? subscriptionStore.currentOfferedPremium : subscriptionStore.currentOfferedPremiumMonthly
@@ -144,24 +155,29 @@ struct HighConversionPaywallView: View {
         }
     }
 
-    // MARK: - Social Proof (stars only — headline already covers 100K stat)
+    // MARK: - Social Proof (rating + user count, above benefits)
     private var starsOnlyBanner: some View {
-        HStack(spacing: 4) {
-            HStack(spacing: 2) {
-                ForEach(0..<5) { _ in Image(systemName: "star.fill").font(.system(size: 13)).foregroundColor(.yellow) }
+        VStack(spacing: 4) {
+            HStack(spacing: 6) {
+                HStack(spacing: 2) {
+                    ForEach(0..<5) { _ in Image(systemName: "star.fill").font(.system(size: 13)).foregroundColor(.yellow) }
+                }
+                Text("4.9 · App Store")
+                    .font(.system(size: 13, weight: .semibold)).foregroundColor(.white.opacity(0.85))
             }
-            Text("4.9 rating · App Store")
-                .font(.system(size: 13, weight: .medium)).foregroundColor(.white.opacity(0.7))
+            Text("100,000+ believers declaring daily")
+                .font(.system(size: 12, weight: .medium))
+                .foregroundColor(.white.opacity(0.6))
         }
     }
 
-    // MARK: - Benefits
+    // MARK: - Benefits (3 tiles, concrete-first per high-conversion brief)
     private var benefitsSection: some View {
-        let icons = ["quote.bubble.fill", "shield.fill", "eye.fill", "person.circle.fill"]
-        let descs = Array(resolvedDescriptions.prefix(4))
-        let props = Array(resolvedValueProps.prefix(4))
+        let icons = ["eye.fill", "shield.fill", "quote.bubble.fill"]
+        let descs = Array(resolvedDescriptions.prefix(3))
+        let props = Array(resolvedValueProps.prefix(3))
         return VStack(alignment: .leading, spacing: 16) {
-            ForEach(0..<min(props.count, 4), id: \.self) { i in
+            ForEach(0..<min(props.count, 3), id: \.self) { i in
                 HCBenefitRow(icon: icons[i], title: props[i], description: i < descs.count ? descs[i] : "")
             }
         }
@@ -255,10 +271,18 @@ struct HighConversionPaywallView: View {
     private var planSelectorSection: some View {
         GeometryReader { geo in
             let cardWidth = (geo.size.width - 10) / 2
+            let annualBadge: String = {
+                if let pct = savingsPercent { return "BEST VALUE · -\(pct)%" }
+                return "BEST VALUE"
+            }()
+            let annualSub: String = {
+                if let pct = savingsPercent { return "\(annualPerMonth)/mo · save \(pct)%" }
+                return "per month \(annualPerMonth)"
+            }()
             HStack(spacing: 10) {
                 planCard(plan: .monthly, topLabel: nil, title: "Monthly", price: monthlyPrice, sub: "per month")
                     .frame(width: cardWidth)
-                planCard(plan: .annual, topLabel: "BEST VALUE", title: "Annual", price: annualPrice, sub: "per month \(annualPerMonth)")
+                planCard(plan: .annual, topLabel: annualBadge, title: "Annual", price: annualPrice, sub: annualSub)
                     .frame(width: cardWidth)
             }
         }
@@ -276,7 +300,12 @@ struct HighConversionPaywallView: View {
                     if topLabel != nil { Spacer().frame(height: 12) }
                     Text(title).font(.system(size: 13, weight: .semibold)).foregroundColor(isSelected ? .white : .white.opacity(0.55))
                     Text(price).font(.system(size: 22, weight: .bold)).foregroundColor(isSelected ? .white : .white.opacity(0.45))
-                    Text(sub).font(.system(size: 10)).foregroundColor(isSelected ? .white.opacity(0.7) : .white.opacity(0.3)).multilineTextAlignment(.center)
+                    Text(sub)
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundColor(isSelected ? .white.opacity(0.85) : .white.opacity(0.4))
+                        .multilineTextAlignment(.center)
+                        .lineLimit(2)
+                        .minimumScaleFactor(0.85)
                 }
                 .padding(.vertical, 14).padding(.horizontal, 8)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -297,12 +326,32 @@ struct HighConversionPaywallView: View {
         .buttonStyle(PlainButtonStyle())
     }
 
-    // MARK: - Trial Callout
+    // MARK: - Trust Stack (3 lines neutralize 3 fears: value, forgetting to cancel, exit friction)
     private var trialCallout: some View {
-        HStack(spacing: 6) {
-            Image(systemName: "checkmark.circle.fill").foregroundColor(.green).font(.system(size: 14))
-            Text(selectedPlan == .annual && isEligibleForTrial ? "3 days free - cancel anytime before trial ends" : "Start today - cancel anytime")
-                .font(.system(size: 13, weight: .medium)).foregroundColor(.white.opacity(0.85))
+        let showTrial = selectedPlan == .annual && isEligibleForTrial
+        return VStack(alignment: .leading, spacing: 6) {
+            if showTrial {
+                trustRow("3 days free — full access, no commitment")
+                trustRow("We'll remind you 24 hours before your trial ends")
+                trustRow("Cancel anytime in one tap")
+            } else {
+                trustRow("Full access from day one")
+                trustRow("Cancel anytime in one tap")
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func trustRow(_ text: String) -> some View {
+        HStack(alignment: .top, spacing: 8) {
+            Image(systemName: "checkmark.circle.fill")
+                .foregroundColor(.green)
+                .font(.system(size: 13))
+            Text(text)
+                .font(.system(size: 13, weight: .medium))
+                .foregroundColor(.white.opacity(0.8))
+                .fixedSize(horizontal: false, vertical: true)
+            Spacer(minLength: 0)
         }
     }
 
@@ -316,11 +365,10 @@ struct HighConversionPaywallView: View {
             .padding(.vertical, 12)
     }
 
-    // MARK: - CTA
+    // MARK: - CTA (personal pronoun + specific period — Apphud: 5–10% lift from CTA word-tweaks)
     private var ctaText: String {
-        if selectedPlan == .monthly { return "Start Taking Ground →" }
-        if isEligibleForTrial { return "Start Free Trial" }
-        return "Start Taking Ground →"
+        if selectedPlan == .annual && isEligibleForTrial { return "Start My 3 Days Free  →" }
+        return "Start Taking Ground  →"
     }
 
     private var ctaButton: some View {
