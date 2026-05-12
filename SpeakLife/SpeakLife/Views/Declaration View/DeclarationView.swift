@@ -245,7 +245,6 @@ struct DeclarationView: View {
                         color: Constants.gold.opacity(checklistPulse ? 0.6 : 0.0),
                         radius: checklistPulse ? 12 : 0
                     )
-                    .scaleEffect(checklistPulse ? 1.09 : 1.0)
             }
             // Animation modifier switches between repeatForever (pending) and a
             // one-shot easeInOut (done). Changing the modifier AND the value
