@@ -228,6 +228,30 @@ final class AppState: ObservableObject {
             defaults.set(true, forKey: "declarationsHealedAfterBugFixV1")
         }
 
+        // V7 heal: align personalDeclarationTimeIndex with the user's current
+        // startTimeIndex. Until the picker-mirror commit there was no user-facing
+        // way to set the PD time independently of the window picker — but V5
+        // only seeded personalDeclarationTimeIndex if the key was nil, so users
+        // whose V5 heal already wrote 8 AM (or seeded from a then-stale
+        // startTimeIndex) never got resynced when they later adjusted their
+        // window. Sentinel flag keeps it one-shot. Only resyncs if the current
+        // startTimeIndex is a reasonable morning hour (>= 6 AM) so we don't
+        // move anyone to midnight.
+        let needsPersonalDeclarationTimeResync = defaults.bool(forKey: "hasPersonalDeclaration")
+            && defaults.object(forKey: "personalDeclarationTimeResyncedV1") == nil
+        if needsPersonalDeclarationTimeResync {
+            let currentStart = defaults.integer(forKey: "startTimeIndex")
+            if currentStart >= 12 {
+                defaults.set(currentStart, forKey: "personalDeclarationTimeIndex")
+                DispatchQueue.main.async {
+                    DIContainer.shared.rescheduleActivePersonalDeclarationIfNeeded(
+                        startTimeIndex: currentStart
+                    )
+                }
+            }
+        }
+        defaults.set(true, forKey: "personalDeclarationTimeResyncedV1")
+
         // Heal lifecycle pushes (D1-D30) that were wiped by the legacy
         // removeAllPendingNotificationRequests() bug in NotificationManager.
         // Service-side flag (lifecycle_repaired_v1) keeps it one-shot.
