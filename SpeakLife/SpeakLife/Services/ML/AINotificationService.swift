@@ -28,10 +28,13 @@ final class AINotificationService {
             return
         }
         
-        // Remove existing notifications
-        notificationCenter.removeAllPendingNotificationRequests()
-        
         // Generate AI-powered notifications
+        // NOTE: previously called removeAllPendingNotificationRequests() here, which
+        // wiped lifecycle pushes (D1-D30), streak triggers, daily burst rotations,
+        // AND the personal_declaration_reminder. That entry point is currently
+        // unreachable (registerAINotifications has no callers), but leaving the
+        // wipe in place is a landmine: anyone wiring this in would silently break
+        // the entire retention system. Schedule by stable ID like everything else.
         let aiNotifications = await generatePersonalizedNotifications(
             count: count,
             timeRange: timeRange
