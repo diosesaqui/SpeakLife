@@ -46,8 +46,12 @@ final class DIContainer {
     /// if no active declaration exists, this is a no-op.
     func rescheduleActivePersonalDeclarationIfNeeded(startTimeIndex: Int) {
         Task { [personalDeclarationRepository, declarationNotificationService] in
-            guard let active = await personalDeclarationRepository.load(),
-                  !active.isReceived else {
+            guard let active = await personalDeclarationRepository.load() else {
+                print("🟡 PD reschedule skipped: no declaration in repo (load returned nil — either never saved, cleared, or decode failed silently)")
+                return
+            }
+            guard !active.isReceived else {
+                print("🟡 PD reschedule skipped: declaration marked received on \(active.receivedDate.map(String.init(describing:)) ?? "?")")
                 return
             }
             await MainActor.run {

@@ -56,6 +56,10 @@ struct ReminderCell: View {
                 showToast()
             } valueIndex: { index in
                 appState.startTimeIndex = index
+                // Keep the personal declaration push aligned with the user's
+                // window setting. The next app foreground re-schedules it via
+                // rescheduleActivePersonalDeclarationIfNeeded using this value.
+                appState.personalDeclarationTimeIndex = index
                 showToast()
             }
 

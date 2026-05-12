@@ -95,6 +95,10 @@ struct NotificationOnboarding: View {
                     appState.startTimeNotification = valueTime
                 } valueIndex: { valueIndex in
                     appState.startTimeIndex = valueIndex
+                    // Mirror to the personal declaration push time. There's no
+                    // separate picker for it, and users expect their selected
+                    // window to also drive the personal declaration reminder.
+                    appState.personalDeclarationTimeIndex = valueIndex
                 }
                 
                 .foregroundColor(appState.onBoardingTest ? .white : Constants.DEABlack)

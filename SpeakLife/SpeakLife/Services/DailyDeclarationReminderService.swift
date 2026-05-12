@@ -156,7 +156,7 @@ class DailyDeclarationReminderService: ObservableObject {
         // Tuesday
         (
             title: "Tuesday: small reps, big results 💪",
-            body: "Day two of the week, day N of your habit. Open SpeakLife and put the words in your mouth."
+            body: "Day two of the week. Open SpeakLife and put the words in your mouth before the day owns you."
         ),
         // Wednesday
         (
