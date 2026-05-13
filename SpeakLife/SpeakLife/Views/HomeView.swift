@@ -324,12 +324,6 @@ struct HomeView: View {
                 .background(Color.clear)
                 .environment(\.colorScheme, .dark)
                 .ignoresSafeArea()
-            
-            // Trial ending banner
-            VStack {
-                TrialEndingBanner()
-                Spacer()
-            }
 
             // Global streak celebration overlay
             if showStreakCelebration {
