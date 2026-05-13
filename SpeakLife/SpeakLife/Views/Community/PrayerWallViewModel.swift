@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import FirebaseAuth
 import FirebaseFirestore
 import FirebaseMessaging
 import Network
@@ -393,8 +394,18 @@ class PrayerWallViewModel: ObservableObject {
     /// Toggle a reaction on a post. Tapping the currently-selected reaction
     /// clears it; tapping a different reaction switches to it.
     func toggleReaction(_ reaction: WarriorRoomReaction, on post: PrayerWallPost) {
-        guard let id = post.id else { return }
+        guard let id = post.id else {
+            #if DEBUG
+            print("🔴 PrayerWall reaction: tap ignored — post has no id")
+            #endif
+            return
+        }
         let existing = self.reaction(for: post)
+        #if DEBUG
+        let uid = Auth.auth().currentUser?.uid ?? "<nil>"
+        let isAnon = Auth.auth().currentUser?.isAnonymous ?? false
+        print("🟣 PrayerWall reaction tap: postId=\(id) tapped=\(reaction.rawValue) existing=\(existing?.rawValue ?? "<none>") uid=\(uid) anon=\(isAnon)")
+        #endif
 
         if existing == reaction {
             // Toggle off
@@ -469,12 +480,24 @@ class PrayerWallViewModel: ObservableObject {
         }
 
         guard !updates.isEmpty else { return }
+        #if DEBUG
+        print("🟣 PrayerWall reaction: writing to \(collection)/\(postId) updates=\(updates)")
+        #endif
         db.collection(collection).document(postId)
             .updateData(updates) { [weak self] error in
                 if let error = error {
+                    #if DEBUG
+                    let ns = error as NSError
+                    print("🔴 PrayerWall reaction FAILED: domain=\(ns.domain) code=\(ns.code) desc=\(ns.localizedDescription)")
+                    print("🔴 PrayerWall reaction userInfo=\(ns.userInfo)")
+                    #endif
                     DispatchQueue.main.async {
                         self?.errorMessage = "Error saving reaction: \(error.localizedDescription)"
                     }
+                } else {
+                    #if DEBUG
+                    print("🟢 PrayerWall reaction: write succeeded for \(postId)")
+                    #endif
                 }
             }
     }
