@@ -455,6 +455,19 @@ struct PrayerPostCard: View {
                 .fill(Color.white.opacity(showAnsweredGlow ? 0.22 : 0.12))
                 .shadow(color: showAnsweredGlow ? Color(hex: "FBBF24").opacity(0.45) : .clear, radius: 12)
         )
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .strokeBorder(
+                    LinearGradient(
+                        colors: post.authorIsPremium == true
+                            ? [Color(hex: "FBBF24").opacity(0.55), Color(hex: "F59E0B").opacity(0.25)]
+                            : [Color.clear, Color.clear],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    lineWidth: post.authorIsPremium == true ? 1 : 0
+                )
+        )
         .animation(.easeOut(duration: 0.6), value: showAnsweredGlow)
     }
 
