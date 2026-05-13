@@ -337,10 +337,16 @@ struct PrayerPostCard: View {
             // Header row
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(post.displayName)
-                        .font(Font.custom("AppleSDGothicNeo-Regular", size: 12, relativeTo: .caption))
-                        .foregroundColor(.white.opacity(0.5))
-                        .italic()
+                    HStack(spacing: 5) {
+                        Text(post.displayName)
+                            .font(Font.custom("AppleSDGothicNeo-Regular", size: 12, relativeTo: .caption))
+                            .foregroundColor(.white.opacity(0.5))
+                            .italic()
+
+                        if post.authorIsPremium == true {
+                            premiumCrownBadge
+                        }
+                    }
 
                     if post.isAnswered {
                         Label("Answered ✓", systemImage: "checkmark.seal.fill")
@@ -467,6 +473,28 @@ struct PrayerPostCard: View {
             RoundedRectangle(cornerRadius: 10)
                 .fill(Color.white.opacity(0.18))
         )
+    }
+
+    private var premiumCrownBadge: some View {
+        HStack(spacing: 3) {
+            Image(systemName: "crown.fill")
+                .font(.system(size: 9, weight: .semibold))
+            Text("Covenant")
+                .font(Font.custom("AppleSDGothicNeo-Bold", size: 10, relativeTo: .caption2))
+                .tracking(0.3)
+        }
+        .foregroundColor(Color(hex: "FBBF24"))
+        .padding(.horizontal, 6)
+        .padding(.vertical, 2)
+        .background(
+            Capsule()
+                .fill(Color(hex: "FBBF24").opacity(0.14))
+                .overlay(
+                    Capsule()
+                        .stroke(Color(hex: "FBBF24").opacity(0.45), lineWidth: 0.5)
+                )
+        )
+        .accessibilityLabel("Covenant Partner")
     }
 
     private var reactionRow: some View {
@@ -1035,6 +1063,7 @@ struct PostPrayerView: View {
                                   isSister: isSister,
                                   category: category,
                                   authorUid: appleSignIn.uid,
+                                  authorIsPremium: subscriptionStore.isPremium,
                                   isTestimony: isTestimony)
                 if viewModel.errorMessage == nil {
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
