@@ -476,25 +476,10 @@ struct PrayerPostCard: View {
     }
 
     private var premiumCrownBadge: some View {
-        HStack(spacing: 3) {
-            Image(systemName: "crown.fill")
-                .font(.system(size: 9, weight: .semibold))
-            Text("Covenant")
-                .font(Font.custom("AppleSDGothicNeo-Bold", size: 10, relativeTo: .caption2))
-                .tracking(0.3)
-        }
-        .foregroundColor(Color(hex: "FBBF24"))
-        .padding(.horizontal, 6)
-        .padding(.vertical, 2)
-        .background(
-            Capsule()
-                .fill(Color(hex: "FBBF24").opacity(0.14))
-                .overlay(
-                    Capsule()
-                        .stroke(Color(hex: "FBBF24").opacity(0.45), lineWidth: 0.5)
-                )
-        )
-        .accessibilityLabel("Covenant Partner")
+        Image(systemName: "crown.fill")
+            .font(.system(size: 11, weight: .semibold))
+            .foregroundColor(Color(hex: "FBBF24"))
+            .accessibilityLabel("Premium subscriber")
     }
 
     private var reactionRow: some View {
