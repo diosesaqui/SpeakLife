@@ -96,6 +96,7 @@ struct HomeView: View {
     @State private var showPDMigrationSheet = false
     @State private var showStreakCelebration = false
     @State private var celebrationStreakCount = 0
+    @State private var anniversaryMilestone: PremiumAnniversaryMilestone?
     
     private let currentVersion = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0.0"
 
@@ -206,6 +207,12 @@ struct HomeView: View {
                                 guard newVersion > 0 else { return }
                                 declarationStore.setRemoteDeclarationVersion(version: newVersion)
                             }
+                            // RC's premium entitlement (and its originalPurchaseDate) is fetched
+                            // async on cold start; the .onAppear check above may run before the
+                            // value lands. Re-run once RC populates it.
+                            .onChange(of: subscriptionStore.premiumOriginalPurchaseDate) { _ in
+                                checkForPremiumAnniversary()
+                            }
                             .onChange(of: paywallTrigger.shouldShowPaywall) { newValue in
                                 if newValue && !subscriptionStore.isPremium {
                                     showTriggeredPaywall = true
@@ -255,6 +262,10 @@ struct HomeView: View {
                                     .environmentObject(audioDeclarationViewModel)
                                     .environmentObject(tabViewModel)
                             }
+                            .fullScreenCover(item: $anniversaryMilestone) { milestone in
+                                PremiumAnniversaryView(milestone: milestone)
+                                    .environmentObject(subscriptionStore)
+                            }
                   
                 } else {
                     SurveyOnboardingView(size: UIScreen.main.bounds.size) {
@@ -298,6 +309,7 @@ struct HomeView: View {
                 .onAppear {
                     checkForNewVersion()
                     checkForPersonalDeclarationMigration()
+                    checkForPremiumAnniversary()
                     if appState.firstOpen {
                         appState.firstOpen = false
                     }
@@ -567,6 +579,37 @@ struct HomeView: View {
             isPresented = true
             UserDefaults.standard.set(currentVersion, forKey: "lastVersion")
        }
+    }
+
+    /// Surfaces a one-time anniversary overlay for premium subscribers at 30,
+    /// 90, and 365 days. If the user is past multiple unshown milestones at
+    /// check time (e.g. when this feature first ships), only the highest is
+    /// shown and the lower ones are marked-as-shown silently so they don't
+    /// queue up.
+    private func checkForPremiumAnniversary() {
+        guard appState.isOnboarded else { return }
+        guard subscriptionStore.isPremium else { return }
+        guard let originalDate = subscriptionStore.premiumOriginalPurchaseDate else { return }
+        guard !showSubscription else { return }
+        guard anniversaryMilestone == nil else { return }
+
+        let days = Calendar.current.dateComponents([.day], from: originalDate, to: Date()).day ?? 0
+        guard days > 0 else { return }
+
+        let defaults = UserDefaults.standard
+        let crossedUnshown = PremiumAnniversaryMilestone.ascending
+            .filter { days >= $0.days && !defaults.bool(forKey: $0.shownDefaultsKey) }
+        guard let highest = crossedUnshown.last else { return }
+
+        for milestone in crossedUnshown where milestone != highest {
+            defaults.set(true, forKey: milestone.shownDefaultsKey)
+        }
+        defaults.set(true, forKey: highest.shownDefaultsKey)
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+            guard appState.isOnboarded && !showSubscription else { return }
+            anniversaryMilestone = highest
+        }
     }
 }
 

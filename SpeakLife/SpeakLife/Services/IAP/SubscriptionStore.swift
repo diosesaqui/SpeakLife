@@ -36,6 +36,9 @@ let weeklyID = "SpeakLife1Wk5"
 final class SubscriptionStore: ObservableObject {
 
     @Published var isPremium: Bool = false
+    /// First date the user ever activated the premium entitlement (survives
+    /// cancel-and-resubscribe). Powers the subscription anniversary overlay.
+    @Published var premiumOriginalPurchaseDate: Date?
     @Published private(set) var subscriptions: [Product] = []
     @Published private(set) var nonConsumables: [Product] = [] // New list for non-consumables
     @Published private(set) var purchasedSubscriptions: [Product] = []
@@ -320,6 +323,9 @@ final class SubscriptionStore: ObservableObject {
 
         isPremium          = premiumActive
         isInDevotionalPremium = devotionalActive
+        premiumOriginalPurchaseDate = premiumActive
+            ? RevenueCatManager.shared.premiumOriginalPurchaseDate(info)
+            : nil
 
         // Mirror into purchasedSubscriptions / purchasedNonConsumables so any
         // view code that checks those arrays keeps working.

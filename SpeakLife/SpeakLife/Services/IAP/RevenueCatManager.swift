@@ -42,6 +42,12 @@ final class RevenueCatManager {
         info.entitlements[Self.devotionalEntitlement]?.isActive == true
     }
 
+    /// First time the user ever purchased premium, surviving cancel/resubscribe.
+    /// Used to compute subscription anniversaries.
+    func premiumOriginalPurchaseDate(_ info: CustomerInfo) -> Date? {
+        info.entitlements[Self.premiumEntitlement]?.originalPurchaseDate
+    }
+
     // MARK: - Purchase
 
     /// Purchase by RC Package (preferred — used when loading from offerings).
