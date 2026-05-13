@@ -97,6 +97,7 @@ struct HomeView: View {
     @State private var showStreakCelebration = false
     @State private var celebrationStreakCount = 0
     @State private var anniversaryMilestone: PremiumAnniversaryMilestone?
+    @State private var yearInReviewStats: YearInReviewStats?
     
     private let currentVersion = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0.0"
 
@@ -213,6 +214,9 @@ struct HomeView: View {
                             .onChange(of: subscriptionStore.premiumOriginalPurchaseDate) { _ in
                                 checkForPremiumAnniversary()
                             }
+                            .onChange(of: subscriptionStore.isPremium) { _ in
+                                checkForYearInReview()
+                            }
                             .onChange(of: paywallTrigger.shouldShowPaywall) { newValue in
                                 if newValue && !subscriptionStore.isPremium {
                                     showTriggeredPaywall = true
@@ -266,6 +270,10 @@ struct HomeView: View {
                                 PremiumAnniversaryView(milestone: milestone)
                                     .environmentObject(subscriptionStore)
                             }
+                            .fullScreenCover(item: $yearInReviewStats) { stats in
+                                YearInReviewView(stats: stats)
+                                    .environmentObject(subscriptionStore)
+                            }
                   
                 } else {
                     SurveyOnboardingView(size: UIScreen.main.bounds.size) {
@@ -310,6 +318,7 @@ struct HomeView: View {
                     checkForNewVersion()
                     checkForPersonalDeclarationMigration()
                     checkForPremiumAnniversary()
+                    checkForYearInReview()
                     if appState.firstOpen {
                         appState.firstOpen = false
                     }
@@ -579,6 +588,45 @@ struct HomeView: View {
             isPresented = true
             UserDefaults.standard.set(currentVersion, forKey: "lastVersion")
        }
+    }
+
+    /// Surfaces the premium Year in Review between Dec 15 and Jan 15. Auto-
+    /// launches on cold start once per recap year. From Dec 15 → Dec 31 the
+    /// recap is for the in-progress current year (Spotify Wrapped pattern);
+    /// from Jan 1 → Jan 15 it's for the year that just closed.
+    private func checkForYearInReview() {
+        guard appState.isOnboarded else { return }
+        guard subscriptionStore.isPremium else { return }
+        guard !showSubscription else { return }
+        guard yearInReviewStats == nil else { return }
+
+        let calendar = Calendar.current
+        let now = Date()
+        let month = calendar.component(.month, from: now)
+        let day = calendar.component(.day, from: now)
+        let currentYear = calendar.component(.year, from: now)
+
+        let recapYear: Int
+        if month == 12 && day >= 15 {
+            recapYear = currentYear
+        } else if month == 1 && day <= 15 {
+            recapYear = currentYear - 1
+        } else {
+            return
+        }
+
+        let shownKey = "yearInReview_shown_\(recapYear)"
+        guard !UserDefaults.standard.bool(forKey: shownKey) else { return }
+
+        let stats = YearInReviewStats.build(for: recapYear)
+        guard stats.hasMeaningfulActivity else { return }
+
+        UserDefaults.standard.set(true, forKey: shownKey)
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+            guard appState.isOnboarded && !showSubscription else { return }
+            yearInReviewStats = stats
+        }
     }
 
     /// Surfaces a one-time anniversary overlay for premium subscribers at 30,

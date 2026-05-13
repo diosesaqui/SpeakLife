@@ -30,6 +30,8 @@
 		451AECF52E4EEB2D00C1490E /* BootcampDetailViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 451AECF22E4EEB2D00C1490E /* BootcampDetailViews.swift */; };
 		4525D6852F37C0EB00571394 /* DailyDeclarationBurstView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4525D6842F37C0EB00571394 /* DailyDeclarationBurstView.swift */; };
 		45F0BBBB2F40C0EB00571394 /* PremiumAnniversaryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45F0AAAA2F40C0EB00571394 /* PremiumAnniversaryView.swift */; };
+		45F0DDDD2F40C0EB00571394 /* YearInReviewStats.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45F0CCCC2F40C0EB00571394 /* YearInReviewStats.swift */; };
+		45F0FFFF2F40C0EB00571394 /* YearInReviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45F0EEEE2F40C0EB00571394 /* YearInReviewView.swift */; };
 		4525D7D02F3DC7B400571394 /* PolishedCrossOnboardingFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4525D7CF2F3DC7B400571394 /* PolishedCrossOnboardingFlow.swift */; };
 		4525D7D22F3DC87E00571394 /* DailyDeclarationReminderService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4525D7D12F3DC87E00571394 /* DailyDeclarationReminderService.swift */; };
 		4525D8D92F4AC12800571394 /* DeclarationFavoriteEntry+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4525D8D72F4AC12800571394 /* DeclarationFavoriteEntry+CoreDataClass.swift */; };
@@ -442,6 +444,8 @@
 		451AECF32E4EEB2D00C1490E /* BootcampTabViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BootcampTabViews.swift; sourceTree = "<group>"; };
 		4525D6842F37C0EB00571394 /* DailyDeclarationBurstView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyDeclarationBurstView.swift; sourceTree = "<group>"; };
 		45F0AAAA2F40C0EB00571394 /* PremiumAnniversaryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PremiumAnniversaryView.swift; sourceTree = "<group>"; };
+		45F0CCCC2F40C0EB00571394 /* YearInReviewStats.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YearInReviewStats.swift; sourceTree = "<group>"; };
+		45F0EEEE2F40C0EB00571394 /* YearInReviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YearInReviewView.swift; sourceTree = "<group>"; };
 		4525D7CF2F3DC7B400571394 /* PolishedCrossOnboardingFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PolishedCrossOnboardingFlow.swift; sourceTree = "<group>"; };
 		4525D7D12F3DC87E00571394 /* DailyDeclarationReminderService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyDeclarationReminderService.swift; sourceTree = "<group>"; };
 		4525D8D52F4AC12800571394 /* AudioFavoriteEntry+CoreDataClass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AudioFavoriteEntry+CoreDataClass.swift"; sourceTree = "<group>"; };
@@ -978,6 +982,15 @@
 			path = Bible;
 			sourceTree = "<group>";
 		};
+		45F0EAEA2F40C0EB00571394 /* YearInReview */ = {
+			isa = PBXGroup;
+			children = (
+				45F0CCCC2F40C0EB00571394 /* YearInReviewStats.swift */,
+				45F0EEEE2F40C0EB00571394 /* YearInReviewView.swift */,
+			);
+			path = YearInReview;
+			sourceTree = "<group>";
+		};
 		45567D6A2F29E3FF00382072 /* Components */ = {
 			isa = PBXGroup;
 			children = (
@@ -1408,6 +1421,7 @@
 				7A601440294E574500CD2103 /* HomeView.swift */,
 				4525D6842F37C0EB00571394 /* DailyDeclarationBurstView.swift */,
 				45F0AAAA2F40C0EB00571394 /* PremiumAnniversaryView.swift */,
+				45F0EAEA2F40C0EB00571394 /* YearInReview */,
 				45567D5D2F29CA5D00382072 /* Bible */,
 				451AECF02E4EE7F000C1490E /* Bootcamp */,
 				4597E2592E41C1AC009D6C66 /* Components */,
@@ -2242,6 +2256,8 @@
 				7A601441294E574500CD2103 /* HomeView.swift in Sources */,
 				4525D6852F37C0EB00571394 /* DailyDeclarationBurstView.swift in Sources */,
 				45F0BBBB2F40C0EB00571394 /* PremiumAnniversaryView.swift in Sources */,
+				45F0DDDD2F40C0EB00571394 /* YearInReviewStats.swift in Sources */,
+				45F0FFFF2F40C0EB00571394 /* YearInReviewView.swift in Sources */,
 				4597E2402E419D7D009D6C66 /* CoreDataExtensions.swift in Sources */,
 				4597E2412E419D7D009D6C66 /* JournalEntry+CoreDataProperties.swift in Sources */,
 				4597E2422E419D7D009D6C66 /* AffirmationEntry+CoreDataClass.swift in Sources */,
