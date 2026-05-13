@@ -2,8 +2,10 @@
 //  YearInReviewView.swift
 //  SpeakLife
 //
-//  Premium-only year-end recap. Six paged slides plus a final shareable
-//  summary card. Surfaced once per year between Dec 15 and Jan 15.
+//  Year-end recap. Everyone with meaningful activity gets the core slides;
+//  premium subscribers get an additional Strength Level bonus slide and a
+//  Premium Warrior mark on the share card. Surfaced once per year between
+//  Dec 15 and Jan 15.
 //
 
 import SwiftUI
@@ -17,19 +19,32 @@ struct YearInReviewView: View {
     @State private var pageIndex: Int = 0
     @State private var shareItem: ShareItem?
 
-    private let slideCount = 6
+    /// Slide layout is dynamic so the premium-only Strength Level slide can
+    /// slot in between "Total Declarations" and "Summary" without breaking
+    /// share-button indexing.
+    private enum Slide: Hashable {
+        case cover, days, longestStreak, bestMonth, totals, strength, summary
+    }
+
+    private var slides: [Slide] {
+        var s: [Slide] = [.cover, .days, .longestStreak, .bestMonth, .totals]
+        if subscriptionStore.isPremium { s.append(.strength) }
+        s.append(.summary)
+        return s
+    }
+
+    private var currentSlide: Slide { slides[safe: pageIndex] ?? .cover }
+    private var isFirstSlide: Bool { pageIndex == 0 }
+    private var isLastSlide: Bool { pageIndex == slides.count - 1 }
 
     var body: some View {
         ZStack {
             backgroundLayer
 
             TabView(selection: $pageIndex) {
-                coverSlide.tag(0)
-                daysActiveSlide.tag(1)
-                longestStreakSlide.tag(2)
-                bestMonthSlide.tag(3)
-                totalDeclarationsSlide.tag(4)
-                summarySlide.tag(5)
+                ForEach(Array(slides.enumerated()), id: \.offset) { index, slide in
+                    slideView(for: slide).tag(index)
+                }
             }
             .tabViewStyle(.page(indexDisplayMode: .never))
             .indexViewStyle(.page(backgroundDisplayMode: .never))
@@ -37,7 +52,7 @@ struct YearInReviewView: View {
             VStack {
                 topBar
                 Spacer()
-                if pageIndex < slideCount - 1 {
+                if !isLastSlide {
                     pageDots
                         .padding(.bottom, 28)
                 }
@@ -46,6 +61,19 @@ struct YearInReviewView: View {
         .preferredColorScheme(.dark)
         .sheet(item: $shareItem) { item in
             ShareSheet(items: [item.image, item.text])
+        }
+    }
+
+    @ViewBuilder
+    private func slideView(for slide: Slide) -> some View {
+        switch slide {
+        case .cover:         coverSlide
+        case .days:          daysActiveSlide
+        case .longestStreak: longestStreakSlide
+        case .bestMonth:     bestMonthSlide
+        case .totals:        totalDeclarationsSlide
+        case .strength:      strengthLevelSlide
+        case .summary:       summarySlide
         }
     }
 
@@ -80,9 +108,9 @@ struct YearInReviewView: View {
                     .background(Circle().fill(Color.white.opacity(0.12)))
             }
             Spacer()
-            if pageIndex > 0 && pageIndex < slideCount - 1 {
+            if !isFirstSlide && !isLastSlide {
                 Button {
-                    presentShare(of: currentShareableSlide(), text: shareText(for: pageIndex))
+                    presentShare(of: currentShareableSlide(), text: shareText(for: currentSlide))
                 } label: {
                     Image(systemName: "square.and.arrow.up")
                         .font(.system(size: 16, weight: .semibold))
@@ -98,7 +126,7 @@ struct YearInReviewView: View {
 
     private var pageDots: some View {
         HStack(spacing: 6) {
-            ForEach(0..<slideCount, id: \.self) { i in
+            ForEach(0..<slides.count, id: \.self) { i in
                 Capsule()
                     .fill(i == pageIndex ? Color(hex: "FBBF24") : Color.white.opacity(0.25))
                     .frame(width: i == pageIndex ? 18 : 6, height: 6)
@@ -202,6 +230,59 @@ struct YearInReviewView: View {
                 verse: "The word of God is alive and active.",
                 verseRef: "Hebrews 4:12"
             )
+        }
+    }
+
+    /// Premium-only bonus slide. Surfaces the highest spiritual-strength tier
+    /// the user reached during the year, using the level system that already
+    /// powers the BurstCompletionTracker UI.
+    private var strengthLevelSlide: some View {
+        slideShell {
+            VStack(spacing: 18) {
+                HStack(spacing: 6) {
+                    Image(systemName: "crown.fill")
+                        .font(.system(size: 11, weight: .semibold))
+                    Text("FOR YOU \u{2022} PREMIUM")
+                        .font(Font.custom("AppleSDGothicNeo-Bold", size: 11, relativeTo: .caption2))
+                        .tracking(2.0)
+                }
+                .foregroundColor(Color(hex: "FBBF24"))
+
+                eyebrow("Strength reached this year")
+
+                Image(systemName: stats.peakStrengthLevel.icon)
+                    .font(.system(size: 76, weight: .semibold))
+                    .foregroundStyle(goldGradient)
+                    .shadow(color: Color(hex: "FBBF24").opacity(0.4), radius: 18)
+                    .padding(.vertical, 4)
+
+                Text(stats.peakStrengthLevel.rawValue.uppercased())
+                    .font(Font.custom("AppleSDGothicNeo-Bold", size: 38, relativeTo: .largeTitle))
+                    .foregroundStyle(goldGradient)
+                    .tracking(2.0)
+
+                Text("Peak score \(stats.peakStrengthScore) of 100")
+                    .font(Font.custom("AppleSDGothicNeo-Regular", size: 14, relativeTo: .caption))
+                    .foregroundColor(.white.opacity(0.6))
+
+                Text(strengthLevelBlessing(stats.peakStrengthLevel))
+                    .font(Font.custom("AppleSDGothicNeo-Regular", size: 14, relativeTo: .caption))
+                    .foregroundColor(.white.opacity(0.75))
+                    .italic()
+                    .multilineTextAlignment(.center)
+                    .padding(.top, 6)
+                    .padding(.horizontal, 12)
+            }
+        }
+    }
+
+    private func strengthLevelBlessing(_ level: BurstCompletionTracker.StrengthLevel) -> String {
+        switch level {
+        case .warrior:     return "You took up the shield. The fight has only begun."
+        case .champion:    return "You did not retreat. The medal is earned."
+        case .conqueror:   return "Crown set, ground taken. The land is yours."
+        case .victorious:  return "You walked through fire and came out shining."
+        case .unstoppable: return "What can stand against you? Nothing in His name."
         }
     }
 
@@ -353,8 +434,30 @@ struct YearInReviewView: View {
                     summaryRow(label: "Strongest month",   value: best.name)
                 }
                 summaryRow(label: "Words declared",        value: "\(stats.totalDeclarationsSpoken)")
+                if subscriptionStore.isPremium {
+                    summaryRow(label: "Strength reached",  value: stats.peakStrengthLevel.rawValue)
+                }
             }
             .padding(.horizontal, 22)
+
+            if subscriptionStore.isPremium {
+                HStack(spacing: 5) {
+                    Image(systemName: "crown.fill")
+                        .font(.system(size: 10, weight: .semibold))
+                    Text("PREMIUM WARRIOR")
+                        .font(Font.custom("AppleSDGothicNeo-Bold", size: 10, relativeTo: .caption2))
+                        .tracking(2.0)
+                }
+                .foregroundColor(Color(hex: "FBBF24"))
+                .padding(.horizontal, 10)
+                .padding(.vertical, 4)
+                .background(
+                    Capsule()
+                        .fill(Color(hex: "FBBF24").opacity(0.14))
+                        .overlay(Capsule().stroke(Color(hex: "FBBF24").opacity(0.45), lineWidth: 0.5))
+                )
+                .padding(.top, 8)
+            }
 
             Text("SpeakLife")
                 .font(Font.custom("AppleSDGothicNeo-Bold", size: 11, relativeTo: .caption2))
@@ -402,22 +505,22 @@ struct YearInReviewView: View {
     @ViewBuilder
     private func currentShareableSlide() -> some View {
         ShareCardWrapper {
-            switch pageIndex {
-            case 1: slideStat(
+            switch currentSlide {
+            case .days: slideStat(
                 eyebrow: "Days I stood in \(stats.year)",
                 number: "\(stats.daysActive)",
                 unit: stats.daysActive == 1 ? "day" : "days",
                 accent: "\(stats.percentOfYear)% of the year",
                 verse: nil, verseRef: nil
             )
-            case 2: slideStat(
+            case .longestStreak: slideStat(
                 eyebrow: "My longest stand in \(stats.year)",
                 number: "\(stats.longestStreakInYear)",
                 unit: stats.longestStreakInYear == 1 ? "day in a row" : "days in a row",
                 accent: "I did not grow weary.",
                 verse: nil, verseRef: nil
             )
-            case 3:
+            case .bestMonth:
                 if let best = stats.bestMonth {
                     VStack(spacing: 12) {
                         eyebrow("My strongest month in \(stats.year)")
@@ -431,14 +534,25 @@ struct YearInReviewView: View {
                 } else {
                     EmptyView()
                 }
-            case 4: slideStat(
+            case .totals: slideStat(
                 eyebrow: "Words I declared in \(stats.year)",
                 number: "\(stats.totalDeclarationsSpoken)",
                 unit: stats.totalDeclarationsSpoken == 1 ? "time" : "times",
                 accent: "Every word a stone of remembrance.",
                 verse: nil, verseRef: nil
             )
-            default: EmptyView()
+            case .strength:
+                VStack(spacing: 14) {
+                    eyebrow("My strength reached in \(stats.year)")
+                    Image(systemName: stats.peakStrengthLevel.icon)
+                        .font(.system(size: 70, weight: .semibold))
+                        .foregroundStyle(goldGradient)
+                    Text(stats.peakStrengthLevel.rawValue.uppercased())
+                        .font(Font.custom("AppleSDGothicNeo-Bold", size: 40, relativeTo: .largeTitle))
+                        .foregroundStyle(goldGradient)
+                        .tracking(2.0)
+                }
+            case .cover, .summary: EmptyView()
             }
         }
     }
@@ -451,20 +565,25 @@ struct YearInReviewView: View {
         }
     }
 
-    private func shareText(for index: Int) -> String {
-        switch index {
-        case 1: return "I stood in God's Word \(stats.daysActive) days this year. #SpeakLife"
-        case 2: return "My longest unbroken stand in \(stats.year): \(stats.longestStreakInYear) days. #SpeakLife"
-        case 3:
+    private func shareText(for slide: Slide) -> String {
+        switch slide {
+        case .days:          return "I stood in God's Word \(stats.daysActive) days this year. #SpeakLife"
+        case .longestStreak: return "My longest unbroken stand in \(stats.year): \(stats.longestStreakInYear) days. #SpeakLife"
+        case .bestMonth:
             if let best = stats.bestMonth { return "\(best.name) was my strongest month in \(stats.year). #SpeakLife" }
             return "My year of standing. #SpeakLife"
-        case 4: return "I spoke God's Word \(stats.totalDeclarationsSpoken) times this year. #SpeakLife"
-        default: return "My year of standing. #SpeakLife"
+        case .totals:        return "I spoke God's Word \(stats.totalDeclarationsSpoken) times this year. #SpeakLife"
+        case .strength:      return "I reached \(stats.peakStrengthLevel.rawValue) in \(stats.year). #SpeakLife"
+        case .cover, .summary: return "My year of standing. #SpeakLife"
         }
     }
 
     private var shareSummaryText: String {
-        "My Year of Standing — \(stats.year). \(stats.daysActive) days, longest run \(stats.longestStreakInYear), \(stats.totalDeclarationsSpoken) declarations. #SpeakLife"
+        let base = "My Year of Standing — \(stats.year). \(stats.daysActive) days, longest run \(stats.longestStreakInYear), \(stats.totalDeclarationsSpoken) declarations."
+        if subscriptionStore.isPremium {
+            return "\(base) Strength reached: \(stats.peakStrengthLevel.rawValue). #SpeakLife"
+        }
+        return "\(base) #SpeakLife"
     }
 
     @MainActor
@@ -525,4 +644,10 @@ struct ShareSheet: UIViewControllerRepresentable {
         UIActivityViewController(activityItems: items, applicationActivities: nil)
     }
     func updateUIViewController(_ controller: UIActivityViewController, context: Context) {}
+}
+
+private extension Array {
+    subscript(safe index: Int) -> Element? {
+        indices.contains(index) ? self[index] : nil
+    }
 }

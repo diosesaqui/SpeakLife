@@ -16,6 +16,10 @@ struct YearInReviewStats: Identifiable {
     let bestMonth: (name: String, count: Int)?
     let totalDeclarationsSpoken: Int
     let currentStreak: Int
+    /// Highest spiritual-strength level the user reached across the year.
+    /// Powers the premium-only "Strength Level" bonus slide.
+    let peakStrengthLevel: BurstCompletionTracker.StrengthLevel
+    let peakStrengthScore: Int
 
     /// Recap is meaningful only if the user showed up at all this year.
     var hasMeaningfulActivity: Bool { daysActive >= 1 }
@@ -50,14 +54,26 @@ struct YearInReviewStats: Identifiable {
 
         let totalDeclarations = inYear.map { $0.declarationCount }.reduce(0, +)
 
+        let peakScore = inYear.map { $0.spiritualStrengthScore }.max() ?? 0
+        let peakLevel = strengthLevel(for: peakScore)
+
         return YearInReviewStats(
             year: year,
             daysActive: daysActive,
             longestStreakInYear: longest,
             bestMonth: bestMonth,
             totalDeclarationsSpoken: totalDeclarations,
-            currentStreak: BurstCompletionTracker.shared.currentStreak
+            currentStreak: BurstCompletionTracker.shared.currentStreak,
+            peakStrengthLevel: peakLevel,
+            peakStrengthScore: peakScore
         )
+    }
+
+    private static func strengthLevel(for score: Int) -> BurstCompletionTracker.StrengthLevel {
+        for level in BurstCompletionTracker.StrengthLevel.allCases.reversed() {
+            if score >= level.minimumScore { return level }
+        }
+        return .warrior
     }
 
     private static func longestConsecutiveRun(in dayStarts: Set<Date>,

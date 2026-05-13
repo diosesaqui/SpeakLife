@@ -590,13 +590,16 @@ struct HomeView: View {
        }
     }
 
-    /// Surfaces the premium Year in Review between Dec 15 and Jan 15. Auto-
-    /// launches on cold start once per recap year. From Dec 15 → Dec 31 the
-    /// recap is for the in-progress current year (Spotify Wrapped pattern);
-    /// from Jan 1 → Jan 15 it's for the year that just closed.
+    /// Surfaces the Year in Review between Dec 15 and Jan 15. Auto-launches
+    /// on cold start once per recap year. From Dec 15 → Dec 31 the recap is
+    /// for the in-progress current year (Spotify Wrapped pattern); from
+    /// Jan 1 → Jan 15 it's for the year that just closed.
+    ///
+    /// Everyone with meaningful activity gets the core recap; premium
+    /// subscribers see an additional Strength Level slide and a Premium
+    /// Warrior mark on the share card (handled inside YearInReviewView).
     private func checkForYearInReview() {
         guard appState.isOnboarded else { return }
-        guard subscriptionStore.isPremium else { return }
         guard !showSubscription else { return }
         guard yearInReviewStats == nil else { return }
 
