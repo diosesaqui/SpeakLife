@@ -95,6 +95,13 @@ final class AppState: ObservableObject {
     // Survey personalization — set by SurveyOnboardingView, read by NotificationScene and paywalls
     @AppStorage("surveyGoalWord") var surveyGoalWord: String = ""
 
+    // Quiz onboarding (Treatment cohort of useQuizOnboarding A/B). Set by
+    // QuizOnboardingView; read by HighConversionPaywallView for headline
+    // framing and by analytics for segment lift measurement.
+    @AppStorage("onboarding_segment") var onboardingSegment: String = ""
+    @AppStorage("onboarding_completed_at") var onboardingCompletedAt: Date?
+    @AppStorage("onboarding_quiz_version") var onboardingQuizVersion: String = ""
+
     var selectedDeclarationStyles: [String] {
         get {
             let raw = UserDefaults.standard.string(forKey: "selectedDeclarationStyles") ?? ""

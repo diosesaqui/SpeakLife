@@ -31,6 +31,11 @@ struct HighConversionPaywallView: View {
     @State private var isEligibleForTrial = false
 
     var callback: (() -> Void)?
+    /// Where this paywall is being shown from. Drives the `source` property on
+    /// paywall analytics events ('onboarding' | 'settings' | 'feature_gate').
+    /// Default of 'settings' matches the dominant non-onboarding callsites
+    /// (PremiumView, OptimizedSubscriptionView from HomeView).
+    var source: String = "settings"
 
     /// Variant string sent to Firebase Analytics on every paywall event so the
     /// A/B between benefit-based and feature-based copy can be compared.
@@ -58,12 +63,26 @@ struct HighConversionPaywallView: View {
         SurveyPersonalizationEngine(goalWordRaw: appState.surveyGoalWord)
     }
 
-    /// Resolved copy: survey goal word first, category-based fallback second
+    /// Active quiz segment, if the user came through QuizOnboardingView (Treatment cohort).
+    /// Takes priority over survey copy because it reflects the specific ad-matched framing.
+    private var quizSegment: QuizSegment? {
+        QuizSegment(rawValue: appState.onboardingSegment)
+    }
+
+    /// Segment-tagged analytics property. Empty string when the user came through
+    /// the Control onboarding so paywall events stay backward-compatible.
+    private var segmentParam: String {
+        appState.onboardingSegment
+    }
+
+    /// Resolved copy: quiz segment first, survey goal word second, category-based fallback third.
     private var resolvedHeadline: String {
-        surveyEngine.hasSurveyData ? surveyEngine.paywallCopy.headline : copy.headline
+        if let segment = quizSegment { return segment.paywallHeadline }
+        return surveyEngine.hasSurveyData ? surveyEngine.paywallCopy.headline : copy.headline
     }
     private var resolvedSubheadline: String {
-        surveyEngine.hasSurveyData ? surveyEngine.paywallCopy.subheadline : copy.subheadline
+        if let segment = quizSegment { return segment.paywallSubheadline }
+        return surveyEngine.hasSurveyData ? surveyEngine.paywallCopy.subheadline : copy.subheadline
     }
     private var resolvedValueProps: [String] {
         surveyEngine.hasSurveyData ? surveyEngine.paywallCopy.valueProps.map { $0.title } : copy.valueProps
@@ -313,7 +332,7 @@ struct HighConversionPaywallView: View {
         let isSelected = selectedPlan == plan
         return Button(action: {
             withAnimation(.easeInOut(duration: 0.15)) { selectedPlan = plan }
-            Analytics.logEvent("paywall_plan_switched", parameters: ["plan": plan.rawValue, "variant": paywallVariant])
+            Analytics.logEvent("paywall_plan_switched", parameters: ["plan": plan.rawValue, "variant": paywallVariant, "segment": segmentParam])
         }) {
             ZStack(alignment: .top) {
                 VStack(spacing: 4) {
@@ -415,7 +434,8 @@ struct HighConversionPaywallView: View {
                     Analytics.logEvent("paywall_dismissed", parameters: [
                         "variant": paywallVariant,
                         "plan_viewed": selectedPlan.rawValue,
-                        "seconds_on_paywall": Int(Date().timeIntervalSince(timeOnPaywall))
+                        "seconds_on_paywall": Int(Date().timeIntervalSince(timeOnPaywall)),
+                        "segment": segmentParam
                     ])
                     callback?(); dismiss()
                 }) {
@@ -441,7 +461,13 @@ struct HighConversionPaywallView: View {
         AnalyticsService.shared.trackPaywallImpression(paywallId: paywallVariant, metadata: [
             "variant": paywallVariant,
             "user_category": preferencesTracker.primaryCategory.rawValue,
-            "initial_plan": "annual"
+            "initial_plan": "annual",
+            "segment": segmentParam
+        ])
+        Analytics.logEvent("paywall_shown", parameters: [
+            "segment": segmentParam,
+            "source": source,
+            "variant": paywallVariant
         ])
         DispatchQueue.main.asyncAfter(deadline: .now() + 4) {
             withAnimation(.easeIn(duration: 0.4)) { showCloseButton = true }
@@ -460,7 +486,13 @@ struct HighConversionPaywallView: View {
             "variant": paywallVariant,
             "plan": selectedPlan.rawValue,
             "user_category": preferencesTracker.primaryCategory.rawValue,
-            "product_id": product.id
+            "product_id": product.id,
+            "segment": segmentParam
+        ])
+        Analytics.logEvent("paywall_subscribe_tapped", parameters: [
+            "segment": segmentParam,
+            "plan": selectedPlan.rawValue,
+            "variant": paywallVariant
         ])
         Task {
             await MainActor.run { declarationStore.isPurchasing = true }
@@ -472,10 +504,17 @@ struct HighConversionPaywallView: View {
                         productId: product.id, paywallId: paywallVariant, price: price,
                         metadata: ["variant": paywallVariant, "plan": selectedPlan.rawValue,
                                    "user_category": preferencesTracker.primaryCategory.rawValue,
-                                   "seconds_to_convert": Int(Date().timeIntervalSince(timeOnPaywall))]
+                                   "seconds_to_convert": Int(Date().timeIntervalSince(timeOnPaywall)),
+                                   "segment": segmentParam]
                     )
                     if isEligibleForTrial {
-                        AnalyticsService.shared.trackTrialStarted(productId: product.id, metadata: ["variant": paywallVariant])
+                        AnalyticsService.shared.trackTrialStarted(productId: product.id, metadata: ["variant": paywallVariant, "segment": segmentParam])
+                        Analytics.logEvent("trial_started", parameters: [
+                            "segment": segmentParam,
+                            "plan_id": selectedPlan.rawValue,
+                            "paywall_variant": paywallVariant,
+                            "product_id": product.id
+                        ])
                     }
                     await MainActor.run { declarationStore.isPurchasing = false; callback?(); dismiss() }
                 } else {
