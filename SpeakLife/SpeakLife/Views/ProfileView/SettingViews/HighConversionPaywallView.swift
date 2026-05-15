@@ -65,8 +65,13 @@ struct HighConversionPaywallView: View {
 
     /// Active quiz segment, if the user came through QuizOnboardingView (Treatment cohort).
     /// Takes priority over survey copy because it reflects the specific ad-matched framing.
+    /// Returns nil for the `unsegmented` cohort so they fall through to the
+    /// surveyEngine-personalized headline (driven by their burden choice), which
+    /// is more specific than the generic "Speak life today" unsegmented copy.
     private var quizSegment: QuizSegment? {
-        QuizSegment(rawValue: appState.onboardingSegment)
+        guard let seg = QuizSegment(rawValue: appState.onboardingSegment),
+              seg != .unsegmented else { return nil }
+        return seg
     }
 
     /// Segment-tagged analytics property. Empty string when the user came through

@@ -28,20 +28,20 @@ enum QuizSegment: String, CaseIterable {
 
     var buttonHeadline: String {
         switch self {
-        case .battlefieldMind:   return "My thoughts are out of control."
-        case .believerAuthority: return "I've prayed for years and nothing's moved."
-        case .alreadyYours:      return "I keep begging for what God already gave me."
-        case .hisHeart:          return "I need to feel His love again."
+        case .battlefieldMind:   return "My thoughts won't stop."
+        case .believerAuthority: return "I've prayed for years. Nothing's moved."
+        case .alreadyYours:      return "I'm tired of begging for what's already mine."
+        case .hisHeart:          return "I need to feel God's love again."
         case .unsegmented:       return "Just exploring — show me everything."
         }
     }
 
     var buttonSubhead: String {
         switch self {
-        case .battlefieldMind:   return "Anxiety, fear, 3am wake-ups."
-        case .believerAuthority: return ""
-        case .alreadyYours:      return ""
-        case .hisHeart:          return ""
+        case .battlefieldMind:   return "Anxiety. Fear. 3am wake-ups."
+        case .believerAuthority: return "Praying harder isn't working."
+        case .alreadyYours:      return "Healing, provision, peace — already paid for."
+        case .hisHeart:          return "He feels far. I'm tired of striving."
         case .unsegmented:       return ""
         }
     }
@@ -58,10 +58,10 @@ enum QuizSegment: String, CaseIterable {
 
     var mirrorBody: String {
         switch self {
-        case .battlefieldMind:   return "You're not alone, and you're not powerless. There's a Scripture written for this exact storm."
-        case .believerAuthority: return "Jesus didn't beg the storm. He spoke to it. So can you."
-        case .alreadyYours:      return "It's time to stop begging and start agreeing."
-        case .hisHeart:          return "Let's put His love in your mouth daily."
+        case .battlefieldMind:   return "You're not crazy. You're not powerless. There's a Scripture written for this exact storm."
+        case .believerAuthority: return "Jesus didn't beg the storm. He spoke to it. You can too."
+        case .alreadyYours:      return "Time to stop begging. Start agreeing."
+        case .hisHeart:          return "Let's get His love on your lips every morning."
         case .unsegmented:       return "Speak the truth. Win the day."
         }
     }
@@ -169,27 +169,27 @@ enum BeliefQuestion: Int, CaseIterable {
     var headline: String {
         switch self {
         case .godLoves:
-            return "Do you believe God loves you — right now, today, exactly as you are?"
-        case .answersPrayer:
-            return "Do you believe God hears and answers when you pray?"
-        case .promisesTrue:
-            return "When you read God's promises in Scripture — are they for you?"
+            return "Right now, today — do you really believe God loves you?"
         case .tooMessedUp:
-            return "Have you ever felt too far gone for God to fully accept or use you?"
+            return "Have you ever felt too far gone for God to actually use you?"
+        case .promisesTrue:
+            return "When you read God's promises — are they really for YOU?"
+        case .answersPrayer:
+            return "Do you believe God hears you when you pray?"
         case .wordIsPowerful:
-            return "Do you believe God's Word has real power when YOU speak it out loud?"
+            return "Does God's Word actually have power when YOU speak it?"
         case .authority:
-            return "Do you know you have authority over the enemy in Jesus' name?"
+            return "Do you know you have authority over the enemy?"
         }
     }
 
     var subhead: String? {
         switch self {
-        case .godLoves:       return "Be honest. There's a Scripture waiting either way."
-        case .tooMessedUp:    return "Shame thrives in silence. Let's bring it into the light."
-        case .promisesTrue:   return "Pick what's true today, not what you wish was true."
+        case .godLoves:       return "Be honest. There's a Scripture for you either way."
+        case .tooMessedUp:    return "Shame loses its grip the second you name it."
+        case .promisesTrue:   return "Pick what's true today — not what you wish was true."
         case .answersPrayer:  return "Whichever you pick, the Word has an answer."
-        case .wordIsPowerful: return "This one matters. Speaking life is what this app is built on."
+        case .wordIsPowerful: return "This one matters. It's the whole reason this app exists."
         case .authority:      return "This is the one that changes everything."
         }
     }
@@ -199,30 +199,30 @@ enum BeliefQuestion: Int, CaseIterable {
         case .godLoves: return [
             BeliefAnswer(
                 id: "love_yes",
-                label: "Yes. Completely and unconditionally.",
+                label: "Yes. He's crazy about me.",
                 isConfident: true,
-                declaration: "God demonstrates His love for me in this: while I was still a sinner, Christ died for me. I am fully, finally, eternally loved.",
+                declaration: "God showed His love for me like this: while I was still a mess, Christ died for me. I am fully, finally, forever loved.",
                 verseReference: "Romans 5:8"
             ),
             BeliefAnswer(
                 id: "love_uncertain",
-                label: "I want to believe it. I don't always feel it.",
+                label: "I want to. I don't always feel it.",
                 isConfident: false,
-                declaration: "I am rooted and established in love. The Father's love for me is wider, longer, higher, and deeper than my feelings can measure.",
+                declaration: "I am rooted and grounded in love. The Father's love for me is wider, longer, higher, deeper than anything I feel today.",
                 verseReference: "Ephesians 3:17-18"
             ),
             BeliefAnswer(
                 id: "love_general_not_me",
-                label: "He loves people. Me specifically? I'm not sure.",
+                label: "He loves people. Me specifically? Not sure.",
                 isConfident: false,
-                declaration: "The Father Himself loves me. Not the crowd. Me. Specifically. Personally. Right now.",
+                declaration: "The Father Himself loves me. Not the crowd. Me. By name. Right now.",
                 verseReference: "John 16:27"
             ),
             BeliefAnswer(
                 id: "love_unearned",
-                label: "I don't think I've earned His love yet.",
+                label: "Honestly? I don't think I've earned it.",
                 isConfident: false,
-                declaration: "I am loved by grace alone. Nothing I do earns it. Nothing I fail at can lose it. His love is the foundation, not the reward.",
+                declaration: "I am loved by grace — not performance. Nothing I do earns it. Nothing I do can lose it. His love is the floor, not the ceiling.",
                 verseReference: "Ephesians 2:8-9"
             )
         ]
@@ -230,30 +230,30 @@ enum BeliefQuestion: Int, CaseIterable {
         case .answersPrayer: return [
             BeliefAnswer(
                 id: "answers_yes",
-                label: "Yes. He hears and answers in His timing.",
+                label: "Yes. He hears me. Always.",
                 isConfident: true,
-                declaration: "I have confidence that whatever I ask according to His will, He hears me. And if He hears me, I have what I asked of Him.",
+                declaration: "Whatever I ask in line with His will, He hears me. And if He hears me — I already have what I asked.",
                 verseReference: "1 John 5:14-15"
             ),
             BeliefAnswer(
                 id: "answers_unsure",
-                label: "He hears. I'm not sure He answers me.",
+                label: "He hears. I'm not sure He answers.",
                 isConfident: false,
-                declaration: "My prayers are powerful and effective because I am made right with God in Christ. Heaven leans in when I speak.",
+                declaration: "My prayer is powerful and effective because I've been made right with God in Christ. Heaven leans in when I speak.",
                 verseReference: "James 5:16"
             ),
             BeliefAnswer(
                 id: "answers_others_not_me",
-                label: "He answers others. Mine stay silent.",
+                label: "He answers others. Mine go silent.",
                 isConfident: false,
-                declaration: "The Lord is near to all who call on Him. He hears MY cry, He inclines His ear to ME, and He answers.",
+                declaration: "The Lord is near to all who call on Him. He hears MY cry. He inclines His ear to ME. He answers.",
                 verseReference: "Psalm 145:18-19"
             ),
             BeliefAnswer(
                 id: "answers_stopped_asking",
-                label: "I've stopped asking. It's been too long.",
+                label: "I stopped asking. It's been too long.",
                 isConfident: false,
-                declaration: "What looks like silence is preparation. The answer hastens toward me. I refuse to stop asking before God finishes answering.",
+                declaration: "What looks like silence is preparation. The answer is racing toward me. I will not stop asking before God finishes answering.",
                 verseReference: "Habakkuk 2:3"
             )
         ]
@@ -261,30 +261,30 @@ enum BeliefQuestion: Int, CaseIterable {
         case .promisesTrue: return [
             BeliefAnswer(
                 id: "promises_yes",
-                label: "Yes. Every promise has my name on it.",
+                label: "Yes. Every one has my name on it.",
                 isConfident: true,
-                declaration: "Every promise of God is YES and AMEN in Christ Jesus — through me, to the glory of God.",
+                declaration: "Every promise of God is YES and AMEN in Christ — through me, for me, to His glory.",
                 verseReference: "2 Corinthians 1:20"
             ),
             BeliefAnswer(
                 id: "promises_intellectual",
-                label: "I believe them. I struggle to claim them.",
+                label: "I believe them. Claiming them feels harder.",
                 isConfident: false,
-                declaration: "His divine power has GIVEN me everything I need for life and godliness. The promises are already mine. I receive them today.",
+                declaration: "His divine power has already given me everything I need for life and godliness. The promises are already mine. Today I receive them.",
                 verseReference: "2 Peter 1:3-4"
             ),
             BeliefAnswer(
                 id: "promises_not_mature",
-                label: "Maybe for the spiritually mature. Not me yet.",
+                label: "Maybe for the spiritually mature. Not me — yet.",
                 isConfident: false,
-                declaration: "I am a child of Abraham — an heir according to the promise. There is no junior class in the Kingdom of God.",
+                declaration: "I am a child of Abraham — an heir of the promise. There is no junior class in the Kingdom. The promises are for me now.",
                 verseReference: "Galatians 3:29"
             ),
             BeliefAnswer(
                 id: "promises_then_not_now",
-                label: "Those were Bible times. I don't see them now.",
+                label: "Those were Bible times. I don't see them today.",
                 isConfident: false,
-                declaration: "Jesus Christ is the same yesterday, today, and forever. What God did then, He does now — in me, through me, for me.",
+                declaration: "Jesus Christ is the same yesterday, today, and forever. What He did then, He does now — in me, through me, for me.",
                 verseReference: "Hebrews 13:8"
             )
         ]
@@ -292,30 +292,30 @@ enum BeliefQuestion: Int, CaseIterable {
         case .tooMessedUp: return [
             BeliefAnswer(
                 id: "messed_no",
-                label: "No. He chose me knowing exactly who I am.",
+                label: "No. He picked me on purpose.",
                 isConfident: true,
-                declaration: "I am a new creation in Christ. The old has gone, the new has come. God chose me on purpose, for purpose.",
+                declaration: "I am a new creation in Christ. The old me is gone. God chose me on purpose — for purpose.",
                 verseReference: "2 Corinthians 5:17"
             ),
             BeliefAnswer(
                 id: "messed_some_days",
-                label: "Some days yes, some days no.",
+                label: "Some days yeah. Some days no.",
                 isConfident: false,
-                declaration: "There is NO condemnation for me because I am in Christ Jesus. I refuse to live under what He already paid for.",
+                declaration: "There is NO condemnation for me, because I am in Christ. I refuse to keep paying a bill He already paid in full.",
                 verseReference: "Romans 8:1"
             ),
             BeliefAnswer(
                 id: "messed_forgiven_not_used",
-                label: "Forgiven, maybe. Useful to Him? Not so sure.",
+                label: "Forgiven, yeah. Useful to Him? Not so sure.",
                 isConfident: false,
-                declaration: "God chose the foolish, the weak, the lowly — to shame the strong. He didn't disqualify me. He drafted me.",
+                declaration: "God picks the unlikely. He didn't disqualify me — He drafted me. My past is the testimony, not the verdict.",
                 verseReference: "1 Corinthians 1:27-28"
             ),
             BeliefAnswer(
                 id: "messed_hidden_shame",
-                label: "If He really knew, He'd be done with me.",
+                label: "If He really knew me, He'd be done with me.",
                 isConfident: false,
-                declaration: "He has searched me and knows me fully. He sees everything — and still calls me His own. Still loved. Still chosen.",
+                declaration: "He's already searched me. He sees all of it — and still calls me His. Still loved. Still chosen. Nothing hidden has changed His mind.",
                 verseReference: "Psalm 139:1-3"
             )
         ]
@@ -323,30 +323,30 @@ enum BeliefQuestion: Int, CaseIterable {
         case .wordIsPowerful: return [
             BeliefAnswer(
                 id: "word_yes",
-                label: "Yes. There's authority in spoken Scripture.",
+                label: "Yes. When I speak it, something shifts.",
                 isConfident: true,
-                declaration: "The Word of God is alive and active, sharper than any double-edged sword. When I speak it, heaven moves.",
+                declaration: "The Word of God is alive and active, sharper than any sword. When I speak it, heaven moves.",
                 verseReference: "Hebrews 4:12"
             ),
             BeliefAnswer(
                 id: "word_open_inexperienced",
-                label: "I believe it — I've just never really tried.",
+                label: "I believe it. I've just never really tried.",
                 isConfident: false,
-                declaration: "Faith comes by hearing — and hearing by the Word of God. When I speak truth, my own ears hear it, and faith rises in me.",
+                declaration: "Faith comes by hearing — and hearing by the Word. When I speak truth, my own ears hear it, and faith rises in me.",
                 verseReference: "Romans 10:17"
             ),
             BeliefAnswer(
                 id: "word_pastors_not_me",
                 label: "Powerful for pastors. Not sure about me.",
                 isConfident: false,
-                declaration: "Jesus said I will say to this mountain MOVE, and it will move. That authority belongs to me through His name.",
+                declaration: "Jesus said I will speak to the mountain — and it will move. That authority is mine through His name.",
                 verseReference: "Mark 11:23"
             ),
             BeliefAnswer(
                 id: "word_symbolic",
-                label: "Words are symbolic. They don't really change anything.",
+                label: "Words are symbolic. They don't change anything.",
                 isConfident: false,
-                declaration: "God spoke and there was light. He made me in His image. My words carry weight when they agree with His.",
+                declaration: "God spoke — and there was light. He made me in His image. When my words agree with His, they carry weight.",
                 verseReference: "Genesis 1:3"
             )
         ]
@@ -354,30 +354,30 @@ enum BeliefQuestion: Int, CaseIterable {
         case .authority: return [
             BeliefAnswer(
                 id: "authority_yes",
-                label: "Yes. I speak — and the enemy has to flee.",
+                label: "Yes. I speak — the enemy flees.",
                 isConfident: true,
-                declaration: "I have been given authority to trample on serpents and scorpions, and over all the power of the enemy. Nothing shall harm me.",
+                declaration: "I have authority to trample on serpents and scorpions, and over all the power of the enemy. Nothing shall harm me.",
                 verseReference: "Luke 10:19"
             ),
             BeliefAnswer(
                 id: "authority_unsure_how",
-                label: "I've heard it — I'm not sure how to use it.",
+                label: "I've heard it. I don't know how to use it.",
                 isConfident: false,
-                declaration: "I am seated with Christ in heavenly places, far above every principality, power, and dominion. The authority I walk in is His.",
+                declaration: "I am seated with Christ in heavenly places — far above every power, principality, and dominion. The authority I walk in is His.",
                 verseReference: "Ephesians 2:6"
             ),
             BeliefAnswer(
                 id: "authority_not_for_me",
-                label: "That sounds like warfare stuff. Is that for everyday me?",
+                label: "Spiritual warfare? Feels like pastor territory.",
                 isConfident: false,
-                declaration: "The weapons of my warfare are not carnal but mighty in God for pulling down strongholds. This authority is for my real, daily life.",
+                declaration: "The weapons of my warfare are not natural — they're mighty in God for tearing down strongholds. This is for my real, daily life.",
                 verseReference: "2 Corinthians 10:4"
             ),
             BeliefAnswer(
                 id: "authority_defeated",
-                label: "I feel powerless. The enemy seems to be winning.",
+                label: "I feel powerless. The enemy is winning.",
                 isConfident: false,
-                declaration: "Greater is He who is in me than he who is in the world. I am not a victim. I submit to God, I resist the devil, and he flees.",
+                declaration: "Greater is He who is in me than he who is in the world. I am not a victim. I submit to God, I resist the devil — and he flees.",
                 verseReference: "1 John 4:4"
             )
         ]
@@ -394,12 +394,13 @@ struct QuizOnboardingView: View {
     let size: CGSize
     let onComplete: () -> Void
 
-    static let quizVersion = "v2_belief"
+    static let quizVersion = "v3_burden"
 
     enum Step: Int, CaseIterable {
         case quiz
         case mirror
         case beliefSequence
+        case burdenSelection   // 2-axis personalization: drives matched declaration content + home category
         case matchedDeclaration
         case personalDeclaration
         case commitmentHold
@@ -410,11 +411,30 @@ struct QuizOnboardingView: View {
     @State private var selectedSegment: QuizSegment? = nil
     @State private var beliefIndex: Int = 0
     @State private var currentBeliefAnswer: BeliefAnswer? = nil
+    @State private var selectedBurden: HeaviestBurden? = nil
     @State private var savedPersonalDeclaration: PersonalDeclaration? = nil
     @State private var quizShownAt: Date = Date()
     @State private var stepEnteredAt: Date = Date()
 
     private var segment: QuizSegment { selectedSegment ?? .unsegmented }
+
+    // Burden drives the matched declaration content + the home/Daily Burst
+    // category seed. Falls back to segment-specific defaults if the user
+    // somehow lands at the matched declaration without picking a burden
+    // (shouldn't happen — the burden screen is in-flow — but defensive).
+    private var matchedDeclarationText: String {
+        if let preview = selectedBurden?.previewDeclaration {
+            return preview.text
+        }
+        return segment.declarationText
+    }
+
+    private var matchedDeclarationVerse: String {
+        if let preview = selectedBurden?.previewDeclaration {
+            return preview.reference
+        }
+        return segment.declarationVerse
+    }
 
     var body: some View {
         ZStack {
@@ -432,11 +452,15 @@ struct QuizOnboardingView: View {
                     }
                 case .beliefSequence:
                     beliefSequenceView
+                case .burdenSelection:
+                    BurdenSelectionScreen(size: size) { burden in
+                        handleBurdenAnswer(burden)
+                    }
                 case .matchedDeclaration:
                     QuizDeclarationScreen(
                         size: size,
-                        text: segment.declarationText,
-                        verse: segment.declarationVerse
+                        text: matchedDeclarationText,
+                        verse: matchedDeclarationVerse
                     ) {
                         advanceFromMatchedDeclaration()
                     }
@@ -548,10 +572,11 @@ struct QuizOnboardingView: View {
         ])
 
         if picked == .unsegmented {
-            // "Just exploring" → bypass mirror + belief sequence + matched
-            // declaration. Drop them straight into PersonalDeclaration so they
-            // still create something before paywall.
-            transition(to: .personalDeclaration)
+            // "Just exploring" → bypass mirror + belief sequence. Still get
+            // the burden Q so we can personalize the matched declaration +
+            // home category, then PersonalDeclaration + CommitmentHold.
+            transition(to: .burdenSelection)
+            fireBurdenShown()
         } else {
             transition(to: .mirror)
             Analytics.logEvent("onboarding_mirror_shown", parameters: [
@@ -602,10 +627,33 @@ struct QuizOnboardingView: View {
             stepEnteredAt = Date()
             fireBeliefShown(nextQuestion)
         } else {
-            // Belief sequence complete → matched declaration
-            transition(to: .matchedDeclaration)
-            fireDeclarationShown(for: segment)
+            // Belief sequence complete → burden selection (diagnostic axis)
+            transition(to: .burdenSelection)
+            fireBurdenShown()
         }
+    }
+
+    private func handleBurdenAnswer(_ burden: HeaviestBurden) {
+        UIImpactFeedbackGenerator(style: .soft).impactOccurred()
+        selectedBurden = burden
+
+        // Persist downstream so HighConversionPaywallView's surveyEngine path
+        // (used as fallback when segment is .unsegmented) renders personalized
+        // copy, and so NotificationScene + other surveyGoalWord readers stay
+        // wired up the same way they were under the Control onboarding.
+        let goalWord = burden.goalWord
+        appState.surveyGoalWord = goalWord.rawValue
+        appState.selectedDeclarationStyles = [burden.declarationStyle.rawValue]
+
+        Analytics.logEvent("onboarding_burden_answered", parameters: [
+            "segment": segment.rawValue,
+            "burden": burden.rawValue,
+            "goal_word": goalWord.rawValue,
+            "time_to_answer_seconds": Int(Date().timeIntervalSince(stepEnteredAt))
+        ])
+
+        transition(to: .matchedDeclaration)
+        fireMatchedDeclarationShown()
     }
 
     private func advanceFromMatchedDeclaration() {
@@ -613,7 +661,8 @@ struct QuizOnboardingView: View {
         let timeOnScreen = Int(Date().timeIntervalSince(stepEnteredAt))
         Analytics.logEvent("onboarding_first_declaration_spoken", parameters: [
             "segment": segment.rawValue,
-            "declaration_id": segment.declarationVerse,
+            "burden": selectedBurden?.rawValue ?? "none",
+            "declaration_id": matchedDeclarationVerse,
             "time_on_screen_seconds": timeOnScreen
         ])
         transition(to: .personalDeclaration)
@@ -643,6 +692,7 @@ struct QuizOnboardingView: View {
     }
 
     private func finishOnboarding() {
+        let categories = selectedBurden?.goalWord.notificationCategories ?? segment.notificationCategories
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { granted, _ in
             Analytics.logEvent("notification_permission", parameters: [
                 "granted": granted,
@@ -656,7 +706,7 @@ struct QuizOnboardingView: View {
                         count: appState.notificationCount,
                         startTime: appState.startTimeIndex,
                         endTime: appState.endTimeIndex,
-                        categories: segment.notificationCategories
+                        categories: categories
                     )
                     appState.lastNotificationSetDate = Date()
                 }
@@ -680,22 +730,37 @@ struct QuizOnboardingView: View {
         ])
     }
 
-    private func fireDeclarationShown(for segment: QuizSegment) {
+    private func fireBurdenShown() {
+        Analytics.logEvent("onboarding_burden_shown", parameters: [
+            "segment": segment.rawValue
+        ])
+    }
+
+    private func fireMatchedDeclarationShown() {
         Analytics.logEvent("onboarding_first_declaration_shown", parameters: [
             "segment": segment.rawValue,
-            "declaration_id": segment.declarationVerse
+            "burden": selectedBurden?.rawValue ?? "none",
+            "declaration_id": matchedDeclarationVerse
         ])
     }
 
     private func applySegmentDefaults() {
         appState.onboardingCompletedAt = Date()
 
-        let category = segment.primaryCategory
+        // Two-axis personalization:
+        //   - Burden (diagnostic axis) drives the actual content seeded into
+        //     home + Daily Burst + push notifications.
+        //   - Segment (ad-match axis) drives paywall framing already applied
+        //     in HighConversionPaywallView.
+        let burdenGoalWord = selectedBurden?.goalWord
+        let category = burdenGoalWord?.declarationCategory ?? segment.primaryCategory
+        let notificationCategories = burdenGoalWord?.notificationCategories ?? segment.notificationCategories
+
         UserDefaults.standard.set(category.rawValue, forKey: "selectedCategory")
         UserPreferencesTracker.shared.trackCategorySelection(category.rawValue)
         declarationStore.choose(category) { _ in }
 
-        appState.selectedNotificationCategories = segment.notificationCategories
+        appState.selectedNotificationCategories = notificationCategories
             .map { $0.rawValue }
             .joined(separator: ",")
     }
@@ -1052,6 +1117,102 @@ private struct QuizDeclarationScreen: View {
             .padding(.horizontal, 24)
             .padding(.bottom, size.height * 0.08)
             .accessibilityLabel(Text("Speak this declaration out loud."))
+        }
+    }
+}
+
+// MARK: - Burden selection (diagnostic axis)
+
+private struct BurdenSelectionScreen: View {
+    let size: CGSize
+    let onSelect: (HeaviestBurden) -> Void
+
+    // Curated subset that maps cleanly to the matched-declaration content.
+    // Order is rough most-common-first to maximize tap rate on the visible
+    // options without scroll.
+    private let options: [HeaviestBurden] = [
+        .peace, .health, .identity, .joy, .purpose, .abundance, .allOfIt
+    ]
+
+    var body: some View {
+        VStack(spacing: 0) {
+            Spacer().frame(height: size.height * 0.08)
+
+            Text("Last question.")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundColor(.white.opacity(0.65))
+                .textCase(.uppercase)
+                .tracking(1.4)
+
+            Text("What do you need MOST from God right now?")
+                .font(.system(size: 22, weight: .bold, design: .rounded))
+                .foregroundColor(.white)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 24)
+                .padding(.top, 10)
+
+            Text("We'll match Scripture to where you actually are.")
+                .font(.system(size: 14))
+                .foregroundColor(.white.opacity(0.7))
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 36)
+                .padding(.top, 8)
+
+            Spacer().frame(height: 20)
+
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 10) {
+                    ForEach(options, id: \.self) { burden in
+                        BurdenButton(burden: burden) {
+                            onSelect(burden)
+                        }
+                    }
+                }
+                .padding(.horizontal, 24)
+                .padding(.bottom, size.height * 0.04)
+            }
+        }
+    }
+
+    private struct BurdenButton: View {
+        let burden: HeaviestBurden
+        let action: () -> Void
+
+        var body: some View {
+            Button(action: action) {
+                HStack(spacing: 14) {
+                    Text(burden.icon)
+                        .font(.system(size: 26))
+                        .frame(width: 36)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(burden.rawValue)
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundColor(.white)
+                            .multilineTextAlignment(.leading)
+                        if !burden.description.isEmpty {
+                            Text(burden.description)
+                                .font(.system(size: 12))
+                                .foregroundColor(.white.opacity(0.65))
+                                .multilineTextAlignment(.leading)
+                        }
+                    }
+                    Spacer()
+                }
+                .padding(.vertical, 14)
+                .padding(.horizontal, 16)
+                .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+                .background(
+                    RoundedRectangle(cornerRadius: 14)
+                        .fill(Color.white.opacity(0.10))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 14)
+                                .stroke(Color.white.opacity(0.22), lineWidth: 1)
+                        )
+                )
+            }
+            .buttonStyle(PlainButtonStyle())
+            .accessibilityLabel(Text(burden.rawValue))
+            .accessibilityHint(Text(burden.description))
         }
     }
 }
