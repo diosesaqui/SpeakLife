@@ -143,12 +143,15 @@ struct BeliefAnswer: Identifiable, Equatable {
 }
 
 enum BeliefQuestion: Int, CaseIterable {
+    // Ordered for a love → worthiness → promises → response → mechanic → authority
+    // theological arc. Foundation first (lowest barrier to entry), authority last
+    // (sends them into the matched declaration with the right posture).
     case godLoves         = 0
-    case answersPrayer    = 1
+    case tooMessedUp      = 1
     case promisesTrue     = 2
-    case tooMessedUp      = 3
+    case answersPrayer    = 3
     case wordIsPowerful   = 4
-    case faithStrength    = 5
+    case authority        = 5
 
     static var count: Int { allCases.count }
 
@@ -159,7 +162,7 @@ enum BeliefQuestion: Int, CaseIterable {
         case .promisesTrue:   return "promises_for_me"
         case .tooMessedUp:    return "too_messed_up"
         case .wordIsPowerful: return "word_is_powerful"
-        case .faithStrength:  return "faith_strength"
+        case .authority:      return "authority_over_enemy"
         }
     }
 
@@ -175,19 +178,19 @@ enum BeliefQuestion: Int, CaseIterable {
             return "Have you ever felt too far gone for God to fully accept or use you?"
         case .wordIsPowerful:
             return "Do you believe God's Word has real power when YOU speak it out loud?"
-        case .faithStrength:
-            return "Does your faith have to feel strong for God to move on your behalf?"
+        case .authority:
+            return "Do you know you have authority over the enemy in Jesus' name?"
         }
     }
 
     var subhead: String? {
         switch self {
         case .godLoves:       return "Be honest. There's a Scripture waiting either way."
-        case .answersPrayer:  return "Whichever you pick, the Word has an answer."
-        case .promisesTrue:   return "Pick what's true today, not what you wish was true."
         case .tooMessedUp:    return "Shame thrives in silence. Let's bring it into the light."
+        case .promisesTrue:   return "Pick what's true today, not what you wish was true."
+        case .answersPrayer:  return "Whichever you pick, the Word has an answer."
         case .wordIsPowerful: return "This one matters. Speaking life is what this app is built on."
-        case .faithStrength:  return "Mustard-seed faith counts. Let's see what God says about yours."
+        case .authority:      return "This is the one that changes everything."
         }
     }
 
@@ -348,34 +351,34 @@ enum BeliefQuestion: Int, CaseIterable {
             )
         ]
 
-        case .faithStrength: return [
+        case .authority: return [
             BeliefAnswer(
-                id: "faith_no",
-                label: "No. He works with whatever faith I have.",
+                id: "authority_yes",
+                label: "Yes. I speak — and the enemy has to flee.",
                 isConfident: true,
-                declaration: "Faith the size of a mustard seed moves mountains. My faith — small as it is today — is enough because He is enough.",
-                verseReference: "Matthew 17:20"
+                declaration: "I have been given authority to trample on serpents and scorpions, and over all the power of the enemy. Nothing shall harm me.",
+                verseReference: "Luke 10:19"
             ),
             BeliefAnswer(
-                id: "faith_stuck",
-                label: "I think so. That's why I feel stuck.",
+                id: "authority_unsure_how",
+                label: "I've heard it — I'm not sure how to use it.",
                 isConfident: false,
-                declaration: "I cry, 'Lord, I believe — help my unbelief.' He honors the smallest yes I can offer Him today.",
-                verseReference: "Mark 9:24"
+                declaration: "I am seated with Christ in heavenly places, far above every principality, power, and dominion. The authority I walk in is His.",
+                verseReference: "Ephesians 2:6"
             ),
             BeliefAnswer(
-                id: "faith_compare",
-                label: "Strong faith helps. Mine doesn't qualify.",
+                id: "authority_not_for_me",
+                label: "That sounds like warfare stuff. Is that for everyday me?",
                 isConfident: false,
-                declaration: "He is faithful even when I am faithless — He cannot disown Himself. His character qualifies me, not my performance.",
-                verseReference: "2 Timothy 2:13"
+                declaration: "The weapons of my warfare are not carnal but mighty in God for pulling down strongholds. This authority is for my real, daily life.",
+                verseReference: "2 Corinthians 10:4"
             ),
             BeliefAnswer(
-                id: "faith_law",
-                label: "Yes. Strong faith means results.",
+                id: "authority_defeated",
+                label: "I feel powerless. The enemy seems to be winning.",
                 isConfident: false,
-                declaration: "It is by grace I am saved through faith — and even this faith is a gift from God. He gives me what I need to believe.",
-                verseReference: "Ephesians 2:8"
+                declaration: "Greater is He who is in me than he who is in the world. I am not a victim. I submit to God, I resist the devil, and he flees.",
+                verseReference: "1 John 4:4"
             )
         ]
         }
