@@ -339,7 +339,7 @@ enum BeliefQuestion: Int, CaseIterable {
                 id: "word_pastors_not_me",
                 label: "Powerful for pastors. Not sure about me.",
                 isConfident: false,
-                declaration: "Jesus said I will speak to the mountain — and it will move. That authority is mine through His name.",
+                declaration: "I speak directly to my mountain — and I don't doubt in my heart. What I declare in Jesus' name is done.",
                 verseReference: "Mark 11:23"
             ),
             BeliefAnswer(
@@ -1004,10 +1004,10 @@ private struct BeliefResponseScreen: View {
                 .padding(.bottom, 16)
 
             Text(answer.isConfident ? "Stand on this." : "Hear what God says.")
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundColor(.white.opacity(0.65))
+                .font(.system(size: 16, weight: .bold))
+                .foregroundColor(.white.opacity(0.9))
                 .textCase(.uppercase)
-                .tracking(1.4)
+                .tracking(1.6)
 
             Spacer()
 
@@ -1076,10 +1076,10 @@ private struct QuizDeclarationScreen: View {
             Spacer()
             VStack(spacing: 24) {
                 Text("Your verse for this storm.")
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.65))
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundColor(.white.opacity(0.9))
                     .textCase(.uppercase)
-                    .tracking(1.4)
+                    .tracking(1.6)
                 Text("\u{201C}\(text)\u{201D}")
                     .font(.system(size: 22, weight: .semibold, design: .rounded))
                     .foregroundColor(.white)
@@ -1139,10 +1139,10 @@ private struct BurdenSelectionScreen: View {
             Spacer().frame(height: size.height * 0.08)
 
             Text("Last question.")
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundColor(.white.opacity(0.65))
+                .font(.system(size: 16, weight: .bold))
+                .foregroundColor(.white.opacity(0.9))
                 .textCase(.uppercase)
-                .tracking(1.4)
+                .tracking(1.6)
 
             Text("What do you need MOST from God right now?")
                 .font(.system(size: 22, weight: .bold, design: .rounded))
