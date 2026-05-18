@@ -24,6 +24,7 @@ struct MomentDeclaration: Equatable {
 enum MomentGenerationError: Error, LocalizedError {
     case unavailable
     case modelFailed(String)
+    case rateLimited(nextAvailable: Date)
 
     var errorDescription: String? {
         switch self {
@@ -31,6 +32,8 @@ enum MomentGenerationError: Error, LocalizedError {
             return "AI generation isn't available right now. Check your connection and try again."
         case .modelFailed(let reason):
             return "Couldn't generate a declaration. \(reason)"
+        case .rateLimited:
+            return "You've already received your moment declaration today. Come back tomorrow."
         }
     }
 }
@@ -50,9 +53,20 @@ protocol OnDeviceDeclarationGeneratorProtocol {
 final class OnDeviceDeclarationGenerator: OnDeviceDeclarationGeneratorProtocol {
 
     private let session: URLSession
+    private let defaults: UserDefaults
+    private let calendar: Calendar
 
-    init(session: URLSession = .shared) {
+    /// One successful generation per local calendar day, across all
+    /// surfaces (Warrior Room post hook + DeclarationView entry).
+    /// UserDefaults key — kept simple; no migration needed.
+    private static let lastGenerationDateKey = "momentDeclarationLastGenerationDate"
+
+    init(session: URLSession = .shared,
+         defaults: UserDefaults = .standard,
+         calendar: Calendar = .current) {
         self.session = session
+        self.defaults = defaults
+        self.calendar = calendar
     }
 
     var isAvailable: Bool {
@@ -64,12 +78,24 @@ final class OnDeviceDeclarationGenerator: OnDeviceDeclarationGeneratorProtocol {
             print("✨ [MomentDeclaration] No API key loaded yet")
             throw MomentGenerationError.unavailable
         }
+        // Daily cap: one successful generation per local calendar day.
+        // We check BEFORE calling Claude so a blocked attempt costs $0.
+        if let last = defaults.object(forKey: Self.lastGenerationDateKey) as? Date,
+           calendar.isDate(last, inSameDayAs: Date()) {
+            let nextAvailable = calendar.startOfDay(for: Date())
+                .addingTimeInterval(24 * 60 * 60)
+            print("✨ [MomentDeclaration] 🚫 Rate-limited until \(nextAvailable)")
+            throw MomentGenerationError.rateLimited(nextAvailable: nextAvailable)
+        }
         print("✨ [MomentDeclaration] Calling Claude for input: \(input.prefix(60))...")
         let start = Date()
         do {
             let result = try await callClaude(input: input)
             let elapsed = Date().timeIntervalSince(start)
             print("✨ [MomentDeclaration] ✅ Generated in \(String(format: "%.1f", elapsed))s")
+            // Stamp the success — only on actual success so failures
+            // don't burn the user's daily allowance.
+            defaults.set(Date(), forKey: Self.lastGenerationDateKey)
             return result
         } catch {
             let elapsed = Date().timeIntervalSince(start)

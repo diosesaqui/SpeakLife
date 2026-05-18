@@ -238,20 +238,29 @@ struct MomentDeclarationSheet: View {
 
     @ViewBuilder
     private var actionButton: some View {
-        if declarationText.isEmpty {
-            Button {
-                Task { await runGenerate() }
-            } label: {
-                actionLabel(title: "Generate", enabled: canGenerate)
-            }
-            .disabled(!canGenerate || generating)
-        } else {
+        if !declarationText.isEmpty {
+            // Success — Amen.
             Button {
                 Analytics.logEvent("moment_declaration_done", parameters: ["source": source])
                 dismiss()
             } label: {
                 actionLabel(title: "Amen", enabled: true)
             }
+        } else if errorMessage != nil && !generating {
+            // Error (incl. daily rate limit). Close instead of leaving
+            // a dead "Generate" button that would just re-error.
+            Button {
+                dismiss()
+            } label: {
+                actionLabel(title: "Close", enabled: true)
+            }
+        } else {
+            Button {
+                Task { await runGenerate() }
+            } label: {
+                actionLabel(title: "Generate", enabled: canGenerate)
+            }
+            .disabled(!canGenerate || generating)
         }
     }
 

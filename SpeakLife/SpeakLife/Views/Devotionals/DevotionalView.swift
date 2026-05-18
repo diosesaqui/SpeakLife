@@ -142,11 +142,15 @@ struct DevotionalView: View {
             }
 
         }
-        .overlay(alignment: .topLeading) {
-            aiDevotionalTopLeftButton
-                .padding(.leading, 20)
-                .padding(.top, 60)
-        }
+        // AI devotional entry point — temporarily hidden while we
+        // evaluate cost / quality. Underlying CategoryDevotionalSheet,
+        // generator, sheet modifier and paywall hookup are kept intact
+        // so we can re-enable by uncommenting the .overlay block.
+        // .overlay(alignment: .topLeading) {
+        //     aiDevotionalTopLeftButton
+        //         .padding(.leading, 20)
+        //         .padding(.top, 60)
+        // }
         .sheet(isPresented: $showCategoryDevotionalSheet) {
             CategoryDevotionalSheet()
                 .environmentObject(subscriptionStore)
