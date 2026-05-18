@@ -75,7 +75,7 @@ struct AnimatedAppIconView: View {
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
             guard animationPhase == 1 else { return } // Safety check
             withAnimation(.easeInOut(duration: 0.5)) {
-                animationScale = 5.0
+                animationScale = 1.4
                 animationPhase = 2
             }
             

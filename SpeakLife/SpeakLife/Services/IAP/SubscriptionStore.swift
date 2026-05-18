@@ -70,6 +70,11 @@ final class SubscriptionStore: ObservableObject {
     
     // MARK: - Spiritual Warfare Onboarding Toggle
     @Published var useSpiritualWarfareOnboarding: Bool? = false
+
+    // MARK: - Quiz Onboarding (Treatment cohort of the install→trial A/B)
+    // false = current SurveyOnboardingView (Control)
+    // true  = QuizOnboardingView with personalized paywall framing (Treatment)
+    @Published var useQuizOnboarding = false
     
     // MARK: - AI Feature Flag
     @Published var enableAIFeatures = false
@@ -224,6 +229,9 @@ final class SubscriptionStore: ObservableObject {
         
         // Spiritual Warfare Onboarding Toggle from Remote Config
         useSpiritualWarfareOnboarding = remoteConfig["useSpiritualWarfareOnboarding"].boolValue
+
+        // Quiz Onboarding A/B from Remote Config (key: useQuizOnboarding)
+        useQuizOnboarding = remoteConfig["useQuizOnboarding"].boolValue
         
         // High Conversion Paywall Flag
         useHighConversionPaywall = remoteConfig["useHighConversionPaywall"].boolValue

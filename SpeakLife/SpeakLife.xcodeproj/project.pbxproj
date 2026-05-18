@@ -336,7 +336,6 @@
 		7AF18C9F2A0DB06C005A6E31 /* TrackerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AF18C9E2A0DB06C005A6E31 /* TrackerView.swift */; };
 		7AF18CA22A0DB126005A6E31 /* SwiftUICharts in Frameworks */ = {isa = PBXBuildFile; productRef = 7AF18CA12A0DB126005A6E31 /* SwiftUICharts */; };
 		7AF46FC52A41326100A45C01 /* AbbasLoveView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AF46FC42A41326100A45C01 /* AbbasLoveView.swift */; };
-		80C39CCCF6868B4C448E5D18 /* TrialEndingBanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66D0E43E7B9E3396848559EA /* TrialEndingBanner.swift */; };
 		81FE0DDC33BC402685CA44EE /* BurstCompletionModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81FE0DDC33BC402685CA44ED /* BurstCompletionModel.swift */; };
 		8C81294FE8FD42174F375CFB /* LifecycleNotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA221D745BD49CF6BCFEBAA1 /* LifecycleNotificationService.swift */; };
 		8D9D24C8C66A40D5AF502D31 /* AudioProgressStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 750128553E56408E9225277C /* AudioProgressStore.swift */; };
@@ -372,6 +371,7 @@
 		D0010000000000000001BBBB /* SurveyPersonalizationEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0010000000000000001AAAA /* SurveyPersonalizationEngine.swift */; };
 		D0030000000000000003BBBB /* SurveyOnboardingScreens.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0030000000000000003AAAA /* SurveyOnboardingScreens.swift */; };
 		D0040000000000000004BBBB /* SurveyOnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0040000000000000004AAAA /* SurveyOnboardingView.swift */; };
+		D0080000000000000008BBBB /* QuizOnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0080000000000000008AAAA /* QuizOnboardingView.swift */; };
 		D0060000000000000006BBBB /* PayWhatYouCanView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0060000000000000006AAAA /* PayWhatYouCanView.swift */; };
 		D0070000000000000007BBBB /* SurveyTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0070000000000000007AAAA /* SurveyTypes.swift */; };
 		D2AD4D1C5D81425897424332 /* StructuredDayLaunchTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9A3081A52984B6AB0EECD7B /* StructuredDayLaunchTracker.swift */; };
@@ -649,7 +649,6 @@
 		46F66FE59AA649BFB7D06B09 /* HookScene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HookScene.swift; sourceTree = "<group>"; };
 		59BFF68BFA515EAC0AC88C85 /* WidgetIntents.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WidgetIntents.swift; sourceTree = "<group>"; };
 		61721EDB270E45A784DF2A6C /* EmailConfirmationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmailConfirmationView.swift; sourceTree = "<group>"; };
-		66D0E43E7B9E3396848559EA /* TrialEndingBanner.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TrialEndingBanner.swift; sourceTree = "<group>"; };
 		6BA7EE898DF248C4EB6EDEB2 /* PrayerWallViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrayerWallViewModel.swift; sourceTree = "<group>"; };
 		6D920701A13775F49180D845 /* WldehBibleAPIService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WldehBibleAPIService.swift; sourceTree = "<group>"; };
 		74DAA35385DD02F8B0DCADE5 /* HowToUseSpeakLifeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HowToUseSpeakLifeView.swift; sourceTree = "<group>"; };
@@ -774,6 +773,7 @@
 		C0010000000000000001AAAA /* SurveyPersonalizationEngine.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SurveyPersonalizationEngine.swift; sourceTree = "<group>"; };
 		C0030000000000000003AAAA /* SurveyOnboardingScreens.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SurveyOnboardingScreens.swift; sourceTree = "<group>"; };
 		C0040000000000000004AAAA /* SurveyOnboardingView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SurveyOnboardingView.swift; sourceTree = "<group>"; };
+		C0080000000000000008AAAA /* QuizOnboardingView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = QuizOnboardingView.swift; sourceTree = "<group>"; };
 		C0060000000000000006AAAA /* PayWhatYouCanView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PayWhatYouCanView.swift; sourceTree = "<group>"; };
 		C0070000000000000007AAAA /* SurveyTypes.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SurveyTypes.swift; sourceTree = "<group>"; };
 		CL00DE00000000001111AAAA /* ClaudeDeclarationMatcher.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ClaudeDeclarationMatcher.swift; sourceTree = "<group>"; };
@@ -1223,7 +1223,6 @@
 				4575C9412E4657D2007C14F3 /* CloudKitDebugView.swift */,
 				4514AF142E47031200254B74 /* AppGroupsDebugView.swift */,
 				4597E2582E41C1AC009D6C66 /* CloudKitSyncBadge.swift */,
-				66D0E43E7B9E3396848559EA /* TrialEndingBanner.swift */,
 			);
 			path = Components;
 			sourceTree = "<group>";
@@ -1744,6 +1743,7 @@
 				A000DDDDDDDDDDDDDDDDEEEE /* PersonalDeclarationOnboardingView.swift */,
 				C0030000000000000003AAAA /* SurveyOnboardingScreens.swift */,
 				C0040000000000000004AAAA /* SurveyOnboardingView.swift */,
+				C0080000000000000008AAAA /* QuizOnboardingView.swift */,
 			);
 			path = Onboarding;
 			sourceTree = "<group>";
@@ -2351,7 +2351,6 @@
 				FCB7A8468DAA92844336D893 /* CancelInterventionView.swift in Sources */,
 				8C81294FE8FD42174F375CFB /* LifecycleNotificationService.swift in Sources */,
 				20F4D11E6F9CB2FA07540EE7 /* TrialExperienceService.swift in Sources */,
-				80C39CCCF6868B4C448E5D18 /* TrialEndingBanner.swift in Sources */,
 				B0001111111111111111BBBB /* PersonalDeclaration.swift in Sources */,
 				B0002222222222222222BBBB /* DeclarationContent.swift in Sources */,
 				B0003333333333333333BBBB /* DeclarationMatcher.swift in Sources */,
@@ -2374,6 +2373,7 @@
 				D0010000000000000001BBBB /* SurveyPersonalizationEngine.swift in Sources */,
 				D0030000000000000003BBBB /* SurveyOnboardingScreens.swift in Sources */,
 				D0040000000000000004BBBB /* SurveyOnboardingView.swift in Sources */,
+				D0080000000000000008BBBB /* QuizOnboardingView.swift in Sources */,
 				D0060000000000000006BBBB /* PayWhatYouCanView.swift in Sources */,
 				D0070000000000000007BBBB /* SurveyTypes.swift in Sources */,
 			);
@@ -2580,7 +2580,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = SpeakLife/SpeakLife.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 993;
+				CURRENT_PROJECT_VERSION = 994;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_ASSET_PATHS = "\"SpeakLife/Preview Content\"";
 				DEVELOPMENT_TEAM = G7398P2856;
@@ -2601,7 +2601,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 4.18;
+				MARKETING_VERSION = 4.19;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Franchiz.SpeakLife;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -2622,7 +2622,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = SpeakLife/SpeakLife.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 993;
+				CURRENT_PROJECT_VERSION = 994;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_ASSET_PATHS = "\"SpeakLife/Preview Content\"";
 				DEVELOPMENT_TEAM = G7398P2856;
@@ -2643,7 +2643,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 4.18;
+				MARKETING_VERSION = 4.19;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Franchiz.SpeakLife;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
