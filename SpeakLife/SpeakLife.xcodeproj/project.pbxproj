@@ -372,6 +372,11 @@
 		CF8E572E5459A038EEE73B3A /* PrayerWallViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BA7EE898DF248C4EB6EDEB2 /* PrayerWallViewModel.swift */; };
 		CL00DE00000000003333BBBB /* ClaudeDeclarationMatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = CL00DE00000000001111AAAA /* ClaudeDeclarationMatcher.swift */; };
 		CL00DE00000000004444BBBB /* AnthropicConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = CL00DE00000000002222AAAA /* AnthropicConfig.swift */; };
+		ONDEV00000000005555BBBB /* AppleIntelligenceDeclarationMatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = ONDEV00000000005555AAAA /* AppleIntelligenceDeclarationMatcher.swift */; };
+		ONDEV00000000006666BBBB /* OnDeviceDeclarationGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = ONDEV00000000006666AAAA /* OnDeviceDeclarationGenerator.swift */; };
+		ONDEV00000000007777BBBB /* OnDeviceDevotionalGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = ONDEV00000000007777AAAA /* OnDeviceDevotionalGenerator.swift */; };
+		ONDEV00000000008888BBBB /* MomentDeclarationSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = ONDEV00000000008888AAAA /* MomentDeclarationSheet.swift */; };
+		ONDEV00000000009999BBBB /* CategoryDevotionalSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = ONDEV00000000009999AAAA /* CategoryDevotionalSheet.swift */; };
 		D0010000000000000001BBBB /* SurveyPersonalizationEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0010000000000000001AAAA /* SurveyPersonalizationEngine.swift */; };
 		D0030000000000000003BBBB /* SurveyOnboardingScreens.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0030000000000000003AAAA /* SurveyOnboardingScreens.swift */; };
 		D0040000000000000004BBBB /* SurveyOnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0040000000000000004AAAA /* SurveyOnboardingView.swift */; };
@@ -785,6 +790,11 @@
 		C0080000000000000008AAAA /* QuizOnboardingView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = QuizOnboardingView.swift; sourceTree = "<group>"; };
 		CL00DE00000000001111AAAA /* ClaudeDeclarationMatcher.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ClaudeDeclarationMatcher.swift; sourceTree = "<group>"; };
 		CL00DE00000000002222AAAA /* AnthropicConfig.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AnthropicConfig.swift; sourceTree = "<group>"; };
+		ONDEV00000000005555AAAA /* AppleIntelligenceDeclarationMatcher.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppleIntelligenceDeclarationMatcher.swift; sourceTree = "<group>"; };
+		ONDEV00000000006666AAAA /* OnDeviceDeclarationGenerator.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = OnDeviceDeclarationGenerator.swift; sourceTree = "<group>"; };
+		ONDEV00000000007777AAAA /* OnDeviceDevotionalGenerator.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = OnDeviceDevotionalGenerator.swift; sourceTree = "<group>"; };
+		ONDEV00000000008888AAAA /* MomentDeclarationSheet.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MomentDeclarationSheet.swift; sourceTree = "<group>"; };
+		ONDEV00000000009999AAAA /* CategoryDevotionalSheet.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CategoryDevotionalSheet.swift; sourceTree = "<group>"; };
 		DC27319C7422AFA8C439B08F /* AppleSignInService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleSignInService.swift; sourceTree = "<group>"; };
 		DC73B2698B17B267C7A6F437 /* TrialExperienceService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TrialExperienceService.swift; sourceTree = "<group>"; };
 		DECL0001VERIF00001FILEREF /* DeclarationVerificationService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DeclarationVerificationService.swift; sourceTree = "<group>"; };
@@ -931,6 +941,8 @@
 				452F6ADA2E87CD8500A27856 /* AIEnhancedDailyChecklist.swift */,
 				452F6ADB2E87CD8500A27856 /* AIEnhancedDeclarationView.swift */,
 				452F6ADC2E87CD8500A27856 /* PersonalizedFeedSection.swift */,
+				ONDEV00000000008888AAAA /* MomentDeclarationSheet.swift */,
+				ONDEV00000000009999AAAA /* CategoryDevotionalSheet.swift */,
 			);
 			path = AI;
 			sourceTree = "<group>";
@@ -1799,6 +1811,7 @@
 			isa = PBXGroup;
 			children = (
 				7AF18C922A0CBF71005A6E31 /* DevotionalService.swift */,
+				ONDEV00000000007777AAAA /* OnDeviceDevotionalGenerator.swift */,
 			);
 			path = DailyDevotions;
 			sourceTree = "<group>";
@@ -1830,6 +1843,8 @@
 				A0006666666666666666AAAA /* SpeechTranscriptionService.swift */,
 				CL00DE00000000001111AAAA /* ClaudeDeclarationMatcher.swift */,
 				CL00DE00000000002222AAAA /* AnthropicConfig.swift */,
+				ONDEV00000000005555AAAA /* AppleIntelligenceDeclarationMatcher.swift */,
+				ONDEV00000000006666AAAA /* OnDeviceDeclarationGenerator.swift */,
 				DECL0001VERIF00001FILEREF /* DeclarationVerificationService.swift */,
 				A1B2C3D4E5F60001A1B2C3D5 /* Protocols */,
 				A1B2C3D4E5F60002A1B2C3D6 /* UseCases */,
@@ -2377,6 +2392,11 @@
 				B0003333333333333333BBBB /* DeclarationMatcher.swift in Sources */,
 				CL00DE00000000003333BBBB /* ClaudeDeclarationMatcher.swift in Sources */,
 				CL00DE00000000004444BBBB /* AnthropicConfig.swift in Sources */,
+				ONDEV00000000005555BBBB /* AppleIntelligenceDeclarationMatcher.swift in Sources */,
+				ONDEV00000000006666BBBB /* OnDeviceDeclarationGenerator.swift in Sources */,
+				ONDEV00000000007777BBBB /* OnDeviceDevotionalGenerator.swift in Sources */,
+				ONDEV00000000008888BBBB /* MomentDeclarationSheet.swift in Sources */,
+				ONDEV00000000009999BBBB /* CategoryDevotionalSheet.swift in Sources */,
 				DECL0001VERIF00001BUILDF /* DeclarationVerificationService.swift in Sources */,
 				HIGH0001DECL000001BUILDF /* HighlightedDeclarationText.swift in Sources */,
 				B0004444444444444444BBBB /* PersonalDeclarationRepository.swift in Sources */,

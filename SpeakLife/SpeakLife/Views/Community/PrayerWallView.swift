@@ -883,8 +883,11 @@ struct PostPrayerView: View {
     @State private var text: String
     @State private var selectedCategory: WarriorRoomCategory?
     @State private var isTestimony: Bool
+    @State private var pendingMomentText: String?
+    @State private var showMomentSheet: Bool = false
     private let maxChars = 280
     private let minWords = 5
+    private let momentGenerator: OnDeviceDeclarationGeneratorProtocol = OnDeviceDeclarationGenerator()
 
     /// Default initialiser for normal Warrior Room composer entries.
     init(viewModel: PrayerWallViewModel) {
@@ -1057,6 +1060,7 @@ struct PostPrayerView: View {
             // Submit button — sits below scroll, lifts with keyboard naturally
             Button {
                 guard let category = selectedCategory else { return }
+                pendingMomentText = text  // capture before submission (text may clear after)
                 viewModel.addPost(text: text,
                                   isSister: isSister,
                                   category: category,
@@ -1065,7 +1069,18 @@ struct PostPrayerView: View {
                                   isTestimony: isTestimony)
                 if viewModel.errorMessage == nil {
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
-                        dismiss()
+                        // After a successful post, hand off to the on-device
+                        // declaration sheet so the user walks away with a
+                        // personal declaration tied to what they just shared.
+                        // Falls back to the legacy immediate-dismiss when the
+                        // model isn't available on this device.
+                        if momentGenerator.isAvailable,
+                           let _ = pendingMomentText,
+                           viewModel.errorMessage == nil {
+                            showMomentSheet = true
+                        } else {
+                            dismiss()
+                        }
                     }
                 }
             } label: {
@@ -1097,6 +1112,11 @@ struct PostPrayerView: View {
                 Color.black.opacity(0.62)
                     .ignoresSafeArea()
             }
+        }
+        .sheet(isPresented: $showMomentSheet, onDismiss: { dismiss() }) {
+            MomentDeclarationSheet(autoStartInput: pendingMomentText,
+                                   source: "warrior_room_post")
+                .environmentObject(subscriptionStore)
         }
     }
 

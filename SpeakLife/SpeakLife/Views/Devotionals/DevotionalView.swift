@@ -20,6 +20,8 @@ struct DevotionalView: View {
     @State private var share = false
     @State var presentDevotionalSubscriptionView = false
     @State private var readerCount: String? = nil
+    @State private var showCategoryDevotionalSheet = false
+    private let aiDevotionalGenerator: OnDeviceDevotionalGeneratorProtocol = OnDeviceDevotionalGenerator()
     
     let spacing: CGFloat = 50
     
@@ -254,19 +256,39 @@ struct DevotionalView: View {
     var navigateDevotionalStack: some View {
         HStack {
             backDevotionalButton
-            
+
             Spacer()
                 .frame(width: 25)
-            
+
             forwardDevotionalButton
-            
+
             Spacer()
                 .frame(width: 25)
-            
+
             shareButton
-            
+
+            if aiDevotionalGenerator.isAvailable {
+                Spacer()
+                    .frame(width: 25)
+                aiDevotionalButton
+            }
         }
         .foregroundColor(.white)
+        .sheet(isPresented: $showCategoryDevotionalSheet) {
+            CategoryDevotionalSheet()
+                .environmentObject(subscriptionStore)
+        }
+    }
+
+    private var aiDevotionalButton: some View {
+        Button {
+            Analytics.logEvent("ai_devotional_open", parameters: nil)
+            showCategoryDevotionalSheet = true
+        } label: {
+            Image(systemName: "sparkles")
+                .resizable()
+                .frame(width: 25, height: 25)
+        }
     }
     
     
