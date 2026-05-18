@@ -77,11 +77,7 @@ final class OnDeviceDeclarationGenerator: OnDeviceDeclarationGeneratorProtocol {
             print("✨ [MomentDeclaration] Generating for input: \(input.prefix(60))...")
             let start = Date()
             do {
-                // See OnDeviceDevotionalGenerator for why permissive guardrails.
-                let session = LanguageModelSession(
-                    guardrails: .permissiveContentTransformations,
-                    instructions: Self.onDeviceSystemPrompt
-                )
+                let session = LanguageModelSession(instructions: Self.onDeviceSystemPrompt)
                 let response = try await session.respond(
                     to: "Need: \(input)",
                     generating: OnDeviceDeclaration.self

@@ -67,12 +67,7 @@ final class AppleIntelligenceDeclarationMatcher: DeclarationMatcherProtocol {
 
         let start = Date()
         do {
-            // permissiveContentTransformations relaxes the default on-device
-            // safety filter which can reject scripture-heavy content.
-            let session = LanguageModelSession(
-                guardrails: .permissiveContentTransformations,
-                instructions: Self.onDeviceSystemPrompt
-            )
+            let session = LanguageModelSession(instructions: Self.onDeviceSystemPrompt)
             let response = try await session.respond(
                 to: "Need: \(input)",
                 generating: OnDeviceDeclaration.self

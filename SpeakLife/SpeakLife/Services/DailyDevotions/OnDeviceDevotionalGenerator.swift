@@ -96,17 +96,14 @@ final class OnDeviceDevotionalGenerator: OnDeviceDevotionalGeneratorProtocol {
             print("📖 [AIDevotional] Generating for category=\(category.rawValue)")
             let start = Date()
             do {
-                // permissiveContentTransformations relaxes the on-device safety
-                // filter that was rejecting our scripture-and-warfare prompts
-                // as "unsafe". This is the Apple-blessed knob — we're not
-                // disabling safety, just opting into the less-conservative
-                // mode meant for creative/religious/literary content.
-                let session = LanguageModelSession(
-                    guardrails: .permissiveContentTransformations,
-                    instructions: Self.systemPrompt
-                )
+                // The on-device model's safety filter is conservative about
+                // religious / "spiritual warfare" content. Use a neutralized
+                // prompt phrasing for sensitive categories so we don't trip
+                // the guardrail in the first place. If it trips anyway,
+                // describeError below maps the violation to a user message.
+                let session = LanguageModelSession(instructions: Self.systemPrompt)
                 let response = try await session.respond(
-                    to: "Category: \(category.label). Write today's devotional.",
+                    to: Self.prompt(for: category),
                     generating: GeneratedDevotional.self
                 )
                 let elapsed = Date().timeIntervalSince(start)
@@ -184,6 +181,20 @@ final class OnDeviceDevotionalGenerator: OnDeviceDevotionalGeneratorProtocol {
             return "Apple's on-device safety filter blocked this devotional. Try a different category or tap Generate again."
         }
         return (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+    }
+
+    /// Softens category prompts that the on-device safety filter tends to
+    /// reject. Users still see the original category label in the picker
+    /// (Spiritual Warfare etc.); the model just receives a less
+    /// trigger-prone phrasing.
+    fileprivate static func prompt(for category: GeneratedDevotionalCategory) -> String {
+        let topic: String
+        switch category {
+        case .warfare:       topic = "standing firm in faith and the armor of God"
+        case .fear:          topic = "trusting God when you feel afraid"
+        default:             topic = category.label
+        }
+        return "Topic: \(topic). Write today's devotional."
     }
 }
 
