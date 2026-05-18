@@ -96,6 +96,8 @@ struct HomeView: View {
     @State private var showPDMigrationSheet = false
     @State private var showStreakCelebration = false
     @State private var celebrationStreakCount = 0
+    @State private var anniversaryMilestone: PremiumAnniversaryMilestone?
+    @State private var yearInReviewStats: YearInReviewStats?
     
     private let currentVersion = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0.0"
 
@@ -206,6 +208,12 @@ struct HomeView: View {
                                 guard newVersion > 0 else { return }
                                 declarationStore.setRemoteDeclarationVersion(version: newVersion)
                             }
+                            // RC's premium entitlement (and its originalPurchaseDate) is fetched
+                            // async on cold start; the .onAppear check above may run before the
+                            // value lands. Re-run once RC populates it.
+                            .onChange(of: subscriptionStore.premiumOriginalPurchaseDate) { _ in
+                                checkForPremiumAnniversary()
+                            }
                             .onChange(of: paywallTrigger.shouldShowPaywall) { newValue in
                                 if newValue && !subscriptionStore.isPremium {
                                     showTriggeredPaywall = true
@@ -254,6 +262,20 @@ struct HomeView: View {
                                     .environmentObject(devotionalViewModel)
                                     .environmentObject(audioDeclarationViewModel)
                                     .environmentObject(tabViewModel)
+                            }
+                            .fullScreenCover(item: $anniversaryMilestone) { milestone in
+                                PremiumAnniversaryView(milestone: milestone)
+                                    .environmentObject(subscriptionStore)
+                            }
+                            .fullScreenCover(item: $yearInReviewStats) { stats in
+                                // Snapshot premium status into the view so a
+                                // late StoreKit hydration can't mutate the
+                                // slide list mid-presentation.
+                                YearInReviewView(
+                                    stats: stats,
+                                    includesPremiumExtras: subscriptionStore.isPremium
+                                )
+                                .environmentObject(subscriptionStore)
                             }
                   
                 } else if subscriptionStore.useQuizOnboarding {
@@ -312,6 +334,8 @@ struct HomeView: View {
                 .onAppear {
                     checkForNewVersion()
                     checkForPersonalDeclarationMigration()
+                    checkForPremiumAnniversary()
+                    checkForYearInReview()
                     if appState.firstOpen {
                         appState.firstOpen = false
                     }
@@ -575,6 +599,79 @@ struct HomeView: View {
             isPresented = true
             UserDefaults.standard.set(currentVersion, forKey: "lastVersion")
        }
+    }
+
+    /// Surfaces the Year in Review between Dec 15 and Jan 15. Auto-launches
+    /// on cold start once per recap year. From Dec 15 → Dec 31 the recap is
+    /// for the in-progress current year (Spotify Wrapped pattern); from
+    /// Jan 1 → Jan 15 it's for the year that just closed.
+    ///
+    /// Everyone with meaningful activity gets the core recap; premium
+    /// subscribers see an additional Strength Level slide and a Premium
+    /// Warrior mark on the share card (handled inside YearInReviewView).
+    private func checkForYearInReview() {
+        guard appState.isOnboarded else { return }
+        guard !showSubscription else { return }
+        guard yearInReviewStats == nil else { return }
+
+        let calendar = Calendar.current
+        let now = Date()
+        let month = calendar.component(.month, from: now)
+        let day = calendar.component(.day, from: now)
+        let currentYear = calendar.component(.year, from: now)
+
+        let recapYear: Int
+        if month == 12 && day >= 15 {
+            recapYear = currentYear
+        } else if month == 1 && day <= 15 {
+            recapYear = currentYear - 1
+        } else {
+            return
+        }
+
+        let shownKey = "yearInReview_shown_\(recapYear)"
+        guard !UserDefaults.standard.bool(forKey: shownKey) else { return }
+
+        let stats = YearInReviewStats.build(for: recapYear)
+        guard stats.hasMeaningfulActivity else { return }
+
+        UserDefaults.standard.set(true, forKey: shownKey)
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+            guard appState.isOnboarded && !showSubscription else { return }
+            yearInReviewStats = stats
+        }
+    }
+
+    /// Surfaces a one-time anniversary overlay for premium subscribers at 30,
+    /// 90, and 365 days. If the user is past multiple unshown milestones at
+    /// check time (e.g. when this feature first ships), only the highest is
+    /// shown and the lower ones are marked-as-shown silently so they don't
+    /// queue up.
+    private func checkForPremiumAnniversary() {
+        guard appState.isOnboarded else { return }
+        guard subscriptionStore.isPremium else { return }
+        guard let originalDate = subscriptionStore.premiumOriginalPurchaseDate else { return }
+        guard !showSubscription else { return }
+        guard anniversaryMilestone == nil else { return }
+
+        let days = Calendar.current.dateComponents([.day], from: originalDate, to: Date()).day ?? 0
+        guard days > 0 else { return }
+
+        let defaults = UserDefaults.standard
+        let crossedUnshown = PremiumAnniversaryMilestone.ascending
+            .filter { days >= $0.days && !defaults.bool(forKey: $0.shownDefaultsKey) }
+        guard let highest = crossedUnshown.last else { return }
+
+        for milestone in crossedUnshown where milestone != highest {
+            defaults.set(true, forKey: milestone.shownDefaultsKey)
+        }
+        defaults.set(true, forKey: highest.shownDefaultsKey)
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+            guard appState.isOnboarded && !showSubscription else { return }
+            anniversaryMilestone = highest
+        }
     }
 }
 

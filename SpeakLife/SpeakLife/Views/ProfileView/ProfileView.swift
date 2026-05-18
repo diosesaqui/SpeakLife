@@ -137,12 +137,12 @@ struct ProfileView: View {
                         privacyPolicyRow
                         termsConditionsRow
                     }
-                    
+
                     Section(footer: VStack {
                         Text(appVersion).font(.footnote)
                         Spacer().frame(height: 8)
                     }) {
-                        
+
                     }
                    
                 }
@@ -778,7 +778,7 @@ struct ProfileView: View {
     private func shareApp() {
         showShareSheet.toggle()
     }
-    
+
 }
 
 extension UIView {

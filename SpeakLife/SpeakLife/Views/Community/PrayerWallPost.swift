@@ -35,11 +35,18 @@ struct PrayerWallPost: Identifiable, Codable {
     /// all owner-gated mutations on them).
     var authorUid: String?
 
+    /// Snapshot of the author's premium entitlement at post time. Drives the
+    /// crown badge shown next to their displayName in the wall feed. Stored
+    /// per-post rather than resolved live so legacy posts (and posts whose
+    /// author later cancels) keep stable display. Nil on legacy posts.
+    var authorIsPremium: Bool?
+
     init(text: String,
          displayName: String,
          deviceId: String,
          category: WarriorRoomCategory? = nil,
-         authorUid: String? = nil) {
+         authorUid: String? = nil,
+         authorIsPremium: Bool? = nil) {
         self.text = text
         self.displayName = displayName
         self.deviceId = deviceId
@@ -51,6 +58,7 @@ struct PrayerWallPost: Identifiable, Codable {
         self.category = category?.rawValue
         self.reactionCounts = nil
         self.authorUid = authorUid
+        self.authorIsPremium = authorIsPremium
     }
 }
 

@@ -289,6 +289,7 @@ class PrayerWallViewModel: ObservableObject {
                  isSister: Bool,
                  category: WarriorRoomCategory,
                  authorUid: String,
+                 authorIsPremium: Bool,
                  isTestimony: Bool = false) {
         guard networkMonitor.currentPath.status != .unsatisfied else {
             errorMessage = "You are offline. Please connect to the internet to post."
@@ -316,6 +317,7 @@ class PrayerWallViewModel: ObservableObject {
                             isSister: isSister,
                             category: category,
                             authorUid: authorUid,
+                            authorIsPremium: authorIsPremium,
                             isTestimony: isTestimony)
         }
     }
@@ -324,6 +326,7 @@ class PrayerWallViewModel: ObservableObject {
                             isSister: Bool,
                             category: WarriorRoomCategory,
                             authorUid: String,
+                            authorIsPremium: Bool,
                             isTestimony: Bool) {
         isSubmitting = true
         let displayName = isSister ? "A sister in Christ" : "A brother in Christ"
@@ -331,7 +334,8 @@ class PrayerWallViewModel: ObservableObject {
                                      displayName: displayName,
                                      deviceId: deviceId,
                                      category: category,
-                                     authorUid: authorUid)
+                                     authorUid: authorUid,
+                                     authorIsPremium: authorIsPremium ? true : nil)
         // Posts created as a testimony go to the wall already marked as
         // answered, so the feed and the per-post Cloud Function copy can
         // treat them as praise reports rather than prayer requests.
