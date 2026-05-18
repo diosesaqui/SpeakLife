@@ -14,17 +14,19 @@ final class DIContainer {
 
     // MARK: - Personal Declaration
 
-    /// Three-tier matcher: Apple on-device (iOS 26+) → Claude API → keyword rules.
-    /// The Apple matcher already chains the Claude → keyword fallback internally,
-    /// so this single instance covers all three tiers.
-    lazy var declarationMatcher: DeclarationMatcherProtocol = AppleIntelligenceDeclarationMatcher()
+    /// Cloud Anthropic matcher with a keyword-rule fallback baked in.
+    /// (AppleIntelligenceDeclarationMatcher exists in the tree but produced
+    /// low-quality output for SpeakLife's voice; keeping the cloud path
+    /// active until on-device generation is good enough to take back over.)
+    lazy var declarationMatcher: DeclarationMatcherProtocol = ClaudeDeclarationMatcher()
     lazy var personalDeclarationRepository: PersonalDeclarationRepositoryProtocol = PersonalDeclarationRepository()
     lazy var declarationNotificationService: DeclarationNotificationServiceProtocol = DeclarationNotificationService()
     lazy var speechTranscriptionService: SpeechTranscriptionProtocol = SpeechTranscriptionService()
 
-    /// On-demand generators for the "Declaration of the Moment" feature and
-    /// the AI-generated devotional category sheet. Only functional on iOS 26+
-    /// with Apple Intelligence enabled — UI checks `isAvailable` before use.
+    /// Cloud-backed generators powering the "Declaration of the Moment"
+    /// sheet and the AI devotional category sheet. Class names retain
+    /// the "OnDevice" prefix for historical reasons — implementations
+    /// now call the same Anthropic API used by ClaudeDeclarationMatcher.
     lazy var momentDeclarationGenerator: OnDeviceDeclarationGeneratorProtocol = OnDeviceDeclarationGenerator()
     lazy var categoryDevotionalGenerator: OnDeviceDevotionalGeneratorProtocol = OnDeviceDevotionalGenerator()
 

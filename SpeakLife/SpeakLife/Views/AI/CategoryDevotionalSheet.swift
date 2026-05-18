@@ -97,7 +97,7 @@ struct CategoryDevotionalSheet: View {
                 Text("New Devotional")
                     .font(Font.custom("AppleSDGothicNeo-Bold", size: 24, relativeTo: .title))
                     .foregroundColor(.white)
-                Text("Pick a category. Apple Intelligence writes one tailored to you, in the SpeakLife voice.")
+                Text("Pick a category. We'll write one tailored to you, in the SpeakLife voice.")
                     .font(Font.custom("AppleSDGothicNeo-Regular", size: 14, relativeTo: .footnote))
                     .foregroundColor(.white.opacity(0.7))
                     .multilineTextAlignment(.center)
@@ -179,16 +179,11 @@ struct CategoryDevotionalSheet: View {
                     .lineLimit(nil)
                     .fixedSize(horizontal: false, vertical: true)
             } else if generating {
-                VStack(spacing: 12) {
-                    HStack(spacing: 8) {
-                        ProgressView().tint(.white)
-                        Text("Drawing from the well…")
-                            .font(Font.custom("AppleSDGothicNeo-Regular", size: 14, relativeTo: .footnote))
-                            .foregroundColor(.white.opacity(0.65))
-                    }
-                    Text("This can take 10–20 seconds on-device.")
-                        .font(Font.custom("AppleSDGothicNeo-Regular", size: 12, relativeTo: .caption))
-                        .foregroundColor(.white.opacity(0.45))
+                HStack(spacing: 8) {
+                    ProgressView().tint(.white)
+                    Text("Drawing from the well…")
+                        .font(Font.custom("AppleSDGothicNeo-Regular", size: 14, relativeTo: .footnote))
+                        .foregroundColor(.white.opacity(0.65))
                 }
                 .padding(.top, 4)
             }
@@ -199,10 +194,10 @@ struct CategoryDevotionalSheet: View {
 
     private var unavailableNotice: some View {
         VStack(spacing: 10) {
-            Image(systemName: "sparkles")
+            Image(systemName: "wifi.slash")
                 .font(.system(size: 28))
                 .foregroundColor(.white.opacity(0.7))
-            Text("On-device devotionals need iOS 26 with Apple Intelligence enabled.")
+            Text("AI generation isn't ready right now. Check your connection and try again in a moment.")
                 .font(Font.custom("AppleSDGothicNeo-Regular", size: 14, relativeTo: .footnote))
                 .foregroundColor(.white.opacity(0.75))
                 .multilineTextAlignment(.center)

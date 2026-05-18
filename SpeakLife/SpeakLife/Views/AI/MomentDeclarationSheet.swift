@@ -175,10 +175,10 @@ struct MomentDeclarationSheet: View {
 
     private var unavailableNotice: some View {
         VStack(spacing: 10) {
-            Image(systemName: "sparkles")
+            Image(systemName: "wifi.slash")
                 .font(.system(size: 28))
                 .foregroundColor(.white.opacity(0.7))
-            Text("On-device generation needs iOS 26 with Apple Intelligence enabled.")
+            Text("AI generation isn't ready right now. Check your connection and try again in a moment.")
                 .font(Font.custom("AppleSDGothicNeo-Regular", size: 14, relativeTo: .footnote))
                 .foregroundColor(.white.opacity(0.75))
                 .multilineTextAlignment(.center)
@@ -197,16 +197,11 @@ struct MomentDeclarationSheet: View {
                     .lineLimit(nil)
                     .fixedSize(horizontal: false, vertical: true)
             } else if generating {
-                VStack(spacing: 8) {
-                    HStack(spacing: 10) {
-                        ProgressView().tint(.white)
-                        Text("Generating…")
-                            .font(Font.custom("AppleSDGothicNeo-Regular", size: 14, relativeTo: .footnote))
-                            .foregroundColor(.white.opacity(0.65))
-                    }
-                    Text("This can take 10–20 seconds on-device.")
-                        .font(Font.custom("AppleSDGothicNeo-Regular", size: 12, relativeTo: .caption))
-                        .foregroundColor(.white.opacity(0.45))
+                HStack(spacing: 10) {
+                    ProgressView().tint(.white)
+                    Text("Drawing this together…")
+                        .font(Font.custom("AppleSDGothicNeo-Regular", size: 14, relativeTo: .footnote))
+                        .foregroundColor(.white.opacity(0.65))
                 }
                 .padding(.vertical, 8)
             }
@@ -287,7 +282,7 @@ struct MomentDeclarationSheet: View {
     @MainActor
     private func runGenerate() async {
         guard generator.isAvailable else {
-            errorMessage = "On-device generation isn't available on this device."
+            errorMessage = "AI generation isn't ready yet. Try again in a moment."
             return
         }
         let trimmed = userInput.trimmingCharacters(in: .whitespacesAndNewlines)

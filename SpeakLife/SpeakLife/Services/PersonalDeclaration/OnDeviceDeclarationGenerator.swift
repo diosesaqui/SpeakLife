@@ -2,25 +2,19 @@
 //  OnDeviceDeclarationGenerator.swift
 //  SpeakLife
 //
-//  "Declaration of the Moment" — generates a fresh, personalized declaration
-//  on-device whenever the user asks (e.g. mid-day prayer, post to the Warrior
-//  Room). Unlike the onboarding matcher, these declarations are not
-//  persisted, not notified, and not de-duplicated. Pure ephemeral generation.
-//
-//  Distinction from AppleIntelligenceDeclarationMatcher: that one returns
-//  the full DeclarationMatch object used by the onboarding pipeline. This
-//  one streams partial output for UX (typewriter effect) and is meant to be
-//  consumed by transient sheets.
+//  NOTE: name is now historical — this class drives the "Declaration of
+//  the Moment" feature using the cloud Anthropic Messages API (the same
+//  service ClaudeDeclarationMatcher uses for onboarding). The Apple
+//  on-device path produced low-quality output for this app's voice, so
+//  the implementation was swapped to cloud while keeping the public
+//  protocol surface stable. The MomentDeclarationSheet UI consumes
+//  this through OnDeviceDeclarationGeneratorProtocol — no changes there.
 //
 
 import Foundation
+import FirebaseAnalytics
 
-#if canImport(FoundationModels)
-import FoundationModels
-#endif
-
-/// What the UI receives. Identical shape to DeclarationMatch but without
-/// the `category` (categories are an onboarding-pipeline concept).
+/// What the UI receives.
 struct MomentDeclaration: Equatable {
     let declarationText: String
     let verseText: String
@@ -34,7 +28,7 @@ enum MomentGenerationError: Error, LocalizedError {
     var errorDescription: String? {
         switch self {
         case .unavailable:
-            return "On-device generation needs iOS 26 with Apple Intelligence enabled."
+            return "AI generation isn't available right now. Check your connection and try again."
         case .modelFailed(let reason):
             return "Couldn't generate a declaration. \(reason)"
         }
@@ -42,70 +36,49 @@ enum MomentGenerationError: Error, LocalizedError {
 }
 
 protocol OnDeviceDeclarationGeneratorProtocol {
-    /// True when the on-device model is reachable on this device, right now.
+    /// True when the cloud Anthropic API key has been loaded from Remote Config.
     var isAvailable: Bool { get }
 
-    /// One-shot generation. Returns the full declaration when the model
-    /// finishes. Throws `MomentGenerationError.unavailable` if the model
-    /// can't be reached at all.
+    /// One-shot generation.
     func generate(from input: String) async throws -> MomentDeclaration
 
-    /// Streaming generation. Yields partial values as the model produces
-    /// them — every yield is a snapshot of the structured output with the
-    /// fields filled in so far. Final yield is the complete value.
+    /// Stream wrapper around `generate` so the UI can keep its streaming
+    /// consumer shape. Emits a single final value when the cloud call returns.
     func stream(from input: String) -> AsyncThrowingStream<MomentDeclaration, Error>
 }
 
 final class OnDeviceDeclarationGenerator: OnDeviceDeclarationGeneratorProtocol {
 
+    private let session: URLSession
+
+    init(session: URLSession = .shared) {
+        self.session = session
+    }
+
     var isAvailable: Bool {
-        #if canImport(FoundationModels)
-        if #available(iOS 26.0, *) {
-            return SystemLanguageModel.default.isAvailable
-        }
-        #endif
-        return false
+        !AnthropicConfig.apiKey.isEmpty
     }
 
     func generate(from input: String) async throws -> MomentDeclaration {
-        #if canImport(FoundationModels)
-        if #available(iOS 26.0, *) {
-            guard SystemLanguageModel.default.isAvailable else {
-                print("✨ [MomentDeclaration] Model unavailable")
-                throw MomentGenerationError.unavailable
-            }
-            print("✨ [MomentDeclaration] Generating for input: \(input.prefix(60))...")
-            let start = Date()
-            do {
-                let session = LanguageModelSession(instructions: Self.onDeviceSystemPrompt)
-                let response = try await session.respond(
-                    to: "Need: \(input)",
-                    generating: OnDeviceDeclaration.self
-                )
-                let elapsed = Date().timeIntervalSince(start)
-                print("✨ [MomentDeclaration] ✅ Generated in \(String(format: "%.1f", elapsed))s")
-                return MomentDeclaration(
-                    declarationText: response.content.declarationText,
-                    verseText: response.content.verseText,
-                    verseReference: response.content.verseReference
-                )
-            } catch {
-                let elapsed = Date().timeIntervalSince(start)
-                let description = Self.describeError(error)
-                print("✨ [MomentDeclaration] ❌ Failed after \(String(format: "%.1f", elapsed))s: \(description)")
-                throw MomentGenerationError.modelFailed(description)
-            }
+        guard !AnthropicConfig.apiKey.isEmpty else {
+            print("✨ [MomentDeclaration] No API key loaded yet")
+            throw MomentGenerationError.unavailable
         }
-        #endif
-        throw MomentGenerationError.unavailable
+        print("✨ [MomentDeclaration] Calling Claude for input: \(input.prefix(60))...")
+        let start = Date()
+        do {
+            let result = try await callClaude(input: input)
+            let elapsed = Date().timeIntervalSince(start)
+            print("✨ [MomentDeclaration] ✅ Generated in \(String(format: "%.1f", elapsed))s")
+            return result
+        } catch {
+            let elapsed = Date().timeIntervalSince(start)
+            print("✨ [MomentDeclaration] ❌ Failed after \(String(format: "%.1f", elapsed))s: \(error)")
+            throw MomentGenerationError.modelFailed(error.localizedDescription)
+        }
     }
 
     func stream(from input: String) -> AsyncThrowingStream<MomentDeclaration, Error> {
-        // Wraps the non-streaming respond(...) and emits a single final value.
-        // The released Foundation Models SDK exposes streaming partials via a
-        // `Snapshot` wrapper whose field-access pattern we haven't yet
-        // confirmed against a working build; rather than guess, ship the
-        // one-shot path and revisit streaming as a follow-up enhancement.
         let (stream, continuation) = AsyncThrowingStream<MomentDeclaration, Error>.makeStream()
         Task {
             do {
@@ -119,29 +92,95 @@ final class OnDeviceDeclarationGenerator: OnDeviceDeclarationGeneratorProtocol {
         return stream
     }
 
-    // On-device prompt: dramatically shorter than the cloud Anthropic prompt.
-    // The on-device model is ~3B params with a smaller context window, and
-    // performs much better with a tight, single-paragraph instruction set
-    // than the cloud-style multi-section spec we send to Claude.
-    private static let onDeviceSystemPrompt = """
-    Write a short Christian declaration for someone facing the stated need.
+    // MARK: - Cloud call
 
-    declarationText: 2-3 short sentences. First person ("I am", "I have", "I walk"). Present tense. Bold and direct. No em dashes — use periods.
-    verseText: One NIV Bible verse.
-    verseReference: Book Chapter:Verse (e.g. "Romans 8:28").
-    category: one lowercase word from this list — health, wealth, anxiety, fear, love, marriage, parenting, destiny, identity, rest, joy, favor, grace, warfare, addiction, confidence, wisdom, miracles, hope, grief, salvation, forgiveness, anger, faith, debt, work, gratitude.
+    private func callClaude(input: String) async throws -> MomentDeclaration {
+        var request = URLRequest(url: AnthropicConfig.apiURL)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue(AnthropicConfig.apiKey, forHTTPHeaderField: "x-api-key")
+        request.setValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
+        request.timeoutInterval = 20
 
-    Voice: weighty, certain. No clichés. Words like rooted, anchored, redeemed, established, unshakeable, called.
-    """
+        let body = ClaudeRequest(
+            model: AnthropicConfig.model,
+            maxTokens: 512,
+            system: AnthropicConfig.systemPrompt,
+            messages: [.init(role: "user", content: "User need: \(input)")]
+        )
+        request.httpBody = try JSONEncoder().encode(body)
 
-    /// Mirror of OnDeviceDevotionalGenerator.describeError. Detects guardrail
-    /// violations from Foundation Models and turns them into a sentence the
-    /// user can act on.
-    fileprivate static func describeError(_ error: Error) -> String {
-        let raw = "\(error)".lowercased()
-        if raw.contains("guardrail") || raw.contains("unsafe") || raw.contains("safety") {
-            return "Apple's on-device safety filter blocked this declaration. Try rephrasing your need or tap Generate again."
+        let (data, response) = try await session.data(for: request)
+        if let http = response as? HTTPURLResponse, http.statusCode != 200 {
+            let bodyText = String(data: data, encoding: .utf8) ?? ""
+            Analytics.logEvent("moment_decl_http_error",
+                               parameters: ["status": http.statusCode,
+                                            "body": String(bodyText.prefix(100))])
+            throw NSError(domain: "Anthropic", code: http.statusCode,
+                          userInfo: [NSLocalizedDescriptionKey: "HTTP \(http.statusCode)"])
         }
-        return (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+
+        let claude = try JSONDecoder().decode(ClaudeResponse.self, from: data)
+        guard let text = claude.content.first(where: { $0.type == "text" })?.text else {
+            throw NSError(domain: "Anthropic", code: -1,
+                          userInfo: [NSLocalizedDescriptionKey: "Empty response"])
+        }
+
+        let jsonData = try Self.extractJSON(from: text)
+        let parsed = try JSONDecoder().decode(DeclarationJSON.self, from: jsonData)
+        return MomentDeclaration(
+            declarationText: parsed.declarationText,
+            verseText: parsed.verseText,
+            verseReference: parsed.verseReference
+        )
     }
+
+    private static func extractJSON(from text: String) throws -> Data {
+        guard let start = text.firstIndex(of: "{"),
+              let end = text.lastIndex(of: "}") else {
+            throw NSError(domain: "Anthropic", code: -2,
+                          userInfo: [NSLocalizedDescriptionKey: "Invalid JSON in response"])
+        }
+        let jsonString = String(text[start...end])
+        guard let data = jsonString.data(using: .utf8) else {
+            throw NSError(domain: "Anthropic", code: -3,
+                          userInfo: [NSLocalizedDescriptionKey: "JSON encoding failed"])
+        }
+        return data
+    }
+}
+
+// MARK: - Anthropic request/response shapes
+
+private struct ClaudeRequest: Encodable {
+    let model: String
+    let maxTokens: Int
+    let system: String
+    let messages: [Message]
+
+    struct Message: Encodable {
+        let role: String
+        let content: String
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case model, system, messages
+        case maxTokens = "max_tokens"
+    }
+}
+
+private struct ClaudeResponse: Decodable {
+    let content: [ContentBlock]
+
+    struct ContentBlock: Decodable {
+        let type: String
+        let text: String?
+    }
+}
+
+private struct DeclarationJSON: Decodable {
+    let category: String?
+    let declarationText: String
+    let verseText: String
+    let verseReference: String
 }

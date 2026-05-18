@@ -2,21 +2,16 @@
 //  OnDeviceDevotionalGenerator.swift
 //  SpeakLife
 //
-//  Generates a Devotional on-device, in the same shape and voice as the
-//  editorially-curated ones in devotionals.json. The user picks a topical
-//  category (healing, identity, peace, breakthrough, etc.) and the model
-//  produces a title, scripture line, and 4–6 paragraph reflection.
-//
-//  Same fallback story as OnDeviceDeclarationGenerator: only available on
-//  iOS 26 with Apple Intelligence enabled. Caller is expected to check
-//  `isAvailable` before showing the entry point.
+//  NOTE: name is now historical — implementation calls the cloud Anthropic
+//  Messages API (same service as ClaudeDeclarationMatcher / the personal
+//  declaration onboarding path). Apple's on-device model didn't hold up
+//  for this format, so generation was moved to cloud while the public
+//  protocol stayed stable. CategoryDevotionalSheet consumes this through
+//  OnDeviceDevotionalGeneratorProtocol — no UI changes required.
 //
 
 import Foundation
-
-#if canImport(FoundationModels)
-import FoundationModels
-#endif
+import FirebaseAnalytics
 
 enum GeneratedDevotionalCategory: String, CaseIterable, Identifiable {
     case healing
@@ -77,52 +72,36 @@ protocol OnDeviceDevotionalGeneratorProtocol {
 
 final class OnDeviceDevotionalGenerator: OnDeviceDevotionalGeneratorProtocol {
 
+    private let session: URLSession
+
+    init(session: URLSession = .shared) {
+        self.session = session
+    }
+
     var isAvailable: Bool {
-        #if canImport(FoundationModels)
-        if #available(iOS 26.0, *) {
-            return SystemLanguageModel.default.isAvailable
-        }
-        #endif
-        return false
+        !AnthropicConfig.apiKey.isEmpty
     }
 
     func generate(category: GeneratedDevotionalCategory) async throws -> Devotional {
-        #if canImport(FoundationModels)
-        if #available(iOS 26.0, *) {
-            guard SystemLanguageModel.default.isAvailable else {
-                print("📖 [AIDevotional] Model unavailable for category=\(category.rawValue)")
-                throw MomentGenerationError.unavailable
-            }
-            print("📖 [AIDevotional] Generating for category=\(category.rawValue)")
-            let start = Date()
-            do {
-                // The on-device model's safety filter is conservative about
-                // religious / "spiritual warfare" content. Use a neutralized
-                // prompt phrasing for sensitive categories so we don't trip
-                // the guardrail in the first place. If it trips anyway,
-                // describeError below maps the violation to a user message.
-                let session = LanguageModelSession(instructions: Self.systemPrompt)
-                let response = try await session.respond(
-                    to: Self.prompt(for: category),
-                    generating: GeneratedDevotional.self
-                )
-                let elapsed = Date().timeIntervalSince(start)
-                print("📖 [AIDevotional] ✅ Generated in \(String(format: "%.1f", elapsed))s — title='\(response.content.title)'")
-                return Self.makeDevotional(from: response.content)
-            } catch {
-                let elapsed = Date().timeIntervalSince(start)
-                let description = Self.describeError(error)
-                print("📖 [AIDevotional] ❌ Failed after \(String(format: "%.1f", elapsed))s: \(description)")
-                throw MomentGenerationError.modelFailed(description)
-            }
+        guard !AnthropicConfig.apiKey.isEmpty else {
+            print("📖 [AIDevotional] No API key loaded yet")
+            throw MomentGenerationError.unavailable
         }
-        #endif
-        throw MomentGenerationError.unavailable
+        print("📖 [AIDevotional] Calling Claude for category=\(category.rawValue)")
+        let start = Date()
+        do {
+            let result = try await callClaude(category: category)
+            let elapsed = Date().timeIntervalSince(start)
+            print("📖 [AIDevotional] ✅ Generated in \(String(format: "%.1f", elapsed))s — title='\(result.title)'")
+            return result
+        } catch {
+            let elapsed = Date().timeIntervalSince(start)
+            print("📖 [AIDevotional] ❌ Failed after \(String(format: "%.1f", elapsed))s: \(error)")
+            throw MomentGenerationError.modelFailed(error.localizedDescription)
+        }
     }
 
     func stream(category: GeneratedDevotionalCategory) -> AsyncThrowingStream<Devotional, Error> {
-        // One-shot wrapper around generate(...). See OnDeviceDeclarationGenerator.stream
-        // for why we're not driving the FoundationModels Snapshot stream here.
         let (stream, continuation) = AsyncThrowingStream<Devotional, Error>.makeStream()
         Task {
             do {
@@ -136,81 +115,118 @@ final class OnDeviceDevotionalGenerator: OnDeviceDevotionalGeneratorProtocol {
         return stream
     }
 
-    // MARK: - Static helpers
+    // MARK: - Cloud call
+
+    private func callClaude(category: GeneratedDevotionalCategory) async throws -> Devotional {
+        var request = URLRequest(url: AnthropicConfig.apiURL)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue(AnthropicConfig.apiKey, forHTTPHeaderField: "x-api-key")
+        request.setValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
+        request.timeoutInterval = 45  // longer prompts → longer responses
+
+        let body = ClaudeRequest(
+            model: AnthropicConfig.model,
+            maxTokens: 1200,
+            system: Self.systemPrompt,
+            messages: [.init(role: "user", content: "Category: \(category.label). Write today's devotional.")]
+        )
+        request.httpBody = try JSONEncoder().encode(body)
+
+        let (data, response) = try await session.data(for: request)
+        if let http = response as? HTTPURLResponse, http.statusCode != 200 {
+            let bodyText = String(data: data, encoding: .utf8) ?? ""
+            Analytics.logEvent("ai_devotional_http_error",
+                               parameters: ["status": http.statusCode,
+                                            "body": String(bodyText.prefix(100))])
+            throw NSError(domain: "Anthropic", code: http.statusCode,
+                          userInfo: [NSLocalizedDescriptionKey: "HTTP \(http.statusCode)"])
+        }
+
+        let claude = try JSONDecoder().decode(ClaudeResponse.self, from: data)
+        guard let text = claude.content.first(where: { $0.type == "text" })?.text else {
+            throw NSError(domain: "Anthropic", code: -1,
+                          userInfo: [NSLocalizedDescriptionKey: "Empty response"])
+        }
+
+        let jsonData = try Self.extractJSON(from: text)
+        let parsed = try JSONDecoder().decode(DevotionalJSON.self, from: jsonData)
+        return Devotional(
+            date: Date(),
+            title: parsed.title,
+            devotionalText: parsed.body,
+            books: parsed.scriptureLine
+        )
+    }
+
+    private static func extractJSON(from text: String) throws -> Data {
+        guard let start = text.firstIndex(of: "{"),
+              let end = text.lastIndex(of: "}") else {
+            throw NSError(domain: "Anthropic", code: -2,
+                          userInfo: [NSLocalizedDescriptionKey: "Invalid JSON in response"])
+        }
+        let jsonString = String(text[start...end])
+        guard let data = jsonString.data(using: .utf8) else {
+            throw NSError(domain: "Anthropic", code: -3,
+                          userInfo: [NSLocalizedDescriptionKey: "JSON encoding failed"])
+        }
+        return data
+    }
+
+    // MARK: - Prompt
 
     private static let systemPrompt = """
-    Write a short Christian devotional for the SpeakLife app.
+    You are writing today's devotional for SpeakLife, a Christian faith app used by over 1 million believers daily. Match the voice and shape of the editorially-curated devotionals exactly.
 
-    title: 4-7 words, evocative.
-    scriptureLine: One NIV Bible verse, format: "Verse text. – Book Chapter:Verse"
-    body: 3 paragraphs separated by \\n\\n. 150-220 words total.
-      - Paragraph 1: a theological hook naming the truth.
-      - Paragraph 2: apply it to the reader using "you". Pastoral, certain, weighty.
-      - Paragraph 3: a one-sentence prayer ending "Amen. 💜"
+    STRUCTURE:
+    - title: 4-8 words, evocative and theological. Examples: "His Words Are Spirit and Life", "Clean Hands, Dirty Hearts?", "The Banner Over Me Is Love"
+    - scriptureLine: One Bible verse, NIV preferred, written as "Quoted verse text. – Book Chapter:Verse" with the dash separator and reference at the end.
+    - body: 4-6 paragraphs separated by double newlines (\\n\\n). Total length 350-500 words.
 
-    Voice: pastoral, weighty, no clichés. Write TO the reader, not as them.
+    BODY VOICE RULES:
+    - Open with a one-sentence theological hook naming the truth the devotional will unfold.
+    - Second paragraph: ground the truth in the scripture and the moment it was spoken. Name what God is like ("This is who He is — a God who…").
+    - Middle paragraphs: apply the truth to the reader with specificity. Use direct address ("you"). Ask a piercing question.
+    - Closing paragraph: a short, surrendered prayer ending with "Amen." and a single heart emoji 💜.
+    - Tone: pastoral, certain, weighty. No hedging. No clichés ("hang in there", "God's got this").
+    - Em dashes are allowed in the devotional body (the curated devotionals use them freely).
+    - The devotional is written TO the reader, not as the reader speaking.
+
+    Respond ONLY with valid JSON — no markdown, no code fences, no preface. Exact format:
+    {"title":"Title here","scriptureLine":"Verse text. – Book Chapter:Verse","body":"Paragraph 1.\\n\\nParagraph 2.\\n\\nParagraph 3."}
     """
+}
 
-    #if canImport(FoundationModels)
-    @available(iOS 26.0, *)
-    private static func makeDevotional(from generated: GeneratedDevotional) -> Devotional {
-        makeDevotional(
-            title: generated.title,
-            books: generated.scriptureLine,
-            devotionalText: generated.body
-        )
-    }
-    #endif
+// MARK: - Anthropic request/response shapes
 
-    private static func makeDevotional(title: String, books: String, devotionalText: String) -> Devotional {
-        Devotional(
-            date: Date(),
-            title: title,
-            devotionalText: devotionalText,
-            books: books
-        )
+private struct ClaudeRequest: Encodable {
+    let model: String
+    let maxTokens: Int
+    let system: String
+    let messages: [Message]
+
+    struct Message: Encodable {
+        let role: String
+        let content: String
     }
 
-    /// Turns Foundation Models errors into messages the user can act on.
-    /// The framework's guardrail violation looks like a generic error from
-    /// the outside; we surface it specifically so the sheet can show
-    /// "Apple's safety filter blocked this" instead of a stuck spinner.
-    fileprivate static func describeError(_ error: Error) -> String {
-        let raw = "\(error)".lowercased()
-        if raw.contains("guardrail") || raw.contains("unsafe") || raw.contains("safety") {
-            return "Apple's on-device safety filter blocked this devotional. Try a different category or tap Generate again."
-        }
-        return (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
-    }
-
-    /// Softens category prompts that the on-device safety filter tends to
-    /// reject. Users still see the original category label in the picker
-    /// (Spiritual Warfare etc.); the model just receives a less
-    /// trigger-prone phrasing.
-    fileprivate static func prompt(for category: GeneratedDevotionalCategory) -> String {
-        let topic: String
-        switch category {
-        case .warfare:       topic = "standing firm in faith and the armor of God"
-        case .fear:          topic = "trusting God when you feel afraid"
-        default:             topic = category.label
-        }
-        return "Topic: \(topic). Write today's devotional."
+    enum CodingKeys: String, CodingKey {
+        case model, system, messages
+        case maxTokens = "max_tokens"
     }
 }
 
-// MARK: - Structured output
+private struct ClaudeResponse: Decodable {
+    let content: [ContentBlock]
 
-#if canImport(FoundationModels)
-@available(iOS 26.0, *)
-@Generable
-struct GeneratedDevotional {
-    @Guide(description: "Title, 4-7 words. Example: 'The Banner Over Me Is Love'")
+    struct ContentBlock: Decodable {
+        let type: String
+        let text: String?
+    }
+}
+
+private struct DevotionalJSON: Decodable {
     let title: String
-
-    @Guide(description: "NIV verse formatted as 'Verse text. - Book Chapter:Verse'")
     let scriptureLine: String
-
-    @Guide(description: "3 paragraphs separated by double newlines, 150-220 words. Last paragraph is a one-sentence prayer ending 'Amen. 💜'")
     let body: String
 }
-#endif
