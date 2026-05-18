@@ -113,7 +113,12 @@ struct HomeView: View {
                                 // Re-select the correct category seeded during onboarding.
                                 // DeclarationViewModel initialises before onboarding writes the
                                 // survey goal word to UserDefaults, so we need to pick it up here.
-                                declarationStore.choose(declarationStore.selectedCategory) { _ in }
+                                // Skip when a notification tap is mid-flight — setDeclaration is
+                                // already loading the category and pinning the tapped declaration
+                                // at index 0; re-calling choose() here re-shuffles and clobbers it.
+                                if !declarationStore.isProcessingNotification {
+                                    declarationStore.choose(declarationStore.selectedCategory) { _ in }
+                                }
                                 Task {
                                     if devotionalViewModel.shouldFetchNewDevotional() {
                                             // Fetching devotional with current version
@@ -550,6 +555,9 @@ struct HomeView: View {
         // Delay slightly so the main app finishes loading first
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
             guard appState.isOnboarded && !showSubscription else { return }
+            // Don't cover the deep-linked declaration when launched from a notification.
+            // Defer until a launch where the user isn't actively coming from a push.
+            guard !declarationStore.isProcessingNotification else { return }
             pdMigrationPromptShown = true
             showPDMigrationSheet = true
         }
