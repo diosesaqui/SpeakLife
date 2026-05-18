@@ -108,7 +108,8 @@ final class OnDeviceDevotionalGenerator: OnDeviceDevotionalGeneratorProtocol {
     }
 
     func stream(category: GeneratedDevotionalCategory) -> AsyncThrowingStream<Devotional, Error> {
-        AsyncThrowingStream { continuation in
+        // Explicit generics — see OnDeviceDeclarationGenerator.stream for why.
+        AsyncThrowingStream<Devotional, Error> { (continuation: AsyncThrowingStream<Devotional, Error>.Continuation) in
             #if canImport(FoundationModels)
             if #available(iOS 26.0, *) {
                 guard SystemLanguageModel.default.isAvailable else {

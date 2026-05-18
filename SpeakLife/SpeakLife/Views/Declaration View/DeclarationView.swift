@@ -72,6 +72,8 @@ struct DeclarationView: View {
     @State private var showSpeakAloudBanner = false
     @State private var showBreakthroughFlow = false
     @State private var showNewDeclarationSheet = false
+    @State private var showMomentDeclarationSheet = false
+    private let momentDeclarationGenerator: OnDeviceDeclarationGeneratorProtocol = OnDeviceDeclarationGenerator()
     /// Drives the pulse animation on the checklist icon when the user has
     /// pending tasks for the day. Toggled by the autoreverse animation below.
     @State private var checklistPulse = false
@@ -179,7 +181,8 @@ struct DeclarationView: View {
             devotionalButton
             //dailyBurstButton
             personalDeclarationButton
-            
+            momentDeclarationButton
+
             speakAloudBannerSection(geometry)
             if !showSpeakAloudBanner {
                 Spacer()
@@ -191,6 +194,35 @@ struct DeclarationView: View {
             }
         }
         .padding([.leading, .trailing])
+    }
+
+    /// "Declaration of the Moment" — tap to generate a fresh, on-device
+    /// declaration tied to whatever the user is walking through right now.
+    /// Hidden on devices where on-device generation isn't available so
+    /// users never see a button that does nothing.
+    @ViewBuilder
+    private var momentDeclarationButton: some View {
+        if momentDeclarationGenerator.isAvailable {
+            Button {
+                Analytics.logEvent("moment_declaration_open",
+                                   parameters: ["source": "declaration_view"])
+                showMomentDeclarationSheet = true
+            } label: {
+                Image(systemName: "sparkles")
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundColor(.white)
+                    .frame(width: 44, height: 44)
+                    .background(
+                        Circle()
+                            .fill(Color.black.opacity(0.7))
+                            .overlay(
+                                Circle()
+                                    .stroke(Color(hex: "A78BFA").opacity(0.6), lineWidth: 1)
+                            )
+                    )
+            }
+            .buttonStyle(PlainButtonStyle())
+        }
     }
     
     @ViewBuilder
@@ -389,6 +421,10 @@ struct DeclarationView: View {
         .alert("Know anyone that can benefit from SpeakLife?", isPresented: $share, actions: shareAlert)
         .sheet(isPresented: $isShowingMailView) {
             MailView(isShowing: $isShowingMailView, result: self.$result, origin: .review, isSubscribed: subscriptionStore.isPremium)
+        }
+        .sheet(isPresented: $showMomentDeclarationSheet) {
+            MomentDeclarationSheet(source: "declaration_view")
+                .environmentObject(subscriptionStore)
         }
         .fullScreenCover(isPresented: $showDailyBurst) {
             DailyDeclarationBurstView()

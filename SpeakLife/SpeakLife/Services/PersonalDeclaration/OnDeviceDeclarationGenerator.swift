@@ -93,7 +93,10 @@ final class OnDeviceDeclarationGenerator: OnDeviceDeclarationGeneratorProtocol {
     }
 
     func stream(from input: String) -> AsyncThrowingStream<MomentDeclaration, Error> {
-        AsyncThrowingStream { continuation in
+        // Explicit generics here: without them Swift's overload resolver can
+        // pick `AsyncThrowingStream.init(unfolding:)` (a zero-arg async closure
+        // returning `Element?`) and reject this builder-style closure.
+        AsyncThrowingStream<MomentDeclaration, Error> { (continuation: AsyncThrowingStream<MomentDeclaration, Error>.Continuation) in
             #if canImport(FoundationModels)
             if #available(iOS 26.0, *) {
                 guard SystemLanguageModel.default.isAvailable else {
