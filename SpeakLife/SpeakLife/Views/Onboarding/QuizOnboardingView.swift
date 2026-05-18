@@ -571,18 +571,15 @@ struct QuizOnboardingView: View {
             "time_to_answer_seconds": timeToAnswer
         ])
 
-        if picked == .unsegmented {
-            // "Just exploring" → bypass mirror + belief sequence. Still get
-            // the burden Q so we can personalize the matched declaration +
-            // home category, then PersonalDeclaration + CommitmentHold.
-            transition(to: .burdenSelection)
-            fireBurdenShown()
-        } else {
-            transition(to: .mirror)
-            Analytics.logEvent("onboarding_mirror_shown", parameters: [
-                "segment": picked.rawValue
-            ])
-        }
+        // Every cohort — including 'Just exploring' (unsegmented) — runs the
+        // full flow: mirror → 6 belief Qs → burden → matched declaration →
+        // PersonalDeclaration → CommitmentHold → paywall. The unsegmented
+        // mirror is a generic welcome ('Speak the truth. Win the day.') —
+        // they still get every belief-barrier reinforcement before pricing.
+        transition(to: .mirror)
+        Analytics.logEvent("onboarding_mirror_shown", parameters: [
+            "segment": picked.rawValue
+        ])
     }
 
     private func advanceFromMirror() {
