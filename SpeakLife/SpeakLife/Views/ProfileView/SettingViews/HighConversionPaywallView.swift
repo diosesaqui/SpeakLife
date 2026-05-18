@@ -80,12 +80,44 @@ struct HighConversionPaywallView: View {
         appState.onboardingSegment
     }
 
-    /// Resolved copy: quiz segment first, survey goal word second, category-based fallback third.
+    /// True when the user just completed PersonalDeclaration in the onboarding
+    /// flow. This is the warmest emotional anchor in the funnel — they literally
+    /// spoke their own declaration aloud seconds ago. We reference that moment
+    /// in the paywall headline + subhead for max continuity.
+    private var hasFreshPersonalDeclaration: Bool {
+        if let belief = preferencesTracker.personalDeclarationBelief, !belief.isEmpty {
+            return true
+        }
+        return false
+    }
+
+    /// Burden goal word (peace / healing / identity / etc.) — drives the
+    /// continuity subhead for personal-declaration users so the promise is
+    /// specific to what they actually need, not generic.
+    private var burdenStyleLabel: String? {
+        guard let goalWord = SurveyGoalWord(rawValue: appState.surveyGoalWord) else { return nil }
+        return goalWord.styleLabel.lowercased()
+    }
+
+    /// Resolved copy priority:
+    /// 1. PersonalDeclaration continuity — emotionally warmest moment
+    /// 2. Quiz segment — ad-match
+    /// 3. Survey engine — goal word personalization
+    /// 4. Category fallback
     private var resolvedHeadline: String {
+        if hasFreshPersonalDeclaration {
+            return "Keep speaking what you just declared."
+        }
         if let segment = quizSegment { return segment.paywallHeadline }
         return surveyEngine.hasSurveyData ? surveyEngine.paywallCopy.headline : copy.headline
     }
     private var resolvedSubheadline: String {
+        if hasFreshPersonalDeclaration {
+            if let burden = burdenStyleLabel {
+                return "We'll send your \(burden) declaration every morning until it comes to pass. Don't let a day go unclaimed."
+            }
+            return "We'll send your declaration every morning until it comes to pass. Don't let a day go unclaimed."
+        }
         if let segment = quizSegment { return segment.paywallSubheadline }
         return surveyEngine.hasSurveyData ? surveyEngine.paywallCopy.subheadline : copy.subheadline
     }
@@ -311,6 +343,7 @@ struct HighConversionPaywallView: View {
                 trialCallout
                 closingLine
                 ctaButton
+                payWhatYouCanCTA
                 bottomLinks
             }
             .padding(.horizontal, 20).padding(.vertical, 16).padding(.bottom, 8)
@@ -365,12 +398,25 @@ struct HighConversionPaywallView: View {
         .buttonStyle(PlainButtonStyle())
     }
 
-    // MARK: - Trial Callout
+    // MARK: - Trial Callout (clarity-first: addresses the autocharge fear head-on)
     private var trialCallout: some View {
-        HStack(spacing: 6) {
-            Image(systemName: "checkmark.circle.fill").foregroundColor(.green).font(.system(size: 14))
-            Text(selectedPlan == .annual && isEligibleForTrial ? "3 days free - cancel anytime before trial ends" : "Start today - cancel anytime")
-                .font(.system(size: 13, weight: .medium)).foregroundColor(.white.opacity(0.85))
+        VStack(spacing: 6) {
+            HStack(spacing: 6) {
+                Image(systemName: "checkmark.circle.fill").foregroundColor(.green).font(.system(size: 14))
+                Text(selectedPlan == .annual && isEligibleForTrial
+                     ? "$0 today. $0 in 3 days unless you keep going."
+                     : "Start today. Cancel anytime in Settings.")
+                    .font(.system(size: 13, weight: .semibold)).foregroundColor(.white.opacity(0.92))
+            }
+            if selectedPlan == .annual && isEligibleForTrial {
+                HStack(spacing: 6) {
+                    Image(systemName: "bell.badge.fill").foregroundColor(.white.opacity(0.55)).font(.system(size: 11))
+                    Text("Apple notifies you 24 hours before the trial ends. Cancel anytime in Settings.")
+                        .font(.system(size: 11)).foregroundColor(.white.opacity(0.6))
+                        .multilineTextAlignment(.center)
+                }
+                .padding(.horizontal, 12)
+            }
         }
     }
 
@@ -409,25 +455,35 @@ struct HighConversionPaywallView: View {
         .buttonStyle(PlainButtonStyle())
     }
 
+    // MARK: - Pay What You Can (secondary CTA, intentionally subordinate to main CTA)
+    @ViewBuilder
+    private var payWhatYouCanCTA: some View {
+        if subscriptionStore.showPayWhatYouCanLink {
+            Button(action: {
+                Analytics.logEvent("paywall_pay_what_you_can_tapped", parameters: [
+                    "variant": paywallVariant,
+                    "segment": segmentParam
+                ])
+                showPayWhatYouCan = true
+            }) {
+                Text("Can't afford full price? Pay what you can →")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(.white.opacity(0.7))
+                    .padding(.vertical, 4)
+            }
+            .buttonStyle(PlainButtonStyle())
+            .accessibilityLabel(Text("Pay what you can option"))
+        }
+    }
+
     // MARK: - Bottom Links
     private var bottomLinks: some View {
-        VStack(spacing: 8) {
-            HStack(spacing: 24) {
-                Button("Restore", action: restore)
-                Link("Terms", destination: URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!)
-                Button("Privacy") { showPrivacyPolicy = true }
-            }
-            .font(.system(size: 12)).foregroundColor(.white.opacity(0.4))
-
-            if subscriptionStore.showPayWhatYouCanLink {
-                Button(action: { showPayWhatYouCan = true }) {
-                    Text("Can't afford it? Pay what you can →")
-                        .font(.system(size: 12))
-                        .foregroundColor(.white.opacity(0.35))
-                        .underline()
-                }
-            }
+        HStack(spacing: 24) {
+            Button("Restore", action: restore)
+            Link("Terms", destination: URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!)
+            Button("Privacy") { showPrivacyPolicy = true }
         }
+        .font(.system(size: 12)).foregroundColor(.white.opacity(0.4))
     }
 
     // MARK: - Close Button
