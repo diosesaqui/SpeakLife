@@ -93,43 +93,21 @@ final class OnDeviceDeclarationGenerator: OnDeviceDeclarationGeneratorProtocol {
     }
 
     func stream(from input: String) -> AsyncThrowingStream<MomentDeclaration, Error> {
-        // Using makeStream rather than the trailing-closure init: Swift's
-        // overload resolver kept matching `init(unfolding:)` (zero-arg async
-        // closure returning `Element?`) even with explicit generics on the
-        // call site. makeStream returns a stream + continuation pair with no
-        // ambiguity to resolve.
+        // Wraps the non-streaming respond(...) and emits a single final value.
+        // The released Foundation Models SDK exposes streaming partials via a
+        // `Snapshot` wrapper whose field-access pattern we haven't yet
+        // confirmed against a working build; rather than guess, ship the
+        // one-shot path and revisit streaming as a follow-up enhancement.
         let (stream, continuation) = AsyncThrowingStream<MomentDeclaration, Error>.makeStream()
-
-        #if canImport(FoundationModels)
-        if #available(iOS 26.0, *) {
-            guard SystemLanguageModel.default.isAvailable else {
-                continuation.finish(throwing: MomentGenerationError.unavailable)
-                return stream
+        Task {
+            do {
+                let result = try await self.generate(from: input)
+                continuation.yield(result)
+                continuation.finish()
+            } catch {
+                continuation.finish(throwing: error)
             }
-            Task {
-                do {
-                    let session = LanguageModelSession(instructions: AnthropicConfig.systemPrompt)
-                    let partials = session.streamResponse(
-                        to: "User need: \(input)",
-                        generating: OnDeviceDeclaration.self
-                    )
-                    for try await partial in partials {
-                        continuation.yield(MomentDeclaration(
-                            declarationText: partial.declarationText ?? "",
-                            verseText: partial.verseText ?? "",
-                            verseReference: partial.verseReference ?? ""
-                        ))
-                    }
-                    continuation.finish()
-                } catch {
-                    continuation.finish(throwing: MomentGenerationError.modelFailed(error.localizedDescription))
-                }
-            }
-            return stream
         }
-        #endif
-
-        continuation.finish(throwing: MomentGenerationError.unavailable)
         return stream
     }
 }
