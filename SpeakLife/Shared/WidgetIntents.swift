@@ -9,147 +9,145 @@ import AppIntents
 import Foundation
 import WidgetKit
 
-// MARK: - Shared Declarations Data
-struct SharedPromiseData {
-//    static let declarations: [String] = [
-//        "I tell you, you can pray for anything, and if you believe that you've received it, it will be yours.",
-//        "Love is patient and kind. Love is not jealous or boastful or proud or rude. It does not demand its own way. It is not irritable, and it keeps no record of being wronged.",
-//        "Always be joyful. Never stop praying. Be thankful in all circumstances, for this is God's will for you who belong to Christ Jesus.",
-//        "The Lord is for me, so I will have no fear. What can mere people do to me?",
-//        "The Lord keeps watch over you as you come and go, both now and forever.",
-//        "You must serve only the Lord your God. If you do, I will bless you with food and water, and I will protect you from illness.",
-//        "I am leaving you with a gift—peace of mind and heart. And the peace I give is a gift the world cannot give. So don't be troubled or afraid.",
-//        "How much better to get wisdom than gold, and good judgment than silver!",
-//        "A fool is quick-tempered, but a wise person stays calm when insulted.",
-//        "The light shines in the darkness, and the darkness can never extinguish it.",
-//        "For you know that when your faith is tested, your endurance has a chance to grow.",
-//        "Three things will last forever—faith, hope, and love—and the greatest of these is love.",
-//        "Don't worry about anything; instead, pray about everything. Tell God what you need, and thank him for all he has done.",
-//        "For God has not given us a spirit of fear and timidity, but of power, love, and self-discipline.",
-//        "\"For I know the plans I have for you,\" says the Lord. \"They are plans for good and not for disaster, to give you a future and a hope.\"",
-//        "Kind words are like honey— sweet to the soul and healthy for the body.",
-//        "I have told you all this so that you may have peace in me. Here on earth you will have many trials and sorrows. But take heart, because I have overcome the world.",
-//        "Trust in the Lord with all your heart; do not depend on your own understanding.",
-//        "And it is impossible to please God without faith. Anyone who wants to come to him must believe that God exists and that he rewards those who sincerely seek him.",
-//        "This is the day the Lord has made. We will rejoice and be glad in it.",
-//        "Don't be afraid, for I am with you. Don't be discouraged, for I am your God. I will strengthen you and help you. I will hold you up with my victorious right hand."
-//    ]
+// MARK: - App Group Constants
+
+enum WidgetSharedConstants {
+    static let appGroupSuiteName = "group.com.Franchiz.SpeakLife"
+    static let widgetKind = "PromisesWidget"
+
+    enum Keys {
+        static let syncedRecords = "syncedDeclarationRecords"   // JSON [WidgetDeclaration]
+        static let syncedPromises = "syncedPromises"            // Legacy [String]
+        static let widgetFavorites = "widgetFavorites"
+        static let pendingFavoriteAction = "lastFavoriteAction"
+        static let pendingFavoriteSyncStamp = "needsSyncFavorites"
+        static let pendingReadStamp = "needsSyncReadStatus"
+        static let pendingReadPromise = "lastReadPromise"
+        static let readPromises = "readPromises"
+        static let rotationOffset = "widgetRotationOffset"
+        static let selectedCategories = "selectedCategories"
+    }
 }
 
-// MARK: - App Intents for Widget Interactions
+// MARK: - UserDefaults Extension
 
-@available(iOS 16.0, *)
-struct NextPromiseIntent: AppIntent {
+extension UserDefaults {
+    static let widgetGroup = UserDefaults(suiteName: WidgetSharedConstants.appGroupSuiteName) ?? UserDefaults.standard
+}
+
+// MARK: - Shared Declaration Model
+
+/// Codable record shared between the app (encoder) and the widget (decoder) via the App Group.
+struct WidgetDeclaration: Codable, Hashable, Identifiable {
+    let text: String
+    let book: String?
+    let bibleVerseText: String?
+    let category: String
+
+    var id: String { text + category }
+
+    init(text: String, book: String? = nil, bibleVerseText: String? = nil, category: String) {
+        self.text = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        self.book = book?.trimmingCharacters(in: .whitespacesAndNewlines)
+        self.bibleVerseText = bibleVerseText?.trimmingCharacters(in: .whitespacesAndNewlines)
+        self.category = category
+    }
+
+    static let fallback = WidgetDeclaration(
+        text: "I am blessed!",
+        book: nil,
+        bibleVerseText: nil,
+        category: "faith"
+    )
+}
+
+// MARK: - Widget App Intents (iOS 17+)
+
+/// Advances the widget's rotation offset. Each tap re-seeds the daily-verse selection.
+@available(iOS 17.0, *)
+struct NextDeclarationIntent: AppIntent {
     static var title: LocalizedStringResource = "Next Promise"
-    static var description = IntentDescription("Show the next Bible promise")
-    static var openAppWhenRun: Bool = false
-    
+    static var description = IntentDescription("Show the next inspirational Bible promise.")
+    static var isDiscoverable: Bool = true
+
+    init() {}
+
     func perform() async throws -> some IntentResult {
-        let nextPromise = getNextPromise()
-        
-        UserDefaults.widgetGroup.set(nextPromise, forKey: "currentWidgetPromise")
-        UserDefaults.widgetGroup.set(Date(), forKey: "lastPromiseChangeDate")
-        
-        WidgetCenter.shared.reloadTimelines(ofKind: "PromisesWidget")
-        
+        let current = UserDefaults.widgetGroup.integer(forKey: WidgetSharedConstants.Keys.rotationOffset)
+        UserDefaults.widgetGroup.set(current &+ 1, forKey: WidgetSharedConstants.Keys.rotationOffset)
+        WidgetCenter.shared.reloadTimelines(ofKind: WidgetSharedConstants.widgetKind)
         return .result()
-    }
-    
-    private func getNextPromise() -> String {
-        // Use synced promises from app
-        let syncedPromises = UserDefaults.widgetGroup.stringArray(forKey: "syncedPromises") ?? []
-        let currentPromise = UserDefaults.widgetGroup.string(forKey: "currentWidgetPromise")
-        
-        if !syncedPromises.isEmpty {
-            if let current = currentPromise,
-               let currentIndex = syncedPromises.firstIndex(of: current) {
-                let nextIndex = (currentIndex + 1) % syncedPromises.count
-                return syncedPromises[nextIndex]
-            }
-            
-            return syncedPromises.randomElement() ?? "I am blessed!"
-        }
-        
-        return "I am blessed!"
     }
 }
 
-@available(iOS 16.0, *)
+/// Toggles favorite status for a specific promise. Records a pending action so the app can sync to Core Data later.
+@available(iOS 17.0, *)
 struct ToggleFavoriteIntent: AppIntent {
-    static var title: LocalizedStringResource = "Toggle Favorite"
-    static var description = IntentDescription("Add or remove promise from favorites")
-    static var openAppWhenRun: Bool = false
-    
+    static var title: LocalizedStringResource = "Favorite Promise"
+    static var description = IntentDescription("Save or unsave the current Bible promise to your favorites.")
+    static var isDiscoverable: Bool = true
+
+    @Parameter(title: "Promise")
+    var promiseText: String
+
+    init() {}
+
+    init(promiseText: String) {
+        self.promiseText = promiseText
+    }
+
     func perform() async throws -> some IntentResult {
-        let currentPromise = getCurrentPromise()
-        print("🎯 ToggleFavoriteIntent: Current promise:", currentPromise)
-        
-        let wasFavorited = toggleFavoriteStatus(for: currentPromise)
-        print("❤️ Was favorited:", wasFavorited, "Now:", !wasFavorited)
-        
-        UserDefaults.widgetGroup.set(Date(), forKey: "needsSyncFavorites")
-        UserDefaults.widgetGroup.set(["promise": currentPromise, "isFavorited": !wasFavorited], forKey: "lastFavoriteAction")
-        
-        // Debug: Check what's saved
-        let allFavorites = UserDefaults.widgetGroup.stringArray(forKey: "widgetFavorites") ?? []
-        print("📱 Widget favorites after toggle:", allFavorites.count, "items")
-        
-        WidgetCenter.shared.reloadTimelines(ofKind: "PromisesWidget")
-        
-        return .result()
-    }
-    
-    private func getCurrentPromise() -> String {
-        return UserDefaults.widgetGroup.string(forKey: "currentWidgetPromise") ?? "I am blessed!"
-    }
-    
-    private func toggleFavoriteStatus(for promise: String) -> Bool {
-        var favorites = UserDefaults.widgetGroup.stringArray(forKey: "widgetFavorites") ?? []
-        let wasFavorited = favorites.contains(promise)
-        
+        let defaults = UserDefaults.widgetGroup
+        var favorites = defaults.stringArray(forKey: WidgetSharedConstants.Keys.widgetFavorites) ?? []
+        let wasFavorited = favorites.contains(promiseText)
+
         if wasFavorited {
-            favorites.removeAll { $0 == promise }
+            favorites.removeAll { $0 == promiseText }
         } else {
-            favorites.append(promise)
+            favorites.append(promiseText)
         }
-        
-        UserDefaults.widgetGroup.set(favorites, forKey: "widgetFavorites")
-        return wasFavorited
+        defaults.set(favorites, forKey: WidgetSharedConstants.Keys.widgetFavorites)
+
+        // Hand off to the app for Core Data sync on next foreground.
+        defaults.set(
+            ["promise": promiseText, "isFavorited": !wasFavorited],
+            forKey: WidgetSharedConstants.Keys.pendingFavoriteAction
+        )
+        defaults.set(Date(), forKey: WidgetSharedConstants.Keys.pendingFavoriteSyncStamp)
+
+        WidgetCenter.shared.reloadTimelines(ofKind: WidgetSharedConstants.widgetKind)
+        return .result()
     }
 }
 
-@available(iOS 16.0, *)
+/// Marks a promise as read. Kept for the lock-screen tap flow.
+@available(iOS 17.0, *)
 struct MarkAsReadIntent: AppIntent {
     static var title: LocalizedStringResource = "Mark as Read"
-    static var description = IntentDescription("Mark current promise as read")
-    static var openAppWhenRun: Bool = false
-    
+    static var description = IntentDescription("Mark this promise as read.")
+    static var isDiscoverable: Bool = false
+
+    @Parameter(title: "Promise")
+    var promiseText: String
+
+    init() {}
+
+    init(promiseText: String) {
+        self.promiseText = promiseText
+    }
+
     func perform() async throws -> some IntentResult {
-        let currentPromise = getCurrentPromise()
-        markAsRead(promise: currentPromise)
-        
-        UserDefaults.widgetGroup.set(Date(), forKey: "needsSyncReadStatus")
-        UserDefaults.widgetGroup.set(currentPromise, forKey: "lastReadPromise")
-        
-        WidgetCenter.shared.reloadTimelines(ofKind: "PromisesWidget")
-        
+        let defaults = UserDefaults.widgetGroup
+        var read = defaults.stringArray(forKey: WidgetSharedConstants.Keys.readPromises) ?? []
+        if !read.contains(promiseText) {
+            read.append(promiseText)
+            defaults.set(read, forKey: WidgetSharedConstants.Keys.readPromises)
+        }
+
+        defaults.set(promiseText, forKey: WidgetSharedConstants.Keys.pendingReadPromise)
+        defaults.set(Date(), forKey: WidgetSharedConstants.Keys.pendingReadStamp)
+
+        WidgetCenter.shared.reloadTimelines(ofKind: WidgetSharedConstants.widgetKind)
         return .result()
     }
-    
-    private func getCurrentPromise() -> String {
-        return UserDefaults.widgetGroup.string(forKey: "currentWidgetPromise") ?? "I am blessed!"
-    }
-    
-    private func markAsRead(promise: String) {
-        var readPromises = UserDefaults.widgetGroup.stringArray(forKey: "readPromises") ?? []
-        if !readPromises.contains(promise) {
-            readPromises.append(promise)
-            UserDefaults.widgetGroup.set(readPromises, forKey: "readPromises")
-        }
-    }
-}
-
-//// MARK: - UserDefaults Extension
-extension UserDefaults {
-    static let widgetGroup = UserDefaults(suiteName: "group.com.Franchiz.SpeakLife") ?? UserDefaults.standard
 }

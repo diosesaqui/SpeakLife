@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		01ED29F757107A93D56507E0 /* WidgetIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59BFF68BFA515EAC0AC88C85 /* WidgetIntents.swift */; };
+		B3443A27A06B1D7578E6B584 /* WidgetIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59BFF68BFA515EAC0AC88C85 /* WidgetIntents.swift */; };
 		0E1A8C97F61B9FB156F0F50F /* HowToUseSpeakLifeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74DAA35385DD02F8B0DCADE5 /* HowToUseSpeakLifeView.swift */; };
 		20F4D11E6F9CB2FA07540EE7 /* TrialExperienceService.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC73B2698B17B267C7A6F437 /* TrialExperienceService.swift */; };
 		2F740F6929D4017400E89E7F /* APIClientTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F740F6829D4017400E89E7F /* APIClientTests.swift */; };
@@ -2384,6 +2385,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				7A7BEBD92913574D008D08A3 /* PromisesWidget.swift in Sources */,
+				B3443A27A06B1D7578E6B584 /* WidgetIntents.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
