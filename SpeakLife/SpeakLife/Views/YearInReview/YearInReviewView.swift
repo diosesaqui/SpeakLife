@@ -294,48 +294,52 @@ struct YearInReviewView: View {
     }
 
     private var summarySlide: some View {
-        // Pin the slide to the full TabView page bounds first, then apply a
-        // single horizontal padding to the inner column. Without this, the
-        // VStack sized to its tallest child and the card's
-        // .frame(maxWidth: .infinity) grew past the screen — clipping rows
-        // and pushing the Share button edge-to-edge.
-        VStack(spacing: 0) {
-            Spacer(minLength: 20)
-            summaryCard
-            Spacer()
-            VStack(spacing: 10) {
-                Button {
-                    presentShare(of: summaryCardForExport(), text: shareSummaryText)
-                } label: {
-                    HStack(spacing: 8) {
-                        Image(systemName: "square.and.arrow.up")
-                        Text("Share Your Year")
+        // TabView page style doesn't always hand children a finite width, so
+        // .frame(maxWidth: .infinity) on the card was free to overflow.
+        // Use GeometryReader to read the actual page size and hard-pin the
+        // column width to (page - 48), centered with HStack spacers.
+        GeometryReader { geo in
+            HStack(spacing: 0) {
+                Spacer(minLength: 0)
+                VStack(spacing: 0) {
+                    Spacer(minLength: 20)
+                    summaryCard
+                    Spacer()
+                    VStack(spacing: 10) {
+                        Button {
+                            presentShare(of: summaryCardForExport(), text: shareSummaryText)
+                        } label: {
+                            HStack(spacing: 8) {
+                                Image(systemName: "square.and.arrow.up")
+                                Text("Share Your Year")
+                            }
+                            .font(Font.custom("AppleSDGothicNeo-Bold", size: 16, relativeTo: .body))
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 52)
+                            .background(
+                                LinearGradient(colors: [Color(hex: "F59E0B"), Color(hex: "B45309")],
+                                               startPoint: .leading, endPoint: .trailing)
+                            )
+                            .clipShape(RoundedRectangle(cornerRadius: 14))
+                        }
+                        Button {
+                            dismiss()
+                        } label: {
+                            Text("Done")
+                                .font(Font.custom("AppleSDGothicNeo-Regular", size: 15, relativeTo: .body))
+                                .foregroundColor(.white.opacity(0.55))
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 44)
+                        }
                     }
-                    .font(Font.custom("AppleSDGothicNeo-Bold", size: 16, relativeTo: .body))
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 52)
-                    .background(
-                        LinearGradient(colors: [Color(hex: "F59E0B"), Color(hex: "B45309")],
-                                       startPoint: .leading, endPoint: .trailing)
-                    )
-                    .clipShape(RoundedRectangle(cornerRadius: 14))
+                    .padding(.bottom, 28)
                 }
-                Button {
-                    dismiss()
-                } label: {
-                    Text("Done")
-                        .font(Font.custom("AppleSDGothicNeo-Regular", size: 15, relativeTo: .body))
-                        .foregroundColor(.white.opacity(0.55))
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 44)
-                }
+                .frame(width: max(0, geo.size.width - 48))
+                .padding(.top, 60) // clear the topBar's close button
+                Spacer(minLength: 0)
             }
-            .padding(.bottom, 28)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .padding(.horizontal, 24)
-        .padding(.top, 60) // clear the topBar's close button
     }
 
     // MARK: - Reusable bits
