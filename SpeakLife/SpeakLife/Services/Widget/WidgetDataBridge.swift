@@ -9,322 +9,228 @@ import Foundation
 import CoreData
 import WidgetKit
 
-/// Bridge between widget UserDefaults and main app CoreData
+/// Bridge between widget UserDefaults (App Group) and main app CoreData.
 class WidgetDataBridge: ObservableObject {
     static let shared = WidgetDataBridge()
-    
+
+    private enum Keys {
+        // Widget content (additional keys not in WidgetSharedConstants.Keys)
+        static let allDeclarations = "allDeclarations"
+        static let lastSyncDate = "lastSyncDate"
+
+        // Categories
+        static let availableCategories = "availableCategories"
+        static let lastCategorySyncDate = "lastCategorySyncDate"
+        static let lastCategoryUpdate = "lastCategoryUpdate"
+        static let categoryUsage = "categoryUsage"
+    }
+
+    private static let widgetKind = WidgetSharedConstants.widgetKind
+    private static let recordSyncLimit = 250  // Generous upper bound; encoded JSON stays well under 4MB plist limit.
+    private static let pendingActionWindow: TimeInterval = -300 // 5 minutes
+
     private init() {}
-    
-    /// Sync favorites from app to widget UserDefaults
-    func syncFavoritesToWidget() {
-        // For now, we'll need to get favorites from the Declaration model
-        // This will be called from DeclarationViewModel when favorites change
-        // The DeclarationViewModel will pass the favorite texts
-        
-        // Just refresh widgets to pick up any changes
-        WidgetCenter.shared.reloadTimelines(ofKind: "PromisesWidget")
-    }
-    
-    /// Direct sync method for Declaration favorites
-    func syncDeclarationFavorites(_ favoriteTexts: [String]) {
-        print("📝 Favorite texts:", favoriteTexts)
-        
-        // Update widget UserDefaults with favorite texts
-        UserDefaults.widgetGroup.set(favoriteTexts, forKey: "widgetFavorites")
-        
-        // Verify the save
-        let saved = UserDefaults.widgetGroup.stringArray(forKey: "widgetFavorites") ?? []
-        print("✅ Verified saved favorites:", saved.count)
-        print("🔍 App Group available:", UserDefaults.widgetGroup != UserDefaults.standard)
-        
-        // Refresh widgets
-        WidgetCenter.shared.reloadTimelines(ofKind: "PromisesWidget")
-    }
-    
-    /// Sync optimized set of declarations to widget
-    func syncAllDeclarationsToWidget(_ declarations: [String]) {
-        // Validate input
+
+    // MARK: - Sync app → widget
+
+    /// Sync full declaration records (text + reference + scripture) to the widget.
+    /// Preferred entry point. Replaces text-only `syncAllDeclarationsToWidget`.
+    func syncFullDeclarationsToWidget(_ declarations: [Declaration]) {
         guard !declarations.isEmpty else { return }
-        
-        // Optimize: Only sync a subset for better performance and storage efficiency
-        let optimizedDeclarations = Array(declarations.shuffled().prefix(100))
-        
-        // Update widget UserDefaults with optimized declaration texts
-        UserDefaults.widgetGroup.set(optimizedDeclarations, forKey: "syncedPromises")
-        
-        // Store timestamp for sync tracking
-        UserDefaults.widgetGroup.set(Date(), forKey: "lastSyncDate")
-        
-        // Refresh widgets
-        WidgetCenter.shared.reloadTimelines(ofKind: "PromisesWidget")
+
+        let records = declarations
+            .shuffled()
+            .prefix(Self.recordSyncLimit)
+            .map { declaration in
+                WidgetDeclaration(
+                    text: declaration.text,
+                    book: declaration.book,
+                    bibleVerseText: declaration.bibleVerseText,
+                    category: declaration.category.rawValue
+                )
+            }
+
+        do {
+            let data = try JSONEncoder().encode(Array(records))
+            UserDefaults.widgetGroup.set(data, forKey: WidgetSharedConstants.Keys.syncedRecords)
+        } catch {
+            assertionFailure("Failed to encode declarations for widget: \(error)")
+        }
+
+        // Also keep the legacy text array populated for backward compatibility
+        // until older widget binaries are no longer in flight.
+        let texts = records.map { $0.text }
+        UserDefaults.widgetGroup.set(texts, forKey: WidgetSharedConstants.Keys.syncedPromises)
+        UserDefaults.widgetGroup.set(declarations.map { $0.text }, forKey: Keys.allDeclarations)
+        UserDefaults.widgetGroup.set(Date(), forKey: Keys.lastSyncDate)
+
+        WidgetCenter.shared.reloadTimelines(ofKind: Self.widgetKind)
     }
-    
-    /// Sync declarations organized by categories for smart filtering
+
+    /// Legacy text-only sync. Kept for callers that don't yet have full records.
+    func syncAllDeclarationsToWidget(_ declarations: [String]) {
+        guard !declarations.isEmpty else { return }
+        let optimized = Array(declarations.shuffled().prefix(Self.recordSyncLimit))
+        UserDefaults.widgetGroup.set(optimized, forKey: WidgetSharedConstants.Keys.syncedPromises)
+        UserDefaults.widgetGroup.set(Date(), forKey: Keys.lastSyncDate)
+        WidgetCenter.shared.reloadTimelines(ofKind: Self.widgetKind)
+    }
+
+    /// Sync favorite declarations to the widget. Used by the heart-button intent.
+    func syncDeclarationFavorites(_ favoriteTexts: [String]) {
+        UserDefaults.widgetGroup.set(favoriteTexts, forKey: WidgetSharedConstants.Keys.widgetFavorites)
+        WidgetCenter.shared.reloadTimelines(ofKind: Self.widgetKind)
+    }
+
+    /// Sync declarations organized by categories for filtered widget content.
     func syncCategorizedDeclarations(_ declarationsByCategory: [String: [String]]) {
         guard !declarationsByCategory.isEmpty else { return }
-        
-        // Store each category's declarations separately for smart filtering
+
         for (category, declarations) in declarationsByCategory {
-            let categoryKey = "category_\(category)"
-            let optimizedDeclarations = Array(declarations.prefix(50)) // Limit per category
-            UserDefaults.widgetGroup.set(optimizedDeclarations, forKey: categoryKey)
+            let key = "category_\(category)"
+            let optimized = Array(declarations.prefix(50))
+            UserDefaults.widgetGroup.set(optimized, forKey: key)
         }
-        
-        // Store category list for reference
-        let availableCategories = Array(declarationsByCategory.keys)
-        UserDefaults.widgetGroup.set(availableCategories, forKey: "availableCategories")
-        
-        // Update sync timestamp
-        UserDefaults.widgetGroup.set(Date(), forKey: "lastCategorySyncDate")
-        
-        // Refresh widgets
-        WidgetCenter.shared.reloadTimelines(ofKind: "PromisesWidget")
+
+        let categories = Array(declarationsByCategory.keys)
+        UserDefaults.widgetGroup.set(categories, forKey: Keys.availableCategories)
+        UserDefaults.widgetGroup.set(Date(), forKey: Keys.lastCategorySyncDate)
+
+        WidgetCenter.shared.reloadTimelines(ofKind: Self.widgetKind)
     }
-    
-    /// Update user's selected categories for widget filtering
+
+    /// Update user's selected categories for widget filtering.
     func updateSelectedCategories(_ categories: [String]) {
-        UserDefaults.widgetGroup.set(categories, forKey: "selectedCategories")
-        UserDefaults.widgetGroup.set(Date(), forKey: "lastCategoryUpdate")
-        
-        // Refresh widgets immediately to reflect new category preferences
-        WidgetCenter.shared.reloadTimelines(ofKind: "PromisesWidget")
+        UserDefaults.widgetGroup.set(categories, forKey: WidgetSharedConstants.Keys.selectedCategories)
+        UserDefaults.widgetGroup.set(Date(), forKey: Keys.lastCategoryUpdate)
+        WidgetCenter.shared.reloadTimelines(ofKind: Self.widgetKind)
     }
-    
-    /// Track category usage for intelligent recommendations
+
+    /// Track category usage for intelligent recommendations.
     func trackCategoryUsage(_ category: String) {
-        let usageKey = "categoryUsage"
-        var usage = UserDefaults.widgetGroup.dictionary(forKey: usageKey) as? [String: Int] ?? [:]
+        var usage = UserDefaults.widgetGroup.dictionary(forKey: Keys.categoryUsage) as? [String: Int] ?? [:]
         usage[category] = (usage[category] ?? 0) + 1
-        UserDefaults.widgetGroup.set(usage, forKey: usageKey)
+        UserDefaults.widgetGroup.set(usage, forKey: Keys.categoryUsage)
     }
-    
-    /// Sync widget favorites back to CoreData
-    func syncFavoritesFromWidget() {
-        let widgetFavorites = UserDefaults.widgetGroup.stringArray(forKey: "widgetFavorites") ?? []
-        let context = PersistenceController.shared.container.viewContext
-        
-        for favoriteText in widgetFavorites {
-            // Check if this affirmation already exists in CoreData
-            let request: NSFetchRequest<AffirmationEntry> = AffirmationEntry.fetchRequest()
-            request.predicate = NSPredicate(format: "text == %@", favoriteText)
-            
-            do {
-                let existingEntries = try context.fetch(request)
-                
-                if let existingEntry = existingEntries.first {
-                    // Update existing entry
-                    existingEntry.isFavorite = true
-                    existingEntry.lastModified = Date()
-                } else {
-                    // Create new entry
-                    let newEntry = AffirmationEntry(context: context)
-                    newEntry.text = favoriteText
-                    newEntry.isFavorite = true
-                    newEntry.createdAt = Date()
-                    newEntry.lastModified = Date()
-                }
-            } catch {
-                print("Failed to sync favorite from widget: \(error)")
-            }
-        }
-        
-        // Save context
-        do {
-            try context.save()
-        } catch {
-            print("Failed to save favorites from widget: \(error)")
-        }
-    }
-    
-    /// Sync read status to widget
-    func syncReadStatusToWidget() {
-        let context = PersistenceController.shared.container.viewContext
-        let request: NSFetchRequest<AffirmationEntry> = AffirmationEntry.fetchRequest()
-        // Simplified - just use UserDefaults for now
-        // request.predicate = NSPredicate(format: "createdAt != nil")
-        
-        // Simplified - read status is already managed in UserDefaults
-        // Just refresh widgets
-        WidgetCenter.shared.reloadTimelines(ofKind: "PromisesWidget")
-    }
-    
-    /// Sync read status from widget to CoreData
-    func syncReadStatusFromWidget() {
-        let readPromises = UserDefaults.widgetGroup.stringArray(forKey: "readPromises") ?? []
-        let context = PersistenceController.shared.container.viewContext
-        
-        for readPromise in readPromises {
-            let request: NSFetchRequest<AffirmationEntry> = AffirmationEntry.fetchRequest()
-            request.predicate = NSPredicate(format: "text == %@", readPromise)
-            
-            do {
-                let existingEntries = try context.fetch(request)
-                
-                // Simplified - just track in UserDefaults for now
-                // Would need to add read tracking properties to CoreData model
-                print("Syncing read promise from widget: \(readPromise)")
-            } catch {
-                print("Failed to sync read status from widget: \(error)")
-            }
-        }
-        
-        do {
-            try context.save()
-        } catch {
-            print("Failed to save read status from widget: \(error)")
-        }
-    }
-    
-    /// Process pending widget actions
+
+    // MARK: - Sync widget → app
+
+    /// Process any pending favorite / read actions left by widget App Intents.
+    /// Call from app launch and scene activation.
     func processPendingWidgetActions() {
-        
-        // Check for pending favorite actions
-        if let lastFavoriteChange = UserDefaults.widgetGroup.object(forKey: "needsSyncFavorites") as? Date,
-           lastFavoriteChange.timeIntervalSinceNow > -300, // Within last 5 minutes
-           let favoriteAction = UserDefaults.widgetGroup.dictionary(forKey: "lastFavoriteAction"),
-           let promise = favoriteAction["promise"] as? String,
-           let isFavorited = favoriteAction["isFavorited"] as? Bool {
-            
-            print("✅ Found pending favorite action:")
-            print("   Promise:", promise)
-            print("   Should be favorited:", isFavorited)
-            print("   Time since action:", -lastFavoriteChange.timeIntervalSinceNow, "seconds ago")
-            
-            updateFavoriteInCoreData(promise: promise, isFavorited: isFavorited)
-            UserDefaults.widgetGroup.removeObject(forKey: "needsSyncFavorites")
-            UserDefaults.widgetGroup.removeObject(forKey: "lastFavoriteAction")
-        } else {
-            print("❌ No pending favorite actions found")
-            print("   Checking UserDefaults.widgetGroup availability:", UserDefaults.widgetGroup != UserDefaults.standard)
-            
-            if let lastChange = UserDefaults.widgetGroup.object(forKey: "needsSyncFavorites") as? Date {
-                print("   Last change was:", -lastChange.timeIntervalSinceNow, "seconds ago (too old)")
-            } else {
-                print("   No 'needsSyncFavorites' timestamp found")
-            }
-            
-            if let favoriteAction = UserDefaults.widgetGroup.dictionary(forKey: "lastFavoriteAction") {
-                print("   Found action dict but timestamp issue:", favoriteAction)
-            } else {
-                print("   No 'lastFavoriteAction' dictionary found")
-            }
-            
-            // Debug: Check all keys
-            print("   All UserDefaults keys:", UserDefaults.widgetGroup.dictionaryRepresentation().keys.sorted())
-        }
-        
-        // Check for pending read status actions
-        if let lastReadChange = UserDefaults.widgetGroup.object(forKey: "needsSyncReadStatus") as? Date,
-           lastReadChange.timeIntervalSinceNow > -300, // Within last 5 minutes
-           let readPromise = UserDefaults.widgetGroup.string(forKey: "lastReadPromise") {
-            
-            markAsReadInCoreData(promise: readPromise)
-            UserDefaults.widgetGroup.removeObject(forKey: "needsSyncReadStatus")
-            UserDefaults.widgetGroup.removeObject(forKey: "lastReadPromise")
-        }
+        processPendingFavoriteAction()
+        processPendingReadAction()
     }
-    
+
+    private func processPendingFavoriteAction() {
+        let defaults = UserDefaults.widgetGroup
+        guard
+            let stamp = defaults.object(forKey: WidgetSharedConstants.Keys.pendingFavoriteSyncStamp) as? Date,
+            stamp.timeIntervalSinceNow > Self.pendingActionWindow,
+            let action = defaults.dictionary(forKey: WidgetSharedConstants.Keys.pendingFavoriteAction),
+            let promise = action["promise"] as? String,
+            let isFavorited = action["isFavorited"] as? Bool
+        else { return }
+
+        updateFavoriteInCoreData(promise: promise, isFavorited: isFavorited)
+        defaults.removeObject(forKey: WidgetSharedConstants.Keys.pendingFavoriteSyncStamp)
+        defaults.removeObject(forKey: WidgetSharedConstants.Keys.pendingFavoriteAction)
+    }
+
+    private func processPendingReadAction() {
+        let defaults = UserDefaults.widgetGroup
+        guard
+            let stamp = defaults.object(forKey: WidgetSharedConstants.Keys.pendingReadStamp) as? Date,
+            stamp.timeIntervalSinceNow > Self.pendingActionWindow,
+            let promise = defaults.string(forKey: WidgetSharedConstants.Keys.pendingReadPromise)
+        else { return }
+
+        markAsReadInCoreData(promise: promise)
+        defaults.removeObject(forKey: WidgetSharedConstants.Keys.pendingReadStamp)
+        defaults.removeObject(forKey: WidgetSharedConstants.Keys.pendingReadPromise)
+    }
+
     private func updateFavoriteInCoreData(promise: String, isFavorited: Bool) {
         let context = PersistenceController.shared.container.viewContext
         let request: NSFetchRequest<AffirmationEntry> = AffirmationEntry.fetchRequest()
         request.predicate = NSPredicate(format: "text == %@", promise)
-        
+
         do {
-            let existingEntries = try context.fetch(request)
-            
-            if let existingEntry = existingEntries.first {
-                existingEntry.isFavorite = isFavorited
-                existingEntry.lastModified = Date()
-                print("✅ Updated existing entry favorite status to:", isFavorited)
+            let existing = try context.fetch(request)
+
+            if let entry = existing.first {
+                entry.isFavorite = isFavorited
+                entry.lastModified = Date()
             } else if isFavorited {
-                // Check if this promise exists in our full declaration set
-                let allDeclarations = UserDefaults.widgetGroup.stringArray(forKey: "allDeclarations") ?? []
-                if allDeclarations.contains(promise) {
-                    // Only create new entry if marking as favorite and it's a valid declaration
-                    let newEntry = AffirmationEntry(context: context)
-                    newEntry.text = promise
-                    newEntry.isFavorite = true
-                    newEntry.createdAt = Date()
-                    newEntry.lastModified = Date()
-                    print("✅ Created new favorite entry for:", promise)
-                } else {
-                    print("⚠️ Promise not found in valid declarations, skipping:", promise)
-                }
+                let allDeclarations = UserDefaults.widgetGroup.stringArray(forKey: Keys.allDeclarations) ?? []
+                guard allDeclarations.contains(promise) else { return }
+                let entry = AffirmationEntry(context: context)
+                entry.text = promise
+                entry.isFavorite = true
+                entry.createdAt = Date()
+                entry.lastModified = Date()
             }
-            
+
             try context.save()
         } catch {
-            print("Failed to update favorite in CoreData: \(error)")
+            assertionFailure("Failed to update favorite from widget: \(error)")
         }
     }
-    
+
     private func markAsReadInCoreData(promise: String) {
-        let context = PersistenceController.shared.container.viewContext
-        let request: NSFetchRequest<AffirmationEntry> = AffirmationEntry.fetchRequest()
-        request.predicate = NSPredicate(format: "text == %@", promise)
-        
-        do {
-            let existingEntries = try context.fetch(request)
-            
-            // Simplified - just track in UserDefaults for now
-            // Would need to add read tracking properties to CoreData model
-            print("Marking promise as read: \(promise)")
-            
-            try context.save()
-        } catch {
-            print("Failed to mark as read in CoreData: \(error)")
+        // Tracked in UserDefaults until a `readAt` property is added to AffirmationEntry.
+        var read = UserDefaults.widgetGroup.stringArray(forKey: WidgetSharedConstants.Keys.readPromises) ?? []
+        if !read.contains(promise) {
+            read.append(promise)
+            UserDefaults.widgetGroup.set(read, forKey: WidgetSharedConstants.Keys.readPromises)
         }
     }
-    
-    /// Sync all data between widget and CoreData
+
+    // MARK: - Lifecycle
+
+    /// Single entry point called from app launch / activation.
     func syncAllData() {
         processPendingWidgetActions()
-        syncFavoritesToWidget()
-        syncReadStatusToWidget()
-        
-        // Ensure widget has some declarations to display
-        syncFallbackDeclarations()
+        ensureFallbackContent()
+        WidgetCenter.shared.reloadTimelines(ofKind: Self.widgetKind)
     }
-    
-    /// Sync basic declarations if none exist yet
-    private func syncFallbackDeclarations() {
-        // First test if App Groups is working
-        let testKey = "appGroupsTest"
-        let testValue = "test-\(Date().timeIntervalSince1970)"
-        UserDefaults.widgetGroup.set(testValue, forKey: testKey)
-        
-        let readBack = UserDefaults.widgetGroup.string(forKey: testKey)
-        
-        let existingDeclarations = UserDefaults.widgetGroup.stringArray(forKey: "syncedPromises") ?? []
-        
-        // If no declarations are synced yet, provide a basic set
-        if existingDeclarations.isEmpty {
-            let fallbackDeclarations = [
-                "Trust in the Lord with all your heart; do not depend on your own understanding.",
-                "For I know the plans I have for you, says the Lord. They are plans for good and not for disaster, to give you a future and a hope.",
-                "Don't worry about anything; instead, pray about everything. Tell God what you need, and thank him for all he has done.",
-                "The Lord is for me, so I will have no fear. What can mere people do to me?",
-                "I am leaving you with a gift—peace of mind and heart. And the peace I give is a gift the world cannot give. So don't be troubled or afraid.",
-                "For God has not given us a spirit of fear and timidity, but of power, love, and self-discipline.",
-                "Always be joyful. Never stop praying. Be thankful in all circumstances, for this is God's will for you who belong to Christ Jesus.",
-                "Three things will last forever—faith, hope, and love—and the greatest of these is love.",
-                "This is the day the Lord has made. We will rejoice and be glad in it.",
-                "Don't be afraid, for I am with you. Don't be discouraged, for I am your God. I will strengthen you and help you. I will hold you up with my victorious right hand."
-            ]
-            
-            UserDefaults.widgetGroup.set(fallbackDeclarations, forKey: "syncedPromises")
-            UserDefaults.widgetGroup.set(fallbackDeclarations, forKey: "allDeclarations")
-            
-            // Refresh widgets
-            WidgetCenter.shared.reloadTimelines(ofKind: "PromisesWidget")
-            WidgetCenter.shared.reloadAllTimelines() // Force refresh all widgets
-        }
-        
-        // Debug: Also set a current promise to ensure widget shows something
-        let testPromise = "Trust in the Lord with all your heart; do not depend on your own understanding."
-        UserDefaults.widgetGroup.set(testPromise, forKey: "currentWidgetPromise")
-        UserDefaults.widgetGroup.set(Date(), forKey: "lastWidgetUpdate")
-        
-    }
-}
 
+    /// Ensure the widget has *something* to show before the first real sync completes.
+    private func ensureFallbackContent() {
+        let defaults = UserDefaults.widgetGroup
+
+        // If we already have either full records or legacy strings, nothing to do.
+        if defaults.data(forKey: WidgetSharedConstants.Keys.syncedRecords) != nil { return }
+        if let existing = defaults.stringArray(forKey: WidgetSharedConstants.Keys.syncedPromises), !existing.isEmpty { return }
+
+        let fallback = Self.fallbackRecords
+        if let data = try? JSONEncoder().encode(fallback) {
+            defaults.set(data, forKey: WidgetSharedConstants.Keys.syncedRecords)
+        }
+        defaults.set(fallback.map { $0.text }, forKey: WidgetSharedConstants.Keys.syncedPromises)
+        defaults.set(fallback.map { $0.text }, forKey: Keys.allDeclarations)
+    }
+
+    private static let fallbackRecords: [WidgetDeclaration] = [
+        .init(text: "Trust in the Lord with all your heart; do not depend on your own understanding.",
+              book: "Proverbs 3:5", bibleVerseText: nil, category: "faith"),
+        .init(text: "For I know the plans I have for you, plans for good and not for disaster, to give you a future and a hope.",
+              book: "Jeremiah 29:11", bibleVerseText: nil, category: "hope"),
+        .init(text: "Don't worry about anything; instead, pray about everything.",
+              book: "Philippians 4:6", bibleVerseText: nil, category: "anxiety"),
+        .init(text: "The Lord is for me, so I will have no fear.",
+              book: "Psalm 118:6", bibleVerseText: nil, category: "fear"),
+        .init(text: "Peace I leave with you; my peace I give you.",
+              book: "John 14:27", bibleVerseText: nil, category: "rest"),
+        .init(text: "God has not given me a spirit of fear, but of power, love, and self-discipline.",
+              book: "2 Timothy 1:7", bibleVerseText: nil, category: "fear"),
+        .init(text: "Be joyful in hope, patient in affliction, faithful in prayer.",
+              book: "Romans 12:12", bibleVerseText: nil, category: "joy"),
+        .init(text: "This is the day the Lord has made. I will rejoice and be glad in it.",
+              book: "Psalm 118:24", bibleVerseText: nil, category: "gratitude"),
+        .init(text: "I can do all things through Christ who strengthens me.",
+              book: "Philippians 4:13", bibleVerseText: nil, category: "faith"),
+        .init(text: "The Lord is my shepherd; I shall not want.",
+              book: "Psalm 23:1", bibleVerseText: nil, category: "rest")
+    ]
+}

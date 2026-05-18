@@ -221,9 +221,9 @@ final class DeclarationViewModel: ObservableObject {
             let favoriteTexts = self.favorites.map { $0.text }
             WidgetDataBridge.shared.syncDeclarationFavorites(favoriteTexts)
             
-            // Sync all declarations to widget for accurate text matching
-            let allTexts = self.allDeclarations.map { $0.text }
-            WidgetDataBridge.shared.syncAllDeclarationsToWidget(allTexts)
+            // Sync full declaration records (text + book reference + scripture) so the widget
+            // can render the verse reference and underlying scripture, not just the affirmation.
+            WidgetDataBridge.shared.syncFullDeclarationsToWidget(self.allDeclarations)
             
             // Sync categorized declarations for smart widget filtering
             self.syncCategorizedDeclarationsToWidget()

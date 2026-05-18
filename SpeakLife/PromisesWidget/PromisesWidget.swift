@@ -7,40 +7,20 @@
 
 import WidgetKit
 import SwiftUI
+import AppIntents
 
 // MARK: - Constants
 
 private enum WidgetConstants {
-    static let appGroupSuiteName = "group.com.Franchiz.SpeakLife"
-    static let syncedPromisesKey = "syncedPromises"
-    static let fallbackPromise = "I am blessed!"
     static let placeholderText = "Loading..."
-    static let customFontName = "Avenir Next"  // Clean, modern font
-    
+
     enum Design {
-        static let backgroundOpacity: Double = 0.4  // Lower opacity for image overlay
-        static let textBackgroundOpacity: Double = 0.08  // Ultra-subtle glass morphism
-        static let greetingOpacity: Double = 0.9
-        static let contentSpacing: CGFloat = 12
-        static let horizontalPadding: CGFloat = 20
-        static let bottomPadding: CGFloat = 12
+        static let contentSpacing: CGFloat = 10
+        static let horizontalPadding: CGFloat = 18
         static let cornerRadius: CGFloat = 20
-        
-        enum FontSizes {
-            static let small: CGFloat = 16
-            static let medium: CGFloat = 18
-            static let large: CGFloat = 20
-            static let greeting: CGFloat = 13
-        }
+        static let actionRowSpacing: CGFloat = 12
     }
-    
-    enum UserPreferences {
-        static let selectedCategoriesKey = "selectedCategories"
-        static let recentCategoriesKey = "recentCategories"
-        static let categoryUsageKey = "categoryUsage"
-        static let lastCategoryUpdateKey = "lastCategoryUpdate"
-    }
-    
+
     enum TimeRanges {
         static let morningStart = 5
         static let morningEnd = 11
@@ -49,151 +29,115 @@ private enum WidgetConstants {
     }
 }
 
+// MARK: - Declaration Store
+
+/// Single source of truth for what the widget displays.
+/// Reads the JSON-encoded record set written by the app; falls back to the legacy string array.
+struct WidgetDeclarationStore {
+    let records: [WidgetDeclaration]
+
+    static func load() -> WidgetDeclarationStore {
+        let defaults = UserDefaults.widgetGroup
+
+        if let data = defaults.data(forKey: WidgetSharedConstants.Keys.syncedRecords),
+           let decoded = try? JSONDecoder().decode([WidgetDeclaration].self, from: data),
+           !decoded.isEmpty {
+            return WidgetDeclarationStore(records: decoded)
+        }
+
+        // Legacy fallback: array of text-only declarations
+        if let texts = defaults.stringArray(forKey: WidgetSharedConstants.Keys.syncedPromises),
+           !texts.isEmpty {
+            let legacy = texts.map { WidgetDeclaration(text: $0, category: "faith") }
+            return WidgetDeclarationStore(records: legacy)
+        }
+
+        return WidgetDeclarationStore(records: [.fallback])
+    }
+
+    /// Deterministic daily verse: same per device per day, drift one verse per rotation tap.
+    func declaration(for date: Date, offset: Int = 0) -> WidgetDeclaration {
+        guard !records.isEmpty else { return .fallback }
+        let filtered = filteredBySelectedCategories(records)
+        let pool = filtered.isEmpty ? records : filtered
+
+        let calendar = Calendar.current
+        let dayOfYear = calendar.ordinality(of: .day, in: .year, for: date) ?? 1
+        let year = calendar.component(.year, from: date)
+        // Stable hash: large prime mixes to avoid clustering.
+        let seed = abs((dayOfYear &* 1_000_003) &+ (year &* 31) &+ offset)
+        let index = seed % pool.count
+        return pool[index]
+    }
+
+    private func filteredBySelectedCategories(_ all: [WidgetDeclaration]) -> [WidgetDeclaration] {
+        let selected = UserDefaults.widgetGroup.stringArray(forKey: WidgetSharedConstants.Keys.selectedCategories) ?? []
+        guard !selected.isEmpty else { return [] }
+        let normalized = Set(selected.map { $0.lowercased() })
+        return all.filter { normalized.contains($0.category.lowercased()) }
+    }
+}
+
 // MARK: - Timeline Provider
 
 struct Provider: TimelineProvider {
-    
+
     func placeholder(in context: Context) -> SimpleEntry {
-        SimpleEntry(date: Date(), promise: WidgetConstants.placeholderText)
+        SimpleEntry(
+            date: Date(),
+            declaration: WidgetDeclaration(text: WidgetConstants.placeholderText, category: "faith"),
+            isFavorite: false
+        )
     }
-    
+
     func getSnapshot(in context: Context, completion: @escaping (SimpleEntry) -> ()) {
-        let promise = getCurrentPromise()
-        completion(SimpleEntry(date: Date(), promise: promise))
+        completion(currentEntry(at: Date()))
     }
-    
-    func getTimeline(in context: Context, completion: @escaping (Timeline<Entry>) -> ()) {
+
+    func getTimeline(in context: Context, completion: @escaping (Timeline<SimpleEntry>) -> ()) {
         let now = Date()
-        let promise = getCurrentPromise()
-        
-        // Create entries for the current hour and next few hours
         var entries: [SimpleEntry] = []
-        
+
         // Current entry
-        entries.append(SimpleEntry(date: now, promise: promise))
-        
-        // Next hour entry (different promise if available)
-        if let nextHour = Calendar.current.date(byAdding: .hour, value: 1, to: now) {
-            let nextPromise = getPromiseForTime(nextHour)
-            entries.append(SimpleEntry(date: nextHour, promise: nextPromise))
-        }
-        
-        // Determine next refresh time (next hour boundary)
-        let nextRefresh = Calendar.current.date(byAdding: .hour, value: 1, to: now) ?? 
-                         Calendar.current.date(byAdding: .minute, value: 15, to: now) ?? now
-        
-        let timeline = Timeline(entries: entries, policy: .after(nextRefresh))
-        completion(timeline)
-    }
-    
-    // MARK: - Private Methods
-    
-    private func getCurrentPromise() -> String {
-        return getPromiseForTime(Date())
-    }
-    
-    private func getPromiseForTime(_ date: Date) -> String {
-        guard let widgetDefaults = UserDefaults(suiteName: WidgetConstants.appGroupSuiteName) else {
-            return WidgetConstants.fallbackPromise
-        }
-        
-        // Try to get category-filtered promises first
-        if let categoryPromise = getCategoryFilteredPromise(from: widgetDefaults, for: date) {
-            return categoryPromise
-        }
-        
-        // Fallback to all synced promises
-        guard let syncedPromises = widgetDefaults.stringArray(forKey: WidgetConstants.syncedPromisesKey),
-              !syncedPromises.isEmpty else {
-            return WidgetConstants.fallbackPromise
-        }
-        
-        // Use hour-based selection for consistent daily rotation
-        let hour = Calendar.current.component(.hour, from: date)
-        let safeIndex = hour % syncedPromises.count
-        
-        return syncedPromises[safeIndex]
-    }
-    
-    private func getCategoryFilteredPromise(from defaults: UserDefaults, for date: Date) -> String? {
-        // Strategy 1: Time-based category intelligence
-        let contextualCategories = getContextualCategories(for: date)
-        
-        for category in contextualCategories {
-            if let categoryPromises = defaults.stringArray(forKey: "category_\(category)"),
-               !categoryPromises.isEmpty {
-                let hour = Calendar.current.component(.hour, from: date)
-                let index = hour % categoryPromises.count
-                return categoryPromises[index]
+        entries.append(currentEntry(at: now))
+
+        // Pre-roll a few hourly entries so the widget animates between rotations
+        // even before the system asks for a fresh timeline.
+        for hourOffset in 1...4 {
+            if let future = Calendar.current.date(byAdding: .hour, value: hourOffset, to: now) {
+                entries.append(currentEntry(at: future))
             }
         }
-        
-        // Strategy 2: User's selected categories
-        if let selectedCategories = defaults.stringArray(forKey: WidgetConstants.UserPreferences.selectedCategoriesKey) {
-            for category in selectedCategories {
-                if let categoryPromises = defaults.stringArray(forKey: "category_\(category)"),
-                   !categoryPromises.isEmpty {
-                    let hour = Calendar.current.component(.hour, from: date)
-                    let index = hour % categoryPromises.count
-                    return categoryPromises[index]
-                }
-            }
-        }
-        
-        return nil
+
+        // Refresh at the next day boundary so the daily verse rolls over.
+        let startOfTomorrow = Calendar.current.nextDate(
+            after: now,
+            matching: DateComponents(hour: 0, minute: 1),
+            matchingPolicy: .nextTime
+        ) ?? now.addingTimeInterval(60 * 60)
+
+        completion(Timeline(entries: entries, policy: .after(startOfTomorrow)))
     }
-    
-    private func getContextualCategories(for date: Date) -> [String] {
-        let hour = Calendar.current.component(.hour, from: date)
-        let dayOfWeek = Calendar.current.component(.weekday, from: date)
-        
-        var categories: [String] = []
-        
-        // Time-based context
-        switch hour {
-        case 5...8:
-            categories.append(contentsOf: ["Morning", "Strength", "New Beginnings", "Energy"])
-        case 9...11:
-            categories.append(contentsOf: ["Work", "Focus", "Productivity", "Wisdom"])
-        case 12...13:
-            categories.append(contentsOf: ["Rest", "Reflection", "Gratitude"])
-        case 14...17:
-            categories.append(contentsOf: ["Perseverance", "Strength", "Purpose"])
-        case 18...20:
-            categories.append(contentsOf: ["Family", "Love", "Gratitude", "Reflection"])
-        case 21...23:
-            categories.append(contentsOf: ["Peace", "Rest", "Forgiveness", "Comfort"])
-        default:
-            categories.append(contentsOf: ["Peace", "Comfort", "Protection"])
-        }
-        
-        // Day-based context
-        switch dayOfWeek {
-        case 1: // Sunday
-            categories.append(contentsOf: ["Worship", "Rest", "Family", "Reflection"])
-        case 2: // Monday
-            categories.append(contentsOf: ["New Beginnings", "Strength", "Purpose", "Energy"])
-        case 6, 7: // Friday/Saturday
-            categories.append(contentsOf: ["Gratitude", "Joy", "Celebration", "Rest"])
-        default:
-            categories.append(contentsOf: ["Work", "Perseverance", "Wisdom"])
-        }
-        
-        return categories
+
+    private func currentEntry(at date: Date) -> SimpleEntry {
+        let store = WidgetDeclarationStore.load()
+        let offset = UserDefaults.widgetGroup.integer(forKey: WidgetSharedConstants.Keys.rotationOffset)
+        let declaration = store.declaration(for: date, offset: offset)
+        let favorites = Set(UserDefaults.widgetGroup.stringArray(forKey: WidgetSharedConstants.Keys.widgetFavorites) ?? [])
+        return SimpleEntry(
+            date: date,
+            declaration: declaration,
+            isFavorite: favorites.contains(declaration.text)
+        )
     }
 }
 
 // MARK: - Timeline Entry
 
-/// Represents a single timeline entry for the widget
 struct SimpleEntry: TimelineEntry {
     let date: Date
-    let promise: String
-    
-    init(date: Date, promise: String) {
-        self.date = date
-        self.promise = promise.trimmingCharacters(in: .whitespacesAndNewlines)
-    }
+    let declaration: WidgetDeclaration
+    let isFavorite: Bool
 }
 
 // MARK: - Widget Entry View
@@ -201,15 +145,13 @@ struct SimpleEntry: TimelineEntry {
 struct PromisesWidgetEntryView: View {
     @Environment(\.widgetFamily) var family: WidgetFamily
     let entry: Provider.Entry
-    
+
     var body: some View {
         widgetContent
             .accessibilityElement(children: .combine)
             .accessibilityLabel(accessibilityText)
     }
-    
-    // MARK: - Private Views
-    
+
     @ViewBuilder
     private var widgetContent: some View {
         switch family {
@@ -219,153 +161,219 @@ struct PromisesWidgetEntryView: View {
             rectangularLockScreenView
         case .accessoryInline:
             inlineLockScreenView
-        default:
-            if #available(iOS 17.0, *) {
-                contentView
-                    .containerBackground(.clear, for: .widget)
-            } else {
-                contentView
-            }
-        }
-    }
-    
-    private var contentView: some View {
-        ZStack {
-            // Use beautiful gradient background (images may not load properly in widget)
-            BeautifulGradientBackground()
-            
-            // Time-based gradient overlay for ambiance
-            WidgetGradientBackground()
-                .opacity(0.15)
-            
-            VStack(spacing: WidgetConstants.Design.contentSpacing) {
-                Spacer()
-                
-                // Text with premium glass morphism background
-                VStack(spacing: 8) {
-                    promiseText
-                }
-                .padding()
-                .background(
-                    ZStack {
-                        // Glass morphism effect
-                        RoundedRectangle(cornerRadius: WidgetConstants.Design.cornerRadius)
-                            .fill(
-                                LinearGradient(
-                                    colors: [
-                                        Color.white.opacity(0.1),
-                                        Color.white.opacity(0.05)
-                                    ],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
-                        
-                        // Subtle border for definition
-                        RoundedRectangle(cornerRadius: WidgetConstants.Design.cornerRadius)
-                            .strokeBorder(
-                                LinearGradient(
-                                    colors: [
-                                        Color.white.opacity(0.2),
-                                        Color.white.opacity(0.1)
-                                    ],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                ),
-                                lineWidth: 0.5
-                            )
-                    }
-                )
-                .padding(.horizontal, 12)
-                
-                Spacer()
-                
-                if shouldShowGreeting {
-                    greetingText
-                }
-            }
-        }
-    }
-    
-    private var promiseText: some View {
-        Text(entry.promise)
-            .foregroundColor(.white)
-            .font(.system(size: fontSize, weight: .medium, design: .serif))  // Elegant serif for premium feel
-            .multilineTextAlignment(.center)
-            .lineSpacing(4)
-            .shadow(color: .black.opacity(0.3), radius: 2, x: 0, y: 1)
-            .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2) // Softer, layered shadows
-            .minimumScaleFactor(0.8) // Allow text scaling for better fit
-    }
-    
-    private var greetingText: some View {
-        Text(TimeBasedGreeting.current.message)
-            .font(.system(size: WidgetConstants.Design.FontSizes.greeting, weight: .light, design: .serif))
-            .foregroundColor(.white.opacity(WidgetConstants.Design.greetingOpacity))
-            .shadow(color: .black.opacity(0.2), radius: 1, x: 0, y: 1)
-            .padding(.bottom, WidgetConstants.Design.bottomPadding)
-    }
-    
-    // MARK: - Computed Properties
-    
-    private var fontSize: CGFloat {
-        switch family {
         case .systemSmall:
-            return WidgetConstants.Design.FontSizes.small
+            smallView
+                .containerBackground(for: .widget) { background }
         case .systemMedium:
-            return WidgetConstants.Design.FontSizes.medium
+            mediumView
+                .containerBackground(for: .widget) { background }
+        case .systemLarge:
+            largeView
+                .containerBackground(for: .widget) { background }
         default:
-            return WidgetConstants.Design.FontSizes.large
+            smallView
+                .containerBackground(for: .widget) { background }
         }
     }
-    
-    private var shouldShowGreeting: Bool {
-        family == .systemLarge
-    }
-    
-    private var accessibilityText: String {
-        if shouldShowGreeting {
-            return "\(entry.promise). \(TimeBasedGreeting.current.message)"
+
+    // MARK: Background
+
+    private var background: some View {
+        ZStack {
+            BeautifulGradientBackground()
+            WidgetGradientBackground().opacity(0.15)
         }
-        return entry.promise
     }
-    
+
+    // MARK: Home Screen Views
+
+    private var smallView: some View {
+        VStack(spacing: 6) {
+            promiseText(
+                size: 15,
+                lineLimit: 6,
+                weight: .medium
+            )
+            if let book = entry.declaration.book, !book.isEmpty {
+                bookReference(book, size: 10)
+            }
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
+        .widgetURL(deepLinkURL)
+    }
+
+    private var mediumView: some View {
+        VStack(spacing: 8) {
+            promiseText(
+                size: 16,
+                lineLimit: 5,
+                weight: .medium
+            )
+
+            if let book = entry.declaration.book, !book.isEmpty {
+                bookReference(book, size: 11)
+            }
+
+            actionRow
+                .padding(.top, 2)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .widgetURL(deepLinkURL)
+    }
+
+    private var largeView: some View {
+        VStack(spacing: 12) {
+            promiseText(
+                size: 20,
+                lineLimit: 5,
+                weight: .semibold
+            )
+
+            if let verse = entry.declaration.bibleVerseText, !verse.isEmpty {
+                Rectangle()
+                    .fill(Color.white.opacity(0.2))
+                    .frame(width: 40, height: 0.5)
+                    .padding(.vertical, 2)
+
+                Text("\u{201C}\(verse)\u{201D}")
+                    .font(.system(size: 13, weight: .regular, design: .serif))
+                    .foregroundColor(.white.opacity(0.85))
+                    .multilineTextAlignment(.center)
+                    .lineSpacing(2)
+                    .lineLimit(5)
+                    .minimumScaleFactor(0.8)
+                    .shadow(color: .black.opacity(0.25), radius: 2, x: 0, y: 1)
+            }
+
+            if let book = entry.declaration.book, !book.isEmpty {
+                bookReference(book, size: 13)
+            }
+
+            actionRow
+                .padding(.top, 4)
+
+            Text(TimeBasedGreeting.current.message)
+                .font(.system(size: 11, weight: .light, design: .serif))
+                .foregroundColor(.white.opacity(0.75))
+                .padding(.top, 2)
+        }
+        .padding(.horizontal, 18)
+        .padding(.vertical, 14)
+        .widgetURL(deepLinkURL)
+    }
+
+    // MARK: Lock Screen Views
+
     private var circularLockScreenView: some View {
         ZStack {
             AccessoryWidgetBackground()
-            VStack(spacing: 2) {
+            VStack(spacing: 1) {
                 Image(systemName: timeBasedIcon)
-                    .font(.system(size: 20, weight: .medium))
+                    .font(.system(size: 16, weight: .semibold))
                     .widgetAccentable()
-                Text(shortPromiseText)
-                    .font(.system(size: 11, weight: .semibold, design: .rounded))
-                    .lineLimit(2)
+                Text(circularLabel)
+                    .font(.system(size: 10, weight: .semibold, design: .rounded))
+                    .lineLimit(1)
                     .minimumScaleFactor(0.7)
-                    .multilineTextAlignment(.center)
             }
-            .padding(4)
         }
     }
-    
+
+    /// Compact verse reference (e.g. "Rom 8:38") for the tiny circular slot.
+    private var circularLabel: String {
+        if let book = entry.declaration.book, !book.isEmpty {
+            return shortBookReference(book)
+        }
+        let words = entry.declaration.text.split(separator: " ")
+        return words.prefix(2).joined(separator: " ")
+    }
+
     private var rectangularLockScreenView: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(mediumPromiseText)
-                .font(.system(size: 14, weight: .medium, design: .rounded))
-                .lineLimit(3)
-                .minimumScaleFactor(0.8)
+        VStack(alignment: .leading, spacing: 2) {
+            Text(entry.declaration.text)
+                .font(.system(size: 13, weight: .medium, design: .rounded))
+                .lineLimit(2)
+                .minimumScaleFactor(0.85)
+            if let book = entry.declaration.book, !book.isEmpty {
+                Text(book)
+                    .font(.system(size: 10, weight: .regular, design: .rounded))
+                    .opacity(0.7)
+                    .widgetAccentable()
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
-    
+
     private var inlineLockScreenView: some View {
         HStack(spacing: 4) {
             Image(systemName: timeBasedIcon)
-            Text(inlinePromiseText)
-                .font(.system(size: 14, weight: .medium, design: .rounded))
+            Text(entry.declaration.text)
                 .lineLimit(1)
         }
     }
-    
+
+    // MARK: Components
+
+    private func promiseText(size: CGFloat, lineLimit: Int, weight: Font.Weight) -> some View {
+        Text(entry.declaration.text)
+            .foregroundColor(.white)
+            .font(.system(size: size, weight: weight, design: .serif))
+            .multilineTextAlignment(.center)
+            .lineSpacing(3)
+            .lineLimit(lineLimit)
+            .minimumScaleFactor(0.7)
+            .shadow(color: .black.opacity(0.35), radius: 2, x: 0, y: 1)
+            .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
+    }
+
+    private func bookReference(_ book: String, size: CGFloat) -> some View {
+        Text(book)
+            .font(.system(size: size, weight: .semibold, design: .serif))
+            .foregroundColor(.white.opacity(0.8))
+            .tracking(0.5)
+            .widgetAccentable()
+            .shadow(color: .black.opacity(0.2), radius: 1, x: 0, y: 1)
+    }
+
+    private var actionRow: some View {
+        HStack(spacing: WidgetConstants.Design.actionRowSpacing) {
+            Button(intent: ToggleFavoriteIntent(promiseText: entry.declaration.text)) {
+                Image(systemName: entry.isFavorite ? "heart.fill" : "heart")
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundColor(.white)
+                    .frame(width: 28, height: 28)
+                    .background(Circle().fill(Color.white.opacity(0.15)))
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(entry.isFavorite ? "Unfavorite promise" : "Favorite promise")
+
+            Button(intent: NextDeclarationIntent()) {
+                Image(systemName: "arrow.triangle.2.circlepath")
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundColor(.white)
+                    .frame(width: 28, height: 28)
+                    .background(Circle().fill(Color.white.opacity(0.15)))
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Next promise")
+        }
+    }
+
+    // MARK: Computed Helpers
+
+    private var deepLinkURL: URL? {
+        URL(string: "speaklife://declaration?text=\(entry.declaration.text.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")")
+    }
+
+    private var accessibilityText: String {
+        var parts = [entry.declaration.text]
+        if let book = entry.declaration.book, !book.isEmpty { parts.append(book) }
+        if family == .systemLarge { parts.append(TimeBasedGreeting.current.message) }
+        return parts.joined(separator: ". ")
+    }
+
     private var timeBasedIcon: String {
         let hour = Calendar.current.component(.hour, from: entry.date)
         switch hour {
@@ -375,29 +383,15 @@ struct PromisesWidgetEntryView: View {
         default: return "moon.stars.fill"
         }
     }
-    
-    private var shortPromiseText: String {
-        let words = entry.promise.split(separator: " ")
-        if words.count <= 4 {
-            return entry.promise
-        }
-        return words.prefix(4).joined(separator: " ") + "..."
-    }
-    
-    private var mediumPromiseText: String {
-        let words = entry.promise.split(separator: " ")
-        if words.count <= 12 {
-            return entry.promise
-        }
-        return words.prefix(12).joined(separator: " ") + "..."
-    }
-    
-    private var inlinePromiseText: String {
-        let words = entry.promise.split(separator: " ")
-        if words.count <= 6 {
-            return entry.promise
-        }
-        return words.prefix(6).joined(separator: " ") + "..."
+
+    /// Abbreviate "Romans 8:38-39" → "Rom 8:38" for the circular slot.
+    private func shortBookReference(_ book: String) -> String {
+        let parts = book.split(separator: " ", maxSplits: 1, omittingEmptySubsequences: true)
+        guard parts.count == 2 else { return book }
+        let name = String(parts[0])
+        let ref = String(parts[1]).split(separator: "-").first.map(String.init) ?? String(parts[1])
+        let abbrev = name.count > 4 ? String(name.prefix(3)) : name
+        return "\(abbrev) \(ref)"
     }
 }
 
@@ -405,20 +399,16 @@ struct PromisesWidgetEntryView: View {
 
 enum TimeBasedGreeting {
     case morning, afternoon, evening, night
-    
+
     var message: String {
         switch self {
-        case .morning:
-            return "Good morning! Start your day with faith."
-        case .afternoon:
-            return "Good afternoon! Keep your spirit strong."
-        case .evening:
-            return "Good evening! Reflect on God's blessings."
-        case .night:
-            return "Good night! Rest in His promises."
+        case .morning:   return "Good morning. Start the day in His word."
+        case .afternoon: return "Good afternoon. Keep your spirit strong."
+        case .evening:   return "Good evening. Reflect on His blessings."
+        case .night:     return "Good night. Rest in His promises."
         }
     }
-    
+
     static var current: TimeBasedGreeting {
         let hour = Calendar.current.component(.hour, from: Date())
         switch hour {
@@ -434,178 +424,106 @@ enum TimeBasedGreeting {
     }
 }
 
-// MARK: - Calendar Extension
-
-extension Calendar {
-    func ordinateOfDay(for date: Date) -> Int? {
-        return self.ordinality(of: .day, in: .year, for: date)
-    }
-}
-
-// MARK: - Background Helpers
-
-struct WidgetBackgroundImage {
-    static var current: String {
-        // Beautiful images available in the app
-        let images = [
-            "boatLakeMountain",
-            "wheatFieldRedRose",
-            "redTreeLake",
-            "redRosesGreySkies"
-        ]
-        
-        // Use time-based selection for variety
-        let hour = Calendar.current.component(.hour, from: Date())
-        let dayOfYear = Calendar.current.ordinateOfDay(for: Date()) ?? 1
-        
-        // Combine hour and day for image rotation
-        let index = (hour + dayOfYear) % images.count
-        return images[index]
-    }
-}
-
 // MARK: - Beautiful Gradient Background
 
 struct BeautifulGradientBackground: View {
     private var timeBasedGradient: LinearGradient {
         let hour = Calendar.current.component(.hour, from: Date())
-        
+
         switch hour {
-        case 5...8: // Morning - sophisticated dawn
+        case 5...8: // Sophisticated dawn
             return LinearGradient(
                 colors: [
-                    Color(red: 0.95, green: 0.85, blue: 0.75),   // Warm champagne
-                    Color(red: 0.85, green: 0.75, blue: 0.7),    // Soft beige
-                    Color(red: 0.75, green: 0.65, blue: 0.65),   // Muted rose
-                    Color(red: 0.65, green: 0.55, blue: 0.6)     // Dusty mauve
+                    Color(red: 0.95, green: 0.85, blue: 0.75),
+                    Color(red: 0.85, green: 0.75, blue: 0.7),
+                    Color(red: 0.75, green: 0.65, blue: 0.65),
+                    Color(red: 0.65, green: 0.55, blue: 0.6)
                 ],
                 startPoint: .top,
                 endPoint: .bottom
             )
-        case 9...16: // Day - elegant sky  
+        case 9...16: // Elegant sky
             return LinearGradient(
                 colors: [
-                    Color(red: 0.85, green: 0.9, blue: 0.95),    // Soft cloud white
-                    Color(red: 0.75, green: 0.82, blue: 0.9),    // Powder blue
-                    Color(red: 0.65, green: 0.75, blue: 0.85),   // Steel blue
-                    Color(red: 0.55, green: 0.68, blue: 0.8)     // Sophisticated blue
+                    Color(red: 0.85, green: 0.9, blue: 0.95),
+                    Color(red: 0.75, green: 0.82, blue: 0.9),
+                    Color(red: 0.65, green: 0.75, blue: 0.85),
+                    Color(red: 0.55, green: 0.68, blue: 0.8)
                 ],
                 startPoint: .top,
                 endPoint: .bottom
             )
-        case 17...20: // Evening - refined sunset
+        case 17...20: // Refined sunset
             return LinearGradient(
                 colors: [
-                    Color(red: 0.85, green: 0.7, blue: 0.65),    // Warm taupe
-                    Color(red: 0.75, green: 0.6, blue: 0.6),     // Muted terracotta
-                    Color(red: 0.65, green: 0.5, blue: 0.55),    // Dusty rose
-                    Color(red: 0.55, green: 0.4, blue: 0.5)      // Deep mauve
+                    Color(red: 0.85, green: 0.7, blue: 0.65),
+                    Color(red: 0.75, green: 0.6, blue: 0.6),
+                    Color(red: 0.65, green: 0.5, blue: 0.55),
+                    Color(red: 0.55, green: 0.4, blue: 0.5)
                 ],
                 startPoint: .top,
                 endPoint: .bottom
             )
-        default: // Night - luxurious deep tones
+        default: // Deep night
             return LinearGradient(
                 colors: [
-                    Color(red: 0.15, green: 0.15, blue: 0.25),   // Rich navy
-                    Color(red: 0.12, green: 0.12, blue: 0.22),   // Deep midnight
-                    Color(red: 0.1, green: 0.1, blue: 0.18),     // Charcoal blue
-                    Color(red: 0.08, green: 0.08, blue: 0.15)    // Almost black
+                    Color(red: 0.15, green: 0.15, blue: 0.25),
+                    Color(red: 0.12, green: 0.12, blue: 0.22),
+                    Color(red: 0.1, green: 0.1, blue: 0.18),
+                    Color(red: 0.08, green: 0.08, blue: 0.15)
                 ],
                 startPoint: .top,
                 endPoint: .bottom
             )
         }
     }
-    
+
     var body: some View {
         ZStack {
-            // Base time-based gradient
             timeBasedGradient
-            
-            // Multiple layers for sophisticated depth
             RadialGradient(
-                colors: [
-                    Color.white.opacity(0.08),
-                    Color.clear
-                ],
+                colors: [Color.white.opacity(0.08), Color.clear],
                 center: .topLeading,
                 startRadius: 20,
                 endRadius: 200
             )
-            
-            // Subtle vignette for depth
             RadialGradient(
-                colors: [
-                    Color.clear,
-                    Color.black.opacity(0.15)
-                ],
+                colors: [Color.clear, Color.black.opacity(0.18)],
                 center: .center,
                 startRadius: 100,
                 endRadius: 300
             )
-            
-            // Noise texture overlay for premium feel
-            LinearGradient(
-                colors: [
-                    Color.white.opacity(0.02),
-                    Color.black.opacity(0.02)
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            .blendMode(.overlay)
         }
     }
 }
 
-// MARK: - Gradient Background
+// MARK: - Time-of-Day Overlay
 
 struct WidgetGradientBackground: View {
-    
-    private enum GradientColors {
-        static let morning: [Color] = [
-            Color(red: 0.9, green: 0.85, blue: 0.8).opacity(0.2),
-            Color(red: 0.85, green: 0.8, blue: 0.75).opacity(0.15)
-        ]
-        static let afternoon: [Color] = [
-            Color(red: 0.8, green: 0.85, blue: 0.9).opacity(0.2),
-            Color(red: 0.75, green: 0.8, blue: 0.85).opacity(0.15)
-        ]
-        static let evening: [Color] = [
-            Color(red: 0.8, green: 0.7, blue: 0.75).opacity(0.2),
-            Color(red: 0.75, green: 0.65, blue: 0.7).opacity(0.15)
-        ]
-        static let night: [Color] = [
-            Color(red: 0.2, green: 0.2, blue: 0.3).opacity(0.3),
-            Color(red: 0.15, green: 0.15, blue: 0.25).opacity(0.25)
-        ]
-    }
-    
     var body: some View {
-        LinearGradient(
-            gradient: Gradient(colors: timeBasedColors),
+        let colors = timeBasedColors
+        return LinearGradient(
+            gradient: Gradient(colors: colors),
             startPoint: .topLeading,
             endPoint: .bottomTrailing
         )
     }
-    
+
     private var timeBasedColors: [Color] {
-        let colors: [Color]
-        
         switch TimeBasedGreeting.current {
         case .morning:
-            colors = GradientColors.morning
+            return [Color(red: 0.9, green: 0.85, blue: 0.8).opacity(0.2),
+                    Color(red: 0.85, green: 0.8, blue: 0.75).opacity(0.15)]
         case .afternoon:
-            colors = GradientColors.afternoon
+            return [Color(red: 0.8, green: 0.85, blue: 0.9).opacity(0.2),
+                    Color(red: 0.75, green: 0.8, blue: 0.85).opacity(0.15)]
         case .evening:
-            colors = GradientColors.evening
+            return [Color(red: 0.8, green: 0.7, blue: 0.75).opacity(0.2),
+                    Color(red: 0.75, green: 0.65, blue: 0.7).opacity(0.15)]
         case .night:
-            colors = GradientColors.night
+            return [Color(red: 0.2, green: 0.2, blue: 0.3).opacity(0.3),
+                    Color(red: 0.15, green: 0.15, blue: 0.25).opacity(0.25)]
         }
-        
-        // Return a stable 2-color gradient (no randomization for consistency)
-        return Array(colors.prefix(2))
     }
 }
 
@@ -614,7 +532,7 @@ struct WidgetGradientBackground: View {
 @main
 struct PromisesWidget: Widget {
     private static let widgetKind = "PromisesWidget"
-    
+
     var body: some WidgetConfiguration {
         StaticConfiguration(
             kind: Self.widgetKind,
@@ -624,8 +542,11 @@ struct PromisesWidget: Widget {
         }
         .configurationDisplayName("Daily Promises")
         .description("Inspiring Bible promises that change throughout the day to encourage your faith journey.")
-        .supportedFamilies([.systemSmall, .systemMedium, .systemLarge, .accessoryCircular, .accessoryRectangular, .accessoryInline])
-        .contentMarginsDisabled() // Use full widget space
+        .supportedFamilies([
+            .systemSmall, .systemMedium, .systemLarge,
+            .accessoryCircular, .accessoryRectangular, .accessoryInline
+        ])
+        .contentMarginsDisabled()
     }
 }
 
@@ -633,37 +554,34 @@ struct PromisesWidget: Widget {
 
 #if DEBUG
 struct PromisesWidget_Previews: PreviewProvider {
+    static var sample = WidgetDeclaration(
+        text: "I am loved by God, and nothing can separate me from His love.",
+        book: "Romans 8:38-39",
+        bibleVerseText: "For I am convinced that neither death nor life will be able to separate us from the love of God that is in Christ Jesus our Lord.",
+        category: "love"
+    )
+
     static var previews: some View {
         Group {
-            // Small widget preview
-            PromisesWidgetEntryView(
-                entry: SimpleEntry(
-                    date: Date(),
-                    promise: "Trust in the Lord with all your heart; do not depend on your own understanding."
-                )
-            )
-            .previewContext(WidgetPreviewContext(family: .systemSmall))
-            .previewDisplayName("Small")
-            
-            // Medium widget preview
-            PromisesWidgetEntryView(
-                entry: SimpleEntry(
-                    date: Date(),
-                    promise: "For I know the plans I have for you, says the Lord. They are plans for good and not for disaster, to give you a future and a hope."
-                )
-            )
-            .previewContext(WidgetPreviewContext(family: .systemMedium))
-            .previewDisplayName("Medium")
-            
-            // Large widget preview
-            PromisesWidgetEntryView(
-                entry: SimpleEntry(
-                    date: Date(),
-                    promise: "Don't worry about anything; instead, pray about everything. Tell God what you need, and thank him for all he has done."
-                )
-            )
-            .previewContext(WidgetPreviewContext(family: .systemLarge))
-            .previewDisplayName("Large")
+            PromisesWidgetEntryView(entry: SimpleEntry(date: Date(), declaration: sample, isFavorite: false))
+                .previewContext(WidgetPreviewContext(family: .systemSmall))
+                .previewDisplayName("Small")
+
+            PromisesWidgetEntryView(entry: SimpleEntry(date: Date(), declaration: sample, isFavorite: true))
+                .previewContext(WidgetPreviewContext(family: .systemMedium))
+                .previewDisplayName("Medium")
+
+            PromisesWidgetEntryView(entry: SimpleEntry(date: Date(), declaration: sample, isFavorite: false))
+                .previewContext(WidgetPreviewContext(family: .systemLarge))
+                .previewDisplayName("Large")
+
+            PromisesWidgetEntryView(entry: SimpleEntry(date: Date(), declaration: sample, isFavorite: false))
+                .previewContext(WidgetPreviewContext(family: .accessoryCircular))
+                .previewDisplayName("Circular")
+
+            PromisesWidgetEntryView(entry: SimpleEntry(date: Date(), declaration: sample, isFavorite: false))
+                .previewContext(WidgetPreviewContext(family: .accessoryRectangular))
+                .previewDisplayName("Rectangular")
         }
     }
 }
