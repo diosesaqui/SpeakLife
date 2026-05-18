@@ -405,6 +405,7 @@ struct QuizOnboardingView: View {
         case personalDeclaration
         case commitmentHold
         case paywall
+        case notificationTime  // post-paywall: pick a window, then iOS permission prompt
     }
 
     @State private var currentStep: Step = .quiz
@@ -415,6 +416,12 @@ struct QuizOnboardingView: View {
     @State private var savedPersonalDeclaration: PersonalDeclaration? = nil
     @State private var quizShownAt: Date = Date()
     @State private var stepEnteredAt: Date = Date()
+
+    // Backing model for SurveyQ8NotificationScreen so we can reuse that
+    // screen verbatim (same UI as Control's notification picker). We only
+    // populate heaviestBurden (for the subtitle/preview) and notificationTime
+    // (set by the user's pick on the screen).
+    @StateObject private var notificationResponses = SurveyResponses()
 
     private var segment: QuizSegment { selectedSegment ?? .unsegmented }
 
@@ -478,8 +485,16 @@ struct QuizOnboardingView: View {
                     }
                 case .paywall:
                     HighConversionPaywallView(callback: {
-                        finishOnboarding()
+                        advanceFromPaywall()
                     }, source: "onboarding")
+                case .notificationTime:
+                    SurveyQ8NotificationScreen(
+                        size: size,
+                        responses: notificationResponses,
+                        onContinue: {
+                            advanceFromNotificationTime()
+                        }
+                    )
                 }
             }
             .transition(.asymmetric(
@@ -686,6 +701,34 @@ struct QuizOnboardingView: View {
             "total_duration_seconds": totalDuration
         ])
         transition(to: .paywall)
+    }
+
+    private func advanceFromPaywall() {
+        // Paywall callback fires both on successful purchase AND on close —
+        // either way the user moves on to pick their notification window.
+        // Seed the screen with the burden so its subtitle and preview render
+        // the user's matched declaration text instead of a generic fallback.
+        notificationResponses.heaviestBurden = selectedBurden
+        Analytics.logEvent("onboarding_notification_time_shown", parameters: [
+            "segment": segment.rawValue
+        ])
+        transition(to: .notificationTime)
+    }
+
+    private func advanceFromNotificationTime() {
+        UIImpactFeedbackGenerator(style: .soft).impactOccurred()
+        if let notifTime = notificationResponses.notificationTime {
+            appState.startTimeIndex = notifTime.startTimeIndex
+            appState.endTimeIndex   = notifTime.endTimeIndex
+            // Mirror to the personal declaration push time — same pattern
+            // SurveyOnboardingView uses for the survey flow's notification step.
+            appState.personalDeclarationTimeIndex = notifTime.startTimeIndex
+            Analytics.logEvent("onboarding_notification_time_picked", parameters: [
+                "segment": segment.rawValue,
+                "notification_time": notifTime.rawValue
+            ])
+        }
+        finishOnboarding()
     }
 
     private func finishOnboarding() {
