@@ -294,16 +294,18 @@ struct YearInReviewView: View {
     }
 
     private var summarySlide: some View {
-        // TabView page style doesn't always hand children a finite width, so
-        // .frame(maxWidth: .infinity) on the card was free to overflow.
-        // Use GeometryReader to read the actual page size and hard-pin the
-        // column width to (page - 48), centered with HStack spacers.
+        // Width-propagation from parent containers wasn't working — the
+        // card's .frame(maxWidth: .infinity) kept escaping. Apply an
+        // explicit width to the card and button column based on the page
+        // bounds, then center both in a ZStack pinned to the page.
         GeometryReader { geo in
-            HStack(spacing: 0) {
-                Spacer(minLength: 0)
+            let contentWidth = max(0, geo.size.width - 48)
+            ZStack {
+                Color.clear
                 VStack(spacing: 0) {
                     Spacer(minLength: 20)
                     summaryCard
+                        .frame(width: contentWidth)
                     Spacer()
                     VStack(spacing: 10) {
                         Button {
@@ -315,8 +317,7 @@ struct YearInReviewView: View {
                             }
                             .font(Font.custom("AppleSDGothicNeo-Bold", size: 16, relativeTo: .body))
                             .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 52)
+                            .frame(width: contentWidth, height: 52)
                             .background(
                                 LinearGradient(colors: [Color(hex: "F59E0B"), Color(hex: "B45309")],
                                                startPoint: .leading, endPoint: .trailing)
@@ -329,16 +330,14 @@ struct YearInReviewView: View {
                             Text("Done")
                                 .font(Font.custom("AppleSDGothicNeo-Regular", size: 15, relativeTo: .body))
                                 .foregroundColor(.white.opacity(0.55))
-                                .frame(maxWidth: .infinity)
-                                .frame(height: 44)
+                                .frame(width: contentWidth, height: 44)
                         }
                     }
                     .padding(.bottom, 28)
                 }
-                .frame(width: max(0, geo.size.width - 48))
                 .padding(.top, 60) // clear the topBar's close button
-                Spacer(minLength: 0)
             }
+            .frame(width: geo.size.width, height: geo.size.height)
         }
     }
 
