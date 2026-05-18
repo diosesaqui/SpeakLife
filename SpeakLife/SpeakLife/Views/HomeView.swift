@@ -256,6 +256,20 @@ struct HomeView: View {
                                     .environmentObject(tabViewModel)
                             }
                   
+                } else if subscriptionStore.useQuizOnboarding {
+                    QuizOnboardingView(size: UIScreen.main.bounds.size) {
+                        withAnimation {
+                            appState.isOnboarded = true
+                            LifecycleNotificationService.shared.scheduleLifecycleNotifications()
+                            Analytics.logEvent("onBoardingFinished", parameters: nil)
+                        }
+                    }
+                    .ignoresSafeArea()
+                    .onAppear {
+                        viewModel.requestPermission { granted in
+                            // ATT Permission handled
+                        }
+                    }
                 } else {
                     SurveyOnboardingView(size: UIScreen.main.bounds.size) {
                         withAnimation {
