@@ -140,13 +140,25 @@ struct DevotionalView: View {
                     }
                 }
             }
-            
+
+        }
+        .overlay(alignment: .topLeading) {
+            aiDevotionalTopLeftButton
+                .padding(.leading, 20)
+                .padding(.top, 60)
+        }
+        .sheet(isPresented: $showCategoryDevotionalSheet) {
+            CategoryDevotionalSheet()
+                .environmentObject(subscriptionStore)
+        }
+        .fullScreenCover(isPresented: $presentDevotionalSubscriptionView) {
+            OptimizedSubscriptionView { }
         }
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.willResignActiveNotification)) { _ in
             self.share = false
         }
     }
-    
+
     @ViewBuilder
     var dateLabel: some View {
         HStack {
@@ -266,28 +278,40 @@ struct DevotionalView: View {
                 .frame(width: 25)
 
             shareButton
-
-            if aiDevotionalGenerator.isAvailable {
-                Spacer()
-                    .frame(width: 25)
-                aiDevotionalButton
-            }
         }
         .foregroundColor(.white)
-        .sheet(isPresented: $showCategoryDevotionalSheet) {
-            CategoryDevotionalSheet()
-                .environmentObject(subscriptionStore)
-        }
     }
 
-    private var aiDevotionalButton: some View {
-        Button {
-            Analytics.logEvent("ai_devotional_open", parameters: nil)
-            showCategoryDevotionalSheet = true
-        } label: {
-            Image(systemName: "sparkles")
-                .resizable()
-                .frame(width: 25, height: 25)
+    /// AI sparkles button — top-left of the devotional view (floating
+    /// overlay). Premium-only because each tap kicks off a cloud
+    /// Anthropic generation. Free users see the same curated daily
+    /// devotional they always have.
+    @ViewBuilder
+    private var aiDevotionalTopLeftButton: some View {
+        if aiDevotionalGenerator.isAvailable {
+            Button {
+                if subscriptionStore.isPremium {
+                    Analytics.logEvent("ai_devotional_open", parameters: nil)
+                    showCategoryDevotionalSheet = true
+                } else {
+                    Analytics.logEvent("ai_devotional_paywall", parameters: nil)
+                    presentDevotionalSubscriptionView = true
+                }
+            } label: {
+                Image(systemName: "sparkles")
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundColor(.white)
+                    .frame(width: 44, height: 44)
+                    .background(
+                        Circle()
+                            .fill(Color.black.opacity(0.7))
+                            .overlay(
+                                Circle()
+                                    .stroke(Color(hex: "A78BFA").opacity(0.6), lineWidth: 1)
+                            )
+                    )
+            }
+            .buttonStyle(PlainButtonStyle())
         }
     }
     

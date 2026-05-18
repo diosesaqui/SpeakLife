@@ -196,13 +196,14 @@ struct DeclarationView: View {
         .padding([.leading, .trailing])
     }
 
-    /// "Declaration of the Moment" — tap to generate a fresh, on-device
-    /// declaration tied to whatever the user is walking through right now.
-    /// Hidden on devices where on-device generation isn't available so
-    /// users never see a button that does nothing.
+    /// "Declaration of the Moment" — premium-only. Hidden for free users
+    /// so the top button row keeps its original layout (the extra icon
+    /// was squeezing the personal-declaration button off screen). Free
+    /// users still get this kind of flow via the Warrior Room
+    /// post-submit hook, which is rate-limited to 1/day.
     @ViewBuilder
     private var momentDeclarationButton: some View {
-        if momentDeclarationGenerator.isAvailable {
+        if momentDeclarationGenerator.isAvailable && subscriptionStore.isPremium {
             Button {
                 Analytics.logEvent("moment_declaration_open",
                                    parameters: ["source": "declaration_view"])
