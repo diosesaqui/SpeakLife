@@ -41,6 +41,7 @@ struct ProfileView: View {
     
     @State var isPresentingManageSubscriptionView = false
     @State var isPresentingContentView = false
+    @State var isPresentingFeatureRequestView = false
     @State var isPresentingPrayerRequestView = false
     @State var isPresentingBottomSheet = false
     @State private var showStreakStats = false
@@ -119,6 +120,7 @@ struct ProfileView: View {
                         shareRow
                         reviewRow
                         feedbackRow
+                        featureRequestRow
                         emailRow
                         supportIDRow
                         
@@ -606,6 +608,35 @@ struct ProfileView: View {
         if MFMailComposeViewController.canSendMail() {
             SettingsRow(isPresentingContentView: $isPresentingContentView, imageTitle: "highlighter", title: "Contact us", viewToPresent: LazyView(MailView(isShowing: $isPresentingContentView, result: self.$result, origin: .review, isSubscribed: subscriptionStore.isPremium))) {
                 presentContentView()
+            }
+            .id(UUID())
+        }
+    }
+
+    @MainActor
+    @ViewBuilder
+    private var featureRequestRow: some View {
+        if MFMailComposeViewController.canSendMail() {
+            SettingsRow(
+                isPresentingContentView: $isPresentingFeatureRequestView,
+                imageTitle: "wand.and.stars",
+                title: "Request a Feature or Content",
+                viewToPresent: LazyView(
+                    MailView(
+                        isShowing: $isPresentingFeatureRequestView,
+                        result: self.$result,
+                        origin: .newFeatures,
+                        prefillBody: "I'd love to see the following feature or content in SpeakLife:\n\n",
+                        isSubscribed: subscriptionStore.isPremium
+                    )
+                )
+            ) {
+                isPresentingFeatureRequestView = true
+                Event.trackUserAction(
+                    "feature_request_opened",
+                    category: "profile",
+                    metadata: ["source": "profile_menu"]
+                )
             }
             .id(UUID())
         }
