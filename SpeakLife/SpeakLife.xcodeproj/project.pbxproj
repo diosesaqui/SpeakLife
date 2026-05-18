@@ -8,7 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		01ED29F757107A93D56507E0 /* WidgetIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59BFF68BFA515EAC0AC88C85 /* WidgetIntents.swift */; };
-		B3443A27A06B1D7578E6B584 /* WidgetIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59BFF68BFA515EAC0AC88C85 /* WidgetIntents.swift */; };
 		0E1A8C97F61B9FB156F0F50F /* HowToUseSpeakLifeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74DAA35385DD02F8B0DCADE5 /* HowToUseSpeakLifeView.swift */; };
 		20F4D11E6F9CB2FA07540EE7 /* TrialExperienceService.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC73B2698B17B267C7A6F437 /* TrialExperienceService.swift */; };
 		2F740F6929D4017400E89E7F /* APIClientTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F740F6829D4017400E89E7F /* APIClientTests.swift */; };
@@ -30,9 +29,6 @@
 		451AECF42E4EEB2D00C1490E /* BootcampTabViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 451AECF32E4EEB2D00C1490E /* BootcampTabViews.swift */; };
 		451AECF52E4EEB2D00C1490E /* BootcampDetailViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 451AECF22E4EEB2D00C1490E /* BootcampDetailViews.swift */; };
 		4525D6852F37C0EB00571394 /* DailyDeclarationBurstView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4525D6842F37C0EB00571394 /* DailyDeclarationBurstView.swift */; };
-		45F0BBBB2F40C0EB00571394 /* PremiumAnniversaryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45F0AAAA2F40C0EB00571394 /* PremiumAnniversaryView.swift */; };
-		45F0DDDD2F40C0EB00571394 /* YearInReviewStats.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45F0CCCC2F40C0EB00571394 /* YearInReviewStats.swift */; };
-		45F0FFFF2F40C0EB00571394 /* YearInReviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45F0EEEE2F40C0EB00571394 /* YearInReviewView.swift */; };
 		4525D7D02F3DC7B400571394 /* PolishedCrossOnboardingFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4525D7CF2F3DC7B400571394 /* PolishedCrossOnboardingFlow.swift */; };
 		4525D7D22F3DC87E00571394 /* DailyDeclarationReminderService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4525D7D12F3DC87E00571394 /* DailyDeclarationReminderService.swift */; };
 		4525D8D92F4AC12800571394 /* DeclarationFavoriteEntry+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4525D8D72F4AC12800571394 /* DeclarationFavoriteEntry+CoreDataClass.swift */; };
@@ -232,6 +228,9 @@
 		45E56DC32F5BD28600859EDC /* RevenueCat in Frameworks */ = {isa = PBXBuildFile; productRef = 45E56DC22F5BD28600859EDC /* RevenueCat */; };
 		45ED72C42BA10B3500F5F5E3 /* ConfettiView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45ED72C32BA10B3500F5F5E3 /* ConfettiView.swift */; };
 		45ED72C62BA64C3F00F5F5E3 /* StreakInfoBottomSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45ED72C52BA64C3F00F5F5E3 /* StreakInfoBottomSheet.swift */; };
+		45F0BBBB2F40C0EB00571394 /* PremiumAnniversaryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45F0AAAA2F40C0EB00571394 /* PremiumAnniversaryView.swift */; };
+		45F0DDDD2F40C0EB00571394 /* YearInReviewStats.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45F0CCCC2F40C0EB00571394 /* YearInReviewStats.swift */; };
+		45F0FFFF2F40C0EB00571394 /* YearInReviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45F0EEEE2F40C0EB00571394 /* YearInReviewView.swift */; };
 		45F32FDA2E0F29B80035FB1D /* EmailCaptureView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45F32FD92E0F29AE0035FB1D /* EmailCaptureView.swift */; };
 		45F3E7572EAAAD38002B1F4E /* AudioDevotionalsTutorial.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45F3E7562EAAAD38002B1F4E /* AudioDevotionalsTutorial.swift */; };
 		45F3E7582EAAAD38002B1F4E /* AffirmationsTutorial.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45F3E7552EAAAD38002B1F4E /* AffirmationsTutorial.swift */; };
@@ -362,6 +361,7 @@
 		B000DDDDDDDDDDDDDDDDEEEE /* PersonalDeclarationOnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A000DDDDDDDDDDDDDDDDEEEE /* PersonalDeclarationOnboardingView.swift */; };
 		B000EEEEEEEEEEEEEEEEEFFF /* PersonalDeclarationCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = A000EEEEEEEEEEEEEEEEEFFF /* PersonalDeclarationCard.swift */; };
 		B000FFFFFFFFFFFFFFFFFFFF /* BreakthroughFlowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A000FFFFFFFFFFFFFFFFFFFF /* BreakthroughFlowView.swift */; };
+		B3443A27A06B1D7578E6B584 /* WidgetIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59BFF68BFA515EAC0AC88C85 /* WidgetIntents.swift */; };
 		BCC8A7200000000000000001 /* BibleChatTopic.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCC8A7100000000000000001 /* BibleChatTopic.swift */; };
 		BCC8A7200000000000000002 /* BibleChatService.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCC8A7100000000000000002 /* BibleChatService.swift */; };
 		BCC8A7200000000000000003 /* BibleChatViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCC8A7100000000000000003 /* BibleChatViewModel.swift */; };
@@ -375,9 +375,9 @@
 		D0010000000000000001BBBB /* SurveyPersonalizationEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0010000000000000001AAAA /* SurveyPersonalizationEngine.swift */; };
 		D0030000000000000003BBBB /* SurveyOnboardingScreens.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0030000000000000003AAAA /* SurveyOnboardingScreens.swift */; };
 		D0040000000000000004BBBB /* SurveyOnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0040000000000000004AAAA /* SurveyOnboardingView.swift */; };
-		D0080000000000000008BBBB /* QuizOnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0080000000000000008AAAA /* QuizOnboardingView.swift */; };
 		D0060000000000000006BBBB /* PayWhatYouCanView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0060000000000000006AAAA /* PayWhatYouCanView.swift */; };
 		D0070000000000000007BBBB /* SurveyTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0070000000000000007AAAA /* SurveyTypes.swift */; };
+		D0080000000000000008BBBB /* QuizOnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0080000000000000008AAAA /* QuizOnboardingView.swift */; };
 		D2AD4D1C5D81425897424332 /* StructuredDayLaunchTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9A3081A52984B6AB0EECD7B /* StructuredDayLaunchTracker.swift */; };
 		D807A5FAC8CD4B79A92D4C57 /* EmailConfirmationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61721EDB270E45A784DF2A6C /* EmailConfirmationView.swift */; };
 		DA3182D477494E6A9E4F8AC4 /* AdaptiveSheetModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 067C652453504C60AD4342E8 /* AdaptiveSheetModifier.swift */; };
@@ -444,9 +444,6 @@
 		451AECF22E4EEB2D00C1490E /* BootcampDetailViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BootcampDetailViews.swift; sourceTree = "<group>"; };
 		451AECF32E4EEB2D00C1490E /* BootcampTabViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BootcampTabViews.swift; sourceTree = "<group>"; };
 		4525D6842F37C0EB00571394 /* DailyDeclarationBurstView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyDeclarationBurstView.swift; sourceTree = "<group>"; };
-		45F0AAAA2F40C0EB00571394 /* PremiumAnniversaryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PremiumAnniversaryView.swift; sourceTree = "<group>"; };
-		45F0CCCC2F40C0EB00571394 /* YearInReviewStats.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YearInReviewStats.swift; sourceTree = "<group>"; };
-		45F0EEEE2F40C0EB00571394 /* YearInReviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YearInReviewView.swift; sourceTree = "<group>"; };
 		4525D7CF2F3DC7B400571394 /* PolishedCrossOnboardingFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PolishedCrossOnboardingFlow.swift; sourceTree = "<group>"; };
 		4525D7D12F3DC87E00571394 /* DailyDeclarationReminderService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyDeclarationReminderService.swift; sourceTree = "<group>"; };
 		4525D8D52F4AC12800571394 /* AudioFavoriteEntry+CoreDataClass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AudioFavoriteEntry+CoreDataClass.swift"; sourceTree = "<group>"; };
@@ -639,6 +636,9 @@
 		45D6402A2CD218AE006F05AD /* declarationsv5.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = declarationsv5.json; sourceTree = "<group>"; };
 		45ED72C32BA10B3500F5F5E3 /* ConfettiView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfettiView.swift; sourceTree = "<group>"; };
 		45ED72C52BA64C3F00F5F5E3 /* StreakInfoBottomSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StreakInfoBottomSheet.swift; sourceTree = "<group>"; };
+		45F0AAAA2F40C0EB00571394 /* PremiumAnniversaryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PremiumAnniversaryView.swift; sourceTree = "<group>"; };
+		45F0CCCC2F40C0EB00571394 /* YearInReviewStats.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YearInReviewStats.swift; sourceTree = "<group>"; };
+		45F0EEEE2F40C0EB00571394 /* YearInReviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YearInReviewView.swift; sourceTree = "<group>"; };
 		45F32FD92E0F29AE0035FB1D /* EmailCaptureView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmailCaptureView.swift; sourceTree = "<group>"; };
 		45F3E7552EAAAD38002B1F4E /* AffirmationsTutorial.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AffirmationsTutorial.swift; sourceTree = "<group>"; };
 		45F3E7562EAAAD38002B1F4E /* AudioDevotionalsTutorial.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioDevotionalsTutorial.swift; sourceTree = "<group>"; };
@@ -780,9 +780,9 @@
 		C0010000000000000001AAAA /* SurveyPersonalizationEngine.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SurveyPersonalizationEngine.swift; sourceTree = "<group>"; };
 		C0030000000000000003AAAA /* SurveyOnboardingScreens.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SurveyOnboardingScreens.swift; sourceTree = "<group>"; };
 		C0040000000000000004AAAA /* SurveyOnboardingView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SurveyOnboardingView.swift; sourceTree = "<group>"; };
-		C0080000000000000008AAAA /* QuizOnboardingView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = QuizOnboardingView.swift; sourceTree = "<group>"; };
 		C0060000000000000006AAAA /* PayWhatYouCanView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PayWhatYouCanView.swift; sourceTree = "<group>"; };
 		C0070000000000000007AAAA /* SurveyTypes.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SurveyTypes.swift; sourceTree = "<group>"; };
+		C0080000000000000008AAAA /* QuizOnboardingView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = QuizOnboardingView.swift; sourceTree = "<group>"; };
 		CL00DE00000000001111AAAA /* ClaudeDeclarationMatcher.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ClaudeDeclarationMatcher.swift; sourceTree = "<group>"; };
 		CL00DE00000000002222AAAA /* AnthropicConfig.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AnthropicConfig.swift; sourceTree = "<group>"; };
 		DC27319C7422AFA8C439B08F /* AppleSignInService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleSignInService.swift; sourceTree = "<group>"; };
@@ -981,15 +981,6 @@
 				BCC8A7100000000000000005 /* BibleChatAnswerView.swift */,
 			);
 			path = Bible;
-			sourceTree = "<group>";
-		};
-		45F0EAEA2F40C0EB00571394 /* YearInReview */ = {
-			isa = PBXGroup;
-			children = (
-				45F0CCCC2F40C0EB00571394 /* YearInReviewStats.swift */,
-				45F0EEEE2F40C0EB00571394 /* YearInReviewView.swift */,
-			);
-			path = YearInReview;
 			sourceTree = "<group>";
 		};
 		45567D6A2F29E3FF00382072 /* Components */ = {
@@ -1291,6 +1282,15 @@
 				45C7482F2B5BC4330011D8F6 /* AudioPlayer.swift */,
 			);
 			path = AudioPlayer;
+			sourceTree = "<group>";
+		};
+		45F0EAEA2F40C0EB00571394 /* YearInReview */ = {
+			isa = PBXGroup;
+			children = (
+				45F0CCCC2F40C0EB00571394 /* YearInReviewStats.swift */,
+				45F0EEEE2F40C0EB00571394 /* YearInReviewView.swift */,
+			);
+			path = YearInReview;
 			sourceTree = "<group>";
 		};
 		45FF71902E64293D0048C523 /* Analytics */ = {
@@ -2602,7 +2602,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = SpeakLife/SpeakLife.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 994;
+				CURRENT_PROJECT_VERSION = 995;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_ASSET_PATHS = "\"SpeakLife/Preview Content\"";
 				DEVELOPMENT_TEAM = G7398P2856;
@@ -2623,7 +2623,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 4.19;
+				MARKETING_VERSION = 4.20;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Franchiz.SpeakLife;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -2644,7 +2644,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = SpeakLife/SpeakLife.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 994;
+				CURRENT_PROJECT_VERSION = 995;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_ASSET_PATHS = "\"SpeakLife/Preview Content\"";
 				DEVELOPMENT_TEAM = G7398P2856;
@@ -2665,7 +2665,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 4.19;
+				MARKETING_VERSION = 4.20;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Franchiz.SpeakLife;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
