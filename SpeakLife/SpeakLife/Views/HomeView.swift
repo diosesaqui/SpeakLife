@@ -556,8 +556,9 @@ struct HomeView: View {
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
             guard appState.isOnboarded && !showSubscription else { return }
             // Don't cover the deep-linked declaration when launched from a notification.
-            // Defer until a launch where the user isn't actively coming from a push.
-            guard !declarationStore.isProcessingNotification else { return }
+            // isProcessingNotification clears ~1s after setDeclaration completes (often
+            // before this asyncAfter fires at t≈2.5s), so use the session-scoped flag.
+            guard !declarationStore.didOpenFromNotificationThisSession else { return }
             pdMigrationPromptShown = true
             showPDMigrationSheet = true
         }
