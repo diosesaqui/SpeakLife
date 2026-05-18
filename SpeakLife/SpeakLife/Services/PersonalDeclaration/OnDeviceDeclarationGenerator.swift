@@ -93,39 +93,43 @@ final class OnDeviceDeclarationGenerator: OnDeviceDeclarationGeneratorProtocol {
     }
 
     func stream(from input: String) -> AsyncThrowingStream<MomentDeclaration, Error> {
-        // Explicit generics here: without them Swift's overload resolver can
-        // pick `AsyncThrowingStream.init(unfolding:)` (a zero-arg async closure
-        // returning `Element?`) and reject this builder-style closure.
-        AsyncThrowingStream<MomentDeclaration, Error> { (continuation: AsyncThrowingStream<MomentDeclaration, Error>.Continuation) in
-            #if canImport(FoundationModels)
-            if #available(iOS 26.0, *) {
-                guard SystemLanguageModel.default.isAvailable else {
-                    continuation.finish(throwing: MomentGenerationError.unavailable)
-                    return
-                }
-                Task {
-                    do {
-                        let session = LanguageModelSession(instructions: AnthropicConfig.systemPrompt)
-                        let partials = session.streamResponse(
-                            to: "User need: \(input)",
-                            generating: OnDeviceDeclaration.self
-                        )
-                        for try await partial in partials {
-                            continuation.yield(MomentDeclaration(
-                                declarationText: partial.declarationText ?? "",
-                                verseText: partial.verseText ?? "",
-                                verseReference: partial.verseReference ?? ""
-                            ))
-                        }
-                        continuation.finish()
-                    } catch {
-                        continuation.finish(throwing: MomentGenerationError.modelFailed(error.localizedDescription))
-                    }
-                }
-                return
+        // Using makeStream rather than the trailing-closure init: Swift's
+        // overload resolver kept matching `init(unfolding:)` (zero-arg async
+        // closure returning `Element?`) even with explicit generics on the
+        // call site. makeStream returns a stream + continuation pair with no
+        // ambiguity to resolve.
+        let (stream, continuation) = AsyncThrowingStream<MomentDeclaration, Error>.makeStream()
+
+        #if canImport(FoundationModels)
+        if #available(iOS 26.0, *) {
+            guard SystemLanguageModel.default.isAvailable else {
+                continuation.finish(throwing: MomentGenerationError.unavailable)
+                return stream
             }
-            #endif
-            continuation.finish(throwing: MomentGenerationError.unavailable)
+            Task {
+                do {
+                    let session = LanguageModelSession(instructions: AnthropicConfig.systemPrompt)
+                    let partials = session.streamResponse(
+                        to: "User need: \(input)",
+                        generating: OnDeviceDeclaration.self
+                    )
+                    for try await partial in partials {
+                        continuation.yield(MomentDeclaration(
+                            declarationText: partial.declarationText ?? "",
+                            verseText: partial.verseText ?? "",
+                            verseReference: partial.verseReference ?? ""
+                        ))
+                    }
+                    continuation.finish()
+                } catch {
+                    continuation.finish(throwing: MomentGenerationError.modelFailed(error.localizedDescription))
+                }
+            }
+            return stream
         }
+        #endif
+
+        continuation.finish(throwing: MomentGenerationError.unavailable)
+        return stream
     }
 }

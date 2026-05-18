@@ -108,39 +108,41 @@ final class OnDeviceDevotionalGenerator: OnDeviceDevotionalGeneratorProtocol {
     }
 
     func stream(category: GeneratedDevotionalCategory) -> AsyncThrowingStream<Devotional, Error> {
-        // Explicit generics — see OnDeviceDeclarationGenerator.stream for why.
-        AsyncThrowingStream<Devotional, Error> { (continuation: AsyncThrowingStream<Devotional, Error>.Continuation) in
-            #if canImport(FoundationModels)
-            if #available(iOS 26.0, *) {
-                guard SystemLanguageModel.default.isAvailable else {
-                    continuation.finish(throwing: MomentGenerationError.unavailable)
-                    return
-                }
-                Task {
-                    do {
-                        let session = LanguageModelSession(instructions: Self.systemPrompt)
-                        let partials = session.streamResponse(
-                            to: "Category: \(category.label). Write today's devotional.",
-                            generating: GeneratedDevotional.self
-                        )
-                        for try await partial in partials {
-                            let partialDev = Self.makeDevotional(
-                                title: partial.title ?? "",
-                                books: partial.scriptureLine ?? "",
-                                devotionalText: partial.body ?? ""
-                            )
-                            continuation.yield(partialDev)
-                        }
-                        continuation.finish()
-                    } catch {
-                        continuation.finish(throwing: MomentGenerationError.modelFailed(error.localizedDescription))
-                    }
-                }
-                return
+        // makeStream avoids overload ambiguity — see OnDeviceDeclarationGenerator.stream.
+        let (stream, continuation) = AsyncThrowingStream<Devotional, Error>.makeStream()
+
+        #if canImport(FoundationModels)
+        if #available(iOS 26.0, *) {
+            guard SystemLanguageModel.default.isAvailable else {
+                continuation.finish(throwing: MomentGenerationError.unavailable)
+                return stream
             }
-            #endif
-            continuation.finish(throwing: MomentGenerationError.unavailable)
+            Task {
+                do {
+                    let session = LanguageModelSession(instructions: Self.systemPrompt)
+                    let partials = session.streamResponse(
+                        to: "Category: \(category.label). Write today's devotional.",
+                        generating: GeneratedDevotional.self
+                    )
+                    for try await partial in partials {
+                        let partialDev = Self.makeDevotional(
+                            title: partial.title ?? "",
+                            books: partial.scriptureLine ?? "",
+                            devotionalText: partial.body ?? ""
+                        )
+                        continuation.yield(partialDev)
+                    }
+                    continuation.finish()
+                } catch {
+                    continuation.finish(throwing: MomentGenerationError.modelFailed(error.localizedDescription))
+                }
+            }
+            return stream
         }
+        #endif
+
+        continuation.finish(throwing: MomentGenerationError.unavailable)
+        return stream
     }
 
     // MARK: - Static helpers
