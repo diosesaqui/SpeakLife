@@ -26,7 +26,6 @@ class WidgetDataBridge: ObservableObject {
     }
 
     private static let widgetKind = WidgetSharedConstants.widgetKind
-    private static let recordSyncLimit = 250  // Generous upper bound; encoded JSON stays well under 4MB plist limit.
     private static let pendingActionWindow: TimeInterval = -300 // 5 minutes
 
     private init() {}
@@ -34,13 +33,14 @@ class WidgetDataBridge: ObservableObject {
     // MARK: - Sync app → widget
 
     /// Sync full declaration records (text + reference + scripture) to the widget.
-    /// Preferred entry point. Replaces text-only `syncAllDeclarationsToWidget`.
-    func syncFullDeclarationsToWidget(_ declarations: [Declaration]) {
+    /// Sorted by text so the daily-verse seed picks a stable verse across syncs.
+    /// `reloadTimeline` lets callers batch multiple syncs into a single reload to preserve WidgetKit's daily budget.
+    func syncFullDeclarationsToWidget(_ declarations: [Declaration], reloadTimeline: Bool = true) {
         guard !declarations.isEmpty else { return }
 
+        // Sort deterministically: identical app state produces identical widget order,
+        // so the daily seed always lands on the same verse.
         let records = declarations
-            .shuffled()
-            .prefix(Self.recordSyncLimit)
             .map { declaration in
                 WidgetDeclaration(
                     text: declaration.text,
@@ -49,41 +49,48 @@ class WidgetDataBridge: ObservableObject {
                     category: declaration.category.rawValue
                 )
             }
+            .sorted { $0.text < $1.text }
 
         do {
-            let data = try JSONEncoder().encode(Array(records))
+            let data = try JSONEncoder().encode(records)
             UserDefaults.widgetGroup.set(data, forKey: WidgetSharedConstants.Keys.syncedRecords)
         } catch {
-            assertionFailure("Failed to encode declarations for widget: \(error)")
+            // Encoding a [String: String?] Codable cannot fail in practice — fall back to text-only.
         }
 
-        // Also keep the legacy text array populated for backward compatibility
+        // Keep the legacy text array populated for backward compatibility
         // until older widget binaries are no longer in flight.
         let texts = records.map { $0.text }
         UserDefaults.widgetGroup.set(texts, forKey: WidgetSharedConstants.Keys.syncedPromises)
         UserDefaults.widgetGroup.set(declarations.map { $0.text }, forKey: Keys.allDeclarations)
         UserDefaults.widgetGroup.set(Date(), forKey: Keys.lastSyncDate)
 
-        WidgetCenter.shared.reloadTimelines(ofKind: Self.widgetKind)
+        if reloadTimeline {
+            WidgetCenter.shared.reloadTimelines(ofKind: Self.widgetKind)
+        }
     }
 
     /// Legacy text-only sync. Kept for callers that don't yet have full records.
-    func syncAllDeclarationsToWidget(_ declarations: [String]) {
+    func syncAllDeclarationsToWidget(_ declarations: [String], reloadTimeline: Bool = true) {
         guard !declarations.isEmpty else { return }
-        let optimized = Array(declarations.shuffled().prefix(Self.recordSyncLimit))
-        UserDefaults.widgetGroup.set(optimized, forKey: WidgetSharedConstants.Keys.syncedPromises)
+        let sorted = declarations.sorted()
+        UserDefaults.widgetGroup.set(sorted, forKey: WidgetSharedConstants.Keys.syncedPromises)
         UserDefaults.widgetGroup.set(Date(), forKey: Keys.lastSyncDate)
-        WidgetCenter.shared.reloadTimelines(ofKind: Self.widgetKind)
+        if reloadTimeline {
+            WidgetCenter.shared.reloadTimelines(ofKind: Self.widgetKind)
+        }
     }
 
     /// Sync favorite declarations to the widget. Used by the heart-button intent.
-    func syncDeclarationFavorites(_ favoriteTexts: [String]) {
+    func syncDeclarationFavorites(_ favoriteTexts: [String], reloadTimeline: Bool = true) {
         UserDefaults.widgetGroup.set(favoriteTexts, forKey: WidgetSharedConstants.Keys.widgetFavorites)
-        WidgetCenter.shared.reloadTimelines(ofKind: Self.widgetKind)
+        if reloadTimeline {
+            WidgetCenter.shared.reloadTimelines(ofKind: Self.widgetKind)
+        }
     }
 
     /// Sync declarations organized by categories for filtered widget content.
-    func syncCategorizedDeclarations(_ declarationsByCategory: [String: [String]]) {
+    func syncCategorizedDeclarations(_ declarationsByCategory: [String: [String]], reloadTimeline: Bool = true) {
         guard !declarationsByCategory.isEmpty else { return }
 
         for (category, declarations) in declarationsByCategory {
@@ -96,13 +103,22 @@ class WidgetDataBridge: ObservableObject {
         UserDefaults.widgetGroup.set(categories, forKey: Keys.availableCategories)
         UserDefaults.widgetGroup.set(Date(), forKey: Keys.lastCategorySyncDate)
 
-        WidgetCenter.shared.reloadTimelines(ofKind: Self.widgetKind)
+        if reloadTimeline {
+            WidgetCenter.shared.reloadTimelines(ofKind: Self.widgetKind)
+        }
     }
 
     /// Update user's selected categories for widget filtering.
-    func updateSelectedCategories(_ categories: [String]) {
+    func updateSelectedCategories(_ categories: [String], reloadTimeline: Bool = true) {
         UserDefaults.widgetGroup.set(categories, forKey: WidgetSharedConstants.Keys.selectedCategories)
         UserDefaults.widgetGroup.set(Date(), forKey: Keys.lastCategoryUpdate)
+        if reloadTimeline {
+            WidgetCenter.shared.reloadTimelines(ofKind: Self.widgetKind)
+        }
+    }
+
+    /// Trigger a single widget reload after a batch of syncs.
+    func reloadWidgetTimelines() {
         WidgetCenter.shared.reloadTimelines(ofKind: Self.widgetKind)
     }
 
