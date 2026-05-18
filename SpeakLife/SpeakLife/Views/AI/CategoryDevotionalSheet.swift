@@ -32,9 +32,10 @@ struct CategoryDevotionalSheet: View {
     private var hasResult: Bool { !title.isEmpty || !body_.isEmpty }
 
     var body: some View {
-        ZStack {
-            background
-
+        // VStack root with the ScrollView taking flex space and the action
+        // button below it. Avoids the floating-overlay layout where long
+        // result text could bleed under the button or off the edges.
+        VStack(spacing: 0) {
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 22) {
                     handleBar
@@ -52,22 +53,22 @@ struct CategoryDevotionalSheet: View {
                             .font(Font.custom("AppleSDGothicNeo-Regular", size: 13, relativeTo: .caption))
                             .foregroundColor(Color(hex: "F87171"))
                             .multilineTextAlignment(.center)
-                            .padding(.horizontal, 24)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, 24)
-                .padding(.bottom, 140)
+                .padding(.bottom, 16)
             }
 
-            VStack {
-                Spacer()
-                if generator.isAvailable {
-                    actionButton
-                        .padding(.horizontal, 24)
-                        .padding(.bottom, 28)
-                }
+            if generator.isAvailable {
+                actionButton
+                    .padding(.horizontal, 24)
+                    .padding(.top, 8)
+                    .padding(.bottom, 28)
             }
         }
+        .background(background)
     }
 
     // MARK: - Subviews
@@ -100,15 +101,21 @@ struct CategoryDevotionalSheet: View {
                     .font(Font.custom("AppleSDGothicNeo-Regular", size: 14, relativeTo: .footnote))
                     .foregroundColor(.white.opacity(0.7))
                     .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
                     .padding(.horizontal, 8)
             }
+            .frame(maxWidth: .infinity)
 
-            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
+            LazyVGrid(
+                columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)],
+                spacing: 12
+            ) {
                 ForEach(GeneratedDevotionalCategory.allCases) { cat in
                     categoryCell(cat)
                 }
             }
         }
+        .frame(maxWidth: .infinity)
         .padding(.top, 4)
     }
 
@@ -150,14 +157,18 @@ struct CategoryDevotionalSheet: View {
             }
 
             Text(title.isEmpty ? "Writing your devotional…" : title)
-                .font(.system(size: 28, weight: .bold))
+                .font(.system(size: 26, weight: .bold))
                 .foregroundColor(.white)
+                .lineLimit(nil)
+                .fixedSize(horizontal: false, vertical: true)
 
             if !scriptureLine.isEmpty {
                 Text(scriptureLine)
                     .font(.system(size: 16, weight: .semibold))
                     .italic()
                     .foregroundColor(.white.opacity(0.9))
+                    .lineLimit(nil)
+                    .fixedSize(horizontal: false, vertical: true)
             }
 
             if !body_.isEmpty {
@@ -165,16 +176,24 @@ struct CategoryDevotionalSheet: View {
                     .font(.system(size: 16))
                     .foregroundColor(.white.opacity(0.85))
                     .lineSpacing(5)
+                    .lineLimit(nil)
+                    .fixedSize(horizontal: false, vertical: true)
             } else if generating {
-                HStack(spacing: 8) {
-                    ProgressView().tint(.white)
-                    Text("Drawing from the well…")
-                        .font(Font.custom("AppleSDGothicNeo-Regular", size: 14, relativeTo: .footnote))
-                        .foregroundColor(.white.opacity(0.65))
+                VStack(spacing: 12) {
+                    HStack(spacing: 8) {
+                        ProgressView().tint(.white)
+                        Text("Drawing from the well…")
+                            .font(Font.custom("AppleSDGothicNeo-Regular", size: 14, relativeTo: .footnote))
+                            .foregroundColor(.white.opacity(0.65))
+                    }
+                    Text("This can take 10–20 seconds on-device.")
+                        .font(Font.custom("AppleSDGothicNeo-Regular", size: 12, relativeTo: .caption))
+                        .foregroundColor(.white.opacity(0.45))
                 }
                 .padding(.top, 4)
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.top, 4)
     }
 

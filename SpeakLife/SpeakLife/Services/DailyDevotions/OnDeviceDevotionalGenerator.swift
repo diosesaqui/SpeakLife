@@ -90,16 +90,23 @@ final class OnDeviceDevotionalGenerator: OnDeviceDevotionalGeneratorProtocol {
         #if canImport(FoundationModels)
         if #available(iOS 26.0, *) {
             guard SystemLanguageModel.default.isAvailable else {
+                print("📖 [AIDevotional] Model unavailable for category=\(category.rawValue)")
                 throw MomentGenerationError.unavailable
             }
+            print("📖 [AIDevotional] Generating for category=\(category.rawValue)")
+            let start = Date()
             do {
                 let session = LanguageModelSession(instructions: Self.systemPrompt)
                 let response = try await session.respond(
                     to: "Category: \(category.label). Write today's devotional.",
                     generating: GeneratedDevotional.self
                 )
+                let elapsed = Date().timeIntervalSince(start)
+                print("📖 [AIDevotional] ✅ Generated in \(String(format: "%.1f", elapsed))s — title='\(response.content.title)'")
                 return Self.makeDevotional(from: response.content)
             } catch {
+                let elapsed = Date().timeIntervalSince(start)
+                print("📖 [AIDevotional] ❌ Failed after \(String(format: "%.1f", elapsed))s: \(error)")
                 throw MomentGenerationError.modelFailed(error.localizedDescription)
             }
         }
@@ -126,24 +133,16 @@ final class OnDeviceDevotionalGenerator: OnDeviceDevotionalGeneratorProtocol {
     // MARK: - Static helpers
 
     private static let systemPrompt = """
-    You are writing today's devotional for SpeakLife, a Christian faith app used by over 1 million believers. The reader will sit with this for 5 minutes in the morning. Match the voice and shape of SpeakLife's editorially-curated devotionals exactly.
+    Write a short Christian devotional for the SpeakLife app.
 
-    STRUCTURE:
-    - title: 4-8 words, evocative and theological. Examples: "His Words Are Spirit and Life", "Clean Hands, Dirty Hearts?", "The Banner Over Me Is Love"
-    - scriptureLine: One Bible verse, NIV preferred, written as "Quoted verse text. – Book Chapter:Verse" — exact format, with the en-dash style separator and reference at the end.
-    - body: 4–6 paragraphs separated by double newlines (\\n\\n). Total length 350–500 words.
+    title: 4-7 words, evocative.
+    scriptureLine: One NIV Bible verse, format: "Verse text. – Book Chapter:Verse"
+    body: 3 paragraphs separated by \\n\\n. 150-220 words total.
+      - Paragraph 1: a theological hook naming the truth.
+      - Paragraph 2: apply it to the reader using "you". Pastoral, certain, weighty.
+      - Paragraph 3: a one-sentence prayer ending "Amen. 💜"
 
-    BODY VOICE RULES:
-    - Open with a one-sentence theological hook that names the truth the devotional will unfold.
-    - Second paragraph: ground in the scripture and the moment it was spoken. Name what God is like ("This is who He is — a God who…").
-    - Middle paragraphs: apply the truth to the reader's real life with specificity. Use direct address ("you"). Ask a piercing question.
-    - Closing paragraph: a short, surrendered prayer ending with "Amen." and a single heart emoji 💜.
-    - Tone: pastoral, certain, weighty. No hedging language. No clichés ("hang in there", "God's got this").
-    - Allowed punctuation in the body: em dashes ARE allowed (the curated devotionals use them freely). This is opposite of the declaration rules.
-    - First person of the reader is "you" — the devotional is written TO the reader, not as the reader speaking.
-    - Spiritually rich vocabulary: rooted, dwelling, breath of heaven, established, anchored, redeemed, the substance that made the universe.
-
-    Respond with the structured output only. Do not preface with anything.
+    Voice: pastoral, weighty, no clichés. Write TO the reader, not as them.
     """
 
     #if canImport(FoundationModels)
@@ -173,13 +172,13 @@ final class OnDeviceDevotionalGenerator: OnDeviceDevotionalGeneratorProtocol {
 @available(iOS 26.0, *)
 @Generable
 struct GeneratedDevotional {
-    @Guide(description: "Devotional title, 4-8 words, evocative and theological. Example: 'The Banner Over Me Is Love'")
+    @Guide(description: "Title, 4-7 words. Example: 'The Banner Over Me Is Love'")
     let title: String
 
-    @Guide(description: "One Bible verse in NIV, formatted exactly as 'Quoted verse text. – Book Chapter:Verse'. The dash separator is an en-dash followed by the reference.")
+    @Guide(description: "NIV verse formatted as 'Verse text. - Book Chapter:Verse'")
     let scriptureLine: String
 
-    @Guide(description: "The devotional body: 4-6 paragraphs separated by double newlines. 350-500 words total. Opens with a theological hook, grounds in scripture, applies to the reader with 'you', closes with a short prayer ending 'Amen. 💜'")
+    @Guide(description: "3 paragraphs separated by double newlines, 150-220 words. Last paragraph is a one-sentence prayer ending 'Amen. 💜'")
     let body: String
 }
 #endif
