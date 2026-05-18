@@ -87,19 +87,27 @@ struct YearInReviewView: View {
     // MARK: - Layers
 
     private var backgroundLayer: some View {
-        ZStack {
-            Color.black.ignoresSafeArea()
-            Image(subscriptionStore.onboardingBGImage)
-                .resizable()
-                .scaledToFill()
-                .opacity(0.45)
+        // Pin the background image to the geometry size — without an
+        // explicit frame after .scaledToFill(), the image overflows and
+        // grows the parent ZStack past screen width, which is what was
+        // pushing the summary card and Share button off both screen edges.
+        GeometryReader { geo in
+            ZStack {
+                Color.black.ignoresSafeArea()
+                Image(subscriptionStore.onboardingBGImage)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: geo.size.width, height: geo.size.height)
+                    .opacity(0.45)
+                    .clipped()
+                    .ignoresSafeArea()
+                LinearGradient(
+                    colors: [Color.black.opacity(0.7), Color.black.opacity(0.4), Color.black.opacity(0.85)],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
                 .ignoresSafeArea()
-            LinearGradient(
-                colors: [Color.black.opacity(0.7), Color.black.opacity(0.4), Color.black.opacity(0.85)],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-            .ignoresSafeArea()
+            }
         }
     }
 
