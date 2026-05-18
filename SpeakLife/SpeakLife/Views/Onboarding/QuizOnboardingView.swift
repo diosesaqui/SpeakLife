@@ -175,7 +175,7 @@ enum BeliefQuestion: Int, CaseIterable {
         case .promisesTrue:
             return "When you read God's promises — are they really for YOU?"
         case .answersPrayer:
-            return "Do you believe God hears you when you pray?"
+            return "Does God actually answer when you pray?"
         case .wordIsPowerful:
             return "Does God's Word actually have power when YOU speak it?"
         case .authority:
@@ -201,7 +201,7 @@ enum BeliefQuestion: Int, CaseIterable {
                 id: "love_yes",
                 label: "Yes. He's crazy about me.",
                 isConfident: true,
-                declaration: "God showed His love for me like this: while I was still a mess, Christ died for me. I am fully, finally, forever loved.",
+                declaration: "God isn't just OK with me — He delights in me. While I was still a mess, Christ died for me. I am fully, finally, forever loved.",
                 verseReference: "Romans 5:8"
             ),
             BeliefAnswer(
@@ -270,7 +270,7 @@ enum BeliefQuestion: Int, CaseIterable {
                 id: "promises_intellectual",
                 label: "I believe them. Claiming them feels harder.",
                 isConfident: false,
-                declaration: "His divine power has already given me everything I need for life and godliness. The promises are already mine. Today I receive them.",
+                declaration: "His divine power has ALREADY given me everything I need for life and godliness. Past tense. Done deal. I stop asking and start receiving.",
                 verseReference: "2 Peter 1:3-4"
             ),
             BeliefAnswer(
@@ -325,7 +325,7 @@ enum BeliefQuestion: Int, CaseIterable {
                 id: "word_yes",
                 label: "Yes. When I speak it, something shifts.",
                 isConfident: true,
-                declaration: "The Word of God is alive and active, sharper than any sword. When I speak it, heaven moves.",
+                declaration: "The Word of God is alive and active, sharper than any sword. When I speak it, heaven moves and hell trembles.",
                 verseReference: "Hebrews 4:12"
             ),
             BeliefAnswer(
@@ -363,7 +363,7 @@ enum BeliefQuestion: Int, CaseIterable {
                 id: "authority_unsure_how",
                 label: "I've heard it. I don't know how to use it.",
                 isConfident: false,
-                declaration: "I am seated with Christ in heavenly places — far above every power, principality, and dominion. The authority I walk in is His.",
+                declaration: "I don't need to learn authority — I need to BELIEVE it. I am seated with Christ, far above every power, principality, and dominion. I already have it.",
                 verseReference: "Ephesians 2:6"
             ),
             BeliefAnswer(
