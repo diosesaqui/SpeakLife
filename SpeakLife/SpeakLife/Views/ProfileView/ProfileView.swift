@@ -50,20 +50,6 @@ struct ProfileView: View {
     @State private var showEmailCaptureSheet = false
     @State private var showHowToUse = false
     let url = URL(string:APP.Product.urlID)
-
-    #if DEBUG
-    /// DEBUG-only: lets us preview the Year in Review recap on-device any
-    /// time, bypassing the Dec 15 – Jan 15 date gate and the once-per-year
-    /// UserDefaults flag. The Bool decides whether to render the premium
-    /// extras (Strength Level slide + Premium Warrior mark on share card).
-    @State private var debugYearInReview: DebugRecapPresentation?
-
-    private struct DebugRecapPresentation: Identifiable {
-        let id = UUID()
-        let stats: YearInReviewStats
-        let includesPremiumExtras: Bool
-    }
-    #endif
     
     
     @ViewBuilder
@@ -152,10 +138,6 @@ struct ProfileView: View {
                         termsConditionsRow
                     }
 
-                    #if DEBUG
-                    debugSection
-                    #endif
-
                     Section(footer: VStack {
                         Text(appVersion).font(.footnote)
                         Spacer().frame(height: 8)
@@ -183,15 +165,6 @@ struct ProfileView: View {
         .sheet(isPresented: $showSpiritualGrowth) {
             SpiritualGrowthView()
         }
-        #if DEBUG
-        .fullScreenCover(item: $debugYearInReview) { presentation in
-            YearInReviewView(
-                stats: presentation.stats,
-                includesPremiumExtras: presentation.includesPremiumExtras
-            )
-            .environmentObject(subscriptionStore)
-        }
-        #endif
         .alert(isPresented: $declarationStore.errorAlert) {
             Alert(
                 title: Text("Failed to register notifications", comment: "notifications not enough"),
@@ -805,53 +778,6 @@ struct ProfileView: View {
     private func shareApp() {
         showShareSheet.toggle()
     }
-
-    #if DEBUG
-    @ViewBuilder
-    private var debugSection: some View {
-        Section(header: Text("DEBUG \u{2022} YEAR IN REVIEW").font(.caption)) {
-            Button {
-                debugYearInReview = DebugRecapPresentation(
-                    stats: debugStats(),
-                    includesPremiumExtras: false
-                )
-            } label: {
-                Label("Preview as Free", systemImage: "play.rectangle")
-                    .foregroundColor(.white)
-            }
-            Button {
-                debugYearInReview = DebugRecapPresentation(
-                    stats: debugStats(),
-                    includesPremiumExtras: true
-                )
-            } label: {
-                Label("Preview as Premium", systemImage: "crown.fill")
-                    .foregroundColor(.white)
-            }
-        }
-    }
-
-    /// Prefer real BurstCompletionTracker data for the current year so the
-    /// preview reflects the user's actual numbers. Fall back to plausible
-    /// mock data when there's no activity, so the recap still has content.
-    private func debugStats() -> YearInReviewStats {
-        let calendar = Calendar.current
-        let currentYear = calendar.component(.year, from: Date())
-        let real = YearInReviewStats.build(for: currentYear)
-        if real.hasMeaningfulActivity { return real }
-
-        return YearInReviewStats(
-            year: currentYear,
-            daysActive: 247,
-            longestStreakInYear: 38,
-            bestMonth: (name: "August", count: 29),
-            totalDeclarationsSpoken: 4_812,
-            currentStreak: 12,
-            peakStrengthLevel: .victorious,
-            peakStrengthScore: 73
-        )
-    }
-    #endif
 
 }
 
