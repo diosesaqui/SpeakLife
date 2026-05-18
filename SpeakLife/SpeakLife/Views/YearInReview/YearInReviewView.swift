@@ -13,6 +13,13 @@ import UIKit
 
 struct YearInReviewView: View {
     let stats: YearInReviewStats
+    /// Snapshotted at construction time. The slide list and summary-card
+    /// chrome must not mutate while the recap is on screen — if we read
+    /// `subscriptionStore.isPremium` reactively, a late StoreKit hydration
+    /// can grow/shrink the slide array under a stale `pageIndex` and warp
+    /// the user to a different slide mid-recap.
+    let includesPremiumExtras: Bool
+
     @EnvironmentObject var subscriptionStore: SubscriptionStore
     @Environment(\.dismiss) private var dismiss
 
@@ -28,7 +35,7 @@ struct YearInReviewView: View {
 
     private var slides: [Slide] {
         var s: [Slide] = [.cover, .days, .longestStreak, .bestMonth, .totals]
-        if subscriptionStore.isPremium { s.append(.strength) }
+        if includesPremiumExtras { s.append(.strength) }
         s.append(.summary)
         return s
     }
@@ -434,13 +441,13 @@ struct YearInReviewView: View {
                     summaryRow(label: "Strongest month",   value: best.name)
                 }
                 summaryRow(label: "Words declared",        value: "\(stats.totalDeclarationsSpoken)")
-                if subscriptionStore.isPremium {
+                if includesPremiumExtras {
                     summaryRow(label: "Strength reached",  value: stats.peakStrengthLevel.rawValue)
                 }
             }
             .padding(.horizontal, 22)
 
-            if subscriptionStore.isPremium {
+            if includesPremiumExtras {
                 HStack(spacing: 5) {
                     Image(systemName: "crown.fill")
                         .font(.system(size: 10, weight: .semibold))
@@ -580,7 +587,7 @@ struct YearInReviewView: View {
 
     private var shareSummaryText: String {
         let base = "My Year of Standing — \(stats.year). \(stats.daysActive) days, longest run \(stats.longestStreakInYear), \(stats.totalDeclarationsSpoken) declarations."
-        if subscriptionStore.isPremium {
+        if includesPremiumExtras {
             return "\(base) Strength reached: \(stats.peakStrengthLevel.rawValue). #SpeakLife"
         }
         return "\(base) #SpeakLife"

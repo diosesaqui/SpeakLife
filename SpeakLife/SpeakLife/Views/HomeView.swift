@@ -214,9 +214,6 @@ struct HomeView: View {
                             .onChange(of: subscriptionStore.premiumOriginalPurchaseDate) { _ in
                                 checkForPremiumAnniversary()
                             }
-                            .onChange(of: subscriptionStore.isPremium) { _ in
-                                checkForYearInReview()
-                            }
                             .onChange(of: paywallTrigger.shouldShowPaywall) { newValue in
                                 if newValue && !subscriptionStore.isPremium {
                                     showTriggeredPaywall = true
@@ -271,8 +268,14 @@ struct HomeView: View {
                                     .environmentObject(subscriptionStore)
                             }
                             .fullScreenCover(item: $yearInReviewStats) { stats in
-                                YearInReviewView(stats: stats)
-                                    .environmentObject(subscriptionStore)
+                                // Snapshot premium status into the view so a
+                                // late StoreKit hydration can't mutate the
+                                // slide list mid-presentation.
+                                YearInReviewView(
+                                    stats: stats,
+                                    includesPremiumExtras: subscriptionStore.isPremium
+                                )
+                                .environmentObject(subscriptionStore)
                             }
                   
                 } else {
