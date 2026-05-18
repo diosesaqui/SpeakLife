@@ -100,13 +100,13 @@ struct HighConversionPaywallView: View {
     }
 
     /// Resolved copy priority:
-    /// 1. PersonalDeclaration continuity — emotionally warmest moment
+    /// 1. PersonalDeclaration continuity — emotionally warmest moment, names the promise
     /// 2. Quiz segment — ad-match
     /// 3. Survey engine — goal word personalization
     /// 4. Category fallback
     private var resolvedHeadline: String {
         if hasFreshPersonalDeclaration {
-            return "Keep speaking what you just declared."
+            return "Speak it daily until it comes to pass."
         }
         if let segment = quizSegment { return segment.paywallHeadline }
         return surveyEngine.hasSurveyData ? surveyEngine.paywallCopy.headline : copy.headline
@@ -114,9 +114,9 @@ struct HighConversionPaywallView: View {
     private var resolvedSubheadline: String {
         if hasFreshPersonalDeclaration {
             if let burden = burdenStyleLabel {
-                return "We'll send your \(burden) declaration every morning until it comes to pass. Don't let a day go unclaimed."
+                return "Your \(burden) declaration — in your mouth every morning. Until you possess it."
             }
-            return "We'll send your declaration every morning until it comes to pass. Don't let a day go unclaimed."
+            return "Your declaration — in your mouth every morning. Until you possess it."
         }
         if let segment = quizSegment { return segment.paywallSubheadline }
         return surveyEngine.hasSurveyData ? surveyEngine.paywallCopy.subheadline : copy.subheadline
@@ -398,25 +398,16 @@ struct HighConversionPaywallView: View {
         .buttonStyle(PlainButtonStyle())
     }
 
-    // MARK: - Trial Callout (clarity-first: addresses the autocharge fear head-on)
+    // MARK: - Trial Callout (clarity-first: addresses the autocharge fear without
+    // making any claims we can't keep — Apple's pre-trial-end notification is
+    // inconsistent across users/regions/notification-settings, so we don't promise it).
     private var trialCallout: some View {
-        VStack(spacing: 6) {
-            HStack(spacing: 6) {
-                Image(systemName: "checkmark.circle.fill").foregroundColor(.green).font(.system(size: 14))
-                Text(selectedPlan == .annual && isEligibleForTrial
-                     ? "$0 today. $0 in 3 days unless you keep going."
-                     : "Start today. Cancel anytime in Settings.")
-                    .font(.system(size: 13, weight: .semibold)).foregroundColor(.white.opacity(0.92))
-            }
-            if selectedPlan == .annual && isEligibleForTrial {
-                HStack(spacing: 6) {
-                    Image(systemName: "bell.badge.fill").foregroundColor(.white.opacity(0.55)).font(.system(size: 11))
-                    Text("Apple notifies you 24 hours before the trial ends. Cancel anytime in Settings.")
-                        .font(.system(size: 11)).foregroundColor(.white.opacity(0.6))
-                        .multilineTextAlignment(.center)
-                }
-                .padding(.horizontal, 12)
-            }
+        HStack(spacing: 6) {
+            Image(systemName: "checkmark.circle.fill").foregroundColor(.green).font(.system(size: 14))
+            Text(selectedPlan == .annual && isEligibleForTrial
+                 ? "Free for 3 days. Cancel by day 3 to pay nothing."
+                 : "Start today. Cancel anytime in Settings.")
+                .font(.system(size: 13, weight: .semibold)).foregroundColor(.white.opacity(0.92))
         }
     }
 
