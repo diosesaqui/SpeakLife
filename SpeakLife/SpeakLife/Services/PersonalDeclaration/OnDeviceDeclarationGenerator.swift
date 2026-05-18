@@ -71,21 +71,33 @@ final class OnDeviceDeclarationGenerator: OnDeviceDeclarationGeneratorProtocol {
         #if canImport(FoundationModels)
         if #available(iOS 26.0, *) {
             guard SystemLanguageModel.default.isAvailable else {
+                print("✨ [MomentDeclaration] Model unavailable")
                 throw MomentGenerationError.unavailable
             }
+            print("✨ [MomentDeclaration] Generating for input: \(input.prefix(60))...")
+            let start = Date()
             do {
-                let session = LanguageModelSession(instructions: AnthropicConfig.systemPrompt)
+                // See OnDeviceDevotionalGenerator for why permissive guardrails.
+                let session = LanguageModelSession(
+                    guardrails: .permissiveContentTransformations,
+                    instructions: Self.onDeviceSystemPrompt
+                )
                 let response = try await session.respond(
-                    to: "User need: \(input)",
+                    to: "Need: \(input)",
                     generating: OnDeviceDeclaration.self
                 )
+                let elapsed = Date().timeIntervalSince(start)
+                print("✨ [MomentDeclaration] ✅ Generated in \(String(format: "%.1f", elapsed))s")
                 return MomentDeclaration(
                     declarationText: response.content.declarationText,
                     verseText: response.content.verseText,
                     verseReference: response.content.verseReference
                 )
             } catch {
-                throw MomentGenerationError.modelFailed(error.localizedDescription)
+                let elapsed = Date().timeIntervalSince(start)
+                let description = Self.describeError(error)
+                print("✨ [MomentDeclaration] ❌ Failed after \(String(format: "%.1f", elapsed))s: \(description)")
+                throw MomentGenerationError.modelFailed(description)
             }
         }
         #endif
@@ -109,5 +121,31 @@ final class OnDeviceDeclarationGenerator: OnDeviceDeclarationGeneratorProtocol {
             }
         }
         return stream
+    }
+
+    // On-device prompt: dramatically shorter than the cloud Anthropic prompt.
+    // The on-device model is ~3B params with a smaller context window, and
+    // performs much better with a tight, single-paragraph instruction set
+    // than the cloud-style multi-section spec we send to Claude.
+    private static let onDeviceSystemPrompt = """
+    Write a short Christian declaration for someone facing the stated need.
+
+    declarationText: 2-3 short sentences. First person ("I am", "I have", "I walk"). Present tense. Bold and direct. No em dashes — use periods.
+    verseText: One NIV Bible verse.
+    verseReference: Book Chapter:Verse (e.g. "Romans 8:28").
+    category: one lowercase word from this list — health, wealth, anxiety, fear, love, marriage, parenting, destiny, identity, rest, joy, favor, grace, warfare, addiction, confidence, wisdom, miracles, hope, grief, salvation, forgiveness, anger, faith, debt, work, gratitude.
+
+    Voice: weighty, certain. No clichés. Words like rooted, anchored, redeemed, established, unshakeable, called.
+    """
+
+    /// Mirror of OnDeviceDevotionalGenerator.describeError. Detects guardrail
+    /// violations from Foundation Models and turns them into a sentence the
+    /// user can act on.
+    fileprivate static func describeError(_ error: Error) -> String {
+        let raw = "\(error)".lowercased()
+        if raw.contains("guardrail") || raw.contains("unsafe") || raw.contains("safety") {
+            return "Apple's on-device safety filter blocked this declaration. Try rephrasing your need or tap Generate again."
+        }
+        return (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
     }
 }

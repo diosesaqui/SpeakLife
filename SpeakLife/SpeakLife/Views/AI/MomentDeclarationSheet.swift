@@ -51,48 +51,57 @@ struct MomentDeclarationSheet: View {
     }
 
     var body: some View {
-        ZStack {
-            background
+        VStack(spacing: 0) {
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 20) {
+                    handleBar
+                    header
 
-            VStack(spacing: 0) {
-                ScrollView(showsIndicators: false) {
-                    VStack(spacing: 20) {
-                        handleBar
-                        header
-
-                        if autoStartInput == nil {
-                            inputField
-                        }
-
-                        if generator.isAvailable == false {
-                            unavailableNotice
-                        } else if generating || !declarationText.isEmpty {
-                            generatedCard
-                        }
-
-                        if let err = errorMessage {
-                            Text(err)
-                                .font(Font.custom("AppleSDGothicNeo-Regular", size: 13, relativeTo: .caption))
-                                .foregroundColor(Color(hex: "F87171"))
-                                .multilineTextAlignment(.center)
-                                .padding(.horizontal, 24)
-                        }
+                    if autoStartInput == nil {
+                        inputField
                     }
-                    .padding(.horizontal, 24)
-                }
 
-                actionButton
-                    .padding(.horizontal, 24)
-                    .padding(.bottom, 28)
-                    .padding(.top, 12)
+                    if generator.isAvailable == false {
+                        unavailableNotice
+                    } else if generating || !declarationText.isEmpty {
+                        generatedCard
+                    }
+
+                    if let err = errorMessage {
+                        Text(err)
+                            .font(Font.custom("AppleSDGothicNeo-Regular", size: 13, relativeTo: .caption))
+                            .foregroundColor(Color(hex: "F87171"))
+                            .multilineTextAlignment(.center)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 24)
+                .padding(.bottom, 12)
             }
+            .scrollDismissesKeyboard(.interactively)
+
+            actionButton
+                .padding(.horizontal, 24)
+                .padding(.bottom, 28)
+                .padding(.top, 12)
         }
+        .background(background)
         .onAppear {
             if let prefill = autoStartInput, !prefill.isEmpty {
                 userInput = prefill
                 Task { await runGenerate() }
             }
         }
+    }
+
+    /// Resigns first responder app-wide. Used when Generate fires so the
+    /// keyboard doesn't sit on top of the streaming result.
+    private func dismissKeyboard() {
+        UIApplication.shared.sendAction(
+            #selector(UIResponder.resignFirstResponder),
+            to: nil, from: nil, for: nil
+        )
     }
 
     // MARK: - Subviews
@@ -185,12 +194,19 @@ struct MomentDeclarationSheet: View {
                     .font(Font.custom("AppleSDGothicNeo-Bold", size: 20, relativeTo: .title3))
                     .foregroundColor(.white)
                     .lineSpacing(4)
+                    .lineLimit(nil)
+                    .fixedSize(horizontal: false, vertical: true)
             } else if generating {
-                HStack(spacing: 10) {
-                    ProgressView().tint(.white)
-                    Text("Generating…")
-                        .font(Font.custom("AppleSDGothicNeo-Regular", size: 14, relativeTo: .footnote))
-                        .foregroundColor(.white.opacity(0.65))
+                VStack(spacing: 8) {
+                    HStack(spacing: 10) {
+                        ProgressView().tint(.white)
+                        Text("Generating…")
+                            .font(Font.custom("AppleSDGothicNeo-Regular", size: 14, relativeTo: .footnote))
+                            .foregroundColor(.white.opacity(0.65))
+                    }
+                    Text("This can take 10–20 seconds on-device.")
+                        .font(Font.custom("AppleSDGothicNeo-Regular", size: 12, relativeTo: .caption))
+                        .foregroundColor(.white.opacity(0.45))
                 }
                 .padding(.vertical, 8)
             }
@@ -204,6 +220,8 @@ struct MomentDeclarationSheet: View {
                         .italic()
                         .foregroundColor(.white.opacity(0.9))
                         .lineSpacing(3)
+                        .lineLimit(nil)
+                        .fixedSize(horizontal: false, vertical: true)
                     if !verseReference.isEmpty {
                         Text(verseReference)
                             .font(Font.custom("AppleSDGothicNeo-Bold", size: 13, relativeTo: .caption))
@@ -278,6 +296,7 @@ struct MomentDeclarationSheet: View {
             return
         }
 
+        dismissKeyboard()
         errorMessage = nil
         declarationText = ""
         verseText = ""

@@ -65,15 +65,22 @@ final class AppleIntelligenceDeclarationMatcher: DeclarationMatcherProtocol {
             return nil
         }
 
+        let start = Date()
         do {
-            let session = LanguageModelSession(instructions: AnthropicConfig.systemPrompt)
+            // permissiveContentTransformations relaxes the default on-device
+            // safety filter which can reject scripture-heavy content.
+            let session = LanguageModelSession(
+                guardrails: .permissiveContentTransformations,
+                instructions: Self.onDeviceSystemPrompt
+            )
             let response = try await session.respond(
-                to: "User need: \(input)",
+                to: "Need: \(input)",
                 generating: OnDeviceDeclaration.self
             )
+            let elapsed = Date().timeIntervalSince(start)
             let category = DeclarationCategory(rawValue: response.content.category) ?? .faith
             Analytics.logEvent("apple_ai_success", parameters: ["category": category.rawValue])
-            print("✅ [AppleAI] Generated declaration for category: \(category.rawValue)")
+            print("✅ [AppleAI] Generated in \(String(format: "%.1f", elapsed))s, category: \(category.rawValue)")
             return DeclarationMatch(
                 category: category,
                 declarationText: response.content.declarationText,
@@ -82,12 +89,26 @@ final class AppleIntelligenceDeclarationMatcher: DeclarationMatcherProtocol {
                 isConfident: true
             )
         } catch {
-            print("❌ [AppleAI] Error: \(error) — falling back to cloud")
+            let elapsed = Date().timeIntervalSince(start)
+            print("❌ [AppleAI] Error after \(String(format: "%.1f", elapsed))s: \(error) — falling back to cloud")
             Analytics.logEvent("apple_ai_fallback", parameters: ["reason": "\(error)"])
             return nil
         }
     }
     #endif
+
+    // Compact on-device prompt. The cloud Anthropic prompt is too long for
+    // Apple's on-device model — it returns malformed output or hangs.
+    fileprivate static let onDeviceSystemPrompt = """
+    Match the user's stated need to a Christian declaration.
+
+    declarationText: 2-3 short sentences. First person ("I am", "I have", "I walk"). Present tense. Bold and direct. No em dashes — use periods.
+    verseText: One NIV Bible verse supporting it.
+    verseReference: Book Chapter:Verse (e.g. "Romans 8:28").
+    category: one lowercase word from this list — health, wealth, anxiety, fear, love, marriage, parenting, destiny, identity, rest, joy, favor, grace, warfare, addiction, confidence, wisdom, miracles, hope, grief, salvation, forgiveness, anger, faith, debt, work, gratitude.
+
+    Voice: weighty, certain. Words like rooted, anchored, redeemed, established, unshakeable, called.
+    """
 }
 
 // MARK: - Structured output shape
@@ -96,16 +117,16 @@ final class AppleIntelligenceDeclarationMatcher: DeclarationMatcherProtocol {
 @available(iOS 26.0, *)
 @Generable
 struct OnDeviceDeclaration {
-    @Guide(description: "Exact rawValue of the matched DeclarationCategory enum: health, wealth, anxiety, fear, love, relationship, marriage, parenting, destiny, identity, rest, joy, favor, grace, godsprotection, warfare, addiction, confidence, wisdom, innerHealing, spiritualGrowth, miracles, hardtimes, friendship, purity, hope, grief, fertility, salvation, education, housing, divorce, wellness, mentalHealth, forgiveness, newSeason, singleParent, anger, faith, debt, business, work, praise, gratitude")
+    @Guide(description: "One lowercase word: health, wealth, anxiety, fear, love, marriage, parenting, destiny, identity, rest, joy, favor, grace, warfare, addiction, confidence, wisdom, miracles, hope, grief, salvation, forgiveness, anger, faith, debt, work, gratitude")
     let category: String
 
-    @Guide(description: "First-person, present-tense declaration the user will speak aloud. 2-4 short, punchy sentences. Bold and direct. No em dashes or en dashes. Use spiritually rich words like rooted, sealed, commissioned, anchored, redeemed, established, unshakeable, radiant.")
+    @Guide(description: "First-person present-tense declaration, 2-3 short sentences. No em dashes.")
     let declarationText: String
 
-    @Guide(description: "Exact NIV Bible verse text supporting the declaration. Quote the verse verbatim without abbreviation.")
+    @Guide(description: "NIV Bible verse text, quoted verbatim.")
     let verseText: String
 
-    @Guide(description: "Bible reference in 'Book Chapter:Verse' format, e.g. 'Jeremiah 29:11' or 'Romans 8:28'")
+    @Guide(description: "Bible reference: 'Book Chapter:Verse', e.g. 'Romans 8:28'")
     let verseReference: String
 }
 #endif

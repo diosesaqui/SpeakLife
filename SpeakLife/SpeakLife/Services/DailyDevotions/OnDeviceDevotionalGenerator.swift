@@ -96,7 +96,15 @@ final class OnDeviceDevotionalGenerator: OnDeviceDevotionalGeneratorProtocol {
             print("📖 [AIDevotional] Generating for category=\(category.rawValue)")
             let start = Date()
             do {
-                let session = LanguageModelSession(instructions: Self.systemPrompt)
+                // permissiveContentTransformations relaxes the on-device safety
+                // filter that was rejecting our scripture-and-warfare prompts
+                // as "unsafe". This is the Apple-blessed knob — we're not
+                // disabling safety, just opting into the less-conservative
+                // mode meant for creative/religious/literary content.
+                let session = LanguageModelSession(
+                    guardrails: .permissiveContentTransformations,
+                    instructions: Self.systemPrompt
+                )
                 let response = try await session.respond(
                     to: "Category: \(category.label). Write today's devotional.",
                     generating: GeneratedDevotional.self
@@ -106,8 +114,9 @@ final class OnDeviceDevotionalGenerator: OnDeviceDevotionalGeneratorProtocol {
                 return Self.makeDevotional(from: response.content)
             } catch {
                 let elapsed = Date().timeIntervalSince(start)
-                print("📖 [AIDevotional] ❌ Failed after \(String(format: "%.1f", elapsed))s: \(error)")
-                throw MomentGenerationError.modelFailed(error.localizedDescription)
+                let description = Self.describeError(error)
+                print("📖 [AIDevotional] ❌ Failed after \(String(format: "%.1f", elapsed))s: \(description)")
+                throw MomentGenerationError.modelFailed(description)
             }
         }
         #endif
@@ -163,6 +172,18 @@ final class OnDeviceDevotionalGenerator: OnDeviceDevotionalGeneratorProtocol {
             devotionalText: devotionalText,
             books: books
         )
+    }
+
+    /// Turns Foundation Models errors into messages the user can act on.
+    /// The framework's guardrail violation looks like a generic error from
+    /// the outside; we surface it specifically so the sheet can show
+    /// "Apple's safety filter blocked this" instead of a stuck spinner.
+    fileprivate static func describeError(_ error: Error) -> String {
+        let raw = "\(error)".lowercased()
+        if raw.contains("guardrail") || raw.contains("unsafe") || raw.contains("safety") {
+            return "Apple's on-device safety filter blocked this devotional. Try a different category or tap Generate again."
+        }
+        return (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
     }
 }
 
