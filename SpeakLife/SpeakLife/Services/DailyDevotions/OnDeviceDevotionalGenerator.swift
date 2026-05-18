@@ -146,6 +146,8 @@ final class OnDeviceDevotionalGenerator: OnDeviceDevotionalGeneratorProtocol {
     Respond with the structured output only. Do not preface with anything.
     """
 
+    #if canImport(FoundationModels)
+    @available(iOS 26.0, *)
     private static func makeDevotional(from generated: GeneratedDevotional) -> Devotional {
         makeDevotional(
             title: generated.title,
@@ -153,6 +155,7 @@ final class OnDeviceDevotionalGenerator: OnDeviceDevotionalGeneratorProtocol {
             devotionalText: generated.body
         )
     }
+    #endif
 
     private static func makeDevotional(title: String, books: String, devotionalText: String) -> Devotional {
         Devotional(
