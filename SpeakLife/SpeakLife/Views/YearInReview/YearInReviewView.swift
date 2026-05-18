@@ -294,10 +294,14 @@ struct YearInReviewView: View {
     }
 
     private var summarySlide: some View {
+        // Pin the slide to the full TabView page bounds first, then apply a
+        // single horizontal padding to the inner column. Without this, the
+        // VStack sized to its tallest child and the card's
+        // .frame(maxWidth: .infinity) grew past the screen — clipping rows
+        // and pushing the Share button edge-to-edge.
         VStack(spacing: 0) {
             Spacer(minLength: 20)
             summaryCard
-                .padding(.horizontal, 24)
             Spacer()
             VStack(spacing: 10) {
                 Button {
@@ -327,9 +331,11 @@ struct YearInReviewView: View {
                         .frame(height: 44)
                 }
             }
-            .padding(.horizontal, 24)
             .padding(.bottom, 28)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(.horizontal, 24)
+        .padding(.top, 60) // clear the topBar's close button
     }
 
     // MARK: - Reusable bits
