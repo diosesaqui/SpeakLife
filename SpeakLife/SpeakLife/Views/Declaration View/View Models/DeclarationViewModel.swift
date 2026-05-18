@@ -41,7 +41,14 @@ final class DeclarationViewModel: ObservableObject {
     private(set) var currentDeclaration: Declaration?
     
     // Track notification-triggered declarations to prevent overrides
-    private var isProcessingNotification = false
+    // Readable so HomeView.onAppear can skip its category re-load
+    // while setDeclaration is pinning the notification's declaration.
+    private(set) var isProcessingNotification = false
+
+    // Set true the first time setDeclaration runs in a session, and never
+    // auto-reset. Use this for longer-window decisions (like deferring the
+    // PD migration sheet) where isProcessingNotification clears too early.
+    private(set) var didOpenFromNotificationThisSession = false
     
     // Add UnifiedFavoritesManager
     private let unifiedFavoritesManager = UnifiedFavoritesManager()
@@ -672,6 +679,7 @@ final class DeclarationViewModel: ObservableObject {
         
         // Flag to prevent auto-selection overrides
         isProcessingNotification = true
+        didOpenFromNotificationThisSession = true
         
         // Wait for declarations to load if necessary
         if allDeclarations.isEmpty {
