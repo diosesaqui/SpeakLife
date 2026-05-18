@@ -67,7 +67,7 @@ struct YearInReviewView: View {
         }
         .preferredColorScheme(.dark)
         .sheet(item: $shareItem) { item in
-            ShareSheet(items: [item.image, item.text])
+            ShareSheet(activityItems: [item.image, item.text])
         }
     }
 
@@ -644,17 +644,3 @@ private struct ShareCardWrapper<Content: View>: View {
     }
 }
 
-/// UIActivityViewController wrapper for SwiftUI.
-struct ShareSheet: UIViewControllerRepresentable {
-    let items: [Any]
-    func makeUIViewController(context: Context) -> UIActivityViewController {
-        UIActivityViewController(activityItems: items, applicationActivities: nil)
-    }
-    func updateUIViewController(_ controller: UIActivityViewController, context: Context) {}
-}
-
-private extension Array {
-    subscript(safe index: Int) -> Element? {
-        indices.contains(index) ? self[index] : nil
-    }
-}
