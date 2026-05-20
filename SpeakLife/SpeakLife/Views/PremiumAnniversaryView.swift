@@ -38,7 +38,7 @@ enum PremiumAnniversaryMilestone: Int, CaseIterable, Identifiable {
     var verseText: String {
         switch self {
         case .day30:
-            return "That person is like a tree planted by streams of water, which yields its fruit in season, and whose leaf does not wither."
+            return "You are like a tree planted by streams of water, which yields its fruit in season, and whose leaf does not wither."
         case .day90:
             return "Rooted and built up in Him, established in the faith, abounding in thanksgiving."
         case .day365:
@@ -120,7 +120,7 @@ struct PremiumAnniversaryView: View {
                     .opacity(contentOpacity)
 
                     VStack(spacing: 10) {
-                        Text("\u{201C}\(milestone.verseText)\u{201D}")
+                        Text(milestone.verseText)
                             .font(Font.custom("AppleSDGothicNeo-Regular", size: 16, relativeTo: .body))
                             .foregroundColor(.white.opacity(0.92))
                             .multilineTextAlignment(.center)

@@ -184,7 +184,7 @@ struct YearInReviewView: View {
                 number: "\(stats.daysActive)",
                 unit: stats.daysActive == 1 ? "day" : "days",
                 accent: "\(stats.percentOfYear)% of \(stats.year)",
-                verse: "That person is like a tree planted by streams of water, which yields its fruit in season.",
+                verse: "You are like a tree planted by streams of water, which yields its fruit in season.",
                 verseRef: "Psalm 1:3"
             )
         }
@@ -396,7 +396,7 @@ struct YearInReviewView: View {
 
             if let verse, let verseRef {
                 VStack(spacing: 6) {
-                    Text("\u{201C}\(verse)\u{201D}")
+                    Text(verse)
                         .font(Font.custom("AppleSDGothicNeo-Regular", size: 14, relativeTo: .caption))
                         .foregroundColor(.white.opacity(0.78))
                         .multilineTextAlignment(.center)
