@@ -36,6 +36,9 @@ let weeklyID = "SpeakLife1Wk5"
 final class SubscriptionStore: ObservableObject {
 
     @Published var isPremium: Bool = false
+    /// First date the user ever activated the premium entitlement (survives
+    /// cancel-and-resubscribe). Powers the subscription anniversary overlay.
+    @Published var premiumOriginalPurchaseDate: Date?
     @Published private(set) var subscriptions: [Product] = []
     @Published private(set) var nonConsumables: [Product] = [] // New list for non-consumables
     @Published private(set) var purchasedSubscriptions: [Product] = []
@@ -70,6 +73,11 @@ final class SubscriptionStore: ObservableObject {
     
     // MARK: - Spiritual Warfare Onboarding Toggle
     @Published var useSpiritualWarfareOnboarding: Bool? = false
+
+    // MARK: - Quiz Onboarding (Treatment cohort of the install→trial A/B)
+    // false = current SurveyOnboardingView (Control)
+    // true  = QuizOnboardingView with personalized paywall framing (Treatment)
+    @Published var useQuizOnboarding = false
     
     // MARK: - AI Feature Flag
     @Published var enableAIFeatures = false
@@ -224,6 +232,9 @@ final class SubscriptionStore: ObservableObject {
         
         // Spiritual Warfare Onboarding Toggle from Remote Config
         useSpiritualWarfareOnboarding = remoteConfig["useSpiritualWarfareOnboarding"].boolValue
+
+        // Quiz Onboarding A/B from Remote Config (key: useQuizOnboarding)
+        useQuizOnboarding = remoteConfig["useQuizOnboarding"].boolValue
         
         // High Conversion Paywall Flag
         useHighConversionPaywall = remoteConfig["useHighConversionPaywall"].boolValue
@@ -320,6 +331,9 @@ final class SubscriptionStore: ObservableObject {
 
         isPremium          = premiumActive
         isInDevotionalPremium = devotionalActive
+        premiumOriginalPurchaseDate = premiumActive
+            ? RevenueCatManager.shared.premiumOriginalPurchaseDate(info)
+            : nil
 
         // Mirror into purchasedSubscriptions / purchasedNonConsumables so any
         // view code that checks those arrays keeps working.

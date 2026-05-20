@@ -31,7 +31,7 @@ struct MailView: UIViewControllerRepresentable {
         switch origin {
         case .profile: return "Scholarship request"
         case .review: return "Prayer Request / Report an issue \(appVersion), \(isSubscribed)"
-        case .newFeatures: return "Request new feature"
+        case .newFeatures: return "Feature or content request"
         case .prayer: return "Prayer request"
         case .testimony: return "My Testimony 🙌"
         case .bibleChatTopic: return "Bible Chat: Topic Request 🙏"

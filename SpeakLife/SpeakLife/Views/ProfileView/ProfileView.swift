@@ -41,6 +41,7 @@ struct ProfileView: View {
     
     @State var isPresentingManageSubscriptionView = false
     @State var isPresentingContentView = false
+    @State var isPresentingFeatureRequestView = false
     @State var isPresentingPrayerRequestView = false
     @State var isPresentingBottomSheet = false
     @State private var showStreakStats = false
@@ -119,6 +120,7 @@ struct ProfileView: View {
                         shareRow
                         reviewRow
                         feedbackRow
+                        featureRequestRow
                         emailRow
                         supportIDRow
                         
@@ -137,12 +139,12 @@ struct ProfileView: View {
                         privacyPolicyRow
                         termsConditionsRow
                     }
-                    
+
                     Section(footer: VStack {
                         Text(appVersion).font(.footnote)
                         Spacer().frame(height: 8)
                     }) {
-                        
+
                     }
                    
                 }
@@ -611,6 +613,35 @@ struct ProfileView: View {
         }
     }
 
+    @MainActor
+    @ViewBuilder
+    private var featureRequestRow: some View {
+        if MFMailComposeViewController.canSendMail() {
+            SettingsRow(
+                isPresentingContentView: $isPresentingFeatureRequestView,
+                imageTitle: "wand.and.stars",
+                title: "Request a Feature or Content",
+                viewToPresent: LazyView(
+                    MailView(
+                        isShowing: $isPresentingFeatureRequestView,
+                        result: self.$result,
+                        origin: .newFeatures,
+                        prefillBody: "I'd love to see the following feature or content in SpeakLife:\n\n",
+                        isSubscribed: subscriptionStore.isPremium
+                    )
+                )
+            ) {
+                isPresentingFeatureRequestView = true
+                Event.trackUserAction(
+                    "feature_request_opened",
+                    category: "profile",
+                    metadata: ["source": "profile_menu"]
+                )
+            }
+            .id(UUID())
+        }
+    }
+
     @ViewBuilder
     private var emailRow: some View {
         Button(action: { showEmailCaptureSheet = true }) {
@@ -778,7 +809,7 @@ struct ProfileView: View {
     private func shareApp() {
         showShareSheet.toggle()
     }
-    
+
 }
 
 extension UIView {

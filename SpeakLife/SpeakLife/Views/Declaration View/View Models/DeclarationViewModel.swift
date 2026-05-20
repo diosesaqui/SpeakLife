@@ -224,16 +224,12 @@ final class DeclarationViewModel: ObservableObject {
             // Also ensure Core Data favorites are loaded
             self.refreshFavoritesFromCoreData()
             
-            // Sync initial favorites to widget
+            // Batch widget syncs into a single timeline reload to preserve WidgetKit's daily budget.
             let favoriteTexts = self.favorites.map { $0.text }
-            WidgetDataBridge.shared.syncDeclarationFavorites(favoriteTexts)
-            
-            // Sync all declarations to widget for accurate text matching
-            let allTexts = self.allDeclarations.map { $0.text }
-            WidgetDataBridge.shared.syncAllDeclarationsToWidget(allTexts)
-            
-            // Sync categorized declarations for smart widget filtering
-            self.syncCategorizedDeclarationsToWidget()
+            WidgetDataBridge.shared.syncDeclarationFavorites(favoriteTexts, reloadTimeline: false)
+            WidgetDataBridge.shared.syncFullDeclarationsToWidget(self.allDeclarations, reloadTimeline: false)
+            self.syncCategorizedDeclarationsToWidget(reloadTimeline: false)
+            WidgetDataBridge.shared.reloadWidgetTimelines()
             self.errorMessage = error?.localizedDescription
         }
     }
@@ -749,7 +745,7 @@ final class DeclarationViewModel: ObservableObject {
     // MARK: - Smart Widget Category Integration
     
     /// Sync declarations organized by categories to widget for intelligent filtering
-    private func syncCategorizedDeclarationsToWidget() {
+    private func syncCategorizedDeclarationsToWidget(reloadTimeline: Bool = true) {
         var categorizedDeclarations: [String: [String]] = [:]
         
         // Map your DeclarationCategory to widget-friendly category names
@@ -822,14 +818,14 @@ final class DeclarationViewModel: ObservableObject {
         }
         
         // Sync to widget
-        WidgetDataBridge.shared.syncCategorizedDeclarations(categorizedDeclarations)
-        
+        WidgetDataBridge.shared.syncCategorizedDeclarations(categorizedDeclarations, reloadTimeline: false)
+
         // Update user's selected categories for widget
-        syncUserCategoryPreferences()
+        syncUserCategoryPreferences(reloadTimeline: reloadTimeline)
     }
     
     /// Sync user's currently selected categories to widget for personalization
-    private func syncUserCategoryPreferences() {
+    private func syncUserCategoryPreferences(reloadTimeline: Bool = true) {
         // Convert user's selected DeclarationCategories to widget category names
         let widgetCategories = selectedCategories.compactMap { category -> [String]? in
             switch category {
@@ -865,7 +861,7 @@ final class DeclarationViewModel: ObservableObject {
         
         // Remove duplicates and update widget
         let uniqueCategories = Array(Set(finalCategories))
-        WidgetDataBridge.shared.updateSelectedCategories(uniqueCategories)
+        WidgetDataBridge.shared.updateSelectedCategories(uniqueCategories, reloadTimeline: reloadTimeline)
     }
     
     /// Call this when user changes their category selections

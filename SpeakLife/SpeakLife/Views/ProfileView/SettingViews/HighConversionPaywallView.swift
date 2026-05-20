@@ -31,6 +31,11 @@ struct HighConversionPaywallView: View {
     @State private var isEligibleForTrial = false
 
     var callback: (() -> Void)?
+    /// Where this paywall is being shown from. Drives the `source` property on
+    /// paywall analytics events ('onboarding' | 'settings' | 'feature_gate').
+    /// Default of 'settings' matches the dominant non-onboarding callsites
+    /// (PremiumView, OptimizedSubscriptionView from HomeView).
+    var source: String = "settings"
 
     /// Variant string sent to Firebase Analytics on every paywall event so the
     /// A/B between benefit-based and feature-based copy can be compared.
@@ -58,12 +63,63 @@ struct HighConversionPaywallView: View {
         SurveyPersonalizationEngine(goalWordRaw: appState.surveyGoalWord)
     }
 
-    /// Resolved copy: survey goal word first, category-based fallback second
+    /// Active quiz segment, if the user came through QuizOnboardingView (Treatment cohort).
+    /// Takes priority over survey copy because it reflects the specific ad-matched framing.
+    /// Returns nil for the `unsegmented` cohort so they fall through to the
+    /// surveyEngine-personalized headline (driven by their burden choice), which
+    /// is more specific than the generic "Speak life today" unsegmented copy.
+    private var quizSegment: QuizSegment? {
+        guard let seg = QuizSegment(rawValue: appState.onboardingSegment),
+              seg != .unsegmented else { return nil }
+        return seg
+    }
+
+    /// Segment-tagged analytics property. Empty string when the user came through
+    /// the Control onboarding so paywall events stay backward-compatible.
+    private var segmentParam: String {
+        appState.onboardingSegment
+    }
+
+    /// True when the user just completed PersonalDeclaration in the onboarding
+    /// flow. This is the warmest emotional anchor in the funnel — they literally
+    /// spoke their own declaration aloud seconds ago. We reference that moment
+    /// in the paywall headline + subhead for max continuity.
+    private var hasFreshPersonalDeclaration: Bool {
+        if let belief = preferencesTracker.personalDeclarationBelief, !belief.isEmpty {
+            return true
+        }
+        return false
+    }
+
+    /// Burden goal word (peace / healing / identity / etc.) — drives the
+    /// continuity subhead for personal-declaration users so the promise is
+    /// specific to what they actually need, not generic.
+    private var burdenStyleLabel: String? {
+        guard let goalWord = SurveyGoalWord(rawValue: appState.surveyGoalWord) else { return nil }
+        return goalWord.styleLabel.lowercased()
+    }
+
+    /// Resolved copy priority:
+    /// 1. PersonalDeclaration continuity — emotionally warmest moment, names the promise
+    /// 2. Quiz segment — ad-match
+    /// 3. Survey engine — goal word personalization
+    /// 4. Category fallback
     private var resolvedHeadline: String {
-        surveyEngine.hasSurveyData ? surveyEngine.paywallCopy.headline : copy.headline
+        if hasFreshPersonalDeclaration {
+            return "Speak it daily until it comes to pass."
+        }
+        if let segment = quizSegment { return segment.paywallHeadline }
+        return surveyEngine.hasSurveyData ? surveyEngine.paywallCopy.headline : copy.headline
     }
     private var resolvedSubheadline: String {
-        surveyEngine.hasSurveyData ? surveyEngine.paywallCopy.subheadline : copy.subheadline
+        if hasFreshPersonalDeclaration {
+            if let burden = burdenStyleLabel {
+                return "Your \(burden) declaration — in your mouth every morning. Until you possess it."
+            }
+            return "Your declaration — in your mouth every morning. Until you possess it."
+        }
+        if let segment = quizSegment { return segment.paywallSubheadline }
+        return surveyEngine.hasSurveyData ? surveyEngine.paywallCopy.subheadline : copy.subheadline
     }
     private var resolvedValueProps: [String] {
         surveyEngine.hasSurveyData ? surveyEngine.paywallCopy.valueProps.map { $0.title } : copy.valueProps
@@ -287,6 +343,7 @@ struct HighConversionPaywallView: View {
                 trialCallout
                 closingLine
                 ctaButton
+                payWhatYouCanCTA
                 bottomLinks
             }
             .padding(.horizontal, 20).padding(.vertical, 16).padding(.bottom, 8)
@@ -313,7 +370,7 @@ struct HighConversionPaywallView: View {
         let isSelected = selectedPlan == plan
         return Button(action: {
             withAnimation(.easeInOut(duration: 0.15)) { selectedPlan = plan }
-            Analytics.logEvent("paywall_plan_switched", parameters: ["plan": plan.rawValue, "variant": paywallVariant])
+            Analytics.logEvent("paywall_plan_switched", parameters: ["plan": plan.rawValue, "variant": paywallVariant, "segment": segmentParam])
         }) {
             ZStack(alignment: .top) {
                 VStack(spacing: 4) {
@@ -341,12 +398,16 @@ struct HighConversionPaywallView: View {
         .buttonStyle(PlainButtonStyle())
     }
 
-    // MARK: - Trial Callout
+    // MARK: - Trial Callout (clarity-first: addresses the autocharge fear without
+    // making any claims we can't keep — Apple's pre-trial-end notification is
+    // inconsistent across users/regions/notification-settings, so we don't promise it).
     private var trialCallout: some View {
         HStack(spacing: 6) {
             Image(systemName: "checkmark.circle.fill").foregroundColor(.green).font(.system(size: 14))
-            Text(selectedPlan == .annual && isEligibleForTrial ? "3 days free - cancel anytime before trial ends" : "Start today - cancel anytime")
-                .font(.system(size: 13, weight: .medium)).foregroundColor(.white.opacity(0.85))
+            Text(selectedPlan == .annual && isEligibleForTrial
+                 ? "Free for 3 days. Cancel by day 3 to pay nothing."
+                 : "Start today. Cancel anytime in Settings.")
+                .font(.system(size: 13, weight: .semibold)).foregroundColor(.white.opacity(0.92))
         }
     }
 
@@ -385,25 +446,35 @@ struct HighConversionPaywallView: View {
         .buttonStyle(PlainButtonStyle())
     }
 
+    // MARK: - Pay What You Can (secondary CTA, intentionally subordinate to main CTA)
+    @ViewBuilder
+    private var payWhatYouCanCTA: some View {
+        if subscriptionStore.showPayWhatYouCanLink {
+            Button(action: {
+                Analytics.logEvent("paywall_pay_what_you_can_tapped", parameters: [
+                    "variant": paywallVariant,
+                    "segment": segmentParam
+                ])
+                showPayWhatYouCan = true
+            }) {
+                Text("Can't afford full price? Pay what you can →")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(.white.opacity(0.7))
+                    .padding(.vertical, 4)
+            }
+            .buttonStyle(PlainButtonStyle())
+            .accessibilityLabel(Text("Pay what you can option"))
+        }
+    }
+
     // MARK: - Bottom Links
     private var bottomLinks: some View {
-        VStack(spacing: 8) {
-            HStack(spacing: 24) {
-                Button("Restore", action: restore)
-                Link("Terms", destination: URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!)
-                Button("Privacy") { showPrivacyPolicy = true }
-            }
-            .font(.system(size: 12)).foregroundColor(.white.opacity(0.4))
-
-            if subscriptionStore.showPayWhatYouCanLink {
-                Button(action: { showPayWhatYouCan = true }) {
-                    Text("Can't afford it? Pay what you can →")
-                        .font(.system(size: 12))
-                        .foregroundColor(.white.opacity(0.35))
-                        .underline()
-                }
-            }
+        HStack(spacing: 24) {
+            Button("Restore", action: restore)
+            Link("Terms", destination: URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!)
+            Button("Privacy") { showPrivacyPolicy = true }
         }
+        .font(.system(size: 12)).foregroundColor(.white.opacity(0.4))
     }
 
     // MARK: - Close Button
@@ -415,7 +486,8 @@ struct HighConversionPaywallView: View {
                     Analytics.logEvent("paywall_dismissed", parameters: [
                         "variant": paywallVariant,
                         "plan_viewed": selectedPlan.rawValue,
-                        "seconds_on_paywall": Int(Date().timeIntervalSince(timeOnPaywall))
+                        "seconds_on_paywall": Int(Date().timeIntervalSince(timeOnPaywall)),
+                        "segment": segmentParam
                     ])
                     callback?(); dismiss()
                 }) {
@@ -441,7 +513,13 @@ struct HighConversionPaywallView: View {
         AnalyticsService.shared.trackPaywallImpression(paywallId: paywallVariant, metadata: [
             "variant": paywallVariant,
             "user_category": preferencesTracker.primaryCategory.rawValue,
-            "initial_plan": "annual"
+            "initial_plan": "annual",
+            "segment": segmentParam
+        ])
+        Analytics.logEvent("paywall_shown", parameters: [
+            "segment": segmentParam,
+            "source": source,
+            "variant": paywallVariant
         ])
         DispatchQueue.main.asyncAfter(deadline: .now() + 4) {
             withAnimation(.easeIn(duration: 0.4)) { showCloseButton = true }
@@ -460,7 +538,13 @@ struct HighConversionPaywallView: View {
             "variant": paywallVariant,
             "plan": selectedPlan.rawValue,
             "user_category": preferencesTracker.primaryCategory.rawValue,
-            "product_id": product.id
+            "product_id": product.id,
+            "segment": segmentParam
+        ])
+        Analytics.logEvent("paywall_subscribe_tapped", parameters: [
+            "segment": segmentParam,
+            "plan": selectedPlan.rawValue,
+            "variant": paywallVariant
         ])
         Task {
             await MainActor.run { declarationStore.isPurchasing = true }
@@ -472,10 +556,17 @@ struct HighConversionPaywallView: View {
                         productId: product.id, paywallId: paywallVariant, price: price,
                         metadata: ["variant": paywallVariant, "plan": selectedPlan.rawValue,
                                    "user_category": preferencesTracker.primaryCategory.rawValue,
-                                   "seconds_to_convert": Int(Date().timeIntervalSince(timeOnPaywall))]
+                                   "seconds_to_convert": Int(Date().timeIntervalSince(timeOnPaywall)),
+                                   "segment": segmentParam]
                     )
                     if isEligibleForTrial {
-                        AnalyticsService.shared.trackTrialStarted(productId: product.id, metadata: ["variant": paywallVariant])
+                        AnalyticsService.shared.trackTrialStarted(productId: product.id, metadata: ["variant": paywallVariant, "segment": segmentParam])
+                        Analytics.logEvent("trial_started", parameters: [
+                            "segment": segmentParam,
+                            "plan_id": selectedPlan.rawValue,
+                            "paywall_variant": paywallVariant,
+                            "product_id": product.id
+                        ])
                     }
                     await MainActor.run { declarationStore.isPurchasing = false; callback?(); dismiss() }
                 } else {

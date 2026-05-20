@@ -142,7 +142,7 @@ struct SpeakLifeApp: App {
                     // 🧪 Test HelloAO Bible API integration
                     // runHelloAOTest() // Disabled: Test should not run in production
                     // Handle landing page and initial category selection
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
                         withAnimation {
                             isShowingLanding = false
                         }
@@ -228,11 +228,19 @@ struct SpeakLifeApp: App {
                 // a defensive idempotent reschedule on each open guarantees the user
                 // gets it daily. Stable identifier means iOS replaces in place — no
                 // duplicates queued.
-                if appState.notificationEnabled {
-                    DIContainer.shared.rescheduleActivePersonalDeclarationIfNeeded(
-                        startTimeIndex: appState.personalDeclarationTimeIndex
-                    )
-                }
+                //
+                // NOT gated on appState.notificationEnabled: that flag was only
+                // ever set to true by specific onboarding paths and can be left
+                // false on users whose onboarding flow didn't hit one of those
+                // paths, or who toggled it off in Settings. Meanwhile the daily
+                // burst uses an independent key (dailyDeclarationRemindersEnabled),
+                // so a user gets burst pushes but no personal declaration push —
+                // exactly the "got it for a week, then stopped" failure mode.
+                // iOS already silently no-ops add() when permission is denied, so
+                // there's no harm in calling unconditionally.
+                DIContainer.shared.rescheduleActivePersonalDeclarationIfNeeded(
+                    startTimeIndex: appState.personalDeclarationTimeIndex
+                )
 
                 // Check if we should show evening reminder for daily burst
                 DailyDeclarationReminderService.shared.refreshEveningReminderIfNeeded()

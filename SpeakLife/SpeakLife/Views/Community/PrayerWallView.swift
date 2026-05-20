@@ -337,10 +337,16 @@ struct PrayerPostCard: View {
             // Header row
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(post.displayName)
-                        .font(Font.custom("AppleSDGothicNeo-Regular", size: 12, relativeTo: .caption))
-                        .foregroundColor(.white.opacity(0.5))
-                        .italic()
+                    HStack(spacing: 5) {
+                        Text(post.displayName)
+                            .font(Font.custom("AppleSDGothicNeo-Regular", size: 12, relativeTo: .caption))
+                            .foregroundColor(.white.opacity(0.5))
+                            .italic()
+
+                        if post.authorIsPremium == true {
+                            premiumCrownBadge
+                        }
+                    }
 
                     if post.isAnswered {
                         Label("Answered ✓", systemImage: "checkmark.seal.fill")
@@ -449,6 +455,19 @@ struct PrayerPostCard: View {
                 .fill(Color.white.opacity(showAnsweredGlow ? 0.22 : 0.12))
                 .shadow(color: showAnsweredGlow ? Color(hex: "FBBF24").opacity(0.45) : .clear, radius: 12)
         )
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .strokeBorder(
+                    LinearGradient(
+                        colors: post.authorIsPremium == true
+                            ? [Color(hex: "FBBF24").opacity(0.55), Color(hex: "F59E0B").opacity(0.25)]
+                            : [Color.clear, Color.clear],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    lineWidth: post.authorIsPremium == true ? 1 : 0
+                )
+        )
         .animation(.easeOut(duration: 0.6), value: showAnsweredGlow)
     }
 
@@ -467,6 +486,13 @@ struct PrayerPostCard: View {
             RoundedRectangle(cornerRadius: 10)
                 .fill(Color.white.opacity(0.18))
         )
+    }
+
+    private var premiumCrownBadge: some View {
+        Image(systemName: "crown.fill")
+            .font(.system(size: 11, weight: .semibold))
+            .foregroundColor(Color(hex: "FBBF24"))
+            .accessibilityLabel("Premium subscriber")
     }
 
     private var reactionRow: some View {
@@ -1035,6 +1061,7 @@ struct PostPrayerView: View {
                                   isSister: isSister,
                                   category: category,
                                   authorUid: appleSignIn.uid,
+                                  authorIsPremium: subscriptionStore.isPremium,
                                   isTestimony: isTestimony)
                 if viewModel.errorMessage == nil {
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
