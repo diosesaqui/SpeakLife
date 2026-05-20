@@ -105,13 +105,11 @@ final class NotificationManager: NSObject {
         let endTime   = defaults.integer(forKey: "endTimeIndex")
         let catString = defaults.string(forKey: "selectedNotificationCategories") ?? ""
         let parsed    = Set(catString.components(separatedBy: ",").compactMap { DeclarationCategory($0) })
-        var categories: Set<DeclarationCategory> = parsed.isEmpty
+        // Respect the user's saved selection exactly. Only fall back to a
+        // generic mix when nothing is saved at all.
+        let categories: Set<DeclarationCategory> = parsed.isEmpty
             ? [.destiny, .gratitude, .faith, .identity, .grace, .joy, .rest]
             : parsed
-        if categories.count <= 1 {
-            categories.insert(.destiny)
-            categories.insert(.love)
-        }
 
         registerNotifications(
             count: max(count, 5),
@@ -778,11 +776,8 @@ final class UpdateNotificationsOperation: Operation {
     
     override func start() {
         let categories = appState.selectedNotificationCategories.components(separatedBy: ",").compactMap({ DeclarationCategory($0) })
-        var setCategories = Set(categories)
-        if setCategories.count <= 1 {
-            setCategories.insert(DeclarationCategory(rawValue: "destiny")!)
-            setCategories.insert(DeclarationCategory(rawValue: "love")!)
-        }
+        let setCategories = Set(categories)
+        // Respect the user's saved selection exactly — no implicit widening.
         let selectedCategories = setCategories.isEmpty ? nil : setCategories
         
         NotificationManager.shared.notificationsPending { [weak self] pending, count in

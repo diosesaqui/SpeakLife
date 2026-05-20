@@ -131,14 +131,13 @@ struct SurveyOnboardingView: View {
         if let style = responses.primaryDeclarationStyle {
             appState.selectedDeclarationStyles = [style.rawValue]
         }
-        // Persist the goal-word's curated notification mix so SpeakLifeApp.resetNotifications
-        // schedules personalized content instead of falling back to NotificationManager's
-        // generic [destiny, gratitude, faith, identity, grace, joy, rest] default.
-        let notificationCategoriesSet = goalWord.notificationCategories
-        appState.selectedNotificationCategories = notificationCategoriesSet
-            .map { $0.rawValue }
-            .joined(separator: ",")
         let category = goalWord.declarationCategory
+        // Schedule notifications from ONLY the user's selected category — same
+        // category seeded into the home feed below. Previously we expanded to a
+        // hardcoded set of 4 related categories via goalWord.notificationCategories,
+        // which caused pushes to surface content the user never picked.
+        let notificationCategoriesSet: Set<DeclarationCategory> = [category]
+        appState.selectedNotificationCategories = category.rawValue
         UserDefaults.standard.set(category.rawValue, forKey: "selectedCategory")
         UserPreferencesTracker.shared.trackCategorySelection(category.rawValue)
         declarationStore.choose(category) { _ in }
