@@ -38,7 +38,7 @@ enum PremiumAnniversaryMilestone: Int, CaseIterable, Identifiable {
     var verseText: String {
         switch self {
         case .day30:
-            return "She is like a tree planted by streams of water, which yields its fruit in season, and whose leaf does not wither."
+            return "That person is like a tree planted by streams of water, which yields its fruit in season, and whose leaf does not wither."
         case .day90:
             return "Rooted and built up in Him, established in the faith, abounding in thanksgiving."
         case .day365:

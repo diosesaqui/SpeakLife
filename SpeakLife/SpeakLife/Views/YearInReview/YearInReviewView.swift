@@ -184,7 +184,7 @@ struct YearInReviewView: View {
                 number: "\(stats.daysActive)",
                 unit: stats.daysActive == 1 ? "day" : "days",
                 accent: "\(stats.percentOfYear)% of \(stats.year)",
-                verse: "She is like a tree planted by streams of water, which yields its fruit in season.",
+                verse: "That person is like a tree planted by streams of water, which yields its fruit in season.",
                 verseRef: "Psalm 1:3"
             )
         }
