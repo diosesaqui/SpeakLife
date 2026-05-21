@@ -98,6 +98,11 @@ struct HomeView: View {
     @State private var celebrationStreakCount = 0
     @State private var anniversaryMilestone: PremiumAnniversaryMilestone?
     @State private var yearInReviewStats: YearInReviewStats?
+    // Brief window after HomeView mounts where any email-capture sheet is held
+    // back so SKStoreReviewController (kicked off from the onboarding rating
+    // screen) has a clean scene to render in. iOS silently drops requestReview
+    // when a sheet is presenting over the active window.
+    @State private var suppressEmailSheets = false
     
     private let currentVersion = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0.0"
 
@@ -153,14 +158,23 @@ struct HomeView: View {
                                     }
                                 }
                             }
-                            .sheet(isPresented: $appState.needEmail) {
+                            .sheet(isPresented: Binding(
+                                get: { !suppressEmailSheets && appState.needEmail },
+                                set: { appState.needEmail = $0 }
+                            )) {
                                 EmailCaptureView()
                             }
-                            .sheet(isPresented: $subscriptionStore.showEmailCaptureAfterPurchase) {
+                            .sheet(isPresented: Binding(
+                                get: { !suppressEmailSheets && subscriptionStore.showEmailCaptureAfterPurchase },
+                                set: { subscriptionStore.showEmailCaptureAfterPurchase = $0 }
+                            )) {
                                 EmailCaptureView(source: "post_purchase")
                                     .environmentObject(appState)
                             }
-                            .sheet(isPresented: $subscriptionStore.showEmailConfirmAfterPurchase) {
+                            .sheet(isPresented: Binding(
+                                get: { !suppressEmailSheets && subscriptionStore.showEmailConfirmAfterPurchase },
+                                set: { subscriptionStore.showEmailConfirmAfterPurchase = $0 }
+                            )) {
                                 EmailConfirmationView(storedEmail: appState.email, source: "post_purchase")
                                     .environmentObject(appState)
                                     .environmentObject(subscriptionStore)
@@ -355,6 +369,17 @@ struct HomeView: View {
                         appState.firstOpen = false
                     }
                     UIScrollView.appearance().isScrollEnabled = true
+
+                    // First mount after onboarding: SubscriptionStore may have
+                    // pre-flagged showEmailCaptureAfterPurchase during the in-
+                    // onboarding paywall purchase. Hold any pending email sheet
+                    // for ~4s so the rating-screen SKStoreReviewController call
+                    // has a clean scene. Underlying flags are untouched; only
+                    // their .sheet bindings are gated.
+                    suppressEmailSheets = true
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 4.0) {
+                        suppressEmailSheets = false
+                    }
 
                     // Email capture / confirmation for existing premium users.
                     // Fires once only per path — guarded by separate UserDefaults keys.
@@ -678,6 +703,23 @@ struct HomeView: View {
         guard days > 0 else { return }
 
         let defaults = UserDefaults.standard
+
+        // RevenueCat's originalPurchaseDate survives reinstalls (tied to the
+        // Apple ID), but our shownDefaultsKey flags don't. Without this guard,
+        // any tester or returning subscriber whose Apple ID previously held the
+        // entitlement instantly gets the highest milestone surfaced right after
+        // onboarding. The first time THIS install ever observes the user as
+        // premium, silently mark every already-crossed milestone as shown so
+        // only milestones crossed during this install fire going forward.
+        let initialSeenKey = "premiumAnniversary_initialSeenAt"
+        if defaults.object(forKey: initialSeenKey) == nil {
+            defaults.set(Date(), forKey: initialSeenKey)
+            for milestone in PremiumAnniversaryMilestone.ascending where days >= milestone.days {
+                defaults.set(true, forKey: milestone.shownDefaultsKey)
+            }
+            return
+        }
+
         let crossedUnshown = PremiumAnniversaryMilestone.ascending
             .filter { days >= $0.days && !defaults.bool(forKey: $0.shownDefaultsKey) }
         guard let highest = crossedUnshown.last else { return }

@@ -737,7 +737,12 @@ struct QuizOnboardingView: View {
     }
 
     private func finishOnboarding() {
-        let categories = selectedBurden?.goalWord.notificationCategories ?? segment.notificationCategories
+        // Schedule notifications from ONLY the user's primary category — same
+        // category seeded into home + Daily Burst in applySegmentDefaults.
+        // Previously expanded to a hardcoded 4-category mix, which surfaced
+        // pushes from categories the user never picked.
+        let primaryCategory = selectedBurden?.goalWord.declarationCategory ?? segment.primaryCategory
+        let categories: Set<DeclarationCategory> = [primaryCategory]
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { granted, _ in
             Analytics.logEvent("notification_permission", parameters: [
                 "granted": granted,
@@ -804,15 +809,15 @@ struct QuizOnboardingView: View {
         //     in HighConversionPaywallView.
         let burdenGoalWord = selectedBurden?.goalWord
         let category = burdenGoalWord?.declarationCategory ?? segment.primaryCategory
-        let notificationCategories = burdenGoalWord?.notificationCategories ?? segment.notificationCategories
 
         UserDefaults.standard.set(category.rawValue, forKey: "selectedCategory")
         UserPreferencesTracker.shared.trackCategorySelection(category.rawValue)
         declarationStore.choose(category) { _ in }
 
-        appState.selectedNotificationCategories = notificationCategories
-            .map { $0.rawValue }
-            .joined(separator: ",")
+        // Notifications scheduled from ONLY this category — matches the home
+        // feed seeded above. Pushes shouldn't surface content from categories
+        // the user didn't pick.
+        appState.selectedNotificationCategories = category.rawValue
     }
 }
 
