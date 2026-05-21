@@ -678,6 +678,23 @@ struct HomeView: View {
         guard days > 0 else { return }
 
         let defaults = UserDefaults.standard
+
+        // RevenueCat's originalPurchaseDate survives reinstalls (tied to the
+        // Apple ID), but our shownDefaultsKey flags don't. Without this guard,
+        // any tester or returning subscriber whose Apple ID previously held the
+        // entitlement instantly gets the highest milestone surfaced right after
+        // onboarding. The first time THIS install ever observes the user as
+        // premium, silently mark every already-crossed milestone as shown so
+        // only milestones crossed during this install fire going forward.
+        let initialSeenKey = "premiumAnniversary_initialSeenAt"
+        if defaults.object(forKey: initialSeenKey) == nil {
+            defaults.set(Date(), forKey: initialSeenKey)
+            for milestone in PremiumAnniversaryMilestone.ascending where days >= milestone.days {
+                defaults.set(true, forKey: milestone.shownDefaultsKey)
+            }
+            return
+        }
+
         let crossedUnshown = PremiumAnniversaryMilestone.ascending
             .filter { days >= $0.days && !defaults.bool(forKey: $0.shownDefaultsKey) }
         guard let highest = crossedUnshown.last else { return }
