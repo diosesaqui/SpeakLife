@@ -86,7 +86,7 @@ struct RatingView: View {
                 Spacer()
                 
                 ShimmerButton(colors: [.blue], buttonTitle: "Rate us", action: {
-                    appState.requestReviewIfEligible(trigger: "onboarding_rating_screen")
+                    appState.requestReviewIfEligible(trigger: .onboardingRatingScreen)
                     callBack()
                 })
                     .frame(width: size.width * 0.87 ,height: 50)

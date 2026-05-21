@@ -120,28 +120,22 @@ struct SurveyOnboardingView: View {
         UIImpactFeedbackGenerator(style: .soft).impactOccurred()
         Analytics.logEvent("survey_step_completed", parameters: ["step": currentStep.rawValue])
 
-        // Leaving the rating screen is the true end of onboarding.
-        if currentStep == .rating {
+        switch currentStep {
+        case .rating:
             onComplete()
-            return
-        }
-
-        // Leaving the notification step: persist survey responses, ask for the
-        // iOS notification permission, then route to the rating screen — the
-        // rating tap fires the SKStoreReviewController prompt cleanly after the
-        // notification prompt has resolved.
-        if currentStep == .notificationTime {
+        case .notificationTime:
+            // Persist survey responses + request notification permission before
+            // handing off to the rating screen.
             applyResponsesAndContinueToRating()
-            return
+        default:
+            let nextRaw = currentStep.rawValue + 1
+            guard let next = SurveyStep(rawValue: nextRaw) else {
+                assertionFailure("SurveyOnboardingView.advance(): no successor for \(currentStep). .rating should be the terminal step.")
+                onComplete()
+                return
+            }
+            withAnimation(.easeInOut(duration: 0.35)) { currentStep = next }
         }
-
-        let nextRaw = currentStep.rawValue + 1
-        guard let next = SurveyStep(rawValue: nextRaw) else {
-            // Defensive — should be unreachable now that .rating is the terminal step.
-            onComplete()
-            return
-        }
-        withAnimation(.easeInOut(duration: 0.35)) { currentStep = next }
     }
 
     private func applyResponsesAndContinueToRating() {

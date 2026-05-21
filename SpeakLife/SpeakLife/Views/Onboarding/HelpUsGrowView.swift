@@ -6,7 +6,6 @@
 //
 
 import SwiftUI
-import StoreKit
 
 struct HelpUsGrowModel {
     let title: String
@@ -22,16 +21,7 @@ class HelpUsGrowViewModel: ObservableObject {
         self.model = model
     }
 
-    func requestReview() {
-        // Here you would invoke the review request.
-        // This might be more complex depending on how you want to handle this.
-        if let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene {
-            SKStoreReviewController.requestReview(in: scene)
-        }
-    }
-
     func showRatingPrompt() {
-        // This triggers the UI to show the rating prompt
         self.isShowingRatingPrompt = true
     }
 }
@@ -81,8 +71,7 @@ struct HelpUsGrowView: View {
                     title: Text("Rate Us"),
                     message: Text("Thanks for your support ✝️"),
                     primaryButton: .default(Text("Rate")) {
-                        viewModel.requestReview()
-                        appState.lastReviewRequestSetDate = Date()
+                        appState.requestReviewIfEligible(trigger: .onboardingRatingScreen)
                     },
                     secondaryButton: .cancel() {
                         callBack()

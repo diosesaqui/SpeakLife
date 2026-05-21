@@ -286,10 +286,7 @@ struct BreakthroughFlowView: View {
                 .buttonStyle(PlainButtonStyle())
 
                 Button {
-                    // A confirmed breakthrough is the strongest possible review
-                    // moment — fire the SKStoreReviewController prompt before
-                    // returning home so it lands inside the celebration window.
-                    appState.requestReviewIfEligible(trigger: "breakthrough_celebration")
+                    appState.requestReviewIfEligible(trigger: .breakthroughCelebration)
                     onDismiss()
                 } label: {
                     Text("Go to Home")

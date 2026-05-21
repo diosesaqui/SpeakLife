@@ -584,6 +584,6 @@ struct DeclarationView: View {
     }
     
     private func showReview() {
-        appState.requestReviewIfEligible(trigger: "declaration_view")
+        appState.requestReviewIfEligible(trigger: .declarationView)
     }
 }

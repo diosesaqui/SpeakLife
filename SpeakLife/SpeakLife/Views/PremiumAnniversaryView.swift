@@ -155,9 +155,7 @@ struct PremiumAnniversaryView: View {
                     Spacer()
 
                     Button {
-                        // Hitting a premium milestone is a peak moment — ask
-                        // for the App Store review before the user dismisses.
-                        appState.requestReviewIfEligible(trigger: "premium_anniversary_\(milestone.days)")
+                        appState.requestReviewIfEligible(trigger: .premiumAnniversary(milestone.days))
                         dismiss()
                     } label: {
                         Text("Keep Standing")

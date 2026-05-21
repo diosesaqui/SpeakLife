@@ -406,7 +406,7 @@ struct QuizOnboardingView: View {
         case commitmentHold
         case paywall
         case notificationTime  // post-paywall: pick a window, then iOS permission prompt
-        case rating            // dedicated SKStoreReviewController prime — highest-velocity ask
+        case rating
     }
 
     @State private var currentStep: Step = .quiz

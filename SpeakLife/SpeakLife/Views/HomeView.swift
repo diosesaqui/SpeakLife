@@ -101,6 +101,8 @@ struct HomeView: View {
     
     private let currentVersion = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0.0"
 
+    private static let streakReviewMilestones: Set<Int> = [3, 7, 14, 30, 60, 100, 365]
+
     let data = [true, false]
     var body: some View {
         Group {
@@ -225,21 +227,15 @@ struct HomeView: View {
                                 }
                             }
                             .onReceive(NotificationCenter.default.publisher(for: Notification.Name("StreakCompleted"))) { _ in
-                                // Show celebration animation globally when timer completes
-                                celebrationStreakCount = timerViewModel.currentStreak
+                                let streak = timerViewModel.currentStreak
+                                celebrationStreakCount = streak
                                 showStreakCelebration = true
-                                // Global streak celebration triggered
 
-                                // Streak milestones are a peak-emotion moment — prime the
-                                // App Store prompt once we've earned the goodwill. The
-                                // 3-day floor avoids first-week churn users and Apple's
-                                // SKStoreReviewController still caps at 3 prompts/year.
-                                let milestoneDays: Set<Int> = [3, 7, 14, 30, 60, 100, 365]
-                                if milestoneDays.contains(timerViewModel.currentStreak) {
-                                    DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                                        appState.requestReviewIfEligible(
-                                            trigger: "streak_milestone_\(timerViewModel.currentStreak)"
-                                        )
+                                // Let the celebration animation breathe before the SK
+                                // prompt lands on top of it.
+                                if Self.streakReviewMilestones.contains(streak) {
+                                    DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
+                                        appState.requestReviewIfEligible(trigger: .streakMilestone(streak))
                                     }
                                 }
                             }
