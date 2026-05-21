@@ -406,6 +406,7 @@ struct QuizOnboardingView: View {
         case commitmentHold
         case paywall
         case notificationTime  // post-paywall: pick a window, then iOS permission prompt
+        case rating
     }
 
     @State private var currentStep: Step = .quiz
@@ -495,6 +496,10 @@ struct QuizOnboardingView: View {
                             advanceFromNotificationTime()
                         }
                     )
+                case .rating:
+                    RatingView(size: size) {
+                        advanceFromRating()
+                    }
                 }
             }
             .transition(.asymmetric(
@@ -755,9 +760,14 @@ struct QuizOnboardingView: View {
                     )
                     appState.lastNotificationSetDate = Date()
                 }
-                onComplete()
+                transition(to: .rating)
             }
         }
+    }
+
+    private func advanceFromRating() {
+        UIImpactFeedbackGenerator(style: .soft).impactOccurred()
+        onComplete()
     }
 
     private func transition(to step: Step) {

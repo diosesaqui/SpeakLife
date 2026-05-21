@@ -6,6 +6,8 @@
 //
 
 import SwiftUI
+import StoreKit
+import FirebaseAnalytics
 
 final class AppState: ObservableObject {
     @Published var rootViewId = UUID()
@@ -305,7 +307,60 @@ final class AppState: ObservableObject {
             notificationCount = 5
         }
     }
-    
+
+    /// Requests an App Store review if the throttle allows it. Apple's
+    /// SKStoreReviewController hard-caps at 3 prompts per 365 days regardless,
+    /// so this gate exists to avoid burning the OS-level budget on rapid-fire
+    /// triggers (every favorite tap, every devotional share, etc.) and to
+    /// re-open the budget for returning users after a fresh app release.
+    func requestReviewIfEligible(trigger: ReviewTrigger) {
+        // Serialize the throttle check and write on main so two near-simultaneous
+        // callers can't both pass the guard and double-log to Analytics.
+        DispatchQueue.main.async {
+            let currentVersion = Self.currentAppVersion
+            let versionChanged = self.lastRequestedRatingVersion != currentVersion
+            let elapsedEnough: Bool = {
+                guard let last = self.lastReviewRequestSetDate else { return true }
+                return Date().timeIntervalSince(last) >= Self.minimumReviewInterval
+            }()
+
+            guard versionChanged || elapsedEnough else { return }
+            guard let scene = UIApplication.shared.connectedScenes
+                .first(where: { $0.activationState == .foregroundActive })
+                as? UIWindowScene else { return }
+
+            SKStoreReviewController.requestReview(in: scene)
+            self.lastReviewRequestSetDate = Date()
+            self.lastRequestedRatingVersion = currentVersion
+            Analytics.logEvent(Event.leaveReviewShown, parameters: ["trigger": trigger.analyticsKey])
+        }
+    }
+
+    private static let currentAppVersion: String = APP.Version.stringNumber
+
+    private static let minimumReviewInterval: TimeInterval = 60 * 60 * 24 * 3
+}
+
+enum ReviewTrigger {
+    case declarationView
+    case onboardingRatingScreen
+    case streakMilestone(Int)
+    case breakthroughCelebration
+    case premiumAnniversary(Int)
+    case devotionalShared
+    case personalDeclarationCreated
+
+    var analyticsKey: String {
+        switch self {
+        case .declarationView:              return "declaration_view"
+        case .onboardingRatingScreen:       return "onboarding_rating_screen"
+        case .streakMilestone(let days):    return "streak_milestone_\(days)"
+        case .breakthroughCelebration:      return "breakthrough_celebration"
+        case .premiumAnniversary(let days): return "premium_anniversary_\(days)"
+        case .devotionalShared:             return "devotional_shared"
+        case .personalDeclarationCreated:   return "personal_declaration_created"
+        }
+    }
 }
 
 @propertyWrapper

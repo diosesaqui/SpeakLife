@@ -64,7 +64,7 @@ struct CreateYourOwnView: View {
             .onDisappear {
                 editingDeclaration = nil
                 declarationStore.refreshCreateOwn()
-                declarationStore.requestReview.toggle()
+                appState.requestReviewIfEligible(trigger: .personalDeclarationCreated)
             }
         }
         .onAppear()  {

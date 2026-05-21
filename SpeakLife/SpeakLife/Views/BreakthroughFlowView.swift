@@ -286,6 +286,7 @@ struct BreakthroughFlowView: View {
                 .buttonStyle(PlainButtonStyle())
 
                 Button {
+                    appState.requestReviewIfEligible(trigger: .breakthroughCelebration)
                     onDismiss()
                 } label: {
                     Text("Go to Home")
