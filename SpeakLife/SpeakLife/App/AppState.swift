@@ -6,6 +6,8 @@
 //
 
 import SwiftUI
+import StoreKit
+import FirebaseAnalytics
 
 final class AppState: ObservableObject {
     @Published var rootViewId = UUID()
@@ -305,7 +307,35 @@ final class AppState: ObservableObject {
             notificationCount = 5
         }
     }
-    
+
+    /// Requests an App Store review if the throttle allows it. Apple's
+    /// SKStoreReviewController hard-caps at 3 prompts per 365 days regardless,
+    /// so this gate exists to avoid burning the OS-level budget on rapid-fire
+    /// triggers (every favorite tap, every devotional share, etc.) and to
+    /// re-open the budget for returning users after a fresh app release.
+    func requestReviewIfEligible(trigger: String) {
+        let currentVersion = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0.0"
+        let minimumInterval: TimeInterval = 60 * 60 * 24 * 3 // 3 days between prompts within a version
+
+        let versionChanged = lastRequestedRatingVersion != currentVersion
+        let elapsedEnough: Bool = {
+            guard let last = lastReviewRequestSetDate else { return true }
+            return Date().timeIntervalSince(last) >= minimumInterval
+        }()
+
+        guard versionChanged || elapsedEnough else { return }
+
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            guard let scene = UIApplication.shared.connectedScenes
+                .first(where: { $0.activationState == .foregroundActive })
+                as? UIWindowScene else { return }
+            SKStoreReviewController.requestReview(in: scene)
+            self.lastReviewRequestSetDate = Date()
+            self.lastRequestedRatingVersion = currentVersion
+            Analytics.logEvent(Event.leaveReviewShown, parameters: ["trigger": trigger])
+        }
+    }
 }
 
 @propertyWrapper

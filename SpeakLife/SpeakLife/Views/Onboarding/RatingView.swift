@@ -85,14 +85,17 @@ struct RatingView: View {
                 
                 Spacer()
                 
-                ShimmerButton(colors: [.blue], buttonTitle: "Rate us", action: callBack)
+                ShimmerButton(colors: [.blue], buttonTitle: "Rate us", action: {
+                    appState.requestReviewIfEligible(trigger: "onboarding_rating_screen")
+                    callBack()
+                })
                     .frame(width: size.width * 0.87 ,height: 50)
-                
+
                     .scaleEffect(showStars[4] ? 1 : 0.95) // Button appears last
                     .animation(Animation.spring(response: 0.4, dampingFraction: 0.5)
                         .delay(0.5), value: showStars[4])
                     .padding(.horizontal, 20)
-                
+
                 Spacer()
                     .frame(width: 5, height: size.height * 0.07)
             }
@@ -106,18 +109,8 @@ struct RatingView: View {
                     Color.black.opacity(0.4)
                         .edgesIgnoringSafeArea(.all)
                 }
-                
+
             )
-        }
-        .onAppear {
-            DispatchQueue.main.async {
-                if let scene = UIApplication.shared.connectedScenes
-                    .first(where: { $0.activationState == .foregroundActive })
-                    as? UIWindowScene {
-                    SKStoreReviewController.requestReview(in: scene)
-                }
-            }
-            appState.lastReviewRequestSetDate = Date()
         }
     }
        

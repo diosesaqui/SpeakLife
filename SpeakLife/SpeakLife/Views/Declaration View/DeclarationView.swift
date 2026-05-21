@@ -36,9 +36,7 @@ struct DeclarationView: View {
 
     private var isIPad: Bool { horizontalSizeClass == .regular }
     
-    @AppStorage("review.counter") private var reviewCounter = 0
     @AppStorage("share.counter") private var shareCounter = 0
-    @AppStorage("review.try") private var reviewTry = 1
     @AppStorage("shared.count") private var shared = 0
     @AppStorage("premium.count") private var premiumCount = 0
     @State var result: Result<MFMailComposeResult, Error>? = nil
@@ -385,7 +383,6 @@ struct DeclarationView: View {
         })
         .onChange(of: presentDevotionalSubscriptionView, perform: handleDevotionalPresentation)
         .alert(isPresented: $viewModel.showErrorMessage, content: errorAlert)
-        .alert(isPresented: $viewModel.helpUsGrowAlert, content: growAlert)
         .alert("Know anyone that can benefit from SpeakLife?", isPresented: $share, actions: shareAlert)
         .sheet(isPresented: $isShowingMailView) {
             MailView(isShowing: $isShowingMailView, result: self.$result, origin: .review, isSubscribed: subscriptionStore.isPremium)
@@ -499,17 +496,6 @@ struct DeclarationView: View {
         )
     }
     
-    private func growAlert() -> Alert {
-        Alert(
-            title: Text("Help us grow?"),
-            message: Text("Leave us a 5 star review 🌟"),
-            primaryButton: .default(Text("Yes")) {
-                requestReview()
-            },
-            secondaryButton: .cancel()
-        )
-    }
-    
     @ViewBuilder
     private func shareAlert() -> some View {
         Button("Yes, I'll share with friends!") {
@@ -523,7 +509,6 @@ struct DeclarationView: View {
     
     private func handleOnAppear() {
         checkAndShowBanner()
-        reviewCounter += 1
         shareCounter += 1
         premiumCount += 1
         shareApp()
@@ -598,51 +583,7 @@ struct DeclarationView: View {
         }
     }
     
-    func requestReview() {
-        showReview()
-    }
-    
     private func showReview() {
-     
-        let currentDate = Date()
-        if reviewTry <= 3 && appState.lastReviewRequestSetDate == nil {
-            DispatchQueue.main.async {
-                if let scene = UIApplication.shared.connectedScenes
-                    .first(where: { $0.activationState == .foregroundActive })
-                    as? UIWindowScene {
-                    SKStoreReviewController.requestReview(in: scene)
-                   
-                    reviewTry += 1
-                    appState.lastReviewRequestSetDate = Date()
-                    Analytics.logEvent(Event.leaveReviewShown, parameters: nil)
-                    
-                }
-            }
-        } else if reviewTry <= 1, let lastReviewSetDate = appState.lastReviewRequestSetDate, currentDate.timeIntervalSince(lastReviewSetDate) >= 60 * 1 {
-            DispatchQueue.main.async {
-                if let scene = UIApplication.shared.connectedScenes
-                    .first(where: { $0.activationState == .foregroundActive })
-                    as? UIWindowScene {
-                    SKStoreReviewController.requestReview(in: scene)
-                    reviewTry += 1
-                    appState.lastReviewRequestSetDate = Date()
-                    Analytics.logEvent(Event.leaveReviewShown, parameters: nil)
-                }
-            }
-        }
-            else if let lastReviewSetDate = appState.lastReviewRequestSetDate,
-                  currentDate.timeIntervalSince(lastReviewSetDate) >= 60 * 60 * 24 * 5,
-                  reviewTry < 3 {
-            DispatchQueue.main.async {
-                if let scene = UIApplication.shared.connectedScenes
-                    .first(where: { $0.activationState == .foregroundActive })
-                    as? UIWindowScene {
-                    SKStoreReviewController.requestReview(in: scene)
-                    reviewTry += 1
-                    appState.lastReviewRequestSetDate = Date()
-                    Analytics.logEvent(Event.leaveReviewShown, parameters: nil)
-                }
-            }
-        }
+        appState.requestReviewIfEligible(trigger: "declaration_view")
     }
 }

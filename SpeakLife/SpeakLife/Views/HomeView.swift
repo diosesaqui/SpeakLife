@@ -229,6 +229,19 @@ struct HomeView: View {
                                 celebrationStreakCount = timerViewModel.currentStreak
                                 showStreakCelebration = true
                                 // Global streak celebration triggered
+
+                                // Streak milestones are a peak-emotion moment — prime the
+                                // App Store prompt once we've earned the goodwill. The
+                                // 3-day floor avoids first-week churn users and Apple's
+                                // SKStoreReviewController still caps at 3 prompts/year.
+                                let milestoneDays: Set<Int> = [3, 7, 14, 30, 60, 100, 365]
+                                if milestoneDays.contains(timerViewModel.currentStreak) {
+                                    DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                                        appState.requestReviewIfEligible(
+                                            trigger: "streak_milestone_\(timerViewModel.currentStreak)"
+                                        )
+                                    }
+                                }
                             }
                             // Notification-triggered burst (push notification tap) — unchanged
                             // Personal Declaration migration — shown once to existing users on update
@@ -271,6 +284,7 @@ struct HomeView: View {
                             .fullScreenCover(item: $anniversaryMilestone) { milestone in
                                 PremiumAnniversaryView(milestone: milestone)
                                     .environmentObject(subscriptionStore)
+                                    .environmentObject(appState)
                             }
                             .fullScreenCover(item: $yearInReviewStats) { stats in
                                 // Snapshot premium status into the view so a

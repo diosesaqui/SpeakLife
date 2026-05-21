@@ -95,6 +95,8 @@ struct SurveyOnboardingView: View {
             HighConversionPaywallView(callback: { advance() })
         case .notificationTime:
             SurveyQ8NotificationScreen(size: size, responses: responses) { advance() }
+        case .rating:
+            RatingView(size: size) { advance() }
         default:
             EmptyView()
         }
@@ -117,15 +119,32 @@ struct SurveyOnboardingView: View {
     private func advance() {
         UIImpactFeedbackGenerator(style: .soft).impactOccurred()
         Analytics.logEvent("survey_step_completed", parameters: ["step": currentStep.rawValue])
+
+        // Leaving the rating screen is the true end of onboarding.
+        if currentStep == .rating {
+            onComplete()
+            return
+        }
+
+        // Leaving the notification step: persist survey responses, ask for the
+        // iOS notification permission, then route to the rating screen — the
+        // rating tap fires the SKStoreReviewController prompt cleanly after the
+        // notification prompt has resolved.
+        if currentStep == .notificationTime {
+            applyResponsesAndContinueToRating()
+            return
+        }
+
         let nextRaw = currentStep.rawValue + 1
         guard let next = SurveyStep(rawValue: nextRaw) else {
-            applyResponsesAndComplete()
+            // Defensive — should be unreachable now that .rating is the terminal step.
+            onComplete()
             return
         }
         withAnimation(.easeInOut(duration: 0.35)) { currentStep = next }
     }
 
-    private func applyResponsesAndComplete() {
+    private func applyResponsesAndContinueToRating() {
         let goalWord = responses.resolvedGoalWord
         appState.surveyGoalWord = goalWord.rawValue
         if let style = responses.primaryDeclarationStyle {
@@ -159,14 +178,10 @@ struct SurveyOnboardingView: View {
             "set_personal_declaration": (savedDeclaration != nil) as NSNumber
         ])
 
-        // Ask for notification permission BEFORE handing off to onComplete (which
-        // schedules lifecycle pushes + content batch). Without this, every survey
-        // user lands with notificationEnabled=false and gets zero pushes until
-        // they manually toggle Reminders on.
-        requestNotificationPermissionThenComplete(categories: notificationCategoriesSet)
+        requestNotificationPermissionThenAdvanceToRating(categories: notificationCategoriesSet)
     }
 
-    private func requestNotificationPermissionThenComplete(categories: Set<DeclarationCategory>) {
+    private func requestNotificationPermissionThenAdvanceToRating(categories: Set<DeclarationCategory>) {
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { granted, _ in
             Analytics.logEvent("notification_permission", parameters: ["granted": granted, "source": "survey_onboarding"])
             DispatchQueue.main.async {
@@ -184,7 +199,7 @@ struct SurveyOnboardingView: View {
                     )
                     appState.lastNotificationSetDate = Date()
                 }
-                onComplete()
+                withAnimation(.easeInOut(duration: 0.35)) { currentStep = .rating }
             }
         }
     }
