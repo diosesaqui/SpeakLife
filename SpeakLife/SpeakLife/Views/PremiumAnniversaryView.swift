@@ -61,6 +61,7 @@ enum PremiumAnniversaryMilestone: Int, CaseIterable, Identifiable {
 struct PremiumAnniversaryView: View {
     let milestone: PremiumAnniversaryMilestone
     @EnvironmentObject var subscriptionStore: SubscriptionStore
+    @EnvironmentObject var appState: AppState
     @Environment(\.dismiss) private var dismiss
 
     @State private var crownScale: CGFloat = 0.6
@@ -154,6 +155,7 @@ struct PremiumAnniversaryView: View {
                     Spacer()
 
                     Button {
+                        appState.requestReviewIfEligible(trigger: .premiumAnniversary(milestone.days))
                         dismiss()
                     } label: {
                         Text("Keep Standing")

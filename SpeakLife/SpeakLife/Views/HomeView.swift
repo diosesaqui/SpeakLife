@@ -101,6 +101,8 @@ struct HomeView: View {
     
     private let currentVersion = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0.0"
 
+    private static let streakReviewMilestones: Set<Int> = [3, 7, 14, 30, 60, 100, 365]
+
     let data = [true, false]
     var body: some View {
         Group {
@@ -225,10 +227,17 @@ struct HomeView: View {
                                 }
                             }
                             .onReceive(NotificationCenter.default.publisher(for: Notification.Name("StreakCompleted"))) { _ in
-                                // Show celebration animation globally when timer completes
-                                celebrationStreakCount = timerViewModel.currentStreak
+                                let streak = timerViewModel.currentStreak
+                                celebrationStreakCount = streak
                                 showStreakCelebration = true
-                                // Global streak celebration triggered
+
+                                // Let the celebration animation breathe before the SK
+                                // prompt lands on top of it.
+                                if Self.streakReviewMilestones.contains(streak) {
+                                    DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
+                                        appState.requestReviewIfEligible(trigger: .streakMilestone(streak))
+                                    }
+                                }
                             }
                             // Notification-triggered burst (push notification tap) — unchanged
                             // Personal Declaration migration — shown once to existing users on update
@@ -271,6 +280,7 @@ struct HomeView: View {
                             .fullScreenCover(item: $anniversaryMilestone) { milestone in
                                 PremiumAnniversaryView(milestone: milestone)
                                     .environmentObject(subscriptionStore)
+                                    .environmentObject(appState)
                             }
                             .fullScreenCover(item: $yearInReviewStats) { stats in
                                 // Snapshot premium status into the view so a

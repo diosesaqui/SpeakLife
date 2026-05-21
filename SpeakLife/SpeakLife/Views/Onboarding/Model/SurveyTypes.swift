@@ -22,12 +22,14 @@ enum SurveyStep: Int, CaseIterable {
     case firstDeclaration   = 11  // taste before paywall
     case paywall            = 12
     case notificationTime   = 13  // post-paywall
+    case rating             = 14  // dedicated SKStoreReviewController prime — highest-velocity ask
 
     var isQuestion: Bool {
         switch self {
         case .intro, .productPositioning, .interstitialB,
              .goalReveal, .personalDeclaration, .takeAStand,
-             .commitmentHold, .firstDeclaration, .paywall, .notificationTime: return false
+             .commitmentHold, .firstDeclaration, .paywall,
+             .notificationTime, .rating: return false
         default: return true
         }
     }

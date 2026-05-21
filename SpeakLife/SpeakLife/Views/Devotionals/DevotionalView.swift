@@ -242,7 +242,7 @@ struct DevotionalView: View {
     private var shareButton: some View {
         Button {
             share.toggle()
-            declarationViewModel.requestReview.toggle()
+            appState.requestReviewIfEligible(trigger: .devotionalShared)
             Analytics.logEvent(Event.devotionalShared, parameters: ["devotionalID": viewModel.devotionalId])
         } label: {
             Image(systemName: "square.and.arrow.up")

@@ -35,9 +35,7 @@ final class DeclarationViewModel: ObservableObject {
     @Published var requestReview = false 
     
     @Published var showDiscountView = false
-    
-    @Published var helpUsGrowAlert = false
-    
+
     private(set) var currentDeclaration: Declaration?
     
     // Track notification-triggered declarations to prevent overrides
