@@ -171,13 +171,13 @@ enum BeliefQuestion: Int, CaseIterable {
         case .godLoves:
             return "Right now, today — do you really believe God loves you?"
         case .tooMessedUp:
-            return "Have you ever felt too far gone for God to actually use you?"
+            return "Deep down — do you ever feel too far gone for God?"
         case .promisesTrue:
-            return "When you read God's promises — are they really for YOU?"
+            return "When you read God's promises — does your heart hear 'this is mine'?"
         case .answersPrayer:
-            return "Does God actually answer when you pray?"
+            return "When you pray — do you actually expect God to answer?"
         case .wordIsPowerful:
-            return "Does God's Word actually have power when YOU speak it?"
+            return "Does God's Word actually move things when YOU speak it?"
         case .authority:
             return "Do you know you have authority over the enemy?"
         }
@@ -188,8 +188,8 @@ enum BeliefQuestion: Int, CaseIterable {
         case .godLoves:       return "Be honest. There's a Scripture for you either way."
         case .tooMessedUp:    return "Shame loses its grip the second you name it."
         case .promisesTrue:   return "Pick what's true today — not what you wish was true."
-        case .answersPrayer:  return "Whichever you pick, the Word has an answer."
-        case .wordIsPowerful: return "This one matters. It's the whole reason this app exists."
+        case .answersPrayer:  return "Your honest answer here is sacred. Pick it."
+        case .wordIsPowerful: return "This one matters. Everything in SpeakLife flows from this."
         case .authority:      return "This is the one that changes everything."
         }
     }
@@ -275,7 +275,7 @@ enum BeliefQuestion: Int, CaseIterable {
             ),
             BeliefAnswer(
                 id: "promises_not_mature",
-                label: "Maybe for the spiritually mature. Not me — yet.",
+                label: "Maybe for the spiritually mature. Not someone like me.",
                 isConfident: false,
                 declaration: "I am a child of Abraham — an heir of the promise. There is no junior class in the Kingdom. The promises are for me now.",
                 verseReference: "Galatians 3:29"
