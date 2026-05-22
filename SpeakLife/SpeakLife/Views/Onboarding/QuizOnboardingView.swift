@@ -201,7 +201,7 @@ enum BeliefQuestion: Int, CaseIterable {
                 id: "love_yes",
                 label: "Yes. He's crazy about me.",
                 isConfident: true,
-                declaration: "God isn't just OK with me — He delights in me. While I was still a mess, Christ died for me. I am fully, finally, forever loved.",
+                declaration: "God isn't just OK with me. He delights in me. While I was still a mess, Christ died for me. I am fully, finally, forever loved.",
                 verseReference: "Romans 5:8"
             ),
             BeliefAnswer(
@@ -222,7 +222,7 @@ enum BeliefQuestion: Int, CaseIterable {
                 id: "love_unearned",
                 label: "Honestly? I don't think I've earned it.",
                 isConfident: false,
-                declaration: "I am loved by grace — not performance. Nothing I do earns it. Nothing I do can lose it. His love is the floor, not the ceiling.",
+                declaration: "I am loved by grace. Not by performance. Nothing I do earns it. Nothing I do can lose it. His love is the floor, not the ceiling.",
                 verseReference: "Ephesians 2:8-9"
             )
         ]
@@ -232,7 +232,7 @@ enum BeliefQuestion: Int, CaseIterable {
                 id: "answers_yes",
                 label: "Yes. He hears me. Always.",
                 isConfident: true,
-                declaration: "Whatever I ask in line with His will, He hears me. And if He hears me — I already have what I asked.",
+                declaration: "Whatever I ask in line with His will, He hears me. And if He hears me, I already have what I asked.",
                 verseReference: "1 John 5:14-15"
             ),
             BeliefAnswer(
@@ -263,7 +263,7 @@ enum BeliefQuestion: Int, CaseIterable {
                 id: "promises_yes",
                 label: "Yes. Every one has my name on it.",
                 isConfident: true,
-                declaration: "Every promise of God is YES and AMEN in Christ — through me, for me, to His glory.",
+                declaration: "Every promise of God is YES and AMEN in Christ. Through me. For me. To His glory.",
                 verseReference: "2 Corinthians 1:20"
             ),
             BeliefAnswer(
@@ -277,14 +277,14 @@ enum BeliefQuestion: Int, CaseIterable {
                 id: "promises_not_mature",
                 label: "Maybe for the spiritually mature. Not someone like me.",
                 isConfident: false,
-                declaration: "I am a child of Abraham — an heir of the promise. There is no junior class in the Kingdom. The promises are for me now.",
+                declaration: "I am a child of Abraham. I am an heir of the promise. There is no junior class in the Kingdom. The promises are for me now.",
                 verseReference: "Galatians 3:29"
             ),
             BeliefAnswer(
                 id: "promises_then_not_now",
                 label: "Those were Bible times. I don't see them today.",
                 isConfident: false,
-                declaration: "Jesus Christ is the same yesterday, today, and forever. What He did then, He does now — in me, through me, for me.",
+                declaration: "Jesus Christ is the same yesterday, today, and forever. What He did then, He does now. In me. Through me. For me.",
                 verseReference: "Hebrews 13:8"
             )
         ]
@@ -294,7 +294,7 @@ enum BeliefQuestion: Int, CaseIterable {
                 id: "messed_no",
                 label: "No. He picked me on purpose.",
                 isConfident: true,
-                declaration: "I am a new creation in Christ. The old me is gone. God chose me on purpose — for purpose.",
+                declaration: "I am a new creation in Christ. The old me is gone. God chose me on purpose. For purpose.",
                 verseReference: "2 Corinthians 5:17"
             ),
             BeliefAnswer(
@@ -308,14 +308,14 @@ enum BeliefQuestion: Int, CaseIterable {
                 id: "messed_forgiven_not_used",
                 label: "Forgiven, yeah. Useful to Him? Not so sure.",
                 isConfident: false,
-                declaration: "God picks the unlikely. He didn't disqualify me — He drafted me. My past is the testimony, not the verdict.",
+                declaration: "God picks the unlikely. He didn't disqualify me. He drafted me. My past is the testimony, not the verdict.",
                 verseReference: "1 Corinthians 1:27-28"
             ),
             BeliefAnswer(
                 id: "messed_hidden_shame",
                 label: "If He really knew me, He'd be done with me.",
                 isConfident: false,
-                declaration: "He's already searched me. He sees all of it — and still calls me His. Still loved. Still chosen. Nothing hidden has changed His mind.",
+                declaration: "He's already searched me. He sees all of it. And still calls me His. Still loved. Still chosen. Nothing hidden has changed His mind.",
                 verseReference: "Psalm 139:1-3"
             )
         ]
@@ -332,21 +332,21 @@ enum BeliefQuestion: Int, CaseIterable {
                 id: "word_open_inexperienced",
                 label: "I believe it. I've just never really tried.",
                 isConfident: false,
-                declaration: "Faith comes by hearing — and hearing by the Word. When I speak truth, my own ears hear it, and faith rises in me.",
+                declaration: "Faith comes by hearing. Hearing comes by the Word. When I speak truth, my own ears hear it, and faith rises in me.",
                 verseReference: "Romans 10:17"
             ),
             BeliefAnswer(
                 id: "word_pastors_not_me",
                 label: "Powerful for pastors. Not sure about me.",
                 isConfident: false,
-                declaration: "I speak directly to my mountain — and I don't doubt in my heart. What I declare in Jesus' name is done.",
+                declaration: "I speak directly to my mountain. I don't doubt in my heart. What I declare in Jesus' name is done.",
                 verseReference: "Mark 11:23"
             ),
             BeliefAnswer(
                 id: "word_symbolic",
                 label: "Words are symbolic. They don't change anything.",
                 isConfident: false,
-                declaration: "God spoke — and there was light. He made me in His image. When my words agree with His, they carry weight.",
+                declaration: "God spoke. And there was light. He made me in His image. When my words agree with His, they carry weight.",
                 verseReference: "Genesis 1:3"
             )
         ]
@@ -363,22 +363,22 @@ enum BeliefQuestion: Int, CaseIterable {
                 id: "authority_unsure_how",
                 label: "Yes — but I freeze when it matters.",
                 isConfident: false,
-                declaration: "I don't need to learn authority — I need to BELIEVE it. I am seated with Christ, far above every power, principality, and dominion. I already have it.",
+                declaration: "I don't need to learn authority. I need to BELIEVE it. I am seated with Christ, far above every power, principality, and dominion. I already have it.",
                 verseReference: "Ephesians 2:6"
             ),
             BeliefAnswer(
                 id: "authority_not_for_me",
                 label: "Spiritual warfare feels too dramatic for my real life.",
                 isConfident: false,
-                declaration: "The weapons of my warfare are not natural — they're mighty in God for tearing down strongholds. This is for my real, daily life.",
+                declaration: "The weapons of my warfare are not natural. They're mighty in God for tearing down strongholds. This is for my real, daily life.",
                 verseReference: "2 Corinthians 10:4"
             ),
             BeliefAnswer(
                 id: "authority_defeated",
                 label: "I feel powerless. The enemy is winning.",
                 isConfident: false,
-                declaration: "Greater is He who is in me than he who is in the world. I am not a victim. I submit to God, I resist the devil — and he flees.",
-                verseReference: "1 John 4:4"
+                declaration: "Greater is He who is in me than he who is in the world. I am not a victim. I submit to God. I resist the devil. And he flees.",
+                verseReference: "1 John 4:4; James 4:7"
             )
         ]
         }
