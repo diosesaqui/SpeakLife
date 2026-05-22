@@ -361,14 +361,14 @@ enum BeliefQuestion: Int, CaseIterable {
             ),
             BeliefAnswer(
                 id: "authority_unsure_how",
-                label: "I've heard it. I don't know how to use it.",
+                label: "Yes — but I freeze when it matters.",
                 isConfident: false,
                 declaration: "I don't need to learn authority — I need to BELIEVE it. I am seated with Christ, far above every power, principality, and dominion. I already have it.",
                 verseReference: "Ephesians 2:6"
             ),
             BeliefAnswer(
                 id: "authority_not_for_me",
-                label: "Spiritual warfare? Feels like pastor territory.",
+                label: "Spiritual warfare feels too dramatic for my real life.",
                 isConfident: false,
                 declaration: "The weapons of my warfare are not natural — they're mighty in God for tearing down strongholds. This is for my real, daily life.",
                 verseReference: "2 Corinthians 10:4"
