@@ -499,6 +499,17 @@
             "tag": "godsHeart"
         },
         {
+            "id": "speaklife-s4e6.mp3",
+            "title": "Daily Healing Bread",
+            "subtitle": "SpeakLife",
+            "duration": "4m",
+            "imageUrl": "devotional",
+            "isPremium": true,
+            "tag": "speaklife",
+            "season": 4,
+            "episode": 6
+        },
+        {
             "id": "speaklife-s4e5.mp3",
             "title": "You Don't Produce",
             "subtitle": "You Receive",
