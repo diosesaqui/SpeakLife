@@ -261,6 +261,49 @@ final class AppState: ObservableObject {
         }
         defaults.set(true, forKey: "personalDeclarationTimeResyncedV1")
 
+        // V8 heal: collapse an auto-widened notification category set back down to
+        // the single category the user actually chose in onboarding. Older
+        // onboarding builds wrote goalWord.notificationCategories /
+        // segment.notificationCategories (a curated 4-6 category set) into
+        // selectedNotificationCategories, so daily pushes surfaced topics the user
+        // never picked. New onboarding writes only the single category, and the
+        // background reschedule paths now respect the saved set exactly — but
+        // existing users still carry the widened value in UserDefaults.
+        //
+        // Precise + safe: only collapse when the stored set EXACTLY matches one of
+        // the known auto-widened patterns. A user who deliberately multi-selected
+        // in Settings won't match one of those curated combos and is left
+        // untouched. One-shot via sentinel.
+        if defaults.object(forKey: "notificationCategoriesCollapsedV1") == nil {
+            let rawStored = defaults.string(forKey: "selectedNotificationCategories") ?? ""
+            let storedSet = Set(rawStored.split(separator: ",").compactMap { DeclarationCategory(rawValue: String($0)) })
+            print("🔎 notification categories check: stored=\(storedSet.map { $0.rawValue }.sorted()) onboardingCategory=\(defaults.string(forKey: "selectedCategory") ?? "nil")")
+            if storedSet.count > 1 {
+                // Enum-derived patterns from the two routed onboarding flows, plus
+                // the hardcoded fallback sets used by older/unrouted flows
+                // (StreamlinedSpiritualWarfareFlow + EnhancedOnboardingViewRefactored
+                // fall back to [.faith,.confidence,.wisdom,.destiny] when goalWord is
+                // nil; OnboardingView seeds [.faith,.confidence,.wisdom,.speaklife]).
+                let autoWidenedPatterns: [Set<DeclarationCategory>] =
+                    SurveyGoalWord.allCases.map { $0.notificationCategories }
+                    + QuizSegment.allCases.map { $0.notificationCategories }
+                    + [
+                        [.faith, .confidence, .wisdom, .destiny],
+                        [.faith, .confidence, .wisdom, .speaklife],
+                    ]
+                if autoWidenedPatterns.contains(storedSet),
+                   let single = DeclarationCategory(rawValue: defaults.string(forKey: "selectedCategory") ?? ""),
+                   storedSet.contains(single) {
+                    defaults.set(single.rawValue, forKey: "selectedNotificationCategories")
+                    print("🩹 V8 heal: collapsed auto-widened notification categories \(storedSet.map { $0.rawValue }.sorted()) → \(single.rawValue)")
+                    DispatchQueue.main.async {
+                        NotificationManager.shared.rescheduleFromUserDefaults()
+                    }
+                }
+            }
+        }
+        defaults.set(true, forKey: "notificationCategoriesCollapsedV1")
+
         // Heal lifecycle pushes (D1-D30) that were wiped by the legacy
         // removeAllPendingNotificationRequests() bug in NotificationManager.
         // Service-side flag (lifecycle_repaired_v1) keeps it one-shot.
