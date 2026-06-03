@@ -487,7 +487,7 @@ struct QuizOnboardingView: View {
                 case .paywall:
                     HighConversionPaywallView(callback: {
                         advanceFromPaywall()
-                    }, source: "onboarding")
+                    }, source: "onboarding", isHardPaywall: true)
                 case .notificationTime:
                     SurveyQ8NotificationScreen(
                         size: size,
@@ -709,8 +709,8 @@ struct QuizOnboardingView: View {
     }
 
     private func advanceFromPaywall() {
-        // Paywall callback fires both on successful purchase AND on close —
-        // either way the user moves on to pick their notification window.
+        // Hard paywall: the only path that fires this callback is a successful
+        // purchase (close button is suppressed via isHardPaywall: true).
         // Seed the screen with the burden so its subtitle and preview render
         // the user's matched declaration text instead of a generic fallback.
         notificationResponses.heaviestBurden = selectedBurden

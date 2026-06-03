@@ -37,6 +37,11 @@ struct HighConversionPaywallView: View {
     /// (PremiumView, OptimizedSubscriptionView from HomeView).
     var source: String = "settings"
 
+    /// When true, the close button is never rendered. The only way to advance
+    /// is a successful purchase (or Restore). Used by the quiz onboarding so
+    /// users cannot dismiss the paywall without making a decision.
+    var isHardPaywall: Bool = false
+
     /// Variant string sent to Firebase Analytics on every paywall event so the
     /// A/B between benefit-based and feature-based copy can be compared.
     private var paywallVariant: String {
@@ -176,7 +181,7 @@ struct HighConversionPaywallView: View {
             }
 
             if declarationStore.isPurchasing { RotatingLoadingImageView() }
-            if showCloseButton { closeButton }
+            if showCloseButton && !isHardPaywall { closeButton }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .ignoresSafeArea(edges: .bottom)
@@ -521,8 +526,10 @@ struct HighConversionPaywallView: View {
             "source": source,
             "variant": paywallVariant
         ])
-        DispatchQueue.main.asyncAfter(deadline: .now() + 4) {
-            withAnimation(.easeIn(duration: 0.4)) { showCloseButton = true }
+        if !isHardPaywall {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 4) {
+                withAnimation(.easeIn(duration: 0.4)) { showCloseButton = true }
+            }
         }
     }
 
