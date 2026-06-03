@@ -37,6 +37,19 @@ struct HighConversionPaywallView: View {
     /// (PremiumView, OptimizedSubscriptionView from HomeView).
     var source: String = "settings"
 
+    /// When true at the callsite, the paywall *may* render hard (no close button).
+    /// Actual hardness is gated by Remote Config `showPayWhatYouCanLink`: hard
+    /// only takes effect when the pay-what-you-can escape valve is also OFF.
+    /// Flipping `showPayWhatYouCanLink` to true in Remote Config restores both
+    /// the link and the close button as a single kill-switch.
+    var isHardPaywall: Bool = false
+
+    /// Effective hard-paywall state. Caller opts in via `isHardPaywall`, but
+    /// the Remote Config flag must also gate the escape valve off.
+    private var effectiveIsHardPaywall: Bool {
+        isHardPaywall && !subscriptionStore.showPayWhatYouCanLink
+    }
+
     /// Variant string sent to Firebase Analytics on every paywall event so the
     /// A/B between benefit-based and feature-based copy can be compared.
     private var paywallVariant: String {
@@ -176,7 +189,7 @@ struct HighConversionPaywallView: View {
             }
 
             if declarationStore.isPurchasing { RotatingLoadingImageView() }
-            if showCloseButton { closeButton }
+            if showCloseButton && !effectiveIsHardPaywall { closeButton }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .ignoresSafeArea(edges: .bottom)
@@ -521,8 +534,10 @@ struct HighConversionPaywallView: View {
             "source": source,
             "variant": paywallVariant
         ])
-        DispatchQueue.main.asyncAfter(deadline: .now() + 4) {
-            withAnimation(.easeIn(duration: 0.4)) { showCloseButton = true }
+        if !effectiveIsHardPaywall {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 4) {
+                withAnimation(.easeIn(duration: 0.4)) { showCloseButton = true }
+            }
         }
     }
 
