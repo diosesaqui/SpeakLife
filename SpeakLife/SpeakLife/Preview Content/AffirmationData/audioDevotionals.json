@@ -16,7 +16,7 @@
             "id": "speaklife",
             "displayName": "SpeakLife",
             "order": 1,
-            "reversed": true
+            "reversed": false
         },
         {
             "id": "newcreation",
