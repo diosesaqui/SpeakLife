@@ -143,8 +143,9 @@ struct SpeakLifeApp: App {
                     // runHelloAOTest() // Disabled: Test should not run in production
                     // Handle landing page and initial category selection.
                     // Budget aligned with LandingView's sequenced entrance:
-                    // entrance ~1.4s, breath ~0.7s, outgoing fade ~0.4s.
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+                    // glow+icon spring ~0.7s, wordmark letter cascade,
+                    // shimmer sweep, tagline, breath, then outgoing fade.
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 2.8) {
                         withAnimation {
                             isShowingLanding = false
                         }
