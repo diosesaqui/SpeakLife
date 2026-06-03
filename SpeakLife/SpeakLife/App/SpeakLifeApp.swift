@@ -141,8 +141,11 @@ struct SpeakLifeApp: App {
                     
                     // 🧪 Test HelloAO Bible API integration
                     // runHelloAOTest() // Disabled: Test should not run in production
-                    // Handle landing page and initial category selection
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                    // Handle landing page and initial category selection.
+                    // Budget aligned with LandingView's sequenced entrance:
+                    // glow+icon spring ~0.7s, wordmark letter cascade,
+                    // shimmer sweep, tagline, breath, then outgoing fade.
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 2.8) {
                         withAnimation {
                             isShowingLanding = false
                         }
