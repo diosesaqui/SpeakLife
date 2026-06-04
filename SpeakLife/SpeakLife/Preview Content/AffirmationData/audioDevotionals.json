@@ -499,6 +499,17 @@
             "tag": "godsHeart"
         },
         {
+            "id": "speaklife-s4e7.mp3",
+            "title": "It Is Written",
+            "subtitle": "SpeakLife",
+            "duration": "4m",
+            "imageUrl": "devotional",
+            "isPremium": true,
+            "tag": "speaklife",
+            "season": 4,
+            "episode": 7
+        },
+        {
             "id": "speaklife-s4e6.mp3",
             "title": "Daily Healing Bread",
             "subtitle": "SpeakLife",
