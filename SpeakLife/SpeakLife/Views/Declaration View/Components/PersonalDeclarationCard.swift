@@ -226,7 +226,13 @@ struct PersonalDeclarationCard: View {
                 cardAppear = true
             }
         }
-        .onDisappear { stopRecording() }
+        .onDisappear {
+            // Abort cleanly on dismiss — invalidate the auto-stop timer and tear
+            // down the recorder without kicking off a transcription we'd discard.
+            autoStopTimer?.invalidate()
+            autoStopTimer = nil
+            verifier.cancel()
+        }
     }
 
     // MARK: - Day Badge
@@ -543,12 +549,6 @@ struct PersonalDeclarationCard: View {
                 showTryAgain()
             }
         }
-    }
-
-    private func stopRecording() {
-        autoStopTimer?.invalidate()
-        autoStopTimer = nil
-        Task { _ = await verifier.stopAndTranscribe() }
     }
 
     private func showSuccess() {

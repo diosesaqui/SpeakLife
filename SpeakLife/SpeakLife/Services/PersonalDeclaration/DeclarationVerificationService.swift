@@ -96,6 +96,17 @@ final class DeclarationVerificationService: ObservableObject {
         isRecording = true
     }
 
+    /// Aborts any in-flight recording without transcribing. Called when the card
+    /// is dismissed so the audio session and state never leak into a stuck spinner.
+    func cancel() {
+        recorder?.stop()
+        recorder = nil
+        isRecording = false
+        isTranscribing = false
+        try? AVAudioSession.sharedInstance().setActive(false,
+            options: .notifyOthersOnDeactivation)
+    }
+
     /// Stops recording, transcribes the audio, and returns the match percentage.
     func stopAndTranscribe() async -> Double {
         recorder?.stop()
@@ -124,18 +135,46 @@ final class DeclarationVerificationService: ObservableObject {
         let capturedWords = declarationWords
 
         return await withCheckedContinuation { continuation in
-            recognizer.recognitionTask(with: request) { [weak self] result, error in
-                guard let final = result, final.isFinal else {
-                    if error != nil { continuation.resume(returning: 0) }
-                    return
+            // SFSpeechRecognitionTask can fire its callback multiple times, and
+            // on short/silent/empty audio (some iOS versions) it may never fire
+            // an `.isFinal` result and never error. Resuming a continuation twice
+            // is a runtime trap (crash); never resuming hangs the caller forever
+            // (the card sticks on the "Analyzing…" spinner with no way out). The
+            // lock-guarded `resumed` flag makes the resume-exactly-once safe across
+            // the recognizer's arbitrary callback queue and the timeout below.
+            let lock = NSLock()
+            var resumed = false
+            var task: SFSpeechRecognitionTask?
+
+            func finish(_ value: Double) {
+                lock.lock()
+                let already = resumed
+                resumed = true
+                lock.unlock()
+                guard !already else { return }
+                task?.cancel()
+                continuation.resume(returning: value)
+            }
+
+            task = recognizer.recognitionTask(with: request) { [weak self] result, error in
+                if let final = result, final.isFinal {
+                    let transcription = final.bestTranscription.formattedString
+                    let (pct, indices) = Self.computeMatch(transcription: transcription,
+                                                           declarationWords: capturedWords)
+                    Task { @MainActor [weak self] in
+                        self?.matchedIndices = indices
+                    }
+                    finish(pct)
+                } else if error != nil {
+                    finish(0)
                 }
-                let transcription = final.bestTranscription.formattedString
-                let (pct, indices) = Self.computeMatch(transcription: transcription,
-                                                       declarationWords: capturedWords)
-                Task { @MainActor [weak self] in
-                    self?.matchedIndices = indices
-                }
-                continuation.resume(returning: pct)
+                // Non-final, no error → partial callback; wait for final or timeout.
+            }
+
+            // Safety net: if the recognizer never returns a final result and never
+            // errors, resolve as a miss after 8s rather than leaving the UI frozen.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 8) {
+                finish(0)
             }
         }
     }
