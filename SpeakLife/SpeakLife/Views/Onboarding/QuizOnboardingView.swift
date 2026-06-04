@@ -402,11 +402,11 @@ struct QuizOnboardingView: View {
         case beliefSequence
         case burdenSelection   // 2-axis personalization: drives matched declaration content + home category
         case matchedDeclaration
+        case rating            // App Store review prompt — slotted before paywall so every funnel-progress user sees it (ASO velocity); placed AFTER matched declaration so the user has had at least one personalized payoff and BEFORE personalDeclaration/paywall so it doesn't compete with the trial decision
         case personalDeclaration
         case commitmentHold
         case paywall
         case notificationTime  // post-paywall: pick a window, then iOS permission prompt
-        case rating
     }
 
     @State private var currentStep: Step = .quiz
@@ -682,7 +682,15 @@ struct QuizOnboardingView: View {
             "declaration_id": matchedDeclarationVerse,
             "time_on_screen_seconds": timeOnScreen
         ])
-        transition(to: .personalDeclaration)
+        // Slot the App Store review prompt here — right after the user sees
+        // their first personalized payoff and BEFORE the hard paywall. This
+        // captures every funnel-progress user (not just subscribers) for ASO
+        // velocity, and stays out of the way of the trial conversion moment.
+        Analytics.logEvent("onboarding_rating_step_shown", parameters: [
+            "segment": segment.rawValue,
+            "position": "post_matched_declaration"
+        ])
+        transition(to: .rating)
     }
 
     private func advanceFromPersonalDeclaration() {
@@ -762,14 +770,22 @@ struct QuizOnboardingView: View {
                     )
                     appState.lastNotificationSetDate = Date()
                 }
-                transition(to: .rating)
+                // Rating step now fires earlier in the funnel (right after
+                // matchedDeclaration) so non-converters see it too. By the
+                // time we finish onboarding the user has already been asked,
+                // and the 3-day local throttle in requestReviewIfEligible
+                // would suppress a second ask anyway — so skip straight to
+                // onComplete.
+                onComplete()
             }
         }
     }
 
     private func advanceFromRating() {
         UIImpactFeedbackGenerator(style: .soft).impactOccurred()
-        onComplete()
+        // Rating now lives between matchedDeclaration and personalDeclaration,
+        // so advancing means continuing into the spoken declaration flow.
+        transition(to: .personalDeclaration)
     }
 
     private func transition(to step: Step) {
