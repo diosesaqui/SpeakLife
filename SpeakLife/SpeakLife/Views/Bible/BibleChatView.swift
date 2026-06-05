@@ -458,19 +458,13 @@ struct BibleChatConversationView: View {
 
     private var typingIndicator: some View {
         HStack {
-            HStack(spacing: 5) {
-                ForEach(0..<3) { _ in
-                    Circle()
-                        .fill(Color.white.opacity(0.55))
-                        .frame(width: 7, height: 7)
-                }
-            }
-            .padding(.vertical, 12)
-            .padding(.horizontal, 16)
-            .background(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(Color.white.opacity(0.08))
-            )
+            TypingDots()
+                .padding(.vertical, 12)
+                .padding(.horizontal, 16)
+                .background(
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .fill(Color.white.opacity(0.08))
+                )
             Spacer(minLength: 40)
         }
     }
@@ -507,6 +501,28 @@ struct BibleChatConversationView: View {
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
         .background(Color.black.opacity(0.2))
+    }
+}
+
+// Animated "typing" indicator — three dots pulsing in a wave.
+private struct TypingDots: View {
+    @State private var animating = false
+
+    var body: some View {
+        HStack(spacing: 5) {
+            ForEach(0..<3) { i in
+                Circle()
+                    .fill(Color.white.opacity(0.6))
+                    .frame(width: 7, height: 7)
+                    .scaleEffect(animating ? 1.0 : 0.5)
+                    .opacity(animating ? 1.0 : 0.4)
+                    .animation(
+                        .easeInOut(duration: 0.6).repeatForever().delay(Double(i) * 0.2),
+                        value: animating
+                    )
+            }
+        }
+        .onAppear { animating = true }
     }
 }
 

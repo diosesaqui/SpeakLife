@@ -101,13 +101,15 @@ enum QuizSegment: String, CaseIterable {
         }
     }
 
+    // Trial details live in the plan section below, so the subhead leads with the
+    // promise instead of repeating "Start your 3-day free trial."
     var paywallSubheadline: String {
         switch self {
-        case .battlefieldMind:   return "Start your 3-day free trial. Speak truth before the next 3am wake-up."
-        case .believerAuthority: return "Start your 3-day free trial. Speak God's Word with authority."
-        case .alreadyYours:      return "Start your 3-day free trial. Stop earning what He's already given."
-        case .hisHeart:          return "Start your 3-day free trial. Receive His love every morning."
-        case .unsegmented:       return "Start your 3-day free trial. 500,000+ believers do this daily."
+        case .battlefieldMind:   return "Speak truth before the next 3am wake-up."
+        case .believerAuthority: return "Speak God's Word with authority, every day."
+        case .alreadyYours:      return "Everything He's already given — claimed daily."
+        case .hisHeart:          return "Receive His love every single morning."
+        case .unsegmented:       return "Join 500,000+ believers who do this daily."
         }
     }
 
