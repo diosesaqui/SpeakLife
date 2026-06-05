@@ -41,12 +41,16 @@ struct PrayerWallView: View {
                 Image(subscriptionStore.onboardingBGImage)
                     .resizable()
                     .scaledToFill()
+                    .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
+                    .clipped()
+                    
                     .ignoresSafeArea()
 
                 Color.black.opacity(0.50)
                     .ignoresSafeArea()
 
                 VStack(spacing: 0) {
+                    Spacer().frame(height: UIScreen.main.bounds.height * 0.1)
                     segmentedControl
                         .padding(.horizontal, 20)
                         .padding(.top, 8)
