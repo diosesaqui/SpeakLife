@@ -50,6 +50,7 @@ struct ProfileView: View {
     @State private var showSupportIDCopied = false
     @State private var showEmailCaptureSheet = false
     @State private var showHowToUse = false
+    @State private var showCommunity = false
     let url = URL(string:APP.Product.urlID)
     
     
@@ -103,8 +104,9 @@ struct ProfileView: View {
                       //  dailyBurstStatsRow
                             quizRow
                            prayerRow
+                           communityRow
                        // }
-                        
+
                         remindersRow
                      //   widgetPreferencesRow
                      //   emailsRow
@@ -314,6 +316,30 @@ struct ProfileView: View {
         EmptyView()
     }
     
+    // The Warrior Room community wall lives here for users who want it (it was
+    // removed from the main tab in favor of Bible Chat). PrayerWallView wraps its
+    // own NavigationView, so present it as a sheet rather than pushing it.
+    @MainActor
+    private var communityRow: some View {
+        Button {
+            AnalyticsService.shared.trackUserAction("community_opened", category: "profile")
+            showCommunity = true
+        } label: {
+            HStack {
+                Image(systemName: "person.3.fill")
+                    .foregroundColor(Constants.DAMidBlue)
+                Text("Community", comment: "Community / Warrior Room row title")
+                Spacer()
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .sheet(isPresented: $showCommunity) {
+            PrayerWallView()
+                .environmentObject(subscriptionStore)
+        }
+    }
+
     @MainActor
     private var prayerRow: some View {
         HStack {

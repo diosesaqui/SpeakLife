@@ -21,6 +21,7 @@ class AudioPlayerService: NSObject, AVAudioPlayerDelegate {
     // Smart pause/resume for background interruptions
     private var backgroundStopTimer: Timer?
     private var wasPausedForBackground = false
+    private var wasInterruptedWhilePlaying = false
     private let backgroundStopDelay: TimeInterval = 15.0 // 15 seconds
     
     private override init() {
@@ -301,13 +302,29 @@ class AudioPlayerService: NSObject, AVAudioPlayerDelegate {
               let type = AVAudioSession.InterruptionType(rawValue: typeValue) else { return }
 
         if type == .began {
-            // Audio session was interrupted
-            audioPlayer?.pause()
-            isPlaying = false
+            // Audio session was interrupted (e.g. the ATT prompt, Siri, a call).
+            if isPlaying {
+                audioPlayer?.pause()
+                isPlaying = false
+                wasInterruptedWhilePlaying = true
+            }
         } else if type == .ended {
-            // Interruption ended - don't automatically resume
-            // User must explicitly press play to resume
-            // This prevents unwanted audio playback
+            // Resume only if WE paused for this interruption AND iOS says it's
+            // appropriate (.shouldResume). This is set for brief system alerts
+            // like the ATT prompt, but not when the user started other audio —
+            // so we keep music going through the prompt without unwanted resumes.
+            guard wasInterruptedWhilePlaying else { return }
+            wasInterruptedWhilePlaying = false
+            let options = (userInfo[AVAudioSessionInterruptionOptionKey] as? UInt)
+                .map { AVAudioSession.InterruptionOptions(rawValue: $0) } ?? []
+            guard options.contains(.shouldResume) else { return }
+            do {
+                try AVAudioSession.sharedInstance().setActive(true)
+                audioPlayer?.play()
+                isPlaying = true
+            } catch {
+                // Leave stopped if the session can't be reactivated.
+            }
         }
     }
 }
