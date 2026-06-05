@@ -329,14 +329,36 @@ struct BibleChatConversationView: View {
     @EnvironmentObject var appState: AppState
     @EnvironmentObject var declarationStore: DeclarationViewModel
     @State private var showPaywall = false
+    @State private var heroAppeared = false
     @FocusState private var inputFocused: Bool
 
     private let starters: [BibleChatTopic] = (try? BibleChatService.shared.loadTopics()) ?? []
+
+    private var greeting: String {
+        switch Calendar.current.component(.hour, from: Date()) {
+        case 5..<12:  return "Good morning."
+        case 12..<17: return "Good afternoon."
+        case 17..<22: return "Good evening."
+        default:      return "Peace to you."
+        }
+    }
+    private var greetingPrompt: String {
+        let hour = Calendar.current.component(.hour, from: Date())
+        return (hour >= 17 || hour < 5) ? "What's weighing on you tonight?" : "What's on your heart today?"
+    }
 
     var body: some View {
         NavigationView {
             ZStack {
                 Gradients().speakLifeCYOCell.ignoresSafeArea()
+                // Soft gold aura from the top for depth.
+                RadialGradient(
+                    colors: [Constants.gold.opacity(0.16), .clear],
+                    center: .top, startRadius: 0, endRadius: 380
+                )
+                .ignoresSafeArea()
+                .blendMode(.plusLighter)
+                .allowsHitTesting(false)
                 VStack(spacing: 0) {
                     transcript
                     inputBar
@@ -404,56 +426,71 @@ struct BibleChatConversationView: View {
     }
 
     private var emptyState: some View {
-        VStack(spacing: 16) {
-            Image(systemName: "bubble.left.and.text.bubble.right.fill")
-                .font(.system(size: 40))
-                .foregroundColor(Constants.gold)
-            Text("What's on your heart?")
-                .font(.system(size: 22, weight: .bold, design: .serif))
-                .foregroundColor(.white)
-            Text("Ask anything about life or faith. Get a warm, scripture-rooted answer in seconds.")
-                .font(.system(size: 14))
-                .foregroundColor(.white.opacity(0.7))
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 24)
-
-            VStack(spacing: 10) {
-                ForEach(starters.prefix(5)) { topic in
-                    Button {
-                        let generator = UIImpactFeedbackGenerator(style: .light)
-                        generator.impactOccurred()
-                        viewModel.send(topic.question, isPremium: subscriptionStore.isPremium)
-                    } label: {
-                        HStack(spacing: 10) {
-                            Image(systemName: topic.icon)
-                                .font(.system(size: 14, weight: .semibold))
-                                .foregroundColor(topic.accentColor)
-                            Text(topic.title)
-                                .font(.system(size: 14, weight: .medium))
-                                .foregroundColor(.white)
-                                .multilineTextAlignment(.leading)
-                            Spacer(minLength: 0)
-                            Image(systemName: "arrow.up.right")
-                                .font(.system(size: 11, weight: .semibold))
-                                .foregroundColor(.white.opacity(0.4))
-                        }
-                        .padding(.vertical, 12)
-                        .padding(.horizontal, 14)
-                        .background(
-                            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                .fill(Color.white.opacity(0.06))
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                        .stroke(Color.white.opacity(0.12), lineWidth: 1)
-                                )
+        VStack(spacing: 24) {
+            // Hero
+            VStack(spacing: 12) {
+                ZStack {
+                    Circle()
+                        .fill(Constants.gold.opacity(0.22))
+                        .frame(width: 96, height: 96)
+                        .blur(radius: 26)
+                    Image(systemName: "bubble.left.and.text.bubble.right.fill")
+                        .font(.system(size: 44))
+                        .foregroundStyle(
+                            LinearGradient(
+                                colors: [Constants.gold, Constants.gold.opacity(0.65)],
+                                startPoint: .top, endPoint: .bottom
+                            )
                         )
+                        .shadow(color: Constants.gold.opacity(0.5), radius: 14, y: 4)
+                }
+                Text(greeting)
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundColor(Constants.gold.opacity(0.9))
+                Text(greetingPrompt)
+                    .font(.system(size: 24, weight: .bold, design: .serif))
+                    .foregroundColor(.white)
+                    .multilineTextAlignment(.center)
+                Text("Bring anything — anxiety, relationships, doubt. Get a warm, scripture-rooted answer in seconds.")
+                    .font(.system(size: 14))
+                    .foregroundColor(.white.opacity(0.65))
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 28)
+            }
+            .opacity(heroAppeared ? 1 : 0)
+            .offset(y: heroAppeared ? 0 : 10)
+            .animation(.easeOut(duration: 0.45), value: heroAppeared)
+
+            // Suggestions
+            VStack(alignment: .leading, spacing: 10) {
+                Text("TRY ASKING")
+                    .font(.system(size: 11, weight: .bold))
+                    .tracking(1.4)
+                    .foregroundColor(.white.opacity(0.4))
+                    .padding(.leading, 4)
+                ForEach(Array(starters.prefix(5).enumerated()), id: \.element.id) { index, topic in
+                    StarterCard(topic: topic) {
+                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                        viewModel.send(topic.question, isPremium: subscriptionStore.isPremium)
                     }
-                    .buttonStyle(.plain)
+                    .opacity(heroAppeared ? 1 : 0)
+                    .offset(y: heroAppeared ? 0 : 14)
+                    .animation(.easeOut(duration: 0.4).delay(0.08 + Double(index) * 0.06), value: heroAppeared)
                 }
             }
-            .padding(.top, 6)
+
+            // Trust line
+            HStack(spacing: 6) {
+                Image(systemName: "lock.fill").font(.system(size: 10))
+                Text("Rooted in Scripture · Private")
+                    .font(.system(size: 12, weight: .medium))
+            }
+            .foregroundColor(.white.opacity(0.4))
+            .opacity(heroAppeared ? 1 : 0)
+            .animation(.easeOut(duration: 0.5).delay(0.45), value: heroAppeared)
         }
-        .padding(.top, 36)
+        .padding(.top, 28)
+        .onAppear { heroAppeared = true }
     }
 
     private var typingIndicator: some View {
@@ -486,7 +523,12 @@ struct BibleChatConversationView: View {
             .background(
                 RoundedRectangle(cornerRadius: 20, style: .continuous)
                     .fill(Color.white.opacity(0.08))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 20, style: .continuous)
+                            .stroke(inputFocused ? Constants.gold.opacity(0.55) : Color.white.opacity(0.10), lineWidth: 1)
+                    )
             )
+            .animation(.easeInOut(duration: 0.2), value: inputFocused)
 
             Button {
                 inputFocused = false
@@ -501,6 +543,64 @@ struct BibleChatConversationView: View {
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
         .background(Color.black.opacity(0.2))
+    }
+}
+
+// Accent-tinted suggestion card for the empty state — gradient icon badge,
+// soft accent tint + shadow, press feedback. Reuses each topic's accentColor.
+private struct StarterCard: View {
+    let topic: BibleChatTopic
+    let action: () -> Void
+    @State private var pressed = false
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 14) {
+                ZStack {
+                    Circle()
+                        .fill(
+                            LinearGradient(
+                                colors: [topic.accentColor, topic.accentColor.opacity(0.55)],
+                                startPoint: .topLeading, endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 38, height: 38)
+                        .shadow(color: topic.accentColor.opacity(0.5), radius: 8, x: 0, y: 3)
+                    Image(systemName: topic.icon)
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(.white)
+                }
+                Text(topic.title)
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundColor(.white)
+                    .multilineTextAlignment(.leading)
+                Spacer(minLength: 8)
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundColor(.white.opacity(0.4))
+            }
+            .padding(.vertical, 12)
+            .padding(.horizontal, 14)
+            .background(
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .fill(
+                        LinearGradient(
+                            colors: [topic.accentColor.opacity(0.22), Color.white.opacity(0.04)],
+                            startPoint: .topLeading, endPoint: .bottomTrailing
+                        )
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 18, style: .continuous)
+                            .stroke(topic.accentColor.opacity(0.45), lineWidth: 1)
+                    )
+                    .shadow(color: topic.accentColor.opacity(0.18), radius: 10, x: 0, y: 5)
+            )
+            .scaleEffect(pressed ? 0.98 : 1)
+        }
+        .buttonStyle(.plain)
+        .onLongPressGesture(minimumDuration: 0, maximumDistance: .infinity, pressing: { isPressing in
+            withAnimation(.easeOut(duration: 0.12)) { pressed = isPressing }
+        }, perform: {})
     }
 }
 
