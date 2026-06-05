@@ -137,21 +137,12 @@ final class AppDelegate: NSObject, MessagingDelegate {
                     print("✅ Already authorized - registering for FCM Token RWRW")
                     UIApplication.shared.registerForRemoteNotifications()
                 }
-            } else if settings.authorizationStatus == .notDetermined {
-                // First time - request authorization
-                UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { granted, error in
-                    if granted {
-                        DispatchQueue.main.async {
-                            print("✅ Permission granted - registering for FCM Token  RWRW")
-                            UIApplication.shared.registerForRemoteNotifications()
-                        }
-                    } else {
-                        print("🔴 Push notifications permission denied: \(error?.localizedDescription ?? "No error") RWRW")
-                    }
-                }
-            } else {
-                print("RWRW weird state")
             }
+            // Do NOT prompt undetermined users at launch. The onboarding flow asks
+            // for notification permission at the right moment (after the user picks
+            // their needs / notification time). Prompting here showed the
+            // notification alert too early AND blocked the ATT prompt from
+            // appearing (iOS won't present two system alerts at once).
         }
     }
     
