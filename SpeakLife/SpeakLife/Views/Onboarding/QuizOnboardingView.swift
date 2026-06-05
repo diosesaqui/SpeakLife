@@ -107,7 +107,7 @@ enum QuizSegment: String, CaseIterable {
         switch self {
         case .battlefieldMind:   return "Speak truth before the next 3am wake-up."
         case .believerAuthority: return "Speak God's Word with authority, every day."
-        case .alreadyYours:      return "Everything He's already given — claimed daily."
+        case .alreadyYours:      return "Everything He's already given, claimed daily."
         case .hisHeart:          return "Receive His love every single morning."
         case .unsegmented:       return "Join 500,000+ believers who do this daily."
         }
