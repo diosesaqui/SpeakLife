@@ -4,3 +4,7 @@ SpeakLife/Secrets.xcconfig
 firebase-debug.log
 firebase-debug.*.log
 .firebase/
+
+# Xcode per-user state
+*.xcuserstate
+xcuserdata/
