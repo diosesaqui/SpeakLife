@@ -8,3 +8,6 @@ firebase-debug.*.log
 # Xcode per-user state
 *.xcuserstate
 xcuserdata/
+
+# Claude Code session/plan files
+.claude/
