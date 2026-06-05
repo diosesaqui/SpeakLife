@@ -529,10 +529,20 @@ private struct TypingDots: View {
 private struct ChatBubble: View {
     let message: ChatMessage
 
+    // Parse Markdown (bold/italic) while preserving the model's line breaks, so
+    // **bold** renders as bold instead of showing literal asterisks. Falls back
+    // to plain text if parsing fails.
+    private var rendered: AttributedString {
+        (try? AttributedString(
+            markdown: message.text,
+            options: .init(interpretedSyntax: .inlineOnlyPreservingWhitespace)
+        )) ?? AttributedString(message.text)
+    }
+
     var body: some View {
         HStack {
             if message.role == .user { Spacer(minLength: 40) }
-            Text(message.text)
+            Text(rendered)
                 .font(.system(size: 15, design: message.role == .assistant ? .serif : .default))
                 .foregroundColor(.white)
                 .padding(.vertical, 12)
