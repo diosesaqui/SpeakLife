@@ -350,10 +350,10 @@ struct HighConversionPaywallView: View {
         VStack(spacing: 0) {
             LinearGradient(colors: [.clear, Color(red:0.07,green:0.10,blue:0.22).opacity(0.97)], startPoint: .top, endPoint: .bottom)
                 .frame(height: 20)
-            VStack(spacing: 14) {
+            VStack(spacing: 18) {
                 planSelectorSection
                 trialCallout
-                closingLine
+               // closingLine
                 ctaButton
                 payWhatYouCanCTA
                 bottomLinks
