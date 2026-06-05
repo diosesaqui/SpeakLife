@@ -90,7 +90,12 @@ final class SubscriptionStore: ObservableObject {
     // false = benefit-based personalized props (high_conversion_v1)
     // true  = succinct feature-based props (high_conversion_succinct_v1)
     @Published var useSuccinctPaywallValueProps = false
-    
+
+    // MARK: - Weekly Plan A/B Test
+    // false = show Monthly as the non-annual option (default)
+    // true  = show Weekly ($SpeakLife1Wk5) instead of Monthly on the paywall
+    @Published var useWeeklyPlan = false
+
     @Published var yearlySubscription = ""
     @Published var monthlySubscription = ""
     @Published var discountSubscription = ""
@@ -242,6 +247,9 @@ final class SubscriptionStore: ObservableObject {
 
         // Paywall Value Props A/B Test
         useSuccinctPaywallValueProps = remoteConfig["useSuccinctPaywallValueProps"].boolValue
+
+        // Weekly Plan A/B Test
+        useWeeklyPlan = remoteConfig["useWeeklyPlan"].boolValue
         
         // AI Feature Flag from Remote Config
         enableAIFeatures = remoteConfig["enableAIFeatures"].boolValue
