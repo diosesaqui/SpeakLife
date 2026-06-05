@@ -2,6 +2,9 @@ import Foundation
 import FirebaseAnalytics
 import TikTokBusinessSDK
 import FacebookCore
+#if canImport(PostHog)
+import PostHog
+#endif
 
 // MARK: - Analytics Event Model
 //
@@ -104,9 +107,13 @@ final class AnalyticsService {
         register(TikTokAnalyticsProvider())
         register(MetaAnalyticsProvider())
 
-        // Example: add a product-analytics destination once its SDK is integrated.
-        // register(AmplitudeAnalyticsProvider(apiKey: "..."))
-        // register(PostHogAnalyticsProvider(apiKey: "...", host: "..."))
+        // Product analytics (funnels / retention / session replay). Add the
+        // PostHog Swift package, then uncomment with your project API key:
+        // register(PostHogAnalyticsProvider(
+        //     apiKey: "phc_xxx",
+        //     host: "https://us.i.posthog.com",
+        //     enableSessionReplay: true
+        // ))
     }
 
     /// Register a new analytics destination. Safe to call at any time; the
@@ -566,40 +573,81 @@ final class MetaAnalyticsProvider: AnalyticsProvider {
     }
 }
 
-// MARK: - Provider Template
+// MARK: - PostHog Provider
 //
-// Copy this skeleton to add a product-analytics destination (Amplitude,
-// Mixpanel, PostHog, …). Once the vendor SDK is added to the project:
+// Product analytics: funnels, retention, cohorts, and session replay — the
+// "why aren't users converting" layer that Firebase doesn't surface well.
 //
-//   1. Fill in `configure()`, `log(_:)`, `setUserProperty`, `setUserId`.
-//   2. Register it in `AnalyticsService.registerDefaultProviders()`:
-//          register(AmplitudeAnalyticsProvider(apiKey: "..."))
+// Setup:
+//   1. Add the PostHog Swift package:
+//        https://github.com/PostHog/posthog-ios  (File ▸ Add Packages…)
+//   2. Register it in `registerDefaultProviders()` with your project API key.
 //
-// Nothing else changes — all existing `Event.track*` / `AnalyticsService`
-// call sites start flowing into the new tool automatically.
+// The SDK calls are guarded by `#if canImport(PostHog)`, so this file keeps
+// compiling before the package is added; the provider becomes a no-op until
+// then and lights up automatically once the dependency is present.
 //
-// final class AmplitudeAnalyticsProvider: AnalyticsProvider {
-//     let id = "amplitude"
-//     private let apiKey: String
-//     init(apiKey: String) { self.apiKey = apiKey }
-//
-//     func configure() {
-//         // Amplitude.instance().initializeApiKey(apiKey)
-//     }
-//
-//     func log(_ event: AnalyticsEvent) {
-//         // Amplitude.instance().logEvent(event.name, withEventProperties: event.parameters)
-//     }
-//
-//     func setUserProperty(_ value: Any, forName name: String) {
-//         // let identify = AMPIdentify().set(name, value: value as? NSObject)
-//         // Amplitude.instance().identify(identify)
-//     }
-//
-//     func setUserId(_ id: String?) {
-//         // Amplitude.instance().setUserId(id)
-//     }
-// }
+// To query / interpret the data programmatically (e.g. let an assistant pull
+// funnels via HogQL), create a Personal API Key in PostHog → Settings, and
+// hit the query API at `{host}/api/projects/{id}/query/`. That key is a
+// server-side secret — do NOT ship it in the app; only the project `apiKey`
+// (phc_…) belongs in `configure()`.
+
+final class PostHogAnalyticsProvider: AnalyticsProvider {
+    let id = "posthog"
+
+    private let apiKey: String
+    private let host: String
+    private let enableSessionReplay: Bool
+
+    init(apiKey: String,
+         host: String = "https://us.i.posthog.com",
+         enableSessionReplay: Bool = true) {
+        self.apiKey = apiKey
+        self.host = host
+        self.enableSessionReplay = enableSessionReplay
+    }
+
+    func configure() {
+        #if canImport(PostHog)
+        let config = PostHogConfig(apiKey: apiKey, host: host)
+        config.sessionReplay = enableSessionReplay
+        // Mask sensitive text/images in replays by default; relax per-view as needed.
+        config.sessionReplayConfig.maskAllTextInputs = true
+        config.sessionReplayConfig.maskAllImages = false
+        PostHogSDK.shared.setup(config)
+        #endif
+    }
+
+    func log(_ event: AnalyticsEvent) {
+        #if canImport(PostHog)
+        // Use PostHog's native screen tracking so screens populate the
+        // pageview/funnel UI correctly instead of being generic events.
+        if case .screenView(let name) = event.semantic {
+            PostHogSDK.shared.screen(name, properties: event.parameters)
+            return
+        }
+        PostHogSDK.shared.capture(event.name, properties: event.parameters)
+        #endif
+    }
+
+    func setUserProperty(_ value: Any, forName name: String) {
+        #if canImport(PostHog)
+        // Person properties attach to the current identified/anonymous user.
+        PostHogSDK.shared.capture("$set", properties: ["$set": [name: value]])
+        #endif
+    }
+
+    func setUserId(_ id: String?) {
+        #if canImport(PostHog)
+        if let id = id {
+            PostHogSDK.shared.identify(id)
+        } else {
+            PostHogSDK.shared.reset()
+        }
+        #endif
+    }
+}
 
 enum AudioPlaybackAction: String {
     case started = "started"
