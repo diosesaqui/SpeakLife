@@ -153,19 +153,33 @@ struct HighConversionPaywallView: View {
               let d = Double(p.price.description) else { return "$3.33" }
         return String(format: "$%.2f", d / 12.0)
     }
-    /// % saved on annual vs paying monthly for a year. nil if not computable.
+    /// % saved on annual vs paying the non-annual plan (weekly×52 or monthly×12)
+    /// for a year. nil if not computable.
     private var annualSavingsPercent: Int? {
         guard let annual = subscriptionStore.currentOfferedPremium,
-              let monthly = subscriptionStore.currentOfferedPremiumMonthly,
-              let a = Double(annual.price.description),
-              let m = Double(monthly.price.description), m > 0 else { return nil }
-        let yearlyIfMonthly = m * 12
-        guard yearlyIfMonthly > 0 else { return nil }
-        let pct = Int(((yearlyIfMonthly - a) / yearlyIfMonthly * 100).rounded())
+              let a = Double(annual.price.description) else { return nil }
+        let comparisonYearly: Double? = subscriptionStore.useWeeklyPlan
+            ? subscriptionStore.currentOfferedWeekly.flatMap { Double($0.price.description) }.map { $0 * 52 }
+            : subscriptionStore.currentOfferedPremiumMonthly.flatMap { Double($0.price.description) }.map { $0 * 12 }
+        guard let yearly = comparisonYearly, yearly > 0 else { return nil }
+        let pct = Int(((yearly - a) / yearly * 100).rounded())
         return pct > 0 ? pct : nil
     }
+
+    // Non-annual plan adapts to the useWeeklyPlan flag (Weekly vs Monthly).
+    private var nonAnnualTitle: String { subscriptionStore.useWeeklyPlan ? "Weekly" : "Monthly" }
+    private var nonAnnualSub: String { subscriptionStore.useWeeklyPlan ? "per week" : "per month" }
+    private var nonAnnualPrice: String {
+        subscriptionStore.useWeeklyPlan
+            ? (subscriptionStore.currentOfferedWeekly?.displayPrice ?? "$4.99")
+            : monthlyPrice
+    }
+
     private var selectedProduct: Product? {
-        selectedPlan == .annual ? subscriptionStore.currentOfferedPremium : subscriptionStore.currentOfferedPremiumMonthly
+        if selectedPlan == .annual { return subscriptionStore.currentOfferedPremium }
+        return subscriptionStore.useWeeklyPlan
+            ? subscriptionStore.currentOfferedWeekly
+            : subscriptionStore.currentOfferedPremiumMonthly
     }
     private var copy: UserPreferencesTracker.PaywallCopy { preferencesTracker.getDynamicPaywallCopy() }
 
@@ -355,7 +369,7 @@ struct HighConversionPaywallView: View {
         GeometryReader { geo in
             let cardWidth = (geo.size.width - 10) / 2
             HStack(spacing: 10) {
-                planCard(plan: .monthly, topLabel: nil, title: "Monthly", price: monthlyPrice, sub: "per month")
+                planCard(plan: .monthly, topLabel: nil, title: nonAnnualTitle, price: nonAnnualPrice, sub: nonAnnualSub)
                     .frame(width: cardWidth)
                 planCard(plan: .annual, topLabel: annualSavingsPercent.map { "SAVE \($0)%" } ?? "BEST VALUE", title: "Annual", price: annualPrice, sub: "per month \(annualPerMonth)")
                     .frame(width: cardWidth)
