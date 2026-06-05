@@ -343,6 +343,16 @@ final class SubscriptionStore: ObservableObject {
             ? RevenueCatManager.shared.premiumOriginalPurchaseDate(info)
             : nil
 
+        // Defensive cleanup for users affected by the pre-fix isTrialProduct
+        // bug, where a non-trial purchase scheduled D2/D3 "your trial ends
+        // tomorrow" pushes. RC is the source of truth: if the user is premium
+        // but NOT in a trial period right now, any pending trial pushes are
+        // stale and must be cleared. Idempotent — safe to run on every RC
+        // customer-info update.
+        if premiumActive && !RevenueCatManager.shared.isPremiumInTrial(info) {
+            TrialExperienceService.shared.clearPendingTrialPushes()
+        }
+
         // Mirror into purchasedSubscriptions / purchasedNonConsumables so any
         // view code that checks those arrays keeps working.
         // We use the already-fetched StoreKit products for the Product objects.
@@ -433,7 +443,23 @@ final class SubscriptionStore: ObservableObject {
     @discardableResult
     func purchase(_ product: Product, paywallName: String = "unknown") async throws -> Bool {
         let priceValue   = NSDecimalNumber(decimal: product.price).doubleValue
-        let isTrialProduct = product.subscription?.introductoryOffer != nil
+        // Product has *some* intro offer configured in App Store Connect — but
+        // that does NOT mean THIS user gets one. Returning subscribers who
+        // already consumed the trial slot on this subscription group pay full
+        // price immediately. We must check per-user eligibility BEFORE the
+        // purchase resolves, because afterwards Apple flips isEligibleForIntroOffer
+        // to false (the slot is now used) and we lose the signal.
+        let hasIntroOffer = product.subscription?.introductoryOffer != nil
+        let isEligibleForIntroOffer: Bool
+        if let subscription = product.subscription {
+            isEligibleForIntroOffer = await subscription.isEligibleForIntroOffer
+        } else {
+            isEligibleForIntroOffer = false
+        }
+        // True iff this specific purchase actually enters a trial period.
+        // Used to gate the Facebook StartTrial event, the analytics is_trial
+        // flag, and the D2/D3 trial-ending push scheduling.
+        let willStartTrial = hasIntroOffer && isEligibleForIntroOffer
         let currency     = product.priceFormatStyle.currencyCode ?? "USD"
 
         // NOTE: Do NOT fire analytics before RC confirms — RC validates the receipt.
@@ -458,7 +484,7 @@ final class SubscriptionStore: ObservableObject {
             self.subscriptionGroupStatus = .subscribed
         }
 
-        if isTrialProduct {
+        if willStartTrial {
             // ─── TRIAL START ─────────────────────────────────────────────
             AppEvents.shared.logEvent(
                 AppEvents.Name("StartTrial"),
@@ -497,24 +523,35 @@ final class SubscriptionStore: ObservableObject {
             "value": priceValue,
             "currency": currency,
             "paywall_name": paywallName,
-            "is_trial": isTrialProduct
+            "is_trial": willStartTrial
         ])
         Analytics.logEvent("subscription_started", parameters: [
             "product_id": product.id,
             "value": priceValue,
             "currency": currency,
             "paywall_name": paywallName,
-            "is_trial": isTrialProduct
+            "is_trial": willStartTrial
         ])
 
         // Hook into the trial experience push sequence. Without this the D2/D3
         // trial-conversion pushes coded in TrialExperienceService never fire.
-        if isTrialProduct {
+        // Critical: gate on willStartTrial (actual per-user eligibility), not
+        // on hasIntroOffer — otherwise returning subscribers who pay full price
+        // get scheduled "your trial ends tomorrow" pushes for a trial they
+        // never started.
+        if willStartTrial {
             TrialExperienceService.shared.onTrialStarted()
         } else if TrialExperienceService.shared.isTrialActive {
             // Trial-active user just bought a paid product → mark converted so
             // we cancel the still-pending trial pushes and stop nagging them.
             TrialExperienceService.shared.onTrialConverted()
+        } else {
+            // Defensive cleanup: a paid (non-trial) purchase by a user who
+            // somehow has stale trial pushes pending (e.g. affected by the
+            // pre-fix isTrialProduct/willStartTrial bug, or a restore). Clear
+            // them so we don't fire bogus "last day of trial" pushes after a
+            // paid sale.
+            TrialExperienceService.shared.clearPendingTrialPushes()
         }
 
         // Post-purchase email capture (unchanged)

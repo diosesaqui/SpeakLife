@@ -50,6 +50,18 @@ final class RevenueCatManager {
         info.entitlements[Self.devotionalEntitlement]?.isActive == true
     }
 
+    /// True iff the premium entitlement is currently in a free-trial introductory
+    /// period (RC's `periodType == .trial`). Returns false for normal paid
+    /// periods, intro-pricing periods, and for users who don't have the
+    /// entitlement at all. Used to distinguish "actually on trial right now"
+    /// from "subscribed for any reason" so the trial-end push sequence can be
+    /// gated correctly.
+    func isPremiumInTrial(_ info: CustomerInfo) -> Bool {
+        guard let entitlement = info.entitlements[Self.premiumEntitlement],
+              entitlement.isActive else { return false }
+        return entitlement.periodType == .trial
+    }
+
     /// First time the user ever purchased premium, surviving cancel/resubscribe.
     /// Used to compute subscription anniversaries.
     func premiumOriginalPurchaseDate(_ info: CustomerInfo) -> Date? {
