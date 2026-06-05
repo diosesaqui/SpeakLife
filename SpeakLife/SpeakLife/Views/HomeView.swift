@@ -341,15 +341,15 @@ struct HomeView: View {
                 audioView
                // bibleView
                 // dailyChecklistView // Moved to DeclarationView
-                createYourOwnView
-                // Bible Chat replaces the Warrior Room tab. The enableAIFeatures
-                // Remote Config flag is a kill-switch: if it's off, we fall back
-                // to the Warrior Room so a bad rollout is one toggle from revert.
+                // Bible Chat sits in the CENTER slot (highest-engagement position)
+                // and replaces the Warrior Room tab. enableAIFeatures is a kill-
+                // switch: off → fall back to Warrior Room (one toggle to revert).
                 if subscriptionStore.enableAIFeatures || BibleChatLocal.isDebug {
                     bibleChatTabView
                 } else {
                     communityView
                 }
+                createYourOwnView
                 profileView
                     
                 }
