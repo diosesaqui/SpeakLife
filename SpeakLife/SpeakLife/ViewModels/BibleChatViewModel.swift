@@ -71,6 +71,9 @@ final class BibleChatConversationViewModel: ObservableObject {
 
     private let service: BibleChatAIService
     private let windowSize = 8
+    /// Bumped whenever the user switches chats; lets an in-flight send ignore
+    /// its result if the context changed while it was loading.
+    private var generation = 0
 
     init(service: BibleChatAIService = .shared) {
         self.service = service
@@ -98,12 +101,16 @@ final class BibleChatConversationViewModel: ObservableObject {
 
         // Rolling window: only the last N messages are sent upstream.
         let window = Array(messages.suffix(windowSize))
+        let gen = generation
         AnalyticsService.shared.trackUserAction("bible_chat_message_sent", category: "bible_chat")
 
         Task {
             defer { isSending = false }
             do {
                 let result = try await service.send(messages: window, isPremium: isPremium)
+                // If the user switched to another chat (or started a new one)
+                // while this was loading, drop the stale result.
+                guard gen == generation else { return }
                 if result.needsPaywall {
                     // Pull the unanswered question back so the transcript stays clean.
                     if messages.last?.role == .user { messages.removeLast() }
@@ -118,6 +125,7 @@ final class BibleChatConversationViewModel: ObservableObject {
                     )
                 }
             } catch {
+                guard gen == generation else { return }
                 // Leave the user's message in the transcript and surface an error
                 // so nothing they typed is lost; they can resend.
                 errorMessage = "Something went wrong. Please try again."
@@ -127,6 +135,7 @@ final class BibleChatConversationViewModel: ObservableObject {
 
     /// Clear the screen for a fresh conversation (does not delete saved history).
     func startNewConversation() {
+        generation += 1
         messages = []
         draft = ""
         errorMessage = nil
@@ -136,6 +145,7 @@ final class BibleChatConversationViewModel: ObservableObject {
 
     /// Load a saved conversation back into the chat to continue or review it.
     func load(_ conversation: ChatConversation) {
+        generation += 1
         currentConversation = conversation
         errorMessage = nil
         messages = conversation.messages
