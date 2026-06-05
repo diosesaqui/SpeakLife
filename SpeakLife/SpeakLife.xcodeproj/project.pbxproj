@@ -83,6 +83,7 @@
 		454807882E3F3CAA00B8C71B /* BadgeUnlockView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 454807852E3F3CAA00B8C71B /* BadgeUnlockView.swift */; };
 		454807892E3F3CAA00B8C71B /* BadgeRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 454807842E3F3CAA00B8C71B /* BadgeRenderer.swift */; };
 		4548078C2E3F3E6500B8C71B /* BadgeTestView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4548078A2E3F3E1D00B8C71B /* BadgeTestView.swift */; };
+		4553AE002FD2DDA70000D657 /* PostHog in Frameworks */ = {isa = PBXBuildFile; productRef = 4553ADFF2FD2DDA70000D657 /* PostHog */; };
 		45567D262F27239A00382072 /* EnhancedOnboardingScreensRefactored.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45567D252F27239A00382072 /* EnhancedOnboardingScreensRefactored.swift */; };
 		45567D282F2723FE00382072 /* EnhancedOnboardingViewRefactored.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45567D272F2723FE00382072 /* EnhancedOnboardingViewRefactored.swift */; };
 		45567D2A2F27251400382072 /* EnhancedOnboardingModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45567D292F27251400382072 /* EnhancedOnboardingModels.swift */; };
@@ -829,6 +830,7 @@
 				452D17DF2D703F3A000AB1D1 /* FirebaseFirestore in Frameworks */,
 				452D17DD2D703E9E000AB1D1 /* FirebaseStorage in Frameworks */,
 				45F6D87E2F2AD75200C0B98D /* FirebaseAuth in Frameworks */,
+				4553AE002FD2DDA70000D657 /* PostHog in Frameworks */,
 				7A00721D2908D50800965AF7 /* (null) in Frameworks */,
 				7A7BEBCD2913536B008D08A3 /* StoreKit.framework in Frameworks */,
 			);
@@ -1927,6 +1929,7 @@
 				457CD38D2E84A11000F435EC /* TikTokBusinessSDK */,
 				45F6D87D2F2AD75200C0B98D /* FirebaseAuth */,
 				45E56DC22F5BD28600859EDC /* RevenueCat */,
+				4553ADFF2FD2DDA70000D657 /* PostHog */,
 			);
 			productName = SpeakLife;
 			productReference = 7A278F97288915DE0084BB57 /* SpeakLife.app */;
@@ -1986,6 +1989,7 @@
 				452D17D72D703E9E000AB1D1 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 				457CD38C2E84A11000F435EC /* XCRemoteSwiftPackageReference "tiktok-business-ios-sdk" */,
 				45E56DC12F5BD28600859EDC /* XCRemoteSwiftPackageReference "purchases-ios-spm" */,
+				4553ADFE2FD2DDA70000D657 /* XCRemoteSwiftPackageReference "posthog-ios" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 7A278F98288915DE0084BB57 /* Products */;
@@ -2788,6 +2792,14 @@
 				minimumVersion = 11.9.0;
 			};
 		};
+		4553ADFE2FD2DDA70000D657 /* XCRemoteSwiftPackageReference "posthog-ios" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/PostHog/posthog-ios";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 3.59.3;
+			};
+		};
 		457CD38C2E84A11000F435EC /* XCRemoteSwiftPackageReference "tiktok-business-ios-sdk" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/tiktok/tiktok-business-ios-sdk";
@@ -2842,6 +2854,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 452D17D72D703E9E000AB1D1 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseFirestore;
+		};
+		4553ADFF2FD2DDA70000D657 /* PostHog */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 4553ADFE2FD2DDA70000D657 /* XCRemoteSwiftPackageReference "posthog-ios" */;
+			productName = PostHog;
 		};
 		457CD38D2E84A11000F435EC /* TikTokBusinessSDK */ = {
 			isa = XCSwiftPackageProductDependency;

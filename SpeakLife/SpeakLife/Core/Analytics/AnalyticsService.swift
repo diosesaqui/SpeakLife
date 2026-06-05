@@ -109,11 +109,11 @@ final class AnalyticsService {
 
         // Product analytics (funnels / retention / session replay). Add the
         // PostHog Swift package, then uncomment with your project API key:
-        // register(PostHogAnalyticsProvider(
-        //     apiKey: "phc_xxx",
-        //     host: "https://us.i.posthog.com",
-        //     enableSessionReplay: true
-        // ))
+         register(PostHogAnalyticsProvider(
+             apiKey: "phc_D4qLgjTSwfzKpbgCNTdUn7Hx9QoS7ur3BWwpwubVLdG7",
+             host: "https://us.i.posthog.com",
+             enableSessionReplay: true
+         ))
     }
 
     /// Register a new analytics destination. Safe to call at any time; the
