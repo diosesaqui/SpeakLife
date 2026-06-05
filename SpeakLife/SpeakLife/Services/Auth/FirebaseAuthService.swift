@@ -88,8 +88,11 @@ final class FirebaseAuthService: FirebaseAuthServiceProtocol {
             ]
             
             try await firestore.collection("users").document(user.uid).setData(userData)
-            
-            
+
+            // Tie analytics events to this user across all providers.
+            AnalyticsService.shared.setUserId(user.uid)
+            AnalyticsService.shared.setUserProperty("auth_method", value: "email")
+
             return FirebaseUserResult(
                 uid: user.uid,
                 email: email,
@@ -113,7 +116,11 @@ final class FirebaseAuthService: FirebaseAuthServiceProtocol {
             try await firestore.collection("users").document(user.uid).updateData([
                 "lastLoginAt": FieldValue.serverTimestamp()
             ])
-            
+
+            // Tie analytics events to this user across all providers.
+            AnalyticsService.shared.setUserId(user.uid)
+            AnalyticsService.shared.setUserProperty("auth_method", value: "email")
+
             return FirebaseUserResult(
                 uid: user.uid,
                 email: user.email ?? email,
@@ -129,6 +136,8 @@ final class FirebaseAuthService: FirebaseAuthServiceProtocol {
     func signOut() throws {
         do {
             try auth.signOut()
+            // Detach analytics from the signed-out user (resets distinct id).
+            AnalyticsService.shared.setUserId(nil)
         } catch {
             throw FirebaseAuthError.unknown(error)
         }
