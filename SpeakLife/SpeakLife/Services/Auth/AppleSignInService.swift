@@ -43,6 +43,8 @@ final class AppleSignInService: NSObject, ObservableObject {
             isSignedIn = true
             uid = user.uid
             displayName = user.displayName ?? ""
+            // Re-identify an already-signed-in user on launch.
+            AnalyticsService.shared.setUserId(user.uid)
         } else {
             isSignedIn = false
             uid = ""
@@ -79,6 +81,8 @@ final class AppleSignInService: NSObject, ObservableObject {
             isSignedIn = false
             uid = ""
             displayName = ""
+            // Detach analytics from the signed-out user (resets distinct id).
+            AnalyticsService.shared.setUserId(nil)
         } catch {
             errorMessage = "Sign out failed: \(error.localizedDescription)"
         }
@@ -174,6 +178,10 @@ extension AppleSignInService: ASAuthorizationControllerDelegate {
                 self.displayName = name
                 self.isSignedIn = true
                 self.isLoading = false
+
+                // Tie analytics events to this user across all providers.
+                AnalyticsService.shared.setUserId(user.uid)
+                AnalyticsService.shared.setUserProperty("auth_method", value: "apple")
 
                 self.upsertUserDocument(uid: user.uid, displayName: name, email: appleCredential.email ?? user.email)
             } catch {
