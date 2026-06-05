@@ -514,7 +514,7 @@ struct QuizOnboardingView: View {
         .onAppear {
             quizShownAt = Date()
             stepEnteredAt = Date()
-            Analytics.logEvent("onboarding_quiz_shown", parameters: [
+            AnalyticsService.shared.track("onboarding_quiz_shown", parameters: [
                 "quiz_version": Self.quizVersion
             ])
         }
@@ -587,7 +587,7 @@ struct QuizOnboardingView: View {
         appState.onboardingQuizVersion = Self.quizVersion
 
         let timeToAnswer = Int(Date().timeIntervalSince(quizShownAt))
-        Analytics.logEvent("onboarding_quiz_answered", parameters: [
+        AnalyticsService.shared.track("onboarding_quiz_answered", parameters: [
             "quiz_version": Self.quizVersion,
             "answer": picked.rawValue,
             "time_to_answer_seconds": timeToAnswer
@@ -599,7 +599,7 @@ struct QuizOnboardingView: View {
         // mirror is a generic welcome ('Speak the truth. Win the day.') —
         // they still get every belief-barrier reinforcement before pricing.
         transition(to: .mirror)
-        Analytics.logEvent("onboarding_mirror_shown", parameters: [
+        AnalyticsService.shared.track("onboarding_mirror_shown", parameters: [
             "segment": picked.rawValue
         ])
     }
@@ -614,7 +614,7 @@ struct QuizOnboardingView: View {
 
     private func selectBeliefAnswer(question: BeliefQuestion, answer: BeliefAnswer) {
         UIImpactFeedbackGenerator(style: .soft).impactOccurred()
-        Analytics.logEvent("onboarding_belief_answered", parameters: [
+        AnalyticsService.shared.track("onboarding_belief_answered", parameters: [
             "question_id": question.analyticsId,
             "question_index": question.rawValue,
             "answer_id": answer.id,
@@ -629,7 +629,7 @@ struct QuizOnboardingView: View {
 
     private func speakBeliefAnswer(question: BeliefQuestion, answer: BeliefAnswer) {
         UIImpactFeedbackGenerator(style: .soft).impactOccurred()
-        Analytics.logEvent("onboarding_belief_spoken", parameters: [
+        AnalyticsService.shared.track("onboarding_belief_spoken", parameters: [
             "question_id": question.analyticsId,
             "question_index": question.rawValue,
             "answer_id": answer.id,
@@ -664,7 +664,7 @@ struct QuizOnboardingView: View {
         appState.surveyGoalWord = goalWord.rawValue
         appState.selectedDeclarationStyles = [burden.declarationStyle.rawValue]
 
-        Analytics.logEvent("onboarding_burden_answered", parameters: [
+        AnalyticsService.shared.track("onboarding_burden_answered", parameters: [
             "segment": segment.rawValue,
             "burden": burden.rawValue,
             "goal_word": goalWord.rawValue,
@@ -682,7 +682,7 @@ struct QuizOnboardingView: View {
 
     private func requestNotificationPermissionAtBurdenSelection() {
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { granted, _ in
-            Analytics.logEvent("notification_permission", parameters: [
+            AnalyticsService.shared.track("notification_permission", parameters: [
                 "granted": granted,
                 "source": "quiz_onboarding_burden"
             ])
@@ -698,7 +698,7 @@ struct QuizOnboardingView: View {
     private func advanceFromMatchedDeclaration() {
         UIImpactFeedbackGenerator(style: .soft).impactOccurred()
         let timeOnScreen = Int(Date().timeIntervalSince(stepEnteredAt))
-        Analytics.logEvent("onboarding_first_declaration_spoken", parameters: [
+        AnalyticsService.shared.track("onboarding_first_declaration_spoken", parameters: [
             "segment": segment.rawValue,
             "burden": selectedBurden?.rawValue ?? "none",
             "declaration_id": matchedDeclarationVerse,
@@ -710,14 +710,14 @@ struct QuizOnboardingView: View {
     private func advanceFromPersonalDeclaration() {
         UIImpactFeedbackGenerator(style: .soft).impactOccurred()
         appState.hasPersonalDeclaration = savedPersonalDeclaration != nil
-        Analytics.logEvent("onboarding_personal_declaration_completed", parameters: [
+        AnalyticsService.shared.track("onboarding_personal_declaration_completed", parameters: [
             "segment": segment.rawValue,
             "set_personal_declaration": (savedPersonalDeclaration != nil) as NSNumber
         ])
         // App Store review prompt at the emotional peak — right after the user
         // has spoken their OWN declaration aloud — and still BEFORE the paywall
         // so it never competes with or gets soured by the pricing decision.
-        Analytics.logEvent("onboarding_rating_step_shown", parameters: [
+        AnalyticsService.shared.track("onboarding_rating_step_shown", parameters: [
             "segment": segment.rawValue,
             "position": "post_personal_declaration"
         ])
@@ -730,7 +730,7 @@ struct QuizOnboardingView: View {
         // (and the analytics events fired from it) see the chosen segment.
         applySegmentDefaults()
         let totalDuration = Int(Date().timeIntervalSince(quizShownAt))
-        Analytics.logEvent("onboarding_completed", parameters: [
+        AnalyticsService.shared.track("onboarding_completed", parameters: [
             "segment": segment.rawValue,
             "total_duration_seconds": totalDuration
         ])
@@ -745,7 +745,7 @@ struct QuizOnboardingView: View {
         // Seed the screen with the burden so its subtitle and preview render
         // the user's matched declaration text instead of a generic fallback.
         notificationResponses.heaviestBurden = selectedBurden
-        Analytics.logEvent("onboarding_notification_time_shown", parameters: [
+        AnalyticsService.shared.track("onboarding_notification_time_shown", parameters: [
             "segment": segment.rawValue
         ])
         transition(to: .notificationTime)
@@ -759,7 +759,7 @@ struct QuizOnboardingView: View {
             // Mirror to the personal declaration push time — same pattern
             // SurveyOnboardingView uses for the survey flow's notification step.
             appState.personalDeclarationTimeIndex = notifTime.startTimeIndex
-            Analytics.logEvent("onboarding_notification_time_picked", parameters: [
+            AnalyticsService.shared.track("onboarding_notification_time_picked", parameters: [
                 "segment": segment.rawValue,
                 "notification_time": notifTime.rawValue
             ])
@@ -775,7 +775,7 @@ struct QuizOnboardingView: View {
         let primaryCategory = selectedBurden?.goalWord.declarationCategory ?? segment.primaryCategory
         let categories: Set<DeclarationCategory> = [primaryCategory]
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { granted, _ in
-            Analytics.logEvent("notification_permission", parameters: [
+            AnalyticsService.shared.track("notification_permission", parameters: [
                 "granted": granted,
                 "source": "quiz_onboarding"
             ])
@@ -817,7 +817,7 @@ struct QuizOnboardingView: View {
     }
 
     private func fireBeliefShown(_ question: BeliefQuestion) {
-        Analytics.logEvent("onboarding_belief_shown", parameters: [
+        AnalyticsService.shared.track("onboarding_belief_shown", parameters: [
             "question_id": question.analyticsId,
             "question_index": question.rawValue,
             "segment": segment.rawValue
@@ -825,13 +825,13 @@ struct QuizOnboardingView: View {
     }
 
     private func fireBurdenShown() {
-        Analytics.logEvent("onboarding_burden_shown", parameters: [
+        AnalyticsService.shared.track("onboarding_burden_shown", parameters: [
             "segment": segment.rawValue
         ])
     }
 
     private func fireMatchedDeclarationShown() {
-        Analytics.logEvent("onboarding_first_declaration_shown", parameters: [
+        AnalyticsService.shared.track("onboarding_first_declaration_shown", parameters: [
             "segment": segment.rawValue,
             "burden": selectedBurden?.rawValue ?? "none",
             "declaration_id": matchedDeclarationVerse
