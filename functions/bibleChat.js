@@ -62,7 +62,10 @@ SAFETY:
 - Never give professional medical, legal, or financial advice. Point to prayer, Scripture, and a qualified professional.
 - If someone expresses intent to harm themselves or others, respond with compassion, urge them to reach out to a crisis line or emergency services immediately, and remind them they are loved by God.`;
 
-// ─── RevenueCat entitlement check (server-side, authoritative) ───────────────
+// ─── RevenueCat entitlement check (server-side, authoritative when reachable) ─
+// Returns true/false when RC gives a definitive answer, or null when RC is
+// unreachable/misconfigured (bad key, outage) so the caller can fall back to the
+// client's premium claim instead of wrongly locking a paying user out.
 async function isPremiumViaRevenueCat(appUserId, secretKey) {
   try {
     const resp = await fetch(
@@ -70,8 +73,8 @@ async function isPremiumViaRevenueCat(appUserId, secretKey) {
       { headers: { Authorization: `Bearer ${secretKey}` } }
     );
     if (!resp.ok) {
-      console.warn(`RC lookup ${resp.status} for ${appUserId}`);
-      return false;
+      console.warn(`RC lookup ${resp.status} for ${appUserId} — falling back to client claim`);
+      return null;
     }
     const data = await resp.json();
     const ent = data && data.subscriber && data.subscriber.entitlements
@@ -83,7 +86,7 @@ async function isPremiumViaRevenueCat(appUserId, secretKey) {
     return new Date(ent.expires_date).getTime() > Date.now();
   } catch (err) {
     console.error('RC check failed:', err.message);
-    return false;
+    return null;
   }
 }
 
@@ -137,10 +140,15 @@ exports.bibleChat = onRequest(
     }
 
     // ─── Entitlement ─────────────────────────────────────────────────────
+    // RevenueCat is authoritative when it answers; if it's unset, down, or the
+    // secret is misconfigured, fall back to the client's premium flag rather
+    // than locking out paying users.
     const rcKey = REVENUECAT_SECRET_KEY.value();
-    const isPremium = rcKey
-      ? await isPremiumViaRevenueCat(appUserId, rcKey)
-      : body.isPremiumClaim === true; // fallback until RC secret is configured
+    let isPremium = body.isPremiumClaim === true;
+    if (rcKey) {
+      const rc = await isPremiumViaRevenueCat(appUserId, rcKey);
+      if (rc !== null) isPremium = rc;
+    }
 
     const usageRef = db.collection('bibleChatUsage').doc(appUserId);
 
