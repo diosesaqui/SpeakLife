@@ -77,7 +77,7 @@ final class SubscriptionStore: ObservableObject {
     // MARK: - Quiz Onboarding (Treatment cohort of the install→trial A/B)
     // false = current SurveyOnboardingView (Control)
     // true  = QuizOnboardingView with personalized paywall framing (Treatment)
-    @Published var useQuizOnboarding = false
+    @Published var useQuizOnboarding = true
     
     // MARK: - AI Feature Flag
     @Published var enableAIFeatures = false

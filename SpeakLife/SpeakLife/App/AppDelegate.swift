@@ -84,8 +84,16 @@ final class AppDelegate: NSObject, MessagingDelegate {
         settings.minimumFetchInterval = 3600 * 5
         #endif
         RemoteConfig.remoteConfig().configSettings = settings
-       
-        
+
+        // In-app Remote Config defaults. Without these, a fresh install reads
+        // un-fetched flags as false before the first network fetch completes —
+        // which made first-launch onboarding fall back to the OLD survey flow.
+        // Default the new quiz onboarding ON so fresh installs get it immediately;
+        // Remote Config still overrides this once fetched.
+        RemoteConfig.remoteConfig().setDefaults([
+            "useQuizOnboarding": true as NSNumber
+        ])
+
         registerBGTask()
         
         // Initialize TikTok SDK after a brief delay to not interfere with landing animation
