@@ -34,6 +34,14 @@ final class RevenueCatManager {
         try await Purchases.shared.customerInfo()
     }
 
+    /// Stable per-install identity RevenueCat uses for this user. The Bible Chat
+    /// proxy keys server-side entitlement checks and usage metering off this.
+    var appUserID: String {
+        // Purchases.shared traps if accessed before configure(). Guard so chat
+        // code paths in previews/tests/early-launch don't crash.
+        Purchases.isConfigured ? Purchases.shared.appUserID : ""
+    }
+
     func isPremiumActive(_ info: CustomerInfo) -> Bool {
         info.entitlements[Self.premiumEntitlement]?.isActive == true
     }

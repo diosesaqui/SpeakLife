@@ -1,0 +1,217 @@
+/**
+ * bibleChat.js
+ * Firebase Cloud Function (v2 HTTPS) — Bible Chat AI proxy.
+ *
+ * Why a proxy and not a direct device → Anthropic call:
+ *   - The Anthropic API key never ships to the device (lives in Secret Manager).
+ *   - Premium is verified server-side via RevenueCat (not spoofable).
+ *   - Free-tier message limit + token usage are metered in Firestore.
+ *   - The on-topic system prompt is cached (cache_control) for ~90% cheaper reads.
+ *
+ * ─── Setup ──────────────────────────────────────────────────────────────────
+ *  1. npm install  (adds @anthropic-ai/sdk)
+ *  2. Set secrets:
+ *       firebase functions:secrets:set ANTHROPIC_API_KEY
+ *       firebase functions:secrets:set REVENUECAT_SECRET_KEY   # RC v1 secret key
+ *     (If REVENUECAT_SECRET_KEY is unset the function falls back to the client's
+ *      isPremium claim — fine for a first deploy, less secure. Add it to harden.)
+ *  3. firebase deploy --only functions:bibleChat
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
+
+const { onRequest } = require('firebase-functions/v2/https');
+const { defineSecret } = require('firebase-functions/params');
+const { getApps, initializeApp } = require('firebase-admin/app');
+const { getFirestore, FieldValue } = require('firebase-admin/firestore');
+const Anthropic = require('@anthropic-ai/sdk');
+
+// prayerWallNotifications.js also calls initializeApp() at module load. When both
+// are pulled in via index.js, guard against double-init.
+if (getApps().length === 0) initializeApp();
+
+const db = getFirestore();
+
+// ─── Secrets ──────────────────────────────────────────────────────────────
+const ANTHROPIC_API_KEY = defineSecret('ANTHROPIC_API_KEY');
+const REVENUECAT_SECRET_KEY = defineSecret('REVENUECAT_SECRET_KEY');
+
+// ─── Constants ──────────────────────────────────────────────────────────────
+const MODEL = 'claude-haiku-4-5-20251001';
+const MAX_TOKENS = 600;
+const FREE_MESSAGE_LIMIT = 3;   // non-premium users get this many lifetime, then paywall
+const WINDOW = 8;               // rolling window: last 8 messages (~4 exchanges)
+const MAX_CHARS = 2000;         // per-message hard truncation (anti-abuse, bounds tokens)
+const PREMIUM_ENTITLEMENT = 'premium';
+
+// The on-topic biblical-counselor prompt. Cached server-side so repeat reads are
+// ~10% of input cost. The strict topic guardrail keeps the model on faith/life
+// challenges (no sports/trivia/chit-chat) — this is the real cost governor.
+const SYSTEM_PROMPT = `You are a warm, biblically-grounded companion inside the SpeakLife app, used by over a million believers. You help people with real-life challenges — anxiety, fear, relationships, marriage, parenting, grief, purpose, identity, temptation, finances, loneliness, faith — always through the lens of Scripture.
+
+HOW YOU RESPOND:
+- Ground every answer in the Bible. Cite specific verses with references (NIV preferred). Quote the verse text when it helps.
+- Be warm, encouraging, direct, and pastoral. Speak to the person's heart.
+- Keep replies under ~220 words. Short and clear is powerful. Use a short prayer or a single reflective question when it fits.
+- Meet people where they are. Acknowledge their pain before pointing to truth.
+
+STRICT TOPIC BOUNDARY:
+- You ONLY discuss faith, Scripture, prayer, God, and real-life struggles viewed through a biblical lens.
+- If asked about off-topic subjects (sports, celebrities, coding, math, trivia, current events, politics, product help, or general chit-chat), gently decline in one sentence and redirect to how God's Word might speak to what they're really carrying. Do not answer the off-topic question.
+
+SAFETY:
+- Never give professional medical, legal, or financial advice. Point to prayer, Scripture, and a qualified professional.
+- If someone expresses intent to harm themselves or others, respond with compassion, urge them to reach out to a crisis line or emergency services immediately, and remind them they are loved by God.`;
+
+// ─── RevenueCat entitlement check (server-side, authoritative) ───────────────
+async function isPremiumViaRevenueCat(appUserId, secretKey) {
+  try {
+    const resp = await fetch(
+      `https://api.revenuecat.com/v1/subscribers/${encodeURIComponent(appUserId)}`,
+      { headers: { Authorization: `Bearer ${secretKey}` } }
+    );
+    if (!resp.ok) {
+      console.warn(`RC lookup ${resp.status} for ${appUserId}`);
+      return false;
+    }
+    const data = await resp.json();
+    const ent = data && data.subscriber && data.subscriber.entitlements
+      ? data.subscriber.entitlements[PREMIUM_ENTITLEMENT]
+      : null;
+    if (!ent) return false;
+    // No expiry → lifetime/non-expiring. Otherwise active if expiry is future.
+    if (!ent.expires_date) return true;
+    return new Date(ent.expires_date).getTime() > Date.now();
+  } catch (err) {
+    console.error('RC check failed:', err.message);
+    return false;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// bibleChat — POST { appUserId, messages:[{role,content}], isPremiumClaim? }
+//   → { reply, needsPaywall, remainingFree, usage }
+// ═══════════════════════════════════════════════════════════════════════════
+exports.bibleChat = onRequest(
+  {
+    region: 'us-central1',
+    cors: true,
+    secrets: [ANTHROPIC_API_KEY, REVENUECAT_SECRET_KEY],
+    timeoutSeconds: 30,
+  },
+  async (req, res) => {
+    if (req.method !== 'POST') {
+      res.status(405).json({ error: 'method_not_allowed' });
+      return;
+    }
+
+    const body = req.body || {};
+    const appUserId = typeof body.appUserId === 'string' ? body.appUserId.trim() : '';
+    const rawMessages = Array.isArray(body.messages) ? body.messages : null;
+
+    if (!appUserId || !rawMessages) {
+      res.status(400).json({ error: 'missing appUserId or messages' });
+      return;
+    }
+
+    // appUserId is used directly as a Firestore document ID. Reject anything
+    // that would make .doc() throw synchronously (slashes, dot segments, or
+    // oversized) before it reaches the collection call.
+    if (appUserId.length > 1500 || appUserId.includes('/') ||
+        appUserId === '.' || appUserId === '..') {
+      res.status(400).json({ error: 'invalid appUserId' });
+      return;
+    }
+
+    // Clamp to the rolling window, sanitize roles, hard-truncate each message.
+    const messages = rawMessages
+      .slice(-WINDOW)
+      .map((m) => ({
+        role: m && m.role === 'assistant' ? 'assistant' : 'user',
+        content: String((m && m.content) || '').slice(0, MAX_CHARS).trim(),
+      }))
+      .filter((m) => m.content.length > 0);
+
+    if (messages.length === 0 || messages[messages.length - 1].role !== 'user') {
+      res.status(400).json({ error: 'last message must be a non-empty user message' });
+      return;
+    }
+
+    // ─── Entitlement ─────────────────────────────────────────────────────
+    const rcKey = REVENUECAT_SECRET_KEY.value();
+    const isPremium = rcKey
+      ? await isPremiumViaRevenueCat(appUserId, rcKey)
+      : body.isPremiumClaim === true; // fallback until RC secret is configured
+
+    const usageRef = db.collection('bibleChatUsage').doc(appUserId);
+
+    // ─── Free-tier gate (non-premium only) ───────────────────────────────
+    let freeUsedBefore = 0;
+    if (!isPremium) {
+      const snap = await usageRef.get();
+      freeUsedBefore = snap.exists ? snap.data().freeMessagesUsed || 0 : 0;
+      if (freeUsedBefore >= FREE_MESSAGE_LIMIT) {
+        res.json({ needsPaywall: true, remainingFree: 0 });
+        return;
+      }
+    }
+
+    // ─── Claude call ─────────────────────────────────────────────────────
+    let reply = '';
+    let usage = {};
+    try {
+      const client = new Anthropic({ apiKey: ANTHROPIC_API_KEY.value() });
+      const completion = await client.messages.create({
+        model: MODEL,
+        max_tokens: MAX_TOKENS,
+        system: [
+          { type: 'text', text: SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } },
+        ],
+        messages,
+      });
+      reply = (completion.content || [])
+        .filter((b) => b.type === 'text')
+        .map((b) => b.text)
+        .join('\n')
+        .trim();
+      usage = completion.usage || {};
+    } catch (err) {
+      console.error('Anthropic error:', err.message);
+      res.status(502).json({ error: 'ai_unavailable' });
+      return;
+    }
+
+    if (!reply) {
+      res.status(502).json({ error: 'empty_reply' });
+      return;
+    }
+
+    // ─── Meter usage (and burn a free message only on success) ────────────
+    const update = {
+      lastUsedAt: FieldValue.serverTimestamp(),
+      totalMessages: FieldValue.increment(1),
+      inputTokens: FieldValue.increment(usage.input_tokens || 0),
+      outputTokens: FieldValue.increment(usage.output_tokens || 0),
+      cacheReadTokens: FieldValue.increment(usage.cache_read_input_tokens || 0),
+      cacheWriteTokens: FieldValue.increment(usage.cache_creation_input_tokens || 0),
+    };
+    if (!isPremium) update.freeMessagesUsed = FieldValue.increment(1);
+    await usageRef.set(update, { merge: true });
+
+    // Derive remaining count from the value we already read — avoids a second
+    // round-trip (and a crash if the doc were deleted in between).
+    const remainingFree = isPremium
+      ? null
+      : Math.max(0, FREE_MESSAGE_LIMIT - (freeUsedBefore + 1));
+
+    res.json({
+      reply,
+      needsPaywall: false,
+      remainingFree,
+      usage: {
+        inputTokens: usage.input_tokens || 0,
+        outputTokens: usage.output_tokens || 0,
+        cacheReadTokens: usage.cache_read_input_tokens || 0,
+      },
+    });
+  }
+);
