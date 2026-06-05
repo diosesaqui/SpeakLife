@@ -5,6 +5,7 @@
 
 import Foundation
 import SwiftUI
+import SwiftData
 
 @MainActor
 final class BibleChatViewModel: ObservableObject {
@@ -65,6 +66,8 @@ final class BibleChatConversationViewModel: ObservableObject {
     @Published var errorMessage: String?
     @Published var needsPaywall: Bool = false
     @Published private(set) var remainingFree: Int?
+    /// The conversation currently being viewed/extended (nil = unsaved new chat).
+    @Published var currentConversation: ChatConversation?
 
     private let service: BibleChatAIService
     private let windowSize = 8
@@ -108,6 +111,11 @@ final class BibleChatConversationViewModel: ObservableObject {
                 } else if let reply = result.reply {
                     messages.append(ChatMessage(role: .assistant, text: reply))
                     remainingFree = result.remainingFree
+                    // Persist the exchange to local history (creates the
+                    // conversation on the first save of a new chat).
+                    currentConversation = ChatHistoryStore.shared.record(
+                        userText: text, assistantText: reply, into: currentConversation
+                    )
                 }
             } catch {
                 // Leave the user's message in the transcript and surface an error
@@ -115,5 +123,26 @@ final class BibleChatConversationViewModel: ObservableObject {
                 errorMessage = "Something went wrong. Please try again."
             }
         }
+    }
+
+    /// Clear the screen for a fresh conversation (does not delete saved history).
+    func startNewConversation() {
+        messages = []
+        draft = ""
+        errorMessage = nil
+        needsPaywall = false
+        currentConversation = nil
+    }
+
+    /// Load a saved conversation back into the chat to continue or review it.
+    func load(_ conversation: ChatConversation) {
+        currentConversation = conversation
+        errorMessage = nil
+        messages = conversation.messages
+            .sorted { $0.createdAt < $1.createdAt }
+            .map { ChatMessage(
+                role: $0.role == ChatMessage.Role.assistant.rawValue ? .assistant : .user,
+                text: $0.text
+            ) }
     }
 }

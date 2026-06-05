@@ -7,6 +7,7 @@
 
 import SwiftUI
 import MessageUI
+import SwiftData
 
 struct BibleChatView: View {
     @StateObject private var viewModel = BibleChatViewModel()
@@ -329,6 +330,7 @@ struct BibleChatConversationView: View {
     @EnvironmentObject var appState: AppState
     @EnvironmentObject var declarationStore: DeclarationViewModel
     @State private var showPaywall = false
+    @State private var showHistory = false
     @State private var heroAppeared = false
     @FocusState private var inputFocused: Bool
 
@@ -366,10 +368,29 @@ struct BibleChatConversationView: View {
             }
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button {
+                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                        viewModel.startNewConversation()
+                    } label: {
+                        Image(systemName: "square.and.pencil")
+                            .foregroundColor(.white)
+                    }
+                    .accessibilityLabel("New chat")
+                }
                 ToolbarItem(placement: .principal) {
                     Text("Bible Chat")
                         .font(.system(size: 18, weight: .bold, design: .serif))
                         .foregroundColor(.white)
+                }
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button {
+                        showHistory = true
+                    } label: {
+                        Image(systemName: "clock.arrow.circlepath")
+                            .foregroundColor(.white)
+                    }
+                    .accessibilityLabel("Chat history")
                 }
             }
         }
@@ -386,6 +407,13 @@ struct BibleChatConversationView: View {
                 .environmentObject(declarationStore)
                 .environmentObject(subscriptionStore)
                 .presentationDetents([.large])
+        }
+        .sheet(isPresented: $showHistory) {
+            ChatHistoryView(
+                onSelect: { conversation in viewModel.load(conversation) },
+                onNewChat: { viewModel.startNewConversation() }
+            )
+            .modelContainer(ChatHistoryStore.shared.container)
         }
         .onAppear { AnalyticsService.shared.trackScreenView("bible_chat_conversation") }
     }
@@ -543,6 +571,92 @@ struct BibleChatConversationView: View {
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
         .background(Color.black.opacity(0.2))
+    }
+}
+
+// MARK: - Chat history list
+//
+// Reads from the same shared SwiftData container the conversation view model
+// writes to (injected via .modelContainer), so @Query auto-updates as new
+// chats are saved.
+
+struct ChatHistoryView: View {
+    @Query(sort: \ChatConversation.updatedAt, order: .reverse) private var conversations: [ChatConversation]
+    @Environment(\.modelContext) private var context
+    @Environment(\.dismiss) private var dismiss
+
+    let onSelect: (ChatConversation) -> Void
+    let onNewChat: () -> Void
+
+    var body: some View {
+        NavigationView {
+            ZStack {
+                Gradients().speakLifeCYOCell.ignoresSafeArea()
+                if conversations.isEmpty {
+                    VStack(spacing: 10) {
+                        Image(systemName: "clock.arrow.circlepath")
+                            .font(.system(size: 34))
+                            .foregroundColor(.white.opacity(0.5))
+                        Text("No past chats yet")
+                            .font(.system(size: 15, weight: .medium))
+                            .foregroundColor(.white.opacity(0.75))
+                        Text("Your conversations will appear here.")
+                            .font(.system(size: 13))
+                            .foregroundColor(.white.opacity(0.45))
+                    }
+                } else {
+                    List {
+                        ForEach(conversations) { conversation in
+                            Button {
+                                onSelect(conversation)
+                                dismiss()
+                            } label: {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text(conversation.title)
+                                        .font(.system(size: 15, weight: .semibold))
+                                        .foregroundColor(.white)
+                                        .lineLimit(1)
+                                    Text(conversation.updatedAt, format: .relative(presentation: .named))
+                                        .font(.system(size: 12))
+                                        .foregroundColor(.white.opacity(0.5))
+                                }
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .contentShape(Rectangle())
+                            }
+                            .buttonStyle(.plain)
+                            .listRowBackground(Color.white.opacity(0.05))
+                        }
+                        .onDelete(perform: delete)
+                    }
+                    .scrollContentBackground(.hidden)
+                }
+            }
+            .navigationTitle("Your Chats")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button {
+                        onNewChat()
+                        dismiss()
+                    } label: {
+                        Label("New", systemImage: "square.and.pencil")
+                    }
+                    .tint(Constants.gold)
+                }
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") { dismiss() }
+                        .tint(.white)
+                }
+            }
+        }
+        .navigationViewStyle(.stack)
+    }
+
+    private func delete(at offsets: IndexSet) {
+        for index in offsets {
+            context.delete(conversations[index])
+        }
+        try? context.save()
     }
 }
 
