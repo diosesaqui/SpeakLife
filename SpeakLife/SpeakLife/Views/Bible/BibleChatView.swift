@@ -635,6 +635,9 @@ struct ChatHistoryView: View {
             }
             .navigationTitle("Your Chats")
             .navigationBarTitleDisplayMode(.inline)
+            // The sheet has its own nav bar that defaults to light mode — force
+            // dark so the title/buttons read correctly over the dark gradient.
+            .toolbarColorScheme(.dark, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button {
