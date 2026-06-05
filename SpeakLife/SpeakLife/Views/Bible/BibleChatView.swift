@@ -588,6 +588,10 @@ struct ChatHistoryView: View {
     let onSelect: (ChatConversation) -> Void
     let onNewChat: () -> Void
 
+    @State private var renamingConversation: ChatConversation?
+    @State private var renameText: String = ""
+    @State private var showRename = false
+
     var body: some View {
         NavigationView {
             ZStack {
@@ -616,7 +620,7 @@ struct ChatHistoryView: View {
                                         .font(.system(size: 15, weight: .semibold))
                                         .foregroundColor(.white)
                                         .lineLimit(1)
-                                    Text(conversation.updatedAt, format: .relative(presentation: .named))
+                                    Text(conversation.updatedAt.formatted(date: .abbreviated, time: .shortened))
                                         .font(.system(size: 12))
                                         .foregroundColor(.white.opacity(0.5))
                                 }
@@ -625,6 +629,16 @@ struct ChatHistoryView: View {
                             }
                             .buttonStyle(.plain)
                             .listRowBackground(Color.white.opacity(0.05))
+                            .swipeActions(edge: .leading) {
+                                Button {
+                                    renamingConversation = conversation
+                                    renameText = conversation.title
+                                    showRename = true
+                                } label: {
+                                    Label("Rename", systemImage: "pencil")
+                                }
+                                .tint(.blue)
+                            }
                         }
                         .onDelete(perform: delete)
                     }
@@ -647,6 +661,19 @@ struct ChatHistoryView: View {
                     Button("Done") { dismiss() }
                         .tint(.white)
                 }
+            }
+            .alert("Rename chat", isPresented: $showRename) {
+                TextField("Title", text: $renameText)
+                Button("Save") {
+                    if let convo = renamingConversation {
+                        let trimmed = renameText.trimmingCharacters(in: .whitespacesAndNewlines)
+                        if !trimmed.isEmpty {
+                            convo.title = String(trimmed.prefix(60))
+                            try? context.save()
+                        }
+                    }
+                }
+                Button("Cancel", role: .cancel) {}
             }
         }
         .navigationViewStyle(.stack)

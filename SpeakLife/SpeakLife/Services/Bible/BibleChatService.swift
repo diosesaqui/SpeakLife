@@ -238,8 +238,12 @@ final class ChatHistoryStore {
 
     /// Append the latest user+assistant exchange, creating the conversation on
     /// first save. Returns the (possibly newly created) conversation.
+    /// Keep at most this many conversations on device (oldest auto-pruned).
+    private let maxConversations = 50
+
     @discardableResult
     func record(userText: String, assistantText: String, into conversation: ChatConversation?) -> ChatConversation {
+        let isNew = (conversation == nil)
         let convo: ChatConversation
         if let existing = conversation {
             convo = existing
@@ -256,11 +260,32 @@ final class ChatHistoryStore {
         convo.messages.append(assistant)
         convo.updatedAt = now
         try? context.save()
+        if isNew { pruneIfNeeded() }
         return convo
+    }
+
+    /// Rename a conversation. Ignores empty titles.
+    func rename(_ conversation: ChatConversation, to title: String) {
+        let trimmed = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        conversation.title = String(trimmed.prefix(60))
+        try? context.save()
     }
 
     func delete(_ conversation: ChatConversation) {
         context.delete(conversation)
+        try? context.save()
+    }
+
+    /// Delete the oldest conversations beyond the cap (called when a new one is added).
+    private func pruneIfNeeded() {
+        let descriptor = FetchDescriptor<ChatConversation>(
+            sortBy: [SortDescriptor(\.updatedAt, order: .reverse)]
+        )
+        guard let all = try? context.fetch(descriptor), all.count > maxConversations else { return }
+        for convo in all[maxConversations...] {
+            context.delete(convo)
+        }
         try? context.save()
     }
 
