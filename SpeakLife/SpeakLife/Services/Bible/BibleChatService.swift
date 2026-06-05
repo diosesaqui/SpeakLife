@@ -7,7 +7,6 @@
 
 import Foundation
 import FirebaseAnalytics
-import SwiftData
 
 protocol BibleChatServiceProtocol {
     func loadTopics() throws -> [BibleChatTopic]
@@ -171,141 +170,108 @@ final class BibleChatAIService {
     }
 }
 
-// MARK: - Chat history (SwiftData, local)
+// MARK: - Chat history (local JSON cache)
 //
-// A single @Model holds the whole conversation; messages are stored as a Codable
-// value array rather than a SwiftData relationship. The two-model relationship
-// was triggering SwiftData's loadIssueModelContainer on init — one flat model
-// with primitive + Codable properties loads reliably. Fast SQLite, instant,
-// offline. To sync across devices later, add the iCloud capability and pass
-// `cloudKitDatabase: .automatic` to the ModelConfiguration.
+// SwiftData refused to build a ModelContainer in this app (loadIssueModelContainer
+// on init for both a relationship model and a Codable-array model), so chat
+// history uses a simple, bulletproof Codable-to-disk cache. The data is small
+// (capped at 50 conversations), loaded once and rewritten on each exchange —
+// fast and reliable, with no schema engine to fail.
 
-struct StoredMessage: Codable, Identifiable {
-    var id: UUID = UUID()
+struct StoredMessage: Codable, Identifiable, Equatable {
+    var id = UUID()
     var role: String
     var text: String
     var createdAt: Date
 }
 
-@Model
-final class ChatConversation {
-    var id: UUID
+struct ChatConversation: Codable, Identifiable, Equatable {
+    var id = UUID()
     var title: String
-    var createdAt: Date
-    var updatedAt: Date
-    var messages: [StoredMessage]
-
-    init(id: UUID = UUID(),
-         title: String,
-         createdAt: Date = Date(),
-         updatedAt: Date = Date(),
-         messages: [StoredMessage] = []) {
-        self.id = id
-        self.title = title
-        self.createdAt = createdAt
-        self.updatedAt = updatedAt
-        self.messages = messages
-    }
+    var createdAt: Date = Date()
+    var updatedAt: Date = Date()
+    var messages: [StoredMessage] = []
 }
 
 @MainActor
-final class ChatHistoryStore {
+final class ChatHistoryStore: ObservableObject {
     static let shared = ChatHistoryStore()
 
-    /// Optional so a SwiftData failure degrades gracefully (history disabled)
-    /// instead of crashing the app.
-    let container: ModelContainer?
+    /// Conversations, newest first.
+    @Published private(set) var conversations: [ChatConversation] = []
+
     private let maxConversations = 50
+    private let fileURL: URL
 
     private init() {
-        if let c = try? Self.makeContainer(inMemory: false) {
-            container = c
+        let dir = (try? FileManager.default.url(
+            for: .applicationSupportDirectory, in: .userDomainMask,
+            appropriateFor: nil, create: true
+        )) ?? FileManager.default.temporaryDirectory
+        fileURL = dir.appendingPathComponent("bible_chat_history.json")
+        loadFromDisk()
+    }
+
+    private func loadFromDisk() {
+        guard let data = try? Data(contentsOf: fileURL),
+              let decoded = try? JSONDecoder().decode([ChatConversation].self, from: data) else {
+            conversations = []
             return
         }
-        // On-disk store likely corrupt/incompatible — delete and retry once.
-        Self.deleteDefaultStore()
-        if let c = try? Self.makeContainer(inMemory: false) {
-            container = c
-            return
-        }
-        // Final fallback: in-memory (no persistence this launch). nil if even
-        // this fails — the app never crashes over chat history.
-        container = try? Self.makeContainer(inMemory: true)
+        conversations = decoded.sorted { $0.updatedAt > $1.updatedAt }
     }
 
-    private static func makeContainer(inMemory: Bool) throws -> ModelContainer {
-        let schema = Schema([ChatConversation.self])
-        return try ModelContainer(
-            for: schema,
-            configurations: ModelConfiguration(schema: schema, isStoredInMemoryOnly: inMemory)
-        )
+    private func persist() {
+        guard let data = try? JSONEncoder().encode(conversations) else { return }
+        try? data.write(to: fileURL, options: .atomic)
     }
 
-    /// Remove the default SwiftData store (and -shm/-wal sidecars) so a corrupt
-    /// store can be recreated cleanly.
-    private static func deleteDefaultStore() {
-        let schema = Schema([ChatConversation.self])
-        let url = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false).url
-        let base = url.path
-        for path in [base, base + "-shm", base + "-wal"] {
-            try? FileManager.default.removeItem(atPath: path)
-        }
-    }
-
-    private var context: ModelContext? { container?.mainContext }
-
-    /// Append the latest user+assistant exchange, creating the conversation on
-    /// first save. Returns the conversation (or the passed-in one if history is
-    /// unavailable).
+    /// Append the latest user+assistant exchange. Creates the conversation if
+    /// `conversationID` is nil or no longer exists. Returns the conversation.
     @discardableResult
-    func record(userText: String, assistantText: String, into conversation: ChatConversation?) -> ChatConversation? {
-        guard let context else { return conversation }
-        let convo: ChatConversation
-        let isNew: Bool
-        // Guard against a conversation deleted from history while it was active.
-        if let existing = conversation, existing.modelContext != nil {
-            convo = existing
-            isNew = false
-        } else {
-            convo = ChatConversation(title: Self.makeTitle(from: userText))
-            context.insert(convo)
-            isNew = true
-        }
+    func record(userText: String, assistantText: String, into conversationID: UUID?) -> ChatConversation {
         let now = Date()
-        convo.messages.append(StoredMessage(role: ChatMessage.Role.user.rawValue, text: userText, createdAt: now))
-        convo.messages.append(StoredMessage(role: ChatMessage.Role.assistant.rawValue, text: assistantText, createdAt: now.addingTimeInterval(0.001)))
-        convo.updatedAt = now
-        try? context.save()
-        if isNew { pruneIfNeeded() }
+        let userMsg = StoredMessage(role: ChatMessage.Role.user.rawValue, text: userText, createdAt: now)
+        let aiMsg = StoredMessage(role: ChatMessage.Role.assistant.rawValue, text: assistantText, createdAt: now.addingTimeInterval(0.001))
+
+        if let id = conversationID, let idx = conversations.firstIndex(where: { $0.id == id }) {
+            conversations[idx].messages.append(userMsg)
+            conversations[idx].messages.append(aiMsg)
+            conversations[idx].updatedAt = now
+            let updated = conversations.remove(at: idx)
+            conversations.insert(updated, at: 0) // bump to top (newest first)
+            persist()
+            return updated
+        }
+
+        let convo = ChatConversation(
+            title: Self.makeTitle(from: userText),
+            createdAt: now, updatedAt: now,
+            messages: [userMsg, aiMsg]
+        )
+        conversations.insert(convo, at: 0)
+        if conversations.count > maxConversations {
+            conversations.removeLast(conversations.count - maxConversations)
+        }
+        persist()
         return convo
     }
 
-    /// Rename a conversation. Ignores empty titles.
-    func rename(_ conversation: ChatConversation, to title: String) {
-        guard let context else { return }
+    func rename(_ id: UUID, to title: String) {
         let trimmed = title.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { return }
-        conversation.title = String(trimmed.prefix(60))
-        try? context.save()
+        guard !trimmed.isEmpty, let idx = conversations.firstIndex(where: { $0.id == id }) else { return }
+        conversations[idx].title = String(trimmed.prefix(60))
+        persist()
     }
 
-    func delete(_ conversation: ChatConversation) {
-        guard let context else { return }
-        context.delete(conversation)
-        try? context.save()
+    func delete(_ id: UUID) {
+        conversations.removeAll { $0.id == id }
+        persist()
     }
 
-    /// Delete the oldest conversations beyond the cap (called when a new one is added).
-    private func pruneIfNeeded() {
-        guard let context else { return }
-        let descriptor = FetchDescriptor<ChatConversation>(
-            sortBy: [SortDescriptor(\.updatedAt, order: .reverse)]
-        )
-        guard let all = try? context.fetch(descriptor), all.count > maxConversations else { return }
-        for convo in all[maxConversations...] {
-            context.delete(convo)
-        }
-        try? context.save()
+    func delete(at offsets: IndexSet) {
+        conversations.remove(atOffsets: offsets)
+        persist()
     }
 
     static func makeTitle(from text: String) -> String {

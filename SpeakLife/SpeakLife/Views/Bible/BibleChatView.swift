@@ -7,7 +7,6 @@
 
 import SwiftUI
 import MessageUI
-import SwiftData
 
 struct BibleChatView: View {
     @StateObject private var viewModel = BibleChatViewModel()
@@ -402,20 +401,10 @@ struct BibleChatConversationView: View {
                 .presentationDetents([.large])
         }
         .sheet(isPresented: $showHistory) {
-            if let container = ChatHistoryStore.shared.container {
-                ChatHistoryView(
-                    onSelect: { conversation in viewModel.load(conversation) },
-                    onNewChat: { viewModel.startNewConversation() }
-                )
-                .modelContainer(container)
-            } else {
-                ZStack {
-                    Gradients().speakLifeCYOCell.ignoresSafeArea()
-                    Text("Chat history is unavailable right now.")
-                        .font(.system(size: 15))
-                        .foregroundColor(.white.opacity(0.7))
-                }
-            }
+            ChatHistoryView(
+                onSelect: { conversation in viewModel.load(conversation) },
+                onNewChat: { viewModel.startNewConversation() }
+            )
         }
         .onAppear { AnalyticsService.shared.trackScreenView("bible_chat_conversation") }
     }
@@ -578,19 +567,16 @@ struct BibleChatConversationView: View {
 
 // MARK: - Chat history list
 //
-// Reads from the same shared SwiftData container the conversation view model
-// writes to (injected via .modelContainer), so @Query auto-updates as new
-// chats are saved.
+// Observes the shared JSON-backed ChatHistoryStore; updates as chats are saved.
 
 struct ChatHistoryView: View {
-    @Query(sort: \ChatConversation.updatedAt, order: .reverse) private var conversations: [ChatConversation]
-    @Environment(\.modelContext) private var context
+    @ObservedObject private var store = ChatHistoryStore.shared
     @Environment(\.dismiss) private var dismiss
 
     let onSelect: (ChatConversation) -> Void
     let onNewChat: () -> Void
 
-    @State private var renamingConversation: ChatConversation?
+    @State private var renamingID: UUID?
     @State private var renameText: String = ""
     @State private var showRename = false
 
@@ -598,7 +584,7 @@ struct ChatHistoryView: View {
         NavigationView {
             ZStack {
                 Gradients().speakLifeCYOCell.ignoresSafeArea()
-                if conversations.isEmpty {
+                if store.conversations.isEmpty {
                     VStack(spacing: 10) {
                         Image(systemName: "clock.arrow.circlepath")
                             .font(.system(size: 34))
@@ -612,7 +598,7 @@ struct ChatHistoryView: View {
                     }
                 } else {
                     List {
-                        ForEach(conversations) { conversation in
+                        ForEach(store.conversations) { conversation in
                             Button {
                                 onSelect(conversation)
                                 dismiss()
@@ -633,7 +619,7 @@ struct ChatHistoryView: View {
                             .listRowBackground(Color.white.opacity(0.05))
                             .swipeActions(edge: .leading) {
                                 Button {
-                                    renamingConversation = conversation
+                                    renamingID = conversation.id
                                     renameText = conversation.title
                                     showRename = true
                                 } label: {
@@ -642,7 +628,7 @@ struct ChatHistoryView: View {
                                 .tint(.blue)
                             }
                         }
-                        .onDelete(perform: delete)
+                        .onDelete { store.delete(at: $0) }
                     }
                     .scrollContentBackground(.hidden)
                 }
@@ -667,25 +653,14 @@ struct ChatHistoryView: View {
             .alert("Rename chat", isPresented: $showRename) {
                 TextField("Title", text: $renameText)
                 Button("Save") {
-                    if let convo = renamingConversation {
-                        let trimmed = renameText.trimmingCharacters(in: .whitespacesAndNewlines)
-                        if !trimmed.isEmpty {
-                            convo.title = String(trimmed.prefix(60))
-                            try? context.save()
-                        }
+                    if let id = renamingID {
+                        store.rename(id, to: renameText)
                     }
                 }
                 Button("Cancel", role: .cancel) {}
             }
         }
         .navigationViewStyle(.stack)
-    }
-
-    private func delete(at offsets: IndexSet) {
-        for index in offsets {
-            context.delete(conversations[index])
-        }
-        try? context.save()
     }
 }
 

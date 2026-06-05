@@ -5,7 +5,6 @@
 
 import Foundation
 import SwiftUI
-import SwiftData
 
 @MainActor
 final class BibleChatViewModel: ObservableObject {
@@ -67,7 +66,7 @@ final class BibleChatConversationViewModel: ObservableObject {
     @Published var needsPaywall: Bool = false
     @Published private(set) var remainingFree: Int?
     /// The conversation currently being viewed/extended (nil = unsaved new chat).
-    @Published var currentConversation: ChatConversation?
+    @Published var currentConversationID: UUID?
 
     private let service: BibleChatAIService
     private let windowSize = 8
@@ -120,9 +119,9 @@ final class BibleChatConversationViewModel: ObservableObject {
                     remainingFree = result.remainingFree
                     // Persist the exchange to local history (creates the
                     // conversation on the first save of a new chat).
-                    currentConversation = ChatHistoryStore.shared.record(
-                        userText: text, assistantText: reply, into: currentConversation
-                    )
+                    currentConversationID = ChatHistoryStore.shared.record(
+                        userText: text, assistantText: reply, into: currentConversationID
+                    ).id
                 }
             } catch {
                 guard gen == generation else { return }
@@ -140,13 +139,13 @@ final class BibleChatConversationViewModel: ObservableObject {
         draft = ""
         errorMessage = nil
         needsPaywall = false
-        currentConversation = nil
+        currentConversationID = nil
     }
 
     /// Load a saved conversation back into the chat to continue or review it.
     func load(_ conversation: ChatConversation) {
         generation += 1
-        currentConversation = conversation
+        currentConversationID = conversation.id
         errorMessage = nil
         messages = conversation.messages
             .sorted { $0.createdAt < $1.createdAt }
