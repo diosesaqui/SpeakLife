@@ -50,3 +50,70 @@ final class BibleChatViewModel: ObservableObject {
         selectedTopic = nil
     }
 }
+
+// MARK: - Live conversation view model
+//
+// Drives the AI Bible Chat. Keeps a rolling window of the last 8 messages
+// (~4 exchanges) so follow-ups feel natural while keeping tokens bounded.
+
+@MainActor
+final class BibleChatConversationViewModel: ObservableObject {
+
+    @Published var messages: [ChatMessage] = []
+    @Published var draft: String = ""
+    @Published var isSending: Bool = false
+    @Published var errorMessage: String?
+    @Published var needsPaywall: Bool = false
+    @Published private(set) var remainingFree: Int?
+
+    private let service: BibleChatAIService
+    private let windowSize = 8
+
+    init(service: BibleChatAIService = .shared) {
+        self.service = service
+    }
+
+    var canSend: Bool {
+        !isSending && !draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
+    func sendDraft(isPremium: Bool) {
+        // Guard before clearing draft so a send while one is in flight (e.g. the
+        // return key firing) never silently discards the user's text.
+        guard !isSending else { return }
+        let text = draft.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !text.isEmpty else { return }
+        draft = ""
+        send(text, isPremium: isPremium)
+    }
+
+    func send(_ text: String, isPremium: Bool) {
+        guard !isSending else { return }
+        errorMessage = nil
+        messages.append(ChatMessage(role: .user, text: text))
+        isSending = true
+
+        // Rolling window: only the last N messages are sent upstream.
+        let window = Array(messages.suffix(windowSize))
+        AnalyticsService.shared.trackUserAction("bible_chat_message_sent", category: "bible_chat")
+
+        Task {
+            defer { isSending = false }
+            do {
+                let result = try await service.send(messages: window, isPremium: isPremium)
+                if result.needsPaywall {
+                    // Pull the unanswered question back so the transcript stays clean.
+                    if messages.last?.role == .user { messages.removeLast() }
+                    needsPaywall = true
+                } else if let reply = result.reply {
+                    messages.append(ChatMessage(role: .assistant, text: reply))
+                    remainingFree = result.remainingFree
+                }
+            } catch {
+                // Leave the user's message in the transcript and surface an error
+                // so nothing they typed is lost; they can resend.
+                errorMessage = "Something went wrong. Please try again."
+            }
+        }
+    }
+}

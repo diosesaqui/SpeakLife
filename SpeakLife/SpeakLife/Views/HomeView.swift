@@ -41,12 +41,13 @@ class TabViewModel: ObservableObject {
     }
     
     private func trackTabNavigation(from previousTab: Int, to newTab: Int) {
+        // Keys are the actual .tag() values used as selectedTab (not positions).
         let tabNames = [
             0: "declarations",
             1: "audio",
-            2: "create_your_own",
-            3: "bible",
-            4: "profile"
+            3: "create_your_own",
+            4: "bible_chat",
+            5: "profile"
         ]
         
         guard let fromName = tabNames[previousTab],
@@ -349,7 +350,14 @@ struct HomeView: View {
                // bibleView
                 // dailyChecklistView // Moved to DeclarationView
                 createYourOwnView
-                communityView
+                // Bible Chat replaces the Warrior Room tab. The enableAIFeatures
+                // Remote Config flag is a kill-switch: if it's off, we fall back
+                // to the Warrior Room so a bad rollout is one toggle from revert.
+                if subscriptionStore.enableAIFeatures || BibleChatLocal.isDebug {
+                    bibleChatTabView
+                } else {
+                    communityView
+                }
                 profileView
                     
                 }
@@ -548,6 +556,16 @@ struct HomeView: View {
                     Image(systemName: "person.2.fill")
                         .renderingMode(.original)
                 }
+            }
+    }
+
+    var bibleChatTabView: some View {
+        BibleChatConversationView()
+            .tag(4) // keep tag 4 so existing deep-links/selection still resolve
+            .tabItem {
+                Image(systemName: "bubble.left.and.text.bubble.right.fill")
+                    .renderingMode(.original)
+                Text("Bible Chat")
             }
     }
     
