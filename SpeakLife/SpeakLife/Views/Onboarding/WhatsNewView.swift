@@ -13,7 +13,8 @@ struct WhatsNewBottomSheet: View {
     let features = [
        // "NEW Bible Tab",
         "Bug Fixes",
-        "Widget Updates",
+        "New Bible Chat",
+        "Warrior Room Moved to Profile",
        // "New Spiritual Faith Tree 🌳"
     ]
 
