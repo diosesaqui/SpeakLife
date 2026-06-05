@@ -331,6 +331,14 @@ final class AnalyticsService {
         }
     }
 
+    /// Generic passthrough for events that don't have a dedicated typed method.
+    /// Fans out to every registered provider (Firebase, PostHog, …). Prefer this
+    /// over calling `Analytics.logEvent` directly so new destinations — and the
+    /// PostHog funnels built on them — actually receive the event.
+    func track(_ name: String, parameters: [String: Any] = [:]) {
+        dispatch(name, parameters: parameters)
+    }
+
     func trackOnboarding(step: String, action: OnboardingAction, metadata: [String: Any] = [:]) {
         var params: [String: Any] = [
             "onboarding_step": step,
