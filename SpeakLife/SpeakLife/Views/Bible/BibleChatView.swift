@@ -368,21 +368,14 @@ struct BibleChatConversationView: View {
             }
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button {
-                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                        viewModel.startNewConversation()
-                    } label: {
-                        Image(systemName: "square.and.pencil")
-                            .foregroundColor(.white)
-                    }
-                    .accessibilityLabel("New chat")
-                }
                 ToolbarItem(placement: .principal) {
                     Text("Bible Chat")
                         .font(.system(size: 18, weight: .bold, design: .serif))
                         .foregroundColor(.white)
                 }
+                // History (and "New" inside it) lives here. The separate top-left
+                // "new chat" button was removed — it looked dead on the empty
+                // screen and duplicated the history panel's New action.
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button {
                         showHistory = true

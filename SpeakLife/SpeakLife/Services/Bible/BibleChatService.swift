@@ -219,18 +219,40 @@ final class ChatHistoryStore {
     let container: ModelContainer
 
     private init() {
+        // Persistent first. If the on-disk store is corrupt or incompatible
+        // (e.g. left over from an earlier schema during development), delete it
+        // and retry. Fall back to in-memory so the app never crashes over chat
+        // history. A FRESH schema is built per attempt — reusing one Schema
+        // instance across container inits can itself throw.
+        if let c = try? Self.makeContainer(inMemory: false) {
+            container = c
+            return
+        }
+        Self.deleteDefaultStore()
+        if let c = try? Self.makeContainer(inMemory: false) {
+            container = c
+            return
+        }
+        // Last resort: in-memory (history won't persist this launch, but no crash).
+        container = try! Self.makeContainer(inMemory: true)
+    }
+
+    private static func makeContainer(inMemory: Bool) throws -> ModelContainer {
         let schema = Schema([ChatConversation.self, StoredChatMessage.self])
-        do {
-            container = try ModelContainer(
-                for: schema,
-                configurations: ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
-            )
-        } catch {
-            // Never crash the app over chat history — fall back to in-memory.
-            container = try! ModelContainer(
-                for: schema,
-                configurations: ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
-            )
+        return try ModelContainer(
+            for: schema,
+            configurations: ModelConfiguration(schema: schema, isStoredInMemoryOnly: inMemory)
+        )
+    }
+
+    /// Remove the default SwiftData store (and its -shm/-wal sidecars) so a
+    /// corrupt/incompatible store can be recreated cleanly.
+    private static func deleteDefaultStore() {
+        let schema = Schema([ChatConversation.self, StoredChatMessage.self])
+        let url = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false).url
+        let base = url.path
+        for path in [base, base + "-shm", base + "-wal"] {
+            try? FileManager.default.removeItem(atPath: path)
         }
     }
 
