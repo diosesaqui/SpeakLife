@@ -7,6 +7,7 @@
 
 import Foundation
 import FirebaseAnalytics
+import SwiftData
 
 protocol BibleChatServiceProtocol {
     func loadTopics() throws -> [BibleChatTopic]
@@ -167,5 +168,104 @@ final class BibleChatAIService {
         let isBlankReply = reply?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ?? true
         if !needsPaywall && isBlankReply { throw BibleChatAIError.empty }
         return BibleChatResponse(reply: reply, needsPaywall: needsPaywall, remainingFree: remaining)
+    }
+}
+
+// MARK: - Chat history (SwiftData, local)
+//
+// Local cache of past conversations. SwiftData is Core Data under the hood
+// (fast SQLite) but with pure-Swift models — instant, offline, no .xcdatamodeld
+// edits. To later sync across devices, add the iCloud capability and pass
+// `cloudKitDatabase: .automatic` to the ModelConfiguration.
+
+@Model
+final class ChatConversation {
+    var id: UUID
+    var title: String
+    var createdAt: Date
+    var updatedAt: Date
+    @Relationship(deleteRule: .cascade, inverse: \StoredChatMessage.conversation)
+    var messages: [StoredChatMessage]
+
+    init(id: UUID = UUID(), title: String, createdAt: Date = Date(), updatedAt: Date = Date()) {
+        self.id = id
+        self.title = title
+        self.createdAt = createdAt
+        self.updatedAt = updatedAt
+        self.messages = []
+    }
+}
+
+@Model
+final class StoredChatMessage {
+    var id: UUID
+    var role: String
+    var text: String
+    var createdAt: Date
+    var conversation: ChatConversation?
+
+    init(id: UUID = UUID(), role: String, text: String, createdAt: Date = Date()) {
+        self.id = id
+        self.role = role
+        self.text = text
+        self.createdAt = createdAt
+    }
+}
+
+@MainActor
+final class ChatHistoryStore {
+    static let shared = ChatHistoryStore()
+
+    let container: ModelContainer
+
+    private init() {
+        let schema = Schema([ChatConversation.self, StoredChatMessage.self])
+        do {
+            container = try ModelContainer(
+                for: schema,
+                configurations: ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
+            )
+        } catch {
+            // Never crash the app over chat history — fall back to in-memory.
+            container = try! ModelContainer(
+                for: schema,
+                configurations: ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
+            )
+        }
+    }
+
+    private var context: ModelContext { container.mainContext }
+
+    /// Append the latest user+assistant exchange, creating the conversation on
+    /// first save. Returns the (possibly newly created) conversation.
+    @discardableResult
+    func record(userText: String, assistantText: String, into conversation: ChatConversation?) -> ChatConversation {
+        let convo: ChatConversation
+        if let existing = conversation {
+            convo = existing
+        } else {
+            convo = ChatConversation(title: Self.makeTitle(from: userText))
+            context.insert(convo)
+        }
+        let now = Date()
+        let user = StoredChatMessage(role: ChatMessage.Role.user.rawValue, text: userText, createdAt: now)
+        let assistant = StoredChatMessage(role: ChatMessage.Role.assistant.rawValue, text: assistantText, createdAt: now.addingTimeInterval(0.001))
+        user.conversation = convo
+        assistant.conversation = convo
+        convo.messages.append(user)
+        convo.messages.append(assistant)
+        convo.updatedAt = now
+        try? context.save()
+        return convo
+    }
+
+    func delete(_ conversation: ChatConversation) {
+        context.delete(conversation)
+        try? context.save()
+    }
+
+    static func makeTitle(from text: String) -> String {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? "New conversation" : String(trimmed.prefix(48))
     }
 }
