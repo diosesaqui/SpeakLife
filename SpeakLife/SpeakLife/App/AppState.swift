@@ -375,7 +375,10 @@ final class AppState: ObservableObject {
             SKStoreReviewController.requestReview(in: scene)
             self.lastReviewRequestSetDate = Date()
             self.lastRequestedRatingVersion = currentVersion
-            Analytics.logEvent(Event.leaveReviewShown, parameters: ["trigger": trigger.analyticsKey])
+            // Route through the dispatcher so PostHog (and any future provider)
+            // sees when the native review sheet was actually presented, not just
+            // Firebase. Covers every ReviewTrigger via the `trigger` property.
+            AnalyticsService.shared.track(Event.leaveReviewShown, parameters: ["trigger": trigger.analyticsKey])
         }
     }
 

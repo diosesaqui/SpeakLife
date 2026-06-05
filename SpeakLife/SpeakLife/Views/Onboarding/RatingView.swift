@@ -86,6 +86,7 @@ struct RatingView: View {
                 Spacer()
                 
                 ShimmerButton(colors: [.blue], buttonTitle: "Rate us", action: {
+                    AnalyticsService.shared.track("onboarding_rating_tapped")
                     appState.requestReviewIfEligible(trigger: .onboardingRatingScreen)
                     callBack()
                 })
