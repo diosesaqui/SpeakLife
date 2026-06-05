@@ -64,14 +64,14 @@ struct HighConversionPaywallView: View {
         "Renew your mind daily",
         "Sleep in God's peace",
         "Speak over your battles",
-        "Stand with 100,000+ believers"
+        "Walk in your identity"
     ]
     private static let succinctIcons: [String] = [
         "quote.bubble.fill",
         "book.fill",
         "headphones",
-        "square.and.pencil",
-        "person.2.fill"
+        "megaphone.fill",
+        "crown.fill"
     ]
 
     private var surveyEngine: SurveyPersonalizationEngine {
@@ -152,6 +152,17 @@ struct HighConversionPaywallView: View {
         guard let p = subscriptionStore.currentOfferedPremium,
               let d = Double(p.price.description) else { return "$3.33" }
         return String(format: "$%.2f", d / 12.0)
+    }
+    /// % saved on annual vs paying monthly for a year. nil if not computable.
+    private var annualSavingsPercent: Int? {
+        guard let annual = subscriptionStore.currentOfferedPremium,
+              let monthly = subscriptionStore.currentOfferedPremiumMonthly,
+              let a = Double(annual.price.description),
+              let m = Double(monthly.price.description), m > 0 else { return nil }
+        let yearlyIfMonthly = m * 12
+        guard yearlyIfMonthly > 0 else { return nil }
+        let pct = Int(((yearlyIfMonthly - a) / yearlyIfMonthly * 100).rounded())
+        return pct > 0 ? pct : nil
     }
     private var selectedProduct: Product? {
         selectedPlan == .annual ? subscriptionStore.currentOfferedPremium : subscriptionStore.currentOfferedPremiumMonthly
@@ -346,7 +357,7 @@ struct HighConversionPaywallView: View {
             HStack(spacing: 10) {
                 planCard(plan: .monthly, topLabel: nil, title: "Monthly", price: monthlyPrice, sub: "per month")
                     .frame(width: cardWidth)
-                planCard(plan: .annual, topLabel: "BEST VALUE", title: "Annual", price: annualPrice, sub: "per month \(annualPerMonth)")
+                planCard(plan: .annual, topLabel: annualSavingsPercent.map { "SAVE \($0)%" } ?? "BEST VALUE", title: "Annual", price: annualPrice, sub: "per month \(annualPerMonth)")
                     .frame(width: cardWidth)
             }
         }
