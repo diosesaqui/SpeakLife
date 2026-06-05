@@ -75,6 +75,13 @@ final class TrialExperienceService: ObservableObject {
         ])
     }
 
+    /// Clear any pending D2/D3 trial-ending pushes without flipping any state.
+    /// Used as a defensive cleanup after a non-trial purchase by a user who
+    /// has stale pushes from the pre-fix isTrialProduct/willStartTrial bug.
+    func clearPendingTrialPushes() {
+        center.removePendingNotificationRequests(withIdentifiers: ["trial_d2", "trial_d3"])
+    }
+
     // MARK: - Push Notifications
 
     private func scheduleTrialPushes(from startDate: Date) {
