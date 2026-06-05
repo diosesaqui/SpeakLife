@@ -671,8 +671,28 @@ struct QuizOnboardingView: View {
             "time_to_answer_seconds": Int(Date().timeIntervalSince(stepEnteredAt))
         ])
 
+        // Ask for notification permission now — the user has just told us their
+        // struggle, so this is the contextual moment to offer daily declarations
+        // for it. Scheduling still happens after they pick a time post-paywall.
+        requestNotificationPermissionAtBurdenSelection()
+
         transition(to: .matchedDeclaration)
         fireMatchedDeclarationShown()
+    }
+
+    private func requestNotificationPermissionAtBurdenSelection() {
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { granted, _ in
+            Analytics.logEvent("notification_permission", parameters: [
+                "granted": granted,
+                "source": "quiz_onboarding_burden"
+            ])
+            DispatchQueue.main.async {
+                appState.notificationEnabled = granted
+                if granted {
+                    UIApplication.shared.registerForRemoteNotifications()
+                }
+            }
+        }
     }
 
     private func advanceFromMatchedDeclaration() {
@@ -684,15 +704,7 @@ struct QuizOnboardingView: View {
             "declaration_id": matchedDeclarationVerse,
             "time_on_screen_seconds": timeOnScreen
         ])
-        // Slot the App Store review prompt here — right after the user sees
-        // their first personalized payoff and BEFORE the hard paywall. This
-        // captures every funnel-progress user (not just subscribers) for ASO
-        // velocity, and stays out of the way of the trial conversion moment.
-        Analytics.logEvent("onboarding_rating_step_shown", parameters: [
-            "segment": segment.rawValue,
-            "position": "post_matched_declaration"
-        ])
-        transition(to: .rating)
+        transition(to: .personalDeclaration)
     }
 
     private func advanceFromPersonalDeclaration() {
@@ -702,7 +714,14 @@ struct QuizOnboardingView: View {
             "segment": segment.rawValue,
             "set_personal_declaration": (savedPersonalDeclaration != nil) as NSNumber
         ])
-        transition(to: .commitmentHold)
+        // App Store review prompt at the emotional peak — right after the user
+        // has spoken their OWN declaration aloud — and still BEFORE the paywall
+        // so it never competes with or gets soured by the pricing decision.
+        Analytics.logEvent("onboarding_rating_step_shown", parameters: [
+            "segment": segment.rawValue,
+            "position": "post_personal_declaration"
+        ])
+        transition(to: .rating)
     }
 
     private func advanceFromCommitmentHold() {
@@ -785,9 +804,9 @@ struct QuizOnboardingView: View {
 
     private func advanceFromRating() {
         UIImpactFeedbackGenerator(style: .soft).impactOccurred()
-        // Rating now lives between matchedDeclaration and personalDeclaration,
-        // so advancing means continuing into the spoken declaration flow.
-        transition(to: .personalDeclaration)
+        // Rating now lives right after personalDeclaration (the emotional peak),
+        // so advancing continues into the commitment hold and then the paywall.
+        transition(to: .commitmentHold)
     }
 
     private func transition(to step: Step) {
