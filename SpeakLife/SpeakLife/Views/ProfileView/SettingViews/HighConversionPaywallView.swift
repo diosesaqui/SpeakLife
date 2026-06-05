@@ -6,7 +6,7 @@
 //  Fixes: 70% abandon rate, missing price anchor, weak social proof
 //  Tracks paywallVariant on all events:
 //    - "high_conversion_v1"          (benefit-based personalized props)
-//    - "high_conversion_succinct_v1" (succinct feature-based props, A/B via
+//    - "high_conversion_succinct_v1" (succinct outcome-based props, A/B via
 //      Remote Config flag useSuccinctPaywallValueProps)
 //
 
@@ -56,20 +56,22 @@ struct HighConversionPaywallView: View {
         subscriptionStore.useSuccinctPaywallValueProps ? "high_conversion_succinct_v1" : "high_conversion_v1"
     }
 
-    /// Succinct feature-based value props (Variant B). Plain, scannable list.
+    /// Short, scannable value props. Title-only, 3–5 words each — readable in a
+    /// glance. The longer two-line descriptions were too much to read. The
+    /// personalized headline/subhead above still adapts to the user.
     private static let succinctValueProps: [String] = [
-        "Access to all declaration categories",
-        "Access to all devotionals",
-        "Access to all mind-renewing audios",
-        "Unlimited Create-Your-Own declarations & private journal entries",
-        "Access to all themes"
+        "Quiet anxious thoughts",
+        "Renew your mind daily",
+        "Sleep in God's peace",
+        "Speak over your battles",
+        "Stand with 100,000+ believers"
     ]
     private static let succinctIcons: [String] = [
         "quote.bubble.fill",
         "book.fill",
         "headphones",
         "square.and.pencil",
-        "paintbrush.fill"
+        "person.2.fill"
     ]
 
     private var surveyEngine: SurveyPersonalizationEngine {
@@ -133,19 +135,6 @@ struct HighConversionPaywallView: View {
         }
         if let segment = quizSegment { return segment.paywallSubheadline }
         return surveyEngine.hasSurveyData ? surveyEngine.paywallCopy.subheadline : copy.subheadline
-    }
-    private var resolvedValueProps: [String] {
-        surveyEngine.hasSurveyData ? surveyEngine.paywallCopy.valueProps.map { $0.title } : copy.valueProps
-    }
-    private var resolvedDescriptions: [String] {
-        surveyEngine.hasSurveyData
-            ? surveyEngine.paywallCopy.valueProps.map { $0.description }
-            : [
-                "Daily declarations rewire your mind until God's Word becomes your first response.",
-                "Spoken truth is your greatest weapon. It is exactly how Jesus defeated every attack.",
-                "Faith comes by hearing. Audio devotionals put Scripture in your ears morning and night.",
-                "Know your identity in Christ so deeply that fear, doubt, and shame lose their grip."
-              ]
     }
     private var resolvedChallengeName: String? {
         surveyEngine.hasSurveyData ? surveyEngine.paywallCopy.challengeName : nil
@@ -249,25 +238,10 @@ struct HighConversionPaywallView: View {
     }
 
     // MARK: - Benefits
-    @ViewBuilder
+    // Always render the short, scannable props. (The longer personalized list
+    // was too much to read; the headline above still carries personalization.)
     private var benefitsSection: some View {
-        if subscriptionStore.useSuccinctPaywallValueProps {
-            succinctBenefitsSection
-        } else {
-            personalizedBenefitsSection
-        }
-    }
-
-    private var personalizedBenefitsSection: some View {
-        let icons = ["quote.bubble.fill", "shield.fill", "eye.fill", "person.circle.fill"]
-        let descs = Array(resolvedDescriptions.prefix(4))
-        let props = Array(resolvedValueProps.prefix(4))
-        return VStack(alignment: .leading, spacing: 16) {
-            ForEach(0..<min(props.count, 4), id: \.self) { i in
-                HCBenefitRow(icon: icons[i], title: props[i], description: i < descs.count ? descs[i] : "")
-            }
-        }
-        .padding(.horizontal, 24)
+        succinctBenefitsSection
     }
 
     private var succinctBenefitsSection: some View {
@@ -607,23 +581,7 @@ struct HighConversionPaywallView: View {
     }
 }
 
-// MARK: - Benefit Row Component
-private struct HCBenefitRow: View {
-    let icon: String; let title: String; let description: String
-    var body: some View {
-        HStack(alignment: .top, spacing: 14) {
-            Image(systemName: icon).font(.system(size: 20, weight: .medium))
-                .foregroundColor(Constants.DAMidBlue).frame(width: 26)
-            VStack(alignment: .leading, spacing: 3) {
-                Text(title).font(.system(size: 14, weight: .semibold)).foregroundColor(.white)
-                Text(description).font(.system(size: 12)).foregroundColor(.white.opacity(0.65)).fixedSize(horizontal: false, vertical: true)
-            }
-            Spacer()
-        }
-    }
-}
-
-// MARK: - Succinct Benefit Row (Variant B)
+// MARK: - Succinct Benefit Row
 private struct HCSuccinctBenefitRow: View {
     let icon: String; let title: String
     var body: some View {
