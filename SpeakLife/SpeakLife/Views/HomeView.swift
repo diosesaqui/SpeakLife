@@ -317,11 +317,8 @@ struct HomeView: View {
                         }
                     }
                     .ignoresSafeArea()
-                    .onAppear {
-                        viewModel.requestPermission { granted in
-                            // ATT Permission handled
-                        }
-                    }
+                    // ATT is requested once from SpeakLifeApp (delayed until active);
+                    // requesting it again here fired too early and dropped the prompt.
                 } else {
                     SurveyOnboardingView(size: UIScreen.main.bounds.size) {
                         withAnimation {
@@ -331,11 +328,6 @@ struct HomeView: View {
                         }
                     }
                     .ignoresSafeArea()
-                    .onAppear {
-                        viewModel.requestPermission { granted in
-                            // ATT Permission handled
-                        }
-                    }
                 }
             }
         
