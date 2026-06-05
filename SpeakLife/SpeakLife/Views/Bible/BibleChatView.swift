@@ -402,11 +402,20 @@ struct BibleChatConversationView: View {
                 .presentationDetents([.large])
         }
         .sheet(isPresented: $showHistory) {
-            ChatHistoryView(
-                onSelect: { conversation in viewModel.load(conversation) },
-                onNewChat: { viewModel.startNewConversation() }
-            )
-            .modelContainer(ChatHistoryStore.shared.container)
+            if let container = ChatHistoryStore.shared.container {
+                ChatHistoryView(
+                    onSelect: { conversation in viewModel.load(conversation) },
+                    onNewChat: { viewModel.startNewConversation() }
+                )
+                .modelContainer(container)
+            } else {
+                ZStack {
+                    Gradients().speakLifeCYOCell.ignoresSafeArea()
+                    Text("Chat history is unavailable right now.")
+                        .font(.system(size: 15))
+                        .foregroundColor(.white.opacity(0.7))
+                }
+            }
         }
         .onAppear { AnalyticsService.shared.trackScreenView("bible_chat_conversation") }
     }
