@@ -243,13 +243,17 @@ final class ChatHistoryStore {
 
     @discardableResult
     func record(userText: String, assistantText: String, into conversation: ChatConversation?) -> ChatConversation {
-        let isNew = (conversation == nil)
         let convo: ChatConversation
-        if let existing = conversation {
+        let isNew: Bool
+        // Guard against a conversation that was deleted from history while it was
+        // still the active chat — appending to a deleted model would crash.
+        if let existing = conversation, existing.modelContext != nil {
             convo = existing
+            isNew = false
         } else {
             convo = ChatConversation(title: Self.makeTitle(from: userText))
             context.insert(convo)
+            isNew = true
         }
         let now = Date()
         let user = StoredChatMessage(role: ChatMessage.Role.user.rawValue, text: userText, createdAt: now)
