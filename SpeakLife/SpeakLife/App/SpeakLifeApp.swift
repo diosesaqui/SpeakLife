@@ -109,9 +109,15 @@ struct SpeakLifeApp: App {
                     // Sync widget data on app launch
                     WidgetDataBridge.shared.syncAllData()
                     
-                    viewModel.requestPermission() { accepted in
-                        if accepted {
-                            appDelegate.initializeTikTokSDK()
+                    // ATT must be requested while the app is in the active state or
+                    // iOS silently drops the prompt. Calling it at launch (before
+                    // active) was consuming the one-shot request, so the prompt never
+                    // appeared during onboarding. Delay briefly so it reliably shows.
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                        viewModel.requestPermission { accepted in
+                            if accepted {
+                                appDelegate.initializeTikTokSDK()
+                            }
                         }
                     }
                     
