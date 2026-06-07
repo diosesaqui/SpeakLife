@@ -284,14 +284,14 @@ private struct ProductHookScreen: View {
             Spacer()
 
             VStack(spacing: 24) {
-                Text("Stop white-knuckling it.")
-                    .font(.system(size: 34, weight: .bold, design: .rounded))
+                Text("When life hits hard,\nyou don't have to face it alone.")
+                    .font(.system(size: 32, weight: .bold, design: .rounded))
                     .foregroundColor(.white)
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
                     .appearStagger(v)
 
-                Text("When anxiety hits at 2am, you don't need a 45-minute sermon.\nYou need one declaration.")
+                Text("In the middle of a storm, you don't need a 45-minute sermon.\nYou need God's Word for this exact moment.")
                     .font(.system(size: 19, weight: .semibold, design: .rounded))
                     .foregroundColor(.white.opacity(0.85))
                     .multilineTextAlignment(.center)
@@ -299,7 +299,7 @@ private struct ProductHookScreen: View {
                     .fixedSize(horizontal: false, vertical: true)
                     .appearStagger(v, delay: 0.12)
 
-                Text("There's a way out of the anxiety loop. It's been in the Bible the whole time. We'll hand it to you.")
+                Text("There's a way through every storm. It's been in the Bible the whole time. We put it right in your hands.")
                     .font(.system(size: 16, weight: .regular, design: .rounded))
                     .foregroundColor(.white.opacity(0.65))
                     .multilineTextAlignment(.center)
@@ -503,8 +503,8 @@ private struct ProductExperienceScreen: View {
 
     private let features: [(icon: String, title: String, body: String)] = [
         ("hand.tap", "Tap and hold", "Let a declaration sink in deep. The Word goes from your screen to your spirit."),
-        ("shield.lefthalf.filled", "The Warrior Room", "Step in when you need to fight. Scripture aimed straight at what's coming against you."),
-        ("car", "Built for real life", "Use it in the car, before a hard conversation, or at 2am. Simple when everything else is falling apart.")
+        ("bubble.left.and.bubble.right.fill", "Bible Chat", "Ask anything and get answers rooted in Scripture. Like having a wise friend in the Word, any hour of the day."),
+        ("car", "Built for real life", "Use it in the car, before a hard conversation, or late at night. Simple when everything else feels heavy.")
     ]
 
     var body: some View {
