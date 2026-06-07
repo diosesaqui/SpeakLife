@@ -78,7 +78,13 @@ final class SubscriptionStore: ObservableObject {
     // false = current SurveyOnboardingView (Control)
     // true  = QuizOnboardingView with personalized paywall framing (Treatment)
     @Published var useQuizOnboarding = true
-    
+
+    // MARK: - Product Onboarding (marketing-principle, value-led flow)
+    // Evaluated only when useQuizOnboarding is false (the non-quiz cohort).
+    // true  = ProductOnboardingView (Speed / New mechanism / Experience / Clarity / Avoid discomfort)
+    // false = SurveyOnboardingView (the previous non-quiz control)
+    @Published var useProductOnboarding = false
+
     // MARK: - AI Feature Flag
     @Published var enableAIFeatures = false
     
@@ -240,7 +246,11 @@ final class SubscriptionStore: ObservableObject {
 
         // Quiz Onboarding A/B from Remote Config (key: useQuizOnboarding)
         useQuizOnboarding = remoteConfig["useQuizOnboarding"].boolValue
-        
+
+        // Product Onboarding A/B from Remote Config (key: useProductOnboarding)
+        // Only takes effect for the non-quiz cohort (useQuizOnboarding == false).
+        useProductOnboarding = remoteConfig["useProductOnboarding"].boolValue
+
         // High Conversion Paywall Flag
         useHighConversionPaywall = remoteConfig["useHighConversionPaywall"].boolValue
         showPayWhatYouCanLink = remoteConfig["showPayWhatYouCanLink"].boolValue
