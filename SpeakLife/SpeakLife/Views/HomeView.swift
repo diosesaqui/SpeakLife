@@ -319,6 +319,15 @@ struct HomeView: View {
                     .ignoresSafeArea()
                     // ATT is requested once from SpeakLifeApp (delayed until active);
                     // requesting it again here fired too early and dropped the prompt.
+                } else if subscriptionStore.useProductOnboarding {
+                    ProductOnboardingView(size: UIScreen.main.bounds.size) {
+                        withAnimation {
+                            appState.isOnboarded = true
+                            LifecycleNotificationService.shared.scheduleLifecycleNotifications()
+                            Analytics.logEvent("onBoardingFinished", parameters: nil)
+                        }
+                    }
+                    .ignoresSafeArea()
                 } else {
                     SurveyOnboardingView(size: UIScreen.main.bounds.size) {
                         withAnimation {
