@@ -75,15 +75,9 @@ final class SubscriptionStore: ObservableObject {
     @Published var useSpiritualWarfareOnboarding: Bool? = false
 
     // MARK: - Quiz Onboarding (Treatment cohort of the install→trial A/B)
-    // false = current SurveyOnboardingView (Control)
     // true  = QuizOnboardingView with personalized paywall framing (Treatment)
+    // false = ProductOnboardingView, the value-led marketing-principle flow (Control)
     @Published var useQuizOnboarding = true
-
-    // MARK: - Product Onboarding (marketing-principle, value-led flow)
-    // Evaluated only when useQuizOnboarding is false (the non-quiz cohort).
-    // true  = ProductOnboardingView (Speed / New mechanism / Experience / Clarity / Avoid discomfort)
-    // false = SurveyOnboardingView (the previous non-quiz control)
-    @Published var useProductOnboarding = false
 
     // MARK: - AI Feature Flag
     @Published var enableAIFeatures = false
@@ -245,11 +239,8 @@ final class SubscriptionStore: ObservableObject {
         useSpiritualWarfareOnboarding = remoteConfig["useSpiritualWarfareOnboarding"].boolValue
 
         // Quiz Onboarding A/B from Remote Config (key: useQuizOnboarding)
+        // true = QuizOnboardingView, false = ProductOnboardingView.
         useQuizOnboarding = remoteConfig["useQuizOnboarding"].boolValue
-
-        // Product Onboarding A/B from Remote Config (key: useProductOnboarding)
-        // Only takes effect for the non-quiz cohort (useQuizOnboarding == false).
-        useProductOnboarding = remoteConfig["useProductOnboarding"].boolValue
 
         // High Conversion Paywall Flag
         useHighConversionPaywall = remoteConfig["useHighConversionPaywall"].boolValue

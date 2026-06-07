@@ -10,14 +10,14 @@
 //    2. New mechanism    — speaking the Word, not just reading it
 //    3. Good experience  — designed for the middle of the storm
 //    4. Clarity          — done-for-you declarations for what you're facing
-//    5. Avoid discomfort — stop white-knuckling the anxiety loop
+//    5. Avoid discomfort — God's Word for the middle of a life storm
 //
 //  After the value screens it reuses the proven back-half (taste of a
 //  personalized declaration → record your own → paywall → notification time
 //  → rating), and seeds the home feed from a single light category picker.
 //
-//  Gated by Remote Config `useProductOnboarding`, evaluated only for the
-//  non-quiz cohort (useQuizOnboarding == false).
+//  Shown for the Control cohort of the onboarding A/B: HomeView routes here
+//  when Remote Config `useQuizOnboarding` is false (true → QuizOnboardingView).
 //
 
 import SwiftUI
