@@ -93,12 +93,7 @@ final class AppDelegate: NSObject, MessagingDelegate {
         // Default the new quiz onboarding ON so fresh installs get it immediately;
         // Remote Config still overrides this once fetched.
         RemoteConfig.remoteConfig().setDefaults([
-            "useQuizOnboarding": true as NSNumber,
-            // Non-quiz cohort gate: when the quiz is OFF, this picks the new
-            // value-led ProductOnboardingView over the legacy survey flow.
-            // Defaults OFF so the proven survey remains the fallback until the
-            // A/B test is ramped from Remote Config.
-            "useProductOnboarding": false as NSNumber
+            "useQuizOnboarding": true as NSNumber
         ])
 
         registerBGTask()
