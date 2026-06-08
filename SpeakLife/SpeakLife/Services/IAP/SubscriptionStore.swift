@@ -33,6 +33,13 @@ let currentPremiumID = "SpeakLife1YR29"
 let lifetimeID = "SpeakLifeLifetime"
 let devotionals = "Devotionals30SL"
 let weeklyID = "SpeakLife1Wk5"
+
+extension Notification.Name {
+    /// Posted when an ad deep link assigns an onboarding variant (see
+    /// SubscriptionStore.assignOnboardingVariantFromAd).
+    static let adOnboardingVariantAssigned = Notification.Name("adOnboardingVariantAssigned")
+}
+
 final class SubscriptionStore: ObservableObject {
 
     @Published var isPremium: Bool = false
@@ -90,30 +97,52 @@ final class SubscriptionStore: ObservableObject {
     // users are unaffected until the string key is set in Remote Config.
     @Published var onboardingVariant: String = ""
 
-    enum OnboardingVariant {
+    // MARK: - Ad-matched onboarding override
+    // When a user installs from an ad whose deep link carries `ob=<variant>`, that
+    // choice is recorded once and WINS over the Remote Config experiment, so the
+    // onboarding matches the ad they tapped. Persisted in UserDefaults (stable for
+    // the user) and mirrored here so SwiftUI re-renders if the Meta deferred app
+    // link resolves after onboarding first appears.
+    static let adOnboardingKey = "adOnboardingVariant"
+    @Published var adOnboardingVariant: String? =
+        UserDefaults.standard.string(forKey: SubscriptionStore.adOnboardingKey)
+
+    enum OnboardingVariant: String {
         case quiz, product, identity, survey
+        init?(code: String) { self.init(rawValue: code.lowercased()) }
     }
 
     var resolvedOnboardingVariant: OnboardingVariant {
-        switch onboardingVariant.lowercased() {
-        case "identity": return .identity
-        case "product":  return .product
-        case "survey":   return .survey
-        case "quiz":     return .quiz
-        default:         return useQuizOnboarding ? .quiz : .product
-        }
+        // 1) ad-matched override → 2) Remote Config experiment → 3) legacy fallback
+        if let ad = adOnboardingVariant, let v = OnboardingVariant(code: ad) { return v }
+        if let v = OnboardingVariant(code: onboardingVariant) { return v }
+        return useQuizOnboarding ? .quiz : .product
     }
 
-    /// String label for the user's resolved onboarding A/B arm. Stamped onto the
+    /// String label for the user's resolved onboarding arm. Stamped onto the
     /// onboarding + conversion analytics so the PostHog/Firebase funnels can pick
     /// a winner per variant.
-    var onboardingVariantName: String {
-        switch resolvedOnboardingVariant {
-        case .quiz:     return "quiz"
-        case .product:  return "product"
-        case .identity: return "identity"
-        case .survey:   return "survey"
-        }
+    var onboardingVariantName: String { resolvedOnboardingVariant.rawValue }
+
+    /// Parse an incoming deep link / app link for the `ob=` param and record the
+    /// matched onboarding. Static so the Meta deferred-app-link callback in
+    /// AppDelegate can call it without a store instance; the @Published mirror is
+    /// updated via `.adOnboardingVariantAssigned`.
+    static func handleIncomingURL(_ url: URL, source: String) {
+        guard let items = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems,
+              let ob = items.first(where: { $0.name == "ob" })?.value else { return }
+        assignOnboardingVariantFromAd(ob, source: source)
+    }
+
+    static func assignOnboardingVariantFromAd(_ rawCode: String?, source: String) {
+        guard let code = rawCode?.lowercased(),
+              OnboardingVariant(code: code) != nil,
+              UserDefaults.standard.string(forKey: adOnboardingKey) == nil  // first assignment wins
+        else { return }
+        UserDefaults.standard.set(code, forKey: adOnboardingKey)
+        AnalyticsService.shared.track("onboarding_variant_assigned",
+                                      parameters: ["variant": code, "source": source])
+        NotificationCenter.default.post(name: .adOnboardingVariantAssigned, object: code)
     }
 
     // MARK: - AI Feature Flag
@@ -158,6 +187,18 @@ final class SubscriptionStore: ObservableObject {
                         self?.audioRemoteVersion = version
                     }
                 }
+            }
+            .store(in: &cancellables)
+
+        // Ad-matched onboarding: when a deep link / Meta deferred app link assigns
+        // a variant, mirror it into the published property so onboarding re-renders
+        // even if the (async) deferred link resolves after onboarding first showed.
+        NotificationCenter.default
+            .publisher(for: .adOnboardingVariantAssigned)
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] note in
+                self?.adOnboardingVariant = (note.object as? String)
+                    ?? UserDefaults.standard.string(forKey: Self.adOnboardingKey)
             }
             .store(in: &cancellables)
 

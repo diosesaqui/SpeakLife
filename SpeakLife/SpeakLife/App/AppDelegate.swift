@@ -77,7 +77,18 @@ final class AppDelegate: NSObject, MessagingDelegate {
             application,
             didFinishLaunchingWithOptions: launchOptions
         )
-        
+
+        // Meta deferred app link → ad-matched onboarding. On a fresh install from
+        // a Meta ad whose deep link carries `ob=<variant>`, recover it on first
+        // launch and record the matched onboarding. Runs once.
+        if !UserDefaults.standard.bool(forKey: "didCheckDeferredAppLink") {
+            UserDefaults.standard.set(true, forKey: "didCheckDeferredAppLink")
+            AppLinkUtility.fetchDeferredAppLink { url, _ in
+                guard let url = url else { return }
+                SubscriptionStore.handleIncomingURL(url, source: "ad")
+            }
+        }
+
         Messaging.messaging().delegate = self
         let settings = RemoteConfigSettings()
         #if DEBUG
