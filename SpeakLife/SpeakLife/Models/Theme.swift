@@ -86,8 +86,16 @@ class Theme: Identifiable, Codable {
         }
     }
     
-    static var all: [Theme] = [mountainOnboarding, nightaurora, starrySunrise, redmoon, fullmoonOcean, JesusOnWater,JesusOnCross,JesusHealing,JesusRisen, lakeSunrise2,oceansunrise2, sunsetMountains3,mountainValley,autumnLake, autumnleaves,redRosesGreySkies, redTreeLake, snowMountainLake,boatLakeMountain,sunriseCliff,heavenStairway,wheatFieldRedRose,nightStarrySkies, desertNight, doveSkies,wheatField,lightHouse,oceanSunrise,lakeSunset,  JesusPraying, JesusHeaven,warriorAngel,heavenly,lakeTrees,majesticNight, mountainLandscape, pinkHueMountain, sunsetMountain, breathTakingSunset, sunset3,moonlight2,desertsky, lushForestSunrise, flowingRiver]
+    static var all: [Theme] = [mountainOnboarding, nightaurora, paintNight, paintDay,paintPinkTrees,paintForest,paintsea, paintGarden,paintPurple,paintFields,starrySunrise, redmoon, fullmoonOcean, JesusOnWater,JesusOnCross,JesusHealing,JesusRisen, lakeSunrise2,oceansunrise2, sunsetMountains3,mountainValley,autumnLake, snowMountainLake,boatLakeMountain,sunriseCliff,nightStarrySkies, desertNight, doveSkies,lightHouse,oceanSunrise,lakeSunset,  JesusPraying,lakeTrees,pinkHueMountain, sunset3,moonlight2,desertsky, flowingRiver]
     
+    private static let paintNight = Theme("paintNight", blurEffect: true)
+    private static let paintDay = Theme("paintDay", blurEffect: true)
+    private static let paintPurple = Theme("paintpurple", blurEffect: true)
+    private static let paintForest = Theme("paintforest", blurEffect: true)
+    private static let paintPinkTrees = Theme("paintpinktrees", blurEffect: true)
+    private static let paintsea = Theme("paintsea", blurEffect: true)
+    private static let paintGarden = Theme("paintgarden", blurEffect: true)
+    private static let paintFields = Theme("paintfields", blurEffect: true)
     private static let mountainOnboarding = Theme("mountainonboarding", blurEffect: true)
     private static let boatLakeMountain = Theme("boatLakeMountain", blurEffect: true)
     private static let nightaurora = Theme("nightaurora", blurEffect: false)
