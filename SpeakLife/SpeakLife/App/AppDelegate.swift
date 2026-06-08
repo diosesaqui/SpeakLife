@@ -88,12 +88,14 @@ final class AppDelegate: NSObject, MessagingDelegate {
         RemoteConfig.remoteConfig().configSettings = settings
 
         // In-app Remote Config defaults. Without these, a fresh install reads
-        // un-fetched flags as false before the first network fetch completes —
-        // which made first-launch onboarding fall back to the OLD survey flow.
-        // Default the new quiz onboarding ON so fresh installs get it immediately;
-        // Remote Config still overrides this once fetched.
+        // un-fetched flags before the first network fetch completes — which
+        // would briefly fall back to the legacy useQuizOnboarding routing.
+        // Default onboardingVariant so first launch goes straight to the chosen
+        // flow; Remote Config (incl. any A/B test) still overrides once fetched.
+        // Change "identity" to "product" or "quiz" to move the pre-fetch default.
         RemoteConfig.remoteConfig().setDefaults([
-            "useQuizOnboarding": true as NSNumber
+            "useQuizOnboarding": true as NSNumber,
+            "onboardingVariant": "identity" as NSString
         ])
 
         registerBGTask()
