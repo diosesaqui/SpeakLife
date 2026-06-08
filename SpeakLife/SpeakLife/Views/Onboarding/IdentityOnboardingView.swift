@@ -14,8 +14,8 @@
 //    5. Stand in it   — pick the truth to anchor (seeds the home feed)
 //
 //  After the identity screens it reuses the proven back-half (taste of a
-//  personalized declaration → record your own → paywall → notification time
-//  → rating), and seeds the home feed from the identity picker, which maps
+//  personalized declaration → record your own → rating → paywall →
+//  notification time), and seeds the home feed from the identity picker, which maps
 //  each truth to a HeaviestBurden/category so the shared screens work unchanged.
 //
 //  Shown when Remote Config `onboardingVariant` == "identity".
@@ -133,14 +133,12 @@ struct IdentityOnboardingView: View {
         Analytics.logEvent("identity_step_completed", parameters: ["step": currentStep.rawValue])
 
         switch currentStep {
-        case .rating:
-            onComplete()
         case .notificationTime:
-            applyResponsesAndContinueToRating()
+            applyResponsesAndComplete()
         default:
             let nextRaw = currentStep.rawValue + 1
             guard let next = IdentityStep(rawValue: nextRaw) else {
-                assertionFailure("IdentityOnboardingView.advance(): no successor for \(currentStep). .rating should be terminal.")
+                assertionFailure("IdentityOnboardingView.advance(): no successor for \(currentStep). .notificationTime should be terminal.")
                 onComplete()
                 return
             }
@@ -149,8 +147,8 @@ struct IdentityOnboardingView: View {
     }
 
     // Mirrors the product/survey completion: persist the chosen category, seed
-    // the home feed + notifications from it, then prime the rating ask.
-    private func applyResponsesAndContinueToRating() {
+    // the home feed + notifications from it, then finish.
+    private func applyResponsesAndComplete() {
         let goalWord = responses.resolvedGoalWord
         appState.surveyGoalWord = goalWord.rawValue
         if let style = responses.primaryDeclarationStyle {
@@ -174,10 +172,10 @@ struct IdentityOnboardingView: View {
             "set_personal_declaration": (savedDeclaration != nil) as NSNumber
         ])
 
-        requestNotificationPermissionThenAdvanceToRating(categories: notificationCategoriesSet)
+        requestNotificationPermissionThenComplete(categories: notificationCategoriesSet)
     }
 
-    private func requestNotificationPermissionThenAdvanceToRating(categories: Set<DeclarationCategory>) {
+    private func requestNotificationPermissionThenComplete(categories: Set<DeclarationCategory>) {
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { granted, _ in
             Analytics.logEvent("notification_permission", parameters: ["granted": granted, "source": "identity_onboarding"])
             DispatchQueue.main.async {
@@ -192,7 +190,7 @@ struct IdentityOnboardingView: View {
                     )
                     appState.lastNotificationSetDate = Date()
                 }
-                withAnimation(.easeInOut(duration: 0.35)) { currentStep = .rating }
+                onComplete()
             }
         }
     }
@@ -210,9 +208,9 @@ enum IdentityStep: Int, CaseIterable {
     // Shared back-half (reused from the survey flow)
     case firstDeclaration = 5
     case personalDeclaration = 6
-    case paywall         = 7
-    case notificationTime = 8
-    case rating          = 9   // terminal
+    case rating          = 7   // rating ask at the personal-declaration peak
+    case paywall         = 8
+    case notificationTime = 9  // terminal — completes onboarding
 
     var valueScreenIndex: Int? {
         let screens: [IdentityStep] = [.lie, .verdict, .named, .mechanism, .identityPicker]

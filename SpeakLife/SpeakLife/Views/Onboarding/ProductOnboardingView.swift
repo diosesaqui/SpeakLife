@@ -13,8 +13,8 @@
 //    5. Avoid discomfort — God's Word for the middle of a life storm
 //
 //  After the value screens it reuses the proven back-half (taste of a
-//  personalized declaration → record your own → paywall → notification time
-//  → rating), and seeds the home feed from a single light category picker.
+//  personalized declaration → record your own → rating → paywall →
+//  notification time), and seeds the home feed from a single light category picker.
 //
 //  One arm of the onboarding A/B: HomeView routes here when Remote Config
 //  `onboardingVariant` == "product" (see SubscriptionStore.resolvedOnboardingVariant).
@@ -133,14 +133,12 @@ struct ProductOnboardingView: View {
         Analytics.logEvent("product_step_completed", parameters: ["step": currentStep.rawValue])
 
         switch currentStep {
-        case .rating:
-            onComplete()
         case .notificationTime:
-            applyResponsesAndContinueToRating()
+            applyResponsesAndComplete()
         default:
             let nextRaw = currentStep.rawValue + 1
             guard let next = ProductStep(rawValue: nextRaw) else {
-                assertionFailure("ProductOnboardingView.advance(): no successor for \(currentStep). .rating should be terminal.")
+                assertionFailure("ProductOnboardingView.advance(): no successor for \(currentStep). .notificationTime should be terminal.")
                 onComplete()
                 return
             }
@@ -149,8 +147,8 @@ struct ProductOnboardingView: View {
     }
 
     // Mirrors SurveyOnboardingView's completion: persist the user's selected
-    // category, seed the home feed + notifications from it, then prime rating.
-    private func applyResponsesAndContinueToRating() {
+    // category, seed the home feed + notifications from it, then finish.
+    private func applyResponsesAndComplete() {
         let goalWord = responses.resolvedGoalWord
         appState.surveyGoalWord = goalWord.rawValue
         if let style = responses.primaryDeclarationStyle {
@@ -174,10 +172,10 @@ struct ProductOnboardingView: View {
             "set_personal_declaration": (savedDeclaration != nil) as NSNumber
         ])
 
-        requestNotificationPermissionThenAdvanceToRating(categories: notificationCategoriesSet)
+        requestNotificationPermissionThenComplete(categories: notificationCategoriesSet)
     }
 
-    private func requestNotificationPermissionThenAdvanceToRating(categories: Set<DeclarationCategory>) {
+    private func requestNotificationPermissionThenComplete(categories: Set<DeclarationCategory>) {
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { granted, _ in
             Analytics.logEvent("notification_permission", parameters: ["granted": granted, "source": "product_onboarding"])
             DispatchQueue.main.async {
@@ -192,7 +190,7 @@ struct ProductOnboardingView: View {
                     )
                     appState.lastNotificationSetDate = Date()
                 }
-                withAnimation(.easeInOut(duration: 0.35)) { currentStep = .rating }
+                onComplete()
             }
         }
     }
@@ -208,11 +206,11 @@ enum ProductStep: Int, CaseIterable {
     case experience      = 3   // Good experience
     case categoryPicker  = 4   // Clarity + personalization
     // Shared back-half (reused from the survey flow)
-    case firstDeclaration = 5  // taste before paywall
+    case firstDeclaration = 5  // taste of the matched declaration
     case personalDeclaration = 6
-    case paywall         = 7
-    case notificationTime = 8  // post-paywall
-    case rating          = 9   // terminal — SKStoreReviewController prime
+    case rating          = 7   // rating ask at the personal-declaration peak
+    case paywall         = 8
+    case notificationTime = 9  // terminal — completes onboarding
 
     // Index within the value-led intro screens, used to drive the progress bar.
     var valueScreenIndex: Int? {
