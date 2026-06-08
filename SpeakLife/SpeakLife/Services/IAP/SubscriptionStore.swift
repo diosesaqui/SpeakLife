@@ -74,11 +74,31 @@ final class SubscriptionStore: ObservableObject {
     // MARK: - Spiritual Warfare Onboarding Toggle
     @Published var useSpiritualWarfareOnboarding: Bool? = false
 
-    // MARK: - Quiz Onboarding (Treatment cohort of the install→trial A/B)
-    // false = current SurveyOnboardingView (Control)
-    // true  = QuizOnboardingView with personalized paywall framing (Treatment)
+    // MARK: - Quiz Onboarding (legacy boolean, kept as a migration fallback)
+    // true  = QuizOnboardingView, false = ProductOnboardingView.
+    // Superseded by `onboardingVariant` below; only consulted when that string
+    // is empty/unset (see resolvedOnboardingVariant).
     @Published var useQuizOnboarding = true
-    
+
+    // MARK: - Onboarding A/B variant (single switch for which flow shows)
+    // Remote Config key `onboardingVariant`: "quiz" | "product" | "identity".
+    // Empty/unset falls back to the legacy useQuizOnboarding boolean so live
+    // users are unaffected until the string key is set in Remote Config.
+    @Published var onboardingVariant: String = ""
+
+    enum OnboardingVariant {
+        case quiz, product, identity
+    }
+
+    var resolvedOnboardingVariant: OnboardingVariant {
+        switch onboardingVariant.lowercased() {
+        case "identity": return .identity
+        case "product":  return .product
+        case "quiz":     return .quiz
+        default:         return useQuizOnboarding ? .quiz : .product
+        }
+    }
+
     // MARK: - AI Feature Flag
     @Published var enableAIFeatures = false
     
@@ -238,9 +258,14 @@ final class SubscriptionStore: ObservableObject {
         // Spiritual Warfare Onboarding Toggle from Remote Config
         useSpiritualWarfareOnboarding = remoteConfig["useSpiritualWarfareOnboarding"].boolValue
 
-        // Quiz Onboarding A/B from Remote Config (key: useQuizOnboarding)
+        // Quiz Onboarding A/B from Remote Config (key: useQuizOnboarding) — legacy fallback.
         useQuizOnboarding = remoteConfig["useQuizOnboarding"].boolValue
-        
+
+        // Onboarding A/B variant (key: onboardingVariant) — "quiz" | "product" | "identity".
+        // Empty until set in Remote Config; resolvedOnboardingVariant then falls
+        // back to useQuizOnboarding so nothing changes for live users.
+        onboardingVariant = remoteConfig["onboardingVariant"].stringValue
+
         // High Conversion Paywall Flag
         useHighConversionPaywall = remoteConfig["useHighConversionPaywall"].boolValue
         showPayWhatYouCanLink = remoteConfig["showPayWhatYouCanLink"].boolValue
