@@ -9,5 +9,6 @@ firebase-debug.*.log
 *.xcuserstate
 xcuserdata/
 
-# Claude Code session/plan files
-.claude/
+# Claude Code session/plan files (keep committed skills, ignore the rest)
+.claude/*
+!.claude/skills/
