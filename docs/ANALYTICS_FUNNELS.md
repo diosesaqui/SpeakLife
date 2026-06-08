@@ -57,16 +57,47 @@ From finishing onboarding through to a paid conversion.
 
 ---
 
+## 3. Onboarding A/B — Winner by Variant
+
+The cross-variant experiment funnel. Every onboarding flow now fires a unified
+`onboarding_started` → `onboarding_finished` pair from `HomeView`, tagged with
+the chosen arm, so the four variants (`product` / `identity` / `quiz` /
+`survey`, selected by Remote Config `onboardingVariant`) compare head-to-head.
+These route through `AnalyticsService`, so PostHog and Firebase both receive them.
+
+**PostHog insight:** [Onboarding A/B — Winner by Variant](https://us.posthog.com/project/455580/insights/QfVRKZ3H)
+
+| # | Event | Meaning |
+|---|-------|---------|
+| 1 | `onboarding_started` | Entered onboarding (any variant) |
+| 2 | `onboarding_finished` | Completed onboarding |
+| 3 | `subscription_started` | Started a trial or paid sub |
+
+**Breakdown:** event property `variant` (`product` / `identity` / `quiz` / `survey`).
+**Funnel settings:** conversion window `14 days`, order `ordered`.
+
+`onboarding_finished` also carries `converted` (bool) and `conversion_type`
+(`trial` / `purchase` / `none`), so you can read completion and conversion mix
+straight off step 2. `trial_started` and `subscription_started` carry `variant`
+too, for revenue attribution per arm.
+
+> Ships in app **v4.27+**. Until that build is live, this funnel reads zero.
+
+---
+
 ## Key event reference
 
 These route through `AnalyticsService` and reach every provider:
 
 | Event | Source method | Notable properties |
 |-------|---------------|--------------------|
+| `onboarding_started` | `AnalyticsService.track` (HomeView) | `variant` |
+| `onboarding_finished` | `AnalyticsService.track` (HomeView) | `variant`, `converted`, `conversion_type` |
+| `subscription_started` | `track` (SubscriptionStore.purchase) | `product_id`, `value`, `is_trial`, `variant` |
 | `screen_viewed` | `trackScreenView` | `screen_name`, `previous_screen` |
 | `paywall_impression` | `trackPaywallImpression` | `paywall_id` |
 | `paywall_conversion` | `trackPaywallConversion` | `product_id`, `price` |
-| `trial_started` | `trackTrialStarted` | `product_id`, `value` |
+| `trial_started` | `trackTrialStarted` / `track` (purchase) | `product_id`, `value`, `variant` |
 | `trial_activated` | `trackTrialActivated` | `product_id`, `price` |
 | `subscription_renewal` | `trackSubscriptionRenewal` | `product_id`, `price` |
 | `subscription_cancelled` | `trackSubscriptionCancelled` | `product_id` |
