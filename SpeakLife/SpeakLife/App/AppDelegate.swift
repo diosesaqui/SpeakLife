@@ -92,10 +92,11 @@ final class AppDelegate: NSObject, MessagingDelegate {
         // would briefly fall back to the legacy useQuizOnboarding routing.
         // Default onboardingVariant so first launch goes straight to the chosen
         // flow; Remote Config (incl. any A/B test) still overrides once fetched.
-        // Change "identity" to "product" or "quiz" to move the pre-fetch default.
+        // "product" is the control/baseline; the Firebase A/B test splits the
+        // other arms (identity / quiz / survey) against it once fetched.
         RemoteConfig.remoteConfig().setDefaults([
             "useQuizOnboarding": true as NSNumber,
-            "onboardingVariant": "identity" as NSString
+            "onboardingVariant": "product" as NSString
         ])
 
         registerBGTask()
