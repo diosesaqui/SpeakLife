@@ -818,7 +818,7 @@ struct SurveyFirstDeclarationScreen: View {
                 .opacity(cardShown ? 1 : 0)
                 .animation(.spring(response: 0.5, dampingFraction: 0.75).delay(0.15), value: cardShown)
 
-                Text("That's one declaration. You get 30 more — built for your exact battle.")
+                Text("That's one declaration. Hundreds more are waiting, built for your exact battle.")
                     .font(.system(size: 14, weight: .regular, design: .rounded))
                     .foregroundColor(.white.opacity(0.5))
                     .multilineTextAlignment(.center)
@@ -829,7 +829,7 @@ struct SurveyFirstDeclarationScreen: View {
 
             Spacer()
 
-            SurveyContinueButton(label: "I Want All 30 →") {
+            SurveyContinueButton(label: "I Want Them All →") {
                 Analytics.logEvent("survey_first_declaration_continue", parameters: nil)
                 onContinue()
             }
