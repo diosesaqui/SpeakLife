@@ -500,8 +500,9 @@ private struct ProductExperienceScreen: View {
     @State private var v = false
 
     private let features: [(icon: String, title: String, body: String)] = [
-        ("hand.tap", "Tap and hold", "Let a declaration sink in deep. The Word goes from your screen to your spirit."),
+        ("sparkles", "Soak in the Word", "Tap and hold to let a declaration sink in deep. The Word goes from your screen to your spirit."),
         ("bubble.left.and.bubble.right.fill", "Bible Chat", "Ask anything and get answers rooted in Scripture. Like having a wise friend in the Word, any hour of the day."),
+        ("headphones", "Listen anywhere", "Press play and let Scripture wash over you. Hands-free declarations for the commute, the gym, or a sleepless night."),
         ("car", "Built for real life", "Use it in the car, before a hard conversation, or late at night. Simple when everything else feels heavy.")
     ]
 
