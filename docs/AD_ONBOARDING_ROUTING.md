@@ -29,7 +29,7 @@ experiment. The variant is **frozen** once onboarding appears
 |---|---|
 | "Who God says you are" / labels / self-worth | `identity` |
 | "Peace in 60 seconds" / anxiety / the storm | `product` |
-| "Take back what the enemy stole" / warfare | `survey` |
+| "Picture your breakthrough" / health, provision, peace, victory | `outcomes` |
 | "Answer 3 questions…" interactive hook | `quiz` |
 
 ## Branch setup (one-time)
@@ -46,7 +46,7 @@ experiment. The variant is **frozen** once onboarding appears
    - **Associated Domains** capability: `applinks:<yoursubdomain>.app.link` and
      `applinks:<yoursubdomain>-alternate.app.link` (Branch gives you these).
 4. Create **4 Branch links** (Quick Links), one per angle, each with **custom data**
-   `ob` = `identity` / `product` / `survey` / `quiz`. (Set the same `ob` on a link
+   `ob` = `identity` / `product` / `outcomes` / `quiz`. (Set the same `ob` on a link
    *template* per ad set so you don't hand-make one per ad.)
 
 ## What URLs to post on each ad
@@ -59,7 +59,7 @@ that angle:
 |---|---|
 | identity | `https://speaklife.app.link/identity` (custom data `ob=identity`) |
 | product  | `https://speaklife.app.link/product`  (custom data `ob=product`)  |
-| survey   | `https://speaklife.app.link/survey`   (custom data `ob=survey`)   |
+| outcomes | `https://speaklife.app.link/outcomes` (custom data `ob=outcomes`) |
 | quiz     | `https://speaklife.app.link/quiz`      (custom data `ob=quiz`)     |
 
 (Branch generates the real `*.app.link` slugs; the `ob` custom data is what the app

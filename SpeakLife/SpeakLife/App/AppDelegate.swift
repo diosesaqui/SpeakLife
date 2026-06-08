@@ -101,7 +101,7 @@ final class AppDelegate: NSObject, MessagingDelegate {
         // Default onboardingVariant so first launch goes straight to the chosen
         // flow; Remote Config (incl. any A/B test) still overrides once fetched.
         // "product" is the control/baseline; the Firebase A/B test splits the
-        // other arms (identity / quiz / survey) against it once fetched.
+        // other arms (identity / quiz / outcomes) against it once fetched.
         RemoteConfig.remoteConfig().setDefaults([
             "useQuizOnboarding": true as NSNumber,
             "onboardingVariant": "product" as NSString

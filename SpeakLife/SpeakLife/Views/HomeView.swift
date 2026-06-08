@@ -309,7 +309,7 @@ struct HomeView: View {
                             }
                   
                 } else {
-                    // Onboarding A/B: quiz | product | identity | survey, selected
+                    // Onboarding A/B: quiz | product | identity | outcomes, selected
                     // by Remote Config `onboardingVariant`. ATT is requested once
                     // from SpeakLifeApp (delayed until active); requesting it
                     // again here fired too early and dropped the prompt.
@@ -334,8 +334,8 @@ struct HomeView: View {
         case .identity:
             IdentityOnboardingView(size: UIScreen.main.bounds.size) { finishOnboarding() }
                 .ignoresSafeArea()
-        case .survey:
-            SurveyOnboardingView(size: UIScreen.main.bounds.size) { finishOnboarding() }
+        case .outcomes:
+            OutcomesOnboardingView(size: UIScreen.main.bounds.size) { finishOnboarding() }
                 .ignoresSafeArea()
         }
     }
