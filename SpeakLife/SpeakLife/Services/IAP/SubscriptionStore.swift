@@ -112,11 +112,27 @@ final class SubscriptionStore: ObservableObject {
         init?(code: String) { self.init(rawValue: code.lowercased()) }
     }
 
+    // Once onboarding first appears the variant is frozen (lockOnboardingVariant)
+    // so a late-resolving ad deep link can't swap the flow mid-run or desync the
+    // started/finished analytics variant.
+    private var lockedOnboardingVariant: OnboardingVariant?
+
     var resolvedOnboardingVariant: OnboardingVariant {
+        lockedOnboardingVariant ?? computedOnboardingVariant
+    }
+
+    private var computedOnboardingVariant: OnboardingVariant {
         // 1) ad-matched override → 2) Remote Config experiment → 3) legacy fallback
         if let ad = adOnboardingVariant, let v = OnboardingVariant(code: ad) { return v }
         if let v = OnboardingVariant(code: onboardingVariant) { return v }
         return useQuizOnboarding ? .quiz : .product
+    }
+
+    /// Freeze the onboarding variant the first time onboarding is shown, so an ad
+    /// deep link that resolves afterward can't restart the user in a different flow
+    /// (and can't desync the started/finished analytics variant). Idempotent.
+    func lockOnboardingVariant() {
+        if lockedOnboardingVariant == nil { lockedOnboardingVariant = computedOnboardingVariant }
     }
 
     /// String label for the user's resolved onboarding arm. Stamped onto the

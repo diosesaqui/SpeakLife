@@ -122,6 +122,9 @@ struct SpeakLifeApp: App {
                             if accepted {
                                 appDelegate.initializeTikTokSDK()
                             }
+                            // ATT is now resolved, so Meta can return the deferred
+                            // app link → ad-matched onboarding. Runs once.
+                            appDelegate.checkDeferredAppLinkOnce()
                         }
                     }
                     

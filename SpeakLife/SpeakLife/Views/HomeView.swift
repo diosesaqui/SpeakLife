@@ -343,6 +343,9 @@ struct HomeView: View {
     private func logOnboardingStarted() {
         guard !onboardingStartLogged else { return }
         onboardingStartLogged = true
+        // Freeze the variant before logging so a late ad deep link can't swap the
+        // flow mid-run or desync started vs finished.
+        subscriptionStore.lockOnboardingVariant()
         // Routed through AnalyticsService so the event reaches PostHog (the A/B
         // funnel) and Firebase, not just Firebase.
         AnalyticsService.shared.track("onboarding_started", parameters: [

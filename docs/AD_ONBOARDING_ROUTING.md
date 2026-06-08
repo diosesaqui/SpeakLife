@@ -52,12 +52,22 @@ inherit the same `ob=` value.
 
 ## Caveats
 
+- **First-session timing (important).** Meta's `fetchDeferredAppLink` only returns
+  the link once ATT is resolved, and we prompt ATT ~1.5s after launch. The landing
+  animation is ~2.8s, after which onboarding renders and **freezes the variant**
+  (`lockOnboardingVariant`, so a late link can't swap the flow mid-run). On a fast
+  first session the deferred link can resolve *after* that lock — in which case the
+  ad match is recorded but applies on a **later launch**, not the first onboarding.
+  If you need guaranteed first-session ad-matching, either (a) gate first-launch
+  onboarding behind the deferred-link resolution with a short timeout, or (b) use an
+  MMP whose link resolves at launch without the ATT dependency (below).
 - **Meta deferred app links are best-effort post-ATT.** If a user denies tracking or
   Meta can't attribute, the link won't resolve and the user falls through to the
   Remote Config experiment / default — graceful, not broken. For high-volume,
-  cross-network reliability, an MMP (Branch / AppsFlyer / Adjust) is the robust
-  upgrade: generate the same four `ob=` links there and the in-app plumbing is
-  unchanged (just call `SubscriptionStore.handleIncomingURL` from the MMP callback).
+  cross-network reliability (and first-session matching), an MMP (Branch / AppsFlyer
+  / Adjust) is the robust upgrade: generate the same four `ob=` links there and the
+  in-app plumbing is unchanged (just call `SubscriptionStore.handleIncomingURL` from
+  the MMP callback, which resolves at launch before onboarding).
 - **Ad-matched routing is targeting, not an A/B test.** Ad users are deliberately
   paired with their best-fit onboarding and are not random-assigned (the override
   wins, and `source: "ad"` keeps them separable from the experiment in PostHog).

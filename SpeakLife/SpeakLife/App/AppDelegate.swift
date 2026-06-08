@@ -78,17 +78,6 @@ final class AppDelegate: NSObject, MessagingDelegate {
             didFinishLaunchingWithOptions: launchOptions
         )
 
-        // Meta deferred app link → ad-matched onboarding. On a fresh install from
-        // a Meta ad whose deep link carries `ob=<variant>`, recover it on first
-        // launch and record the matched onboarding. Runs once.
-        if !UserDefaults.standard.bool(forKey: "didCheckDeferredAppLink") {
-            UserDefaults.standard.set(true, forKey: "didCheckDeferredAppLink")
-            AppLinkUtility.fetchDeferredAppLink { url, _ in
-                guard let url = url else { return }
-                SubscriptionStore.handleIncomingURL(url, source: "ad")
-            }
-        }
-
         Messaging.messaging().delegate = self
         let settings = RemoteConfigSettings()
         #if DEBUG
@@ -169,6 +158,25 @@ final class AppDelegate: NSObject, MessagingDelegate {
                    print("✅ FCM Token: \(token)") // This should now appear in Xcode logs
                } else {
                }
+    }
+
+    /// Recover a Meta deferred app link (ad-matched onboarding) once, AFTER the
+    /// ATT response — advertiser tracking must be resolved or Meta won't return
+    /// the deferred link. The "checked" flag is set only on a clean completion, so
+    /// a transient first-launch failure (e.g. no network) retries on a later launch.
+    func checkDeferredAppLinkOnce() {
+        guard !UserDefaults.standard.bool(forKey: "didCheckDeferredAppLink") else { return }
+        AppLinkUtility.fetchDeferredAppLink { url, error in
+            if let error = error {
+                print("⚠️ Deferred app link fetch failed, will retry next launch: \(error.localizedDescription)")
+                return
+            }
+            // Clean completion: either we got a link, or there genuinely isn't one.
+            UserDefaults.standard.set(true, forKey: "didCheckDeferredAppLink")
+            if let url = url {
+                SubscriptionStore.handleIncomingURL(url, source: "ad")
+            }
+        }
     }
     
     // Removed duplicate didReceive - now handled in extension
