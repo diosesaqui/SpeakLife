@@ -331,6 +331,9 @@ struct HomeView: View {
         case .identity:
             IdentityOnboardingView(size: UIScreen.main.bounds.size) { finishOnboarding() }
                 .ignoresSafeArea()
+        case .survey:
+            SurveyOnboardingView(size: UIScreen.main.bounds.size) { finishOnboarding() }
+                .ignoresSafeArea()
         }
     }
 
