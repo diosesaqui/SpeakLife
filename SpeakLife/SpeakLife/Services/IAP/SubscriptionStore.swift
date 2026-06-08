@@ -36,6 +36,10 @@ let weeklyID = "SpeakLife1Wk5"
 final class SubscriptionStore: ObservableObject {
 
     @Published var isPremium: Bool = false
+    /// True iff the active premium entitlement is currently in its free-trial
+    /// introductory period (vs a paid period). Powers the onboarding conversion
+    /// analytics. Source of truth: RevenueCat, refreshed in applyCustomerInfo.
+    @Published var isInTrial: Bool = false
     /// First date the user ever activated the premium entitlement (survives
     /// cancel-and-resubscribe). Powers the subscription anniversary overlay.
     @Published var premiumOriginalPurchaseDate: Date?
@@ -97,6 +101,18 @@ final class SubscriptionStore: ObservableObject {
         case "survey":   return .survey
         case "quiz":     return .quiz
         default:         return useQuizOnboarding ? .quiz : .product
+        }
+    }
+
+    /// String label for the user's resolved onboarding A/B arm. Stamped onto the
+    /// onboarding + conversion analytics so the PostHog/Firebase funnels can pick
+    /// a winner per variant.
+    var onboardingVariantName: String {
+        switch resolvedOnboardingVariant {
+        case .quiz:     return "quiz"
+        case .product:  return "product"
+        case .identity: return "identity"
+        case .survey:   return "survey"
         }
     }
 
@@ -364,6 +380,7 @@ final class SubscriptionStore: ObservableObject {
         let devotionalActive = RevenueCatManager.shared.isDevotionalActive(info)
 
         isPremium          = premiumActive
+        isInTrial          = premiumActive && RevenueCatManager.shared.isPremiumInTrial(info)
         isInDevotionalPremium = devotionalActive
         premiumOriginalPurchaseDate = premiumActive
             ? RevenueCatManager.shared.premiumOriginalPurchaseDate(info)
@@ -506,6 +523,7 @@ final class SubscriptionStore: ObservableObject {
         // ── Unlock premium immediately ────────────────────────────────────
         await MainActor.run {
             self.isPremium = RevenueCatManager.shared.isPremiumActive(customerInfo)
+            self.isInTrial = self.isPremium && RevenueCatManager.shared.isPremiumInTrial(customerInfo)
             self.isInDevotionalPremium = RevenueCatManager.shared.isDevotionalActive(customerInfo)
             self.subscriptionGroupStatus = .subscribed
         }
@@ -522,11 +540,12 @@ final class SubscriptionStore: ObservableObject {
                     AppEvents.ParameterName("predicted_value"): priceValue as NSNumber
                 ]
             )
-            Analytics.logEvent("trial_started", parameters: [
+            AnalyticsService.shared.track("trial_started", parameters: [
                 "product_id": product.id,
                 "paywall_name": paywallName,
                 "value": priceValue,
-                "currency": currency
+                "currency": currency,
+                "variant": onboardingVariantName
             ])
             Event.trackTikTokEngagement(action: "trial_started", category: "subscription")
         } else {
@@ -549,14 +568,18 @@ final class SubscriptionStore: ObservableObject {
             "value": priceValue,
             "currency": currency,
             "paywall_name": paywallName,
-            "is_trial": willStartTrial
+            "is_trial": willStartTrial,
+            "variant": onboardingVariantName
         ])
-        Analytics.logEvent("subscription_started", parameters: [
+        // Routed through AnalyticsService so PostHog (the A/B funnel) receives it
+        // too, not just Firebase. variant makes revenue attributable per arm.
+        AnalyticsService.shared.track("subscription_started", parameters: [
             "product_id": product.id,
             "value": priceValue,
             "currency": currency,
             "paywall_name": paywallName,
-            "is_trial": willStartTrial
+            "is_trial": willStartTrial,
+            "variant": onboardingVariantName
         ])
 
         // Hook into the trial experience push sequence. Without this the D2/D3

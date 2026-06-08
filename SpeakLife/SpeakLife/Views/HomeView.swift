@@ -309,15 +309,18 @@ struct HomeView: View {
                             }
                   
                 } else {
-                    // Onboarding A/B: quiz | product | identity, selected by
-                    // Remote Config `onboardingVariant`. ATT is requested once
+                    // Onboarding A/B: quiz | product | identity | survey, selected
+                    // by Remote Config `onboardingVariant`. ATT is requested once
                     // from SpeakLifeApp (delayed until active); requesting it
                     // again here fired too early and dropped the prompt.
                     onboardingFlow
+                        .onAppear { logOnboardingStarted() }
                 }
             }
 
     }
+
+    @State private var onboardingStartLogged = false
 
     @ViewBuilder
     private var onboardingFlow: some View {
@@ -337,7 +340,27 @@ struct HomeView: View {
         }
     }
 
+    private func logOnboardingStarted() {
+        guard !onboardingStartLogged else { return }
+        onboardingStartLogged = true
+        // Routed through AnalyticsService so the event reaches PostHog (the A/B
+        // funnel) and Firebase, not just Firebase.
+        AnalyticsService.shared.track("onboarding_started", parameters: [
+            "variant": subscriptionStore.onboardingVariantName
+        ])
+    }
+
     private func finishOnboarding() {
+        // Conversion outcome for the onboarding A/B funnel. The paywall step has
+        // already run by now, so isPremium/isInTrial reflect any purchase made
+        // during onboarding. conversion_type: "trial" | "purchase" | "none".
+        let converted = subscriptionStore.isPremium
+        let conversionType = converted ? (subscriptionStore.isInTrial ? "trial" : "purchase") : "none"
+        AnalyticsService.shared.track("onboarding_finished", parameters: [
+            "variant": subscriptionStore.onboardingVariantName,
+            "converted": converted,
+            "conversion_type": conversionType
+        ])
         withAnimation {
             appState.isOnboarded = true
             LifecycleNotificationService.shared.scheduleLifecycleNotifications()
