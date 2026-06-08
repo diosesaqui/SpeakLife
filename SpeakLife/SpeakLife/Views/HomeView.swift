@@ -308,31 +308,40 @@ struct HomeView: View {
                                 .environmentObject(subscriptionStore)
                             }
                   
-                } else if subscriptionStore.useQuizOnboarding {
-                    QuizOnboardingView(size: UIScreen.main.bounds.size) {
-                        withAnimation {
-                            appState.isOnboarded = true
-                            LifecycleNotificationService.shared.scheduleLifecycleNotifications()
-                            Analytics.logEvent("onBoardingFinished", parameters: nil)
-                        }
-                    }
-                    .ignoresSafeArea()
-                    // ATT is requested once from SpeakLifeApp (delayed until active);
-                    // requesting it again here fired too early and dropped the prompt.
                 } else {
-                    ProductOnboardingView(size: UIScreen.main.bounds.size) {
-                        withAnimation {
-                            appState.isOnboarded = true
-                            LifecycleNotificationService.shared.scheduleLifecycleNotifications()
-                            Analytics.logEvent("onBoardingFinished", parameters: nil)
-                        }
-                    }
-                    .ignoresSafeArea()
+                    // Onboarding A/B: quiz | product | identity, selected by
+                    // Remote Config `onboardingVariant`. ATT is requested once
+                    // from SpeakLifeApp (delayed until active); requesting it
+                    // again here fired too early and dropped the prompt.
+                    onboardingFlow
                 }
             }
-        
+
     }
-    
+
+    @ViewBuilder
+    private var onboardingFlow: some View {
+        switch subscriptionStore.resolvedOnboardingVariant {
+        case .quiz:
+            QuizOnboardingView(size: UIScreen.main.bounds.size) { finishOnboarding() }
+                .ignoresSafeArea()
+        case .product:
+            ProductOnboardingView(size: UIScreen.main.bounds.size) { finishOnboarding() }
+                .ignoresSafeArea()
+        case .identity:
+            IdentityOnboardingView(size: UIScreen.main.bounds.size) { finishOnboarding() }
+                .ignoresSafeArea()
+        }
+    }
+
+    private func finishOnboarding() {
+        withAnimation {
+            appState.isOnboarded = true
+            LifecycleNotificationService.shared.scheduleLifecycleNotifications()
+            Analytics.logEvent("onBoardingFinished", parameters: nil)
+        }
+    }
+
     @ViewBuilder
     var homeView: some View {
         ZStack(alignment: .top) {

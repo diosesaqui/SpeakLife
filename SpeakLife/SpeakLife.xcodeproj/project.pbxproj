@@ -380,6 +380,7 @@
 		D0070000000000000007BBBB /* SurveyTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0070000000000000007AAAA /* SurveyTypes.swift */; };
 		D0080000000000000008BBBB /* QuizOnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0080000000000000008AAAA /* QuizOnboardingView.swift */; };
 		D0090000000000000009BBBB /* ProductOnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0090000000000000009AAAA /* ProductOnboardingView.swift */; };
+		D0100000000000000010BBBB /* IdentityOnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0100000000000000010AAAA /* IdentityOnboardingView.swift */; };
 		D2AD4D1C5D81425897424332 /* StructuredDayLaunchTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9A3081A52984B6AB0EECD7B /* StructuredDayLaunchTracker.swift */; };
 		D807A5FAC8CD4B79A92D4C57 /* EmailConfirmationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61721EDB270E45A784DF2A6C /* EmailConfirmationView.swift */; };
 		DA3182D477494E6A9E4F8AC4 /* AdaptiveSheetModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 067C652453504C60AD4342E8 /* AdaptiveSheetModifier.swift */; };
@@ -786,6 +787,7 @@
 		C0070000000000000007AAAA /* SurveyTypes.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SurveyTypes.swift; sourceTree = "<group>"; };
 		C0080000000000000008AAAA /* QuizOnboardingView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = QuizOnboardingView.swift; sourceTree = "<group>"; };
 		C0090000000000000009AAAA /* ProductOnboardingView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProductOnboardingView.swift; sourceTree = "<group>"; };
+		C0100000000000000010AAAA /* IdentityOnboardingView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IdentityOnboardingView.swift; sourceTree = "<group>"; };
 		CL00DE00000000001111AAAA /* ClaudeDeclarationMatcher.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ClaudeDeclarationMatcher.swift; sourceTree = "<group>"; };
 		CL00DE00000000002222AAAA /* AnthropicConfig.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AnthropicConfig.swift; sourceTree = "<group>"; };
 		DC27319C7422AFA8C439B08F /* AppleSignInService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleSignInService.swift; sourceTree = "<group>"; };
@@ -1767,6 +1769,7 @@
 				C0040000000000000004AAAA /* SurveyOnboardingView.swift */,
 				C0080000000000000008AAAA /* QuizOnboardingView.swift */,
 				C0090000000000000009AAAA /* ProductOnboardingView.swift */,
+				C0100000000000000010AAAA /* IdentityOnboardingView.swift */,
 			);
 			path = Onboarding;
 			sourceTree = "<group>";
@@ -2403,6 +2406,7 @@
 				D0040000000000000004BBBB /* SurveyOnboardingView.swift in Sources */,
 				D0080000000000000008BBBB /* QuizOnboardingView.swift in Sources */,
 				D0090000000000000009BBBB /* ProductOnboardingView.swift in Sources */,
+				D0100000000000000010BBBB /* IdentityOnboardingView.swift in Sources */,
 				D0060000000000000006BBBB /* PayWhatYouCanView.swift in Sources */,
 				D0070000000000000007BBBB /* SurveyTypes.swift in Sources */,
 			);
