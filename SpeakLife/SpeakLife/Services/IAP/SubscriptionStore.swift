@@ -81,19 +81,20 @@ final class SubscriptionStore: ObservableObject {
     @Published var useQuizOnboarding = true
 
     // MARK: - Onboarding A/B variant (single switch for which flow shows)
-    // Remote Config key `onboardingVariant`: "quiz" | "product" | "identity".
+    // Remote Config key `onboardingVariant`: "quiz" | "product" | "identity" | "survey".
     // Empty/unset falls back to the legacy useQuizOnboarding boolean so live
     // users are unaffected until the string key is set in Remote Config.
     @Published var onboardingVariant: String = ""
 
     enum OnboardingVariant {
-        case quiz, product, identity
+        case quiz, product, identity, survey
     }
 
     var resolvedOnboardingVariant: OnboardingVariant {
         switch onboardingVariant.lowercased() {
         case "identity": return .identity
         case "product":  return .product
+        case "survey":   return .survey
         case "quiz":     return .quiz
         default:         return useQuizOnboarding ? .quiz : .product
         }
@@ -261,7 +262,7 @@ final class SubscriptionStore: ObservableObject {
         // Quiz Onboarding A/B from Remote Config (key: useQuizOnboarding) — legacy fallback.
         useQuizOnboarding = remoteConfig["useQuizOnboarding"].boolValue
 
-        // Onboarding A/B variant (key: onboardingVariant) — "quiz" | "product" | "identity".
+        // Onboarding A/B variant (key: onboardingVariant) — "quiz" | "product" | "identity" | "survey".
         // Empty until set in Remote Config; resolvedOnboardingVariant then falls
         // back to useQuizOnboarding so nothing changes for live users.
         onboardingVariant = remoteConfig["onboardingVariant"].stringValue

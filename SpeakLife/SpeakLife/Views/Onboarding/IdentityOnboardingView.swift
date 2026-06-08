@@ -238,8 +238,8 @@ private struct IdentityTruth {
                                  subtitle: "Secure in who God says I am",
                                  symbol: "crown.fill")
         case .purpose:
-            return IdentityTruth(statement: "I am called and commissioned",
-                                 subtitle: "Walking in my God-given assignment",
+            return IdentityTruth(statement: "I am called and sent",
+                                 subtitle: "Living out what God made me for",
                                  symbol: "flag.fill")
         case .allOfIt:
             return IdentityTruth(statement: "I am more than a conqueror",
@@ -258,8 +258,8 @@ private struct IdentityTruth {
                                  subtitle: "Restored in body, mind, and spirit",
                                  symbol: "heart.fill")
         case .abundance:
-            return IdentityTruth(statement: "I live in overflow",
-                                 subtitle: "Provided for, lacking nothing",
+            return IdentityTruth(statement: "I have more than enough",
+                                 subtitle: "Provided for, never in lack",
                                  symbol: "sparkles")
         }
     }
@@ -365,7 +365,7 @@ private struct IdentityLieScreen: View {
                     .fixedSize(horizontal: false, vertical: true)
                     .identityStagger(v, delay: 0.12)
 
-                Text("But a label is not an identity.\nAnd God has already spoken over yours.")
+                Text("But a label is not the truth about you.\nGod already decided who you are.")
                     .font(.system(size: 16, weight: .regular, design: .rounded))
                     .foregroundColor(.white.opacity(0.65))
                     .multilineTextAlignment(.center)
@@ -549,7 +549,7 @@ private struct IdentityMechanismScreen: View {
                             .fixedSize(horizontal: false, vertical: true)
                             .identityStagger(v)
 
-                        Text("Identity isn't found by trying harder.\nIt's renewed by agreeing with what God already says, out loud, until your heart catches up with His Word.")
+                        Text("You don't fix your identity by trying harder.\nYou say what God says about you, out loud, until your heart starts to believe it too.")
                             .font(.system(size: 16, weight: .regular, design: .rounded))
                             .foregroundColor(.white.opacity(0.7))
                             .multilineTextAlignment(.center)
@@ -641,14 +641,14 @@ private struct IdentityPickerScreen: View {
                     Spacer().frame(height: size.height * 0.10)
 
                     VStack(spacing: 12) {
-                        Text("Which truth do you most\nneed to stand in?")
+                        Text("Which truth do you most\nneed to hold onto?")
                             .font(.system(size: 27, weight: .bold, design: .rounded))
                             .foregroundColor(.white)
                             .multilineTextAlignment(.center)
                             .fixedSize(horizontal: false, vertical: true)
                             .identityStagger(v)
 
-                        Text("We'll build your daily declarations around the\nidentity God wants to anchor in you.")
+                        Text("We'll build your daily declarations around it,\nso this truth sinks in deep.")
                             .font(.system(size: 15, weight: .regular, design: .rounded))
                             .foregroundColor(.white.opacity(0.65))
                             .multilineTextAlignment(.center)
