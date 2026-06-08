@@ -1,23 +1,24 @@
 //
-//  ProductOnboardingView.swift
+//  IdentityOnboardingView.swift
 //  SpeakLife
 //
-//  A value-led ("product type") onboarding A/B variant. Instead of
-//  interrogating the user with quiz/poll questions up front, it leads with
-//  the product's promise using the five marketing-psychology principles:
+//  An identity-led onboarding A/B variant. Where the quiz flow leads with a
+//  belief sequence and the product flow leads with value props, this flow is
+//  built entirely around IDENTITY IN CHRIST — silencing the labels the world
+//  assigns and replacing them with who God says the user is:
 //
-//    1. Speed            — peace in under 60 seconds
-//    2. New mechanism    — speaking the Word, not just reading it
-//    3. Good experience  — designed for the middle of the storm
-//    4. Clarity          — done-for-you declarations for what you're facing
-//    5. Avoid discomfort — God's Word for the middle of a life storm
+//    1. The lie       — you are not who your worst day says you are
+//    2. The verdict   — in Christ you are a new creation
+//    3. Named & chosen— chosen, redeemed, called by name (1 Peter 2:9)
+//    4. The mechanism — identity is renewed by declaring it out loud
+//    5. Stand in it   — pick the truth to anchor (seeds the home feed)
 //
-//  After the value screens it reuses the proven back-half (taste of a
+//  After the identity screens it reuses the proven back-half (taste of a
 //  personalized declaration → record your own → paywall → notification time
-//  → rating), and seeds the home feed from a single light category picker.
+//  → rating), and seeds the home feed from the identity picker, which maps
+//  each truth to a HeaviestBurden/category so the shared screens work unchanged.
 //
-//  One arm of the onboarding A/B: HomeView routes here when Remote Config
-//  `onboardingVariant` == "product" (see SubscriptionStore.resolvedOnboardingVariant).
+//  Shown when Remote Config `onboardingVariant` == "identity".
 //
 
 import SwiftUI
@@ -25,23 +26,23 @@ import FirebaseAnalytics
 import UserNotifications
 import UIKit
 
-struct ProductOnboardingView: View {
+struct IdentityOnboardingView: View {
     @EnvironmentObject var subscriptionStore: SubscriptionStore
     @EnvironmentObject var appState: AppState
     @EnvironmentObject var declarationStore: DeclarationViewModel
     let size: CGSize
     let onComplete: () -> Void
 
-    // Reuse the survey response model so the shared back-half screens
-    // (first-declaration taste, notification time) and the seeding logic all
-    // work unchanged. Only `heaviestBurden` and `notificationTime` are set here.
+    // Reuse the survey response model so the shared back-half screens and the
+    // seeding logic work unchanged. Only `heaviestBurden` and `notificationTime`
+    // are set here (the identity picker writes `heaviestBurden`).
     @StateObject private var responses = SurveyResponses()
-    @State private var currentStep: ProductStep = .hook
+    @State private var currentStep: IdentityStep = .lie
     @State private var savedDeclaration: PersonalDeclaration? = nil
 
     private var valueProgress: Double {
         guard let idx = currentStep.valueScreenIndex else { return 0 }
-        return Double(idx) / Double(ProductStep.totalValueScreens)
+        return Double(idx) / Double(IdentityStep.totalValueScreens)
     }
 
     var body: some View {
@@ -73,19 +74,18 @@ struct ProductOnboardingView: View {
             }
         }
         .ignoresSafeArea()
-        .onAppear { Analytics.logEvent("product_onboarding_started", parameters: nil) }
+        .onAppear { Analytics.logEvent("identity_onboarding_started", parameters: nil) }
     }
 
-    // Split to stay within SwiftUI's 10-branch ViewBuilder limit.
     @ViewBuilder
     private var currentStepView: some View {
         switch currentStep {
-        case .hook:        ProductHookScreen(size: size) { advance() }
-        case .speed:       ProductSpeedScreen(size: size) { advance() }
-        case .mechanism:   ProductMechanismScreen(size: size) { advance() }
-        case .experience:  ProductExperienceScreen(size: size) { advance() }
-        case .categoryPicker:
-            ProductCategoryPickerScreen(size: size, responses: responses) { advance() }
+        case .lie:         IdentityLieScreen(size: size) { advance() }
+        case .verdict:     IdentityVerdictScreen(size: size) { advance() }
+        case .named:       IdentityNamedScreen(size: size) { advance() }
+        case .mechanism:   IdentityMechanismScreen(size: size) { advance() }
+        case .identityPicker:
+            IdentityPickerScreen(size: size, responses: responses) { advance() }
         default: backHalfView
         }
     }
@@ -130,7 +130,7 @@ struct ProductOnboardingView: View {
 
     private func advance() {
         UIImpactFeedbackGenerator(style: .soft).impactOccurred()
-        Analytics.logEvent("product_step_completed", parameters: ["step": currentStep.rawValue])
+        Analytics.logEvent("identity_step_completed", parameters: ["step": currentStep.rawValue])
 
         switch currentStep {
         case .rating:
@@ -139,8 +139,8 @@ struct ProductOnboardingView: View {
             applyResponsesAndContinueToRating()
         default:
             let nextRaw = currentStep.rawValue + 1
-            guard let next = ProductStep(rawValue: nextRaw) else {
-                assertionFailure("ProductOnboardingView.advance(): no successor for \(currentStep). .rating should be terminal.")
+            guard let next = IdentityStep(rawValue: nextRaw) else {
+                assertionFailure("IdentityOnboardingView.advance(): no successor for \(currentStep). .rating should be terminal.")
                 onComplete()
                 return
             }
@@ -148,8 +148,8 @@ struct ProductOnboardingView: View {
         }
     }
 
-    // Mirrors SurveyOnboardingView's completion: persist the user's selected
-    // category, seed the home feed + notifications from it, then prime rating.
+    // Mirrors the product/survey completion: persist the chosen category, seed
+    // the home feed + notifications from it, then prime the rating ask.
     private func applyResponsesAndContinueToRating() {
         let goalWord = responses.resolvedGoalWord
         appState.surveyGoalWord = goalWord.rawValue
@@ -168,7 +168,7 @@ struct ProductOnboardingView: View {
             appState.personalDeclarationTimeIndex = notifTime.startTimeIndex
         }
         appState.hasPersonalDeclaration = savedDeclaration != nil
-        Analytics.logEvent("product_onboarding_completed", parameters: [
+        Analytics.logEvent("identity_onboarding_completed", parameters: [
             "goal_word": goalWord.rawValue,
             "burden": responses.heaviestBurden?.rawValue ?? "unknown",
             "set_personal_declaration": (savedDeclaration != nil) as NSNumber
@@ -179,7 +179,7 @@ struct ProductOnboardingView: View {
 
     private func requestNotificationPermissionThenAdvanceToRating(categories: Set<DeclarationCategory>) {
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { granted, _ in
-            Analytics.logEvent("notification_permission", parameters: ["granted": granted, "source": "product_onboarding"])
+            Analytics.logEvent("notification_permission", parameters: ["granted": granted, "source": "identity_onboarding"])
             DispatchQueue.main.async {
                 appState.notificationEnabled = granted
                 if granted {
@@ -200,32 +200,81 @@ struct ProductOnboardingView: View {
 
 // MARK: - Flow Steps
 
-enum ProductStep: Int, CaseIterable {
-    // Value-led screens (the five marketing principles)
-    case hook            = 0   // Avoid discomfort
-    case speed           = 1   // Speed
-    case mechanism       = 2   // New mechanism
-    case experience      = 3   // Good experience
-    case categoryPicker  = 4   // Clarity + personalization
+enum IdentityStep: Int, CaseIterable {
+    // Identity-led screens
+    case lie            = 0   // the world's labels
+    case verdict        = 1   // new creation
+    case named          = 2   // chosen, redeemed, called by name
+    case mechanism      = 3   // renew the mind by declaring
+    case identityPicker = 4   // pick the truth to stand in (seeds the feed)
     // Shared back-half (reused from the survey flow)
-    case firstDeclaration = 5  // taste before paywall
+    case firstDeclaration = 5
     case personalDeclaration = 6
     case paywall         = 7
-    case notificationTime = 8  // post-paywall
-    case rating          = 9   // terminal — SKStoreReviewController prime
+    case notificationTime = 8
+    case rating          = 9   // terminal
 
-    // Index within the value-led intro screens, used to drive the progress bar.
     var valueScreenIndex: Int? {
-        let screens: [ProductStep] = [.hook, .speed, .mechanism, .experience, .categoryPicker]
+        let screens: [IdentityStep] = [.lie, .verdict, .named, .mechanism, .identityPicker]
         return screens.firstIndex(of: self).map { $0 + 1 }
     }
 
     static let totalValueScreens = 5
 }
 
+// MARK: - Identity truth mapping
+//
+// Each HeaviestBurden carries an identity-framed label + a curated "I am"
+// statement. Selecting one writes `responses.heaviestBurden`, which the shared
+// back-half (preview declaration, notification subtitle) and the seeding logic
+// already understand — so the identity picker stays fully compatible.
+private struct IdentityTruth {
+    let statement: String   // headline "I am ..." for the row
+    let subtitle: String    // supporting line
+    let symbol: String      // SF Symbol
+
+    static func of(_ burden: HeaviestBurden) -> IdentityTruth {
+        switch burden {
+        case .identity:
+            return IdentityTruth(statement: "I am chosen and dearly loved",
+                                 subtitle: "Secure in who God says I am",
+                                 symbol: "crown.fill")
+        case .purpose:
+            return IdentityTruth(statement: "I am called and commissioned",
+                                 subtitle: "Walking in my God-given assignment",
+                                 symbol: "flag.fill")
+        case .allOfIt:
+            return IdentityTruth(statement: "I am more than a conqueror",
+                                 subtitle: "Victorious in every battle",
+                                 symbol: "bolt.fill")
+        case .peace:
+            return IdentityTruth(statement: "I am anchored in peace",
+                                 subtitle: "Unshaken no matter the storm",
+                                 symbol: "leaf.fill")
+        case .joy:
+            return IdentityTruth(statement: "I carry unshakeable joy",
+                                 subtitle: "Strength no circumstance can touch",
+                                 symbol: "sun.max.fill")
+        case .health:
+            return IdentityTruth(statement: "I am healed and whole",
+                                 subtitle: "Restored in body, mind, and spirit",
+                                 symbol: "heart.fill")
+        case .abundance:
+            return IdentityTruth(statement: "I live in overflow",
+                                 subtitle: "Provided for, lacking nothing",
+                                 symbol: "sparkles")
+        }
+    }
+}
+
+// Order the picker so the most identity-core truths lead.
+private let identityPickerOrder: [HeaviestBurden] = [
+    .identity, .purpose, .allOfIt, .peace, .joy, .health, .abundance
+]
+
 // MARK: - Shared Components
 
-private struct ProductContinueButton: View {
+private struct IdentityContinueButton: View {
     let label: String
     let isEnabled: Bool
     let action: () -> Void
@@ -254,8 +303,7 @@ private struct ProductContinueButton: View {
     }
 }
 
-// A staggered fade/rise modifier used by the value screens.
-private struct AppearStagger: ViewModifier {
+private struct IdentityAppearStagger: ViewModifier {
     let shown: Bool
     let delay: Double
     func body(content: Content) -> some View {
@@ -267,14 +315,34 @@ private struct AppearStagger: ViewModifier {
 }
 
 private extension View {
-    func appearStagger(_ shown: Bool, delay: Double = 0) -> some View {
-        modifier(AppearStagger(shown: shown, delay: delay))
+    func identityStagger(_ shown: Bool, delay: Double = 0) -> some View {
+        modifier(IdentityAppearStagger(shown: shown, delay: delay))
     }
 }
 
-// MARK: - 1. Hook (Avoid Discomfort)
+// A simple scripture block reused across the identity screens.
+private struct IdentityScripture: View {
+    let verse: String
+    let reference: String
 
-private struct ProductHookScreen: View {
+    var body: some View {
+        VStack(spacing: 4) {
+            Text("\"\(verse)\"")
+                .font(.system(size: 15, weight: .regular, design: .serif))
+                .italic()
+                .foregroundColor(.white.opacity(0.8))
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+            Text(reference)
+                .font(.system(size: 12, weight: .medium, design: .rounded))
+                .foregroundColor(.white.opacity(0.45))
+        }
+    }
+}
+
+// MARK: - 1. The Lie
+
+private struct IdentityLieScreen: View {
     let size: CGSize
     let onContinue: () -> Void
     @State private var v = false
@@ -284,48 +352,48 @@ private struct ProductHookScreen: View {
             Spacer()
 
             VStack(spacing: 24) {
-                Text("When life hits hard,\nyou don't have to face it alone.")
+                Text("You are not who your\nworst day says you are.")
                     .font(.system(size: 32, weight: .bold, design: .rounded))
                     .foregroundColor(.white)
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
-                    .appearStagger(v)
+                    .identityStagger(v)
 
-                Text("In the middle of a storm, you don't need a 45-minute sermon.\nYou need God's Word for this exact moment.")
-                    .font(.system(size: 19, weight: .semibold, design: .rounded))
+                Text("The world keeps handing you labels.\nNot enough. Too much. Too far gone.\nWear them long enough and they start to feel true.")
+                    .font(.system(size: 18, weight: .semibold, design: .rounded))
                     .foregroundColor(.white.opacity(0.85))
                     .multilineTextAlignment(.center)
                     .lineSpacing(4)
                     .fixedSize(horizontal: false, vertical: true)
-                    .appearStagger(v, delay: 0.12)
+                    .identityStagger(v, delay: 0.12)
 
-                Text("There's a way through every storm. It's been in the Bible the whole time. We put it right in your hands.")
+                Text("But a label is not an identity.\nAnd God has already spoken over yours.")
                     .font(.system(size: 16, weight: .regular, design: .rounded))
                     .foregroundColor(.white.opacity(0.65))
                     .multilineTextAlignment(.center)
                     .lineSpacing(3)
                     .padding(.horizontal, 24)
                     .fixedSize(horizontal: false, vertical: true)
-                    .appearStagger(v, delay: 0.24)
+                    .identityStagger(v, delay: 0.24)
             }
             .padding(.horizontal, 28)
 
             Spacer()
 
-            ProductContinueButton(label: "Show Me How →") { onContinue() }
+            IdentityContinueButton(label: "Show Me Who I Am →") { onContinue() }
                 .padding(.bottom, 36)
-                .appearStagger(v, delay: 0.36)
+                .identityStagger(v, delay: 0.36)
         }
         .onAppear {
-            Analytics.logEvent("product_hook_shown", parameters: nil)
+            Analytics.logEvent("identity_lie_shown", parameters: nil)
             withAnimation { v = true }
         }
     }
 }
 
-// MARK: - 2. Speed
+// MARK: - 2. The Verdict (new creation)
 
-private struct ProductSpeedScreen: View {
+private struct IdentityVerdictScreen: View {
     let size: CGSize
     let onContinue: () -> Void
     @State private var v = false
@@ -334,64 +402,137 @@ private struct ProductSpeedScreen: View {
         VStack(spacing: 0) {
             Spacer()
 
-            VStack(spacing: 28) {
-                // Stopwatch motif for the speed promise
-                ZStack {
-                    Circle()
-                        .stroke(Color.white.opacity(0.15), lineWidth: 6)
-                        .frame(width: 132, height: 132)
-                    Circle()
-                        .trim(from: 0, to: 0.92)
-                        .stroke(Color.white, style: StrokeStyle(lineWidth: 6, lineCap: .round))
-                        .frame(width: 132, height: 132)
-                        .rotationEffect(.degrees(-90))
-                    VStack(spacing: 0) {
-                        Text(":60")
-                            .font(.system(size: 40, weight: .black, design: .rounded))
-                            .foregroundColor(.white)
-                        Text("seconds")
-                            .font(.system(size: 13, weight: .medium, design: .rounded))
-                            .foregroundColor(.white.opacity(0.55))
-                    }
-                }
-                .appearStagger(v)
+            VStack(spacing: 26) {
+                Image(systemName: "arrow.triangle.2.circlepath")
+                    .font(.system(size: 54, weight: .light))
+                    .foregroundColor(.white)
+                    .identityStagger(v)
 
-                VStack(spacing: 12) {
-                    Text("Peace in under 60 seconds.")
+                VStack(spacing: 14) {
+                    Text("In Christ, you are made new.")
                         .font(.system(size: 30, weight: .bold, design: .rounded))
                         .foregroundColor(.white)
                         .multilineTextAlignment(.center)
                         .fixedSize(horizontal: false, vertical: true)
-                        .appearStagger(v, delay: 0.12)
+                        .identityStagger(v, delay: 0.12)
 
-                    Text("No chapters to find. No study to sit through.\nOpen SpeakLife, speak the exact word for your moment, and you're standing again. Faster than the spiral.")
+                    Text("The old you. The failures, the shame, the labels.\nNot patched up. Not on probation. Gone.\nYou are a new creation.")
                         .font(.system(size: 16, weight: .regular, design: .rounded))
-                        .foregroundColor(.white.opacity(0.7))
+                        .foregroundColor(.white.opacity(0.72))
                         .multilineTextAlignment(.center)
                         .lineSpacing(4)
                         .padding(.horizontal, 24)
                         .fixedSize(horizontal: false, vertical: true)
-                        .appearStagger(v, delay: 0.24)
+                        .identityStagger(v, delay: 0.24)
                 }
+
+                IdentityScripture(
+                    verse: "If anyone is in Christ, the new creation has come: The old has gone, the new is here.",
+                    reference: "2 Corinthians 5:17"
+                )
+                .padding(.horizontal, 28)
+                .identityStagger(v, delay: 0.36)
             }
             .padding(.horizontal, 28)
 
             Spacer()
 
-            ProductContinueButton(label: "Continue →") { onContinue() }
+            IdentityContinueButton(label: "Continue →") { onContinue() }
                 .padding(.bottom, 36)
-                .appearStagger(v, delay: 0.36)
+                .identityStagger(v, delay: 0.46)
         }
         .onAppear {
-            Analytics.logEvent("product_speed_shown", parameters: nil)
+            Analytics.logEvent("identity_verdict_shown", parameters: nil)
             withAnimation { v = true }
         }
     }
 }
 
-// MARK: - 3. New Mechanism
+// MARK: - 3. Named & Chosen
 
-private struct ProductMechanismScreen: View {
+private struct IdentityNamedScreen: View {
+    let size: CGSize
+    let onContinue: () -> Void
+    @State private var v = false
+
+    private let truths = ["I am chosen.", "I am redeemed.", "I am called by name.", "I am God's own."]
+
+    var body: some View {
+        VStack(spacing: 0) {
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 26) {
+                    Spacer().frame(height: size.height * 0.12)
+
+                    VStack(spacing: 12) {
+                        Text("Chosen. Redeemed.\nCalled by name.")
+                            .font(.system(size: 30, weight: .bold, design: .rounded))
+                            .foregroundColor(.white)
+                            .multilineTextAlignment(.center)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .identityStagger(v)
+
+                        Text("You are not an accident or an afterthought.\nBefore your first breath, God chose you\nand wrote His name over your life.")
+                            .font(.system(size: 16, weight: .regular, design: .rounded))
+                            .foregroundColor(.white.opacity(0.7))
+                            .multilineTextAlignment(.center)
+                            .lineSpacing(4)
+                            .padding(.horizontal, 20)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .identityStagger(v, delay: 0.12)
+                    }
+                    .padding(.horizontal, 28)
+
+                    VStack(spacing: 10) {
+                        ForEach(Array(truths.enumerated()), id: \.offset) { idx, truth in
+                            HStack(spacing: 12) {
+                                Image(systemName: "checkmark.seal.fill")
+                                    .font(.system(size: 18))
+                                    .foregroundColor(.white.opacity(0.9))
+                                Text(truth)
+                                    .font(.system(size: 17, weight: .semibold, design: .rounded))
+                                    .foregroundColor(.white)
+                                Spacer()
+                            }
+                            .padding(.horizontal, 18)
+                            .padding(.vertical, 14)
+                            .background(
+                                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                    .fill(Color.white.opacity(0.08))
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                            .stroke(Color.white.opacity(0.14), lineWidth: 1)
+                                    )
+                            )
+                            .identityStagger(v, delay: 0.2 + Double(idx) * 0.08)
+                        }
+                    }
+                    .padding(.horizontal, 24)
+
+                    IdentityScripture(
+                        verse: "You are a chosen people, a royal priesthood, a holy nation, God's special possession.",
+                        reference: "1 Peter 2:9"
+                    )
+                    .padding(.horizontal, 28)
+                    .identityStagger(v, delay: 0.56)
+
+                    Spacer().frame(height: 8)
+                }
+            }
+
+            IdentityContinueButton(label: "I Want to Believe This →") { onContinue() }
+                .padding(.top, 8).padding(.bottom, 36)
+                .identityStagger(v, delay: 0.62)
+        }
+        .onAppear {
+            Analytics.logEvent("identity_named_shown", parameters: nil)
+            withAnimation { v = true }
+        }
+    }
+}
+
+// MARK: - 4. The Mechanism (renew the mind)
+
+private struct IdentityMechanismScreen: View {
     let size: CGSize
     let onContinue: () -> Void
     @State private var v = false
@@ -403,65 +544,58 @@ private struct ProductMechanismScreen: View {
                     Spacer().frame(height: size.height * 0.12)
 
                     VStack(spacing: 12) {
-                        Text("You've read it.\nHave you spoken it?")
+                        Text("You become what you\nkeep agreeing with.")
                             .font(.system(size: 30, weight: .bold, design: .rounded))
                             .foregroundColor(.white)
                             .multilineTextAlignment(.center)
                             .fixedSize(horizontal: false, vertical: true)
-                            .appearStagger(v)
+                            .identityStagger(v)
 
-                        Text("Most apps hand you something to read.\nSpeakLife puts the Word in your mouth.")
+                        Text("Identity isn't found by trying harder.\nIt's renewed by agreeing with what God already says, out loud, until your heart catches up with His Word.")
                             .font(.system(size: 16, weight: .regular, design: .rounded))
                             .foregroundColor(.white.opacity(0.7))
                             .multilineTextAlignment(.center)
                             .lineSpacing(4)
-                            .padding(.horizontal, 24)
+                            .padding(.horizontal, 22)
                             .fixedSize(horizontal: false, vertical: true)
-                            .appearStagger(v, delay: 0.12)
+                            .identityStagger(v, delay: 0.12)
                     }
                     .padding(.horizontal, 28)
 
-                    // Old way vs SpeakLife way
                     HStack(spacing: 12) {
                         mechanismCard(
-                            tag: "THE OLD WAY",
-                            icon: "book.closed",
-                            title: "Reading about\nthe storm",
+                            tag: "THE OLD STORY",
+                            icon: "exclamationmark.bubble",
+                            title: "Repeating\nthe lie",
                             highlighted: false
                         )
                         mechanismCard(
                             tag: "SPEAKLIFE",
                             icon: "waveform",
-                            title: "Speaking to\nthe storm",
+                            title: "Declaring\nthe truth",
                             highlighted: true
                         )
                     }
                     .padding(.horizontal, 24)
-                    .appearStagger(v, delay: 0.24)
+                    .identityStagger(v, delay: 0.24)
 
-                    VStack(spacing: 4) {
-                        Text("\"Death and life are in the power of the tongue.\"")
-                            .font(.system(size: 15, weight: .regular, design: .serif))
-                            .italic()
-                            .foregroundColor(.white.opacity(0.8))
-                            .multilineTextAlignment(.center)
-                        Text("Proverbs 18:21")
-                            .font(.system(size: 12, weight: .medium, design: .rounded))
-                            .foregroundColor(.white.opacity(0.45))
-                    }
+                    IdentityScripture(
+                        verse: "Be transformed by the renewing of your mind.",
+                        reference: "Romans 12:2"
+                    )
                     .padding(.horizontal, 28)
-                    .appearStagger(v, delay: 0.36)
+                    .identityStagger(v, delay: 0.36)
 
                     Spacer().frame(height: 8)
                 }
             }
 
-            ProductContinueButton(label: "I Want That →") { onContinue() }
+            IdentityContinueButton(label: "Continue →") { onContinue() }
                 .padding(.top, 8).padding(.bottom, 36)
-                .appearStagger(v, delay: 0.42)
+                .identityStagger(v, delay: 0.42)
         }
         .onAppear {
-            Analytics.logEvent("product_mechanism_shown", parameters: nil)
+            Analytics.logEvent("identity_mechanism_shown", parameters: nil)
             withAnimation { v = true }
         }
     }
@@ -494,102 +628,9 @@ private struct ProductMechanismScreen: View {
     }
 }
 
-// MARK: - 4. Good Experience
+// MARK: - 5. Identity Picker (seeds the feed)
 
-private struct ProductExperienceScreen: View {
-    let size: CGSize
-    let onContinue: () -> Void
-    @State private var v = false
-
-    private let features: [(icon: String, title: String, body: String)] = [
-        ("hand.tap", "Tap and hold", "Let a declaration sink in deep. The Word goes from your screen to your spirit."),
-        ("bubble.left.and.bubble.right.fill", "Bible Chat", "Ask anything and get answers rooted in Scripture. Like having a wise friend in the Word, any hour of the day."),
-        ("car", "Built for real life", "Use it in the car, before a hard conversation, or late at night. Simple when everything else feels heavy.")
-    ]
-
-    var body: some View {
-        VStack(spacing: 0) {
-            ScrollView(showsIndicators: false) {
-                VStack(spacing: 24) {
-                    Spacer().frame(height: size.height * 0.12)
-
-                    VStack(spacing: 12) {
-                        Text("Built for the middle\nof the storm.")
-                            .font(.system(size: 30, weight: .bold, design: .rounded))
-                            .foregroundColor(.white)
-                            .multilineTextAlignment(.center)
-                            .fixedSize(horizontal: false, vertical: true)
-                            .appearStagger(v)
-
-                        Text("No friction when you're at your lowest.\nJust the Word, the moment you need it.")
-                            .font(.system(size: 16, weight: .regular, design: .rounded))
-                            .foregroundColor(.white.opacity(0.7))
-                            .multilineTextAlignment(.center)
-                            .lineSpacing(4)
-                            .padding(.horizontal, 24)
-                            .fixedSize(horizontal: false, vertical: true)
-                            .appearStagger(v, delay: 0.12)
-                    }
-                    .padding(.horizontal, 28)
-
-                    VStack(spacing: 12) {
-                        ForEach(Array(features.enumerated()), id: \.offset) { idx, feature in
-                            featureRow(feature)
-                                .appearStagger(v, delay: 0.22 + Double(idx) * 0.1)
-                        }
-                    }
-                    .padding(.horizontal, 24)
-
-                    Spacer().frame(height: 8)
-                }
-            }
-
-            ProductContinueButton(label: "Continue →") { onContinue() }
-                .padding(.top, 8).padding(.bottom, 36)
-                .appearStagger(v, delay: 0.52)
-        }
-        .onAppear {
-            Analytics.logEvent("product_experience_shown", parameters: nil)
-            withAnimation { v = true }
-        }
-    }
-
-    private func featureRow(_ feature: (icon: String, title: String, body: String)) -> some View {
-        HStack(spacing: 14) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(Color.white.opacity(0.12))
-                    .frame(width: 46, height: 46)
-                Image(systemName: feature.icon)
-                    .font(.system(size: 20))
-                    .foregroundColor(.white)
-            }
-            VStack(alignment: .leading, spacing: 3) {
-                Text(feature.title)
-                    .font(.system(size: 16, weight: .semibold, design: .rounded))
-                    .foregroundColor(.white)
-                Text(feature.body)
-                    .font(.system(size: 13, weight: .regular, design: .rounded))
-                    .foregroundColor(.white.opacity(0.6))
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            Spacer(minLength: 0)
-        }
-        .padding(16)
-        .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(Color.white.opacity(0.06))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .stroke(Color.white.opacity(0.12), lineWidth: 1)
-                )
-        )
-    }
-}
-
-// MARK: - 5. Clarity + Category Picker
-
-private struct ProductCategoryPickerScreen: View {
+private struct IdentityPickerScreen: View {
     let size: CGSize
     @ObservedObject var responses: SurveyResponses
     let onContinue: () -> Void
@@ -602,65 +643,65 @@ private struct ProductCategoryPickerScreen: View {
                     Spacer().frame(height: size.height * 0.10)
 
                     VStack(spacing: 12) {
-                        Text("Done-for-you declarations\nfor exactly what you're facing.")
-                            .font(.system(size: 26, weight: .bold, design: .rounded))
+                        Text("Which truth do you most\nneed to stand in?")
+                            .font(.system(size: 27, weight: .bold, design: .rounded))
                             .foregroundColor(.white)
                             .multilineTextAlignment(.center)
                             .fixedSize(horizontal: false, vertical: true)
-                            .appearStagger(v)
+                            .identityStagger(v)
 
-                        Text("Pick where you need God's Word most.\nWe'll build your daily declarations around it.")
+                        Text("We'll build your daily declarations around the\nidentity God wants to anchor in you.")
                             .font(.system(size: 15, weight: .regular, design: .rounded))
                             .foregroundColor(.white.opacity(0.65))
                             .multilineTextAlignment(.center)
                             .lineSpacing(3)
                             .fixedSize(horizontal: false, vertical: true)
-                            .appearStagger(v, delay: 0.1)
+                            .identityStagger(v, delay: 0.1)
                     }
                     .padding(.horizontal, 28)
 
                     VStack(spacing: 10) {
-                        ForEach(HeaviestBurden.allCases) { option in
-                            categoryRow(option)
+                        ForEach(identityPickerOrder) { burden in
+                            truthRow(burden)
                         }
                     }
                     .padding(.horizontal, 20)
-                    .appearStagger(v, delay: 0.2)
+                    .identityStagger(v, delay: 0.2)
 
                     Spacer().frame(height: 8)
                 }
             }
 
-            ProductContinueButton(isEnabled: responses.heaviestBurden != nil, action: onContinue)
+            IdentityContinueButton(isEnabled: responses.heaviestBurden != nil, action: onContinue)
                 .padding(.top, 8).padding(.bottom, 36)
         }
         .onAppear {
-            Analytics.logEvent("product_category_picker_shown", parameters: nil)
+            Analytics.logEvent("identity_picker_shown", parameters: nil)
             withAnimation { v = true }
         }
     }
 
-    private func categoryRow(_ option: HeaviestBurden) -> some View {
-        let isSelected = responses.heaviestBurden == option
+    private func truthRow(_ burden: HeaviestBurden) -> some View {
+        let truth = IdentityTruth.of(burden)
+        let isSelected = responses.heaviestBurden == burden
         return Button(action: {
             UIImpactFeedbackGenerator(style: .light).impactOccurred()
-            responses.heaviestBurden = option
+            responses.heaviestBurden = burden
         }) {
             HStack(spacing: 14) {
-                Text(option.icon)
-                    .font(.system(size: 24))
+                Image(systemName: truth.symbol)
+                    .font(.system(size: 22))
+                    .foregroundColor(.white.opacity(isSelected ? 1 : 0.7))
                     .frame(width: 32)
                 VStack(alignment: .leading, spacing: 3) {
-                    Text(option.rawValue)
+                    Text(truth.statement)
                         .font(.system(size: 16, weight: .semibold, design: .rounded))
                         .foregroundColor(.white)
                         .fixedSize(horizontal: false, vertical: true)
-                    if !option.description.isEmpty {
-                        Text(option.description)
-                            .font(.system(size: 13, weight: .regular, design: .rounded))
-                            .foregroundColor(.white.opacity(0.55))
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
+                    Text(truth.subtitle)
+                        .font(.system(size: 13, weight: .regular, design: .rounded))
+                        .foregroundColor(.white.opacity(0.55))
+                        .fixedSize(horizontal: false, vertical: true)
                 }
                 Spacer()
                 ZStack {
