@@ -340,20 +340,13 @@ struct HomeView: View {
         }
     }
 
-    private func onboardingVariantName() -> String {
-        switch subscriptionStore.resolvedOnboardingVariant {
-        case .quiz:     return "quiz"
-        case .product:  return "product"
-        case .identity: return "identity"
-        case .survey:   return "survey"
-        }
-    }
-
     private func logOnboardingStarted() {
         guard !onboardingStartLogged else { return }
         onboardingStartLogged = true
-        Analytics.logEvent("onboarding_started", parameters: [
-            "variant": onboardingVariantName()
+        // Routed through AnalyticsService so the event reaches PostHog (the A/B
+        // funnel) and Firebase, not just Firebase.
+        AnalyticsService.shared.track("onboarding_started", parameters: [
+            "variant": subscriptionStore.onboardingVariantName
         ])
     }
 
@@ -363,9 +356,9 @@ struct HomeView: View {
         // during onboarding. conversion_type: "trial" | "purchase" | "none".
         let converted = subscriptionStore.isPremium
         let conversionType = converted ? (subscriptionStore.isInTrial ? "trial" : "purchase") : "none"
-        Analytics.logEvent("onboarding_finished", parameters: [
-            "variant": onboardingVariantName(),
-            "converted": converted as NSNumber,
+        AnalyticsService.shared.track("onboarding_finished", parameters: [
+            "variant": subscriptionStore.onboardingVariantName,
+            "converted": converted,
             "conversion_type": conversionType
         ])
         withAnimation {
