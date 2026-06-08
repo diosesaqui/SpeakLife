@@ -146,11 +146,15 @@ struct HighConversionPaywallView: View {
     }
 
     // MARK: - Prices
-    private var annualPrice: String { subscriptionStore.currentOfferedPremium?.displayPrice ?? "$39.99" }
-    private var monthlyPrice: String { subscriptionStore.currentOfferedPremiumMonthly?.displayPrice ?? "$9.99" }
+    // All amounts come straight from StoreKit (driven by the product IDs set in
+    // Remote Config / App Store Connect). No hardcoded prices — if a product
+    // hasn't loaded we show a neutral placeholder, never a fake amount.
+    private let pricePlaceholder = "—"
+    private var annualPrice: String { subscriptionStore.currentOfferedPremium?.displayPrice ?? pricePlaceholder }
+    private var monthlyPrice: String { subscriptionStore.currentOfferedPremiumMonthly?.displayPrice ?? pricePlaceholder }
     private var annualPerMonth: String {
         guard let p = subscriptionStore.currentOfferedPremium,
-              let d = Double(p.price.description) else { return "$3.33" }
+              let d = Double(p.price.description) else { return pricePlaceholder }
         return String(format: "$%.2f", d / 12.0)
     }
     /// % saved on annual vs paying the non-annual plan (weekly×52 or monthly×12)
@@ -158,7 +162,7 @@ struct HighConversionPaywallView: View {
     private var annualSavingsPercent: Int? {
         guard let annual = subscriptionStore.currentOfferedPremium,
               let a = Double(annual.price.description) else { return nil }
-        let comparisonYearly: Double? = subscriptionStore.useWeeklyPlan
+        let comparisonYearly: Double? = showWeeklyPlan
             ? subscriptionStore.currentOfferedWeekly.flatMap { Double($0.price.description) }.map { $0 * 52 }
             : subscriptionStore.currentOfferedPremiumMonthly.flatMap { Double($0.price.description) }.map { $0 * 12 }
         guard let yearly = comparisonYearly, yearly > 0 else { return nil }
@@ -166,18 +170,24 @@ struct HighConversionPaywallView: View {
         return pct > 0 ? pct : nil
     }
 
-    // Non-annual plan adapts to the useWeeklyPlan flag (Weekly vs Monthly).
-    private var nonAnnualTitle: String { subscriptionStore.useWeeklyPlan ? "Weekly" : "Monthly" }
-    private var nonAnnualSub: String { subscriptionStore.useWeeklyPlan ? "per week" : "per month" }
+    // Non-annual plan follows the useWeeklyPlan flag (Weekly vs Monthly), but
+    // only honors Weekly when that product actually loaded from StoreKit —
+    // otherwise it shows Monthly. This is what prevents displaying a price for a
+    // product the store never returned (the source of the phantom "$4.99").
+    private var showWeeklyPlan: Bool {
+        subscriptionStore.useWeeklyPlan && subscriptionStore.currentOfferedWeekly != nil
+    }
+    private var nonAnnualTitle: String { showWeeklyPlan ? "Weekly" : "Monthly" }
+    private var nonAnnualSub: String { showWeeklyPlan ? "per week" : "per month" }
     private var nonAnnualPrice: String {
-        subscriptionStore.useWeeklyPlan
-            ? (subscriptionStore.currentOfferedWeekly?.displayPrice ?? "$4.99")
+        showWeeklyPlan
+            ? (subscriptionStore.currentOfferedWeekly?.displayPrice ?? pricePlaceholder)
             : monthlyPrice
     }
 
     private var selectedProduct: Product? {
         if selectedPlan == .annual { return subscriptionStore.currentOfferedPremium }
-        return subscriptionStore.useWeeklyPlan
+        return showWeeklyPlan
             ? subscriptionStore.currentOfferedWeekly
             : subscriptionStore.currentOfferedPremiumMonthly
     }
@@ -312,7 +322,7 @@ struct HighConversionPaywallView: View {
                 author: "DeShawn R.", stars: 5
             )
             testimonialCard(
-                quote: "I was skeptical but this is the real deal. My mind literally works differently now. Best $4/month I spend.",
+                quote: "I was skeptical but this is the real deal. My mind literally works differently now. Worth every penny.",
                 author: "Priya K.", stars: 5
             )
             testimonialCard(
