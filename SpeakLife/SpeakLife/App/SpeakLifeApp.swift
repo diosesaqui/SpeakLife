@@ -95,6 +95,10 @@ struct SpeakLifeApp: App {
                 .environmentObject(audioDeclarationViewModel)
                 .environmentObject(tabViewModel)
                 .onOpenURL { url in
+                    // Ad-matched onboarding: owned channels (email, push, IG bio,
+                    // QR, landing page) carrying `ob=<variant>` route here when the
+                    // app opens directly (vs. a deferred install link).
+                    SubscriptionStore.handleIncomingURL(url, source: "deeplink")
                     if url.absoluteString == "speaklife://event/daily-declarations" {
 
                     }
@@ -118,6 +122,9 @@ struct SpeakLifeApp: App {
                             if accepted {
                                 appDelegate.initializeTikTokSDK()
                             }
+                            // ATT is now resolved, so Meta can return the deferred
+                            // app link → ad-matched onboarding. Runs once.
+                            appDelegate.checkDeferredAppLinkOnce()
                         }
                     }
                     
