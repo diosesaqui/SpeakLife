@@ -309,15 +309,18 @@ struct HomeView: View {
                             }
                   
                 } else {
-                    // Onboarding A/B: quiz | product | identity, selected by
-                    // Remote Config `onboardingVariant`. ATT is requested once
+                    // Onboarding A/B: quiz | product | identity | survey, selected
+                    // by Remote Config `onboardingVariant`. ATT is requested once
                     // from SpeakLifeApp (delayed until active); requesting it
                     // again here fired too early and dropped the prompt.
                     onboardingFlow
+                        .onAppear { logOnboardingStarted() }
                 }
             }
 
     }
+
+    @State private var onboardingStartLogged = false
 
     @ViewBuilder
     private var onboardingFlow: some View {
@@ -337,7 +340,34 @@ struct HomeView: View {
         }
     }
 
+    private func onboardingVariantName() -> String {
+        switch subscriptionStore.resolvedOnboardingVariant {
+        case .quiz:     return "quiz"
+        case .product:  return "product"
+        case .identity: return "identity"
+        case .survey:   return "survey"
+        }
+    }
+
+    private func logOnboardingStarted() {
+        guard !onboardingStartLogged else { return }
+        onboardingStartLogged = true
+        Analytics.logEvent("onboarding_started", parameters: [
+            "variant": onboardingVariantName()
+        ])
+    }
+
     private func finishOnboarding() {
+        // Conversion outcome for the onboarding A/B funnel. The paywall step has
+        // already run by now, so isPremium/isInTrial reflect any purchase made
+        // during onboarding. conversion_type: "trial" | "purchase" | "none".
+        let converted = subscriptionStore.isPremium
+        let conversionType = converted ? (subscriptionStore.isInTrial ? "trial" : "purchase") : "none"
+        Analytics.logEvent("onboarding_finished", parameters: [
+            "variant": onboardingVariantName(),
+            "converted": converted as NSNumber,
+            "conversion_type": conversionType
+        ])
         withAnimation {
             appState.isOnboarded = true
             LifecycleNotificationService.shared.scheduleLifecycleNotifications()
