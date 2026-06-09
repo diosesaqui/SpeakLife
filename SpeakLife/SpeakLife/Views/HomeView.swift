@@ -309,7 +309,7 @@ struct HomeView: View {
                             }
                   
                 } else {
-                    // Onboarding A/B: quiz | product | identity | survey, selected
+                    // Onboarding A/B: quiz | product | identity | outcomes, selected
                     // by Remote Config `onboardingVariant`. ATT is requested once
                     // from SpeakLifeApp (delayed until active); requesting it
                     // again here fired too early and dropped the prompt.
@@ -334,8 +334,8 @@ struct HomeView: View {
         case .identity:
             IdentityOnboardingView(size: UIScreen.main.bounds.size) { finishOnboarding() }
                 .ignoresSafeArea()
-        case .survey:
-            SurveyOnboardingView(size: UIScreen.main.bounds.size) { finishOnboarding() }
+        case .outcomes:
+            OutcomesOnboardingView(size: UIScreen.main.bounds.size) { finishOnboarding() }
                 .ignoresSafeArea()
         }
     }
@@ -343,6 +343,9 @@ struct HomeView: View {
     private func logOnboardingStarted() {
         guard !onboardingStartLogged else { return }
         onboardingStartLogged = true
+        // Freeze the variant before logging so a late ad deep link can't swap the
+        // flow mid-run or desync started vs finished.
+        subscriptionStore.lockOnboardingVariant()
         // Routed through AnalyticsService so the event reaches PostHog (the A/B
         // funnel) and Firebase, not just Firebase.
         AnalyticsService.shared.track("onboarding_started", parameters: [
@@ -596,21 +599,6 @@ struct HomeView: View {
             }
     }
     
-    var bibleView: some View {
-        BibleView()
-            .tag(4)
-            .tabItem {
-                if #available(iOS 17, *) {
-                    Image(systemName: "book.closed.fill")
-                        .renderingMode(.original)
-                    Text("Bible")
-                } else {
-                    Image(systemName: "person.2.fill")
-                        .renderingMode(.original)
-                }
-            }
-    }
-
     var profileView: some View {
         ProfileView()
             .tag(5)

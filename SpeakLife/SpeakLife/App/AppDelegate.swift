@@ -14,6 +14,9 @@ import FacebookCore
 import AppTrackingTransparency
 import FirebaseMessaging
 import FirebaseRemoteConfigInternal
+#if canImport(BranchSDK)
+import BranchSDK
+#endif
 import TikTokBusinessSDK
 import RevenueCat
 import PostHog
@@ -77,7 +80,12 @@ final class AppDelegate: NSObject, MessagingDelegate {
             application,
             didFinishLaunchingWithOptions: launchOptions
         )
-        
+
+        // Branch (MMP): resolve the deferred deep link at launch (no ATT wait) so
+        // ad-matched onboarding is known before onboarding renders. No-op until the
+        // BranchSDK Swift Package is added in Xcode.
+        BranchAttribution.initSession(launchOptions: launchOptions)
+
         Messaging.messaging().delegate = self
         let settings = RemoteConfigSettings()
         #if DEBUG
@@ -93,7 +101,7 @@ final class AppDelegate: NSObject, MessagingDelegate {
         // Default onboardingVariant so first launch goes straight to the chosen
         // flow; Remote Config (incl. any A/B test) still overrides once fetched.
         // "product" is the control/baseline; the Firebase A/B test splits the
-        // other arms (identity / quiz / survey) against it once fetched.
+        // other arms (identity / quiz / outcomes) against it once fetched.
         RemoteConfig.remoteConfig().setDefaults([
             "useQuizOnboarding": true as NSNumber,
             "onboardingVariant": "product" as NSString
@@ -159,6 +167,25 @@ final class AppDelegate: NSObject, MessagingDelegate {
                } else {
                }
     }
+
+    /// Recover a Meta deferred app link (ad-matched onboarding) once, AFTER the
+    /// ATT response — advertiser tracking must be resolved or Meta won't return
+    /// the deferred link. The "checked" flag is set only on a clean completion, so
+    /// a transient first-launch failure (e.g. no network) retries on a later launch.
+    func checkDeferredAppLinkOnce() {
+        guard !UserDefaults.standard.bool(forKey: "didCheckDeferredAppLink") else { return }
+        AppLinkUtility.fetchDeferredAppLink { url, error in
+            if let error = error {
+                print("⚠️ Deferred app link fetch failed, will retry next launch: \(error.localizedDescription)")
+                return
+            }
+            // Clean completion: either we got a link, or there genuinely isn't one.
+            UserDefaults.standard.set(true, forKey: "didCheckDeferredAppLink")
+            if let url = url {
+                SubscriptionStore.handleIncomingURL(url, source: "ad")
+            }
+        }
+    }
     
     // Removed duplicate didReceive - now handled in extension
     
@@ -167,12 +194,24 @@ final class AppDelegate: NSObject, MessagingDelegate {
             open url: URL,
             options: [UIApplication.OpenURLOptionsKey : Any] = [:]
         ) -> Bool {
-            ApplicationDelegate.shared.application(
+            BranchAttribution.handleOpen(app, url, options)
+            return ApplicationDelegate.shared.application(
                 app,
                 open: url,
                 sourceApplication: options[UIApplication.OpenURLOptionsKey.sourceApplication] as? String,
                 annotation: options[UIApplication.OpenURLOptionsKey.annotation]
             )
+        }
+
+    func application(
+            _ application: UIApplication,
+            continue userActivity: NSUserActivity,
+            restorationHandler: @escaping ([UIUserActivityRestoring]?) -> Void
+        ) -> Bool {
+            // Branch universal links (already-installed taps) — deferred installs
+            // are handled by initSession above.
+            BranchAttribution.handleUserActivity(userActivity)
+            return true
         }
     
     private func registerNotificationHandler() {
@@ -255,4 +294,59 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
         // Pass to NotificationHandler for app state updates
         NotificationHandler.shared.userNotificationCenter(center, didReceive: response, withCompletionHandler: completionHandler)
     }
+}
+
+// MARK: - Branch (MMP) ad-matched onboarding
+//
+// Thin wrapper around the Branch SDK. Guarded by `canImport(BranchSDK)` so the
+// app builds before the Swift Package is added in Xcode; it activates the moment
+// the package is added. Unlike Meta's deferred app link (gated by the ATT
+// response), Branch resolves the deferred link AT LAUNCH without waiting on ATT,
+// so the ad's `ob=<variant>` is known before onboarding renders.
+enum BranchAttribution {
+
+    /// Call as early as possible in didFinishLaunching. Resolves the deferred deep
+    /// link for fresh installs and routes `ob=<variant>` into the onboarding override.
+    static func initSession(launchOptions: [UIApplication.LaunchOptionsKey: Any]?) {
+        #if canImport(BranchSDK)
+        Branch.getInstance().initSession(launchOptions: launchOptions) { params, _ in
+            apply(params as? [String: Any])
+        }
+        #endif
+    }
+
+    /// Forward already-installed Branch link opens (custom scheme).
+    static func handleOpen(_ app: UIApplication, _ url: URL, _ options: [UIApplication.OpenURLOptionsKey: Any]) {
+        #if canImport(BranchSDK)
+        _ = Branch.getInstance().application(app, open: url, options: options)
+        #endif
+    }
+
+    /// Forward direct deep-link opens (SwiftUI `.onOpenURL`).
+    static func handleDeepLink(_ url: URL) {
+        #if canImport(BranchSDK)
+        Branch.getInstance().handleDeepLink(url)
+        #endif
+    }
+
+    /// Forward universal-link opens (SwiftUI `.onContinueUserActivity`).
+    static func handleUserActivity(_ userActivity: NSUserActivity) {
+        #if canImport(BranchSDK)
+        _ = Branch.getInstance().continue(userActivity)
+        #endif
+    }
+
+    #if canImport(BranchSDK)
+    private static func apply(_ params: [String: Any]?) {
+        guard let params = params else { return }
+        // Prefer an explicit `ob` key set on the Branch link's deep-link data;
+        // otherwise recover it from the referring link URL.
+        if let ob = params["ob"] as? String {
+            SubscriptionStore.assignOnboardingVariantFromAd(ob, source: "ad")
+        } else if let link = (params["~referring_link"] as? String) ?? (params["$canonical_url"] as? String),
+                  let url = URL(string: link) {
+            SubscriptionStore.handleIncomingURL(url, source: "ad")
+        }
+    }
+    #endif
 }

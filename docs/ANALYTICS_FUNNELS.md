@@ -62,7 +62,7 @@ From finishing onboarding through to a paid conversion.
 The cross-variant experiment funnel. Every onboarding flow now fires a unified
 `onboarding_started` → `onboarding_finished` pair from `HomeView`, tagged with
 the chosen arm, so the four variants (`product` / `identity` / `quiz` /
-`survey`, selected by Remote Config `onboardingVariant`) compare head-to-head.
+`outcomes`, selected by Remote Config `onboardingVariant`) compare head-to-head.
 These route through `AnalyticsService`, so PostHog and Firebase both receive them.
 
 **PostHog insight:** [Onboarding A/B — Winner by Variant](https://us.posthog.com/project/455580/insights/QfVRKZ3H)
@@ -73,7 +73,7 @@ These route through `AnalyticsService`, so PostHog and Firebase both receive the
 | 2 | `onboarding_finished` | Completed onboarding |
 | 3 | `subscription_started` | Started a trial or paid sub |
 
-**Breakdown:** event property `variant` (`product` / `identity` / `quiz` / `survey`).
+**Breakdown:** event property `variant` (`product` / `identity` / `quiz` / `outcomes`).
 **Funnel settings:** conversion window `14 days`, order `ordered`.
 
 `onboarding_finished` also carries `converted` (bool) and `conversion_type`
