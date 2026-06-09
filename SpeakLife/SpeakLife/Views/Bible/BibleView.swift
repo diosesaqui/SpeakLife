@@ -137,18 +137,23 @@ struct BibleView: View {
             }
             .sheet(isPresented: $showBibleChat) {
                 // Sheets are a fresh environment context — forward
-                // subscriptionStore or BibleChatView crashes reading it.
+                // subscriptionStore or BibleChatView crashes reading it, and pin
+                // the dark scheme so it doesn't render light.
                 BibleChatView()
                     .environmentObject(subscriptionStore)
+                    .preferredColorScheme(.dark)
             }
             .sheet(isPresented: $showSearch) {
                 BibleSearchView(viewModel: viewModel)
+                    .preferredColorScheme(.dark)
             }
             .sheet(isPresented: $showBookmarks) {
                 BibleBookmarksView(viewModel: viewModel)
+                    .preferredColorScheme(.dark)
             }
             .sheet(isPresented: $showSettings) {
                 BibleSettingsView(viewModel: viewModel)
+                    .preferredColorScheme(.dark)
             }
             .alert("Error", isPresented: $viewModel.showError) {
                 Button("OK") { viewModel.showError = false }
@@ -164,6 +169,7 @@ struct BibleView: View {
                         viewModel.showAuthView = false
                     }
                 )
+                .preferredColorScheme(.dark)
             }
             .sheet(isPresented: $showDailyVerseDetail) {
                 if let dailyVerse = viewModel.dailyVerse {
@@ -201,6 +207,7 @@ struct BibleView: View {
                         }
                     }
                 }
+                .preferredColorScheme(.dark)
             }
             .onChange(of: viewModel.isAuthenticated) { newValue in
                 if newValue {
@@ -211,6 +218,11 @@ struct BibleView: View {
         }
         .navigationViewStyle(.stack)
         .navigationViewStyle(StackNavigationViewStyle())
+        // The Bible feature is built for the app's forced-dark theme (verse text
+        // uses .primary, backgrounds use systemBackground). When BibleView is
+        // shown in a sheet it no longer inherits HomeView's dark scheme, so pin
+        // it here or text renders black and headers render white.
+        .preferredColorScheme(.dark)
         .onAppear {
             // Make navigation bar transparent to show gradient
             let appearance = UINavigationBarAppearance()
