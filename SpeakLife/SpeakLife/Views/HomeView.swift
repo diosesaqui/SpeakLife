@@ -599,21 +599,6 @@ struct HomeView: View {
             }
     }
     
-    var bibleView: some View {
-        BibleView()
-            .tag(4)
-            .tabItem {
-                if #available(iOS 17, *) {
-                    Image(systemName: "book.closed.fill")
-                        .renderingMode(.original)
-                    Text("Bible")
-                } else {
-                    Image(systemName: "person.2.fill")
-                        .renderingMode(.original)
-                }
-            }
-    }
-
     var profileView: some View {
         ProfileView()
             .tag(5)

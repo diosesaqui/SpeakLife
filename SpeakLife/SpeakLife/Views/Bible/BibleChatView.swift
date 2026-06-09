@@ -330,6 +330,7 @@ struct BibleChatConversationView: View {
     @EnvironmentObject var declarationStore: DeclarationViewModel
     @State private var showPaywall = false
     @State private var showHistory = false
+    @State private var showBible = false
     @State private var heroAppeared = false
     @FocusState private var inputFocused: Bool
 
@@ -367,14 +368,25 @@ struct BibleChatConversationView: View {
             }
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                // Persistent entry into the full Bible reader. Lives in the
+                // top-left so it stays visible once a conversation starts (the
+                // empty-state hero disappears after the first message), and it
+                // balances the history button on the right.
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button {
+                        showBible = true
+                    } label: {
+                        Image(systemName: "book.closed.fill")
+                            .foregroundColor(.white)
+                    }
+                    .accessibilityLabel("Read the Bible")
+                }
                 ToolbarItem(placement: .principal) {
                     Text("Bible Chat")
                         .font(.system(size: 18, weight: .bold, design: .serif))
                         .foregroundColor(.white)
                 }
-                // History (and "New" inside it) lives here. The separate top-left
-                // "new chat" button was removed — it looked dead on the empty
-                // screen and duplicated the history panel's New action.
+                // History (and "New" inside it) lives here.
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button {
                         showHistory = true
@@ -405,6 +417,17 @@ struct BibleChatConversationView: View {
                 onSelect: { conversation in viewModel.load(conversation) },
                 onNewChat: { viewModel.startNewConversation() }
             )
+        }
+        .sheet(isPresented: $showBible) {
+            // Inject subscriptionStore explicitly — env objects do not reliably
+            // propagate across sheet hops, and BibleView requires it.
+            BibleView()
+                .environmentObject(subscriptionStore)
+                .onAppear {
+                    AnalyticsService.shared.trackUserAction(
+                        "bible_reader_opened_from_chat", category: "bible_chat"
+                    )
+                }
         }
         .onAppear { AnalyticsService.shared.trackScreenView("bible_chat_conversation") }
     }
