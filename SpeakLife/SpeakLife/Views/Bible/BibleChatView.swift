@@ -53,7 +53,10 @@ struct BibleChatView: View {
                 }
             }
             .sheet(item: $viewModel.selectedTopic) { topic in
+                // Inject subscriptionStore so the answer's verse → reader deep
+                // link can present BibleView (env objects don't cross sheets).
                 BibleChatAnswerView(topic: topic)
+                    .environmentObject(subscriptionStore)
             }
             .sheet(isPresented: $showMailSheet) {
                 MailView(

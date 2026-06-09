@@ -9,11 +9,14 @@ import SwiftUI
 
 struct BibleChatAnswerView: View {
     let topic: BibleChatTopic
+    @EnvironmentObject var subscriptionStore: SubscriptionStore
     @Environment(\.dismiss) private var dismiss
     @State private var revealedVerses = 0
     @State private var headerVisible = false
     @State private var answerVisible = false
     @State private var reflectionVisible = false
+    // Set when a verse is tapped, to open the reader at that passage.
+    @State private var deepLink: DeepLinkRef?
 
     var body: some View {
         NavigationView {
@@ -74,6 +77,11 @@ struct BibleChatAnswerView: View {
             .onAppear {
                 AnalyticsService.shared.trackScreenView("bible_chat_answer", metadata: ["topic_id": topic.id])
                 runRevealAnimation()
+            }
+            .sheet(item: $deepLink) { link in
+                BibleView(initialReference: link.reference)
+                    .environmentObject(subscriptionStore)
+                    .preferredColorScheme(.dark)
             }
         }
         .navigationViewStyle(.stack)
@@ -157,11 +165,18 @@ struct BibleChatAnswerView: View {
 
             ForEach(Array(topic.verses.enumerated()), id: \.element.id) { index, verse in
                 if index < revealedVerses {
-                    VerseCard(verse: verse, accent: topic.accentColor)
-                        .transition(.asymmetric(
-                            insertion: .opacity.combined(with: .move(edge: .bottom)),
-                            removal: .opacity
-                        ))
+                    VerseCard(verse: verse, accent: topic.accentColor) {
+                        deepLink = DeepLinkRef(reference: verse.reference)
+                        AnalyticsService.shared.trackUserAction(
+                            "bible_chat_verse_tapped",
+                            category: "bible_chat",
+                            metadata: ["reference": verse.reference, "topic_id": topic.id]
+                        )
+                    }
+                    .transition(.asymmetric(
+                        insertion: .opacity.combined(with: .move(edge: .bottom)),
+                        removal: .opacity
+                    ))
                 }
             }
         }
@@ -272,48 +287,67 @@ struct BibleChatAnswerView: View {
     }
 }
 
+/// Identifiable wrapper so a tapped reference can drive a `.sheet(item:)`.
+private struct DeepLinkRef: Identifiable {
+    let id = UUID()
+    let reference: String
+}
+
 private struct VerseCard: View {
     let verse: BibleChatVerse
     let accent: Color
+    let onOpen: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("\u{201C}\(verse.text)\u{201D}")
-                .font(.system(size: 14, design: .serif))
-                .foregroundColor(.white)
-                .lineSpacing(3)
-                .multilineTextAlignment(.leading)
-            HStack {
-                Text(verse.reference)
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundColor(accent)
-                if let translation = verse.translation, !translation.isEmpty {
-                    Text(translation.uppercased())
-                        .font(.system(size: 10, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.4))
+        Button(action: onOpen) {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("\u{201C}\(verse.text)\u{201D}")
+                    .font(.system(size: 14, design: .serif))
+                    .foregroundColor(.white)
+                    .lineSpacing(3)
+                    .multilineTextAlignment(.leading)
+                HStack {
+                    Text(verse.reference)
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundColor(accent)
+                    if let translation = verse.translation, !translation.isEmpty {
+                        Text(translation.uppercased())
+                            .font(.system(size: 10, weight: .semibold))
+                            .foregroundColor(.white.opacity(0.4))
+                    }
+                    Spacer()
+                    // Affordance that the card opens the full chapter.
+                    HStack(spacing: 3) {
+                        Text("Read")
+                            .font(.system(size: 11, weight: .semibold))
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 9, weight: .bold))
+                    }
+                    .foregroundColor(accent.opacity(0.9))
                 }
-                Spacer()
             }
-        }
-        .padding(14)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(
-                    LinearGradient(
-                        colors: [
-                            accent.opacity(0.16),
-                            Color.black.opacity(0.30)
-                        ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
+            .padding(14)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                accent.opacity(0.16),
+                                Color.black.opacity(0.30)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
                     )
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 14, style: .continuous)
-                        .stroke(accent.opacity(0.45), lineWidth: 1)
-                )
-                .shadow(color: accent.opacity(0.20), radius: 8, x: 0, y: 4)
-        )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                            .stroke(accent.opacity(0.45), lineWidth: 1)
+                    )
+                    .shadow(color: accent.opacity(0.20), radius: 8, x: 0, y: 4)
+            )
+        }
+        .buttonStyle(.plain)
+        .accessibilityHint("Opens \(verse.reference) in the Bible reader")
     }
 }

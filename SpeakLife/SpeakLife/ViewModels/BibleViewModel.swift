@@ -41,20 +41,25 @@ final class BibleViewModel: ObservableObject {
     private let presenter: BiblePresenterProtocol
     private var cancellables = Set<AnyCancellable>()
     private var allBooks: [BibleBook] = []
-    
+    /// When set, the initial load opens this passage (e.g. "John 3:16") instead
+    /// of resuming the last-read location. Drives the chat-answer deep link.
+    private let initialReference: String?
+
     // MARK: - Task Management
     private var currentChapterLoadTask: Task<Void, Never>?
     private var searchTask: Task<Void, Never>?
     private var initialLoadTask: Task<Void, Never>?
-    
+
     // MARK: - Initialization
     init(
         interactor: BibleInteractorProtocol = BibleInteractor(),
-        presenter: BiblePresenterProtocol = BiblePresenter()
+        presenter: BiblePresenterProtocol = BiblePresenter(),
+        initialReference: String? = nil
     ) {
         self.interactor = interactor
         self.presenter = presenter
-        
+        self.initialReference = initialReference
+
         setupBindings()
         loadInitialData()
     }
@@ -87,8 +92,11 @@ final class BibleViewModel: ObservableObject {
                 loadHistory()
             }
             
-            // Check for last read location
-            if let lastRead = interactor.getLastReadLocation() {
+            // A deep-linked reference takes precedence over resuming the
+            // last-read location, so the two never race to set currentChapter.
+            if let initialReference {
+                await openReference(initialReference)
+            } else if let lastRead = interactor.getLastReadLocation() {
                 await continueReading(book: lastRead.book, chapter: lastRead.chapter)
             }
         }
@@ -475,6 +483,78 @@ final class BibleViewModel: ObservableObject {
             selectedBook = displayModel
             await loadChapter(bookAbbrev: book, chapterNumber: chapter)
         }
+    }
+
+    // MARK: - Deep Linking
+    /// Opens the reader at a scripture reference like "John 3:16" or "1 John 4:8".
+    /// The verse number only locates the chapter; the reader shows the full chapter.
+    /// Called from the initial load (books already present); the empty-guard keeps
+    /// it safe if invoked on its own. A reference that can't be resolved is a no-op,
+    /// leaving the normal book list visible.
+    func openReference(_ reference: String) async {
+        guard let parsed = Self.parseReference(reference) else { return }
+        if allBooks.isEmpty { await loadBooks() }
+        guard let book = Self.matchBook(named: parsed.book, in: allBooks) else { return }
+
+        let chapter = min(max(parsed.chapter, 1), max(book.chapters, 1))
+        selectedBook = presenter.formatBookForDisplay(book)
+        await loadChapter(bookAbbrev: book.abbrev.en.lowercased(), chapterNumber: chapter)
+
+        AnalyticsService.shared.trackUserAction(
+            "bible_reference_opened",
+            category: "bible_chat",
+            metadata: ["reference": reference, "book": book.abbrev.en, "chapter": chapter]
+        )
+    }
+
+    /// Parses "Book Chapter:Verse" ("1 John 4:8", "Psalm 23:1", "John 3:16-17")
+    /// into the book name and chapter. The chapter:verse token is always the final
+    /// whitespace-separated component, so the book name (which may contain spaces
+    /// or a leading number) is everything before it.
+    static func parseReference(_ reference: String) -> (book: String, chapter: Int)? {
+        let trimmed = reference.trimmingCharacters(in: .whitespacesAndNewlines)
+        let parts = trimmed.split(separator: " ").map(String.init)
+        guard parts.count >= 2, let last = parts.last else { return nil }
+
+        let bookName = parts.dropLast().joined(separator: " ")
+        guard !bookName.isEmpty else { return nil }
+
+        // last is "3:16", "3:16-17", or just "3"; the chapter is before the colon.
+        guard let chapterToken = last.split(separator: ":", maxSplits: 1).first,
+              let chapter = Int(chapterToken) else { return nil }
+        return (bookName, chapter)
+    }
+
+    /// Resolves a reference's book name to a loaded BibleBook, tolerant of case,
+    /// punctuation, singular/plural ("Psalm" vs "Psalms"), and naming variants
+    /// ("Song of Solomon" vs "Song of Songs"). Both the reference name and each
+    /// book name are canonicalized through the same alias table, so the match is
+    /// direction-independent. Exact match wins first, so close names (Jude vs
+    /// Judges) are never confused.
+    private static func matchBook(named name: String, in books: [BibleBook]) -> BibleBook? {
+        // Variant -> canonical token, applied to BOTH sides so either spelling resolves.
+        let aliases: [String: String] = [
+            "psalm": "psalms",
+            "song of solomon": "song of songs",
+            "canticles": "song of songs",
+            "revelations": "revelation"
+        ]
+        func canon(_ s: String) -> String {
+            let n = s.lowercased()
+                .replacingOccurrences(of: ".", with: "")
+                .trimmingCharacters(in: .whitespaces)
+            return aliases[n] ?? n
+        }
+        let target = canon(name)
+
+        if let exact = books.first(where: { canon($0.name) == target }) {
+            return exact
+        }
+        // No exact match: tolerate trailing-plural differences in authored text.
+        return books.first(where: {
+            let n = canon($0.name)
+            return n == target + "s" || target == n + "s"
+        })
     }
     
     // MARK: - Version Management
