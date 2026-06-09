@@ -1,6 +1,6 @@
 ---
 name: onboarding-ab-ranking
-description: Query PostHog for the onboarding A/B funnel and rank the variants (product / identity / quiz / outcomes) to pick a winner. Use when asked which onboarding is winning, onboarding A/B results, onboarding funnel rankings, or "which onboarding should we ship".
+description: Query PostHog for the onboarding A/B funnel and rank the variants (product / identity / quiz / outcomes / warfare) to pick a winner. Use when asked which onboarding is winning, onboarding A/B results, onboarding funnel rankings, or "which onboarding should we ship".
 ---
 
 # Onboarding A/B Ranking
@@ -10,8 +10,9 @@ variant is winning, with the numbers behind it.
 
 ## Context
 
-- The app shows one of four onboarding flows, chosen by Remote Config
-  `onboardingVariant`: `product`, `identity`, `quiz`, `outcomes`.
+- The app shows one of several onboarding flows, chosen by Remote Config
+  `onboardingVariant`: `product`, `identity`, `quiz`, `outcomes`, `warfare`.
+  `warfare` is the default arm from app **v4.28+**.
 - Every flow fires a unified, variant-tagged funnel (added in app **v4.27+**):
   1. `onboarding_started`  — entered onboarding `{ variant }`
   2. `onboarding_finished` — completed onboarding `{ variant, converted, conversion_type }`
