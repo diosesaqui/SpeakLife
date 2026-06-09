@@ -136,6 +136,19 @@ struct HighConversionPaywallView: View {
         if let segment = quizSegment { return segment.paywallSubheadline }
         return surveyEngine.hasSurveyData ? surveyEngine.paywallCopy.subheadline : copy.subheadline
     }
+    private var resolvedValueProps: [String] {
+        surveyEngine.hasSurveyData ? surveyEngine.paywallCopy.valueProps.map { $0.title } : copy.valueProps
+    }
+    private var resolvedDescriptions: [String] {
+        surveyEngine.hasSurveyData
+            ? surveyEngine.paywallCopy.valueProps.map { $0.description }
+            : [
+                "Daily declarations rewire your mind until God's Word becomes your first response.",
+                "Spoken truth is your greatest weapon. It is exactly how Jesus defeated every attack.",
+                "Faith comes by hearing. Audio devotionals put Scripture in your ears morning and night.",
+                "Know your identity in Christ so deeply that fear, doubt, and shame lose their grip."
+              ]
+    }
     private var resolvedChallengeName: String? {
         surveyEngine.hasSurveyData ? surveyEngine.paywallCopy.challengeName : nil
     }
@@ -273,10 +286,29 @@ struct HighConversionPaywallView: View {
     }
 
     // MARK: - Benefits
-    // Always render the short, scannable props. (The longer personalized list
-    // was too much to read; the headline above still carries personalization.)
+    // Personalized value props (default) adapt to the user's burden/goal via the
+    // survey engine; the succinct generic list is the A/B variant behind the
+    // useSuccinctPaywallValueProps flag. (Reverted: forcing succinct on everyone
+    // removed paywall personalization and tracked with a yearly-trial decline.)
+    @ViewBuilder
     private var benefitsSection: some View {
-        succinctBenefitsSection
+        if subscriptionStore.useSuccinctPaywallValueProps {
+            succinctBenefitsSection
+        } else {
+            personalizedBenefitsSection
+        }
+    }
+
+    private var personalizedBenefitsSection: some View {
+        let icons = ["quote.bubble.fill", "shield.fill", "eye.fill", "person.circle.fill"]
+        let descs = Array(resolvedDescriptions.prefix(4))
+        let props = Array(resolvedValueProps.prefix(4))
+        return VStack(alignment: .leading, spacing: 16) {
+            ForEach(0..<min(props.count, 4), id: \.self) { i in
+                HCBenefitRow(icon: icons[i], title: props[i], description: i < descs.count ? descs[i] : "")
+            }
+        }
+        .padding(.horizontal, 24)
     }
 
     private var succinctBenefitsSection: some View {
@@ -612,6 +644,22 @@ struct HighConversionPaywallView: View {
             await MainActor.run { declarationStore.isPurchasing = true }
             await subscriptionStore.restore()
             await MainActor.run { declarationStore.isPurchasing = false; errorMessage = "Purchases restored"; isShowingError = true }
+        }
+    }
+}
+
+// MARK: - Benefit Row Component
+private struct HCBenefitRow: View {
+    let icon: String; let title: String; let description: String
+    var body: some View {
+        HStack(alignment: .top, spacing: 14) {
+            Image(systemName: icon).font(.system(size: 20, weight: .medium))
+                .foregroundColor(Constants.DAMidBlue).frame(width: 26)
+            VStack(alignment: .leading, spacing: 3) {
+                Text(title).font(.system(size: 14, weight: .semibold)).foregroundColor(.white)
+                Text(description).font(.system(size: 12)).foregroundColor(.white.opacity(0.65)).fixedSize(horizontal: false, vertical: true)
+            }
+            Spacer()
         }
     }
 }
