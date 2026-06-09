@@ -161,12 +161,15 @@ final class BibleViewModel: ObservableObject {
                     ]
                 )
             } catch {
+                // A cancelled load means a newer load superseded this one (e.g. the
+                // user tapped another chapter). Don't surface it as an error.
+                if Self.isCancellation(error) || Task.isCancelled { return }
                 await MainActor.run {
                     handleError(error)
                 }
             }
         }
-        
+
         await currentChapterLoadTask?.value
     }
     
@@ -197,6 +200,8 @@ final class BibleViewModel: ObservableObject {
                     category: "bible_\(selectedVersion)"
                 )
             } catch {
+                // A cancelled search was superseded by a newer query; ignore it.
+                if Self.isCancellation(error) || Task.isCancelled { return }
                 await MainActor.run {
                     // Handle search errors locally without dismissing the search sheet
                     handleSearchError(error)
@@ -633,9 +638,25 @@ final class BibleViewModel: ObservableObject {
         }
     }
     
+    /// Detects request cancellation, which happens routinely when a newer load
+    /// supersedes an in-flight one. It must never be shown as a network error.
+    static func isCancellation(_ error: Error) -> Bool {
+        if error is CancellationError { return true }
+        let nsError = error as NSError
+        if nsError.domain == NSURLErrorDomain && nsError.code == NSURLErrorCancelled { return true }
+        if let apiError = error as? BibleAPIError, case .networkError(let underlying) = apiError {
+            return isCancellation(underlying)
+        }
+        return false
+    }
+
     private func handleError(_ error: Error) {
+        // Cancellation is expected when loads supersede each other; ignore it
+        // rather than telling the user their connection failed.
+        guard !Self.isCancellation(error) else { return }
+
         isLoading = false
-        
+
         if let apiError = error as? BibleAPIError {
             switch apiError {
             case .rateLimited:

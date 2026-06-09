@@ -349,11 +349,16 @@ final class HelloAOBibleAPIService {
             }
         } catch let error as BibleAPIError {
             throw error
+        } catch is CancellationError {
+            // A cancelled in-flight request is not a connectivity failure.
+            throw CancellationError()
+        } catch let urlError as URLError where urlError.code == .cancelled {
+            throw CancellationError()
         } catch {
             throw BibleAPIError.networkError(error)
         }
     }
-    
+
     // MARK: - Adapter Methods (Convert HelloAO models to existing app models)
     func adaptTranslationToBibleVersion(_ translation: HelloAOTranslation) -> BibleVersion {
         return BibleVersion(
