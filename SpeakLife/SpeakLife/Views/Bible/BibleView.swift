@@ -136,7 +136,10 @@ struct BibleView: View {
                 }
             }
             .sheet(isPresented: $showBibleChat) {
+                // Sheets are a fresh environment context — forward
+                // subscriptionStore or BibleChatView crashes reading it.
                 BibleChatView()
+                    .environmentObject(subscriptionStore)
             }
             .sheet(isPresented: $showSearch) {
                 BibleSearchView(viewModel: viewModel)
