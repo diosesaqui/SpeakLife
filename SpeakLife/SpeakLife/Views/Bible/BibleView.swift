@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct BibleView: View {
-    @StateObject private var viewModel = BibleViewModel()
+    @StateObject private var viewModel: BibleViewModel
     @EnvironmentObject var subscriptionStore: SubscriptionStore
     @State private var showSearch = false
     @State private var showBookmarks = false
@@ -17,7 +17,13 @@ struct BibleView: View {
     @State private var selectedTab = 0
     @State private var showDailyVerseDetail = false
     @State private var showBibleChat = false
-    
+
+    /// `initialReference` (e.g. "John 3:16", from a chat answer) is handed to the
+    /// view model so the initial load opens that passage directly.
+    init(initialReference: String? = nil) {
+        _viewModel = StateObject(wrappedValue: BibleViewModel(initialReference: initialReference))
+    }
+
     var body: some View {
         NavigationView {
             ZStack {
