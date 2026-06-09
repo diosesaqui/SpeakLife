@@ -104,7 +104,7 @@ final class AppDelegate: NSObject, MessagingDelegate {
         // other arms (product / identity / quiz) against it once fetched.
         RemoteConfig.remoteConfig().setDefaults([
             "useQuizOnboarding": true as NSNumber,
-            "onboardingVariant": "outcomes" as NSString
+            "onboardingVariant": "product" as NSString
         ])
 
         registerBGTask()

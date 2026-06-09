@@ -213,7 +213,7 @@ struct BibleView: View {
                         }
                     }
                 }
-                .preferredColorScheme(.dark)
+              //  .preferredColorScheme(.dark)
             }
             .onChange(of: viewModel.isAuthenticated) { newValue in
                 if newValue {
