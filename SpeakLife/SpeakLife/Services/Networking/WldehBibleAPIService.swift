@@ -442,11 +442,19 @@ final class WldehBibleAPIService: BibleAPIServiceProtocol {
             }
         } catch let error as BibleAPIError {
             throw error
+        } catch is CancellationError {
+            // The Task driving this request was cancelled (e.g. the user tapped
+            // a new chapter before the previous load finished). This is not a
+            // connectivity failure, so surface it as cancellation so callers can
+            // ignore it instead of showing a false "No internet" alert.
+            throw CancellationError()
+        } catch let urlError as URLError where urlError.code == .cancelled {
+            throw CancellationError()
         } catch {
             throw BibleAPIError.networkError(error)
         }
     }
-    
+
     private func mapToWldehVersion(_ version: String) -> String {
         // Map common version abbreviations to Wldeh format
         let versionLower = version.lowercased()
