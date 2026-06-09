@@ -337,6 +337,9 @@ struct HomeView: View {
         case .outcomes:
             OutcomesOnboardingView(size: UIScreen.main.bounds.size) { finishOnboarding() }
                 .ignoresSafeArea()
+        case .warfare:
+            WarfareOnboardingView(size: UIScreen.main.bounds.size) { finishOnboarding() }
+                .ignoresSafeArea()
         }
     }
 
