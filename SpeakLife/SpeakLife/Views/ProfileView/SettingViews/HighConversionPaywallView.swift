@@ -53,7 +53,10 @@ struct HighConversionPaywallView: View {
     /// Variant string sent to Firebase Analytics on every paywall event so the
     /// A/B between benefit-based and feature-based copy can be compared.
     private var paywallVariant: String {
-        subscriptionStore.useSuccinctPaywallValueProps ? "high_conversion_succinct_v1" : "high_conversion_v1"
+        let base = subscriptionStore.useSuccinctPaywallValueProps ? "high_conversion_succinct_v1" : "high_conversion_v1"
+        // Suffix the comparison-grid cohort so its trial-start rate can be read
+        // against the no-grid control without losing the props A/B dimension.
+        return subscriptionStore.showComparisonTable ? base + "_cmp" : base
     }
 
     /// Short, scannable value props. Title-only, 3–5 words each — readable in a
@@ -217,6 +220,9 @@ struct HighConversionPaywallView: View {
                         headerSection
                         starsOnlyBanner.padding(.top, 20)
                         benefitsSection.padding(.top, 20)
+                        if subscriptionStore.showComparisonTable {
+                            comparisonSection.padding(.top, 28)
+                        }
                         featuredTestimonial.padding(.top, 24)
                         remainingTestimonialsSection.padding(.top, 24)
                         Spacer(minLength: 20)
@@ -320,6 +326,109 @@ struct HighConversionPaywallView: View {
             }
         }
         .padding(.horizontal, 24)
+    }
+
+    // MARK: - Competitor Comparison Grid
+    // Feature-by-feature grid: SpeakLife (highlighted) vs the three closest
+    // competitors. Reframes the decision from "is this worth it?" to "why pay the
+    // same or more elsewhere for less?". Gated by Remote Config `showComparisonTable`.
+    //
+    // Competitor data reflects offerings as of the last review (June 2026) and is
+    // intentionally conservative — only features we've confirmed they lack are
+    // marked absent. Re-verify before major releases; competitor feature sets move.
+    private struct ComparisonApp {
+        let name: String
+        let isUs: Bool
+        /// Parallel to `comparisonFeatures` order.
+        let has: [Bool]
+    }
+    private static let comparisonFeatures: [String] = [
+        "Spoken declarations",
+        "Guided audio",
+        "Faith journal",
+        "Personalized to you"
+    ]
+    private static let comparisonApps: [ComparisonApp] = [
+        ComparisonApp(name: "SpeakLife",  isUs: true,  has: [true,  true,  true,  true]),
+        ComparisonApp(name: "Haven",      isUs: false, has: [false, false, false, false]),
+        ComparisonApp(name: "Bible Chat", isUs: false, has: [false, false, false, false]),
+        ComparisonApp(name: "Creed",      isUs: false, has: [false, false, true,  false])
+    ]
+    private static let comparisonColumnWidth: CGFloat = 52
+
+    private var comparisonSection: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Text("Why pay more for less?")
+                .font(.system(size: 17, weight: .bold)).foregroundColor(.white)
+                .padding(.bottom, 16)
+
+            comparisonHeaderRow
+                .padding(.bottom, 6)
+            Divider().background(Color.white.opacity(0.12))
+
+            ForEach(Array(Self.comparisonFeatures.enumerated()), id: \.offset) { index, feature in
+                comparisonRow(feature: feature, index: index)
+                if index < Self.comparisonFeatures.count - 1 {
+                    Divider().background(Color.white.opacity(0.08))
+                }
+            }
+
+            Text("Everything in one app — just \(annualPerMonth)/mo. Others charge up to $30/mo for less.")
+                .font(.system(size: 12)).foregroundColor(.white.opacity(0.55))
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.top, 14)
+        }
+        .padding(18)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 14)
+                .fill(Color.white.opacity(0.06))
+                .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.white.opacity(0.12), lineWidth: 1))
+        )
+        .padding(.horizontal, 24)
+    }
+
+    private var comparisonHeaderRow: some View {
+        HStack(spacing: 0) {
+            Spacer(minLength: 0)
+            ForEach(Self.comparisonApps, id: \.name) { app in
+                Text(app.name)
+                    .font(.system(size: 10.5, weight: app.isUs ? .bold : .medium))
+                    .foregroundColor(app.isUs ? Constants.DAMidBlue : .white.opacity(0.5))
+                    .multilineTextAlignment(.center)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.8)
+                    .frame(width: Self.comparisonColumnWidth)
+            }
+        }
+    }
+
+    private func comparisonRow(feature: String, index: Int) -> some View {
+        HStack(spacing: 0) {
+            Text(feature)
+                .font(.system(size: 12.5, weight: .medium))
+                .foregroundColor(.white.opacity(0.88))
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            ForEach(Self.comparisonApps, id: \.name) { app in
+                comparisonCell(on: app.has[index], isUs: app.isUs)
+                    .frame(width: Self.comparisonColumnWidth)
+            }
+        }
+        .padding(.vertical, 11)
+    }
+
+    @ViewBuilder
+    private func comparisonCell(on: Bool, isUs: Bool) -> some View {
+        if on {
+            Image(systemName: "checkmark")
+                .font(.system(size: 13, weight: .bold))
+                .foregroundColor(isUs ? .green : .white.opacity(0.55))
+        } else {
+            Image(systemName: "xmark")
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundColor(.white.opacity(0.22))
+        }
     }
 
     // MARK: - Featured Testimonial (above the fold, anxiety-first)
