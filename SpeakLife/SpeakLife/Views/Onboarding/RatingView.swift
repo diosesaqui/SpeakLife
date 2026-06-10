@@ -23,7 +23,12 @@ struct RatingView: View {
                     .font(.system(size: 34, weight: .semibold, design: .rounded))
                     .foregroundColor(.white)
                     .shadow(color: Color.white.opacity(0.5), radius: 4, x: 0, y: 2)
-                    .padding(.top, 20)
+                    // Parent onboarding container uses .ignoresSafeArea(), so this
+                    // GeometryReader spans the full screen including the notch /
+                    // Dynamic Island. A flat 20pt top padding tucked the title up
+                    // under the notch — clear it with a proportional inset that
+                    // matches the top-spacing convention used elsewhere in the flow.
+                    .padding(.top, max(24, proxy.size.height * 0.08))
                 
                 Spacer()
                 
