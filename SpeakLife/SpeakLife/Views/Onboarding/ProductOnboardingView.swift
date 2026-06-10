@@ -83,7 +83,7 @@ struct ProductOnboardingView: View {
         case .hook:        ProductHookScreen(size: size) { advance() }
         case .speed:       ProductSpeedScreen(size: size) { advance() }
         case .mechanism:   ProductMechanismScreen(size: size) { advance() }
-        case .experience:  ProductExperienceScreen(size: size) { advance() }
+        case .experience:  OnboardingProductExperienceScreen(size: size) { advance() }
         case .categoryPicker:
             ProductCategoryPickerScreen(size: size, responses: responses) { advance() }
         default: backHalfView
@@ -223,7 +223,9 @@ enum ProductStep: Int, CaseIterable {
 
 // MARK: - Shared Components
 
-private struct ProductContinueButton: View {
+// Internal (not private) so the shared OnboardingProductExperienceScreen can
+// reuse it. Single definition in the module, so no redeclaration conflict.
+struct ProductContinueButton: View {
     let label: String
     let isEnabled: Bool
     let action: () -> Void
@@ -487,100 +489,6 @@ private struct ProductMechanismScreen: View {
                 .overlay(
                     RoundedRectangle(cornerRadius: 18, style: .continuous)
                         .stroke(highlighted ? Color.white.opacity(0.5) : Color.white.opacity(0.12), lineWidth: 1)
-                )
-        )
-    }
-}
-
-// MARK: - 4. Good Experience
-
-private struct ProductExperienceScreen: View {
-    let size: CGSize
-    let onContinue: () -> Void
-    @State private var v = false
-
-    private let features: [(icon: String, title: String, body: String)] = [
-        ("waveform", "Speak it out loud", "Declarations are made to be spoken, not just read. Open your mouth over your situation and watch what shifts."),
-        ("bubble.left.and.bubble.right.fill", "Bible Chat", "Ask anything and get answers rooted in Scripture. Like having a wise friend in the Word, any hour of the day."),
-        ("headphones", "Listen anywhere", "Press play and let Scripture wash over you. Hands-free declarations for the commute, the gym, or a sleepless night."),
-        ("car", "Built for real life", "Use it in the car, before a hard conversation, or late at night. Simple when everything else feels heavy.")
-    ]
-
-    var body: some View {
-        VStack(spacing: 0) {
-            ScrollView(showsIndicators: false) {
-                VStack(spacing: 24) {
-                    Spacer().frame(height: size.height * 0.12)
-
-                    VStack(spacing: 12) {
-                        Text("Built for the middle\nof the storm.")
-                            .font(.system(size: 30, weight: .bold, design: .rounded))
-                            .foregroundColor(.white)
-                            .multilineTextAlignment(.center)
-                            .fixedSize(horizontal: false, vertical: true)
-                            .appearStagger(v)
-
-                        Text("No friction when you're at your lowest.\nJust the Word, the moment you need it.")
-                            .font(.system(size: 16, weight: .regular, design: .rounded))
-                            .foregroundColor(.white.opacity(0.7))
-                            .multilineTextAlignment(.center)
-                            .lineSpacing(4)
-                            .padding(.horizontal, 24)
-                            .fixedSize(horizontal: false, vertical: true)
-                            .appearStagger(v, delay: 0.12)
-                    }
-                    .padding(.horizontal, 28)
-
-                    VStack(spacing: 12) {
-                        ForEach(Array(features.enumerated()), id: \.offset) { idx, feature in
-                            featureRow(feature)
-                                .appearStagger(v, delay: 0.22 + Double(idx) * 0.1)
-                        }
-                    }
-                    .padding(.horizontal, 24)
-
-                    Spacer().frame(height: 8)
-                }
-            }
-
-            ProductContinueButton(label: "Continue →") { onContinue() }
-                .padding(.top, 8).padding(.bottom, 36)
-                .appearStagger(v, delay: 0.52)
-        }
-        .onAppear {
-            Analytics.logEvent("product_experience_shown", parameters: nil)
-            withAnimation { v = true }
-        }
-    }
-
-    private func featureRow(_ feature: (icon: String, title: String, body: String)) -> some View {
-        HStack(spacing: 14) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(Color.white.opacity(0.12))
-                    .frame(width: 46, height: 46)
-                Image(systemName: feature.icon)
-                    .font(.system(size: 20))
-                    .foregroundColor(.white)
-            }
-            VStack(alignment: .leading, spacing: 3) {
-                Text(feature.title)
-                    .font(.system(size: 16, weight: .semibold, design: .rounded))
-                    .foregroundColor(.white)
-                Text(feature.body)
-                    .font(.system(size: 13, weight: .regular, design: .rounded))
-                    .foregroundColor(.white.opacity(0.6))
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            Spacer(minLength: 0)
-        }
-        .padding(16)
-        .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(Color.white.opacity(0.06))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .stroke(Color.white.opacity(0.12), lineWidth: 1)
                 )
         )
     }
