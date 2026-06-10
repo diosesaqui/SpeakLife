@@ -107,7 +107,7 @@ struct WarfareOnboardingView: View {
         case .rating:
             RatingView(size: size) { advance() }
         case .paywall:
-            HighConversionPaywallView(callback: { advance() })
+            HighConversionPaywallView(callback: { advance() }, source: "onboarding", isHardPaywall: true)
         case .notificationTime:
             SurveyQ8NotificationScreen(size: size, responses: responses) { advance() }
         default:
