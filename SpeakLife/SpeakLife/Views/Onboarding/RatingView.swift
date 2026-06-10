@@ -15,6 +15,17 @@ struct RatingView: View {
     let callBack: (() -> Void)
     @State private var showStars = [false, false, false, false, false]
 
+    /// Actual top safe-area inset. The parent onboarding container applies
+    /// `.ignoresSafeArea()`, so the GeometryReader proxy reports 0 here — read it
+    /// from the key window instead so the title clears the notch / Dynamic Island
+    /// on every device. Falls back to a sensible notch height if unavailable.
+    private var topSafeInset: CGFloat {
+        (UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .flatMap { $0.windows }
+            .first(where: { $0.isKeyWindow })?.safeAreaInsets.top) ?? 47
+    }
+
     var body: some View {
         GeometryReader { proxy in
             VStack {
@@ -25,10 +36,9 @@ struct RatingView: View {
                     .shadow(color: Color.white.opacity(0.5), radius: 4, x: 0, y: 2)
                     // Parent onboarding container uses .ignoresSafeArea(), so this
                     // GeometryReader spans the full screen including the notch /
-                    // Dynamic Island. A flat 20pt top padding tucked the title up
-                    // under the notch — clear it with a proportional inset that
-                    // matches the top-spacing convention used elsewhere in the flow.
-                    .padding(.top, max(24, proxy.size.height * 0.08))
+                    // Dynamic Island. Clear it using the real top safe-area inset
+                    // plus a little breathing room.
+                    .padding(.top, topSafeInset + 12)
                 
                 Spacer()
                 
@@ -105,7 +115,10 @@ struct RatingView: View {
                 Spacer()
                     .frame(width: 5, height: size.height * 0.07)
             }
-            .frame(width: proxy.size.width, height: proxy.size.height)
+            // Top-align: if the stacked content is taller than the screen it
+            // overflows off the BOTTOM instead of centering (which would shove the
+            // title up off the top edge).
+            .frame(width: proxy.size.width, height: proxy.size.height, alignment: .top)
             .background(
                 ZStack {
                     Image(subscriptionStore.onboardingBGImage)

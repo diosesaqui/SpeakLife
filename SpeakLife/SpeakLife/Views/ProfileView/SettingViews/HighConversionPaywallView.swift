@@ -53,10 +53,7 @@ struct HighConversionPaywallView: View {
     /// Variant string sent to Firebase Analytics on every paywall event so the
     /// A/B between benefit-based and feature-based copy can be compared.
     private var paywallVariant: String {
-        let base = subscriptionStore.useSuccinctPaywallValueProps ? "high_conversion_succinct_v1" : "high_conversion_v1"
-        // Suffix the comparison-grid cohort so its trial-start rate can be read
-        // against the no-grid control without losing the props A/B dimension.
-        return subscriptionStore.showComparisonTable ? base + "_cmp" : base
+        subscriptionStore.useSuccinctPaywallValueProps ? "high_conversion_succinct_v1" : "high_conversion_v1"
     }
 
     /// Short, scannable value props. Title-only, 3–5 words each — readable in a
@@ -220,9 +217,7 @@ struct HighConversionPaywallView: View {
                         headerSection
                         starsOnlyBanner.padding(.top, 20)
                         benefitsSection.padding(.top, 20)
-                        if subscriptionStore.showComparisonTable {
-                            comparisonSection.padding(.top, 28)
-                        }
+                        comparisonSection.padding(.top, 28)
                         featuredTestimonial.padding(.top, 24)
                         remainingTestimonialsSection.padding(.top, 24)
                         Spacer(minLength: 20)
@@ -330,8 +325,8 @@ struct HighConversionPaywallView: View {
 
     // MARK: - Comparison Grid (SpeakLife vs. Other apps)
     // Two-column feature grid that reframes the decision from "is this worth it?"
-    // to "why pay the same or more elsewhere for less?". Gated by Remote Config
-    // `showComparisonTable`.
+    // to "why pay the same or more elsewhere for less?". Always shown on the
+    // high-conversion paywall.
     //
     // Deliberately generic ("Other apps") rather than naming competitors: the
     // paywall ships through App Review and can't be hot-fixed, so a named claim
@@ -339,10 +334,11 @@ struct HighConversionPaywallView: View {
     // quickly correct. Named, specific comparisons live on owned surfaces (ads,
     // landing pages) instead. The `.some` state keeps the journal row honest —
     // a few competitors do offer journaling.
-    private enum OthersMark { case no, some }
+    private enum OthersMark { case no, some, yes }
     private static let comparisonRows: [(feature: String, others: OthersMark)] = [
         ("Spoken declarations",  .no),
         ("Guided audio",         .no),
+        ("AI Bible chat",        .yes),   // both have it — check on both columns
         ("Faith journal",        .some),
         ("Personalized to you",  .no)
     ]
@@ -422,6 +418,12 @@ struct HighConversionPaywallView: View {
             Text("Some")
                 .font(.system(size: 11, weight: .medium))
                 .foregroundColor(.white.opacity(0.4))
+        case .yes:
+            // Feature both apps have. Still a check, but muted so SpeakLife's
+            // green "win" rows stay the visual focus.
+            Image(systemName: "checkmark")
+                .font(.system(size: 13, weight: .bold))
+                .foregroundColor(.white.opacity(0.55))
         }
     }
 

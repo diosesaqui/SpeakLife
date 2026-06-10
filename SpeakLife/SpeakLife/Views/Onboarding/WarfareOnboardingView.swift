@@ -106,6 +106,8 @@ struct WarfareOnboardingView: View {
             }
         case .rating:
             RatingView(size: size) { advance() }
+        case .experience:
+            OnboardingProductExperienceScreen(size: size) { advance() }
         case .paywall:
             HighConversionPaywallView(callback: { advance() }, source: "onboarding", isHardPaywall: true)
         case .notificationTime:
@@ -210,8 +212,9 @@ enum WarfareStep: Int, CaseIterable {
     case firstDeclaration = 5
     case personalDeclaration = 6
     case rating          = 7   // rating ask at the personal-declaration peak
-    case paywall         = 8
-    case notificationTime = 9  // terminal — completes onboarding
+    case experience      = 8   // pre-paywall product-capability recap (de-risks the ask)
+    case paywall         = 9
+    case notificationTime = 10 // terminal — completes onboarding
 
     var valueScreenIndex: Int? {
         let screens: [WarfareStep] = [.thief, .paidFor, .weapon, .activation, .takeBackPicker]
