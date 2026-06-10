@@ -178,6 +178,13 @@ final class SubscriptionStore: ObservableObject {
     // true  = show Weekly ($SpeakLife1Wk5) instead of Monthly on the paywall
     @Published var useWeeklyPlan = false
 
+    // MARK: - Competitor Comparison Grid A/B Test
+    // false = no comparison grid (default — current paywall)
+    // true  = show the "SpeakLife vs others" feature-comparison grid between the
+    //         benefits and testimonial sections. Tracked as paywall variant
+    //         suffix "_cmp" so trial-start lift can be measured against control.
+    @Published var showComparisonTable = false
+
     @Published var yearlySubscription = ""
     @Published var monthlySubscription = ""
     @Published var discountSubscription = ""
@@ -349,7 +356,10 @@ final class SubscriptionStore: ObservableObject {
 
         // Weekly Plan A/B Test
         useWeeklyPlan = remoteConfig["useWeeklyPlan"].boolValue
-        
+
+        // Competitor Comparison Grid A/B Test
+        showComparisonTable = remoteConfig["showComparisonTable"].boolValue
+
         // AI Feature Flag from Remote Config
         enableAIFeatures = remoteConfig["enableAIFeatures"].boolValue
 
