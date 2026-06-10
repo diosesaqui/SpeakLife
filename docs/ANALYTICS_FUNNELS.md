@@ -84,6 +84,18 @@ too, for revenue attribution per arm.
 
 > Ships in app **v4.27+**. Until that build is live, this funnel reads zero.
 
+### 3a. Warfare vs Product (head-to-head)
+
+A focused cut of the same funnel for the planned **80/20 warfare-vs-product
+holdout**: identical steps and breakdown, but filtered to `variant in [warfare,
+product]` so the default arm and its control read side-by-side without the other
+arms' noise.
+
+**PostHog insight:** [Onboarding A/B — Warfare vs Product (head-to-head)](https://us.posthog.com/project/455580/insights/e1Gfs1SQ)
+
+> Populates from app **v4.28+** (when `warfare` is the default); reads zero until
+> warfare traffic lands.
+
 ---
 
 ## Key event reference

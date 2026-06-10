@@ -37,6 +37,8 @@ final class AppDelegate: NSObject, MessagingDelegate {
         Purchases.logLevel = .debug
         #endif
         Purchases.configure(withAPIKey: "appl_MUGzgdbuQuNIDtfDLiJtIdyYPqf")
+        Purchases.shared.attribution.collectDeviceIdentifiers()
+        Purchases.shared.attribution.setFBAnonymousID(AppEvents.shared.anonymousID)
 
         // Link RC attribution data to Firebase for campaign attribution
         if let instanceID = Analytics.appInstanceID() {
