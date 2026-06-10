@@ -328,33 +328,25 @@ struct HighConversionPaywallView: View {
         .padding(.horizontal, 24)
     }
 
-    // MARK: - Competitor Comparison Grid
-    // Feature-by-feature grid: SpeakLife (highlighted) vs the three closest
-    // competitors. Reframes the decision from "is this worth it?" to "why pay the
-    // same or more elsewhere for less?". Gated by Remote Config `showComparisonTable`.
+    // MARK: - Comparison Grid (SpeakLife vs. Other apps)
+    // Two-column feature grid that reframes the decision from "is this worth it?"
+    // to "why pay the same or more elsewhere for less?". Gated by Remote Config
+    // `showComparisonTable`.
     //
-    // Competitor data reflects offerings as of the last review (June 2026) and is
-    // intentionally conservative — only features we've confirmed they lack are
-    // marked absent. Re-verify before major releases; competitor feature sets move.
-    private struct ComparisonApp {
-        let name: String
-        let isUs: Bool
-        /// Parallel to `comparisonFeatures` order.
-        let has: [Bool]
-    }
-    private static let comparisonFeatures: [String] = [
-        "Spoken declarations",
-        "Guided audio",
-        "Faith journal",
-        "Personalized to you"
+    // Deliberately generic ("Other apps") rather than naming competitors: the
+    // paywall ships through App Review and can't be hot-fixed, so a named claim
+    // that goes stale becomes a false-advertising exposure on a surface we can't
+    // quickly correct. Named, specific comparisons live on owned surfaces (ads,
+    // landing pages) instead. The `.some` state keeps the journal row honest —
+    // a few competitors do offer journaling.
+    private enum OthersMark { case no, some }
+    private static let comparisonRows: [(feature: String, others: OthersMark)] = [
+        ("Spoken declarations",  .no),
+        ("Guided audio",         .no),
+        ("Faith journal",        .some),
+        ("Personalized to you",  .no)
     ]
-    private static let comparisonApps: [ComparisonApp] = [
-        ComparisonApp(name: "SpeakLife",  isUs: true,  has: [true,  true,  true,  true]),
-        ComparisonApp(name: "Haven",      isUs: false, has: [false, false, false, false]),
-        ComparisonApp(name: "Bible Chat", isUs: false, has: [false, false, false, false]),
-        ComparisonApp(name: "Creed",      isUs: false, has: [false, false, true,  false])
-    ]
-    private static let comparisonColumnWidth: CGFloat = 52
+    private static let comparisonColumnWidth: CGFloat = 92
 
     private var comparisonSection: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -366,14 +358,14 @@ struct HighConversionPaywallView: View {
                 .padding(.bottom, 6)
             Divider().background(Color.white.opacity(0.12))
 
-            ForEach(Array(Self.comparisonFeatures.enumerated()), id: \.offset) { index, feature in
-                comparisonRow(feature: feature, index: index)
-                if index < Self.comparisonFeatures.count - 1 {
+            ForEach(Array(Self.comparisonRows.enumerated()), id: \.offset) { index, row in
+                comparisonRow(feature: row.feature, others: row.others)
+                if index < Self.comparisonRows.count - 1 {
                     Divider().background(Color.white.opacity(0.08))
                 }
             }
 
-            Text("Everything in one app — just \(annualPerMonth)/mo. Others charge up to $30/mo for less.")
+            Text("Everything in one app — just \(annualPerMonth)/mo. Other apps charge up to $30/mo for less.")
                 .font(.system(size: 12)).foregroundColor(.white.opacity(0.55))
                 .fixedSize(horizontal: false, vertical: true)
                 .padding(.top, 14)
@@ -391,43 +383,45 @@ struct HighConversionPaywallView: View {
     private var comparisonHeaderRow: some View {
         HStack(spacing: 0) {
             Spacer(minLength: 0)
-            ForEach(Self.comparisonApps, id: \.name) { app in
-                Text(app.name)
-                    .font(.system(size: 10.5, weight: app.isUs ? .bold : .medium))
-                    .foregroundColor(app.isUs ? Constants.DAMidBlue : .white.opacity(0.5))
-                    .multilineTextAlignment(.center)
-                    .lineLimit(2)
-                    .minimumScaleFactor(0.8)
-                    .frame(width: Self.comparisonColumnWidth)
-            }
+            Text("SpeakLife")
+                .font(.system(size: 12, weight: .bold))
+                .foregroundColor(Constants.DAMidBlue)
+                .frame(width: Self.comparisonColumnWidth)
+            Text("Other apps")
+                .font(.system(size: 12, weight: .medium))
+                .foregroundColor(.white.opacity(0.5))
+                .frame(width: Self.comparisonColumnWidth)
         }
     }
 
-    private func comparisonRow(feature: String, index: Int) -> some View {
+    private func comparisonRow(feature: String, others: OthersMark) -> some View {
         HStack(spacing: 0) {
             Text(feature)
                 .font(.system(size: 12.5, weight: .medium))
                 .foregroundColor(.white.opacity(0.88))
                 .fixedSize(horizontal: false, vertical: true)
                 .frame(maxWidth: .infinity, alignment: .leading)
-            ForEach(Self.comparisonApps, id: \.name) { app in
-                comparisonCell(on: app.has[index], isUs: app.isUs)
-                    .frame(width: Self.comparisonColumnWidth)
-            }
+            Image(systemName: "checkmark")
+                .font(.system(size: 14, weight: .bold))
+                .foregroundColor(.green)
+                .frame(width: Self.comparisonColumnWidth)
+            othersCell(others)
+                .frame(width: Self.comparisonColumnWidth)
         }
         .padding(.vertical, 11)
     }
 
     @ViewBuilder
-    private func comparisonCell(on: Bool, isUs: Bool) -> some View {
-        if on {
-            Image(systemName: "checkmark")
-                .font(.system(size: 13, weight: .bold))
-                .foregroundColor(isUs ? .green : .white.opacity(0.55))
-        } else {
+    private func othersCell(_ mark: OthersMark) -> some View {
+        switch mark {
+        case .no:
             Image(systemName: "xmark")
                 .font(.system(size: 12, weight: .semibold))
                 .foregroundColor(.white.opacity(0.22))
+        case .some:
+            Text("Some")
+                .font(.system(size: 11, weight: .medium))
+                .foregroundColor(.white.opacity(0.4))
         }
     }
 
