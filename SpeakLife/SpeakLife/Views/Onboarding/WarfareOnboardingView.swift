@@ -107,7 +107,7 @@ struct WarfareOnboardingView: View {
         case .rating:
             RatingView(size: size) { advance() }
         case .experience:
-            OnboardingProductExperienceScreen(size: size) { advance() }
+            OnboardingProductExperienceScreen(size: size, flow: "warfare") { advance() }
         case .paywall:
             HighConversionPaywallView(callback: { advance() }, source: "onboarding", isHardPaywall: true)
         case .notificationTime:
