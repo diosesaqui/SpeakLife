@@ -218,6 +218,7 @@
 		45C15A8E2F35751A006171F5 /* TestimonialsOnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45C15A8D2F35751A006171F5 /* TestimonialsOnboardingView.swift */; };
 		45C15A902F357857006171F5 /* LazyJSONLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45C15A8F2F357857006171F5 /* LazyJSONLoader.swift */; };
 		45C15A922F36FCCF006171F5 /* SpiritualWarfareOnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45C15A912F36FCCF006171F5 /* SpiritualWarfareOnboardingView.swift */; };
+		D0120000000000000013BBBB /* OnboardingProductExperienceScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0120000000000000013AAAA /* OnboardingProductExperienceScreen.swift */; };
 		45C15A942F3704EB006171F5 /* SpiritualWarfareContentScreens.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45C15A932F3704EB006171F5 /* SpiritualWarfareContentScreens.swift */; };
 		45C15A962F37064A006171F5 /* OptimizedSubscriptionViewV2.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45C15A952F37064A006171F5 /* OptimizedSubscriptionViewV2.swift */; };
 		45C15A982F370869006171F5 /* StreamlinedSpiritualWarfareFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45C15A972F370869006171F5 /* StreamlinedSpiritualWarfareFlow.swift */; };
@@ -633,6 +634,7 @@
 		45C15A8D2F35751A006171F5 /* TestimonialsOnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestimonialsOnboardingView.swift; sourceTree = "<group>"; };
 		45C15A8F2F357857006171F5 /* LazyJSONLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LazyJSONLoader.swift; sourceTree = "<group>"; };
 		45C15A912F36FCCF006171F5 /* SpiritualWarfareOnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpiritualWarfareOnboardingView.swift; sourceTree = "<group>"; };
+		C0120000000000000013AAAA /* OnboardingProductExperienceScreen.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = OnboardingProductExperienceScreen.swift; sourceTree = "<group>"; };
 		45C15A932F3704EB006171F5 /* SpiritualWarfareContentScreens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpiritualWarfareContentScreens.swift; sourceTree = "<group>"; };
 		45C15A952F37064A006171F5 /* OptimizedSubscriptionViewV2.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OptimizedSubscriptionViewV2.swift; sourceTree = "<group>"; };
 		45C15A972F370869006171F5 /* StreamlinedSpiritualWarfareFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StreamlinedSpiritualWarfareFlow.swift; sourceTree = "<group>"; };
@@ -1776,6 +1778,7 @@
 				C0100000000000000010AAAA /* IdentityOnboardingView.swift */,
 				C0110000000000000011AAAA /* OutcomesOnboardingView.swift */,
 				C0120000000000000012AAAA /* WarfareOnboardingView.swift */,
+				C0120000000000000013AAAA /* OnboardingProductExperienceScreen.swift */,
 			);
 			path = Onboarding;
 			sourceTree = "<group>";
@@ -2138,6 +2141,7 @@
 				4597E2262E419183009D6C66 /* VoiceCorrectionsView.swift in Sources */,
 				7AF18C8229FD2494005A6E31 /* Badge.swift in Sources */,
 				45C15A922F36FCCF006171F5 /* SpiritualWarfareOnboardingView.swift in Sources */,
+				D0120000000000000013BBBB /* OnboardingProductExperienceScreen.swift in Sources */,
 				7AA2AFCA29DA1BBF00176ADF /* ImagePicker.swift in Sources */,
 				45567D5E2F29CA5D00382072 /* BibleView.swift in Sources */,
 				45567D5F2F29CA5D00382072 /* BibleBookmarksView.swift in Sources */,
