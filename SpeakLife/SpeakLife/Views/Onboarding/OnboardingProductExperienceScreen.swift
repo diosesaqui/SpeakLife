@@ -15,6 +15,9 @@ import FirebaseAnalytics
 
 struct OnboardingProductExperienceScreen: View {
     let size: CGSize
+    /// Which onboarding flow is showing this screen ("product" | "warfare").
+    /// Stamped onto `product_experience_shown` so the funnels can tell them apart.
+    let flow: String
     let onContinue: () -> Void
     @State private var v = false
 
@@ -67,7 +70,7 @@ struct OnboardingProductExperienceScreen: View {
                 .appearStagger(v, delay: 0.52)
         }
         .onAppear {
-            Analytics.logEvent("product_experience_shown", parameters: nil)
+            Analytics.logEvent("product_experience_shown", parameters: ["flow": flow])
             withAnimation { v = true }
         }
     }

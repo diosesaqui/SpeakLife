@@ -83,7 +83,7 @@ struct ProductOnboardingView: View {
         case .hook:        ProductHookScreen(size: size) { advance() }
         case .speed:       ProductSpeedScreen(size: size) { advance() }
         case .mechanism:   ProductMechanismScreen(size: size) { advance() }
-        case .experience:  OnboardingProductExperienceScreen(size: size) { advance() }
+        case .experience:  OnboardingProductExperienceScreen(size: size, flow: "product") { advance() }
         case .categoryPicker:
             ProductCategoryPickerScreen(size: size, responses: responses) { advance() }
         default: backHalfView
