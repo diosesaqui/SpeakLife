@@ -92,7 +92,7 @@ struct SurveyOnboardingView: View {
         case .commitmentHold:
             SurveyCommitmentHoldScreen(size: size) { advance() }
         case .paywall:
-            HighConversionPaywallView(callback: { advance() })
+            HighConversionPaywallView(callback: { advance() }, source: "onboarding", isHardPaywall: true)
         case .notificationTime:
             SurveyQ8NotificationScreen(size: size, responses: responses) { advance() }
         case .rating:
