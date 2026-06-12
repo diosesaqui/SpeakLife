@@ -27,7 +27,11 @@ struct HighConversionPaywallView: View {
     @State private var showPayWhatYouCan = false
     @State private var showCloseButton = false
     @State private var timeOnPaywall: Date = Date()
-    @State private var isEligibleForTrial = false
+    /// Per-product intro-offer eligibility (product id → eligible), checked
+    /// against Apple per user. Keyed per product because eligibility is asked
+    /// of whichever plan is selected (annual / monthly / weekly), and a single
+    /// global bit checked only against the annual product mislabels the others.
+    @State private var trialEligibility: [String: Bool] = [:]
 
     // MARK: - Welcome Offer State (decline path)
     // One recovery screen shown when an onboarding user dismisses this paywall
@@ -185,9 +189,8 @@ struct HighConversionPaywallView: View {
     private var annualPrice: String { subscriptionStore.currentOfferedPremium?.displayPrice ?? pricePlaceholder }
     private var monthlyPrice: String { subscriptionStore.currentOfferedPremiumMonthly?.displayPrice ?? pricePlaceholder }
     private var annualPerMonth: String {
-        guard let p = subscriptionStore.currentOfferedPremium,
-              let d = Double(p.price.description) else { return pricePlaceholder }
-        return String(format: "$%.2f", d / 12.0)
+        guard let p = subscriptionStore.currentOfferedPremium else { return pricePlaceholder }
+        return perMonthString(yearlyProduct: p) ?? pricePlaceholder
     }
     /// % saved on annual vs paying the non-annual plan (weekly×52 or monthly×12)
     /// for a year. nil if not computable.
@@ -231,13 +234,25 @@ struct HighConversionPaywallView: View {
     // MARK: - Trial Eligibility / Intro Offer
     /// Days in the introductory free-trial offer for the given product, read
     /// from the loaded StoreKit Product (never hardcoded). nil when this user
-    /// isn't eligible for an intro offer (per-user check done in onAppear) or
-    /// when the product has no free-trial intro offer configured.
+    /// isn't eligible for an intro offer on THIS product (per-product check
+    /// done in refreshTrialEligibility) or when the product has no free-trial
+    /// intro offer configured. Unknown/not-yet-checked products default to
+    /// false, so trial copy never overpromises while eligibility loads.
     private func trialDays(for product: Product?) -> Int? {
-        introTrialDays(for: product, isEligible: isEligibleForTrial)
+        guard let product else { return nil }
+        return introTrialDays(for: product, isEligible: trialEligibility[product.id] ?? false)
     }
     /// Trial length for the currently selected plan, nil when not trial-eligible.
     private var selectedPlanTrialDays: Int? { trialDays(for: selectedProduct) }
+    /// Stable fingerprint of the three offered product ids; onChange watches it
+    /// so eligibility re-runs when products finish loading after first render.
+    private var offeredProductIDs: String {
+        [
+            subscriptionStore.currentOfferedPremium?.id,
+            subscriptionStore.currentOfferedPremiumMonthly?.id,
+            subscriptionStore.currentOfferedWeekly?.id
+        ].map { $0 ?? "" }.joined(separator: "|")
+    }
     private var copy: UserPreferencesTracker.PaywallCopy { preferencesTracker.getDynamicPaywallCopy() }
 
     // MARK: - Body
@@ -293,6 +308,12 @@ struct HighConversionPaywallView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .ignoresSafeArea(edges: .bottom)
         .onAppear(perform: onAppear)
+        // Products can finish loading after onAppear (Remote Config + StoreKit
+        // race the paywall presentation). Re-check eligibility whenever any of
+        // the three offered product ids changes.
+        .onChange(of: offeredProductIDs) { _ in
+            Task { await refreshTrialEligibility() }
+        }
         .alert("", isPresented: $isShowingError) {
             Button("OK", role: .cancel) { }
         } message: { Text(errorMessage) }
@@ -913,11 +934,9 @@ struct HighConversionPaywallView: View {
     private func onAppear() {
         timeOnPaywall = Date()
         selectedPlan = .annual
-        // Check actual trial eligibility from Apple
-        Task {
-            let eligible = await subscriptionStore.currentOfferedPremium?.subscription?.isEligibleForIntroOffer ?? false
-            await MainActor.run { isEligibleForTrial = eligible }
-        }
+        // Check actual trial eligibility from Apple (re-run via onChange when
+        // products finish loading after the paywall is already on screen).
+        Task { await refreshTrialEligibility() }
         AnalyticsService.shared.trackPaywallImpression(paywallId: paywallVariant, metadata: [
             "variant": paywallVariant,
             "user_category": preferencesTracker.primaryCategory.rawValue,
@@ -933,6 +952,26 @@ struct HighConversionPaywallView: View {
             DispatchQueue.main.asyncAfter(deadline: .now() + 4) {
                 withAnimation(.easeIn(duration: 0.4)) { showCloseButton = true }
             }
+        }
+    }
+
+    /// Asks Apple, per product, whether THIS user is eligible for the intro
+    /// offer on every plan this paywall can sell (annual + monthly + weekly,
+    /// whichever loaded). Latest write wins, which is race-safe enough here:
+    /// eligibility for a given product id never changes mid-session.
+    private func refreshTrialEligibility() async {
+        let products = [
+            subscriptionStore.currentOfferedPremium,
+            subscriptionStore.currentOfferedPremiumMonthly,
+            subscriptionStore.currentOfferedWeekly
+        ].compactMap { $0 }
+        var eligibility: [String: Bool] = [:]
+        for product in products {
+            eligibility[product.id] = await product.subscription?.isEligibleForIntroOffer ?? false
+        }
+        let resolved = eligibility
+        await MainActor.run {
+            trialEligibility.merge(resolved) { _, new in new }
         }
     }
 
@@ -1067,6 +1106,18 @@ fileprivate func introTrialDays(for product: Product?, isEligible: Bool) -> Int?
     }
 }
 
+// MARK: - Shared Per-Month Price Helper
+/// Per-month equivalent of a yearly product's price, formatted in the
+/// product's own locale and currency (never a hardcoded "$"). Shared by the
+/// main paywall and WelcomeOfferView. nil if formatting fails.
+fileprivate func perMonthString(yearlyProduct: Product) -> String? {
+    let monthly = yearlyProduct.price / 12
+    let formatter = NumberFormatter()
+    formatter.numberStyle = .currency
+    formatter.locale = yearlyProduct.priceFormatStyle.locale
+    return formatter.string(from: NSDecimalNumber(decimal: monthly))
+}
+
 // MARK: - Welcome Offer (decline-path recovery screen)
 /// Shown at most once ever (UserDefaults `welcomeOfferShown`) when an
 /// onboarding user dismisses the soft paywall without buying, and only when
@@ -1109,8 +1160,8 @@ struct WelcomeOfferView: View {
     private var discountPrice: String { discountProduct?.displayPrice ?? pricePlaceholder }
     private var regularPrice: String { regularProduct?.displayPrice ?? pricePlaceholder }
     private var discountPerMonth: String {
-        guard let p = discountProduct, let d = Double(p.price.description) else { return pricePlaceholder }
-        return String(format: "$%.2f", d / 12.0)
+        guard let p = discountProduct else { return pricePlaceholder }
+        return perMonthString(yearlyProduct: p) ?? pricePlaceholder
     }
     /// % saved vs the regular annual, computed from the real StoreKit prices.
     private var savingsPercent: Int? {

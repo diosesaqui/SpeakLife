@@ -42,10 +42,14 @@ struct WarfareOnboardingView: View {
     @State private var currentStep: WarfareStep = .thief
     @State private var savedDeclaration: PersonalDeclaration? = nil
 
-    // Snapshot accessor for the quiz v2 Remote Config flag. When false the
-    // flow is byte-for-byte the current quiz (belief step skipped, connect
-    // style question shown, no plan-reveal echo).
-    private var quizV2: Bool { subscriptionStore.useQuizV2 }
+    // Quiz v2 flag, frozen at the flow's first appearance (mirroring
+    // lockOnboardingVariant's intent) so a realtime Remote Config activation
+    // mid-session can't swap questions, progress totals, or quiz_version
+    // under the user. The live-read fallback only covers pre-onAppear access.
+    // When false the flow is byte-for-byte the current quiz (belief step
+    // skipped, connect style question shown, no plan-reveal echo).
+    @State private var quizV2Snapshot: Bool? = nil
+    private var quizV2: Bool { quizV2Snapshot ?? subscriptionStore.useQuizV2 }
 
     private var valueProgress: Double {
         guard let idx = currentStep.valueScreenIndex(quizV2: quizV2) else { return 0 }
@@ -81,7 +85,10 @@ struct WarfareOnboardingView: View {
             }
         }
         .ignoresSafeArea()
-        .onAppear { AnalyticsService.shared.track("warfare_onboarding_started") }
+        .onAppear {
+            if quizV2Snapshot == nil { quizV2Snapshot = subscriptionStore.useQuizV2 }
+            AnalyticsService.shared.track("warfare_onboarding_started")
+        }
     }
 
     @ViewBuilder
@@ -183,7 +190,8 @@ struct WarfareOnboardingView: View {
 
     private func advance() {
         UIImpactFeedbackGenerator(style: .soft).impactOccurred()
-        AnalyticsService.shared.track("warfare_step_completed", parameters: ["step": currentStep.rawValue])
+        // flow_schema 2 = this branch's step layout (1 = pre-renumbering); bump when step raw values are renumbered again.
+        AnalyticsService.shared.track("warfare_step_completed", parameters: ["step": currentStep.rawValue, "flow_schema": 2])
 
         // Leaving the take-back picker: stamp the segment so downstream paywall
         // events carry a meaningful segment for this arm (quiz sets its own).
@@ -248,6 +256,7 @@ struct WarfareOnboardingView: View {
             "victory_looks_like": responses.victoryOutcome ?? "unknown",
             "belief": responses.beliefLevel ?? "unknown",
             "quiz_version": quizV2 ? "v2" : "v1",
+            "flow_schema": 2,  // joins with warfare_step_completed; bump when step raw values are renumbered again
             "set_personal_declaration": (savedDeclaration != nil) as NSNumber
         ])
 
@@ -268,6 +277,8 @@ struct WarfareOnboardingView: View {
                         categories: categories
                     )
                     appState.lastNotificationSetDate = Date()
+                    // Trial pushes may have been scheduled pre-authorization on the paywall; re-add now that delivery is guaranteed.
+                    TrialExperienceService.shared.reschedulePendingTrialPushesIfNeeded()
                 }
                 onComplete()
             }

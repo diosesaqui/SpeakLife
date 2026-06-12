@@ -558,7 +558,10 @@ final class SubscriptionStore: ObservableObject {
         // price immediately. We must check per-user eligibility BEFORE the
         // purchase resolves, because afterwards Apple flips isEligibleForIntroOffer
         // to false (the slot is now used) and we lose the signal.
-        let hasIntroOffer = product.subscription?.introductoryOffer != nil
+        // Only a .freeTrial intro offer is a trial. Discounted pay-as-you-go /
+        // pay-up-front intro offers charge immediately and must take the
+        // regular Subscribe path, not the StartTrial/trial_started one.
+        let hasFreeTrialIntroOffer = product.subscription?.introductoryOffer?.paymentMode == .freeTrial
         let isEligibleForIntroOffer: Bool
         if let subscription = product.subscription {
             isEligibleForIntroOffer = await subscription.isEligibleForIntroOffer
@@ -568,7 +571,7 @@ final class SubscriptionStore: ObservableObject {
         // True iff this specific purchase actually enters a trial period.
         // Used to gate the Facebook StartTrial event, the analytics is_trial
         // flag, and the D2/D3 trial-ending push scheduling.
-        let willStartTrial = hasIntroOffer && isEligibleForIntroOffer
+        let willStartTrial = hasFreeTrialIntroOffer && isEligibleForIntroOffer
         let currency     = product.priceFormatStyle.currencyCode ?? "USD"
 
         // NOTE: Do NOT fire analytics before RC confirms — RC validates the receipt.
@@ -616,7 +619,11 @@ final class SubscriptionStore: ObservableObject {
                 "currency": currency,
                 "variant": onboardingVariantName,
                 "segment": UserDefaults.standard.string(forKey: "onboarding_segment") ?? "",
-                "plan": planLabel(for: product)
+                "plan": planLabel(for: product),
+                // Aliases of plan/paywall_name kept so pre-existing dashboards
+                // keyed on the old HC-paywall event keys keep working.
+                "plan_id": planLabel(for: product),
+                "paywall_variant": paywallName
             ])
             Event.trackTikTokEngagement(action: "trial_started", category: "subscription")
         } else {

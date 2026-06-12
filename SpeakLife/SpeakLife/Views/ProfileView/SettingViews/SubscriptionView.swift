@@ -252,17 +252,7 @@ struct OfferPageView: View {
                         ]
                     )
                     
-                    // Check if this is a trial start
-                    let hasTrial = product.subscription?.introductoryOffer?.period != nil
-                    if hasTrial {
-                        AnalyticsService.shared.trackTrialStarted(
-                            productId: iap,
-                            metadata: [
-                                "trial_days": product.subscription?.introductoryOffer?.period.value ?? 0,
-                                "variant": "standard"
-                            ]
-                        )
-                    }
+                    // trial_started fires from SubscriptionStore.purchase — single source of truth
                 }
                 
                 // Keep existing event for backward compatibility
@@ -659,18 +649,8 @@ struct SubscriptionView: View {
                         ]
                     )
                     
-                    // Check if this is a trial start
-                    let hasTrial = currentSelection.subscription?.introductoryOffer?.period != nil
-                    if hasTrial {
-                        AnalyticsService.shared.trackTrialStarted(
-                            productId: currentSelection.id,
-                            metadata: [
-                                "trial_days": currentSelection.subscription?.introductoryOffer?.period.value ?? 0,
-                                "variant": "standard"
-                            ]
-                        )
-                    }
-                    
+                    // trial_started fires from SubscriptionStore.purchase — single source of truth
+
                     // Keep existing event for backward compatibility
                     Analytics.logEvent(currentSelection.id, parameters: nil)
                     callback?()

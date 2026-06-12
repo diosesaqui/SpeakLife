@@ -11,7 +11,6 @@
 import Foundation
 import StoreKit
 import UserNotifications
-import FirebaseAnalytics
 
 final class TrialExperienceService: ObservableObject {
     static let shared = TrialExperienceService()
@@ -70,7 +69,7 @@ final class TrialExperienceService: ObservableObject {
         UserDefaults.standard.set(length, forKey: kTrialLengthDays)
 
         scheduleTrialPushes(from: now, trialLengthDays: length)
-        Analytics.logEvent("trial_experience_started", parameters: [
+        AnalyticsService.shared.track("trial_experience_started", parameters: [
             "trial_length_days": length
         ])
     }
@@ -103,7 +102,7 @@ final class TrialExperienceService: ObservableObject {
     func onTrialConverted() {
         UserDefaults.standard.set(false, forKey: kTrialActive)
         center.removePendingNotificationRequests(withIdentifiers: ["trial_d2", "trial_d3"])
-        Analytics.logEvent("trial_experience_converted", parameters: [
+        AnalyticsService.shared.track("trial_experience_converted", parameters: [
             "declarations_during_trial": declarationCountDuringTrial,
             "trial_day": trialDay
         ])
@@ -114,6 +113,20 @@ final class TrialExperienceService: ObservableObject {
     /// has stale pushes from the pre-fix isTrialProduct/willStartTrial bug.
     func clearPendingTrialPushes() {
         center.removePendingNotificationRequests(withIdentifiers: ["trial_d2", "trial_d3"])
+    }
+
+    /// Re-schedule the D2/D3 trial-ending pushes from the persisted trial
+    /// state. Flows should call this right after the user grants notification
+    /// permission: the paywall runs BEFORE the onboarding notification ask, so
+    /// the original scheduling may have happened while authorization was still
+    /// .notDetermined and relied on undocumented OS queuing. Safe to call any
+    /// time — the trial_d2/trial_d3 identifiers are constant, so re-adding
+    /// replaces the pending requests (no duplicates), and the scheduling
+    /// path's past-date guards keep late re-scheduling from firing stale
+    /// pushes. No-op when no trial is active or no start date was stored.
+    func reschedulePendingTrialPushesIfNeeded() {
+        guard isTrialActive, let start = trialStartDate else { return }
+        scheduleTrialPushes(from: start, trialLengthDays: trialLengthDays)
     }
 
     // MARK: - Push Notifications
