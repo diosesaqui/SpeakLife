@@ -1282,6 +1282,302 @@ struct SurveyCommitmentHoldScreen: View {
     }
 }
 
+// MARK: - Extended Quiz (Q2-Q6 in the warfare/product flows)
+
+/// One selectable answer in an extended-quiz question. `value` is the raw
+/// analytics value stored on SurveyResponses and stamped onto
+/// `quiz_question_answered` + the flow-completed events.
+struct ExtendedQuizOption: Identifiable {
+    let value: String
+    let label: String
+    let sublabel: String?
+    let symbol: String
+
+    var id: String { value }
+
+    init(value: String, label: String, sublabel: String? = nil, symbol: String) {
+        self.value = value
+        self.label = label
+        self.sublabel = sublabel
+        self.symbol = symbol
+    }
+}
+
+/// Copy + options for one extended-quiz question. The five questions inserted
+/// after the burden picker in the warfare and product arms live here so both
+/// flows render identical screens.
+struct ExtendedQuizQuestion {
+    let key: String
+    let title: String
+    let subtitle: String
+    let options: [ExtendedQuizOption]
+
+    static let battleDuration = ExtendedQuizQuestion(
+        key: "battle_duration",
+        title: "How long has this battle\nbeen going on?",
+        subtitle: "Be honest. This shapes your plan.",
+        options: [
+            ExtendedQuizOption(value: "weeks",  label: "A few weeks", symbol: "clock"),
+            ExtendedQuizOption(value: "months", label: "A few months", symbol: "calendar"),
+            ExtendedQuizOption(value: "years",  label: "Years", symbol: "hourglass"),
+            ExtendedQuizOption(value: "always", label: "As long as I can remember", symbol: "infinity")
+        ]
+    )
+
+    static let alreadyTried = ExtendedQuizQuestion(
+        key: "already_tried",
+        title: "What have you already tried?",
+        subtitle: "There's no wrong answer here.",
+        options: [
+            ExtendedQuizOption(value: "prayer",      label: "Prayer when it gets bad", symbol: "hands.sparkles.fill"),
+            ExtendedQuizOption(value: "devotionals", label: "Devotionals and reading plans", symbol: "book.fill"),
+            ExtendedQuizOption(value: "therapy",     label: "Therapy or counseling", symbol: "person.2.fill"),
+            ExtendedQuizOption(value: "willpower",   label: "Pushing through on my own", symbol: "figure.walk"),
+            ExtendedQuizOption(value: "everything",  label: "All of it. I'm still in the fight", symbol: "flame.fill")
+        ]
+    )
+
+    static let hitsHardest = ExtendedQuizQuestion(
+        key: "hits_hardest",
+        title: "When does it hit hardest?",
+        subtitle: "We'll arm you for that exact moment.",
+        options: [
+            ExtendedQuizOption(value: "night",   label: "3am wake-ups and racing thoughts", symbol: "moon.zzz.fill"),
+            ExtendedQuizOption(value: "morning", label: "First thing in the morning", symbol: "sunrise.fill"),
+            ExtendedQuizOption(value: "midday",  label: "Under pressure during the day", symbol: "sun.max.fill"),
+            ExtendedQuizOption(value: "evening", label: "When everything goes quiet at night", symbol: "moon.stars.fill")
+        ]
+    )
+
+    static let connectStyle = ExtendedQuizQuestion(
+        key: "connect_style",
+        title: "How do you connect best\nwith God's Word?",
+        subtitle: "Your plan will lead with this.",
+        options: [
+            ExtendedQuizOption(value: "speaking",   label: "Speaking it out loud", symbol: "waveform"),
+            ExtendedQuizOption(value: "listening",  label: "Listening on the go", symbol: "headphones"),
+            ExtendedQuizOption(value: "reading",    label: "Reading and reflecting", symbol: "book.closed.fill"),
+            ExtendedQuizOption(value: "journaling", label: "Writing and journaling", symbol: "square.and.pencil")
+        ]
+    )
+
+    static let dailyMinutes = ExtendedQuizQuestion(
+        key: "daily_minutes",
+        title: "How much time can you\ngive this daily?",
+        subtitle: "Small and daily beats big and rare.",
+        options: [
+            ExtendedQuizOption(value: "one",   label: "1 minute. I need it fast", symbol: "bolt.fill"),
+            ExtendedQuizOption(value: "three", label: "3 minutes morning and night", symbol: "clock.fill"),
+            ExtendedQuizOption(value: "ten",   label: "10 minutes. I want to go deep", symbol: "books.vertical.fill")
+        ]
+    )
+}
+
+/// Icon-tile answer row matching the burden pickers' chrome (icon, label,
+/// optional sub-label, radio circle, selection highlight).
+private struct QuizOptionRow: View {
+    let option: ExtendedQuizOption
+    let isSelected: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: {
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            action()
+        }) {
+            HStack(spacing: 14) {
+                Image(systemName: option.symbol)
+                    .font(.system(size: 22))
+                    .foregroundColor(.white.opacity(isSelected ? 1 : 0.7))
+                    .frame(width: 32)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(option.label)
+                        .font(.system(size: 16, weight: .semibold, design: .rounded))
+                        .foregroundColor(.white)
+                        .fixedSize(horizontal: false, vertical: true)
+                    if let sub = option.sublabel {
+                        Text(sub)
+                            .font(.system(size: 13, weight: .regular, design: .rounded))
+                            .foregroundColor(.white.opacity(0.55))
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+                Spacer()
+                ZStack {
+                    Circle()
+                        .strokeBorder(isSelected ? Color.white : Color.white.opacity(0.35), lineWidth: 1.5)
+                        .frame(width: 22, height: 22)
+                    if isSelected {
+                        Circle().fill(Color.white).frame(width: 12, height: 12)
+                    }
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 14)
+            .background(
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .fill(isSelected ? Color.white.opacity(0.15) : Color.white.opacity(0.06))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                            .strokeBorder(isSelected ? Color.white.opacity(0.5) : Color.white.opacity(0.12), lineWidth: 1)
+                    )
+            )
+            .animation(.spring(response: 0.3, dampingFraction: 0.75), value: isSelected)
+        }
+        .buttonStyle(PlainButtonStyle())
+    }
+}
+
+/// Reusable single-select question screen for the extended quiz. Continue is
+/// disabled until an option is selected; no auto-advance. Fires
+/// `quiz_question_shown` on appear and `quiz_question_answered` on continue,
+/// both tagged with the flow ("warfare" | "product").
+struct SurveyExtendedQuizScreen: View {
+    let size: CGSize
+    let flow: String
+    let question: ExtendedQuizQuestion
+    @Binding var selection: String?
+    let onContinue: () -> Void
+
+    @State private var v = false
+
+    var body: some View {
+        VStack(spacing: 0) {
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 22) {
+                    Spacer().frame(height: size.height * 0.10)
+
+                    VStack(spacing: 12) {
+                        Text(question.title)
+                            .font(.system(size: 27, weight: .bold, design: .rounded))
+                            .foregroundColor(.white)
+                            .multilineTextAlignment(.center)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .planRevealStagger(v)
+
+                        Text(question.subtitle)
+                            .font(.system(size: 15, weight: .regular, design: .rounded))
+                            .foregroundColor(.white.opacity(0.65))
+                            .multilineTextAlignment(.center)
+                            .lineSpacing(3)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .planRevealStagger(v, delay: 0.1)
+                    }
+                    .padding(.horizontal, 28)
+
+                    VStack(spacing: 10) {
+                        ForEach(question.options) { option in
+                            QuizOptionRow(option: option, isSelected: selection == option.value) {
+                                selection = option.value
+                            }
+                        }
+                    }
+                    .padding(.horizontal, 20)
+                    .planRevealStagger(v, delay: 0.2)
+
+                    Spacer().frame(height: 8)
+                }
+            }
+
+            SurveyContinueButton(isEnabled: selection != nil) {
+                AnalyticsService.shared.track("quiz_question_answered", parameters: [
+                    "flow": flow,
+                    "question": question.key,
+                    "answer": selection ?? "unknown"
+                ])
+                onContinue()
+            }
+            .padding(.top, 8).padding(.bottom, 36)
+        }
+        .onAppear {
+            AnalyticsService.shared.track("quiz_question_shown", parameters: [
+                "flow": flow,
+                "question": question.key
+            ])
+            withAnimation { v = true }
+        }
+    }
+}
+
+/// Micro-insight interstitial between Q3 and Q4: reframes the product
+/// mechanism (speaking vs reading) right after the user names what they've
+/// already tried. Tap-through, no selection. Qualitative claims only.
+struct SurveyQuizInsightScreen: View {
+    let size: CGSize
+    let flow: String
+    let onContinue: () -> Void
+
+    @State private var v = false
+
+    var body: some View {
+        VStack(spacing: 0) {
+            Spacer()
+
+            VStack(spacing: 26) {
+                ZStack {
+                    Circle()
+                        .fill(Color.white.opacity(0.10))
+                        .frame(width: 96, height: 96)
+                    Image(systemName: "waveform")
+                        .font(.system(size: 40))
+                        .foregroundColor(.white)
+                }
+                .planRevealStagger(v)
+
+                VStack(spacing: 14) {
+                    Text("HERE'S THE SHIFT")
+                        .font(.system(size: 12, weight: .bold, design: .rounded))
+                        .foregroundColor(.white.opacity(0.5))
+                        .kerning(1.4)
+                        .multilineTextAlignment(.center)
+                        .planRevealStagger(v, delay: 0.08)
+
+                    Text("Reading calms the mind.\nSpeaking takes ground.")
+                        .font(.system(size: 30, weight: .bold, design: .rounded))
+                        .foregroundColor(.white)
+                        .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .planRevealStagger(v, delay: 0.14)
+
+                    Text("Most believers read about peace and feel better for an hour. Jesus spoke to storms, and they obeyed. Your plan is built around your voice, because faith comes by hearing, and hearing by the word of God.")
+                        .font(.system(size: 17, weight: .regular, design: .rounded))
+                        .foregroundColor(.white.opacity(0.75))
+                        .multilineTextAlignment(.center)
+                        .lineSpacing(4)
+                        .padding(.horizontal, 22)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .planRevealStagger(v, delay: 0.22)
+                }
+
+                VStack(spacing: 4) {
+                    Text("\"So then faith comes by hearing, and hearing by the word of God.\"")
+                        .font(.system(size: 15, weight: .regular, design: .serif))
+                        .italic()
+                        .foregroundColor(.white.opacity(0.8))
+                        .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Text("Romans 10:17")
+                        .font(.system(size: 12, weight: .medium, design: .rounded))
+                        .foregroundColor(.white.opacity(0.45))
+                }
+                .padding(.horizontal, 28)
+                .planRevealStagger(v, delay: 0.32)
+            }
+            .padding(.horizontal, 28)
+
+            Spacer()
+
+            SurveyContinueButton(label: "That's What I Want →") { onContinue() }
+                .padding(.bottom, 36)
+                .planRevealStagger(v, delay: 0.42)
+        }
+        .onAppear {
+            AnalyticsService.shared.track("quiz_insight_shown", parameters: ["flow": flow])
+            withAnimation { v = true }
+        }
+    }
+}
+
 // MARK: - Plan Building (pre-paywall loader)
 
 /// A ~4s "building your plan" loader shown right before the plan reveal +
@@ -1422,6 +1718,10 @@ struct SurveyPlanRevealScreen: View {
     /// The user's saved personal declaration, if they recorded one. When nil
     /// (or empty) the burden's curated preview declaration is shown instead.
     let personalDeclaration: String?
+    /// Raw "daily_minutes" quiz answer ("one" | "three" | "ten"). Drives the
+    /// "Daily rhythm" row copy; nil falls back to the generic line so callers
+    /// without the extended quiz are unaffected.
+    var dailyMinutes: String? = nil
     let onContinue: () -> Void
 
     @State private var v = false
@@ -1429,6 +1729,15 @@ struct SurveyPlanRevealScreen: View {
     private var hasPersonalDeclaration: Bool {
         if let text = personalDeclaration, !text.isEmpty { return true }
         return false
+    }
+
+    private var dailyRhythmDetail: String {
+        switch dailyMinutes {
+        case "one":   return "1 minute, morning and evening"
+        case "three": return "3 minutes, morning and evening"
+        case "ten":   return "10 minutes of depth, morning and evening"
+        default:      return "Morning and evening declarations, built around your day."
+        }
     }
 
     private var declarationText: String {
@@ -1476,7 +1785,7 @@ struct SurveyPlanRevealScreen: View {
                         planRow(
                             icon: "bell.badge.fill",
                             title: "Daily rhythm",
-                            detail: "Morning and evening declarations, built around your day."
+                            detail: dailyRhythmDetail
                         )
                     }
                     .background(

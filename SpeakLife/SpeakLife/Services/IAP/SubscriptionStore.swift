@@ -650,8 +650,13 @@ final class SubscriptionStore: ObservableObject {
         // on hasIntroOffer — otherwise returning subscribers who pay full price
         // get scheduled "your trial ends tomorrow" pushes for a trial they
         // never started.
+        // The trial length is read from THIS product's intro offer (3-day,
+        // 7-day, ...) so the reminder offsets track whichever SKU Remote
+        // Config pointed the paywall at — never a hardcoded 3 days.
         if willStartTrial {
-            TrialExperienceService.shared.onTrialStarted()
+            TrialExperienceService.shared.onTrialStarted(
+                lengthInDays: TrialExperienceService.introTrialDays(for: product)
+            )
         } else if TrialExperienceService.shared.isTrialActive {
             // Trial-active user just bought a paid product → mark converted so
             // we cancel the still-pending trial pushes and stop nagging them.

@@ -86,7 +86,30 @@ struct ProductOnboardingView: View {
         case .experience:  OnboardingProductExperienceScreen(size: size, flow: "product") { advance() }
         case .categoryPicker:
             ProductCategoryPickerScreen(size: size, responses: responses) { advance() }
+        case .battleDuration, .alreadyTried, .insight, .hitsHardest, .connectStyle, .dailyMinutes:
+            quizStepView
         default: backHalfView
+        }
+    }
+
+    // Extended quiz steps (Q2-Q6 + insight), shared with the warfare arm.
+    @ViewBuilder
+    private var quizStepView: some View {
+        switch currentStep {
+        case .battleDuration:
+            SurveyExtendedQuizScreen(size: size, flow: "product", question: .battleDuration, selection: $responses.battleDuration) { advance() }
+        case .alreadyTried:
+            SurveyExtendedQuizScreen(size: size, flow: "product", question: .alreadyTried, selection: $responses.alreadyTried) { advance() }
+        case .insight:
+            SurveyQuizInsightScreen(size: size, flow: "product") { advance() }
+        case .hitsHardest:
+            SurveyExtendedQuizScreen(size: size, flow: "product", question: .hitsHardest, selection: $responses.hitsHardest) { advance() }
+        case .connectStyle:
+            SurveyExtendedQuizScreen(size: size, flow: "product", question: .connectStyle, selection: $responses.connectStyle) { advance() }
+        case .dailyMinutes:
+            SurveyExtendedQuizScreen(size: size, flow: "product", question: .dailyMinutes, selection: $responses.dailyMinutes) { advance() }
+        default:
+            EmptyView()
         }
     }
 
@@ -113,7 +136,8 @@ struct ProductOnboardingView: View {
                 size: size,
                 burden: responses.heaviestBurden ?? .peace,
                 flow: "product",
-                personalDeclaration: savedDeclaration?.declarationText
+                personalDeclaration: savedDeclaration?.declarationText,
+                dailyMinutes: responses.dailyMinutes
             ) { advance() }
         case .paywall:
             HighConversionPaywallView(callback: { advance() }, source: "onboarding", isHardPaywall: true)
@@ -146,6 +170,13 @@ struct ProductOnboardingView: View {
         // events carry a meaningful segment for this arm (quiz sets its own).
         if currentStep == .categoryPicker, let burden = responses.heaviestBurden {
             appState.onboardingSegment = "product_\(burden.shortLabel)"
+        }
+
+        // Leaving the hits-hardest question: pre-select the notification-time
+        // screen from when their battle hits (no auto-advance; still editable).
+        if currentStep == .hitsHardest, responses.notificationTime == nil,
+           let suggested = responses.suggestedNotificationTime {
+            responses.notificationTime = suggested
         }
 
         switch currentStep {
@@ -185,6 +216,11 @@ struct ProductOnboardingView: View {
         AnalyticsService.shared.track("product_onboarding_completed", parameters: [
             "goal_word": goalWord.rawValue,
             "burden": responses.heaviestBurden?.rawValue ?? "unknown",
+            "battle_duration": responses.battleDuration ?? "unknown",
+            "already_tried": responses.alreadyTried ?? "unknown",
+            "hits_hardest": responses.hitsHardest ?? "unknown",
+            "connect_style": responses.connectStyle ?? "unknown",
+            "daily_minutes": responses.dailyMinutes ?? "unknown",
             "set_personal_declaration": (savedDeclaration != nil) as NSNumber
         ])
 
@@ -221,22 +257,33 @@ enum ProductStep: Int, CaseIterable {
     case mechanism       = 2   // New mechanism
     case experience      = 3   // Good experience
     case categoryPicker  = 4   // Clarity + personalization
+    // Extended personalization quiz (shared screens in SurveyOnboardingScreens)
+    case battleDuration  = 5   // Q2: how long has this battle been going on?
+    case alreadyTried    = 6   // Q3: what have you already tried?
+    case insight         = 7   // micro-insight interstitial (reading vs speaking)
+    case hitsHardest     = 8   // Q4: when does it hit hardest? (preselects notification time)
+    case connectStyle    = 9   // Q5: how do you connect best with God's Word?
+    case dailyMinutes    = 10  // Q6: how much time daily? (drives plan reveal rhythm)
     // Shared back-half (reused from the survey flow)
-    case firstDeclaration = 5  // taste of the matched declaration
-    case personalDeclaration = 6
-    case rating          = 7   // rating ask at the personal-declaration peak
-    case planBuilding    = 8   // "building your plan" loader (transition, no bar)
-    case planReveal      = 9   // named 30-day plan reveal — sets up the paywall ask
-    case paywall         = 10
-    case notificationTime = 11 // terminal — completes onboarding
+    case firstDeclaration = 11 // taste of the matched declaration
+    case personalDeclaration = 12
+    case rating          = 13  // rating ask at the personal-declaration peak
+    case planBuilding    = 14  // "building your plan" loader (transition, no bar)
+    case planReveal      = 15  // named 30-day plan reveal — sets up the paywall ask
+    case paywall         = 16
+    case notificationTime = 17 // terminal — completes onboarding
 
-    // Index within the value-led intro screens, used to drive the progress bar.
+    // Index within the value-led intro + quiz screens, used to drive the
+    // progress bar (visible investment across the question screens too).
     var valueScreenIndex: Int? {
-        let screens: [ProductStep] = [.hook, .speed, .mechanism, .experience, .categoryPicker]
+        let screens: [ProductStep] = [
+            .hook, .speed, .mechanism, .experience, .categoryPicker,
+            .battleDuration, .alreadyTried, .insight, .hitsHardest, .connectStyle, .dailyMinutes
+        ]
         return screens.firstIndex(of: self).map { $0 + 1 }
     }
 
-    static let totalValueScreens = 5
+    static let totalValueScreens = 11
 }
 
 // MARK: - Shared Components

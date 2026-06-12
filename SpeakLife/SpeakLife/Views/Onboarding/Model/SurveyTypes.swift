@@ -462,6 +462,28 @@ class SurveyResponses: ObservableObject {
     @Published var declarationExperience: DeclarationExperience? = nil
     @Published var notificationTime: NotificationTime? = nil
 
+    // Extended quiz answers (warfare/product flows, Q2-Q6). Stored as the raw
+    // analytics values; the question copy + options live in
+    // SurveyOnboardingScreens.swift (QuizQuestion).
+    @Published var battleDuration: String? = nil   // weeks | months | years | always
+    @Published var alreadyTried: String? = nil     // prayer | devotionals | therapy | willpower | everything
+    @Published var hitsHardest: String? = nil      // night | morning | midday | evening
+    @Published var connectStyle: String? = nil     // speaking | listening | reading | journaling
+    @Published var dailyMinutes: String? = nil     // one | three | ten
+
+    /// Maps the "when does it hit hardest?" answer to a notification window so
+    /// the time screen arrives pre-selected (the user can still change it).
+    /// 3am/night battles get all-day anchoring; the rest map directly.
+    var suggestedNotificationTime: NotificationTime? {
+        switch hitsHardest {
+        case "morning": return .morning
+        case "midday":  return .midday
+        case "evening": return .evening
+        case "night":   return .allDay
+        default:        return nil
+        }
+    }
+
     var resolvedGoalWord: SurveyGoalWord {
         heaviestBurden?.goalWord ?? .peace
     }

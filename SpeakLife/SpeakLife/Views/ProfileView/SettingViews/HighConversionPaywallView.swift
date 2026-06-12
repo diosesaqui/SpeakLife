@@ -39,6 +39,19 @@ struct HighConversionPaywallView: View {
     /// never resets, so the user sees the welcome offer at most once for life.
     @AppStorage("welcomeOfferShown") private var welcomeOfferShown = false
 
+    // MARK: - Post-Purchase Mission State
+    // Brief mission/thank-you state shown after a successful purchase from the
+    // onboarding paywall (main CTA or welcome offer) BEFORE the original
+    // success path runs. Reframes the subscription as mission (the Bible Chat
+    // pattern). Settings / feature-gate purchases keep the immediate dismiss —
+    // those users are mid-task.
+    private enum MissionResolution { case mainPurchase, welcomeOfferPurchase }
+    @State private var showMissionScreen = false
+    /// Exactly-once guard: the CTA tap and the 6-second auto-advance can race.
+    @State private var missionContinued = false
+    @State private var missionShownAt = Date()
+    @State private var missionResolution: MissionResolution = .mainPurchase
+
     var callback: (() -> Void)?
     /// Where this paywall is being shown from. Drives the `source` property on
     /// paywall analytics events ('onboarding' | 'settings' | 'feature_gate').
@@ -232,7 +245,13 @@ struct HighConversionPaywallView: View {
         ZStack {
             backgroundGradient.ignoresSafeArea()
 
-            if showWelcomeOffer {
+            if showMissionScreen {
+                // Post-purchase mission screen. Same state-swap pattern as the
+                // welcome offer below; takes precedence over both because it
+                // only ever appears after a successful purchase.
+                PostPurchaseMissionView(onContinue: continueMission)
+                    .transition(.opacity)
+            } else if showWelcomeOffer {
                 // Decline-path recovery screen. State-swap (not a modal): this
                 // paywall is embedded as a step inside the onboarding flows,
                 // so swapping content in place is safer than layering a
@@ -240,7 +259,8 @@ struct HighConversionPaywallView: View {
                 WelcomeOfferView(
                     variant: paywallVariant,
                     segment: segmentParam,
-                    onResolve: resolveWelcomeOffer
+                    onResolve: resolveWelcomeOffer,
+                    onPurchaseSuccess: { presentMissionScreen(.welcomeOfferPurchase) }
                 )
                 .transition(.opacity)
             } else {
@@ -609,6 +629,7 @@ struct HighConversionPaywallView: View {
                // closingLine
                 ctaButton
                 trialReassuranceLine
+                generosityLine
                 payWhatYouCanCTA
                 bottomLinks
             }
@@ -734,6 +755,27 @@ struct HighConversionPaywallView: View {
         }
     }
 
+    // MARK: - Generosity Line (mission framing above the pay-what-you-can link)
+    // TRUTHFULNESS: defensible because the pay-what-you-can program exists —
+    // full-price subscribers effectively subsidize it. Never escalate this to
+    // a literal one-for-one donated subscription claim ("gives SpeakLife free
+    // to someone"); no such program exists.
+    private var generosityLine: some View {
+        HStack(alignment: .top, spacing: 6) {
+            Image(systemName: "heart.fill")
+                .font(.system(size: 11))
+                .foregroundColor(.white.opacity(0.6))
+                .padding(.top, 2)
+            Text("Your subscription helps keep SpeakLife within reach for believers who can't afford full price.")
+                .font(.system(size: 12))
+                .foregroundColor(.white.opacity(0.6))
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.horizontal, 12)
+    }
+
     // MARK: - Pay What You Can (secondary CTA, intentionally subordinate to main CTA)
     @ViewBuilder
     private var payWhatYouCanCTA: some View {
@@ -831,6 +873,42 @@ struct HighConversionPaywallView: View {
         dismiss()
     }
 
+    // MARK: - Post-Purchase Mission Screen Routing
+    /// Swaps in the mission screen after a successful purchase, remembering
+    /// which success path to run when it continues. Callers clear the purchase
+    /// spinner (declarationStore.isPurchasing) before invoking this, so the
+    /// spinner never overlaps the mission screen. Auto-advances after 6
+    /// seconds so the user is never trapped here.
+    private func presentMissionScreen(_ resolution: MissionResolution) {
+        missionResolution = resolution
+        missionShownAt = Date()
+        AnalyticsService.shared.track("post_purchase_mission_shown", parameters: [
+            "variant": paywallVariant,
+            "source": source
+        ])
+        withAnimation(.easeInOut(duration: 0.3)) { showMissionScreen = true }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 6) { continueMission() }
+    }
+
+    /// Runs the original purchase success path exactly once, whether triggered
+    /// by the mission CTA tap or the 6-second auto-advance (both can fire).
+    /// The welcome-offer path goes through resolveWelcomeOffer, preserving its
+    /// own exactly-once guard.
+    private func continueMission() {
+        guard !missionContinued else { return }
+        missionContinued = true
+        AnalyticsService.shared.track("post_purchase_mission_continue", parameters: [
+            "seconds_on_screen": Int(Date().timeIntervalSince(missionShownAt))
+        ])
+        switch missionResolution {
+        case .mainPurchase:
+            callback?()
+            dismiss()
+        case .welcomeOfferPurchase:
+            resolveWelcomeOffer()
+        }
+    }
+
     // MARK: - Lifecycle
     private func onAppear() {
         timeOnPaywall = Date()
@@ -897,7 +975,19 @@ struct HighConversionPaywallView: View {
                     // here too double-counted trials (and misfired for plans
                     // without an intro offer, since the old gate only checked the
                     // annual product).
-                    await MainActor.run { declarationStore.isPurchasing = false; callback?(); dismiss() }
+                    await MainActor.run {
+                        // Spinner clears before the mission screen swaps in.
+                        declarationStore.isPurchasing = false
+                        if source == "onboarding" {
+                            // Onboarding buyers see the mission screen first;
+                            // its continue path runs callback?() + dismiss().
+                            presentMissionScreen(.mainPurchase)
+                        } else {
+                            // Settings / feature-gate buyers are mid-task —
+                            // keep the immediate dismiss.
+                            callback?(); dismiss()
+                        }
+                    }
                 } else {
                     await MainActor.run { declarationStore.isPurchasing = false }
                 }
@@ -997,8 +1087,14 @@ struct WelcomeOfferView: View {
     /// Onboarding segment, forwarded for the same reason.
     let segment: String
     /// Runs the original paywall dismissal path (onboarding callback +
-    /// dismiss). The parent guards it so it can only ever fire once.
+    /// dismiss). The parent guards it so it can only ever fire once. Fired on
+    /// decline ("No thanks, continue").
     let onResolve: () -> Void
+    /// Fired on purchase success instead of onResolve, so the parent can show
+    /// the post-purchase mission screen first. The mission screen's continue
+    /// path then calls the same guarded resolve, preserving exactly-once
+    /// semantics for the onboarding callback.
+    let onPurchaseSuccess: () -> Void
 
     @State private var isShowingError = false
     @State private var errorMessage = ""
@@ -1218,7 +1314,9 @@ struct WelcomeOfferView: View {
                 let purchased = try await subscriptionStore.purchase(product, paywallName: "welcome_offer_v1")
                 await MainActor.run {
                     declarationStore.isPurchasing = false
-                    if purchased { onResolve() }
+                    // Spinner cleared above; the parent swaps in the mission
+                    // screen, whose continue path runs the guarded resolve.
+                    if purchased { onPurchaseSuccess() }
                 }
             } catch {
                 await MainActor.run {
@@ -1248,6 +1346,57 @@ struct WelcomeOfferView: View {
                 errorMessage = restored ? "Purchases restored" : "No purchases found to restore."
                 isShowingError = true
             }
+        }
+    }
+}
+
+// MARK: - Post-Purchase Mission Screen
+/// Brief, reverent thank-you state shown after a successful purchase from the
+/// onboarding paywall (main CTA or welcome offer), BEFORE the original success
+/// callback runs. Reframes the subscription as mission: paying members keep
+/// the pay-what-you-can program viable. No confetti. TRUTHFULNESS: same
+/// constraint as the paywall generosity line — never claim a one-for-one
+/// donated subscription; no such program exists. Restore success and
+/// settings / feature-gate purchases never route here. The parent auto-fires
+/// onContinue after 6 seconds (exactly-once guarded) so nobody is trapped.
+private struct PostPurchaseMissionView: View {
+    let onContinue: () -> Void
+
+    var body: some View {
+        VStack(spacing: 0) {
+            Spacer()
+            VStack(spacing: 16) {
+                Image(systemName: "heart.circle.fill")
+                    .font(.system(size: 64))
+                    .foregroundColor(Constants.DAMidBlue)
+                Text("WELCOME TO SPEAKLIFE")
+                    .font(.system(size: 12, weight: .bold))
+                    .tracking(2)
+                    .foregroundColor(Constants.DAMidBlue)
+                Text("Your plan is ready.")
+                    .font(.system(size: 26, weight: .bold))
+                    .foregroundColor(.white)
+                    .multilineTextAlignment(.center)
+                Text("You just did more than subscribe. Members like you keep SpeakLife within reach for believers walking through their hardest season. Now let's take some ground.")
+                    .font(.system(size: 15))
+                    .foregroundColor(.white.opacity(0.75))
+                    .multilineTextAlignment(.center)
+                    .lineSpacing(4)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .padding(.horizontal, 36)
+            Spacer()
+            Button(action: onContinue) {
+                Text("Start Speaking Life →")
+                    .font(.system(size: 17, weight: .bold))
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 17)
+                    .background(RoundedRectangle(cornerRadius: 30).fill(LinearGradient(colors: [Constants.DAMidBlue, Constants.DAMidBlue.opacity(0.85)], startPoint: .leading, endPoint: .trailing)))
+            }
+            .buttonStyle(PlainButtonStyle())
+            .padding(.horizontal, 20)
+            .padding(.bottom, 40)
         }
     }
 }
