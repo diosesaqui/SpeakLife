@@ -42,9 +42,14 @@ struct WarfareOnboardingView: View {
     @State private var currentStep: WarfareStep = .thief
     @State private var savedDeclaration: PersonalDeclaration? = nil
 
+    // Snapshot accessor for the quiz v2 Remote Config flag. When false the
+    // flow is byte-for-byte the current quiz (belief step skipped, connect
+    // style question shown, no plan-reveal echo).
+    private var quizV2: Bool { subscriptionStore.useQuizV2 }
+
     private var valueProgress: Double {
-        guard let idx = currentStep.valueScreenIndex else { return 0 }
-        return Double(idx) / Double(WarfareStep.totalValueScreens)
+        guard let idx = currentStep.valueScreenIndex(quizV2: quizV2) else { return 0 }
+        return Double(idx) / Double(WarfareStep.totalValueScreens(quizV2: quizV2))
     }
 
     var body: some View {
@@ -58,7 +63,7 @@ struct WarfareOnboardingView: View {
                 ))
                 .id(currentStep.rawValue)
 
-            if currentStep.valueScreenIndex != nil {
+            if currentStep.valueScreenIndex(quizV2: quizV2) != nil {
                 VStack {
                     GeometryReader { geo in
                         ZStack(alignment: .leading) {
@@ -90,7 +95,7 @@ struct WarfareOnboardingView: View {
             OnboardingProductExperienceScreen(size: size, flow: "warfare") { advance() }
         case .takeBackPicker:
             WarfareTakeBackPickerScreen(size: size, responses: responses) { advance() }
-        case .battleDuration, .alreadyTried, .insight, .hitsHardest, .connectStyle, .dailyMinutes:
+        case .battleDuration, .alreadyTried, .insight, .hitsHardest, .connectStyle, .belief, .dailyMinutes:
             quizStepView
         default: backHalfView
         }
@@ -109,7 +114,16 @@ struct WarfareOnboardingView: View {
         case .hitsHardest:
             SurveyExtendedQuizScreen(size: size, flow: "warfare", question: .hitsHardest, selection: $responses.hitsHardest) { advance() }
         case .connectStyle:
-            SurveyExtendedQuizScreen(size: size, flow: "warfare", question: .connectStyle, selection: $responses.connectStyle) { advance() }
+            // Quiz v2 swaps the connect-style question for the burden-aware
+            // outcome question in the same slot; v1 is unchanged.
+            if quizV2 {
+                SurveyExtendedQuizScreen(size: size, flow: "warfare", question: .victoryLooksLike(for: responses.heaviestBurden ?? .peace), selection: $responses.victoryOutcome) { advance() }
+            } else {
+                SurveyExtendedQuizScreen(size: size, flow: "warfare", question: .connectStyle, selection: $responses.connectStyle) { advance() }
+            }
+        case .belief:
+            // Quiz v2 only — v1's advance() jumps over this step entirely.
+            SurveyExtendedQuizScreen(size: size, flow: "warfare", question: .belief, selection: $responses.beliefLevel) { advance() }
         case .dailyMinutes:
             SurveyExtendedQuizScreen(size: size, flow: "warfare", question: .dailyMinutes, selection: $responses.dailyMinutes) { advance() }
         default:
@@ -141,7 +155,8 @@ struct WarfareOnboardingView: View {
                 burden: responses.heaviestBurden ?? .peace,
                 flow: "warfare",
                 personalDeclaration: savedDeclaration?.declarationText,
-                dailyMinutes: responses.dailyMinutes
+                dailyMinutes: responses.dailyMinutes,
+                victoryEcho: responses.victoryEcho  // nil in quiz v1
             ) { advance() }
         case .paywall:
             HighConversionPaywallView(callback: { advance() }, source: "onboarding", isHardPaywall: true)
@@ -187,7 +202,12 @@ struct WarfareOnboardingView: View {
         case .notificationTime:
             applyResponsesAndComplete()
         default:
-            let nextRaw = currentStep.rawValue + 1
+            var nextRaw = currentStep.rawValue + 1
+            // Quiz v1 has no belief step — jump straight from connect style
+            // to daily minutes, exactly the pre-v2 sequence.
+            if !quizV2, WarfareStep(rawValue: nextRaw) == .belief {
+                nextRaw += 1
+            }
             guard let next = WarfareStep(rawValue: nextRaw) else {
                 assertionFailure("WarfareOnboardingView.advance(): no successor for \(currentStep). .notificationTime should be terminal.")
                 onComplete()
@@ -225,6 +245,9 @@ struct WarfareOnboardingView: View {
             "hits_hardest": responses.hitsHardest ?? "unknown",
             "connect_style": responses.connectStyle ?? "unknown",
             "daily_minutes": responses.dailyMinutes ?? "unknown",
+            "victory_looks_like": responses.victoryOutcome ?? "unknown",
+            "belief": responses.beliefLevel ?? "unknown",
+            "quiz_version": quizV2 ? "v2" : "v1",
             "set_personal_declaration": (savedDeclaration != nil) as NSNumber
         ])
 
@@ -267,26 +290,28 @@ enum WarfareStep: Int, CaseIterable {
     case alreadyTried   = 7   // Q3: what have you already tried?
     case insight        = 8   // micro-insight interstitial (reading vs speaking)
     case hitsHardest    = 9   // Q4: when does it hit hardest? (preselects notification time)
-    case connectStyle   = 10  // Q5: how do you connect best with God's Word?
-    case dailyMinutes   = 11  // Q6: how much time daily? (drives plan reveal rhythm)
+    case connectStyle   = 10  // Q5: connect style (quiz v1) or victory outcome (quiz v2)
+    case belief         = 11  // quiz v2 only: do you believe God wants more? (v1 skips it)
+    case dailyMinutes   = 12  // Q6: how much time daily? (drives plan reveal rhythm)
     // Shared back-half (reused from the survey flow)
-    case firstDeclaration = 12
-    case personalDeclaration = 13
-    case rating          = 14  // rating ask at the personal-declaration peak
-    case planBuilding    = 15  // "building your battle plan" loader (transition, no bar)
-    case planReveal      = 16  // named 30-day plan reveal — sets up the paywall ask
-    case paywall         = 17
-    case notificationTime = 18 // terminal — completes onboarding
+    case firstDeclaration = 13
+    case personalDeclaration = 14
+    case rating          = 15  // rating ask at the personal-declaration peak
+    case planBuilding    = 16  // "building your battle plan" loader (transition, no bar)
+    case planReveal      = 17  // named 30-day plan reveal — sets up the paywall ask
+    case paywall         = 18
+    case notificationTime = 19 // terminal — completes onboarding
 
-    var valueScreenIndex: Int? {
-        let screens: [WarfareStep] = [
+    func valueScreenIndex(quizV2: Bool) -> Int? {
+        var screens: [WarfareStep] = [
             .thief, .paidFor, .weapon, .activation, .experience, .takeBackPicker,
-            .battleDuration, .alreadyTried, .insight, .hitsHardest, .connectStyle, .dailyMinutes
+            .battleDuration, .alreadyTried, .insight, .hitsHardest, .connectStyle, .belief, .dailyMinutes
         ]
+        if !quizV2 { screens.removeAll { $0 == .belief } }
         return screens.firstIndex(of: self).map { $0 + 1 }
     }
 
-    static let totalValueScreens = 12
+    static func totalValueScreens(quizV2: Bool) -> Int { quizV2 ? 13 : 12 }
 }
 
 // MARK: - Warfare scene content

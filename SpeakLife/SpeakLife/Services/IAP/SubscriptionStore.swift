@@ -178,6 +178,12 @@ final class SubscriptionStore: ObservableObject {
     // true  = show Weekly ($SpeakLife1Wk5) instead of Monthly on the paywall
     @Published var useWeeklyPlan = false
 
+    // MARK: - Quiz v2 A/B Test (warfare + product onboarding quiz)
+    // false = current quiz: connect_style question, no belief step (default)
+    // true  = outcome question ("victory_looks_like") replaces connect_style,
+    //         a belief question follows it, and the plan reveal echoes the outcome
+    @Published var useQuizV2 = false
+
     @Published var yearlySubscription = ""
     @Published var monthlySubscription = ""
     @Published var discountSubscription = ""
@@ -349,6 +355,9 @@ final class SubscriptionStore: ObservableObject {
 
         // Weekly Plan A/B Test
         useWeeklyPlan = remoteConfig["useWeeklyPlan"].boolValue
+
+        // Quiz v2 A/B Test (unset key resolves to false, so this ships dormant)
+        useQuizV2 = remoteConfig["useQuizV2"].boolValue
 
         // AI Feature Flag from Remote Config
         enableAIFeatures = remoteConfig["enableAIFeatures"].boolValue

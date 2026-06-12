@@ -1371,6 +1371,33 @@ struct ExtendedQuizQuestion {
             ExtendedQuizOption(value: "ten",   label: "10 minutes. I want to go deep", symbol: "books.vertical.fill")
         ]
     )
+
+    /// Quiz v2 only: the outcome question that replaces `connectStyle` when
+    /// Remote Config `useQuizV2` is on. Options are burden-aware so victory
+    /// reads in the user's own battle (see HeaviestBurden.victoryOptions).
+    static func victoryLooksLike(for burden: HeaviestBurden) -> ExtendedQuizQuestion {
+        ExtendedQuizQuestion(
+            key: "victory_looks_like",
+            title: "What would change if this\nbattle was actually won?",
+            subtitle: "Name it. That's what we aim at.",
+            options: burden.victoryOptions.map {
+                ExtendedQuizOption(value: $0.value, label: $0.label, symbol: $0.symbol)
+            }
+        )
+    }
+
+    /// Quiz v2 only: asked right after the outcome question. Every answer
+    /// simply advances — no judgmental follow-up.
+    static let belief = ExtendedQuizQuestion(
+        key: "belief",
+        title: "Do you believe God wants\nmore for you in this area?",
+        subtitle: "There's no wrong answer. This is between you and Him.",
+        options: [
+            ExtendedQuizOption(value: "yes",     label: "Yes, absolutely", symbol: "flame.fill"),
+            ExtendedQuizOption(value: "want_to", label: "I want to believe it", symbol: "heart.fill"),
+            ExtendedQuizOption(value: "unsure",  label: "Honestly, I'm not sure", symbol: "questionmark.circle.fill")
+        ]
+    )
 }
 
 /// Icon-tile answer row matching the burden pickers' chrome (icon, label,
@@ -1722,6 +1749,9 @@ struct SurveyPlanRevealScreen: View {
     /// "Daily rhythm" row copy; nil falls back to the generic line so callers
     /// without the extended quiz are unaffected.
     var dailyMinutes: String? = nil
+    /// Quiz v2 only: the user's victory-outcome echo phrase. When present the
+    /// week-4 arc line replays it in their own words; nil keeps the static line.
+    var victoryEcho: String? = nil
     let onContinue: () -> Void
 
     @State private var v = false
@@ -1743,6 +1773,13 @@ struct SurveyPlanRevealScreen: View {
     private var declarationText: String {
         if let text = personalDeclaration, !text.isEmpty { return text }
         return burden.previewDeclaration.text
+    }
+
+    private var weekFourLine: String {
+        if let echo = victoryEcho, !echo.isEmpty {
+            return "\(echo). Standing on promises."
+        }
+        return "Standing on promises, not fighting for footing."
     }
 
     var body: some View {
@@ -1803,7 +1840,7 @@ struct SurveyPlanRevealScreen: View {
                     VStack(alignment: .leading, spacing: 10) {
                         weekLine("WEEK 1", "Speak truth before the spiral starts.")
                         weekLine("WEEK 2", "God's Word becomes your first response.")
-                        weekLine("WEEK 4", "Standing on promises, not fighting for footing.")
+                        weekLine("WEEK 4", weekFourLine)
                     }
                     .padding(.horizontal, 32)
                     .frame(maxWidth: .infinity, alignment: .leading)
