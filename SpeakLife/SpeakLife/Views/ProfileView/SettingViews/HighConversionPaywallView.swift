@@ -12,7 +12,6 @@
 
 import SwiftUI
 import StoreKit
-import FirebaseAnalytics
 
 struct HighConversionPaywallView: View {
     @Environment(\.dismiss) var dismiss
@@ -28,7 +27,34 @@ struct HighConversionPaywallView: View {
     @State private var showPayWhatYouCan = false
     @State private var showCloseButton = false
     @State private var timeOnPaywall: Date = Date()
-    @State private var isEligibleForTrial = false
+    /// Per-product intro-offer eligibility (product id → eligible), checked
+    /// against Apple per user. Keyed per product because eligibility is asked
+    /// of whichever plan is selected (annual / monthly / weekly), and a single
+    /// global bit checked only against the annual product mislabels the others.
+    @State private var trialEligibility: [String: Bool] = [:]
+
+    // MARK: - Welcome Offer State (decline path)
+    // One recovery screen shown when an onboarding user dismisses this paywall
+    // without buying. Exactly one step deep (Apple 5.6): once it resolves we
+    // run the original callback/dismiss path and never show another offer.
+    @State private var showWelcomeOffer = false
+    @State private var welcomeOfferResolved = false
+    /// Once-ever persistence: flips true the moment the offer is presented and
+    /// never resets, so the user sees the welcome offer at most once for life.
+    @AppStorage("welcomeOfferShown") private var welcomeOfferShown = false
+
+    // MARK: - Post-Purchase Mission State
+    // Brief mission/thank-you state shown after a successful purchase from the
+    // onboarding paywall (main CTA or welcome offer) BEFORE the original
+    // success path runs. Reframes the subscription as mission (the Bible Chat
+    // pattern). Settings / feature-gate purchases keep the immediate dismiss —
+    // those users are mid-task.
+    private enum MissionResolution { case mainPurchase, welcomeOfferPurchase }
+    @State private var showMissionScreen = false
+    /// Exactly-once guard: the CTA tap and the 6-second auto-advance can race.
+    @State private var missionContinued = false
+    @State private var missionShownAt = Date()
+    @State private var missionResolution: MissionResolution = .mainPurchase
 
     var callback: (() -> Void)?
     /// Where this paywall is being shown from. Drives the `source` property on
@@ -149,13 +175,10 @@ struct HighConversionPaywallView: View {
                 "Know your identity in Christ so deeply that fear, doubt, and shame lose their grip."
               ]
     }
-    private var resolvedChallengeName: String? {
-        surveyEngine.hasSurveyData ? surveyEngine.paywallCopy.challengeName : nil
-    }
-
     enum PlanType: String {
         case annual = "annual"
         case monthly = "monthly"
+        case weekly = "weekly"
     }
 
     // MARK: - Prices
@@ -166,9 +189,8 @@ struct HighConversionPaywallView: View {
     private var annualPrice: String { subscriptionStore.currentOfferedPremium?.displayPrice ?? pricePlaceholder }
     private var monthlyPrice: String { subscriptionStore.currentOfferedPremiumMonthly?.displayPrice ?? pricePlaceholder }
     private var annualPerMonth: String {
-        guard let p = subscriptionStore.currentOfferedPremium,
-              let d = Double(p.price.description) else { return pricePlaceholder }
-        return String(format: "$%.2f", d / 12.0)
+        guard let p = subscriptionStore.currentOfferedPremium else { return pricePlaceholder }
+        return perMonthString(yearlyProduct: p) ?? pricePlaceholder
     }
     /// % saved on annual vs paying the non-annual plan (weekly×52 or monthly×12)
     /// for a year. nil if not computable.
@@ -192,6 +214,9 @@ struct HighConversionPaywallView: View {
     }
     private var nonAnnualTitle: String { showWeeklyPlan ? "Weekly" : "Monthly" }
     private var nonAnnualSub: String { showWeeklyPlan ? "per week" : "per month" }
+    /// Plan identity of the non-annual card, so analytics report "weekly" (not
+    /// "monthly") when the useWeeklyPlan flag is on.
+    private var nonAnnualPlan: PlanType { showWeeklyPlan ? .weekly : .monthly }
     private var nonAnnualPrice: String {
         showWeeklyPlan
             ? (subscriptionStore.currentOfferedWeekly?.displayPrice ?? pricePlaceholder)
@@ -199,10 +224,34 @@ struct HighConversionPaywallView: View {
     }
 
     private var selectedProduct: Product? {
-        if selectedPlan == .annual { return subscriptionStore.currentOfferedPremium }
-        return showWeeklyPlan
-            ? subscriptionStore.currentOfferedWeekly
-            : subscriptionStore.currentOfferedPremiumMonthly
+        switch selectedPlan {
+        case .annual:  return subscriptionStore.currentOfferedPremium
+        case .weekly:  return subscriptionStore.currentOfferedWeekly
+        case .monthly: return subscriptionStore.currentOfferedPremiumMonthly
+        }
+    }
+
+    // MARK: - Trial Eligibility / Intro Offer
+    /// Days in the introductory free-trial offer for the given product, read
+    /// from the loaded StoreKit Product (never hardcoded). nil when this user
+    /// isn't eligible for an intro offer on THIS product (per-product check
+    /// done in refreshTrialEligibility) or when the product has no free-trial
+    /// intro offer configured. Unknown/not-yet-checked products default to
+    /// false, so trial copy never overpromises while eligibility loads.
+    private func trialDays(for product: Product?) -> Int? {
+        guard let product else { return nil }
+        return introTrialDays(for: product, isEligible: trialEligibility[product.id] ?? false)
+    }
+    /// Trial length for the currently selected plan, nil when not trial-eligible.
+    private var selectedPlanTrialDays: Int? { trialDays(for: selectedProduct) }
+    /// Stable fingerprint of the three offered product ids; onChange watches it
+    /// so eligibility re-runs when products finish loading after first render.
+    private var offeredProductIDs: String {
+        [
+            subscriptionStore.currentOfferedPremium?.id,
+            subscriptionStore.currentOfferedPremiumMonthly?.id,
+            subscriptionStore.currentOfferedWeekly?.id
+        ].map { $0 ?? "" }.joined(separator: "|")
     }
     private var copy: UserPreferencesTracker.PaywallCopy { preferencesTracker.getDynamicPaywallCopy() }
 
@@ -211,27 +260,60 @@ struct HighConversionPaywallView: View {
         ZStack {
             backgroundGradient.ignoresSafeArea()
 
-            VStack(spacing: 0) {
-                ScrollView(showsIndicators: false) {
-                    VStack(spacing: 0) {
-                        headerSection
-                        starsOnlyBanner.padding(.top, 20)
-                        benefitsSection.padding(.top, 20)
-                        comparisonSection.padding(.top, 28)
-                        featuredTestimonial.padding(.top, 24)
-                        remainingTestimonialsSection.padding(.top, 24)
-                        Spacer(minLength: 20)
+            if showMissionScreen {
+                // Post-purchase mission screen. Same state-swap pattern as the
+                // welcome offer below; takes precedence over both because it
+                // only ever appears after a successful purchase.
+                PostPurchaseMissionView(onContinue: continueMission)
+                    .transition(.opacity)
+            } else if showWelcomeOffer {
+                // Decline-path recovery screen. State-swap (not a modal): this
+                // paywall is embedded as a step inside the onboarding flows,
+                // so swapping content in place is safer than layering a
+                // fullScreenCover on a non-presented view.
+                WelcomeOfferView(
+                    variant: paywallVariant,
+                    segment: segmentParam,
+                    onResolve: resolveWelcomeOffer,
+                    onPurchaseSuccess: { presentMissionScreen(.welcomeOfferPurchase) }
+                )
+                .transition(.opacity)
+            } else {
+                VStack(spacing: 0) {
+                    ScrollView(showsIndicators: false) {
+                        VStack(spacing: 0) {
+                            headerSection
+                            starsOnlyBanner.padding(.top, 20)
+                            benefitsSection.padding(.top, 20)
+                            comparisonSection.padding(.top, 28)
+                            if let days = selectedPlanTrialDays {
+                                trialTimelineSection(days: days).padding(.top, 24)
+                            }
+                            featuredTestimonial.padding(.top, 24)
+                            remainingTestimonialsSection.padding(.top, 24)
+                            Spacer(minLength: 20)
+                        }
                     }
+                    stickyBottomSection
                 }
-                stickyBottomSection
+
+                if showCloseButton && !effectiveIsHardPaywall { closeButton }
             }
 
+            // Shared purchase spinner — covers both the paywall and the
+            // welcome offer (the offer routes purchases through the same
+            // declarationStore.isPurchasing flag).
             if declarationStore.isPurchasing { RotatingLoadingImageView() }
-            if showCloseButton && !effectiveIsHardPaywall { closeButton }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .ignoresSafeArea(edges: .bottom)
         .onAppear(perform: onAppear)
+        // Products can finish loading after onAppear (Remote Config + StoreKit
+        // race the paywall presentation). Re-check eligibility whenever any of
+        // the three offered product ids changes.
+        .onChange(of: offeredProductIDs) { _ in
+            Task { await refreshTrialEligibility() }
+        }
         .alert("", isPresented: $isShowingError) {
             Button("OK", role: .cancel) { }
         } message: { Text(errorMessage) }
@@ -427,6 +509,71 @@ struct HighConversionPaywallView: View {
         }
     }
 
+    // MARK: - Trial Timeline (Blinkist pattern)
+    // Shows exactly how the free trial unfolds to defuse the "I'll forget and
+    // get charged" fear. Rendered only when the user is actually trial-eligible
+    // for the selected plan; day counts come from the real StoreKit intro offer.
+    private func trialTimelineSection(days: Int) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Text("How your free trial works")
+                .font(.system(size: 17, weight: .bold)).foregroundColor(.white)
+                .padding(.bottom, 16)
+            trialTimelineStep(
+                icon: "lock.open.fill", title: "Today",
+                detail: "Full access unlocked. Speak your first declaration over your battle.",
+                showsLine: true
+            )
+            if days > 1 {
+                trialTimelineStep(
+                    icon: "bell.fill", title: "Day \(days - 1)",
+                    detail: "We'll remind you before your trial ends.",
+                    showsLine: true
+                )
+            }
+            trialTimelineStep(
+                icon: "star.fill", title: "Day \(days)",
+                detail: "Your subscription starts. Cancel anytime before.",
+                showsLine: false
+            )
+        }
+        .padding(18)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 14)
+                .fill(Color.white.opacity(0.06))
+                .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.white.opacity(0.12), lineWidth: 1))
+        )
+        .padding(.horizontal, 24)
+    }
+
+    private func trialTimelineStep(icon: String, title: String, detail: String, showsLine: Bool) -> some View {
+        HStack(alignment: .top, spacing: 14) {
+            VStack(spacing: 0) {
+                Image(systemName: icon)
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundColor(Constants.DAMidBlue)
+                    .frame(width: 28, height: 28)
+                    .background(Circle().fill(Constants.DAMidBlue.opacity(0.18)))
+                if showsLine {
+                    Rectangle()
+                        .fill(Constants.DAMidBlue.opacity(0.35))
+                        .frame(width: 2)
+                        .frame(maxHeight: .infinity)
+                }
+            }
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.system(size: 13, weight: .bold)).foregroundColor(.white)
+                Text(detail)
+                    .font(.system(size: 12.5)).foregroundColor(.white.opacity(0.75))
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.bottom, showsLine ? 16 : 0)
+            }
+            Spacer(minLength: 0)
+        }
+        .fixedSize(horizontal: false, vertical: true)
+    }
+
     // MARK: - Featured Testimonial (above the fold, anxiety-first)
     private var featuredTestimonial: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -502,6 +649,8 @@ struct HighConversionPaywallView: View {
                 trialCallout
                // closingLine
                 ctaButton
+                trialReassuranceLine
+                generosityLine
                 payWhatYouCanCTA
                 bottomLinks
             }
@@ -516,7 +665,7 @@ struct HighConversionPaywallView: View {
         GeometryReader { geo in
             let cardWidth = (geo.size.width - 10) / 2
             HStack(spacing: 10) {
-                planCard(plan: .monthly, topLabel: nil, title: nonAnnualTitle, price: nonAnnualPrice, sub: nonAnnualSub)
+                planCard(plan: nonAnnualPlan, topLabel: nil, title: nonAnnualTitle, price: nonAnnualPrice, sub: nonAnnualSub)
                     .frame(width: cardWidth)
                 planCard(plan: .annual, topLabel: annualSavingsPercent.map { "SAVE \($0)%" } ?? "BEST VALUE", title: "Annual", price: annualPrice, sub: "per month \(annualPerMonth)")
                     .frame(width: cardWidth)
@@ -529,7 +678,7 @@ struct HighConversionPaywallView: View {
         let isSelected = selectedPlan == plan
         return Button(action: {
             withAnimation(.easeInOut(duration: 0.15)) { selectedPlan = plan }
-            Analytics.logEvent("paywall_plan_switched", parameters: ["plan": plan.rawValue, "variant": paywallVariant, "segment": segmentParam])
+            AnalyticsService.shared.track("paywall_plan_switched", parameters: ["plan": plan.rawValue, "variant": paywallVariant, "segment": segmentParam])
         }) {
             ZStack(alignment: .top) {
                 VStack(spacing: 4) {
@@ -557,17 +706,22 @@ struct HighConversionPaywallView: View {
         .buttonStyle(PlainButtonStyle())
     }
 
-    // MARK: - Trial Callout (clarity-first: addresses the autocharge fear without
-    // making any claims we can't keep — Apple's pre-trial-end notification is
-    // inconsistent across users/regions/notification-settings, so we don't promise it).
+    // MARK: - Trial Callout (clarity-first: addresses the autocharge fear).
+    // Day count is read from the selected plan's real StoreKit intro offer —
+    // never hardcoded — and only shown when this user is actually eligible.
     private var trialCallout: some View {
         HStack(spacing: 6) {
             Image(systemName: "checkmark.circle.fill").foregroundColor(.green).font(.system(size: 14))
-            Text(selectedPlan == .annual && isEligibleForTrial
-                 ? "Free for 3 days. Cancel by day 3 to pay nothing."
-                 : "Start today. Cancel anytime in Settings.")
+            Text(trialCalloutText)
                 .font(.system(size: 13, weight: .semibold)).foregroundColor(.white.opacity(0.92))
         }
+    }
+
+    private var trialCalloutText: String {
+        if let days = selectedPlanTrialDays {
+            return "Free for \(days) days. Cancel before day \(days) to pay nothing."
+        }
+        return "Start today. Cancel anytime in Settings."
     }
 
     // MARK: - Closing Line
@@ -582,8 +736,7 @@ struct HighConversionPaywallView: View {
 
     // MARK: - CTA
     private var ctaText: String {
-        if selectedPlan == .monthly { return "Start Taking Ground →" }
-        if isEligibleForTrial { return "Start Free Trial" }
+        if selectedPlanTrialDays != nil { return "Start Free Trial" }
         return "Start Taking Ground →"
     }
 
@@ -605,12 +758,51 @@ struct HighConversionPaywallView: View {
         .buttonStyle(PlainButtonStyle())
     }
 
+    // MARK: - Reassurance Stack (under CTA, trial-eligible only)
+    // Repeats the no-payment-now promise right at the moment of commitment.
+    // Billed price in the plan cards stays the most conspicuous price element
+    // (Apple 3.1.2) — this line carries no price at all.
+    @ViewBuilder
+    private var trialReassuranceLine: some View {
+        if selectedPlanTrialDays != nil {
+            HStack(spacing: 5) {
+                Image(systemName: "checkmark")
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundColor(.white.opacity(0.7))
+                Text("No payment due now · Cancel anytime in Settings")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(.white.opacity(0.7))
+            }
+        }
+    }
+
+    // MARK: - Generosity Line (mission framing above the pay-what-you-can link)
+    // TRUTHFULNESS: defensible because the pay-what-you-can program exists —
+    // full-price subscribers effectively subsidize it. Never escalate this to
+    // a literal one-for-one donated subscription claim ("gives SpeakLife free
+    // to someone"); no such program exists.
+    private var generosityLine: some View {
+        HStack(alignment: .top, spacing: 6) {
+            Image(systemName: "heart.fill")
+                .font(.system(size: 11))
+                .foregroundColor(.white.opacity(0.6))
+                .padding(.top, 2)
+            Text("Your subscription helps keep SpeakLife within reach for believers who can't afford full price.")
+                .font(.system(size: 12))
+                .foregroundColor(.white.opacity(0.6))
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.horizontal, 12)
+    }
+
     // MARK: - Pay What You Can (secondary CTA, intentionally subordinate to main CTA)
     @ViewBuilder
     private var payWhatYouCanCTA: some View {
         if subscriptionStore.showPayWhatYouCanLink {
             Button(action: {
-                Analytics.logEvent("paywall_pay_what_you_can_tapped", parameters: [
+                AnalyticsService.shared.track("paywall_pay_what_you_can_tapped", parameters: [
                     "variant": paywallVariant,
                     "segment": segmentParam
                 ])
@@ -642,13 +834,21 @@ struct HighConversionPaywallView: View {
             HStack {
                 Spacer()
                 Button(action: {
-                    Analytics.logEvent("paywall_dismissed", parameters: [
+                    // paywall_dismissed fires at the moment of dismissal —
+                    // before the welcome offer (if any) is shown — so funnel
+                    // numbers stay comparable to the pre-offer baseline.
+                    AnalyticsService.shared.track("paywall_dismissed", parameters: [
                         "variant": paywallVariant,
                         "plan_viewed": selectedPlan.rawValue,
                         "seconds_on_paywall": Int(Date().timeIntervalSince(timeOnPaywall)),
                         "segment": segmentParam
                     ])
-                    callback?(); dismiss()
+                    if canShowWelcomeOffer {
+                        welcomeOfferShown = true
+                        withAnimation(.easeInOut(duration: 0.3)) { showWelcomeOffer = true }
+                    } else {
+                        callback?(); dismiss()
+                    }
                 }) {
                     Image(systemName: "xmark.circle.fill").font(.system(size: 28))
                         .foregroundColor(.white.opacity(0.6)).background(Circle().fill(Color.black.opacity(0.2)))
@@ -660,22 +860,90 @@ struct HighConversionPaywallView: View {
         .transition(.opacity)
     }
 
+    // MARK: - Welcome Offer Gate
+    /// True when dismissing this paywall should show the one-time welcome
+    /// offer instead of immediately advancing onboarding. All must hold:
+    /// onboarding source, never shown before (persisted once-ever flag), soft
+    /// paywall (hard mode has no close button, but gate it anyway), AND the
+    /// Remote Config `discountID` product actually loaded from StoreKit as an
+    /// annual SKU priced below the regular annual. The product checks are the
+    /// same anti-phantom-price stance as the plan cards: if the discount
+    /// product is unset, unloaded, not annual, or not actually cheaper, the
+    /// offer never shows at all.
+    private var canShowWelcomeOffer: Bool {
+        guard source == "onboarding",
+              !welcomeOfferShown,
+              !effectiveIsHardPaywall,
+              let discount = subscriptionStore.currentOfferedDiscount,
+              let regular = subscriptionStore.currentOfferedPremium,
+              discount.subscription?.subscriptionPeriod.unit == .year,
+              let discountValue = Double(discount.price.description),
+              let regularValue = Double(regular.price.description),
+              discountValue < regularValue else { return false }
+        return true
+    }
+
+    /// Runs the original dismissal path (advance onboarding + dismiss) exactly
+    /// once after the welcome offer resolves, whether by purchase success or
+    /// "No thanks, continue". Guarded so a purchase completion racing a
+    /// decline tap can't fire the onboarding callback twice.
+    private func resolveWelcomeOffer() {
+        guard !welcomeOfferResolved else { return }
+        welcomeOfferResolved = true
+        callback?()
+        dismiss()
+    }
+
+    // MARK: - Post-Purchase Mission Screen Routing
+    /// Swaps in the mission screen after a successful purchase, remembering
+    /// which success path to run when it continues. Callers clear the purchase
+    /// spinner (declarationStore.isPurchasing) before invoking this, so the
+    /// spinner never overlaps the mission screen. Auto-advances after 6
+    /// seconds so the user is never trapped here.
+    private func presentMissionScreen(_ resolution: MissionResolution) {
+        missionResolution = resolution
+        missionShownAt = Date()
+        AnalyticsService.shared.track("post_purchase_mission_shown", parameters: [
+            "variant": paywallVariant,
+            "source": source
+        ])
+        withAnimation(.easeInOut(duration: 0.3)) { showMissionScreen = true }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 6) { continueMission() }
+    }
+
+    /// Runs the original purchase success path exactly once, whether triggered
+    /// by the mission CTA tap or the 6-second auto-advance (both can fire).
+    /// The welcome-offer path goes through resolveWelcomeOffer, preserving its
+    /// own exactly-once guard.
+    private func continueMission() {
+        guard !missionContinued else { return }
+        missionContinued = true
+        AnalyticsService.shared.track("post_purchase_mission_continue", parameters: [
+            "seconds_on_screen": Int(Date().timeIntervalSince(missionShownAt))
+        ])
+        switch missionResolution {
+        case .mainPurchase:
+            callback?()
+            dismiss()
+        case .welcomeOfferPurchase:
+            resolveWelcomeOffer()
+        }
+    }
+
     // MARK: - Lifecycle
     private func onAppear() {
         timeOnPaywall = Date()
         selectedPlan = .annual
-        // Check actual trial eligibility from Apple
-        Task {
-            let eligible = await subscriptionStore.currentOfferedPremium?.subscription?.isEligibleForIntroOffer ?? false
-            await MainActor.run { isEligibleForTrial = eligible }
-        }
+        // Check actual trial eligibility from Apple (re-run via onChange when
+        // products finish loading after the paywall is already on screen).
+        Task { await refreshTrialEligibility() }
         AnalyticsService.shared.trackPaywallImpression(paywallId: paywallVariant, metadata: [
             "variant": paywallVariant,
             "user_category": preferencesTracker.primaryCategory.rawValue,
             "initial_plan": "annual",
             "segment": segmentParam
         ])
-        Analytics.logEvent("paywall_shown", parameters: [
+        AnalyticsService.shared.track("paywall_shown", parameters: [
             "segment": segmentParam,
             "source": source,
             "variant": paywallVariant
@@ -687,6 +955,26 @@ struct HighConversionPaywallView: View {
         }
     }
 
+    /// Asks Apple, per product, whether THIS user is eligible for the intro
+    /// offer on every plan this paywall can sell (annual + monthly + weekly,
+    /// whichever loaded). Latest write wins, which is race-safe enough here:
+    /// eligibility for a given product id never changes mid-session.
+    private func refreshTrialEligibility() async {
+        let products = [
+            subscriptionStore.currentOfferedPremium,
+            subscriptionStore.currentOfferedPremiumMonthly,
+            subscriptionStore.currentOfferedWeekly
+        ].compactMap { $0 }
+        var eligibility: [String: Bool] = [:]
+        for product in products {
+            eligibility[product.id] = await product.subscription?.isEligibleForIntroOffer ?? false
+        }
+        let resolved = eligibility
+        await MainActor.run {
+            trialEligibility.merge(resolved) { _, new in new }
+        }
+    }
+
     // MARK: - Purchase
     private func makePurchase() {
         guard let product = selectedProduct else {
@@ -695,14 +983,14 @@ struct HighConversionPaywallView: View {
             return
         }
         UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-        Analytics.logEvent("paywall_cta_tapped", parameters: [
+        AnalyticsService.shared.track("paywall_cta_tapped", parameters: [
             "variant": paywallVariant,
             "plan": selectedPlan.rawValue,
             "user_category": preferencesTracker.primaryCategory.rawValue,
             "product_id": product.id,
             "segment": segmentParam
         ])
-        Analytics.logEvent("paywall_subscribe_tapped", parameters: [
+        AnalyticsService.shared.track("paywall_subscribe_tapped", parameters: [
             "segment": segmentParam,
             "plan": selectedPlan.rawValue,
             "variant": paywallVariant
@@ -720,16 +1008,25 @@ struct HighConversionPaywallView: View {
                                    "seconds_to_convert": Int(Date().timeIntervalSince(timeOnPaywall)),
                                    "segment": segmentParam]
                     )
-                    if isEligibleForTrial {
-                        AnalyticsService.shared.trackTrialStarted(productId: product.id, metadata: ["variant": paywallVariant, "segment": segmentParam])
-                        Analytics.logEvent("trial_started", parameters: [
-                            "segment": segmentParam,
-                            "plan_id": selectedPlan.rawValue,
-                            "paywall_variant": paywallVariant,
-                            "product_id": product.id
-                        ])
+                    // NOTE: trial_started is fired by SubscriptionStore.purchase —
+                    // the single source of truth, correctly gated on the purchased
+                    // product's intro offer + this user's eligibility. Firing it
+                    // here too double-counted trials (and misfired for plans
+                    // without an intro offer, since the old gate only checked the
+                    // annual product).
+                    await MainActor.run {
+                        // Spinner clears before the mission screen swaps in.
+                        declarationStore.isPurchasing = false
+                        if source == "onboarding" {
+                            // Onboarding buyers see the mission screen first;
+                            // its continue path runs callback?() + dismiss().
+                            presentMissionScreen(.mainPurchase)
+                        } else {
+                            // Settings / feature-gate buyers are mid-task —
+                            // keep the immediate dismiss.
+                            callback?(); dismiss()
+                        }
                     }
-                    await MainActor.run { declarationStore.isPurchasing = false; callback?(); dismiss() }
                 } else {
                     await MainActor.run { declarationStore.isPurchasing = false }
                 }
@@ -747,8 +1044,12 @@ struct HighConversionPaywallView: View {
     private func restore() {
         Task {
             await MainActor.run { declarationStore.isPurchasing = true }
-            await subscriptionStore.restore()
-            await MainActor.run { declarationStore.isPurchasing = false; errorMessage = "Purchases restored"; isShowingError = true }
+            let restored = await subscriptionStore.restore()
+            await MainActor.run {
+                declarationStore.isPurchasing = false
+                errorMessage = restored ? "Purchases restored" : "No purchases found to restore."
+                isShowingError = true
+            }
         }
     }
 }
@@ -781,6 +1082,372 @@ private struct HCSuccinctBenefitRow: View {
                 .foregroundColor(.white)
                 .fixedSize(horizontal: false, vertical: true)
             Spacer()
+        }
+    }
+}
+
+// MARK: - Shared Intro-Offer Helper
+/// Days in the introductory free-trial offer for the given product, read from
+/// the loaded StoreKit Product (never hardcoded). nil when the user isn't
+/// eligible for an intro offer (per-user check done by callers) or when the
+/// product has no free-trial intro offer configured. Shared by the main
+/// paywall and the decline-path WelcomeOfferView so trial copy can never
+/// disagree between the two screens.
+fileprivate func introTrialDays(for product: Product?, isEligible: Bool) -> Int? {
+    guard isEligible,
+          let offer = product?.subscription?.introductoryOffer,
+          offer.paymentMode == .freeTrial else { return nil }
+    switch offer.period.unit {
+    case .day:   return offer.period.value
+    case .week:  return offer.period.value * 7
+    case .month: return offer.period.value * 30
+    case .year:  return offer.period.value * 365
+    @unknown default: return nil
+    }
+}
+
+// MARK: - Shared Per-Month Price Helper
+/// Per-month equivalent of a yearly product's price, formatted in the
+/// product's own locale and currency (never a hardcoded "$"). Shared by the
+/// main paywall and WelcomeOfferView. nil if formatting fails.
+fileprivate func perMonthString(yearlyProduct: Product) -> String? {
+    let monthly = yearlyProduct.price / 12
+    let formatter = NumberFormatter()
+    formatter.numberStyle = .currency
+    formatter.locale = yearlyProduct.priceFormatStyle.locale
+    return formatter.string(from: NSDecimalNumber(decimal: monthly))
+}
+
+// MARK: - Welcome Offer (decline-path recovery screen)
+/// Shown at most once ever (UserDefaults `welcomeOfferShown`) when an
+/// onboarding user dismisses the soft paywall without buying, and only when
+/// the Remote Config discount annual product actually loaded from StoreKit at
+/// a price below the regular annual (gate: HighConversionPaywallView
+/// .canShowWelcomeOffer — the anti-phantom-price guard). Exactly one step
+/// deep per Apple Guideline 5.6: purchase and "No thanks" both resolve to the
+/// original callback/dismiss path and no further offers follow. No countdown
+/// timer or fake urgency — the framing line states plainly that it's a
+/// one-time offer. All prices come straight from StoreKit.
+struct WelcomeOfferView: View {
+    @EnvironmentObject var declarationStore: DeclarationViewModel
+    @EnvironmentObject var subscriptionStore: SubscriptionStore
+
+    /// Paywall variant string, forwarded so offer analytics join cleanly with
+    /// the paywall events that preceded them.
+    let variant: String
+    /// Onboarding segment, forwarded for the same reason.
+    let segment: String
+    /// Runs the original paywall dismissal path (onboarding callback +
+    /// dismiss). The parent guards it so it can only ever fire once. Fired on
+    /// decline ("No thanks, continue").
+    let onResolve: () -> Void
+    /// Fired on purchase success instead of onResolve, so the parent can show
+    /// the post-purchase mission screen first. The mission screen's continue
+    /// path then calls the same guarded resolve, preserving exactly-once
+    /// semantics for the onboarding callback.
+    let onPurchaseSuccess: () -> Void
+
+    @State private var isShowingError = false
+    @State private var errorMessage = ""
+    @State private var showPrivacyPolicy = false
+    @State private var isEligibleForTrial = false
+    @State private var timeOnOffer = Date()
+
+    // MARK: Products / Prices (all from StoreKit, never hardcoded)
+    private let pricePlaceholder = "—"
+    private var discountProduct: Product? { subscriptionStore.currentOfferedDiscount }
+    private var regularProduct: Product? { subscriptionStore.currentOfferedPremium }
+    private var discountPrice: String { discountProduct?.displayPrice ?? pricePlaceholder }
+    private var regularPrice: String { regularProduct?.displayPrice ?? pricePlaceholder }
+    private var discountPerMonth: String {
+        guard let p = discountProduct else { return pricePlaceholder }
+        return perMonthString(yearlyProduct: p) ?? pricePlaceholder
+    }
+    /// % saved vs the regular annual, computed from the real StoreKit prices.
+    private var savingsPercent: Int? {
+        guard let d = discountProduct.flatMap({ Double($0.price.description) }),
+              let r = regularProduct.flatMap({ Double($0.price.description) }),
+              r > 0, d < r else { return nil }
+        return Int(((r - d) / r * 100).rounded())
+    }
+    /// Trial length of the discount product, nil when this user isn't eligible
+    /// or the SKU has no free-trial intro offer.
+    private var offerTrialDays: Int? {
+        introTrialDays(for: discountProduct, isEligible: isEligibleForTrial)
+    }
+    private var ctaText: String {
+        offerTrialDays != nil ? "Start Free Trial" : "Claim My Welcome Offer"
+    }
+
+    // MARK: Body
+    var body: some View {
+        ZStack {
+            backgroundGradient.ignoresSafeArea()
+            VStack(spacing: 0) {
+                ScrollView(showsIndicators: false) {
+                    VStack(spacing: 0) {
+                        header
+                        offerCard.padding(.top, 28)
+                        honestyLine.padding(.top, 18)
+                        if let days = offerTrialDays {
+                            trialLine(days: days).padding(.top, 14)
+                        }
+                        Spacer(minLength: 20)
+                    }
+                }
+                bottomSection
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .onAppear(perform: onAppear)
+        .alert("", isPresented: $isShowingError) {
+            Button("OK", role: .cancel) { }
+        } message: { Text(errorMessage) }
+        .sheet(isPresented: $showPrivacyPolicy) { PrivacyPolicyView() }
+    }
+
+    // MARK: Chrome
+    private var backgroundGradient: some View {
+        LinearGradient(
+            colors: [Color(red:0.07,green:0.10,blue:0.22), Color(red:0.12,green:0.07,blue:0.20), Color(red:0.04,green:0.04,blue:0.12)],
+            startPoint: .topLeading, endPoint: .bottomTrailing
+        )
+    }
+
+    private var header: some View {
+        VStack(spacing: 12) {
+            Image("appIconDisplay")
+                .resizable().frame(width: 64, height: 64)
+                .clipShape(RoundedRectangle(cornerRadius: 14))
+                .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.white.opacity(0.2), lineWidth: 1))
+            Text("BEFORE YOU GO")
+                .font(.system(size: 12, weight: .bold))
+                .tracking(2)
+                .foregroundColor(Constants.DAMidBlue)
+            Text("Speak life over your battle\nfor less.")
+                .font(.system(size: 26, weight: .bold)).foregroundColor(.white)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 24)
+        }
+        .padding(.top, 56)
+    }
+
+    // MARK: Offer Card
+    // The billed annual price is deliberately the most conspicuous price
+    // element on the screen (Apple 3.1.2); the per-month equivalent is small
+    // and clearly labeled as billed annually.
+    private var offerCard: some View {
+        VStack(spacing: 6) {
+            if let pct = savingsPercent {
+                Text("SAVE \(pct)%")
+                    .font(.system(size: 11, weight: .bold)).foregroundColor(.white)
+                    .padding(.horizontal, 10).padding(.vertical, 4)
+                    .background(Capsule().fill(Color.green))
+            }
+            Text("was \(regularPrice)")
+                .font(.system(size: 15, weight: .medium))
+                .foregroundColor(.white.opacity(0.5))
+                .strikethrough(true, color: .white.opacity(0.5))
+                .padding(.top, 10)
+            Text("\(discountPrice)/year")
+                .font(.system(size: 36, weight: .bold)).foregroundColor(.white)
+            Text("\(discountPerMonth) per month, billed annually")
+                .font(.system(size: 13)).foregroundColor(.white.opacity(0.6))
+        }
+        .padding(.vertical, 22).padding(.horizontal, 18)
+        .frame(maxWidth: .infinity)
+        .background(
+            RoundedRectangle(cornerRadius: 14)
+                .fill(Color.white.opacity(0.06))
+                .overlay(RoundedRectangle(cornerRadius: 14).stroke(Constants.DAMidBlue.opacity(0.6), lineWidth: 1))
+        )
+        .padding(.horizontal, 24)
+    }
+
+    // MARK: Honest Framing (no fake urgency, no countdown)
+    private var honestyLine: some View {
+        Text("A one time welcome offer for new believers in the app. No pressure, no tricks.")
+            .font(.system(size: 13)).foregroundColor(.white.opacity(0.65))
+            .multilineTextAlignment(.center)
+            .fixedSize(horizontal: false, vertical: true)
+            .padding(.horizontal, 36)
+    }
+
+    private func trialLine(days: Int) -> some View {
+        HStack(spacing: 6) {
+            Image(systemName: "checkmark.circle.fill").foregroundColor(.green).font(.system(size: 14))
+            Text("Free for \(days) days. Cancel before day \(days) to pay nothing.")
+                .font(.system(size: 13, weight: .semibold)).foregroundColor(.white.opacity(0.92))
+        }
+    }
+
+    // MARK: Bottom (CTA + decline + links)
+    private var bottomSection: some View {
+        VStack(spacing: 14) {
+            ctaButton
+            noThanksButton
+            bottomLinks
+        }
+        .padding(.horizontal, 20).padding(.top, 8).padding(.bottom, 24)
+    }
+
+    private var ctaButton: some View {
+        Button(action: claimOffer) {
+            Group {
+                if declarationStore.isPurchasing {
+                    ProgressView()
+                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                } else {
+                    Text(ctaText).font(.system(size: 17, weight: .bold)).foregroundColor(.white)
+                }
+            }
+            .frame(maxWidth: .infinity).padding(.vertical, 17)
+            .background(RoundedRectangle(cornerRadius: 30).fill(LinearGradient(colors: [Constants.DAMidBlue, Constants.DAMidBlue.opacity(0.85)], startPoint: .leading, endPoint: .trailing)))
+        }
+        .disabled(declarationStore.isPurchasing)
+        .opacity(declarationStore.isPurchasing ? 0.7 : 1.0)
+        .buttonStyle(PlainButtonStyle())
+    }
+
+    private var noThanksButton: some View {
+        Button(action: declineOffer) {
+            Text("No thanks, continue")
+                .font(.system(size: 14, weight: .medium))
+                .foregroundColor(.white.opacity(0.6))
+                .padding(.vertical, 4)
+        }
+        .buttonStyle(PlainButtonStyle())
+        .disabled(declarationStore.isPurchasing)
+    }
+
+    private var bottomLinks: some View {
+        HStack(spacing: 24) {
+            Button("Restore", action: restore)
+            Link("Terms", destination: URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!)
+            Button("Privacy") { showPrivacyPolicy = true }
+        }
+        .font(.system(size: 12)).foregroundColor(.white.opacity(0.4))
+    }
+
+    // MARK: Lifecycle
+    private func onAppear() {
+        timeOnOffer = Date()
+        // Per-user trial eligibility for the DISCOUNT product specifically —
+        // it can differ from the main annual (same subscription group, but the
+        // check is per user, not per product configuration).
+        Task {
+            let eligible = await subscriptionStore.currentOfferedDiscount?.subscription?.isEligibleForIntroOffer ?? false
+            await MainActor.run { isEligibleForTrial = eligible }
+        }
+        AnalyticsService.shared.track("welcome_offer_shown", parameters: [
+            "variant": variant,
+            "segment": segment
+        ])
+    }
+
+    // MARK: Purchase
+    // On success SubscriptionStore.purchase fires trial_started /
+    // subscription_started / premiumSucceeded itself — do NOT duplicate them
+    // here (same single-source-of-truth rule as the main paywall CTA).
+    private func claimOffer() {
+        guard let product = discountProduct else {
+            errorMessage = "This offer is unavailable right now. Please try again."
+            isShowingError = true
+            return
+        }
+        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+        AnalyticsService.shared.track("welcome_offer_cta_tapped", parameters: [
+            "product_id": product.id
+        ])
+        Task {
+            await MainActor.run { declarationStore.isPurchasing = true }
+            do {
+                let purchased = try await subscriptionStore.purchase(product, paywallName: "welcome_offer_v1")
+                await MainActor.run {
+                    declarationStore.isPurchasing = false
+                    // Spinner cleared above; the parent swaps in the mission
+                    // screen, whose continue path runs the guarded resolve.
+                    if purchased { onPurchaseSuccess() }
+                }
+            } catch {
+                await MainActor.run {
+                    declarationStore.isPurchasing = false
+                    errorMessage = "Purchase failed. Please try again."
+                    isShowingError = true
+                }
+            }
+        }
+    }
+
+    // MARK: Decline
+    private func declineOffer() {
+        AnalyticsService.shared.track("welcome_offer_dismissed", parameters: [
+            "seconds_on_offer": Int(Date().timeIntervalSince(timeOnOffer))
+        ])
+        onResolve()
+    }
+
+    // MARK: Restore
+    private func restore() {
+        Task {
+            await MainActor.run { declarationStore.isPurchasing = true }
+            let restored = await subscriptionStore.restore()
+            await MainActor.run {
+                declarationStore.isPurchasing = false
+                errorMessage = restored ? "Purchases restored" : "No purchases found to restore."
+                isShowingError = true
+            }
+        }
+    }
+}
+
+// MARK: - Post-Purchase Mission Screen
+/// Brief, reverent thank-you state shown after a successful purchase from the
+/// onboarding paywall (main CTA or welcome offer), BEFORE the original success
+/// callback runs. Reframes the subscription as mission: paying members keep
+/// the pay-what-you-can program viable. No confetti. TRUTHFULNESS: same
+/// constraint as the paywall generosity line — never claim a one-for-one
+/// donated subscription; no such program exists. Restore success and
+/// settings / feature-gate purchases never route here. The parent auto-fires
+/// onContinue after 6 seconds (exactly-once guarded) so nobody is trapped.
+private struct PostPurchaseMissionView: View {
+    let onContinue: () -> Void
+
+    var body: some View {
+        VStack(spacing: 0) {
+            Spacer()
+            VStack(spacing: 16) {
+                Image(systemName: "heart.circle.fill")
+                    .font(.system(size: 64))
+                    .foregroundColor(Constants.DAMidBlue)
+                Text("WELCOME TO SPEAKLIFE")
+                    .font(.system(size: 12, weight: .bold))
+                    .tracking(2)
+                    .foregroundColor(Constants.DAMidBlue)
+                Text("Your plan is ready.")
+                    .font(.system(size: 26, weight: .bold))
+                    .foregroundColor(.white)
+                    .multilineTextAlignment(.center)
+                Text("You just did more than subscribe. Members like you keep SpeakLife within reach for believers walking through their hardest season. Now let's take some ground.")
+                    .font(.system(size: 15))
+                    .foregroundColor(.white.opacity(0.75))
+                    .multilineTextAlignment(.center)
+                    .lineSpacing(4)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .padding(.horizontal, 36)
+            Spacer()
+            Button(action: onContinue) {
+                Text("Start Speaking Life →")
+                    .font(.system(size: 17, weight: .bold))
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 17)
+                    .background(RoundedRectangle(cornerRadius: 30).fill(LinearGradient(colors: [Constants.DAMidBlue, Constants.DAMidBlue.opacity(0.85)], startPoint: .leading, endPoint: .trailing)))
+            }
+            .buttonStyle(PlainButtonStyle())
+            .padding(.horizontal, 20)
+            .padding(.bottom, 40)
         }
     }
 }

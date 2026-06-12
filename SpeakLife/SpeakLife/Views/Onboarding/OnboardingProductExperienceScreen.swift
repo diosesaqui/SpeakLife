@@ -11,7 +11,6 @@
 //
 
 import SwiftUI
-import FirebaseAnalytics
 
 struct OnboardingProductExperienceScreen: View {
     let size: CGSize
@@ -70,7 +69,7 @@ struct OnboardingProductExperienceScreen: View {
                 .appearStagger(v, delay: 0.52)
         }
         .onAppear {
-            Analytics.logEvent("product_experience_shown", parameters: ["flow": flow])
+            AnalyticsService.shared.track("product_experience_shown", parameters: ["flow": flow])
             withAnimation { v = true }
         }
     }

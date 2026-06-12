@@ -13,15 +13,15 @@
 //    5. Avoid discomfort — God's Word for the middle of a life storm
 //
 //  After the value screens it reuses the proven back-half (taste of a
-//  personalized declaration → record your own → rating → paywall →
-//  notification time), and seeds the home feed from a single light category picker.
+//  personalized declaration → record your own → rating → plan-building loader →
+//  named plan reveal → paywall → notification time), and seeds the home feed
+//  from a single light category picker.
 //
 //  One arm of the onboarding A/B: HomeView routes here when Remote Config
 //  `onboardingVariant` == "product" (see SubscriptionStore.resolvedOnboardingVariant).
 //
 
 import SwiftUI
-import FirebaseAnalytics
 import UserNotifications
 import UIKit
 
@@ -39,9 +39,18 @@ struct ProductOnboardingView: View {
     @State private var currentStep: ProductStep = .hook
     @State private var savedDeclaration: PersonalDeclaration? = nil
 
+    // Quiz v2 flag, frozen at the flow's first appearance (mirroring
+    // lockOnboardingVariant's intent) so a realtime Remote Config activation
+    // mid-session can't swap questions, progress totals, or quiz_version
+    // under the user. The live-read fallback only covers pre-onAppear access.
+    // When false the flow is byte-for-byte the current quiz (belief step
+    // skipped, connect style question shown, no plan-reveal echo).
+    @State private var quizV2Snapshot: Bool? = nil
+    private var quizV2: Bool { quizV2Snapshot ?? subscriptionStore.useQuizV2 }
+
     private var valueProgress: Double {
-        guard let idx = currentStep.valueScreenIndex else { return 0 }
-        return Double(idx) / Double(ProductStep.totalValueScreens)
+        guard let idx = currentStep.valueScreenIndex(quizV2: quizV2) else { return 0 }
+        return Double(idx) / Double(ProductStep.totalValueScreens(quizV2: quizV2))
     }
 
     var body: some View {
@@ -55,7 +64,7 @@ struct ProductOnboardingView: View {
                 ))
                 .id(currentStep.rawValue)
 
-            if currentStep.valueScreenIndex != nil {
+            if currentStep.valueScreenIndex(quizV2: quizV2) != nil {
                 VStack {
                     GeometryReader { geo in
                         ZStack(alignment: .leading) {
@@ -73,7 +82,10 @@ struct ProductOnboardingView: View {
             }
         }
         .ignoresSafeArea()
-        .onAppear { Analytics.logEvent("product_onboarding_started", parameters: nil) }
+        .onAppear {
+            if quizV2Snapshot == nil { quizV2Snapshot = subscriptionStore.useQuizV2 }
+            AnalyticsService.shared.track("product_onboarding_started")
+        }
     }
 
     // Split to stay within SwiftUI's 10-branch ViewBuilder limit.
@@ -86,7 +98,39 @@ struct ProductOnboardingView: View {
         case .experience:  OnboardingProductExperienceScreen(size: size, flow: "product") { advance() }
         case .categoryPicker:
             ProductCategoryPickerScreen(size: size, responses: responses) { advance() }
+        case .battleDuration, .alreadyTried, .insight, .hitsHardest, .connectStyle, .belief, .dailyMinutes:
+            quizStepView
         default: backHalfView
+        }
+    }
+
+    // Extended quiz steps (Q2-Q6 + insight), shared with the warfare arm.
+    @ViewBuilder
+    private var quizStepView: some View {
+        switch currentStep {
+        case .battleDuration:
+            SurveyExtendedQuizScreen(size: size, flow: "product", question: .battleDuration, selection: $responses.battleDuration) { advance() }
+        case .alreadyTried:
+            SurveyExtendedQuizScreen(size: size, flow: "product", question: .alreadyTried, selection: $responses.alreadyTried) { advance() }
+        case .insight:
+            SurveyQuizInsightScreen(size: size, flow: "product") { advance() }
+        case .hitsHardest:
+            SurveyExtendedQuizScreen(size: size, flow: "product", question: .hitsHardest, selection: $responses.hitsHardest) { advance() }
+        case .connectStyle:
+            // Quiz v2 swaps the connect-style question for the burden-aware
+            // outcome question in the same slot; v1 is unchanged.
+            if quizV2 {
+                SurveyExtendedQuizScreen(size: size, flow: "product", question: .victoryLooksLike(for: responses.heaviestBurden ?? .peace), selection: $responses.victoryOutcome) { advance() }
+            } else {
+                SurveyExtendedQuizScreen(size: size, flow: "product", question: .connectStyle, selection: $responses.connectStyle) { advance() }
+            }
+        case .belief:
+            // Quiz v2 only — v1's advance() jumps over this step entirely.
+            SurveyExtendedQuizScreen(size: size, flow: "product", question: .belief, selection: $responses.beliefLevel) { advance() }
+        case .dailyMinutes:
+            SurveyExtendedQuizScreen(size: size, flow: "product", question: .dailyMinutes, selection: $responses.dailyMinutes) { advance() }
+        default:
+            EmptyView()
         }
     }
 
@@ -94,21 +138,33 @@ struct ProductOnboardingView: View {
     private var backHalfView: some View {
         switch currentStep {
         case .firstDeclaration:
-            SurveyFirstDeclarationScreen(size: size, responses: responses) { advance() }
+            SurveyFirstDeclarationScreen(size: size, responses: responses, flow: "product") { advance() }
         case .personalDeclaration:
             PersonalDeclarationOnboardingView(
                 viewModel: DIContainer.shared.makePersonalDeclarationViewModel(),
-                size: size
+                size: size,
+                flow: "product"
             ) { declaration in
                 savedDeclaration = declaration
                 advance()
             }
+        case .rating:
+            RatingView(size: size) { advance() }
+        case .planBuilding:
+            SurveyPlanBuildingScreen(burden: responses.heaviestBurden ?? .peace, flow: "product") { advance() }
+        case .planReveal:
+            SurveyPlanRevealScreen(
+                size: size,
+                burden: responses.heaviestBurden ?? .peace,
+                flow: "product",
+                personalDeclaration: savedDeclaration?.declarationText,
+                dailyMinutes: responses.dailyMinutes,
+                victoryEcho: responses.victoryEcho  // nil in quiz v1
+            ) { advance() }
         case .paywall:
             HighConversionPaywallView(callback: { advance() }, source: "onboarding", isHardPaywall: true)
         case .notificationTime:
-            SurveyQ8NotificationScreen(size: size, responses: responses) { advance() }
-        case .rating:
-            RatingView(size: size) { advance() }
+            SurveyQ8NotificationScreen(size: size, responses: responses, flow: "product") { advance() }
         default:
             EmptyView()
         }
@@ -130,13 +186,32 @@ struct ProductOnboardingView: View {
 
     private func advance() {
         UIImpactFeedbackGenerator(style: .soft).impactOccurred()
-        Analytics.logEvent("product_step_completed", parameters: ["step": currentStep.rawValue])
+        // flow_schema 2 = this branch's step layout (1 = pre-renumbering); bump when step raw values are renumbered again.
+        AnalyticsService.shared.track("product_step_completed", parameters: ["step": currentStep.rawValue, "flow_schema": 2])
+
+        // Leaving the category picker: stamp the segment so downstream paywall
+        // events carry a meaningful segment for this arm (quiz sets its own).
+        if currentStep == .categoryPicker, let burden = responses.heaviestBurden {
+            appState.onboardingSegment = "product_\(burden.shortLabel)"
+        }
+
+        // Leaving the hits-hardest question: pre-select the notification-time
+        // screen from when their battle hits (no auto-advance; still editable).
+        if currentStep == .hitsHardest, responses.notificationTime == nil,
+           let suggested = responses.suggestedNotificationTime {
+            responses.notificationTime = suggested
+        }
 
         switch currentStep {
         case .notificationTime:
             applyResponsesAndComplete()
         default:
-            let nextRaw = currentStep.rawValue + 1
+            var nextRaw = currentStep.rawValue + 1
+            // Quiz v1 has no belief step — jump straight from connect style
+            // to daily minutes, exactly the pre-v2 sequence.
+            if !quizV2, ProductStep(rawValue: nextRaw) == .belief {
+                nextRaw += 1
+            }
             guard let next = ProductStep(rawValue: nextRaw) else {
                 assertionFailure("ProductOnboardingView.advance(): no successor for \(currentStep). .notificationTime should be terminal.")
                 onComplete()
@@ -166,9 +241,18 @@ struct ProductOnboardingView: View {
             appState.personalDeclarationTimeIndex = notifTime.startTimeIndex
         }
         appState.hasPersonalDeclaration = savedDeclaration != nil
-        Analytics.logEvent("product_onboarding_completed", parameters: [
+        AnalyticsService.shared.track("product_onboarding_completed", parameters: [
             "goal_word": goalWord.rawValue,
             "burden": responses.heaviestBurden?.rawValue ?? "unknown",
+            "battle_duration": responses.battleDuration ?? "unknown",
+            "already_tried": responses.alreadyTried ?? "unknown",
+            "hits_hardest": responses.hitsHardest ?? "unknown",
+            "connect_style": responses.connectStyle ?? "unknown",
+            "daily_minutes": responses.dailyMinutes ?? "unknown",
+            "victory_looks_like": responses.victoryOutcome ?? "unknown",
+            "belief": responses.beliefLevel ?? "unknown",
+            "quiz_version": quizV2 ? "v2" : "v1",
+            "flow_schema": 2,  // joins with product_step_completed; bump when step raw values are renumbered again
             "set_personal_declaration": (savedDeclaration != nil) as NSNumber
         ])
 
@@ -177,7 +261,7 @@ struct ProductOnboardingView: View {
 
     private func requestNotificationPermissionThenComplete(categories: Set<DeclarationCategory>) {
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { granted, _ in
-            Analytics.logEvent("notification_permission", parameters: ["granted": granted, "source": "product_onboarding"])
+            AnalyticsService.shared.track("notification_permission", parameters: ["granted": granted, "source": "product_onboarding"])
             DispatchQueue.main.async {
                 appState.notificationEnabled = granted
                 if granted {
@@ -189,6 +273,8 @@ struct ProductOnboardingView: View {
                         categories: categories
                     )
                     appState.lastNotificationSetDate = Date()
+                    // Trial pushes may have been scheduled pre-authorization on the paywall; re-add now that delivery is guaranteed.
+                    TrialExperienceService.shared.reschedulePendingTrialPushesIfNeeded()
                 }
                 onComplete()
             }
@@ -205,20 +291,35 @@ enum ProductStep: Int, CaseIterable {
     case mechanism       = 2   // New mechanism
     case experience      = 3   // Good experience
     case categoryPicker  = 4   // Clarity + personalization
+    // Extended personalization quiz (shared screens in SurveyOnboardingScreens)
+    case battleDuration  = 5   // Q2: how long has this battle been going on?
+    case alreadyTried    = 6   // Q3: what have you already tried?
+    case insight         = 7   // micro-insight interstitial (reading vs speaking)
+    case hitsHardest     = 8   // Q4: when does it hit hardest? (preselects notification time)
+    case connectStyle    = 9   // Q5: connect style (quiz v1) or victory outcome (quiz v2)
+    case belief          = 10  // quiz v2 only: do you believe God wants more? (v1 skips it)
+    case dailyMinutes    = 11  // Q6: how much time daily? (drives plan reveal rhythm)
     // Shared back-half (reused from the survey flow)
-    case firstDeclaration = 5  // taste of the matched declaration
-    case personalDeclaration = 6
-    case rating          = 7   // rating ask at the personal-declaration peak
-    case paywall         = 8
-    case notificationTime = 9  // terminal — completes onboarding
+    case firstDeclaration = 12 // taste of the matched declaration
+    case personalDeclaration = 13
+    case rating          = 14  // rating ask at the personal-declaration peak
+    case planBuilding    = 15  // "building your plan" loader (transition, no bar)
+    case planReveal      = 16  // named 30-day plan reveal — sets up the paywall ask
+    case paywall         = 17
+    case notificationTime = 18 // terminal — completes onboarding
 
-    // Index within the value-led intro screens, used to drive the progress bar.
-    var valueScreenIndex: Int? {
-        let screens: [ProductStep] = [.hook, .speed, .mechanism, .experience, .categoryPicker]
+    // Index within the value-led intro + quiz screens, used to drive the
+    // progress bar (visible investment across the question screens too).
+    func valueScreenIndex(quizV2: Bool) -> Int? {
+        var screens: [ProductStep] = [
+            .hook, .speed, .mechanism, .experience, .categoryPicker,
+            .battleDuration, .alreadyTried, .insight, .hitsHardest, .connectStyle, .belief, .dailyMinutes
+        ]
+        if !quizV2 { screens.removeAll { $0 == .belief } }
         return screens.firstIndex(of: self).map { $0 + 1 }
     }
 
-    static let totalValueScreens = 5
+    static func totalValueScreens(quizV2: Bool) -> Int { quizV2 ? 12 : 11 }
 }
 
 // MARK: - Shared Components
@@ -317,7 +418,7 @@ private struct ProductHookScreen: View {
                 .appearStagger(v, delay: 0.36)
         }
         .onAppear {
-            Analytics.logEvent("product_hook_shown", parameters: nil)
+            AnalyticsService.shared.track("product_hook_shown")
             withAnimation { v = true }
         }
     }
@@ -383,7 +484,7 @@ private struct ProductSpeedScreen: View {
                 .appearStagger(v, delay: 0.36)
         }
         .onAppear {
-            Analytics.logEvent("product_speed_shown", parameters: nil)
+            AnalyticsService.shared.track("product_speed_shown")
             withAnimation { v = true }
         }
     }
@@ -461,7 +562,7 @@ private struct ProductMechanismScreen: View {
                 .appearStagger(v, delay: 0.42)
         }
         .onAppear {
-            Analytics.logEvent("product_mechanism_shown", parameters: nil)
+            AnalyticsService.shared.track("product_mechanism_shown")
             withAnimation { v = true }
         }
     }
@@ -542,7 +643,7 @@ private struct ProductCategoryPickerScreen: View {
                 .padding(.top, 8).padding(.bottom, 36)
         }
         .onAppear {
-            Analytics.logEvent("product_category_picker_shown", parameters: nil)
+            AnalyticsService.shared.track("product_category_picker_shown")
             withAnimation { v = true }
         }
     }

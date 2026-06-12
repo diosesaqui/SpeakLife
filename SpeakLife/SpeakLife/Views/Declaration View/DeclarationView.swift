@@ -399,7 +399,8 @@ struct DeclarationView: View {
             GeometryReader { geo in
                 PersonalDeclarationOnboardingView(
                     viewModel: DIContainer.shared.makePersonalDeclarationViewModel(),
-                    size: geo.size
+                    size: geo.size,
+                    flow: "app"
                 ) { newDeclaration in
                     if newDeclaration != nil {
                         appState.hasPersonalDeclaration = true

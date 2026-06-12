@@ -117,6 +117,19 @@ enum HeaviestBurden: String, CaseIterable, Identifiable {
 
     var isGrowthTrack: Bool { self == .allOfIt }
 
+    // Named 30-day plan title shown on the pre-paywall plan reveal screen.
+    var planTitle: String {
+        switch self {
+        case .peace:     return "Your 30-Day\nTake Back My Peace Plan"
+        case .health:    return "Your 30-Day\nTake Back My Health Plan"
+        case .joy:       return "Your 30-Day\nTake Back My Joy Plan"
+        case .identity:  return "Your 30-Day\nKnow Who I Am Plan"
+        case .purpose:   return "Your 30-Day\nWalk In My Calling Plan"
+        case .abundance: return "Your 30-Day\nTake Back My Provision Plan"
+        case .allOfIt:   return "Your 30-Day\nSpeak Life Plan"
+        }
+    }
+
     var testimonialGroup: TestimonialGroup {
         switch self {
         case .peace, .health:             return .fearAndHealth
@@ -170,6 +183,65 @@ enum HeaviestBurden: String, CaseIterable, Identifiable {
                 "In all these things we are more than conquerors through him who loved us.",
                 "Romans 8:37"
             )
+        }
+    }
+}
+
+// Quiz v2: burden-aware answers for the "victory_looks_like" outcome question
+// (replaces connect_style when Remote Config `useQuizV2` is on). `value` is the
+// raw analytics value; `echo` is replayed on the plan reveal's week-4 arc line.
+extension HeaviestBurden {
+    var victoryOptions: [(value: String, label: String, symbol: String, echo: String)] {
+        switch self {
+        case .peace:
+            return [
+                (value: "sleep",   label: "I sleep through the night",            symbol: "moon.zzz.fill",         echo: "Sleeping through the night"),
+                (value: "present", label: "I'm present with the people I love",   symbol: "figure.2.arms.open",    echo: "Present with the people you love"),
+                (value: "quiet",   label: "My mind finally gets quiet",           symbol: "brain.head.profile",    echo: "A quiet mind"),
+                (value: "myself",  label: "I feel like myself again",             symbol: "person.fill.checkmark", echo: "Feeling like yourself again")
+            ]
+        case .health:
+            return [
+                (value: "strength", label: "I wake up with strength",             symbol: "sunrise.fill",          echo: "Waking up with strength"),
+                (value: "active",   label: "I'm active with my family again",     symbol: "figure.run",            echo: "Active with your family again"),
+                (value: "fear",     label: "The fear about my body is gone",      symbol: "shield.fill",           echo: "Free from fear about your body"),
+                (value: "whole",    label: "I walk in the healing Jesus paid for", symbol: "heart.fill",           echo: "Walking in the healing Jesus paid for")
+            ]
+        case .joy:
+            return [
+                (value: "mornings", label: "I wake up expectant, not heavy",      symbol: "sunrise.fill",          echo: "Waking up expectant"),
+                (value: "laugh",    label: "I laugh easily again",                symbol: "face.smiling",          echo: "Laughing easily again"),
+                (value: "hope",     label: "Hope feels normal, not forced",       symbol: "sparkles",              echo: "Hope that feels normal"),
+                (value: "light",    label: "The heaviness lifts off my house",    symbol: "house.fill",            echo: "A lighter home")
+            ]
+        case .identity:
+            return [
+                (value: "secure",  label: "I stop second-guessing who I am",      symbol: "person.fill.checkmark", echo: "Secure in who God says you are"),
+                (value: "rooms",   label: "I walk into rooms without shrinking",  symbol: "figure.walk",           echo: "Walking in without shrinking"),
+                (value: "voices",  label: "Other people's opinions lose their grip", symbol: "speaker.slash.fill", echo: "Free from other people's opinions"),
+                (value: "son",     label: "I live like a loved son or daughter",  symbol: "crown.fill",            echo: "Living like a loved son or daughter")
+            ]
+        case .purpose:
+            return [
+                (value: "clarity", label: "I know my next step",                  symbol: "signpost.right.fill",   echo: "Clear on your next step"),
+                (value: "courage", label: "I move without waiting for permission", symbol: "bolt.fill",            echo: "Moving with courage"),
+                (value: "fruit",   label: "My work starts bearing fruit",         symbol: "leaf.fill",             echo: "Work that bears fruit"),
+                (value: "aligned", label: "My days line up with my calling",      symbol: "scope",                 echo: "Days lined up with your calling")
+            ]
+        case .abundance:
+            return [
+                (value: "bills",    label: "Bills stop running my thoughts",      symbol: "checkmark.seal.fill",   echo: "Bills no longer running your thoughts"),
+                (value: "doors",    label: "Doors open that I didn't force",      symbol: "key.fill",              echo: "Doors opening that you didn't force"),
+                (value: "give",     label: "I give without fear",                 symbol: "gift.fill",             echo: "Giving without fear"),
+                (value: "overflow", label: "My family lives from overflow",       symbol: "drop.fill",             echo: "A family living from overflow")
+            ]
+        case .allOfIt:
+            return [
+                (value: "more",       label: "I stop surviving and start advancing", symbol: "flag.fill",          echo: "Advancing, not surviving"),
+                (value: "atmosphere", label: "The atmosphere of my life shifts",  symbol: "wind",                  echo: "A shifted atmosphere"),
+                (value: "words",      label: "My words start building, not leaking", symbol: "quote.bubble.fill",  echo: "Words that build"),
+                (value: "ceiling",    label: "I break the ceiling I've been living under", symbol: "arrow.up.circle.fill", echo: "Breaking the ceiling")
+            ]
         }
     }
 }
@@ -448,6 +520,40 @@ class SurveyResponses: ObservableObject {
     @Published var barriers: Set<BarrierOption> = []
     @Published var declarationExperience: DeclarationExperience? = nil
     @Published var notificationTime: NotificationTime? = nil
+
+    // Extended quiz answers (warfare/product flows, Q2-Q6). Stored as the raw
+    // analytics values; the question copy + options live in
+    // SurveyOnboardingScreens.swift (QuizQuestion).
+    @Published var battleDuration: String? = nil   // weeks | months | years | always
+    @Published var alreadyTried: String? = nil     // prayer | devotionals | therapy | willpower | everything
+    @Published var hitsHardest: String? = nil      // night | morning | midday | evening
+    @Published var connectStyle: String? = nil     // speaking | listening | reading | journaling (quiz v1 only)
+    @Published var dailyMinutes: String? = nil     // one | three | ten
+
+    // Quiz v2 answers (only set when Remote Config `useQuizV2` is on).
+    @Published var victoryOutcome: String? = nil   // burden-aware "victory_looks_like" value
+    @Published var beliefLevel: String? = nil      // yes | want_to | unsure
+
+    /// The plan reveal's week-4 echo phrase, derived from the victory-outcome
+    /// answer. Nil in quiz v1 (victoryOutcome is never set there).
+    var victoryEcho: String? {
+        guard let value = victoryOutcome else { return nil }
+        let burden = heaviestBurden ?? .peace  // mirrors the screen's fallback
+        return burden.victoryOptions.first(where: { $0.value == value })?.echo
+    }
+
+    /// Maps the "when does it hit hardest?" answer to a notification window so
+    /// the time screen arrives pre-selected (the user can still change it).
+    /// 3am/night battles get all-day anchoring; the rest map directly.
+    var suggestedNotificationTime: NotificationTime? {
+        switch hitsHardest {
+        case "morning": return .morning
+        case "midday":  return .midday
+        case "evening": return .evening
+        case "night":   return .allDay
+        default:        return nil
+        }
+    }
 
     var resolvedGoalWord: SurveyGoalWord {
         heaviestBurden?.goalWord ?? .peace

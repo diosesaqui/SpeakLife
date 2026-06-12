@@ -42,6 +42,7 @@ struct PayWhatYouCanView: View {
                     productsSection
                     ctaSection
                     footerLinks
+                    reciprocityNote
                     Spacer().frame(height: 24)
                 }
             }
@@ -197,6 +198,18 @@ struct PayWhatYouCanView: View {
                 .underline()
                 .foregroundColor(.blue)
         }
+    }
+
+    // MARK: - Reciprocity note
+    // Quiet generosity-loop framing: full-price members make this screen
+    // possible, and today's recipient is invited to pass it on later.
+    private var reciprocityNote: some View {
+        Text("Made possible by members who pay full price. Pay what you can today, pass it on when you're able.")
+            .font(.system(size: 11))
+            .foregroundColor(.white.opacity(0.45))
+            .multilineTextAlignment(.center)
+            .lineSpacing(3)
+            .padding(.horizontal, 32)
     }
 
     // MARK: - Label helpers

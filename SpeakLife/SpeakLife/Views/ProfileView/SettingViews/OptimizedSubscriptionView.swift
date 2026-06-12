@@ -624,18 +624,8 @@ struct OptimizedSubscriptionView: View {
                         ]
                     )
                     
-                    // Check if this is a trial start
-                    let hasTrial = selectedProduct.subscription?.introductoryOffer?.period != nil
-                    if hasTrial {
-                        AnalyticsService.shared.trackTrialStarted(
-                            productId: selectedProduct.id,
-                            metadata: [
-                                "trial_days": selectedProduct.subscription?.introductoryOffer?.period.value ?? 0,
-                                "variant": "default"
-                            ]
-                        )
-                    }
-                    
+                    // trial_started fires from SubscriptionStore.purchase — single source of truth
+
                     // Keep existing event for backward compatibility
                     Analytics.logEvent("subscription_started", parameters: [
                         "product_id": selectedProduct.id,

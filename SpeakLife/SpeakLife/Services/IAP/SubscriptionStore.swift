@@ -178,6 +178,12 @@ final class SubscriptionStore: ObservableObject {
     // true  = show Weekly ($SpeakLife1Wk5) instead of Monthly on the paywall
     @Published var useWeeklyPlan = false
 
+    // MARK: - Quiz v2 A/B Test (warfare + product onboarding quiz)
+    // false = current quiz: connect_style question, no belief step (default)
+    // true  = outcome question ("victory_looks_like") replaces connect_style,
+    //         a belief question follows it, and the plan reveal echoes the outcome
+    @Published var useQuizV2 = false
+
     @Published var yearlySubscription = ""
     @Published var monthlySubscription = ""
     @Published var discountSubscription = ""
@@ -349,6 +355,9 @@ final class SubscriptionStore: ObservableObject {
 
         // Weekly Plan A/B Test
         useWeeklyPlan = remoteConfig["useWeeklyPlan"].boolValue
+
+        // Quiz v2 A/B Test (unset key resolves to false, so this ships dormant)
+        useQuizV2 = remoteConfig["useQuizV2"].boolValue
 
         // AI Feature Flag from Remote Config
         enableAIFeatures = remoteConfig["enableAIFeatures"].boolValue
@@ -549,7 +558,10 @@ final class SubscriptionStore: ObservableObject {
         // price immediately. We must check per-user eligibility BEFORE the
         // purchase resolves, because afterwards Apple flips isEligibleForIntroOffer
         // to false (the slot is now used) and we lose the signal.
-        let hasIntroOffer = product.subscription?.introductoryOffer != nil
+        // Only a .freeTrial intro offer is a trial. Discounted pay-as-you-go /
+        // pay-up-front intro offers charge immediately and must take the
+        // regular Subscribe path, not the StartTrial/trial_started one.
+        let hasFreeTrialIntroOffer = product.subscription?.introductoryOffer?.paymentMode == .freeTrial
         let isEligibleForIntroOffer: Bool
         if let subscription = product.subscription {
             isEligibleForIntroOffer = await subscription.isEligibleForIntroOffer
@@ -559,7 +571,7 @@ final class SubscriptionStore: ObservableObject {
         // True iff this specific purchase actually enters a trial period.
         // Used to gate the Facebook StartTrial event, the analytics is_trial
         // flag, and the D2/D3 trial-ending push scheduling.
-        let willStartTrial = hasIntroOffer && isEligibleForIntroOffer
+        let willStartTrial = hasFreeTrialIntroOffer && isEligibleForIntroOffer
         let currency     = product.priceFormatStyle.currencyCode ?? "USD"
 
         // NOTE: Do NOT fire analytics before RC confirms — RC validates the receipt.
@@ -597,12 +609,21 @@ final class SubscriptionStore: ObservableObject {
                     AppEvents.ParameterName("predicted_value"): priceValue as NSNumber
                 ]
             )
+            // Single source of truth for trial_started (paywalls must NOT fire
+            // their own copy). segment/plan added so the event keeps the
+            // properties the HighConversionPaywall version used to carry.
             AnalyticsService.shared.track("trial_started", parameters: [
                 "product_id": product.id,
                 "paywall_name": paywallName,
                 "value": priceValue,
                 "currency": currency,
-                "variant": onboardingVariantName
+                "variant": onboardingVariantName,
+                "segment": UserDefaults.standard.string(forKey: "onboarding_segment") ?? "",
+                "plan": planLabel(for: product),
+                // Aliases of plan/paywall_name kept so pre-existing dashboards
+                // keyed on the old HC-paywall event keys keep working.
+                "plan_id": planLabel(for: product),
+                "paywall_variant": paywallName
             ])
             Event.trackTikTokEngagement(action: "trial_started", category: "subscription")
         } else {
@@ -645,8 +666,13 @@ final class SubscriptionStore: ObservableObject {
         // on hasIntroOffer — otherwise returning subscribers who pay full price
         // get scheduled "your trial ends tomorrow" pushes for a trial they
         // never started.
+        // The trial length is read from THIS product's intro offer (3-day,
+        // 7-day, ...) so the reminder offsets track whichever SKU Remote
+        // Config pointed the paywall at — never a hardcoded 3 days.
         if willStartTrial {
-            TrialExperienceService.shared.onTrialStarted()
+            TrialExperienceService.shared.onTrialStarted(
+                lengthInDays: TrialExperienceService.introTrialDays(for: product)
+            )
         } else if TrialExperienceService.shared.isTrialActive {
             // Trial-active user just bought a paid product → mark converted so
             // we cancel the still-pending trial pushes and stop nagging them.
@@ -671,6 +697,20 @@ final class SubscriptionStore: ObservableObject {
 
     // MARK: - Helpers
 
+    /// Plan label derived from the product's subscription period so conversion
+    /// events report annual/monthly/weekly correctly regardless of which
+    /// paywall initiated the purchase.
+    private func planLabel(for product: Product) -> String {
+        guard let unit = product.subscription?.subscriptionPeriod.unit else { return "unknown" }
+        switch unit {
+        case .year:  return "annual"
+        case .month: return "monthly"
+        case .week:  return "weekly"
+        case .day:   return "daily"
+        @unknown default: return "unknown"
+        }
+    }
+
     func isPurchased(_ product: Product) async -> Bool {
         isPremium || purchasedNonConsumables.contains(product)
     }
@@ -690,12 +730,19 @@ final class SubscriptionStore: ObservableObject {
 
     // MARK: - Restore (via RevenueCat)
 
-    func restore() async {
+    /// Returns true when the restore found an active entitlement, so callers can
+    /// tell the user "restored" vs "nothing to restore" instead of always
+    /// claiming success.
+    @discardableResult
+    func restore() async -> Bool {
         do {
             let info = try await RevenueCatManager.shared.restorePurchases()
             await MainActor.run { applyCustomerInfo(info) }
+            return RevenueCatManager.shared.isPremiumActive(info)
+                || RevenueCatManager.shared.isDevotionalActive(info)
         } catch {
             print("RC restore failed: \(error)")
+            return false
         }
     }
 }

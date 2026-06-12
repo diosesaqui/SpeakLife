@@ -4,7 +4,6 @@
 //
 
 import SwiftUI
-import FirebaseAnalytics
 
 // MARK: - Ambient Orb (background atmosphere)
 
@@ -57,12 +56,25 @@ struct PersonalDeclarationOnboardingView: View {
     @StateObject var viewModel: PersonalDeclarationViewModel
 
     let size: CGSize
+    /// Which flow is showing this screen ("quiz" | "survey" | "identity" |
+    /// "outcomes" | "warfare" | "product" | "migration" | "app" | "legacy").
+    /// Stamped onto the personal-declaration events so funnels can split the
+    /// shared screen by surface. Defaults to "quiz" for the quiz flow's
+    /// existing call site.
+    var flow: String = "quiz"
     let onComplete: (PersonalDeclaration?) -> Void
 
     @State private var titleAppeared = false
     @State private var micAppeared = false
     @State private var micBreath = false
     @State private var glowPulse = false
+    @State private var skipDelayElapsed = false
+
+    // The quiet escape hatch: visible after a short delay on the input state,
+    // and immediately whenever a failure message is showing.
+    private var skipVisible: Bool {
+        skipDelayElapsed || viewModel.errorMessage != nil
+    }
 
     var body: some View {
         ZStack {
@@ -105,11 +117,14 @@ struct PersonalDeclarationOnboardingView: View {
         }
         .frame(width: size.width, height: size.height)
         .onAppear {
-            Analytics.logEvent("personal_declaration_screen_shown", parameters: nil)
+            AnalyticsService.shared.track("personal_declaration_screen_shown", parameters: ["flow": flow])
             withAnimation(.easeOut(duration: 0.7)) { titleAppeared = true }
             withAnimation(.easeOut(duration: 0.7).delay(0.35)) { micAppeared = true }
             withAnimation(.easeInOut(duration: 2.2).repeatForever(autoreverses: true)) {
                 micBreath = true
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 6) {
+                withAnimation(.easeIn(duration: 0.4)) { skipDelayElapsed = true }
             }
         }
     }
@@ -166,8 +181,32 @@ struct PersonalDeclarationOnboardingView: View {
 
             Spacer()
 
-            Spacer().frame(height: size.height * 0.06)
+            skipButton
+                .opacity(skipVisible ? 1 : 0)
+                .allowsHitTesting(skipVisible)
+                .animation(.easeIn(duration: 0.4), value: skipVisible)
+
+            Spacer().frame(height: size.height * 0.05)
         }
+    }
+
+    // MARK: - Skip (quiet escape hatch — never compete with the main CTA)
+
+    private var skipButton: some View {
+        Button("Skip for now") { skip() }
+            .font(.system(size: 14, weight: .regular, design: .rounded))
+            .foregroundColor(.white.opacity(0.5))
+    }
+
+    private func skip() {
+        AnalyticsService.shared.track("personal_declaration_skipped", parameters: [
+            "flow": flow,
+            "after_failure": viewModel.errorMessage != nil
+        ])
+        // Same completion path as a save, just without a declaration — parents
+        // keep `savedDeclaration` nil so `set_personal_declaration` stays false
+        // and the burden's preview declaration remains the downstream fallback.
+        onComplete(nil)
     }
 
     // MARK: - Mic Block
@@ -675,8 +714,9 @@ struct PersonalDeclarationOnboardingView: View {
                     )
                     appState.hasPersonalDeclaration = true
                     UserPreferencesTracker.shared.personalDeclarationBelief = declaration.beliefText
-                    Analytics.logEvent("personal_declaration_saved", parameters: [
-                        "category": declaration.categoryRaw as NSString
+                    AnalyticsService.shared.track("personal_declaration_saved", parameters: [
+                        "category": declaration.categoryRaw as NSString,
+                        "flow": flow
                     ])
                     onComplete(declaration)
                 } catch {
@@ -693,6 +733,11 @@ struct PersonalDeclarationOnboardingView: View {
                 .font(.system(size: 13))
                 .foregroundColor(.red.opacity(0.8))
                 .padding(.bottom, 8)
+
+            // A failed save would otherwise dead-end the flow — offer the
+            // quiet exit immediately.
+            skipButton
+                .padding(.bottom, 12)
         }
         } // end outer VStack
     }

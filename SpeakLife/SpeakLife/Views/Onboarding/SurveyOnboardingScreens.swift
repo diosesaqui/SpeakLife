@@ -661,6 +661,11 @@ struct SurveyGoalRevealScreen: View {
 struct SurveyQ8NotificationScreen: View {
     let size: CGSize
     @ObservedObject var responses: SurveyResponses
+    /// Which onboarding flow is showing this screen ("quiz" | "survey" |
+    /// "identity" | "outcomes" | "warfare" | "product"). Stamped onto
+    /// `survey_q8_shown` so funnels can split the shared back-half by arm.
+    /// Defaults to "quiz" for the quiz flow's existing call site.
+    var flow: String = "quiz"
     var onContinue: () -> Void
 
     @State private var showPreview = false
@@ -714,7 +719,7 @@ struct SurveyQ8NotificationScreen: View {
             .padding(.bottom, 36)
         }
         .onAppear {
-            Analytics.logEvent("survey_q8_shown", parameters: nil)
+            AnalyticsService.shared.track("survey_q8_shown", parameters: ["flow": flow])
         }
     }
 
@@ -763,6 +768,10 @@ struct SurveyQ8NotificationScreen: View {
 struct SurveyFirstDeclarationScreen: View {
     let size: CGSize
     @ObservedObject var responses: SurveyResponses
+    /// Which onboarding flow is showing this screen ("survey" | "identity" |
+    /// "outcomes" | "warfare" | "product"). Stamped onto the shared
+    /// first-declaration events so funnels can split them by arm.
+    var flow: String = "survey"
     let onContinue: () -> Void
 
     @State private var labelShown = false
@@ -830,7 +839,7 @@ struct SurveyFirstDeclarationScreen: View {
             Spacer()
 
             SurveyContinueButton(label: "I Want Them All →") {
-                Analytics.logEvent("survey_first_declaration_continue", parameters: nil)
+                AnalyticsService.shared.track("survey_first_declaration_continue", parameters: ["flow": flow])
                 onContinue()
             }
             .padding(.bottom, 36)
@@ -838,8 +847,9 @@ struct SurveyFirstDeclarationScreen: View {
             .animation(.easeOut(duration: 0.4).delay(0.55), value: cardShown)
         }
         .onAppear {
-            Analytics.logEvent("survey_first_declaration_shown", parameters: [
-                "burden": responses.heaviestBurden?.rawValue ?? "unknown"
+            AnalyticsService.shared.track("survey_first_declaration_shown", parameters: [
+                "burden": responses.heaviestBurden?.rawValue ?? "unknown",
+                "flow": flow
             ])
             withAnimation { labelShown = true }
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
@@ -1269,5 +1279,641 @@ struct SurveyCommitmentHoldScreen: View {
         withAnimation(.easeOut(duration: 0.4)) { glowOpacity = 0 }
         withAnimation(.easeOut(duration: 0.3)) { ringScale = 1.0 }
         withAnimation(.linear(duration: 0.2)) { holdProgress = 0 }
+    }
+}
+
+// MARK: - Extended Quiz (Q2-Q6 in the warfare/product flows)
+
+/// One selectable answer in an extended-quiz question. `value` is the raw
+/// analytics value stored on SurveyResponses and stamped onto
+/// `quiz_question_answered` + the flow-completed events.
+struct ExtendedQuizOption: Identifiable {
+    let value: String
+    let label: String
+    let sublabel: String?
+    let symbol: String
+
+    var id: String { value }
+
+    init(value: String, label: String, sublabel: String? = nil, symbol: String) {
+        self.value = value
+        self.label = label
+        self.sublabel = sublabel
+        self.symbol = symbol
+    }
+}
+
+/// Copy + options for one extended-quiz question. The five questions inserted
+/// after the burden picker in the warfare and product arms live here so both
+/// flows render identical screens.
+struct ExtendedQuizQuestion {
+    let key: String
+    let title: String
+    let subtitle: String
+    let options: [ExtendedQuizOption]
+
+    static let battleDuration = ExtendedQuizQuestion(
+        key: "battle_duration",
+        title: "How long has this battle\nbeen going on?",
+        subtitle: "Be honest. This shapes your plan.",
+        options: [
+            ExtendedQuizOption(value: "weeks",  label: "A few weeks", symbol: "clock"),
+            ExtendedQuizOption(value: "months", label: "A few months", symbol: "calendar"),
+            ExtendedQuizOption(value: "years",  label: "Years", symbol: "hourglass"),
+            ExtendedQuizOption(value: "always", label: "As long as I can remember", symbol: "infinity")
+        ]
+    )
+
+    static let alreadyTried = ExtendedQuizQuestion(
+        key: "already_tried",
+        title: "What have you already tried?",
+        subtitle: "There's no wrong answer here.",
+        options: [
+            ExtendedQuizOption(value: "prayer",      label: "Prayer when it gets bad", symbol: "hands.sparkles.fill"),
+            ExtendedQuizOption(value: "devotionals", label: "Devotionals and reading plans", symbol: "book.fill"),
+            ExtendedQuizOption(value: "therapy",     label: "Therapy or counseling", symbol: "person.2.fill"),
+            ExtendedQuizOption(value: "willpower",   label: "Pushing through on my own", symbol: "figure.walk"),
+            ExtendedQuizOption(value: "everything",  label: "All of it. I'm still in the fight", symbol: "flame.fill")
+        ]
+    )
+
+    static let hitsHardest = ExtendedQuizQuestion(
+        key: "hits_hardest",
+        title: "When does it hit hardest?",
+        subtitle: "We'll arm you for that exact moment.",
+        options: [
+            ExtendedQuizOption(value: "night",   label: "3am wake-ups and racing thoughts", symbol: "moon.zzz.fill"),
+            ExtendedQuizOption(value: "morning", label: "First thing in the morning", symbol: "sunrise.fill"),
+            ExtendedQuizOption(value: "midday",  label: "Under pressure during the day", symbol: "sun.max.fill"),
+            ExtendedQuizOption(value: "evening", label: "When everything goes quiet at night", symbol: "moon.stars.fill")
+        ]
+    )
+
+    static let connectStyle = ExtendedQuizQuestion(
+        key: "connect_style",
+        title: "How do you connect best\nwith God's Word?",
+        subtitle: "Your plan will lead with this.",
+        options: [
+            ExtendedQuizOption(value: "speaking",   label: "Speaking it out loud", symbol: "waveform"),
+            ExtendedQuizOption(value: "listening",  label: "Listening on the go", symbol: "headphones"),
+            ExtendedQuizOption(value: "reading",    label: "Reading and reflecting", symbol: "book.closed.fill"),
+            ExtendedQuizOption(value: "journaling", label: "Writing and journaling", symbol: "square.and.pencil")
+        ]
+    )
+
+    static let dailyMinutes = ExtendedQuizQuestion(
+        key: "daily_minutes",
+        title: "How much time can you\ngive this daily?",
+        subtitle: "Small and daily beats big and rare.",
+        options: [
+            ExtendedQuizOption(value: "one",   label: "1 minute. I need it fast", symbol: "bolt.fill"),
+            ExtendedQuizOption(value: "three", label: "3 minutes morning and night", symbol: "clock.fill"),
+            ExtendedQuizOption(value: "ten",   label: "10 minutes. I want to go deep", symbol: "books.vertical.fill")
+        ]
+    )
+
+    /// Quiz v2 only: the outcome question that replaces `connectStyle` when
+    /// Remote Config `useQuizV2` is on. Options are burden-aware so victory
+    /// reads in the user's own battle (see HeaviestBurden.victoryOptions).
+    static func victoryLooksLike(for burden: HeaviestBurden) -> ExtendedQuizQuestion {
+        ExtendedQuizQuestion(
+            key: "victory_looks_like",
+            title: "What would change if this\nbattle was actually won?",
+            subtitle: "Name it. That's what we aim at.",
+            options: burden.victoryOptions.map {
+                ExtendedQuizOption(value: $0.value, label: $0.label, symbol: $0.symbol)
+            }
+        )
+    }
+
+    /// Quiz v2 only: asked right after the outcome question. Every answer
+    /// simply advances — no judgmental follow-up.
+    static let belief = ExtendedQuizQuestion(
+        key: "belief",
+        title: "Do you believe God wants\nmore for you in this area?",
+        subtitle: "There's no wrong answer. This is between you and Him.",
+        options: [
+            ExtendedQuizOption(value: "yes",     label: "Yes, absolutely", symbol: "flame.fill"),
+            ExtendedQuizOption(value: "want_to", label: "I want to believe it", symbol: "heart.fill"),
+            ExtendedQuizOption(value: "unsure",  label: "Honestly, I'm not sure", symbol: "questionmark.circle.fill")
+        ]
+    )
+}
+
+/// Icon-tile answer row matching the burden pickers' chrome (icon, label,
+/// optional sub-label, radio circle, selection highlight).
+private struct QuizOptionRow: View {
+    let option: ExtendedQuizOption
+    let isSelected: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: {
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            action()
+        }) {
+            HStack(spacing: 14) {
+                Image(systemName: option.symbol)
+                    .font(.system(size: 22))
+                    .foregroundColor(.white.opacity(isSelected ? 1 : 0.7))
+                    .frame(width: 32)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(option.label)
+                        .font(.system(size: 16, weight: .semibold, design: .rounded))
+                        .foregroundColor(.white)
+                        .fixedSize(horizontal: false, vertical: true)
+                    if let sub = option.sublabel {
+                        Text(sub)
+                            .font(.system(size: 13, weight: .regular, design: .rounded))
+                            .foregroundColor(.white.opacity(0.55))
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+                Spacer()
+                ZStack {
+                    Circle()
+                        .strokeBorder(isSelected ? Color.white : Color.white.opacity(0.35), lineWidth: 1.5)
+                        .frame(width: 22, height: 22)
+                    if isSelected {
+                        Circle().fill(Color.white).frame(width: 12, height: 12)
+                    }
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 14)
+            .background(
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .fill(isSelected ? Color.white.opacity(0.15) : Color.white.opacity(0.06))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                            .strokeBorder(isSelected ? Color.white.opacity(0.5) : Color.white.opacity(0.12), lineWidth: 1)
+                    )
+            )
+            .animation(.spring(response: 0.3, dampingFraction: 0.75), value: isSelected)
+        }
+        .buttonStyle(PlainButtonStyle())
+    }
+}
+
+/// Reusable single-select question screen for the extended quiz. Continue is
+/// disabled until an option is selected; no auto-advance. Fires
+/// `quiz_question_shown` on appear and `quiz_question_answered` on continue,
+/// both tagged with the flow ("warfare" | "product").
+struct SurveyExtendedQuizScreen: View {
+    let size: CGSize
+    let flow: String
+    let question: ExtendedQuizQuestion
+    @Binding var selection: String?
+    let onContinue: () -> Void
+
+    @State private var v = false
+
+    var body: some View {
+        VStack(spacing: 0) {
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 22) {
+                    Spacer().frame(height: size.height * 0.10)
+
+                    VStack(spacing: 12) {
+                        Text(question.title)
+                            .font(.system(size: 27, weight: .bold, design: .rounded))
+                            .foregroundColor(.white)
+                            .multilineTextAlignment(.center)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .planRevealStagger(v)
+
+                        Text(question.subtitle)
+                            .font(.system(size: 15, weight: .regular, design: .rounded))
+                            .foregroundColor(.white.opacity(0.65))
+                            .multilineTextAlignment(.center)
+                            .lineSpacing(3)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .planRevealStagger(v, delay: 0.1)
+                    }
+                    .padding(.horizontal, 28)
+
+                    VStack(spacing: 10) {
+                        ForEach(question.options) { option in
+                            QuizOptionRow(option: option, isSelected: selection == option.value) {
+                                selection = option.value
+                            }
+                        }
+                    }
+                    .padding(.horizontal, 20)
+                    .planRevealStagger(v, delay: 0.2)
+
+                    Spacer().frame(height: 8)
+                }
+            }
+
+            SurveyContinueButton(isEnabled: selection != nil) {
+                AnalyticsService.shared.track("quiz_question_answered", parameters: [
+                    "flow": flow,
+                    "question": question.key,
+                    "answer": selection ?? "unknown"
+                ])
+                onContinue()
+            }
+            .padding(.top, 8).padding(.bottom, 36)
+        }
+        .onAppear {
+            AnalyticsService.shared.track("quiz_question_shown", parameters: [
+                "flow": flow,
+                "question": question.key
+            ])
+            withAnimation { v = true }
+        }
+    }
+}
+
+/// Micro-insight interstitial between Q3 and Q4: reframes the product
+/// mechanism (speaking vs reading) right after the user names what they've
+/// already tried. Tap-through, no selection. Qualitative claims only.
+struct SurveyQuizInsightScreen: View {
+    let size: CGSize
+    let flow: String
+    let onContinue: () -> Void
+
+    @State private var v = false
+
+    var body: some View {
+        VStack(spacing: 0) {
+            Spacer()
+
+            VStack(spacing: 26) {
+                ZStack {
+                    Circle()
+                        .fill(Color.white.opacity(0.10))
+                        .frame(width: 96, height: 96)
+                    Image(systemName: "waveform")
+                        .font(.system(size: 40))
+                        .foregroundColor(.white)
+                }
+                .planRevealStagger(v)
+
+                VStack(spacing: 14) {
+                    Text("HERE'S THE SHIFT")
+                        .font(.system(size: 12, weight: .bold, design: .rounded))
+                        .foregroundColor(.white.opacity(0.5))
+                        .kerning(1.4)
+                        .multilineTextAlignment(.center)
+                        .planRevealStagger(v, delay: 0.08)
+
+                    Text("Reading calms the mind.\nSpeaking takes ground.")
+                        .font(.system(size: 30, weight: .bold, design: .rounded))
+                        .foregroundColor(.white)
+                        .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .planRevealStagger(v, delay: 0.14)
+
+                    Text("Most believers read about peace and feel better for an hour. Jesus spoke to storms, and they obeyed. Your plan is built around your voice, because faith comes by hearing, and hearing by the word of God.")
+                        .font(.system(size: 17, weight: .regular, design: .rounded))
+                        .foregroundColor(.white.opacity(0.75))
+                        .multilineTextAlignment(.center)
+                        .lineSpacing(4)
+                        .padding(.horizontal, 22)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .planRevealStagger(v, delay: 0.22)
+                }
+
+                VStack(spacing: 4) {
+                    Text("\"So then faith comes by hearing, and hearing by the word of God.\"")
+                        .font(.system(size: 15, weight: .regular, design: .serif))
+                        .italic()
+                        .foregroundColor(.white.opacity(0.8))
+                        .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Text("Romans 10:17")
+                        .font(.system(size: 12, weight: .medium, design: .rounded))
+                        .foregroundColor(.white.opacity(0.45))
+                }
+                .padding(.horizontal, 28)
+                .planRevealStagger(v, delay: 0.32)
+            }
+            .padding(.horizontal, 28)
+
+            Spacer()
+
+            SurveyContinueButton(label: "That's What I Want →") { onContinue() }
+                .padding(.bottom, 36)
+                .planRevealStagger(v, delay: 0.42)
+        }
+        .onAppear {
+            AnalyticsService.shared.track("quiz_insight_shown", parameters: ["flow": flow])
+            withAnimation { v = true }
+        }
+    }
+}
+
+// MARK: - Plan Building (pre-paywall loader)
+
+/// A ~4s "building your plan" loader shown right before the plan reveal +
+/// paywall (the Noom / Bible Chat pattern). Four checkmark lines tick in one
+/// by one with a soft haptic each, then it auto-advances. No button, no
+/// progress bar — it reads as a transition, not a step.
+struct SurveyPlanBuildingScreen: View {
+    let burden: HeaviestBurden
+    /// Which onboarding flow is showing this screen ("warfare" | "product").
+    let flow: String
+    let onComplete: () -> Void
+
+    @State private var visibleLines = 0
+    @State private var spinnerAngle: Double = 0
+    @State private var hasCompleted = false
+
+    private static let checkGreen = Color(red: 0.36, green: 0.84, blue: 0.55)
+
+    private var title: String {
+        flow == "warfare" ? "Building your battle plan..." : "Building your plan..."
+    }
+
+    private var lines: [String] {
+        let matching: String
+        if burden == .allOfIt {
+            matching = "Matching declarations to your fight"
+        } else {
+            matching = "Matching declarations to your battle for \(burden.shortLabel)"
+        }
+        return [
+            matching,
+            "Choosing your verses",
+            "Setting your daily rhythm",
+            "Trusted by \(SocialProof.believersCount) believers"
+        ]
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            Spacer()
+
+            VStack(spacing: 36) {
+                ZStack {
+                    Circle()
+                        .stroke(Color.white.opacity(0.15), lineWidth: 4)
+                        .frame(width: 56, height: 56)
+                    Circle()
+                        .trim(from: 0, to: 0.3)
+                        .stroke(Color.white, style: StrokeStyle(lineWidth: 4, lineCap: .round))
+                        .frame(width: 56, height: 56)
+                        .rotationEffect(.degrees(spinnerAngle))
+                }
+
+                Text(title)
+                    .font(.system(size: 26, weight: .bold, design: .rounded))
+                    .foregroundColor(.white)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.horizontal, 28)
+
+                VStack(alignment: .leading, spacing: 18) {
+                    ForEach(lines.indices, id: \.self) { i in
+                        HStack(alignment: .firstTextBaseline, spacing: 12) {
+                            Image(systemName: "checkmark.circle.fill")
+                                .font(.system(size: 19))
+                                .foregroundColor(Self.checkGreen)
+                            Text(lines[i])
+                                .font(.system(size: 16, weight: .medium, design: .rounded))
+                                .foregroundColor(.white.opacity(0.85))
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        .opacity(i < visibleLines ? 1 : 0)
+                        .offset(y: i < visibleLines ? 0 : 8)
+                        .animation(.easeOut(duration: 0.35), value: visibleLines)
+                    }
+                }
+                .padding(.horizontal, 44)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+
+            Spacer()
+            Spacer().frame(height: 80)
+        }
+        .onAppear { start() }
+    }
+
+    private func start() {
+        AnalyticsService.shared.track("plan_building_shown", parameters: [
+            "flow": flow,
+            "burden": burden.shortLabel
+        ])
+        withAnimation(.linear(duration: 1.1).repeatForever(autoreverses: false)) {
+            spinnerAngle = 360
+        }
+        let lineCount = lines.count
+        for i in 1...lineCount {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4 + Double(i - 1) * 0.9) {
+                UIImpactFeedbackGenerator(style: .soft).impactOccurred()
+                withAnimation { visibleLines = i }
+            }
+        }
+        // Last line lands at 0.4 + 2.7 = 3.1s; settle ~1s, advance at ~4.1s.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4 + Double(lineCount - 1) * 0.9 + 1.0) {
+            guard !hasCompleted else { return }
+            hasCompleted = true
+            onComplete()
+        }
+    }
+}
+
+// MARK: - Plan Reveal (named plan, shown right before the paywall)
+
+private struct SurveyPlanRevealStagger: ViewModifier {
+    let shown: Bool
+    let delay: Double
+    func body(content: Content) -> some View {
+        content
+            .opacity(shown ? 1 : 0)
+            .offset(y: shown ? 0 : 16)
+            .animation(.easeOut(duration: 0.55).delay(delay), value: shown)
+    }
+}
+
+private extension View {
+    func planRevealStagger(_ shown: Bool, delay: Double = 0) -> some View {
+        modifier(SurveyPlanRevealStagger(shown: shown, delay: delay))
+    }
+}
+
+/// The named-plan reveal: "Your 30-Day Take Back My Peace Plan" with a plan
+/// card (their declaration, the scripture anchor, the daily rhythm) and a
+/// realistic 3-line arc. CTA advances to the paywall.
+struct SurveyPlanRevealScreen: View {
+    let size: CGSize
+    let burden: HeaviestBurden
+    /// Which onboarding flow is showing this screen ("warfare" | "product").
+    let flow: String
+    /// The user's saved personal declaration, if they recorded one. When nil
+    /// (or empty) the burden's curated preview declaration is shown instead.
+    let personalDeclaration: String?
+    /// Raw "daily_minutes" quiz answer ("one" | "three" | "ten"). Drives the
+    /// "Daily rhythm" row copy; nil falls back to the generic line so callers
+    /// without the extended quiz are unaffected.
+    var dailyMinutes: String? = nil
+    /// Quiz v2 only: the user's victory-outcome echo phrase. When present the
+    /// week-4 arc line replays it in their own words; nil keeps the static line.
+    var victoryEcho: String? = nil
+    let onContinue: () -> Void
+
+    @State private var v = false
+
+    private var hasPersonalDeclaration: Bool {
+        if let text = personalDeclaration, !text.isEmpty { return true }
+        return false
+    }
+
+    private var dailyRhythmDetail: String {
+        switch dailyMinutes {
+        case "one":   return "1 minute, morning and evening"
+        case "three": return "3 minutes, morning and evening"
+        case "ten":   return "10 minutes of depth, morning and evening"
+        default:      return "Morning and evening declarations, built around your day."
+        }
+    }
+
+    private var declarationText: String {
+        if let text = personalDeclaration, !text.isEmpty { return text }
+        return burden.previewDeclaration.text
+    }
+
+    private var weekFourLine: String {
+        if let echo = victoryEcho, !echo.isEmpty {
+            return "\(echo). Standing on promises."
+        }
+        return "Standing on promises, not fighting for footing."
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 22) {
+                    Spacer().frame(height: size.height * 0.09)
+
+                    VStack(spacing: 12) {
+                        Text("YOUR PLAN IS READY")
+                            .font(.system(size: 12, weight: .bold, design: .rounded))
+                            .foregroundColor(.white.opacity(0.5))
+                            .kerning(1.4)
+                            .planRevealStagger(v)
+
+                        Text(burden.planTitle)
+                            .font(.system(size: 28, weight: .bold, design: .rounded))
+                            .foregroundColor(.white)
+                            .multilineTextAlignment(.center)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .planRevealStagger(v, delay: 0.08)
+                    }
+                    .padding(.horizontal, 28)
+
+                    // Plan card
+                    VStack(spacing: 0) {
+                        planRow(
+                            icon: "quote.opening",
+                            title: "Your daily declaration",
+                            detail: declarationText,
+                            detailLineLimit: 3
+                        )
+                        cardDivider
+                        planRow(
+                            icon: "book.fill",
+                            title: "Scripture-backed",
+                            detail: "Every word stands on the Word, starting with \(burden.previewDeclaration.reference)."
+                        )
+                        cardDivider
+                        planRow(
+                            icon: "bell.badge.fill",
+                            title: "Daily rhythm",
+                            detail: dailyRhythmDetail
+                        )
+                    }
+                    .background(
+                        RoundedRectangle(cornerRadius: 20, style: .continuous)
+                            .fill(Color.white.opacity(0.09))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                                    .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                            )
+                    )
+                    .padding(.horizontal, 24)
+                    .planRevealStagger(v, delay: 0.18)
+
+                    // Realistic 3-line arc
+                    VStack(alignment: .leading, spacing: 10) {
+                        weekLine("WEEK 1", "Speak truth before the spiral starts.")
+                        weekLine("WEEK 2", "God's Word becomes your first response.")
+                        weekLine("WEEK 4", weekFourLine)
+                    }
+                    .padding(.horizontal, 32)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .planRevealStagger(v, delay: 0.3)
+
+                    Spacer().frame(height: 8)
+                }
+            }
+
+            SurveyContinueButton(label: "Unlock My Plan →") {
+                AnalyticsService.shared.track("plan_reveal_continue", parameters: [
+                    "flow": flow,
+                    "burden": burden.shortLabel
+                ])
+                onContinue()
+            }
+            .padding(.top, 8).padding(.bottom, 36)
+            .planRevealStagger(v, delay: 0.4)
+        }
+        .onAppear {
+            AnalyticsService.shared.track("plan_reveal_shown", parameters: [
+                "flow": flow,
+                "burden": burden.shortLabel,
+                "has_personal_declaration": hasPersonalDeclaration as NSNumber
+            ])
+            withAnimation { v = true }
+        }
+    }
+
+    private var cardDivider: some View {
+        Rectangle()
+            .fill(Color.white.opacity(0.12))
+            .frame(height: 1)
+            .padding(.horizontal, 16)
+    }
+
+    private func planRow(icon: String, title: String, detail: String, detailLineLimit: Int? = nil) -> some View {
+        HStack(alignment: .top, spacing: 14) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 10)
+                    .fill(Color.white.opacity(0.12))
+                    .frame(width: 38, height: 38)
+                Image(systemName: icon)
+                    .font(.system(size: 16))
+                    .foregroundColor(.white)
+            }
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
+                    .font(.system(size: 14, weight: .semibold, design: .rounded))
+                    .foregroundColor(.white)
+                Text(detail)
+                    .font(.system(size: 13, weight: .regular, design: .rounded))
+                    .foregroundColor(.white.opacity(0.65))
+                    .lineLimit(detailLineLimit)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 14)
+    }
+
+    private func weekLine(_ week: String, _ text: String) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 10) {
+            Text(week)
+                .font(.system(size: 11, weight: .bold, design: .rounded))
+                .foregroundColor(.white.opacity(0.5))
+                .kerning(0.8)
+                .frame(width: 52, alignment: .leading)
+            Text(text)
+                .font(.system(size: 14, weight: .regular, design: .rounded))
+                .foregroundColor(.white.opacity(0.8))
+                .fixedSize(horizontal: false, vertical: true)
+        }
     }
 }

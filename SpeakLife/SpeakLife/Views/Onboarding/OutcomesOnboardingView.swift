@@ -93,11 +93,12 @@ struct OutcomesOnboardingView: View {
     private var backHalfView: some View {
         switch currentStep {
         case .firstDeclaration:
-            SurveyFirstDeclarationScreen(size: size, responses: responses) { advance() }
+            SurveyFirstDeclarationScreen(size: size, responses: responses, flow: "outcomes") { advance() }
         case .personalDeclaration:
             PersonalDeclarationOnboardingView(
                 viewModel: DIContainer.shared.makePersonalDeclarationViewModel(),
-                size: size
+                size: size,
+                flow: "outcomes"
             ) { declaration in
                 savedDeclaration = declaration
                 advance()
@@ -107,7 +108,7 @@ struct OutcomesOnboardingView: View {
         case .paywall:
             HighConversionPaywallView(callback: { advance() }, source: "onboarding", isHardPaywall: true)
         case .notificationTime:
-            SurveyQ8NotificationScreen(size: size, responses: responses) { advance() }
+            SurveyQ8NotificationScreen(size: size, responses: responses, flow: "outcomes") { advance() }
         default:
             EmptyView()
         }

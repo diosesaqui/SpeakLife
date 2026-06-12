@@ -76,13 +76,14 @@ struct SurveyOnboardingView: View {
         case .declarationExp:
             SurveyQ5DeclarationExpScreen(size: size, responses: responses) { advance() }
         case .firstDeclaration:
-            SurveyFirstDeclarationScreen(size: size, responses: responses) { advance() }
+            SurveyFirstDeclarationScreen(size: size, responses: responses, flow: "survey") { advance() }
         case .goalReveal:
             SurveyGoalRevealScreen(size: size, responses: responses) { advance() }
         case .personalDeclaration:
             PersonalDeclarationOnboardingView(
                 viewModel: DIContainer.shared.makePersonalDeclarationViewModel(),
-                size: size
+                size: size,
+                flow: "survey"
             ) { declaration in
                 savedDeclaration = declaration
                 advance()
@@ -94,7 +95,7 @@ struct SurveyOnboardingView: View {
         case .paywall:
             HighConversionPaywallView(callback: { advance() }, source: "onboarding", isHardPaywall: true)
         case .notificationTime:
-            SurveyQ8NotificationScreen(size: size, responses: responses) { advance() }
+            SurveyQ8NotificationScreen(size: size, responses: responses, flow: "survey") { advance() }
         case .rating:
             RatingView(size: size) { advance() }
         default:
