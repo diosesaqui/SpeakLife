@@ -86,7 +86,11 @@ final class TrialExperienceService: ObservableObject {
 
     private func scheduleTrialPushes(from startDate: Date) {
         center.getNotificationSettings { [weak self] settings in
-            guard settings.authorizationStatus == .authorized else { return }
+            // Schedule while permission is still .notDetermined too: the paywall
+            // (and trial timeline) runs BEFORE the onboarding notification ask,
+            // and pending requests added pre-authorization deliver normally once
+            // the user grants permission. Only a hard denial makes them pointless.
+            guard settings.authorizationStatus != .denied else { return }
             self?.scheduleDay2Push(from: startDate)
             self?.scheduleDay3Push(from: startDate)
         }

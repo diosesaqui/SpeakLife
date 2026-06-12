@@ -260,7 +260,8 @@ struct HomeView: View {
                                 GeometryReader { geo in
                                     PersonalDeclarationOnboardingView(
                                         viewModel: DIContainer.shared.makePersonalDeclarationViewModel(),
-                                        size: geo.size
+                                        size: geo.size,
+                                        flow: "migration"
                                     ) { declaration in
                                         if declaration != nil {
                                             appState.hasPersonalDeclaration = true

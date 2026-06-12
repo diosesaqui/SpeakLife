@@ -661,6 +661,11 @@ struct SurveyGoalRevealScreen: View {
 struct SurveyQ8NotificationScreen: View {
     let size: CGSize
     @ObservedObject var responses: SurveyResponses
+    /// Which onboarding flow is showing this screen ("quiz" | "survey" |
+    /// "identity" | "outcomes" | "warfare" | "product"). Stamped onto
+    /// `survey_q8_shown` so funnels can split the shared back-half by arm.
+    /// Defaults to "quiz" for the quiz flow's existing call site.
+    var flow: String = "quiz"
     var onContinue: () -> Void
 
     @State private var showPreview = false
@@ -714,7 +719,7 @@ struct SurveyQ8NotificationScreen: View {
             .padding(.bottom, 36)
         }
         .onAppear {
-            Analytics.logEvent("survey_q8_shown", parameters: nil)
+            AnalyticsService.shared.track("survey_q8_shown", parameters: ["flow": flow])
         }
     }
 
@@ -763,6 +768,10 @@ struct SurveyQ8NotificationScreen: View {
 struct SurveyFirstDeclarationScreen: View {
     let size: CGSize
     @ObservedObject var responses: SurveyResponses
+    /// Which onboarding flow is showing this screen ("survey" | "identity" |
+    /// "outcomes" | "warfare" | "product"). Stamped onto the shared
+    /// first-declaration events so funnels can split them by arm.
+    var flow: String = "survey"
     let onContinue: () -> Void
 
     @State private var labelShown = false
@@ -830,7 +839,7 @@ struct SurveyFirstDeclarationScreen: View {
             Spacer()
 
             SurveyContinueButton(label: "I Want Them All →") {
-                Analytics.logEvent("survey_first_declaration_continue", parameters: nil)
+                AnalyticsService.shared.track("survey_first_declaration_continue", parameters: ["flow": flow])
                 onContinue()
             }
             .padding(.bottom, 36)
@@ -838,8 +847,9 @@ struct SurveyFirstDeclarationScreen: View {
             .animation(.easeOut(duration: 0.4).delay(0.55), value: cardShown)
         }
         .onAppear {
-            Analytics.logEvent("survey_first_declaration_shown", parameters: [
-                "burden": responses.heaviestBurden?.rawValue ?? "unknown"
+            AnalyticsService.shared.track("survey_first_declaration_shown", parameters: [
+                "burden": responses.heaviestBurden?.rawValue ?? "unknown",
+                "flow": flow
             ])
             withAnimation { labelShown = true }
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
@@ -1269,5 +1279,295 @@ struct SurveyCommitmentHoldScreen: View {
         withAnimation(.easeOut(duration: 0.4)) { glowOpacity = 0 }
         withAnimation(.easeOut(duration: 0.3)) { ringScale = 1.0 }
         withAnimation(.linear(duration: 0.2)) { holdProgress = 0 }
+    }
+}
+
+// MARK: - Plan Building (pre-paywall loader)
+
+/// A ~4s "building your plan" loader shown right before the plan reveal +
+/// paywall (the Noom / Bible Chat pattern). Four checkmark lines tick in one
+/// by one with a soft haptic each, then it auto-advances. No button, no
+/// progress bar — it reads as a transition, not a step.
+struct SurveyPlanBuildingScreen: View {
+    let burden: HeaviestBurden
+    /// Which onboarding flow is showing this screen ("warfare" | "product").
+    let flow: String
+    let onComplete: () -> Void
+
+    @State private var visibleLines = 0
+    @State private var spinnerAngle: Double = 0
+    @State private var hasCompleted = false
+
+    private static let checkGreen = Color(red: 0.36, green: 0.84, blue: 0.55)
+
+    private var title: String {
+        flow == "warfare" ? "Building your battle plan..." : "Building your plan..."
+    }
+
+    private var lines: [String] {
+        let matching: String
+        if burden == .allOfIt {
+            matching = "Matching declarations to your fight"
+        } else {
+            matching = "Matching declarations to your battle for \(burden.shortLabel)"
+        }
+        return [
+            matching,
+            "Choosing your verses",
+            "Setting your daily rhythm",
+            "Trusted by \(SocialProof.believersCount) believers"
+        ]
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            Spacer()
+
+            VStack(spacing: 36) {
+                ZStack {
+                    Circle()
+                        .stroke(Color.white.opacity(0.15), lineWidth: 4)
+                        .frame(width: 56, height: 56)
+                    Circle()
+                        .trim(from: 0, to: 0.3)
+                        .stroke(Color.white, style: StrokeStyle(lineWidth: 4, lineCap: .round))
+                        .frame(width: 56, height: 56)
+                        .rotationEffect(.degrees(spinnerAngle))
+                }
+
+                Text(title)
+                    .font(.system(size: 26, weight: .bold, design: .rounded))
+                    .foregroundColor(.white)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.horizontal, 28)
+
+                VStack(alignment: .leading, spacing: 18) {
+                    ForEach(lines.indices, id: \.self) { i in
+                        HStack(alignment: .firstTextBaseline, spacing: 12) {
+                            Image(systemName: "checkmark.circle.fill")
+                                .font(.system(size: 19))
+                                .foregroundColor(Self.checkGreen)
+                            Text(lines[i])
+                                .font(.system(size: 16, weight: .medium, design: .rounded))
+                                .foregroundColor(.white.opacity(0.85))
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        .opacity(i < visibleLines ? 1 : 0)
+                        .offset(y: i < visibleLines ? 0 : 8)
+                        .animation(.easeOut(duration: 0.35), value: visibleLines)
+                    }
+                }
+                .padding(.horizontal, 44)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+
+            Spacer()
+            Spacer().frame(height: 80)
+        }
+        .onAppear { start() }
+    }
+
+    private func start() {
+        AnalyticsService.shared.track("plan_building_shown", parameters: [
+            "flow": flow,
+            "burden": burden.shortLabel
+        ])
+        withAnimation(.linear(duration: 1.1).repeatForever(autoreverses: false)) {
+            spinnerAngle = 360
+        }
+        let lineCount = lines.count
+        for i in 1...lineCount {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4 + Double(i - 1) * 0.9) {
+                UIImpactFeedbackGenerator(style: .soft).impactOccurred()
+                withAnimation { visibleLines = i }
+            }
+        }
+        // Last line lands at 0.4 + 2.7 = 3.1s; settle ~1s, advance at ~4.1s.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4 + Double(lineCount - 1) * 0.9 + 1.0) {
+            guard !hasCompleted else { return }
+            hasCompleted = true
+            onComplete()
+        }
+    }
+}
+
+// MARK: - Plan Reveal (named plan, shown right before the paywall)
+
+private struct SurveyPlanRevealStagger: ViewModifier {
+    let shown: Bool
+    let delay: Double
+    func body(content: Content) -> some View {
+        content
+            .opacity(shown ? 1 : 0)
+            .offset(y: shown ? 0 : 16)
+            .animation(.easeOut(duration: 0.55).delay(delay), value: shown)
+    }
+}
+
+private extension View {
+    func planRevealStagger(_ shown: Bool, delay: Double = 0) -> some View {
+        modifier(SurveyPlanRevealStagger(shown: shown, delay: delay))
+    }
+}
+
+/// The named-plan reveal: "Your 30-Day Take Back My Peace Plan" with a plan
+/// card (their declaration, the scripture anchor, the daily rhythm) and a
+/// realistic 3-line arc. CTA advances to the paywall.
+struct SurveyPlanRevealScreen: View {
+    let size: CGSize
+    let burden: HeaviestBurden
+    /// Which onboarding flow is showing this screen ("warfare" | "product").
+    let flow: String
+    /// The user's saved personal declaration, if they recorded one. When nil
+    /// (or empty) the burden's curated preview declaration is shown instead.
+    let personalDeclaration: String?
+    let onContinue: () -> Void
+
+    @State private var v = false
+
+    private var hasPersonalDeclaration: Bool {
+        if let text = personalDeclaration, !text.isEmpty { return true }
+        return false
+    }
+
+    private var declarationText: String {
+        if let text = personalDeclaration, !text.isEmpty { return text }
+        return burden.previewDeclaration.text
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 22) {
+                    Spacer().frame(height: size.height * 0.09)
+
+                    VStack(spacing: 12) {
+                        Text("YOUR PLAN IS READY")
+                            .font(.system(size: 12, weight: .bold, design: .rounded))
+                            .foregroundColor(.white.opacity(0.5))
+                            .kerning(1.4)
+                            .planRevealStagger(v)
+
+                        Text(burden.planTitle)
+                            .font(.system(size: 28, weight: .bold, design: .rounded))
+                            .foregroundColor(.white)
+                            .multilineTextAlignment(.center)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .planRevealStagger(v, delay: 0.08)
+                    }
+                    .padding(.horizontal, 28)
+
+                    // Plan card
+                    VStack(spacing: 0) {
+                        planRow(
+                            icon: "quote.opening",
+                            title: "Your daily declaration",
+                            detail: declarationText,
+                            detailLineLimit: 3
+                        )
+                        cardDivider
+                        planRow(
+                            icon: "book.fill",
+                            title: "Scripture-backed",
+                            detail: "Every word stands on the Word, starting with \(burden.previewDeclaration.reference)."
+                        )
+                        cardDivider
+                        planRow(
+                            icon: "bell.badge.fill",
+                            title: "Daily rhythm",
+                            detail: "Morning and evening declarations, built around your day."
+                        )
+                    }
+                    .background(
+                        RoundedRectangle(cornerRadius: 20, style: .continuous)
+                            .fill(Color.white.opacity(0.09))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                                    .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                            )
+                    )
+                    .padding(.horizontal, 24)
+                    .planRevealStagger(v, delay: 0.18)
+
+                    // Realistic 3-line arc
+                    VStack(alignment: .leading, spacing: 10) {
+                        weekLine("WEEK 1", "Speak truth before the spiral starts.")
+                        weekLine("WEEK 2", "God's Word becomes your first response.")
+                        weekLine("WEEK 4", "Standing on promises, not fighting for footing.")
+                    }
+                    .padding(.horizontal, 32)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .planRevealStagger(v, delay: 0.3)
+
+                    Spacer().frame(height: 8)
+                }
+            }
+
+            SurveyContinueButton(label: "Unlock My Plan →") {
+                AnalyticsService.shared.track("plan_reveal_continue", parameters: [
+                    "flow": flow,
+                    "burden": burden.shortLabel
+                ])
+                onContinue()
+            }
+            .padding(.top, 8).padding(.bottom, 36)
+            .planRevealStagger(v, delay: 0.4)
+        }
+        .onAppear {
+            AnalyticsService.shared.track("plan_reveal_shown", parameters: [
+                "flow": flow,
+                "burden": burden.shortLabel,
+                "has_personal_declaration": hasPersonalDeclaration as NSNumber
+            ])
+            withAnimation { v = true }
+        }
+    }
+
+    private var cardDivider: some View {
+        Rectangle()
+            .fill(Color.white.opacity(0.12))
+            .frame(height: 1)
+            .padding(.horizontal, 16)
+    }
+
+    private func planRow(icon: String, title: String, detail: String, detailLineLimit: Int? = nil) -> some View {
+        HStack(alignment: .top, spacing: 14) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 10)
+                    .fill(Color.white.opacity(0.12))
+                    .frame(width: 38, height: 38)
+                Image(systemName: icon)
+                    .font(.system(size: 16))
+                    .foregroundColor(.white)
+            }
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
+                    .font(.system(size: 14, weight: .semibold, design: .rounded))
+                    .foregroundColor(.white)
+                Text(detail)
+                    .font(.system(size: 13, weight: .regular, design: .rounded))
+                    .foregroundColor(.white.opacity(0.65))
+                    .lineLimit(detailLineLimit)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 14)
+    }
+
+    private func weekLine(_ week: String, _ text: String) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 10) {
+            Text(week)
+                .font(.system(size: 11, weight: .bold, design: .rounded))
+                .foregroundColor(.white.opacity(0.5))
+                .kerning(0.8)
+                .frame(width: 52, alignment: .leading)
+            Text(text)
+                .font(.system(size: 14, weight: .regular, design: .rounded))
+                .foregroundColor(.white.opacity(0.8))
+                .fixedSize(horizontal: false, vertical: true)
+        }
     }
 }

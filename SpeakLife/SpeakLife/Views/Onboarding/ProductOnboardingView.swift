@@ -13,15 +13,15 @@
 //    5. Avoid discomfort — God's Word for the middle of a life storm
 //
 //  After the value screens it reuses the proven back-half (taste of a
-//  personalized declaration → record your own → rating → paywall →
-//  notification time), and seeds the home feed from a single light category picker.
+//  personalized declaration → record your own → rating → plan-building loader →
+//  named plan reveal → paywall → notification time), and seeds the home feed
+//  from a single light category picker.
 //
 //  One arm of the onboarding A/B: HomeView routes here when Remote Config
 //  `onboardingVariant` == "product" (see SubscriptionStore.resolvedOnboardingVariant).
 //
 
 import SwiftUI
-import FirebaseAnalytics
 import UserNotifications
 import UIKit
 
@@ -73,7 +73,7 @@ struct ProductOnboardingView: View {
             }
         }
         .ignoresSafeArea()
-        .onAppear { Analytics.logEvent("product_onboarding_started", parameters: nil) }
+        .onAppear { AnalyticsService.shared.track("product_onboarding_started") }
     }
 
     // Split to stay within SwiftUI's 10-branch ViewBuilder limit.
@@ -94,21 +94,31 @@ struct ProductOnboardingView: View {
     private var backHalfView: some View {
         switch currentStep {
         case .firstDeclaration:
-            SurveyFirstDeclarationScreen(size: size, responses: responses) { advance() }
+            SurveyFirstDeclarationScreen(size: size, responses: responses, flow: "product") { advance() }
         case .personalDeclaration:
             PersonalDeclarationOnboardingView(
                 viewModel: DIContainer.shared.makePersonalDeclarationViewModel(),
-                size: size
+                size: size,
+                flow: "product"
             ) { declaration in
                 savedDeclaration = declaration
                 advance()
             }
+        case .rating:
+            RatingView(size: size) { advance() }
+        case .planBuilding:
+            SurveyPlanBuildingScreen(burden: responses.heaviestBurden ?? .peace, flow: "product") { advance() }
+        case .planReveal:
+            SurveyPlanRevealScreen(
+                size: size,
+                burden: responses.heaviestBurden ?? .peace,
+                flow: "product",
+                personalDeclaration: savedDeclaration?.declarationText
+            ) { advance() }
         case .paywall:
             HighConversionPaywallView(callback: { advance() }, source: "onboarding", isHardPaywall: true)
         case .notificationTime:
-            SurveyQ8NotificationScreen(size: size, responses: responses) { advance() }
-        case .rating:
-            RatingView(size: size) { advance() }
+            SurveyQ8NotificationScreen(size: size, responses: responses, flow: "product") { advance() }
         default:
             EmptyView()
         }
@@ -130,7 +140,13 @@ struct ProductOnboardingView: View {
 
     private func advance() {
         UIImpactFeedbackGenerator(style: .soft).impactOccurred()
-        Analytics.logEvent("product_step_completed", parameters: ["step": currentStep.rawValue])
+        AnalyticsService.shared.track("product_step_completed", parameters: ["step": currentStep.rawValue])
+
+        // Leaving the category picker: stamp the segment so downstream paywall
+        // events carry a meaningful segment for this arm (quiz sets its own).
+        if currentStep == .categoryPicker, let burden = responses.heaviestBurden {
+            appState.onboardingSegment = "product_\(burden.shortLabel)"
+        }
 
         switch currentStep {
         case .notificationTime:
@@ -166,7 +182,7 @@ struct ProductOnboardingView: View {
             appState.personalDeclarationTimeIndex = notifTime.startTimeIndex
         }
         appState.hasPersonalDeclaration = savedDeclaration != nil
-        Analytics.logEvent("product_onboarding_completed", parameters: [
+        AnalyticsService.shared.track("product_onboarding_completed", parameters: [
             "goal_word": goalWord.rawValue,
             "burden": responses.heaviestBurden?.rawValue ?? "unknown",
             "set_personal_declaration": (savedDeclaration != nil) as NSNumber
@@ -177,7 +193,7 @@ struct ProductOnboardingView: View {
 
     private func requestNotificationPermissionThenComplete(categories: Set<DeclarationCategory>) {
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { granted, _ in
-            Analytics.logEvent("notification_permission", parameters: ["granted": granted, "source": "product_onboarding"])
+            AnalyticsService.shared.track("notification_permission", parameters: ["granted": granted, "source": "product_onboarding"])
             DispatchQueue.main.async {
                 appState.notificationEnabled = granted
                 if granted {
@@ -209,8 +225,10 @@ enum ProductStep: Int, CaseIterable {
     case firstDeclaration = 5  // taste of the matched declaration
     case personalDeclaration = 6
     case rating          = 7   // rating ask at the personal-declaration peak
-    case paywall         = 8
-    case notificationTime = 9  // terminal — completes onboarding
+    case planBuilding    = 8   // "building your plan" loader (transition, no bar)
+    case planReveal      = 9   // named 30-day plan reveal — sets up the paywall ask
+    case paywall         = 10
+    case notificationTime = 11 // terminal — completes onboarding
 
     // Index within the value-led intro screens, used to drive the progress bar.
     var valueScreenIndex: Int? {
@@ -317,7 +335,7 @@ private struct ProductHookScreen: View {
                 .appearStagger(v, delay: 0.36)
         }
         .onAppear {
-            Analytics.logEvent("product_hook_shown", parameters: nil)
+            AnalyticsService.shared.track("product_hook_shown")
             withAnimation { v = true }
         }
     }
@@ -383,7 +401,7 @@ private struct ProductSpeedScreen: View {
                 .appearStagger(v, delay: 0.36)
         }
         .onAppear {
-            Analytics.logEvent("product_speed_shown", parameters: nil)
+            AnalyticsService.shared.track("product_speed_shown")
             withAnimation { v = true }
         }
     }
@@ -461,7 +479,7 @@ private struct ProductMechanismScreen: View {
                 .appearStagger(v, delay: 0.42)
         }
         .onAppear {
-            Analytics.logEvent("product_mechanism_shown", parameters: nil)
+            AnalyticsService.shared.track("product_mechanism_shown")
             withAnimation { v = true }
         }
     }
@@ -542,7 +560,7 @@ private struct ProductCategoryPickerScreen: View {
                 .padding(.top, 8).padding(.bottom, 36)
         }
         .onAppear {
-            Analytics.logEvent("product_category_picker_shown", parameters: nil)
+            AnalyticsService.shared.track("product_category_picker_shown")
             withAnimation { v = true }
         }
     }

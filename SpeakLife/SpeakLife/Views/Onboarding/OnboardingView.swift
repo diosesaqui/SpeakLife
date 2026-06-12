@@ -76,7 +76,8 @@ struct OnboardingView: View {
                     // SCREEN 6: Personal Declaration — "What's one thing you're trusting God for?"
                     PersonalDeclarationOnboardingView(
                         viewModel: DIContainer.shared.makePersonalDeclarationViewModel(),
-                        size: geometry.size
+                        size: geometry.size,
+                        flow: "legacy"
                     ) { declaration in
                         savedDeclaration = declaration
                         withAnimation { advance() }

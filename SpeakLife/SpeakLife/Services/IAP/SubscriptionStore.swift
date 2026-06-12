@@ -597,12 +597,17 @@ final class SubscriptionStore: ObservableObject {
                     AppEvents.ParameterName("predicted_value"): priceValue as NSNumber
                 ]
             )
+            // Single source of truth for trial_started (paywalls must NOT fire
+            // their own copy). segment/plan added so the event keeps the
+            // properties the HighConversionPaywall version used to carry.
             AnalyticsService.shared.track("trial_started", parameters: [
                 "product_id": product.id,
                 "paywall_name": paywallName,
                 "value": priceValue,
                 "currency": currency,
-                "variant": onboardingVariantName
+                "variant": onboardingVariantName,
+                "segment": UserDefaults.standard.string(forKey: "onboarding_segment") ?? "",
+                "plan": planLabel(for: product)
             ])
             Event.trackTikTokEngagement(action: "trial_started", category: "subscription")
         } else {
@@ -671,6 +676,20 @@ final class SubscriptionStore: ObservableObject {
 
     // MARK: - Helpers
 
+    /// Plan label derived from the product's subscription period so conversion
+    /// events report annual/monthly/weekly correctly regardless of which
+    /// paywall initiated the purchase.
+    private func planLabel(for product: Product) -> String {
+        guard let unit = product.subscription?.subscriptionPeriod.unit else { return "unknown" }
+        switch unit {
+        case .year:  return "annual"
+        case .month: return "monthly"
+        case .week:  return "weekly"
+        case .day:   return "daily"
+        @unknown default: return "unknown"
+        }
+    }
+
     func isPurchased(_ product: Product) async -> Bool {
         isPremium || purchasedNonConsumables.contains(product)
     }
@@ -690,12 +709,19 @@ final class SubscriptionStore: ObservableObject {
 
     // MARK: - Restore (via RevenueCat)
 
-    func restore() async {
+    /// Returns true when the restore found an active entitlement, so callers can
+    /// tell the user "restored" vs "nothing to restore" instead of always
+    /// claiming success.
+    @discardableResult
+    func restore() async -> Bool {
         do {
             let info = try await RevenueCatManager.shared.restorePurchases()
             await MainActor.run { applyCustomerInfo(info) }
+            return RevenueCatManager.shared.isPremiumActive(info)
+                || RevenueCatManager.shared.isDevotionalActive(info)
         } catch {
             print("RC restore failed: \(error)")
+            return false
         }
     }
 }

@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SpeakLife — Onboarding & Paywall Conversion Analysis (June 2026)</title>
+<style>
+  :root{
+    --bg:#0e1320; --panel:#161d30; --panel2:#1c2440; --line:#2a3554;
+    --txt:#e8ecf6; --muted:#9aa7c7; --accent:#6ea8ff; --gold:#ffd166;
+    --green:#4cd97b; --red:#ff6b6b; --orange:#ffa94d; --purple:#b197fc;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--txt);font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+  .wrap{max-width:1080px;margin:0 auto;padding:48px 28px 96px}
+  h1{font-size:34px;line-height:1.2;margin:0 0 6px}
+  h2{font-size:25px;margin:64px 0 16px;padding-top:24px;border-top:1px solid var(--line);color:#fff}
+  h3{font-size:19px;margin:32px 0 10px;color:var(--accent)}
+  h4{font-size:16px;margin:24px 0 8px;color:var(--gold)}
+  p{margin:10px 0}
+  .sub{color:var(--muted);font-size:15px;margin-bottom:32px}
+  .pill{display:inline-block;padding:2px 11px;border-radius:99px;font-size:12.5px;font-weight:600;margin-right:6px;vertical-align:middle}
+  .p0{background:#3a1220;color:#ff8fa3;border:1px solid #6e2238}
+  .p1{background:#3a2a10;color:#ffce80;border:1px solid #6e5222}
+  .p2{background:#102a3a;color:#80d4ff;border:1px solid #225a6e}
+  .bug{background:#2a1030;color:#dba6ff;border:1px solid #5a2270}
+  .win{background:#0f3320;color:#7be3a4;border:1px solid #1f6e42}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px 24px;margin:18px 0}
+  .card h3{margin-top:0}
+  table{width:100%;border-collapse:collapse;margin:16px 0;font-size:14.5px}
+  th{background:var(--panel2);text-align:left;padding:10px 12px;color:var(--accent);font-weight:600;border:1px solid var(--line)}
+  td{padding:9px 12px;border:1px solid var(--line);vertical-align:top}
+  tr:nth-child(even) td{background:rgba(255,255,255,0.018)}
+  code{background:var(--panel2);padding:2px 7px;border-radius:6px;font-size:13.5px;color:#ffd9a0;font-family:"SF Mono",Menlo,Consolas,monospace}
+  .num{font-size:30px;font-weight:700;color:var(--gold);line-height:1.1}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;margin:20px 0}
+  .stat{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px}
+  .stat .lbl{color:var(--muted);font-size:13px;margin-top:6px}
+  .quote{border-left:3px solid var(--accent);padding:8px 18px;margin:14px 0;color:var(--muted);font-style:italic;background:rgba(110,168,255,0.05);border-radius:0 8px 8px 0}
+  ul,ol{margin:10px 0;padding-left:24px}
+  li{margin:7px 0}
+  .good{color:var(--green);font-weight:600}
+  .bad{color:var(--red);font-weight:600}
+  .warn{color:var(--orange);font-weight:600}
+  .src{color:var(--muted);font-size:12.5px}
+  a{color:var(--accent);text-decoration:none}
+  a:hover{text-decoration:underline}
+  .toc{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px 26px;margin:28px 0}
+  .toc ol{columns:2;column-gap:40px;margin:8px 0}
+  .toc li{break-inside:avoid;font-size:14.5px}
+  .impact{font-weight:700;color:var(--green)}
+  .effort{color:var(--muted);font-size:13px}
+  .flowbox{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0;align-items:center}
+  .step{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:5px 11px;font-size:13px;white-space:nowrap}
+  .step.new{background:#0f3320;border-color:#1f6e42;color:#7be3a4}
+  .step.pay{background:#3a2a10;border-color:#6e5222;color:#ffce80}
+  .arrow{color:var(--muted);font-size:13px}
+  .footer{margin-top:72px;border-top:1px solid var(--line);padding-top:20px;color:var(--muted);font-size:13px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>SpeakLife Onboarding &amp; Paywall — Conversion Analysis</h1>
+<p class="sub">Deep research synthesis (RevenueCat, Adapty, Superwall, Blinkist/growth.design, ScreensDesign teardowns of Hallow, Bible Chat, Cal AI, Flo, Noom, Glorify, Abide, "I am") &times; full code audit of <code>HighConversionPaywallView</code>, <code>WarfareOnboardingView</code>, and <code>ProductOnboardingView</code>. Generated June 12, 2026.</p>
+
+<div class="toc">
+<strong>Contents</strong>
+<ol>
+  <li><a href="#exec">Executive summary</a></li>
+  <li><a href="#bench">Research benchmarks that matter</a></li>
+  <li><a href="#current">What you have today (audit)</a></li>
+  <li><a href="#gaps">Gap analysis vs. best-in-class</a></li>
+  <li><a href="#paywall-changes">Paywall: what I would change</a></li>
+  <li><a href="#onboarding-changes">Onboarding: what I would change</a></li>
+  <li><a href="#bugs">Bugs &amp; instrumentation fixes</a></li>
+  <li><a href="#faith">Faith-niche strategic plays</a></li>
+  <li><a href="#roadmap">Prioritized roadmap &amp; experiment plan</a></li>
+  <li><a href="#sources">Sources</a></li>
+</ol>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="exec">1. Executive Summary</h2>
+
+<p><strong>The good news: your funnel architecture is fundamentally correct.</strong> You have a Day-0 onboarding paywall (where 82–90% of all trial starts happen), hard gating in onboarding (hard paywalls convert ~5x freemium with no retention penalty), an annual-default plan selector with per-month anchoring and a SAVE% badge, real social proof, a personalized headline system, and a pay-what-you-can escape valve that doubles as App Review insurance. Most apps get this skeleton wrong; you didn't.</p>
+
+<p><strong>The gap is in the three highest-evidence patterns you haven't built yet</strong>, plus a layer of analytics bugs that are currently making it impossible to know what's working:</p>
+
+<div class="grid">
+  <div class="stat"><div class="num">1 → 6–8</div><div class="lbl">Quiz questions. Your flows ask <strong>one</strong> question before the paywall. Every top performer asks 15–30. Lose It! saw double-digit trial-rate gains just from lengthening; Adapty case: +40% conversions.</div></div>
+  <div class="stat"><div class="num">+10–15%</div><div class="lbl">Expected lift from a "building your plan…" loader + named plan reveal before the paywall — described by Adapty as "table stakes" in 2026 and entirely absent from both flows.</div></div>
+  <div class="stat"><div class="num">+23%</div><div class="lbl">Trial starts from a Blinkist-style trial-timeline section ("Today → Day 2 reminder → Day 3 charge"). Now the Apple-safe successor to the banned trial toggle. Your paywall has one line of trial text.</div></div>
+  <div class="stat"><div class="num">+10–15% ARPU</div><div class="lbl">From a decline path. Today <code>paywall_dismissed</code> fires and <em>nothing happens</em>. A single one-step exit offer (discounted annual or longer trial) is the cheapest revenue you're leaving on the table.</div></div>
+</div>
+
+<p><strong>And the bad news that's actually urgent:</strong> your per-step onboarding events go to Firebase only (never PostHog), <code>segment</code> is empty on every paywall event for product/warfare users, weekly purchases are logged as "monthly", and <code>trial_started</code> can double-fire or fire for non-trial purchases. <span class="bad">You cannot currently trust the funnel data you'd use to judge any of the improvements above.</span> Instrumentation fixes should ship first.</p>
+
+<!-- ============================================================ -->
+<h2 id="bench">2. Research Benchmarks That Matter</h2>
+
+<table>
+<tr><th>Metric</th><th>Median</th><th>Top performers</th><th>Source</th></tr>
+<tr><td>Install → trial start</td><td>6.2–10.9%</td><td>2–3x median</td><td>RevenueCat SOSA 2025; Adapty 2026</td></tr>
+<tr><td>Trial → paid (3-day trial)</td><td>25.5–30%</td><td>—</td><td>RevenueCat / Adapty</td></tr>
+<tr><td>Trial → paid (5–9 day trial)</td><td>37.4–45%</td><td>H&amp;F top decile: 68.3%</td><td>RevenueCat / Adapty ("5–9 days is the sweet spot")</td></tr>
+<tr><td>Hard paywall download→paid vs freemium</td><td>10.7–12.1% vs 2.1–2.2%</td><td>~5x gap, identical Y1 retention</td><td>RevenueCat 2025/2026</td></tr>
+<tr><td>Share of trial starts on Day 0</td><td colspan="2"><strong>82–90%</strong> — the onboarding paywall is essentially the whole game</td><td>RevenueCat / Superwall</td></tr>
+<tr><td>Paywall view → purchase</td><td>~1.5% (bottom quartile)</td><td>6%+ (top quartile)</td><td>RevenueCat 2025</td></tr>
+<tr><td>Weekly plan share of all subscription revenue</td><td colspan="2">55.6% in 2025 (up from 43.3%) — weekly converts 1.7–7.4x better than annual; weekly + 3-day trial = best 1-yr LTV config (1.5x average)</td><td>Adapty 2026</td></tr>
+<tr><td>Experiment cadence</td><td colspan="2">Apps running ~15+ experiments/yr earn up to 40x non-testers; Cal AI ran 61 tests on its onboarding paywall alone → +31% trial-to-paid, 3x revenue in 10 months</td><td>Adapty; Superwall Cal AI case</td></tr>
+<tr><td>Test win rates by type</td><td colspan="2">Localization 62.3% · trial structure 59.6% · plan count 57.1% · price 45.5% · <strong>visual/copy only 34.6%</strong> — structure beats pixels</td><td>Adapty 2026</td></tr>
+</table>
+
+<h3>The five patterns with the strongest documented evidence</h3>
+<ol>
+  <li><strong>Long personalization quiz (15–30 purposeful screens).</strong> Sunk-cost investment + the "promise of personalization." Lose It!: double-digit trial-rate gains purely from adding questions. Web funnels: up to +60% vs direct-to-paywall. Bible Chat (the fastest-growing faith app, ~$15M ARR in year one) runs a 20-step quiz including denomination.</li>
+  <li><strong>"Building your plan…" processing screen + named plan reveal.</strong> FunnelFox: "ask a question, add a loader — that's an extra 10–15% conversion." Adapty 2026 calls a loader with social-proof checkmarks "table stakes."</li>
+  <li><strong>Trial-timeline ("honest") paywall.</strong> Blinkist: +23% trial starts, push opt-in 6%→74%, massive complaint reduction. RevenueCat explicitly names it the replacement for the trial toggle (rejected by Apple since Jan 2026).</li>
+  <li><strong>Decline-path offers.</strong> 24-hour welcome offer to non-converters or exit offer on dismissal: +10–15% ARPU (Superwall, Adapty, RevenueCat native feature since Dec 2025). Keep it one step deep (Guideline 5.6 risk).</li>
+  <li><strong>"No payment due now" reassurance + trial repetition.</strong> Cal AI's signature; restate the trial in headline, mid-page, and under the CTA.</li>
+</ol>
+
+<!-- ============================================================ -->
+<h2 id="current">3. What You Have Today (Audit)</h2>
+
+<h3>3.1 The flows at a glance</h3>
+
+<p><strong>WARFARE</strong> (11 screens):</p>
+<div class="flowbox">
+  <span class="step">Thief narrative</span><span class="arrow">→</span>
+  <span class="step">Already paid for</span><span class="arrow">→</span>
+  <span class="step">Speaking = weapon</span><span class="arrow">→</span>
+  <span class="step">Activation</span><span class="arrow">→</span>
+  <span class="step">Burden picker (1 question)</span><span class="arrow">→</span>
+  <span class="step">First declaration taste</span><span class="arrow">→</span>
+  <span class="step">Personal declaration (mandatory, no skip)</span><span class="arrow">→</span>
+  <span class="step">Rating ask</span><span class="arrow">→</span>
+  <span class="step">Product recap</span><span class="arrow">→</span>
+  <span class="step pay">PAYWALL (hard)</span><span class="arrow">→</span>
+  <span class="step">Notification time + OS prompt</span>
+</div>
+
+<p><strong>PRODUCT</strong> (10 screens):</p>
+<div class="flowbox">
+  <span class="step">Storm hook</span><span class="arrow">→</span>
+  <span class="step">60-second speed</span><span class="arrow">→</span>
+  <span class="step">Read vs Speak mechanism</span><span class="arrow">→</span>
+  <span class="step">Product recap</span><span class="arrow">→</span>
+  <span class="step">Burden picker (1 question)</span><span class="arrow">→</span>
+  <span class="step">First declaration taste</span><span class="arrow">→</span>
+  <span class="step">Personal declaration (mandatory, no skip)</span><span class="arrow">→</span>
+  <span class="step">Rating ask</span><span class="arrow">→</span>
+  <span class="step pay">PAYWALL (hard)</span><span class="arrow">→</span>
+  <span class="step">Notification time + OS prompt</span>
+</div>
+
+<h3>3.2 What's already strong <span class="pill win">KEEP</span></h3>
+<ul>
+  <li><strong>Day-0 hard onboarding paywall</strong> in every arm, with the <code>showPayWhatYouCanLink</code> Remote Config flag as a single kill-switch to soften it. Exactly right per the data.</li>
+  <li><strong>The "first declaration taste" screen</strong> is your Headspace-breathing-exercise equivalent — a felt value moment, burden-matched, before the ask. This is genuinely best-practice and most apps in your niche don't have it.</li>
+  <li><strong>The personal declaration step</strong> is a powerful commitment device ("I Spoke It. Send It to Me Every Day.") AND it feeds the warmest paywall headline ("Speak it daily until it comes to pass."). Research says commitment devices right before the paywall produce real (if modest) lifts — yours is stronger than Flo's thumb-hold because it's content, not theater.</li>
+  <li><strong>Annual default + per-month anchoring + SAVE% badge</strong>, live StoreKit prices with a phantom-price guard, per-user Apple-verified trial eligibility. The OptimizedSubscriptionView fallback-price problem was correctly fixed here.</li>
+  <li><strong>Pay-what-you-can</strong> is a faith-native generosity valve nobody else in the niche has framed this well ("God sees the heart") — and it satisfies 3.1.1.</li>
+  <li><strong>Rating ask before the paywall</strong> (peak goodwill, pre-money-ask) matches what Cal AI and top H&amp;F funnels do.</li>
+  <li><strong>Notification permission last, after time selection</strong>, with a mock push preview of their actual declaration — textbook primer pattern.</li>
+  <li><strong>Personalized headline waterfall</strong> (personal declaration → quiz segment → survey goal word → category fallback). Superwall: personalized paywalls beat generic by 15%+.</li>
+</ul>
+
+<h3>3.3 Where it diverges from best-in-class <span class="pill bug">GAPS</span></h3>
+<ul>
+  <li><span class="bad">Quiz depth: 1 question.</span> Both flows ask only the burden picker. The narrative screens (thief/paid-for/weapon and hook/speed/mechanism) are <em>tap-throughs</em> — they build emotion but zero investment. Investment is what the data rewards.</li>
+  <li><span class="bad">No plan-building loader, no plan reveal.</span> After the rating ask, users hit the paywall cold. There is no "Building your battle plan…" moment, no named plan ("Your 30-Day Peace Plan"), no projection. The paywall sells a subscription, not <em>their</em> plan.</li>
+  <li><span class="bad">No trial timeline on the paywall.</span> Trial communication is one hardcoded line ("Free for 3 days. Cancel by day 3 to pay nothing.") — which also silently lies if Remote Config points at a 7-day-trial SKU.</li>
+  <li><span class="bad">No decline path.</span> Dismissal is instrumented but unmonetized. No exit offer, no 24h welcome offer, no winback after trial cancellation. (The old discount-timer machinery in PremiumView is dead code.)</li>
+  <li><span class="warn">No "No payment due now" line under the CTA</span>, and the trial is mentioned once, not repeated.</li>
+  <li><span class="warn">No early testimonial wall</span> (Bible Chat opens with one before its quiz) — all social proof is concentrated on the paywall itself.</li>
+  <li><span class="warn">Personal declaration step has no skip</span> — a mandatory voice/text input two screens before the paywall is your single biggest unmeasured drop-off risk (and you can't measure it, because its events don't reach PostHog).</li>
+</ul>
+
+<!-- ============================================================ -->
+<h2 id="gaps">4. Gap Analysis vs. Best-in-Class</h2>
+
+<table>
+<tr><th>Pattern</th><th>Evidence</th><th>Hallow / Bible Chat / Cal AI</th><th>SpeakLife today</th><th>Verdict</th></tr>
+<tr><td>Day-0 onboarding paywall, hard</td><td>~90% of trials are Day 0; hard ≈ 5x freemium</td><td>All three</td><td>✅ Yes, all arms</td><td class="good">KEEP</td></tr>
+<tr><td>Personalization quiz 6+ questions</td><td>Double-digit trial lift (Lose It!); +40% (Adapty)</td><td>Bible Chat 20 steps; Cal AI 28; Hallow ~6</td><td>❌ 1 question</td><td class="bad">BUILD</td></tr>
+<tr><td>Plan loader + named plan reveal</td><td>+10–15% (FunnelFox); "table stakes" (Adapty)</td><td>Bible Chat ("generating your plan"), Cal AI, Noom</td><td>❌ Absent</td><td class="bad">BUILD</td></tr>
+<tr><td>Trial timeline paywall section</td><td>+23% trials (Blinkist); Apple-safe</td><td>Hallow, Cal AI, Strava, Lose It!</td><td>❌ One text line</td><td class="bad">BUILD</td></tr>
+<tr><td>"No payment due now" reassurance</td><td>Cal AI signature; repeatedly validated</td><td>Cal AI</td><td>❌ Absent</td><td class="bad">BUILD (trivial)</td></tr>
+<tr><td>Decline path / exit offer</td><td>+10–15% ARPU (Superwall/Adapty)</td><td>Cal AI (spin-wheel + abandonment recovery), Abide (post-buy refund-the-difference)</td><td>❌ Dismiss does nothing</td><td class="bad">BUILD</td></tr>
+<tr><td>Felt value moment pre-paywall</td><td>Headspace breathing pattern</td><td>Headspace; few faith apps</td><td>✅ First-declaration taste + personal declaration</td><td class="good">KEEP / amplify</td></tr>
+<tr><td>Social proof above price</td><td>Frequent measurable winner (Airbridge)</td><td>Flo, YAZIO, Speak, Hallow</td><td>✅ Stars + 5 testimonials (but conflicting counts)</td><td class="warn">FIX numbers</td></tr>
+<tr><td>Notification primer tied to chosen time</td><td>~3x opt-in vs raw prompt</td><td>Hallow routines</td><td>✅ Time picker + mock push preview</td><td class="good">KEEP</td></tr>
+<tr><td>Generosity framing</td><td>Niche-defining (Glorify pay-it-forward, Hallow one-for-one, Bible Chat charity reframe)</td><td>All three faith leaders</td><td>◑ PWYC exists; no one-for-one, no gift flow, no post-purchase mission reframe</td><td class="warn">EXTEND</td></tr>
+<tr><td>Seasonal challenge funnel</td><td>Hallow's #1 growth loop (Pray40/Pray25); challenge = trial-start mechanism</td><td>Hallow</td><td>❌ None (survey engine's "30-Day Challenge" CTA is dead code)</td><td class="bad">STRATEGIC</td></tr>
+<tr><td>Trustworthy per-step funnel analytics</td><td>Cal AI: 123 experiments need clean data</td><td>—</td><td>❌ Firebase-only step events; empty segments; mislabeled plans</td><td class="bad">FIX FIRST</td></tr>
+</table>
+
+<!-- ============================================================ -->
+<h2 id="paywall-changes">5. HighConversionPaywall — What I Would Change</h2>
+
+<div class="card">
+<h3><span class="pill p0">P0</span> 5.1 Add a trial-timeline section above the plan selector</h3>
+<p>Insert a vertical 3-step timeline between the comparison grid and the sticky purchase block, rendered only when the user is trial-eligible, with the day numbers <strong>read from the actual StoreKit intro offer</strong> (fixes the hardcoded "3 days" bug at the same time):</p>
+<ul>
+  <li><strong>Today</strong> — 🔓 "Full access unlocked. Speak your first declaration over your battle."</li>
+  <li><strong>Day {n−1}</strong> — 🔔 "We'll remind you before your trial ends." <em>(Only promise this if you send your own local reminder notification — Apple's is inconsistent, which your code comment already knows. Build the local reminder; it's also Blinkist's push-opt-in engine: 6%→74%.)</em></li>
+  <li><strong>Day {n}</strong> — ⭐ "Your subscription starts. Cancel anytime before."</li>
+</ul>
+<p class="impact">Expected impact: +15–23% trial starts (Blinkist case; RevenueCat-endorsed pattern)</p><p class="effort">Effort: ~1–2 days incl. reading intro-offer period from StoreKit and a local "trial ending" notification.</p>
+</div>
+
+<div class="card">
+<h3><span class="pill p0">P0</span> 5.2 Add the reassurance stack under the CTA</h3>
+<p>Directly beneath "Start Free Trial": <code>✓ No payment due now &nbsp;·&nbsp; ✓ Cancel anytime in Settings</code> — and restate the trial in the headline area ("Try everything free for {n} days"). Trial repetition (headline + mid-page + CTA) measurably reduces perceived risk. Keep the billed annual price the largest price element (Apple 3.1.2).</p>
+<p class="impact">Expected impact: small but consistently positive; zero risk</p><p class="effort">Effort: hours.</p>
+</div>
+
+<div class="card">
+<h3><span class="pill p0">P0</span> 5.3 Build the decline path (one step deep)</h3>
+<p>On <code>paywall_dismissed</code> from onboarding, route to a single recovery screen instead of straight to <code>advance()</code>:</p>
+<ul>
+  <li><strong>Option A (recommended first test):</strong> a 24-hour "welcome offer" — the discounted annual SKU you already have configured (<code>1YR29</code>/<code>1YR19</code> exist in App Store Connect) with honest framing: "Before you go — first year {price}, this week only." Use a real expiry, not a fake timer.</li>
+  <li><strong>Option B:</strong> offer the weekly plan as a "just try it" downsell.</li>
+  <li>Also wire a winback: if a user cancels during trial, surface a 30–50% annual offer at next session (Airbridge: minutes-level intent window), and configure Apple win-back offers in App Store Connect for lapsed subs (free distribution).</li>
+</ul>
+<p>Keep PWYC as-is — it already covers the affordability segment; the decline path covers the hesitation segment. Don't chain offers (Guideline 5.6).</p>
+<p class="impact">Expected impact: +10–15% ARPU (Superwall/Adapty consensus)</p><p class="effort">Effort: 2–4 days.</p>
+</div>
+
+<div class="card">
+<h3><span class="pill p1">P1</span> 5.4 Unify and strengthen social proof</h3>
+<ul>
+  <li><span class="bad">Fix the number contradiction:</span> the quiz-unsegmented subhead says "500,000+ believers" while benefit rows say "100,000 ground-takers" — both can render on the same screen. Pick one true number and use it everywhere (a single constant).</li>
+  <li>Move the star banner + featured testimonial <em>above</em> the benefits so trust context precedes price (Airbridge: frequent measurable winner). Consider adding one "as seen in" / category-rank laurel if you have one.</li>
+  <li>Keep testimonials in testimony register ("God used this app to…") — it's the niche's native proof format.</li>
+</ul>
+<p class="impact">Expected impact: modest lift + removes a credibility self-own</p><p class="effort">Effort: hours.</p>
+</div>
+
+<div class="card">
+<h3><span class="pill p1">P1</span> 5.5 Fix the SurveyPersonalizationEngine benefit copy</h3>
+<p>The 4 value-prop <em>titles</em> are near-identical long sentences across all 7 goal words (props 2–4 literally identical), titles/descriptions read swapped, and <code>ctaText</code>/<code>urgencyText</code>/<code>challengeName</code> are never rendered (dead code). Rewrite as: short benefit title (3–6 words, goal-specific) + one-line description. Copy-only tests have the lowest win rate (34.6%) so don't over-invest — but broken templating is below baseline, not a test.</p>
+<p class="effort">Effort: half a day.</p>
+</div>
+
+<div class="card">
+<h3><span class="pill p2">P2</span> 5.6 Structural pricing tests (the highest win-rate test category, 59.6%)</h3>
+<ol>
+  <li><strong>Weekly + 3-day trial vs annual-led:</strong> you already have the <code>useWeeklyPlan</code> flag and <code>SpeakLife1Wk5</code>. Adapty 2026: weekly+3-day-trial is the single best 1-yr-LTV config (1.5x average); weekly is now 55.6% of industry revenue. Caveat: faith/H&amp;F skews annual (Hallow is annual-led) — so test, don't assume.</li>
+  <li><strong>Trial on annual only</strong> (no trial on the short plan) to push the high-LTV SKU — emerging 2026 standard.</li>
+  <li><strong>Trial length 3 vs 7 days:</strong> 5–9-day trials convert 37–45% vs 25–30% for ≤4 days. You already own 7-day-trial SKUs (<code>1YR49</code>, <code>1YR39</code>) — this is a Remote Config flip once the hardcoded "3 days" string is fixed (5.1).</li>
+  <li><strong>Lifetime as a third option or inside PWYC:</strong> older Christian users distrust auto-renew; lifetime ($99.99 exists) converts the subscription-averse (Hallow sells $149.99 lifetime).</li>
+  <li><strong>Localize prices/strings</strong> — localization is the #1 win-rate test type (62.3%). Your <code>"$%.2f"</code> formatting and "$30/mo" footnote are USD-hardcoded today.</li>
+</ol>
+</div>
+
+<div class="card">
+<h3><span class="pill p2">P2</span> 5.7 Smaller paywall items</h3>
+<ul>
+  <li>Keep the 4-second delayed X on soft surfaces — research says don't hide it further; the dismissal event (now monetized via 5.3) is worth more.</li>
+  <li>Test an animated hero (subtle motion on <code>starrySunrise</code>, button pulse): +8–15% documented for production-quality motion; skip cheap video.</li>
+  <li>Re-enable the commented-out closing line ("God prepared the treasure chest…") under the CTA — warmth above the legal links costs nothing.</li>
+  <li>The comparison grid is good and rare in the niche; keep "Other apps" unnamed (your code comment is right about the legal risk).</li>
+</ul>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="onboarding-changes">6. Warfare &amp; Product Onboarding — What I Would Change</h2>
+
+<div class="card">
+<h3><span class="pill p0">P0</span> 6.1 Deepen the quiz from 1 question to 6–8</h3>
+<p>Keep the narrative screens — they're your emotional differentiator — but convert investment-free tap-throughs into investment. After the burden picker, add 4–6 quick single-tap questions that <em>visibly feed the plan</em>:</p>
+<ol>
+  <li><strong>"How long has this battle been going on?"</strong> (weeks / months / years / as long as I can remember) — agitation + sunk cost.</li>
+  <li><strong>"What have you already tried?"</strong> (prayer alone / devotionals / therapy / pushing through / all of it) — primes "this is different," mirrors your Priya K. testimonial.</li>
+  <li><strong>"When does it hit hardest?"</strong> (3am wake-ups / mornings / under pressure / at night) — feeds notification timing AND paywall copy ("before the next 3am wake-up" already exists in your quiz-segment copy — earn it here).</li>
+  <li><strong>"How do you connect best with the Word?"</strong> (speaking out loud / listening / reading / journaling) — feature-routing question, sells breadth.</li>
+  <li><strong>"How much time can you give this daily?"</strong> (1 min / 3 min / 10 min) — every answer is a yes; classic micro-commitment.</li>
+  <li><strong>Micro-insight interstitial</strong> after Q2–Q3 (the FunnelFox pattern): e.g. "73% of believers say anxious thoughts return within an hour of praying. Speaking Scripture out loud is how you hold the ground." — only use stats you can stand behind.</li>
+</ol>
+<p>Each answer should echo somewhere downstream (plan reveal, paywall subhead, notification copy). The data is unambiguous: this is the single biggest onboarding lever you have.</p>
+<p class="impact">Expected impact: double-digit trial-start lift (Lose It!, Adapty cases)</p><p class="effort">Effort: ~1 week incl. copy + plumbing answers into SurveyResponses.</p>
+</div>
+
+<div class="card">
+<h3><span class="pill p0">P0</span> 6.2 Add the plan-builder loader + named plan reveal before the paywall</h3>
+<p>Between the rating screen and the paywall (both flows), insert:</p>
+<ol>
+  <li><strong>Loader (3–5s):</strong> "Building your battle plan…" with sequential checkmarks: "Matching declarations to your fight ✓ · Choosing your verses ✓ · Setting your daily rhythm ✓ · Trusted by 100,000+ believers ✓" (social proof inside the loader is the 2026 standard).</li>
+  <li><strong>Plan reveal:</strong> a named plan — <em>"Your 30-Day Take-Back-My-Peace Plan"</em> — showing their burden, their personal declaration (you already have it!), their chosen time, and a realistic arc ("Week 1: quiet the 3am thoughts · Week 2: first-response Scripture · Week 4: standing, not spiraling"). CTA: "Unlock My Plan →" straight into the paywall.</li>
+</ol>
+<p>This converts the paywall from "subscribe to an app" into "unlock the plan that's already mine" — the Noom/Bible Chat mechanic, and it composts perfectly with your existing personal-declaration headline.</p>
+<p class="impact">Expected impact: +10–15% (FunnelFox loader data) plus paywall-personalization compounding</p><p class="effort">Effort: 3–5 days.</p>
+</div>
+
+<div class="card">
+<h3><span class="pill p1">P1</span> 6.3 Make the personal-declaration step skippable — carefully</h3>
+<p>It's your best moment, but it's mandatory voice/text input with no exit (and a save failure dead-ends with "try again"). Add a quiet "Skip for now" after ~6 seconds or after a failed attempt, defaulting the user to their burden's preview declaration so the paywall continuity copy still works. Instrument entry/complete/skip (to PostHog — see §7) and <em>then</em> decide: if completion is &gt;85%, keep it mandatory; if it's leaking 20%+, the skip pays for itself.</p>
+<p class="effort">Effort: 1 day.</p>
+</div>
+
+<div class="card">
+<h3><span class="pill p1">P1</span> 6.4 Standardize the pre-paywall sequence across arms</h3>
+<p>Warfare inserts the product-recap screen between rating and paywall; product puts it mid-flow. That's a hidden confound in your A/B readout (warfare's rating ask sits one screen further from the paywall). Pick one position — I'd put the recap mid-flow in both (product's placement) and let the new plan reveal (6.2) be the universal pre-paywall screen — so the arms differ only in their narrative front half and the comparison is clean.</p>
+<p class="effort">Effort: hours.</p>
+</div>
+
+<div class="card">
+<h3><span class="pill p2">P2</span> 6.5 Test an opening testimonial wall</h3>
+<p>Bible Chat (fastest-growing faith app) opens with a scrolling wall of testimonies <em>before</em> the quiz — trust before ask. You have 5 paywall testimonials; surface 3 of them as a swipe-through screen right after the hook. Faith audiences run on testimony; front-loading it also softens the "is this another cash-grab app" reflex documented in Hallow's backlash.</p>
+<p class="effort">Effort: 1–2 days.</p>
+</div>
+
+<div class="card">
+<h3><span class="pill p2">P2</span> 6.6 Keep (don't move) the notification flow</h3>
+<p>Time-picker → mock push preview → OS prompt as the terminal step is correct: post-paywall placement avoids delaying the money screen, and the preview-of-their-own-declaration is a strong primer. One addition: if permission is granted and the user started a trial, schedule the trial-ending local reminder here (pairs with 5.1's timeline promise).</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="bugs">7. Bugs &amp; Instrumentation Fixes <span class="pill bug">SHIP FIRST</span></h2>
+
+<p>These aren't optimizations — they're prerequisites. Every experiment above will be judged with this data.</p>
+
+<table>
+<tr><th>#</th><th>Issue</th><th>Where</th><th>Consequence</th></tr>
+<tr><td>1</td><td>Per-step onboarding events fire via <code>Analytics.logEvent</code> (Firebase only), never PostHog</td><td><code>WarfareOnboardingView</code>, <code>ProductOnboardingView</code>, shared survey screens</td><td><span class="bad">No step-by-step drop-off funnel exists in PostHog</span> — only start → finish → conversion. Route everything through <code>AnalyticsService.track</code>.</td></tr>
+<tr><td>2</td><td><code>segment</code> is <code>""</code> on all paywall events for product/warfare users (only the quiz flow sets it)</td><td><code>appState.onboardingSegment</code></td><td>Segment slicing silently excludes two A/B arms. Set segment (or burden/goal_word) for every arm.</td></tr>
+<tr><td>3</td><td><code>trial_started</code> gated by <em>annual</em>-product eligibility but fired for any purchased plan; also duplicated between paywall (L723) and SubscriptionStore (L600)</td><td><code>HighConversionPaywallView.swift:723</code></td><td>Trial counts inflated/double-counted → trial-to-paid rates untrustworthy.</td></tr>
+<tr><td>4</td><td>Weekly purchases logged as <code>plan: "monthly"</code> (<code>PlanType</code> has no weekly case)</td><td><code>HighConversionPaywallView</code></td><td>The <code>useWeeklyPlan</code> experiment is unreadable except via product_id.</td></tr>
+<tr><td>5</td><td>"Free for 3 days" hardcoded; actual intro-offer period never read</td><td><code>HighConversionPaywallView.swift:567</code></td><td>Pointing RC at a 7-day SKU makes the paywall lie — compliance + trust risk. (Fixed by 5.1.)</td></tr>
+<tr><td>6</td><td><code>SpiritualWarfareOnboardingView:215</code> presents the paywall with no <code>source</code>/<code>isHardPaywall</code></td><td>legacy flow</td><td>Pollutes funnel attribution as <code>source: "settings"</code> and renders soft. Fix or delete the dead flow.</td></tr>
+<tr><td>7</td><td>Social-proof count contradiction (500,000+ vs 100,000+) on one screen</td><td>quiz subhead vs benefit rows</td><td>Credibility hit exactly where trust matters most.</td></tr>
+<tr><td>8</td><td><code>restore()</code> always alerts "Purchases restored" even on failure</td><td><code>HighConversionPaywallView.swift:751</code></td><td>Support tickets + 1-star reviews.</td></tr>
+<tr><td>9</td><td><code>PaywallTriggerManager.checkDayBasedTriggers()</code> never called</td><td>—</td><td>Day-2/3 re-engagement paywalls are dead code — either wire them or remove.</td></tr>
+<tr><td>10</td><td>Currency hardcoded (<code>"$%.2f"</code>, "$30/mo")</td><td>paywall pricing strings</td><td>Wrong symbols for non-USD storefronts; blocks localization (the top win-rate test).</td></tr>
+<tr><td>11</td><td>Dead onboarding flows + a stray duplicate source tree (<code>SpeakLife/SpeakLife/SpeakLife/…</code>, old <code>SpeakLife/{App,Views}</code> copies)</td><td>repo-wide</td><td>Drift hazard; misleads audits and grep. Delete after the A/B test concludes.</td></tr>
+<tr><td>12</td><td><code>useQuizOnboarding</code> default flips after RC load (<code>true</code> → <code>boolValue</code>=false when unset)</td><td><code>SubscriptionStore</code></td><td>Fallback arm changes quiz→product depending on config timing.</td></tr>
+</table>
+
+<!-- ============================================================ -->
+<h2 id="faith">8. Faith-Niche Strategic Plays</h2>
+
+<div class="quote">"Users generally expect faith-based services to be free… premium must be positioned as enhancement, never gatekeeping the essentials." — Ryan Beck, CTO, Pray.com (Sub Club podcast)</div>
+
+<ol>
+  <li><strong>Add a generosity layer to the paywall.</strong> The three faith leaders all monetize through generosity framing: Glorify's pay-it-forward sponsor tiers, Hallow's one-for-one donated subscription, Bible Chat's post-purchase charity reframe. You're one line away: under the CTA — <em>"Every subscription gives SpeakLife free to a believer who can't afford it."</em> (Your PWYC program literally makes this true.) Then add a post-purchase screen that reframes the buy as mission: <em>"You just helped someone speak life over their storm."</em> This lifts conversion <em>and</em> inoculates against the "profiting off faith" backlash documented against Hallow.</li>
+  <li><strong>Run the liturgical calendar as your promo calendar.</strong> Hallow's single biggest funnel is Pray40 (Lent) / Pray25 (Advent) — the challenge requires a trial, so the challenge IS the trial-start mechanism, with culturally legitimate urgency ("starts Ash Wednesday") replacing fake timers. A "40-Day Speak Life Challenge" is fully copyable at your scale, and your survey engine already has dead <code>challengeName</code> plumbing waiting for it.</li>
+  <li><strong>Keep the daily declaration genuinely free.</strong> The documented backlash trigger in this niche isn't price — it's gating "prayer itself" and surprise charges. Your hard onboarding paywall is fine (Hallow gates 85%), but make sure one daily declaration always works free, and over-communicate trial renewal (the local reminder from 5.1). In this audience a surprise charge isn't churn, it's a public testimony against you.</li>
+  <li><strong>Widget + multiple daily declaration moments.</strong> The "I am" app's growth engine ($300–600K/mo) is the lock-screen widget — declarations surfacing ambiently all day. Same mechanic, scriptural content; nobody at scale has combined them. Frame streaks as faithfulness ("days speaking God's Word") the way YouVersion and Hallow do.</li>
+  <li><strong>Gift &amp; group flows later:</strong> gift subscriptions, a family plan (~1.7x annual), and church/group codes (Hallow's parish model scaled down) match how faith spreads — household and congregation, not individual.</li>
+</ol>
+
+<!-- ============================================================ -->
+<h2 id="roadmap">9. Prioritized Roadmap</h2>
+
+<h3>Week 1 — Fix the measurement (no experiments are valid until this ships)</h3>
+<ul>
+  <li>Route all per-step onboarding + paywall events through <code>AnalyticsService.track</code> (PostHog included); tag shared back-half events with <code>flow</code>; set <code>segment</code>/burden for all arms. <em>(§7 #1–2)</em></li>
+  <li>Fix <code>trial_started</code> gating/duplication, add weekly to <code>PlanType</code>, read the real intro-offer period, fix restore() and the social-proof number. <em>(§7 #3–5, 7–8)</em></li>
+</ul>
+
+<h3>Weeks 2–3 — The three proven paywall/flow upgrades</h3>
+<ul>
+  <li>Trial-timeline section + reassurance stack + local trial-ending reminder <em>(5.1, 5.2)</em> — <span class="impact">+15–23% trials expected</span></li>
+  <li>Plan-builder loader + named plan reveal before the paywall, both arms, standardized sequence <em>(6.2, 6.4)</em> — <span class="impact">+10–15%</span></li>
+  <li>Decline path: one-step welcome offer on dismissal + trial-cancel winback <em>(5.3)</em> — <span class="impact">+10–15% ARPU</span></li>
+</ul>
+
+<h3>Weeks 4–6 — The big onboarding lever</h3>
+<ul>
+  <li>Extend both arms' quizzes to 6–8 questions with one micro-insight interstitial, answers flowing into the plan reveal and paywall copy <em>(6.1)</em> — <span class="impact">double-digit trial-start lift expected</span></li>
+  <li>Personal-declaration skip + instrumentation <em>(6.3)</em>; survey-engine copy fix <em>(5.5)</em>; generosity line + post-purchase mission screen <em>(§8.1)</em></li>
+</ul>
+
+<h3>Ongoing — Structural experiment queue (highest win-rate categories first)</h3>
+<ol>
+  <li>Trial length: 3-day vs 7-day annual SKU (you already own both products — RC flip after 5.1)</li>
+  <li>Weekly+3-day-trial vs annual-led (flag exists; analytics fix #4 is the prerequisite)</li>
+  <li>Trial on annual only</li>
+  <li>Price localization</li>
+  <li>Opening testimonial wall <em>(6.5)</em>; lifetime as third option; animated hero</li>
+  <li>Plan a 40-day challenge for Advent 2026 (build starts ~September)</li>
+</ol>
+
+<p>Target cadence: <strong>2–3 experiments/month</strong>. Cal AI's 3x revenue came from ~5/month for 10 months; Adapty's data says ~15 experiments/year separates the 40x apps from the rest. Judge experiments on realized trial-to-paid and Day-0 cancellation (55% of 3-day-trial cancels are Day-0 buyer's remorse — your honesty metric), not trial starts alone.</p>
+
+<!-- ============================================================ -->
+<h2 id="sources">10. Key Sources</h2>
+<ul class="src" style="font-size:13px">
+  <li><a href="https://www.revenuecat.com/state-of-subscription-apps-2025/">RevenueCat State of Subscription Apps 2025</a> · <a href="https://www.revenuecat.com/blog/growth/subscription-app-trends-benchmarks-2026/">RevenueCat 2026 benchmarks</a> · <a href="https://www.revenuecat.com/blog/growth/why-your-onboarding-experience-might-be-too-short/">"Why your onboarding might be too short"</a> · <a href="https://www.revenuecat.com/blog/growth/rip-toggle-paywall/">"R.I.P. toggle paywall"</a> · <a href="https://www.revenuecat.com/blog/growth/web-to-app-onboarding-funnel/">Noom teardown</a> · <a href="https://www.revenuecat.com/blog/growth/ryan-beck-pray-com-sub-club/">Pray.com Sub Club interview</a></li>
+  <li><a href="https://adapty.io/state-of-in-app-subscriptions/">Adapty State of In-App Subscriptions 2025/2026</a> · <a href="https://adapty.io/blog/high-performing-paywall-2026/">High-performing paywall 2026</a></li>
+  <li><a href="https://superwall.com/case-studies/cal-ai">Superwall Cal AI case study</a> · <a href="https://superwall.com/blog/5-paywall-patterns-used-by-million-dollar-apps">5 paywall patterns of million-dollar apps</a></li>
+  <li><a href="https://growth.design/case-studies/trial-paywall-challenge">growth.design — Blinkist "honest paywall" (+23%)</a></li>
+  <li><a href="https://blog.funnelfox.com/onboarding-funnel-optimization/">FunnelFox (311 funnels analyzed)</a> · <a href="https://www.airbridge.io/en/blog/what-happens-after-user-rejects-paywall">Airbridge paywall recovery</a> · <a href="https://www.airbridge.io/blog/decoding-subscription-monetization-proven-strategies-from-100-paywall-and-pricing-experiments">Airbridge 100+ paywall experiments</a></li>
+  <li>ScreensDesign teardowns: <a href="https://screensdesign.com/showcase/hallow-prayer-meditation">Hallow</a> · <a href="https://screensdesign.com/showcase/bible-chat-daily-devotional">Bible Chat</a> · <a href="https://screensdesign.com/showcase/cal-ai-calorie-tracker">Cal AI</a> · <a href="https://screensdesign.com/showcase/flo-period-pregnancy-tracker">Flo</a> · <a href="https://screensdesign.com/showcase/i-am-daily-affirmations">"I am"</a> · <a href="https://screensdesign.com/showcase/glorify-devotional-prayer">Glorify</a> · <a href="https://screensdesign.com/showcase/abide-bible-meditation-sleep">Abide</a></li>
+  <li><a href="https://research.contrary.com/company/hallow">Contrary Research — Hallow</a> · <a href="https://www.christianitytoday.com/2022/01/app-investment-prayer-bible-meditation-glorify-hallow/">Christianity Today — "VCs See Profit in Prayer"</a> · <a href="https://blog.duolingo.com/how-streaks-keep-duolingo-learners-committed-to-their-language-goals/">Duolingo streaks</a> · <a href="https://www.braze.com/resources/articles/whats-a-push-primer">Braze push primers</a></li>
+  <li>Code audited: <code>HighConversionPaywallView.swift</code>, <code>WarfareOnboardingView.swift</code>, <code>ProductOnboardingView.swift</code>, <code>OnboardingProductExperienceScreen.swift</code>, <code>SurveyOnboardingScreens.swift</code>, <code>PersonalDeclarationOnboardingView.swift</code>, <code>SubscriptionStore.swift</code>, <code>SurveyPersonalizationEngine.swift</code>, <code>UserPreferencesTracker.swift</code>, <code>AnalyticsService.swift</code>, <code>PaywallTriggerManager.swift</code>, <code>HomeView.swift</code></li>
+</ul>
+
+<div class="footer">SpeakLife conversion analysis · multi-agent deep research + code audit · June 12, 2026</div>
+</div>
+</body>
+</html>

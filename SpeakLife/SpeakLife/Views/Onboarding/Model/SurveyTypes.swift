@@ -117,6 +117,19 @@ enum HeaviestBurden: String, CaseIterable, Identifiable {
 
     var isGrowthTrack: Bool { self == .allOfIt }
 
+    // Named 30-day plan title shown on the pre-paywall plan reveal screen.
+    var planTitle: String {
+        switch self {
+        case .peace:     return "Your 30-Day\nTake Back My Peace Plan"
+        case .health:    return "Your 30-Day\nTake Back My Health Plan"
+        case .joy:       return "Your 30-Day\nTake Back My Joy Plan"
+        case .identity:  return "Your 30-Day\nKnow Who I Am Plan"
+        case .purpose:   return "Your 30-Day\nWalk In My Calling Plan"
+        case .abundance: return "Your 30-Day\nTake Back My Provision Plan"
+        case .allOfIt:   return "Your 30-Day\nSpeak Life Plan"
+        }
+    }
+
     var testimonialGroup: TestimonialGroup {
         switch self {
         case .peace, .health:             return .fearAndHealth

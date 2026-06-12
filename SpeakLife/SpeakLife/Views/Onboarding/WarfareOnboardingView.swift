@@ -13,17 +13,18 @@
 //    4. Activation        — in Christ you already have it in the spirit; speaking
 //                           pulls it down into the physical realm
 //
-//  Then a "what is the enemy trying to steal from you?" picker (which seeds the
-//  home feed), and the proven back-half (taste → record your own → rating →
-//  paywall → notification time). The picker maps each answer to a
-//  HeaviestBurden/category so the shared screens + seeding work unchanged.
+//  Then a product-capability recap (matching the product arm's mid-flow
+//  placement), a "what is the enemy trying to steal from you?" picker (which
+//  seeds the home feed), and the proven back-half (taste → record your own →
+//  rating → plan-building loader → named plan reveal → paywall → notification
+//  time). The picker maps each answer to a HeaviestBurden/category so the
+//  shared screens + seeding work unchanged.
 //
 //  One arm of the onboarding A/B: HomeView routes here when Remote Config
 //  `onboardingVariant` == "warfare".
 //
 
 import SwiftUI
-import FirebaseAnalytics
 import UserNotifications
 import UIKit
 
@@ -75,7 +76,7 @@ struct WarfareOnboardingView: View {
             }
         }
         .ignoresSafeArea()
-        .onAppear { Analytics.logEvent("warfare_onboarding_started", parameters: nil) }
+        .onAppear { AnalyticsService.shared.track("warfare_onboarding_started") }
     }
 
     @ViewBuilder
@@ -85,6 +86,8 @@ struct WarfareOnboardingView: View {
         case .paidFor:    WarfareSceneScreen(size: size, scene: .paidFor) { advance() }
         case .weapon:     WarfareSceneScreen(size: size, scene: .weapon) { advance() }
         case .activation: WarfareSceneScreen(size: size, scene: .activation) { advance() }
+        case .experience:
+            OnboardingProductExperienceScreen(size: size, flow: "warfare") { advance() }
         case .takeBackPicker:
             WarfareTakeBackPickerScreen(size: size, responses: responses) { advance() }
         default: backHalfView
@@ -95,23 +98,31 @@ struct WarfareOnboardingView: View {
     private var backHalfView: some View {
         switch currentStep {
         case .firstDeclaration:
-            SurveyFirstDeclarationScreen(size: size, responses: responses) { advance() }
+            SurveyFirstDeclarationScreen(size: size, responses: responses, flow: "warfare") { advance() }
         case .personalDeclaration:
             PersonalDeclarationOnboardingView(
                 viewModel: DIContainer.shared.makePersonalDeclarationViewModel(),
-                size: size
+                size: size,
+                flow: "warfare"
             ) { declaration in
                 savedDeclaration = declaration
                 advance()
             }
         case .rating:
             RatingView(size: size) { advance() }
-        case .experience:
-            OnboardingProductExperienceScreen(size: size, flow: "warfare") { advance() }
+        case .planBuilding:
+            SurveyPlanBuildingScreen(burden: responses.heaviestBurden ?? .peace, flow: "warfare") { advance() }
+        case .planReveal:
+            SurveyPlanRevealScreen(
+                size: size,
+                burden: responses.heaviestBurden ?? .peace,
+                flow: "warfare",
+                personalDeclaration: savedDeclaration?.declarationText
+            ) { advance() }
         case .paywall:
             HighConversionPaywallView(callback: { advance() }, source: "onboarding", isHardPaywall: true)
         case .notificationTime:
-            SurveyQ8NotificationScreen(size: size, responses: responses) { advance() }
+            SurveyQ8NotificationScreen(size: size, responses: responses, flow: "warfare") { advance() }
         default:
             EmptyView()
         }
@@ -133,7 +144,13 @@ struct WarfareOnboardingView: View {
 
     private func advance() {
         UIImpactFeedbackGenerator(style: .soft).impactOccurred()
-        Analytics.logEvent("warfare_step_completed", parameters: ["step": currentStep.rawValue])
+        AnalyticsService.shared.track("warfare_step_completed", parameters: ["step": currentStep.rawValue])
+
+        // Leaving the take-back picker: stamp the segment so downstream paywall
+        // events carry a meaningful segment for this arm (quiz sets its own).
+        if currentStep == .takeBackPicker, let burden = responses.heaviestBurden {
+            appState.onboardingSegment = "warfare_\(burden.shortLabel)"
+        }
 
         switch currentStep {
         case .notificationTime:
@@ -169,7 +186,7 @@ struct WarfareOnboardingView: View {
             appState.personalDeclarationTimeIndex = notifTime.startTimeIndex
         }
         appState.hasPersonalDeclaration = savedDeclaration != nil
-        Analytics.logEvent("warfare_onboarding_completed", parameters: [
+        AnalyticsService.shared.track("warfare_onboarding_completed", parameters: [
             "goal_word": goalWord.rawValue,
             "burden": responses.heaviestBurden?.rawValue ?? "unknown",
             "set_personal_declaration": (savedDeclaration != nil) as NSNumber
@@ -180,7 +197,7 @@ struct WarfareOnboardingView: View {
 
     private func requestNotificationPermissionThenComplete(categories: Set<DeclarationCategory>) {
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { granted, _ in
-            Analytics.logEvent("notification_permission", parameters: ["granted": granted, "source": "warfare_onboarding"])
+            AnalyticsService.shared.track("notification_permission", parameters: ["granted": granted, "source": "warfare_onboarding"])
             DispatchQueue.main.async {
                 appState.notificationEnabled = granted
                 if granted {
@@ -207,21 +224,23 @@ enum WarfareStep: Int, CaseIterable {
     case paidFor        = 1   // it's already yours — Jesus paid for it
     case weapon         = 2   // you take it back by speaking
     case activation     = 3   // spiritual truth activated into the physical realm
-    case takeBackPicker = 4   // what is the enemy trying to steal? (seeds the feed)
+    case experience     = 4   // product-capability recap (mid-flow, matching the product arm)
+    case takeBackPicker = 5   // what is the enemy trying to steal? (seeds the feed)
     // Shared back-half (reused from the survey flow)
-    case firstDeclaration = 5
-    case personalDeclaration = 6
-    case rating          = 7   // rating ask at the personal-declaration peak
-    case experience      = 8   // pre-paywall product-capability recap (de-risks the ask)
-    case paywall         = 9
-    case notificationTime = 10 // terminal — completes onboarding
+    case firstDeclaration = 6
+    case personalDeclaration = 7
+    case rating          = 8   // rating ask at the personal-declaration peak
+    case planBuilding    = 9   // "building your battle plan" loader (transition, no bar)
+    case planReveal      = 10  // named 30-day plan reveal — sets up the paywall ask
+    case paywall         = 11
+    case notificationTime = 12 // terminal — completes onboarding
 
     var valueScreenIndex: Int? {
-        let screens: [WarfareStep] = [.thief, .paidFor, .weapon, .activation, .takeBackPicker]
+        let screens: [WarfareStep] = [.thief, .paidFor, .weapon, .activation, .experience, .takeBackPicker]
         return screens.firstIndex(of: self).map { $0 + 1 }
     }
 
-    static let totalValueScreens = 5
+    static let totalValueScreens = 6
 }
 
 // MARK: - Warfare scene content
@@ -470,7 +489,7 @@ private struct WarfareSceneScreen: View {
                 .warfareStagger(v, delay: 0.42)
         }
         .onAppear {
-            Analytics.logEvent("warfare_scene_shown", parameters: ["scene": scene.analyticsName])
+            AnalyticsService.shared.track("warfare_scene_shown", parameters: ["scene": scene.analyticsName])
             withAnimation { v = true }
         }
     }
@@ -524,7 +543,7 @@ private struct WarfareTakeBackPickerScreen: View {
                 .padding(.top, 8).padding(.bottom, 36)
         }
         .onAppear {
-            Analytics.logEvent("warfare_picker_shown", parameters: nil)
+            AnalyticsService.shared.track("warfare_picker_shown")
             withAnimation { v = true }
         }
     }

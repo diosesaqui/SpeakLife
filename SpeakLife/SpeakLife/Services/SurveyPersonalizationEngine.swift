@@ -48,10 +48,10 @@ struct SurveyPersonalizationEngine {
                 headline: "Anxiety Has Had Enough of You.",
                 subheadline: "3 minutes of God's Word every morning rewires how your brain responds to fear.",
                 valueProps: [
-                    SurveyValueProp(icon: "wind", title: "Your Peace inheritance — delivered every morning until it's fully received.", description: "Targeted scripture over anxiety, fear, and worry — spoken out loud, daily."),
-                    SurveyValueProp(icon: "moon.stars.fill", title: "Speak first. Possess first. The ground is yours — claim it daily.", description: "Spoken truth is your greatest weapon. It is exactly how Jesus defeated every attack."),
-                    SurveyValueProp(icon: "brain.head.profile", title: "28 territories of inheritance — healing, identity, destiny, abundance, and more. Every area God prepared.", description: "Faith comes by hearing. Audio devotionals put Scripture in your ears morning and night."),
-                    SurveyValueProp(icon: "person.2.fill", title: "100,000 ground-takers advancing together right now. You're not doing this alone.", description: "Know your identity in Christ so deeply that fear, doubt, and shame lose their grip.")
+                    SurveyValueProp(icon: "wind", title: "Quiet the 3am thoughts", description: "Daily declarations rewire your mind until God's peace is your first response."),
+                    SurveyValueProp(icon: "moon.stars.fill", title: "Speak peace over every storm", description: "Jesus spoke to storms and they obeyed. Learn to speak His Word over yours."),
+                    SurveyValueProp(icon: "brain.head.profile", title: "Scripture in your ears daily", description: "Audio devotionals soak your mind in God's promises, morning and night."),
+                    SurveyValueProp(icon: "person.2.fill", title: "Anchored, not anxious", description: "Join \(SocialProof.believersCount) believers trading worry for an unshakeable identity in Christ.")
                 ],
                 ctaText: "Start My 30-Day SpeakLife Challenge",
                 urgencyText: "3 Days Free • Cancel Anytime",
@@ -62,10 +62,10 @@ struct SurveyPersonalizationEngine {
                 headline: "It's Time to Know Who God Says You Are.",
                 subheadline: "You've believed the lie long enough. God wrote a different story about you.",
                 valueProps: [
-                    SurveyValueProp(icon: "sparkles", title: "Your Identity inheritance — delivered every morning until it's fully received.", description: "Scripture that dismantles 'I'm not enough' and replaces it with who God says you are."),
-                    SurveyValueProp(icon: "book.fill", title: "Speak first. Possess first. The ground is yours — claim it daily.", description: "Spoken truth is your greatest weapon. It is exactly how Jesus defeated every attack."),
-                    SurveyValueProp(icon: "repeat.circle.fill", title: "28 territories of inheritance — healing, identity, destiny, abundance, and more. Every area God prepared.", description: "Faith comes by hearing. Audio devotionals put Scripture in your ears morning and night."),
-                    SurveyValueProp(icon: "person.2.fill", title: "100,000 ground-takers advancing together right now. You're not doing this alone.", description: "Know your identity in Christ so deeply that fear, doubt, and shame lose their grip.")
+                    SurveyValueProp(icon: "sparkles", title: "Silence the 'not enough' lie", description: "Daily declarations replace the old story with what God actually says about you."),
+                    SurveyValueProp(icon: "book.fill", title: "Speak who you are", description: "Your identity gets sealed when your own voice agrees with God's Word."),
+                    SurveyValueProp(icon: "repeat.circle.fill", title: "Hear His truth every morning", description: "Audio devotionals keep God's voice louder than every label you've carried."),
+                    SurveyValueProp(icon: "person.2.fill", title: "Never walk this alone", description: "Join \(SocialProof.believersCount) believers discovering who God says they are.")
                 ],
                 ctaText: "Start My 30-Day SpeakLife Challenge",
                 urgencyText: "3 Days Free • Cancel Anytime",
@@ -76,10 +76,10 @@ struct SurveyPersonalizationEngine {
                 headline: "Your Calling Is Waiting to Be Walked Into.",
                 subheadline: "God wrote your destiny before you were born. SpeakLife helps you walk into it.",
                 valueProps: [
-                    SurveyValueProp(icon: "flame.fill", title: "Your Purpose inheritance — delivered every morning until it's fully received.", description: "Speak boldness, clarity, and calling into existence every morning."),
-                    SurveyValueProp(icon: "map.fill", title: "Speak first. Possess first. The ground is yours — claim it daily.", description: "Spoken truth is your greatest weapon. It is exactly how Jesus defeated every attack."),
-                    SurveyValueProp(icon: "arrow.up.forward.circle.fill", title: "28 territories of inheritance — healing, identity, destiny, abundance, and more. Every area God prepared.", description: "Faith comes by hearing. Audio devotionals put Scripture in your ears morning and night."),
-                    SurveyValueProp(icon: "person.2.fill", title: "100,000 ground-takers advancing together right now. You're not doing this alone.", description: "Know your identity in Christ so deeply that fear, doubt, and shame lose their grip.")
+                    SurveyValueProp(icon: "flame.fill", title: "Walk into your calling", description: "Daily declarations align your steps with the destiny God wrote for you."),
+                    SurveyValueProp(icon: "map.fill", title: "Speak direction over confusion", description: "Declare God's plans out loud until clarity replaces second-guessing."),
+                    SurveyValueProp(icon: "arrow.up.forward.circle.fill", title: "Vision in your ears daily", description: "Audio devotionals fill your mornings with purpose before the noise gets in."),
+                    SurveyValueProp(icon: "person.2.fill", title: "Called and commissioned", description: "Join \(SocialProof.believersCount) believers stepping into their God-given assignment.")
                 ],
                 ctaText: "Start My 30-Day SpeakLife Challenge",
                 urgencyText: "3 Days Free • Cancel Anytime",
@@ -90,10 +90,10 @@ struct SurveyPersonalizationEngine {
                 headline: "Find a Joy the World Cannot Steal.",
                 subheadline: "Not happiness. The real thing — deep, unshakeable, God-given joy.",
                 valueProps: [
-                    SurveyValueProp(icon: "sun.max.fill", title: "Your Joy inheritance — delivered every morning until it's fully received.", description: "Scripture that restores gladness when life has drained it from you."),
-                    SurveyValueProp(icon: "music.note", title: "Speak first. Possess first. The ground is yours — claim it daily.", description: "Spoken truth is your greatest weapon. It is exactly how Jesus defeated every attack."),
-                    SurveyValueProp(icon: "arrow.counterclockwise.circle.fill", title: "28 territories of inheritance — healing, identity, destiny, abundance, and more. Every area God prepared.", description: "Faith comes by hearing. Audio devotionals put Scripture in your ears morning and night."),
-                    SurveyValueProp(icon: "person.2.fill", title: "100,000 ground-takers advancing together right now. You're not doing this alone.", description: "Know your identity in Christ so deeply that fear, doubt, and shame lose their grip.")
+                    SurveyValueProp(icon: "sun.max.fill", title: "Joy that outlasts circumstances", description: "Daily declarations plant a gladness in you the world cannot take."),
+                    SurveyValueProp(icon: "music.note", title: "Speak gladness over heaviness", description: "Declaring God's promises out loud lifts what the day tries to put on you."),
+                    SurveyValueProp(icon: "arrow.counterclockwise.circle.fill", title: "Start mornings with His delight", description: "Audio devotionals tune your heart to God's joy before anything else speaks."),
+                    SurveyValueProp(icon: "person.2.fill", title: "Rooted in the God of joy", description: "Join \(SocialProof.believersCount) believers whose joy is anchored in Christ, not circumstances.")
                 ],
                 ctaText: "Start My 30-Day SpeakLife Challenge",
                 urgencyText: "3 Days Free • Cancel Anytime",
@@ -104,10 +104,10 @@ struct SurveyPersonalizationEngine {
                 headline: "Walk Like You Know Who Made You.",
                 subheadline: "God did not give you a spirit of fear. It's time to start living like it.",
                 valueProps: [
-                    SurveyValueProp(icon: "bolt.fill", title: "Your Confidence inheritance — delivered every morning until it's fully received.", description: "Speak boldness into your DNA — daily, out loud, until it sticks."),
-                    SurveyValueProp(icon: "crown.fill", title: "Speak first. Possess first. The ground is yours — claim it daily.", description: "Spoken truth is your greatest weapon. It is exactly how Jesus defeated every attack."),
-                    SurveyValueProp(icon: "figure.stand", title: "28 territories of inheritance — healing, identity, destiny, abundance, and more. Every area God prepared.", description: "Faith comes by hearing. Audio devotionals put Scripture in your ears morning and night."),
-                    SurveyValueProp(icon: "person.2.fill", title: "100,000 ground-takers advancing together right now. You're not doing this alone.", description: "Know your identity in Christ so deeply that fear, doubt, and shame lose their grip.")
+                    SurveyValueProp(icon: "bolt.fill", title: "Bold in every room", description: "Daily declarations build confidence rooted in who made you, not how you feel."),
+                    SurveyValueProp(icon: "crown.fill", title: "Speak boldness until it sticks", description: "Your voice agreeing with God's Word dismantles timidity at the root."),
+                    SurveyValueProp(icon: "figure.stand", title: "Courage in your ears daily", description: "Audio devotionals remind you whose you are before doubt gets a word in."),
+                    SurveyValueProp(icon: "person.2.fill", title: "Fearless in your identity", description: "Join \(SocialProof.believersCount) believers walking in God-given boldness every day.")
                 ],
                 ctaText: "Start My 30-Day SpeakLife Challenge",
                 urgencyText: "3 Days Free • Cancel Anytime",
@@ -118,10 +118,10 @@ struct SurveyPersonalizationEngine {
                 headline: "What Broke — God Restores.",
                 subheadline: "Healing isn't just physical. SpeakLife speaks God's Word over your whole person.",
                 valueProps: [
-                    SurveyValueProp(icon: "leaf.fill", title: "Your Healing inheritance — delivered every morning until it's fully received.", description: "God's promises over your body, mind, and soul — spoken aloud every day."),
-                    SurveyValueProp(icon: "heart.fill", title: "Speak first. Possess first. The ground is yours — claim it daily.", description: "Spoken truth is your greatest weapon. It is exactly how Jesus defeated every attack."),
-                    SurveyValueProp(icon: "waveform.path.ecg", title: "28 territories of inheritance — healing, identity, destiny, abundance, and more. Every area God prepared.", description: "Faith comes by hearing. Audio devotionals put Scripture in your ears morning and night."),
-                    SurveyValueProp(icon: "person.2.fill", title: "100,000 ground-takers advancing together right now. You're not doing this alone.", description: "Know your identity in Christ so deeply that fear, doubt, and shame lose their grip.")
+                    SurveyValueProp(icon: "leaf.fill", title: "Speak life over your body", description: "Daily healing declarations put God's promises over every diagnosis and pain."),
+                    SurveyValueProp(icon: "heart.fill", title: "Declare healing out loud", description: "Spoken Scripture is how you take hold of what Jesus already paid for."),
+                    SurveyValueProp(icon: "waveform.path.ecg", title: "Healing promises in your ears", description: "Audio devotionals soak your mind in God's restoring Word, morning and night."),
+                    SurveyValueProp(icon: "person.2.fill", title: "Whole in body and soul", description: "Join \(SocialProof.believersCount) believers speaking God's healing over their lives.")
                 ],
                 ctaText: "Start My 30-Day SpeakLife Challenge",
                 urgencyText: "3 Days Free • Cancel Anytime",
@@ -132,10 +132,10 @@ struct SurveyPersonalizationEngine {
                 headline: "You Were Made to Walk in Overflow.",
                 subheadline: "God's Word has more to say about abundance than you've been taught. Start speaking it.",
                 valueProps: [
-                    SurveyValueProp(icon: "star.fill", title: "Your Abundance inheritance — delivered every morning until it's fully received.", description: "Scripture-backed declarations over your finances, provision, and breakthrough."),
-                    SurveyValueProp(icon: "briefcase.fill", title: "Speak first. Possess first. The ground is yours — claim it daily.", description: "Spoken truth is your greatest weapon. It is exactly how Jesus defeated every attack."),
-                    SurveyValueProp(icon: "arrow.up.forward.circle.fill", title: "28 territories of inheritance — healing, identity, destiny, abundance, and more. Every area God prepared.", description: "Faith comes by hearing. Audio devotionals put Scripture in your ears morning and night."),
-                    SurveyValueProp(icon: "person.2.fill", title: "100,000 ground-takers advancing together right now. You're not doing this alone.", description: "Know your identity in Christ so deeply that fear, doubt, and shame lose their grip.")
+                    SurveyValueProp(icon: "star.fill", title: "Break the scarcity mindset", description: "Daily abundance declarations renew how you see provision, money, and overflow."),
+                    SurveyValueProp(icon: "briefcase.fill", title: "Speak increase over your finances", description: "Declaring God's promises out loud shifts your beliefs, then your decisions."),
+                    SurveyValueProp(icon: "arrow.up.forward.circle.fill", title: "Provision promises every morning", description: "Audio devotionals fill your ears with God's abundance before the world preaches lack."),
+                    SurveyValueProp(icon: "person.2.fill", title: "An heir, not a beggar", description: "Join \(SocialProof.believersCount) believers walking in God's overflow together.")
                 ],
                 ctaText: "Start My 30-Day SpeakLife Challenge",
                 urgencyText: "3 Days Free • Cancel Anytime",
@@ -146,7 +146,6 @@ struct SurveyPersonalizationEngine {
 
     var notificationCopy: SurveyNotificationCopy {
         guard let word = goalWord else { return defaultNotificationCopy }
-        let challenge = word.challengeName
         switch word {
         case .peace:
             return SurveyNotificationCopy(
@@ -203,12 +202,12 @@ struct SurveyPersonalizationEngine {
     private var defaultPaywallCopy: SurveyPaywallCopy {
         SurveyPaywallCopy(
             headline: "Become Unshakable — One Declaration at a Time",
-            subheadline: "Join 100,000+ believers who chose God's truth over their feelings.",
+            subheadline: "Join \(SocialProof.believersCount) believers who chose God's truth over their feelings.",
             valueProps: [
-                SurveyValueProp(icon: "book.fill", title: "28 territories of inheritance — healing, identity, destiny, abundance, and more. Every area God prepared.", description: "Faith comes by hearing. Audio devotionals put Scripture in your ears morning and night."),
-                SurveyValueProp(icon: "bolt.fill", title: "Your personal declaration — delivered every morning until it's fully received.", description: "God's Word spoken over your exact situation, every morning."),
-                SurveyValueProp(icon: "headphones", title: "Speak first. Possess first. The ground is yours — claim it daily.", description: "Spoken truth is your greatest weapon. It is exactly how Jesus defeated every attack."),
-                SurveyValueProp(icon: "person.2.fill", title: "100,000 ground-takers advancing together right now. You're not doing this alone.", description: "Know your identity in Christ so deeply that fear, doubt, and shame lose their grip.")
+                SurveyValueProp(icon: "book.fill", title: "Declarations made for you", description: "God's Word spoken over your exact situation, every single morning."),
+                SurveyValueProp(icon: "bolt.fill", title: "Speak truth, take ground", description: "Spoken Scripture is your greatest weapon. It is how Jesus won every battle."),
+                SurveyValueProp(icon: "headphones", title: "Faith comes by hearing", description: "Audio devotionals put God's promises in your ears morning and night."),
+                SurveyValueProp(icon: "person.2.fill", title: "Unshakeable identity in Christ", description: "Join \(SocialProof.believersCount) believers who know who they are in Him.")
             ],
             ctaText: "Begin My Faith Reset",
             urgencyText: "3 Days Free • Cancel Anytime",

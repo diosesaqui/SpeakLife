@@ -8,6 +8,13 @@
 import Foundation
 import SwiftUI
 
+/// Single source of truth for social-proof numbers shown across onboarding,
+/// survey, and paywall copy. Keep every surface citing the same (truthful)
+/// figure — update it here, never inline.
+enum SocialProof {
+    static let believersCount = "100,000+"
+}
+
 final class UserPreferencesTracker: ObservableObject {
     static let shared = UserPreferencesTracker()
 
@@ -107,7 +114,7 @@ final class UserPreferencesTracker: ObservableObject {
                     "Your personal declaration — delivered every morning until it's fully received.",
                     "Speak first. Possess first. The ground is yours — claim it daily.",
                     "28 territories of inheritance — healing, identity, destiny, abundance, and more. Every area God prepared.",
-                    "100,000 ground-takers advancing together right now. You're not doing this alone.",
+                    "\(SocialProof.believersCount) ground-takers advancing together right now. You're not doing this alone.",
                     "Unlimited Declarations Across All Categories"
                 ],
                 ctaText: "Start Believing Every Day",
@@ -125,7 +132,7 @@ final class UserPreferencesTracker: ObservableObject {
                     "Build a Mind Nothing Can Shake",
                     "No More Fear of the Future — God Has a Promise for It",
                     "Become Who God Said You Are",
-                    "Pray With 100,000+ Believers"
+                    "Pray With \(SocialProof.believersCount) Believers"
                 ],
                 ctaText: "Begin My Faith Reset",
                 urgencyText: "3 Days Free • Cancel Anytime"
@@ -140,7 +147,7 @@ final class UserPreferencesTracker: ObservableObject {
                     "Build a Mind Nothing Can Shake",
                     "No More Fear of the Future — God Has a Promise for It",
                     "Become Who God Said You Are",
-                    "Pray With 100,000+ Believers"
+                    "Pray With \(SocialProof.believersCount) Believers"
                 ],
                 ctaText: "Strengthen Your Faith Today",
                 urgencyText: "Start Free & Grow Stronger"
@@ -155,7 +162,7 @@ final class UserPreferencesTracker: ObservableObject {
                     "Build a Mind Nothing Can Shake",
                     "No More Fear of the Future — God Has a Promise for It",
                     "Become Who God Said You Are",
-                    "Pray With 100,000+ Believers"
+                    "Pray With \(SocialProof.believersCount) Believers"
                 ],
                 ctaText: "Unlock Your Joy Today",
                 urgencyText: "Experience Joy in 3 Days"
@@ -170,7 +177,7 @@ final class UserPreferencesTracker: ObservableObject {
                     "Build a Mind Nothing Can Shake",
                     "No More Fear of the Future — God Has a Promise for It",
                     "Become Who God Said You Are",
-                    "Pray With 100,000+ Believers"
+                    "Pray With \(SocialProof.believersCount) Believers"
                 ],
                 ctaText: "Sleep Peacefully Tonight",
                 urgencyText: "Better Sleep Starts Today"
@@ -185,7 +192,7 @@ final class UserPreferencesTracker: ObservableObject {
                     "Build a Mind Nothing Can Shake",
                     "No More Fear of the Future — God Has a Promise for It",
                     "Become Who God Said You Are",
-                    "Pray With 100,000+ Believers"
+                    "Pray With \(SocialProof.believersCount) Believers"
                 ],
                 ctaText: "Claim Your Healing",
                 urgencyText: "Start Your Healing Journey"
@@ -200,7 +207,7 @@ final class UserPreferencesTracker: ObservableObject {
                     "Build a Mind Nothing Can Shake",
                     "No More Fear of the Future — God Has a Promise for It",
                     "Become Who God Said You Are",
-                    "Pray With 100,000+ Believers"
+                    "Pray With \(SocialProof.believersCount) Believers"
                 ],
                 ctaText: "Unlock Bold Confidence",
                 urgencyText: "Transform in 3 Days Free"
@@ -215,7 +222,7 @@ final class UserPreferencesTracker: ObservableObject {
                     "Build a Mind Nothing Can Shake",
                     "No More Fear of the Future — God Has a Promise for It",
                     "Become Who God Said You Are",
-                    "Pray With 100,000+ Believers"
+                    "Pray With \(SocialProof.believersCount) Believers"
                 ],
                 ctaText: "Overcome Fear Today",
                 urgencyText: "Freedom Starts Now"
@@ -230,7 +237,7 @@ final class UserPreferencesTracker: ObservableObject {
                     "Build a Mind Nothing Can Shake",
                     "No More Fear of the Future — God Has a Promise for It",
                     "Become Who God Said You Are",
-                    "Pray With 100,000+ Believers"
+                    "Pray With \(SocialProof.believersCount) Believers"
                 ],
                 ctaText: "Bless Your Marriage",
                 urgencyText: "Transform Your Marriage"
@@ -245,7 +252,7 @@ final class UserPreferencesTracker: ObservableObject {
                     "Build a Mind Nothing Can Shake",
                     "No More Fear of the Future — God Has a Promise for It",
                     "Become Who God Said You Are",
-                    "Pray With 100,000+ Believers"
+                    "Pray With \(SocialProof.believersCount) Believers"
                 ],
                 ctaText: "Receive Perfect Love",
                 urgencyText: "Love Transformation Awaits"
@@ -260,7 +267,7 @@ final class UserPreferencesTracker: ObservableObject {
                     "Build a Mind Nothing Can Shake",
                     "No More Fear of the Future — God Has a Promise for It",
                     "Become Who God Said You Are",
-                    "Pray With 100,000+ Believers"
+                    "Pray With \(SocialProof.believersCount) Believers"
                 ],
                 ctaText: "Reclaim Your Hope",
                 urgencyText: "Hope Starts Today"
@@ -269,13 +276,13 @@ final class UserPreferencesTracker: ObservableObject {
         case .general:
             return PaywallCopy(
                 headline: "Become Unshakable — One Declaration at a Time",
-                subheadline: "Join 100,000+ believers who chose God's truth over their feelings.",
+                subheadline: "Join \(SocialProof.believersCount) believers who chose God's truth over their feelings.",
                 valueProps: [
                     "Replace Every Lie With God's Truth",
                     "Build a Mind Nothing Can Shake",
                     "No More Fear of the Future — God Has a Promise for It",
                     "Become Who God Said You Are",
-                    "Pray With 100,000+ Believers"
+                    "Pray With \(SocialProof.believersCount) Believers"
                 ],
                 ctaText: "Begin My Faith Reset",
                 urgencyText: "3 Days Free • Cancel Anytime"
