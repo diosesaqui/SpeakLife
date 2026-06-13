@@ -1,0 +1,130 @@
+//
+//  RemoteMessageView.swift
+//  SpeakLife
+//
+//  A standalone screen for displaying a personalized message that was delivered
+//  via a remote (Firebase) push notification. Unlike declaration notifications
+//  — which open the home feed — these messages can be longer than a banner can
+//  show, so tapping the notification pops this screen with the full text.
+//
+
+import SwiftUI
+
+/// Lightweight payload for an in-app message delivered through a push notification.
+///
+/// Built from the FCM `userInfo` dictionary when `deepLink == "message"`. The
+/// banner shows a short title/body; the full (potentially long) message is carried
+/// in the optional `messageTitle` / `messageBody` data keys and falls back to the
+/// banner's own title/body when those keys are absent.
+struct RemoteMessage: Identifiable, Equatable {
+    let id = UUID()
+    let title: String
+    let body: String
+
+    /// Builds a message from a notification's `userInfo`.
+    ///
+    /// - Returns: `nil` when there is no displayable body text, so callers can
+    ///   safely skip presentation rather than show an empty screen.
+    init?(userInfo: [AnyHashable: Any], fallbackTitle: String, fallbackBody: String) {
+        let explicitTitle = (userInfo["messageTitle"] as? String)?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        let explicitBody = (userInfo["messageBody"] as? String)?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+
+        let resolvedBody = (explicitBody?.isEmpty == false)
+            ? explicitBody!
+            : fallbackBody.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        guard !resolvedBody.isEmpty else { return nil }
+
+        let resolvedTitle = (explicitTitle?.isEmpty == false)
+            ? explicitTitle!
+            : fallbackTitle.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        self.title = resolvedTitle
+        self.body = resolvedBody
+    }
+}
+
+/// Full-screen reader for a `RemoteMessage`. Presented as a sheet so it floats
+/// above whatever tab the user was on without disturbing the home feed.
+struct RemoteMessageView: View {
+
+    let message: RemoteMessage
+
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        ZStack {
+            Gradients().speakLifeFrostyCell
+                .ignoresSafeArea()
+
+            VStack(spacing: 0) {
+                // Close affordance in the top-right.
+                HStack {
+                    Spacer()
+                    Button {
+                        dismiss()
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.title2)
+                            .foregroundColor(.white.opacity(0.7))
+                    }
+                    .accessibilityLabel("Close")
+                }
+                .padding(.horizontal, 20)
+                .padding(.top, 16)
+
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 20) {
+                        if !message.title.isEmpty {
+                            Text(message.title)
+                                .font(.system(size: 28, weight: .bold, design: .rounded))
+                                .foregroundColor(.white)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+
+                        Text(message.body)
+                            .font(.system(size: 19, weight: .regular, design: .rounded))
+                            .foregroundColor(.white.opacity(0.92))
+                            .lineSpacing(7)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 28)
+                    .padding(.top, 12)
+                    .padding(.bottom, 40)
+                }
+
+                Button {
+                    dismiss()
+                } label: {
+                    Text("Amen")
+                        .font(.system(size: 18, weight: .semibold, design: .rounded))
+                        .foregroundColor(Color(hex: "#0B0F1A"))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 16)
+                        .background(
+                            RoundedRectangle(cornerRadius: 16)
+                                .fill(Color.white)
+                        )
+                }
+                .padding(.horizontal, 28)
+                .padding(.bottom, 28)
+            }
+        }
+    }
+}
+
+#Preview {
+    RemoteMessageView(
+        message: RemoteMessage(
+            userInfo: [
+                "messageTitle": "A Word For You Today",
+                "messageBody": "I see you, and I am proud of how far you've come. The road has not been easy, but every step has been ordered. Keep going. Your breakthrough is closer than it appears, and the One who started a good work in you is faithful to complete it."
+            ],
+            fallbackTitle: "",
+            fallbackBody: ""
+        )!
+    )
+}

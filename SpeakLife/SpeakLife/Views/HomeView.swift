@@ -308,6 +308,12 @@ struct HomeView: View {
                                 )
                                 .environmentObject(subscriptionStore)
                             }
+                            // Personalized push message — its own reader screen,
+                            // separate from the declaration feed. Driven by a
+                            // `deepLink == "message"` notification tap.
+                            .sheet(item: $appState.remoteMessage) { message in
+                                RemoteMessageView(message: message)
+                            }
                   
                 } else {
                     // Onboarding A/B: quiz | product | identity | outcomes, selected

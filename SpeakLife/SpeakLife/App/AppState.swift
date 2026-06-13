@@ -11,6 +11,11 @@ import FirebaseAnalytics
 
 final class AppState: ObservableObject {
     @Published var rootViewId = UUID()
+    /// A personalized message delivered via push notification, awaiting display in
+    /// its own screen. Set when a `deepLink == "message"` notification is tapped;
+    /// drives the `.sheet(item:)` in HomeView. Not persisted — it lives only for
+    /// the duration of the presentation.
+    @Published var remoteMessage: RemoteMessage?
     @Published var showIntentBar = true
     @Published var onBoardingTest = true
     @Published var showScreenshotLabel = false {

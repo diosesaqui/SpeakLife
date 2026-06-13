@@ -258,6 +258,7 @@
 		7A278FA2288915DF0084BB57 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 7A278FA1288915DF0084BB57 /* Preview Assets.xcassets */; };
 		7A60143F294E382700CD2103 /* SubscriptionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A60143E294E382700CD2103 /* SubscriptionStore.swift */; };
 		7A601441294E574500CD2103 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A601440294E574500CD2103 /* HomeView.swift */; };
+		45FACE0012345678ABCDEF01 /* RemoteMessageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45FACE0012345678ABCDEF02 /* RemoteMessageView.swift */; };
 		7A7BEBCD2913536B008D08A3 /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7A7BEBCC2913536B008D08A3 /* StoreKit.framework */; };
 		7A7BEBD42913574D008D08A3 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7A7BEBD32913574D008D08A3 /* WidgetKit.framework */; };
 		7A7BEBD62913574D008D08A3 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7A7BEBD52913574D008D08A3 /* SwiftUI.framework */; };
@@ -674,6 +675,7 @@
 		7A278FA1288915DF0084BB57 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		7A60143E294E382700CD2103 /* SubscriptionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubscriptionStore.swift; sourceTree = "<group>"; };
 		7A601440294E574500CD2103 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
+		45FACE0012345678ABCDEF02 /* RemoteMessageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteMessageView.swift; sourceTree = "<group>"; };
 		7A7BEBCA2913534E008D08A3 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		7A7BEBCC2913536B008D08A3 /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = System/Library/Frameworks/StoreKit.framework; sourceTree = SDKROOT; };
 		7A7BEBD22913574D008D08A3 /* PromisesWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = PromisesWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -1431,6 +1433,7 @@
 			children = (
 				458510D82B159B0D00230EE5 /* LandingView.swift */,
 				7A601440294E574500CD2103 /* HomeView.swift */,
+				45FACE0012345678ABCDEF02 /* RemoteMessageView.swift */,
 				4525D6842F37C0EB00571394 /* DailyDeclarationBurstView.swift */,
 				45F0AAAA2F40C0EB00571394 /* PremiumAnniversaryView.swift */,
 				45F0EAEA2F40C0EB00571394 /* YearInReview */,
@@ -2275,6 +2278,7 @@
 				7AA8709128DACCA700134ADB /* GlobalConstants.swift in Sources */,
 				4597E2472E419DB4009D6C66 /* CoreDataDeclarationViewModel.swift in Sources */,
 				7A601441294E574500CD2103 /* HomeView.swift in Sources */,
+				45FACE0012345678ABCDEF01 /* RemoteMessageView.swift in Sources */,
 				4525D6852F37C0EB00571394 /* DailyDeclarationBurstView.swift in Sources */,
 				45F0BBBB2F40C0EB00571394 /* PremiumAnniversaryView.swift in Sources */,
 				45F0DDDD2F40C0EB00571394 /* YearInReviewStats.swift in Sources */,
