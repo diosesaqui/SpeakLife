@@ -16,7 +16,7 @@ import SwiftUI
 /// banner shows a short title/body; the full (potentially long) message is carried
 /// in the optional `messageTitle` / `messageBody` data keys and falls back to the
 /// banner's own title/body when those keys are absent.
-struct RemoteMessage: Identifiable, Equatable {
+struct RemoteMessage: Identifiable {
     let id = UUID()
     let title: String
     let body: String
