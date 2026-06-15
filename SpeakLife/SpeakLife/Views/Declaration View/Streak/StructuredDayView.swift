@@ -60,6 +60,83 @@ struct DayProgressRing: View {
     }
 }
 
+// MARK: - Week Streak Strip
+//
+// Week-at-a-glance row (S M T W T F S) modeled on Apple Fitness / Duolingo /
+// Haven. Visualizing the week so far is one of the strongest return-drivers in
+// habit apps: completed days read as earned, today is the obvious next move,
+// and a gap creates gentle "don't break it" pressure. Backed by real per-day
+// completion history from BurstCompletionTracker, so it never lies.
+
+struct WeekStreakStrip: View {
+    let currentStreak: Int
+    @ObservedObject private var tracker = BurstCompletionTracker.shared
+    private let calendar = Calendar.current
+
+    private struct DayCell: Identifiable {
+        let id = UUID()
+        let label: String
+        let isToday: Bool
+        let isCompleted: Bool
+        let isFuture: Bool
+    }
+
+    private var days: [DayCell] {
+        let today = calendar.startOfDay(for: Date())
+        let weekday = calendar.component(.weekday, from: today) // 1 = Sunday
+        guard let startOfWeek = calendar.date(byAdding: .day, value: -(weekday - 1), to: today) else { return [] }
+        let symbols = ["S", "M", "T", "W", "T", "F", "S"]
+
+        return (0..<7).compactMap { offset in
+            guard let date = calendar.date(byAdding: .day, value: offset, to: startOfWeek) else { return nil }
+            let completed = tracker.completions.contains { calendar.isDate($0.date, inSameDayAs: date) }
+            return DayCell(
+                label: symbols[offset],
+                isToday: calendar.isDate(date, inSameDayAs: today),
+                isCompleted: completed,
+                isFuture: date > today
+            )
+        }
+    }
+
+    var body: some View {
+        HStack(spacing: 0) {
+            ForEach(days) { day in
+                VStack(spacing: 6) {
+                    Text(day.label)
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundColor(.white.opacity(day.isFuture ? 0.3 : 0.6))
+                    ZStack {
+                        Circle()
+                            .fill(day.isCompleted ? Color.orange.opacity(0.9) : Color.white.opacity(0.08))
+                            .frame(width: 30, height: 30)
+                        if day.isToday {
+                            Circle()
+                                .stroke(Color.white.opacity(0.9), lineWidth: 2)
+                                .frame(width: 30, height: 30)
+                        }
+                        if day.isCompleted {
+                            Image(systemName: "flame.fill")
+                                .font(.system(size: 13, weight: .bold))
+                                .foregroundColor(.white)
+                        } else if !day.isFuture {
+                            Circle()
+                                .fill(Color.white.opacity(0.18))
+                                .frame(width: 5, height: 5)
+                        }
+                    }
+                }
+                .frame(maxWidth: .infinity)
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel(day.isCompleted ? "\(day.label), completed" : day.label)
+            }
+        }
+        .padding(.vertical, 12)
+        .padding(.horizontal, 8)
+        .background(RoundedRectangle(cornerRadius: 16).fill(Color.white.opacity(0.04)))
+    }
+}
+
 // MARK: - Hero Card
 
 struct NextUpTaskCard: View {
@@ -74,6 +151,8 @@ struct NextUpTaskCard: View {
         case .burst:       colors = [Color(hex: "#7C3AED"), Color(hex: "#4F46E5")]
         case .devotional:  colors = [Color(hex: "#0EA5E9"), Color(hex: "#0369A1")]
         case .audioTab:    colors = [Color(hex: "#059669"), Color(hex: "#065F46")]
+        case .bibleChat:   colors = [Color(hex: "#0D9488"), Color(hex: "#115E59")]
+        case .journal:     colors = [Color(hex: "#D97706"), Color(hex: "#92400E")]
         case .none:        colors = [Color(hex: "#B45309"), Color(hex: "#78350F")]
         }
         return LinearGradient(gradient: Gradient(colors: colors), startPoint: .topLeading, endPoint: .bottomTrailing)
@@ -84,6 +163,8 @@ struct NextUpTaskCard: View {
         case .burst:      return "Start Burst →"
         case .devotional: return "Open Devotional →"
         case .audioTab:   return "Listen Now →"
+        case .bibleChat:  return "Ask the Bible →"
+        case .journal:    return "Open Journal →"
         case .none:       return "Complete →"
         }
     }

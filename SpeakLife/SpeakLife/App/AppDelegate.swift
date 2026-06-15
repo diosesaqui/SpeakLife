@@ -55,13 +55,18 @@ final class AppDelegate: NSObject, MessagingDelegate {
     
     // Initialize TikTok SDK after ATT permission is handled
     func initializeTikTokSDK() {
-        // Run on background queue to avoid blocking UI
-        DispatchQueue.global(qos: .background).async {
+        // The TikTok SDK builds shared singletons (logger/session) during
+        // initializeSdk and is NOT safe to initialize off the main thread —
+        // doing so races that setup and over-releases its internal `logger`
+        // (EXC_BAD_ACCESS in getRemoteSwitch/getLogger). Initialize on the main
+        // thread; the SDK performs its network calls asynchronously itself, so
+        // this does not block the UI.
+        let start = {
             let config = TikTokConfig(accessToken: "TTT9Kn1rHyqZN1AMEcrMS6WBCnh7pFj2", appId: "7421777490315624455", tiktokAppId: "7421777490315624455")
             #if DEBUG
             config?.enableDebugMode()
             #endif
-            
+
             TikTokBusiness.initializeSdk(config) { success, error in
                 DispatchQueue.main.async {
                     if (!success) {
@@ -71,6 +76,12 @@ final class AppDelegate: NSObject, MessagingDelegate {
                     }
                 }
             }
+        }
+
+        if Thread.isMainThread {
+            start()
+        } else {
+            DispatchQueue.main.async(execute: start)
         }
     }
     

@@ -148,8 +148,10 @@ final class EnhancedStreakViewModel: ObservableObject {
         
         let task = todayChecklist.tasks[taskIndex]
         
-        // Enhanced analytics with progressive task data
-        Analytics.logEvent("complete_task", parameters: [
+        // Routed through AnalyticsService so the daily-habit loop is visible in
+        // PostHog (retention/funnels), not Firebase alone. The Firebase sink
+        // still receives it via FirebaseAnalyticsProvider.
+        AnalyticsService.shared.track("checklist_task_completed", parameters: [
             "task_id": taskId,
             "task_category": task.category.rawValue,
             "task_type": task.type.rawValue,
@@ -157,7 +159,8 @@ final class EnhancedStreakViewModel: ObservableObject {
             "streak_day": streakStats.currentStreak,
             "current_phase": todayChecklist.currentPhase.rawValue,
             "estimated_minutes": task.estimatedMinutes,
-            "is_newly_unlocked": task.isNewlyUnlocked
+            "is_newly_unlocked": task.isNewlyUnlocked,
+            "is_burst": taskId == "complete_daily_burst"
         ])
         
         todayChecklist.tasks[taskIndex].isCompleted = true
@@ -213,7 +216,7 @@ final class EnhancedStreakViewModel: ObservableObject {
         
         // Analytics for phase progression
         if currentPhase != previousPhase {
-            Analytics.logEvent("phase_progression", parameters: [
+            AnalyticsService.shared.track("phase_progression", parameters: [
                 "previous_phase": previousPhase.rawValue,
                 "new_phase": currentPhase.rawValue,
                 "streak_day": currentStreak
@@ -228,7 +231,7 @@ final class EnhancedStreakViewModel: ObservableObject {
             
             // Analytics for new task unlocks
             for newTask in newTasks {
-                Analytics.logEvent("task_unlocked", parameters: [
+                AnalyticsService.shared.track("task_unlocked", parameters: [
                     "task_id": newTask.id,
                     "task_category": newTask.category.rawValue,
                     "task_type": newTask.type.rawValue,
@@ -327,7 +330,20 @@ final class EnhancedStreakViewModel: ObservableObject {
         }
         
         let isNewRecord = currentStreakNumber > longestStreakBefore
-        
+
+        // THE core retention event — fires the moment a streak day is earned.
+        // Previously untracked, which is why D1/D7 streak retention was invisible
+        // in PostHog. Everything in the retention funnel hangs off this.
+        AnalyticsService.shared.track("streak_day_completed", parameters: [
+            "streak_day": currentStreakNumber,
+            "is_new_record": isNewRecord,
+            "longest_streak": streakStats.longestStreak,
+            "total_days_completed": streakStats.totalDaysCompleted,
+            "tasks_completed": todayChecklist.completedTasksCount,
+            "total_tasks": todayChecklist.tasks.count,
+            "phase": todayChecklist.currentPhase.rawValue
+        ])
+
         // Premium celebration for daily goal completion
         PremiumHaptics.dailyGoalCompleted()
         AudioDelightManager.shared.playForStreakMilestone(currentStreakNumber)
