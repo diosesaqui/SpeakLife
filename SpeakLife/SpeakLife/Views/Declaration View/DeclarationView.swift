@@ -394,6 +394,11 @@ struct DeclarationView: View {
                 .environmentObject(timerViewModel)
                 .environmentObject(streakViewModel)
         }
+        // Presented from the "Today" checklist tab: it switches to this feed tab
+        // and posts this so the burst opens here, where its cover is fully wired.
+        .onReceive(NotificationCenter.default.publisher(for: Notification.Name("ShowDailyDeclarationBurst"))) { _ in
+            showDailyBurst = true
+        }
         // Top-level cover — handles both "create first declaration" and "set new after breakthrough"
         .fullScreenCover(isPresented: $showNewDeclarationSheet) {
             GeometryReader { geo in

@@ -151,6 +151,8 @@ struct NextUpTaskCard: View {
         case .burst:       colors = [Color(hex: "#7C3AED"), Color(hex: "#4F46E5")]
         case .devotional:  colors = [Color(hex: "#0EA5E9"), Color(hex: "#0369A1")]
         case .audioTab:    colors = [Color(hex: "#059669"), Color(hex: "#065F46")]
+        case .bibleChat:   colors = [Color(hex: "#0D9488"), Color(hex: "#115E59")]
+        case .journal:     colors = [Color(hex: "#D97706"), Color(hex: "#92400E")]
         case .none:        colors = [Color(hex: "#B45309"), Color(hex: "#78350F")]
         }
         return LinearGradient(gradient: Gradient(colors: colors), startPoint: .topLeading, endPoint: .bottomTrailing)
@@ -161,6 +163,8 @@ struct NextUpTaskCard: View {
         case .burst:      return "Start Burst →"
         case .devotional: return "Open Devotional →"
         case .audioTab:   return "Listen Now →"
+        case .bibleChat:  return "Ask the Bible →"
+        case .journal:    return "Open Journal →"
         case .none:       return "Complete →"
         }
     }

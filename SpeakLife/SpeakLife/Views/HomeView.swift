@@ -31,21 +31,25 @@ class TabViewModel: ObservableObject {
     func goToAudio() {
         selectedTab = 1
     }
-    
-//    func goToChecklist() {
-//        selectedTab = 2  // Daily Checklist is at position 2
-//    }
+
+    func goToChecklist() {
+        selectedTab = 0  // "Today" checklist is the home tab
+    }
+
+    func goToDeclarations() {
+        selectedTab = 2  // Swipeable declaration feed ("Speak")
+    }
 
     func resetToHome() {
-        selectedTab = 0  // Go to Declarations (main home view)
+        selectedTab = 0  // Go to the "Today" checklist (home)
     }
-    
+
     private func trackTabNavigation(from previousTab: Int, to newTab: Int) {
         // Keys are the actual .tag() values used as selectedTab (not positions).
         let tabNames = [
-            0: "declarations",
+            0: "today_checklist",
             1: "audio",
-            3: "create_your_own",
+            2: "declarations",
             4: "bible_chat",
             5: "profile"
         ]
@@ -379,10 +383,14 @@ struct HomeView: View {
     var homeView: some View {
         ZStack(alignment: .top) {
             TabView(selection: $tabViewModel.selectedTab) {
+                // "Today" checklist is the home tab (tag 0) — the daily-habit
+                // surface that gives a goal, a "done", and a reason to return.
+                dailyChecklistView
+                // The swipeable declaration feed is demoted to its own "Speak"
+                // tab (tag 2). It stays one tap away and is what the Daily Burst
+                // opens into, but it no longer owns the landing surface.
                 declarationView
                 audioView
-               // bibleView
-                // dailyChecklistView // Moved to DeclarationView
                 // Bible Chat sits in the CENTER slot (highest-engagement position)
                 // and replaces the Warrior Room tab. enableAIFeatures is a kill-
                 // switch: off → fall back to Warrior Room (one toggle to revert).
@@ -391,9 +399,10 @@ struct HomeView: View {
                 } else {
                     communityView
                 }
-                createYourOwnView
+                // createYourOwnView dropped from the tab bar to stay within the
+                // 5-tab limit; still reachable from the feed's create action.
                 profileView
-                    
+
                 }
                 .hideTabBar(if: appState.showScreenshotLabel)
                 .sheet(isPresented: $isPresented) {
@@ -503,12 +512,11 @@ struct HomeView: View {
     var declarationView: some View {
         DeclarationView()
             .id(appState.rootViewId)
-            .tag(0)
+            .tag(2)
             .tabItem {
                 Image(systemName: "quote.bubble.fill")
                     .renderingMode(.original)
-                Text("Home")
-                
+                Text("Speak")
             }
     }
     
@@ -561,11 +569,12 @@ struct HomeView: View {
     }
     
     var dailyChecklistView: some View {
-        ModernDailyChecklistView(viewModel: streakViewModel)
-            .tag(2)
+        ModernDailyChecklistView(viewModel: streakViewModel, isHomeTab: true)
+            .tag(0)
             .tabItem {
-                Image(systemName: "checklist")
+                Image(systemName: "sun.max.fill")
                     .renderingMode(.original)
+                Text("Today")
             }
     }
     
