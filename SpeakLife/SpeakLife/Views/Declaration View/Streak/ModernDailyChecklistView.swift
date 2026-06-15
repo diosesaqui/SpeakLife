@@ -70,6 +70,19 @@ struct ModernDailyChecklistView: View {
         return []
     }
 
+    /// Time-aware, personalized greeting (Calm / Haven style). Falls back to a
+    /// plain greeting when no name was captured during onboarding.
+    private var greeting: String {
+        let base: String
+        switch Calendar.current.component(.hour, from: Date()) {
+        case 5..<12:  base = "Good morning"
+        case 12..<17: base = "Good afternoon"
+        default:      base = "Good evening"
+        }
+        let name = UserDefaults.standard.string(forKey: "userName") ?? ""
+        return name.isEmpty ? base : "\(base), \(name)"
+    }
+
     private var motivationalText: String {
         let hour = Calendar.current.component(.hour, from: Date())
         let completed = viewModel.todayChecklist.completedTasksCount
@@ -95,72 +108,35 @@ struct ModernDailyChecklistView: View {
     var body: some View {
         ZStack {
             VStack(spacing: 0) {
-                // Modern header with TODAY emphasis
+                // MARK: Header — greeting, streak, and week-at-a-glance
                 VStack(spacing: 16) {
-                    HStack {
+                    HStack(alignment: .top) {
                         VStack(alignment: .leading, spacing: 4) {
-                            Text("Today's Tasks")
+                            Text(greeting)
                                 .font(.title2)
                                 .fontWeight(.bold)
                                 .foregroundColor(.white)
-                            
-                            HStack(spacing: 6) {
-                                Text(Date().formatted(.dateTime.weekday(.wide).month().day()))
-                                    .font(.subheadline)
-                                    .foregroundColor(.white.opacity(0.7))
-                                
-//                                if viewModel.streakStats.currentStreak > 0 {
-//                                    Text("•")
-//                                        .foregroundColor(.white.opacity(0.5))
-//                                    HStack(spacing: 4) {
-//                                        Text("🔥")
-//                                        Text("\(viewModel.streakStats.currentStreak) day streak")
-//                                            .font(.subheadline)
-//                                            .foregroundColor(.orange)
-//                                    }
-//                                }
-                            }
+
+                            Text(Date().formatted(.dateTime.weekday(.wide).month().day()))
+                                .font(.subheadline)
+                                .foregroundColor(.white.opacity(0.6))
                         }
-                        
+
                         Spacer()
-                        
-                        // Task counter instead of percentage
-//                        VStack(spacing: 4) {
-//                            Text("\(viewModel.todayChecklist.completedTasksCount)")
-//                                .font(.largeTitle)
-//                                .fontWeight(.bold)
-//                                .foregroundColor(.white)
-//                                .scaleEffect(celebrationScale)
-//                            Text("of \(viewModel.todayChecklist.tasks.count)")
-//                                .font(.caption)
-//                                .foregroundColor(.white.opacity(0.7))
-//                        }
-//                        .padding(.horizontal, 16)
-//                        .padding(.vertical, 8)
-//                        .background(
-//                            RoundedRectangle(cornerRadius: 12)
-//                                .fill(Color.white.opacity(0.1))
-//                        )
-//                        
-//                        // Devotional button
-//                        Button(action: { showDevotional = true }) {
-//                            VStack(spacing: 4) {
-//                                Image(systemName: "book.pages.fill")
-//                                    .font(.title)
-//                                    .fontWeight(.semibold)
-//                                    .foregroundColor(.white)
-//                                Text("Devotional")
-//                                    .font(.caption)
-//                                    .foregroundColor(.white.opacity(0.7))
-//                            }
-//                            .padding(.horizontal, 16)
-//                            .padding(.vertical, 8)
-//                            .background(
-//                                RoundedRectangle(cornerRadius: 12)
-//                                    .fill(Color.white.opacity(0.1))
-//                            )
-//                        }
-                        
+
+                        if viewModel.streakStats.currentStreak > 0 {
+                            HStack(spacing: 5) {
+                                Text("🔥").font(.system(size: 15))
+                                Text("\(viewModel.streakStats.currentStreak)")
+                                    .font(.system(size: 16, weight: .bold, design: .rounded))
+                                    .foregroundColor(.orange)
+                            }
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 7)
+                            .background(Capsule().fill(Color.orange.opacity(0.15)))
+                            .accessibilityLabel("\(viewModel.streakStats.currentStreak) day streak")
+                        }
+
                         // Always show close button — fullScreenCover has no swipe-to-dismiss
                         Button(action: {
                             if let onClose = onClose {
@@ -171,38 +147,19 @@ struct ModernDailyChecklistView: View {
                         }) {
                             Image(systemName: "xmark.circle.fill")
                                 .font(.title3)
-                                .foregroundColor(.white.opacity(0.5))
+                                .foregroundColor(.white.opacity(0.4))
                         }
+                        .padding(.leading, 4)
                     }
-                    
-                    // Motivational text
+
+                    // Week-at-a-glance streak strip (the marquee return-driver)
+                    WeekStreakStrip(currentStreak: viewModel.streakStats.currentStreak)
+
+                    // Progress-aware nudge toward securing today's streak
                     Text(motivationalText)
                         .font(.subheadline)
-                        .foregroundColor(.white.opacity(0.9))
+                        .foregroundColor(.white.opacity(0.85))
                         .frame(maxWidth: .infinity, alignment: .leading)
-                    
-                    // Clean progress bar
-                    GeometryReader { geometry in
-                        ZStack(alignment: .leading) {
-                            RoundedRectangle(cornerRadius: 4)
-                                .fill(Color.white.opacity(0.1))
-                                .frame(height: 8)
-                            
-                            RoundedRectangle(cornerRadius: 4)
-                                .fill(
-                                    LinearGradient(
-                                        colors: viewModel.todayChecklist.isCompleted ? 
-                                            [.green, .green.opacity(0.8)] : 
-                                            [.blue, .blue.opacity(0.8)],
-                                        startPoint: .leading,
-                                        endPoint: .trailing
-                                    )
-                                )
-                                .frame(width: geometry.size.width * viewModel.todayChecklist.completionProgress, height: 8)
-                                .animation(.spring(response: 0.5, dampingFraction: 0.8), value: viewModel.todayChecklist.completionProgress)
-                        }
-                    }
-                    .frame(height: 8)
                 }
                 .padding(.horizontal, 20)
                 .padding(.top, 20)
@@ -352,10 +309,13 @@ struct ModernDailyChecklistView: View {
         }
         .animation(.spring(response: 0.4, dampingFraction: 0.8), value: viewModel.showFreezeUsedMessage)
         .onAppear {
-            Analytics.logEvent("daily_checklist_viewed", parameters: [
+            // Routed through AnalyticsService so the home/checklist surface shows
+            // up in PostHog retention + funnels, not Firebase alone.
+            AnalyticsService.shared.track("home_checklist_viewed", parameters: [
                 "current_streak": viewModel.streakStats.currentStreak,
                 "completed_tasks": viewModel.todayChecklist.completedTasksCount,
-                "total_tasks": viewModel.todayChecklist.tasks.count
+                "total_tasks": viewModel.todayChecklist.tasks.count,
+                "is_streak_earned": viewModel.todayChecklist.isStreakEarned
             ])
         }
         .onChange(of: viewModel.todayChecklist.isCompleted) { isCompleted in

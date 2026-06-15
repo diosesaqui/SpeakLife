@@ -791,7 +791,9 @@ struct DailyDeclarationBurstView: View {
     // MARK: - Actions
     
     private func startBurst() {
-        Analytics.logEvent("DailyBurst_Started", parameters: nil)
+        AnalyticsService.shared.track("daily_burst_started", parameters: [
+            "streak": burstTracker.currentStreak
+        ])
         withAnimation(.easeIn(duration: 0.5)) {
             declarationOpacity = 1
         }
@@ -849,7 +851,7 @@ struct DailyDeclarationBurstView: View {
                 showCompletionView = true
             }
             
-            Analytics.logEvent("DailyBurst_Completed", parameters: [
+            AnalyticsService.shared.track("daily_burst_completed", parameters: [
                 "declarations_count": morningDeclarations.count,
                 "time_spent": Int(timeSpent),
                 "streak": burstTracker.currentStreak
