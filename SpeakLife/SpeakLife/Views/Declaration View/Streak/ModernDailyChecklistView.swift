@@ -231,14 +231,8 @@ struct ModernDailyChecklistView: View {
                     VStack(spacing: 12) {
                         // Declaration of the Day — themed to the user's category
                         if let declaration = declarationOfTheDay {
-                            DeclarationOfTheDayCard(declaration: declaration) {
-                                AnalyticsService.shared.track("declaration_of_the_day_tapped", parameters: [
-                                    "category": declaration.category.rawValue
-                                ])
-                                if let onClose = onClose { onClose() } else { dismiss() }
-                                tabViewModel.goToDeclarations()
-                            }
-                            .padding(.horizontal, 20)
+                            DeclarationOfTheDayCard(declaration: declaration)
+                                .padding(.horizontal, 20)
                         }
 
                         // Today's Tasks Section
@@ -697,51 +691,38 @@ struct InstantResponseButtonStyle: ButtonStyle {
 
 struct DeclarationOfTheDayCard: View {
     let declaration: Declaration
-    let onTap: () -> Void
 
     var body: some View {
-        Button(action: {
-            UIImpactFeedbackGenerator(style: .light).impactOccurred()
-            onTap()
-        }) {
-            VStack(alignment: .leading, spacing: 10) {
-                HStack {
-                    Text("DECLARATION OF THE DAY")
-                        .font(.system(size: 10, weight: .bold)).tracking(1.5)
-                        .foregroundColor(.white.opacity(0.6))
-                    Spacer()
-                    Image(systemName: "quote.bubble.fill")
-                        .font(.caption)
-                        .foregroundColor(.white.opacity(0.5))
-                }
-                Text(declaration.text)
-                    .font(.system(size: 18, weight: .semibold, design: .serif))
-                    .foregroundColor(.white)
-                    .multilineTextAlignment(.leading)
-                    .fixedSize(horizontal: false, vertical: true)
-                if let book = declaration.book, !book.isEmpty {
-                    Text(book)
-                        .font(.system(size: 13, weight: .medium))
-                        .foregroundColor(.white.opacity(0.65))
-                }
-                HStack {
-                    Spacer()
-                    Text("Speak it →")
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.85))
-                }
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Text("DECLARATION OF THE DAY")
+                    .font(.system(size: 10, weight: .bold)).tracking(1.5)
+                    .foregroundColor(.white.opacity(0.6))
+                Spacer()
+                Image(systemName: "quote.bubble.fill")
+                    .font(.caption)
+                    .foregroundColor(.white.opacity(0.5))
             }
-            .padding(18)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(
-                RoundedRectangle(cornerRadius: 18)
-                    .fill(LinearGradient(
-                        colors: [Color.white.opacity(0.12), Color.white.opacity(0.05)],
-                        startPoint: .topLeading, endPoint: .bottomTrailing))
-                    .overlay(RoundedRectangle(cornerRadius: 18).stroke(Color.white.opacity(0.12), lineWidth: 1))
-            )
+            Text(declaration.text)
+                .font(.system(size: 18, weight: .semibold, design: .serif))
+                .foregroundColor(.white)
+                .multilineTextAlignment(.leading)
+                .fixedSize(horizontal: false, vertical: true)
+            if let book = declaration.book, !book.isEmpty {
+                Text(book)
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundColor(.white.opacity(0.65))
+            }
         }
-        .buttonStyle(PlainButtonStyle())
+        .padding(18)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 18)
+                .fill(LinearGradient(
+                    colors: [Color.white.opacity(0.12), Color.white.opacity(0.05)],
+                    startPoint: .topLeading, endPoint: .bottomTrailing))
+                .overlay(RoundedRectangle(cornerRadius: 18).stroke(Color.white.opacity(0.12), lineWidth: 1))
+        )
     }
 }
 
