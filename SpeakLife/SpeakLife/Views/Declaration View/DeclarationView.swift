@@ -38,6 +38,8 @@ struct DeclarationView: View {
     
     @AppStorage("share.counter") private var shareCounter = 0
     @AppStorage("shared.count") private var shared = 0
+    // Ask the user to share the app at most once, ever.
+    @AppStorage("hasAskedToShareApp") private var hasAskedToShareApp = false
     @AppStorage("premium.count") private var premiumCount = 0
     @State var result: Result<MFMailComposeResult, Error>? = nil
     @State private var share = false
@@ -556,8 +558,10 @@ struct DeclarationView: View {
     
     private func shareApp() {
         let currentDate = Date()
-        if shareCounter > 3 && shared < 2 && currentDate.timeIntervalSince(appState.lastSharedAttemptDate) >= 12 * 60 * 60 {
+        // Ask only once, ever — don't re-prompt users who declined.
+        if !hasAskedToShareApp && shareCounter > 3 {
             share = true
+            hasAskedToShareApp = true
             appState.lastSharedAttemptDate = currentDate
         }
     }
