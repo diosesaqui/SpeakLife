@@ -99,6 +99,7 @@ struct ProfileView: View {
                     
                     Section(header: Text("Yours").font(.caption)) {
                         AbbasLoveRow
+                        createYourOwnRow
                        // howToUseRow
                         streakStatsRow
                       //  dailyBurstStatsRow
@@ -226,6 +227,27 @@ struct ProfileView: View {
 
 
     
+    @MainActor
+    private var createYourOwnRow: some View {
+        HStack {
+            Image(systemName: "square.and.pencil")
+                .foregroundColor(Constants.DAMidBlue)
+            NavigationLink(destination: LazyView(CreateYourOwnView())) {
+                HStack {
+                    Text("Create Your Own", comment: "create your own row title")
+                    Spacer()
+                }
+            }
+            .simultaneousGesture(TapGesture().onEnded {
+                Event.trackUserAction(
+                    "create_your_own_opened",
+                    category: "profile",
+                    metadata: ["source": "profile_menu"]
+                )
+            })
+        }
+    }
+
     @MainActor
     private var remindersRow: some View {
         HStack {

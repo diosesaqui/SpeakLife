@@ -16,6 +16,7 @@ struct ModernDailyChecklistView: View {
     @EnvironmentObject var devotionalViewModel: DevotionalViewModel
     @EnvironmentObject var audioDeclarationViewModel: AudioDeclarationViewModel
     @EnvironmentObject var tabViewModel: TabViewModel
+    @EnvironmentObject var themeViewModel: ThemeViewModel
     @Environment(\.dismiss) private var dismiss
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     private var isIPad: Bool { horizontalSizeClass == .regular }
@@ -97,6 +98,28 @@ struct ModernDailyChecklistView: View {
         }
         if let single = defaults.string(forKey: "selectedCategory") { return [single] }
         return []
+    }
+
+    /// Matches the declaration feed's themed backdrop (including a user-chosen
+    /// custom image) so the checklist reflects the theme the user picked. A dark
+    /// scrim keeps the white text and cards legible on lighter themes.
+    private var themeBackground: some View {
+        ZStack {
+            if themeViewModel.showUserSelectedImage, let image = themeViewModel.selectedImage {
+                Image(uiImage: image)
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+            } else {
+                Image(themeViewModel.selectedTheme.backgroundImageString)
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+            }
+            LinearGradient(
+                colors: [Color.black.opacity(0.45), Color.black.opacity(0.65)],
+                startPoint: .top, endPoint: .bottom
+            )
+        }
+        .ignoresSafeArea()
     }
 
     /// Time-aware, personalized greeting (Calm / Haven style). Falls back to a
@@ -310,14 +333,7 @@ struct ModernDailyChecklistView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(
-            LinearGradient(
-                colors: [Color(red: 0.1, green: 0.15, blue: 0.3), Color(red: 0.02, green: 0.07, blue: 0.15)],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-            .ignoresSafeArea()
-        )
+        .background(themeBackground)
         .sheet(isPresented: $showInfoSheet) {
             DailyChecklistInfoSheet()
         }
