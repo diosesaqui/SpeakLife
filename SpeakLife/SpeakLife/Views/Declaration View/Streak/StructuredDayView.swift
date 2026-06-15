@@ -70,6 +70,10 @@ struct DayProgressRing: View {
 
 struct WeekStreakStrip: View {
     let currentStreak: Int
+    /// Last day the streak was earned. Lets the strip stay consistent with the
+    /// header streak even when the streak was restored/synced without a
+    /// per-day BurstCompletion record.
+    var lastCompletedDate: Date? = nil
     @ObservedObject private var tracker = BurstCompletionTracker.shared
     private let calendar = Calendar.current
 
@@ -81,6 +85,27 @@ struct WeekStreakStrip: View {
         let isFuture: Bool
     }
 
+    /// The inclusive [start, end] day range the current streak covers, or nil.
+    private var streakRange: (start: Date, end: Date)? {
+        guard currentStreak > 0, let last = lastCompletedDate else { return nil }
+        let end = calendar.startOfDay(for: last)
+        guard let start = calendar.date(byAdding: .day, value: -(currentStreak - 1), to: end) else { return nil }
+        return (start, end)
+    }
+
+    private func isCompleted(_ date: Date) -> Bool {
+        // A day counts as done if a burst was actually recorded that day OR the
+        // current streak logically covers it — so the strip never contradicts
+        // the streak number shown in the header.
+        if tracker.completions.contains(where: { calendar.isDate($0.date, inSameDayAs: date) }) {
+            return true
+        }
+        if let range = streakRange {
+            return date >= range.start && date <= range.end
+        }
+        return false
+    }
+
     private var days: [DayCell] {
         let today = calendar.startOfDay(for: Date())
         let weekday = calendar.component(.weekday, from: today) // 1 = Sunday
@@ -89,11 +114,10 @@ struct WeekStreakStrip: View {
 
         return (0..<7).compactMap { offset in
             guard let date = calendar.date(byAdding: .day, value: offset, to: startOfWeek) else { return nil }
-            let completed = tracker.completions.contains { calendar.isDate($0.date, inSameDayAs: date) }
             return DayCell(
                 label: symbols[offset],
                 isToday: calendar.isDate(date, inSameDayAs: today),
-                isCompleted: completed,
+                isCompleted: isCompleted(date),
                 isFuture: date > today
             )
         }

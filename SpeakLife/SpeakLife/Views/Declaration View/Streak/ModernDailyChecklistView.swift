@@ -211,7 +211,10 @@ struct ModernDailyChecklistView: View {
                     }
 
                     // Week-at-a-glance streak strip (the marquee return-driver)
-                    WeekStreakStrip(currentStreak: viewModel.streakStats.currentStreak)
+                    WeekStreakStrip(
+                        currentStreak: viewModel.streakStats.currentStreak,
+                        lastCompletedDate: viewModel.streakStats.lastCompletedDate
+                    )
 
                     // Progress-aware nudge toward securing today's streak
                     Text(motivationalText)
@@ -871,8 +874,9 @@ struct JournalEntrySheet: View {
                 ])
             } catch {
                 // Don't leave an orphaned inserted object that a later viewContext
-                // save could flush; discard it.
-                context.perform { context.delete(entry) }
+                // save could flush; discard it. performAndWait is the synchronous
+                // variant (the async perform overload would need `await` here).
+                context.performAndWait { context.delete(entry) }
             }
         }
         PremiumHaptics.affirmationCompleted()
