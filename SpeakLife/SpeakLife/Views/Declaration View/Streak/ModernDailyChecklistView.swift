@@ -17,6 +17,7 @@ struct ModernDailyChecklistView: View {
     @EnvironmentObject var audioDeclarationViewModel: AudioDeclarationViewModel
     @EnvironmentObject var tabViewModel: TabViewModel
     @EnvironmentObject var themeViewModel: ThemeViewModel
+    @EnvironmentObject var declarationStore: DeclarationViewModel
     @Environment(\.dismiss) private var dismiss
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     private var isIPad: Bool { horizontalSizeClass == .regular }
@@ -37,23 +38,10 @@ struct ModernDailyChecklistView: View {
     private func handleTaskNavigation(_ task: DailyTask) {
         switch task.navigationDestination {
         case .audioTab:
-            // Pick the best filter based on onboarding categories.
-            // We do NOT pick the episode here — audio content may not be loaded yet
-            // if the user hasn't visited the audio tab this session.
-            // AudioDeclarationView will pick and play the first unplayed episode
-            // via onReceive(contentByFilter) once the content finishes loading.
-            let userCategories = getUserTopCategories()
-            let availableFilterIds = audioDeclarationViewModel.dynamicFilters.map { $0.id }
-            let filterId = AudioRecommendationEngine.bestFilterId(
-                for: userCategories,
-                availableFilterIds: availableFilterIds.isEmpty ? ["speaklife"] : availableFilterIds
-            )
-            audioDeclarationViewModel.setSelectedFilter(filterId)
-            audioDeclarationViewModel.checklistAutoPlayPending = true
-            dismiss()
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
-                tabViewModel.goToAudio()
-            }
+            // Just open the Audio tab and let the user choose what to play —
+            // no forced filter, no autoplay.
+            if let onClose = onClose { onClose() } else { dismiss() }
+            tabViewModel.goToAudio()
         case .devotional:
             showDevotional = true
         case .bibleChat:
@@ -120,6 +108,21 @@ struct ModernDailyChecklistView: View {
             )
         }
         .ignoresSafeArea()
+    }
+
+    /// A single declaration for the user's selected (onboarding) category that
+    /// stays stable for the whole calendar day. Reads the already-loaded
+    /// declarations; returns nil until they load, so the card appears reactively
+    /// once `declarationStore` publishes.
+    private var declarationOfTheDay: Declaration? {
+        let all = declarationStore.allAvailableDeclarations
+        guard !all.isEmpty else { return nil }
+        let category = declarationStore.selectedCategory
+        var pool = all.filter { $0.category == category && $0.contentType == .affirmation }
+        if pool.isEmpty { pool = all.filter { $0.contentType == .affirmation } }
+        guard !pool.isEmpty else { return nil }
+        let day = Calendar.current.ordinality(of: .day, in: .year, for: Date()) ?? 0
+        return pool[day % pool.count]
     }
 
     /// Time-aware, personalized greeting (Calm / Haven style). Falls back to a
@@ -223,6 +226,18 @@ struct ModernDailyChecklistView: View {
                 // Scrollable content with cleaner layout
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 12) {
+                        // Declaration of the Day — themed to the user's category
+                        if let declaration = declarationOfTheDay {
+                            DeclarationOfTheDayCard(declaration: declaration) {
+                                AnalyticsService.shared.track("declaration_of_the_day_tapped", parameters: [
+                                    "category": declaration.category.rawValue
+                                ])
+                                if let onClose = onClose { onClose() } else { dismiss() }
+                                tabViewModel.goToDeclarations()
+                            }
+                            .padding(.horizontal, 20)
+                        }
+
                         // Today's Tasks Section
                         StructuredDayView(
                             tasks: viewModel.todayChecklist.tasks,
@@ -341,8 +356,13 @@ struct ModernDailyChecklistView: View {
             DevotionalView(viewModel: devotionalViewModel)
         }
         .sheet(isPresented: $showBibleChat) {
-            BibleChatView()
+            // The conversational Bible Chat (not the topic picker). Inject the
+            // env objects explicitly since SwiftUI doesn't reliably propagate
+            // them across the sheet hop.
+            BibleChatConversationView()
                 .environmentObject(subscriptionStore)
+                .environmentObject(appState)
+                .environmentObject(declarationStore)
         }
         .sheet(isPresented: $showJournal) {
             JournalEntrySheet(category: getUserTopCategories().first)
@@ -670,6 +690,58 @@ struct InstantResponseButtonStyle: ButtonStyle {
     }
 }
 
+// MARK: - Declaration of the Day
+
+struct DeclarationOfTheDayCard: View {
+    let declaration: Declaration
+    let onTap: () -> Void
+
+    var body: some View {
+        Button(action: {
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            onTap()
+        }) {
+            VStack(alignment: .leading, spacing: 10) {
+                HStack {
+                    Text("DECLARATION OF THE DAY")
+                        .font(.system(size: 10, weight: .bold)).tracking(1.5)
+                        .foregroundColor(.white.opacity(0.6))
+                    Spacer()
+                    Image(systemName: "quote.bubble.fill")
+                        .font(.caption)
+                        .foregroundColor(.white.opacity(0.5))
+                }
+                Text(declaration.text)
+                    .font(.system(size: 18, weight: .semibold, design: .serif))
+                    .foregroundColor(.white)
+                    .multilineTextAlignment(.leading)
+                    .fixedSize(horizontal: false, vertical: true)
+                if let book = declaration.book, !book.isEmpty {
+                    Text(book)
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundColor(.white.opacity(0.65))
+                }
+                HStack {
+                    Spacer()
+                    Text("Speak it →")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(.white.opacity(0.85))
+                }
+            }
+            .padding(18)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(
+                RoundedRectangle(cornerRadius: 18)
+                    .fill(LinearGradient(
+                        colors: [Color.white.opacity(0.12), Color.white.opacity(0.05)],
+                        startPoint: .topLeading, endPoint: .bottomTrailing))
+                    .overlay(RoundedRectangle(cornerRadius: 18).stroke(Color.white.opacity(0.12), lineWidth: 1))
+            )
+        }
+        .buttonStyle(PlainButtonStyle())
+    }
+}
+
 // MARK: - Quick Access Tile
 
 struct QuickActionTile: View {
@@ -789,12 +861,20 @@ struct JournalEntrySheet: View {
         let entry = JournalEntry(context: context)
         entry.text = trimmed
         entry.category = category
-        Task { try? await JournalRepository(context: context).create(entry) }
-        AnalyticsService.shared.track("journal_entry_saved", parameters: [
-            "category": category ?? "none",
-            "char_count": trimmed.count,
-            "source": "checklist"
-        ])
+        Task {
+            do {
+                try await JournalRepository(context: context).create(entry)
+                AnalyticsService.shared.track("journal_entry_saved", parameters: [
+                    "category": category ?? "none",
+                    "char_count": trimmed.count,
+                    "source": "checklist"
+                ])
+            } catch {
+                // Don't leave an orphaned inserted object that a later viewContext
+                // save could flush; discard it.
+                context.perform { context.delete(entry) }
+            }
+        }
         PremiumHaptics.affirmationCompleted()
         dismiss()
     }
