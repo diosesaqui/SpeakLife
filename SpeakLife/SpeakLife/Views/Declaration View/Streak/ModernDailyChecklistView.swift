@@ -110,21 +110,6 @@ struct ModernDailyChecklistView: View {
         .ignoresSafeArea()
     }
 
-    /// A single declaration for the user's selected (onboarding) category that
-    /// stays stable for the whole calendar day. Reads the already-loaded
-    /// declarations; returns nil until they load, so the card appears reactively
-    /// once `declarationStore` publishes.
-    private var declarationOfTheDay: Declaration? {
-        let all = declarationStore.allAvailableDeclarations
-        guard !all.isEmpty else { return nil }
-        let category = declarationStore.selectedCategory
-        var pool = all.filter { $0.category == category && $0.contentType == .affirmation }
-        if pool.isEmpty { pool = all.filter { $0.contentType == .affirmation } }
-        guard !pool.isEmpty else { return nil }
-        let day = Calendar.current.ordinality(of: .day, in: .year, for: Date()) ?? 0
-        return pool[day % pool.count]
-    }
-
     /// Time-aware, personalized greeting (Calm / Haven style). Falls back to a
     /// plain greeting when no name was captured during onboarding.
     private var greeting: String {
@@ -229,18 +214,6 @@ struct ModernDailyChecklistView: View {
                 // Scrollable content with cleaner layout
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 12) {
-                        // Declaration of the Day — themed to the user's category
-                        if let declaration = declarationOfTheDay {
-                            DeclarationOfTheDayCard(declaration: declaration) {
-                                AnalyticsService.shared.track("declaration_of_the_day_tapped", parameters: [
-                                    "category": declaration.category.rawValue
-                                ])
-                                if let onClose = onClose { onClose() } else { dismiss() }
-                                tabViewModel.goToDeclarations()
-                            }
-                            .padding(.horizontal, 20)
-                        }
-
                         // Today's Tasks Section
                         StructuredDayView(
                             tasks: viewModel.todayChecklist.tasks,
@@ -690,58 +663,6 @@ struct InstantResponseButtonStyle: ButtonStyle {
             .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
             .opacity(configuration.isPressed ? 0.8 : 1.0)
             .animation(.easeOut(duration: 0.05), value: configuration.isPressed)
-    }
-}
-
-// MARK: - Declaration of the Day
-
-struct DeclarationOfTheDayCard: View {
-    let declaration: Declaration
-    let onTap: () -> Void
-
-    var body: some View {
-        Button(action: {
-            UIImpactFeedbackGenerator(style: .light).impactOccurred()
-            onTap()
-        }) {
-            VStack(alignment: .leading, spacing: 10) {
-                HStack {
-                    Text("DECLARATION OF THE DAY")
-                        .font(.system(size: 10, weight: .bold)).tracking(1.5)
-                        .foregroundColor(.white.opacity(0.6))
-                    Spacer()
-                    Image(systemName: "quote.bubble.fill")
-                        .font(.caption)
-                        .foregroundColor(.white.opacity(0.5))
-                }
-                Text(declaration.text)
-                    .font(.system(size: 18, weight: .semibold, design: .serif))
-                    .foregroundColor(.white)
-                    .multilineTextAlignment(.leading)
-                    .fixedSize(horizontal: false, vertical: true)
-                if let book = declaration.book, !book.isEmpty {
-                    Text(book)
-                        .font(.system(size: 13, weight: .medium))
-                        .foregroundColor(.white.opacity(0.65))
-                }
-                HStack {
-                    Spacer()
-                    Text("Speak it →")
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.85))
-                }
-            }
-            .padding(18)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(
-                RoundedRectangle(cornerRadius: 18)
-                    .fill(LinearGradient(
-                        colors: [Color.white.opacity(0.12), Color.white.opacity(0.05)],
-                        startPoint: .topLeading, endPoint: .bottomTrailing))
-                    .overlay(RoundedRectangle(cornerRadius: 18).stroke(Color.white.opacity(0.12), lineWidth: 1))
-            )
-        }
-        .buttonStyle(PlainButtonStyle())
     }
 }
 
