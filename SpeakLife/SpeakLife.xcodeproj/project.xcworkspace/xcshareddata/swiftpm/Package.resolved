@@ -1,5 +1,5 @@
 {
-  "originHash" : "54f52128a11a26a7e669b47aa6eaba5beb7ad4a949d625dc60ae3408d01c48e2",
+  "originHash" : "46d207727b100f258e574889d384ee7f4464bfa36dd7d3eec0e08382415dccc8",
   "pins" : [
     {
       "identity" : "abseil-cpp-binary",
@@ -159,8 +159,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/tiktok/tiktok-business-ios-sdk",
       "state" : {
-        "revision" : "1ce3fff7f4374d12674aa2b3660a50cfd9ee024e",
-        "version" : "1.5.1"
+        "revision" : "4d330d4da158190d2c67b2142c2bd36c9eb5291e",
+        "version" : "1.6.1"
       }
     }
   ],
