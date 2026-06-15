@@ -308,7 +308,7 @@ struct HomeView: View {
                                 )
                                 .environmentObject(subscriptionStore)
                             }
-                  
+
                 } else {
                     // Onboarding A/B: quiz | product | identity | outcomes, selected
                     // by Remote Config `onboardingVariant`. ATT is requested once
@@ -317,6 +317,15 @@ struct HomeView: View {
                     onboardingFlow
                         .onAppear { logOnboardingStarted() }
                 }
+            }
+            // Personalized push message — its own reader screen, separate from the
+            // declaration feed. Attached at the container level (not inside the
+            // onboarded branch) so a tapped message still presents during the
+            // launch/landing window and is never stranded if its branch is
+            // unmounted. Dismissal clears appState.remoteMessage.
+            // Driven by a `deepLink == "message"` notification tap.
+            .sheet(item: $appState.remoteMessage) { message in
+                RemoteMessageView(message: message)
             }
 
     }

@@ -332,6 +332,17 @@ struct SpeakLifeApp: App {
                 tabViewModel.selectedTab = 0
                 appState.scrollToPersonalDeclaration = true
                 return
+            case "message":
+                // Personalized push message — open its own reader screen rather
+                // than navigating the home feed. The full (possibly long) text is
+                // carried in the optional messageTitle/messageBody data keys and
+                // falls back to the banner's title/body when those are absent.
+                if let message = RemoteMessage(userInfo: content.userInfo,
+                                               fallbackTitle: content.title,
+                                               fallbackBody: content.body) {
+                    appState.remoteMessage = message
+                }
+                return
             default:
                 break
             }

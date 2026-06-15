@@ -97,6 +97,15 @@ final class NotificationHandler: NSObject, ObservableObject, UNUserNotificationC
             }
         }
 
+        // Personalized message notifications open a dedicated screen. When one
+        // arrives while the app is in the foreground we only want the banner —
+        // the screen should appear when the user actually taps it (handled in
+        // didReceive), not pop up unsolicited over whatever they're doing.
+        if (content.userInfo["deepLink"] as? String) == "message" {
+            completionHandler([.banner, .sound])
+            return
+        }
+
         callback?(content)
         completionHandler([.banner, .sound])
     }
