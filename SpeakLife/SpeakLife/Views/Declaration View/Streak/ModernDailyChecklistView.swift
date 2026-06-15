@@ -79,6 +79,16 @@ struct ModernDailyChecklistView: View {
         }
     }
 
+    /// Surface the user's Personal Declaration via the feed's existing card flow
+    /// (it loads from the repository and presents on this flag change).
+    private func openPersonalDeclaration() {
+        if let onClose = onClose { onClose() } else { dismiss() }
+        tabViewModel.goToDeclarations()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+            appState.scrollToPersonalDeclaration = true
+        }
+    }
+
     private func getUserTopCategories() -> [String] {
         let defaults = UserDefaults.standard
         if let data = defaults.data(forKey: "userSelectedCategories"),
@@ -269,6 +279,10 @@ struct ModernDailyChecklistView: View {
                             HStack(spacing: 10) {
                                 QuickActionTile(icon: "bolt.fill", label: "Burst",
                                                 tint: Color(hex: "#7C3AED"), action: openBurst)
+                                if appState.hasPersonalDeclaration {
+                                    QuickActionTile(icon: "hands.sparkles.fill", label: "My Word",
+                                                    tint: Color(hex: "#CA8A04")) { openPersonalDeclaration() }
+                                }
                                 QuickActionTile(icon: "book.fill", label: "Devotional",
                                                 tint: Color(hex: "#0EA5E9")) { showDevotional = true }
                                 QuickActionTile(icon: "bubble.left.and.text.bubble.right.fill", label: "Ask Bible",
@@ -664,6 +678,7 @@ struct QuickActionTile: View {
                     .font(.system(size: 11, weight: .medium))
                     .foregroundColor(.white.opacity(0.8))
                     .lineLimit(1)
+                    .minimumScaleFactor(0.75)
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 12)
