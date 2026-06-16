@@ -117,7 +117,10 @@ final class AppDelegate: NSObject, MessagingDelegate {
         // other arms (product / identity / quiz / outcomes) against it once fetched.
         RemoteConfig.remoteConfig().setDefaults([
             "useQuizOnboarding": true as NSNumber,
-            "onboardingVariant": "warfare" as NSString
+            "onboardingVariant": "warfare" as NSString,
+            // Checklist home tab is on by default; flip to false in Remote Config
+            // to revert to the feed-as-home layout if complaints spike.
+            "checklistHomeEnabled": true as NSNumber
         ])
 
         registerBGTask()
