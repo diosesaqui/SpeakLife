@@ -130,17 +130,17 @@ struct ModernDailyChecklistView: View {
         let streakEarned = viewModel.todayChecklist.isStreakEarned
 
         if completed == total {
-            return "All tasks complete — you went above and beyond! 🎉"
+            return "All ground taken today. 🎉 You went above and beyond."
         } else if streakEarned {
-            return "Streak secured! 🔥 Bonus tasks below for extra growth."
+            return "Today's ground is yours. 🔥 Bonus below for extra growth."
         } else if completed > 0 {
-            return "Great progress! Complete your Burst to lock in today's streak. 💪"
+            return "Great start. Speak your declarations and take more ground 💪"
         } else {
             switch hour {
-            case 5..<12: return "Start your day strong! Complete your Burst 🌅"
-            case 12..<17: return "Don't forget your Burst — streak is on the line! 💪"
-            case 17..<21: return "Complete your Burst before midnight to keep your streak 🔥"
-            default: return "End your day with purpose! 🙏"
+            case 5..<12:  return "Speak today's declarations and take more ground 🌅"
+            case 12..<17: return "Speak today's declarations and take more ground 🔥"
+            case 17..<21: return "Speak today's declarations and take more ground 🔥"
+            default:      return "Speak today's declarations and take more ground 🙏"
             }
         }
     }
