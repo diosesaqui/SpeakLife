@@ -368,18 +368,6 @@ struct TaskLibrary {
             minimumStreakDay: 2,
             estimatedMinutes: 2,
             navigationDestination: .journal
-        ),
-        DailyTask(
-            id: "ask_the_bible",
-            title: "Ask the Bible",
-            description: "Bring today's question to Scripture and let the Word answer",
-            icon: "bubble.left.and.text.bubble.right.fill",
-            category: .foundation,
-            type: .study,
-            difficulty: .beginner,
-            minimumStreakDay: 3,
-            estimatedMinutes: 4,
-            navigationDestination: .bibleChat
         )
     ]
     
