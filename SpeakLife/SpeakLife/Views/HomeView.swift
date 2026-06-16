@@ -28,20 +28,25 @@ class TabViewModel: ObservableObject {
         }
     }
 
+    /// Tag of the declaration feed. It's the "Speak" tab (2) when the checklist
+    /// owns home, but the home tab (0) when the checklist kill switch is off.
+    /// HomeView sets this from the Remote Config flag.
+    var feedTabTag: Int = 2
+
     func goToAudio() {
         selectedTab = 1
     }
 
     func goToChecklist() {
-        selectedTab = 0  // "Today" checklist is the home tab
+        selectedTab = 0  // "Today" checklist is the home tab (when enabled)
     }
 
     func goToDeclarations() {
-        selectedTab = 2  // Swipeable declaration feed ("Speak")
+        selectedTab = feedTabTag  // Swipeable declaration feed
     }
 
     func resetToHome() {
-        selectedTab = 0  // Go to the "Today" checklist (home)
+        selectedTab = 0  // Home tab — checklist when enabled, feed when not
     }
 
     private func trackTabNavigation(from previousTab: Int, to newTab: Int) {
@@ -392,26 +397,37 @@ struct HomeView: View {
     var homeView: some View {
         ZStack(alignment: .top) {
             TabView(selection: $tabViewModel.selectedTab) {
-                // "Today" checklist is the home tab (tag 0) — the daily-habit
-                // surface that gives a goal, a "done", and a reason to return.
-                dailyChecklistView
-                // The swipeable declaration feed is demoted to its own "Speak"
-                // tab (tag 2). It stays one tap away and is what the Daily Burst
-                // opens into, but it no longer owns the landing surface.
-                declarationView
-                audioView
-                // Bible Chat sits in the CENTER slot (highest-engagement position)
-                // and replaces the Warrior Room tab. enableAIFeatures is a kill-
-                // switch: off → fall back to Warrior Room (one toggle to revert).
-                if subscriptionStore.enableAIFeatures || BibleChatLocal.isDebug {
-                    bibleChatTabView
+                if subscriptionStore.checklistHomeEnabled {
+                    // "Today" checklist owns the home tab (tag 0) — the daily-habit
+                    // surface that gives a goal, a "done", and a reason to return.
+                    // The feed is demoted to its own "Speak" tab (tag 2); it's still
+                    // one tap away and is what the Daily Burst opens into.
+                    dailyChecklistView
+                    declarationTab(tag: 2, title: "Speak")
+                    audioView
+                    // Bible Chat sits in the CENTER slot; enableAIFeatures kill-
+                    // switch falls back to Warrior Room when off.
+                    if subscriptionStore.enableAIFeatures || BibleChatLocal.isDebug {
+                        bibleChatTabView
+                    } else {
+                        communityView
+                    }
+                    // createYourOwnView dropped from this layout's bar to stay within
+                    // the 5-tab limit; still reachable from the feed and Profile.
+                    profileView
                 } else {
-                    communityView
+                    // Kill switch off (Remote Config): revert to the legacy
+                    // feed-as-home layout so we can roll back if complaints spike.
+                    declarationTab(tag: 0, title: "Home")
+                    audioView
+                    if subscriptionStore.enableAIFeatures || BibleChatLocal.isDebug {
+                        bibleChatTabView
+                    } else {
+                        communityView
+                    }
+                    createYourOwnView
+                    profileView
                 }
-                // createYourOwnView dropped from the tab bar to stay within the
-                // 5-tab limit; still reachable from the feed's create action.
-                profileView
-
                 }
                 .hideTabBar(if: appState.showScreenshotLabel)
                 .sheet(isPresented: $isPresented) {
@@ -420,7 +436,13 @@ struct HomeView: View {
                         .presentationDragIndicator(.visible)
                 }
                 .accentColor(Constants.DAMidBlue)
+                // Keep feed routing (notifications, deep links, Daily Burst) pointed
+                // at the right tab as the Remote Config layout flag resolves.
+                .onChange(of: subscriptionStore.checklistHomeEnabled) { enabled in
+                    tabViewModel.feedTabTag = enabled ? 2 : 0
+                }
                 .onAppear {
+                    tabViewModel.feedTabTag = subscriptionStore.checklistHomeEnabled ? 2 : 0
                     checkForNewVersion()
                     checkForPersonalDeclarationMigration()
                     checkForPremiumAnniversary()
@@ -518,14 +540,17 @@ struct HomeView: View {
         }
     }
     
-    var declarationView: some View {
+    // The declaration feed, parameterized so it can be the "Speak" tab (tag 2)
+    // under the checklist-home layout or the "Home" tab (tag 0) under the legacy
+    // feed-home layout.
+    func declarationTab(tag: Int, title: String) -> some View {
         DeclarationView()
             .id(appState.rootViewId)
-            .tag(2)
+            .tag(tag)
             .tabItem {
                 Image(systemName: "quote.bubble.fill")
                     .renderingMode(.original)
-                Text("Speak")
+                Text(title)
             }
     }
     

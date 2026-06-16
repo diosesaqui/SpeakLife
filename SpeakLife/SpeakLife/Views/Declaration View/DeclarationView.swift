@@ -218,7 +218,9 @@ struct DeclarationView: View {
     
     @ViewBuilder
     private var dailyChecklistButton: some View {
-        if !showSpeakAloudBanner {
+        // Hidden when the checklist owns the home tab (the icon would be
+        // redundant). Only shows in the reverted feed-as-home layout.
+        if !showSpeakAloudBanner && !subscriptionStore.checklistHomeEnabled {
             let isDone = streakViewModel.todayChecklist.isStreakEarned
             Button(action: {
                 activeSheet = .dailyChecklist

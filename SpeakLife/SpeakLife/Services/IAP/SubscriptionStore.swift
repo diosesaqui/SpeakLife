@@ -163,6 +163,12 @@ final class SubscriptionStore: ObservableObject {
 
     // MARK: - AI Feature Flag
     @Published var enableAIFeatures = false
+
+    // MARK: - Checklist Home Tab Flag
+    // Kill switch for the "Today" checklist home tab. Defaults true (registered
+    // in AppDelegate's Remote Config defaults); set `checklistHomeEnabled` to
+    // false in Remote Config to revert to the feed-as-home layout.
+    @Published var checklistHomeEnabled = true
     
     // MARK: - High Conversion Paywall Flag
     @Published var useHighConversionPaywall = false
@@ -331,7 +337,8 @@ final class SubscriptionStore: ObservableObject {
         showMostPopularBadge = remoteConfig["showMostPopularBadge"].boolValue
         showTestimonyTab = remoteConfig["showTestimonyTab"].boolValue
         offerFreeTrial = remoteConfig["offerFreeTrial"].boolValue
-        
+        checklistHomeEnabled = remoteConfig["checklistHomeEnabled"].boolValue
+
         // Enhanced Onboarding Toggle from Remote Config
         useEnhancedOnboarding = remoteConfig["useEnhancedOnboarding"].boolValue
         
