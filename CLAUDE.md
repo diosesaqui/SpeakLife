@@ -58,6 +58,17 @@ Language must be spiritually rich, resonant, and precise. Declarations should fe
 ### 10. Declaration Count
 Do not reduce the count of any category. If you replace a declaration, the total number stays the same.
 
+### 11. Emotional Resonance (Never Apathy)
+The one reaction a declaration must never produce is apathy. Every declaration is spoken over the speaker's own heart, and if it leaves them indifferent, it has failed — no matter how doctrinally correct it is. The eye should not be able to skim past it unmoved.
+
+- **Make them feel something.** Each declaration must stir a real emotion: awe, courage, comfort, holy defiance, longing, joy, or gratitude that genuinely moves. Aim for the line that gives chills or steadies a shaking heart.
+- **Emotion creates action.** Feeling is what moves the speaker to actually believe the Word and act on it. A declaration that only informs is dead weight; one that ignites is doing its job.
+- **Engage the senses and the stakes.** Use concrete, vivid, embodied language over abstract theology. Name what is at war and what is won. Let the speaker feel the weight of the promise, not just read it.
+- ❌ "God is able to help me with my health." → flat, forgettable, apathy-inducing.
+- ✅ "Sickness has no claim on this body. I am bought, healed, and untouchable in Christ." → stirs defiance and assurance.
+
+This rule works with Rules 6 and 8, not against them: power and vocabulary are the tools; *making the speaker feel something* is the goal.
+
 ---
 
 ## File Location
