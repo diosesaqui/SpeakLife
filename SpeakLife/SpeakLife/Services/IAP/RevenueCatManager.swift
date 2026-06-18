@@ -122,4 +122,14 @@ final class RevenueCatManager {
     func restorePurchases() async throws -> CustomerInfo {
         try await Purchases.shared.restorePurchases()
     }
+
+    // MARK: - Offer Codes
+
+    /// Presents Apple's offer-code redemption sheet. Apple gives no success
+    /// callback; the redeemed transaction is picked up automatically by the
+    /// Purchases delegate (see SubscriptionStore.setupRCCustomerInfoListener).
+    @MainActor
+    func presentOfferCodeRedemption() {
+        Purchases.shared.presentCodeRedemptionSheet()
+    }
 }

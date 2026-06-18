@@ -93,6 +93,7 @@ struct ProfileView: View {
                 List {
                     Section(header: Text("Premium".uppercased()).font(.caption)) {
                         subscriptionRow
+                        redeemCodeRow
                         //bookLink
                     }
                     
@@ -206,6 +207,22 @@ struct ProfileView: View {
         }
     }
     
+    @MainActor
+    private var redeemCodeRow: some View {
+        Button {
+            subscriptionStore.redeemOfferCode()
+            AnalyticsService.shared.trackUserAction("redeem_code_tapped", category: "profile")
+        } label: {
+            HStack {
+                Image(systemName: "gift.fill")
+                    .foregroundColor(Constants.DAMidBlue)
+                Text("Redeem a Code", comment: "offer code row")
+                Spacer()
+            }
+        }
+        .foregroundColor(.white)
+    }
+
     @MainActor
     private var emailsRow: some View {
         HStack {

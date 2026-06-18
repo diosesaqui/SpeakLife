@@ -437,6 +437,20 @@ final class SubscriptionStore: ObservableObject {
         }
     }
 
+    // MARK: - Offer Codes
+
+    /// Presents Apple's offer-code redemption sheet, then refreshes entitlements.
+    /// RC's delegate (`setupRCCustomerInfoListener`) already flips premium state
+    /// when the redeemed transaction lands; this extra refresh is a safety net.
+    @MainActor
+    func redeemOfferCode() {
+        RevenueCatManager.shared.presentOfferCodeRedemption()
+        Task {
+            try? await Purchases.shared.syncPurchases()
+            await updateEntitlementsFromRC()
+        }
+    }
+
     /// Fetches entitlements from RC and updates all published state.
     func updateEntitlementsFromRC() async {
         do {
