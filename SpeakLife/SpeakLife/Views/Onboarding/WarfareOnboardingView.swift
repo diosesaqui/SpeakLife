@@ -15,10 +15,12 @@
 //
 //  Then a product-capability recap (matching the product arm's mid-flow
 //  placement), a "what is the enemy trying to steal from you?" picker (which
-//  seeds the home feed), and the proven back-half (taste → record your own →
-//  rating → plan-building loader → named plan reveal → paywall → notification
-//  time). The picker maps each answer to a HeaviestBurden/category so the
-//  shared screens + seeding work unchanged.
+//  seeds the home feed), and a burden-matched "victory vision" payoff that shows
+//  the restored life once it's taken back (the dream-outcome beat, so the flow
+//  carries both fear-of-loss AND the dream, not just the fight). Then the proven
+//  back-half (taste → record your own → rating → plan-building loader → named
+//  plan reveal → paywall → notification time). The picker maps each answer to a
+//  HeaviestBurden/category so the shared screens + seeding work unchanged.
 //
 //  One arm of the onboarding A/B: HomeView routes here when Remote Config
 //  `onboardingVariant` == "warfare".
@@ -102,6 +104,8 @@ struct WarfareOnboardingView: View {
             OnboardingProductExperienceScreen(size: size, flow: "warfare") { advance() }
         case .takeBackPicker:
             WarfareTakeBackPickerScreen(size: size, responses: responses) { advance() }
+        case .victoryVision:
+            WarfareVictoryVisionScreen(size: size, burden: responses.heaviestBurden ?? .peace) { advance() }
         case .battleDuration, .alreadyTried, .insight, .hitsHardest, .connectStyle, .belief, .dailyMinutes:
             quizStepView
         default: backHalfView
@@ -190,8 +194,8 @@ struct WarfareOnboardingView: View {
 
     private func advance() {
         UIImpactFeedbackGenerator(style: .soft).impactOccurred()
-        // flow_schema 2 = this branch's step layout (1 = pre-renumbering); bump when step raw values are renumbered again.
-        AnalyticsService.shared.track("warfare_step_completed", parameters: ["step": currentStep.rawValue, "flow_schema": 2])
+        // flow_schema 3 = victory-vision inserted after the picker (2 = pre-victory-vision, 1 = pre-renumbering); bump when step raw values are renumbered again.
+        AnalyticsService.shared.track("warfare_step_completed", parameters: ["step": currentStep.rawValue, "flow_schema": 3])
 
         // Leaving the take-back picker: stamp the segment so downstream paywall
         // events carry a meaningful segment for this arm (quiz sets its own).
@@ -256,7 +260,7 @@ struct WarfareOnboardingView: View {
             "victory_looks_like": responses.victoryOutcome ?? "unknown",
             "belief": responses.beliefLevel ?? "unknown",
             "quiz_version": quizV2 ? "v2" : "v1",
-            "flow_schema": 2,  // joins with warfare_step_completed; bump when step raw values are renumbered again
+            "flow_schema": 3,  // joins with warfare_step_completed; bump when step raw values are renumbered again
             "set_personal_declaration": (savedDeclaration != nil) as NSNumber
         ])
 
@@ -296,33 +300,34 @@ enum WarfareStep: Int, CaseIterable {
     case activation     = 3   // spiritual truth activated into the physical realm
     case experience     = 4   // product-capability recap (mid-flow, matching the product arm)
     case takeBackPicker = 5   // what is the enemy trying to steal? (seeds the feed)
+    case victoryVision  = 6   // burden-matched dream payoff: the life once it's taken back
     // Extended personalization quiz (shared screens in SurveyOnboardingScreens)
-    case battleDuration = 6   // Q2: how long has this battle been going on?
-    case alreadyTried   = 7   // Q3: what have you already tried?
-    case insight        = 8   // micro-insight interstitial (reading vs speaking)
-    case hitsHardest    = 9   // Q4: when does it hit hardest? (preselects notification time)
-    case connectStyle   = 10  // Q5: connect style (quiz v1) or victory outcome (quiz v2)
-    case belief         = 11  // quiz v2 only: do you believe God wants more? (v1 skips it)
-    case dailyMinutes   = 12  // Q6: how much time daily? (drives plan reveal rhythm)
+    case battleDuration = 7   // Q2: how long has this battle been going on?
+    case alreadyTried   = 8   // Q3: what have you already tried?
+    case insight        = 9   // micro-insight interstitial (reading vs speaking)
+    case hitsHardest    = 10  // Q4: when does it hit hardest? (preselects notification time)
+    case connectStyle   = 11  // Q5: connect style (quiz v1) or victory outcome (quiz v2)
+    case belief         = 12  // quiz v2 only: do you believe God wants more? (v1 skips it)
+    case dailyMinutes   = 13  // Q6: how much time daily? (drives plan reveal rhythm)
     // Shared back-half (reused from the survey flow)
-    case firstDeclaration = 13
-    case personalDeclaration = 14
-    case rating          = 15  // rating ask at the personal-declaration peak
-    case planBuilding    = 16  // "building your battle plan" loader (transition, no bar)
-    case planReveal      = 17  // named 30-day plan reveal — sets up the paywall ask
-    case paywall         = 18
-    case notificationTime = 19 // terminal — completes onboarding
+    case firstDeclaration = 14
+    case personalDeclaration = 15
+    case rating          = 16  // rating ask at the personal-declaration peak
+    case planBuilding    = 17  // "building your battle plan" loader (transition, no bar)
+    case planReveal      = 18  // named 30-day plan reveal — sets up the paywall ask
+    case paywall         = 19
+    case notificationTime = 20 // terminal — completes onboarding
 
     func valueScreenIndex(quizV2: Bool) -> Int? {
         var screens: [WarfareStep] = [
-            .thief, .paidFor, .weapon, .activation, .experience, .takeBackPicker,
+            .thief, .paidFor, .weapon, .activation, .experience, .takeBackPicker, .victoryVision,
             .battleDuration, .alreadyTried, .insight, .hitsHardest, .connectStyle, .belief, .dailyMinutes
         ]
         if !quizV2 { screens.removeAll { $0 == .belief } }
         return screens.firstIndex(of: self).map { $0 + 1 }
     }
 
-    static func totalValueScreens(quizV2: Bool) -> Int { quizV2 ? 13 : 12 }
+    static func totalValueScreens(quizV2: Bool) -> Int { quizV2 ? 14 : 13 }
 }
 
 // MARK: - Warfare scene content
@@ -675,5 +680,150 @@ private struct WarfareTakeBackPickerScreen: View {
             .animation(.spring(response: 0.3, dampingFraction: 0.75), value: isSelected)
         }
         .buttonStyle(PlainButtonStyle())
+    }
+}
+
+// MARK: - Victory Vision (the dream payoff, after the user names what's being stolen)
+
+// The warfare arc nails the fear-of-loss trigger (the thief) but stops short of
+// painting the won life. This flips the chosen burden forward: once you take it
+// back, THIS is what you're standing in. Same vivid-outcome angle the outcomes
+// arm leads with, kept in warfare's voice so the flow carries both the fight AND
+// the dream reality the user is acting toward.
+private struct WarfareVictory {
+    let title: String
+    let body: String
+    let verse: String
+    let reference: String
+    let symbol: String
+
+    static func of(_ burden: HeaviestBurden) -> WarfareVictory {
+        switch burden {
+        case .health:
+            return WarfareVictory(
+                title: "Your body,\ntaken back.",
+                body: "The diagnosis loses its grip. Strength returns. You wake up in a body that lines up with the healing Jesus already paid for.",
+                verse: "By his wounds you have been healed.",
+                reference: "1 Peter 2:24",
+                symbol: "heart.fill")
+        case .abundance:
+            return WarfareVictory(
+                title: "Your provision,\nrecovered.",
+                body: "The right call. The unexpected open door. Provision arriving ahead of the need. You live from overflow, not lack.",
+                verse: "And my God will meet all your needs according to the riches of his glory in Christ Jesus.",
+                reference: "Philippians 4:19",
+                symbol: "key.fill")
+        case .peace:
+            return WarfareVictory(
+                title: "Your home,\nat peace again.",
+                body: "The tension breaks. The arguments quiet. Your home becomes the calm place, anchored, where anxiety used to live.",
+                verse: "You will keep in perfect peace those whose minds are steadfast, because they trust in you.",
+                reference: "Isaiah 26:3",
+                symbol: "house.fill")
+        case .allOfIt:
+            return WarfareVictory(
+                title: "The attack,\nbroken.",
+                body: "You stand your ground and the enemy flees. You stop fighting for the victory and start living from it. The ground he took is yours again.",
+                verse: "In all these things we are more than conquerors through him who loved us.",
+                reference: "Romans 8:37",
+                symbol: "bolt.fill")
+        case .identity:
+            return WarfareVictory(
+                title: "You, standing in\nwho you really are.",
+                body: "The lies fall silent. The labels lose their hold. You live secure, chosen, and redeemed, the new creation God already made you.",
+                verse: "If anyone is in Christ, the new creation has come: The old has gone, the new is here.",
+                reference: "2 Corinthians 5:17",
+                symbol: "crown.fill")
+        case .purpose:
+            return WarfareVictory(
+                title: "Your calling,\nreclaimed.",
+                body: "The distractions lose their pull. You step back onto the path God set for you and walk in the future He promised, on purpose.",
+                verse: "For I know the plans I have for you, declares the Lord, plans to prosper you and not to harm you.",
+                reference: "Jeremiah 29:11",
+                symbol: "flag.fill")
+        case .joy:
+            return WarfareVictory(
+                title: "Your joy,\nback for good.",
+                body: "The heaviness lifts. Joy returns and roots down deep, the kind nothing and no one can steal from you again.",
+                verse: "The joy of the Lord is your strength.",
+                reference: "Nehemiah 8:10",
+                symbol: "sun.max.fill")
+        }
+    }
+}
+
+private struct WarfareVictoryVisionScreen: View {
+    let size: CGSize
+    let burden: HeaviestBurden
+    let onContinue: () -> Void
+    @State private var v = false
+
+    var body: some View {
+        let victory = WarfareVictory.of(burden)
+        return VStack(spacing: 0) {
+            Spacer()
+
+            VStack(spacing: 26) {
+                ZStack {
+                    Circle()
+                        .fill(Color.white.opacity(0.10))
+                        .frame(width: 96, height: 96)
+                    Image(systemName: victory.symbol)
+                        .font(.system(size: 40))
+                        .foregroundColor(.white)
+                }
+                .warfareStagger(v)
+
+                VStack(spacing: 14) {
+                    Text("WHAT TAKING IT BACK LOOKS LIKE")
+                        .font(.system(size: 12, weight: .bold, design: .rounded))
+                        .foregroundColor(.white.opacity(0.5))
+                        .kerning(1.4)
+                        .multilineTextAlignment(.center)
+                        .warfareStagger(v, delay: 0.08)
+
+                    Text(victory.title)
+                        .font(.system(size: 32, weight: .bold, design: .rounded))
+                        .foregroundColor(.white)
+                        .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .warfareStagger(v, delay: 0.14)
+
+                    Text(victory.body)
+                        .font(.system(size: 17, weight: .regular, design: .rounded))
+                        .foregroundColor(.white.opacity(0.75))
+                        .multilineTextAlignment(.center)
+                        .lineSpacing(4)
+                        .padding(.horizontal, 22)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .warfareStagger(v, delay: 0.22)
+                }
+
+                VStack(spacing: 4) {
+                    Text("\"\(victory.verse)\"")
+                        .font(.system(size: 15, weight: .regular, design: .serif))
+                        .italic()
+                        .foregroundColor(.white.opacity(0.8))
+                        .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Text(victory.reference)
+                        .font(.system(size: 12, weight: .medium, design: .rounded))
+                        .foregroundColor(.white.opacity(0.45))
+                }
+                .padding(.horizontal, 28)
+                .warfareStagger(v, delay: 0.32)
+            }
+            .padding(.horizontal, 28)
+
+            Spacer()
+
+            WarfareContinueButton(label: "This Is What I'm Fighting For →") { onContinue() }
+                .padding(.bottom, 36)
+                .warfareStagger(v, delay: 0.42)
+        }
+        .onAppear {
+            AnalyticsService.shared.track("warfare_victory_vision_shown", parameters: ["burden": burden.shortLabel])
+            withAnimation { v = true }
+        }
     }
 }
