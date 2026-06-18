@@ -1846,6 +1846,25 @@ struct SurveyPlanRevealScreen: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .planRevealStagger(v, delay: 0.3)
 
+                    // Destination: the vivid won life this plan (and the unlock)
+                    // is building toward — the bridge from product to the user's
+                    // dream reality, landed right before the ask.
+                    VStack(spacing: 6) {
+                        Text("WHERE THIS TAKES YOU")
+                            .font(.system(size: 11, weight: .bold, design: .rounded))
+                            .foregroundColor(.white.opacity(0.5))
+                            .kerning(1.2)
+                        Text(burden.dreamOutcome)
+                            .font(.system(size: 18, weight: .semibold, design: .rounded))
+                            .foregroundColor(.white)
+                            .multilineTextAlignment(.center)
+                            .lineSpacing(3)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .padding(.horizontal, 28)
+                    .padding(.top, 4)
+                    .planRevealStagger(v, delay: 0.36)
+
                     Spacer().frame(height: 8)
                 }
             }
