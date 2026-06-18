@@ -39,11 +39,13 @@ Never use em dashes (—) or en dashes (–) in declaration text. They create ru
 - ❌ "God's banner over me is love—I live under His unfailing claim on my life."
 - ✅ "God's banner over me is love. I live under His unfailing, unbreakable claim on my life."
 
-### 8. Vocabulary Depth
+### 8. Vocabulary Depth (Rich, Never Obscure)
 Language must be spiritually rich, resonant, and precise. Declarations should feel weighty and specific — not flat or generic.
+- **Rich but never obscure.** Choose words that carry weight AND land instantly. The speaker should never have to stop and ask what a word means. If a word feels churchy, academic, or seminary-only, cut it for a plainer word that hits just as hard.
 - ❌ "God loves me and things are good." → flat
-- ✅ Words that carry weight: *rooted, sealed, unshakeable, commissioned, anchored, redeemed, established, radiant, dwelling*
-- Each declaration should feel like it cost something to write.
+- ❌ "I will never forget His precepts." → obscure, churchy, makes the eye stall
+- ✅ Words that carry weight and stay clear: *rooted, sealed, unshakeable, anchored, redeemed, radiant, dwelling, revive, breathe, broken, whole, free*
+- The test: weighty on the heart, effortless on the tongue. Each declaration should feel like it cost something to write, but nothing to understand.
 
 ### 9. JSON Structure (never change these field names)
 ```json
