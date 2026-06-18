@@ -81,14 +81,18 @@ struct RemoteMessageView: View {
                             Text(message.title)
                                 .font(.system(size: 28, weight: .bold, design: .rounded))
                                 .foregroundColor(.white)
-                                .fixedSize(horizontal: false, vertical: true)
+                                .multilineTextAlignment(.leading)
                         }
 
+                        // No .fixedSize here: combined with .lineSpacing it makes
+                        // SwiftUI under-measure the text height and clip long
+                        // messages. Inside a ScrollView the text is already given
+                        // unbounded height, so it renders in full and scrolls.
                         Text(message.body)
                             .font(.system(size: 19, weight: .regular, design: .rounded))
                             .foregroundColor(.white.opacity(0.92))
                             .lineSpacing(7)
-                            .fixedSize(horizontal: false, vertical: true)
+                            .multilineTextAlignment(.leading)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal, 28)
