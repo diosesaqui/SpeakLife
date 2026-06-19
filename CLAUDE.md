@@ -71,6 +71,18 @@ The one reaction a declaration must never produce is apathy. Every declaration i
 
 This rule works with Rules 6 and 8, not against them: power and vocabulary are the tools; *making the speaker feel something* is the goal.
 
+### 12. Command and Triumph (Authority, Not Confession)
+A declaration is an exercise of authority, not a journal entry or a prayer of resignation. The speaker rules over the body, the circumstance, and the feeling. Never the reverse.
+
+- **Command the problem out; call the solution forward.** Speak to the pain, sickness, fear, or lack and command it to stop. Speak the healing, peace, provision, or breakthrough forward into the actual situation.
+- **Truth triumphs LOUDLY over feeling.** You may name a symptom, fear, or feeling ONLY to overrule it. Never validate it, never let it stand, never end the line on it. The promise gets the last word, every time.
+- **Declare the concrete outcome over the real thing.** Renewal is declared over *my body*, provision over *my finances*, peace over *my mind*. Not a vague "something inside."
+- **Break the formula and name the stakes.** Vary the structure so no two lines march to the same cadence. Name the real war (the diagnosis, the dread, the empty account) only to put it under the speaker's feet.
+- ❌ "Some days my heart feels like it is giving out, and I say so honestly. But God is my strength." → concedes the feeling and lets it stand.
+- ✅ "Let my flesh say whatever it wants. The truth is louder. God is the strength of my heart, and what He holds does not fail." → names the feeling, then triumphs over it.
+
+This rule governs Rule 11: the emotion we trigger is the emotion of victory and authority, never resignation.
+
 ---
 
 ## File Location
