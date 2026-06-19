@@ -86,7 +86,10 @@ This rule governs Rule 11: the emotion we trigger is the emotion of victory and 
 ---
 
 ## File Location
-`SpeakLife/Preview Content/AffirmationData/declarationsv10.json`
+`SpeakLife/SpeakLife/Preview Content/AffirmationData/declarationsv10.json`
+(This is the copy the Xcode target bundles, per `DEVELOPMENT_ASSET_PATHS` and the
+project's Resources build phase. Edit THIS file. Do not recreate the old
+single-nested `SpeakLife/Preview Content/...` copy, which the build never used.)
 
 ## Development Branch
 Always develop on `claude/review-destiny-declarations-gVBrT` and push there.
