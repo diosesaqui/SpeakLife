@@ -281,17 +281,12 @@ struct HomeView: View {
                                 }
                                 .ignoresSafeArea()
                             }
-                            .fullScreenCover(isPresented: $showDailyBurstOnLaunch) {
-                                DailyDeclarationBurstView()
-                                    .environmentObject(declarationStore)
-                                    .environmentObject(themeStore)
-                                    .environmentObject(timerViewModel)
-                                    .environmentObject(streakViewModel)
-                                    .environmentObject(subscriptionStore)
-                            }
-                            .onReceive(NotificationCenter.default.publisher(for: Notification.Name("ShowDailyDeclarationBurst"))) { _ in
-                                showDailyBurstOnLaunch = true
-                            }
+                            // The Daily Burst is presented by DeclarationView's own
+                            // fullScreenCover (the "fully wired" one). Listening for
+                            // "ShowDailyDeclarationBurst" here too caused BOTH covers to
+                            // fire on a single notification, and SwiftUI can only present
+                            // one cover per context — so the burst appeared and was
+                            // immediately dismissed, forcing the user to trigger it twice.
                             // Daily first-open: show Structured Day plan instead of raw burst.
                             // The burst task is inside the checklist — users reach it naturally.
                             .fullScreenCover(isPresented: $showDailyStructuredDayOnLaunch) {
