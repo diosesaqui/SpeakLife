@@ -64,14 +64,17 @@ struct HighConversionPaywallView: View {
     var source: String = "settings"
 
     /// When true at the callsite, the paywall *may* render hard (no close button).
-    /// Actual hardness is gated by Remote Config `showPayWhatYouCanLink`: hard
-    /// only takes effect when the pay-what-you-can escape valve is also OFF.
-    /// Flipping `showPayWhatYouCanLink` to true in Remote Config restores both
-    /// the link and the close button as a single kill-switch.
+    /// Actual hardness is gated by Remote Config `showPayWhatYouCanLink` (the
+    /// soft-onboarding-paywall switch): hard only takes effect when that soft
+    /// switch is OFF. When it's ON, the paywall keeps its close button and the
+    /// one-time welcome-offer discount on dismiss. The visible "pay what you
+    /// can" link is now a separate switch (`showPayWhatYouCanCTA`) and no longer
+    /// affects hardness or the welcome offer.
     var isHardPaywall: Bool = false
 
-    /// Effective hard-paywall state. Caller opts in via `isHardPaywall`, but
-    /// the Remote Config flag must also gate the escape valve off.
+    /// Effective hard-paywall state. Caller opts in via `isHardPaywall`, but the
+    /// soft-onboarding-paywall Remote Config flag must also be OFF for the wall
+    /// to actually render hard.
     private var effectiveIsHardPaywall: Bool {
         isHardPaywall && !subscriptionStore.showPayWhatYouCanLink
     }
@@ -798,9 +801,12 @@ struct HighConversionPaywallView: View {
     }
 
     // MARK: - Pay What You Can (secondary CTA, intentionally subordinate to main CTA)
+    // Gated by its own Remote Config flag (showPayWhatYouCanCTA), independent of
+    // the soft/hard wall and the welcome-offer discount. Default OFF, so the link
+    // is hidden until Remote Config turns it on.
     @ViewBuilder
     private var payWhatYouCanCTA: some View {
-        if subscriptionStore.showPayWhatYouCanLink {
+        if subscriptionStore.showPayWhatYouCanCTA {
             Button(action: {
                 AnalyticsService.shared.track("paywall_pay_what_you_can_tapped", parameters: [
                     "variant": paywallVariant,
