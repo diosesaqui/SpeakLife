@@ -397,6 +397,7 @@ struct DeclarationView: View {
                 .environmentObject(themeViewModel)
                 .environmentObject(timerViewModel)
                 .environmentObject(streakViewModel)
+                .environmentObject(subscriptionStore)
         }
         // Presented from the "Today" checklist tab: it switches to this feed tab
         // and posts this so the burst opens here, where its cover is fully wired.
