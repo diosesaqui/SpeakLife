@@ -9,63 +9,73 @@ import UIKit
 import Foundation
 
 final class PremiumHaptics {
-    
+
     static let shared = PremiumHaptics()
     private init() {}
-    
+
+    // Persistent, reusable generators. Creating a fresh generator per call and
+    // firing immediately leaves the Taptic Engine cold, so single taps are
+    // routinely dropped or feel weak (only multi-impact patterns registered).
+    // Keeping prepared instances alive makes every impact land.
+    private static let lightGen = UIImpactFeedbackGenerator(style: .light)
+    private static let mediumGen = UIImpactFeedbackGenerator(style: .medium)
+    private static let heavyGen = UIImpactFeedbackGenerator(style: .heavy)
+    private static let notificationGen = UINotificationFeedbackGenerator()
+
+    /// Warm the Taptic Engine ahead of interactions. Safe to call often
+    /// (e.g. once on app launch and on tab changes).
+    static func prepare() {
+        lightGen.prepare()
+        mediumGen.prepare()
+        heavyGen.prepare()
+        notificationGen.prepare()
+    }
+
     // MARK: - Basic Haptics
-    
+
     static func light() {
-        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        lightGen.prepare()
+        lightGen.impactOccurred()
     }
-    
+
     static func medium() {
-        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+        mediumGen.prepare()
+        mediumGen.impactOccurred()
     }
-    
+
     static func heavy() {
-        UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
+        heavyGen.prepare()
+        heavyGen.impactOccurred()
     }
-    
+
     static func success() {
-        UINotificationFeedbackGenerator().notificationOccurred(.success)
+        notificationGen.prepare()
+        notificationGen.notificationOccurred(.success)
     }
-    
+
     static func warning() {
-        UINotificationFeedbackGenerator().notificationOccurred(.warning)
+        notificationGen.prepare()
+        notificationGen.notificationOccurred(.warning)
     }
-    
+
     static func error() {
-        UINotificationFeedbackGenerator().notificationOccurred(.error)
+        notificationGen.prepare()
+        notificationGen.notificationOccurred(.error)
     }
     
     // MARK: - Custom Haptic Sequences
     
     /// Triple-tap success sequence: light → medium → heavy
     static func successSequence() {
-        let light = UIImpactFeedbackGenerator(style: .light)
-        let medium = UIImpactFeedbackGenerator(style: .medium)
-        let heavy = UIImpactFeedbackGenerator(style: .heavy)
-        
-        light.impactOccurred()
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            medium.impactOccurred()
-        }
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-            heavy.impactOccurred()
-        }
+        light()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { medium() }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { heavy() }
     }
-    
+
     /// Heartbeat pattern: medium → pause → medium
     static func heartbeat() {
-        let impact = UIImpactFeedbackGenerator(style: .medium)
-        impact.impactOccurred()
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-            impact.impactOccurred()
-        }
+        medium()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { medium() }
     }
     
     /// Gentle pulse for meditation/prayer
@@ -100,11 +110,9 @@ final class PremiumHaptics {
     
     /// Celebration burst: rapid medium taps
     static func celebrationBurst() {
-        let medium = UIImpactFeedbackGenerator(style: .medium)
-        
         for i in 0..<5 {
             DispatchQueue.main.asyncAfter(deadline: .now() + Double(i) * 0.05) {
-                medium.impactOccurred()
+                medium()
             }
         }
     }

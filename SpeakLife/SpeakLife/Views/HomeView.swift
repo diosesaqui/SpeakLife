@@ -411,6 +411,7 @@ struct HomeView: View {
                     tabViewModel.feedTabTag = enabled ? 2 : 0
                 }
                 .onAppear {
+                    PremiumHaptics.prepare() // warm the Taptic Engine so the first tap lands
                     tabViewModel.feedTabTag = subscriptionStore.checklistHomeEnabled ? 2 : 0
                     checkForNewVersion()
                     checkForPersonalDeclarationMigration()
