@@ -24,7 +24,7 @@ struct BibleReaderView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
                     // Chapter Header
-                    VStack(spacing: 8) {
+                    VStack(spacing: DS.Spacing.xs) {
                         Text(chapter.bookName)
                             .font(.system(size: 24, weight: .bold, design: .serif))
                         
@@ -147,7 +147,7 @@ struct VerseView: View {
     let onTap: () -> Void
     
     var body: some View {
-        HStack(alignment: .top, spacing: 8) {
+        HStack(alignment: .top, spacing: DS.Spacing.xs) {
             // Verse Number
             Text("\(verse.number)")
                 .font(.custom(fontName, size: fontSize * 0.7))

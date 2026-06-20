@@ -76,7 +76,7 @@ struct BibleChatView: View {
     }
 
     private var header: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: DS.Spacing.xs) {
             Text("What does the Bible say about…")
                 .font(.system(size: 22, weight: .semibold, design: .serif))
                 .foregroundColor(.white)
@@ -227,7 +227,7 @@ private struct TopicCardView: View {
 
     var body: some View {
         Button(action: action) {
-            VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: DS.Spacing.sm) {
                 iconBadge
 
                 Text(topic.title)
@@ -248,7 +248,7 @@ private struct TopicCardView: View {
                 Spacer(minLength: 0)
             }
             .frame(maxWidth: .infinity, minHeight: 152, alignment: .topLeading)
-            .padding(16)
+            .padding(DS.Spacing.md)
             .background(cardBackground)
             .scaleEffect(pressed ? 0.97 : 1)
         }
@@ -469,9 +469,9 @@ struct BibleChatConversationView: View {
     }
 
     private var emptyState: some View {
-        VStack(spacing: 24) {
+        VStack(spacing: DS.Spacing.lg) {
             // Hero
-            VStack(spacing: 12) {
+            VStack(spacing: DS.Spacing.sm) {
                 ZStack {
                     Circle()
                         .fill(Constants.gold.opacity(0.22))
@@ -864,7 +864,7 @@ struct BibleChatPaywallSplash: View {
                     .padding(.horizontal, 28)
                     .padding(.top, 8)
 
-                VStack(alignment: .leading, spacing: 16) {
+                VStack(alignment: .leading, spacing: DS.Spacing.md) {
                     ForEach(benefits, id: \.icon) { item in
                         HStack(spacing: 14) {
                             Image(systemName: item.icon)

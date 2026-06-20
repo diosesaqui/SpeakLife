@@ -209,8 +209,8 @@ struct AIEnhancedDailyChecklist: View {
                 
                 Text("Enable AI")
                     .font(.caption)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
+                    .padding(.horizontal, DS.Spacing.xs)
+                    .padding(.vertical, DS.Spacing.xxs)
                     .background(Color.blue.opacity(0.3))
                     .foregroundColor(.white)
                     .cornerRadius(8)
@@ -235,11 +235,11 @@ struct AIEnhancedDailyChecklist: View {
     // MARK: - AI Upgrade Prompt
     
     private var aiUpgradePrompt: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: DS.Spacing.sm) {
             HStack {
                 Image(systemName: "sparkles")
                     .foregroundColor(.orange)
-                
+
                 Text("AI-Powered Spiritual Growth")
                     .font(.headline)
                     .foregroundColor(.white)
@@ -255,7 +255,7 @@ struct AIEnhancedDailyChecklist: View {
                     .cornerRadius(8)
             }
             
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: DS.Spacing.xs) {
                 AIChecklistFeatureRow(
                     icon: "target",
                     title: "Personalized Daily Tasks",
@@ -282,7 +282,7 @@ struct AIEnhancedDailyChecklist: View {
             .fontWeight(.semibold)
             .foregroundColor(.white)
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 12)
+            .padding(.vertical, DS.Spacing.sm)
             .background(Color.orange)
             .cornerRadius(10)
         }
@@ -382,10 +382,10 @@ struct ExistingTaskRow: View {
                     .foregroundColor(task.isCompleted ? .green : .white.opacity(0.7))
             }
             
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: DS.Spacing.xxs) {
                 Text(task.title)
                     .foregroundColor(.white)
-                
+
                 Text(task.description)
                     .font(.caption)
                     .foregroundColor(.white.opacity(0.7))
@@ -420,7 +420,7 @@ struct AITaskRow: View {
                     .foregroundColor(isCompleted ? .green : .white.opacity(0.7))
             }
             
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: DS.Spacing.xxs) {
                 HStack {
                     Text(task.title)
                         .foregroundColor(.white)
@@ -468,7 +468,7 @@ struct DailyInsightCard: View {
     @State private var isExpanded = false
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: DS.Spacing.xs) {
             HStack {
                 Text(insight.contextualMessage)
                     .font(.subheadline)
@@ -485,6 +485,7 @@ struct DailyInsightCard: View {
                         .foregroundColor(.white.opacity(0.7))
                         .font(.caption)
                 }
+                .buttonStyle(.dsPressable(feel: .tapSolid))
             }
             
             if isExpanded {
@@ -512,7 +513,7 @@ struct EmptyAITasksView: View {
     let onGenerate: () async -> Void
     
     var body: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: DS.Spacing.sm) {
             Image(systemName: "sparkles")
                 .font(.title)
                 .foregroundColor(.yellow)
@@ -534,8 +535,8 @@ struct EmptyAITasksView: View {
             .font(.caption)
             .fontWeight(.semibold)
             .foregroundColor(.white)
-            .padding(.horizontal, 16)
-            .padding(.vertical, 8)
+            .padding(.horizontal, DS.Spacing.md)
+            .padding(.vertical, DS.Spacing.xs)
             .background(Color.yellow.opacity(0.3))
             .cornerRadius(8)
         }
@@ -549,7 +550,7 @@ struct AIChecklistFeatureRow: View {
     let description: String
     
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: DS.Spacing.sm) {
             Image(systemName: icon)
                 .foregroundColor(.orange)
                 .font(.title3)
