@@ -370,6 +370,41 @@ struct DSProgressRing: View {
     }
 }
 
+// MARK: - DSAppear: a safe, reusable entrance animation
+
+/// Fades and lifts content into place on first appearance. Layout-safe — it
+/// only animates `opacity` and a small `offset`, never the view's footprint —
+/// so it can't cause truncation or reflow. Stagger sibling elements with an
+/// increasing `delay` for a premium cascade.
+struct DSAppear: ViewModifier {
+    var delay: Double = 0
+    var rise: CGFloat = 12
+    @State private var shown = false
+
+    func body(content: Content) -> some View {
+        content
+            .opacity(shown ? 1 : 0)
+            .offset(y: shown ? 0 : rise)
+            .onAppear {
+                withAnimation(DS.Motion.smooth.delay(delay)) { shown = true }
+            }
+    }
+}
+
+extension View {
+    /// Fade + lift entrance. `delay` staggers a cascade across siblings.
+    func dsAppear(_ delay: Double = 0, rise: CGFloat = 12) -> some View {
+        modifier(DSAppear(delay: delay, rise: rise))
+    }
+
+    /// Apply a semantic type style from `DS.Typography`. Keeps callers
+    /// describing intent ("headline") rather than a raw size/weight, so the
+    /// ramp stays consistent and a future re-scale touches one place.
+    func dsType(_ font: Font) -> some View {
+        self.font(font)
+    }
+}
+
 // MARK: - Demo / Preview
 
 /// A self-contained demo of the design system applied to a declaration card,

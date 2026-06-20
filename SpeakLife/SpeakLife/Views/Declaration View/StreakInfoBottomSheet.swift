@@ -80,16 +80,19 @@ struct StreakInfoBottomSheet: View {
             Text("Speak Life Daily")
                 .font(.system(size: 24, weight: .semibold, design: .rounded))
                 .foregroundColor(.white)
+                .dsAppear(0)
 
             Text("Practice God’s presence and speak His Word—He promised to never leave you. Let your attitude, mindset, and perspective be shaped by this truth: God is in you, with you, and for you 🙌")
                 .foregroundColor(.white.opacity(0.85))
                 .font(.system(size: 16, weight: .regular, design: .rounded))
                 .multilineTextAlignment(.center)
                 .padding(.horizontal)
+                .dsAppear(0.06)
 
             Spacer()
-            
+
             StreakInfoSection(viewModel: streakViewModel)
+                .dsAppear(0.12)
 
             Spacer()
 

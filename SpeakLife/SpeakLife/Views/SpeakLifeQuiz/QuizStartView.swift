@@ -9,13 +9,15 @@ struct QuizStartView: View {
     var body: some View {
         VStack(spacing: 30) {
             Text(quizTitle)
-                .font(.largeTitle.bold())
+                .font(DS.Typography.title)
                 .multilineTextAlignment(.center)
+                .dsAppear(0)
 
             Text("Discover when and how to speak life through powerful Scripture truths.")
-                .font(.body)
+                .font(DS.Typography.body)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal)
+                .dsAppear(0.06)
 
             Spacer()
 

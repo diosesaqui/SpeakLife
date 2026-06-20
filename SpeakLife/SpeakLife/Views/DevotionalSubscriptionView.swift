@@ -18,9 +18,10 @@ struct DevotionalSubscriptionView: View {
         VStack {
             // Curved header with image
             HeaderImageView(imageName: "sermonMount")
-            
+                .dsAppear(0)
+
             Spacer()
-            
+
             SubscriptionDetailsView(
                 title: "30-Day Access to Devotionals with Jesus",
                 description: """
@@ -29,13 +30,15 @@ struct DevotionalSubscriptionView: View {
                 """,
                 disclaimer: "*30-day non-refundable subscription, begins at the time of purchase and will not auto-renew."
             )
-            
+            .dsAppear(0.06)
+
             Spacer()
-            
+
             ShimmerButton(colors: [Color.orange, Color.yellow.opacity(0.8)], buttonTitle: "Start Your 30-Day Journey with Jesus") {
                 makePurchase()
             }
             .padding()
+            .dsAppear(0.12)
         
         }
         .background(

@@ -97,7 +97,7 @@ struct CancelInterventionView: View {
                         Text("😔")
                             .font(.system(size: 48))
                         Text("Before you go...")
-                            .font(.system(size: 24, weight: .bold))
+                            .font(DS.Typography.title)
                             .foregroundColor(.white)
                         Text("Help us understand what went wrong so we can do better.")
                             .font(.system(size: 15))
@@ -106,9 +106,11 @@ struct CancelInterventionView: View {
                             .padding(.horizontal, 24)
                     }
                     .padding(.top, 32)
+                    .dsAppear(0)
 
                     // Streak reminder
                     streakReminderCard
+                        .dsAppear(0.08)
 
                     // Reason picker
                     VStack(spacing: 10) {
@@ -164,7 +166,7 @@ struct CancelInterventionView: View {
                                 .font(.system(size: 48))
                                 .padding(.top, 32)
                             Text("Don't lose what you've built")
-                                .font(.system(size: 22, weight: .bold))
+                                .font(DS.Typography.title)
                                 .foregroundColor(.white)
                                 .multilineTextAlignment(.center)
                             Text(reason.retentionMessage)
@@ -173,9 +175,11 @@ struct CancelInterventionView: View {
                                 .multilineTextAlignment(.center)
                                 .padding(.horizontal, 24)
                         }
+                        .dsAppear(0)
 
                         // What they lose card
                         loseValueCard
+                            .dsAppear(0.08)
 
                         Spacer(minLength: 20)
                     }
@@ -221,7 +225,7 @@ struct CancelInterventionView: View {
             Spacer()
             VStack(spacing: 16) {
                 Text("We'll miss you 💙")
-                    .font(.system(size: 24, weight: .bold))
+                    .font(DS.Typography.title)
                     .foregroundColor(.white)
                 Text("You can manage or cancel your subscription through Apple. Your current rate won't be available if you return.")
                     .font(.system(size: 15))
@@ -290,7 +294,7 @@ struct CancelInterventionView: View {
                             .font(.system(size: 48))
                             .padding(.top, 32)
                         Text("Before you go — a better deal")
-                            .font(.system(size: 22, weight: .bold))
+                            .font(DS.Typography.title)
                             .foregroundColor(.white)
                             .multilineTextAlignment(.center)
                         Text("Switch to a plan that fits your budget and keep everything you've built.")

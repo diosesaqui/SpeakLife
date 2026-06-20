@@ -308,12 +308,13 @@ struct VoiceTipsView: View {
                         Text("Voice Input Tips")
                             .font(.title.bold())
                             .foregroundColor(.primary)
-                        
+
                         Text("Make the most of voice input for your spiritual journaling")
                             .font(.subheadline)
                             .foregroundColor(.secondary)
                     }
-                    
+                    .dsAppear(0)
+
                     // Tips
                     VStack(spacing: DS.Spacing.md) {
                         TipCard(
@@ -352,6 +353,7 @@ struct VoiceTipsView: View {
                             description: "Voice input captures the emotion and authenticity of your spiritual reflections better than typing alone."
                         )
                     }
+                    .dsAppear(0.06)
                 }
                 .padding(20)
             }

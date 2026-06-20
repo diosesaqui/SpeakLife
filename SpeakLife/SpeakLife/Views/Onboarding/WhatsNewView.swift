@@ -23,7 +23,7 @@ struct WhatsNewBottomSheet: View {
                // Header Section
                VStack(spacing: 10) {
                    Text("What's New in \(version)")
-                       .font(.title)
+                       .font(DS.Typography.title)
                        .fontWeight(.bold)
                        .multilineTextAlignment(.center)
 
@@ -34,6 +34,7 @@ struct WhatsNewBottomSheet: View {
                        .padding(.horizontal, 20)
                }
                .padding(.top, 20)
+               .dsAppear(0)
 
                // Features Section
                ScrollView {
@@ -52,6 +53,7 @@ struct WhatsNewBottomSheet: View {
                        }
                    }
                }
+               .dsAppear(0.06)
 
                // Dismiss Button
                Button(action: {
@@ -67,6 +69,7 @@ struct WhatsNewBottomSheet: View {
                        .padding(.horizontal, 20)
                }
                .padding(.bottom, 20)
+               .dsAppear(0.12)
            }
            .background(
                RoundedRectangle(cornerRadius: 20)

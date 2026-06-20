@@ -59,6 +59,7 @@ where Provider.ContentType == ContentType {
                 // Empty state
                 if sectionProvider.sections.isEmpty {
                     emptyStateView
+                        .dsAppear(0.06)
                 }
             }
         }

@@ -34,6 +34,7 @@ struct ImprovementScene: View {
                             .foregroundColor(appState.onBoardingTest ? .white : Constants.DEABlack)
                             .padding()
                             .lineLimit(2)
+                            .dsAppear(0)
 
                         Text("87% of believers struggle in silence. Let's create your personalized breakthrough plan.", comment: "Intro scene instructions")
                             .font(Font.custom("AppleSDGothicNeo-Regular", size: 20, relativeTo: .body))
@@ -41,9 +42,11 @@ struct ImprovementScene: View {
                             .multilineTextAlignment(.center)
                             .lineSpacing(10)
                             .frame(width: size.width * 0.8)
+                            .dsAppear(0.06)
 
                         ImprovementSelectionListView(viewModel: viewModel)
                             .frame(width: size.width * 0.9, height: size.height * 0.5)
+                            .dsAppear(0.12)
 
                         Spacer() // ✅ Pushes button down inside ScrollView
                     }

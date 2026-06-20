@@ -90,15 +90,18 @@ struct SectionedAudioView: View {
                 .resizable()
                 .frame(width: 80, height: 80)
                 .foregroundColor(.white.opacity(0.5))
-            
+                .dsAppear()
+
             Text("No SpeakLife Content")
-                .font(.title2)
+                .font(DS.Typography.title)
                 .fontWeight(.bold)
                 .foregroundColor(.white)
-            
+                .dsAppear(0.06)
+
             Text("Check back later for new content")
-                .font(.body)
+                .font(DS.Typography.body)
                 .foregroundColor(.white.opacity(0.7))
+                .dsAppear(0.12)
             
             Button(action: {
                 Task {

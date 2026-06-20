@@ -229,7 +229,8 @@ struct ModernDailyChecklistView: View {
                 .padding(.horizontal, 20)
                 .padding(.top, 20)
                 .padding(.bottom, 16)
-                
+                .dsAppear(0)
+
                 // Scrollable content with cleaner layout
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 12) {
@@ -267,7 +268,8 @@ struct ModernDailyChecklistView: View {
                             }
                         )
                         .padding(.horizontal, 20)
-                        
+                        .dsAppear(0.08)
+
                         // Only show upcoming tasks if current list isn't completed
                         if !viewModel.todayChecklist.isCompleted {
                             let upcomingTasks = viewModel.getUpcomingUnlocks(for: viewModel.streakStats.currentStreak)
@@ -338,6 +340,7 @@ struct ModernDailyChecklistView: View {
                         }
                         .padding(.horizontal, 20)
                         .padding(.top, 12)
+                        .dsAppear(0.16)
 
                         // Bottom spacing for last task accessibility
                         Color.clear.frame(height: 80)

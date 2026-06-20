@@ -55,22 +55,26 @@ struct PersonalizedFeedSection: View {
                 }
             }
             .padding(.horizontal)
-            
+            .dsAppear(0)
+
             if isLoading {
                 LoadingStateView()
             } else {
                 // AI-generated personal categories
                 if !personalizedCategories.isEmpty {
                     PersonalCategoriesScrollView(categories: personalizedCategories)
+                        .dsAppear(0.06)
                 }
-                
+
                 // Today's AI recommendations
                 if !todayRecommendations.isEmpty {
                     TodayRecommendationsSection(recommendations: todayRecommendations)
+                        .dsAppear(0.12)
                 }
-                
+
                 // AI insights section
                 AIInsightsSection()
+                    .dsAppear(0.18)
             }
         }
         .padding(.vertical)
@@ -472,8 +476,7 @@ struct PremiumUpgradeView: View {
     var body: some View {
         VStack(spacing: 20) {
             Text("✨ Unlock AI-Powered Spirituality")
-                .font(.title2)
-                .fontWeight(.bold)
+                .font(DS.Typography.title)
             
             VStack(alignment: .leading, spacing: DS.Spacing.sm) {
                 AIFeatureRow(icon: "🎯", title: "Personalized Categories", description: "AI creates unique spiritual focus areas just for you")

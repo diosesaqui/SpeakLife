@@ -80,7 +80,7 @@ struct RemoteMessageView: View {
                     VStack(alignment: .leading, spacing: 20) {
                         if !message.title.isEmpty {
                             Text(message.title)
-                                .font(.system(size: 28, weight: .bold, design: .rounded))
+                                .font(DS.Typography.title)
                                 .foregroundColor(.white)
                                 .multilineTextAlignment(.leading)
                         }
@@ -100,6 +100,7 @@ struct RemoteMessageView: View {
                     .padding(.top, 12)
                     .padding(.bottom, 40)
                 }
+                .dsAppear(0.06)
 
                 Button {
                     dismiss()
@@ -117,6 +118,7 @@ struct RemoteMessageView: View {
                 .buttonStyle(.dsPressable(feel: .tapSolid))
                 .padding(.horizontal, 28)
                 .padding(.bottom, 28)
+                .dsAppear(0.12)
             }
         }
     }

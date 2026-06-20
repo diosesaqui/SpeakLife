@@ -95,6 +95,7 @@ struct FullScreenEntryView: View {
                 .cornerRadius(DS.Radius.sm)
                 .padding(.horizontal, DS.Spacing.md)
                 .padding(.bottom, keyboardHeight > 0 ? max(keyboardHeight - 300, 20) : 20)
+                .dsAppear(0.12)
                 
             }
             

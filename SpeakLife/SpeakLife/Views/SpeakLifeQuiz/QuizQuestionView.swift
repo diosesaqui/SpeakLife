@@ -31,7 +31,8 @@ struct QuizQuestionView: View {
                 ProgressView(value: Double(questionIndex + 1), total: Double(questions.count))
                     .progressViewStyle(LinearProgressViewStyle(tint: .cyan))
                     .padding()
-                
+                    .dsAppear(0)
+
                 Image("appIconDisplay")
                         .resizable()
                         .scaledToFit()
@@ -39,11 +40,13 @@ struct QuizQuestionView: View {
                         .cornerRadius(20)
                         .shadow(radius: 5)
                         .padding(.horizontal)
-                
+                        .dsAppear(0.06)
+
 
                 Text(questions[questionIndex].question)
-                    .font(.title2.bold())
+                    .font(DS.Typography.headline)
                     .multilineTextAlignment(.center)
+                    .dsAppear(0.12)
 
                 ForEach(0..<4) { index in
                     Button(action: {

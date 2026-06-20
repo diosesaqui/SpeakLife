@@ -132,16 +132,18 @@ struct BibleSearchView: View {
                         Image(systemName: "magnifyingglass")
                             .font(.system(size: 48))
                             .foregroundColor(.white.opacity(0.8))
+                            .dsAppear()
 
                         VStack(spacing: DS.Spacing.xs) {
                             Text("Search the Bible")
-                                .font(.system(size: 20, weight: .semibold))
+                                .font(DS.Typography.headline)
                                 .foregroundColor(.white)
-                            
+
                             Text("Find verses by keywords")
                                 .font(.system(size: 14))
                                 .foregroundColor(.white.opacity(0.8))
                         }
+                        .dsAppear(0.06)
                         
                         // Suggested Searches
                         VStack(alignment: .leading, spacing: DS.Spacing.sm) {

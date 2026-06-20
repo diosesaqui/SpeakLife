@@ -40,6 +40,7 @@ struct DailyVerseDetailView: View {
                                 .foregroundColor(.primary)
                         }
                         .padding(.top, 20)
+                        .dsAppear()
                         
                         // Verse Content
                         VStack(spacing: DS.Spacing.lg) {
@@ -69,7 +70,8 @@ struct DailyVerseDetailView: View {
                                 .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 4)
                         )
                         .padding(.horizontal)
-                        
+                        .dsAppear(0.06)
+
                         // Action Buttons
                         VStack(spacing: DS.Spacing.md) {
                             // Share Button
@@ -110,7 +112,8 @@ struct DailyVerseDetailView: View {
                             }
                         }
                         .padding(.horizontal, 40)
-                        
+                        .dsAppear(0.12)
+
                         Spacer()
                     }
                 }

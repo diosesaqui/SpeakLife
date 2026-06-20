@@ -368,7 +368,8 @@ struct EnhancedStreakSheet: View {
                 // Today's checklist status
                 DailyChecklistSummary(viewModel: viewModel)
                     .padding(.horizontal, 20)
-                
+                    .dsAppear(0)
+
                 // Enhanced Progress ring with milestone info
                 EnhancedProgressRing(
                     progress: progress,
@@ -377,10 +378,12 @@ struct EnhancedStreakSheet: View {
                     showSparkles: showSparkles
                 )
                 .padding(.top, 12)
-                
+                .dsAppear(0.06)
+
                 // Enhanced streak stats
                 EnhancedStreakStatsView(viewModel: viewModel)
                     .padding(.horizontal, 24)
+                    .dsAppear(0.12)
                 
                 // Action buttons
                 VStack(spacing: 16) {

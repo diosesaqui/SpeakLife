@@ -47,17 +47,19 @@ struct BibleBookmarksView: View {
             Image(systemName: "bookmark")
                 .font(.system(size: 60))
                 .foregroundColor(.white.opacity(0.8))
-            
+                .dsAppear()
+
             VStack(spacing: DS.Spacing.xs) {
                 Text("No Bookmarks Yet")
-                    .font(.system(size: 20, weight: .semibold))
+                    .font(DS.Typography.headline)
                     .foregroundColor(.white)
-                
+
                 Text("Tap and hold any verse to bookmark it")
                     .font(.system(size: 14))
                     .foregroundColor(.white.opacity(0.8))
                     .multilineTextAlignment(.center)
             }
+            .dsAppear(0.06)
             
             Spacer()
         }

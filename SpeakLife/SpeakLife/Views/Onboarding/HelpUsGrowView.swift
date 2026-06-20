@@ -47,12 +47,14 @@ struct HelpUsGrowView: View {
                 Text(viewModel.model.title)
                     .font(.largeTitle)
                     .bold()
-                
+                    .dsAppear(0)
+
                 Text(viewModel.model.message)
                     .font(.body)
                     .multilineTextAlignment(.center)
                     .padding()
-                
+                    .dsAppear(0.06)
+
                 Button(action: {
                     viewModel.showRatingPrompt()
                 }) {
@@ -64,6 +66,7 @@ struct HelpUsGrowView: View {
                         .cornerRadius(10)
                 }
                 .buttonStyle(.dsPressable(feel: .tapSolid))
+                .dsAppear(0.12)
             }
             .foregroundColor(.white)
             .padding()

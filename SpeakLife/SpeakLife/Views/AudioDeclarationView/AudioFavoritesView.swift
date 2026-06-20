@@ -328,19 +328,22 @@ struct AudioFavoritesView: View {
                 .resizable()
                 .frame(width: 80, height: 80)
                 .foregroundColor(.white.opacity(0.6))
-            
+                .dsAppear()
+
             Text(searchText.isEmpty ? "No Audio Favorites Yet" : "No Results Found")
-                .font(.title2)
+                .font(DS.Typography.title)
                 .fontWeight(.semibold)
                 .foregroundColor(.white)
-            
-            Text(searchText.isEmpty ? 
+                .dsAppear(0.06)
+
+            Text(searchText.isEmpty ?
                  "Tap the heart icon on any audio to add it to your favorites." :
                  "Try adjusting your search terms.")
-                .font(.body)
+                .font(DS.Typography.body)
                 .foregroundColor(.white.opacity(0.7))
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 40)
+                .dsAppear(0.12)
             
             if searchText.isEmpty {
                 Button("Browse Audio") {

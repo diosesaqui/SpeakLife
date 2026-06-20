@@ -54,9 +54,10 @@ struct DemoExperienceView: View {
                         .foregroundColor(.white)
                         .shadow(color: .white.opacity(0.3), radius: 4, x: 0, y: 2)
                 }
-                
+                .dsAppear(0)
+
                 Spacer()
-                
+
                 // Declaration Card
                 VStack(spacing: 20) {
                     Image(systemName: "quote.opening")
@@ -78,7 +79,8 @@ struct DemoExperienceView: View {
                 .padding(.vertical, 40)
                 .frame(width: size.width * 0.85)
                 .dsGlass(cornerRadius: DS.Radius.lg)
-                
+                .dsAppear(0.06)
+
                 Spacer()
                 
                 // CTA Section

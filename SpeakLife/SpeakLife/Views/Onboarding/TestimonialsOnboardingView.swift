@@ -116,7 +116,8 @@ struct TestimonialsOnboardingView: View {
                             .foregroundColor(.white.opacity(0.8))
                     }
                     .padding(.top, 20)
-                    
+                    .dsAppear(0)
+
                     // Stats section
                     HStack(spacing: 40) {
                         // Worshippers stat
@@ -155,7 +156,8 @@ struct TestimonialsOnboardingView: View {
                                 .foregroundColor(DS.Palette.gold.opacity(0.9))
                         }
                     }
-                    
+                    .dsAppear(0.06)
+
                     // Testimonials carousel
                     TabView(selection: $currentTestimonialIndex) {
                         ForEach(Array(testimonials.enumerated()), id: \.offset) { index, testimonial in
