@@ -81,7 +81,7 @@ struct AppleSignInPromptView: View {
                 .frame(width: 280, height: 56)
                 .clipShape(Capsule())
                 .cornerRadius(12)
-                .padding(.horizontal, 32)
+                .padding(.horizontal, DS.Spacing.xl)
                 .disabled(appleSignIn.isLoading)
                 .overlay(
                     Group {

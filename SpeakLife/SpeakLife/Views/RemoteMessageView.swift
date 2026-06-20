@@ -71,9 +71,10 @@ struct RemoteMessageView: View {
                             .foregroundColor(.white.opacity(0.7))
                     }
                     .accessibilityLabel("Close")
+                    .buttonStyle(.dsPressable(feel: .tapSolid))
                 }
                 .padding(.horizontal, 20)
-                .padding(.top, 16)
+                .padding(.top, DS.Spacing.md)
 
                 ScrollView {
                     VStack(alignment: .leading, spacing: 20) {
@@ -113,6 +114,7 @@ struct RemoteMessageView: View {
                                 .fill(Color.white)
                         )
                 }
+                .buttonStyle(.dsPressable(feel: .tapSolid))
                 .padding(.horizontal, 28)
                 .padding(.bottom, 28)
             }
