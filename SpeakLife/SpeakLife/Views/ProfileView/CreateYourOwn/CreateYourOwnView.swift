@@ -476,7 +476,7 @@ struct AffirmationDetailView: View {
                                 .font(.system(size: dynamicFontSize, weight: .bold))
                                 .foregroundColor(.white)
                                 .opacity(0.9)
-                                .padding(12)
+                                .padding(DS.Spacing.sm)
                                 .background(
                                     RoundedRectangle(cornerRadius: 12)
                                         .fill(Color.white.opacity(0.05))
@@ -492,7 +492,7 @@ struct AffirmationDetailView: View {
                                 Text(displayedText)
                                     .font(.system(size: dynamicFontSize, weight: .bold))
                                     .foregroundColor(.white)
-                                    .padding(12)
+                                    .padding(DS.Spacing.sm)
                                 Spacer()
                                     .frame(height: UIScreen.main.bounds.height * 0.1)
                                 AppLogo(height: 80)

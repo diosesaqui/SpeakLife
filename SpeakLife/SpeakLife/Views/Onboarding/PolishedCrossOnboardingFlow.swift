@@ -277,9 +277,10 @@ struct FoundationalTruthScreen: View {
                         .frame(width: size.width * 0.85, height: 50)
                         .background(
                             RoundedRectangle(cornerRadius: 25)
-                                .fill(Color(red: 0.9, green: 0.7, blue: 0.3))
+                                .fill(DS.Gradient.gold)
                         )
                 }
+                .buttonStyle(.dsPressable(feel: .tapSolid, haptics: false))
                 .padding(.bottom, 40)
             }
         }
@@ -505,9 +506,10 @@ struct CrossAnchorScreen: View {
                         .frame(width: size.width * 0.85, height: 50)
                         .background(
                             RoundedRectangle(cornerRadius: 25)
-                                .fill(Color(red: 0.9, green: 0.7, blue: 0.3))
+                                .fill(DS.Gradient.gold)
                         )
                 }
+                .buttonStyle(.dsPressable(feel: .tapSolid, haptics: false))
                 .padding(.bottom, 40)
                 .opacity(showMeaning ? 1 : 0.3)
                 .disabled(!showMeaning)

@@ -557,10 +557,10 @@ struct DailyVerseCard: View {
             }
             .padding()
             .background(
-                RoundedRectangle(cornerRadius: 12)
+                RoundedRectangle(cornerRadius: DS.Radius.sm, style: .continuous)
                     .fill(Color(UIColor.secondarySystemBackground))
                     .overlay(
-                        RoundedRectangle(cornerRadius: 12)
+                        RoundedRectangle(cornerRadius: DS.Radius.sm, style: .continuous)
                             .stroke(Constants.DAMidBlue.opacity(0.2), lineWidth: 1)
                     )
             )

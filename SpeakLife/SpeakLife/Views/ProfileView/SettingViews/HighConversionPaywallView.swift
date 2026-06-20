@@ -290,10 +290,10 @@ struct HighConversionPaywallView: View {
                             benefitsSection.padding(.top, 20)
                             comparisonSection.padding(.top, 28)
                             if let days = selectedPlanTrialDays {
-                                trialTimelineSection(days: days).padding(.top, 24)
+                                trialTimelineSection(days: days).padding(.top, DS.Spacing.lg)
                             }
-                            featuredTestimonial.padding(.top, 24)
-                            remainingTestimonialsSection.padding(.top, 24)
+                            featuredTestimonial.padding(.top, DS.Spacing.lg)
+                            remainingTestimonialsSection.padding(.top, DS.Spacing.lg)
                             Spacer(minLength: 20)
                         }
                     }

@@ -290,7 +290,7 @@ struct SpiritualGrowthView: View {
             
             // Progress to next level
             if let nextLevel = getNextLevel() {
-                VStack(alignment: .leading, spacing: 8) {
+                VStack(alignment: .leading, spacing: DS.Spacing.xs) {
                     HStack {
                         Text("Progress to \(nextLevel.rawValue)")
                             .font(.system(size: 14, weight: .medium))
@@ -312,7 +312,7 @@ struct SpiritualGrowthView: View {
                 }
             }
         }
-        .padding(24)
+        .padding(DS.Spacing.lg)
         .background(
             RoundedRectangle(cornerRadius: 20)
                 .fill(
@@ -339,7 +339,7 @@ struct SpiritualGrowthView: View {
     // MARK: - Achievement Section
     
     private var achievementSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: DS.Spacing.md) {
             Text("Achievements")
                 .font(.system(size: 20, weight: .semibold))
                 .foregroundColor(.white)

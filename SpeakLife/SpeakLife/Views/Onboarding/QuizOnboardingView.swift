@@ -1099,7 +1099,7 @@ private struct BeliefResponseScreen: View {
 
             Text(answer.isConfident ? "Stand on this." : "Hear what God says.")
                 .font(.system(size: 16, weight: .bold))
-                .foregroundColor(.white.opacity(0.9))
+                .foregroundColor(DS.Palette.gold.opacity(0.9))
                 .textCase(.uppercase)
                 .tracking(1.6)
 
@@ -1132,10 +1132,7 @@ private struct BeliefResponseScreen: View {
                     .frame(maxWidth: .infinity, minHeight: 56)
                     .background(
                         RoundedRectangle(cornerRadius: 28)
-                            .fill(LinearGradient(
-                                colors: [Constants.DAMidBlue, Constants.DAMidBlue.opacity(0.85)],
-                                startPoint: .leading, endPoint: .trailing
-                            ))
+                            .fill(DS.Gradient.brand)
                     )
                     .scaleEffect(isPressed ? 1.04 : 1.0)
                     .shadow(color: Constants.DAMidBlue.opacity(0.4),
@@ -1198,10 +1195,7 @@ private struct QuizDeclarationScreen: View {
                     .frame(maxWidth: .infinity, minHeight: 56)
                     .background(
                         RoundedRectangle(cornerRadius: 28)
-                            .fill(LinearGradient(
-                                colors: [Constants.DAMidBlue, Constants.DAMidBlue.opacity(0.85)],
-                                startPoint: .leading, endPoint: .trailing
-                            ))
+                            .fill(DS.Gradient.brand)
                     )
                     .scaleEffect(isPressed ? 1.04 : 1.0)
                     .shadow(color: Constants.DAMidBlue.opacity(0.4),
