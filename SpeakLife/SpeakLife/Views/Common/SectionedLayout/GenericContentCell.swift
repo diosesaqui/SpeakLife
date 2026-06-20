@@ -134,11 +134,12 @@ struct GenericContentCell<ContentType: SectionableContent>: View {
         .padding(.vertical, DS.Spacing.xs)
         .padding(.horizontal, DS.Spacing.md)
         .background(
-            RoundedRectangle(cornerRadius: 12)
+            RoundedRectangle(cornerRadius: DS.Radius.sm, style: .continuous)
                 .fill(.ultraThinMaterial)
         )
+        .dsShadow(DS.Elevation.low)
     }
-    
+
     private var featuredCell: some View {
         ZStack(alignment: .bottomLeading) {
             // Background image
@@ -196,8 +197,8 @@ struct GenericContentCell<ContentType: SectionableContent>: View {
             .padding(DS.Spacing.md)
         }
         .frame(width: configuration.itemWidth, height: configuration.itemHeight)
-        .cornerRadius(16)
-        .shadow(color: .black.opacity(0.3), radius: 8, x: 0, y: 4)
+        .cornerRadius(DS.Radius.md)
+        .dsShadow(DS.Elevation.low)
     }
     
     private func customCell(width: CGFloat, height: CGFloat) -> some View {

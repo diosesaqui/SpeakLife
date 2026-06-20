@@ -30,7 +30,7 @@ struct ReminderCell: View {
     }
 
     var body: some View {
-        VStack(alignment: .center, spacing: 16) {
+        VStack(alignment: .center, spacing: DS.Spacing.md) {
             Toggle(isOn: appState.$notificationEnabled) {
                 Text("Daily Declaration Reminder")
                     .font(.headline)
@@ -79,10 +79,10 @@ struct ReminderCell: View {
         }
         .padding()
         .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
+            RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous)
                 .fill(Color.white.opacity(0.05))
                 .background(.ultraThinMaterial)
-                .shadow(color: .black.opacity(0.2), radius: 10, x: 0, y: 6)
+                .dsShadow(DS.Elevation.low)
         )
     }
 

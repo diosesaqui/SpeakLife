@@ -32,7 +32,8 @@ struct VoiceStateIndicator: View {
         .padding(.horizontal, DS.Spacing.md)
         .padding(.vertical, DS.Spacing.sm)
         .background(statusBackgroundColor)
-        .cornerRadius(12)
+        .cornerRadius(DS.Radius.sm)
+        .dsShadow(DS.Elevation.low)
     }
     
     // MARK: - Computed Properties

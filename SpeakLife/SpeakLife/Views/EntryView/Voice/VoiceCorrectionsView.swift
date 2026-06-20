@@ -162,7 +162,7 @@ struct VoiceQuickCorrections: View {
                             .padding(.horizontal, DS.Spacing.sm)
                             .padding(.vertical, 6)
                             .background(Color.white.opacity(0.15))
-                            .cornerRadius(16)
+                            .cornerRadius(DS.Radius.md)
                     }
                     .buttonStyle(.dsPressable(feel: .tapSolid))
                 }
@@ -181,7 +181,7 @@ struct VoiceQuickCorrections: View {
                         .padding(.horizontal, DS.Spacing.sm)
                         .padding(.vertical, 6)
                         .background(Color.orange.opacity(0.15))
-                        .cornerRadius(16)
+                        .cornerRadius(DS.Radius.md)
                     }
                     .buttonStyle(.dsPressable(feel: .tapLight, haptics: false))
                 }

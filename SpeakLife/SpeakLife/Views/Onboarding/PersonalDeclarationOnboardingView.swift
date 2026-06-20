@@ -636,14 +636,7 @@ struct PersonalDeclarationOnboardingView: View {
                     }
                     .padding(20)
                     .frame(maxWidth: .infinity)
-                    .background(
-                        RoundedRectangle(cornerRadius: 18)
-                            .fill(Color.white.opacity(0.07))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 18)
-                                    .stroke(Color.white.opacity(0.1), lineWidth: 1)
-                            )
-                    )
+                    .dsGlass(cornerRadius: DS.Radius.lg)
                     .padding(.horizontal, 24)
 
                     Spacer().frame(height: 16)

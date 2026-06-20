@@ -42,7 +42,7 @@ struct BibleSearchView: View {
                 }
                 .padding()
                 .background(
-                    RoundedRectangle(cornerRadius: 12)
+                    RoundedRectangle(cornerRadius: DS.Radius.sm, style: .continuous)
                         .fill(Constants.backgroundColor)
                         .stroke(Constants.DAMidBlue.opacity(0.3), lineWidth: 1)
                 )
@@ -223,9 +223,10 @@ struct SearchResultCard: View {
             }
             .padding()
             .background(
-                RoundedRectangle(cornerRadius: 12)
+                RoundedRectangle(cornerRadius: DS.Radius.sm, style: .continuous)
                     .fill(Color(UIColor.secondarySystemBackground))
             )
+            .dsShadow(DS.Elevation.low)
             .padding(.horizontal)
         }
         .buttonStyle(PlainButtonStyle())

@@ -370,7 +370,7 @@ struct YearInReviewView: View {
         Text(text.uppercased())
             .font(Font.custom("AppleSDGothicNeo-Bold", size: 13, relativeTo: .caption))
             .tracking(2.5)
-            .foregroundColor(.white.opacity(0.65))
+            .foregroundColor(DS.Palette.gold.opacity(0.9))
     }
 
     @ViewBuilder

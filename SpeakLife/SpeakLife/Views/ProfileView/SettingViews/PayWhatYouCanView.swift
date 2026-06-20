@@ -141,7 +141,7 @@ struct PayWhatYouCanView: View {
                     .font(.system(size: 16, weight: .bold))
                     .foregroundColor(isSelected ? Color.yellow : .white.opacity(0.9))
             }
-            .padding(.horizontal, 16)
+            .padding(.horizontal, DS.Spacing.md)
             .padding(.vertical, 14)
             .background(
                 RoundedRectangle(cornerRadius: 12)
@@ -158,7 +158,7 @@ struct PayWhatYouCanView: View {
     // MARK: - CTA
 
     private var ctaSection: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: DS.Spacing.xs) {
             Button(action: makePurchase) {
                 Text(selectedProduct != nil
                      ? "Continue with \(selectedProduct!.displayPrice)"
@@ -166,7 +166,7 @@ struct PayWhatYouCanView: View {
                     .font(.system(size: 17, weight: .bold))
                     .foregroundColor(.black)
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, 16)
+                    .padding(.vertical, DS.Spacing.md)
                     .background(selectedProduct != nil ? Color.yellow : Color.gray)
                     .cornerRadius(28)
                     .padding(.horizontal, 20)
@@ -209,7 +209,7 @@ struct PayWhatYouCanView: View {
             .foregroundColor(.white.opacity(0.45))
             .multilineTextAlignment(.center)
             .lineSpacing(3)
-            .padding(.horizontal, 32)
+            .padding(.horizontal, DS.Spacing.xl)
     }
 
     // MARK: - Label helpers

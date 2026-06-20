@@ -52,7 +52,7 @@ struct SpiritualGrowthView: View {
                 
                 // Content
                 ScrollView {
-                    VStack(spacing: 24) {
+                    VStack(spacing: DS.Spacing.lg) {
                         if selectedTab == 0 {
                             overviewContent
                                 .transition(.asymmetric(
@@ -185,7 +185,7 @@ struct SpiritualGrowthView: View {
     // MARK: - Overview Content
     
     private var overviewContent: some View {
-        VStack(spacing: 24) {
+        VStack(spacing: DS.Spacing.lg) {
             // Hero card with current status
             heroStatusCard
             

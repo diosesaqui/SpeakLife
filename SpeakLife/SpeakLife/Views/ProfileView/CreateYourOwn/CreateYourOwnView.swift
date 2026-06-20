@@ -125,9 +125,9 @@ struct CreateYourOwnView: View {
         }
         .padding(2)
         .background(segmentedControlBackground)
-        .padding(.horizontal, 16)
-        .padding(.top, 8)
-        .padding(.bottom, 12)
+        .padding(.horizontal, DS.Spacing.md)
+        .padding(.top, DS.Spacing.xs)
+        .padding(.bottom, DS.Spacing.sm)
     }
     
     private func segmentedControlButton(for contentType: ContentType) -> some View {
@@ -140,7 +140,7 @@ struct CreateYourOwnView: View {
                 .font(.system(size: 16, weight: .medium))
                 .foregroundColor(selectedContentType == contentType ? .white : .white.opacity(0.7))
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, 8)
+                .padding(.vertical, DS.Spacing.xs)
                 .background(segmentedControlButtonBackground(for: contentType))
                 .animation(.easeInOut(duration: 0.2), value: selectedContentType)
         }
@@ -177,7 +177,7 @@ struct CreateYourOwnView: View {
             Gradients().speakLifeCYOCell
                 .ignoresSafeArea()
             
-            VStack(spacing: 32) {
+            VStack(spacing: DS.Spacing.xl) {
                 Spacer().frame(height: 40)
                 animatedLogoView
                 emptyStateTextContent
@@ -202,7 +202,7 @@ struct CreateYourOwnView: View {
     }
     
     private var emptyStateTextContent: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: DS.Spacing.xs) {
             Text(emptyStateTitle)
                 .font(.system(size: 20, weight: .semibold))
                 .multilineTextAlignment(.center)

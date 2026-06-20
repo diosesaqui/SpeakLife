@@ -193,15 +193,10 @@ struct DailyDeclarationBurstView: View {
                         .blur(radius: 20)
                     
                     Circle()
-                        .fill(
-                            LinearGradient(
-                                colors: [Color(red: 1.0, green: 0.58, blue: 0.0).opacity(0.2), Color(red: 1.0, green: 0.34, blue: 0.13).opacity(0.2)],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
+                        .fill(DS.Gradient.ember)
                         .frame(width: 100, height: 100)
-                    
+                        .shadow(color: Color(red: 1.0, green: 0.34, blue: 0.13).opacity(0.5), radius: 8, x: 0, y: 4)
+
                     Image(systemName: "bolt.fill")
                         .font(.system(size: 50, weight: .bold))
                         .foregroundColor(.white)
@@ -630,18 +625,13 @@ struct DailyDeclarationBurstView: View {
             VStack(spacing: 8) {
                 ZStack {
                     Circle()
-                        .fill(
-                            LinearGradient(
-                                colors: highlight ? [.orange, .red] : [Color(red: 1.0, green: 0.8, blue: 0.3).opacity(0.3), Color(red: 1.0, green: 0.6, blue: 0.2).opacity(0.2)],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
+                        .fill(highlight ? DS.Gradient.ember : DS.Gradient.gold)
                         .frame(width: 60, height: 60)
-                    
+                        .shadow(color: (highlight ? Color(red: 1.0, green: 0.34, blue: 0.13) : DS.Palette.gold).opacity(0.5), radius: 8, x: 0, y: 4)
+
                     Image(systemName: icon)
                         .font(.system(size: 24, weight: .bold))
-                        .foregroundColor(highlight ? .white : Color(red: 1.0, green: 0.8, blue: 0.3))
+                        .foregroundColor(.white)
                 }
                 
                 Text(value)

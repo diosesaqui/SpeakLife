@@ -43,9 +43,7 @@ struct SkillLevelView: View {
                 .frame(height: 8)
         }
         .padding()
-        .background(.ultraThinMaterial)
-        .clipShape(RoundedRectangle(cornerRadius: 20))
-        .shadow(radius: 5)
+        .dsGlass(cornerRadius: DS.Radius.lg)
         .padding(.horizontal)
     }
 }

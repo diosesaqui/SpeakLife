@@ -64,7 +64,7 @@ struct DailyVerseDetailView: View {
                         }
                         .padding()
                         .background(
-                            RoundedRectangle(cornerRadius: 16)
+                            RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous)
                                 .fill(Color(UIColor.secondarySystemBackground))
                                 .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 4)
                         )
@@ -86,7 +86,7 @@ struct DailyVerseDetailView: View {
                                 .frame(maxWidth: .infinity)
                                 .frame(height: 50)
                                 .background(Constants.DAMidBlue)
-                                .cornerRadius(12)
+                                .cornerRadius(DS.Radius.sm)
                             }
                             
                             // Copy Button
@@ -103,7 +103,7 @@ struct DailyVerseDetailView: View {
                                 .frame(maxWidth: .infinity)
                                 .frame(height: 50)
                                 .background(
-                                    RoundedRectangle(cornerRadius: 12)
+                                    RoundedRectangle(cornerRadius: DS.Radius.sm, style: .continuous)
                                         .stroke(Constants.DAMidBlue, lineWidth: 2)
                                         .fill(Color.clear)
                                 )

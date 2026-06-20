@@ -71,7 +71,7 @@ struct BibleAuthenticationView: View {
                         }
                         .padding()
                         .background(
-                            RoundedRectangle(cornerRadius: 12)
+                            RoundedRectangle(cornerRadius: DS.Radius.sm, style: .continuous)
                                 .fill(Color(UIColor.secondarySystemBackground))
                         )
                         .padding(.horizontal)
@@ -91,8 +91,8 @@ struct BibleAuthenticationView: View {
                                 )
                                 .signInWithAppleButtonStyle(.black)
                                 .frame(height: 50)
-                                .cornerRadius(12)
-                                
+                                .cornerRadius(DS.Radius.sm)
+
                                 // Divider
                                 HStack {
                                     Rectangle()
@@ -121,7 +121,7 @@ struct BibleAuthenticationView: View {
                                     .frame(maxWidth: .infinity)
                                     .frame(height: 50)
                                     .background(Color.blue)
-                                    .cornerRadius(12)
+                                    .cornerRadius(DS.Radius.sm)
                                 }
                             }
                             .padding(.horizontal)
@@ -227,7 +227,7 @@ struct BibleAuthenticationView: View {
                         .frame(maxWidth: .infinity)
                         .frame(height: 44)
                         .background(Color(UIColor.tertiarySystemFill))
-                        .cornerRadius(10)
+                        .cornerRadius(DS.Radius.sm)
                 }
                 
                 // Submit button
@@ -244,7 +244,7 @@ struct BibleAuthenticationView: View {
                         .frame(maxWidth: .infinity)
                         .frame(height: 44)
                         .background(formIsValid ? Color.blue : Color.gray)
-                        .cornerRadius(10)
+                        .cornerRadius(DS.Radius.sm)
                 }
                 .disabled(!formIsValid)
             }
@@ -267,7 +267,7 @@ struct BibleAuthenticationView: View {
                 }
                 .padding(DS.Spacing.xl)
                 .background(
-                    RoundedRectangle(cornerRadius: 16)
+                    RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous)
                         .fill(Color(UIColor.systemBackground))
                 )
             )
@@ -561,9 +561,9 @@ struct RoundedTextFieldStyle: TextFieldStyle {
         configuration
             .padding()
             .background(Color(UIColor.tertiarySystemFill))
-            .cornerRadius(10)
+            .cornerRadius(DS.Radius.sm)
             .overlay(
-                RoundedRectangle(cornerRadius: 10)
+                RoundedRectangle(cornerRadius: DS.Radius.sm, style: .continuous)
                     .stroke(Color.gray.opacity(0.2), lineWidth: 1)
             )
     }

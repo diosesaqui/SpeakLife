@@ -111,7 +111,7 @@ struct RemoteMessageView: View {
                         .padding(.vertical, 16)
                         .background(
                             RoundedRectangle(cornerRadius: 16)
-                                .fill(Color.white)
+                                .fill(DS.Gradient.gold)
                         )
                 }
                 .buttonStyle(.dsPressable(feel: .tapSolid))

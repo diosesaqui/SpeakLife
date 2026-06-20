@@ -159,7 +159,7 @@ struct WeekStreakStrip: View {
         }
         .padding(.vertical, 12)
         .padding(.horizontal, 8)
-        .background(RoundedRectangle(cornerRadius: 16).fill(Color.white.opacity(0.04)))
+        .dsGlass(cornerRadius: DS.Radius.md)
     }
 }
 
@@ -330,9 +330,11 @@ struct DayCelebrationView: View {
             Button(action: onDismiss) {
                 Text("Done").font(.system(size: 17, weight: .semibold)).foregroundColor(.white)
                     .frame(maxWidth: .infinity).padding(.vertical, 16)
-                    .background(RoundedRectangle(cornerRadius: 16).fill(Color.green.opacity(0.3)))
+                    .background(RoundedRectangle(cornerRadius: 16).fill(DS.Gradient.brand))
                     .padding(.horizontal, 24)
-            }.opacity(opacity).padding(.bottom, 32)
+            }
+            .buttonStyle(.dsPressable(feel: .tapSolid))
+            .opacity(opacity).padding(.bottom, 32)
         }
         .onAppear {
             withAnimation(.spring(response: 0.5, dampingFraction: 0.6)) { scale = 1.0; opacity = 1.0 }

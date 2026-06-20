@@ -40,24 +40,24 @@ struct ContentRow: View {
     // MARK: - Private Views
     
     private var rowContent: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: DS.Spacing.sm) {
             contentSection
             Spacer()
             menuButton
         }
         .padding(.horizontal, 20)
-        .padding(.vertical, 16)
+        .padding(.vertical, DS.Spacing.md)
         .background(backgroundStyle)
     }
     
     private var contentSection: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: DS.Spacing.xxs) {
             Text(declaration.text)
                 .font(.system(size: 17, weight: .semibold, design: .rounded))
                 .foregroundColor(.white)
                 .lineLimit(2)
-            
-            HStack(spacing: 4) {
+
+            HStack(spacing: DS.Spacing.xxs) {
                 Image(systemName: declaration.contentType.icon)
                     .font(.caption2)
                     .foregroundColor(.white.opacity(0.6))
@@ -76,7 +76,7 @@ struct ContentRow: View {
             Image(systemName: "ellipsis.circle.fill")
                 .font(.title3)
                 .foregroundColor(colorScheme == .dark ? .white.opacity(0.8) : Constants.DAMidBlue)
-                .padding(8)
+                .padding(DS.Spacing.xs)
                 .background(Color.white.opacity(0.05))
                 .clipShape(Circle())
         }
@@ -213,7 +213,7 @@ struct FavoritesView: View {
     }
     
     private var emptyStateView: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: DS.Spacing.md) {
             Image(systemName: "heart.text.square")
                 .resizable()
                 .frame(width: 100, height: 100)

@@ -92,12 +92,12 @@ struct BreakthroughFlowView: View {
                         .frame(height: 56)
                         .background(
                             RoundedRectangle(cornerRadius: 16)
-                                .fill(Color.green.opacity(0.85))
+                                .fill(DS.Gradient.gold)
                         )
                         .foregroundColor(.white)
                         .padding(.horizontal, DS.Spacing.lg)
                 }
-                .buttonStyle(PlainButtonStyle())
+                .buttonStyle(.dsPressable(feel: .tapSolid))
 
                 Button {
                     onDismiss()
@@ -201,12 +201,12 @@ struct BreakthroughFlowView: View {
                     .frame(height: 56)
                     .background(
                         RoundedRectangle(cornerRadius: 16)
-                            .fill(Color.green.opacity(0.85))
+                            .fill(DS.Gradient.gold)
                     )
                     .foregroundColor(.white)
                     .padding(.horizontal, DS.Spacing.lg)
                 }
-                .buttonStyle(PlainButtonStyle())
+                .buttonStyle(.dsPressable(feel: .tapSolid))
                 .disabled(isSaving || testimonyViewModel.isSubmitting || testimony.count > 500)
 
                 // Keep Private — saves locally, doesn't post
@@ -281,12 +281,12 @@ struct BreakthroughFlowView: View {
                         .frame(height: 56)
                         .background(
                             RoundedRectangle(cornerRadius: 16)
-                                .fill(Color(red: 0.2, green: 0.5, blue: 1.0))
+                                .fill(DS.Gradient.brand)
                         )
                         .foregroundColor(.white)
                         .padding(.horizontal, DS.Spacing.lg)
                 }
-                .buttonStyle(PlainButtonStyle())
+                .buttonStyle(.dsPressable(feel: .tapSolid))
 
                 Button {
                     appState.requestReviewIfEligible(trigger: .breakthroughCelebration)

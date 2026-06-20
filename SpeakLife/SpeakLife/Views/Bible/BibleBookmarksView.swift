@@ -139,9 +139,10 @@ struct BookmarkCard: View {
             }
             .padding()
             .background(
-                RoundedRectangle(cornerRadius: 12)
+                RoundedRectangle(cornerRadius: DS.Radius.sm, style: .continuous)
                     .fill(Color(UIColor.secondarySystemBackground))
             )
+            .dsShadow(DS.Elevation.low)
         }
         .buttonStyle(PlainButtonStyle())
         .confirmationDialog(

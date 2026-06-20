@@ -62,7 +62,7 @@ struct EmailCaptureView: View {
                         .padding()
                         .background(isFormValid ? Color.blue : Color.gray)
                         .foregroundColor(.white)
-                        .cornerRadius(10)
+                        .cornerRadius(DS.Radius.sm)
                 }
             }
             .disabled(isSubmitting || !isFormValid)
@@ -76,8 +76,8 @@ struct EmailCaptureView: View {
                         .foregroundColor(messageColor)
                 }
                 .font(.footnote)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
+                .padding(.horizontal, DS.Spacing.sm)
+                .padding(.vertical, DS.Spacing.xs)
                 .background(messageColor.opacity(0.1))
                 .cornerRadius(8)
             }

@@ -1561,7 +1561,15 @@ struct FeatureScriptureRow: View {
                 .font(.system(size: 18, weight: .semibold))
                 .foregroundColor(.white)
                 .frame(width: 36, height: 36)
-                .background(Circle().fill(Color.white.opacity(0.15)))
+                .background(
+                    Circle().fill(
+                        LinearGradient(
+                            colors: [DS.Palette.accent.opacity(0.95), DS.Palette.accent.opacity(0.55)],
+                            startPoint: .topLeading, endPoint: .bottomTrailing
+                        )
+                    )
+                )
+                .shadow(color: DS.Palette.accent.opacity(0.5), radius: 8, x: 0, y: 4)
 
             VStack(alignment: .leading, spacing: 3) {
                 Text(feature)
@@ -1729,14 +1737,7 @@ struct LiveDeclarationPreviewScreen: View {
                     .offset(y: scriptureVisible ? 0 : 10)
                 }
                 .padding(24)
-                .background(
-                    RoundedRectangle(cornerRadius: 20, style: .continuous)
-                        .fill(Color.white.opacity(0.12))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                                .strokeBorder(Color.white.opacity(0.2), lineWidth: 1)
-                        )
-                )
+                .dsGlass(cornerRadius: DS.Radius.lg)
                 .padding(.horizontal, 24)
                 .scaleEffect(cardVisible ? 1 : 0.92)
                 .opacity(cardVisible ? 1 : 0)
@@ -1857,8 +1858,14 @@ struct AudioFeatureScreen: View {
                         HStack(spacing: 12) {
                             ZStack {
                                 Circle()
-                                    .fill(Color.white.opacity(0.15))
+                                    .fill(
+                                        LinearGradient(
+                                            colors: [DS.Palette.accent.opacity(0.95), DS.Palette.accent.opacity(0.55)],
+                                            startPoint: .topLeading, endPoint: .bottomTrailing
+                                        )
+                                    )
                                     .frame(width: 48, height: 48)
+                                    .shadow(color: DS.Palette.accent.opacity(0.5), radius: 8, x: 0, y: 4)
                                 Image(systemName: "headphones")
                                     .font(.system(size: 22, weight: .medium))
                                     .foregroundColor(.white)
@@ -1884,12 +1891,7 @@ struct AudioFeatureScreen: View {
                             .fixedSize(horizontal: false, vertical: true)
                     }
                     .padding(20)
-                    .background(
-                        RoundedRectangle(cornerRadius: 18, style: .continuous)
-                            .fill(Color.white.opacity(0.1))
-                            .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous)
-                                .strokeBorder(Color.white.opacity(0.18), lineWidth: 1))
-                    )
+                    .dsGlass(cornerRadius: DS.Radius.lg)
                     .padding(.horizontal, 24)
                     .opacity(cardVisible ? 1 : 0)
                     .scaleEffect(cardVisible ? 1 : 0.95)
@@ -1990,8 +1992,14 @@ struct DailyDevotionalFeatureScreen: View {
                         HStack(spacing: 12) {
                             ZStack {
                                 Circle()
-                                    .fill(Color.white.opacity(0.15))
+                                    .fill(
+                                        LinearGradient(
+                                            colors: [DS.Palette.accent.opacity(0.95), DS.Palette.accent.opacity(0.55)],
+                                            startPoint: .topLeading, endPoint: .bottomTrailing
+                                        )
+                                    )
                                     .frame(width: 48, height: 48)
+                                    .shadow(color: DS.Palette.accent.opacity(0.5), radius: 8, x: 0, y: 4)
                                 Image(systemName: "book.fill")
                                     .font(.system(size: 22, weight: .medium))
                                     .foregroundColor(.white)
@@ -2017,12 +2025,7 @@ struct DailyDevotionalFeatureScreen: View {
                             .fixedSize(horizontal: false, vertical: true)
                     }
                     .padding(20)
-                    .background(
-                        RoundedRectangle(cornerRadius: 18, style: .continuous)
-                            .fill(Color.white.opacity(0.1))
-                            .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous)
-                                .strokeBorder(Color.white.opacity(0.18), lineWidth: 1))
-                    )
+                    .dsGlass(cornerRadius: DS.Radius.lg)
                     .padding(.horizontal, 24)
                     .opacity(cardVisible ? 1 : 0)
                     .scaleEffect(cardVisible ? 1 : 0.95)
@@ -2129,8 +2132,14 @@ struct WarriorRoomFeatureScreen: View {
                     HStack(spacing: 10) {
                         ZStack {
                             Circle()
-                                .fill(Color.white.opacity(0.15))
+                                .fill(
+                                    LinearGradient(
+                                        colors: [DS.Palette.accent.opacity(0.95), DS.Palette.accent.opacity(0.55)],
+                                        startPoint: .topLeading, endPoint: .bottomTrailing
+                                    )
+                                )
                                 .frame(width: 42, height: 42)
+                                .shadow(color: DS.Palette.accent.opacity(0.5), radius: 8, x: 0, y: 4)
                             Image(systemName: "shield.fill")
                                 .font(.system(size: 19, weight: .medium))
                                 .foregroundColor(.white)
@@ -2188,12 +2197,7 @@ struct WarriorRoomFeatureScreen: View {
                                 .background(Capsule().fill(Color.white.opacity(0.08)))
                             }
                             .padding(14)
-                            .background(
-                                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                    .fill(Color.white.opacity(0.09))
-                                    .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                        .strokeBorder(Color.white.opacity(0.14), lineWidth: 1))
-                            )
+                            .dsGlass(cornerRadius: DS.Radius.md)
                             .opacity(postsVisible ? 1 : 0)
                             .offset(y: postsVisible ? 0 : 16)
                             .animation(.easeOut(duration: 0.5).delay(Double(index) * 0.12), value: postsVisible)
@@ -2310,8 +2314,14 @@ struct DailyCommitmentScreen: View {
                             // Step indicator
                             ZStack {
                                 Circle()
-                                    .fill(Color.white.opacity(0.15))
+                                    .fill(
+                                        LinearGradient(
+                                            colors: [DS.Palette.accent.opacity(0.95), DS.Palette.accent.opacity(0.55)],
+                                            startPoint: .topLeading, endPoint: .bottomTrailing
+                                        )
+                                    )
                                     .frame(width: 36, height: 36)
+                                    .shadow(color: DS.Palette.accent.opacity(0.5), radius: 8, x: 0, y: 4)
                                 Text(milestone.0)
                                     .font(.system(size: 14, weight: .bold, design: .rounded))
                                     .foregroundColor(.white)

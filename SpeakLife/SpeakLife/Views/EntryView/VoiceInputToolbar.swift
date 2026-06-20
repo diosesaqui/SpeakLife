@@ -47,13 +47,14 @@ struct VoiceInputToolbar: View {
         .padding(.horizontal, 20)
         .padding(.vertical, DS.Spacing.sm)
         .background(
-            RoundedRectangle(cornerRadius: 16)
+            RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous)
                 .fill(Color.white.opacity(0.08))
                 .overlay(
-                    RoundedRectangle(cornerRadius: 16)
+                    RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous)
                         .stroke(Color.white.opacity(0.2), lineWidth: 1)
                 )
         )
+        .dsShadow(DS.Elevation.low)
         .alert("Microphone Permission Required", isPresented: $showingPermissionAlert) {
             Button("Settings") {
                 openSettings()
@@ -392,7 +393,8 @@ struct TipCard: View {
         }
         .padding(DS.Spacing.md)
         .background(Color(.systemGray6))
-        .cornerRadius(12)
+        .cornerRadius(DS.Radius.sm)
+        .dsShadow(DS.Elevation.low)
     }
 }
 

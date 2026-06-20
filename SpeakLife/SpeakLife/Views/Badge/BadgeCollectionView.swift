@@ -164,7 +164,7 @@ struct StatCard: View {
         VStack(spacing: DS.Spacing.xs) {
             Text(title.uppercased())
                 .font(.system(size: 12, weight: .medium))
-                .foregroundColor(.white.opacity(0.7))
+                .foregroundColor(DS.Palette.gold.opacity(0.9))
                 .tracking(1)
             
             Text(value)
@@ -177,13 +177,10 @@ struct StatCard: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 20)
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(Color.white.opacity(0.1))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 16)
-                        .stroke(color.opacity(0.3), lineWidth: 1)
-                )
+        .dsGlass(cornerRadius: DS.Radius.md)
+        .overlay(
+            RoundedRectangle(cornerRadius: DS.Radius.md)
+                .stroke(color.opacity(0.3), lineWidth: 1)
         )
     }
 }
@@ -423,22 +420,19 @@ struct NextMilestoneCard: View {
             // based on current progress toward this badge
         }
         .padding(20)
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(Color.white.opacity(0.05))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 16)
-                        .stroke(
-                            LinearGradient(
-                                colors: [
-                                    badge.type.primaryColor.opacity(0.5),
-                                    badge.type.secondaryColor.opacity(0.5)
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            ),
-                            lineWidth: 1
-                        )
+        .dsGlass(cornerRadius: DS.Radius.md)
+        .overlay(
+            RoundedRectangle(cornerRadius: DS.Radius.md)
+                .stroke(
+                    LinearGradient(
+                        colors: [
+                            badge.type.primaryColor.opacity(0.5),
+                            badge.type.secondaryColor.opacity(0.5)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    lineWidth: 1
                 )
         )
     }

@@ -83,12 +83,12 @@ struct ProfileView: View {
                 )
             VStack {
                 VStack {
-            Spacer().frame(height: 8)
-                    
+            Spacer().frame(height: DS.Spacing.xs)
+
             AppLogo(height: 80)
 
 
-            Spacer().frame(height: 8)
+            Spacer().frame(height: DS.Spacing.xs)
         }
                 List {
                     Section(header: Text("Premium".uppercased()).font(.caption)) {
@@ -146,7 +146,7 @@ struct ProfileView: View {
 
                     Section(footer: VStack {
                         Text(appVersion).font(.footnote)
-                        Spacer().frame(height: 8)
+                        Spacer().frame(height: DS.Spacing.xs)
                     }) {
 
                     }
@@ -431,7 +431,7 @@ struct ProfileView: View {
         let stats = enhancedStreakViewModel.streakStats
         let earnedBadges = enhancedStreakViewModel.badgeManager.allBadges.filter { $0.isUnlocked }
 
-        return HStack(spacing: 12) {
+        return HStack(spacing: DS.Spacing.sm) {
             Image(systemName: "flame.fill")
                 .foregroundColor(.orange)
 
@@ -947,22 +947,22 @@ struct StreakStatsProfileSheet: View {
     var body: some View {
         NavigationView {
             ScrollView(showsIndicators: false) {
-                VStack(spacing: 24) {
+                VStack(spacing: DS.Spacing.lg) {
 
                     // ── Streak Stats ──────────────────────────────────────
-                    VStack(spacing: 16) {
+                    VStack(spacing: DS.Spacing.md) {
                         Text("Your Streak")
                             .font(.title2.bold())
                             .frame(maxWidth: .infinity, alignment: .leading)
 
-                        HStack(spacing: 12) {
+                        HStack(spacing: DS.Spacing.sm) {
                             streakStatCard(icon: "flame.fill",              color: .orange, value: "\(viewModel.streakStats.currentStreak)",    label: "Current")
                             streakStatCard(icon: "trophy.fill",             color: .yellow, value: "\(viewModel.streakStats.longestStreak)",     label: "Best")
                             streakStatCard(icon: "calendar.badge.checkmark",color: .green,  value: "\(viewModel.streakStats.totalDaysCompleted)",label: "Total Days")
                         }
 
                         if viewModel.streakStats.streakFreezeAvailable {
-                            HStack(spacing: 8) {
+                            HStack(spacing: DS.Spacing.xs) {
                                 Text("🛡️")
                                 Text("Streak freeze available — one missed day won't break your streak")
                                     .font(.caption)
@@ -971,7 +971,7 @@ struct StreakStatsProfileSheet: View {
                             .padding(10)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .background(Color.blue.opacity(0.08))
-                            .clipShape(RoundedRectangle(cornerRadius: 10))
+                            .clipShape(RoundedRectangle(cornerRadius: DS.Radius.sm, style: .continuous))
                         }
                     }
                     .padding(.horizontal, 20)
@@ -979,7 +979,7 @@ struct StreakStatsProfileSheet: View {
                     Divider().padding(.horizontal, 20)
 
                     // ── Badges ────────────────────────────────────────────
-                    VStack(spacing: 16) {
+                    VStack(spacing: DS.Spacing.md) {
                         let allBadges   = viewModel.badgeManager.allBadges
                         let earnedCount = allBadges.filter { $0.isUnlocked }.count
 
@@ -990,7 +990,7 @@ struct StreakStatsProfileSheet: View {
                         }
                         .padding(.horizontal, 20)
 
-                        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
+                        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: DS.Spacing.md) {
                             ForEach(allBadges) { badge in
                                 streakBadgeCell(badge)
                             }
@@ -1019,7 +1019,7 @@ struct StreakStatsProfileSheet: View {
             Text(label).font(.caption).foregroundColor(.secondary)
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 16)
+        .padding(.vertical, DS.Spacing.md)
         .background(Color(.secondarySystemBackground))
         .clipShape(RoundedRectangle(cornerRadius: 14))
     }

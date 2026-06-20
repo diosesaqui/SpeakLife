@@ -67,7 +67,7 @@ struct TestimonyFeedView: View {
                         .padding()
                         .background(Color.blue)
                         .foregroundColor(.white)
-                        .cornerRadius(10)
+                        .cornerRadius(DS.Radius.sm)
                         .padding()
                 }
                 .buttonStyle(.dsPressable(feel: .tapSolid))
@@ -160,7 +160,7 @@ struct TestimonyFormView: View {
                                 .frame(maxWidth: .infinity)
                                 .padding()
                                 .foregroundColor(.white)
-                                .cornerRadius(10)
+                                .cornerRadius(DS.Radius.sm)
                         }
                     }
                     .modifier(SubmitButtonModifier(isDisabled: viewModel.isSubmitting || userName.isEmpty || testimonyText.count > 10))
@@ -187,6 +187,6 @@ struct SubmitButtonModifier: ViewModifier {
             .padding()
             .background(isDisabled ? Color.gray : Color.blue)
             .foregroundColor(.white)
-            .cornerRadius(10)
+            .cornerRadius(DS.Radius.sm)
     }
 }
