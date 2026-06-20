@@ -173,5 +173,21 @@ service cloud.firestore {
     match /bibleChatUsage/{id} {
       allow read, write: if false;
     }
+
+    // ─── Referral program ──────────────────────────────────────────────
+    // Written exclusively by the referral Cloud Functions via the admin SDK
+    // (which bypasses these rules). Keyed by RevenueCat appUserId, not auth
+    // uid, so clients must never read or tamper directly — they go through
+    // getReferralCode / redeemReferral / getReferralStatus.
+
+    match /referralCodes/{code} {
+      allow read, write: if false;
+    }
+    match /referralUsers/{id} {
+      allow read, write: if false;
+    }
+    match /referrals/{id} {
+      allow read, write: if false;
+    }
   }
 }

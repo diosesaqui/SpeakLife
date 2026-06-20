@@ -92,6 +92,7 @@ struct ProfileView: View {
                 List {
                     Section(header: Text("Premium".uppercased()).font(.caption)) {
                         subscriptionRow
+                        inviteFriendsRow
                         redeemCodeRow
                         //bookLink
                     }
@@ -200,6 +201,27 @@ struct ProfileView: View {
         }
     }
     
+    // Shown to non-subscribers only: a free month has real value only to someone
+    // who isn't currently paying (an RC promotional grant can't pause Apple's
+    // billing on an active sub).
+    @MainActor
+    @ViewBuilder
+    private var inviteFriendsRow: some View {
+        if !subscriptionStore.isPremium {
+            HStack {
+                Image(systemName: "person.2.fill")
+                    .foregroundColor(Constants.DAMidBlue)
+                NavigationLink(destination: LazyView(ReferralView())) {
+                    HStack {
+                        Text("Invite Friends, Get a Free Month", comment: "referral row")
+                        Spacer()
+                    }
+                }
+            }
+            .foregroundColor(.white)
+        }
+    }
+
     @MainActor
     private var redeemCodeRow: some View {
         Button {

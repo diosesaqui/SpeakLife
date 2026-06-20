@@ -79,13 +79,29 @@ Authorization: Bearer <REVENUECAT_SECRET_KEY>
 
 ## 4. Recommended program design
 
-### Double-sided reward (recommended)
-Single-sided ("only the inviter gets something") converts far worse. Give the
-**friend** a reason to accept too:
+### Single-sided, non-subscribers only (decided for v1)
+- **Inviter:** 3 successful referrals → **1 month Premium free**, granted as a
+  RevenueCat promotional entitlement.
+- **Invitee:** gets the app's **existing 3-day onboarding trial** (no separate
+  referral reward in v1).
+- **Only non-subscribers see the "earn a free month" UI.**
 
-- **Inviter:** 3 successful referrals → **1 month Premium free.**
-- **Invitee:** completing onboarding via a referral → **7-day Premium trial**
-  (or 1 free week). This is the Dropbox model and roughly doubles accept rates.
+**Why not double-sided?** The classic "double-sided doubles accept rates"
+finding assumes the invitee otherwise gets nothing. SpeakLife already gives every
+new user a 3-day trial, so the friend isn't empty-handed. We launch single-sided
+and keep the natural sweetener — *referred friends get an extended trial (e.g. 7
+days instead of 3)* — as a Phase 2 A/B test that reuses the same grant path.
+
+### Why a free month doesn't work for active subscribers
+A RevenueCat **promotional** entitlement does **not** stop Apple from billing an
+active auto-renewable subscription — Apple owns that billing. Granting "premium"
+to someone already paying just double-covers them while Apple keeps charging, so
+the free month only has real cash value to a **non-subscriber**. Therefore:
+- The "Invite friends, get a free month" row is gated on `!isPremium` (client).
+- `redeemReferral` additionally refuses to count an invitee RevenueCat reports as
+  already Premium (server).
+- Rewarding paying advocates (banked credit, exclusive content, recognition) is
+  deferred — revisit once the core loop is proven.
 
 ### What counts as a "successful" referral (anti-fraud)
 A referral only counts toward the inviter's 3 when the invitee:
@@ -213,6 +229,41 @@ Small, additive — no changes to existing Premium gating.
    funnel and retention of referred users.
 
 ---
+
+## 8b. What's built (Phase 1, in this branch)
+
+**Backend — `functions/referrals.js`** (wired into `functions/index.js`):
+- `getReferralCode` — returns/creates the user's code (e.g. `GRACE-7K2`).
+- `redeemReferral` — invitee path; runs all anti-fraud checks in a Firestore
+  transaction (one referral per invitee ever, no self-referral, not-already-
+  Premium), grants the inviter a promotional month at every 3rd qualified
+  referral, and self-heals failed grants via a `pendingRewards` counter.
+- `getReferralStatus` — code + progress for the UI; reconciles pending rewards.
+- Firestore lockdown for `referralCodes` / `referralUsers` / `referrals`
+  (server-only) added to `firestore.rules`.
+
+**Client (Swift):**
+- `Services/Referral/ReferralService.swift` — calls the three endpoints, mirrors
+  `BibleChatAIService` networking (incl. emulator flag), exposes `@Published`
+  progress, captures/redeems pending codes.
+- `Views/ProfileView/ReferralView.swift` — invite screen: progress bar, code,
+  "Invite Friends" → existing `ShareSheet`, and a "Have a code from a friend?"
+  redeem field.
+- `ProfileView.swift` — new **Invite Friends, Get a Free Month** row in the
+  Premium section, shown only when `!subscriptionStore.isPremium`.
+- Analytics events in `Events.swift`: `referral_screen_viewed`,
+  `referral_invite_tapped`, `referral_redeemed`, `referral_reward_earned`.
+
+**Deploy / config still required (not code):**
+- `firebase deploy --only functions:getReferralCode,functions:redeemReferral,functions:getReferralStatus`
+- `firebase deploy --only firestore:rules`
+- Ensure `REVENUECAT_SECRET_KEY` secret is set (already used by `bibleChat`).
+- In RevenueCat, confirm the `premium` entitlement accepts promotional grants.
+
+**Deferred to Phase 2:** Branch deferred-deep-link capture of `?ref=CODE` and the
+auto-redeem-on-onboarding-complete hook (`ReferralService` already has
+`capturePendingCode` / `redeemPendingCodeIfNeeded` stubs ready), plus the
+extended invitee trial.
 
 ## 9. Phased rollout
 

@@ -364,6 +364,8 @@
 		B3443A27A06B1D7578E6B584 /* WidgetIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59BFF68BFA515EAC0AC88C85 /* WidgetIntents.swift */; };
 		BCC8A7200000000000000001 /* BibleChatTopic.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCC8A7100000000000000001 /* BibleChatTopic.swift */; };
 		BCC8A7200000000000000002 /* BibleChatService.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCC8A7100000000000000002 /* BibleChatService.swift */; };
+		BCC8A7200000000000000010 /* ReferralService.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCC8A7100000000000000010 /* ReferralService.swift */; };
+		BCC8A7200000000000000011 /* ReferralView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCC8A7100000000000000011 /* ReferralView.swift */; };
 		BCC8A7200000000000000003 /* BibleChatViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCC8A7100000000000000003 /* BibleChatViewModel.swift */; };
 		BCC8A7200000000000000004 /* BibleChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCC8A7100000000000000004 /* BibleChatView.swift */; };
 		BCC8A7200000000000000005 /* BibleChatAnswerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCC8A7100000000000000005 /* BibleChatAnswerView.swift */; };
@@ -774,6 +776,8 @@
 		BA221D745BD49CF6BCFEBAA1 /* LifecycleNotificationService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LifecycleNotificationService.swift; sourceTree = "<group>"; };
 		BCC8A7100000000000000001 /* BibleChatTopic.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BibleChatTopic.swift; sourceTree = "<group>"; };
 		BCC8A7100000000000000002 /* BibleChatService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BibleChatService.swift; sourceTree = "<group>"; };
+		BCC8A7100000000000000010 /* ReferralService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReferralService.swift; sourceTree = "<group>"; };
+		BCC8A7100000000000000011 /* ReferralView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReferralView.swift; sourceTree = "<group>"; };
 		BCC8A7100000000000000003 /* BibleChatViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BibleChatViewModel.swift; sourceTree = "<group>"; };
 		BCC8A7100000000000000004 /* BibleChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BibleChatView.swift; sourceTree = "<group>"; };
 		BCC8A7100000000000000005 /* BibleChatAnswerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BibleChatAnswerView.swift; sourceTree = "<group>"; };
@@ -1461,6 +1465,14 @@
 			path = Models;
 			sourceTree = "<group>";
 		};
+		BCC8A7300000000000000010 /* Referral */ = {
+			isa = PBXGroup;
+			children = (
+				BCC8A7100000000000000010 /* ReferralService.swift */,
+			);
+			path = Referral;
+			sourceTree = "<group>";
+		};
 		7AA8706728DACB5100134ADB /* Services */ = {
 			isa = PBXGroup;
 			children = (
@@ -1483,6 +1495,7 @@
 				DC73B2698B17B267C7A6F437 /* TrialExperienceService.swift */,
 				A1B2C3D4E5F60000A1B2C3D4 /* PersonalDeclaration */,
 				C0010000000000000001AAAA /* SurveyPersonalizationEngine.swift */,
+				BCC8A7300000000000000010 /* Referral */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -1659,6 +1672,7 @@
 				7AF18C9D2A0DB056005A6E31 /* Tracker */,
 				7AA870B528DACCB700134ADB /* ProfileBarButton.swift */,
 				7AA870A828DACCB700134ADB /* ProfileView.swift */,
+				BCC8A7100000000000000011 /* ReferralView.swift */,
 				918D0ED751C243E98A66C8E3 /* SpiritualGrowthView.swift */,
 				7AF46FC42A41326100A45C01 /* AbbasLoveView.swift */,
 				7AF18C8729FF8CEE005A6E31 /* TipsView.swift */,
@@ -2309,6 +2323,8 @@
 				45567D582F29CA2700382072 /* BibleViewModel.swift in Sources */,
 				BCC8A7200000000000000001 /* BibleChatTopic.swift in Sources */,
 				BCC8A7200000000000000002 /* BibleChatService.swift in Sources */,
+				BCC8A7200000000000000010 /* ReferralService.swift in Sources */,
+				BCC8A7200000000000000011 /* ReferralView.swift in Sources */,
 				BCC8A7200000000000000003 /* BibleChatViewModel.swift in Sources */,
 				BCC8A7200000000000000004 /* BibleChatView.swift in Sources */,
 				BCC8A7200000000000000005 /* BibleChatAnswerView.swift in Sources */,

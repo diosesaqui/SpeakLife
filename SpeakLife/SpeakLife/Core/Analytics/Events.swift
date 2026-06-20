@@ -39,7 +39,13 @@ struct Event {
     static let devotionalShared = "devotional_shared"
     static let ninetyOnePsalmTapped = "ninety_one_psalm_tapped"
     static let leaveReviewShown = "leave_review_shown"
-    
+
+    // Referral program
+    static let referralScreenViewed = "referral_screen_viewed"
+    static let referralInviteTapped = "referral_invite_tapped"
+    static let referralRedeemed = "referral_redeemed"
+    static let referralRewardEarned = "referral_reward_earned"
+
     static let tabNavigated = "tab_navigated"
     static let audioPlayerOpened = "audio_player_opened"
     static let audioPlayerClosed = "audio_player_closed"
