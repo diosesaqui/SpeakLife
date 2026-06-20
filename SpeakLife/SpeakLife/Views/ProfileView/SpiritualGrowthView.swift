@@ -203,7 +203,7 @@ struct SpiritualGrowthView: View {
     // MARK: - Detailed Metrics Content
     
     private var detailedMetricsContent: some View {
-        VStack(spacing: 24) {
+        VStack(spacing: DS.Spacing.lg) {
             // Detailed stats grid
             detailedStatsGrid
             
@@ -222,7 +222,7 @@ struct SpiritualGrowthView: View {
     
     private var heroStatusCard: some View {
         VStack(spacing: 20) {
-            HStack(spacing: 24) {
+            HStack(spacing: DS.Spacing.lg) {
                 // Strength level visual
                 ZStack {
                     Circle()
@@ -260,7 +260,7 @@ struct SpiritualGrowthView: View {
                     }
                 }
                 
-                VStack(alignment: .leading, spacing: 12) {
+                VStack(alignment: .leading, spacing: DS.Spacing.sm) {
                     Text(burstTracker.strengthLevel.rawValue)
                         .font(.system(size: 28, weight: .bold))
                         .foregroundColor(burstTracker.strengthLevel.color)
@@ -270,7 +270,7 @@ struct SpiritualGrowthView: View {
                         .foregroundColor(.white.opacity(0.85))
                     
                     // Quick stats
-                    HStack(spacing: 16) {
+                    HStack(spacing: DS.Spacing.md) {
                         QuickStat(
                             icon: "flame.fill",
                             value: "\(burstTracker.getCompletionsForWeek().count)",

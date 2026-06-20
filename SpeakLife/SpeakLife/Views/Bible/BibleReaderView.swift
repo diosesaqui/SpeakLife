@@ -261,7 +261,7 @@ struct ReaderControlsView: View {
                 }
                 .padding()
                 .background(
-                    RoundedRectangle(cornerRadius: 20)
+                    RoundedRectangle(cornerRadius: DS.Radius.lg, style: .continuous)
                         .fill(.regularMaterial)
                 )
                 .padding()
@@ -310,10 +310,10 @@ struct VerseActionsSheet: View {
                 }
                 .padding()
                 .background(
-                    RoundedRectangle(cornerRadius: 12)
+                    RoundedRectangle(cornerRadius: DS.Radius.sm, style: .continuous)
                         .fill(Color(UIColor.secondarySystemBackground))
                 )
-                
+
                 // Actions
                 VStack(spacing: DS.Spacing.md) {
                     // Bookmark Toggle

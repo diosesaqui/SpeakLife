@@ -493,7 +493,7 @@ struct SubscriptionView: View {
                 subscriptionOption(product: currentSelection)
             }
         } else {
-            VStack(spacing: 8) {
+            VStack(spacing: DS.Spacing.xs) {
                 if let annual = subscriptionStore.currentOfferedPremium {
                     subscriptionOption(product: annual)
                 }
@@ -528,7 +528,7 @@ struct SubscriptionView: View {
                 .padding()
                 .frame(maxWidth: .infinity)
                 .background(
-                    RoundedRectangle(cornerRadius: 10)
+                    RoundedRectangle(cornerRadius: DS.Radius.sm)
                         .stroke(currentSelection == product ? Color.yellow : Color.gray, lineWidth: 3)
                 )
                 .shadow(color: currentSelection == product ? Color.yellow.opacity(0.6) : .clear, radius: 4)
@@ -558,7 +558,7 @@ struct SubscriptionView: View {
     
     
     private var goPremiumStack: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: DS.Spacing.xs) {
             Button(action: makePurchase) {
                 Text(currentSelection?.ctaButtonTitle ?? "Subscribe")
                     .font(.system(size: 18, weight: .bold))
@@ -589,8 +589,8 @@ struct SubscriptionView: View {
                     .underline()
                     .foregroundColor(.blue)
                 
-                Spacer().frame(width: 16)
-                
+                Spacer().frame(width: DS.Spacing.md)
+
                 Link("Terms & Conditions", destination: URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!)
                     .font(.caption)
                     .underline()

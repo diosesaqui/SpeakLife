@@ -230,15 +230,15 @@ struct CreateYourOwnView: View {
     
     private var declarationsList: some View {
         ScrollView {
-            LazyVStack(spacing: 12) {
+            LazyVStack(spacing: DS.Spacing.sm) {
                 ForEach(filteredDeclarations.reversed()) { declaration in
                     declarationRow(for: declaration)
-                        .padding(.horizontal, 16)
+                        .padding(.horizontal, DS.Spacing.md)
                 }
-                
+
                 listFooterSection
             }
-            .padding(.top, 12)
+            .padding(.top, DS.Spacing.sm)
         }
         .background(Color.clear)
     }
@@ -252,14 +252,14 @@ struct CreateYourOwnView: View {
     }
     
     private var listFooterSection: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: DS.Spacing.sm) {
             HStack {
                 Spacer()
                 AppLogo(height: 80)
                 Spacer()
             }
         }
-        .padding(.top, 12)
+        .padding(.top, DS.Spacing.sm)
         .padding(.bottom, 40)
     }
     
@@ -367,7 +367,7 @@ struct CreateYourOwnView: View {
                 .shadow(color: Constants.DAMidBlue.opacity(0.4), radius: 8, x: 0, y: 4)
                 .scaleEffect(1.02)
         }
-        .padding(.horizontal, 32)
+        .padding(.horizontal, DS.Spacing.xl)
     }
     
     
@@ -454,8 +454,8 @@ struct AffirmationDetailView: View {
                     .offset(y: -100)
                 
                 // Content
-                VStack(spacing: 20) {
-                    
+                VStack(spacing: DS.Spacing.lg) {
+
                     Text(affirmation.lastEdit?.toPrettyString() ?? "")
                         .font(.subheadline)
                         .foregroundColor(Color.gray)

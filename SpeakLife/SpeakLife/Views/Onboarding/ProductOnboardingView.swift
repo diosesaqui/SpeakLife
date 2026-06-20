@@ -571,7 +571,7 @@ private struct ProductMechanismScreen: View {
         VStack(spacing: 12) {
             Text(tag)
                 .font(.system(size: 11, weight: .bold, design: .rounded))
-                .foregroundColor(highlighted ? .white : .white.opacity(0.45))
+                .foregroundColor(highlighted ? DS.Palette.gold.opacity(0.9) : .white.opacity(0.45))
                 .kerning(1.0)
             Image(systemName: icon)
                 .font(.system(size: 30))

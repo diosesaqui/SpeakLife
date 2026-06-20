@@ -106,7 +106,7 @@ where Provider.ContentType == ContentType {
                     .padding(.horizontal, DS.Spacing.lg)
                     .padding(.vertical, DS.Spacing.sm)
                     .background(
-                        RoundedRectangle(cornerRadius: 12)
+                        RoundedRectangle(cornerRadius: DS.Radius.sm, style: .continuous)
                             .fill(Constants.DAMidBlue)
                     )
             }
