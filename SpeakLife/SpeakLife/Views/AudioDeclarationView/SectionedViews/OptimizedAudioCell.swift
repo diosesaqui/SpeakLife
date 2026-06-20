@@ -129,6 +129,18 @@ struct OptimizedAudioCell: View {
             }
             onTap()
         }
+        .contextMenu {
+            Button {
+                Juice.play(.tapSolid)
+                progressStore.togglePlayed(item.id)
+            } label: {
+                if progressStore.isPlayed(item.id) {
+                    Label("Mark as Unplayed", systemImage: "circle")
+                } else {
+                    Label("Mark as Played", systemImage: "checkmark.circle.fill")
+                }
+            }
+        }
     }
 }
 
