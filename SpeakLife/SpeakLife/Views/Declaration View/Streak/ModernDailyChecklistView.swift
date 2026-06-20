@@ -252,7 +252,19 @@ struct ModernDailyChecklistView: View {
                                 }
                             },
                             onNavigate: { task in handleTaskNavigation(task) },
-                            onAllComplete: { dismiss() }
+                            onAllComplete: {
+                                // "Done" on the day-complete celebration. As the
+                                // root Today tab there's nothing to dismiss, so send
+                                // the user into the declaration feed to keep going.
+                                // When opened modally, honor the real dismissal.
+                                if isHomeTab {
+                                    tabViewModel.goToDeclarations()
+                                } else if let onClose = onClose {
+                                    onClose()
+                                } else {
+                                    dismiss()
+                                }
+                            }
                         )
                         .padding(.horizontal, 20)
                         
