@@ -112,8 +112,8 @@ struct PricingOptionViewV1: View {
                             Text("Most popular • Best for transformation")
                                 .font(.system(size: 11, weight: .bold, design: .rounded))
                                 .foregroundColor(.white)
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 4)
+                                .padding(.horizontal, DS.Spacing.xs)
+                                .padding(.vertical, DS.Spacing.xxs)
                                 .background(
                                     Capsule()
                                         .fill(
@@ -196,10 +196,10 @@ struct PricingOptionViewV1: View {
     }
     
     private var backgroundGradient: some View {
-        RoundedRectangle(cornerRadius: 16, style: .continuous)
+        RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous)
             .fill(weeklySelectedGradient)
             .overlay(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous)
                     .stroke(
                         Color.white.opacity(0.9),
                         lineWidth: option.isSelected ? 3 : 1
@@ -250,9 +250,9 @@ struct FloatingCTAButtonV1: View {
                     .foregroundColor(.black.opacity(0.7))
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 16)
+            .padding(.vertical, DS.Spacing.md)
             .background(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous)
                     .fill(
                         LinearGradient(
                             gradient: Gradient(stops: [
@@ -360,11 +360,11 @@ struct OptimizedSubscriptionViewV1: View {
                     VStack(spacing: 0) {
                      //   headerSection
                         mainOfferSection
-                        Spacer().frame(height: 16)
+                        Spacer().frame(height: DS.Spacing.md)
                         pricingSection
                         transformationSection
-                        Spacer().frame(height: 8)
-                       
+                        Spacer().frame(height: DS.Spacing.xs)
+
                         trustSection
                         Spacer().frame(height: 150)
                     }
@@ -610,7 +610,7 @@ struct OptimizedSubscriptionViewV1: View {
             Image(systemName: "checkmark.shield.fill")
                 .foregroundColor(.green)
         }
-        .padding(.vertical, 12)
+        .padding(.vertical, DS.Spacing.sm)
         .padding(.horizontal, 20)
         .background(
             Capsule()
@@ -621,12 +621,12 @@ struct OptimizedSubscriptionViewV1: View {
                 ))
         )
         .padding(.horizontal)
-        .padding(.bottom, 24)
+        .padding(.bottom, DS.Spacing.lg)
     }
   
     
     private var mainOfferSection: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: DS.Spacing.sm) {
           //  appIconSection
             Spacer().frame(height: 70) // Increased to account for safe area
             headlineSection
@@ -655,9 +655,9 @@ struct OptimizedSubscriptionViewV1: View {
                 .resizable()
                 .aspectRatio(contentMode: .fit)
                 .frame(width: 70, height: 70)
-                .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+                .clipShape(RoundedRectangle(cornerRadius: DS.Radius.lg, style: .continuous))
                 .overlay(
-                    RoundedRectangle(cornerRadius: 24, style: .continuous)
+                    RoundedRectangle(cornerRadius: DS.Radius.lg, style: .continuous)
                         .stroke(
                             LinearGradient(
                                 gradient: Gradient(colors: [
@@ -675,7 +675,7 @@ struct OptimizedSubscriptionViewV1: View {
     }
     
     private var headlineSection: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: DS.Spacing.xs) {
             Text("Live Daily From Victory")
                 .font(.system(size: 28, weight: .bold, design: .rounded))
                 .foregroundColor(.white.opacity(0.95))
@@ -696,14 +696,14 @@ struct OptimizedSubscriptionViewV1: View {
     }
     
     private var valuePropsSection: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: DS.Spacing.xs) {
             Text("Activate What's Already Yours:")
                 .font(.system(size: 16, weight: .semibold, design: .rounded))
                 .foregroundColor(.white.opacity(0.9))
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, 20)
             
-            VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: DS.Spacing.sm) {
 //                ValuePropositionV1(icon: "waveform.badge.mic", text: "Personalized declarations that align you with Heaven's reality")
 //                ValuePropositionV1(icon: "brain.head.profile", text: "Anointed audio that rewires your thought life")
 //                ValuePropositionV1(icon: "book.circle", text: "Living Word that transforms from the inside out")
@@ -715,7 +715,7 @@ struct OptimizedSubscriptionViewV1: View {
                 ValuePropositionV1(icon: "shield.lefthalf.filled", text: "Peaceful, premium audio experiences")
             }
             .padding(.horizontal, 20)
-            .padding(.vertical, 12)
+            .padding(.vertical, DS.Spacing.sm)
             .background(
                 RoundedRectangle(cornerRadius: 20, style: .continuous)
                     .fill(
@@ -737,13 +737,13 @@ struct OptimizedSubscriptionViewV1: View {
     }
     
     private var valuePropsSupportSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: DS.Spacing.sm) {
             ForEach(valuePropsSupport, id: \.text) { prop in
                 prop
             }
         }
         .padding(.horizontal, 20)
-        .padding(.vertical, 12)
+        .padding(.vertical, DS.Spacing.sm)
         .background(
             RoundedRectangle(cornerRadius: 20, style: .continuous)
                 .fill(
@@ -764,7 +764,7 @@ struct OptimizedSubscriptionViewV1: View {
     }
     
     private var transformationSection: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: DS.Spacing.md) {
             Text("\"\(transformationStories[testimonialIndex])\"")
                 .font(.system(size: 17, weight: .medium, design: .rounded))
                 .foregroundColor(.white.opacity(0.9))
@@ -777,12 +777,12 @@ struct OptimizedSubscriptionViewV1: View {
                 .animation(.easeInOut(duration: 0.5), value: testimonialIndex)
                 .padding(.horizontal, 30)
         }
-        .padding(.vertical, 12)
+        .padding(.vertical, DS.Spacing.sm)
     }
     @ViewBuilder
     private var pricingSection: some View {
-        VStack(spacing: 12) {
-            Spacer().frame(height: 8)
+        VStack(spacing: DS.Spacing.sm) {
+            Spacer().frame(height: DS.Spacing.xs)
             
             PricingOptionViewV1(
             option: PricingOptionV1(
@@ -831,7 +831,7 @@ struct OptimizedSubscriptionViewV1: View {
             )
             .frame(height: 1)
             
-            VStack(spacing: 16) {
+            VStack(spacing: DS.Spacing.md) {
                 FloatingCTAButtonV1(
                     isYearlyPlan: isYearlyPlan,
                     isLifetimePlan: isLifetimePlan,
@@ -839,11 +839,11 @@ struct OptimizedSubscriptionViewV1: View {
                     action: makePurchase,
                     animateCTA: $animateCTA
                 )
-                
+
                 trustIndicators
             }
             .padding(.horizontal, 20)
-            .padding(.vertical, 16)
+            .padding(.vertical, DS.Spacing.md)
             .background(
                 // Semi-transparent blur effect background
                 Color.black.opacity(0.3)
@@ -857,8 +857,8 @@ struct OptimizedSubscriptionViewV1: View {
     }
     
     private var trustIndicators: some View {
-        HStack(spacing: 24) {
-            HStack(spacing: 4) {
+        HStack(spacing: DS.Spacing.lg) {
+            HStack(spacing: DS.Spacing.xxs) {
                 Image(systemName: "checkmark.circle.fill")
                     .font(.system(size: 12))
                     .foregroundColor(Color(red: 0.2, green: 0.8, blue: 0.2))
@@ -866,8 +866,8 @@ struct OptimizedSubscriptionViewV1: View {
                     .font(.system(size: 11, weight: .medium, design: .rounded))
                     .foregroundColor(.white.opacity(0.8))
             }
-            
-            HStack(spacing: 4) {
+
+            HStack(spacing: DS.Spacing.xxs) {
                 Image(systemName: "lock.fill")
                     .font(.system(size: 12))
                     .foregroundColor(Color(red: 0.2, green: 0.6, blue: 1.0))
@@ -879,8 +879,8 @@ struct OptimizedSubscriptionViewV1: View {
     }
     
     private var trustSection: some View {
-        VStack(spacing: 12) {
-            HStack(spacing: 4) {
+        VStack(spacing: DS.Spacing.sm) {
+            HStack(spacing: DS.Spacing.xxs) {
                 HStack(spacing: 2) {
                     ForEach(0..<5) { _ in
                         Image(systemName: "star.fill")
