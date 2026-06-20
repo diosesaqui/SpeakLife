@@ -145,8 +145,7 @@ struct UpNextCell: View {
     // MARK: - Favorite Actions
     private func toggleFavorite() {
         // Haptic feedback
-        let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
-        impactFeedback.impactOccurred()
+        Juice.play(.tapSolid)
         
         // Animate favorite button
         withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
@@ -567,8 +566,7 @@ struct AudioDeclarationView: View {
     
     private func handleFavoriteSwipeAction(for item: AudioDeclaration) {
         // Haptic feedback
-        let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
-        impactFeedback.impactOccurred()
+        Juice.play(.tapSolid)
         
         // Add a small delay to allow swipe animation to complete
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {

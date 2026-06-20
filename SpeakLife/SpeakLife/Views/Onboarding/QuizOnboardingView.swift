@@ -581,7 +581,7 @@ struct QuizOnboardingView: View {
     // MARK: - Step transitions
 
     private func handleAnswer(_ picked: QuizSegment) {
-        UIImpactFeedbackGenerator(style: .soft).impactOccurred()
+        Juice.play(.tapLight)
         selectedSegment = picked
         appState.onboardingSegment = picked.rawValue
         appState.onboardingQuizVersion = Self.quizVersion
@@ -605,7 +605,7 @@ struct QuizOnboardingView: View {
     }
 
     private func advanceFromMirror() {
-        UIImpactFeedbackGenerator(style: .soft).impactOccurred()
+        Juice.play(.tapLight)
         beliefIndex = 0
         currentBeliefAnswer = nil
         transition(to: .beliefSequence)
@@ -613,7 +613,7 @@ struct QuizOnboardingView: View {
     }
 
     private func selectBeliefAnswer(question: BeliefQuestion, answer: BeliefAnswer) {
-        UIImpactFeedbackGenerator(style: .soft).impactOccurred()
+        Juice.play(.tapLight)
         AnalyticsService.shared.track("onboarding_belief_answered", parameters: [
             "question_id": question.analyticsId,
             "question_index": question.rawValue,
@@ -628,7 +628,7 @@ struct QuizOnboardingView: View {
     }
 
     private func speakBeliefAnswer(question: BeliefQuestion, answer: BeliefAnswer) {
-        UIImpactFeedbackGenerator(style: .soft).impactOccurred()
+        Juice.play(.tapLight)
         AnalyticsService.shared.track("onboarding_belief_spoken", parameters: [
             "question_id": question.analyticsId,
             "question_index": question.rawValue,
@@ -653,7 +653,7 @@ struct QuizOnboardingView: View {
     }
 
     private func handleBurdenAnswer(_ burden: HeaviestBurden) {
-        UIImpactFeedbackGenerator(style: .soft).impactOccurred()
+        Juice.play(.tapLight)
         selectedBurden = burden
 
         // Persist downstream so HighConversionPaywallView's surveyEngine path
@@ -696,7 +696,7 @@ struct QuizOnboardingView: View {
     }
 
     private func advanceFromMatchedDeclaration() {
-        UIImpactFeedbackGenerator(style: .soft).impactOccurred()
+        Juice.play(.tapLight)
         let timeOnScreen = Int(Date().timeIntervalSince(stepEnteredAt))
         AnalyticsService.shared.track("onboarding_first_declaration_spoken", parameters: [
             "segment": segment.rawValue,
@@ -708,7 +708,7 @@ struct QuizOnboardingView: View {
     }
 
     private func advanceFromPersonalDeclaration() {
-        UIImpactFeedbackGenerator(style: .soft).impactOccurred()
+        Juice.play(.tapLight)
         appState.hasPersonalDeclaration = savedPersonalDeclaration != nil
         AnalyticsService.shared.track("onboarding_personal_declaration_completed", parameters: [
             "segment": segment.rawValue,
@@ -725,7 +725,7 @@ struct QuizOnboardingView: View {
     }
 
     private func advanceFromCommitmentHold() {
-        UIImpactFeedbackGenerator(style: .soft).impactOccurred()
+        Juice.play(.tapLight)
         // Apply segment defaults BEFORE the paywall renders so the paywall
         // (and the analytics events fired from it) see the chosen segment.
         applySegmentDefaults()
@@ -752,7 +752,7 @@ struct QuizOnboardingView: View {
     }
 
     private func advanceFromNotificationTime() {
-        UIImpactFeedbackGenerator(style: .soft).impactOccurred()
+        Juice.play(.tapLight)
         if let notifTime = notificationResponses.notificationTime {
             appState.startTimeIndex = notifTime.startTimeIndex
             appState.endTimeIndex   = notifTime.endTimeIndex
@@ -803,7 +803,7 @@ struct QuizOnboardingView: View {
     }
 
     private func advanceFromRating() {
-        UIImpactFeedbackGenerator(style: .soft).impactOccurred()
+        Juice.play(.tapLight)
         // Rating now lives right after personalDeclaration (the emotional peak),
         // so advancing continues into the commitment hold and then the paywall.
         transition(to: .commitmentHold)

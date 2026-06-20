@@ -21,17 +21,17 @@ struct ContentInputView: View {
         VStack(spacing: 0) {
             // Top section with prompts - more compact when keyboard is present
             if keyboardHeight == 0 {
-                VStack(spacing: 12) {
+                VStack(spacing: DS.Spacing.sm) {
                     contextualPromptSection
                     voiceCorrectionsSection
                 }
-                .padding(.bottom, 12)
+                .padding(.bottom, DS.Spacing.sm)
             } else {
                 // Minimal header when keyboard is present
                 VStack(spacing: 6) {
                     voiceCorrectionsSection
                 }
-                .padding(.bottom, 8)
+                .padding(.bottom, DS.Spacing.xs)
             }
             
             // Text input section - takes most space
@@ -40,7 +40,7 @@ struct ContentInputView: View {
             // Voice quick corrections
             if voiceManager.hasContent || voiceManager.voiceInputState == .error {
                 VoiceQuickCorrections(voiceManager: voiceManager, text: $text)
-                    .padding(.vertical, 8)
+                    .padding(.vertical, DS.Spacing.xs)
             }
             
             // Bottom guidance - minimal when keyboard is present

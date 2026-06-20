@@ -121,7 +121,7 @@ struct OptimizedAudioCell: View {
         .frame(width: configuration.itemWidth)
         .contentShape(Rectangle())
         .scaleEffect(isPressed ? 0.95 : 1.0)
-        .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isPressed)
+        .animation(DS.Motion.quick, value: isPressed)
         .onTapGesture {
             isPressed = true
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
@@ -187,7 +187,7 @@ struct CompactAudioCell: View {
                 .fill(.ultraThinMaterial)
         )
         .scaleEffect(isPressed ? 0.97 : 1.0)
-        .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isPressed)
+        .animation(DS.Motion.quick, value: isPressed)
         .onTapGesture {
             isPressed = true
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {

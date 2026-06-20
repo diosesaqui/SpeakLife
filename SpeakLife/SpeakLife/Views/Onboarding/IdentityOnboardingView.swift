@@ -130,7 +130,7 @@ struct IdentityOnboardingView: View {
     }
 
     private func advance() {
-        UIImpactFeedbackGenerator(style: .soft).impactOccurred()
+        Juice.play(.tapLight)
         Analytics.logEvent("identity_step_completed", parameters: ["step": currentStep.rawValue])
 
         switch currentStep {
@@ -684,7 +684,7 @@ private struct IdentityPickerScreen: View {
         let truth = IdentityTruth.of(burden)
         let isSelected = responses.heaviestBurden == burden
         return Button(action: {
-            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            Juice.play(.tapLight)
             responses.heaviestBurden = burden
         }) {
             HStack(spacing: 14) {

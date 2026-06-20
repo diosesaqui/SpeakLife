@@ -128,8 +128,7 @@ struct SaveConfirmationView: View {
             }
             
             // Add haptic feedback
-            let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
-            impactFeedback.impactOccurred()
+            Juice.play(.tapSolid)
         }
         
         // Show particles

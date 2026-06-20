@@ -988,7 +988,7 @@ struct HighConversionPaywallView: View {
             isShowingError = true
             return
         }
-        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+        Juice.play(.tapSolid)
         AnalyticsService.shared.track("paywall_cta_tapped", parameters: [
             "variant": paywallVariant,
             "plan": selectedPlan.rawValue,
@@ -1361,7 +1361,7 @@ struct WelcomeOfferView: View {
             isShowingError = true
             return
         }
-        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+        Juice.play(.tapSolid)
         AnalyticsService.shared.track("welcome_offer_cta_tapped", parameters: [
             "product_id": product.id
         ])

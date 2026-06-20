@@ -140,8 +140,7 @@ struct DailyVerseDetailView: View {
         UIPasteboard.general.string = text
         
         // Show feedback (you could add a toast/banner here)
-        let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
-        impactFeedback.impactOccurred()
+        Juice.play(.tapSolid)
     }
 }
 

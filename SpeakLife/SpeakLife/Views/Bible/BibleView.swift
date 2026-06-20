@@ -57,7 +57,7 @@ struct BibleView: View {
                 ToolbarItem(placement: .navigationBarLeading) {
                     if !viewModel.showBookSelection {
                         Button(action: {
-                            withAnimation(.spring()) {
+                            withAnimation(DS.Motion.smooth) {
                                 if viewModel.currentChapter != nil {
                                     viewModel.backToChapters()
                                 } else {
@@ -329,8 +329,7 @@ struct BibleBookSelectionView: View {
             } else if !viewModel.testamentSections.isEmpty {
                 ScrollView {
                     BibleChatEntryCard {
-                        let generator = UIImpactFeedbackGenerator(style: .light)
-                        generator.impactOccurred()
+                        Juice.play(.tapLight)
                         showBibleChat = true
                     }
                     .padding(.horizontal)

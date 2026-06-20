@@ -550,7 +550,7 @@ struct OptimizedTaskRow: View {
                     .frame(width: 80, height: 80)
                     .contentShape(Rectangle())
                     .onTapGesture {
-                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                        Juice.play(.tapLight)
                         withAnimation(.easeOut(duration: 0.1)) {
                             isPressed = true
                         }
@@ -676,10 +676,10 @@ struct QuickActionTile: View {
 
     var body: some View {
         Button(action: {
-            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            Juice.play(.tapLight)
             action()
         }) {
-            VStack(spacing: 8) {
+            VStack(spacing: DS.Spacing.xs) {
                 ZStack {
                     Circle().fill(tint.opacity(0.22)).frame(width: 46, height: 46)
                     Image(systemName: icon)

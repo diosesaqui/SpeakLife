@@ -140,8 +140,7 @@ struct VoiceInputToolbar: View {
             voiceManager.startListening()
             
             // Haptic feedback
-            let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
-            impactFeedback.impactOccurred()
+            Juice.play(.tapSolid)
         } else {
             requestPermissions()
         }
@@ -166,8 +165,7 @@ struct VoiceInputToolbar: View {
         }
         
         // Gentle haptic feedback
-        let impactFeedback = UIImpactFeedbackGenerator(style: .light)
-        impactFeedback.impactOccurred()
+        Juice.play(.tapLight)
     }
     
     private func togglePauseResume() {

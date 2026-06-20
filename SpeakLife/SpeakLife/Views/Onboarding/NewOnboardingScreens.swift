@@ -104,7 +104,7 @@ struct EmotionalHookScreen: View {
                 .padding(.horizontal, 16)
                 Spacer()
                 Button(action: {
-                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                    Juice.play(.tapLight)
                     onContinue()
                 }) {
                     Text("Start speaking life")
@@ -213,7 +213,7 @@ struct TransformationSocialProofScreen: View {
                 }
                 Spacer()
                 Button(action: {
-                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                    Juice.play(.tapLight)
                     onContinue()
                 }) {
                     Text("Start my transformation")
@@ -385,7 +385,7 @@ struct CategorySelectScreen: View {
                     ], spacing: size.height < 700 ? 7 : 9) {
                         ForEach(topCategories, id: \.self) { category in
                             Button(action: {
-                                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                                Juice.play(.tapLight)
                                 selectionVM.selectExperience(category)
                             }) {
                                 HStack(spacing: 7) {
@@ -428,7 +428,7 @@ struct CategorySelectScreen: View {
                     // CTA — sits directly below grid, no floating gap
                     VStack(spacing: 10) {
                         Button(action: {
-                            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                            Juice.play(.tapSolid)
                             if selectionVM.selectedExperiences.isEmpty {
                                 selectionVM.selectedExperiences = [.faith]
                             }
@@ -599,7 +599,7 @@ struct ScriptureAnchorScreen: View {
     
     var continueButton: some View {
         Button(action: {
-            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            Juice.play(.tapLight)
             onContinue()
         }) {
             HStack(spacing: 8) {
@@ -740,7 +740,7 @@ struct ReframeProblemScreen: View {
     
     var continueButton: some View {
         Button(action: {
-            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            Juice.play(.tapLight)
             onContinue()
         }) {
             Text("Show me")
@@ -886,7 +886,7 @@ struct JesusMethodScreen: View {
     
     var continueButton: some View {
         Button(action: {
-            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            Juice.play(.tapLight)
             onContinue()
         }) {
             Text("I want this")
@@ -953,7 +953,7 @@ struct SelfDiagnosisScreen: View {
                             text: option.1,
                             isSelected: selectedOption == option.0,
                             onTap: {
-                                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                                Juice.play(.tapLight)
                                 withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
                                     selectedOption = option.0
                                 }
@@ -1151,7 +1151,7 @@ struct TruthGapScreen: View {
     
     var continueButton: some View {
         Button(action: {
-            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            Juice.play(.tapLight)
             onContinue()
         }) {
             Text("Teach me how")
@@ -1270,7 +1270,7 @@ struct ApplicationScreen: View {
     
     var continueButton: some View {
         Button(action: {
-            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            Juice.play(.tapLight)
             onContinue()
         }) {
             Text("That changes everything")
@@ -1326,7 +1326,7 @@ struct MicroCommitmentScreen: View {
                             text: option.1,
                             isSelected: selectedOption == option.0,
                             onTap: {
-                                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                                Juice.play(.tapLight)
                                 withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
                                     selectedOption = option.0
                                 }
@@ -1529,7 +1529,7 @@ struct PositionSpeakLifeScreen: View {
     
     var continueButton: some View {
         Button(action: {
-            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            Juice.play(.tapLight)
             onContinue()
         }) {
             Text("Try your first declaration")
@@ -1756,7 +1756,7 @@ struct LiveDeclarationPreviewScreen: View {
                 // CTA
                 VStack(spacing: 12) {
                     Button(action: {
-                        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                        Juice.play(.tapSolid)
                         onContinue()
                     }) {
                         Text("I declare this over my life")
@@ -1904,7 +1904,7 @@ struct AudioFeatureScreen: View {
                         .padding(.horizontal, 8)
 
                     Button(action: {
-                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                        Juice.play(.tapLight)
                         onContinue()
                     }) {
                         Text("I want to hear His Word daily")
@@ -2037,7 +2037,7 @@ struct DailyDevotionalFeatureScreen: View {
                         .padding(.horizontal, 8)
 
                     Button(action: {
-                        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                        Juice.play(.tapSolid)
                         onContinue()
                     }) {
                         Text("Jesus loves ME personally ✝️")
@@ -2209,7 +2209,7 @@ struct WarriorRoomFeatureScreen: View {
                         .multilineTextAlignment(.center)
 
                     Button(action: {
-                        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                        Juice.play(.tapSolid)
                         onContinue()
                     }) {
                         Text("I want to stand with others")
@@ -2351,7 +2351,7 @@ struct DailyCommitmentScreen: View {
                 // CTA
                 VStack(spacing: 10) {
                     Button(action: {
-                        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                        Juice.play(.tapSolid)
                         onContinue()
                     }) {
                         Text("Start My Daily Practice")

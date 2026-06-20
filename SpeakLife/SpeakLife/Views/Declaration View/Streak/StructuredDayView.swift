@@ -225,7 +225,7 @@ struct NextUpTaskCard: View {
             Spacer(minLength: 16)
 
             HStack {
-                Button(action: { UIImpactFeedbackGenerator(style: .medium).impactOccurred(); onNavigate(task) }) {
+                Button(action: { Juice.play(.tapSolid); onNavigate(task) }) {
                     Text(ctaLabel)
                         .font(.system(size: 15, weight: .semibold)).foregroundColor(.white)
                         .padding(.horizontal, 20).padding(.vertical, 11)
@@ -334,7 +334,7 @@ struct DayCelebrationView: View {
         .onAppear {
             withAnimation(.spring(response: 0.5, dampingFraction: 0.6)) { scale = 1.0; opacity = 1.0 }
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                UINotificationFeedbackGenerator().notificationOccurred(.success)
+                Juice.play(.success)
             }
         }
     }

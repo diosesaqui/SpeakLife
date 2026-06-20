@@ -244,7 +244,7 @@ struct PayWhatYouCanView: View {
 
     private func makePurchase() {
         guard let product = selectedProduct else { return }
-        UIImpactFeedbackGenerator(style: .soft).impactOccurred()
+        Juice.play(.tapLight)
         Analytics.logEvent("pay_what_you_can_tapped", parameters: [
             "product_id": product.id,
             "price": NSDecimalNumber(decimal: product.price).doubleValue

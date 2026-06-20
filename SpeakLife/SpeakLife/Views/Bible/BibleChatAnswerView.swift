@@ -219,8 +219,7 @@ struct BibleChatAnswerView: View {
             Button {
                 let pasteboard = UIPasteboard.general
                 pasteboard.string = shareText
-                let generator = UINotificationFeedbackGenerator()
-                generator.notificationOccurred(.success)
+                Juice.play(.success)
                 AnalyticsService.shared.trackContentInteraction(
                     contentType: "bible_chat_topic",
                     contentId: topic.id,

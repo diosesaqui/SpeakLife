@@ -146,49 +146,49 @@ struct OnboardingView: View {
     private func advance() {
         switch selection {
         case .emotionalHook:
-            impactMed.impactOccurred()
+            Juice.play(.tapLight)
             selection = .categorySelect
             onboardingTab = selection.rawValue
             Analytics.logEvent("onboarding_hook_done", parameters: nil)
 
         case .categorySelect:
-            impactMed.impactOccurred()
+            Juice.play(.tapLight)
             selection = .livePreview
             onboardingTab = selection.rawValue
             Analytics.logEvent("onboarding_category_done", parameters: nil)
 
         case .livePreview:
-            impactMed.impactOccurred()
+            Juice.play(.tapLight)
             selection = .socialProof
             onboardingTab = selection.rawValue
             Analytics.logEvent("onboarding_preview_done", parameters: nil)
 
         case .socialProof:
-            impactMed.impactOccurred()
+            Juice.play(.tapLight)
             selection = .dailyCommitment
             onboardingTab = selection.rawValue
             Analytics.logEvent("onboarding_social_proof_done", parameters: nil)
 
         case .dailyCommitment:
-            impactMed.impactOccurred()
+            Juice.play(.tapLight)
             selection = .personalDeclaration
             onboardingTab = selection.rawValue
             Analytics.logEvent("onboarding_commitment_done", parameters: nil)
 
         case .personalDeclaration:
-            impactMed.impactOccurred()
+            Juice.play(.tapLight)
             selection = .subscription
             onboardingTab = selection.rawValue
             Analytics.logEvent("onboarding_personal_declaration_done", parameters: nil)
 
         case .subscription:
-            impactMed.impactOccurred()
+            Juice.play(.tapLight)
             selection = .notification
             onboardingTab = selection.rawValue
             Analytics.logEvent("onboarding_subscription_done", parameters: nil)
 
         case .notification:
-            impactMed.impactOccurred()
+            Juice.play(.tapLight)
             Analytics.logEvent("onboarding_notification_done", parameters: nil)
             dismissOnboarding()
         }

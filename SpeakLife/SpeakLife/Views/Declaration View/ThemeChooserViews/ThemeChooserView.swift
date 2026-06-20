@@ -111,7 +111,7 @@ struct ThemeChooserView: View {
         Button {
             if !subscriptionStore.isPremium {
                 presentPremiumView()
-                Selection.shared.selectionFeedback()
+                Juice.play(.tapLight)
             } else {
                 showingImagePicker = true
             }

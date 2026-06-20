@@ -73,7 +73,7 @@ struct BootcampMainView: View {
                             isSelected: viewModel.selectedTab == tab,
                             namespace: animation
                         ) {
-                            withAnimation(.spring(response: 0.3)) {
+                            withAnimation(DS.Motion.quick) {
                                 viewModel.selectedTab = tab
                             }
                         }

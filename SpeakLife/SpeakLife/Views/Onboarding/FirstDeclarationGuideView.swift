@@ -291,11 +291,11 @@ struct FirstDeclarationGuideView: View {
                     // Only proceed if declaration text is not empty
                     guard !declarationText.isEmpty else { 
                         // Gentle haptic to indicate they need to write something
-                        UIImpactFeedbackGenerator(style: .soft).impactOccurred()
-                        return 
+                        Juice.play(.tapLight)
+                        return
                     }
                     
-                    UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                    Juice.play(.tapSolid)
                     
                     // Save the declaration
                     saveDeclaration()

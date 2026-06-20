@@ -119,7 +119,7 @@ struct AudioContentRow: View {
             )
             .scaleEffect(showRemoveAnimation ? 0.95 : 1.0)
             .opacity(showRemoveAnimation ? 0.7 : 1.0)
-            .animation(.spring(response: 0.3, dampingFraction: 0.7), value: showRemoveAnimation)
+            .animation(DS.Motion.quick, value: showRemoveAnimation)
             .animation(.spring(response: 0.4, dampingFraction: 0.8), value: shouldGlow)
         }
         .buttonStyle(PlainButtonStyle())
@@ -135,7 +135,7 @@ struct AudioContentRow: View {
     // MARK: - Actions
     
     private func handlePlay() {
-        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        Juice.play(.tapLight)
         
         withAnimation(.easeInOut(duration: 0.4)) {
             shouldGlow = true
@@ -150,9 +150,9 @@ struct AudioContentRow: View {
     }
     
     private func handleRemove() {
-        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+        Juice.play(.unfavorite)
         
-        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+        withAnimation(DS.Motion.quick) {
             showRemoveAnimation = true
         }
         

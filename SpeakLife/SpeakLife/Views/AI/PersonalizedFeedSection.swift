@@ -257,8 +257,7 @@ struct TodayRecommendationsSection: View {
     private func navigateToDeclaration(_ declaration: Declaration) {
         
         // Haptic feedback for selection
-        let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
-        impactFeedback.impactOccurred()
+        Juice.play(.tapSolid)
         
         // Try multiple dismissal approaches since CategoryChooserView can be presented in different ways
         DispatchQueue.main.async {

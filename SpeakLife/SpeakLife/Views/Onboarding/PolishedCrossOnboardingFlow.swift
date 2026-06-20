@@ -178,7 +178,7 @@ struct PolishedCrossOnboardingFlow: View {
                 completeOnboarding()
             }
         }
-        impactMed.impactOccurred()
+        Juice.play(.tapLight)
     }
     
     func askNotificationPermission() {

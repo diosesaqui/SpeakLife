@@ -193,7 +193,7 @@ struct OutcomesOnboardingView: View {
     }
 
     private func advance() {
-        UIImpactFeedbackGenerator(style: .soft).impactOccurred()
+        Juice.play(.tapLight)
         // flow_schema 2 = matched-to-warfare layout (stakes + experience recap + extended quiz + plan reveal); 1 = original short outcomes flow. Bump when step raw values are renumbered again.
         AnalyticsService.shared.track("outcomes_step_completed", parameters: ["step": currentStep.rawValue, "flow_schema": 2])
 
@@ -711,7 +711,7 @@ private struct OutcomePickerScreen: View {
         let choice = OutcomeChoice.of(burden)
         let isSelected = responses.heaviestBurden == burden
         return Button(action: {
-            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            Juice.play(.tapLight)
             responses.heaviestBurden = burden
         }) {
             HStack(spacing: 14) {

@@ -93,8 +93,7 @@ struct DemoExperienceView: View {
                     if !hasSpoken {
                         Button(action: {
                             // Haptic feedback
-                            let impactFeedback = UIImpactFeedbackGenerator(style: .heavy)
-                            impactFeedback.impactOccurred()
+                            Juice.play(.tapSolid)
                             
                             // Button press animation
                             withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {

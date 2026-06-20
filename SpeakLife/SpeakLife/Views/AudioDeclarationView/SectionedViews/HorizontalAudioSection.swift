@@ -218,7 +218,7 @@ struct FeaturedAudioCell: View {
         .cornerRadius(16)
         .shadow(color: .black.opacity(0.3), radius: 8, x: 0, y: 4)
         .scaleEffect(isPressed ? 0.95 : 1.0)
-        .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isPressed)
+        .animation(DS.Motion.quick, value: isPressed)
         .onTapGesture {
             isPressed = true
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {

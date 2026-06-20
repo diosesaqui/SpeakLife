@@ -94,10 +94,10 @@ struct StreakInfoBottomSheet: View {
 
             PrimaryActionButton(title: "Got it!") {
                 isShown = false
-                UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                Juice.play(.tapSolid)
             }
             .padding(.horizontal)
-            .padding(.bottom, 16)
+            .padding(.bottom, DS.Spacing.md)
         }
         .padding(.top, 10)
         .background(

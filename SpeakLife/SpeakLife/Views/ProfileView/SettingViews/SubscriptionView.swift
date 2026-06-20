@@ -270,7 +270,7 @@ struct OfferPageView: View {
     }
     
     private func makePurchase(iap: String) {
-        impactMed.impactOccurred()
+        Juice.play(.tapLight)
         Task {
             withAnimation {
                 declarationStore.isPurchasing = true
@@ -625,7 +625,7 @@ struct SubscriptionView: View {
     }
     
     private func makePurchase() {
-        UIImpactFeedbackGenerator(style: .soft).impactOccurred()
+        Juice.play(.tapLight)
         Task {
             declarationStore.isPurchasing = true
             defer {

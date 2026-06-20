@@ -117,7 +117,7 @@ struct ContentRow: View {
     // MARK: - Private Methods
     
     private func handleRowTap() {
-        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        Juice.play(.tapLight)
         triggerGlowAnimation()
         trackContentSelection()
         onSelect?()

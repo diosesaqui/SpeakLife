@@ -310,7 +310,7 @@ struct DeclarationView: View {
         }
         return CapsuleImageButton(title: title) {
             handleDevotionalPresentation(true)
-            Selection.shared.selectionFeedback()
+            Juice.play(.tapLight)
         }
     }
     
@@ -340,7 +340,7 @@ struct DeclarationView: View {
         
         CapsuleImageButton(title: "crown.fill") {
             premiumView()
-            Selection.shared.selectionFeedback()
+            Juice.play(.tapLight)
         }
         .opacity(appState.showScreenshotLabel ? 0 : 1)
         .foregroundStyle(Constants.gold)

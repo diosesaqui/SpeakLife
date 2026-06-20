@@ -193,7 +193,7 @@ struct WarfareOnboardingView: View {
     }
 
     private func advance() {
-        UIImpactFeedbackGenerator(style: .soft).impactOccurred()
+        Juice.play(.tapLight)
         // flow_schema 3 = victory-vision inserted after the picker (2 = pre-victory-vision, 1 = pre-renumbering); bump when step raw values are renumbered again.
         AnalyticsService.shared.track("warfare_step_completed", parameters: ["step": currentStep.rawValue, "flow_schema": 3])
 
@@ -639,7 +639,7 @@ private struct WarfareTakeBackPickerScreen: View {
         let choice = WarfareTakeBackChoice.of(burden)
         let isSelected = responses.heaviestBurden == burden
         return Button(action: {
-            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            Juice.play(.tapLight)
             responses.heaviestBurden = burden
         }) {
             HStack(spacing: 14) {

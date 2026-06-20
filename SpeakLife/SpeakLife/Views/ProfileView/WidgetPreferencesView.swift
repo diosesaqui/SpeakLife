@@ -189,7 +189,7 @@ struct CategoryCard: View {
                 .stroke(isSelected ? Color.clear : Color(UIColor.systemGray4), lineWidth: 1)
         )
         .scaleEffect(isSelected ? 1.02 : 1.0)
-        .animation(.spring(response: 0.3), value: isSelected)
+        .animation(DS.Motion.quick, value: isSelected)
         .onTapGesture {
             onTap()
         }

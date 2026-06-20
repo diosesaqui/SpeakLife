@@ -111,8 +111,8 @@ struct PersonalInsightCard: View {
                 
                 Spacer()
                 
-                Button(action: { 
-                    withAnimation(.spring()) {
+                Button(action: {
+                    withAnimation(DS.Motion.smooth) {
                         isExpanded.toggle()
                     }
                 }) {

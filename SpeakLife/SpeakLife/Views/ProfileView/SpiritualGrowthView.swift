@@ -80,7 +80,7 @@ struct SpiritualGrowthView: View {
                     Color.black.opacity(0.5)
                         .ignoresSafeArea()
                         .onTapGesture {
-                            withAnimation(.spring()) {
+                            withAnimation(DS.Motion.smooth) {
                                 showingInfo = false
                             }
                         }
@@ -133,7 +133,7 @@ struct SpiritualGrowthView: View {
             
             // Info button
             Button {
-                withAnimation(.spring()) {
+                withAnimation(DS.Motion.smooth) {
                     showingInfo = true
                 }
             } label: {
@@ -164,7 +164,7 @@ struct SpiritualGrowthView: View {
                 icon: "chart.xyaxis.line",
                 isSelected: selectedTab == 0
             ) {
-                withAnimation(.spring()) {
+                withAnimation(DS.Motion.smooth) {
                     selectedTab = 0
                 }
             }
@@ -174,7 +174,7 @@ struct SpiritualGrowthView: View {
                 icon: "chart.bar.doc.horizontal",
                 isSelected: selectedTab == 1
             ) {
-                withAnimation(.spring()) {
+                withAnimation(DS.Motion.smooth) {
                     selectedTab = 1
                 }
             }
@@ -859,7 +859,7 @@ struct InfoSheetContent: View {
                 Spacer()
                 
                 Button(action: {
-                    withAnimation(.spring()) {
+                    withAnimation(DS.Motion.smooth) {
                         isPresented = false
                     }
                 }) {

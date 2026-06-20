@@ -126,9 +126,8 @@ struct BibleChatView: View {
             LazyVGrid(columns: columns, spacing: 14) {
                 ForEach(Array(viewModel.filteredTopics.enumerated()), id: \.element.id) { index, topic in
                     TopicCardView(topic: topic, namespace: topicNamespace) {
-                        let generator = UIImpactFeedbackGenerator(style: .light)
-                        generator.impactOccurred()
-                        withAnimation(.spring(response: 0.45, dampingFraction: 0.78)) {
+                        Juice.play(.tapLight)
+                        withAnimation(DS.Motion.smooth) {
                             viewModel.select(topic)
                         }
                     }
@@ -151,8 +150,7 @@ struct BibleChatView: View {
 
     private var suggestTopicButton: some View {
         Button {
-            let generator = UIImpactFeedbackGenerator(style: .light)
-            generator.impactOccurred()
+            Juice.play(.tapLight)
             AnalyticsService.shared.trackUserAction(
                 "bible_chat_suggest_topic_tap",
                 category: "bible_chat"
@@ -515,7 +513,7 @@ struct BibleChatConversationView: View {
                     .padding(.leading, 4)
                 ForEach(Array(starters.prefix(5).enumerated()), id: \.element.id) { index, topic in
                     StarterCard(topic: topic) {
-                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                        Juice.play(.tapLight)
                         viewModel.send(topic.question, isPremium: subscriptionStore.isPremium)
                     }
                     .opacity(heroAppeared ? 1 : 0)

@@ -23,7 +23,7 @@ where Provider.ContentType == ContentType {
             ZStack {
                 // Main content
                 ScrollView(.vertical, showsIndicators: false) {
-                    VStack(spacing: 16) {
+                    VStack(spacing: DS.Spacing.md) {
                         // Pull to refresh indicator
                         if refreshing {
                             refreshIndicator
@@ -103,8 +103,8 @@ where Provider.ContentType == ContentType {
                 Label("Refresh", systemImage: "arrow.clockwise")
                     .font(.headline)
                     .foregroundColor(.white)
-                    .padding(.horizontal, 24)
-                    .padding(.vertical, 12)
+                    .padding(.horizontal, DS.Spacing.lg)
+                    .padding(.vertical, DS.Spacing.sm)
                     .background(
                         RoundedRectangle(cornerRadius: 12)
                             .fill(Constants.DAMidBlue)

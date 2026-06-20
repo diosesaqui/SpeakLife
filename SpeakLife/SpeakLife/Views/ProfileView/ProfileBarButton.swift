@@ -25,7 +25,7 @@ struct ProfileBarButton: View {
             Spacer()
             CapsuleImageButton(title: "person.crop.circle") {
                 profileButtonTapped()
-                Selection.shared.selectionFeedback()
+                Juice.play(.tapLight)
             }.sheet(isPresented: $viewModel.isPresentingProfileView, onDismiss: {
                 self.viewModel.isPresentingProfileView = false
             }, content: {

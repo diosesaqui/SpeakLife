@@ -34,7 +34,7 @@ struct GenericContentCell<ContentType: SectionableContent>: View {
             }
         }
         .scaleEffect(isPressed ? 0.95 : 1.0)
-        .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isPressed)
+        .animation(DS.Motion.quick, value: isPressed)
         .onTapGesture {
             isPressed = true
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
@@ -92,7 +92,7 @@ struct GenericContentCell<ContentType: SectionableContent>: View {
     }
     
     private var compactCell: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: DS.Spacing.sm) {
             // Thumbnail (fixed size)
             cellImageView(width: 60, height: 60)
                 .cornerRadius(8)
@@ -193,7 +193,7 @@ struct GenericContentCell<ContentType: SectionableContent>: View {
                 .frame(height: 32) // Fixed height for controls
             }
             .frame(height: configuration.itemHeight * 0.4) // Fixed content area height
-            .padding(16)
+            .padding(DS.Spacing.md)
         }
         .frame(width: configuration.itemWidth, height: configuration.itemHeight)
         .cornerRadius(16)
@@ -227,7 +227,7 @@ struct GenericContentCell<ContentType: SectionableContent>: View {
             // Favorite button for standard cell
             if configuration.cellStyle == GenericSectionConfiguration.SectionCellStyle.standard {
                 favoriteButton
-                    .padding(8)
+                    .padding(DS.Spacing.xs)
             }
             
             // Premium lock indicator
@@ -255,7 +255,7 @@ struct GenericContentCell<ContentType: SectionableContent>: View {
             Image(systemName: isFavorite ? "heart.fill" : "heart")
                 .font(.system(size: 16, weight: .semibold))
                 .foregroundColor(isFavorite ? .pink : .white)
-                .padding(8)
+                .padding(DS.Spacing.xs)
                 .background(
                     Circle()
                         .fill(.ultraThinMaterial)
@@ -294,7 +294,7 @@ struct GenericContentCell<ContentType: SectionableContent>: View {
                     )
                 Spacer()
             }
-            .padding(8)
+            .padding(DS.Spacing.xs)
         }
     }
 }

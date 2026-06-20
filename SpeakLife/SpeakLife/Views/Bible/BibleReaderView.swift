@@ -268,8 +268,8 @@ struct ReaderControlsView: View {
             }
             
             // Toggle Button
-            Button(action: { 
-                withAnimation(.spring()) {
+            Button(action: {
+                withAnimation(DS.Motion.smooth) {
                     showControls.toggle()
                 }
             }) {

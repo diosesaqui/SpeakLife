@@ -409,7 +409,7 @@ struct AITaskRow: View {
     var body: some View {
         HStack {
             Button(action: {
-                withAnimation(.spring()) {
+                withAnimation(DS.Motion.smooth) {
                     isCompleted.toggle()
                     if isCompleted {
                         onCompletion(task)

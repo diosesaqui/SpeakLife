@@ -141,7 +141,7 @@ struct StreamlinedSpiritualWarfareFlow: View {
                 completeOnboarding()
             }
         }
-        impactMed.impactOccurred()
+        Juice.play(.tapLight)
     }
 
     /// Persist user's category selections for notifications, declarations feed, and paywall personalization
@@ -795,8 +795,7 @@ struct PersonalSelectionScreen: View {
                                     }
 
                                     // Haptic feedback
-                                    let impactFeedback = UIImpactFeedbackGenerator(style: .light)
-                                    impactFeedback.impactOccurred()
+                                    Juice.play(.tapLight)
                                 }
                             }
                         }

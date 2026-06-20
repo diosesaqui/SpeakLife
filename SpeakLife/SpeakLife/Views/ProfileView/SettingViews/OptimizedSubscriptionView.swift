@@ -592,7 +592,7 @@ struct OptimizedSubscriptionView: View {
     }
     
     private func makePurchase() {
-        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+        Juice.play(.tapSolid)
         
         Task {
             // Set loading state immediately

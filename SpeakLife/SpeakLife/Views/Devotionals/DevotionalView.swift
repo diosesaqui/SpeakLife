@@ -159,7 +159,7 @@ struct DevotionalView: View {
     
     @ViewBuilder
     var titleLabel: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: DS.Spacing.xs) {
             Text(viewModel.title)
                 .font(.system(size: 30, weight: .bold, design: .default))
                 .foregroundStyle(.white)

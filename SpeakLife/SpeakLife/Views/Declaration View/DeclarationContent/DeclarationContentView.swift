@@ -561,7 +561,7 @@ struct DeclarationContentView: View {
     }
     
     private func speakTapped(declaration: Declaration) {
-        Selection.shared.selectionFeedback()
+        Juice.play(.tapLight)
         
         Event.trackUserAction(
             "speech_button_tapped",
