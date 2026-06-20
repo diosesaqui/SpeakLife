@@ -64,7 +64,7 @@ struct GenericHorizontalSection<ContentType: SectionableContent>: View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
                 Text(section.title)
-                    .font(.system(size: 20, weight: .bold))
+                    .font(DS.Typography.headline)
                     .foregroundColor(.white)
                 
                 if let subtitle = section.subtitle {

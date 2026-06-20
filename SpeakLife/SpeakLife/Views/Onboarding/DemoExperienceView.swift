@@ -79,7 +79,8 @@ struct DemoExperienceView: View {
                 .padding(.vertical, 40)
                 .frame(width: size.width * 0.85)
                 .dsGlass(cornerRadius: DS.Radius.lg)
-                
+                .dsAppear(0.06)
+
                 Spacer()
                 
                 // CTA Section

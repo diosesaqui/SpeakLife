@@ -476,8 +476,7 @@ struct PremiumUpgradeView: View {
     var body: some View {
         VStack(spacing: 20) {
             Text("✨ Unlock AI-Powered Spirituality")
-                .font(.title2)
-                .fontWeight(.bold)
+                .font(DS.Typography.title)
             
             VStack(alignment: .leading, spacing: DS.Spacing.sm) {
                 AIFeatureRow(icon: "🎯", title: "Personalized Categories", description: "AI creates unique spiritual focus areas just for you")

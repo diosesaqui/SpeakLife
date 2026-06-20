@@ -165,15 +165,17 @@ struct SectionDetailView: View {
             Image(systemName: "magnifyingglass")
                 .font(.system(size: 50))
                 .foregroundColor(.white.opacity(0.5))
-            
+                .dsAppear()
+
             Text("No results found")
-                .font(.title3)
-                .fontWeight(.semibold)
+                .font(DS.Typography.headline)
                 .foregroundColor(.white)
-            
+                .dsAppear(0.06)
+
             Text("Try adjusting your search or filters")
-                .font(.body)
+                .font(DS.Typography.body)
                 .foregroundColor(.white.opacity(0.7))
+                .dsAppear(0.12)
         }
     }
     

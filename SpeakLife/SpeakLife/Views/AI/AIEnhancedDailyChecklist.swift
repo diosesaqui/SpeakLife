@@ -25,22 +25,28 @@ struct AIEnhancedDailyChecklist: View {
             VStack(spacing: 0) {
                 // Header with progress circle - existing from DailyChecklistView
                 headerSection
-                
+                    .dsAppear(0)
+
                 ScrollView {
                     VStack(spacing: DS.Spacing.md) {
                         // Existing checklist items
                         existingChecklistSection
-                        
+                            .dsAppear(0.06)
+
                         // AI-enhanced sections
                         if subscriptionStore.isAIEnabled {
                             if showAISection {
                                 aiPersonalizedTasksSection
+                                    .dsAppear(0.12)
                                 aiInsightsSection
+                                    .dsAppear(0.18)
                             }
                         } else if subscriptionStore.isPremium {
                             aiFeaturePrompt
+                                .dsAppear(0.12)
                         } else {
                             aiUpgradePrompt
+                                .dsAppear(0.12)
                         }
                     }
                     .padding(.horizontal)

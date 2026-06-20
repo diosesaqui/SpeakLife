@@ -33,12 +33,14 @@ struct AppleSignInPromptView: View {
                     .font(.system(size: 54))
                     .foregroundColor(Color(hex: "A78BFA"))
                     .symbolRenderingMode(.multicolor)
+                    .dsAppear(0)
 
                 // Title
                 Text("Join the Warrior Room")
                     .font(Font.custom("AppleSDGothicNeo-Bold", size: 26, relativeTo: .title))
                     .foregroundColor(.white)
                     .multilineTextAlignment(.center)
+                    .dsAppear(0.06)
 
                 // Subtitle
                 Text("Carry each other's burdens,\nand in this way you will fulfill the law of Christ.")
@@ -47,6 +49,7 @@ struct AppleSignInPromptView: View {
                     .multilineTextAlignment(.center)
                     .italic()
                     .padding(.horizontal, DS.Spacing.xl)
+                    .dsAppear(0.12)
 
                 Text("— Galatians 6:2")
                     .font(Font.custom("AppleSDGothicNeo-Regular", size: 13, relativeTo: .caption))

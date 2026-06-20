@@ -204,9 +204,9 @@ struct DailyDeclarationBurstView: View {
                 
                 VStack(spacing: DS.Spacing.md) {
                     Text("Daily Victory Burst")
-                        .font(.system(size: 32, weight: .bold))
+                        .font(DS.Typography.title)
                         .foregroundColor(.white)
-                    
+
                     Text("Speak life over your day with 7 powerful declarations")
                         .font(.system(size: 18))
                         .foregroundColor(.white.opacity(0.9))
@@ -214,9 +214,10 @@ struct DailyDeclarationBurstView: View {
                         .padding(.horizontal, 40)
                 }
             }
-            
+            .dsAppear(0)
+
             Spacer()
-            
+
             // CTA Button
             Button(action: {
                 // Haptic feedback
@@ -248,6 +249,7 @@ struct DailyDeclarationBurstView: View {
             }
             .buttonStyle(.dsPressable(feel: .tapSolid, haptics: false))
             .padding(.bottom, 60)
+            .dsAppear(0.12)
         }
     }
 

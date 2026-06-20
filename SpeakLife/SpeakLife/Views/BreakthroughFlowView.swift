@@ -67,6 +67,7 @@ struct BreakthroughFlowView: View {
 
             Text("\u{1F64F}")
                 .font(.system(size: 64))
+                .dsAppear(0)
 
             VStack(spacing: DS.Spacing.sm) {
                 Text("You're saying God came through?")
@@ -79,6 +80,7 @@ struct BreakthroughFlowView: View {
                     .font(.system(size: 15))
                     .foregroundColor(.white.opacity(0.6))
             }
+            .dsAppear(0.06)
 
             Spacer()
 
@@ -109,6 +111,7 @@ struct BreakthroughFlowView: View {
                 .buttonStyle(.dsPressable(feel: .tapSolid))
             }
             .padding(.bottom, DS.Spacing.xxl)
+            .dsAppear(0.12)
         }
     }
 
@@ -244,10 +247,11 @@ struct BreakthroughFlowView: View {
 
             Text(sharedToWall ? "\u{1F64C}" : "\u{1F389}")
                 .font(.system(size: 80))
+                .dsAppear(0)
 
             VStack(spacing: DS.Spacing.sm) {
                 Text("Your faith moved mountains.")
-                    .font(.system(size: 26, weight: .bold, design: .rounded))
+                    .font(DS.Typography.title)
                     .foregroundColor(.white)
                     .multilineTextAlignment(.center)
 

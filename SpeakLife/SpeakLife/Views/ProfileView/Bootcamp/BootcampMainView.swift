@@ -113,15 +113,19 @@ struct BootcampMainView: View {
                 // Hero Section
                 HeroSection(program: viewModel.currentProgram)
                     .frame(height: UIScreen.main.bounds.height * 0.5)
-                
+                    .dsAppear(0)
+
                 // Program Features
                 FeaturesSection()
-                
+                    .dsAppear(0.06)
+
                 // Curriculum Preview
                 CurriculumPreviewSection(program: viewModel.currentProgram)
-                
+                    .dsAppear(0.12)
+
                 // Testimonials
                 TestimonialsSection()
+                    .dsAppear(0.18)
                 
                 // Pricing Section
                 PricingSection(program: viewModel.currentProgram) {

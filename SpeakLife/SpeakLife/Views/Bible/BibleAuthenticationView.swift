@@ -61,7 +61,8 @@ struct BibleAuthenticationView: View {
                                 .multilineTextAlignment(.center)
                                 .padding(.horizontal)
                         }
-                        
+                        .dsAppear()
+
                         // Benefits list
                         VStack(alignment: .leading, spacing: DS.Spacing.sm) {
                             BibleBenefitRow(icon: "infinity", text: "Unlimited Bible reading")
@@ -75,7 +76,8 @@ struct BibleAuthenticationView: View {
                                 .fill(Color(UIColor.secondarySystemBackground))
                         )
                         .padding(.horizontal)
-                        
+                        .dsAppear(0.06)
+
                         if !showEmailForm {
                             // Sign in options
                             VStack(spacing: DS.Spacing.md) {

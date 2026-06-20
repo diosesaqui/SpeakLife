@@ -107,7 +107,8 @@ struct DevotionalView: View {
                             AppLogo(height: 90)
                             Spacer()
                         }
-                        
+                        .dsAppear(0)
+
                         titleLabel
                         
                         bookLabel
@@ -161,8 +162,9 @@ struct DevotionalView: View {
     var titleLabel: some View {
         VStack(alignment: .leading, spacing: DS.Spacing.xs) {
             Text(viewModel.title)
-                .font(.system(size: 30, weight: .bold, design: .default))
+                .font(DS.Typography.title)
                 .foregroundStyle(.white)
+                .dsAppear(0.06)
             
             if let listenerCount = readerCount {
                 HStack(spacing: 6) {
@@ -194,9 +196,10 @@ struct DevotionalView: View {
     @ViewBuilder
     var devotionText: some View {
         Text(viewModel.devotionalText)
-            .font(.system(size: 16))
+            .font(DS.Typography.body)
             .foregroundStyle(.white.opacity(0.8))
             .lineSpacing(4)
+            .dsAppear(0.12)
         Spacer()
             .frame(height: spacing)
     }

@@ -126,6 +126,7 @@ struct CategoryChooserView: View {
                             .padding()
                             .background(BlurView(style: .systemUltraThinMaterialDark))
                             .cornerRadius(8)
+                            .dsAppear(0)
 
                         // Ask the Bible button
                         Button { showBibleChat = true } label: {
@@ -164,6 +165,7 @@ struct CategoryChooserView: View {
                         .buttonStyle(PlainButtonStyle())
                         .padding(.horizontal, 16)
                         .padding(.top, 4)
+                        .dsAppear(0.06)
                         .sheet(isPresented: $showBibleChat) {
                             BibleChatView()
                                 .environmentObject(subscriptionStore)

@@ -26,7 +26,7 @@ struct QuizExplanationView: View {
 
                 // 📖 Revelation box
                 Text(explanation)
-                    .font(.body)
+                    .font(DS.Typography.body)
                     .padding()
                     .dsGlass(cornerRadius: DS.Radius.lg)
                     .foregroundColor(.white)
