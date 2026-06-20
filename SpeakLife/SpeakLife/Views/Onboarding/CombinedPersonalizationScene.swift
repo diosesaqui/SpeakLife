@@ -204,7 +204,7 @@ struct SimplifiedCategoryGrid: View {
                     isSelected: viewModel.selectedExperiences.contains(category),
                     isCompact: screenHeight < 700
                 ) {
-                    impactLight.impactOccurred()
+                    Juice.play(.tapLight)
                     viewModel.selectExperience(category)
                 }
             }

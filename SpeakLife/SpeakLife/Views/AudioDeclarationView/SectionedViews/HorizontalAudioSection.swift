@@ -19,7 +19,7 @@ struct HorizontalAudioSection: View {
     @State private var showRightGradient = true
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: DS.Spacing.sm) {
             // Section Header
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
@@ -212,13 +212,13 @@ struct FeaturedAudioCell: View {
                     }
                 }
             }
-            .padding(16)
+            .padding(DS.Spacing.md)
         }
         .frame(width: configuration.itemWidth, height: configuration.itemHeight)
-        .cornerRadius(16)
+        .cornerRadius(DS.Radius.md)
         .shadow(color: .black.opacity(0.3), radius: 8, x: 0, y: 4)
         .scaleEffect(isPressed ? 0.95 : 1.0)
-        .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isPressed)
+        .animation(DS.Motion.quick, value: isPressed)
         .onTapGesture {
             isPressed = true
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {

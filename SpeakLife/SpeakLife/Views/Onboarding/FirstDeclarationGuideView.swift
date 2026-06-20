@@ -157,17 +157,10 @@ struct FirstDeclarationGuideView: View {
                     .frame(maxWidth: .infinity, alignment: .trailing)
             }
             .padding(20)
-            .background(
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(Color.white.opacity(0.1))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 16)
-                            .stroke(Color.white.opacity(0.2), lineWidth: 1)
-                    )
-            )
+            .dsGlass(cornerRadius: DS.Radius.md)
         }
     }
-    
+
     private var declarationInputSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Your Declaration")
@@ -196,14 +189,7 @@ struct FirstDeclarationGuideView: View {
                     .padding(8)
             }
             .frame(height: 120)
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(Color.white.opacity(0.1))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(Color.white.opacity(0.3), lineWidth: 1)
-                    )
-            )
+            .dsGlass(cornerRadius: DS.Radius.sm)
         }
     }
     
@@ -229,10 +215,7 @@ struct FirstDeclarationGuideView: View {
                 .foregroundColor(.white)
                 .padding(.horizontal, 20)
                 .padding(.vertical, 14)
-                .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color.white.opacity(0.15))
-                )
+                .dsGlass(cornerRadius: DS.Radius.sm)
             }
             
             if showExample {
@@ -276,10 +259,7 @@ struct FirstDeclarationGuideView: View {
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            RoundedRectangle(cornerRadius: 10)
-                .fill(Color.white.opacity(0.1))
-        )
+        .dsGlass(cornerRadius: DS.Radius.sm)
     }
     
     private var continueButton: some View {
@@ -291,11 +271,11 @@ struct FirstDeclarationGuideView: View {
                     // Only proceed if declaration text is not empty
                     guard !declarationText.isEmpty else { 
                         // Gentle haptic to indicate they need to write something
-                        UIImpactFeedbackGenerator(style: .soft).impactOccurred()
-                        return 
+                        Juice.play(.tapLight)
+                        return
                     }
                     
-                    UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                    Juice.play(.tapSolid)
                     
                     // Save the declaration
                     saveDeclaration()

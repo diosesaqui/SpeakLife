@@ -91,7 +91,7 @@ struct CategoryListView: View {
                 )
                 .ignoresSafeArea()
                 
-                VStack(spacing: 16) {
+                VStack(spacing: DS.Spacing.md) {
                     Text("Notification Topics")
                         .font(.title2.bold())
                         .foregroundColor(.white)
@@ -113,15 +113,16 @@ struct CategoryListView: View {
                                 .fixedSize(horizontal: false, vertical: true)
                         }
                     }
-                    .padding(12)
+                    .padding(DS.Spacing.sm)
                     .background(
-                        RoundedRectangle(cornerRadius: 12)
+                        RoundedRectangle(cornerRadius: DS.Radius.sm, style: .continuous)
                             .fill(Color.yellow.opacity(0.1))
                             .overlay(
-                                RoundedRectangle(cornerRadius: 12)
+                                RoundedRectangle(cornerRadius: DS.Radius.sm, style: .continuous)
                                     .stroke(Color.yellow.opacity(0.25), lineWidth: 1)
                             )
                     )
+                    .dsShadow(DS.Elevation.low)
                     .padding(.horizontal)
 
                     List {
@@ -136,7 +137,7 @@ struct CategoryListView: View {
                     .scrollContentBackground(.hidden)
                     .background(Color.clear)
                     .cornerRadius(20)
-                    .padding(.bottom, 8)
+                    .padding(.bottom, DS.Spacing.xs)
                 }
             }
             .navigationTitle("Notification Topics")
@@ -185,13 +186,13 @@ struct CategoryListCard: View {
             }
             .padding()
             .background(
-                RoundedRectangle(cornerRadius: 14)
+                RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous)
                     .fill(Color.white.opacity(0.08))
                     .overlay(
-                        RoundedRectangle(cornerRadius: 14)
+                        RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous)
                             .stroke(isSelected ? Color.blue.opacity(0.8) : Color.clear, lineWidth: 1.5)
                     )
-                    .shadow(color: Color.black.opacity(0.2), radius: 8, x: 0, y: 3)
+                    .dsShadow(DS.Elevation.low)
             )
         }
         .buttonStyle(PlainButtonStyle())

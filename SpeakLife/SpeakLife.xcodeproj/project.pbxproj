@@ -275,6 +275,7 @@
 		7AA8708228DACC8300134ADB /* InAppPurchases.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AA8707928DACC8300134ADB /* InAppPurchases.swift */; };
 		7AA8709028DACCA700134ADB /* SelectionFeedback.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AA8708628DACCA700134ADB /* SelectionFeedback.swift */; };
 		7AA8709128DACCA700134ADB /* GlobalConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AA8708728DACCA700134ADB /* GlobalConstants.swift */; };
+		D5A1000000000000000000B1 /* DesignSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5A1000000000000000000A1 /* DesignSystem.swift */; };
 		7AA8709228DACCA700134ADB /* ToggleStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AA8708828DACCA700134ADB /* ToggleStyle.swift */; };
 		7AA8709328DACCA700134ADB /* CapsuleImageButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AA8708928DACCA700134ADB /* CapsuleImageButton.swift */; };
 		7AA8709428DACCA800134ADB /* App.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AA8708B28DACCA700134ADB /* App.swift */; };
@@ -688,6 +689,7 @@
 		7AA8707928DACC8300134ADB /* InAppPurchases.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = InAppPurchases.swift; sourceTree = "<group>"; };
 		7AA8708628DACCA700134ADB /* SelectionFeedback.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SelectionFeedback.swift; sourceTree = "<group>"; };
 		7AA8708728DACCA700134ADB /* GlobalConstants.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GlobalConstants.swift; sourceTree = "<group>"; };
+		D5A1000000000000000000A1 /* DesignSystem.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DesignSystem.swift; sourceTree = "<group>"; };
 		7AA8708828DACCA700134ADB /* ToggleStyle.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ToggleStyle.swift; sourceTree = "<group>"; };
 		7AA8708928DACCA700134ADB /* CapsuleImageButton.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CapsuleImageButton.swift; sourceTree = "<group>"; };
 		7AA8708B28DACCA700134ADB /* App.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = App.swift; sourceTree = "<group>"; };
@@ -1551,6 +1553,7 @@
 			children = (
 				7AA8708628DACCA700134ADB /* SelectionFeedback.swift */,
 				7AA8708728DACCA700134ADB /* GlobalConstants.swift */,
+				D5A1000000000000000000A1 /* DesignSystem.swift */,
 				7AA8708828DACCA700134ADB /* ToggleStyle.swift */,
 				7AA8708928DACCA700134ADB /* CapsuleImageButton.swift */,
 				7AA2AFC929DA1BBF00176ADF /* ImagePicker.swift */,
@@ -2248,6 +2251,7 @@
 				7AA870CA28DACCB700134ADB /* SubscriptionView.swift in Sources */,
 				4597E2552E41A62D009D6C66 /* SpeakLife.xcdatamodeld in Sources */,
 				7AA8709128DACCA700134ADB /* GlobalConstants.swift in Sources */,
+				D5A1000000000000000000B1 /* DesignSystem.swift in Sources */,
 				4597E2472E419DB4009D6C66 /* CoreDataDeclarationViewModel.swift in Sources */,
 				7A601441294E574500CD2103 /* HomeView.swift in Sources */,
 				45FACE0012345678ABCDEF01 /* RemoteMessageView.swift in Sources */,
@@ -2623,7 +2627,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 4.32;
+				MARKETING_VERSION = 4.33;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Franchiz.SpeakLife;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -2665,7 +2669,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 4.32;
+				MARKETING_VERSION = 4.33;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Franchiz.SpeakLife;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";

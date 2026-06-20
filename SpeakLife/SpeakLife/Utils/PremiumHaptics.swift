@@ -305,6 +305,10 @@ extension PremiumHaptics {
     static func safeSuccess() {
         executeHaptic { success() }
     }
+
+    static func safeWarning() {
+        executeHaptic { warning() }
+    }
     
     static func safeSuccessSequence() {
         executeHaptic { successSequence() }

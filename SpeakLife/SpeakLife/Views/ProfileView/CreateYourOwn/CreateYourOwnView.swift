@@ -125,9 +125,9 @@ struct CreateYourOwnView: View {
         }
         .padding(2)
         .background(segmentedControlBackground)
-        .padding(.horizontal, 16)
-        .padding(.top, 8)
-        .padding(.bottom, 12)
+        .padding(.horizontal, DS.Spacing.md)
+        .padding(.top, DS.Spacing.xs)
+        .padding(.bottom, DS.Spacing.sm)
     }
     
     private func segmentedControlButton(for contentType: ContentType) -> some View {
@@ -140,7 +140,7 @@ struct CreateYourOwnView: View {
                 .font(.system(size: 16, weight: .medium))
                 .foregroundColor(selectedContentType == contentType ? .white : .white.opacity(0.7))
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, 8)
+                .padding(.vertical, DS.Spacing.xs)
                 .background(segmentedControlButtonBackground(for: contentType))
                 .animation(.easeInOut(duration: 0.2), value: selectedContentType)
         }
@@ -177,7 +177,7 @@ struct CreateYourOwnView: View {
             Gradients().speakLifeCYOCell
                 .ignoresSafeArea()
             
-            VStack(spacing: 32) {
+            VStack(spacing: DS.Spacing.xl) {
                 Spacer().frame(height: 40)
                 animatedLogoView
                 emptyStateTextContent
@@ -202,7 +202,7 @@ struct CreateYourOwnView: View {
     }
     
     private var emptyStateTextContent: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: DS.Spacing.xs) {
             Text(emptyStateTitle)
                 .font(.system(size: 20, weight: .semibold))
                 .multilineTextAlignment(.center)
@@ -230,15 +230,15 @@ struct CreateYourOwnView: View {
     
     private var declarationsList: some View {
         ScrollView {
-            LazyVStack(spacing: 12) {
+            LazyVStack(spacing: DS.Spacing.sm) {
                 ForEach(filteredDeclarations.reversed()) { declaration in
                     declarationRow(for: declaration)
-                        .padding(.horizontal, 16)
+                        .padding(.horizontal, DS.Spacing.md)
                 }
-                
+
                 listFooterSection
             }
-            .padding(.top, 12)
+            .padding(.top, DS.Spacing.sm)
         }
         .background(Color.clear)
     }
@@ -252,14 +252,14 @@ struct CreateYourOwnView: View {
     }
     
     private var listFooterSection: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: DS.Spacing.sm) {
             HStack {
                 Spacer()
                 AppLogo(height: 80)
                 Spacer()
             }
         }
-        .padding(.top, 12)
+        .padding(.top, DS.Spacing.sm)
         .padding(.bottom, 40)
     }
     
@@ -367,7 +367,7 @@ struct CreateYourOwnView: View {
                 .shadow(color: Constants.DAMidBlue.opacity(0.4), radius: 8, x: 0, y: 4)
                 .scaleEffect(1.02)
         }
-        .padding(.horizontal, 32)
+        .padding(.horizontal, DS.Spacing.xl)
     }
     
     
@@ -454,8 +454,8 @@ struct AffirmationDetailView: View {
                     .offset(y: -100)
                 
                 // Content
-                VStack(spacing: 20) {
-                    
+                VStack(spacing: DS.Spacing.lg) {
+
                     Text(affirmation.lastEdit?.toPrettyString() ?? "")
                         .font(.subheadline)
                         .foregroundColor(Color.gray)
@@ -476,7 +476,7 @@ struct AffirmationDetailView: View {
                                 .font(.system(size: dynamicFontSize, weight: .bold))
                                 .foregroundColor(.white)
                                 .opacity(0.9)
-                                .padding(12)
+                                .padding(DS.Spacing.sm)
                                 .background(
                                     RoundedRectangle(cornerRadius: 12)
                                         .fill(Color.white.opacity(0.05))
@@ -492,7 +492,7 @@ struct AffirmationDetailView: View {
                                 Text(displayedText)
                                     .font(.system(size: dynamicFontSize, weight: .bold))
                                     .foregroundColor(.white)
-                                    .padding(12)
+                                    .padding(DS.Spacing.sm)
                                 Spacer()
                                     .frame(height: UIScreen.main.bounds.height * 0.1)
                                 AppLogo(height: 80)

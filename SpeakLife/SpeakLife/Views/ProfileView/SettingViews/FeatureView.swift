@@ -35,12 +35,12 @@ struct FeatureRow: View {
     var body: some View {
         HStack(alignment: .firstTextBaseline) {
             Spacer()
-                .frame(width: 4)
+                .frame(width: DS.Spacing.xxs)
             Image(systemName: feature.imageName)
                 .resizable()
                 .aspectRatio(contentMode: .fit)
                 .frame(width: 14, height: 14)
-                .padding(.trailing, 8)
+                .padding(.trailing, DS.Spacing.xs)
                 .foregroundColor(Constants.gold)
             VStack(alignment: .leading) {
                 Text(feature.subtitle)
@@ -103,7 +103,7 @@ struct FeatureView: View {
         VStack {
             ForEach(valueProps) { feature in
                 FeatureRow(feature: feature)
-                Spacer().frame(height: 8)
+                Spacer().frame(height: DS.Spacing.xs)
                 
             }
         }

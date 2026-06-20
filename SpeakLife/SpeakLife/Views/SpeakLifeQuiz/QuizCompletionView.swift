@@ -49,11 +49,12 @@ struct QuizCompletionView: View {
                         .font(.headline)
                         .padding()
                         .frame(maxWidth: .infinity)
-                        .background(Color.white)
-                        .foregroundColor(.purple)
+                        .background(DS.Gradient.gold)
+                        .foregroundColor(DS.Palette.deepBlue)
                         .cornerRadius(20)
-                        .shadow(radius: 5)
+                        .shadow(color: DS.Palette.gold.opacity(0.45), radius: 8, x: 0, y: 3)
                 }
+                .buttonStyle(.dsPressable(feel: .tapSolid))
                 .padding(.horizontal, 40)
             }
             .padding()

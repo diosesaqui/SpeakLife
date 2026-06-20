@@ -19,7 +19,7 @@ struct AIEnhancedDeclarationView: View {
     @State private var showAIFeatures = false
     
     var body: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: DS.Spacing.md) {
             if subscriptionStore.isPremium && showAIFeatures {
                 // AI-powered sections for premium users
                 if let insight = personalInsight {
@@ -100,7 +100,7 @@ struct PersonalInsightCard: View {
     @State private var isExpanded = false
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: DS.Spacing.sm) {
             HStack {
                 Image(systemName: "lightbulb.fill")
                     .foregroundColor(.yellow)
@@ -111,14 +111,15 @@ struct PersonalInsightCard: View {
                 
                 Spacer()
                 
-                Button(action: { 
-                    withAnimation(.spring()) {
+                Button(action: {
+                    withAnimation(DS.Motion.smooth) {
                         isExpanded.toggle()
                     }
                 }) {
                     Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
                         .foregroundColor(.secondary)
                 }
+                .buttonStyle(.dsPressable(feel: .tapSolid))
             }
             
             Text(insight.contextualMessage)
@@ -126,9 +127,9 @@ struct PersonalInsightCard: View {
                 .foregroundColor(.primary)
             
             if isExpanded {
-                VStack(alignment: .leading, spacing: 8) {
+                VStack(alignment: .leading, spacing: DS.Spacing.xs) {
                     if let suggestion = insight.applicationSuggestion {
-                        HStack(alignment: .top, spacing: 8) {
+                        HStack(alignment: .top, spacing: DS.Spacing.xs) {
                             Image(systemName: "hand.point.right.fill")
                                 .foregroundColor(.blue)
                                 .font(.caption)
@@ -140,7 +141,7 @@ struct PersonalInsightCard: View {
                     }
                     
                     if let scripture = insight.supportingScripture {
-                        HStack(alignment: .top, spacing: 8) {
+                        HStack(alignment: .top, spacing: DS.Spacing.xs) {
                             Image(systemName: "book.fill")
                                 .foregroundColor(.purple)
                                 .font(.caption)
@@ -185,7 +186,7 @@ struct AICategoriesView: View {
     let categories: ContentCategories
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: DS.Spacing.xs) {
             HStack {
                 Image(systemName: "tag.fill")
                     .foregroundColor(.blue)
@@ -204,7 +205,7 @@ struct AICategoriesView: View {
             LazyVGrid(columns: [
                 GridItem(.flexible()),
                 GridItem(.flexible())
-            ], spacing: 8) {
+            ], spacing: DS.Spacing.xs) {
                 // Spiritual categories
                 ForEach(categories.spiritual, id: \.rawValue) { category in
                     CategoryTag(
@@ -244,16 +245,16 @@ struct CategoryTag: View {
     let icon: String
     
     var body: some View {
-        HStack(spacing: 4) {
+        HStack(spacing: DS.Spacing.xxs) {
             Image(systemName: icon)
                 .font(.caption2)
-            
+
             Text(text)
                 .font(.caption)
                 .lineLimit(1)
         }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 4)
+        .padding(.horizontal, DS.Spacing.xs)
+        .padding(.vertical, DS.Spacing.xxs)
         .background(color.opacity(0.2))
         .foregroundColor(color)
         .cornerRadius(8)
@@ -265,7 +266,7 @@ struct RelatedDeclarationsSection: View {
     @EnvironmentObject var declarationStore: DeclarationViewModel
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: DS.Spacing.sm) {
             HStack {
                 Image(systemName: "arrow.triangle.branch")
                     .foregroundColor(.green)
@@ -283,7 +284,7 @@ struct RelatedDeclarationsSection: View {
             .padding(.horizontal)
             
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 12) {
+                HStack(spacing: DS.Spacing.sm) {
                     ForEach(declarations) { related in
                         RelatedDeclarationCard(declaration: related)
                             .onTapGesture {
@@ -315,7 +316,7 @@ struct RelatedDeclarationCard: View {
     let declaration: Declaration
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: DS.Spacing.xs) {
             Text(declaration.text.prefix(80) + "...")
                 .font(.subheadline)
                 .foregroundColor(.primary)
@@ -348,7 +349,7 @@ struct RelatedDeclarationCard: View {
                     .foregroundColor(.secondary)
             }
         }
-        .padding(12)
+        .padding(DS.Spacing.sm)
         .frame(width: 180, height: 120)
         .background(
             RoundedRectangle(cornerRadius: 10)
@@ -365,11 +366,11 @@ struct AIFeaturesTeaser: View {
     @State private var showUpgrade = false
     
     var body: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: DS.Spacing.sm) {
             HStack {
                 Image(systemName: "sparkles")
                     .foregroundColor(.orange)
-                
+
                 Text("AI Insights Available")
                     .font(.headline)
                     .foregroundColor(.primary)
@@ -378,8 +379,8 @@ struct AIFeaturesTeaser: View {
                 
                 Text("Premium")
                     .font(.caption)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
+                    .padding(.horizontal, DS.Spacing.xs)
+                    .padding(.vertical, DS.Spacing.xxs)
                     .background(Color.orange.opacity(0.2))
                     .foregroundColor(.orange)
                     .cornerRadius(8)
@@ -419,8 +420,9 @@ struct AIFeaturesTeaser: View {
             .foregroundColor(.white)
             .frame(maxWidth: .infinity)
             .padding(.vertical, 10)
-            .background(Color.orange)
+            .background(DS.Gradient.gold)
             .cornerRadius(10)
+            .buttonStyle(.dsPressable(feel: .tapSolid))
         }
         .padding()
         .background(

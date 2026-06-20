@@ -100,8 +100,7 @@ class EntryViewModel: ObservableObject {
         }
         
         // Trigger haptic feedback for voice integration
-        let impactFeedback = UIImpactFeedbackGenerator(style: .light)
-        impactFeedback.impactOccurred()
+        Juice.play(.tapLight)
     }
     
     func replaceWithVoiceText(_ voiceText: String) {
@@ -118,8 +117,7 @@ class EntryViewModel: ObservableObject {
         }
         
         // Trigger haptic feedback
-        let impactFeedback = UIImpactFeedbackGenerator(style: .light)
-        impactFeedback.impactOccurred()
+        Juice.play(.tapLight)
     }
     
     func save() async -> Bool {

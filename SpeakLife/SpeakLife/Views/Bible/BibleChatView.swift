@@ -76,7 +76,7 @@ struct BibleChatView: View {
     }
 
     private var header: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: DS.Spacing.xs) {
             Text("What does the Bible say about…")
                 .font(.system(size: 22, weight: .semibold, design: .serif))
                 .foregroundColor(.white)
@@ -126,9 +126,8 @@ struct BibleChatView: View {
             LazyVGrid(columns: columns, spacing: 14) {
                 ForEach(Array(viewModel.filteredTopics.enumerated()), id: \.element.id) { index, topic in
                     TopicCardView(topic: topic, namespace: topicNamespace) {
-                        let generator = UIImpactFeedbackGenerator(style: .light)
-                        generator.impactOccurred()
-                        withAnimation(.spring(response: 0.45, dampingFraction: 0.78)) {
+                        Juice.play(.tapLight)
+                        withAnimation(DS.Motion.smooth) {
                             viewModel.select(topic)
                         }
                     }
@@ -151,8 +150,7 @@ struct BibleChatView: View {
 
     private var suggestTopicButton: some View {
         Button {
-            let generator = UIImpactFeedbackGenerator(style: .light)
-            generator.impactOccurred()
+            Juice.play(.tapLight)
             AnalyticsService.shared.trackUserAction(
                 "bible_chat_suggest_topic_tap",
                 category: "bible_chat"
@@ -229,7 +227,7 @@ private struct TopicCardView: View {
 
     var body: some View {
         Button(action: action) {
-            VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: DS.Spacing.sm) {
                 iconBadge
 
                 Text(topic.title)
@@ -250,7 +248,7 @@ private struct TopicCardView: View {
                 Spacer(minLength: 0)
             }
             .frame(maxWidth: .infinity, minHeight: 152, alignment: .topLeading)
-            .padding(16)
+            .padding(DS.Spacing.md)
             .background(cardBackground)
             .scaleEffect(pressed ? 0.97 : 1)
         }
@@ -471,9 +469,9 @@ struct BibleChatConversationView: View {
     }
 
     private var emptyState: some View {
-        VStack(spacing: 24) {
+        VStack(spacing: DS.Spacing.lg) {
             // Hero
-            VStack(spacing: 12) {
+            VStack(spacing: DS.Spacing.sm) {
                 ZStack {
                     Circle()
                         .fill(Constants.gold.opacity(0.22))
@@ -515,7 +513,7 @@ struct BibleChatConversationView: View {
                     .padding(.leading, 4)
                 ForEach(Array(starters.prefix(5).enumerated()), id: \.element.id) { index, topic in
                     StarterCard(topic: topic) {
-                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                        Juice.play(.tapLight)
                         viewModel.send(topic.question, isPremium: subscriptionStore.isPremium)
                     }
                     .opacity(heroAppeared ? 1 : 0)
@@ -544,7 +542,7 @@ struct BibleChatConversationView: View {
                 .padding(.vertical, 12)
                 .padding(.horizontal, 16)
                 .background(
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous)
                         .fill(Color.white.opacity(0.08))
                 )
             Spacer(minLength: 40)
@@ -866,7 +864,7 @@ struct BibleChatPaywallSplash: View {
                     .padding(.horizontal, 28)
                     .padding(.top, 8)
 
-                VStack(alignment: .leading, spacing: 16) {
+                VStack(alignment: .leading, spacing: DS.Spacing.md) {
                     ForEach(benefits, id: \.icon) { item in
                         HStack(spacing: 14) {
                             Image(systemName: item.icon)

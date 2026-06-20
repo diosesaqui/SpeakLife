@@ -117,7 +117,7 @@ struct OfferPageView: View {
                     
                     HStack(spacing: 10) {
                         VStack {
-                            RoundedRectangle(cornerRadius: 16)
+                            RoundedRectangle(cornerRadius: DS.Radius.md)
                                 .strokeBorder(Color.gray, lineWidth: 1)
                                 .frame(height: 90)
                                 .overlay(
@@ -137,7 +137,7 @@ struct OfferPageView: View {
                         }
                         
                         VStack {
-                            RoundedRectangle(cornerRadius: 16)
+                            RoundedRectangle(cornerRadius: DS.Radius.md)
                                 .fill(Color.white.opacity(0.1))
                                 .frame(height: 90)
                                 .overlay(
@@ -168,7 +168,7 @@ struct OfferPageView: View {
 //                    }
 //                    .animation(.easeInOut(duration: 0.5), value: testimonialIndex)
                     
-                    VStack(spacing: 8) {
+                    VStack(spacing: DS.Spacing.xs) {
                         Button(action: {
                             makePurchase(iap: subscriptionStore.discountSubscription)
                         }) {
@@ -270,7 +270,7 @@ struct OfferPageView: View {
     }
     
     private func makePurchase(iap: String) {
-        impactMed.impactOccurred()
+        Juice.play(.tapLight)
         Task {
             withAnimation {
                 declarationStore.isPurchasing = true
@@ -414,12 +414,12 @@ struct SubscriptionView: View {
                     .fontWeight(.semibold)
                     .foregroundColor(.white)
                     .padding(.top, 8)
-                HStack(spacing: 16) {
+                HStack(spacing: DS.Spacing.md) {
                     ForEach(SubscriptionPlan.allCases, id: \.self) { plan in
                         Text(plan.rawValue)
                             .fontWeight(.semibold)
                             .padding(.vertical, 6)
-                            .padding(.horizontal, 16)
+                            .padding(.horizontal, DS.Spacing.md)
                             .background(selectedPlan == plan ? Color.yellow.opacity(0.9) : Color.gray.opacity(0.2))
                             .cornerRadius(20)
                             .foregroundColor(.black)
@@ -436,16 +436,16 @@ struct SubscriptionView: View {
                             }
                     }
                 }
-                Spacer().frame(height: 12)
+                Spacer().frame(height: DS.Spacing.sm)
             }
         }
     }
-    
+
     private var headerSection: some View {
         ZStack {
             AnimatedHeaderBackground()
-            
-            VStack(spacing: 8) {
+
+            VStack(spacing: DS.Spacing.xs) {
                 Spacer()
                     .frame(height: size.height * 0.06)
                 Image("appIconDisplay")
@@ -465,7 +465,7 @@ struct SubscriptionView: View {
     
     @ViewBuilder
     private var titleSection: some View {
-        Spacer().frame(height: 12)
+        Spacer().frame(height: DS.Spacing.sm)
         VStack(spacing: 10) {
             
             Text(subscriptionStore.showSubscriptionFirst ? "Support the Mission" : "SpeakLife & Transform")
@@ -493,7 +493,7 @@ struct SubscriptionView: View {
                 subscriptionOption(product: currentSelection)
             }
         } else {
-            VStack(spacing: 8) {
+            VStack(spacing: DS.Spacing.xs) {
                 if let annual = subscriptionStore.currentOfferedPremium {
                     subscriptionOption(product: annual)
                 }
@@ -528,7 +528,7 @@ struct SubscriptionView: View {
                 .padding()
                 .frame(maxWidth: .infinity)
                 .background(
-                    RoundedRectangle(cornerRadius: 10)
+                    RoundedRectangle(cornerRadius: DS.Radius.sm)
                         .stroke(currentSelection == product ? Color.yellow : Color.gray, lineWidth: 3)
                 )
                 .shadow(color: currentSelection == product ? Color.yellow.opacity(0.6) : .clear, radius: 4)
@@ -558,7 +558,7 @@ struct SubscriptionView: View {
     
     
     private var goPremiumStack: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: DS.Spacing.xs) {
             Button(action: makePurchase) {
                 Text(currentSelection?.ctaButtonTitle ?? "Subscribe")
                     .font(.system(size: 18, weight: .bold))
@@ -589,8 +589,8 @@ struct SubscriptionView: View {
                     .underline()
                     .foregroundColor(.blue)
                 
-                Spacer().frame(width: 16)
-                
+                Spacer().frame(width: DS.Spacing.md)
+
                 Link("Terms & Conditions", destination: URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!)
                     .font(.caption)
                     .underline()
@@ -625,7 +625,7 @@ struct SubscriptionView: View {
     }
     
     private func makePurchase() {
-        UIImpactFeedbackGenerator(style: .soft).impactOccurred()
+        Juice.play(.tapLight)
         Task {
             declarationStore.isPurchasing = true
             defer {

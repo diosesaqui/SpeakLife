@@ -27,7 +27,7 @@ struct SectionedAudioView: View {
             ZStack {
                 // Main content
                 ScrollView(.vertical, showsIndicators: false) {
-                    VStack(spacing: 24) {
+                    VStack(spacing: DS.Spacing.lg) {
                         // Pull to refresh indicator
                         if refreshing {
                             HStack {
@@ -108,10 +108,10 @@ struct SectionedAudioView: View {
                 Label("Refresh", systemImage: "arrow.clockwise")
                     .font(.headline)
                     .foregroundColor(.white)
-                    .padding(.horizontal, 24)
-                    .padding(.vertical, 12)
+                    .padding(.horizontal, DS.Spacing.lg)
+                    .padding(.vertical, DS.Spacing.sm)
                     .background(
-                        RoundedRectangle(cornerRadius: 12)
+                        RoundedRectangle(cornerRadius: DS.Radius.sm, style: .continuous)
                             .fill(Constants.DAMidBlue)
                     )
             }

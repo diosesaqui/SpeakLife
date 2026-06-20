@@ -152,7 +152,7 @@ struct TestimonialsOnboardingView: View {
                             Text("RATING")
                                 .font(.system(size: 11, weight: .semibold))
                                 .tracking(1)
-                                .foregroundColor(.white.opacity(0.6))
+                                .foregroundColor(DS.Palette.gold.opacity(0.9))
                         }
                     }
                     
@@ -277,14 +277,7 @@ struct TestimonialCard: View {
             }
         }
         .padding(24)
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(Color.white.opacity(0.15))
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .stroke(Color.white.opacity(0.1), lineWidth: 1)
-        )
+        .dsGlass(cornerRadius: DS.Radius.md)
         .padding(.horizontal, 24)
     }
 }

@@ -23,7 +23,7 @@ struct SaveConfirmationView: View {
             Color.black.opacity(0.8)
                 .ignoresSafeArea()
             
-            VStack(spacing: 24) {
+            VStack(spacing: DS.Spacing.lg) {
                 // Success animation
                 ZStack {
                     // Glow background
@@ -73,7 +73,7 @@ struct SaveConfirmationView: View {
                 
                 // Success message
                 if showMessage {
-                    VStack(spacing: 12) {
+                    VStack(spacing: DS.Spacing.sm) {
                         Text(getSuccessTitle())
                             .font(.system(size: 24, weight: .bold, design: .rounded))
                             .foregroundColor(.white)
@@ -83,7 +83,7 @@ struct SaveConfirmationView: View {
                             .font(.system(size: 16, weight: .medium))
                             .foregroundColor(.white.opacity(0.8))
                             .multilineTextAlignment(.center)
-                            .padding(.horizontal, 32)
+                            .padding(.horizontal, DS.Spacing.xl)
                     }
                     .scaleEffect(showMessage ? 1.0 : 0.8)
                     .opacity(showMessage ? 1.0 : 0.0)
@@ -128,8 +128,7 @@ struct SaveConfirmationView: View {
             }
             
             // Add haptic feedback
-            let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
-            impactFeedback.impactOccurred()
+            Juice.play(.tapSolid)
         }
         
         // Show particles
@@ -204,16 +203,16 @@ struct SavedIndicatorBadge: View {
     @State private var bounce = false
     
     var body: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: DS.Spacing.xs) {
             Image(systemName: "checkmark.circle.fill")
                 .foregroundColor(.green)
-            
+
             Text("\(contentType.displayName.capitalized) Saved")
                 .font(.system(size: 14, weight: .semibold))
                 .foregroundColor(.white)
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 8)
+        .padding(.horizontal, DS.Spacing.md)
+        .padding(.vertical, DS.Spacing.xs)
         .background(
             Capsule()
                 .fill(Color.green.opacity(0.2))

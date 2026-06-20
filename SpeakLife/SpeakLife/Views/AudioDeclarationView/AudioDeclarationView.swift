@@ -27,7 +27,7 @@ struct UpNextCell: View {
 
     var body: some View {
         ZStack {
-                HStack(spacing: 16) {
+                HStack(spacing: DS.Spacing.md) {
                     Image(item.imageUrl)
                         .resizable()
                         .aspectRatio(contentMode: .fill)
@@ -49,9 +49,9 @@ struct UpNextCell: View {
                             }
                         }
                     
-                    VStack(alignment: .leading, spacing: 6) {
+                    VStack(alignment: .leading, spacing: DS.Spacing.xxs) {
                         Text(item.title)
-                            .font(.system(size: 17, weight: .semibold))
+                            .font(.system(size: 17, weight: .semibold, design: .rounded))
                             .minimumScaleFactor(0.8)
                             .lineLimit(2)
                         
@@ -92,18 +92,18 @@ struct UpNextCell: View {
                     .frame(width: 44, height: 44)
                 }
                 .contentShape(Rectangle())
-                .padding(.vertical, 16)
-                .padding(.horizontal, 20)
+                .padding(.vertical, DS.Spacing.md)
+                .padding(.horizontal, DS.Spacing.lg)
                 .foregroundColor(.white)
                 .background(
-                    RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    RoundedRectangle(cornerRadius: DS.Radius.lg, style: .continuous)
                         .fill(.ultraThinMaterial)
                         .overlay(
-                            RoundedRectangle(cornerRadius: 20)
-                                .stroke(Color.white.opacity(animateGlow ? 0.15 : 0.05), lineWidth: animateGlow ? 1.5 : 0.5)
+                            RoundedRectangle(cornerRadius: DS.Radius.lg, style: .continuous)
+                                .stroke(Color.white.opacity(animateGlow ? 0.15 : 0.06), lineWidth: animateGlow ? 1.5 : 0.5)
                                 .shadow(color: Color.blue.opacity(animateGlow ? 0.3 : 0), radius: animateGlow ? 10 : 0)
                         )
-                        .shadow(color: Color.black.opacity(0.15), radius: 8, x: 0, y: 4)
+                        .dsShadow(DS.Elevation.low)
                 )
                 .scaleEffect(isTapped ? 0.97 : 1.0)
                 .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isTapped)
@@ -145,8 +145,7 @@ struct UpNextCell: View {
     // MARK: - Favorite Actions
     private func toggleFavorite() {
         // Haptic feedback
-        let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
-        impactFeedback.impactOccurred()
+        Juice.play(.tapSolid)
         
         // Animate favorite button
         withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
@@ -219,7 +218,7 @@ struct AudioDeclarationView: View {
 
                 VStack(spacing: 0) {
                     // Header
-                    VStack(alignment: .leading, spacing: 8) {
+                    VStack(alignment: .leading, spacing: DS.Spacing.xs) {
                         Text("Meditation")
                             .font(.system(size: 28, weight: .bold))
                             .foregroundColor(.white)
@@ -567,8 +566,7 @@ struct AudioDeclarationView: View {
     
     private func handleFavoriteSwipeAction(for item: AudioDeclaration) {
         // Haptic feedback
-        let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
-        impactFeedback.impactOccurred()
+        Juice.play(.tapSolid)
         
         // Add a small delay to allow swipe animation to complete
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {

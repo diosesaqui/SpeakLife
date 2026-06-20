@@ -33,7 +33,7 @@ struct BadgeCollectionView: View {
                 .ignoresSafeArea()
                 
                 ScrollView {
-                    LazyVStack(spacing: 32) {
+                    LazyVStack(spacing: DS.Spacing.xl) {
                         // Header with progress
                         BadgeCollectionHeader(badgeManager: badgeManager)
                             .padding(.horizontal, 20)
@@ -108,7 +108,7 @@ struct BadgeCollectionHeader: View {
     @State private var progressAnimation: CGFloat = 0
     
     var body: some View {
-        VStack(spacing: 24) {
+        VStack(spacing: DS.Spacing.lg) {
             // Stats overview
             HStack(spacing: 20) {
                 StatCard(
@@ -127,7 +127,7 @@ struct BadgeCollectionHeader: View {
             }
             
             // Progress bar
-            VStack(spacing: 12) {
+            VStack(spacing: DS.Spacing.sm) {
                 HStack {
                     Text("Collection Progress")
                         .font(.system(size: 16, weight: .semibold))
@@ -161,10 +161,10 @@ struct StatCard: View {
     let color: Color
     
     var body: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: DS.Spacing.xs) {
             Text(title.uppercased())
                 .font(.system(size: 12, weight: .medium))
-                .foregroundColor(.white.opacity(0.7))
+                .foregroundColor(DS.Palette.gold.opacity(0.9))
                 .tracking(1)
             
             Text(value)
@@ -177,13 +177,10 @@ struct StatCard: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 20)
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(Color.white.opacity(0.1))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 16)
-                        .stroke(color.opacity(0.3), lineWidth: 1)
-                )
+        .dsGlass(cornerRadius: DS.Radius.md)
+        .overlay(
+            RoundedRectangle(cornerRadius: DS.Radius.md)
+                .stroke(color.opacity(0.3), lineWidth: 1)
         )
     }
 }
@@ -259,7 +256,7 @@ struct BadgeFilterTabs: View {
     
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 12) {
+            HStack(spacing: DS.Spacing.sm) {
                 ForEach(filters, id: \.self) { filter in
                     FilterTab(
                         title: filter.displayName,
@@ -311,7 +308,7 @@ struct BadgeGrid: View {
     private let columns = Array(repeating: GridItem(.flexible(), spacing: 20), count: 3)
     
     var body: some View {
-        LazyVGrid(columns: columns, spacing: 24) {
+        LazyVGrid(columns: columns, spacing: DS.Spacing.lg) {
             ForEach(Array(badges.enumerated()), id: \.element.id) { index, badge in
                 BadgeGridItem(
                     badge: badge,
@@ -336,7 +333,7 @@ struct BadgeGridItem: View {
     
     var body: some View {
         Button(action: onTap) {
-            VStack(spacing: 12) {
+            VStack(spacing: DS.Spacing.sm) {
                 BadgeView(
                     badge: badge,
                     size: 80,
@@ -344,7 +341,7 @@ struct BadgeGridItem: View {
                     showParticles: false
                 )
                 
-                VStack(spacing: 4) {
+                VStack(spacing: DS.Spacing.xxs) {
                     Text(badge.displayTitle)
                         .font(.system(size: 12, weight: .bold))
                         .foregroundColor(badge.isUnlocked ? .white : .gray)
@@ -397,9 +394,9 @@ struct NextMilestoneCard: View {
     let badge: Badge
     
     var body: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: DS.Spacing.md) {
             HStack {
-                VStack(alignment: .leading, spacing: 8) {
+                VStack(alignment: .leading, spacing: DS.Spacing.xs) {
                     Text("Next Milestone")
                         .font(.system(size: 16, weight: .semibold))
                         .foregroundColor(.white)
@@ -423,22 +420,19 @@ struct NextMilestoneCard: View {
             // based on current progress toward this badge
         }
         .padding(20)
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(Color.white.opacity(0.05))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 16)
-                        .stroke(
-                            LinearGradient(
-                                colors: [
-                                    badge.type.primaryColor.opacity(0.5),
-                                    badge.type.secondaryColor.opacity(0.5)
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            ),
-                            lineWidth: 1
-                        )
+        .dsGlass(cornerRadius: DS.Radius.md)
+        .overlay(
+            RoundedRectangle(cornerRadius: DS.Radius.md)
+                .stroke(
+                    LinearGradient(
+                        colors: [
+                            badge.type.primaryColor.opacity(0.5),
+                            badge.type.secondaryColor.opacity(0.5)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    lineWidth: 1
                 )
         )
     }
@@ -493,13 +487,13 @@ struct BadgeDetailView: View {
                         
                         // Badge info
                         VStack(spacing: 20) {
-                            VStack(spacing: 12) {
+                            VStack(spacing: DS.Spacing.sm) {
                                 Text(badge.displayTitle)
                                     .font(.system(size: 32, weight: .bold, design: .rounded))
                                     .foregroundColor(.white)
                                     .multilineTextAlignment(.center)
                                 
-                                HStack(spacing: 8) {
+                                HStack(spacing: DS.Spacing.xs) {
                                     ForEach(0..<rarityStars(badge.rarity), id: \.self) { _ in
                                         Image(systemName: "star.fill")
                                             .font(.system(size: 20))
@@ -520,7 +514,7 @@ struct BadgeDetailView: View {
                                 .padding(.horizontal, 40)
                             
                             if let unlockedAt = badge.unlockedAt {
-                                VStack(spacing: 4) {
+                                VStack(spacing: DS.Spacing.xxs) {
                                     Text("Unlocked")
                                         .font(.system(size: 12, weight: .medium))
                                         .foregroundColor(.white.opacity(0.6))
@@ -571,16 +565,16 @@ struct ShareBadgeButton: View {
     
     var body: some View {
         Button(action: shareBadge) {
-            HStack(spacing: 12) {
+            HStack(spacing: DS.Spacing.sm) {
                 Image(systemName: "square.and.arrow.up")
                     .font(.system(size: 16, weight: .semibold))
-                
+
                 Text("Share Badge")
                     .font(.system(size: 16, weight: .semibold))
             }
             .foregroundColor(.white)
-            .padding(.horizontal, 24)
-            .padding(.vertical, 12)
+            .padding(.horizontal, DS.Spacing.lg)
+            .padding(.vertical, DS.Spacing.sm)
             .background(
                 RoundedRectangle(cornerRadius: 20)
                     .fill(

@@ -55,7 +55,7 @@ struct IntentsBarView: View {
     var categoryChooserButton: some View {
         Button {
             chooseCategory()
-            Selection.shared.selectionFeedback()
+            Juice.play(.tapLight)
         } label: {
             HStack {
                 Image(systemName: "square.grid.2x2.fill")
@@ -84,10 +84,10 @@ struct IntentsBarView: View {
     }
     
     var themeChooserButton: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: DS.Spacing.xs) {
             CapsuleImageButton(title: "paintbrush.fill") {
                 chooseWallPaper()
-                Selection.shared.selectionFeedback()
+                Juice.play(.tapLight)
             }.sheet(isPresented: $isPresentingThemeChooser) {
                 self.isPresentingThemeChooser = false
                 if appState.onBoardingTest {

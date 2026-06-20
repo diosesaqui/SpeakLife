@@ -24,11 +24,12 @@ struct QuizStartView: View {
                     .font(.headline)
                     .padding()
                     .frame(maxWidth: .infinity)
-                    .background(Color.blue)
+                    .background(DS.Gradient.brand)
                     .foregroundColor(.white)
                     .cornerRadius(15)
                     .padding(.horizontal)
             }
+            .buttonStyle(.dsPressable(feel: .tapSolid))
 
             Spacer()
         }

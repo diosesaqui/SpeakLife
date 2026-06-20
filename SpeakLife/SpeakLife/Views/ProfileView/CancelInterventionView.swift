@@ -381,12 +381,12 @@ struct CancelInterventionView: View {
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 13)
-                .background(RoundedRectangle(cornerRadius: 10).fill(Constants.DAMidBlue))
+                .background(RoundedRectangle(cornerRadius: DS.Radius.sm, style: .continuous).fill(Constants.DAMidBlue))
             }
             .buttonStyle(PlainButtonStyle())
             .disabled(isPurchasing)
         }
-        .padding(16)
+        .padding(DS.Spacing.md)
         .background(
             RoundedRectangle(cornerRadius: 14)
                 .fill(Color.white.opacity(0.06))
@@ -433,7 +433,7 @@ struct CancelInterventionView: View {
                 }
                 Spacer()
             }
-            .padding(16)
+            .padding(DS.Spacing.md)
             .background(RoundedRectangle(cornerRadius: 12).fill(Color.orange.opacity(0.15)).overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.orange.opacity(0.3), lineWidth: 1)))
             .padding(.horizontal, 20)
         )

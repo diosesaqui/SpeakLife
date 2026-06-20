@@ -169,6 +169,7 @@ struct DailyDeclarationBurstView: View {
                         .font(.system(size: 28))
                         .foregroundColor(.white.opacity(0.6))
                 }
+                .buttonStyle(.dsPressable(feel: .tapSolid))
                 .padding(.leading, 20)
                 .padding(.top, 60)
                 Spacer()
@@ -192,21 +193,16 @@ struct DailyDeclarationBurstView: View {
                         .blur(radius: 20)
                     
                     Circle()
-                        .fill(
-                            LinearGradient(
-                                colors: [Color(red: 1.0, green: 0.58, blue: 0.0).opacity(0.2), Color(red: 1.0, green: 0.34, blue: 0.13).opacity(0.2)],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
+                        .fill(DS.Gradient.ember)
                         .frame(width: 100, height: 100)
-                    
+                        .shadow(color: Color(red: 1.0, green: 0.34, blue: 0.13).opacity(0.5), radius: 8, x: 0, y: 4)
+
                     Image(systemName: "bolt.fill")
                         .font(.system(size: 50, weight: .bold))
                         .foregroundColor(.white)
                 }
                 
-                VStack(spacing: 16) {
+                VStack(spacing: DS.Spacing.md) {
                     Text("Daily Victory Burst")
                         .font(.system(size: 32, weight: .bold))
                         .foregroundColor(.white)
@@ -224,16 +220,14 @@ struct DailyDeclarationBurstView: View {
             // CTA Button
             Button(action: {
                 // Haptic feedback
-                let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
-                impactFeedback.prepare()
-                impactFeedback.impactOccurred()
-                
+                Juice.play(.tapSolid)
+
                 withAnimation(.easeInOut(duration: 0.5)) {
                     showIntroScreen = false
                 }
                 startBurst()
             }) {
-                HStack(spacing: 12) {
+                HStack(spacing: DS.Spacing.sm) {
                     Image(systemName: "bolt.fill")
                         .font(.system(size: 20, weight: .bold))
                     Text("Start Daily Burst")
@@ -252,10 +246,11 @@ struct DailyDeclarationBurstView: View {
                         )
                 )
             }
+            .buttonStyle(.dsPressable(feel: .tapSolid, haptics: false))
             .padding(.bottom, 60)
         }
     }
-    
+
     // MARK: - Burst Content View
     
     private func burstContentView(geometry: GeometryProxy) -> some View {
@@ -280,9 +275,10 @@ struct DailyDeclarationBurstView: View {
                         .font(.system(size: 28))
                         .foregroundColor(.white.opacity(0.6))
                 }
-                
+                .buttonStyle(.dsPressable(feel: .tapSolid))
+
                 Spacer()
-                
+
                 Text("Daily Victory")
                     .font(.system(size: 20, weight: .semibold))
                     .foregroundColor(.white)
@@ -320,13 +316,13 @@ struct DailyDeclarationBurstView: View {
             Spacer()
             
             // Declaration Content
-            VStack(spacing: 24) {
+            VStack(spacing: DS.Spacing.lg) {
                 // Category label with orange gradient background
                 Text(morningDeclarations[currentDeclarationIndex].2.uppercased())
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundColor(.white)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 8)
+                    .padding(.horizontal, DS.Spacing.md)
+                    .padding(.vertical, DS.Spacing.xs)
                     .background(
                         RoundedRectangle(cornerRadius: 20)
                             .fill(
@@ -363,7 +359,7 @@ struct DailyDeclarationBurstView: View {
                     .font(.system(size: 16))
                     .foregroundColor(.white.opacity(0.8))
                 
-                HStack(spacing: 8) {
+                HStack(spacing: DS.Spacing.xs) {
                     ForEach(0..<morningDeclarations.count, id: \.self) { index in
                         Circle()
                             .fill(index <= currentDeclarationIndex ? Color(red: 1.0, green: 0.58, blue: 0.0) : Color.white.opacity(0.3))
@@ -387,6 +383,7 @@ struct DailyDeclarationBurstView: View {
                                 )
                         )
                 }
+                .buttonStyle(.dsPressable(feel: .tapLight, haptics: false))
                 .disabled(isTransitioning)
             }
             .padding(.bottom, 50)
@@ -536,7 +533,7 @@ struct DailyDeclarationBurstView: View {
                 
                 Spacer()
                 
-                VStack(spacing: 16) {
+                VStack(spacing: DS.Spacing.md) {
                     // Share Victory Button
                     Button(action: shareVictory) {
                         HStack(spacing: 10) {
@@ -567,7 +564,7 @@ struct DailyDeclarationBurstView: View {
                     .scaleEffect(shareButtonOpacity)
                     .opacity(shareButtonOpacity)
                     
-                    HStack(spacing: 12) {
+                    HStack(spacing: DS.Spacing.sm) {
                         Button(action: { showSpiritualGraph = true }) {
                             HStack {
                                 Image(systemName: "chart.line.uptrend.xyaxis")
@@ -582,7 +579,8 @@ struct DailyDeclarationBurstView: View {
                                     .stroke(Color(red: 0.9, green: 0.7, blue: 0.3), lineWidth: 1)
                             )
                         }
-                        
+                        .buttonStyle(.dsPressable(feel: .tapSolid))
+
                         Button(action: completeBurst) {
                             Text("Continue")
                                 .font(.system(size: 17, weight: .bold))
@@ -600,6 +598,7 @@ struct DailyDeclarationBurstView: View {
                                 )
                                 .shadow(color: .orange.opacity(0.3), radius: 10, x: 0, y: 5)
                         }
+                        .buttonStyle(.dsPressable(feel: .tapLight, haptics: false))
                     }
                 }
                 .padding(.bottom, 50)
@@ -626,18 +625,13 @@ struct DailyDeclarationBurstView: View {
             VStack(spacing: 8) {
                 ZStack {
                     Circle()
-                        .fill(
-                            LinearGradient(
-                                colors: highlight ? [.orange, .red] : [Color(red: 1.0, green: 0.8, blue: 0.3).opacity(0.3), Color(red: 1.0, green: 0.6, blue: 0.2).opacity(0.2)],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
+                        .fill(highlight ? DS.Gradient.ember : DS.Gradient.gold)
                         .frame(width: 60, height: 60)
-                    
+                        .shadow(color: (highlight ? Color(red: 1.0, green: 0.34, blue: 0.13) : DS.Palette.gold).opacity(0.5), radius: 8, x: 0, y: 4)
+
                     Image(systemName: icon)
                         .font(.system(size: 24, weight: .bold))
-                        .foregroundColor(highlight ? .white : Color(red: 1.0, green: 0.8, blue: 0.3))
+                        .foregroundColor(.white)
                 }
                 
                 Text(value)
@@ -700,10 +694,8 @@ struct DailyDeclarationBurstView: View {
     
     private func triggerCompletionAnimations() {
         // Trigger haptic feedback
-        let successFeedback = UINotificationFeedbackGenerator()
-        successFeedback.prepare()
-        successFeedback.notificationOccurred(.success)
-        
+        Juice.play(.success)
+
         // Cascade animations
         withAnimation(.spring(response: 0.6, dampingFraction: 0.7)) {
             checkmarkScale = 1.0
@@ -719,11 +711,9 @@ struct DailyDeclarationBurstView: View {
                 starOpacity = 1.0
                 confettiOpacity = 1.0
             }
-            
+
             // Medium haptic
-            let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
-            impactFeedback.prepare()
-            impactFeedback.impactOccurred()
+            Juice.play(.tapSolid)
         }
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
@@ -734,9 +724,7 @@ struct DailyDeclarationBurstView: View {
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.7) {
             // Light haptic
-            let lightFeedback = UIImpactFeedbackGenerator(style: .light)
-            lightFeedback.prepare()
-            lightFeedback.impactOccurred()
+            Juice.play(.tapLight)
         }
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
@@ -748,10 +736,8 @@ struct DailyDeclarationBurstView: View {
     
     private func shareVictory() {
         // Haptic feedback
-        let impactFeedback = UIImpactFeedbackGenerator(style: .light)
-        impactFeedback.prepare()
-        impactFeedback.impactOccurred()
-        
+        Juice.play(.tapLight)
+
         let message = "I just completed my Daily Victory Burst on SpeakLife! 🔥\n\n✅ \(morningDeclarations.count) Declarations Spoken\n🔥 \(burstTracker.currentStreak) Day Streak\n💪 \(burstTracker.currentStrengthScore)% Spiritual Strength\n\nJoin me in speaking life daily!"
         
         // Get the active window scene
@@ -801,12 +787,10 @@ struct DailyDeclarationBurstView: View {
     
     private func nextDeclaration() {
         guard !isTransitioning else { return }
-        
+
         // Haptic feedback
-        let impactFeedback = UIImpactFeedbackGenerator(style: .light)
-        impactFeedback.prepare()
-        impactFeedback.impactOccurred()
-        
+        Juice.play(.tapLight)
+
         if currentDeclarationIndex < morningDeclarations.count - 1 {
             isTransitioning = true
             
@@ -823,10 +807,8 @@ struct DailyDeclarationBurstView: View {
             }
         } else {
             // Complete the burst with success haptic
-            let successFeedback = UINotificationFeedbackGenerator()
-            successFeedback.prepare()
-            successFeedback.notificationOccurred(.success)
-            
+            Juice.play(.success)
+
             let timeSpent = Date().timeIntervalSince(startTime)
             burstTracker.recordBurstCompletion(
                 declarationCount: morningDeclarations.count,
@@ -847,7 +829,7 @@ struct DailyDeclarationBurstView: View {
                 }
             }
 
-            withAnimation(.spring()) {
+            withAnimation(DS.Motion.smooth) {
                 showCompletionView = true
             }
             
@@ -861,9 +843,7 @@ struct DailyDeclarationBurstView: View {
     
     private func completeBurst() {
         // Haptic feedback on complete
-        let impactFeedback = UIImpactFeedbackGenerator(style: .light)
-        impactFeedback.prepare()
-        impactFeedback.impactOccurred()
+        Juice.play(.tapLight)
 
         // The burst view has its own completion UI, so the streak view model's
         // celebration covers were never shown. Reset the flags so they don't

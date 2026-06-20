@@ -21,17 +21,17 @@ struct ContentInputView: View {
         VStack(spacing: 0) {
             // Top section with prompts - more compact when keyboard is present
             if keyboardHeight == 0 {
-                VStack(spacing: 12) {
+                VStack(spacing: DS.Spacing.sm) {
                     contextualPromptSection
                     voiceCorrectionsSection
                 }
-                .padding(.bottom, 12)
+                .padding(.bottom, DS.Spacing.sm)
             } else {
                 // Minimal header when keyboard is present
                 VStack(spacing: 6) {
                     voiceCorrectionsSection
                 }
-                .padding(.bottom, 8)
+                .padding(.bottom, DS.Spacing.xs)
             }
             
             // Text input section - takes most space
@@ -40,13 +40,13 @@ struct ContentInputView: View {
             // Voice quick corrections
             if voiceManager.hasContent || voiceManager.voiceInputState == .error {
                 VoiceQuickCorrections(voiceManager: voiceManager, text: $text)
-                    .padding(.vertical, 8)
+                    .padding(.vertical, DS.Spacing.xs)
             }
             
             // Bottom guidance - minimal when keyboard is present
             if keyboardHeight == 0 {
                 contentGuidanceSection
-                    .padding(.top, 8)
+                    .padding(.top, DS.Spacing.xs)
             }
         }
         .onAppear {
@@ -88,7 +88,7 @@ struct ContentInputView: View {
             wordCount: wordCount,
             animate: animatePrompt
         )
-        .padding(.top, 12)
+        .padding(.top, DS.Spacing.sm)
     }
     
     private var textInputSection: some View {
@@ -148,7 +148,7 @@ struct ContextualPromptView: View {
     let animate: Bool
     
     var body: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: DS.Spacing.sm) {
             // Main prompt
             Text(getMainPrompt())
                 .font(.system(size: 20, weight: .bold, design: .rounded))
@@ -167,8 +167,8 @@ struct ContextualPromptView: View {
                 .fixedSize(horizontal: false, vertical: true)
                 .opacity(animate ? 1.0 : 0.7)
         }
-        .padding(.vertical, 8)
-        .padding(.horizontal, 16)
+        .padding(.vertical, DS.Spacing.xs)
+        .padding(.horizontal, DS.Spacing.md)
     }
     
     private func getMainPrompt() -> String {
@@ -209,8 +209,8 @@ struct LiveTranscriptionView: View {
     @State private var showCursor = true
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(spacing: 8) {
+        VStack(alignment: .leading, spacing: DS.Spacing.sm) {
+            HStack(spacing: DS.Spacing.xs) {
                 Image(systemName: "waveform")
                     .font(.system(size: 14))
                     .foregroundColor(.blue)
@@ -245,15 +245,16 @@ struct LiveTranscriptionView: View {
                 }
             }
         }
-        .padding(16)
+        .padding(DS.Spacing.md)
         .background(
-            RoundedRectangle(cornerRadius: 12)
+            RoundedRectangle(cornerRadius: DS.Radius.sm, style: .continuous)
                 .fill(Color.blue.opacity(0.15))
                 .overlay(
-                    RoundedRectangle(cornerRadius: 12)
+                    RoundedRectangle(cornerRadius: DS.Radius.sm, style: .continuous)
                         .stroke(Color.blue.opacity(0.3), lineWidth: 1)
                 )
         )
+        .dsShadow(DS.Elevation.low)
         .onAppear {
             withAnimation(.easeInOut(duration: 0.8).repeatForever()) {
                 showCursor.toggle()
@@ -268,26 +269,26 @@ struct ContentGuidanceView: View {
     let wordCount: Int
     
     var body: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: DS.Spacing.xs) {
             if wordCount > 0 {
                 HStack {
                     progressIndicator
                     Spacer()
                     progressText
                 }
-                .padding(.horizontal, 4)
+                .padding(.horizontal, DS.Spacing.xxs)
             }
-            
+
             if shouldShowLengthGuidance {
                 lengthGuidanceMessage
             }
         }
-        .padding(.vertical, 8)
+        .padding(.vertical, DS.Spacing.xs)
     }
     
     @ViewBuilder
     private var progressIndicator: some View {
-        HStack(spacing: 4) {
+        HStack(spacing: DS.Spacing.xxs) {
             ForEach(0..<5, id: \.self) { index in
                 Circle()
                     .fill(index < progressLevel ? Color.green : Color.gray.opacity(0.3))
@@ -304,7 +305,7 @@ struct ContentGuidanceView: View {
     }
     
     private var lengthGuidanceMessage: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: DS.Spacing.xs) {
             Image(systemName: characterCount > 1000 ? "exclamationmark.triangle" : "info.circle")
                 .font(.system(size: 12))
                 .foregroundColor(characterCount > 1000 ? .orange : .blue)
@@ -313,10 +314,10 @@ struct ContentGuidanceView: View {
                 .font(.system(size: 12))
                 .foregroundColor(characterCount > 1000 ? .orange : .white.opacity(0.7))
         }
-        .padding(.horizontal, 12)
+        .padding(.horizontal, DS.Spacing.sm)
         .padding(.vertical, 6)
         .background(
-            RoundedRectangle(cornerRadius: 8)
+            RoundedRectangle(cornerRadius: DS.Radius.sm, style: .continuous)
                 .fill((characterCount > 1000 ? Color.orange : Color.blue).opacity(0.1))
         )
     }
@@ -388,7 +389,7 @@ struct TextInputAreaView: View {
     @ViewBuilder
     private var placeholderAndHint: some View {
         if text.isEmpty && !voiceManager.isListening {
-            VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: DS.Spacing.md) {
                 placeholderText
                 if showVoiceHint {
                     voiceHintBanner
@@ -401,13 +402,13 @@ struct TextInputAreaView: View {
         Text(placeholder)
             .font(.system(size: 16, weight: .regular))
             .foregroundColor(.gray.opacity(0.8))
-            .padding(.top, 16)
-            .padding(.leading, 16)
+            .padding(.top, DS.Spacing.md)
+            .padding(.leading, DS.Spacing.md)
             .lineLimit(3)
     }
     
     private var voiceHintBanner: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: DS.Spacing.sm) {
             Image(systemName: "mic.fill")
                 .font(.system(size: 16))
                 .foregroundColor(.blue.opacity(0.7))
@@ -416,11 +417,11 @@ struct TextInputAreaView: View {
                 .font(.system(size: 14, weight: .medium))
                 .foregroundColor(.white.opacity(0.7))
         }
-        .padding(.horizontal, 16)
+        .padding(.horizontal, DS.Spacing.md)
         .padding(.vertical, 10)
         .background(Color.blue.opacity(0.1))
         .cornerRadius(12)
-        .padding(.horizontal, 16)
+        .padding(.horizontal, DS.Spacing.md)
         .transition(.move(edge: .bottom).combined(with: .opacity))
     }
     
@@ -437,13 +438,13 @@ struct TextInputAreaView: View {
                     .foregroundColor(.white)
                     .scrollContentBackground(.hidden)
                     .background(Color.clear)
-                    .padding(16)
+                    .padding(DS.Spacing.md)
             } else {
                 TextEditor(text: $text)
                     .font(.system(size: 16, weight: .regular, design: .rounded))
                     .foregroundColor(.white)
                     .background(Color.clear)
-                    .padding(16)
+                    .padding(DS.Spacing.md)
             }
         }
         .frame(minHeight: 120)

@@ -193,7 +193,7 @@ struct WarfareOnboardingView: View {
     }
 
     private func advance() {
-        UIImpactFeedbackGenerator(style: .soft).impactOccurred()
+        Juice.play(.tapLight)
         // flow_schema 3 = victory-vision inserted after the picker (2 = pre-victory-vision, 1 = pre-renumbering); bump when step raw values are renumbered again.
         AnalyticsService.shared.track("warfare_step_completed", parameters: ["step": currentStep.rawValue, "flow_schema": 3])
 
@@ -520,8 +520,9 @@ private struct WarfareSceneScreen: View {
             VStack(spacing: 26) {
                 ZStack {
                     Circle()
-                        .fill(Color.white.opacity(0.10))
+                        .fill(DS.Gradient.ember)
                         .frame(width: 96, height: 96)
+                        .shadow(color: Color(hex: "#FF3D2E").opacity(0.45), radius: 12, x: 0, y: 6)
                     Image(systemName: scene.symbol)
                         .font(.system(size: 40))
                         .foregroundColor(.white)
@@ -531,7 +532,7 @@ private struct WarfareSceneScreen: View {
                 VStack(spacing: 14) {
                     Text(scene.eyebrow)
                         .font(.system(size: 12, weight: .bold, design: .rounded))
-                        .foregroundColor(.white.opacity(0.5))
+                        .foregroundColor(DS.Palette.gold.opacity(0.9))
                         .kerning(1.4)
                         .multilineTextAlignment(.center)
                         .warfareStagger(v, delay: 0.08)
@@ -639,7 +640,7 @@ private struct WarfareTakeBackPickerScreen: View {
         let choice = WarfareTakeBackChoice.of(burden)
         let isSelected = responses.heaviestBurden == burden
         return Button(action: {
-            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            Juice.play(.tapLight)
             responses.heaviestBurden = burden
         }) {
             HStack(spacing: 14) {
@@ -766,8 +767,9 @@ private struct WarfareVictoryVisionScreen: View {
             VStack(spacing: 26) {
                 ZStack {
                     Circle()
-                        .fill(Color.white.opacity(0.10))
+                        .fill(DS.Gradient.ember)
                         .frame(width: 96, height: 96)
+                        .shadow(color: Color(hex: "#FF3D2E").opacity(0.45), radius: 12, x: 0, y: 6)
                     Image(systemName: victory.symbol)
                         .font(.system(size: 40))
                         .foregroundColor(.white)
@@ -777,7 +779,7 @@ private struct WarfareVictoryVisionScreen: View {
                 VStack(spacing: 14) {
                     Text("WHAT TAKING IT BACK LOOKS LIKE")
                         .font(.system(size: 12, weight: .bold, design: .rounded))
-                        .foregroundColor(.white.opacity(0.5))
+                        .foregroundColor(DS.Palette.gold.opacity(0.9))
                         .kerning(1.4)
                         .multilineTextAlignment(.center)
                         .warfareStagger(v, delay: 0.08)

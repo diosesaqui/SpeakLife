@@ -31,9 +31,10 @@ struct PrimaryActionButton: View {
                 .foregroundColor(.white)
                 .frame(maxWidth: .infinity)
                 .padding()
-                .background(Color.white.opacity(0.2))
+                .background(DS.Gradient.brand)
                 .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
         }
+        .buttonStyle(.dsPressable(feel: .tapSolid, haptics: false))
     }
 }
 
@@ -94,10 +95,10 @@ struct StreakInfoBottomSheet: View {
 
             PrimaryActionButton(title: "Got it!") {
                 isShown = false
-                UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                Juice.play(.tapSolid)
             }
             .padding(.horizontal)
-            .padding(.bottom, 16)
+            .padding(.bottom, DS.Spacing.md)
         }
         .padding(.top, 10)
         .background(

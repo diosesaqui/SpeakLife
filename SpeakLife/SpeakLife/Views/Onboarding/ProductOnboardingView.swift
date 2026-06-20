@@ -185,7 +185,7 @@ struct ProductOnboardingView: View {
     }
 
     private func advance() {
-        UIImpactFeedbackGenerator(style: .soft).impactOccurred()
+        Juice.play(.tapLight)
         // flow_schema 2 = this branch's step layout (1 = pre-renumbering); bump when step raw values are renumbered again.
         AnalyticsService.shared.track("product_step_completed", parameters: ["step": currentStep.rawValue, "flow_schema": 2])
 
@@ -571,7 +571,7 @@ private struct ProductMechanismScreen: View {
         VStack(spacing: 12) {
             Text(tag)
                 .font(.system(size: 11, weight: .bold, design: .rounded))
-                .foregroundColor(highlighted ? .white : .white.opacity(0.45))
+                .foregroundColor(highlighted ? DS.Palette.gold.opacity(0.9) : .white.opacity(0.45))
                 .kerning(1.0)
             Image(systemName: icon)
                 .font(.system(size: 30))
@@ -651,7 +651,7 @@ private struct ProductCategoryPickerScreen: View {
     private func categoryRow(_ option: HeaviestBurden) -> some View {
         let isSelected = responses.heaviestBurden == option
         return Button(action: {
-            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            Juice.play(.tapLight)
             responses.heaviestBurden = option
         }) {
             HStack(spacing: 14) {

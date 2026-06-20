@@ -59,10 +59,11 @@ struct HelpUsGrowView: View {
                     Text(viewModel.model.buttonText)
                         .font(.headline)
                         .padding()
-                        .background(Color.blue)
+                        .background(DS.Gradient.brand)
                         //.foregroundColor(.white)
                         .cornerRadius(10)
                 }
+                .buttonStyle(.dsPressable(feel: .tapSolid))
             }
             .foregroundColor(.white)
             .padding()

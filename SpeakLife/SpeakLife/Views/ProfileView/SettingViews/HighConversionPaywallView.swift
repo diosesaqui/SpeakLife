@@ -290,10 +290,10 @@ struct HighConversionPaywallView: View {
                             benefitsSection.padding(.top, 20)
                             comparisonSection.padding(.top, 28)
                             if let days = selectedPlanTrialDays {
-                                trialTimelineSection(days: days).padding(.top, 24)
+                                trialTimelineSection(days: days).padding(.top, DS.Spacing.lg)
                             }
-                            featuredTestimonial.padding(.top, 24)
-                            remainingTestimonialsSection.padding(.top, 24)
+                            featuredTestimonial.padding(.top, DS.Spacing.lg)
+                            remainingTestimonialsSection.padding(.top, DS.Spacing.lg)
                             Spacer(minLength: 20)
                         }
                     }
@@ -344,17 +344,17 @@ struct HighConversionPaywallView: View {
                 .frame(height: 260).clipped()
             LinearGradient(colors: [.clear, Color(red:0.07,green:0.10,blue:0.22)], startPoint: .top, endPoint: .bottom)
                 .frame(height: 120)
-            VStack(spacing: 8) {
+            VStack(spacing: DS.Spacing.xs) {
                 Image("appIconDisplay")
                     .resizable().frame(width: 64, height: 64)
                     .clipShape(RoundedRectangle(cornerRadius: 14))
                     .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.white.opacity(0.2), lineWidth: 1))
                 Text(resolvedHeadline)
                     .font(.system(size: 22, weight: .bold)).foregroundColor(.white)
-                    .multilineTextAlignment(.center).padding(.horizontal, 24)
+                    .multilineTextAlignment(.center).padding(.horizontal, DS.Spacing.lg)
                 Text(resolvedSubheadline)
                     .font(.system(size: 14)).foregroundColor(.white.opacity(0.75))
-                    .multilineTextAlignment(.center).padding(.horizontal, 32)
+                    .multilineTextAlignment(.center).padding(.horizontal, DS.Spacing.xl)
             }
             .padding(.bottom, 20)
         }
@@ -389,12 +389,12 @@ struct HighConversionPaywallView: View {
         let icons = ["quote.bubble.fill", "shield.fill", "eye.fill", "person.circle.fill"]
         let descs = Array(resolvedDescriptions.prefix(4))
         let props = Array(resolvedValueProps.prefix(4))
-        return VStack(alignment: .leading, spacing: 16) {
+        return VStack(alignment: .leading, spacing: DS.Spacing.md) {
             ForEach(0..<min(props.count, 4), id: \.self) { i in
                 HCBenefitRow(icon: icons[i], title: props[i], description: i < descs.count ? descs[i] : "")
             }
         }
-        .padding(.horizontal, 24)
+        .padding(.horizontal, DS.Spacing.lg)
     }
 
     private var succinctBenefitsSection: some View {
@@ -405,7 +405,7 @@ struct HighConversionPaywallView: View {
                 HCSuccinctBenefitRow(icon: icons[i], title: props[i])
             }
         }
-        .padding(.horizontal, 24)
+        .padding(.horizontal, DS.Spacing.lg)
     }
 
     // MARK: - Comparison Grid (SpeakLife vs. Other apps)
@@ -433,7 +433,7 @@ struct HighConversionPaywallView: View {
         VStack(alignment: .leading, spacing: 0) {
             Text("Why pay more for less?")
                 .font(.system(size: 17, weight: .bold)).foregroundColor(.white)
-                .padding(.bottom, 16)
+                .padding(.bottom, DS.Spacing.md)
 
             comparisonHeaderRow
                 .padding(.bottom, 6)
@@ -458,7 +458,7 @@ struct HighConversionPaywallView: View {
                 .fill(Color.white.opacity(0.06))
                 .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.white.opacity(0.12), lineWidth: 1))
         )
-        .padding(.horizontal, 24)
+        .padding(.horizontal, DS.Spacing.lg)
     }
 
     private var comparisonHeaderRow: some View {
@@ -520,7 +520,7 @@ struct HighConversionPaywallView: View {
         VStack(alignment: .leading, spacing: 0) {
             Text("How your free trial works")
                 .font(.system(size: 17, weight: .bold)).foregroundColor(.white)
-                .padding(.bottom, 16)
+                .padding(.bottom, DS.Spacing.md)
             trialTimelineStep(
                 icon: "lock.open.fill", title: "Today",
                 detail: "Full access unlocked. Speak your first declaration over your battle.",
@@ -546,7 +546,7 @@ struct HighConversionPaywallView: View {
                 .fill(Color.white.opacity(0.06))
                 .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.white.opacity(0.12), lineWidth: 1))
         )
-        .padding(.horizontal, 24)
+        .padding(.horizontal, DS.Spacing.lg)
     }
 
     private func trialTimelineStep(icon: String, title: String, detail: String, showsLine: Bool) -> some View {
@@ -579,7 +579,7 @@ struct HighConversionPaywallView: View {
 
     // MARK: - Featured Testimonial (above the fold, anxiety-first)
     private var featuredTestimonial: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: DS.Spacing.xs) {
             HStack(spacing: 2) {
                 ForEach(0..<5) { _ in Image(systemName: "star.fill").font(.system(size: 12)).foregroundColor(.yellow) }
             }
@@ -598,12 +598,12 @@ struct HighConversionPaywallView: View {
                 .fill(Color.white.opacity(0.08))
                 .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.white.opacity(0.12), lineWidth: 1))
         )
-        .padding(.horizontal, 24)
+        .padding(.horizontal, DS.Spacing.lg)
     }
 
     // MARK: - Remaining Testimonials
     private var remainingTestimonialsSection: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: DS.Spacing.sm) {
             testimonialCard(
                 quote: "I've tried journaling, therapy, everything. Nothing rewired my thinking like speaking God's Word daily. This app is different.",
                 author: "DeShawn R.", stars: 5
@@ -621,11 +621,11 @@ struct HighConversionPaywallView: View {
                 author: "Crash L.", stars: 5
             )
         }
-        .padding(.horizontal, 24)
+        .padding(.horizontal, DS.Spacing.lg)
     }
 
     private func testimonialCard(quote: String, author: String, stars: Int) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: DS.Spacing.xs) {
             HStack(spacing: 2) {
                 ForEach(0..<stars) { _ in Image(systemName: "star.fill").font(.system(size: 10)).foregroundColor(.yellow) }
             }
@@ -637,7 +637,7 @@ struct HighConversionPaywallView: View {
                 .font(.system(size: 12, weight: .medium))
                 .foregroundColor(.white.opacity(0.45))
         }
-        .padding(16)
+        .padding(DS.Spacing.md)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(RoundedRectangle(cornerRadius: 12).fill(Color.white.opacity(0.06)))
     }
@@ -657,7 +657,7 @@ struct HighConversionPaywallView: View {
                 payWhatYouCanCTA
                 bottomLinks
             }
-            .padding(.horizontal, 20).padding(.vertical, 16).padding(.bottom, 8)
+            .padding(.horizontal, 20).padding(.vertical, DS.Spacing.md).padding(.bottom, DS.Spacing.xs)
             .background(Color(red:0.07,green:0.10,blue:0.22).opacity(0.97))
         }
         .ignoresSafeArea(edges: .bottom)
@@ -685,12 +685,12 @@ struct HighConversionPaywallView: View {
         }) {
             ZStack(alignment: .top) {
                 VStack(spacing: 4) {
-                    if topLabel != nil { Spacer().frame(height: 12) }
+                    if topLabel != nil { Spacer().frame(height: DS.Spacing.sm) }
                     Text(title).font(.system(size: 13, weight: .semibold)).foregroundColor(isSelected ? .white : .white.opacity(0.55))
                     Text(price).font(.system(size: 22, weight: .bold)).foregroundColor(isSelected ? .white : .white.opacity(0.45))
                     Text(sub).font(.system(size: 10)).foregroundColor(isSelected ? .white.opacity(0.7) : .white.opacity(0.3)).multilineTextAlignment(.center)
                 }
-                .padding(.vertical, 14).padding(.horizontal, 8)
+                .padding(.vertical, 14).padding(.horizontal, DS.Spacing.xs)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(
                     RoundedRectangle(cornerRadius: 12)
@@ -699,7 +699,7 @@ struct HighConversionPaywallView: View {
                 )
                 if let label = topLabel {
                     Text(label).font(.system(size: 9, weight: .bold)).foregroundColor(.white)
-                        .padding(.horizontal, 8).padding(.vertical, 3)
+                        .padding(.horizontal, DS.Spacing.xs).padding(.vertical, 3)
                         .background(Capsule().fill(Color.green))
                         .offset(y: -10)
                 }
@@ -733,8 +733,8 @@ struct HighConversionPaywallView: View {
             .font(.system(size: 14, weight: .regular, design: .rounded))
             .foregroundColor(.white.opacity(0.7))
             .multilineTextAlignment(.center)
-            .padding(.horizontal, 32)
-            .padding(.vertical, 12)
+            .padding(.horizontal, DS.Spacing.xl)
+            .padding(.vertical, DS.Spacing.sm)
     }
 
     // MARK: - CTA
@@ -797,7 +797,7 @@ struct HighConversionPaywallView: View {
                 .fixedSize(horizontal: false, vertical: true)
         }
         .frame(maxWidth: .infinity)
-        .padding(.horizontal, 12)
+        .padding(.horizontal, DS.Spacing.sm)
     }
 
     // MARK: - Pay What You Can (secondary CTA, intentionally subordinate to main CTA)
@@ -826,7 +826,7 @@ struct HighConversionPaywallView: View {
 
     // MARK: - Bottom Links
     private var bottomLinks: some View {
-        HStack(spacing: 24) {
+        HStack(spacing: DS.Spacing.lg) {
             Button("Restore", action: restore)
             Link("Terms", destination: URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!)
             Button("Privacy") { showPrivacyPolicy = true }
@@ -988,7 +988,7 @@ struct HighConversionPaywallView: View {
             isShowingError = true
             return
         }
-        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+        Juice.play(.tapSolid)
         AnalyticsService.shared.track("paywall_cta_tapped", parameters: [
             "variant": paywallVariant,
             "plan": selectedPlan.rawValue,
@@ -1221,7 +1221,7 @@ struct WelcomeOfferView: View {
     }
 
     private var header: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: DS.Spacing.sm) {
             Image("appIconDisplay")
                 .resizable().frame(width: 64, height: 64)
                 .clipShape(RoundedRectangle(cornerRadius: 14))
@@ -1233,7 +1233,7 @@ struct WelcomeOfferView: View {
             Text("Speak life over your battle\nfor less.")
                 .font(.system(size: 26, weight: .bold)).foregroundColor(.white)
                 .multilineTextAlignment(.center)
-                .padding(.horizontal, 24)
+                .padding(.horizontal, DS.Spacing.lg)
         }
         .padding(.top, 56)
     }
@@ -1267,7 +1267,7 @@ struct WelcomeOfferView: View {
                 .fill(Color.white.opacity(0.06))
                 .overlay(RoundedRectangle(cornerRadius: 14).stroke(Constants.DAMidBlue.opacity(0.6), lineWidth: 1))
         )
-        .padding(.horizontal, 24)
+        .padding(.horizontal, DS.Spacing.lg)
     }
 
     // MARK: Honest Framing (no fake urgency, no countdown)
@@ -1294,7 +1294,7 @@ struct WelcomeOfferView: View {
             noThanksButton
             bottomLinks
         }
-        .padding(.horizontal, 20).padding(.top, 8).padding(.bottom, 24)
+        .padding(.horizontal, 20).padding(.top, DS.Spacing.xs).padding(.bottom, DS.Spacing.lg)
     }
 
     private var ctaButton: some View {
@@ -1327,7 +1327,7 @@ struct WelcomeOfferView: View {
     }
 
     private var bottomLinks: some View {
-        HStack(spacing: 24) {
+        HStack(spacing: DS.Spacing.lg) {
             Button("Restore", action: restore)
             Link("Terms", destination: URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!)
             Button("Privacy") { showPrivacyPolicy = true }
@@ -1361,7 +1361,7 @@ struct WelcomeOfferView: View {
             isShowingError = true
             return
         }
-        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+        Juice.play(.tapSolid)
         AnalyticsService.shared.track("welcome_offer_cta_tapped", parameters: [
             "product_id": product.id
         ])
@@ -1422,7 +1422,7 @@ private struct PostPurchaseMissionView: View {
     var body: some View {
         VStack(spacing: 0) {
             Spacer()
-            VStack(spacing: 16) {
+            VStack(spacing: DS.Spacing.md) {
                 Image(systemName: "heart.circle.fill")
                     .font(.system(size: 64))
                     .foregroundColor(Constants.DAMidBlue)

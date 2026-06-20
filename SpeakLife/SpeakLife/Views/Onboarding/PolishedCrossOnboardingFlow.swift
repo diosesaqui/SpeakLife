@@ -178,7 +178,7 @@ struct PolishedCrossOnboardingFlow: View {
                 completeOnboarding()
             }
         }
-        impactMed.impactOccurred()
+        Juice.play(.tapLight)
     }
     
     func askNotificationPermission() {
@@ -277,9 +277,10 @@ struct FoundationalTruthScreen: View {
                         .frame(width: size.width * 0.85, height: 50)
                         .background(
                             RoundedRectangle(cornerRadius: 25)
-                                .fill(Color(red: 0.9, green: 0.7, blue: 0.3))
+                                .fill(DS.Gradient.gold)
                         )
                 }
+                .buttonStyle(.dsPressable(feel: .tapSolid, haptics: false))
                 .padding(.bottom, 40)
             }
         }
@@ -505,9 +506,10 @@ struct CrossAnchorScreen: View {
                         .frame(width: size.width * 0.85, height: 50)
                         .background(
                             RoundedRectangle(cornerRadius: 25)
-                                .fill(Color(red: 0.9, green: 0.7, blue: 0.3))
+                                .fill(DS.Gradient.gold)
                         )
                 }
+                .buttonStyle(.dsPressable(feel: .tapSolid, haptics: false))
                 .padding(.bottom, 40)
                 .opacity(showMeaning ? 1 : 0.3)
                 .disabled(!showMeaning)
@@ -612,9 +614,10 @@ struct IdentityShiftScreen: View {
                         .frame(width: size.width * 0.85, height: 50)
                         .background(
                             RoundedRectangle(cornerRadius: 25)
-                                .fill(Color(red: 0.4, green: 0.5, blue: 0.9))
+                                .fill(DS.Gradient.brand)
                         )
                 }
+                .buttonStyle(.dsPressable(feel: .tapSolid, haptics: false))
                 .padding(.bottom, 40)
             }
             .padding(.horizontal, 30)
@@ -690,9 +693,10 @@ struct DeclarationReframeScreen: View {
                         .frame(width: size.width * 0.85, height: 50)
                         .background(
                             RoundedRectangle(cornerRadius: 25)
-                                .fill(Color(red: 0.4, green: 0.5, blue: 0.9))
+                                .fill(DS.Gradient.brand)
                         )
                 }
+                .buttonStyle(.dsPressable(feel: .tapSolid, haptics: false))
                 .padding(.bottom, 40)
             }
         }
@@ -967,9 +971,10 @@ struct FutureVisionScreen: View {
                         .frame(width: size.width * 0.85, height: 50)
                         .background(
                             RoundedRectangle(cornerRadius: 25)
-                                .fill(Color(red: 0.4, green: 0.5, blue: 0.9))
+                                .fill(DS.Gradient.brand)
                         )
                 }
+                .buttonStyle(.dsPressable(feel: .tapSolid, haptics: false))
                 .padding(.bottom, 40)
             }
         }
@@ -1083,9 +1088,10 @@ struct TransformationPromiseScreen: View {
                         .frame(width: size.width * 0.85, height: 50)
                         .background(
                             RoundedRectangle(cornerRadius: 25)
-                                .fill(Color(red: 0.9, green: 0.7, blue: 0.3))
+                                .fill(DS.Gradient.gold)
                         )
                 }
+                .buttonStyle(.dsPressable(feel: .tapSolid, haptics: false))
                 .padding(.bottom, 40)
                 .opacity(visibleSteps[3] ? 1 : 0.3)
                 .disabled(!visibleSteps[3])

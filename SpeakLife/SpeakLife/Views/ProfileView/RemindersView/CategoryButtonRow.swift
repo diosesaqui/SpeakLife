@@ -46,7 +46,7 @@ struct CategoryButtonRow: View  {
                         Text("\(selectedCount) selected")
                             .font(.system(size: 12, weight: .semibold))
                             .foregroundColor(Constants.DAMidBlue)
-                            .padding(.horizontal, 8)
+                            .padding(.horizontal, DS.Spacing.xs)
                             .padding(.vertical, 3)
                             .background(
                                 Capsule().fill(Constants.DAMidBlue.opacity(0.15))
@@ -63,8 +63,8 @@ struct CategoryButtonRow: View  {
                     .foregroundColor(.white.opacity(0.55))
                     .padding(.leading, 26)
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
+            .padding(.horizontal, DS.Spacing.md)
+            .padding(.vertical, DS.Spacing.sm)
             .overlay(
                 RoundedRectangle(cornerRadius: 20)
                     .stroke(Constants.DAMidBlue, lineWidth: 1)
