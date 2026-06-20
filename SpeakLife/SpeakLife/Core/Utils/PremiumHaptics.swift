@@ -276,7 +276,11 @@ final class PremiumHaptics {
 extension PremiumHaptics {
     
     private static var isHapticsEnabled: Bool {
-        return UserDefaults.standard.bool(forKey: "hapticsEnabled") != false // Default to true
+        // Default to true when the key was never set. `bool(forKey:)` returns
+        // false for a missing key, so the old `!= false` check wrongly disabled
+        // haptics for everyone (no setting ever writes this key). Read the raw
+        // object instead so an unset key means "on".
+        UserDefaults.standard.object(forKey: "hapticsEnabled") as? Bool ?? true
     }
     
     static func setHapticsEnabled(_ enabled: Bool) {
