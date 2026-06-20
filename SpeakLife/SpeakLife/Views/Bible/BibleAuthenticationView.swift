@@ -42,9 +42,9 @@ struct BibleAuthenticationView: View {
                 .ignoresSafeArea()
                 
                 ScrollView {
-                    VStack(spacing: 24) {
+                    VStack(spacing: DS.Spacing.lg) {
                         // Header
-                        VStack(spacing: 16) {
+                        VStack(spacing: DS.Spacing.md) {
                             Image(systemName: "book.closed.fill")
                                 .font(.system(size: 60))
                                 .foregroundColor(Constants.DAMidBlue)
@@ -63,7 +63,7 @@ struct BibleAuthenticationView: View {
                         }
                         
                         // Benefits list
-                        VStack(alignment: .leading, spacing: 12) {
+                        VStack(alignment: .leading, spacing: DS.Spacing.sm) {
                             BibleBenefitRow(icon: "infinity", text: "Unlimited Bible reading")
                             BibleBenefitRow(icon: "magnifyingglass", text: "Unlimited verse searches")
                             BibleBenefitRow(icon: "bookmark.fill", text: "Sync bookmarks across devices")
@@ -78,7 +78,7 @@ struct BibleAuthenticationView: View {
                         
                         if !showEmailForm {
                             // Sign in options
-                            VStack(spacing: 16) {
+                            VStack(spacing: DS.Spacing.md) {
                                 // Apple Sign In
                                 SignInWithAppleButton(
                                     .signIn,
@@ -167,7 +167,7 @@ struct BibleAuthenticationView: View {
     
     @ViewBuilder
     private var emailFormView: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: DS.Spacing.md) {
             // Toggle between Sign In and Sign Up
             Picker("Mode", selection: $authMode) {
                 Text("Sign In").tag(AuthMode.signIn)
@@ -257,7 +257,7 @@ struct BibleAuthenticationView: View {
         Color.black.opacity(0.4)
             .ignoresSafeArea()
             .overlay(
-                VStack(spacing: 16) {
+                VStack(spacing: DS.Spacing.md) {
                     ProgressView()
                         .progressViewStyle(CircularProgressViewStyle(tint: .white))
                         .scaleEffect(1.5)

@@ -315,7 +315,7 @@ struct RelatedDeclarationCard: View {
     let declaration: Declaration
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: DS.Spacing.xs) {
             Text(declaration.text.prefix(80) + "...")
                 .font(.subheadline)
                 .foregroundColor(.primary)
@@ -348,7 +348,7 @@ struct RelatedDeclarationCard: View {
                     .foregroundColor(.secondary)
             }
         }
-        .padding(12)
+        .padding(DS.Spacing.sm)
         .frame(width: 180, height: 120)
         .background(
             RoundedRectangle(cornerRadius: 10)
@@ -365,11 +365,11 @@ struct AIFeaturesTeaser: View {
     @State private var showUpgrade = false
     
     var body: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: DS.Spacing.sm) {
             HStack {
                 Image(systemName: "sparkles")
                     .foregroundColor(.orange)
-                
+
                 Text("AI Insights Available")
                     .font(.headline)
                     .foregroundColor(.primary)
@@ -378,8 +378,8 @@ struct AIFeaturesTeaser: View {
                 
                 Text("Premium")
                     .font(.caption)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
+                    .padding(.horizontal, DS.Spacing.xs)
+                    .padding(.vertical, DS.Spacing.xxs)
                     .background(Color.orange.opacity(0.2))
                     .foregroundColor(.orange)
                     .cornerRadius(8)

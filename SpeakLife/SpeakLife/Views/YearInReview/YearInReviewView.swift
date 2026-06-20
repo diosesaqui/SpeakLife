@@ -153,7 +153,7 @@ struct YearInReviewView: View {
     // MARK: - Slides
 
     private var coverSlide: some View {
-        VStack(spacing: 24) {
+        VStack(spacing: DS.Spacing.lg) {
             Spacer()
             Image(systemName: "crown.fill")
                 .font(.system(size: 56, weight: .semibold))
@@ -286,7 +286,7 @@ struct YearInReviewView: View {
                     .italic()
                     .multilineTextAlignment(.center)
                     .padding(.top, 6)
-                    .padding(.horizontal, 12)
+                    .padding(.horizontal, DS.Spacing.sm)
             }
         }
     }
@@ -319,7 +319,7 @@ struct YearInReviewView: View {
                         Button {
                             presentShare(of: summaryCardForExport(), text: shareSummaryText)
                         } label: {
-                            HStack(spacing: 8) {
+                            HStack(spacing: DS.Spacing.xs) {
                                 Image(systemName: "square.and.arrow.up")
                                 Text("Share Your Year")
                             }
@@ -357,7 +357,7 @@ struct YearInReviewView: View {
             Spacer()
             content()
                 .multilineTextAlignment(.center)
-                .padding(.horizontal, 32)
+                .padding(.horizontal, DS.Spacing.xl)
             Spacer()
         }
     }

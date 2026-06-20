@@ -13,7 +13,7 @@ struct VoiceCorrectionsView: View {
     @State private var showAlternatives = false
     
     var body: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: DS.Spacing.xs) {
             // Confidence indicator
             if voiceManager.transcriptionConfidence > 0 && voiceManager.hasContent {
                 confidenceIndicator
@@ -29,7 +29,7 @@ struct VoiceCorrectionsView: View {
     }
     
     private var confidenceIndicator: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: DS.Spacing.xs) {
             Image(systemName: getConfidenceIcon())
                 .foregroundColor(getConfidenceColor())
                 .font(.system(size: 14))
