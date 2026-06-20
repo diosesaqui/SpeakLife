@@ -54,6 +54,7 @@ struct QuizCompletionView: View {
                         .cornerRadius(20)
                         .shadow(radius: 5)
                 }
+                .buttonStyle(.dsPressable(feel: .tapSolid))
                 .padding(.horizontal, 40)
             }
             .padding()

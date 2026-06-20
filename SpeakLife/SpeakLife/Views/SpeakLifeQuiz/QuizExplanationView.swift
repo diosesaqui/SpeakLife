@@ -49,6 +49,7 @@ struct QuizExplanationView: View {
                         .cornerRadius(15)
                         .shadow(color: .white.opacity(0.4), radius: 10)
                 }
+                .buttonStyle(.dsPressable(feel: .tapSolid))
                 .padding(.horizontal)
             }
             .padding()

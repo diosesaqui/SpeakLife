@@ -9,12 +9,12 @@ struct SkillLevelView: View {
         let color = progressManager.colorForLevel(level)
         let icon = progressManager.iconForLevel(level)
 
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: DS.Spacing.sm) {
             HStack {
                 Image(systemName: icon)
                     .foregroundColor(color)
                     .imageScale(.large)
-                    .padding(8)
+                    .padding(DS.Spacing.xs)
                     .background(color.opacity(0.1))
                     .clipShape(Circle())
 

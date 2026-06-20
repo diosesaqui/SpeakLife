@@ -20,10 +20,10 @@ struct PersonalizedFeedSection: View {
     @State private var showPremiumUpgrade = false
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: DS.Spacing.md) {
             // Header
             HStack {
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: DS.Spacing.xxs) {
                     Text("For You Today")
                         .font(.title2)
                         .fontWeight(.bold)
@@ -41,7 +41,7 @@ struct PersonalizedFeedSection: View {
                         showPremiumUpgrade = true
                     }
                     .font(.caption)
-                    .padding(.horizontal, 12)
+                    .padding(.horizontal, DS.Spacing.sm)
                     .padding(.vertical, 6)
                     .background(Color.orange.opacity(0.8))
                     .foregroundColor(.white)
@@ -145,14 +145,14 @@ struct PersonalCategoriesScrollView: View {
     let categories: [PersonalizedCategory]
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: DS.Spacing.xs) {
             Text("Your Spiritual Focus Areas")
                 .font(.headline)
                 .foregroundColor(.white)
                 .padding(.horizontal)
             
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 12) {
+                HStack(spacing: DS.Spacing.sm) {
                     ForEach(categories) { category in
                         PersonalCategoryCard(category: category)
                     }

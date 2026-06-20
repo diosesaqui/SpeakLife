@@ -15,7 +15,7 @@ private struct SurveyOptionRow: View {
 
     var body: some View {
         Button(action: {
-            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            Juice.play(.tapLight)
             action()
         }) {
             HStack(spacing: 14) {
@@ -65,7 +65,7 @@ private struct SurveyCheckRow: View {
 
     var body: some View {
         Button(action: {
-            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            Juice.play(.tapLight)
             action()
         }) {
             HStack(spacing: 14) {
@@ -228,7 +228,7 @@ private struct TerritoryOptionRow: View {
 
     var body: some View {
         Button(action: {
-            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            Juice.play(.tapLight)
             action()
         }) {
             HStack(spacing: 14) {
@@ -1243,7 +1243,7 @@ struct SurveyCommitmentHoldScreen: View {
 
     private func startHold() {
         guard phase == .idle else { return }
-        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+        Juice.play(.tapSolid)
         withAnimation(.easeInOut(duration: 0.3)) { phase = .holding }
         withAnimation(.easeInOut(duration: 0.5)) { glowOpacity = 1.0 }
         withAnimation(.easeInOut(duration: 1.4).repeatForever(autoreverses: true)) { ringScale = 1.15 }
@@ -1256,12 +1256,12 @@ struct SurveyCommitmentHoldScreen: View {
             let currentSecond = Int(elapsed)
             if currentSecond != lastHapticSecond && currentSecond > 0 && holdProgress < 1.0 {
                 lastHapticSecond = currentSecond
-                UIImpactFeedbackGenerator(style: .rigid).impactOccurred()
+                Juice.play(.tapSolid)
             }
             if holdProgress >= 1.0 {
                 timer.invalidate()
                 holdTimer = nil
-                UINotificationFeedbackGenerator().notificationOccurred(.success)
+                Juice.play(.success)
                 withAnimation(.easeInOut(duration: 0.45)) {
                     glowOpacity = 0
                     phase = .complete
@@ -1274,7 +1274,7 @@ struct SurveyCommitmentHoldScreen: View {
         guard phase == .holding else { return }
         holdTimer?.invalidate()
         holdTimer = nil
-        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        Juice.play(.tapLight)
         withAnimation(.easeOut(duration: 0.3)) { phase = .idle }
         withAnimation(.easeOut(duration: 0.4)) { glowOpacity = 0 }
         withAnimation(.easeOut(duration: 0.3)) { ringScale = 1.0 }
@@ -1409,7 +1409,7 @@ private struct QuizOptionRow: View {
 
     var body: some View {
         Button(action: {
-            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            Juice.play(.tapLight)
             action()
         }) {
             HStack(spacing: 14) {
@@ -1702,7 +1702,7 @@ struct SurveyPlanBuildingScreen: View {
         let lineCount = lines.count
         for i in 1...lineCount {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.4 + Double(i - 1) * 0.9) {
-                UIImpactFeedbackGenerator(style: .soft).impactOccurred()
+                Juice.play(.tapLight)
                 withAnimation { visibleLines = i }
             }
         }

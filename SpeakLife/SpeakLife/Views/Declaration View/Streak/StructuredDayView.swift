@@ -400,6 +400,6 @@ struct StructuredDayView: View {
                 }
             }
         }
-        .animation(.spring(response: 0.45, dampingFraction: 0.8), value: tasks.map { $0.isCompleted })
+        .animation(DS.Motion.smooth, value: tasks.map { $0.isCompleted })
     }
 }

@@ -77,7 +77,7 @@ struct QuizHomeView: View {
         NavigationView {
             ScrollView {
                 VStack(spacing: 20) {
-                    VStack(spacing: 12) {
+                    VStack(spacing: DS.Spacing.sm) {
                         SkillLevelView(progressManager: progressManager)
                     }
                     .padding(.top)
@@ -126,6 +126,6 @@ struct QuizCardView: View {
                 )
         }
         .scaleEffect(1.0)
-        .animation(.spring(), value: UUID())
+        .animation(DS.Motion.smooth, value: UUID())
     }
 }

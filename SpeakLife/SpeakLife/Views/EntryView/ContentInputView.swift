@@ -46,7 +46,7 @@ struct ContentInputView: View {
             // Bottom guidance - minimal when keyboard is present
             if keyboardHeight == 0 {
                 contentGuidanceSection
-                    .padding(.top, 8)
+                    .padding(.top, DS.Spacing.xs)
             }
         }
         .onAppear {
@@ -88,7 +88,7 @@ struct ContentInputView: View {
             wordCount: wordCount,
             animate: animatePrompt
         )
-        .padding(.top, 12)
+        .padding(.top, DS.Spacing.sm)
     }
     
     private var textInputSection: some View {
@@ -148,7 +148,7 @@ struct ContextualPromptView: View {
     let animate: Bool
     
     var body: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: DS.Spacing.sm) {
             // Main prompt
             Text(getMainPrompt())
                 .font(.system(size: 20, weight: .bold, design: .rounded))
@@ -167,8 +167,8 @@ struct ContextualPromptView: View {
                 .fixedSize(horizontal: false, vertical: true)
                 .opacity(animate ? 1.0 : 0.7)
         }
-        .padding(.vertical, 8)
-        .padding(.horizontal, 16)
+        .padding(.vertical, DS.Spacing.xs)
+        .padding(.horizontal, DS.Spacing.md)
     }
     
     private func getMainPrompt() -> String {
@@ -209,8 +209,8 @@ struct LiveTranscriptionView: View {
     @State private var showCursor = true
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(spacing: 8) {
+        VStack(alignment: .leading, spacing: DS.Spacing.sm) {
+            HStack(spacing: DS.Spacing.xs) {
                 Image(systemName: "waveform")
                     .font(.system(size: 14))
                     .foregroundColor(.blue)
@@ -245,7 +245,7 @@ struct LiveTranscriptionView: View {
                 }
             }
         }
-        .padding(16)
+        .padding(DS.Spacing.md)
         .background(
             RoundedRectangle(cornerRadius: 12)
                 .fill(Color.blue.opacity(0.15))
@@ -268,26 +268,26 @@ struct ContentGuidanceView: View {
     let wordCount: Int
     
     var body: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: DS.Spacing.xs) {
             if wordCount > 0 {
                 HStack {
                     progressIndicator
                     Spacer()
                     progressText
                 }
-                .padding(.horizontal, 4)
+                .padding(.horizontal, DS.Spacing.xxs)
             }
-            
+
             if shouldShowLengthGuidance {
                 lengthGuidanceMessage
             }
         }
-        .padding(.vertical, 8)
+        .padding(.vertical, DS.Spacing.xs)
     }
     
     @ViewBuilder
     private var progressIndicator: some View {
-        HStack(spacing: 4) {
+        HStack(spacing: DS.Spacing.xxs) {
             ForEach(0..<5, id: \.self) { index in
                 Circle()
                     .fill(index < progressLevel ? Color.green : Color.gray.opacity(0.3))

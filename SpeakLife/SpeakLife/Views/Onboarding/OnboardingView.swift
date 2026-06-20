@@ -336,7 +336,7 @@ public struct ElegantCloseButton: View {
     }
 
     private func handleAction() {
-        if enableHaptics { UIImpactFeedbackGenerator(style: .soft).impactOccurred() }
+        if enableHaptics { Juice.play(.tapLight) }
         withAnimation(.spring(response: configuration.animationResponse, dampingFraction: configuration.animationDamping)) {
             action()
         }

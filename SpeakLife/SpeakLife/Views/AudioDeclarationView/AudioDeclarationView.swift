@@ -27,7 +27,7 @@ struct UpNextCell: View {
 
     var body: some View {
         ZStack {
-                HStack(spacing: 16) {
+                HStack(spacing: DS.Spacing.md) {
                     Image(item.imageUrl)
                         .resizable()
                         .aspectRatio(contentMode: .fill)
@@ -218,7 +218,7 @@ struct AudioDeclarationView: View {
 
                 VStack(spacing: 0) {
                     // Header
-                    VStack(alignment: .leading, spacing: 8) {
+                    VStack(alignment: .leading, spacing: DS.Spacing.xs) {
                         Text("Meditation")
                             .font(.system(size: 28, weight: .bold))
                             .foregroundColor(.white)

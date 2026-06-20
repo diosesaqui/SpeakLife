@@ -69,6 +69,7 @@ struct QuizQuestionView: View {
                             .foregroundColor(.cyan)
                             .cornerRadius(10)
                     }
+                    .buttonStyle(.dsPressable(feel: .tapSolid))
                     .disabled(showFeedback)
                 }
 
