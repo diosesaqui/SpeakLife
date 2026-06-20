@@ -88,7 +88,7 @@ struct BibleChatAnswerView: View {
     }
 
     private var topicHeader: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: DS.Spacing.sm) {
             ZStack {
                 Circle()
                     .fill(topic.accentColor.opacity(0.22))
@@ -212,7 +212,7 @@ struct BibleChatAnswerView: View {
     }
 
     private var actionRow: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: DS.Spacing.sm) {
             ShareLink(item: shareText) {
                 actionLabel(systemImage: "square.and.arrow.up", title: "Share")
             }

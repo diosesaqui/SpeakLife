@@ -175,7 +175,7 @@ struct BibleAuthenticationView: View {
             }
             .pickerStyle(SegmentedPickerStyle())
             
-            VStack(spacing: 12) {
+            VStack(spacing: DS.Spacing.sm) {
                 // Email field
                 VStack(alignment: .leading, spacing: 4) {
                     TextField("Email", text: $email)
@@ -213,7 +213,7 @@ struct BibleAuthenticationView: View {
                 }
             }
             
-            HStack(spacing: 12) {
+            HStack(spacing: DS.Spacing.sm) {
                 // Back button
                 Button(action: {
                     withAnimation {
@@ -265,7 +265,7 @@ struct BibleAuthenticationView: View {
                         .foregroundColor(.white)
                         .font(.headline)
                 }
-                .padding(32)
+                .padding(DS.Spacing.xl)
                 .background(
                     RoundedRectangle(cornerRadius: 16)
                         .fill(Color(UIColor.systemBackground))
@@ -541,7 +541,7 @@ struct BibleBenefitRow: View {
     let text: String
     
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: DS.Spacing.sm) {
             Image(systemName: icon)
                 .font(.system(size: 20))
                 .foregroundColor(.blue)

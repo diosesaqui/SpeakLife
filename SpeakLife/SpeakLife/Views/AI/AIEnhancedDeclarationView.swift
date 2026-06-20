@@ -119,6 +119,7 @@ struct PersonalInsightCard: View {
                     Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
                         .foregroundColor(.secondary)
                 }
+                .buttonStyle(.dsPressable(feel: .tapSolid))
             }
             
             Text(insight.contextualMessage)

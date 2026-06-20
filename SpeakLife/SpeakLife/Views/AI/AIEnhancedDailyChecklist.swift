@@ -27,7 +27,7 @@ struct AIEnhancedDailyChecklist: View {
                 headerSection
                 
                 ScrollView {
-                    VStack(spacing: 16) {
+                    VStack(spacing: DS.Spacing.md) {
                         // Existing checklist items
                         existingChecklistSection
                         
@@ -56,8 +56,8 @@ struct AIEnhancedDailyChecklist: View {
     
     private var headerSection: some View {
         HStack {
-            VStack(alignment: .leading, spacing: 4) {
-                HStack(spacing: 8) {
+            VStack(alignment: .leading, spacing: DS.Spacing.xxs) {
+                HStack(spacing: DS.Spacing.xs) {
                     Text(viewModel.todayChecklist.currentPhase.emoji)
                         .font(.system(size: 16))
                     Text(viewModel.todayChecklist.currentPhase.displayName)
@@ -96,7 +96,7 @@ struct AIEnhancedDailyChecklist: View {
                         .font(.title2)
                         .foregroundColor(.white.opacity(0.7))
                 }
-                .padding(.trailing, 8)
+                .padding(.trailing, DS.Spacing.xs)
             }
         }
         .padding()
@@ -106,7 +106,7 @@ struct AIEnhancedDailyChecklist: View {
     // MARK: - Existing Checklist Section
     
     private var existingChecklistSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: DS.Spacing.sm) {
             Text("Today's Spiritual Checklist")
                 .font(.headline)
                 .foregroundColor(.white)
@@ -120,11 +120,11 @@ struct AIEnhancedDailyChecklist: View {
     // MARK: - AI Personalized Tasks Section
     
     private var aiPersonalizedTasksSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: DS.Spacing.sm) {
             HStack {
                 Image(systemName: "sparkles")
                     .foregroundColor(.yellow)
-                
+
                 Text("Your Spiritual Focus Today")
                     .font(.headline)
                     .foregroundColor(.white)
@@ -164,11 +164,11 @@ struct AIEnhancedDailyChecklist: View {
     // MARK: - AI Insights Section
     
     private var aiInsightsSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: DS.Spacing.sm) {
             HStack {
                 Image(systemName: "lightbulb.fill")
                     .foregroundColor(.yellow)
-                
+
                 Text("AI Spiritual Insights")
                     .font(.headline)
                     .foregroundColor(.white)
@@ -177,8 +177,8 @@ struct AIEnhancedDailyChecklist: View {
                 
                 Text("Personalized")
                     .font(.caption)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
+                    .padding(.horizontal, DS.Spacing.xs)
+                    .padding(.vertical, DS.Spacing.xxs)
                     .background(Color.yellow.opacity(0.3))
                     .foregroundColor(.white)
                     .cornerRadius(8)
@@ -196,7 +196,7 @@ struct AIEnhancedDailyChecklist: View {
     // MARK: - AI Feature Prompt
     
     private var aiFeaturePrompt: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: DS.Spacing.sm) {
             HStack {
                 Image(systemName: "brain")
                     .foregroundColor(.blue)

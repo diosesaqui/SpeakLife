@@ -122,6 +122,7 @@ struct YearInReviewView: View {
                     .frame(width: 32, height: 32)
                     .background(Circle().fill(Color.white.opacity(0.12)))
             }
+            .buttonStyle(.dsPressable(feel: .tapSolid))
             Spacer()
             if !isFirstSlide && !isLastSlide {
                 Button {
@@ -133,6 +134,7 @@ struct YearInReviewView: View {
                         .frame(width: 32, height: 32)
                         .background(Circle().fill(Color.white.opacity(0.12)))
                 }
+                .buttonStyle(.dsPressable(feel: .tapSolid))
             }
         }
         .padding(.horizontal, 20)
@@ -332,6 +334,7 @@ struct YearInReviewView: View {
                             )
                             .clipShape(RoundedRectangle(cornerRadius: 14))
                         }
+                        .buttonStyle(.dsPressable(feel: .tapSolid))
                         Button {
                             dismiss()
                         } label: {
@@ -340,6 +343,7 @@ struct YearInReviewView: View {
                                 .foregroundColor(.white.opacity(0.55))
                                 .frame(width: contentWidth, height: 44)
                         }
+                        .buttonStyle(.dsPressable(feel: .tapSolid))
                     }
                     .padding(.bottom, 28)
                 }
@@ -392,7 +396,7 @@ struct YearInReviewView: View {
                 .font(Font.custom("AppleSDGothicNeo-Regular", size: 14, relativeTo: .caption))
                 .foregroundColor(.white.opacity(0.65))
                 .italic()
-                .padding(.top, 4)
+                .padding(.top, DS.Spacing.xxs)
 
             if let verse, let verseRef {
                 VStack(spacing: 6) {
@@ -407,7 +411,7 @@ struct YearInReviewView: View {
                         .foregroundColor(Color(hex: "FBBF24"))
                 }
                 .padding(.top, 26)
-                .padding(.horizontal, 12)
+                .padding(.horizontal, DS.Spacing.sm)
             }
         }
     }
@@ -447,9 +451,9 @@ struct YearInReviewView: View {
                     .font(Font.custom("AppleSDGothicNeo-Bold", size: 56, relativeTo: .largeTitle))
                     .foregroundStyle(goldGradient)
             }
-            .padding(.top, 8)
+            .padding(.top, DS.Spacing.xs)
 
-            Divider().background(Color.white.opacity(0.15)).padding(.horizontal, 24)
+            Divider().background(Color.white.opacity(0.15)).padding(.horizontal, DS.Spacing.lg)
 
             VStack(spacing: 14) {
                 summaryRow(label: "Days you stood",        value: "\(stats.daysActive)")
@@ -474,13 +478,13 @@ struct YearInReviewView: View {
                 }
                 .foregroundColor(Color(hex: "FBBF24"))
                 .padding(.horizontal, 10)
-                .padding(.vertical, 4)
+                .padding(.vertical, DS.Spacing.xxs)
                 .background(
                     Capsule()
                         .fill(Color(hex: "FBBF24").opacity(0.14))
                         .overlay(Capsule().stroke(Color(hex: "FBBF24").opacity(0.45), lineWidth: 0.5))
                 )
-                .padding(.top, 8)
+                .padding(.top, DS.Spacing.xs)
             }
 
             Text("SpeakLife")
@@ -490,7 +494,7 @@ struct YearInReviewView: View {
                 .padding(.top, 6)
                 .padding(.bottom, 10)
         }
-        .padding(.vertical, 8)
+        .padding(.vertical, DS.Spacing.xs)
         .frame(maxWidth: .infinity)
         .background(
             RoundedRectangle(cornerRadius: 22)
@@ -546,7 +550,7 @@ struct YearInReviewView: View {
             )
             case .bestMonth:
                 if let best = stats.bestMonth {
-                    VStack(spacing: 12) {
+                    VStack(spacing: DS.Spacing.sm) {
                         eyebrow("My strongest month in \(stats.year)")
                         Text(best.name)
                             .font(Font.custom("AppleSDGothicNeo-Bold", size: 54, relativeTo: .largeTitle))
