@@ -49,10 +49,7 @@ struct AppleSignInPromptView: View {
                     .multilineTextAlignment(.center)
                     .italic()
                     .padding(.horizontal, DS.Spacing.xl)
-<<<<<<< HEAD
                     .dsAppear(0.12)
-=======
->>>>>>> origin/main
 
                 Text("— Galatians 6:2")
                     .font(Font.custom("AppleSDGothicNeo-Regular", size: 13, relativeTo: .caption))

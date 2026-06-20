@@ -47,12 +47,8 @@ struct BibleBookmarksView: View {
             Image(systemName: "bookmark")
                 .font(.system(size: 60))
                 .foregroundColor(.white.opacity(0.8))
-<<<<<<< HEAD
                 .dsAppear()
 
-=======
-            
->>>>>>> origin/main
             VStack(spacing: DS.Spacing.xs) {
                 Text("No Bookmarks Yet")
                     .font(DS.Typography.headline)

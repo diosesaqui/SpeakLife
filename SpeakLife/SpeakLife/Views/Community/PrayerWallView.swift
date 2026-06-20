@@ -55,19 +55,13 @@ struct PrayerWallView: View {
                         .padding(.horizontal, 20)
                         .padding(.top, DS.Spacing.xs)
                         .padding(.bottom, DS.Spacing.sm)
-<<<<<<< HEAD
                         .dsAppear(0)
-=======
->>>>>>> origin/main
 
                     if selectedTab == .wall {
                         categoryFilterBar
                             .padding(.leading, 20)
                             .padding(.bottom, DS.Spacing.xs)
-<<<<<<< HEAD
                             .dsAppear(0.06)
-=======
->>>>>>> origin/main
                     }
 
                     if viewModel.isLoading && currentPosts.isEmpty {
