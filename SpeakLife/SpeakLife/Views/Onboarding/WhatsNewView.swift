@@ -23,7 +23,7 @@ struct WhatsNewBottomSheet: View {
                // Header Section
                VStack(spacing: 10) {
                    Text("What's New in \(version)")
-                       .font(.title)
+                       .font(DS.Typography.title)
                        .fontWeight(.bold)
                        .multilineTextAlignment(.center)
 
