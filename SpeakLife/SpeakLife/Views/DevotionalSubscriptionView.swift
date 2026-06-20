@@ -13,7 +13,6 @@ struct DevotionalSubscriptionView: View {
     @EnvironmentObject var declarationStore: DeclarationViewModel
     @State var errorTitle = ""
     @State var isShowingError: Bool = false
-    let impactMed = UIImpactFeedbackGenerator(style: .soft)
     let callBack: (() -> Void)
     var body: some View {
         VStack {
@@ -72,7 +71,7 @@ struct DevotionalSubscriptionView: View {
     }
     
     private func makePurchase() {
-        impactMed.impactOccurred()
+        Juice.play(.tapLight)
         Task {
             withAnimation {
                 declarationStore.isPurchasing = true
@@ -158,7 +157,7 @@ struct SubscriptionDetailsView: View {
         .padding()
         .background(BlurView(style: .light))
         .cornerRadius(20)
-        .shadow(color: .black.opacity(0.2), radius: 10, x: 0, y: 5)
+        .dsShadow(DS.Elevation.low)
 
     }
 }

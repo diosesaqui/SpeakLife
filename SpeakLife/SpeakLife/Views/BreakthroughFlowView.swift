@@ -267,7 +267,7 @@ struct BreakthroughFlowView: View {
                     .padding(.top, 4)
                 }
             }
-            .padding(.horizontal, 32)
+            .padding(.horizontal, DS.Spacing.xl)
 
             Spacer()
 
@@ -284,7 +284,7 @@ struct BreakthroughFlowView: View {
                                 .fill(Color(red: 0.2, green: 0.5, blue: 1.0))
                         )
                         .foregroundColor(.white)
-                        .padding(.horizontal, 24)
+                        .padding(.horizontal, DS.Spacing.lg)
                 }
                 .buttonStyle(PlainButtonStyle())
 
