@@ -64,10 +64,6 @@ final class SubscriptionStore: ObservableObject {
     @Published var currentOfferedDevotionalPremium: Product? = nil
     @Published var isInDevotionalPremium = false
     @AppStorage("lastDevotionalPurchase") var lastDevotionalPurchaseDate: Date?
-    
-    // MARK: - Email Capture / Confirmation After Purchase
-    @Published var showEmailCaptureAfterPurchase = false   // premium, no email stored
-    @Published var showEmailConfirmAfterPurchase = false   // premium, email already stored → confirm + tag post_purchase
 
     @Published var showDevotionalSubscription = false
     @Published var showOneTimeSubscription = false
@@ -717,12 +713,6 @@ final class SubscriptionStore: ObservableObject {
             // them so we don't fire bogus "last day of trial" pushes after a
             // paid sale.
             TrialExperienceService.shared.clearPendingTrialPushes()
-        }
-
-        // Post-purchase email capture (unchanged)
-        let hasShownEmailCapture = UserDefaults.standard.bool(forKey: "hasShownEmailCapture")
-        if !hasShownEmailCapture {
-            DispatchQueue.main.async { self.showEmailCaptureAfterPurchase = true }
         }
 
         return true
