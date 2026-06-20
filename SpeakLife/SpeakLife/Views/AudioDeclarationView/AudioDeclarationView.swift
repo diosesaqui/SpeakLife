@@ -309,6 +309,9 @@ struct AudioDeclarationView: View {
             }
             .onAppear() {
                 Analytics.logEvent("AudioScreenLoaded", parameters: nil)
+                // Re-apply ordering now that Remote Config and favorites have
+                // loaded — covers existing users who don't rebuild filters on update.
+                viewModel.refreshPersonalization()
             }
             // Auto-play when arriving from daily checklist.
             // Uses onReceive on contentByFilter (a @Published dict) so it fires
@@ -369,6 +372,11 @@ struct AudioDeclarationView: View {
             ForEach(viewModel.dynamicFilters, id: \.id) { filterConfig in
                 Button(action: {
                     viewModel.selectedFilterId = filterConfig.id
+                    Analytics.logEvent("audio_filter_tapped", parameters: [
+                        "filter_id": filterConfig.id,
+                        "position": viewModel.dynamicFilters.firstIndex(where: { $0.id == filterConfig.id }) ?? -1,
+                        "personalized": viewModel.isPersonalizedOrderEnabled
+                    ])
                     if filterConfig.id == "favorites" {
                         AudioAnalytics.shared.trackFavoritesCategoryViewed(
                             favoritesCount: viewModel.favoritesManager.favoritesCount
