@@ -103,4 +103,57 @@ final class AudioRecommendationEngine {
         let current = UserDefaults.standard.integer(forKey: categoryIndexKey)
         UserDefaults.standard.set((current + 1) % categories.count, forKey: categoryIndexKey)
     }
+
+    // MARK: - Personalized Filter Ordering
+
+    /// Re-orders the curated audio filters so the categories the user cares about
+    /// are promoted to the front. The user's personal declaration is the
+    /// highest-intent signal and is applied before onboarding-selected
+    /// categories; everything else keeps its curated order.
+    ///
+    /// Pure and side-effect free — returns `filters` unchanged when there is no
+    /// signal or no match, so it is always safe to call. A pinned "favorites"
+    /// filter (if present) always stays first.
+    ///
+    /// - Parameters:
+    ///   - filters: Curated filter list, already in its intended order.
+    ///   - personalDeclarationCategory: `DeclarationCategory` rawValue of the
+    ///     user's active personal declaration, if any.
+    ///   - selectedCategories: `DeclarationCategory` rawValues chosen during
+    ///     onboarding, in selection order.
+    ///   - maxPromoted: Cap on how many filters float to the front.
+    static func personalizedOrder(
+        filters: [FilterConfig],
+        personalDeclarationCategory: String?,
+        selectedCategories: [String],
+        maxPromoted: Int = 3
+    ) -> [FilterConfig] {
+        guard filters.count > 1, maxPromoted > 0 else { return filters }
+
+        // Ordered, de-duplicated preferred filter IDs. Personal declaration maps
+        // first (strongest intent), then each selected category in turn.
+        var preferredIds: [String] = []
+        func appendMapping(for category: String?) {
+            guard let raw = category?.lowercased(), !raw.isEmpty,
+                  let mapped = categoryToFilterPriority[raw] else { return }
+            for id in mapped where !preferredIds.contains(id) {
+                preferredIds.append(id)
+            }
+        }
+        appendMapping(for: personalDeclarationCategory)
+        selectedCategories.forEach { appendMapping(for: $0) }
+
+        let available = Set(filters.map { $0.id })
+        let promotedIds = preferredIds
+            .filter { available.contains($0) && $0 != "favorites" }
+            .prefix(maxPromoted)
+
+        guard !promotedIds.isEmpty else { return filters }
+        let promotedSet = Set(promotedIds)
+
+        let pinned = filters.filter { $0.id == "favorites" }
+        let promoted = promotedIds.compactMap { id in filters.first { $0.id == id } }
+        let rest = filters.filter { $0.id != "favorites" && !promotedSet.contains($0.id) }
+        return pinned + promoted + rest
+    }
 }

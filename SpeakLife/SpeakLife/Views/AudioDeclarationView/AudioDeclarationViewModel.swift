@@ -9,10 +9,15 @@ import FirebaseStorage
 import SwiftUI
 import Combine
 import FirebaseAnalytics
+import FirebaseRemoteConfig
 
 final class AudioDeclarationViewModel: ObservableObject {
     // New dynamic system
-    @Published var dynamicFilters: [FilterConfig] = []  // Filter configs from JSON
+    @Published var dynamicFilters: [FilterConfig] = []  // Filter configs from JSON (display order, may be personalized)
+    // The curated order before any personalization. Source of truth that is
+    // cached to disk, so toggling the personalization flag off cleanly restores
+    // the original order without a server refetch.
+    private var curatedFilters: [FilterConfig] = []
     @Published var contentByFilter: [String: [AudioDeclaration]] = [:]  // All content organized by filter ID
     @Published var selectedFilterId: String = "speaklife"  // Selected filter ID (set dynamically from server)
     @Published var playedFilter: PlayedFilter = .all  // Played / Unplayed sub-filter
@@ -169,8 +174,11 @@ final class AudioDeclarationViewModel: ObservableObject {
             
             contentByFilter[config.id] = content
         }
+
+        curatedFilters = dynamicFilters
+        applyPersonalization()
     }
-    
+
     private func saveAudioDataToCache() {
         let fileManager = FileManager.default
         let documentDirURL = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
@@ -184,9 +192,12 @@ final class AudioDeclarationViewModel: ObservableObject {
             let data = try encoder.encode(allAudioFiles)
             try data.write(to: fileURL)
             
-            // Save filter configuration if available
-            if !dynamicFilters.isEmpty {
-                let filtersData = try encoder.encode(dynamicFilters)
+            // Save the curated (pre-personalization) order so the cache always
+            // holds the canonical order. Falls back to the display order if the
+            // baseline was never captured.
+            let filtersToCache = curatedFilters.isEmpty ? dynamicFilters : curatedFilters
+            if !filtersToCache.isEmpty {
+                let filtersData = try encoder.encode(filtersToCache)
                 try filtersData.write(to: filtersURL)
             }
         } catch {
@@ -303,8 +314,41 @@ final class AudioDeclarationViewModel: ObservableObject {
                 }
             }
         }
+
+        curatedFilters = dynamicFilters
+        applyPersonalization()
     }
-    
+
+    // MARK: - Personalized Ordering
+
+    /// True when the personalized audio order experiment is enabled via Remote Config.
+    var isPersonalizedOrderEnabled: Bool {
+        RemoteConfig.remoteConfig()
+            .configValue(forKey: "personalizedAudioOrderEnabled").boolValue
+    }
+
+    /// Derives the display order in `dynamicFilters` from the curated baseline.
+    /// When the flag is off (or there is no preference signal) the curated order
+    /// is restored verbatim, so the experiment is cleanly reversible.
+    private func applyPersonalization() {
+        guard isPersonalizedOrderEnabled else {
+            dynamicFilters = curatedFilters
+            return
+        }
+
+        let selected = UserDefaults.standard
+            .string(forKey: "selectedNotificationCategories")?
+            .split(separator: ",")
+            .map { String($0).trimmingCharacters(in: .whitespaces) }
+            .filter { !$0.isEmpty } ?? []
+
+        dynamicFilters = AudioRecommendationEngine.personalizedOrder(
+            filters: curatedFilters,
+            personalDeclarationCategory: PersonalDeclarationRepository.activeCategoryRaw(),
+            selectedCategories: selected
+        )
+    }
+
     func fetchAudio(for item: AudioDeclaration, completion: @escaping (Result<URL, Error>) -> Void) {
            // Get the local URL for the file
            let localURL = cachedFileURL(for: item.id)
