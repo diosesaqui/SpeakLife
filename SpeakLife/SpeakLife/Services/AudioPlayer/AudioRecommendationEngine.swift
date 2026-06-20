@@ -120,6 +120,10 @@ final class AudioRecommendationEngine {
         /// category can't dominate purely by raw count.
         static let favoriteCountCap    = 5
         static let playedCountCap      = 8
+        /// Cap on engagement strength so heavy-but-uncapped selection counts
+        /// can never outweigh the stated-intent signals above (keeps a recent
+        /// power-user category below the personal declaration's weight).
+        static let engagementStrengthCap = 3.0
     }
 
     /// Re-orders the curated audio filters so the categories the user cares about
@@ -178,9 +182,10 @@ final class AudioRecommendationEngine {
             scoreMapping(for: category, base: Weight.selectedCategory * positionFactor)
         }
 
-        // 3. Recency-weighted category engagement.
+        // 3. Recency-weighted category engagement (capped so it stays a
+        // secondary signal beneath stated intent).
         for (category, strength) in engagementCategories {
-            scoreMapping(for: category, base: Weight.engagement * strength)
+            scoreMapping(for: category, base: Weight.engagement * min(strength, Weight.engagementStrengthCap))
         }
 
         // 4. Revealed behavior — favorites and plays map straight to a filter id.
@@ -192,7 +197,12 @@ final class AudioRecommendationEngine {
         }
 
         // Promote the highest-scoring filters; ties fall back to curated order.
-        let curatedIndex = Dictionary(uniqueKeysWithValues: filters.enumerated().map { ($1.id, $0) })
+        // `uniquingKeysWith` keeps the first index if a duplicate filter id ever
+        // slips in from server/cache data, rather than trapping.
+        let curatedIndex = Dictionary(
+            filters.enumerated().map { ($1.id, $0) },
+            uniquingKeysWith: { first, _ in first }
+        )
         let candidates = scores.filter { $0.value > 0 && $0.key != "favorites" && curatedIndex[$0.key] != nil }
         guard !candidates.isEmpty else { return filters }
 
