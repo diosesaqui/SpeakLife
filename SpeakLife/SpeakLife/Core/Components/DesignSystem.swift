@@ -154,6 +154,8 @@ enum Juice {
         case success
         /// A milestone worth celebrating (streaks, goals).
         case celebrate
+        /// A gentle "not yet / try again" — a soft warning, never punishing.
+        case warning
 
         /// The motion token that visually matches this feel. Pair it with the
         /// animation driving the same interaction so they move as one.
@@ -167,6 +169,8 @@ enum Juice {
                 return DS.Motion.smooth
             case .celebrate:
                 return DS.Motion.bouncy
+            case .warning:
+                return DS.Motion.quick
             }
         }
     }
@@ -187,6 +191,8 @@ enum Juice {
             PremiumHaptics.safeSuccessSequence()
         case .celebrate:
             PremiumHaptics.safeCelebrationBurst()
+        case .warning:
+            PremiumHaptics.safeWarning()
         }
     }
 }
