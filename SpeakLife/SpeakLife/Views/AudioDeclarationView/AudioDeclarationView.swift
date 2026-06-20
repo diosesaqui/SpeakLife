@@ -309,6 +309,9 @@ struct AudioDeclarationView: View {
             }
             .onAppear() {
                 Analytics.logEvent("AudioScreenLoaded", parameters: nil)
+                // Re-apply ordering now that Remote Config and favorites have
+                // loaded — covers existing users who don't rebuild filters on update.
+                viewModel.refreshPersonalization()
             }
             // Auto-play when arriving from daily checklist.
             // Uses onReceive on contentByFilter (a @Published dict) so it fires

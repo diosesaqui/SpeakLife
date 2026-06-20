@@ -327,29 +327,44 @@ final class AudioDeclarationViewModel: ObservableObject {
             .configValue(forKey: "personalizedAudioOrderEnabled").boolValue
     }
 
+    /// Re-applies personalization on demand. Inputs (the Remote Config flag and
+    /// favorites) load asynchronously after launch and existing users may not
+    /// rebuild filters at all on update, so the audio screen calls this on
+    /// appear — by which point those inputs are ready. Safe to call repeatedly.
+    func refreshPersonalization() {
+        guard !curatedFilters.isEmpty else { return }
+        applyPersonalization()
+    }
+
     /// Derives the display order in `dynamicFilters` from the curated baseline.
     /// When the flag is off (or there is no preference signal) the curated order
-    /// is restored verbatim, so the experiment is cleanly reversible.
+    /// is restored verbatim, so the experiment is cleanly reversible. Only
+    /// publishes when the resulting order actually changes, so repeated calls
+    /// (e.g. on every appear) are cheap and don't churn the UI.
     private func applyPersonalization() {
-        guard isPersonalizedOrderEnabled else {
-            dynamicFilters = curatedFilters
-            return
+        let newOrder: [FilterConfig]
+        if isPersonalizedOrderEnabled {
+            let selected = UserDefaults.standard
+                .string(forKey: "selectedNotificationCategories")?
+                .split(separator: ",")
+                .map { String($0).trimmingCharacters(in: .whitespaces) }
+                .filter { !$0.isEmpty } ?? []
+
+            newOrder = AudioRecommendationEngine.personalizedOrder(
+                filters: curatedFilters,
+                personalDeclarationCategory: PersonalDeclarationRepository.activeCategoryRaw(),
+                selectedCategories: selected,
+                engagementCategories: engagementCategoryStrengths(),
+                favoritesByFilterId: favoritesCountByFilterId(),
+                playedByFilterId: playedCountByFilterId()
+            )
+        } else {
+            newOrder = curatedFilters
         }
 
-        let selected = UserDefaults.standard
-            .string(forKey: "selectedNotificationCategories")?
-            .split(separator: ",")
-            .map { String($0).trimmingCharacters(in: .whitespaces) }
-            .filter { !$0.isEmpty } ?? []
-
-        dynamicFilters = AudioRecommendationEngine.personalizedOrder(
-            filters: curatedFilters,
-            personalDeclarationCategory: PersonalDeclarationRepository.activeCategoryRaw(),
-            selectedCategories: selected,
-            engagementCategories: engagementCategoryStrengths(),
-            favoritesByFilterId: favoritesCountByFilterId(),
-            playedByFilterId: playedCountByFilterId()
-        )
+        if newOrder.map(\.id) != dynamicFilters.map(\.id) {
+            dynamicFilters = newOrder
+        }
     }
 
     /// Recency-weighted strength per category from the user's tracked selections.
