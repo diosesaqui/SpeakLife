@@ -14,7 +14,7 @@ struct TestimonyRow: View {
     let reportAction: () -> Void
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: DS.Spacing.xs) {
             Text(testimony.user)
                 .font(Font.custom("AppleSDGothicNeo-Regular", size: 22, relativeTo: .headline))
                 .foregroundColor(.blue)
@@ -70,6 +70,7 @@ struct TestimonyFeedView: View {
                         .cornerRadius(10)
                         .padding()
                 }
+                .buttonStyle(.dsPressable(feel: .tapSolid))
                 .sheet(isPresented: $viewModel.isShowingForm) {
                     TestimonyFormView().environmentObject(viewModel)
                 }

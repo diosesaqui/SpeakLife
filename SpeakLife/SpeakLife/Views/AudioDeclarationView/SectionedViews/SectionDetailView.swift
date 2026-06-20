@@ -74,7 +74,7 @@ struct SectionDetailView: View {
                             .foregroundColor(.white)
                             .autocapitalization(.none)
                     }
-                    .padding(12)
+                    .padding(DS.Spacing.sm)
                     .background(
                         RoundedRectangle(cornerRadius: 10)
                             .fill(.ultraThinMaterial)
@@ -84,7 +84,7 @@ struct SectionDetailView: View {
                     
                     // Sort options
                     ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 12) {
+                        HStack(spacing: DS.Spacing.sm) {
                             ForEach(SortOption.allCases, id: \.self) { option in
                                 SortChip(
                                     title: option.rawValue,
@@ -101,7 +101,7 @@ struct SectionDetailView: View {
                     // Items list
                     if items.isEmpty {
                         Spacer()
-                        VStack(spacing: 16) {
+                        VStack(spacing: DS.Spacing.md) {
                             Image(systemName: "music.note.list")
                                 .font(.system(size: 50))
                                 .foregroundColor(.white.opacity(0.5))
@@ -122,7 +122,7 @@ struct SectionDetailView: View {
                         Spacer()
                     } else {
                         ScrollView(.vertical, showsIndicators: false) {
-                            LazyVStack(spacing: 12) {
+                            LazyVStack(spacing: DS.Spacing.sm) {
                                 ForEach(filteredItems) { item in
                                     CompactAudioCell(
                                         item: item,
@@ -159,7 +159,7 @@ struct SectionDetailView: View {
     }
     
     private var emptySearchView: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: DS.Spacing.md) {
             Image(systemName: "magnifyingglass")
                 .font(.system(size: 50))
                 .foregroundColor(.white.opacity(0.5))

@@ -407,7 +407,7 @@ struct TextInputAreaView: View {
     }
     
     private var voiceHintBanner: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: DS.Spacing.sm) {
             Image(systemName: "mic.fill")
                 .font(.system(size: 16))
                 .foregroundColor(.blue.opacity(0.7))
@@ -416,11 +416,11 @@ struct TextInputAreaView: View {
                 .font(.system(size: 14, weight: .medium))
                 .foregroundColor(.white.opacity(0.7))
         }
-        .padding(.horizontal, 16)
+        .padding(.horizontal, DS.Spacing.md)
         .padding(.vertical, 10)
         .background(Color.blue.opacity(0.1))
         .cornerRadius(12)
-        .padding(.horizontal, 16)
+        .padding(.horizontal, DS.Spacing.md)
         .transition(.move(edge: .bottom).combined(with: .opacity))
     }
     
@@ -437,13 +437,13 @@ struct TextInputAreaView: View {
                     .foregroundColor(.white)
                     .scrollContentBackground(.hidden)
                     .background(Color.clear)
-                    .padding(16)
+                    .padding(DS.Spacing.md)
             } else {
                 TextEditor(text: $text)
                     .font(.system(size: 16, weight: .regular, design: .rounded))
                     .foregroundColor(.white)
                     .background(Color.clear)
-                    .padding(16)
+                    .padding(DS.Spacing.md)
             }
         }
         .frame(minHeight: 120)

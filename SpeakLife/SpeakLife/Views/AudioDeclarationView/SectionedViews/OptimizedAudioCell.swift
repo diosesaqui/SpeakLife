@@ -143,7 +143,7 @@ struct CompactAudioCell: View {
     @EnvironmentObject var subscriptionStore: SubscriptionStore
     
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: DS.Spacing.sm) {
             // Thumbnail
             Image(item.imageUrl)
                 .resizable()
