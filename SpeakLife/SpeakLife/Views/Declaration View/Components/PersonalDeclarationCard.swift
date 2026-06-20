@@ -578,7 +578,9 @@ struct PersonalDeclarationCard: View {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
             withAnimation(.easeOut(duration: 0.3)) { dayBadgePulse = false }
         }
-        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+        // Completing a spoken declaration is a real win: reward it with the
+        // matched success sequence (light → medium → heavy) instead of a flat tap.
+        Juice.play(.success)
     }
 
     private func showTryAgain() {

@@ -232,6 +232,11 @@ struct DSPressable: ButtonStyle {
     var feel: Juice.Feel = .tapSolid
     /// How far the button scales down while pressed.
     var pressedScale: CGFloat = 0.96
+    /// When `false`, the style provides only the visual press feedback and
+    /// leaves the haptic to the caller. Use this for controls whose action
+    /// handler already fires a semantically richer haptic (e.g. favorite vs.
+    /// unfavorite) so the buzz isn't doubled.
+    var haptics: Bool = true
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
@@ -239,7 +244,7 @@ struct DSPressable: ButtonStyle {
             .opacity(configuration.isPressed ? 0.92 : 1.0)
             .animation(feel.motion, value: configuration.isPressed)
             .onChange(of: configuration.isPressed) { _, isPressed in
-                if isPressed {
+                if isPressed && haptics {
                     Juice.play(feel)
                 }
             }
@@ -250,9 +255,10 @@ extension ButtonStyle where Self == DSPressable {
     /// Shorthand: `.buttonStyle(.dsPressable())`.
     static func dsPressable(
         feel: Juice.Feel = .tapSolid,
-        pressedScale: CGFloat = 0.96
+        pressedScale: CGFloat = 0.96,
+        haptics: Bool = true
     ) -> DSPressable {
-        DSPressable(feel: feel, pressedScale: pressedScale)
+        DSPressable(feel: feel, pressedScale: pressedScale, haptics: haptics)
     }
 }
 

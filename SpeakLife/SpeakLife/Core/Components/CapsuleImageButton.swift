@@ -29,6 +29,10 @@ struct CapsuleImageButton: View {
         .frame(width: 50, height: 50)
         .background(themeStore.selectedTheme.mode == .dark ? Constants.backgroundColor : Constants.backgroundColorLight)
         .clipShape(Circle())
+        // Consistent press feel across every action-bar icon. Haptics are left
+        // to each button's handler, which knows the semantic feel (favorite vs.
+        // share vs. verse), so the buzz is never doubled.
+        .buttonStyle(DSPressable(feel: .tapLight, haptics: false))
     }
 }
 
