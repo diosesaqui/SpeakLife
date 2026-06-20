@@ -142,6 +142,13 @@ struct HomeView: View {
                                 }
                                
                                 
+                                // Referral (Phase 2): redeem a code captured from a
+                                // share link, now that onboarding is complete. No-op
+                                // when nothing is pending; idempotent server-side.
+                                Task {
+                                    await ReferralService.shared.redeemPendingCodeIfNeeded()
+                                }
+
                                 // Check if user should see declaration prompt
                               //  checkForDeclarationPrompt()
                             }

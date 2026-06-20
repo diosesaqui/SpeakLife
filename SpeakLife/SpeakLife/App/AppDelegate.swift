@@ -356,9 +356,40 @@ enum BranchAttribution {
         #endif
     }
 
+    /// Builds a shareable Branch link carrying the referral `code` so it survives
+    /// a deferred install (friend taps → App Store → installs → the code reaches
+    /// `apply()` on first launch). Returns nil when the Branch SDK isn't linked;
+    /// callers then fall back to a plain App Store link (the code is also printed
+    /// in the share message, so manual entry still works).
+    static func makeReferralLink(code: String) async -> URL? {
+        #if canImport(BranchSDK)
+        return await withCheckedContinuation { continuation in
+            let buo = BranchUniversalObject(canonicalIdentifier: "referral/\(code)")
+            buo.title = "Join me on SpeakLife"
+            buo.contentDescription = "Speak God's Word over your life every day."
+            let props = BranchLinkProperties()
+            props.feature = "referral"
+            props.channel = "share"
+            props.addControlParam("ref", withValue: code)
+            props.addControlParam("$desktop_url", withValue: APP.Product.urlID)
+            props.addControlParam("$fallback_url", withValue: APP.Product.urlID)
+            buo.getShortUrl(with: props) { urlString, _ in
+                continuation.resume(returning: urlString.flatMap { URL(string: $0) })
+            }
+        }
+        #else
+        return nil
+        #endif
+    }
+
     #if canImport(BranchSDK)
     private static func apply(_ params: [String: Any]?) {
         guard let params = params else { return }
+        // Referral: a deferred deep link may carry the inviter's code, either as
+        // an explicit `ref` key on the link data or in the referring link URL.
+        if let ref = params["ref"] as? String {
+            ReferralService.capturePendingCode(ref)
+        }
         // Prefer an explicit `ob` key set on the Branch link's deep-link data;
         // otherwise recover it from the referring link URL.
         if let ob = params["ob"] as? String {

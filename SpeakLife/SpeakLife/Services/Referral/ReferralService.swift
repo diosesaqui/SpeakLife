@@ -52,10 +52,9 @@ final class ReferralService: ObservableObject {
         Self.rewardThreshold - referralsNeeded
     }
 
-    // A referral code captured from a share link or manual entry, redeemed once
-    // the user finishes onboarding. Stored so it survives the install → launch
-    // gap (Phase 2 deep-link capture writes here; manual entry redeems inline).
-    private let pendingCodeKey = "pendingReferralCode"
+    // A referral code captured from a share link, redeemed once the user
+    // finishes onboarding. Stored so it survives the install → launch gap.
+    private static let pendingCodeKey = "pendingReferralCode"
 
     private let session: URLSession
 
@@ -120,8 +119,16 @@ final class ReferralService: ObservableObject {
         "I'm using SpeakLife to speak God's Word over my life every day. Join me with code \(code) and try it free."
     }
 
+    /// The items handed to the share sheet: an invite message plus the best
+    /// available link. Prefers a Branch link (carries the code through a deferred
+    /// install); falls back to a plain App Store link with `?ref=CODE`.
+    func shareItems(for code: String) async -> [Any] {
+        let link = await BranchAttribution.makeReferralLink(code: code) ?? shareURL(for: code)
+        return [shareMessage(for: code), link]
+    }
+
     /// Redeems a friend's code for the current user (the invitee path).
-    func redeem(code rawCode: String) async throws -> ReferralRedeemResult {
+    func redeem(code rawCode: String, source: String = "manual") async throws -> ReferralRedeemResult {
         let code = rawCode.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
         guard !code.isEmpty else { return .invalidCode }
         guard !appUserID.isEmpty else { throw ReferralError.missingUser }
@@ -129,13 +136,13 @@ final class ReferralService: ObservableObject {
         let json = try await post("redeemReferral", body: [
             "inviteeAppUserId": appUserID,
             "code": code,
-            "source": "manual",
+            "source": source,
         ])
 
         if json["success"] as? Bool == true {
             let needed = (json["referralsNeeded"] as? NSNumber)?.intValue ?? Self.rewardThreshold
-            Analytics.logEvent(Event.referralRedeemed, parameters: ["source": "manual"])
-            clearPendingCode()
+            Analytics.logEvent(Event.referralRedeemed, parameters: ["source": source])
+            Self.clearPendingCode()
             return .granted(referralsNeeded: needed)
         }
 
@@ -147,28 +154,36 @@ final class ReferralService: ObservableObject {
         }
     }
 
-    // MARK: - Pending code (for deferred / onboarding redemption)
+    // MARK: - Pending code (deferred deep-link → onboarding redemption)
+    //
+    // These are `nonisolated static` so the URL/Branch capture points (which run
+    // outside the main actor and without a store instance) can call them. They
+    // only touch UserDefaults, which is thread-safe.
 
-    var pendingCode: String? {
+    nonisolated static var pendingCode: String? {
         UserDefaults.standard.string(forKey: pendingCodeKey)
     }
 
-    func capturePendingCode(_ code: String) {
+    /// Captures a referral code from a share link, to redeem once onboarding
+    /// completes. Ignored for users who have already onboarded — referrals are
+    /// for NEW users, and this is the cheapest reliable "fresh user" guard.
+    nonisolated static func capturePendingCode(_ code: String) {
+        guard !UserDefaults.standard.bool(forKey: "onboarded") else { return }
         let trimmed = code.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
         guard !trimmed.isEmpty else { return }
         UserDefaults.standard.set(trimmed, forKey: pendingCodeKey)
     }
 
-    private func clearPendingCode() {
+    nonisolated static func clearPendingCode() {
         UserDefaults.standard.removeObject(forKey: pendingCodeKey)
     }
 
-    /// Redeems a previously-captured code (e.g. after onboarding completes).
+    /// Redeems a previously-captured code (called once onboarding completes).
     /// No-op when there's nothing pending. Call sites can ignore the result.
     @discardableResult
     func redeemPendingCodeIfNeeded() async -> ReferralRedeemResult? {
-        guard let pending = pendingCode, !pending.isEmpty else { return nil }
-        return try? await redeem(code: pending)
+        guard let pending = Self.pendingCode, !pending.isEmpty else { return nil }
+        return try? await redeem(code: pending, source: "deeplink")
     }
 
     // MARK: - Networking

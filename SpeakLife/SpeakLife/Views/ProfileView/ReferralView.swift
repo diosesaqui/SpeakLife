@@ -19,6 +19,8 @@ struct ReferralView: View {
     @State private var redeemMessage: String?
     @State private var redeemSucceeded = false
     @State private var isRedeeming = false
+    @State private var isPreparingShare = false
+    @State private var shareItems: [Any] = []
     @State private var showShareSheet = false
 
     private let threshold = ReferralService.rewardThreshold
@@ -38,8 +40,8 @@ struct ReferralView: View {
         .navigationBarTitleDisplayMode(.inline)
         .foregroundColor(.white)
         .sheet(isPresented: $showShareSheet) {
-            if let code = service.code {
-                ShareSheet(activityItems: [service.shareMessage(for: code), service.shareURL(for: code)])
+            if !shareItems.isEmpty {
+                ShareSheet(activityItems: shareItems)
             }
         }
         .onAppear {
@@ -102,13 +104,15 @@ struct ReferralView: View {
 
             Button {
                 Analytics.logEvent(Event.referralInviteTapped, parameters: nil)
-                Task {
-                    if await service.ensureCode() != nil { showShareSheet = true }
-                }
+                Task { await prepareAndShare() }
             } label: {
                 HStack {
-                    Image(systemName: "square.and.arrow.up")
-                    Text("Invite Friends").bold()
+                    if isPreparingShare {
+                        ProgressView().tint(.white)
+                    } else {
+                        Image(systemName: "square.and.arrow.up")
+                        Text("Invite Friends").bold()
+                    }
                 }
                 .frame(maxWidth: .infinity)
                 .padding()
@@ -116,7 +120,7 @@ struct ReferralView: View {
                 .foregroundColor(.white)
                 .cornerRadius(14)
             }
-            .disabled(service.code == nil)
+            .disabled(service.code == nil || isPreparingShare)
         }
         .padding()
         .background(Color.white.opacity(0.06))
@@ -159,6 +163,14 @@ struct ReferralView: View {
     }
 
     // MARK: - Actions
+
+    private func prepareAndShare() async {
+        guard let code = await service.ensureCode() else { return }
+        isPreparingShare = true
+        shareItems = await service.shareItems(for: code)
+        isPreparingShare = false
+        showShareSheet = true
+    }
 
     private func redeem() async {
         isRedeeming = true

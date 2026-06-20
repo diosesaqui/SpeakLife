@@ -141,8 +141,12 @@ final class SubscriptionStore: ObservableObject {
     /// AppDelegate can call it without a store instance; the @Published mirror is
     /// updated via `.adOnboardingVariantAssigned`.
     static func handleIncomingURL(_ url: URL, source: String) {
-        guard let items = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems,
-              let ob = items.first(where: { $0.name == "ob" })?.value else { return }
+        let items = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems
+        // Referral: capture a ?ref=CODE for redemption after onboarding.
+        if let ref = items?.first(where: { $0.name == "ref" })?.value {
+            ReferralService.capturePendingCode(ref)
+        }
+        guard let ob = items?.first(where: { $0.name == "ob" })?.value else { return }
         assignOnboardingVariantFromAd(ob, source: source)
     }
 

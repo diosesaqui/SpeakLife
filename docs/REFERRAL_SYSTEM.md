@@ -260,10 +260,26 @@ Small, additive — no changes to existing Premium gating.
 - Ensure `REVENUECAT_SECRET_KEY` secret is set (already used by `bibleChat`).
 - In RevenueCat, confirm the `premium` entitlement accepts promotional grants.
 
-**Deferred to Phase 2:** Branch deferred-deep-link capture of `?ref=CODE` and the
-auto-redeem-on-onboarding-complete hook (`ReferralService` already has
-`capturePendingCode` / `redeemPendingCodeIfNeeded` stubs ready), plus the
-extended invitee trial.
+## 8c. What's built (Phase 2 — frictionless deep links)
+
+- **Capture `?ref=CODE` from every channel:** `SubscriptionStore.handleIncomingURL`
+  (direct `.onOpenURL` / universal-link opens) and `BranchAttribution.apply`
+  (Branch **deferred** deep links, resolved on first launch after a fresh
+  install) both call `ReferralService.capturePendingCode`.
+- **"New users only" guard:** `capturePendingCode` ignores the code if the device
+  has already onboarded — the cheapest reliable freshness check.
+- **Auto-redeem on onboarding complete:** the post-onboarding `homeView.onAppear`
+  in `HomeView.swift` calls `redeemPendingCodeIfNeeded()` (source `deeplink`),
+  idempotent and safe to fire every launch.
+- **Branch share links:** `BranchAttribution.makeReferralLink(code:)` builds a
+  Branch link embedding the code so it survives App Store install; `ReferralView`
+  shares it. Falls back to a plain App Store link when the Branch SDK isn't
+  linked — and since the code is printed in the share message, manual entry
+  always works as a backstop.
+
+**Still optional (Phase 3):** the extended invitee trial (e.g. referred friends
+get 7 days instead of 3) as an A/B test, milestone push notifications, and reward
+tuning. No invitee reward is granted today (single-sided, as decided).
 
 ## 9. Phased rollout
 
