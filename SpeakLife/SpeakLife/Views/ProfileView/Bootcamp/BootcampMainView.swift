@@ -81,7 +81,7 @@ struct BootcampMainView: View {
                 }
                 .padding(.horizontal)
             }
-            .padding(.vertical, 12)
+            .padding(.vertical, DS.Spacing.sm)
             .background(Color.black.opacity(0.3))
             
             // Tab Content
@@ -109,7 +109,7 @@ struct BootcampMainView: View {
     // MARK: - Landing Content (Not Enrolled)
     private var landingContent: some View {
         ScrollView {
-            VStack(spacing: 32) {
+            VStack(spacing: DS.Spacing.xl) {
                 // Hero Section
                 HeroSection(program: viewModel.currentProgram)
                     .frame(height: UIScreen.main.bounds.height * 0.5)
@@ -342,12 +342,13 @@ struct FeatureCard: View {
         .padding()
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
-            RoundedRectangle(cornerRadius: 16)
+            RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous)
                 .fill(Color.white.opacity(0.1))
                 .overlay(
-                    RoundedRectangle(cornerRadius: 16)
+                    RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous)
                         .stroke(Color.white.opacity(0.2), lineWidth: 1)
                 )
         )
+        .dsShadow(DS.Elevation.low)
     }
 }

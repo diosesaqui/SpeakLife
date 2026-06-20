@@ -614,9 +614,10 @@ struct IdentityShiftScreen: View {
                         .frame(width: size.width * 0.85, height: 50)
                         .background(
                             RoundedRectangle(cornerRadius: 25)
-                                .fill(Color(red: 0.4, green: 0.5, blue: 0.9))
+                                .fill(DS.Gradient.brand)
                         )
                 }
+                .buttonStyle(.dsPressable(feel: .tapSolid, haptics: false))
                 .padding(.bottom, 40)
             }
             .padding(.horizontal, 30)
@@ -692,9 +693,10 @@ struct DeclarationReframeScreen: View {
                         .frame(width: size.width * 0.85, height: 50)
                         .background(
                             RoundedRectangle(cornerRadius: 25)
-                                .fill(Color(red: 0.4, green: 0.5, blue: 0.9))
+                                .fill(DS.Gradient.brand)
                         )
                 }
+                .buttonStyle(.dsPressable(feel: .tapSolid, haptics: false))
                 .padding(.bottom, 40)
             }
         }

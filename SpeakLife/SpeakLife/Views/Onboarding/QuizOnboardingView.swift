@@ -1168,7 +1168,7 @@ private struct QuizDeclarationScreen: View {
             VStack(spacing: 24) {
                 Text("Your verse for this storm.")
                     .font(.system(size: 16, weight: .bold))
-                    .foregroundColor(.white.opacity(0.9))
+                    .foregroundColor(DS.Palette.gold.opacity(0.9))
                     .textCase(.uppercase)
                     .tracking(1.6)
                 Text("\u{201C}\(text)\u{201D}")
@@ -1228,7 +1228,7 @@ private struct BurdenSelectionScreen: View {
 
             Text("Last question.")
                 .font(.system(size: 16, weight: .bold))
-                .foregroundColor(.white.opacity(0.9))
+                .foregroundColor(DS.Palette.gold.opacity(0.9))
                 .textCase(.uppercase)
                 .tracking(1.6)
 

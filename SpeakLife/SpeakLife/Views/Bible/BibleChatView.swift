@@ -542,7 +542,7 @@ struct BibleChatConversationView: View {
                 .padding(.vertical, 12)
                 .padding(.horizontal, 16)
                 .background(
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous)
                         .fill(Color.white.opacity(0.08))
                 )
             Spacer(minLength: 40)

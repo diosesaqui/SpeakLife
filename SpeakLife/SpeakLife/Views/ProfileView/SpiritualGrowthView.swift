@@ -345,7 +345,7 @@ struct SpiritualGrowthView: View {
                 .foregroundColor(.white)
             
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 16) {
+                HStack(spacing: DS.Spacing.md) {
                     AchievementBadge(
                         icon: "star.fill",
                         title: "7 Day Warrior",
@@ -388,7 +388,7 @@ struct SpiritualGrowthView: View {
     // MARK: - Detailed Stats Grid
     
     private var detailedStatsGrid: some View {
-        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
+        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: DS.Spacing.md) {
             DetailedStatCard(
                 title: "Consistency Score",
                 value: "\(Int(burstTracker.calculateMetrics().consistency * 100))%",
@@ -453,11 +453,12 @@ struct SpiritualGrowthView: View {
         }
         .padding()
         .background(
-            RoundedRectangle(cornerRadius: 16)
+            RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous)
                 .fill(Color.white.opacity(0.05))
         )
+        .dsShadow(DS.Elevation.low)
     }
-    
+
     // MARK: - Recent Activity
     
     private var recentActivityList: some View {

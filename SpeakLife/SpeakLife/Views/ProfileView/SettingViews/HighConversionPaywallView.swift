@@ -344,17 +344,17 @@ struct HighConversionPaywallView: View {
                 .frame(height: 260).clipped()
             LinearGradient(colors: [.clear, Color(red:0.07,green:0.10,blue:0.22)], startPoint: .top, endPoint: .bottom)
                 .frame(height: 120)
-            VStack(spacing: 8) {
+            VStack(spacing: DS.Spacing.xs) {
                 Image("appIconDisplay")
                     .resizable().frame(width: 64, height: 64)
                     .clipShape(RoundedRectangle(cornerRadius: 14))
                     .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.white.opacity(0.2), lineWidth: 1))
                 Text(resolvedHeadline)
                     .font(.system(size: 22, weight: .bold)).foregroundColor(.white)
-                    .multilineTextAlignment(.center).padding(.horizontal, 24)
+                    .multilineTextAlignment(.center).padding(.horizontal, DS.Spacing.lg)
                 Text(resolvedSubheadline)
                     .font(.system(size: 14)).foregroundColor(.white.opacity(0.75))
-                    .multilineTextAlignment(.center).padding(.horizontal, 32)
+                    .multilineTextAlignment(.center).padding(.horizontal, DS.Spacing.xl)
             }
             .padding(.bottom, 20)
         }
@@ -389,12 +389,12 @@ struct HighConversionPaywallView: View {
         let icons = ["quote.bubble.fill", "shield.fill", "eye.fill", "person.circle.fill"]
         let descs = Array(resolvedDescriptions.prefix(4))
         let props = Array(resolvedValueProps.prefix(4))
-        return VStack(alignment: .leading, spacing: 16) {
+        return VStack(alignment: .leading, spacing: DS.Spacing.md) {
             ForEach(0..<min(props.count, 4), id: \.self) { i in
                 HCBenefitRow(icon: icons[i], title: props[i], description: i < descs.count ? descs[i] : "")
             }
         }
-        .padding(.horizontal, 24)
+        .padding(.horizontal, DS.Spacing.lg)
     }
 
     private var succinctBenefitsSection: some View {
@@ -405,7 +405,7 @@ struct HighConversionPaywallView: View {
                 HCSuccinctBenefitRow(icon: icons[i], title: props[i])
             }
         }
-        .padding(.horizontal, 24)
+        .padding(.horizontal, DS.Spacing.lg)
     }
 
     // MARK: - Comparison Grid (SpeakLife vs. Other apps)
