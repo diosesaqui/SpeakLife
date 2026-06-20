@@ -24,6 +24,7 @@ struct HighConversionPaywallView: View {
     @State private var isShowingError = false
     @State private var errorMessage = ""
     @State private var showPrivacyPolicy = false
+    @State private var showReferral = false
     @State private var showPayWhatYouCan = false
     @State private var showCloseButton = false
     @State private var timeOnPaywall: Date = Date()
@@ -321,6 +322,17 @@ struct HighConversionPaywallView: View {
             Button("OK", role: .cancel) { }
         } message: { Text(errorMessage) }
         .sheet(isPresented: $showPrivacyPolicy) { PrivacyPolicyView() }
+        .sheet(isPresented: $showReferral) {
+            NavigationView {
+                ReferralView()
+                    .toolbar {
+                        ToolbarItem(placement: .navigationBarTrailing) {
+                            Button("Done") { showReferral = false }
+                        }
+                    }
+            }
+            .navigationViewStyle(.stack)
+        }
         .sheet(isPresented: $showPayWhatYouCan) {
             PayWhatYouCanView(callback: callback)
                 .environmentObject(subscriptionStore)
@@ -655,6 +667,7 @@ struct HighConversionPaywallView: View {
                 trialReassuranceLine
                 generosityLine
                 payWhatYouCanCTA
+                referralAlternative
                 bottomLinks
             }
             .padding(.horizontal, 20).padding(.vertical, DS.Spacing.md).padding(.bottom, DS.Spacing.xs)
@@ -821,6 +834,32 @@ struct HighConversionPaywallView: View {
             }
             .buttonStyle(PlainButtonStyle())
             .accessibilityLabel(Text("Pay what you can option"))
+        }
+    }
+
+    // MARK: - Referral Alternative
+    // A free-month escape hatch for users who won't pay. Deliberately hidden on
+    // the onboarding hard-sell (source == "onboarding") so it can't cannibalize
+    // first-purchase conversion; shown on settings / feature-gate paywalls where
+    // the user has already declined to subscribe (pure upside).
+    @ViewBuilder
+    private var referralAlternative: some View {
+        if source != "onboarding" && !subscriptionStore.isPremium {
+            Button {
+                AnalyticsService.shared.trackUserAction(
+                    Event.referralPaywallTapped, category: "referral",
+                    metadata: ["source": source])
+                showReferral = true
+            } label: {
+                Text("Can't subscribe right now? Invite \(ReferralService.rewardThreshold) friends, get a month free.")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.85))
+                    .underline()
+                    .multilineTextAlignment(.center)
+                    .padding(.vertical, 6)
+                    .padding(.horizontal, 16)
+            }
+            .buttonStyle(PlainButtonStyle())
         }
     }
 

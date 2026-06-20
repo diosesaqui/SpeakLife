@@ -277,6 +277,16 @@ Small, additive — no changes to existing Premium gating.
   linked — and since the code is printed in the share message, manual entry
   always works as a backstop.
 
+## 8d. Entry points (where users find it)
+
+- **Profile → Premium row** "Invite Friends, Get a Free Month" (non-subscribers).
+- **Paywall escape hatch:** a subtle "Can't subscribe right now? Invite 3 friends,
+  get a month free." link on `HighConversionPaywallView`, shown **only when
+  `source != "onboarding"`** (i.e. the settings / feature-gate paywalls where the
+  user has already declined to subscribe). It is deliberately hidden on the
+  onboarding hard-sell so it can't cannibalize first-purchase conversion. Both
+  entry points open the same `ReferralView`.
+
 **Still optional (Phase 3):** the extended invitee trial (e.g. referred friends
 get 7 days instead of 3) as an A/B test, milestone push notifications, and reward
 tuning. No invitee reward is granted today (single-sided, as decided).

@@ -45,6 +45,7 @@ struct Event {
     static let referralInviteTapped = "referral_invite_tapped"
     static let referralRedeemed = "referral_redeemed"
     static let referralRewardEarned = "referral_reward_earned"
+    static let referralPaywallTapped = "referral_paywall_tapped"
 
     static let tabNavigated = "tab_navigated"
     static let audioPlayerOpened = "audio_player_opened"
