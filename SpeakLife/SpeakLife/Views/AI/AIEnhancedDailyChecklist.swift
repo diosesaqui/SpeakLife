@@ -248,8 +248,8 @@ struct AIEnhancedDailyChecklist: View {
                 
                 Text("Premium")
                     .font(.caption)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
+                    .padding(.horizontal, DS.Spacing.xs)
+                    .padding(.vertical, DS.Spacing.xxs)
                     .background(Color.orange.opacity(0.3))
                     .foregroundColor(.white)
                     .cornerRadius(8)

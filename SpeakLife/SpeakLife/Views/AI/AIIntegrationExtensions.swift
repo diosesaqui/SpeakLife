@@ -199,7 +199,7 @@ struct AIJournalAnalysisView: View {
             
             TextEditor(text: $journalText)
                 .frame(minHeight: 100)
-                .padding(8)
+                .padding(DS.Spacing.xs)
                 .background(Color.gray.opacity(0.1))
                 .cornerRadius(8)
                 .onChange(of: journalText) { newText in
@@ -330,7 +330,7 @@ struct AICrisisSupportView: View {
             
             TextEditor(text: $crisisDescription)
                 .frame(height: 80)
-                .padding(8)
+                .padding(DS.Spacing.xs)
                 .background(Color.gray.opacity(0.1))
                 .cornerRadius(8)
             
