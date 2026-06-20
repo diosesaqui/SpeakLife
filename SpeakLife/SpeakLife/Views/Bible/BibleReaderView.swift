@@ -191,7 +191,7 @@ struct ReaderControlsView: View {
     var body: some View {
         VStack(spacing: 0) {
             if showControls {
-                VStack(spacing: 16) {
+                VStack(spacing: DS.Spacing.md) {
                     // Font Size Control
                     HStack {
                         Text("Text Size")
@@ -299,7 +299,7 @@ struct VerseActionsSheet: View {
         NavigationView {
             VStack(alignment: .leading, spacing: 20) {
                 // Verse Preview
-                VStack(alignment: .leading, spacing: 8) {
+                VStack(alignment: .leading, spacing: DS.Spacing.xs) {
                     Text(verse.reference)
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundColor(.secondary)
@@ -315,7 +315,7 @@ struct VerseActionsSheet: View {
                 )
                 
                 // Actions
-                VStack(spacing: 16) {
+                VStack(spacing: DS.Spacing.md) {
                     // Bookmark Toggle
                     Button(action: {
                         viewModel.toggleBookmark(for: verse)
@@ -333,12 +333,12 @@ struct VerseActionsSheet: View {
                     Divider()
                     
                     // Highlight Options
-                    VStack(alignment: .leading, spacing: 12) {
+                    VStack(alignment: .leading, spacing: DS.Spacing.sm) {
                         Text("Highlight")
                             .font(.system(size: 14, weight: .medium))
                             .foregroundColor(.secondary)
                         
-                        HStack(spacing: 12) {
+                        HStack(spacing: DS.Spacing.sm) {
                             ForEach(highlightColors, id: \.self) { color in
                                 Button(action: {
                                     viewModel.toggleHighlight(for: verse, color: color)

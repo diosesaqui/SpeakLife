@@ -11,7 +11,7 @@ struct VoiceStateIndicator: View {
     let state: VoiceInputState
     
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: DS.Spacing.sm) {
             // Status icon
             statusIcon
                 .foregroundColor(statusColor)
@@ -29,8 +29,8 @@ struct VoiceStateIndicator: View {
                 pulseIndicator
             }
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
+        .padding(.horizontal, DS.Spacing.md)
+        .padding(.vertical, DS.Spacing.sm)
         .background(statusBackgroundColor)
         .cornerRadius(12)
     }
@@ -105,7 +105,7 @@ struct VoiceStateIndicator: View {
     }
     
     private var pulseIndicator: some View {
-        HStack(spacing: 4) {
+        HStack(spacing: DS.Spacing.xxs) {
             ForEach(0..<3, id: \.self) { index in
                 Circle()
                     .fill(statusColor)
@@ -131,7 +131,7 @@ struct VoiceStateIndicator: View {
 #if DEBUG
 struct VoiceStateIndicator_Previews: PreviewProvider {
     static var previews: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: DS.Spacing.md) {
             VoiceStateIndicator(state: .idle)
             VoiceStateIndicator(state: .listening)
             VoiceStateIndicator(state: .transcribing)

@@ -55,7 +55,7 @@ struct FullScreenEntryView: View {
                     if voiceManager.voiceInputState != .idle {
                         VoiceStateIndicator(state: voiceManager.voiceInputState)
                             .padding(.horizontal)
-                            .padding(.bottom, 8)
+                            .padding(.bottom, DS.Spacing.xs)
                             .transition(.move(edge: .top).combined(with: .opacity))
                     }
                     
@@ -65,7 +65,7 @@ struct FullScreenEntryView: View {
                             voiceManager.clearTranscription()
                         }
                         .padding(.horizontal)
-                        .padding(.bottom, 8)
+                        .padding(.bottom, DS.Spacing.xs)
                     }
                     
                     // Main content area
@@ -76,7 +76,7 @@ struct FullScreenEntryView: View {
                         isTextFieldFocused: textFieldFocusBinding
                     )
                     .frame(maxHeight: .infinity)
-                    .padding(.bottom, 16)
+                    .padding(.bottom, DS.Spacing.md)
                 
                 // Voice input toolbar
 //                VoiceInputToolbar(
@@ -93,7 +93,7 @@ struct FullScreenEntryView: View {
                     onCancel: handleCancel
                 )
                 .cornerRadius(8)
-                .padding(.horizontal, 16)
+                .padding(.horizontal, DS.Spacing.md)
                 .padding(.bottom, keyboardHeight > 0 ? max(keyboardHeight - 300, 20) : 20)
                 
             }
@@ -298,11 +298,12 @@ struct EntryHeaderView: View {
                 }
                 .foregroundColor(.white.opacity(0.8))
             }
-            
+            .buttonStyle(.dsPressable(feel: .tapSolid))
+
             Spacer()
-            
+
             // Title and progress
-            VStack(spacing: 4) {
+            VStack(spacing: DS.Spacing.xxs) {
                 Text(isEditing ? "Edit \(contentType.displayName)" : "New \(contentType.displayName)")
                     .font(.system(size: 18, weight: .semibold))
                     .foregroundColor(.white)
@@ -321,8 +322,8 @@ struct EntryHeaderView: View {
                 .frame(width: 80)
         }
         .padding(.horizontal, 20)
-        .padding(.top, 8)
-        .padding(.bottom, 16)
+        .padding(.top, DS.Spacing.xs)
+        .padding(.bottom, DS.Spacing.md)
     }
 }
 
@@ -331,7 +332,7 @@ struct ErrorBanner: View {
     let onDismiss: () -> Void
     
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: DS.Spacing.sm) {
             Image(systemName: "exclamationmark.triangle.fill")
                 .foregroundColor(.red)
             
@@ -346,8 +347,9 @@ struct ErrorBanner: View {
                 Image(systemName: "xmark.circle.fill")
                     .foregroundColor(.white.opacity(0.6))
             }
+            .buttonStyle(.dsPressable(feel: .tapSolid))
         }
-        .padding(12)
+        .padding(DS.Spacing.sm)
         .background(Color.red.opacity(0.2))
         .cornerRadius(12)
         .overlay(

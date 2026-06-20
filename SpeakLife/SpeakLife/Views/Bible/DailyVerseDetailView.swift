@@ -28,9 +28,9 @@ struct DailyVerseDetailView: View {
                 .ignoresSafeArea()
                 
                 ScrollView {
-                    VStack(spacing: 32) {
+                    VStack(spacing: DS.Spacing.xl) {
                         // Header
-                        VStack(spacing: 8) {
+                        VStack(spacing: DS.Spacing.xs) {
                             Image(systemName: "quote.bubble.fill")
                                 .font(.system(size: 48))
                                 .foregroundColor(Constants.DAMidBlue)
@@ -42,7 +42,7 @@ struct DailyVerseDetailView: View {
                         .padding(.top, 20)
                         
                         // Verse Content
-                        VStack(spacing: 24) {
+                        VStack(spacing: DS.Spacing.lg) {
                             // The verse text
                             Text(verse.text)
                                 .font(.system(size: 20, weight: .medium, design: .serif))
@@ -71,7 +71,7 @@ struct DailyVerseDetailView: View {
                         .padding(.horizontal)
                         
                         // Action Buttons
-                        VStack(spacing: 16) {
+                        VStack(spacing: DS.Spacing.md) {
                             // Share Button
                             Button(action: {
                                 shareVerse()

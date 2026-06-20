@@ -56,7 +56,7 @@ struct BibleSearchView: View {
                     Spacer()
                 } else if viewModel.showSearchError && !viewModel.searchText.isEmpty {
                     Spacer()
-                    VStack(spacing: 16) {
+                    VStack(spacing: DS.Spacing.md) {
                         Image(systemName: "exclamationmark.triangle")
                             .font(.system(size: 48))
                             .foregroundColor(.orange)
@@ -86,11 +86,11 @@ struct BibleSearchView: View {
                     Spacer()
                 } else if viewModel.searchResults.isEmpty && !viewModel.searchText.isEmpty {
                     Spacer()
-                    VStack(spacing: 16) {
+                    VStack(spacing: DS.Spacing.md) {
                         Image(systemName: "magnifyingglass")
                             .font(.system(size: 48))
                             .foregroundColor(.white.opacity(0.8))
-                        
+
                         Text("No results found")
                             .font(.system(size: 18, weight: .medium))
                             .foregroundColor(.white.opacity(0.8))
@@ -102,7 +102,7 @@ struct BibleSearchView: View {
                     Spacer()
                 } else if !viewModel.searchResults.isEmpty {
                     ScrollView {
-                        LazyVStack(spacing: 12) {
+                        LazyVStack(spacing: DS.Spacing.sm) {
                             Text("\(viewModel.searchResults.count) results")
                                 .font(.system(size: 14))
                                 .foregroundColor(.white.opacity(0.8))
@@ -128,12 +128,12 @@ struct BibleSearchView: View {
                     }
                 } else {
                     Spacer()
-                    VStack(spacing: 24) {
+                    VStack(spacing: DS.Spacing.lg) {
                         Image(systemName: "magnifyingglass")
                             .font(.system(size: 48))
                             .foregroundColor(.white.opacity(0.8))
-                        
-                        VStack(spacing: 8) {
+
+                        VStack(spacing: DS.Spacing.xs) {
                             Text("Search the Bible")
                                 .font(.system(size: 20, weight: .semibold))
                                 .foregroundColor(.white)
@@ -144,7 +144,7 @@ struct BibleSearchView: View {
                         }
                         
                         // Suggested Searches
-                        VStack(alignment: .leading, spacing: 12) {
+                        VStack(alignment: .leading, spacing: DS.Spacing.sm) {
                             Text("Try searching for:")
                                 .font(.system(size: 14, weight: .medium))
                                 .foregroundColor(.white.opacity(0.8))
@@ -202,7 +202,7 @@ struct SearchResultCard: View {
     
     var body: some View {
         Button(action: onTap) {
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: DS.Spacing.xs) {
                 HStack {
                     Text(result.reference)
                         .font(.system(size: 14, weight: .semibold))

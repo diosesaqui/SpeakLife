@@ -82,7 +82,7 @@ struct BibleView: View {
                 }
                 
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    HStack(spacing: 16) {
+                    HStack(spacing: DS.Spacing.md) {
                         // Auth status indicator
                         if !viewModel.isAuthenticated {
                             Button(action: { viewModel.showAuthView = true }) {
@@ -257,7 +257,7 @@ struct BibleView: View {
     
     @ViewBuilder
     private var errorView: some View {
-        VStack(spacing: 24) {
+        VStack(spacing: DS.Spacing.lg) {
             Image(systemName: "exclamationmark.triangle")
                 .font(.system(size: 60))
                 .foregroundColor(.orange)
@@ -271,7 +271,7 @@ struct BibleView: View {
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 40)
             
-            VStack(spacing: 12) {
+            VStack(spacing: DS.Spacing.sm) {
                 Button(action: {
                     Task {
                         viewModel.showError = false
@@ -339,7 +339,7 @@ struct BibleBookSelectionView: View {
                         GridItem(.flexible()),
                         GridItem(.flexible()),
                         GridItem(.flexible())
-                    ], spacing: 16) {
+                    ], spacing: DS.Spacing.md) {
                         ForEach(viewModel.testamentSections[selectedTestament].books) { book in
                             BookCardView(book: book) {
                                 viewModel.selectBook(book)
@@ -387,7 +387,7 @@ struct BookCardView: View {
                     .font(.system(size: 11, weight: .semibold))
                     .foregroundColor(book.accentColor)
             }
-            .padding(12)
+            .padding(DS.Spacing.sm)
             .frame(maxWidth: .infinity, minHeight: 130, alignment: .topLeading)
             .background(cardBackground)
             .scaleEffect(pressed ? 0.97 : 1)
@@ -456,7 +456,7 @@ struct BibleChapterGridView: View {
         VStack(spacing: 0) {
             if let book = viewModel.selectedBook {
                 // Book Header
-                VStack(spacing: 8) {
+                VStack(spacing: DS.Spacing.xs) {
                     Text(book.name)
                         .font(.system(size: 24, weight: .bold, design: .serif))
                     
@@ -482,7 +482,7 @@ struct BibleChapterGridView: View {
                         GridItem(.flexible()),
                         GridItem(.flexible()),
                         GridItem(.flexible())
-                    ], spacing: 16) {
+                    ], spacing: DS.Spacing.md) {
                         ForEach(1...book.chapters, id: \.self) { chapterNumber in
                             ChapterNumberButton(
                                 number: chapterNumber,
@@ -533,7 +533,7 @@ struct DailyVerseCard: View {
     
     var body: some View {
         Button(action: onTap) {
-            VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: DS.Spacing.sm) {
                 HStack {
                     Image(systemName: "quote.bubble.fill")
                         .foregroundColor(Constants.DAMidBlue)
