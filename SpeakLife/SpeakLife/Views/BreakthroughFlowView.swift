@@ -133,6 +133,7 @@ struct BreakthroughFlowView: View {
                     .font(.system(size: 15))
                     .foregroundColor(.white.opacity(0.55))
             }
+            .dsAppear(0)
 
             ZStack(alignment: .topLeading) {
                 RoundedRectangle(cornerRadius: 14)
@@ -272,6 +273,7 @@ struct BreakthroughFlowView: View {
                 }
             }
             .padding(.horizontal, DS.Spacing.xl)
+            .dsAppear(0.06)
 
             Spacer()
 
@@ -303,6 +305,7 @@ struct BreakthroughFlowView: View {
                 .buttonStyle(.dsPressable(feel: .tapSolid))
             }
             .padding(.bottom, DS.Spacing.xxl)
+            .dsAppear(0.12)
         }
     }
 
