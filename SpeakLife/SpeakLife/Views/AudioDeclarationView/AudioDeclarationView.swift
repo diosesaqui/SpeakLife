@@ -107,6 +107,18 @@ struct UpNextCell: View {
                 )
                 .scaleEffect(isTapped ? 0.97 : 1.0)
                 .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isTapped)
+                .contextMenu {
+                    Button {
+                        Juice.play(.tapSolid)
+                        progressStore.togglePlayed(item.id)
+                    } label: {
+                        if progressStore.isPlayed(item.id) {
+                            Label("Mark as Unplayed", systemImage: "circle")
+                        } else {
+                            Label("Mark as Played", systemImage: "checkmark.circle.fill")
+                        }
+                    }
+                }
                 .onAppear {
                     // Fetch listener count for this audio
 //                    Task {

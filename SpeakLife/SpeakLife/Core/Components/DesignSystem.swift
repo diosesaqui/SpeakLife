@@ -370,6 +370,7 @@ struct DSProgressRing: View {
     }
 }
 
+<<<<<<< HEAD
 // MARK: - DSAppear: a safe, reusable entrance animation
 
 /// Fades and lifts content into place on first appearance. Layout-safe — it
@@ -405,6 +406,8 @@ extension View {
     }
 }
 
+=======
+>>>>>>> origin/main
 // MARK: - Demo / Preview
 
 /// A self-contained demo of the design system applied to a declaration card,

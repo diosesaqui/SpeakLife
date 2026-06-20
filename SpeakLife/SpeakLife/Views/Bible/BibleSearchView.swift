@@ -132,7 +132,10 @@ struct BibleSearchView: View {
                         Image(systemName: "magnifyingglass")
                             .font(.system(size: 48))
                             .foregroundColor(.white.opacity(0.8))
+<<<<<<< HEAD
                             .dsAppear()
+=======
+>>>>>>> origin/main
 
                         VStack(spacing: DS.Spacing.xs) {
                             Text("Search the Bible")

@@ -111,7 +111,10 @@ struct BreakthroughFlowView: View {
                 .buttonStyle(.dsPressable(feel: .tapSolid))
             }
             .padding(.bottom, DS.Spacing.xxl)
+<<<<<<< HEAD
             .dsAppear(0.12)
+=======
+>>>>>>> origin/main
         }
     }
 
@@ -273,7 +276,10 @@ struct BreakthroughFlowView: View {
                 }
             }
             .padding(.horizontal, DS.Spacing.xl)
+<<<<<<< HEAD
             .dsAppear(0.06)
+=======
+>>>>>>> origin/main
 
             Spacer()
 
@@ -305,7 +311,10 @@ struct BreakthroughFlowView: View {
                 .buttonStyle(.dsPressable(feel: .tapSolid))
             }
             .padding(.bottom, DS.Spacing.xxl)
+<<<<<<< HEAD
             .dsAppear(0.12)
+=======
+>>>>>>> origin/main
         }
     }
 
