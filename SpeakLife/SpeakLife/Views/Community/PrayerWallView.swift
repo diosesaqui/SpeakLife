@@ -774,7 +774,7 @@ private struct AgreementPromptSheet: View {
                     Text(reaction.agreementPlaceholder)
                         .font(Font.custom("AppleSDGothicNeo-Regular", size: 14, relativeTo: .body))
                         .foregroundColor(.white.opacity(0.35))
-                        .padding(.top, 12)
+                        .padding(.top, DS.Spacing.sm)
                         .padding(.leading, 14)
                         .allowsHitTesting(false)
                 }
@@ -943,7 +943,7 @@ struct PostPrayerView: View {
                     Capsule()
                         .fill(Color.white.opacity(0.25))
                         .frame(width: 40, height: 4)
-                        .padding(.top, 12)
+                        .padding(.top, DS.Spacing.sm)
 
                     VStack(spacing: DS.Spacing.xxs) {
                         Text(isTestimony
@@ -1115,7 +1115,7 @@ struct PostPrayerView: View {
                 .font(Font.custom("AppleSDGothicNeo-Regular", size: 14, relativeTo: .body))
                 .foregroundColor(isSelected ? .black : .white.opacity(0.65))
                 .frame(width: 100)
-                .padding(.vertical, 8)
+                .padding(.vertical, DS.Spacing.xs)
                 .background(isSelected ? Color.white : Color.clear)
                 .clipShape(RoundedRectangle(cornerRadius: 22))
         }
