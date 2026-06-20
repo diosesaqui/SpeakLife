@@ -345,8 +345,41 @@ final class AudioDeclarationViewModel: ObservableObject {
         dynamicFilters = AudioRecommendationEngine.personalizedOrder(
             filters: curatedFilters,
             personalDeclarationCategory: PersonalDeclarationRepository.activeCategoryRaw(),
-            selectedCategories: selected
+            selectedCategories: selected,
+            engagementCategories: engagementCategoryStrengths(),
+            favoritesByFilterId: favoritesCountByFilterId(),
+            playedByFilterId: playedCountByFilterId()
         )
+    }
+
+    /// Recency-weighted strength per category from the user's tracked selections.
+    /// Strength = selection count decayed by a 14-day half-life, so categories the
+    /// user engaged with recently carry more pull than long-stale ones.
+    private func engagementCategoryStrengths() -> [String: Double] {
+        let halfLifeDays = 14.0
+        var result: [String: Double] = [:]
+        for pref in UserPreferencesTracker.shared.topCategories {
+            let days = max(0, Date().timeIntervalSince(pref.lastSelected) / 86_400)
+            let recency = pow(0.5, days / halfLifeDays)
+            result[pref.category] = Double(pref.count) * recency
+        }
+        return result
+    }
+
+    /// Number of favorited episodes per filter id (audio tag).
+    private func favoritesCountByFilterId() -> [String: Int] {
+        Dictionary(grouping: favoritesManager.favorites.compactMap { $0.tag }) { $0 }
+            .mapValues { $0.count }
+    }
+
+    /// Number of played episodes per filter id, from already-loaded content.
+    private func playedCountByFilterId() -> [String: Int] {
+        var counts: [String: Int] = [:]
+        for (filterId, items) in contentByFilter {
+            let played = items.filter { AudioProgressStore.shared.isPlayed($0.id) }.count
+            if played > 0 { counts[filterId] = played }
+        }
+        return counts
     }
 
     func fetchAudio(for item: AudioDeclaration, completion: @escaping (Result<URL, Error>) -> Void) {

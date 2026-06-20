@@ -106,10 +106,27 @@ final class AudioRecommendationEngine {
 
     // MARK: - Personalized Filter Ordering
 
+    /// Relative weights for each personalization signal. Stated intent
+    /// (declaration, onboarding picks) outweighs revealed behavior (engagement,
+    /// favorites, plays); the second-choice filter in a mapping is halved.
+    private enum Weight {
+        static let personalDeclaration = 100.0
+        static let selectedCategory    = 30.0
+        static let engagement          = 12.0
+        static let favorite            = 8.0
+        static let played              = 3.0
+        static let secondaryFilter     = 0.5
+        /// Cap on how many favorites / plays count, so a single high-volume
+        /// category can't dominate purely by raw count.
+        static let favoriteCountCap    = 5
+        static let playedCountCap      = 8
+    }
+
     /// Re-orders the curated audio filters so the categories the user cares about
-    /// are promoted to the front. The user's personal declaration is the
-    /// highest-intent signal and is applied before onboarding-selected
-    /// categories; everything else keeps its curated order.
+    /// are promoted to the front. Filters are scored from both stated intent
+    /// (personal declaration, onboarding categories) and revealed behavior
+    /// (recency-weighted category engagement, favorites, and plays); the
+    /// highest-scoring filters are promoted, with ties broken by curated order.
     ///
     /// Pure and side-effect free — returns `filters` unchanged when there is no
     /// signal or no match, so it is always safe to call. A pinned "favorites"
@@ -121,36 +138,70 @@ final class AudioRecommendationEngine {
     ///     user's active personal declaration, if any.
     ///   - selectedCategories: `DeclarationCategory` rawValues chosen during
     ///     onboarding, in selection order.
+    ///   - engagementCategories: `DeclarationCategory` rawValue → recency-weighted
+    ///     strength (e.g. from `UserPreferencesTracker.topCategories`).
+    ///   - favoritesByFilterId: Filter id → number of favorited episodes.
+    ///   - playedByFilterId: Filter id → number of played episodes.
     ///   - maxPromoted: Cap on how many filters float to the front.
     static func personalizedOrder(
         filters: [FilterConfig],
         personalDeclarationCategory: String?,
         selectedCategories: [String],
+        engagementCategories: [String: Double] = [:],
+        favoritesByFilterId: [String: Int] = [:],
+        playedByFilterId: [String: Int] = [:],
         maxPromoted: Int = 3
     ) -> [FilterConfig] {
         guard filters.count > 1, maxPromoted > 0 else { return filters }
 
-        // Ordered, de-duplicated preferred filter IDs. Personal declaration maps
-        // first (strongest intent), then each selected category in turn.
-        var preferredIds: [String] = []
-        func appendMapping(for category: String?) {
-            guard let raw = category?.lowercased(), !raw.isEmpty,
+        var scores: [String: Double] = [:]
+        func add(_ filterId: String, _ value: Double) {
+            guard value > 0 else { return }
+            scores[filterId, default: 0] += value
+        }
+        // A declaration category maps to one or two filters; the first gets the
+        // full weight, the second a halved weight.
+        func scoreMapping(for category: String?, base: Double) {
+            guard base > 0, let raw = category?.lowercased(), !raw.isEmpty,
                   let mapped = categoryToFilterPriority[raw] else { return }
-            for id in mapped where !preferredIds.contains(id) {
-                preferredIds.append(id)
+            for (index, id) in mapped.enumerated() {
+                add(id, base * (index == 0 ? 1.0 : Weight.secondaryFilter))
             }
         }
-        appendMapping(for: personalDeclarationCategory)
-        selectedCategories.forEach { appendMapping(for: $0) }
 
-        let available = Set(filters.map { $0.id })
-        let promotedIds = preferredIds
-            .filter { available.contains($0) && $0 != "favorites" }
-            .prefix(maxPromoted)
+        // 1. Personal declaration — strongest intent.
+        scoreMapping(for: personalDeclarationCategory, base: Weight.personalDeclaration)
 
-        guard !promotedIds.isEmpty else { return filters }
+        // 2. Onboarding-selected categories — earlier picks weighted slightly higher.
+        for (index, category) in selectedCategories.enumerated() {
+            let positionFactor = max(0.5, 1.0 - Double(index) * 0.1)
+            scoreMapping(for: category, base: Weight.selectedCategory * positionFactor)
+        }
+
+        // 3. Recency-weighted category engagement.
+        for (category, strength) in engagementCategories {
+            scoreMapping(for: category, base: Weight.engagement * strength)
+        }
+
+        // 4. Revealed behavior — favorites and plays map straight to a filter id.
+        for (filterId, count) in favoritesByFilterId {
+            add(filterId, Weight.favorite * Double(min(count, Weight.favoriteCountCap)))
+        }
+        for (filterId, count) in playedByFilterId {
+            add(filterId, Weight.played * Double(min(count, Weight.playedCountCap)))
+        }
+
+        // Promote the highest-scoring filters; ties fall back to curated order.
+        let curatedIndex = Dictionary(uniqueKeysWithValues: filters.enumerated().map { ($1.id, $0) })
+        let candidates = scores.filter { $0.value > 0 && $0.key != "favorites" && curatedIndex[$0.key] != nil }
+        guard !candidates.isEmpty else { return filters }
+
+        let promotedIds = candidates.keys.sorted { lhs, rhs in
+            if candidates[lhs]! != candidates[rhs]! { return candidates[lhs]! > candidates[rhs]! }
+            return curatedIndex[lhs]! < curatedIndex[rhs]!
+        }.prefix(maxPromoted)
+
         let promotedSet = Set(promotedIds)
-
         let pinned = filters.filter { $0.id == "favorites" }
         let promoted = promotedIds.compactMap { id in filters.first { $0.id == id } }
         let rest = filters.filter { $0.id != "favorites" && !promotedSet.contains($0.id) }
