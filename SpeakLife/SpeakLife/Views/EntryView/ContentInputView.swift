@@ -304,7 +304,7 @@ struct ContentGuidanceView: View {
     }
     
     private var lengthGuidanceMessage: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: DS.Spacing.xs) {
             Image(systemName: characterCount > 1000 ? "exclamationmark.triangle" : "info.circle")
                 .font(.system(size: 12))
                 .foregroundColor(characterCount > 1000 ? .orange : .blue)
@@ -313,7 +313,7 @@ struct ContentGuidanceView: View {
                 .font(.system(size: 12))
                 .foregroundColor(characterCount > 1000 ? .orange : .white.opacity(0.7))
         }
-        .padding(.horizontal, 12)
+        .padding(.horizontal, DS.Spacing.sm)
         .padding(.vertical, 6)
         .background(
             RoundedRectangle(cornerRadius: 8)
@@ -388,7 +388,7 @@ struct TextInputAreaView: View {
     @ViewBuilder
     private var placeholderAndHint: some View {
         if text.isEmpty && !voiceManager.isListening {
-            VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: DS.Spacing.md) {
                 placeholderText
                 if showVoiceHint {
                     voiceHintBanner
@@ -401,8 +401,8 @@ struct TextInputAreaView: View {
         Text(placeholder)
             .font(.system(size: 16, weight: .regular))
             .foregroundColor(.gray.opacity(0.8))
-            .padding(.top, 16)
-            .padding(.leading, 16)
+            .padding(.top, DS.Spacing.md)
+            .padding(.leading, DS.Spacing.md)
             .lineLimit(3)
     }
     

@@ -152,7 +152,7 @@ struct AudioPlayerView: View {
 
     @ViewBuilder
     private func playerControls(proxy: GeometryProxy) -> some View {
-        VStack(spacing: 16) {
+        VStack(spacing: DS.Spacing.md) {
             // Progress slider
             if viewModel.duration > 0 {
                 Slider(
@@ -282,7 +282,7 @@ struct PersistentAudioBar: View {
     @State private var animatePulse = false
 
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: DS.Spacing.sm) {
             ZStack {
                 Image(viewModel.imageUrl)
                     .resizable()

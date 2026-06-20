@@ -83,7 +83,7 @@ struct GenericContentCell<ContentType: SectionableContent>: View {
                 Spacer(minLength: 0) // Fill remaining space
             }
             .padding(.horizontal, 4)
-            .padding(.vertical, 8)
+            .padding(.vertical, DS.Spacing.xs)
             .frame(height: configuration.itemHeight * 0.35) // Fixed height for text area
         }
         .frame(width: configuration.itemWidth, height: configuration.itemHeight, alignment: .top) // Fixed total size with top alignment
@@ -131,8 +131,8 @@ struct GenericContentCell<ContentType: SectionableContent>: View {
                 .frame(width: 44, height: 44)
         }
         .frame(height: 76, alignment: .top) // Fixed total height with top alignment
-        .padding(.vertical, 8)
-        .padding(.horizontal, 16)
+        .padding(.vertical, DS.Spacing.xs)
+        .padding(.horizontal, DS.Spacing.md)
         .background(
             RoundedRectangle(cornerRadius: 12)
                 .fill(.ultraThinMaterial)
@@ -272,7 +272,7 @@ struct GenericContentCell<ContentType: SectionableContent>: View {
                 .font(.caption.weight(.bold))
         }
         .foregroundColor(.white)
-        .padding(.horizontal, 8)
+        .padding(.horizontal, DS.Spacing.xs)
         .padding(.vertical, 4)
         .background(
             Capsule()

@@ -50,7 +50,7 @@ where Provider.ContentType == ContentType {
                         Color.clear
                             .frame(height: 20)
                     }
-                    .padding(.top, 8)
+                    .padding(.top, DS.Spacing.xs)
                 }
                 .refreshable {
                     await refreshContent()
@@ -75,7 +75,7 @@ where Provider.ContentType == ContentType {
                 .font(.caption)
                 .foregroundColor(.white.opacity(0.7))
         }
-        .padding(.top, 8)
+        .padding(.top, DS.Spacing.xs)
         .transition(.move(edge: .top).combined(with: .opacity))
     }
     

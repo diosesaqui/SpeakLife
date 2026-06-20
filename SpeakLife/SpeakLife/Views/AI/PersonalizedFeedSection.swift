@@ -168,9 +168,9 @@ struct PersonalCategoryCard: View {
     @State private var isExpanded = false
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: DS.Spacing.xs) {
             HStack {
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: DS.Spacing.xxs) {
                     Text(category.name)
                         .font(.subheadline)
                         .fontWeight(.semibold)
@@ -208,7 +208,7 @@ struct PersonalCategoryCard: View {
                     .foregroundColor(.white.opacity(0.7))
             }
         }
-        .padding(12)
+        .padding(DS.Spacing.sm)
         .frame(width: 200)
         .frame(minHeight: 100)
         .background(Color.white.opacity(0.1))
@@ -227,7 +227,7 @@ struct TodayRecommendationsSection: View {
     @Environment(\.presentationMode) var presentationMode
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: DS.Spacing.xs) {
             Text("Recommended for Your Journey")
                 .font(.headline)
                 .foregroundColor(.white)
@@ -301,9 +301,9 @@ struct RecommendedDeclarationRow: View {
     @State private var isPressed = false
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: DS.Spacing.xs) {
             HStack {
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: DS.Spacing.xxs) {
                     Text(declaration.text)
                         .font(.subheadline)
                         .foregroundColor(.white)
@@ -341,7 +341,7 @@ struct RecommendedDeclarationRow: View {
                     .foregroundColor(.white.opacity(0.7))
             }
         }
-        .padding(12)
+        .padding(DS.Spacing.sm)
         .background(Color.white.opacity(isPressed ? 0.2 : 0.08))
         .overlay(
             RoundedRectangle(cornerRadius: 8)
@@ -375,7 +375,7 @@ struct AIInsightsSection: View {
     
     var body: some View {
         if !insights.isEmpty {
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: DS.Spacing.xs) {
                 Text("Spiritual Insights")
                     .font(.headline)
                     .foregroundColor(.white)
@@ -446,7 +446,7 @@ struct ConfidenceIndicator: View {
 
 struct LoadingStateView: View {
     var body: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: DS.Spacing.sm) {
             ProgressView()
                 .progressViewStyle(CircularProgressViewStyle(tint: .white))
                 .scaleEffect(0.8)
@@ -471,7 +471,7 @@ struct PremiumUpgradeView: View {
                 .font(.title2)
                 .fontWeight(.bold)
             
-            VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: DS.Spacing.sm) {
                 AIFeatureRow(icon: "🎯", title: "Personalized Categories", description: "AI creates unique spiritual focus areas just for you")
                 AIFeatureRow(icon: "🧠", title: "Smart Recommendations", description: "Content that matches your spiritual season and growth")
                 AIFeatureRow(icon: "⏰", title: "Optimal Timing", description: "Notifications sent at your most receptive moments")
@@ -504,7 +504,7 @@ struct AIFeatureRow: View {
     let description: String
     
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: DS.Spacing.sm) {
             Text(icon)
                 .font(.title2)
             

@@ -399,11 +399,11 @@ struct BadgeDisplayView: View {
     }
     
     var body: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: DS.Spacing.xs) {
             BadgeView(badge: badge, size: size)
-            
+
             if showTitle {
-                VStack(spacing: 4) {
+                VStack(spacing: DS.Spacing.xxs) {
                     Text(badge.displayTitle)
                         .font(.system(size: size * 0.12, weight: .bold, design: .rounded))
                         .foregroundColor(badge.isUnlocked ? .white : .gray)

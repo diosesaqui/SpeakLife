@@ -33,7 +33,7 @@ struct AudioContentRow: View {
         Button(action: {
             handlePlay()
         }) {
-            HStack(spacing: 16) {
+            HStack(spacing: DS.Spacing.md) {
                 // Audio artwork
                 Image(audio.imageUrl)
                     .resizable()
@@ -54,7 +54,7 @@ struct AudioContentRow: View {
                         .foregroundColor(.white.opacity(0.7))
                         .lineLimit(1)
                     
-                    HStack(spacing: 8) {
+                    HStack(spacing: DS.Spacing.xs) {
                         HStack(spacing: 4) {
                             Image(systemName: "play.fill")
                                 .font(.caption2)
@@ -87,7 +87,7 @@ struct AudioContentRow: View {
                 Image(systemName: "ellipsis.circle.fill")
                     .font(.title3)
                     .foregroundColor(.white.opacity(0.8))
-                    .padding(8)
+                    .padding(DS.Spacing.xs)
                     .background(Color.white.opacity(0.05))
                     .clipShape(Circle())
                     .contextMenu {

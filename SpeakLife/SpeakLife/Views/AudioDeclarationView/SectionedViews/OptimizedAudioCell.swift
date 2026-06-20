@@ -64,14 +64,14 @@ struct OptimizedAudioCell: View {
                     Image(systemName: isFavorite ? "heart.fill" : "heart")
                         .font(.system(size: 16, weight: .semibold))
                         .foregroundColor(isFavorite ? .pink : .white)
-                        .padding(8)
+                        .padding(DS.Spacing.xs)
                         .background(
                             Circle()
                                 .fill(.ultraThinMaterial)
                         )
                         .scaleEffect(showFavoriteAnimation ? 1.3 : 1.0)
                 }
-                .padding(8)
+                .padding(DS.Spacing.xs)
                 
                 // Premium lock indicator
                 if item.isPremium && !subscriptionStore.isPremium {
@@ -88,7 +88,7 @@ struct OptimizedAudioCell: View {
                                 )
                             Spacer()
                         }
-                        .padding(8)
+                        .padding(DS.Spacing.xs)
                     }
                 }
             }

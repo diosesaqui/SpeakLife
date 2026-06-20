@@ -434,8 +434,8 @@ struct CelebrationContinueButton: View {
             Text("Continue Your Journey")
                 .font(.system(size: 18, weight: .semibold, design: .rounded))
                 .foregroundColor(.white)
-                .padding(.horizontal, 32)
-                .padding(.vertical, 16)
+                .padding(.horizontal, DS.Spacing.xl)
+                .padding(.vertical, DS.Spacing.md)
                 .background(
                     RoundedRectangle(cornerRadius: 25)
                         .fill(
