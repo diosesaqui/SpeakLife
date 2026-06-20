@@ -76,7 +76,21 @@ struct UpNextCell: View {
                     }
                     
                     Spacer()
-                    
+
+                    // Played toggle
+                    Button(action: {
+                        Juice.play(.tapSolid)
+                        progressStore.togglePlayed(item.id)
+                    }) {
+                        Image(systemName: progressStore.isPlayed(item.id) ? "checkmark.circle.fill" : "circle")
+                            .font(.system(size: 20, weight: .medium))
+                            .foregroundColor(progressStore.isPlayed(item.id) ? Color(red: 0.18, green: 0.78, blue: 0.45) : .white.opacity(0.7))
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                    .contentShape(Circle())
+                    .frame(width: 44, height: 44)
+                    .accessibilityLabel(progressStore.isPlayed(item.id) ? "Mark as unplayed" : "Mark as played")
+
                     // Favorite Button
                     Button(action: {
                         toggleFavorite()

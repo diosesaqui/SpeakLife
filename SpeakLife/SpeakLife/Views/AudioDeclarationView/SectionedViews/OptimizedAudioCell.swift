@@ -36,18 +36,30 @@ struct OptimizedAudioCell: View {
                         )
                     )
                     .overlay(alignment: .bottomTrailing) {
-                        if progressStore.isPlayed(item.id) {
-                            Image(systemName: "checkmark.circle.fill")
-                                .font(.system(size: 18, weight: .bold))
-                                .symbolRenderingMode(.palette)
-                                .foregroundStyle(Color.white, Color(red: 0.18, green: 0.78, blue: 0.45))
-                                .background(
-                                    Circle()
-                                        .fill(Color.black.opacity(0.3))
-                                        .padding(2)
-                                )
-                                .offset(x: -6, y: -6)
+                        Button(action: {
+                            Juice.play(.tapSolid)
+                            progressStore.togglePlayed(item.id)
+                        }) {
+                            Group {
+                                if progressStore.isPlayed(item.id) {
+                                    Image(systemName: "checkmark.circle.fill")
+                                        .symbolRenderingMode(.palette)
+                                        .foregroundStyle(Color.white, Color(red: 0.18, green: 0.78, blue: 0.45))
+                                } else {
+                                    Image(systemName: "circle")
+                                        .foregroundColor(.white.opacity(0.85))
+                                }
+                            }
+                            .font(.system(size: 18, weight: .bold))
+                            .background(
+                                Circle()
+                                    .fill(Color.black.opacity(0.3))
+                                    .padding(2)
+                            )
                         }
+                        .buttonStyle(PlainButtonStyle())
+                        .offset(x: -6, y: -6)
+                        .accessibilityLabel(progressStore.isPlayed(item.id) ? "Mark as unplayed" : "Mark as played")
                     }
                 
                 // Favorite button
