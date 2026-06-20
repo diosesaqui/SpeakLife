@@ -486,7 +486,7 @@ private struct IdentityNamedScreen: View {
                             HStack(spacing: 12) {
                                 Image(systemName: "checkmark.seal.fill")
                                     .font(.system(size: 18))
-                                    .foregroundColor(.white.opacity(0.9))
+                                    .foregroundColor(DS.Palette.gold.opacity(0.95))
                                 Text(truth)
                                     .font(.system(size: 17, weight: .semibold, design: .rounded))
                                     .foregroundColor(.white)
@@ -494,14 +494,7 @@ private struct IdentityNamedScreen: View {
                             }
                             .padding(.horizontal, 18)
                             .padding(.vertical, 14)
-                            .background(
-                                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                    .fill(Color.white.opacity(0.08))
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                            .stroke(Color.white.opacity(0.14), lineWidth: 1)
-                                    )
-                            )
+                            .dsGlass(cornerRadius: DS.Radius.md)
                             .identityStagger(v, delay: 0.2 + Double(idx) * 0.08)
                         }
                     }
@@ -603,7 +596,7 @@ private struct IdentityMechanismScreen: View {
         VStack(spacing: 12) {
             Text(tag)
                 .font(.system(size: 11, weight: .bold, design: .rounded))
-                .foregroundColor(highlighted ? .white : .white.opacity(0.45))
+                .foregroundColor(highlighted ? DS.Palette.gold.opacity(0.9) : .white.opacity(0.45))
                 .kerning(1.0)
             Image(systemName: icon)
                 .font(.system(size: 30))

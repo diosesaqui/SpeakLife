@@ -145,7 +145,7 @@ struct TabButton: View {
     
     var body: some View {
         Button(action: action) {
-            VStack(spacing: 4) {
+            VStack(spacing: DS.Spacing.xxs) {
                 Image(systemName: tab.icon)
                     .font(.system(size: 20, weight: .medium))
                 Text(tab.rawValue)
@@ -153,8 +153,8 @@ struct TabButton: View {
                     .fontWeight(.medium)
             }
             .foregroundColor(isSelected ? .white : .white.opacity(0.6))
-            .padding(.horizontal, 16)
-            .padding(.vertical, 8)
+            .padding(.horizontal, DS.Spacing.md)
+            .padding(.vertical, DS.Spacing.xs)
             .background(
                 ZStack {
                     if isSelected {
@@ -190,7 +190,7 @@ struct HeroSection: View {
                     )
                 )
             
-            VStack(spacing: 24) {
+            VStack(spacing: DS.Spacing.lg) {
                 // Badge
                 HStack {
                     Image(systemName: "flame.fill")
@@ -200,7 +200,7 @@ struct HeroSection: View {
                 .font(.caption)
                 .fontWeight(.bold)
                 .foregroundColor(.orange)
-                .padding(.horizontal, 12)
+                .padding(.horizontal, DS.Spacing.sm)
                 .padding(.vertical, 6)
                 .background(
                     Capsule()
@@ -212,7 +212,7 @@ struct HeroSection: View {
                 )
                 
                 // Title
-                VStack(spacing: 8) {
+                VStack(spacing: DS.Spacing.xs) {
                     Text("SPIRITUAL WARRIOR")
                         .font(.largeTitle)
                         .fontWeight(.black)
@@ -233,7 +233,7 @@ struct HeroSection: View {
                     .padding(.horizontal, 40)
                 
                 // Stats
-                HStack(spacing: 32) {
+                HStack(spacing: DS.Spacing.xl) {
                     StatBadge(value: "12", label: "Weeks")
                     StatBadge(value: "84", label: "Lessons")
                     StatBadge(value: "500+", label: "Warriors")
@@ -249,7 +249,7 @@ struct StatBadge: View {
     let label: String
     
     var body: some View {
-        VStack(spacing: 4) {
+        VStack(spacing: DS.Spacing.xxs) {
             Text(value)
                 .font(.title2)
                 .fontWeight(.bold)
@@ -304,7 +304,7 @@ struct FeaturesSection: View {
                 .foregroundColor(.white)
                 .padding(.horizontal)
             
-            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
+            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: DS.Spacing.md) {
                 ForEach(features, id: \.title) { feature in
                     FeatureCard(feature: feature)
                 }
@@ -324,7 +324,7 @@ struct FeatureCard: View {
     let feature: Feature
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: DS.Spacing.sm) {
             Image(systemName: feature.icon)
                 .font(.system(size: 28))
                 .foregroundColor(.orange)

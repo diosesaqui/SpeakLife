@@ -516,8 +516,9 @@ private struct OutcomeStakesScreen: View {
             VStack(spacing: 26) {
                 ZStack {
                     Circle()
-                        .fill(Color.white.opacity(0.10))
+                        .fill(DS.Gradient.gold)
                         .frame(width: 96, height: 96)
+                        .shadow(color: DS.Palette.gold.opacity(0.45), radius: 12, x: 0, y: 6)
                     Image(systemName: "hourglass")
                         .font(.system(size: 40))
                         .foregroundColor(.white)
@@ -527,7 +528,7 @@ private struct OutcomeStakesScreen: View {
                 VStack(spacing: 14) {
                     Text("BEFORE WE SHOW YOU WHAT'S POSSIBLE")
                         .font(.system(size: 12, weight: .bold, design: .rounded))
-                        .foregroundColor(.white.opacity(0.5))
+                        .foregroundColor(DS.Palette.gold.opacity(0.9))
                         .kerning(1.4)
                         .multilineTextAlignment(.center)
                         .outcomeStagger(v, delay: 0.08)
@@ -593,8 +594,9 @@ private struct OutcomeVisionScreen: View {
             VStack(spacing: 26) {
                 ZStack {
                     Circle()
-                        .fill(Color.white.opacity(0.10))
+                        .fill(DS.Gradient.gold)
                         .frame(width: 96, height: 96)
+                        .shadow(color: DS.Palette.gold.opacity(0.45), radius: 12, x: 0, y: 6)
                     Image(systemName: vision.symbol)
                         .font(.system(size: 40))
                         .foregroundColor(.white)
@@ -604,7 +606,7 @@ private struct OutcomeVisionScreen: View {
                 VStack(spacing: 14) {
                     Text(vision.eyebrow)
                         .font(.system(size: 12, weight: .bold, design: .rounded))
-                        .foregroundColor(.white.opacity(0.5))
+                        .foregroundColor(DS.Palette.gold.opacity(0.9))
                         .kerning(1.4)
                         .outcomeStagger(v, delay: 0.08)
 

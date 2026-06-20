@@ -570,8 +570,14 @@ struct SurveyGoalRevealScreen: View {
 
                     ZStack {
                         Circle()
-                            .fill(Color.white.opacity(0.1))
+                            .fill(
+                                LinearGradient(
+                                    colors: [DS.Palette.gold.opacity(0.95), DS.Palette.gold.opacity(0.55)],
+                                    startPoint: .topLeading, endPoint: .bottomTrailing
+                                )
+                            )
                             .frame(width: 72, height: 72)
+                            .shadow(color: DS.Palette.gold.opacity(0.5), radius: 8, x: 0, y: 4)
 
                         Image(systemName: goalWord.icon)
                             .font(.system(size: 32))
@@ -611,7 +617,7 @@ struct SurveyGoalRevealScreen: View {
                         VStack(spacing: 8) {
                             Text("YOUR INHERITANCE")
                                 .font(.system(size: 12, weight: .bold, design: .rounded))
-                                .foregroundColor(.white.opacity(0.5))
+                                .foregroundColor(DS.Palette.gold.opacity(0.9))
                                 .kerning(1.2)
 
                             Text(goalWord.rawValue)
@@ -752,14 +758,7 @@ struct SurveyQ8NotificationScreen: View {
             }
         }
         .padding(14)
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(Color.white.opacity(0.08))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 16)
-                        .stroke(Color.white.opacity(0.15), lineWidth: 1)
-                )
-        )
+        .dsGlass(cornerRadius: DS.Radius.md)
     }
 }
 
@@ -788,7 +787,7 @@ struct SurveyFirstDeclarationScreen: View {
             VStack(spacing: 24) {
                 Text("Speak this. Out loud. Right now.")
                     .font(.system(size: 13, weight: .semibold, design: .rounded))
-                    .foregroundColor(.white.opacity(0.5))
+                    .foregroundColor(DS.Palette.gold.opacity(0.9))
                     .kerning(0.8)
                     .multilineTextAlignment(.center)
                     .opacity(labelShown ? 1 : 0)
@@ -814,14 +813,7 @@ struct SurveyFirstDeclarationScreen: View {
                     }
                 }
                 .padding(28)
-                .background(
-                    RoundedRectangle(cornerRadius: 24, style: .continuous)
-                        .fill(Color.white.opacity(0.09))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 24, style: .continuous)
-                                .stroke(Color.white.opacity(0.2), lineWidth: 1)
-                        )
-                )
+                .dsGlass(cornerRadius: DS.Radius.lg)
                 .padding(.horizontal, 24)
                 .scaleEffect(cardShown ? 1 : 0.94)
                 .opacity(cardShown ? 1 : 0)
@@ -936,14 +928,7 @@ struct SurveyProductPositioningScreen: View {
                     )
                 }
                 .padding(4)
-                .background(
-                    RoundedRectangle(cornerRadius: 18)
-                        .fill(Color.white.opacity(0.06))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 18)
-                                .stroke(Color.white.opacity(0.15), lineWidth: 1)
-                        )
-                )
+                .dsGlass(cornerRadius: DS.Radius.md)
                 .padding(.horizontal, 28)
 
                 // Seed + scripture

@@ -33,7 +33,7 @@ struct AudioListItemView: View {
                 if let progress = viewModel.downloadProgress[item.id], progress > 0 {
                     ProgressView(value: progress)
                         .progressViewStyle(LinearProgressViewStyle())
-                        .padding(.top, 8)
+                        .padding(.top, DS.Spacing.xs)
                 }
             }
             .listRowInsets(EdgeInsets())

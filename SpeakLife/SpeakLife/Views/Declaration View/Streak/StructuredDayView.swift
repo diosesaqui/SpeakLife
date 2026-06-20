@@ -368,9 +368,6 @@ struct StructuredDayView: View {
                         insertion: .scale(scale: 0.9).combined(with: .opacity),
                         removal: .opacity))
             } else {
-                DayProgressRing(completed: completedTasks.count, total: tasks.count, streakCount: streakCount)
-                    .padding(.top, 8)
-
                 if let next = nextTask {
                     NextUpTaskCard(task: next, onNavigate: onNavigate, onToggle: onToggle)
                         .transition(.asymmetric(
