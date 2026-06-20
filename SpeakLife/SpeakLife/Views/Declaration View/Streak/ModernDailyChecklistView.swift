@@ -153,13 +153,14 @@ struct ModernDailyChecklistView: View {
                     HStack(alignment: .top) {
                         VStack(alignment: .leading, spacing: 4) {
                             Text(greeting)
-                                .font(.title2)
-                                .fontWeight(.bold)
+                                .font(.system(size: 30, weight: .bold, design: .rounded))
                                 .foregroundColor(.white)
+                                .shadow(color: .black.opacity(0.3), radius: 6, x: 0, y: 2)
 
                             Text(Date().formatted(.dateTime.weekday(.wide).month().day()))
                                 .font(.subheadline)
                                 .foregroundColor(.white.opacity(0.6))
+                                .tracking(0.5)
                         }
 
                         Spacer()
@@ -169,11 +170,13 @@ struct ModernDailyChecklistView: View {
                                 Text("🔥").font(.system(size: 15))
                                 Text("\(viewModel.streakStats.currentStreak)")
                                     .font(.system(size: 16, weight: .bold, design: .rounded))
-                                    .foregroundColor(.orange)
+                                    .foregroundColor(.white)
                             }
-                            .padding(.horizontal, 12)
+                            .padding(.horizontal, DS.Spacing.sm)
                             .padding(.vertical, 7)
-                            .background(Capsule().fill(Color.orange.opacity(0.15)))
+                            .background(Capsule().fill(DS.Gradient.ember))
+                            .overlay(Capsule().stroke(Color.white.opacity(0.25), lineWidth: 1))
+                            .shadow(color: Color.orange.opacity(0.45), radius: 8, x: 0, y: 3)
                             .accessibilityLabel("\(viewModel.streakStats.currentStreak) day streak")
                         }
 
@@ -204,8 +207,11 @@ struct ModernDailyChecklistView: View {
                     // Progress-aware nudge toward securing today's streak
                     Text(motivationalText)
                         .font(.subheadline)
-                        .foregroundColor(.white.opacity(0.85))
+                        .foregroundColor(.white.opacity(0.9))
                         .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal, DS.Spacing.md)
+                        .padding(.vertical, DS.Spacing.sm)
+                        .dsGlass(cornerRadius: DS.Radius.md, strokeOpacity: 0.14, elevation: DS.Elevation.low)
                 }
                 .padding(.horizontal, 20)
                 .padding(.top, 20)

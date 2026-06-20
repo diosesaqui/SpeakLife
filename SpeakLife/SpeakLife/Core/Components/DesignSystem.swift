@@ -225,9 +225,63 @@ extension View {
             )
             .dsShadow(elevation)
     }
+
+    /// Frosted-glass surface: a translucent material panel with a soft top-lit
+    /// hairline and continuous-corner clipping. The signature "bolder" surface —
+    /// content floats above the themed backdrop with real depth.
+    func dsGlass(
+        cornerRadius: CGFloat = DS.Radius.lg,
+        strokeOpacity: Double = 0.18,
+        elevation: DS.Elevation.Shadow = DS.Elevation.medium
+    ) -> some View {
+        self
+            .background(
+                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                    .fill(.ultraThinMaterial)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                    .stroke(
+                        LinearGradient(
+                            colors: [Color.white.opacity(strokeOpacity), Color.white.opacity(strokeOpacity * 0.3)],
+                            startPoint: .top, endPoint: .bottom
+                        ),
+                        lineWidth: 1
+                    )
+            )
+            .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+            .dsShadow(elevation)
+    }
 }
 
-// MARK: - DSPressable: a button style with built-in matched feedback
+// MARK: - Gradients (the "bolder" accent surfaces)
+
+extension DS {
+    /// Brand gradients for hero surfaces, accents, and reward moments. Built on
+    /// the existing brand colors so they read as SpeakLife, just richer.
+    enum Gradient {
+        /// Warm reward gradient for streaks, milestones, premium highlights.
+        static let gold = LinearGradient(
+            colors: [Color(hex: "#FFD76A"), DS.Palette.gold, Color(hex: "#E09600")],
+            startPoint: .topLeading, endPoint: .bottomTrailing
+        )
+        /// Fiery streak gradient.
+        static let ember = LinearGradient(
+            colors: [Color(hex: "#FF9D2E"), Color(hex: "#FF3D2E")],
+            startPoint: .topLeading, endPoint: .bottomTrailing
+        )
+        /// Deep brand gradient for primary surfaces and CTAs.
+        static let brand = LinearGradient(
+            colors: [DS.Palette.accent, DS.Palette.deepBlue],
+            startPoint: .top, endPoint: .bottom
+        )
+        /// Subtle top-to-bottom darkening wash to seat content over imagery.
+        static let scrim = LinearGradient(
+            colors: [Color.black.opacity(0.0), Color.black.opacity(0.35)],
+            startPoint: .top, endPoint: .bottom
+        )
+    }
+}
 
 /// A button style that gives every press the same well-tuned feel: a subtle
 /// scale-down on press driven by the design-system motion, plus a matched
