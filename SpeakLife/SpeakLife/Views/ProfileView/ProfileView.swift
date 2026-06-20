@@ -48,7 +48,6 @@ struct ProfileView: View {
     @State private var showShareSheet = false
     @State private var showSpiritualGrowth = false
     @State private var showSupportIDCopied = false
-    @State private var showEmailCaptureSheet = false
     @State private var showHowToUse = false
     @State private var showCommunity = false
     let url = URL(string:APP.Product.urlID)
@@ -111,7 +110,6 @@ struct ProfileView: View {
 
                         remindersRow
                      //   widgetPreferencesRow
-                     //   emailsRow
                        // favoritesRow
                         musicRow
                         soundsRow
@@ -125,7 +123,6 @@ struct ProfileView: View {
                         reviewRow
                         feedbackRow
                         featureRequestRow
-                        emailRow
                         supportIDRow
                         
                         
@@ -134,11 +131,7 @@ struct ProfileView: View {
                     .sheet(isPresented: $showShareSheet, content: {
                         ShareSheet(activityItems: ["Check out SpeakLife - Bible Affirmations app that'll transform your life!", url as Any])
                     })
-                    .sheet(isPresented: $showEmailCaptureSheet) {
-                        EmailCaptureView(source: "settings")
-                            .environmentObject(appState)
-                    }
-                    
+
                     Section(header: Text("Other".uppercased()).font(.caption)) {
                         privacyPolicyRow
                         termsConditionsRow
@@ -223,27 +216,6 @@ struct ProfileView: View {
         .foregroundColor(.white)
     }
 
-    @MainActor
-    private var emailsRow: some View {
-        HStack {
-            Image(systemName: "crown.fill")
-                .foregroundColor(Constants.DAMidBlue)
-            NavigationLink(destination: LazyView(EmailCaptureView())) {
-                HStack {
-                    Text("Email", comment:  "subs row")
-                    Spacer()
-//                        Image(systemName: "chevron.right")
-//                            .resizable()
-//                            .aspectRatio(contentMode: .fit)
-//                            .frame(width: 8)
-//                            .foregroundColor(Constants.DAMidBlue)
-                }
-            }
-        }
-    }
-
-
-    
     @MainActor
     private var createYourOwnRow: some View {
         HStack {
@@ -704,31 +676,6 @@ struct ProfileView: View {
                 )
             }
             .id(UUID())
-        }
-    }
-
-    @ViewBuilder
-    private var emailRow: some View {
-        Button(action: { showEmailCaptureSheet = true }) {
-            HStack {
-                Image(systemName: appState.email.isEmpty ? "envelope.fill" : "envelope.badge.fill")
-                    .foregroundColor(.primary)
-                    .frame(width: 24)
-                Text(appState.email.isEmpty ? "Join Weekly Emails" : "Update Email")
-                    .foregroundColor(.primary)
-                Spacer()
-                if !appState.email.isEmpty {
-                    Text(appState.email)
-                        .font(.footnote)
-                        .foregroundColor(.secondary)
-                        .lineLimit(1)
-                        .truncationMode(.middle)
-                }
-                Image(systemName: "chevron.right")
-                    .foregroundColor(.secondary)
-                    .font(.footnote)
-            }
-            .padding(.vertical, 4)
         }
     }
 
