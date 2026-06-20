@@ -826,7 +826,7 @@ struct HighConversionPaywallView: View {
 
     // MARK: - Bottom Links
     private var bottomLinks: some View {
-        HStack(spacing: 24) {
+        HStack(spacing: DS.Spacing.lg) {
             Button("Restore", action: restore)
             Link("Terms", destination: URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!)
             Button("Privacy") { showPrivacyPolicy = true }
@@ -1221,7 +1221,7 @@ struct WelcomeOfferView: View {
     }
 
     private var header: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: DS.Spacing.sm) {
             Image("appIconDisplay")
                 .resizable().frame(width: 64, height: 64)
                 .clipShape(RoundedRectangle(cornerRadius: 14))
@@ -1233,7 +1233,7 @@ struct WelcomeOfferView: View {
             Text("Speak life over your battle\nfor less.")
                 .font(.system(size: 26, weight: .bold)).foregroundColor(.white)
                 .multilineTextAlignment(.center)
-                .padding(.horizontal, 24)
+                .padding(.horizontal, DS.Spacing.lg)
         }
         .padding(.top, 56)
     }
@@ -1267,7 +1267,7 @@ struct WelcomeOfferView: View {
                 .fill(Color.white.opacity(0.06))
                 .overlay(RoundedRectangle(cornerRadius: 14).stroke(Constants.DAMidBlue.opacity(0.6), lineWidth: 1))
         )
-        .padding(.horizontal, 24)
+        .padding(.horizontal, DS.Spacing.lg)
     }
 
     // MARK: Honest Framing (no fake urgency, no countdown)
@@ -1294,7 +1294,7 @@ struct WelcomeOfferView: View {
             noThanksButton
             bottomLinks
         }
-        .padding(.horizontal, 20).padding(.top, 8).padding(.bottom, 24)
+        .padding(.horizontal, 20).padding(.top, DS.Spacing.xs).padding(.bottom, DS.Spacing.lg)
     }
 
     private var ctaButton: some View {
@@ -1327,7 +1327,7 @@ struct WelcomeOfferView: View {
     }
 
     private var bottomLinks: some View {
-        HStack(spacing: 24) {
+        HStack(spacing: DS.Spacing.lg) {
             Button("Restore", action: restore)
             Link("Terms", destination: URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!)
             Button("Privacy") { showPrivacyPolicy = true }
@@ -1422,7 +1422,7 @@ private struct PostPurchaseMissionView: View {
     var body: some View {
         VStack(spacing: 0) {
             Spacer()
-            VStack(spacing: 16) {
+            VStack(spacing: DS.Spacing.md) {
                 Image(systemName: "heart.circle.fill")
                     .font(.system(size: 64))
                     .foregroundColor(Constants.DAMidBlue)

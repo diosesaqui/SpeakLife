@@ -944,14 +944,7 @@ struct SurveyProductPositioningScreen: View {
                 }
                 .padding(.vertical, 12)
                 .padding(.horizontal, 16)
-                .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color.white.opacity(0.06))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 12)
-                                .stroke(Color.white.opacity(0.1), lineWidth: 1)
-                        )
-                )
+                .dsGlass(cornerRadius: DS.Radius.sm)
                 .padding(.horizontal, 28)
             }
             .opacity(v ? 1 : 0)
@@ -1120,11 +1113,7 @@ struct SurveyCommitmentHoldScreen: View {
                         .lineSpacing(5)
                 }
                 .padding(24)
-                .background(
-                    RoundedRectangle(cornerRadius: 24)
-                        .fill(Color.white.opacity(0.08))
-                        .overlay(RoundedRectangle(cornerRadius: 24).stroke(Color.white.opacity(0.18), lineWidth: 1))
-                )
+                .dsGlass(cornerRadius: DS.Radius.lg)
                 .padding(.horizontal, 28)
             }
 
@@ -1528,8 +1517,14 @@ struct SurveyQuizInsightScreen: View {
             VStack(spacing: 26) {
                 ZStack {
                     Circle()
-                        .fill(Color.white.opacity(0.10))
+                        .fill(
+                            LinearGradient(
+                                colors: [DS.Palette.gold.opacity(0.95), DS.Palette.gold.opacity(0.55)],
+                                startPoint: .topLeading, endPoint: .bottomTrailing
+                            )
+                        )
                         .frame(width: 96, height: 96)
+                        .shadow(color: DS.Palette.gold.opacity(0.5), radius: 8, x: 0, y: 4)
                     Image(systemName: "waveform")
                         .font(.system(size: 40))
                         .foregroundColor(.white)
@@ -1539,7 +1534,7 @@ struct SurveyQuizInsightScreen: View {
                 VStack(spacing: 14) {
                     Text("HERE'S THE SHIFT")
                         .font(.system(size: 12, weight: .bold, design: .rounded))
-                        .foregroundColor(.white.opacity(0.5))
+                        .foregroundColor(DS.Palette.gold.opacity(0.9))
                         .kerning(1.4)
                         .multilineTextAlignment(.center)
                         .planRevealStagger(v, delay: 0.08)
@@ -1776,7 +1771,7 @@ struct SurveyPlanRevealScreen: View {
                     VStack(spacing: 12) {
                         Text("YOUR PLAN IS READY")
                             .font(.system(size: 12, weight: .bold, design: .rounded))
-                            .foregroundColor(.white.opacity(0.5))
+                            .foregroundColor(DS.Palette.gold.opacity(0.9))
                             .kerning(1.4)
                             .planRevealStagger(v)
 
@@ -1810,14 +1805,7 @@ struct SurveyPlanRevealScreen: View {
                             detail: dailyRhythmDetail
                         )
                     }
-                    .background(
-                        RoundedRectangle(cornerRadius: 20, style: .continuous)
-                            .fill(Color.white.opacity(0.09))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 20, style: .continuous)
-                                    .stroke(Color.white.opacity(0.2), lineWidth: 1)
-                            )
-                    )
+                    .dsGlass(cornerRadius: DS.Radius.lg)
                     .padding(.horizontal, 24)
                     .planRevealStagger(v, delay: 0.18)
 
@@ -1837,7 +1825,7 @@ struct SurveyPlanRevealScreen: View {
                     VStack(spacing: 6) {
                         Text("WHERE THIS TAKES YOU")
                             .font(.system(size: 11, weight: .bold, design: .rounded))
-                            .foregroundColor(.white.opacity(0.5))
+                            .foregroundColor(DS.Palette.gold.opacity(0.9))
                             .kerning(1.2)
                         Text(burden.dreamOutcome)
                             .font(.system(size: 18, weight: .semibold, design: .rounded))
