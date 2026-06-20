@@ -71,6 +71,7 @@ struct TestimonyFeedView: View {
                         .padding()
                 }
                 .buttonStyle(.dsPressable(feel: .tapSolid))
+                .dsAppear(0.06)
                 .sheet(isPresented: $viewModel.isShowingForm) {
                     TestimonyFormView().environmentObject(viewModel)
                 }

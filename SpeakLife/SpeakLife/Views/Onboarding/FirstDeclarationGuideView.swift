@@ -55,7 +55,8 @@ struct FirstDeclarationGuideView: View {
                         VStack(spacing: 24) {
                             headerSection
                                 .padding(.top, 20)
-                            
+                                .dsAppear(0)
+
                             scriptureSection
                                 .padding(.horizontal)
                                 .opacity(animateContent ? 1 : 0)

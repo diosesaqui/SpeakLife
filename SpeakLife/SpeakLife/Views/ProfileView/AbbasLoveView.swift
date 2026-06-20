@@ -98,11 +98,12 @@ struct AbbasLoveView: View {
 
                     // ✉️ Title
                     Text("Heavenly Father's Love Letter 💌")
-                        .font(.system(size: 28, weight: .bold, design: .rounded))
+                        .font(DS.Typography.title)
                         .foregroundStyle(.white)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, DS.Spacing.lg)
                         .shadow(radius: 4)
+                        .dsAppear(0)
 
                     // Extra breathing room before pages
                     Spacer().frame(height: proxy.size.height * 0.06)
@@ -131,6 +132,7 @@ struct AbbasLoveView: View {
                             .padding(.horizontal)
                     }
                     .padding(.bottom, 40)
+                    .dsAppear(0.12)
                 }
             }
             .background {

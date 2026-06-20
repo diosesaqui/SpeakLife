@@ -105,15 +105,17 @@ struct SectionDetailView: View {
                             Image(systemName: "music.note.list")
                                 .font(.system(size: 50))
                                 .foregroundColor(.white.opacity(0.5))
-                            
+                                .dsAppear()
+
                             Text("No items in this section")
-                                .font(.title3)
-                                .fontWeight(.semibold)
+                                .font(DS.Typography.headline)
                                 .foregroundColor(.white)
-                            
+                                .dsAppear(0.06)
+
                             Text("Check back later for new content")
-                                .font(.body)
+                                .font(DS.Typography.body)
                                 .foregroundColor(.white.opacity(0.7))
+                                .dsAppear(0.12)
                         }
                         Spacer()
                     } else if filteredItems.isEmpty {

@@ -341,7 +341,7 @@ struct SpiritualGrowthView: View {
     private var achievementSection: some View {
         VStack(alignment: .leading, spacing: DS.Spacing.md) {
             Text("Achievements")
-                .font(.system(size: 20, weight: .semibold))
+                .font(DS.Typography.headline)
                 .foregroundColor(.white)
             
             ScrollView(.horizontal, showsIndicators: false) {
@@ -464,7 +464,7 @@ struct SpiritualGrowthView: View {
     private var recentActivityList: some View {
         VStack(alignment: .leading, spacing: DS.Spacing.md) {
             Text("Recent Activity")
-                .font(.system(size: 20, weight: .semibold))
+                .font(DS.Typography.headline)
                 .foregroundColor(.white)
 
             VStack(spacing: DS.Spacing.sm) {
@@ -480,7 +480,7 @@ struct SpiritualGrowthView: View {
     private var milestonesSection: some View {
         VStack(alignment: .leading, spacing: DS.Spacing.md) {
             Text("Upcoming Milestones")
-                .font(.system(size: 20, weight: .semibold))
+                .font(DS.Typography.headline)
                 .foregroundColor(.white)
 
             VStack(spacing: DS.Spacing.sm) {
@@ -986,7 +986,7 @@ struct SpiritualStrengthGraph: View {
                     .foregroundColor(Color(red: 1.0, green: 0.7, blue: 0.0))
                 
                 Text("Spiritual Strength")
-                    .font(.system(size: 20, weight: .semibold))
+                    .font(DS.Typography.headline)
                     .foregroundColor(.white)
                 
                 Spacer()

@@ -36,14 +36,16 @@ struct WidgetPreferencesView: View {
         NavigationView {
             VStack(alignment: .leading, spacing: 20) {
                 headerSection
-                
+                    .dsAppear(0)
+
                 ScrollView {
                     categoryGrid
                 }
-                
+
                 Spacer()
-                
+
                 actionButtons
+                    .dsAppear(0.1)
             }
             .padding()
             .navigationTitle("Widget Preferences")

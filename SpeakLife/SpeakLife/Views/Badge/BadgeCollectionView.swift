@@ -37,10 +37,12 @@ struct BadgeCollectionView: View {
                         // Header with progress
                         BadgeCollectionHeader(badgeManager: badgeManager)
                             .padding(.horizontal, 20)
-                        
+                            .dsAppear(0)
+
                         // Filter tabs
                         BadgeFilterTabs(selectedFilter: $selectedFilter)
                             .padding(.horizontal, 20)
+                            .dsAppear(0.06)
                         
                         // Badge grid
                         BadgeGrid(
@@ -59,6 +61,7 @@ struct BadgeCollectionView: View {
                         if let nextBadge = badgeManager.getNextBadgeToUnlock() {
                             NextMilestoneCard(badge: nextBadge)
                                 .padding(.horizontal, 20)
+                                .dsAppear(0.18)
                         }
                     }
                     .padding(.vertical, 20)

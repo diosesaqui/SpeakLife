@@ -117,10 +117,11 @@ struct NotificationOnboarding: View {
                 }
 
                 Spacer()
-                
-                
+
+
             }
-            
+            .dsAppear(0)
+
             VStack(spacing: 12) {
                 ShimmerButton(colors: [.blue], buttonTitle: copy.ctaText, action: callBack)
                 .frame(width: size.width * 0.87 ,height: 50)
@@ -134,7 +135,8 @@ struct NotificationOnboarding: View {
                         .foregroundColor(appState.onBoardingTest ? .white.opacity(0.7) : Constants.DALightBlue.opacity(0.7))
                 }
             }
-            
+            .dsAppear(0.06)
+
             Spacer()
                 .frame(width: 5, height: size.height * 0.07)
         }

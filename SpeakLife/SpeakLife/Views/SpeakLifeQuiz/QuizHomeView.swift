@@ -81,6 +81,7 @@ struct QuizHomeView: View {
                         SkillLevelView(progressManager: progressManager)
                     }
                     .padding(.top)
+                    .dsAppear(0)
                     ForEach(QuizHomeView.quizzes) { quiz in
                         NavigationLink(
                             destination: QuizStartView(
