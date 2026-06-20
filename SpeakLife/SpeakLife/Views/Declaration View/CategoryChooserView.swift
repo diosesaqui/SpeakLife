@@ -137,6 +137,7 @@ struct CategoryChooserView: View {
                                             startPoint: .topLeading, endPoint: .bottomTrailing
                                         ))
                                         .frame(width: 48, height: 48)
+                                        .shadow(color: Color(red: 0.55, green: 0.35, blue: 1.0).opacity(0.5), radius: 8, x: 0, y: 4)
                                     Image(systemName: "book.pages.fill")
                                         .font(.system(size: 20, weight: .semibold))
                                         .foregroundColor(.white)
@@ -158,14 +159,7 @@ struct CategoryChooserView: View {
                             }
                             .padding(.horizontal, 18)
                             .padding(.vertical, 14)
-                            .background(
-                                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                    .fill(Color.white.opacity(0.10))
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                            .strokeBorder(Color.white.opacity(0.18), lineWidth: 1)
-                                    )
-                            )
+                            .dsGlass(cornerRadius: DS.Radius.md)
                         }
                         .buttonStyle(PlainButtonStyle())
                         .padding(.horizontal, 16)

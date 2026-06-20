@@ -12,11 +12,18 @@ struct SkillLevelView: View {
         VStack(alignment: .leading, spacing: DS.Spacing.sm) {
             HStack {
                 Image(systemName: icon)
-                    .foregroundColor(color)
+                    .foregroundColor(.white)
                     .imageScale(.large)
                     .padding(DS.Spacing.xs)
-                    .background(color.opacity(0.1))
+                    .background(
+                        LinearGradient(
+                            colors: [color.opacity(0.95), color.opacity(0.55)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
                     .clipShape(Circle())
+                    .shadow(color: color.opacity(0.5), radius: 8, x: 0, y: 4)
 
                 VStack(alignment: .leading) {
                     Text("Your Level")

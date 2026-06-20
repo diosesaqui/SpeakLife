@@ -76,7 +76,7 @@ struct SectionDetailView: View {
                     }
                     .padding(DS.Spacing.sm)
                     .background(
-                        RoundedRectangle(cornerRadius: 10)
+                        RoundedRectangle(cornerRadius: DS.Radius.sm, style: .continuous)
                             .fill(.ultraThinMaterial)
                     )
                     .padding(.horizontal)

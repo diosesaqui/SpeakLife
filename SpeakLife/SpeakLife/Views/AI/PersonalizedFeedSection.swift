@@ -43,9 +43,15 @@ struct PersonalizedFeedSection: View {
                     .font(.caption)
                     .padding(.horizontal, DS.Spacing.sm)
                     .padding(.vertical, 6)
-                    .background(Color.orange.opacity(0.8))
+                    .background(DS.Gradient.gold)
                     .foregroundColor(.white)
                     .cornerRadius(12)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Color.white.opacity(0.25), lineWidth: 1)
+                    )
+                    .shadow(color: DS.Palette.gold.opacity(0.45), radius: 8, x: 0, y: 3)
+                    .buttonStyle(.dsPressable(feel: .tapSolid))
                 }
             }
             .padding(.horizontal)
@@ -211,8 +217,7 @@ struct PersonalCategoryCard: View {
         .padding(DS.Spacing.sm)
         .frame(width: 200)
         .frame(minHeight: 100)
-        .background(Color.white.opacity(0.1))
-        .cornerRadius(12)
+        .dsGlass(cornerRadius: DS.Radius.md)
         .onTapGesture {
             withAnimation(.easeInOut(duration: 0.3)) {
                 isExpanded.toggle()
@@ -424,8 +429,7 @@ struct AIInsightCard: View {
             }
         }
         .padding(10)
-        .background(Color.white.opacity(0.05))
-        .cornerRadius(8)
+        .dsGlass(cornerRadius: DS.Radius.sm)
         .padding(.horizontal)
     }
 }
@@ -486,8 +490,9 @@ struct PremiumUpgradeView: View {
             .foregroundColor(.white)
             .frame(maxWidth: .infinity)
             .padding()
-            .background(Color.blue)
+            .background(DS.Gradient.brand)
             .cornerRadius(12)
+            .buttonStyle(.dsPressable(feel: .tapSolid))
             
             Button("Maybe Later") {
                 dismiss()

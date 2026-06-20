@@ -247,13 +247,14 @@ struct LiveTranscriptionView: View {
         }
         .padding(DS.Spacing.md)
         .background(
-            RoundedRectangle(cornerRadius: 12)
+            RoundedRectangle(cornerRadius: DS.Radius.sm, style: .continuous)
                 .fill(Color.blue.opacity(0.15))
                 .overlay(
-                    RoundedRectangle(cornerRadius: 12)
+                    RoundedRectangle(cornerRadius: DS.Radius.sm, style: .continuous)
                         .stroke(Color.blue.opacity(0.3), lineWidth: 1)
                 )
         )
+        .dsShadow(DS.Elevation.low)
         .onAppear {
             withAnimation(.easeInOut(duration: 0.8).repeatForever()) {
                 showCursor.toggle()
@@ -316,7 +317,7 @@ struct ContentGuidanceView: View {
         .padding(.horizontal, DS.Spacing.sm)
         .padding(.vertical, 6)
         .background(
-            RoundedRectangle(cornerRadius: 8)
+            RoundedRectangle(cornerRadius: DS.Radius.sm, style: .continuous)
                 .fill((characterCount > 1000 ? Color.orange : Color.blue).opacity(0.1))
         )
     }

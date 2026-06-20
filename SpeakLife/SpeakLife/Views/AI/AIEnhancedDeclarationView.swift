@@ -420,8 +420,9 @@ struct AIFeaturesTeaser: View {
             .foregroundColor(.white)
             .frame(maxWidth: .infinity)
             .padding(.vertical, 10)
-            .background(Color.orange)
+            .background(DS.Gradient.gold)
             .cornerRadius(10)
+            .buttonStyle(.dsPressable(feel: .tapSolid))
         }
         .padding()
         .background(

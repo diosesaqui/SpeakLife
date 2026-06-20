@@ -47,10 +47,12 @@ struct DayProgressRing: View {
                     Text("🔥").font(.system(size: 13))
                     Text("\(streakCount) day streak")
                         .font(.system(size: 12, weight: .semibold))
-                        .foregroundColor(.orange)
+                        .foregroundColor(.white)
                 }
                 .padding(.horizontal, 10).padding(.vertical, 4)
-                .background(Capsule().fill(Color.orange.opacity(0.12)))
+                .background(Capsule().fill(DS.Gradient.ember))
+                .overlay(Capsule().stroke(Color.white.opacity(0.25), lineWidth: 1))
+                .shadow(color: Color.orange.opacity(0.45), radius: 8, x: 0, y: 3)
             }
         }
         .onAppear { withAnimation(.easeOut(duration: 0.9)) { animatedProgress = progress } }
@@ -198,7 +200,7 @@ struct NextUpTaskCard: View {
             HStack {
                 Text("NEXT UP")
                     .font(.system(size: 10, weight: .bold)).tracking(1.5)
-                    .foregroundColor(.white.opacity(0.7))
+                    .foregroundColor(DS.Palette.gold.opacity(0.9))
                 Spacer()
                 Text("\(task.estimatedMinutes) min")
                     .font(.system(size: 11, weight: .medium))
@@ -314,13 +316,14 @@ struct DayCelebrationView: View {
                 HStack(spacing: 8) {
                     Text("🔥").font(.system(size: 24))
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("\(streakCount) day streak").font(.system(size: 20, weight: .bold)).foregroundColor(.orange)
-                        Text("Keep going tomorrow").font(.system(size: 13)).foregroundColor(.white.opacity(0.6))
+                        Text("\(streakCount) day streak").font(.system(size: 20, weight: .bold)).foregroundColor(.white)
+                        Text("Keep going tomorrow").font(.system(size: 13)).foregroundColor(.white.opacity(0.85))
                     }
                 }
                 .padding(16)
-                .background(RoundedRectangle(cornerRadius: 16).fill(Color.orange.opacity(0.12))
-                    .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color.orange.opacity(0.25), lineWidth: 1)))
+                .background(RoundedRectangle(cornerRadius: 16).fill(DS.Gradient.ember)
+                    .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color.white.opacity(0.25), lineWidth: 1)))
+                .shadow(color: Color.orange.opacity(0.45), radius: 8, x: 0, y: 3)
                 .opacity(opacity)
             }
             Spacer()
@@ -378,7 +381,7 @@ struct StructuredDayView: View {
                     VStack(spacing: 6) {
                         HStack {
                             Text("UP NEXT").font(.system(size: 10, weight: .bold)).tracking(1.5)
-                                .foregroundColor(.white.opacity(0.35))
+                                .foregroundColor(DS.Palette.gold.opacity(0.9))
                             Spacer()
                         }.padding(.horizontal, 4)
                         ForEach(upcomingTasks) { UpcomingTaskRow(task: $0) }
@@ -389,7 +392,7 @@ struct StructuredDayView: View {
                     VStack(spacing: 6) {
                         HStack {
                             Text("COMPLETED").font(.system(size: 10, weight: .bold)).tracking(1.5)
-                                .foregroundColor(.white.opacity(0.35))
+                                .foregroundColor(DS.Palette.gold.opacity(0.9))
                             Spacer()
                         }.padding(.horizontal, 4)
                         ForEach(completedTasks) { task in

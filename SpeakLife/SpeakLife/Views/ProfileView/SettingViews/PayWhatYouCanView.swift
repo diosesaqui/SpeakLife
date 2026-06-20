@@ -37,13 +37,13 @@ struct PayWhatYouCanView: View {
             Color.black.ignoresSafeArea()
 
             ScrollView(showsIndicators: false) {
-                VStack(spacing: 24) {
+                VStack(spacing: DS.Spacing.lg) {
                     headerView
                     productsSection
                     ctaSection
                     footerLinks
                     reciprocityNote
-                    Spacer().frame(height: 24)
+                    Spacer().frame(height: DS.Spacing.lg)
                 }
             }
 
@@ -78,7 +78,7 @@ struct PayWhatYouCanView: View {
                 Spacer()
             }
             .padding(.horizontal, 20)
-            .padding(.top, 12)
+            .padding(.top, DS.Spacing.sm)
 
             Image(systemName: "heart.fill")
                 .font(.system(size: 48))

@@ -118,9 +118,16 @@ struct AudioDevotionalsTutorial: View {
         VStack(spacing: 12) {
             ZStack {
                 Circle()
-                    .fill(Color.blue.opacity(0.3))
+                    .fill(
+                        LinearGradient(
+                            colors: [Color.blue.opacity(0.95), Color.blue.opacity(0.55)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
                     .frame(width: 60, height: 60)
-                
+                    .shadow(color: Color.blue.opacity(0.5), radius: 8, x: 0, y: 4)
+
                 Image(systemName: "brain.head.profile")
                     .font(.system(size: 30))
                     .foregroundColor(.white)
@@ -157,7 +164,7 @@ struct AudioDevotionalsTutorial: View {
         VStack(spacing: 12) {
             Text("Available Sermons")
                 .font(.system(size: 12, weight: .semibold))
-                .foregroundColor(.white.opacity(0.6))
+                .foregroundColor(DS.Palette.gold.opacity(0.9))
             
             ScrollView(.vertical, showsIndicators: false) {
                 LazyVStack(spacing: 8) {
@@ -230,11 +237,18 @@ struct AudioDevotionalsTutorial: View {
     private var newBadgeView: some View {
         Text("NEW")
             .font(.system(size: 8, weight: .bold))
-            .foregroundColor(.green)
+            .foregroundColor(.white)
             .padding(.horizontal, 3)
             .padding(.vertical, 1)
-            .background(Color.green.opacity(0.2))
-            .cornerRadius(2)
+            .background(
+                RoundedRectangle(cornerRadius: 2)
+                    .fill(DS.Gradient.gold)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 2)
+                    .stroke(Color.white.opacity(0.25), lineWidth: 1)
+            )
+            .shadow(color: DS.Palette.gold.opacity(0.45), radius: 8, x: 0, y: 3)
     }
     
     private var dividerSection: some View {

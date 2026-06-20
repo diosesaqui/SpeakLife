@@ -110,8 +110,8 @@ struct UseCaseScene: View {
                 }.padding()
             }
             .frame(width: size.width * 0.87 ,height: 50)
-            .background(Constants.DAMidBlue)
-            
+            .background(DS.Gradient.brand)
+
             .foregroundColor(.white)
             .cornerRadius(8)
             .shadow(color: Constants.DAMidBlue, radius: 8, x: 0, y: 10)

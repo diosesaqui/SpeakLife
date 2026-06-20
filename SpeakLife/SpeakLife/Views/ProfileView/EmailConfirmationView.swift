@@ -40,11 +40,11 @@ struct EmailConfirmationView: View {
                 EmailCaptureView(source: "post_purchase")
                     .environmentObject(appState)
             } else {
-                VStack(spacing: 20) {
+                VStack(spacing: DS.Spacing.lg) {
                     Image(systemName: "envelope.badge.fill")
                         .font(.system(size: 44))
                         .foregroundColor(.blue)
-                        .padding(.top, 8)
+                        .padding(.top, DS.Spacing.xs)
 
                     Text("Confirm Your Email")
                         .font(.title2)
@@ -66,8 +66,11 @@ struct EmailConfirmationView: View {
                     }
                     .padding()
                     .frame(maxWidth: .infinity)
-                    .background(Color(.secondarySystemBackground))
-                    .cornerRadius(10)
+                    .background(
+                        RoundedRectangle(cornerRadius: DS.Radius.sm, style: .continuous)
+                            .fill(Color(.secondarySystemBackground))
+                    )
+                    .dsShadow(DS.Elevation.low)
                     .padding(.horizontal)
 
                     if let error = errorMessage {
@@ -78,7 +81,7 @@ struct EmailConfirmationView: View {
                     }
 
                     if confirmed {
-                        HStack(spacing: 8) {
+                        HStack(spacing: DS.Spacing.xs) {
                             Image(systemName: "checkmark.seal.fill")
                                 .foregroundColor(.green)
                             Text("Email confirmed!")
@@ -98,7 +101,7 @@ struct EmailConfirmationView: View {
                                     .padding()
                                     .background(Color.blue)
                                     .foregroundColor(.white)
-                                    .cornerRadius(10)
+                                    .cornerRadius(DS.Radius.sm)
                             }
                         }
                         .disabled(isConfirming)

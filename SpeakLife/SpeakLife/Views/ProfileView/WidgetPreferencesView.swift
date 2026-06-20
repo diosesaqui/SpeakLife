@@ -62,7 +62,7 @@ struct WidgetPreferencesView: View {
     }
     
     private var headerSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: DS.Spacing.sm) {
             Text("Personalize Your Widget")
                 .font(.title2)
                 .fontWeight(.semibold)
@@ -78,7 +78,7 @@ struct WidgetPreferencesView: View {
         LazyVGrid(columns: [
             GridItem(.flexible()),
             GridItem(.flexible())
-        ], spacing: 12) {
+        ], spacing: DS.Spacing.sm) {
             ForEach(availableCategories, id: \.0) { category, title, description in
                 CategoryCard(
                     category: category,
@@ -93,7 +93,7 @@ struct WidgetPreferencesView: View {
     }
     
     private var actionButtons: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: DS.Spacing.sm) {
             Button(action: savePreferences) {
                 HStack {
                     Image(systemName: "checkmark.circle.fill")
@@ -150,7 +150,7 @@ struct CategoryCard: View {
     let onTap: () -> Void
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: DS.Spacing.xs) {
             HStack {
                 Image(systemName: category.icon)
                     .foregroundColor(isSelected ? .white : .blue)
@@ -180,14 +180,14 @@ struct CategoryCard: View {
         .padding()
         .frame(height: 120)
         .background(
-            RoundedRectangle(cornerRadius: 16)
+            RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous)
                 .fill(isSelected ? Color.blue : Color(UIColor.systemBackground))
-                .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
         )
         .overlay(
-            RoundedRectangle(cornerRadius: 16)
+            RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous)
                 .stroke(isSelected ? Color.clear : Color(UIColor.systemGray4), lineWidth: 1)
         )
+        .dsShadow(DS.Elevation.low)
         .scaleEffect(isSelected ? 1.02 : 1.0)
         .animation(DS.Motion.quick, value: isSelected)
         .onTapGesture {

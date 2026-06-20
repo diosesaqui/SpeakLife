@@ -80,7 +80,7 @@ struct CreateYourOwnTutorial: View {
                                             HStack {
                                                 Text("DEMO PREVIEW")
                                                     .font(.system(size: 11, weight: .bold))
-                                                    .foregroundColor(.purple.opacity(0.8))
+                                                    .foregroundColor(DS.Palette.gold.opacity(0.9))
                                                     .padding(.horizontal, 8)
                                                     .padding(.vertical, 3)
                                                     .background(Color.purple.opacity(0.2))

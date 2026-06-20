@@ -62,7 +62,7 @@ struct EmotionalHookScreen: View {
                                 HStack(alignment: .top, spacing: 8) {
                                     Text("YOU SAY:")
                                         .font(.system(size: 10, weight: .bold, design: .rounded))
-                                        .foregroundColor(.green.opacity(0.9))
+                                        .foregroundColor(DS.Palette.gold.opacity(0.9))
                                         .tracking(0.8)
                                         .padding(.top, 2)
                                     Text(pair.speak)
@@ -73,12 +73,7 @@ struct EmotionalHookScreen: View {
                             }
                             .padding(14)
                             .frame(maxWidth: .infinity, alignment: .leading)
-                            .background(
-                                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                    .fill(Color.white.opacity(0.08))
-                                    .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                        .strokeBorder(Color.white.opacity(0.15), lineWidth: 1))
-                            )
+                            .dsGlass(cornerRadius: DS.Radius.md)
                             .opacity(subVisible ? 1 : 0)
                             .offset(y: subVisible ? 0 : 16)
                             .animation(.easeOut(duration: 0.45).delay(0.3 + Double(index) * 0.15), value: subVisible)
@@ -280,7 +275,7 @@ struct TestimonyTransformCard: View {
             HStack(alignment: .top, spacing: 8) {
                 Text("NOW")
                     .font(.system(size: 10, weight: .bold, design: .rounded))
-                    .foregroundColor(.green.opacity(0.8))
+                    .foregroundColor(DS.Palette.gold.opacity(0.9))
                     .padding(.top, 2)
                 Text(after)
                     .font(.system(size: 14, weight: .semibold, design: .rounded))
@@ -293,12 +288,7 @@ struct TestimonyTransformCard: View {
                 .frame(maxWidth: .infinity, alignment: .trailing)
         }
         .padding(16)
-        .background(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(Color.white.opacity(0.08))
-                .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .strokeBorder(Color.white.opacity(0.15), lineWidth: 1))
-        )
+        .dsGlass(cornerRadius: DS.Radius.md)
         .opacity(isVisible ? 1 : 0)
         .offset(y: isVisible ? 0 : 20)
         .animation(.easeOut(duration: 0.5), value: isVisible)
@@ -402,14 +392,20 @@ struct CategorySelectScreen: View {
                                 .padding(.vertical, size.height < 700 ? 11 : 13)
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .background(
-                                    RoundedRectangle(cornerRadius: 24)
-                                        .fill(selectionVM.selectedExperiences.contains(category)
-                                              ? Color.blue : Color.white.opacity(0.13))
-                                        .overlay(RoundedRectangle(cornerRadius: 24)
-                                            .strokeBorder(
-                                                selectionVM.selectedExperiences.contains(category)
-                                                ? Color.blue : Color.white.opacity(0.25),
-                                                lineWidth: 1))
+                                    ZStack {
+                                        if selectionVM.selectedExperiences.contains(category) {
+                                            RoundedRectangle(cornerRadius: 24)
+                                                .fill(DS.Gradient.brand)
+                                        } else {
+                                            RoundedRectangle(cornerRadius: 24)
+                                                .fill(Color.white.opacity(0.13))
+                                        }
+                                    }
+                                    .overlay(RoundedRectangle(cornerRadius: 24)
+                                        .strokeBorder(
+                                            selectionVM.selectedExperiences.contains(category)
+                                            ? Color.white.opacity(0.35) : Color.white.opacity(0.25),
+                                            lineWidth: 1))
                                 )
                                 .foregroundColor(.white)
                                 .scaleEffect(selectionVM.selectedExperiences.contains(category) ? 1.02 : 1.0)
@@ -793,9 +789,15 @@ struct JesusMethodScreen: View {
                         HStack(spacing: 20) {
                             ZStack {
                                 Circle()
-                                    .fill(Color.white.opacity(0.15))
+                                    .fill(
+                                        LinearGradient(
+                                            colors: [DS.Palette.accent.opacity(0.95), DS.Palette.accent.opacity(0.55)],
+                                            startPoint: .topLeading, endPoint: .bottomTrailing
+                                        )
+                                    )
                                     .frame(width: 48, height: 48)
-                                
+                                    .shadow(color: DS.Palette.accent.opacity(0.5), radius: 8, x: 0, y: 4)
+
                                 Text("\(index + 1)")
                                     .font(.system(size: 22, weight: .bold, design: .rounded))
                                     .foregroundColor(.white)

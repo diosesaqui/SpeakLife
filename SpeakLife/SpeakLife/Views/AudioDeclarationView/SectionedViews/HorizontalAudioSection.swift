@@ -215,7 +215,7 @@ struct FeaturedAudioCell: View {
             .padding(DS.Spacing.md)
         }
         .frame(width: configuration.itemWidth, height: configuration.itemHeight)
-        .cornerRadius(16)
+        .cornerRadius(DS.Radius.md)
         .shadow(color: .black.opacity(0.3), radius: 8, x: 0, y: 4)
         .scaleEffect(isPressed ? 0.95 : 1.0)
         .animation(DS.Motion.quick, value: isPressed)

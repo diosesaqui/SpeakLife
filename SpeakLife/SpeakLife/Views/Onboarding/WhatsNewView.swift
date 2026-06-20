@@ -61,11 +61,7 @@ struct WhatsNewBottomSheet: View {
                        .fontWeight(.bold)
                        .frame(maxWidth: .infinity)
                        .padding()
-                       .background(LinearGradient(
-                           gradient: Gradient(colors: [Color.blue, Color.purple]),
-                           startPoint: .leading,
-                           endPoint: .trailing
-                       ))
+                       .background(DS.Gradient.brand)
                        .foregroundColor(.white)
                        .cornerRadius(10)
                        .padding(.horizontal, 20)

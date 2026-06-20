@@ -55,28 +55,28 @@ struct MenuButton: View {
                 NavigationLink(destination:  CategoryChooserView(viewModel: viewModel)) {
                     Text("Categories")
                         .padding()
-                        .background(Color.blue)
+                        .background(DS.Gradient.brand)
                         .foregroundColor(.white)
                         .cornerRadius(10)
                 }
                 NavigationLink(destination:  ThemeChooserView(themesViewModel: themeViewModel)) {
                     Text("Themes")
                         .padding()
-                        .background(Color.blue)
+                        .background(DS.Gradient.brand)
                         .foregroundColor(.white)
                         .cornerRadius(10)
                 }
                 NavigationLink(destination: DevotionalView(viewModel: devotionalViewModel)) {
                     Text("Devotionals")
                         .padding()
-                        .background(Color.blue)
+                        .background(DS.Gradient.brand)
                         .foregroundColor(.white)
                         .cornerRadius(10)
                 }
                 NavigationLink(destination: ThirdView()) {
                     Text("Prayers")
                         .padding()
-                        .background(Color.blue)
+                        .background(DS.Gradient.brand)
                         .foregroundColor(.white)
                         .cornerRadius(10)
                 }

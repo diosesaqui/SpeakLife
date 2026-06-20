@@ -92,7 +92,7 @@ struct FullScreenEntryView: View {
                     onSave: handleSave,
                     onCancel: handleCancel
                 )
-                .cornerRadius(8)
+                .cornerRadius(DS.Radius.sm)
                 .padding(.horizontal, DS.Spacing.md)
                 .padding(.bottom, keyboardHeight > 0 ? max(keyboardHeight - 300, 20) : 20)
                 
@@ -351,11 +351,12 @@ struct ErrorBanner: View {
         }
         .padding(DS.Spacing.sm)
         .background(Color.red.opacity(0.2))
-        .cornerRadius(12)
+        .cornerRadius(DS.Radius.sm)
         .overlay(
-            RoundedRectangle(cornerRadius: 12)
+            RoundedRectangle(cornerRadius: DS.Radius.sm, style: .continuous)
                 .stroke(Color.red.opacity(0.4), lineWidth: 1)
         )
+        .dsShadow(DS.Elevation.low)
     }
 }
 

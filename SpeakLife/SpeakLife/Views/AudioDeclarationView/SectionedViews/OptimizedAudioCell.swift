@@ -92,8 +92,8 @@ struct OptimizedAudioCell: View {
                     }
                 }
             }
-            .cornerRadius(12)
-            
+            .cornerRadius(DS.Radius.sm)
+
             // Content
             VStack(alignment: .leading, spacing: 4) {
                 Text(item.title)
@@ -149,7 +149,7 @@ struct CompactAudioCell: View {
                 .resizable()
                 .aspectRatio(contentMode: .fill)
                 .frame(width: 60, height: 60)
-                .cornerRadius(8)
+                .cornerRadius(DS.Radius.sm)
             
             // Content
             VStack(alignment: .leading, spacing: 4) {
@@ -180,12 +180,13 @@ struct CompactAudioCell: View {
                     .foregroundColor(isFavorite ? .pink : .white.opacity(0.6))
             }
         }
-        .padding(.vertical, 8)
-        .padding(.horizontal, 16)
+        .padding(.vertical, DS.Spacing.xs)
+        .padding(.horizontal, DS.Spacing.md)
         .background(
-            RoundedRectangle(cornerRadius: 12)
+            RoundedRectangle(cornerRadius: DS.Radius.sm, style: .continuous)
                 .fill(.ultraThinMaterial)
         )
+        .dsShadow(DS.Elevation.low)
         .scaleEffect(isPressed ? 0.97 : 1.0)
         .animation(DS.Motion.quick, value: isPressed)
         .onTapGesture {

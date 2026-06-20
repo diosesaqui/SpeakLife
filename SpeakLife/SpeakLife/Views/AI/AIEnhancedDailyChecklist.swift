@@ -222,16 +222,9 @@ struct AIEnhancedDailyChecklist: View {
                 .multilineTextAlignment(.leading)
         }
         .padding()
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color.white.opacity(0.1))
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.blue.opacity(0.3), lineWidth: 1)
-        )
+        .dsGlass(cornerRadius: DS.Radius.md)
     }
-    
+
     // MARK: - AI Upgrade Prompt
     
     private var aiUpgradePrompt: some View {
@@ -283,8 +276,9 @@ struct AIEnhancedDailyChecklist: View {
             .foregroundColor(.white)
             .frame(maxWidth: .infinity)
             .padding(.vertical, DS.Spacing.sm)
-            .background(Color.orange)
+            .background(DS.Gradient.gold)
             .cornerRadius(10)
+            .buttonStyle(.dsPressable(feel: .tapSolid))
         }
         .padding()
         .background(Color.orange.opacity(0.1))
@@ -504,8 +498,7 @@ struct DailyInsightCard: View {
             }
         }
         .padding(10)
-        .background(Color.white.opacity(0.05))
-        .cornerRadius(8)
+        .dsGlass(cornerRadius: DS.Radius.sm)
     }
 }
 

@@ -52,7 +52,7 @@ struct PrayerDetailView<InjectedView: View>: View {
                     Text(createYourOwn?.lastEdit?.toPrettyString() ?? "")
                         .font(Font.custom("AppleSDGothicNeo-Regular", size: 16, relativeTo: .caption))
                         .lineSpacing(4)
-                        .padding(.horizontal, 32)
+                        .padding(.horizontal, DS.Spacing.xl)
                         .foregroundColor(.white)
                 }
                 
@@ -61,7 +61,7 @@ struct PrayerDetailView<InjectedView: View>: View {
                 Text(createYourOwn?.text ?? "")
                     .font(.system(size: 20, weight: .medium, design: .rounded))
                     .lineSpacing(4)
-                    .padding(.horizontal, 32)
+                    .padding(.horizontal, DS.Spacing.xl)
                     .foregroundColor(.white)
                     .frame(width: UIScreen.main.bounds.width)
                 
@@ -78,7 +78,7 @@ struct PrayerDetailView<InjectedView: View>: View {
                 Text(prayer)
                     .font(Font.custom("AppleSDGothicNeo-Regular", size: 20, relativeTo: .body))
                     .lineSpacing(4)
-                    .padding(.horizontal, 32)
+                    .padding(.horizontal, DS.Spacing.xl)
                     .foregroundColor(.white)
                     .frame(width: UIScreen.main.bounds.width)
                 

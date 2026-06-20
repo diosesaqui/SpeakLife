@@ -90,7 +90,7 @@ struct VoiceCorrectionsView: View {
                         .padding(.horizontal, DS.Spacing.sm)
                         .padding(.vertical, DS.Spacing.xs)
                         .background(Color.white.opacity(0.1))
-                        .cornerRadius(8)
+                        .cornerRadius(DS.Radius.sm)
                     }
                     .buttonStyle(.dsPressable(feel: .tapSolid))
                 }
@@ -105,7 +105,8 @@ struct VoiceCorrectionsView: View {
             }
             .padding(DS.Spacing.sm)
             .background(Color.black.opacity(0.3))
-            .cornerRadius(12)
+            .cornerRadius(DS.Radius.sm)
+            .dsShadow(DS.Elevation.low)
             .transition(.asymmetric(
                 insertion: .scale.combined(with: .opacity),
                 removal: .scale.combined(with: .opacity)

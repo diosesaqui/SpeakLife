@@ -35,22 +35,22 @@ struct EmailCaptureView: View {
     }
     
     var body: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: DS.Spacing.md) {
             Text("Join Our Weekly Emails")
                 .font(.title2)
                 .fontWeight(.semibold)
-            
+
             Text("Be the first to receive weekly encouragement, Scripture insights, and app updates.")
                 .font(.body)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal)
-            
+
             TextField("Enter your email", text: $email)
                 .textContentType(.emailAddress)
                 .keyboardType(.emailAddress)
                 .padding()
                 .background(Color(.secondarySystemBackground))
-                .cornerRadius(10)
+                .cornerRadius(DS.Radius.sm)
                 .autocapitalization(.none)
             
             Button(action: submitEmail) {
