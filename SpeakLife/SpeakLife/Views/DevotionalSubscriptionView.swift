@@ -138,7 +138,7 @@ struct SubscriptionDetailsView: View {
     let disclaimer: String
 
     var body: some View {
-        VStack(alignment: .center, spacing: 16) {
+        VStack(alignment: .center, spacing: DS.Spacing.md) {
             Text(title)
                 .font(.title)
                 .foregroundColor(.white)

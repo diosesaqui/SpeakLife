@@ -510,7 +510,7 @@ struct HomeView: View {
                                 .font(.headline)
                                 .foregroundColor(.white)
                                 .padding(.horizontal, 40)
-                                .padding(.vertical, 12)
+                                .padding(.vertical, DS.Spacing.sm)
                                 .background(
                                     RoundedRectangle(cornerRadius: 25)
                                         .fill(LinearGradient(
@@ -520,6 +520,7 @@ struct HomeView: View {
                                         ))
                                 )
                         }
+                        .buttonStyle(.dsPressable(feel: .tapSolid))
                     }
                     .transition(.scale.combined(with: .opacity))
                 }
