@@ -204,14 +204,27 @@ struct ModernDailyChecklistView: View {
                         lastCompletedDate: viewModel.streakStats.lastCompletedDate
                     )
 
-                    // Progress-aware nudge toward securing today's streak
-                    Text(motivationalText)
-                        .font(.subheadline)
-                        .foregroundColor(.white.opacity(0.9))
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(.horizontal, DS.Spacing.md)
-                        .padding(.vertical, DS.Spacing.sm)
-                        .dsGlass(cornerRadius: DS.Radius.md, strokeOpacity: 0.14, elevation: DS.Elevation.low)
+                    // Hero progress panel: the day's focal point. A gradient ring
+                    // paired with the progress-aware nudge, floated on glass.
+                    HStack(spacing: DS.Spacing.md) {
+                        DSProgressRing(
+                            completed: viewModel.todayChecklist.completedTasksCount,
+                            total: viewModel.todayChecklist.tasks.count
+                        )
+                        VStack(alignment: .leading, spacing: DS.Spacing.xxs) {
+                            Text("TODAY'S PROGRESS")
+                                .font(.system(size: 11, weight: .bold))
+                                .tracking(1.4)
+                                .foregroundColor(DS.Palette.gold.opacity(0.9))
+                            Text(motivationalText)
+                                .font(.subheadline)
+                                .foregroundColor(.white.opacity(0.9))
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        Spacer(minLength: 0)
+                    }
+                    .padding(DS.Spacing.md)
+                    .dsGlass(cornerRadius: DS.Radius.lg, strokeOpacity: 0.16, elevation: DS.Elevation.medium)
                 }
                 .padding(.horizontal, 20)
                 .padding(.top, 20)
@@ -687,22 +700,30 @@ struct QuickActionTile: View {
         }) {
             VStack(spacing: DS.Spacing.xs) {
                 ZStack {
-                    Circle().fill(tint.opacity(0.22)).frame(width: 46, height: 46)
+                    Circle()
+                        .fill(
+                            LinearGradient(
+                                colors: [tint.opacity(0.95), tint.opacity(0.55)],
+                                startPoint: .topLeading, endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 52, height: 52)
+                        .shadow(color: tint.opacity(0.5), radius: 8, x: 0, y: 4)
                     Image(systemName: icon)
-                        .font(.system(size: 18, weight: .semibold))
+                        .font(.system(size: 20, weight: .bold))
                         .foregroundColor(.white)
                 }
                 Text(label)
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundColor(.white.opacity(0.8))
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.85))
                     .lineLimit(1)
                     .minimumScaleFactor(0.75)
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 12)
-            .background(RoundedRectangle(cornerRadius: 14).fill(Color.white.opacity(0.05)))
+            .padding(.vertical, DS.Spacing.sm)
+            .dsGlass(cornerRadius: DS.Radius.md, strokeOpacity: 0.12, elevation: DS.Elevation.low)
         }
-        .buttonStyle(PlainButtonStyle())
+        .buttonStyle(.dsPressable(feel: .tapLight, haptics: false))
     }
 }
 

@@ -322,6 +322,54 @@ extension ButtonStyle where Self == DSPressable {
     }
 }
 
+// MARK: - DSProgressRing: a hero progress indicator
+
+/// A gradient progress ring with a count in the center, animated on appear and
+/// whenever progress changes. The "look here" focal point for habit/streak
+/// surfaces. Defaults to the gold reward gradient.
+struct DSProgressRing: View {
+    let completed: Int
+    let total: Int
+    var size: CGFloat = 72
+    var lineWidth: CGFloat = 9
+    var gradient: LinearGradient = DS.Gradient.gold
+    var glow: Color = DS.Palette.gold
+
+    @State private var animatedProgress: CGFloat = 0
+
+    private var progress: CGFloat {
+        guard total > 0 else { return 0 }
+        return min(1, CGFloat(completed) / CGFloat(total))
+    }
+
+    var body: some View {
+        ZStack {
+            Circle()
+                .stroke(Color.white.opacity(0.14), lineWidth: lineWidth)
+            Circle()
+                .trim(from: 0, to: animatedProgress)
+                .stroke(gradient, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
+                .rotationEffect(.degrees(-90))
+                .shadow(color: glow.opacity(0.5), radius: 6)
+            VStack(spacing: 0) {
+                Text("\(completed)")
+                    .font(.system(size: size * 0.34, weight: .bold, design: .rounded))
+                    .foregroundColor(.white)
+                Text("of \(total)")
+                    .font(.system(size: size * 0.16, weight: .medium, design: .rounded))
+                    .foregroundColor(.white.opacity(0.6))
+            }
+        }
+        .frame(width: size, height: size)
+        .onAppear {
+            withAnimation(DS.Motion.smooth.delay(0.15)) { animatedProgress = progress }
+        }
+        .onChange(of: progress) { _, newValue in
+            withAnimation(DS.Motion.smooth) { animatedProgress = newValue }
+        }
+    }
+}
+
 // MARK: - Demo / Preview
 
 /// A self-contained demo of the design system applied to a declaration card,
