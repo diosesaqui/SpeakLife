@@ -120,7 +120,11 @@ final class AppDelegate: NSObject, MessagingDelegate {
             "onboardingVariant": "warfare" as NSString,
             // Checklist home tab is on by default; flip to false in Remote Config
             // to revert to the feed-as-home layout if complaints spike.
-            "checklistHomeEnabled": true as NSNumber
+            "checklistHomeEnabled": true as NSNumber,
+            // Personalized audio category ordering ships dark; flip to true in
+            // Remote Config (or via the A/B test) to promote each user's
+            // best-matching categories to the front of the audio filter row.
+            "personalizedAudioOrderEnabled": false as NSNumber
         ])
 
         registerBGTask()

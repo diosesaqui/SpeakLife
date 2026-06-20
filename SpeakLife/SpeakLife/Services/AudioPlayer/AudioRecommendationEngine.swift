@@ -103,4 +103,118 @@ final class AudioRecommendationEngine {
         let current = UserDefaults.standard.integer(forKey: categoryIndexKey)
         UserDefaults.standard.set((current + 1) % categories.count, forKey: categoryIndexKey)
     }
+
+    // MARK: - Personalized Filter Ordering
+
+    /// Relative weights for each personalization signal. Stated intent
+    /// (declaration, onboarding picks) outweighs revealed behavior (engagement,
+    /// favorites, plays); the second-choice filter in a mapping is halved.
+    private enum Weight {
+        static let personalDeclaration = 100.0
+        static let selectedCategory    = 30.0
+        static let engagement          = 12.0
+        static let favorite            = 8.0
+        static let played              = 3.0
+        static let secondaryFilter     = 0.5
+        /// Cap on how many favorites / plays count, so a single high-volume
+        /// category can't dominate purely by raw count.
+        static let favoriteCountCap    = 5
+        static let playedCountCap      = 8
+        /// Cap on engagement strength so heavy-but-uncapped selection counts
+        /// can never outweigh the stated-intent signals above (keeps a recent
+        /// power-user category below the personal declaration's weight).
+        static let engagementStrengthCap = 3.0
+    }
+
+    /// Re-orders the curated audio filters so the categories the user cares about
+    /// are promoted to the front. Filters are scored from both stated intent
+    /// (personal declaration, onboarding categories) and revealed behavior
+    /// (recency-weighted category engagement, favorites, and plays); the
+    /// highest-scoring filters are promoted, with ties broken by curated order.
+    ///
+    /// Pure and side-effect free — returns `filters` unchanged when there is no
+    /// signal or no match, so it is always safe to call. A pinned "favorites"
+    /// filter (if present) always stays first.
+    ///
+    /// - Parameters:
+    ///   - filters: Curated filter list, already in its intended order.
+    ///   - personalDeclarationCategory: `DeclarationCategory` rawValue of the
+    ///     user's active personal declaration, if any.
+    ///   - selectedCategories: `DeclarationCategory` rawValues chosen during
+    ///     onboarding, in selection order.
+    ///   - engagementCategories: `DeclarationCategory` rawValue → recency-weighted
+    ///     strength (e.g. from `UserPreferencesTracker.topCategories`).
+    ///   - favoritesByFilterId: Filter id → number of favorited episodes.
+    ///   - playedByFilterId: Filter id → number of played episodes.
+    ///   - maxPromoted: Cap on how many filters float to the front.
+    static func personalizedOrder(
+        filters: [FilterConfig],
+        personalDeclarationCategory: String?,
+        selectedCategories: [String],
+        engagementCategories: [String: Double] = [:],
+        favoritesByFilterId: [String: Int] = [:],
+        playedByFilterId: [String: Int] = [:],
+        maxPromoted: Int = 3
+    ) -> [FilterConfig] {
+        guard filters.count > 1, maxPromoted > 0 else { return filters }
+
+        var scores: [String: Double] = [:]
+        func add(_ filterId: String, _ value: Double) {
+            guard value > 0 else { return }
+            scores[filterId, default: 0] += value
+        }
+        // A declaration category maps to one or two filters; the first gets the
+        // full weight, the second a halved weight.
+        func scoreMapping(for category: String?, base: Double) {
+            guard base > 0, let raw = category?.lowercased(), !raw.isEmpty,
+                  let mapped = categoryToFilterPriority[raw] else { return }
+            for (index, id) in mapped.enumerated() {
+                add(id, base * (index == 0 ? 1.0 : Weight.secondaryFilter))
+            }
+        }
+
+        // 1. Personal declaration — strongest intent.
+        scoreMapping(for: personalDeclarationCategory, base: Weight.personalDeclaration)
+
+        // 2. Onboarding-selected categories — earlier picks weighted slightly higher.
+        for (index, category) in selectedCategories.enumerated() {
+            let positionFactor = max(0.5, 1.0 - Double(index) * 0.1)
+            scoreMapping(for: category, base: Weight.selectedCategory * positionFactor)
+        }
+
+        // 3. Recency-weighted category engagement (capped so it stays a
+        // secondary signal beneath stated intent).
+        for (category, strength) in engagementCategories {
+            scoreMapping(for: category, base: Weight.engagement * min(strength, Weight.engagementStrengthCap))
+        }
+
+        // 4. Revealed behavior — favorites and plays map straight to a filter id.
+        for (filterId, count) in favoritesByFilterId {
+            add(filterId, Weight.favorite * Double(min(count, Weight.favoriteCountCap)))
+        }
+        for (filterId, count) in playedByFilterId {
+            add(filterId, Weight.played * Double(min(count, Weight.playedCountCap)))
+        }
+
+        // Promote the highest-scoring filters; ties fall back to curated order.
+        // `uniquingKeysWith` keeps the first index if a duplicate filter id ever
+        // slips in from server/cache data, rather than trapping.
+        let curatedIndex = Dictionary(
+            filters.enumerated().map { ($1.id, $0) },
+            uniquingKeysWith: { first, _ in first }
+        )
+        let candidates = scores.filter { $0.value > 0 && $0.key != "favorites" && curatedIndex[$0.key] != nil }
+        guard !candidates.isEmpty else { return filters }
+
+        let promotedIds = candidates.keys.sorted { lhs, rhs in
+            if candidates[lhs]! != candidates[rhs]! { return candidates[lhs]! > candidates[rhs]! }
+            return curatedIndex[lhs]! < curatedIndex[rhs]!
+        }.prefix(maxPromoted)
+
+        let promotedSet = Set(promotedIds)
+        let pinned = filters.filter { $0.id == "favorites" }
+        let promoted = promotedIds.compactMap { id in filters.first { $0.id == id } }
+        let rest = filters.filter { $0.id != "favorites" && !promotedSet.contains($0.id) }
+        return pinned + promoted + rest
+    }
 }
