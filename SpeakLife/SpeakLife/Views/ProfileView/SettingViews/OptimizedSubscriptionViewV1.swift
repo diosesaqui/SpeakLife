@@ -34,7 +34,7 @@ struct ValuePropositionV1: View {
     @State private var iconPulse = false
     
     var body: some View {
-        HStack(spacing: 16) {
+        HStack(spacing: DS.Spacing.md) {
             Image(systemName: icon)
                 .font(.system(size: 16, weight: .medium))
                 .foregroundColor(.white)
@@ -79,9 +79,9 @@ struct PricingOptionViewV1: View {
     var body: some View {
         Button(action: action) {
             ZStack {
-                HStack(spacing: 16) {
-                    VStack(alignment: .leading, spacing: 4) {
-                        HStack(spacing: 8) {
+                HStack(spacing: DS.Spacing.md) {
+                    VStack(alignment: .leading, spacing: DS.Spacing.xxs) {
+                        HStack(spacing: DS.Spacing.xs) {
                             Text(getSubscriptionTypeText(for: option, showingWeeklyMonthly: showingWeeklyMonthly))
                                 .font(.system(size: 18, weight: .semibold, design: .rounded))
                                 .foregroundColor(textColor)
@@ -95,7 +95,7 @@ struct PricingOptionViewV1: View {
                         .foregroundColor(textColor)
                 }
                 .padding(.horizontal, 20)
-                .padding(.vertical, 16)
+                .padding(.vertical, DS.Spacing.md)
                 .background(backgroundGradient)
                 .scaleEffect(option.isSelected ? 1.02 : 1.0)
                 .shadow(

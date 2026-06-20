@@ -489,7 +489,7 @@ struct OptimizedSubscriptionView: View {
                 ),
                 action: { selectedOption = "annual" }
             )
-            .padding(.bottom, 8)
+            .padding(.bottom, DS.Spacing.xs)
             
 //            AbideStylePricingOption(
 //                option: PricingOption(
@@ -528,7 +528,7 @@ struct OptimizedSubscriptionView: View {
             )
             .frame(height: 15)
             
-            VStack(spacing: 12) {
+            VStack(spacing: DS.Spacing.sm) {
                 // Pricing options - centered on iPad
                 if iPad {
                     HStack(spacing: 20) {
