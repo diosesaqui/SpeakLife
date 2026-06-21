@@ -182,10 +182,21 @@ final class AppDelegate: NSObject, MessagingDelegate {
    
     
     func messaging(_ messaging: Messaging, didReceiveRegistrationToken fcmToken: String?) {
-        if let token = fcmToken {
-                   print("✅ FCM Token: \(token)") // This should now appear in Xcode logs
-               } else {
-               }
+        guard let token = fcmToken else { return }
+        print("✅ FCM Token: \(token)") // This should now appear in Xcode logs
+
+        // Cache the token so flows that read it (e.g. PrayerWall registration)
+        // get a real value instead of an empty string.
+        UserDefaults.standard.set(token, forKey: "fcmToken")
+
+        // Subscribe every device to the broadcast topic so server-sent
+        // announcements / personalized messages can reach the whole user base
+        // without needing a per-user token store. Safe to call repeatedly.
+        Messaging.messaging().subscribe(toTopic: "allUsers") { error in
+            if let error = error {
+                print("⚠️ Failed to subscribe to allUsers topic: \(error.localizedDescription)")
+            }
+        }
     }
 
     /// Recover a Meta deferred app link (ad-matched onboarding) once, AFTER the
