@@ -12,3 +12,6 @@ xcuserdata/
 # Claude Code session/plan files (keep committed skills, ignore the rest)
 .claude/*
 !.claude/skills/
+
+# Local sender config (contains the broadcast secret)
+scripts/send-message.env
