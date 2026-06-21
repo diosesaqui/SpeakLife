@@ -8,6 +8,7 @@
 import SwiftUI
 import MessageUI
 import FirebaseAnalytics
+import FirebaseMessaging
 import RevenueCat
 
 struct LazyView<Content: View>: View {
@@ -48,6 +49,7 @@ struct ProfileView: View {
     @State private var showShareSheet = false
     @State private var showSpiritualGrowth = false
     @State private var showSupportIDCopied = false
+    @State private var showFCMTokenCopied = false
     @State private var showEmailCaptureSheet = false
     @State private var showHowToUse = false
     @State private var showCommunity = false
@@ -125,8 +127,11 @@ struct ProfileView: View {
                         featureRequestRow
                         emailRow
                         supportIDRow
-                        
-                        
+                        #if DEBUG
+                        fcmTokenRow
+                        #endif
+
+
                     }
                     
                     .sheet(isPresented: $showShareSheet, content: {
@@ -722,7 +727,49 @@ struct ProfileView: View {
             .padding(.vertical, 4)
         }
     }
-    
+
+    #if DEBUG
+    // Debug-only: copies this device's FCM registration token to the clipboard
+    // so it can be pasted into the test-message tooling (send-message.sh / the
+    // iOS Shortcut). Compiled out of release builds.
+    @ViewBuilder
+    private var fcmTokenRow: some View {
+        Button(action: {
+            Messaging.messaging().token { token, error in
+                DispatchQueue.main.async {
+                    guard let token = token, error == nil else {
+                        print("❌ FCM token fetch failed: \(error?.localizedDescription ?? "unknown")")
+                        return
+                    }
+                    UIPasteboard.general.string = token
+                    print("✅ FCM Token copied: \(token)")
+                    withAnimation {
+                        showFCMTokenCopied = true
+                    }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+                        withAnimation {
+                            showFCMTokenCopied = false
+                        }
+                    }
+                }
+            }
+        }) {
+            HStack {
+                Image(systemName: showFCMTokenCopied ? "checkmark.circle.fill" : "bell.badge.fill")
+                    .foregroundColor(showFCMTokenCopied ? .green : .primary)
+                    .frame(width: 24)
+                Text(showFCMTokenCopied ? "FCM token copied!" : "Copy FCM Token (debug)")
+                    .foregroundColor(.primary)
+                Spacer()
+                Image(systemName: "doc.on.doc")
+                    .foregroundColor(.secondary)
+                    .font(.footnote)
+            }
+            .padding(.vertical, 4)
+        }
+    }
+    #endif
+
 //    @ViewBuilder
 //    private var prayerRequestRow: some View {
 //        if MFMailComposeViewController.canSendMail() {
