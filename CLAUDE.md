@@ -86,7 +86,7 @@ This rule governs Rule 11: the emotion we trigger is the emotion of victory and 
 ### 13. Brevity Is Potency (Cut to the Bone)
 Potency comes from compression. A declaration should hit like a hammer, not unfold like a paragraph. The longer it runs, the more the power leaks out before it lands.
 
-- **One or two sentences. Aim for under ~18 words.** Three sentences is a warning sign, not a target. If a third sentence exists, it is almost always fat: cut it or fold it into the line.
+- **One or two sentences. Most lines 12 to 18 words, hard ceiling around 21.** Three sentences is a warning sign, not a target. If a third sentence exists, it is almost always fat: cut it or fold it into the line. The `health` category is the reference set for this bar (avg ~18 words).
 - **Never say the same truth twice.** The most common leak is a closing sentence that just rephrases the one before it ("My footing does not depend on my grip. It depends on His."). Keep the stronger half and delete the rest.
 - **Land the image and stop.** Do not explain the metaphor after it hits. Trust the line to do its work in the speaker's chest.
 - **Every word earns its place or dies.** Strip filler, throat-clearing, and connective padding. If removing a word does not change the meaning, remove it.
