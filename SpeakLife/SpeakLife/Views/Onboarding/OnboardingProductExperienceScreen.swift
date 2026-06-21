@@ -78,8 +78,14 @@ struct OnboardingProductExperienceScreen: View {
         HStack(spacing: 14) {
             ZStack {
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(Color.white.opacity(0.12))
+                    .fill(
+                        LinearGradient(
+                            colors: [DS.Palette.accent.opacity(0.95), DS.Palette.accent.opacity(0.55)],
+                            startPoint: .topLeading, endPoint: .bottomTrailing
+                        )
+                    )
                     .frame(width: 46, height: 46)
+                    .shadow(color: DS.Palette.accent.opacity(0.5), radius: 8, x: 0, y: 4)
                 Image(systemName: feature.icon)
                     .font(.system(size: 20))
                     .foregroundColor(.white)
@@ -96,14 +102,7 @@ struct OnboardingProductExperienceScreen: View {
             Spacer(minLength: 0)
         }
         .padding(16)
-        .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(Color.white.opacity(0.06))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .stroke(Color.white.opacity(0.12), lineWidth: 1)
-                )
-        )
+        .dsGlass(cornerRadius: DS.Radius.md)
     }
 }
 

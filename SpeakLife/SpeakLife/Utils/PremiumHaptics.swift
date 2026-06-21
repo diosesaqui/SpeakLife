@@ -276,7 +276,8 @@ final class PremiumHaptics {
 extension PremiumHaptics {
     
     private static var isHapticsEnabled: Bool {
-        return UserDefaults.standard.bool(forKey: "hapticsEnabled") != false // Default to true
+        // Default to true when the key was never set (see Core/Utils copy).
+        UserDefaults.standard.object(forKey: "hapticsEnabled") as? Bool ?? true
     }
     
     static func setHapticsEnabled(_ enabled: Bool) {
@@ -304,6 +305,10 @@ extension PremiumHaptics {
     
     static func safeSuccess() {
         executeHaptic { success() }
+    }
+
+    static func safeWarning() {
+        executeHaptic { warning() }
     }
     
     static func safeSuccessSequence() {

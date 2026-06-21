@@ -23,7 +23,7 @@ where Provider.ContentType == ContentType {
             ZStack {
                 // Main content
                 ScrollView(.vertical, showsIndicators: false) {
-                    VStack(spacing: 16) {
+                    VStack(spacing: DS.Spacing.md) {
                         // Pull to refresh indicator
                         if refreshing {
                             refreshIndicator
@@ -50,7 +50,7 @@ where Provider.ContentType == ContentType {
                         Color.clear
                             .frame(height: 20)
                     }
-                    .padding(.top, 8)
+                    .padding(.top, DS.Spacing.xs)
                 }
                 .refreshable {
                     await refreshContent()
@@ -59,6 +59,7 @@ where Provider.ContentType == ContentType {
                 // Empty state
                 if sectionProvider.sections.isEmpty {
                     emptyStateView
+                        .dsAppear(0.06)
                 }
             }
         }
@@ -75,7 +76,7 @@ where Provider.ContentType == ContentType {
                 .font(.caption)
                 .foregroundColor(.white.opacity(0.7))
         }
-        .padding(.top, 8)
+        .padding(.top, DS.Spacing.xs)
         .transition(.move(edge: .top).combined(with: .opacity))
     }
     
@@ -103,10 +104,10 @@ where Provider.ContentType == ContentType {
                 Label("Refresh", systemImage: "arrow.clockwise")
                     .font(.headline)
                     .foregroundColor(.white)
-                    .padding(.horizontal, 24)
-                    .padding(.vertical, 12)
+                    .padding(.horizontal, DS.Spacing.lg)
+                    .padding(.vertical, DS.Spacing.sm)
                     .background(
-                        RoundedRectangle(cornerRadius: 12)
+                        RoundedRectangle(cornerRadius: DS.Radius.sm, style: .continuous)
                             .fill(Constants.DAMidBlue)
                     )
             }

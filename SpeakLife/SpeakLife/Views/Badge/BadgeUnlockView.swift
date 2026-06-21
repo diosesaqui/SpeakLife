@@ -100,7 +100,7 @@ struct BadgeUnlockView: View {
                 }
                 
                 // Badge title and description
-                VStack(spacing: 16) {
+                VStack(spacing: DS.Spacing.md) {
                     Text(badge.title)
                         .font(.system(size: 24, weight: .bold, design: .rounded))
                         .foregroundColor(.white)
@@ -121,7 +121,7 @@ struct BadgeUnlockView: View {
                         .opacity(descriptionOpacity)
                     
                     // Rarity badge
-                    HStack(spacing: 8) {
+                    HStack(spacing: DS.Spacing.xs) {
                         ForEach(0..<rarityStars, id: \.self) { _ in
                             Image(systemName: "star.fill")
                                 .font(.system(size: 16, weight: .bold))
@@ -434,8 +434,8 @@ struct CelebrationContinueButton: View {
             Text("Continue Your Journey")
                 .font(.system(size: 18, weight: .semibold, design: .rounded))
                 .foregroundColor(.white)
-                .padding(.horizontal, 32)
-                .padding(.vertical, 16)
+                .padding(.horizontal, DS.Spacing.xl)
+                .padding(.vertical, DS.Spacing.md)
                 .background(
                     RoundedRectangle(cornerRadius: 25)
                         .fill(

@@ -27,6 +27,22 @@ final class AudioProgressStore: ObservableObject {
         persist()
     }
 
+    /// Manually clear the played state for an audio ID (no-op if not marked).
+    func markUnplayed(_ id: String) {
+        guard playedIDs.contains(id) else { return }
+        playedIDs.remove(id)
+        persist()
+    }
+
+    /// Flip the played state for an audio ID. Used by the manual toggle in the UI.
+    func togglePlayed(_ id: String) {
+        if playedIDs.contains(id) {
+            markUnplayed(id)
+        } else {
+            markPlayed(id)
+        }
+    }
+
     func isPlayed(_ id: String) -> Bool {
         playedIDs.contains(id)
     }

@@ -118,7 +118,7 @@ struct SurveyOnboardingView: View {
     }
 
     private func advance() {
-        UIImpactFeedbackGenerator(style: .soft).impactOccurred()
+        Juice.play(.tapLight)
         Analytics.logEvent("survey_step_completed", parameters: ["step": currentStep.rawValue])
 
         switch currentStep {

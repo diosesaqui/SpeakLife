@@ -27,7 +27,7 @@ struct UpNextCell: View {
 
     var body: some View {
         ZStack {
-                HStack(spacing: 16) {
+                HStack(spacing: DS.Spacing.md) {
                     Image(item.imageUrl)
                         .resizable()
                         .aspectRatio(contentMode: .fill)
@@ -49,9 +49,9 @@ struct UpNextCell: View {
                             }
                         }
                     
-                    VStack(alignment: .leading, spacing: 6) {
+                    VStack(alignment: .leading, spacing: DS.Spacing.xxs) {
                         Text(item.title)
-                            .font(.system(size: 17, weight: .semibold))
+                            .font(.system(size: 17, weight: .semibold, design: .rounded))
                             .minimumScaleFactor(0.8)
                             .lineLimit(2)
                         
@@ -76,7 +76,21 @@ struct UpNextCell: View {
                     }
                     
                     Spacer()
-                    
+
+                    // Played toggle
+                    Button(action: {
+                        Juice.play(.tapSolid)
+                        progressStore.togglePlayed(item.id)
+                    }) {
+                        Image(systemName: progressStore.isPlayed(item.id) ? "checkmark.circle.fill" : "circle")
+                            .font(.system(size: 20, weight: .medium))
+                            .foregroundColor(progressStore.isPlayed(item.id) ? Color(red: 0.18, green: 0.78, blue: 0.45) : .white.opacity(0.7))
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                    .contentShape(Circle())
+                    .frame(width: 44, height: 44)
+                    .accessibilityLabel(progressStore.isPlayed(item.id) ? "Mark as unplayed" : "Mark as played")
+
                     // Favorite Button
                     Button(action: {
                         toggleFavorite()
@@ -92,21 +106,33 @@ struct UpNextCell: View {
                     .frame(width: 44, height: 44)
                 }
                 .contentShape(Rectangle())
-                .padding(.vertical, 16)
-                .padding(.horizontal, 20)
+                .padding(.vertical, DS.Spacing.md)
+                .padding(.horizontal, DS.Spacing.lg)
                 .foregroundColor(.white)
                 .background(
-                    RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    RoundedRectangle(cornerRadius: DS.Radius.lg, style: .continuous)
                         .fill(.ultraThinMaterial)
                         .overlay(
-                            RoundedRectangle(cornerRadius: 20)
-                                .stroke(Color.white.opacity(animateGlow ? 0.15 : 0.05), lineWidth: animateGlow ? 1.5 : 0.5)
+                            RoundedRectangle(cornerRadius: DS.Radius.lg, style: .continuous)
+                                .stroke(Color.white.opacity(animateGlow ? 0.15 : 0.06), lineWidth: animateGlow ? 1.5 : 0.5)
                                 .shadow(color: Color.blue.opacity(animateGlow ? 0.3 : 0), radius: animateGlow ? 10 : 0)
                         )
-                        .shadow(color: Color.black.opacity(0.15), radius: 8, x: 0, y: 4)
+                        .dsShadow(DS.Elevation.low)
                 )
                 .scaleEffect(isTapped ? 0.97 : 1.0)
                 .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isTapped)
+                .contextMenu {
+                    Button {
+                        Juice.play(.tapSolid)
+                        progressStore.togglePlayed(item.id)
+                    } label: {
+                        if progressStore.isPlayed(item.id) {
+                            Label("Mark as Unplayed", systemImage: "circle")
+                        } else {
+                            Label("Mark as Played", systemImage: "checkmark.circle.fill")
+                        }
+                    }
+                }
                 .onAppear {
                     // Fetch listener count for this audio
 //                    Task {
@@ -145,8 +171,7 @@ struct UpNextCell: View {
     // MARK: - Favorite Actions
     private func toggleFavorite() {
         // Haptic feedback
-        let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
-        impactFeedback.impactOccurred()
+        Juice.play(.tapSolid)
         
         // Animate favorite button
         withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
@@ -219,7 +244,7 @@ struct AudioDeclarationView: View {
 
                 VStack(spacing: 0) {
                     // Header
-                    VStack(alignment: .leading, spacing: 8) {
+                    VStack(alignment: .leading, spacing: DS.Spacing.xs) {
                         Text("Meditation")
                             .font(.system(size: 28, weight: .bold))
                             .foregroundColor(.white)
@@ -298,6 +323,9 @@ struct AudioDeclarationView: View {
             }
             .onAppear() {
                 Analytics.logEvent("AudioScreenLoaded", parameters: nil)
+                // Re-apply ordering now that Remote Config and favorites have
+                // loaded — covers existing users who don't rebuild filters on update.
+                viewModel.refreshPersonalization()
             }
             // Auto-play when arriving from daily checklist.
             // Uses onReceive on contentByFilter (a @Published dict) so it fires
@@ -358,6 +386,11 @@ struct AudioDeclarationView: View {
             ForEach(viewModel.dynamicFilters, id: \.id) { filterConfig in
                 Button(action: {
                     viewModel.selectedFilterId = filterConfig.id
+                    Analytics.logEvent("audio_filter_tapped", parameters: [
+                        "filter_id": filterConfig.id,
+                        "position": viewModel.dynamicFilters.firstIndex(where: { $0.id == filterConfig.id }) ?? -1,
+                        "personalized": viewModel.isPersonalizedOrderEnabled
+                    ])
                     if filterConfig.id == "favorites" {
                         AudioAnalytics.shared.trackFavoritesCategoryViewed(
                             favoritesCount: viewModel.favoritesManager.favoritesCount
@@ -567,8 +600,7 @@ struct AudioDeclarationView: View {
     
     private func handleFavoriteSwipeAction(for item: AudioDeclaration) {
         // Haptic feedback
-        let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
-        impactFeedback.impactOccurred()
+        Juice.play(.tapSolid)
         
         // Add a small delay to allow swipe animation to complete
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {

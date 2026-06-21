@@ -153,13 +153,14 @@ struct ModernDailyChecklistView: View {
                     HStack(alignment: .top) {
                         VStack(alignment: .leading, spacing: 4) {
                             Text(greeting)
-                                .font(.title2)
-                                .fontWeight(.bold)
+                                .font(.system(size: 30, weight: .bold, design: .rounded))
                                 .foregroundColor(.white)
+                                .shadow(color: .black.opacity(0.3), radius: 6, x: 0, y: 2)
 
                             Text(Date().formatted(.dateTime.weekday(.wide).month().day()))
                                 .font(.subheadline)
                                 .foregroundColor(.white.opacity(0.6))
+                                .tracking(0.5)
                         }
 
                         Spacer()
@@ -169,11 +170,13 @@ struct ModernDailyChecklistView: View {
                                 Text("🔥").font(.system(size: 15))
                                 Text("\(viewModel.streakStats.currentStreak)")
                                     .font(.system(size: 16, weight: .bold, design: .rounded))
-                                    .foregroundColor(.orange)
+                                    .foregroundColor(.white)
                             }
-                            .padding(.horizontal, 12)
+                            .padding(.horizontal, DS.Spacing.sm)
                             .padding(.vertical, 7)
-                            .background(Capsule().fill(Color.orange.opacity(0.15)))
+                            .background(Capsule().fill(DS.Gradient.ember))
+                            .overlay(Capsule().stroke(Color.white.opacity(0.25), lineWidth: 1))
+                            .shadow(color: Color.orange.opacity(0.45), radius: 8, x: 0, y: 3)
                             .accessibilityLabel("\(viewModel.streakStats.currentStreak) day streak")
                         }
 
@@ -201,16 +204,33 @@ struct ModernDailyChecklistView: View {
                         lastCompletedDate: viewModel.streakStats.lastCompletedDate
                     )
 
-                    // Progress-aware nudge toward securing today's streak
-                    Text(motivationalText)
-                        .font(.subheadline)
-                        .foregroundColor(.white.opacity(0.85))
-                        .frame(maxWidth: .infinity, alignment: .leading)
+                    // Hero progress panel: the day's focal point. A gradient ring
+                    // paired with the progress-aware nudge, floated on glass.
+                    HStack(spacing: DS.Spacing.md) {
+                        DSProgressRing(
+                            completed: viewModel.todayChecklist.completedTasksCount,
+                            total: viewModel.todayChecklist.tasks.count
+                        )
+                        VStack(alignment: .leading, spacing: DS.Spacing.xxs) {
+                            Text("TODAY'S PROGRESS")
+                                .font(.system(size: 11, weight: .bold))
+                                .tracking(1.4)
+                                .foregroundColor(DS.Palette.gold.opacity(0.9))
+                            Text(motivationalText)
+                                .font(.subheadline)
+                                .foregroundColor(.white.opacity(0.9))
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        Spacer(minLength: 0)
+                    }
+                    .padding(DS.Spacing.md)
+                    .dsGlass(cornerRadius: DS.Radius.lg, strokeOpacity: 0.16, elevation: DS.Elevation.medium)
                 }
                 .padding(.horizontal, 20)
                 .padding(.top, 20)
                 .padding(.bottom, 16)
-                
+                .dsAppear(0)
+
                 // Scrollable content with cleaner layout
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 12) {
@@ -233,10 +253,23 @@ struct ModernDailyChecklistView: View {
                                 }
                             },
                             onNavigate: { task in handleTaskNavigation(task) },
-                            onAllComplete: { dismiss() }
+                            onAllComplete: {
+                                // "Done" on the day-complete celebration. As the
+                                // root Today tab there's nothing to dismiss, so send
+                                // the user into the declaration feed to keep going.
+                                // When opened modally, honor the real dismissal.
+                                if isHomeTab {
+                                    tabViewModel.goToDeclarations()
+                                } else if let onClose = onClose {
+                                    onClose()
+                                } else {
+                                    dismiss()
+                                }
+                            }
                         )
                         .padding(.horizontal, 20)
-                        
+                        .dsAppear(0.08)
+
                         // Only show upcoming tasks if current list isn't completed
                         if !viewModel.todayChecklist.isCompleted {
                             let upcomingTasks = viewModel.getUpcomingUnlocks(for: viewModel.streakStats.currentStreak)
@@ -307,6 +340,7 @@ struct ModernDailyChecklistView: View {
                         }
                         .padding(.horizontal, 20)
                         .padding(.top, 12)
+                        .dsAppear(0.16)
 
                         // Bottom spacing for last task accessibility
                         Color.clear.frame(height: 80)
@@ -550,7 +584,7 @@ struct OptimizedTaskRow: View {
                     .frame(width: 80, height: 80)
                     .contentShape(Rectangle())
                     .onTapGesture {
-                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                        Juice.play(.tapLight)
                         withAnimation(.easeOut(duration: 0.1)) {
                             isPressed = true
                         }
@@ -676,27 +710,35 @@ struct QuickActionTile: View {
 
     var body: some View {
         Button(action: {
-            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            Juice.play(.tapLight)
             action()
         }) {
-            VStack(spacing: 8) {
+            VStack(spacing: DS.Spacing.xs) {
                 ZStack {
-                    Circle().fill(tint.opacity(0.22)).frame(width: 46, height: 46)
+                    Circle()
+                        .fill(
+                            LinearGradient(
+                                colors: [tint.opacity(0.95), tint.opacity(0.55)],
+                                startPoint: .topLeading, endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 52, height: 52)
+                        .shadow(color: tint.opacity(0.5), radius: 8, x: 0, y: 4)
                     Image(systemName: icon)
-                        .font(.system(size: 18, weight: .semibold))
+                        .font(.system(size: 20, weight: .bold))
                         .foregroundColor(.white)
                 }
                 Text(label)
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundColor(.white.opacity(0.8))
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.85))
                     .lineLimit(1)
                     .minimumScaleFactor(0.75)
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 12)
-            .background(RoundedRectangle(cornerRadius: 14).fill(Color.white.opacity(0.05)))
+            .padding(.vertical, DS.Spacing.sm)
+            .dsGlass(cornerRadius: DS.Radius.md, strokeOpacity: 0.12, elevation: DS.Elevation.low)
         }
-        .buttonStyle(PlainButtonStyle())
+        .buttonStyle(.dsPressable(feel: .tapLight, haptics: false))
     }
 }
 

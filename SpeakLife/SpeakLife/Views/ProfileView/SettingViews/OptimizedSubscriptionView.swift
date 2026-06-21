@@ -150,7 +150,7 @@ struct AbideStyleCTAButton: View {
                 .font(.system(size: 18, weight: .semibold))
                 .foregroundColor(.white)
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, 16)
+                .padding(.vertical, DS.Spacing.md)
                 .background(
                     RoundedRectangle(cornerRadius: 25)
                         .fill(Constants.DAMidBlue) // SpeakLife blue
@@ -450,7 +450,7 @@ struct OptimizedSubscriptionView: View {
                 .padding(.vertical, iPad ? 12 : geometry.size.height * 0.015)
                 .frame(maxWidth: iPad ? 500 : .infinity)
                 .background(
-                    RoundedRectangle(cornerRadius: 16)
+                    RoundedRectangle(cornerRadius: DS.Radius.md)
                         .fill(Constants.DAMidBlue.opacity(0.9))
                 )
                 .padding(.horizontal, iPad ? 40 : geometry.size.width * 0.05)
@@ -468,7 +468,7 @@ struct OptimizedSubscriptionView: View {
         return VStack(alignment: .leading, spacing: iPad ? 16 : 12) {
             ForEach(benefits, id: \.title) { benefit in
                 BenefitRow(benefit: benefit)
-                Spacer().frame(height: 4)
+                Spacer().frame(height: DS.Spacing.xxs)
             }
         }
         .frame(maxWidth: iPad ? 700 : .infinity, alignment: .leading)
@@ -489,7 +489,7 @@ struct OptimizedSubscriptionView: View {
                 ),
                 action: { selectedOption = "annual" }
             )
-            .padding(.bottom, 8)
+            .padding(.bottom, DS.Spacing.xs)
             
 //            AbideStylePricingOption(
 //                option: PricingOption(
@@ -528,7 +528,7 @@ struct OptimizedSubscriptionView: View {
             )
             .frame(height: 15)
             
-            VStack(spacing: 12) {
+            VStack(spacing: DS.Spacing.sm) {
                 // Pricing options - centered on iPad
                 if iPad {
                     HStack(spacing: 20) {
@@ -592,7 +592,7 @@ struct OptimizedSubscriptionView: View {
     }
     
     private func makePurchase() {
-        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+        Juice.play(.tapSolid)
         
         Task {
             // Set loading state immediately

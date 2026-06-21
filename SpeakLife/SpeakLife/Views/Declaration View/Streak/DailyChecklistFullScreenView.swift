@@ -37,11 +37,13 @@ struct DailyChecklistFullScreenView: View {
                 }
                 .padding(.horizontal, 20)
                 .padding(.top, 16)
-                
+                .dsAppear(0)
+
                 // Main checklist content
                 DailyChecklistView(viewModel: viewModel)
                     .padding(.horizontal, 20)
                     .padding(.top, 20)
+                    .dsAppear(0.06)
                 
                 Spacer()
             }

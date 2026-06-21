@@ -34,7 +34,7 @@ struct GenericContentCell<ContentType: SectionableContent>: View {
             }
         }
         .scaleEffect(isPressed ? 0.95 : 1.0)
-        .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isPressed)
+        .animation(DS.Motion.quick, value: isPressed)
         .onTapGesture {
             isPressed = true
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
@@ -83,7 +83,7 @@ struct GenericContentCell<ContentType: SectionableContent>: View {
                 Spacer(minLength: 0) // Fill remaining space
             }
             .padding(.horizontal, 4)
-            .padding(.vertical, 8)
+            .padding(.vertical, DS.Spacing.xs)
             .frame(height: configuration.itemHeight * 0.35) // Fixed height for text area
         }
         .frame(width: configuration.itemWidth, height: configuration.itemHeight, alignment: .top) // Fixed total size with top alignment
@@ -92,7 +92,7 @@ struct GenericContentCell<ContentType: SectionableContent>: View {
     }
     
     private var compactCell: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: DS.Spacing.sm) {
             // Thumbnail (fixed size)
             cellImageView(width: 60, height: 60)
                 .cornerRadius(8)
@@ -131,14 +131,15 @@ struct GenericContentCell<ContentType: SectionableContent>: View {
                 .frame(width: 44, height: 44)
         }
         .frame(height: 76, alignment: .top) // Fixed total height with top alignment
-        .padding(.vertical, 8)
-        .padding(.horizontal, 16)
+        .padding(.vertical, DS.Spacing.xs)
+        .padding(.horizontal, DS.Spacing.md)
         .background(
-            RoundedRectangle(cornerRadius: 12)
+            RoundedRectangle(cornerRadius: DS.Radius.sm, style: .continuous)
                 .fill(.ultraThinMaterial)
         )
+        .dsShadow(DS.Elevation.low)
     }
-    
+
     private var featuredCell: some View {
         ZStack(alignment: .bottomLeading) {
             // Background image
@@ -193,11 +194,11 @@ struct GenericContentCell<ContentType: SectionableContent>: View {
                 .frame(height: 32) // Fixed height for controls
             }
             .frame(height: configuration.itemHeight * 0.4) // Fixed content area height
-            .padding(16)
+            .padding(DS.Spacing.md)
         }
         .frame(width: configuration.itemWidth, height: configuration.itemHeight)
-        .cornerRadius(16)
-        .shadow(color: .black.opacity(0.3), radius: 8, x: 0, y: 4)
+        .cornerRadius(DS.Radius.md)
+        .dsShadow(DS.Elevation.low)
     }
     
     private func customCell(width: CGFloat, height: CGFloat) -> some View {
@@ -227,7 +228,7 @@ struct GenericContentCell<ContentType: SectionableContent>: View {
             // Favorite button for standard cell
             if configuration.cellStyle == GenericSectionConfiguration.SectionCellStyle.standard {
                 favoriteButton
-                    .padding(8)
+                    .padding(DS.Spacing.xs)
             }
             
             // Premium lock indicator
@@ -255,7 +256,7 @@ struct GenericContentCell<ContentType: SectionableContent>: View {
             Image(systemName: isFavorite ? "heart.fill" : "heart")
                 .font(.system(size: 16, weight: .semibold))
                 .foregroundColor(isFavorite ? .pink : .white)
-                .padding(8)
+                .padding(DS.Spacing.xs)
                 .background(
                     Circle()
                         .fill(.ultraThinMaterial)
@@ -272,7 +273,7 @@ struct GenericContentCell<ContentType: SectionableContent>: View {
                 .font(.caption.weight(.bold))
         }
         .foregroundColor(.white)
-        .padding(.horizontal, 8)
+        .padding(.horizontal, DS.Spacing.xs)
         .padding(.vertical, 4)
         .background(
             Capsule()
@@ -294,7 +295,7 @@ struct GenericContentCell<ContentType: SectionableContent>: View {
                     )
                 Spacer()
             }
-            .padding(8)
+            .padding(DS.Spacing.xs)
         }
     }
 }

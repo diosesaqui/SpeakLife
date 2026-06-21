@@ -52,7 +52,7 @@ struct SpiritualGrowthView: View {
                 
                 // Content
                 ScrollView {
-                    VStack(spacing: 24) {
+                    VStack(spacing: DS.Spacing.lg) {
                         if selectedTab == 0 {
                             overviewContent
                                 .transition(.asymmetric(
@@ -80,7 +80,7 @@ struct SpiritualGrowthView: View {
                     Color.black.opacity(0.5)
                         .ignoresSafeArea()
                         .onTapGesture {
-                            withAnimation(.spring()) {
+                            withAnimation(DS.Motion.smooth) {
                                 showingInfo = false
                             }
                         }
@@ -133,7 +133,7 @@ struct SpiritualGrowthView: View {
             
             // Info button
             Button {
-                withAnimation(.spring()) {
+                withAnimation(DS.Motion.smooth) {
                     showingInfo = true
                 }
             } label: {
@@ -164,7 +164,7 @@ struct SpiritualGrowthView: View {
                 icon: "chart.xyaxis.line",
                 isSelected: selectedTab == 0
             ) {
-                withAnimation(.spring()) {
+                withAnimation(DS.Motion.smooth) {
                     selectedTab = 0
                 }
             }
@@ -174,7 +174,7 @@ struct SpiritualGrowthView: View {
                 icon: "chart.bar.doc.horizontal",
                 isSelected: selectedTab == 1
             ) {
-                withAnimation(.spring()) {
+                withAnimation(DS.Motion.smooth) {
                     selectedTab = 1
                 }
             }
@@ -185,7 +185,7 @@ struct SpiritualGrowthView: View {
     // MARK: - Overview Content
     
     private var overviewContent: some View {
-        VStack(spacing: 24) {
+        VStack(spacing: DS.Spacing.lg) {
             // Hero card with current status
             heroStatusCard
             
@@ -203,7 +203,7 @@ struct SpiritualGrowthView: View {
     // MARK: - Detailed Metrics Content
     
     private var detailedMetricsContent: some View {
-        VStack(spacing: 24) {
+        VStack(spacing: DS.Spacing.lg) {
             // Detailed stats grid
             detailedStatsGrid
             
@@ -222,7 +222,7 @@ struct SpiritualGrowthView: View {
     
     private var heroStatusCard: some View {
         VStack(spacing: 20) {
-            HStack(spacing: 24) {
+            HStack(spacing: DS.Spacing.lg) {
                 // Strength level visual
                 ZStack {
                     Circle()
@@ -260,7 +260,7 @@ struct SpiritualGrowthView: View {
                     }
                 }
                 
-                VStack(alignment: .leading, spacing: 12) {
+                VStack(alignment: .leading, spacing: DS.Spacing.sm) {
                     Text(burstTracker.strengthLevel.rawValue)
                         .font(.system(size: 28, weight: .bold))
                         .foregroundColor(burstTracker.strengthLevel.color)
@@ -270,7 +270,7 @@ struct SpiritualGrowthView: View {
                         .foregroundColor(.white.opacity(0.85))
                     
                     // Quick stats
-                    HStack(spacing: 16) {
+                    HStack(spacing: DS.Spacing.md) {
                         QuickStat(
                             icon: "flame.fill",
                             value: "\(burstTracker.getCompletionsForWeek().count)",
@@ -290,7 +290,7 @@ struct SpiritualGrowthView: View {
             
             // Progress to next level
             if let nextLevel = getNextLevel() {
-                VStack(alignment: .leading, spacing: 8) {
+                VStack(alignment: .leading, spacing: DS.Spacing.xs) {
                     HStack {
                         Text("Progress to \(nextLevel.rawValue)")
                             .font(.system(size: 14, weight: .medium))
@@ -312,7 +312,7 @@ struct SpiritualGrowthView: View {
                 }
             }
         }
-        .padding(24)
+        .padding(DS.Spacing.lg)
         .background(
             RoundedRectangle(cornerRadius: 20)
                 .fill(
@@ -339,13 +339,13 @@ struct SpiritualGrowthView: View {
     // MARK: - Achievement Section
     
     private var achievementSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: DS.Spacing.md) {
             Text("Achievements")
-                .font(.system(size: 20, weight: .semibold))
+                .font(DS.Typography.headline)
                 .foregroundColor(.white)
             
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 16) {
+                HStack(spacing: DS.Spacing.md) {
                     AchievementBadge(
                         icon: "star.fill",
                         title: "7 Day Warrior",
@@ -388,7 +388,7 @@ struct SpiritualGrowthView: View {
     // MARK: - Detailed Stats Grid
     
     private var detailedStatsGrid: some View {
-        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
+        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: DS.Spacing.md) {
             DetailedStatCard(
                 title: "Consistency Score",
                 value: "\(Int(burstTracker.calculateMetrics().consistency * 100))%",
@@ -453,20 +453,21 @@ struct SpiritualGrowthView: View {
         }
         .padding()
         .background(
-            RoundedRectangle(cornerRadius: 16)
+            RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous)
                 .fill(Color.white.opacity(0.05))
         )
+        .dsShadow(DS.Elevation.low)
     }
-    
+
     // MARK: - Recent Activity
     
     private var recentActivityList: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: DS.Spacing.md) {
             Text("Recent Activity")
-                .font(.system(size: 20, weight: .semibold))
+                .font(DS.Typography.headline)
                 .foregroundColor(.white)
-            
-            VStack(spacing: 12) {
+
+            VStack(spacing: DS.Spacing.sm) {
                 ForEach(burstTracker.completions.suffix(5).reversed(), id: \.date) { completion in
                     ActivityRow(completion: completion)
                 }
@@ -477,12 +478,12 @@ struct SpiritualGrowthView: View {
     // MARK: - Milestones Section
     
     private var milestonesSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: DS.Spacing.md) {
             Text("Upcoming Milestones")
-                .font(.system(size: 20, weight: .semibold))
+                .font(DS.Typography.headline)
                 .foregroundColor(.white)
-            
-            VStack(spacing: 12) {
+
+            VStack(spacing: DS.Spacing.sm) {
                 if burstTracker.getUniqueDaysCount() < 7 {
                     MilestoneRow(
                         milestone: "7 Day Warrior",
@@ -516,7 +517,7 @@ struct SpiritualGrowthView: View {
     // MARK: - Motivational Card
     
     private var motivationalCard: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: DS.Spacing.sm) {
             Image(systemName: "quote.opening")
                 .font(.system(size: 24))
                 .foregroundColor(.white.opacity(0.5))
@@ -533,7 +534,7 @@ struct SpiritualGrowthView: View {
                 .foregroundColor(.white.opacity(0.85))
                 .padding(.top, 8)
         }
-        .padding(24)
+        .padding(DS.Spacing.lg)
         .frame(maxWidth: .infinity)
         .background(
             ZStack {
@@ -688,7 +689,7 @@ struct DetailedStatCard: View {
     let color: Color
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: DS.Spacing.sm) {
             HStack {
                 Image(systemName: icon)
                     .font(.system(size: 20))
@@ -712,13 +713,14 @@ struct DetailedStatCard: View {
         .padding()
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
-            RoundedRectangle(cornerRadius: 16)
+            RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous)
                 .fill(Color.white.opacity(0.05))
                 .overlay(
-                    RoundedRectangle(cornerRadius: 16)
+                    RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous)
                         .stroke(color.opacity(0.3), lineWidth: 1)
                 )
         )
+        .dsShadow(DS.Elevation.low)
     }
 }
 
@@ -859,7 +861,7 @@ struct InfoSheetContent: View {
                 Spacer()
                 
                 Button(action: {
-                    withAnimation(.spring()) {
+                    withAnimation(DS.Motion.smooth) {
                         isPresented = false
                     }
                 }) {
@@ -941,18 +943,18 @@ struct InfoSection: View {
     let points: [String]
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: DS.Spacing.sm) {
             Text(title)
                 .font(.system(size: 18, weight: .semibold))
                 .foregroundColor(.orange)
-            
+
             Text(description)
                 .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.9))
-            
-            VStack(alignment: .leading, spacing: 8) {
+
+            VStack(alignment: .leading, spacing: DS.Spacing.xs) {
                 ForEach(points, id: \.self) { point in
-                    HStack(alignment: .top, spacing: 8) {
+                    HStack(alignment: .top, spacing: DS.Spacing.xs) {
                         Text("•")
                             .foregroundColor(.orange)
                         Text(point)
@@ -976,7 +978,7 @@ struct SpiritualStrengthGraph: View {
     @State private var animateGraph = false
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: DS.Spacing.md) {
             // Title and level
             HStack {
                 Image(systemName: "bolt.circle.fill")
@@ -984,7 +986,7 @@ struct SpiritualStrengthGraph: View {
                     .foregroundColor(Color(red: 1.0, green: 0.7, blue: 0.0))
                 
                 Text("Spiritual Strength")
-                    .font(.system(size: 20, weight: .semibold))
+                    .font(DS.Typography.headline)
                     .foregroundColor(.white)
                 
                 Spacer()
@@ -992,8 +994,8 @@ struct SpiritualStrengthGraph: View {
                 Text(tracker.strengthLevel.rawValue)
                     .font(.system(size: 14, weight: .medium))
                     .foregroundColor(tracker.strengthLevel.color)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 4)
+                    .padding(.horizontal, DS.Spacing.sm)
+                    .padding(.vertical, DS.Spacing.xxs)
                     .background(
                         Capsule()
                             .fill(tracker.strengthLevel.color.opacity(0.2))

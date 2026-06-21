@@ -9,14 +9,21 @@ struct SkillLevelView: View {
         let color = progressManager.colorForLevel(level)
         let icon = progressManager.iconForLevel(level)
 
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: DS.Spacing.sm) {
             HStack {
                 Image(systemName: icon)
-                    .foregroundColor(color)
+                    .foregroundColor(.white)
                     .imageScale(.large)
-                    .padding(8)
-                    .background(color.opacity(0.1))
+                    .padding(DS.Spacing.xs)
+                    .background(
+                        LinearGradient(
+                            colors: [color.opacity(0.95), color.opacity(0.55)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
                     .clipShape(Circle())
+                    .shadow(color: color.opacity(0.5), radius: 8, x: 0, y: 4)
 
                 VStack(alignment: .leading) {
                     Text("Your Level")
@@ -36,9 +43,7 @@ struct SkillLevelView: View {
                 .frame(height: 8)
         }
         .padding()
-        .background(.ultraThinMaterial)
-        .clipShape(RoundedRectangle(cornerRadius: 20))
-        .shadow(radius: 5)
+        .dsGlass(cornerRadius: DS.Radius.lg)
         .padding(.horizontal)
     }
 }

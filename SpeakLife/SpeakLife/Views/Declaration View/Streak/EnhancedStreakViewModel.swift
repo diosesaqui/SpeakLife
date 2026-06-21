@@ -68,6 +68,15 @@ final class EnhancedStreakViewModel: ObservableObject {
             name: UIApplication.didBecomeActiveNotification,
             object: nil
         )
+
+        // Also roll over when the calendar day changes while the app is open and
+        // in the foreground across midnight — didBecomeActive doesn't fire then.
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(appDidBecomeActive),
+            name: .NSCalendarDayChanged,
+            object: nil
+        )
     }
     
     // MARK: - Task Personalization
@@ -399,6 +408,12 @@ final class EnhancedStreakViewModel: ObservableObject {
     }
     
     @objc private func appDidBecomeActive() {
+        // May arrive off-main (e.g. NSCalendarDayChanged); this mutates
+        // @Published state, so always run on the main thread.
+        guard Thread.isMainThread else {
+            DispatchQueue.main.async { [weak self] in self?.appDidBecomeActive() }
+            return
+        }
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: Date())
         let checklistDate = calendar.startOfDay(for: todayChecklist.date)

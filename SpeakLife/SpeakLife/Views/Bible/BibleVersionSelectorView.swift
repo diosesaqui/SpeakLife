@@ -42,7 +42,7 @@ struct BibleVersionSelectorView: View {
                                         }
                                     }
                                     .padding(.horizontal)
-                                    .padding(.vertical, 8)
+                                    .padding(.vertical, DS.Spacing.xs)
                                 }
                             }
                             .padding(.top)

@@ -26,7 +26,7 @@ struct BadgeTestView: View {
             }
             
             // Stats
-            VStack(spacing: 8) {
+            VStack(spacing: DS.Spacing.xs) {
                 Text("Badges Earned: \(badgeManager.unlockedBadgeCount)/\(badgeManager.totalBadgeCount)")
                     .font(.headline)
                 
@@ -36,7 +36,7 @@ struct BadgeTestView: View {
             }
             
             // Action buttons
-            VStack(spacing: 12) {
+            VStack(spacing: DS.Spacing.sm) {
                 Button("View Badge Collection") {
                     showBadgeCollection = true
                 }

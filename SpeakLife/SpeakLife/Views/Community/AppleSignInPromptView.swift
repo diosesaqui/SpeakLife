@@ -33,12 +33,14 @@ struct AppleSignInPromptView: View {
                     .font(.system(size: 54))
                     .foregroundColor(Color(hex: "A78BFA"))
                     .symbolRenderingMode(.multicolor)
+                    .dsAppear(0)
 
                 // Title
                 Text("Join the Warrior Room")
                     .font(Font.custom("AppleSDGothicNeo-Bold", size: 26, relativeTo: .title))
                     .foregroundColor(.white)
                     .multilineTextAlignment(.center)
+                    .dsAppear(0.06)
 
                 // Subtitle
                 Text("Carry each other's burdens,\nand in this way you will fulfill the law of Christ.")
@@ -46,7 +48,8 @@ struct AppleSignInPromptView: View {
                     .foregroundColor(.white.opacity(0.75))
                     .multilineTextAlignment(.center)
                     .italic()
-                    .padding(.horizontal, 32)
+                    .padding(.horizontal, DS.Spacing.xl)
+                    .dsAppear(0.12)
 
                 Text("— Galatians 6:2")
                     .font(Font.custom("AppleSDGothicNeo-Regular", size: 13, relativeTo: .caption))
@@ -58,7 +61,7 @@ struct AppleSignInPromptView: View {
                         .font(Font.custom("AppleSDGothicNeo-Regular", size: 13, relativeTo: .caption))
                         .foregroundColor(.red.opacity(0.9))
                         .multilineTextAlignment(.center)
-                        .padding(.horizontal, 32)
+                        .padding(.horizontal, DS.Spacing.xl)
                 }
 
                 // Sign In with Apple button
@@ -81,14 +84,14 @@ struct AppleSignInPromptView: View {
                 .frame(width: 280, height: 56)
                 .clipShape(Capsule())
                 .cornerRadius(12)
-                .padding(.horizontal, 32)
+                .padding(.horizontal, DS.Spacing.xl)
                 .disabled(appleSignIn.isLoading)
                 .overlay(
                     Group {
                         if appleSignIn.isLoading {
                             RoundedRectangle(cornerRadius: 12)
                                 .fill(Color.black.opacity(0.35))
-                                .padding(.horizontal, 32)
+                                .padding(.horizontal, DS.Spacing.xl)
                                 .overlay(ProgressView().tint(.white))
                         }
                     }
@@ -109,7 +112,8 @@ struct AppleSignInPromptView: View {
                         .font(Font.custom("AppleSDGothicNeo-Regular", size: 15, relativeTo: .body))
                         .foregroundColor(.white.opacity(0.55))
                 }
-                .padding(.top, 4)
+                .buttonStyle(.dsPressable(feel: .tapSolid))
+                .padding(.top, DS.Spacing.xxs)
 
                 Spacer()
             }

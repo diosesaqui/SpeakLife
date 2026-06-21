@@ -14,7 +14,7 @@ struct TestimonyRow: View {
     let reportAction: () -> Void
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: DS.Spacing.xs) {
             Text(testimony.user)
                 .font(Font.custom("AppleSDGothicNeo-Regular", size: 22, relativeTo: .headline))
                 .foregroundColor(.blue)
@@ -67,9 +67,11 @@ struct TestimonyFeedView: View {
                         .padding()
                         .background(Color.blue)
                         .foregroundColor(.white)
-                        .cornerRadius(10)
+                        .cornerRadius(DS.Radius.sm)
                         .padding()
                 }
+                .buttonStyle(.dsPressable(feel: .tapSolid))
+                .dsAppear(0.06)
                 .sheet(isPresented: $viewModel.isShowingForm) {
                     TestimonyFormView().environmentObject(viewModel)
                 }
@@ -159,7 +161,7 @@ struct TestimonyFormView: View {
                                 .frame(maxWidth: .infinity)
                                 .padding()
                                 .foregroundColor(.white)
-                                .cornerRadius(10)
+                                .cornerRadius(DS.Radius.sm)
                         }
                     }
                     .modifier(SubmitButtonModifier(isDisabled: viewModel.isSubmitting || userName.isEmpty || testimonyText.count > 10))
@@ -186,6 +188,6 @@ struct SubmitButtonModifier: ViewModifier {
             .padding()
             .background(isDisabled ? Color.gray : Color.blue)
             .foregroundColor(.white)
-            .cornerRadius(10)
+            .cornerRadius(DS.Radius.sm)
     }
 }

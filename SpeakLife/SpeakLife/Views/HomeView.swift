@@ -108,12 +108,7 @@ struct HomeView: View {
     @State private var celebrationStreakCount = 0
     @State private var anniversaryMilestone: PremiumAnniversaryMilestone?
     @State private var yearInReviewStats: YearInReviewStats?
-    // Brief window after HomeView mounts where any email-capture sheet is held
-    // back so SKStoreReviewController (kicked off from the onboarding rating
-    // screen) has a clean scene to render in. iOS silently drops requestReview
-    // when a sheet is presenting over the active window.
-    @State private var suppressEmailSheets = false
-    
+
     private let currentVersion = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0.0"
 
     private static let streakReviewMilestones: Set<Int> = [3, 7, 14, 30, 60, 100, 365]
@@ -167,27 +162,6 @@ struct HomeView: View {
                                         devotionalViewModel.lastFetchDate = DateFormatter.localizedString(from: Date(), dateStyle: .short, timeStyle: .none)
                                     }
                                 }
-                            }
-                            .sheet(isPresented: Binding(
-                                get: { !suppressEmailSheets && appState.needEmail },
-                                set: { appState.needEmail = $0 }
-                            )) {
-                                EmailCaptureView()
-                            }
-                            .sheet(isPresented: Binding(
-                                get: { !suppressEmailSheets && subscriptionStore.showEmailCaptureAfterPurchase },
-                                set: { subscriptionStore.showEmailCaptureAfterPurchase = $0 }
-                            )) {
-                                EmailCaptureView(source: "post_purchase")
-                                    .environmentObject(appState)
-                            }
-                            .sheet(isPresented: Binding(
-                                get: { !suppressEmailSheets && subscriptionStore.showEmailConfirmAfterPurchase },
-                                set: { subscriptionStore.showEmailConfirmAfterPurchase = $0 }
-                            )) {
-                                EmailConfirmationView(storedEmail: appState.email, source: "post_purchase")
-                                    .environmentObject(appState)
-                                    .environmentObject(subscriptionStore)
                             }
                             .sheet(isPresented: $showSubscription, content: {
                                 OptimizedSubscriptionView {
@@ -281,17 +255,12 @@ struct HomeView: View {
                                 }
                                 .ignoresSafeArea()
                             }
-                            .fullScreenCover(isPresented: $showDailyBurstOnLaunch) {
-                                DailyDeclarationBurstView()
-                                    .environmentObject(declarationStore)
-                                    .environmentObject(themeStore)
-                                    .environmentObject(timerViewModel)
-                                    .environmentObject(streakViewModel)
-                                    .environmentObject(subscriptionStore)
-                            }
-                            .onReceive(NotificationCenter.default.publisher(for: Notification.Name("ShowDailyDeclarationBurst"))) { _ in
-                                showDailyBurstOnLaunch = true
-                            }
+                            // The Daily Burst is presented by DeclarationView's own
+                            // fullScreenCover (the "fully wired" one). Listening for
+                            // "ShowDailyDeclarationBurst" here too caused BOTH covers to
+                            // fire on a single notification, and SwiftUI can only present
+                            // one cover per context — so the burst appeared and was
+                            // immediately dismissed, forcing the user to trigger it twice.
                             // Daily first-open: show Structured Day plan instead of raw burst.
                             // The burst task is inside the checklist — users reach it naturally.
                             .fullScreenCover(isPresented: $showDailyStructuredDayOnLaunch) {
@@ -442,6 +411,7 @@ struct HomeView: View {
                     tabViewModel.feedTabTag = enabled ? 2 : 0
                 }
                 .onAppear {
+                    PremiumHaptics.prepare() // warm the Taptic Engine so the first tap lands
                     tabViewModel.feedTabTag = subscriptionStore.checklistHomeEnabled ? 2 : 0
                     checkForNewVersion()
                     checkForPersonalDeclarationMigration()
@@ -451,35 +421,6 @@ struct HomeView: View {
                         appState.firstOpen = false
                     }
                     UIScrollView.appearance().isScrollEnabled = true
-
-                    // First mount after onboarding: SubscriptionStore may have
-                    // pre-flagged showEmailCaptureAfterPurchase during the in-
-                    // onboarding paywall purchase. Hold any pending email sheet
-                    // for ~4s so the rating-screen SKStoreReviewController call
-                    // has a clean scene. Underlying flags are untouched; only
-                    // their .sheet bindings are gated.
-                    suppressEmailSheets = true
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 4.0) {
-                        suppressEmailSheets = false
-                    }
-
-                    // Email capture / confirmation for existing premium users.
-                    // Fires once only per path — guarded by separate UserDefaults keys.
-                    if subscriptionStore.isPremium {
-                        let alreadyCaptured    = UserDefaults.standard.bool(forKey: "hasShownEmailCapture")
-                        let alreadyConfirmed   = UserDefaults.standard.bool(forKey: "hasConfirmedPostPurchaseEmail")
-                        let hasStoredEmail     = !appState.email.isEmpty
-
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                            if hasStoredEmail && !alreadyConfirmed {
-                                // Has email locally → show confirmation popup to tag as post_purchase
-                                subscriptionStore.showEmailConfirmAfterPurchase = true
-                            } else if !hasStoredEmail && !alreadyCaptured {
-                                // No email at all → show capture sheet
-                                subscriptionStore.showEmailCaptureAfterPurchase = true
-                            }
-                        }
-                    }
                 }
                 .background(Color.clear)
                 .environment(\.colorScheme, .dark)
@@ -515,7 +456,7 @@ struct HomeView: View {
                                 .font(.headline)
                                 .foregroundColor(.white)
                                 .padding(.horizontal, 40)
-                                .padding(.vertical, 12)
+                                .padding(.vertical, DS.Spacing.sm)
                                 .background(
                                     RoundedRectangle(cornerRadius: 25)
                                         .fill(LinearGradient(
@@ -525,6 +466,7 @@ struct HomeView: View {
                                         ))
                                 )
                         }
+                        .buttonStyle(.dsPressable(feel: .tapSolid))
                     }
                     .transition(.scale.combined(with: .opacity))
                 }

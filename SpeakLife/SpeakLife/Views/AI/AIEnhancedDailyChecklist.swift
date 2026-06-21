@@ -25,22 +25,28 @@ struct AIEnhancedDailyChecklist: View {
             VStack(spacing: 0) {
                 // Header with progress circle - existing from DailyChecklistView
                 headerSection
-                
+                    .dsAppear(0)
+
                 ScrollView {
-                    VStack(spacing: 16) {
+                    VStack(spacing: DS.Spacing.md) {
                         // Existing checklist items
                         existingChecklistSection
-                        
+                            .dsAppear(0.06)
+
                         // AI-enhanced sections
                         if subscriptionStore.isAIEnabled {
                             if showAISection {
                                 aiPersonalizedTasksSection
+                                    .dsAppear(0.12)
                                 aiInsightsSection
+                                    .dsAppear(0.18)
                             }
                         } else if subscriptionStore.isPremium {
                             aiFeaturePrompt
+                                .dsAppear(0.12)
                         } else {
                             aiUpgradePrompt
+                                .dsAppear(0.12)
                         }
                     }
                     .padding(.horizontal)
@@ -56,8 +62,8 @@ struct AIEnhancedDailyChecklist: View {
     
     private var headerSection: some View {
         HStack {
-            VStack(alignment: .leading, spacing: 4) {
-                HStack(spacing: 8) {
+            VStack(alignment: .leading, spacing: DS.Spacing.xxs) {
+                HStack(spacing: DS.Spacing.xs) {
                     Text(viewModel.todayChecklist.currentPhase.emoji)
                         .font(.system(size: 16))
                     Text(viewModel.todayChecklist.currentPhase.displayName)
@@ -96,7 +102,7 @@ struct AIEnhancedDailyChecklist: View {
                         .font(.title2)
                         .foregroundColor(.white.opacity(0.7))
                 }
-                .padding(.trailing, 8)
+                .padding(.trailing, DS.Spacing.xs)
             }
         }
         .padding()
@@ -106,7 +112,7 @@ struct AIEnhancedDailyChecklist: View {
     // MARK: - Existing Checklist Section
     
     private var existingChecklistSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: DS.Spacing.sm) {
             Text("Today's Spiritual Checklist")
                 .font(.headline)
                 .foregroundColor(.white)
@@ -120,11 +126,11 @@ struct AIEnhancedDailyChecklist: View {
     // MARK: - AI Personalized Tasks Section
     
     private var aiPersonalizedTasksSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: DS.Spacing.sm) {
             HStack {
                 Image(systemName: "sparkles")
                     .foregroundColor(.yellow)
-                
+
                 Text("Your Spiritual Focus Today")
                     .font(.headline)
                     .foregroundColor(.white)
@@ -164,11 +170,11 @@ struct AIEnhancedDailyChecklist: View {
     // MARK: - AI Insights Section
     
     private var aiInsightsSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: DS.Spacing.sm) {
             HStack {
                 Image(systemName: "lightbulb.fill")
                     .foregroundColor(.yellow)
-                
+
                 Text("AI Spiritual Insights")
                     .font(.headline)
                     .foregroundColor(.white)
@@ -177,8 +183,8 @@ struct AIEnhancedDailyChecklist: View {
                 
                 Text("Personalized")
                     .font(.caption)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
+                    .padding(.horizontal, DS.Spacing.xs)
+                    .padding(.vertical, DS.Spacing.xxs)
                     .background(Color.yellow.opacity(0.3))
                     .foregroundColor(.white)
                     .cornerRadius(8)
@@ -196,7 +202,7 @@ struct AIEnhancedDailyChecklist: View {
     // MARK: - AI Feature Prompt
     
     private var aiFeaturePrompt: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: DS.Spacing.sm) {
             HStack {
                 Image(systemName: "brain")
                     .foregroundColor(.blue)
@@ -209,8 +215,8 @@ struct AIEnhancedDailyChecklist: View {
                 
                 Text("Enable AI")
                     .font(.caption)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
+                    .padding(.horizontal, DS.Spacing.xs)
+                    .padding(.vertical, DS.Spacing.xxs)
                     .background(Color.blue.opacity(0.3))
                     .foregroundColor(.white)
                     .cornerRadius(8)
@@ -222,24 +228,17 @@ struct AIEnhancedDailyChecklist: View {
                 .multilineTextAlignment(.leading)
         }
         .padding()
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color.white.opacity(0.1))
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.blue.opacity(0.3), lineWidth: 1)
-        )
+        .dsGlass(cornerRadius: DS.Radius.md)
     }
-    
+
     // MARK: - AI Upgrade Prompt
     
     private var aiUpgradePrompt: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: DS.Spacing.sm) {
             HStack {
                 Image(systemName: "sparkles")
                     .foregroundColor(.orange)
-                
+
                 Text("AI-Powered Spiritual Growth")
                     .font(.headline)
                     .foregroundColor(.white)
@@ -248,14 +247,14 @@ struct AIEnhancedDailyChecklist: View {
                 
                 Text("Premium")
                     .font(.caption)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
+                    .padding(.horizontal, DS.Spacing.xs)
+                    .padding(.vertical, DS.Spacing.xxs)
                     .background(Color.orange.opacity(0.3))
                     .foregroundColor(.white)
                     .cornerRadius(8)
             }
             
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: DS.Spacing.xs) {
                 AIChecklistFeatureRow(
                     icon: "target",
                     title: "Personalized Daily Tasks",
@@ -282,9 +281,10 @@ struct AIEnhancedDailyChecklist: View {
             .fontWeight(.semibold)
             .foregroundColor(.white)
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 12)
-            .background(Color.orange)
+            .padding(.vertical, DS.Spacing.sm)
+            .background(DS.Gradient.gold)
             .cornerRadius(10)
+            .buttonStyle(.dsPressable(feel: .tapSolid))
         }
         .padding()
         .background(Color.orange.opacity(0.1))
@@ -382,10 +382,10 @@ struct ExistingTaskRow: View {
                     .foregroundColor(task.isCompleted ? .green : .white.opacity(0.7))
             }
             
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: DS.Spacing.xxs) {
                 Text(task.title)
                     .foregroundColor(.white)
-                
+
                 Text(task.description)
                     .font(.caption)
                     .foregroundColor(.white.opacity(0.7))
@@ -409,7 +409,7 @@ struct AITaskRow: View {
     var body: some View {
         HStack {
             Button(action: {
-                withAnimation(.spring()) {
+                withAnimation(DS.Motion.smooth) {
                     isCompleted.toggle()
                     if isCompleted {
                         onCompletion(task)
@@ -420,7 +420,7 @@ struct AITaskRow: View {
                     .foregroundColor(isCompleted ? .green : .white.opacity(0.7))
             }
             
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: DS.Spacing.xxs) {
                 HStack {
                     Text(task.title)
                         .foregroundColor(.white)
@@ -468,7 +468,7 @@ struct DailyInsightCard: View {
     @State private var isExpanded = false
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: DS.Spacing.xs) {
             HStack {
                 Text(insight.contextualMessage)
                     .font(.subheadline)
@@ -485,6 +485,7 @@ struct DailyInsightCard: View {
                         .foregroundColor(.white.opacity(0.7))
                         .font(.caption)
                 }
+                .buttonStyle(.dsPressable(feel: .tapSolid))
             }
             
             if isExpanded {
@@ -503,8 +504,7 @@ struct DailyInsightCard: View {
             }
         }
         .padding(10)
-        .background(Color.white.opacity(0.05))
-        .cornerRadius(8)
+        .dsGlass(cornerRadius: DS.Radius.sm)
     }
 }
 
@@ -512,7 +512,7 @@ struct EmptyAITasksView: View {
     let onGenerate: () async -> Void
     
     var body: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: DS.Spacing.sm) {
             Image(systemName: "sparkles")
                 .font(.title)
                 .foregroundColor(.yellow)
@@ -534,8 +534,8 @@ struct EmptyAITasksView: View {
             .font(.caption)
             .fontWeight(.semibold)
             .foregroundColor(.white)
-            .padding(.horizontal, 16)
-            .padding(.vertical, 8)
+            .padding(.horizontal, DS.Spacing.md)
+            .padding(.vertical, DS.Spacing.xs)
             .background(Color.yellow.opacity(0.3))
             .cornerRadius(8)
         }
@@ -549,7 +549,7 @@ struct AIChecklistFeatureRow: View {
     let description: String
     
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: DS.Spacing.sm) {
             Image(systemName: icon)
                 .foregroundColor(.orange)
                 .font(.title3)

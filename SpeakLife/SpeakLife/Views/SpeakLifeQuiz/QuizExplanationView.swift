@@ -26,14 +26,9 @@ struct QuizExplanationView: View {
 
                 // 📖 Revelation box
                 Text(explanation)
-                    .font(.body)
+                    .font(DS.Typography.body)
                     .padding()
-                    .background(
-                        RoundedRectangle(cornerRadius: 20)
-                            .fill(Color.white.opacity(0.15))
-                            .blur(radius: 0.5)
-                            .shadow(color: .white.opacity(0.2), radius: 10, x: 0, y: 8)
-                    )
+                    .dsGlass(cornerRadius: DS.Radius.lg)
                     .foregroundColor(.white)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal)
@@ -42,13 +37,14 @@ struct QuizExplanationView: View {
                 Button(action: onContinue) {
                     Text("Continue")
                         .font(.headline)
-                        .foregroundColor(.purple)
+                        .foregroundColor(DS.Palette.deepBlue)
                         .padding()
                         .frame(maxWidth: .infinity)
-                        .background(.white)
+                        .background(DS.Gradient.gold)
                         .cornerRadius(15)
-                        .shadow(color: .white.opacity(0.4), radius: 10)
+                        .shadow(color: DS.Palette.gold.opacity(0.45), radius: 8, x: 0, y: 3)
                 }
+                .buttonStyle(.dsPressable(feel: .tapSolid))
                 .padding(.horizontal)
             }
             .padding()

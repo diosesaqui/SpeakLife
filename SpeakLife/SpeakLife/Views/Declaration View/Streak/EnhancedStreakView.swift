@@ -368,7 +368,8 @@ struct EnhancedStreakSheet: View {
                 // Today's checklist status
                 DailyChecklistSummary(viewModel: viewModel)
                     .padding(.horizontal, 20)
-                
+                    .dsAppear(0)
+
                 // Enhanced Progress ring with milestone info
                 EnhancedProgressRing(
                     progress: progress,
@@ -377,10 +378,12 @@ struct EnhancedStreakSheet: View {
                     showSparkles: showSparkles
                 )
                 .padding(.top, 12)
-                
+                .dsAppear(0.06)
+
                 // Enhanced streak stats
                 EnhancedStreakStatsView(viewModel: viewModel)
                     .padding(.horizontal, 24)
+                    .dsAppear(0.12)
                 
                 // Action buttons
                 VStack(spacing: 16) {
@@ -474,10 +477,7 @@ struct DailyChecklistSummary: View {
                 }
             }
             .padding(16)
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(Color.white.opacity(0.1))
-            )
+            .dsGlass(cornerRadius: DS.Radius.md)
         }
     }
 }
@@ -529,7 +529,7 @@ struct PremiumStatCard: View {
             // Label
             Text(label.uppercased())
                 .font(.system(size: isHero ? 14 : 12, weight: .medium, design: .default))
-                .foregroundColor(.white.opacity(0.7))
+                .foregroundColor(DS.Palette.gold.opacity(0.9))
                 .tracking(1.2)
             
             // Value
@@ -552,29 +552,7 @@ struct PremiumStatCard: View {
         .frame(maxWidth: .infinity)
         .padding(.vertical, isHero ? 24 : 20)
         .padding(.horizontal, isHero ? 32 : 20)
-        .background(
-            RoundedRectangle(cornerRadius: isHero ? 20 : 16)
-                .fill(
-                    LinearGradient(
-                        colors: isHero ? 
-                            [Color.white.opacity(0.15), Color.white.opacity(0.05)] :
-                            [Color.white.opacity(0.08), Color.white.opacity(0.02)],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: isHero ? 20 : 16)
-                .stroke(
-                    LinearGradient(
-                        colors: [Color.white.opacity(0.2), Color.white.opacity(0.05)],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    ),
-                    lineWidth: 1
-                )
-        )
+        .dsGlass(cornerRadius: isHero ? DS.Radius.lg : DS.Radius.md, elevation: isHero ? DS.Elevation.high : DS.Elevation.medium)
     }
 }
 

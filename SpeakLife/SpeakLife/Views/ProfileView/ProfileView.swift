@@ -8,6 +8,7 @@
 import SwiftUI
 import MessageUI
 import FirebaseAnalytics
+import FirebaseMessaging
 import RevenueCat
 
 struct LazyView<Content: View>: View {
@@ -48,7 +49,7 @@ struct ProfileView: View {
     @State private var showShareSheet = false
     @State private var showSpiritualGrowth = false
     @State private var showSupportIDCopied = false
-    @State private var showEmailCaptureSheet = false
+    @State private var showFCMTokenCopied = false
     @State private var showHowToUse = false
     @State private var showCommunity = false
     let url = URL(string:APP.Product.urlID)
@@ -83,12 +84,12 @@ struct ProfileView: View {
                 )
             VStack {
                 VStack {
-            Spacer().frame(height: 8)
-                    
+            Spacer().frame(height: DS.Spacing.xs)
+
             AppLogo(height: 80)
 
 
-            Spacer().frame(height: 8)
+            Spacer().frame(height: DS.Spacing.xs)
         }
                 List {
                     Section(header: Text("Premium".uppercased()).font(.caption)) {
@@ -111,7 +112,6 @@ struct ProfileView: View {
 
                         remindersRow
                      //   widgetPreferencesRow
-                     //   emailsRow
                        // favoritesRow
                         musicRow
                         soundsRow
@@ -125,20 +125,18 @@ struct ProfileView: View {
                         reviewRow
                         feedbackRow
                         featureRequestRow
-                        emailRow
                         supportIDRow
-                        
-                        
+                        #if DEBUG
+                        fcmTokenRow
+                        #endif
+
+
                     }
                     
                     .sheet(isPresented: $showShareSheet, content: {
                         ShareSheet(activityItems: ["Check out SpeakLife - Bible Affirmations app that'll transform your life!", url as Any])
                     })
-                    .sheet(isPresented: $showEmailCaptureSheet) {
-                        EmailCaptureView(source: "settings")
-                            .environmentObject(appState)
-                    }
-                    
+
                     Section(header: Text("Other".uppercased()).font(.caption)) {
                         privacyPolicyRow
                         termsConditionsRow
@@ -146,7 +144,7 @@ struct ProfileView: View {
 
                     Section(footer: VStack {
                         Text(appVersion).font(.footnote)
-                        Spacer().frame(height: 8)
+                        Spacer().frame(height: DS.Spacing.xs)
                     }) {
 
                     }
@@ -223,27 +221,6 @@ struct ProfileView: View {
         .foregroundColor(.white)
     }
 
-    @MainActor
-    private var emailsRow: some View {
-        HStack {
-            Image(systemName: "crown.fill")
-                .foregroundColor(Constants.DAMidBlue)
-            NavigationLink(destination: LazyView(EmailCaptureView())) {
-                HStack {
-                    Text("Email", comment:  "subs row")
-                    Spacer()
-//                        Image(systemName: "chevron.right")
-//                            .resizable()
-//                            .aspectRatio(contentMode: .fit)
-//                            .frame(width: 8)
-//                            .foregroundColor(Constants.DAMidBlue)
-                }
-            }
-        }
-    }
-
-
-    
     @MainActor
     private var createYourOwnRow: some View {
         HStack {
@@ -431,7 +408,7 @@ struct ProfileView: View {
         let stats = enhancedStreakViewModel.streakStats
         let earnedBadges = enhancedStreakViewModel.badgeManager.allBadges.filter { $0.isUnlocked }
 
-        return HStack(spacing: 12) {
+        return HStack(spacing: DS.Spacing.sm) {
             Image(systemName: "flame.fill")
                 .foregroundColor(.orange)
 
@@ -708,31 +685,6 @@ struct ProfileView: View {
     }
 
     @ViewBuilder
-    private var emailRow: some View {
-        Button(action: { showEmailCaptureSheet = true }) {
-            HStack {
-                Image(systemName: appState.email.isEmpty ? "envelope.fill" : "envelope.badge.fill")
-                    .foregroundColor(.primary)
-                    .frame(width: 24)
-                Text(appState.email.isEmpty ? "Join Weekly Emails" : "Update Email")
-                    .foregroundColor(.primary)
-                Spacer()
-                if !appState.email.isEmpty {
-                    Text(appState.email)
-                        .font(.footnote)
-                        .foregroundColor(.secondary)
-                        .lineLimit(1)
-                        .truncationMode(.middle)
-                }
-                Image(systemName: "chevron.right")
-                    .foregroundColor(.secondary)
-                    .font(.footnote)
-            }
-            .padding(.vertical, 4)
-        }
-    }
-
-    @ViewBuilder
     private var supportIDRow: some View {
         Button(action: {
             let userID = Purchases.shared.appUserID
@@ -761,7 +713,49 @@ struct ProfileView: View {
             .padding(.vertical, 4)
         }
     }
-    
+
+    #if DEBUG
+    // Debug-only: copies this device's FCM registration token to the clipboard
+    // so it can be pasted into the test-message tooling (send-message.sh / the
+    // iOS Shortcut). Compiled out of release builds.
+    @ViewBuilder
+    private var fcmTokenRow: some View {
+        Button(action: {
+            Messaging.messaging().token { token, error in
+                DispatchQueue.main.async {
+                    guard let token = token, error == nil else {
+                        print("❌ FCM token fetch failed: \(error?.localizedDescription ?? "unknown")")
+                        return
+                    }
+                    UIPasteboard.general.string = token
+                    print("✅ FCM Token copied: \(token)")
+                    withAnimation {
+                        showFCMTokenCopied = true
+                    }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+                        withAnimation {
+                            showFCMTokenCopied = false
+                        }
+                    }
+                }
+            }
+        }) {
+            HStack {
+                Image(systemName: showFCMTokenCopied ? "checkmark.circle.fill" : "bell.badge.fill")
+                    .foregroundColor(showFCMTokenCopied ? .green : .primary)
+                    .frame(width: 24)
+                Text(showFCMTokenCopied ? "FCM token copied!" : "Copy FCM Token (debug)")
+                    .foregroundColor(.primary)
+                Spacer()
+                Image(systemName: "doc.on.doc")
+                    .foregroundColor(.secondary)
+                    .font(.footnote)
+            }
+            .padding(.vertical, 4)
+        }
+    }
+    #endif
+
 //    @ViewBuilder
 //    private var prayerRequestRow: some View {
 //        if MFMailComposeViewController.canSendMail() {
@@ -947,22 +941,22 @@ struct StreakStatsProfileSheet: View {
     var body: some View {
         NavigationView {
             ScrollView(showsIndicators: false) {
-                VStack(spacing: 24) {
+                VStack(spacing: DS.Spacing.lg) {
 
                     // ── Streak Stats ──────────────────────────────────────
-                    VStack(spacing: 16) {
+                    VStack(spacing: DS.Spacing.md) {
                         Text("Your Streak")
                             .font(.title2.bold())
                             .frame(maxWidth: .infinity, alignment: .leading)
 
-                        HStack(spacing: 12) {
+                        HStack(spacing: DS.Spacing.sm) {
                             streakStatCard(icon: "flame.fill",              color: .orange, value: "\(viewModel.streakStats.currentStreak)",    label: "Current")
                             streakStatCard(icon: "trophy.fill",             color: .yellow, value: "\(viewModel.streakStats.longestStreak)",     label: "Best")
                             streakStatCard(icon: "calendar.badge.checkmark",color: .green,  value: "\(viewModel.streakStats.totalDaysCompleted)",label: "Total Days")
                         }
 
                         if viewModel.streakStats.streakFreezeAvailable {
-                            HStack(spacing: 8) {
+                            HStack(spacing: DS.Spacing.xs) {
                                 Text("🛡️")
                                 Text("Streak freeze available — one missed day won't break your streak")
                                     .font(.caption)
@@ -971,7 +965,7 @@ struct StreakStatsProfileSheet: View {
                             .padding(10)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .background(Color.blue.opacity(0.08))
-                            .clipShape(RoundedRectangle(cornerRadius: 10))
+                            .clipShape(RoundedRectangle(cornerRadius: DS.Radius.sm, style: .continuous))
                         }
                     }
                     .padding(.horizontal, 20)
@@ -979,7 +973,7 @@ struct StreakStatsProfileSheet: View {
                     Divider().padding(.horizontal, 20)
 
                     // ── Badges ────────────────────────────────────────────
-                    VStack(spacing: 16) {
+                    VStack(spacing: DS.Spacing.md) {
                         let allBadges   = viewModel.badgeManager.allBadges
                         let earnedCount = allBadges.filter { $0.isUnlocked }.count
 
@@ -990,7 +984,7 @@ struct StreakStatsProfileSheet: View {
                         }
                         .padding(.horizontal, 20)
 
-                        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
+                        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: DS.Spacing.md) {
                             ForEach(allBadges) { badge in
                                 streakBadgeCell(badge)
                             }
@@ -1019,7 +1013,7 @@ struct StreakStatsProfileSheet: View {
             Text(label).font(.caption).foregroundColor(.secondary)
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 16)
+        .padding(.vertical, DS.Spacing.md)
         .background(Color(.secondarySystemBackground))
         .clipShape(RoundedRectangle(cornerRadius: 14))
     }

@@ -53,13 +53,15 @@ struct PrayerWallView: View {
                     Spacer().frame(height: UIScreen.main.bounds.height * 0.1)
                     segmentedControl
                         .padding(.horizontal, 20)
-                        .padding(.top, 8)
-                        .padding(.bottom, 12)
+                        .padding(.top, DS.Spacing.xs)
+                        .padding(.bottom, DS.Spacing.sm)
+                        .dsAppear(0)
 
                     if selectedTab == .wall {
                         categoryFilterBar
                             .padding(.leading, 20)
-                            .padding(.bottom, 8)
+                            .padding(.bottom, DS.Spacing.xs)
+                            .dsAppear(0.06)
                     }
 
                     if viewModel.isLoading && currentPosts.isEmpty {
@@ -186,7 +188,7 @@ struct PrayerWallView: View {
         // its content. Trailing padding inside the HStack still works for
         // the last-pill-scroll-bleed.
         ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 8) {
+            HStack(spacing: DS.Spacing.xs) {
                 Spacer().frame(width: 8)
                 filterPill(label: "All",
                            isSelected: viewModel.categoryFilter == nil) {
@@ -256,8 +258,9 @@ struct PrayerWallView: View {
                                     .foregroundColor(.white.opacity(0.5))
                             }
                         }
+                        .buttonStyle(.dsPressable(feel: .tapSolid))
                         .disabled(viewModel.isLoading)
-                        .padding(.vertical, 16)
+                        .padding(.vertical, DS.Spacing.md)
                     } else {
                         // End of feed
                         VStack(spacing: 6) {
@@ -271,8 +274,8 @@ struct PrayerWallView: View {
                     }
                 }
             }
-            .padding(.horizontal, 24)
-            .padding(.top, 4)
+            .padding(.horizontal, DS.Spacing.lg)
+            .padding(.top, DS.Spacing.xxs)
             .padding(.bottom, 30)
         }
         .refreshable {
@@ -293,7 +296,7 @@ struct PrayerWallView: View {
     }
 
     private var emptyState: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: DS.Spacing.md) {
             Spacer()
             Image(systemName: "hands.and.sparkles.fill")
                 .font(.system(size: 48))
@@ -332,7 +335,7 @@ struct PrayerPostCard: View {
     private var agreementsLoading: Bool { viewModel.loadingAgreementsForPost.contains(postId) }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: DS.Spacing.sm) {
             // Category pill (top)
             if let category = post.categoryEnum {
                 categoryPill(category)
@@ -403,13 +406,14 @@ struct PrayerPostCard: View {
                         Text("Mark as Answered ✓")
                             .font(Font.custom("AppleSDGothicNeo-Regular", size: 12, relativeTo: .caption))
                             .foregroundColor(Color(hex: "FBBF24"))
-                            .padding(.horizontal, 12)
+                            .padding(.horizontal, DS.Spacing.sm)
                             .padding(.vertical, 7)
                             .background(
                                 RoundedRectangle(cornerRadius: 20)
                                     .stroke(Color(hex: "FBBF24").opacity(0.6), lineWidth: 1)
                             )
                     }
+                    .buttonStyle(.dsPressable(feel: .tapSolid))
                 }
 
                 Spacer()
@@ -432,8 +436,8 @@ struct PrayerPostCard: View {
                     Image(systemName: "ellipsis")
                         .font(.system(size: 14, weight: .medium))
                         .foregroundColor(.white.opacity(0.35))
-                        .padding(.horizontal, 4)
-                        .padding(.vertical, 4)
+                        .padding(.horizontal, DS.Spacing.xxs)
+                        .padding(.vertical, DS.Spacing.xxs)
                 }
                 .alert("Delete this post?", isPresented: $showDeleteAlert) {
                     Button("Delete", role: .destructive) {
@@ -453,7 +457,7 @@ struct PrayerPostCard: View {
                 }
             }
         }
-        .padding(16)
+        .padding(DS.Spacing.md)
         .background(
             RoundedRectangle(cornerRadius: 16)
                 .fill(Color.white.opacity(showAnsweredGlow ? 0.22 : 0.12))
@@ -478,13 +482,13 @@ struct PrayerPostCard: View {
     // MARK: - Subviews
 
     private func categoryPill(_ category: WarriorRoomCategory) -> some View {
-        HStack(spacing: 4) {
+        HStack(spacing: DS.Spacing.xxs) {
             Text(category.emoji)
             Text(category.label)
         }
         .font(Font.custom("AppleSDGothicNeo-Regular", size: 11, relativeTo: .caption))
         .foregroundColor(.white)
-        .padding(.horizontal, 8)
+        .padding(.horizontal, DS.Spacing.xs)
         .padding(.vertical, 3)
         .background(
             RoundedRectangle(cornerRadius: 10)
@@ -500,7 +504,7 @@ struct PrayerPostCard: View {
     }
 
     private var reactionRow: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: DS.Spacing.xs) {
             ForEach(WarriorRoomReaction.allCases) { reaction in
                 reactionButton(reaction)
             }
@@ -514,7 +518,7 @@ struct PrayerPostCard: View {
         return Button {
             handleReactionTap(reaction)
         } label: {
-            HStack(spacing: 4) {
+            HStack(spacing: DS.Spacing.xxs) {
                 Text(reaction.emoji)
                     .font(.system(size: 13))
                 if count > 0 {
@@ -580,7 +584,7 @@ struct PrayerPostCard: View {
                     isAgreementsExpanded.toggle()
                 }
             } label: {
-                HStack(spacing: 4) {
+                HStack(spacing: DS.Spacing.xxs) {
                     Text(title)
                         .font(Font.custom("AppleSDGothicNeo-Regular", size: 12, relativeTo: .caption))
                         .foregroundColor(.white.opacity(0.55))
@@ -637,7 +641,7 @@ struct PrayerPostCard: View {
         Button {
             startAgreementFlow()
         } label: {
-            HStack(spacing: 4) {
+            HStack(spacing: DS.Spacing.xxs) {
                 Image(systemName: "plus.circle")
                     .font(.system(size: 11))
                 Text("Stand in agreement")
@@ -646,6 +650,7 @@ struct PrayerPostCard: View {
             .foregroundColor(Color(hex: "A78BFA"))
             .padding(.top, 2)
         }
+        .buttonStyle(.dsPressable(feel: .tapSolid))
     }
 
     /// Opens the agreement prompt. If the user has no current reaction yet,
@@ -747,7 +752,7 @@ private struct AgreementPromptSheet: View {
                 .font(Font.custom("AppleSDGothicNeo-Bold", size: 18, relativeTo: .title3))
                 .foregroundColor(.white)
                 .multilineTextAlignment(.center)
-                .padding(.horizontal, 24)
+                .padding(.horizontal, DS.Spacing.lg)
 
             HStack(spacing: 6) {
                 Text(reaction.emoji)
@@ -771,7 +776,7 @@ private struct AgreementPromptSheet: View {
                     Text(reaction.agreementPlaceholder)
                         .font(Font.custom("AppleSDGothicNeo-Regular", size: 14, relativeTo: .body))
                         .foregroundColor(.white.opacity(0.35))
-                        .padding(.top, 12)
+                        .padding(.top, DS.Spacing.sm)
                         .padding(.leading, 14)
                         .allowsHitTesting(false)
                 }
@@ -787,10 +792,10 @@ private struct AgreementPromptSheet: View {
                         }
                     }
             }
-            .padding(.horizontal, 4)
+            .padding(.horizontal, DS.Spacing.xxs)
             .background(Color.white.opacity(0.10))
             .clipShape(RoundedRectangle(cornerRadius: 12))
-            .padding(.horizontal, 24)
+            .padding(.horizontal, DS.Spacing.lg)
 
             HStack {
                 Spacer()
@@ -823,9 +828,10 @@ private struct AgreementPromptSheet: View {
                     .background(canStand ? Color(hex: "7C3AED") : Color.gray.opacity(0.4))
                     .clipShape(RoundedRectangle(cornerRadius: 12))
             }
+            .buttonStyle(.dsPressable(feel: .tapSolid))
             .disabled(!canStand)
-            .padding(.horizontal, 24)
-            .padding(.bottom, 24)
+            .padding(.horizontal, DS.Spacing.lg)
+            .padding(.bottom, DS.Spacing.lg)
         }
         // Width fills the sheet; height fits content. Combining
         // `maxHeight: .infinity` with the `.medium` detent caused the
@@ -939,9 +945,9 @@ struct PostPrayerView: View {
                     Capsule()
                         .fill(Color.white.opacity(0.25))
                         .frame(width: 40, height: 4)
-                        .padding(.top, 12)
+                        .padding(.top, DS.Spacing.sm)
 
-                    VStack(spacing: 4) {
+                    VStack(spacing: DS.Spacing.xxs) {
                         Text(isTestimony
                              ? "Share what God did"
                              : "Share with the Warrior Room")
@@ -984,7 +990,7 @@ struct PostPrayerView: View {
                             .font(Font.custom("AppleSDGothicNeo-Regular", size: 12, relativeTo: .caption))
                             .foregroundColor(.white.opacity(0.5))
                         ScrollView(.horizontal, showsIndicators: false) {
-                            HStack(spacing: 8) {
+                            HStack(spacing: DS.Spacing.xs) {
                                 ForEach(WarriorRoomCategory.allCases) { category in
                                     categoryPickerPill(category)
                                 }
@@ -1054,8 +1060,8 @@ struct PostPrayerView: View {
                             .multilineTextAlignment(.center)
                     }
                 }
-                .padding(.horizontal, 24)
-                .padding(.bottom, 16)
+                .padding(.horizontal, DS.Spacing.lg)
+                .padding(.bottom, DS.Spacing.md)
             }
 
             // Submit button — sits below scroll, lifts with keyboard naturally
@@ -1087,9 +1093,10 @@ struct PostPrayerView: View {
                 .background(canPost ? Color(hex: "7C3AED") : Color.gray.opacity(0.4))
                 .clipShape(RoundedRectangle(cornerRadius: 14))
             }
+            .buttonStyle(.dsPressable(feel: .tapSolid))
             .disabled(!canPost)
-            .padding(.horizontal, 24)
-            .padding(.top, 12)
+            .padding(.horizontal, DS.Spacing.lg)
+            .padding(.top, DS.Spacing.sm)
             .padding(.bottom, 28)
         }
         .background {
@@ -1110,7 +1117,7 @@ struct PostPrayerView: View {
                 .font(Font.custom("AppleSDGothicNeo-Regular", size: 14, relativeTo: .body))
                 .foregroundColor(isSelected ? .black : .white.opacity(0.65))
                 .frame(width: 100)
-                .padding(.vertical, 8)
+                .padding(.vertical, DS.Spacing.xs)
                 .background(isSelected ? Color.white : Color.clear)
                 .clipShape(RoundedRectangle(cornerRadius: 22))
         }
@@ -1133,7 +1140,7 @@ struct PostPrayerView: View {
         return Button {
             selectedCategory = category
         } label: {
-            HStack(spacing: 4) {
+            HStack(spacing: DS.Spacing.xxs) {
                 Text(category.emoji)
                 Text(category.label)
             }

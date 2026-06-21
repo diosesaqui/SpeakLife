@@ -13,15 +13,15 @@ struct DevotionalSubscriptionView: View {
     @EnvironmentObject var declarationStore: DeclarationViewModel
     @State var errorTitle = ""
     @State var isShowingError: Bool = false
-    let impactMed = UIImpactFeedbackGenerator(style: .soft)
     let callBack: (() -> Void)
     var body: some View {
         VStack {
             // Curved header with image
             HeaderImageView(imageName: "sermonMount")
-            
+                .dsAppear(0)
+
             Spacer()
-            
+
             SubscriptionDetailsView(
                 title: "30-Day Access to Devotionals with Jesus",
                 description: """
@@ -30,13 +30,15 @@ struct DevotionalSubscriptionView: View {
                 """,
                 disclaimer: "*30-day non-refundable subscription, begins at the time of purchase and will not auto-renew."
             )
-            
+            .dsAppear(0.06)
+
             Spacer()
-            
+
             ShimmerButton(colors: [Color.orange, Color.yellow.opacity(0.8)], buttonTitle: "Start Your 30-Day Journey with Jesus") {
                 makePurchase()
             }
             .padding()
+            .dsAppear(0.12)
         
         }
         .background(
@@ -72,7 +74,7 @@ struct DevotionalSubscriptionView: View {
     }
     
     private func makePurchase() {
-        impactMed.impactOccurred()
+        Juice.play(.tapLight)
         Task {
             withAnimation {
                 declarationStore.isPurchasing = true
@@ -139,7 +141,7 @@ struct SubscriptionDetailsView: View {
     let disclaimer: String
 
     var body: some View {
-        VStack(alignment: .center, spacing: 16) {
+        VStack(alignment: .center, spacing: DS.Spacing.md) {
             Text(title)
                 .font(.title)
                 .foregroundColor(.white)
@@ -158,7 +160,7 @@ struct SubscriptionDetailsView: View {
         .padding()
         .background(BlurView(style: .light))
         .cornerRadius(20)
-        .shadow(color: .black.opacity(0.2), radius: 10, x: 0, y: 5)
+        .dsShadow(DS.Elevation.low)
 
     }
 }

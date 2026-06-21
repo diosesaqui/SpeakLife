@@ -20,10 +20,10 @@ struct PersonalizedFeedSection: View {
     @State private var showPremiumUpgrade = false
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: DS.Spacing.md) {
             // Header
             HStack {
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: DS.Spacing.xxs) {
                     Text("For You Today")
                         .font(.title2)
                         .fontWeight(.bold)
@@ -41,30 +41,40 @@ struct PersonalizedFeedSection: View {
                         showPremiumUpgrade = true
                     }
                     .font(.caption)
-                    .padding(.horizontal, 12)
+                    .padding(.horizontal, DS.Spacing.sm)
                     .padding(.vertical, 6)
-                    .background(Color.orange.opacity(0.8))
+                    .background(DS.Gradient.gold)
                     .foregroundColor(.white)
                     .cornerRadius(12)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Color.white.opacity(0.25), lineWidth: 1)
+                    )
+                    .shadow(color: DS.Palette.gold.opacity(0.45), radius: 8, x: 0, y: 3)
+                    .buttonStyle(.dsPressable(feel: .tapSolid))
                 }
             }
             .padding(.horizontal)
-            
+            .dsAppear(0)
+
             if isLoading {
                 LoadingStateView()
             } else {
                 // AI-generated personal categories
                 if !personalizedCategories.isEmpty {
                     PersonalCategoriesScrollView(categories: personalizedCategories)
+                        .dsAppear(0.06)
                 }
-                
+
                 // Today's AI recommendations
                 if !todayRecommendations.isEmpty {
                     TodayRecommendationsSection(recommendations: todayRecommendations)
+                        .dsAppear(0.12)
                 }
-                
+
                 // AI insights section
                 AIInsightsSection()
+                    .dsAppear(0.18)
             }
         }
         .padding(.vertical)
@@ -145,14 +155,14 @@ struct PersonalCategoriesScrollView: View {
     let categories: [PersonalizedCategory]
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: DS.Spacing.xs) {
             Text("Your Spiritual Focus Areas")
                 .font(.headline)
                 .foregroundColor(.white)
                 .padding(.horizontal)
             
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 12) {
+                HStack(spacing: DS.Spacing.sm) {
                     ForEach(categories) { category in
                         PersonalCategoryCard(category: category)
                     }
@@ -168,9 +178,9 @@ struct PersonalCategoryCard: View {
     @State private var isExpanded = false
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: DS.Spacing.xs) {
             HStack {
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: DS.Spacing.xxs) {
                     Text(category.name)
                         .font(.subheadline)
                         .fontWeight(.semibold)
@@ -208,11 +218,10 @@ struct PersonalCategoryCard: View {
                     .foregroundColor(.white.opacity(0.7))
             }
         }
-        .padding(12)
+        .padding(DS.Spacing.sm)
         .frame(width: 200)
         .frame(minHeight: 100)
-        .background(Color.white.opacity(0.1))
-        .cornerRadius(12)
+        .dsGlass(cornerRadius: DS.Radius.md)
         .onTapGesture {
             withAnimation(.easeInOut(duration: 0.3)) {
                 isExpanded.toggle()
@@ -227,7 +236,7 @@ struct TodayRecommendationsSection: View {
     @Environment(\.presentationMode) var presentationMode
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: DS.Spacing.xs) {
             Text("Recommended for Your Journey")
                 .font(.headline)
                 .foregroundColor(.white)
@@ -257,8 +266,7 @@ struct TodayRecommendationsSection: View {
     private func navigateToDeclaration(_ declaration: Declaration) {
         
         // Haptic feedback for selection
-        let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
-        impactFeedback.impactOccurred()
+        Juice.play(.tapSolid)
         
         // Try multiple dismissal approaches since CategoryChooserView can be presented in different ways
         DispatchQueue.main.async {
@@ -302,9 +310,9 @@ struct RecommendedDeclarationRow: View {
     @State private var isPressed = false
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: DS.Spacing.xs) {
             HStack {
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: DS.Spacing.xxs) {
                     Text(declaration.text)
                         .font(.subheadline)
                         .foregroundColor(.white)
@@ -342,7 +350,7 @@ struct RecommendedDeclarationRow: View {
                     .foregroundColor(.white.opacity(0.7))
             }
         }
-        .padding(12)
+        .padding(DS.Spacing.sm)
         .background(Color.white.opacity(isPressed ? 0.2 : 0.08))
         .overlay(
             RoundedRectangle(cornerRadius: 8)
@@ -376,7 +384,7 @@ struct AIInsightsSection: View {
     
     var body: some View {
         if !insights.isEmpty {
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: DS.Spacing.xs) {
                 Text("Spiritual Insights")
                     .font(.headline)
                     .foregroundColor(.white)
@@ -425,8 +433,7 @@ struct AIInsightCard: View {
             }
         }
         .padding(10)
-        .background(Color.white.opacity(0.05))
-        .cornerRadius(8)
+        .dsGlass(cornerRadius: DS.Radius.sm)
         .padding(.horizontal)
     }
 }
@@ -447,7 +454,7 @@ struct ConfidenceIndicator: View {
 
 struct LoadingStateView: View {
     var body: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: DS.Spacing.sm) {
             ProgressView()
                 .progressViewStyle(CircularProgressViewStyle(tint: .white))
                 .scaleEffect(0.8)
@@ -469,10 +476,9 @@ struct PremiumUpgradeView: View {
     var body: some View {
         VStack(spacing: 20) {
             Text("✨ Unlock AI-Powered Spirituality")
-                .font(.title2)
-                .fontWeight(.bold)
+                .font(DS.Typography.title)
             
-            VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: DS.Spacing.sm) {
                 AIFeatureRow(icon: "🎯", title: "Personalized Categories", description: "AI creates unique spiritual focus areas just for you")
                 AIFeatureRow(icon: "🧠", title: "Smart Recommendations", description: "Content that matches your spiritual season and growth")
                 AIFeatureRow(icon: "⏰", title: "Optimal Timing", description: "Notifications sent at your most receptive moments")
@@ -487,8 +493,9 @@ struct PremiumUpgradeView: View {
             .foregroundColor(.white)
             .frame(maxWidth: .infinity)
             .padding()
-            .background(Color.blue)
+            .background(DS.Gradient.brand)
             .cornerRadius(12)
+            .buttonStyle(.dsPressable(feel: .tapSolid))
             
             Button("Maybe Later") {
                 dismiss()
@@ -505,7 +512,7 @@ struct AIFeatureRow: View {
     let description: String
     
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: DS.Spacing.sm) {
             Text(icon)
                 .font(.title2)
             

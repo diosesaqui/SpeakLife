@@ -79,7 +79,7 @@ struct AbbasLoveView: View {
     var body: some View {
         GeometryReader { proxy in
             ScrollView {
-                VStack(spacing: 24) {
+                VStack(spacing: DS.Spacing.lg) {
                     // Spacer from top
                     Spacer().frame(height: proxy.size.height * 0.05)
 
@@ -93,16 +93,17 @@ struct AbbasLoveView: View {
                                     .foregroundColor(.white.opacity(0.5))
                             }
                         }
-                        .padding(.horizontal, 24)
+                        .padding(.horizontal, DS.Spacing.lg)
                     }
 
                     // ✉️ Title
                     Text("Heavenly Father's Love Letter 💌")
-                        .font(.system(size: 28, weight: .bold, design: .rounded))
+                        .font(DS.Typography.title)
                         .foregroundStyle(.white)
                         .multilineTextAlignment(.center)
-                        .padding(.horizontal, 24)
+                        .padding(.horizontal, DS.Spacing.lg)
                         .shadow(radius: 4)
+                        .dsAppear(0)
 
                     // Extra breathing room before pages
                     Spacer().frame(height: proxy.size.height * 0.06)
@@ -131,6 +132,7 @@ struct AbbasLoveView: View {
                             .padding(.horizontal)
                     }
                     .padding(.bottom, 40)
+                    .dsAppear(0.12)
                 }
             }
             .background {
@@ -163,14 +165,14 @@ struct PageContent: View {
     let book: String
 
     var body: some View {
-        VStack(spacing: 24) {
+        VStack(spacing: DS.Spacing.lg) {
             Spacer()
 
             Text(verse)
                 .font(.system(size: 22, weight: .semibold, design: .rounded))
                 .multilineTextAlignment(.center)
                 .foregroundColor(.white)
-                .padding(.horizontal, 24)
+                .padding(.horizontal, DS.Spacing.lg)
 
             Text(book)
                 .font(.system(size: 16, weight: .regular, design: .rounded))

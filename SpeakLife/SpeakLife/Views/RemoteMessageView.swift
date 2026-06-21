@@ -71,15 +71,16 @@ struct RemoteMessageView: View {
                             .foregroundColor(.white.opacity(0.7))
                     }
                     .accessibilityLabel("Close")
+                    .buttonStyle(.dsPressable(feel: .tapSolid))
                 }
                 .padding(.horizontal, 20)
-                .padding(.top, 16)
+                .padding(.top, DS.Spacing.md)
 
                 ScrollView {
                     VStack(alignment: .leading, spacing: 20) {
                         if !message.title.isEmpty {
                             Text(message.title)
-                                .font(.system(size: 28, weight: .bold, design: .rounded))
+                                .font(DS.Typography.title)
                                 .foregroundColor(.white)
                                 .multilineTextAlignment(.leading)
                         }
@@ -99,6 +100,7 @@ struct RemoteMessageView: View {
                     .padding(.top, 12)
                     .padding(.bottom, 40)
                 }
+                .dsAppear(0.06)
 
                 Button {
                     dismiss()
@@ -110,11 +112,13 @@ struct RemoteMessageView: View {
                         .padding(.vertical, 16)
                         .background(
                             RoundedRectangle(cornerRadius: 16)
-                                .fill(Color.white)
+                                .fill(DS.Gradient.gold)
                         )
                 }
+                .buttonStyle(.dsPressable(feel: .tapSolid))
                 .padding(.horizontal, 28)
                 .padding(.bottom, 28)
+                .dsAppear(0.12)
             }
         }
     }

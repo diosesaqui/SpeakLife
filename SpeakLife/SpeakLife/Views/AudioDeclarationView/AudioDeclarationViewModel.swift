@@ -9,10 +9,15 @@ import FirebaseStorage
 import SwiftUI
 import Combine
 import FirebaseAnalytics
+import FirebaseRemoteConfig
 
 final class AudioDeclarationViewModel: ObservableObject {
     // New dynamic system
-    @Published var dynamicFilters: [FilterConfig] = []  // Filter configs from JSON
+    @Published var dynamicFilters: [FilterConfig] = []  // Filter configs from JSON (display order, may be personalized)
+    // The curated order before any personalization. Source of truth that is
+    // cached to disk, so toggling the personalization flag off cleanly restores
+    // the original order without a server refetch.
+    private var curatedFilters: [FilterConfig] = []
     @Published var contentByFilter: [String: [AudioDeclaration]] = [:]  // All content organized by filter ID
     @Published var selectedFilterId: String = "speaklife"  // Selected filter ID (set dynamically from server)
     @Published var playedFilter: PlayedFilter = .all  // Played / Unplayed sub-filter
@@ -169,8 +174,11 @@ final class AudioDeclarationViewModel: ObservableObject {
             
             contentByFilter[config.id] = content
         }
+
+        curatedFilters = dynamicFilters
+        applyPersonalization()
     }
-    
+
     private func saveAudioDataToCache() {
         let fileManager = FileManager.default
         let documentDirURL = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
@@ -184,9 +192,12 @@ final class AudioDeclarationViewModel: ObservableObject {
             let data = try encoder.encode(allAudioFiles)
             try data.write(to: fileURL)
             
-            // Save filter configuration if available
-            if !dynamicFilters.isEmpty {
-                let filtersData = try encoder.encode(dynamicFilters)
+            // Save the curated (pre-personalization) order so the cache always
+            // holds the canonical order. Falls back to the display order if the
+            // baseline was never captured.
+            let filtersToCache = curatedFilters.isEmpty ? dynamicFilters : curatedFilters
+            if !filtersToCache.isEmpty {
+                let filtersData = try encoder.encode(filtersToCache)
                 try filtersData.write(to: filtersURL)
             }
         } catch {
@@ -303,8 +314,89 @@ final class AudioDeclarationViewModel: ObservableObject {
                 }
             }
         }
+
+        curatedFilters = dynamicFilters
+        applyPersonalization()
     }
-    
+
+    // MARK: - Personalized Ordering
+
+    /// True when the personalized audio order experiment is enabled via Remote Config.
+    var isPersonalizedOrderEnabled: Bool {
+        RemoteConfig.remoteConfig()
+            .configValue(forKey: "personalizedAudioOrderEnabled").boolValue
+    }
+
+    /// Re-applies personalization on demand. Inputs (the Remote Config flag and
+    /// favorites) load asynchronously after launch and existing users may not
+    /// rebuild filters at all on update, so the audio screen calls this on
+    /// appear — by which point those inputs are ready. Safe to call repeatedly.
+    func refreshPersonalization() {
+        guard !curatedFilters.isEmpty else { return }
+        applyPersonalization()
+    }
+
+    /// Derives the display order in `dynamicFilters` from the curated baseline.
+    /// When the flag is off (or there is no preference signal) the curated order
+    /// is restored verbatim, so the experiment is cleanly reversible. Only
+    /// publishes when the resulting order actually changes, so repeated calls
+    /// (e.g. on every appear) are cheap and don't churn the UI.
+    private func applyPersonalization() {
+        let newOrder: [FilterConfig]
+        if isPersonalizedOrderEnabled {
+            let selected = UserDefaults.standard
+                .string(forKey: "selectedNotificationCategories")?
+                .split(separator: ",")
+                .map { String($0).trimmingCharacters(in: .whitespaces) }
+                .filter { !$0.isEmpty } ?? []
+
+            newOrder = AudioRecommendationEngine.personalizedOrder(
+                filters: curatedFilters,
+                personalDeclarationCategory: PersonalDeclarationRepository.activeCategoryRaw(),
+                selectedCategories: selected,
+                engagementCategories: engagementCategoryStrengths(),
+                favoritesByFilterId: favoritesCountByFilterId(),
+                playedByFilterId: playedCountByFilterId()
+            )
+        } else {
+            newOrder = curatedFilters
+        }
+
+        if newOrder.map(\.id) != dynamicFilters.map(\.id) {
+            dynamicFilters = newOrder
+        }
+    }
+
+    /// Recency-weighted strength per category from the user's tracked selections.
+    /// Strength = selection count decayed by a 14-day half-life, so categories the
+    /// user engaged with recently carry more pull than long-stale ones.
+    private func engagementCategoryStrengths() -> [String: Double] {
+        let halfLifeDays = 14.0
+        var result: [String: Double] = [:]
+        for pref in UserPreferencesTracker.shared.topCategories {
+            let days = max(0, Date().timeIntervalSince(pref.lastSelected) / 86_400)
+            let recency = pow(0.5, days / halfLifeDays)
+            result[pref.category] = Double(pref.count) * recency
+        }
+        return result
+    }
+
+    /// Number of favorited episodes per filter id (audio tag).
+    private func favoritesCountByFilterId() -> [String: Int] {
+        Dictionary(grouping: favoritesManager.favorites.compactMap { $0.tag }) { $0 }
+            .mapValues { $0.count }
+    }
+
+    /// Number of played episodes per filter id, from already-loaded content.
+    private func playedCountByFilterId() -> [String: Int] {
+        var counts: [String: Int] = [:]
+        for (filterId, items) in contentByFilter {
+            let played = items.filter { AudioProgressStore.shared.isPlayed($0.id) }.count
+            if played > 0 { counts[filterId] = played }
+        }
+        return counts
+    }
+
     func fetchAudio(for item: AudioDeclaration, completion: @escaping (Result<URL, Error>) -> Void) {
            // Get the local URL for the file
            let localURL = cachedFileURL(for: item.id)

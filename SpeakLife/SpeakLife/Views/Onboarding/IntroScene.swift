@@ -244,8 +244,8 @@ struct IntroScene: View {
                 }.padding()
             }
             .frame(width: size.width * 0.87 ,height: 50)
-            .background(.blue)
-            
+            .background(DS.Gradient.brand)
+
             .foregroundColor(.white)
             .cornerRadius(8)
             .shadow(color: Constants.DAMidBlue, radius: 8, x: 0, y: 10)
@@ -495,7 +495,15 @@ struct FeatureCard: View {
                         .font(.system(size: 40))
                         .foregroundColor(.white)
                         .padding()
-                        .background(Circle().fill(Color.blue.opacity(0.8)))
+                        .background(
+                            Circle().fill(
+                                LinearGradient(
+                                    colors: [Color.blue.opacity(0.95), Color.blue.opacity(0.55)],
+                                    startPoint: .topLeading, endPoint: .bottomTrailing
+                                )
+                            )
+                            .shadow(color: Color.blue.opacity(0.5), radius: 8, x: 0, y: 4)
+                        )
 
                     Text(title)
                         .font(.title2.bold())

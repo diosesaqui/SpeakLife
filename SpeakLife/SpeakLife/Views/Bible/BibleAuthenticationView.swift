@@ -42,9 +42,9 @@ struct BibleAuthenticationView: View {
                 .ignoresSafeArea()
                 
                 ScrollView {
-                    VStack(spacing: 24) {
+                    VStack(spacing: DS.Spacing.lg) {
                         // Header
-                        VStack(spacing: 16) {
+                        VStack(spacing: DS.Spacing.md) {
                             Image(systemName: "book.closed.fill")
                                 .font(.system(size: 60))
                                 .foregroundColor(Constants.DAMidBlue)
@@ -61,9 +61,10 @@ struct BibleAuthenticationView: View {
                                 .multilineTextAlignment(.center)
                                 .padding(.horizontal)
                         }
-                        
+                        .dsAppear()
+
                         // Benefits list
-                        VStack(alignment: .leading, spacing: 12) {
+                        VStack(alignment: .leading, spacing: DS.Spacing.sm) {
                             BibleBenefitRow(icon: "infinity", text: "Unlimited Bible reading")
                             BibleBenefitRow(icon: "magnifyingglass", text: "Unlimited verse searches")
                             BibleBenefitRow(icon: "bookmark.fill", text: "Sync bookmarks across devices")
@@ -71,14 +72,15 @@ struct BibleAuthenticationView: View {
                         }
                         .padding()
                         .background(
-                            RoundedRectangle(cornerRadius: 12)
+                            RoundedRectangle(cornerRadius: DS.Radius.sm, style: .continuous)
                                 .fill(Color(UIColor.secondarySystemBackground))
                         )
                         .padding(.horizontal)
-                        
+                        .dsAppear(0.06)
+
                         if !showEmailForm {
                             // Sign in options
-                            VStack(spacing: 16) {
+                            VStack(spacing: DS.Spacing.md) {
                                 // Apple Sign In
                                 SignInWithAppleButton(
                                     .signIn,
@@ -91,8 +93,8 @@ struct BibleAuthenticationView: View {
                                 )
                                 .signInWithAppleButtonStyle(.black)
                                 .frame(height: 50)
-                                .cornerRadius(12)
-                                
+                                .cornerRadius(DS.Radius.sm)
+
                                 // Divider
                                 HStack {
                                     Rectangle()
@@ -121,7 +123,7 @@ struct BibleAuthenticationView: View {
                                     .frame(maxWidth: .infinity)
                                     .frame(height: 50)
                                     .background(Color.blue)
-                                    .cornerRadius(12)
+                                    .cornerRadius(DS.Radius.sm)
                                 }
                             }
                             .padding(.horizontal)
@@ -167,7 +169,7 @@ struct BibleAuthenticationView: View {
     
     @ViewBuilder
     private var emailFormView: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: DS.Spacing.md) {
             // Toggle between Sign In and Sign Up
             Picker("Mode", selection: $authMode) {
                 Text("Sign In").tag(AuthMode.signIn)
@@ -175,7 +177,7 @@ struct BibleAuthenticationView: View {
             }
             .pickerStyle(SegmentedPickerStyle())
             
-            VStack(spacing: 12) {
+            VStack(spacing: DS.Spacing.sm) {
                 // Email field
                 VStack(alignment: .leading, spacing: 4) {
                     TextField("Email", text: $email)
@@ -213,7 +215,7 @@ struct BibleAuthenticationView: View {
                 }
             }
             
-            HStack(spacing: 12) {
+            HStack(spacing: DS.Spacing.sm) {
                 // Back button
                 Button(action: {
                     withAnimation {
@@ -227,7 +229,7 @@ struct BibleAuthenticationView: View {
                         .frame(maxWidth: .infinity)
                         .frame(height: 44)
                         .background(Color(UIColor.tertiarySystemFill))
-                        .cornerRadius(10)
+                        .cornerRadius(DS.Radius.sm)
                 }
                 
                 // Submit button
@@ -244,7 +246,7 @@ struct BibleAuthenticationView: View {
                         .frame(maxWidth: .infinity)
                         .frame(height: 44)
                         .background(formIsValid ? Color.blue : Color.gray)
-                        .cornerRadius(10)
+                        .cornerRadius(DS.Radius.sm)
                 }
                 .disabled(!formIsValid)
             }
@@ -257,7 +259,7 @@ struct BibleAuthenticationView: View {
         Color.black.opacity(0.4)
             .ignoresSafeArea()
             .overlay(
-                VStack(spacing: 16) {
+                VStack(spacing: DS.Spacing.md) {
                     ProgressView()
                         .progressViewStyle(CircularProgressViewStyle(tint: .white))
                         .scaleEffect(1.5)
@@ -265,9 +267,9 @@ struct BibleAuthenticationView: View {
                         .foregroundColor(.white)
                         .font(.headline)
                 }
-                .padding(32)
+                .padding(DS.Spacing.xl)
                 .background(
-                    RoundedRectangle(cornerRadius: 16)
+                    RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous)
                         .fill(Color(UIColor.systemBackground))
                 )
             )
@@ -541,7 +543,7 @@ struct BibleBenefitRow: View {
     let text: String
     
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: DS.Spacing.sm) {
             Image(systemName: icon)
                 .font(.system(size: 20))
                 .foregroundColor(.blue)
@@ -561,9 +563,9 @@ struct RoundedTextFieldStyle: TextFieldStyle {
         configuration
             .padding()
             .background(Color(UIColor.tertiarySystemFill))
-            .cornerRadius(10)
+            .cornerRadius(DS.Radius.sm)
             .overlay(
-                RoundedRectangle(cornerRadius: 10)
+                RoundedRectangle(cornerRadius: DS.Radius.sm, style: .continuous)
                     .stroke(Color.gray.opacity(0.2), lineWidth: 1)
             )
     }

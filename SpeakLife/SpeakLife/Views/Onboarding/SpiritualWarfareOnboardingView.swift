@@ -324,7 +324,7 @@ struct SpiritualWarfareOnboardingView: View {
                 }
             }
         }
-        impactMed.impactOccurred()
+        Juice.play(.tapLight)
     }
     
     private func getNextTab() -> SpiritualWarfareTab {

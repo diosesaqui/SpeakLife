@@ -42,7 +42,7 @@ struct BibleSearchView: View {
                 }
                 .padding()
                 .background(
-                    RoundedRectangle(cornerRadius: 12)
+                    RoundedRectangle(cornerRadius: DS.Radius.sm, style: .continuous)
                         .fill(Constants.backgroundColor)
                         .stroke(Constants.DAMidBlue.opacity(0.3), lineWidth: 1)
                 )
@@ -56,7 +56,7 @@ struct BibleSearchView: View {
                     Spacer()
                 } else if viewModel.showSearchError && !viewModel.searchText.isEmpty {
                     Spacer()
-                    VStack(spacing: 16) {
+                    VStack(spacing: DS.Spacing.md) {
                         Image(systemName: "exclamationmark.triangle")
                             .font(.system(size: 48))
                             .foregroundColor(.orange)
@@ -86,11 +86,11 @@ struct BibleSearchView: View {
                     Spacer()
                 } else if viewModel.searchResults.isEmpty && !viewModel.searchText.isEmpty {
                     Spacer()
-                    VStack(spacing: 16) {
+                    VStack(spacing: DS.Spacing.md) {
                         Image(systemName: "magnifyingglass")
                             .font(.system(size: 48))
                             .foregroundColor(.white.opacity(0.8))
-                        
+
                         Text("No results found")
                             .font(.system(size: 18, weight: .medium))
                             .foregroundColor(.white.opacity(0.8))
@@ -102,7 +102,7 @@ struct BibleSearchView: View {
                     Spacer()
                 } else if !viewModel.searchResults.isEmpty {
                     ScrollView {
-                        LazyVStack(spacing: 12) {
+                        LazyVStack(spacing: DS.Spacing.sm) {
                             Text("\(viewModel.searchResults.count) results")
                                 .font(.system(size: 14))
                                 .foregroundColor(.white.opacity(0.8))
@@ -128,23 +128,25 @@ struct BibleSearchView: View {
                     }
                 } else {
                     Spacer()
-                    VStack(spacing: 24) {
+                    VStack(spacing: DS.Spacing.lg) {
                         Image(systemName: "magnifyingglass")
                             .font(.system(size: 48))
                             .foregroundColor(.white.opacity(0.8))
-                        
-                        VStack(spacing: 8) {
+                            .dsAppear()
+
+                        VStack(spacing: DS.Spacing.xs) {
                             Text("Search the Bible")
-                                .font(.system(size: 20, weight: .semibold))
+                                .font(DS.Typography.headline)
                                 .foregroundColor(.white)
-                            
+
                             Text("Find verses by keywords")
                                 .font(.system(size: 14))
                                 .foregroundColor(.white.opacity(0.8))
                         }
+                        .dsAppear(0.06)
                         
                         // Suggested Searches
-                        VStack(alignment: .leading, spacing: 12) {
+                        VStack(alignment: .leading, spacing: DS.Spacing.sm) {
                             Text("Try searching for:")
                                 .font(.system(size: 14, weight: .medium))
                                 .foregroundColor(.white.opacity(0.8))
@@ -202,7 +204,7 @@ struct SearchResultCard: View {
     
     var body: some View {
         Button(action: onTap) {
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: DS.Spacing.xs) {
                 HStack {
                     Text(result.reference)
                         .font(.system(size: 14, weight: .semibold))
@@ -223,9 +225,10 @@ struct SearchResultCard: View {
             }
             .padding()
             .background(
-                RoundedRectangle(cornerRadius: 12)
+                RoundedRectangle(cornerRadius: DS.Radius.sm, style: .continuous)
                     .fill(Color(UIColor.secondarySystemBackground))
             )
+            .dsShadow(DS.Elevation.low)
             .padding(.horizontal)
         }
         .buttonStyle(PlainButtonStyle())

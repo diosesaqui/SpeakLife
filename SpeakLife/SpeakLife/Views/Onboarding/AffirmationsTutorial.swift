@@ -84,7 +84,7 @@ struct AffirmationsTutorial: View {
                         VStack(spacing: 12) {
                             Text("Declare out loud:")
                                 .font(.system(size: 14, weight: .medium))
-                                .foregroundColor(.white.opacity(0.7))
+                                .foregroundColor(DS.Palette.gold.opacity(0.9))
                             
                             Text(affirmations[currentAffirmation])
                                 .font(.system(size: 20, weight: .bold))

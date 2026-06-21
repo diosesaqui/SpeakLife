@@ -62,7 +62,7 @@ struct EmotionalHookScreen: View {
                                 HStack(alignment: .top, spacing: 8) {
                                     Text("YOU SAY:")
                                         .font(.system(size: 10, weight: .bold, design: .rounded))
-                                        .foregroundColor(.green.opacity(0.9))
+                                        .foregroundColor(DS.Palette.gold.opacity(0.9))
                                         .tracking(0.8)
                                         .padding(.top, 2)
                                     Text(pair.speak)
@@ -73,12 +73,7 @@ struct EmotionalHookScreen: View {
                             }
                             .padding(14)
                             .frame(maxWidth: .infinity, alignment: .leading)
-                            .background(
-                                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                    .fill(Color.white.opacity(0.08))
-                                    .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                        .strokeBorder(Color.white.opacity(0.15), lineWidth: 1))
-                            )
+                            .dsGlass(cornerRadius: DS.Radius.md)
                             .opacity(subVisible ? 1 : 0)
                             .offset(y: subVisible ? 0 : 16)
                             .animation(.easeOut(duration: 0.45).delay(0.3 + Double(index) * 0.15), value: subVisible)
@@ -104,7 +99,7 @@ struct EmotionalHookScreen: View {
                 .padding(.horizontal, 16)
                 Spacer()
                 Button(action: {
-                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                    Juice.play(.tapLight)
                     onContinue()
                 }) {
                     Text("Start speaking life")
@@ -213,7 +208,7 @@ struct TransformationSocialProofScreen: View {
                 }
                 Spacer()
                 Button(action: {
-                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                    Juice.play(.tapLight)
                     onContinue()
                 }) {
                     Text("Start my transformation")
@@ -280,7 +275,7 @@ struct TestimonyTransformCard: View {
             HStack(alignment: .top, spacing: 8) {
                 Text("NOW")
                     .font(.system(size: 10, weight: .bold, design: .rounded))
-                    .foregroundColor(.green.opacity(0.8))
+                    .foregroundColor(DS.Palette.gold.opacity(0.9))
                     .padding(.top, 2)
                 Text(after)
                     .font(.system(size: 14, weight: .semibold, design: .rounded))
@@ -293,12 +288,7 @@ struct TestimonyTransformCard: View {
                 .frame(maxWidth: .infinity, alignment: .trailing)
         }
         .padding(16)
-        .background(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(Color.white.opacity(0.08))
-                .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .strokeBorder(Color.white.opacity(0.15), lineWidth: 1))
-        )
+        .dsGlass(cornerRadius: DS.Radius.md)
         .opacity(isVisible ? 1 : 0)
         .offset(y: isVisible ? 0 : 20)
         .animation(.easeOut(duration: 0.5), value: isVisible)
@@ -385,7 +375,7 @@ struct CategorySelectScreen: View {
                     ], spacing: size.height < 700 ? 7 : 9) {
                         ForEach(topCategories, id: \.self) { category in
                             Button(action: {
-                                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                                Juice.play(.tapLight)
                                 selectionVM.selectExperience(category)
                             }) {
                                 HStack(spacing: 7) {
@@ -402,14 +392,20 @@ struct CategorySelectScreen: View {
                                 .padding(.vertical, size.height < 700 ? 11 : 13)
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .background(
-                                    RoundedRectangle(cornerRadius: 24)
-                                        .fill(selectionVM.selectedExperiences.contains(category)
-                                              ? Color.blue : Color.white.opacity(0.13))
-                                        .overlay(RoundedRectangle(cornerRadius: 24)
-                                            .strokeBorder(
-                                                selectionVM.selectedExperiences.contains(category)
-                                                ? Color.blue : Color.white.opacity(0.25),
-                                                lineWidth: 1))
+                                    ZStack {
+                                        if selectionVM.selectedExperiences.contains(category) {
+                                            RoundedRectangle(cornerRadius: 24)
+                                                .fill(DS.Gradient.brand)
+                                        } else {
+                                            RoundedRectangle(cornerRadius: 24)
+                                                .fill(Color.white.opacity(0.13))
+                                        }
+                                    }
+                                    .overlay(RoundedRectangle(cornerRadius: 24)
+                                        .strokeBorder(
+                                            selectionVM.selectedExperiences.contains(category)
+                                            ? Color.white.opacity(0.35) : Color.white.opacity(0.25),
+                                            lineWidth: 1))
                                 )
                                 .foregroundColor(.white)
                                 .scaleEffect(selectionVM.selectedExperiences.contains(category) ? 1.02 : 1.0)
@@ -428,7 +424,7 @@ struct CategorySelectScreen: View {
                     // CTA — sits directly below grid, no floating gap
                     VStack(spacing: 10) {
                         Button(action: {
-                            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                            Juice.play(.tapSolid)
                             if selectionVM.selectedExperiences.isEmpty {
                                 selectionVM.selectedExperiences = [.faith]
                             }
@@ -599,7 +595,7 @@ struct ScriptureAnchorScreen: View {
     
     var continueButton: some View {
         Button(action: {
-            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            Juice.play(.tapLight)
             onContinue()
         }) {
             HStack(spacing: 8) {
@@ -740,7 +736,7 @@ struct ReframeProblemScreen: View {
     
     var continueButton: some View {
         Button(action: {
-            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            Juice.play(.tapLight)
             onContinue()
         }) {
             Text("Show me")
@@ -793,9 +789,15 @@ struct JesusMethodScreen: View {
                         HStack(spacing: 20) {
                             ZStack {
                                 Circle()
-                                    .fill(Color.white.opacity(0.15))
+                                    .fill(
+                                        LinearGradient(
+                                            colors: [DS.Palette.accent.opacity(0.95), DS.Palette.accent.opacity(0.55)],
+                                            startPoint: .topLeading, endPoint: .bottomTrailing
+                                        )
+                                    )
                                     .frame(width: 48, height: 48)
-                                
+                                    .shadow(color: DS.Palette.accent.opacity(0.5), radius: 8, x: 0, y: 4)
+
                                 Text("\(index + 1)")
                                     .font(.system(size: 22, weight: .bold, design: .rounded))
                                     .foregroundColor(.white)
@@ -886,7 +888,7 @@ struct JesusMethodScreen: View {
     
     var continueButton: some View {
         Button(action: {
-            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            Juice.play(.tapLight)
             onContinue()
         }) {
             Text("I want this")
@@ -953,7 +955,7 @@ struct SelfDiagnosisScreen: View {
                             text: option.1,
                             isSelected: selectedOption == option.0,
                             onTap: {
-                                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                                Juice.play(.tapLight)
                                 withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
                                     selectedOption = option.0
                                 }
@@ -1151,7 +1153,7 @@ struct TruthGapScreen: View {
     
     var continueButton: some View {
         Button(action: {
-            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            Juice.play(.tapLight)
             onContinue()
         }) {
             Text("Teach me how")
@@ -1270,7 +1272,7 @@ struct ApplicationScreen: View {
     
     var continueButton: some View {
         Button(action: {
-            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            Juice.play(.tapLight)
             onContinue()
         }) {
             Text("That changes everything")
@@ -1326,7 +1328,7 @@ struct MicroCommitmentScreen: View {
                             text: option.1,
                             isSelected: selectedOption == option.0,
                             onTap: {
-                                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                                Juice.play(.tapLight)
                                 withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
                                     selectedOption = option.0
                                 }
@@ -1529,7 +1531,7 @@ struct PositionSpeakLifeScreen: View {
     
     var continueButton: some View {
         Button(action: {
-            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            Juice.play(.tapLight)
             onContinue()
         }) {
             Text("Try your first declaration")
@@ -1559,7 +1561,15 @@ struct FeatureScriptureRow: View {
                 .font(.system(size: 18, weight: .semibold))
                 .foregroundColor(.white)
                 .frame(width: 36, height: 36)
-                .background(Circle().fill(Color.white.opacity(0.15)))
+                .background(
+                    Circle().fill(
+                        LinearGradient(
+                            colors: [DS.Palette.accent.opacity(0.95), DS.Palette.accent.opacity(0.55)],
+                            startPoint: .topLeading, endPoint: .bottomTrailing
+                        )
+                    )
+                )
+                .shadow(color: DS.Palette.accent.opacity(0.5), radius: 8, x: 0, y: 4)
 
             VStack(alignment: .leading, spacing: 3) {
                 Text(feature)
@@ -1727,14 +1737,7 @@ struct LiveDeclarationPreviewScreen: View {
                     .offset(y: scriptureVisible ? 0 : 10)
                 }
                 .padding(24)
-                .background(
-                    RoundedRectangle(cornerRadius: 20, style: .continuous)
-                        .fill(Color.white.opacity(0.12))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                                .strokeBorder(Color.white.opacity(0.2), lineWidth: 1)
-                        )
-                )
+                .dsGlass(cornerRadius: DS.Radius.lg)
                 .padding(.horizontal, 24)
                 .scaleEffect(cardVisible ? 1 : 0.92)
                 .opacity(cardVisible ? 1 : 0)
@@ -1756,7 +1759,7 @@ struct LiveDeclarationPreviewScreen: View {
                 // CTA
                 VStack(spacing: 12) {
                     Button(action: {
-                        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                        Juice.play(.tapSolid)
                         onContinue()
                     }) {
                         Text("I declare this over my life")
@@ -1855,8 +1858,14 @@ struct AudioFeatureScreen: View {
                         HStack(spacing: 12) {
                             ZStack {
                                 Circle()
-                                    .fill(Color.white.opacity(0.15))
+                                    .fill(
+                                        LinearGradient(
+                                            colors: [DS.Palette.accent.opacity(0.95), DS.Palette.accent.opacity(0.55)],
+                                            startPoint: .topLeading, endPoint: .bottomTrailing
+                                        )
+                                    )
                                     .frame(width: 48, height: 48)
+                                    .shadow(color: DS.Palette.accent.opacity(0.5), radius: 8, x: 0, y: 4)
                                 Image(systemName: "headphones")
                                     .font(.system(size: 22, weight: .medium))
                                     .foregroundColor(.white)
@@ -1882,12 +1891,7 @@ struct AudioFeatureScreen: View {
                             .fixedSize(horizontal: false, vertical: true)
                     }
                     .padding(20)
-                    .background(
-                        RoundedRectangle(cornerRadius: 18, style: .continuous)
-                            .fill(Color.white.opacity(0.1))
-                            .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous)
-                                .strokeBorder(Color.white.opacity(0.18), lineWidth: 1))
-                    )
+                    .dsGlass(cornerRadius: DS.Radius.lg)
                     .padding(.horizontal, 24)
                     .opacity(cardVisible ? 1 : 0)
                     .scaleEffect(cardVisible ? 1 : 0.95)
@@ -1904,7 +1908,7 @@ struct AudioFeatureScreen: View {
                         .padding(.horizontal, 8)
 
                     Button(action: {
-                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                        Juice.play(.tapLight)
                         onContinue()
                     }) {
                         Text("I want to hear His Word daily")
@@ -1988,8 +1992,14 @@ struct DailyDevotionalFeatureScreen: View {
                         HStack(spacing: 12) {
                             ZStack {
                                 Circle()
-                                    .fill(Color.white.opacity(0.15))
+                                    .fill(
+                                        LinearGradient(
+                                            colors: [DS.Palette.accent.opacity(0.95), DS.Palette.accent.opacity(0.55)],
+                                            startPoint: .topLeading, endPoint: .bottomTrailing
+                                        )
+                                    )
                                     .frame(width: 48, height: 48)
+                                    .shadow(color: DS.Palette.accent.opacity(0.5), radius: 8, x: 0, y: 4)
                                 Image(systemName: "book.fill")
                                     .font(.system(size: 22, weight: .medium))
                                     .foregroundColor(.white)
@@ -2015,12 +2025,7 @@ struct DailyDevotionalFeatureScreen: View {
                             .fixedSize(horizontal: false, vertical: true)
                     }
                     .padding(20)
-                    .background(
-                        RoundedRectangle(cornerRadius: 18, style: .continuous)
-                            .fill(Color.white.opacity(0.1))
-                            .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous)
-                                .strokeBorder(Color.white.opacity(0.18), lineWidth: 1))
-                    )
+                    .dsGlass(cornerRadius: DS.Radius.lg)
                     .padding(.horizontal, 24)
                     .opacity(cardVisible ? 1 : 0)
                     .scaleEffect(cardVisible ? 1 : 0.95)
@@ -2037,7 +2042,7 @@ struct DailyDevotionalFeatureScreen: View {
                         .padding(.horizontal, 8)
 
                     Button(action: {
-                        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                        Juice.play(.tapSolid)
                         onContinue()
                     }) {
                         Text("Jesus loves ME personally ✝️")
@@ -2127,8 +2132,14 @@ struct WarriorRoomFeatureScreen: View {
                     HStack(spacing: 10) {
                         ZStack {
                             Circle()
-                                .fill(Color.white.opacity(0.15))
+                                .fill(
+                                    LinearGradient(
+                                        colors: [DS.Palette.accent.opacity(0.95), DS.Palette.accent.opacity(0.55)],
+                                        startPoint: .topLeading, endPoint: .bottomTrailing
+                                    )
+                                )
                                 .frame(width: 42, height: 42)
+                                .shadow(color: DS.Palette.accent.opacity(0.5), radius: 8, x: 0, y: 4)
                             Image(systemName: "shield.fill")
                                 .font(.system(size: 19, weight: .medium))
                                 .foregroundColor(.white)
@@ -2186,12 +2197,7 @@ struct WarriorRoomFeatureScreen: View {
                                 .background(Capsule().fill(Color.white.opacity(0.08)))
                             }
                             .padding(14)
-                            .background(
-                                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                    .fill(Color.white.opacity(0.09))
-                                    .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                        .strokeBorder(Color.white.opacity(0.14), lineWidth: 1))
-                            )
+                            .dsGlass(cornerRadius: DS.Radius.md)
                             .opacity(postsVisible ? 1 : 0)
                             .offset(y: postsVisible ? 0 : 16)
                             .animation(.easeOut(duration: 0.5).delay(Double(index) * 0.12), value: postsVisible)
@@ -2209,7 +2215,7 @@ struct WarriorRoomFeatureScreen: View {
                         .multilineTextAlignment(.center)
 
                     Button(action: {
-                        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                        Juice.play(.tapSolid)
                         onContinue()
                     }) {
                         Text("I want to stand with others")
@@ -2308,8 +2314,14 @@ struct DailyCommitmentScreen: View {
                             // Step indicator
                             ZStack {
                                 Circle()
-                                    .fill(Color.white.opacity(0.15))
+                                    .fill(
+                                        LinearGradient(
+                                            colors: [DS.Palette.accent.opacity(0.95), DS.Palette.accent.opacity(0.55)],
+                                            startPoint: .topLeading, endPoint: .bottomTrailing
+                                        )
+                                    )
                                     .frame(width: 36, height: 36)
+                                    .shadow(color: DS.Palette.accent.opacity(0.5), radius: 8, x: 0, y: 4)
                                 Text(milestone.0)
                                     .font(.system(size: 14, weight: .bold, design: .rounded))
                                     .foregroundColor(.white)
@@ -2351,7 +2363,7 @@ struct DailyCommitmentScreen: View {
                 // CTA
                 VStack(spacing: 10) {
                     Button(action: {
-                        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                        Juice.play(.tapSolid)
                         onContinue()
                     }) {
                         Text("Start My Daily Practice")

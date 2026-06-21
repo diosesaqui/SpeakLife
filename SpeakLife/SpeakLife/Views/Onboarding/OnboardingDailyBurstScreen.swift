@@ -68,12 +68,18 @@ struct OnboardingDailyBurstScreen: View {
                 // Lightning Bolt Icon
                 ZStack {
                     Circle()
-                        .fill(Color(red: 0.9, green: 0.6, blue: 0.2).opacity(0.3))
+                        .fill(
+                            LinearGradient(
+                                colors: [Color(red: 0.9, green: 0.6, blue: 0.2).opacity(0.95), Color(red: 0.9, green: 0.6, blue: 0.2).opacity(0.55)],
+                                startPoint: .topLeading, endPoint: .bottomTrailing
+                            )
+                        )
                         .frame(width: 100, height: 100)
-                    
+                        .shadow(color: Color(red: 0.9, green: 0.6, blue: 0.2).opacity(0.5), radius: 8, x: 0, y: 4)
+
                     Image(systemName: "bolt.fill")
                         .font(.system(size: 50))
-                        .foregroundColor(Color(red: 0.9, green: 0.6, blue: 0.2))
+                        .foregroundColor(.white)
                 }
                 .opacity(declarationOpacity)
                 .scaleEffect(declarationOpacity)
@@ -268,12 +274,18 @@ struct OnboardingDailyBurstScreen: View {
                 // Crown Icon
                 ZStack {
                     Circle()
-                        .fill(Color(red: 0.6, green: 0.4, blue: 0.2).opacity(0.3))
+                        .fill(
+                            LinearGradient(
+                                colors: [Color(red: 0.95, green: 0.8, blue: 0.2).opacity(0.95), Color(red: 0.95, green: 0.8, blue: 0.2).opacity(0.55)],
+                                startPoint: .topLeading, endPoint: .bottomTrailing
+                            )
+                        )
                         .frame(width: 120, height: 120)
-                    
+                        .shadow(color: Color(red: 0.95, green: 0.8, blue: 0.2).opacity(0.5), radius: 8, x: 0, y: 4)
+
                     Image(systemName: "crown.fill")
                         .font(.system(size: 60))
-                        .foregroundColor(Color(red: 0.95, green: 0.8, blue: 0.2))
+                        .foregroundColor(.white)
                 }
                 .scaleEffect(completionOpacity)
                 .opacity(completionOpacity)

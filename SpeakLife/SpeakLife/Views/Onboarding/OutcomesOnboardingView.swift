@@ -193,7 +193,7 @@ struct OutcomesOnboardingView: View {
     }
 
     private func advance() {
-        UIImpactFeedbackGenerator(style: .soft).impactOccurred()
+        Juice.play(.tapLight)
         // flow_schema 2 = matched-to-warfare layout (stakes + experience recap + extended quiz + plan reveal); 1 = original short outcomes flow. Bump when step raw values are renumbered again.
         AnalyticsService.shared.track("outcomes_step_completed", parameters: ["step": currentStep.rawValue, "flow_schema": 2])
 
@@ -466,15 +466,17 @@ private struct OutcomeContinueButton: View {
     var body: some View {
         Button(action: action) {
             Text(label)
-                .font(.system(size: 17, weight: .semibold, design: .rounded))
-                .foregroundColor(isEnabled ? .black : .white.opacity(0.4))
+                .font(.system(size: 17, weight: .bold, design: .rounded))
+                .foregroundColor(isEnabled ? DS.Palette.deepBlue : .white.opacity(0.4))
                 .frame(maxWidth: .infinity)
                 .frame(height: 56)
                 .background(
                     Capsule()
-                        .fill(isEnabled ? Color.white : Color.white.opacity(0.12))
+                        .fill(isEnabled ? AnyShapeStyle(DS.Gradient.gold) : AnyShapeStyle(Color.white.opacity(0.12)))
+                        .shadow(color: isEnabled ? DS.Palette.gold.opacity(0.45) : .clear, radius: 14, x: 0, y: 6)
                 )
         }
+        .buttonStyle(.dsPressable(feel: .tapSolid))
         .disabled(!isEnabled)
         .padding(.horizontal, 28)
         .animation(.easeInOut(duration: 0.2), value: isEnabled)
@@ -516,8 +518,9 @@ private struct OutcomeStakesScreen: View {
             VStack(spacing: 26) {
                 ZStack {
                     Circle()
-                        .fill(Color.white.opacity(0.10))
+                        .fill(DS.Gradient.gold)
                         .frame(width: 96, height: 96)
+                        .shadow(color: DS.Palette.gold.opacity(0.45), radius: 12, x: 0, y: 6)
                     Image(systemName: "hourglass")
                         .font(.system(size: 40))
                         .foregroundColor(.white)
@@ -527,7 +530,7 @@ private struct OutcomeStakesScreen: View {
                 VStack(spacing: 14) {
                     Text("BEFORE WE SHOW YOU WHAT'S POSSIBLE")
                         .font(.system(size: 12, weight: .bold, design: .rounded))
-                        .foregroundColor(.white.opacity(0.5))
+                        .foregroundColor(DS.Palette.gold.opacity(0.9))
                         .kerning(1.4)
                         .multilineTextAlignment(.center)
                         .outcomeStagger(v, delay: 0.08)
@@ -593,8 +596,9 @@ private struct OutcomeVisionScreen: View {
             VStack(spacing: 26) {
                 ZStack {
                     Circle()
-                        .fill(Color.white.opacity(0.10))
+                        .fill(DS.Gradient.gold)
                         .frame(width: 96, height: 96)
+                        .shadow(color: DS.Palette.gold.opacity(0.45), radius: 12, x: 0, y: 6)
                     Image(systemName: vision.symbol)
                         .font(.system(size: 40))
                         .foregroundColor(.white)
@@ -604,7 +608,7 @@ private struct OutcomeVisionScreen: View {
                 VStack(spacing: 14) {
                     Text(vision.eyebrow)
                         .font(.system(size: 12, weight: .bold, design: .rounded))
-                        .foregroundColor(.white.opacity(0.5))
+                        .foregroundColor(DS.Palette.gold.opacity(0.9))
                         .kerning(1.4)
                         .outcomeStagger(v, delay: 0.08)
 
@@ -711,13 +715,13 @@ private struct OutcomePickerScreen: View {
         let choice = OutcomeChoice.of(burden)
         let isSelected = responses.heaviestBurden == burden
         return Button(action: {
-            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            Juice.play(.tapLight)
             responses.heaviestBurden = burden
         }) {
             HStack(spacing: 14) {
                 Image(systemName: choice.symbol)
                     .font(.system(size: 22))
-                    .foregroundColor(.white.opacity(isSelected ? 1 : 0.7))
+                    .foregroundColor(isSelected ? DS.Palette.gold : .white.opacity(0.7))
                     .frame(width: 32)
                 VStack(alignment: .leading, spacing: 3) {
                     Text(choice.statement)
@@ -732,10 +736,10 @@ private struct OutcomePickerScreen: View {
                 Spacer()
                 ZStack {
                     Circle()
-                        .strokeBorder(isSelected ? Color.white : Color.white.opacity(0.35), lineWidth: 1.5)
+                        .strokeBorder(isSelected ? DS.Palette.gold : Color.white.opacity(0.35), lineWidth: 1.5)
                         .frame(width: 22, height: 22)
                     if isSelected {
-                        Circle().fill(Color.white).frame(width: 12, height: 12)
+                        Circle().fill(DS.Palette.gold).frame(width: 12, height: 12)
                     }
                 }
             }
@@ -746,7 +750,7 @@ private struct OutcomePickerScreen: View {
                     .fill(isSelected ? Color.white.opacity(0.15) : Color.white.opacity(0.06))
                     .overlay(
                         RoundedRectangle(cornerRadius: 14, style: .continuous)
-                            .strokeBorder(isSelected ? Color.white.opacity(0.5) : Color.white.opacity(0.12), lineWidth: 1)
+                            .strokeBorder(isSelected ? DS.Palette.gold.opacity(0.55) : Color.white.opacity(0.12), lineWidth: 1)
                     )
             )
             .animation(.spring(response: 0.3, dampingFraction: 0.75), value: isSelected)

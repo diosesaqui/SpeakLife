@@ -25,16 +25,18 @@ struct WidgetScene: View {
                 .font(.system(size: 34, weight: .semibold, design: .rounded))
                 .shadow(color: Color.white.opacity(0.6), radius: 4, x: 0, y: 2)
                 .foregroundColor(.white)
-            
+                .dsAppear(0)
+
             Image("widget")
                 .resizable()
                 .aspectRatio(contentMode: .fit)
                 .frame(width: 235, height: size.height * 0.3)
-            
+                .dsAppear(0.06)
+
             Spacer().frame(height:  size.height * 0.1)
             VStack {
-               
-                
+
+
                 VStack {
                     Text("Long press your home screen until apps wiggle.", comment: "widget scene add instructions")
                         .font(Font.custom("AppleSDGothicNeo-Regular", size: 20, relativeTo: .body))
@@ -63,10 +65,13 @@ struct WidgetScene: View {
                 }
                 .frame(width: size.width * 0.8)
             }
+            .dsAppear(0.12)
+
             Spacer()
-            
+
             ShimmerButton(colors: [Constants.DAMidBlue, .yellow], buttonTitle: "Got it!", action: callBack)
             .frame(width: size.width * 0.87 ,height: 50)
+            .dsAppear(0.18)
             .shadow(color: Constants.DAMidBlue, radius: 8, x: 0, y: 10)
             
             .background(Constants.DADarkBlue.opacity(0.6))
@@ -110,8 +115,8 @@ struct UseCaseScene: View {
                 }.padding()
             }
             .frame(width: size.width * 0.87 ,height: 50)
-            .background(Constants.DAMidBlue)
-            
+            .background(DS.Gradient.brand)
+
             .foregroundColor(.white)
             .cornerRadius(8)
             .shadow(color: Constants.DAMidBlue, radius: 8, x: 0, y: 10)

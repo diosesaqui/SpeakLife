@@ -310,7 +310,7 @@ struct DeclarationView: View {
         }
         return CapsuleImageButton(title: title) {
             handleDevotionalPresentation(true)
-            Selection.shared.selectionFeedback()
+            Juice.play(.tapLight)
         }
     }
     
@@ -340,7 +340,7 @@ struct DeclarationView: View {
         
         CapsuleImageButton(title: "crown.fill") {
             premiumView()
-            Selection.shared.selectionFeedback()
+            Juice.play(.tapLight)
         }
         .opacity(appState.showScreenshotLabel ? 0 : 1)
         .foregroundStyle(Constants.gold)
@@ -397,6 +397,7 @@ struct DeclarationView: View {
                 .environmentObject(themeViewModel)
                 .environmentObject(timerViewModel)
                 .environmentObject(streakViewModel)
+                .environmentObject(subscriptionStore)
         }
         // Presented from the "Today" checklist tab: it switches to this feed tab
         // and posts this so the burst opens here, where its cover is fully wired.

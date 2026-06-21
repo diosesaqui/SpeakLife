@@ -28,9 +28,9 @@ struct DailyVerseDetailView: View {
                 .ignoresSafeArea()
                 
                 ScrollView {
-                    VStack(spacing: 32) {
+                    VStack(spacing: DS.Spacing.xl) {
                         // Header
-                        VStack(spacing: 8) {
+                        VStack(spacing: DS.Spacing.xs) {
                             Image(systemName: "quote.bubble.fill")
                                 .font(.system(size: 48))
                                 .foregroundColor(Constants.DAMidBlue)
@@ -40,9 +40,10 @@ struct DailyVerseDetailView: View {
                                 .foregroundColor(.primary)
                         }
                         .padding(.top, 20)
+                        .dsAppear()
                         
                         // Verse Content
-                        VStack(spacing: 24) {
+                        VStack(spacing: DS.Spacing.lg) {
                             // The verse text
                             Text(verse.text)
                                 .font(.system(size: 20, weight: .medium, design: .serif))
@@ -64,14 +65,15 @@ struct DailyVerseDetailView: View {
                         }
                         .padding()
                         .background(
-                            RoundedRectangle(cornerRadius: 16)
+                            RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous)
                                 .fill(Color(UIColor.secondarySystemBackground))
                                 .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 4)
                         )
                         .padding(.horizontal)
-                        
+                        .dsAppear(0.06)
+
                         // Action Buttons
-                        VStack(spacing: 16) {
+                        VStack(spacing: DS.Spacing.md) {
                             // Share Button
                             Button(action: {
                                 shareVerse()
@@ -86,7 +88,7 @@ struct DailyVerseDetailView: View {
                                 .frame(maxWidth: .infinity)
                                 .frame(height: 50)
                                 .background(Constants.DAMidBlue)
-                                .cornerRadius(12)
+                                .cornerRadius(DS.Radius.sm)
                             }
                             
                             // Copy Button
@@ -103,14 +105,15 @@ struct DailyVerseDetailView: View {
                                 .frame(maxWidth: .infinity)
                                 .frame(height: 50)
                                 .background(
-                                    RoundedRectangle(cornerRadius: 12)
+                                    RoundedRectangle(cornerRadius: DS.Radius.sm, style: .continuous)
                                         .stroke(Constants.DAMidBlue, lineWidth: 2)
                                         .fill(Color.clear)
                                 )
                             }
                         }
                         .padding(.horizontal, 40)
-                        
+                        .dsAppear(0.12)
+
                         Spacer()
                     }
                 }
@@ -140,8 +143,7 @@ struct DailyVerseDetailView: View {
         UIPasteboard.general.string = text
         
         // Show feedback (you could add a toast/banner here)
-        let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
-        impactFeedback.impactOccurred()
+        Juice.play(.tapSolid)
     }
 }
 
