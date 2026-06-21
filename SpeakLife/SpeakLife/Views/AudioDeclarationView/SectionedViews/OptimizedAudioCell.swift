@@ -36,18 +36,30 @@ struct OptimizedAudioCell: View {
                         )
                     )
                     .overlay(alignment: .bottomTrailing) {
-                        if progressStore.isPlayed(item.id) {
-                            Image(systemName: "checkmark.circle.fill")
-                                .font(.system(size: 18, weight: .bold))
-                                .symbolRenderingMode(.palette)
-                                .foregroundStyle(Color.white, Color(red: 0.18, green: 0.78, blue: 0.45))
-                                .background(
-                                    Circle()
-                                        .fill(Color.black.opacity(0.3))
-                                        .padding(2)
-                                )
-                                .offset(x: -6, y: -6)
+                        Button(action: {
+                            Juice.play(.tapSolid)
+                            progressStore.togglePlayed(item.id)
+                        }) {
+                            Group {
+                                if progressStore.isPlayed(item.id) {
+                                    Image(systemName: "checkmark.circle.fill")
+                                        .symbolRenderingMode(.palette)
+                                        .foregroundStyle(Color.white, Color(red: 0.18, green: 0.78, blue: 0.45))
+                                } else {
+                                    Image(systemName: "circle")
+                                        .foregroundColor(.white.opacity(0.85))
+                                }
+                            }
+                            .font(.system(size: 18, weight: .bold))
+                            .background(
+                                Circle()
+                                    .fill(Color.black.opacity(0.3))
+                                    .padding(2)
+                            )
                         }
+                        .buttonStyle(PlainButtonStyle())
+                        .offset(x: -6, y: -6)
+                        .accessibilityLabel(progressStore.isPlayed(item.id) ? "Mark as unplayed" : "Mark as played")
                     }
                 
                 // Favorite button
@@ -64,14 +76,14 @@ struct OptimizedAudioCell: View {
                     Image(systemName: isFavorite ? "heart.fill" : "heart")
                         .font(.system(size: 16, weight: .semibold))
                         .foregroundColor(isFavorite ? .pink : .white)
-                        .padding(8)
+                        .padding(DS.Spacing.xs)
                         .background(
                             Circle()
                                 .fill(.ultraThinMaterial)
                         )
                         .scaleEffect(showFavoriteAnimation ? 1.3 : 1.0)
                 }
-                .padding(8)
+                .padding(DS.Spacing.xs)
                 
                 // Premium lock indicator
                 if item.isPremium && !subscriptionStore.isPremium {
@@ -88,12 +100,12 @@ struct OptimizedAudioCell: View {
                                 )
                             Spacer()
                         }
-                        .padding(8)
+                        .padding(DS.Spacing.xs)
                     }
                 }
             }
-            .cornerRadius(12)
-            
+            .cornerRadius(DS.Radius.sm)
+
             // Content
             VStack(alignment: .leading, spacing: 4) {
                 Text(item.title)
@@ -121,13 +133,25 @@ struct OptimizedAudioCell: View {
         .frame(width: configuration.itemWidth)
         .contentShape(Rectangle())
         .scaleEffect(isPressed ? 0.95 : 1.0)
-        .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isPressed)
+        .animation(DS.Motion.quick, value: isPressed)
         .onTapGesture {
             isPressed = true
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                 isPressed = false
             }
             onTap()
+        }
+        .contextMenu {
+            Button {
+                Juice.play(.tapSolid)
+                progressStore.togglePlayed(item.id)
+            } label: {
+                if progressStore.isPlayed(item.id) {
+                    Label("Mark as Unplayed", systemImage: "circle")
+                } else {
+                    Label("Mark as Played", systemImage: "checkmark.circle.fill")
+                }
+            }
         }
     }
 }
@@ -143,13 +167,13 @@ struct CompactAudioCell: View {
     @EnvironmentObject var subscriptionStore: SubscriptionStore
     
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: DS.Spacing.sm) {
             // Thumbnail
             Image(item.imageUrl)
                 .resizable()
                 .aspectRatio(contentMode: .fill)
                 .frame(width: 60, height: 60)
-                .cornerRadius(8)
+                .cornerRadius(DS.Radius.sm)
             
             // Content
             VStack(alignment: .leading, spacing: 4) {
@@ -180,14 +204,15 @@ struct CompactAudioCell: View {
                     .foregroundColor(isFavorite ? .pink : .white.opacity(0.6))
             }
         }
-        .padding(.vertical, 8)
-        .padding(.horizontal, 16)
+        .padding(.vertical, DS.Spacing.xs)
+        .padding(.horizontal, DS.Spacing.md)
         .background(
-            RoundedRectangle(cornerRadius: 12)
+            RoundedRectangle(cornerRadius: DS.Radius.sm, style: .continuous)
                 .fill(.ultraThinMaterial)
         )
+        .dsShadow(DS.Elevation.low)
         .scaleEffect(isPressed ? 0.97 : 1.0)
-        .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isPressed)
+        .animation(DS.Motion.quick, value: isPressed)
         .onTapGesture {
             isPressed = true
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {

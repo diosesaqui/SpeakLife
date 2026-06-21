@@ -95,7 +95,7 @@ struct FixedBattleIntroScreen: View {
                         .frame(width: size.width * 0.85, height: 50)
                         .background(
                             RoundedRectangle(cornerRadius: 25)
-                                .fill(Color(red: 0.4, green: 0.5, blue: 0.9))
+                                .fill(DS.Gradient.brand)
                         )
                 }
                 .padding(.bottom, 40)
@@ -163,7 +163,7 @@ struct FixedVictorySolutionScreen: View {
                             
                             Text("THE TRUTH")
                                 .font(.system(size: 14, weight: .semibold))
-                                .foregroundColor(.white.opacity(0.7))
+                                .foregroundColor(DS.Palette.gold.opacity(0.9))
                                 .tracking(2)
                             
                             Text("Jesus already\\ndefeated those lies")
@@ -218,7 +218,7 @@ struct FixedVictorySolutionScreen: View {
                         .frame(width: size.width * 0.85, height: 50)
                         .background(
                             RoundedRectangle(cornerRadius: 25)
-                                .fill(Color(red: 0.9, green: 0.6, blue: 0.3))
+                                .fill(DS.Gradient.gold)
                         )
                 }
                 .padding(.bottom, 40)

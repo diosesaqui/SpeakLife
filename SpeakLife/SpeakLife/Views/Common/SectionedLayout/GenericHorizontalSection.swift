@@ -20,7 +20,7 @@ struct GenericHorizontalSection<ContentType: SectionableContent>: View {
     @State private var showRightGradient = true
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: DS.Spacing.sm) {
             // Section Header
             sectionHeader
             
@@ -64,7 +64,7 @@ struct GenericHorizontalSection<ContentType: SectionableContent>: View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
                 Text(section.title)
-                    .font(.system(size: 20, weight: .bold))
+                    .font(DS.Typography.headline)
                     .foregroundColor(.white)
                 
                 if let subtitle = section.subtitle {

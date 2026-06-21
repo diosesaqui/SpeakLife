@@ -73,11 +73,12 @@ struct BenefitScene: View {
                     }.padding()
                 }
                 .frame(width: size.width * 0.87 ,height: 50)
-                .background(Constants.DAMidBlue)
-                
+                .background(DS.Gradient.brand)
+
                 .foregroundColor(.white)
                 .cornerRadius(8)
                 .shadow(color: Constants.DAMidBlue, radius: 8, x: 0, y: 10)
+                .buttonStyle(.dsPressable(feel: .tapSolid))
                 
                 Spacer()
                     .frame(width: 5, height: size.height * 0.07)

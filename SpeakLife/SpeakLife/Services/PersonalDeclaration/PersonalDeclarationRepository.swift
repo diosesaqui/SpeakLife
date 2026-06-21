@@ -10,11 +10,22 @@
 import Foundation
 
 final class PersonalDeclarationRepository: PersonalDeclarationRepositoryProtocol {
-    private let key = "personal_declaration_v1"
+    static let storageKey = "personal_declaration_v1"
+    private let key = PersonalDeclarationRepository.storageKey
     private let defaults: UserDefaults
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
+    }
+
+    /// Synchronous read of the active personal declaration's category rawValue.
+    /// For callers on the main thread that can't await `load()` (e.g. ordering
+    /// the audio filters as they're built). Returns nil when none is saved.
+    static func activeCategoryRaw(defaults: UserDefaults = .standard) -> String? {
+        guard let data = defaults.data(forKey: storageKey),
+              let declaration = try? JSONDecoder().decode(PersonalDeclaration.self, from: data)
+        else { return nil }
+        return declaration.categoryRaw
     }
 
     func save(_ declaration: PersonalDeclaration) async throws {

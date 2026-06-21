@@ -42,7 +42,8 @@ struct TimerStreakDetailView: View {
                     .frame(maxWidth: 150)
                 }
                 .padding(.top, 10)
-                
+                .dsAppear(0)
+
                 Divider()
                 
                 // Timer Section
@@ -112,7 +113,8 @@ struct TimerStreakDetailView: View {
                         }
                     }
                 }
-                
+                .dsAppear(0.06)
+
                 }
             }
             .padding(.horizontal)

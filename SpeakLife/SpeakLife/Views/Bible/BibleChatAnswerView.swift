@@ -88,7 +88,7 @@ struct BibleChatAnswerView: View {
     }
 
     private var topicHeader: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: DS.Spacing.sm) {
             ZStack {
                 Circle()
                     .fill(topic.accentColor.opacity(0.22))
@@ -131,7 +131,7 @@ struct BibleChatAnswerView: View {
             .foregroundColor(.white)
             .lineSpacing(4)
             .multilineTextAlignment(.leading)
-            .padding(16)
+            .padding(DS.Spacing.md)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(
                 RoundedRectangle(cornerRadius: 18, style: .continuous)
@@ -212,15 +212,14 @@ struct BibleChatAnswerView: View {
     }
 
     private var actionRow: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: DS.Spacing.sm) {
             ShareLink(item: shareText) {
                 actionLabel(systemImage: "square.and.arrow.up", title: "Share")
             }
             Button {
                 let pasteboard = UIPasteboard.general
                 pasteboard.string = shareText
-                let generator = UINotificationFeedbackGenerator()
-                generator.notificationOccurred(.success)
+                Juice.play(.success)
                 AnalyticsService.shared.trackContentInteraction(
                     contentType: "bible_chat_topic",
                     contentId: topic.id,
@@ -300,7 +299,7 @@ private struct VerseCard: View {
 
     var body: some View {
         Button(action: onOpen) {
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: DS.Spacing.xs) {
                 Text("\u{201C}\(verse.text)\u{201D}")
                     .font(.system(size: 14, design: .serif))
                     .foregroundColor(.white)

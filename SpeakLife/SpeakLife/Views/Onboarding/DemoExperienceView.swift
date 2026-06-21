@@ -47,16 +47,17 @@ struct DemoExperienceView: View {
                 VStack(spacing: 8) {
                     Text("Your First Declaration")
                         .font(.system(size: 16, weight: .medium, design: .rounded))
-                        .foregroundColor(.white.opacity(0.8))
+                        .foregroundColor(DS.Palette.gold.opacity(0.9))
                     
                     Text("Speak This Out Loud")
                         .font(.system(size: 32, weight: .bold, design: .rounded))
                         .foregroundColor(.white)
                         .shadow(color: .white.opacity(0.3), radius: 4, x: 0, y: 2)
                 }
-                
+                .dsAppear(0)
+
                 Spacer()
-                
+
                 // Declaration Card
                 VStack(spacing: 20) {
                     Image(systemName: "quote.opening")
@@ -77,15 +78,9 @@ struct DemoExperienceView: View {
                 }
                 .padding(.vertical, 40)
                 .frame(width: size.width * 0.85)
-                .background(
-                    RoundedRectangle(cornerRadius: 20)
-                        .fill(Color.white.opacity(0.1))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 20)
-                                .stroke(Color.white.opacity(0.2), lineWidth: 1)
-                        )
-                )
-                
+                .dsGlass(cornerRadius: DS.Radius.lg)
+                .dsAppear(0.06)
+
                 Spacer()
                 
                 // CTA Section
@@ -93,8 +88,7 @@ struct DemoExperienceView: View {
                     if !hasSpoken {
                         Button(action: {
                             // Haptic feedback
-                            let impactFeedback = UIImpactFeedbackGenerator(style: .heavy)
-                            impactFeedback.impactOccurred()
+                            Juice.play(.tapSolid)
                             
                             // Button press animation
                             withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
@@ -214,11 +208,12 @@ struct DemoExperienceView: View {
                             .padding(.horizontal, 20)
                             .background(
                                 RoundedRectangle(cornerRadius: 16)
-                                    .fill(Color.orange.opacity(0.1))
+                                    .fill(DS.Gradient.ember)
                                     .overlay(
                                         RoundedRectangle(cornerRadius: 16)
-                                            .stroke(Color.orange.opacity(0.3), lineWidth: 1)
+                                            .stroke(Color.white.opacity(0.25), lineWidth: 1)
                                     )
+                                    .shadow(color: Color.orange.opacity(0.45), radius: 8, x: 0, y: 3)
                                     .scaleEffect(pulseAnimation ? 1.02 : 1.0)
                                     .animation(.easeInOut(duration: 2).repeatForever(autoreverses: true), value: pulseAnimation)
                             )

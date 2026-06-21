@@ -185,6 +185,23 @@ enum HeaviestBurden: String, CaseIterable, Identifiable {
             )
         }
     }
+
+    // One vivid, present-tense picture of the won life for this burden. Shown on
+    // the pre-paywall plan reveal as the destination the plan is building toward
+    // — the bridge that connects the product to the user's dream reality right
+    // before the ask. Kept short and concrete so it lands as a felt outcome,
+    // not a feature.
+    var dreamOutcome: String {
+        switch self {
+        case .peace:     return "A quiet mind, a calm home, and sleep that finally comes."
+        case .health:    return "Strength back in your body and mornings you wake up grateful."
+        case .joy:       return "Joy that holds steady, even on the hard days."
+        case .identity:  return "Standing secure in who God says you are, no labels attached."
+        case .purpose:   return "Stepping into the calling God built you for, on purpose."
+        case .abundance: return "Open doors, provision ahead of the need, living from overflow."
+        case .allOfIt:   return "More ground taken every day. Victory you live from, not fight for."
+        }
+    }
 }
 
 // Quiz v2: burden-aware answers for the "victory_looks_like" outcome question

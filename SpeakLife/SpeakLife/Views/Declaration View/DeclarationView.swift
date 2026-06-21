@@ -38,6 +38,8 @@ struct DeclarationView: View {
     
     @AppStorage("share.counter") private var shareCounter = 0
     @AppStorage("shared.count") private var shared = 0
+    // Ask the user to share the app at most once, ever.
+    @AppStorage("hasAskedToShareApp") private var hasAskedToShareApp = false
     @AppStorage("premium.count") private var premiumCount = 0
     @State var result: Result<MFMailComposeResult, Error>? = nil
     @State private var share = false
@@ -216,7 +218,9 @@ struct DeclarationView: View {
     
     @ViewBuilder
     private var dailyChecklistButton: some View {
-        if !showSpeakAloudBanner {
+        // Hidden when the checklist owns the home tab (the icon would be
+        // redundant). Only shows in the reverted feed-as-home layout.
+        if !showSpeakAloudBanner && !subscriptionStore.checklistHomeEnabled {
             let isDone = streakViewModel.todayChecklist.isStreakEarned
             Button(action: {
                 activeSheet = .dailyChecklist
@@ -306,7 +310,7 @@ struct DeclarationView: View {
         }
         return CapsuleImageButton(title: title) {
             handleDevotionalPresentation(true)
-            Selection.shared.selectionFeedback()
+            Juice.play(.tapLight)
         }
     }
     
@@ -336,7 +340,7 @@ struct DeclarationView: View {
         
         CapsuleImageButton(title: "crown.fill") {
             premiumView()
-            Selection.shared.selectionFeedback()
+            Juice.play(.tapLight)
         }
         .opacity(appState.showScreenshotLabel ? 0 : 1)
         .foregroundStyle(Constants.gold)
@@ -393,6 +397,12 @@ struct DeclarationView: View {
                 .environmentObject(themeViewModel)
                 .environmentObject(timerViewModel)
                 .environmentObject(streakViewModel)
+                .environmentObject(subscriptionStore)
+        }
+        // Presented from the "Today" checklist tab: it switches to this feed tab
+        // and posts this so the burst opens here, where its cover is fully wired.
+        .onReceive(NotificationCenter.default.publisher(for: Notification.Name("ShowDailyDeclarationBurst"))) { _ in
+            showDailyBurst = true
         }
         // Top-level cover — handles both "create first declaration" and "set new after breakthrough"
         .fullScreenCover(isPresented: $showNewDeclarationSheet) {
@@ -551,8 +561,10 @@ struct DeclarationView: View {
     
     private func shareApp() {
         let currentDate = Date()
-        if shareCounter > 3 && shared < 2 && currentDate.timeIntervalSince(appState.lastSharedAttemptDate) >= 12 * 60 * 60 {
+        // Ask only once, ever — don't re-prompt users who declined.
+        if !hasAskedToShareApp && shareCounter > 3 {
             share = true
+            hasAskedToShareApp = true
             appState.lastSharedAttemptDate = currentDate
         }
     }

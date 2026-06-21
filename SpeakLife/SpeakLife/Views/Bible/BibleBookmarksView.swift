@@ -41,23 +41,25 @@ struct BibleBookmarksView: View {
     }
     
     private var emptyStateView: some View {
-        VStack(spacing: 24) {
+        VStack(spacing: DS.Spacing.lg) {
             Spacer()
-            
+
             Image(systemName: "bookmark")
                 .font(.system(size: 60))
                 .foregroundColor(.white.opacity(0.8))
-            
-            VStack(spacing: 8) {
+                .dsAppear()
+
+            VStack(spacing: DS.Spacing.xs) {
                 Text("No Bookmarks Yet")
-                    .font(.system(size: 20, weight: .semibold))
+                    .font(DS.Typography.headline)
                     .foregroundColor(.white)
-                
+
                 Text("Tap and hold any verse to bookmark it")
                     .font(.system(size: 14))
                     .foregroundColor(.white.opacity(0.8))
                     .multilineTextAlignment(.center)
             }
+            .dsAppear(0.06)
             
             Spacer()
         }
@@ -66,7 +68,7 @@ struct BibleBookmarksView: View {
     
     private var bookmarksList: some View {
         ScrollView {
-            LazyVStack(spacing: 12) {
+            LazyVStack(spacing: DS.Spacing.sm) {
                 ForEach(viewModel.bookmarks) { bookmark in
                     BookmarkCard(
                         bookmark: bookmark,
@@ -99,7 +101,7 @@ struct BookmarkCard: View {
     
     var body: some View {
         Button(action: onTap) {
-            VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: DS.Spacing.sm) {
                 HStack {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("\(bookmark.bookName) \(bookmark.chapter):\(bookmark.verseNumber)")
@@ -139,9 +141,10 @@ struct BookmarkCard: View {
             }
             .padding()
             .background(
-                RoundedRectangle(cornerRadius: 12)
+                RoundedRectangle(cornerRadius: DS.Radius.sm, style: .continuous)
                     .fill(Color(UIColor.secondarySystemBackground))
             )
+            .dsShadow(DS.Elevation.low)
         }
         .buttonStyle(PlainButtonStyle())
         .confirmationDialog(
@@ -303,7 +306,7 @@ struct BibleVersionRow: View {
     
     var body: some View {
         Button(action: onTap) {
-            HStack(spacing: 12) {
+            HStack(spacing: DS.Spacing.sm) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(version.displayName)
                         .font(.system(size: 16, weight: .medium))

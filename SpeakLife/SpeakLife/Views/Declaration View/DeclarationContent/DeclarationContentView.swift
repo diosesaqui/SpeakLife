@@ -529,7 +529,7 @@ struct DeclarationContentView: View {
     
     private func shareTapped(declaration: Declaration) {
         viewModel.setCurrent(declaration)
-        Selection.shared.selectionFeedback()
+        Juice.play(.tapSolid)
 
         // Fix 3: Increment social shares counter for badge tracking
         UserDefaults.standard.set(
@@ -561,7 +561,7 @@ struct DeclarationContentView: View {
     }
     
     private func speakTapped(declaration: Declaration) {
-        Selection.shared.selectionFeedback()
+        Juice.play(.tapLight)
         
         Event.trackUserAction(
             "speech_button_tapped",
@@ -579,8 +579,8 @@ struct DeclarationContentView: View {
     }
     
     private func showVerse(declaration: Declaration) {
-        Selection.shared.selectionFeedback()
-        withAnimation {
+        Juice.play(.tapLight)
+        withAnimation(DS.Motion.smooth) {
             toggleDeclaration(declaration)
         }
     }
@@ -602,7 +602,9 @@ struct DeclarationContentView: View {
         )
         
         favorite(declaration)
-        self.isFavorite = !wasFavorite
+        withAnimation(Juice.Feel.favorite.motion) {
+            self.isFavorite = !wasFavorite
+        }
         // Fix 3: Increment favorites counter when adding (not removing) a favorite
         if !wasFavorite {
             UserDefaults.standard.set(
@@ -610,7 +612,8 @@ struct DeclarationContentView: View {
                 forKey: "totalFavoritesAdded"
             )
         }
-        Selection.shared.selectionFeedback()
+        // Matched feedback: a warm heartbeat when adding, a soft tap when removing.
+        Juice.play(wasFavorite ? .unfavorite : .favorite)
         appState.offerDiscountTry += 1
         if !subscriptionStore.isPremium, appState.offerDiscountTry % 5 == 0 {
             viewModel.showDiscountView.toggle()
@@ -619,7 +622,7 @@ struct DeclarationContentView: View {
     
     @ViewBuilder
     private func intentStackButtons(declaration: Declaration) -> some View  {
-        HStack(spacing: 24) {
+        HStack(spacing: DS.Spacing.lg) {
                 
                 Menu {
                     Button("Instagram Stories") {

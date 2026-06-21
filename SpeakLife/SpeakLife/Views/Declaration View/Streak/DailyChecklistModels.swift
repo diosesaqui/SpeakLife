@@ -78,6 +78,8 @@ enum TaskNavigationDestination: String, Codable {
     case audioTab
     case devotional
     case burst
+    case bibleChat
+    case journal
 }
 
 // MARK: - Enhanced Daily Task Model
@@ -365,7 +367,7 @@ struct TaskLibrary {
             difficulty: .beginner,
             minimumStreakDay: 2,
             estimatedMinutes: 2,
-            navigationDestination: .none
+            navigationDestination: .journal
         )
     ]
     
@@ -410,6 +412,18 @@ struct TaskLibrary {
         case "journal_insight":
             if let primaryCategory = topCategories.first {
                 personalizedTask.description = "Write about how God is working in your \(formatCategoryName(primaryCategory)) journey"
+            }
+
+        case "gratitude_moment":
+            if let primaryCategory = topCategories.first {
+                personalizedTask.title = "Reflect on \(formatCategoryName(primaryCategory))"
+                personalizedTask.description = "Write one honest line about where you need God in your \(formatCategoryName(primaryCategory)) right now"
+            }
+
+        case "ask_the_bible":
+            if let primaryCategory = topCategories.first {
+                personalizedTask.title = "Ask the Bible about \(formatCategoryName(primaryCategory))"
+                personalizedTask.description = "Bring a \(formatCategoryName(primaryCategory)) question to Scripture and let the Word answer"
             }
             
         case "memorize_verse":
@@ -479,7 +493,8 @@ struct TaskLibrary {
             type: .reflect,
             difficulty: .intermediate,
             minimumStreakDay: 8,
-            estimatedMinutes: 5
+            estimatedMinutes: 5,
+            navigationDestination: .journal
         ),
         DailyTask(
             id: "memorize_verse",
@@ -667,8 +682,10 @@ struct TaskLibrary {
         
         switch phase {
         case .foundation:
-            // Always include foundation tasks, add 4th task after day 4
-            tasks = Array(foundationTasks.filter { $0.minimumStreakDay <= streakDay }.prefix(4))
+            // Light on day 1 (burst + devotional + audio) to protect the streak,
+            // then progressively reveal gratitude, Ask the Bible, etc. as the
+            // habit takes hold. Gated by each task's minimumStreakDay.
+            tasks = Array(foundationTasks.filter { $0.minimumStreakDay <= streakDay }.prefix(5))
             
         case .growth:
             // Mix foundation and growth tasks
@@ -772,7 +789,7 @@ struct TaskLibrary {
             return task1.minimumStreakDay <= task2.minimumStreakDay
         }
         
-        return Array(prioritizedTasks.prefix(4))
+        return Array(prioritizedTasks.prefix(5))
     }
     
     private static func selectGrowthTasksWithAI(availableTasks: [DailyTask], userBehavior: [String: Any], streakDay: Int) -> [DailyTask] {
@@ -816,11 +833,10 @@ struct TaskLibrary {
     }
     
     private static func personalizeTasksForUser(tasks: [DailyTask], userCategories: [String], userBehavior: [String: Any]) -> [DailyTask] {
-        // Apply final AI personalization layer
-        return tasks.map { task in
-            // AI could modify task descriptions, add personal touches, etc.
-            // For now, return tasks as-is
-            return task
-        }
+        // Apply the same onboarding-category personalization the standard path
+        // uses, so titles/descriptions reflect the user's selections regardless
+        // of whether AI task selection is enabled.
+        guard !userCategories.isEmpty else { return tasks }
+        return tasks.map { personalizeTask($0, for: userCategories) }
     }
 }

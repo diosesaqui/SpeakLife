@@ -92,8 +92,6 @@ final class AppState: ObservableObject {
     @AppStorage("subscriptionTest") var subscriptionTestnineteen = false
     @AppStorage("firstOpen") var firstOpen = true
     @AppStorage("showGiftViewCount") var showGiftViewCount = 0
-    @AppStorage("email") var email = ""
-    @AppStorage("hasEmailv2") var needEmail = true
     @AppStorage("showQuizButton") var showQuizButton = true
     
     @AppStorage("hasCompletedDemo") var hasCompletedDemo = false
@@ -389,7 +387,10 @@ final class AppState: ObservableObject {
 
     private static let currentAppVersion: String = APP.Version.stringNumber
 
-    private static let minimumReviewInterval: TimeInterval = 60 * 60 * 24 * 3
+    // Spread the (Apple-capped 3/year) review prompts out instead of letting
+    // rapid triggers — every 7th swipe, every favorite, each streak milestone —
+    // burn all three in the first week, which reads as "asked too much".
+    private static let minimumReviewInterval: TimeInterval = 60 * 60 * 24 * 21
 }
 
 enum ReviewTrigger {

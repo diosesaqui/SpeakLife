@@ -24,7 +24,7 @@ struct BibleReaderView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
                     // Chapter Header
-                    VStack(spacing: 8) {
+                    VStack(spacing: DS.Spacing.xs) {
                         Text(chapter.bookName)
                             .font(.system(size: 24, weight: .bold, design: .serif))
                         
@@ -147,7 +147,7 @@ struct VerseView: View {
     let onTap: () -> Void
     
     var body: some View {
-        HStack(alignment: .top, spacing: 8) {
+        HStack(alignment: .top, spacing: DS.Spacing.xs) {
             // Verse Number
             Text("\(verse.number)")
                 .font(.custom(fontName, size: fontSize * 0.7))
@@ -191,7 +191,7 @@ struct ReaderControlsView: View {
     var body: some View {
         VStack(spacing: 0) {
             if showControls {
-                VStack(spacing: 16) {
+                VStack(spacing: DS.Spacing.md) {
                     // Font Size Control
                     HStack {
                         Text("Text Size")
@@ -261,15 +261,15 @@ struct ReaderControlsView: View {
                 }
                 .padding()
                 .background(
-                    RoundedRectangle(cornerRadius: 20)
+                    RoundedRectangle(cornerRadius: DS.Radius.lg, style: .continuous)
                         .fill(.regularMaterial)
                 )
                 .padding()
             }
             
             // Toggle Button
-            Button(action: { 
-                withAnimation(.spring()) {
+            Button(action: {
+                withAnimation(DS.Motion.smooth) {
                     showControls.toggle()
                 }
             }) {
@@ -299,7 +299,7 @@ struct VerseActionsSheet: View {
         NavigationView {
             VStack(alignment: .leading, spacing: 20) {
                 // Verse Preview
-                VStack(alignment: .leading, spacing: 8) {
+                VStack(alignment: .leading, spacing: DS.Spacing.xs) {
                     Text(verse.reference)
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundColor(.secondary)
@@ -310,12 +310,12 @@ struct VerseActionsSheet: View {
                 }
                 .padding()
                 .background(
-                    RoundedRectangle(cornerRadius: 12)
+                    RoundedRectangle(cornerRadius: DS.Radius.sm, style: .continuous)
                         .fill(Color(UIColor.secondarySystemBackground))
                 )
-                
+
                 // Actions
-                VStack(spacing: 16) {
+                VStack(spacing: DS.Spacing.md) {
                     // Bookmark Toggle
                     Button(action: {
                         viewModel.toggleBookmark(for: verse)
@@ -333,12 +333,12 @@ struct VerseActionsSheet: View {
                     Divider()
                     
                     // Highlight Options
-                    VStack(alignment: .leading, spacing: 12) {
+                    VStack(alignment: .leading, spacing: DS.Spacing.sm) {
                         Text("Highlight")
                             .font(.system(size: 14, weight: .medium))
                             .foregroundColor(.secondary)
                         
-                        HStack(spacing: 12) {
+                        HStack(spacing: DS.Spacing.sm) {
                             ForEach(highlightColors, id: \.self) { color in
                                 Button(action: {
                                     viewModel.toggleHighlight(for: verse, color: color)

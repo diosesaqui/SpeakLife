@@ -15,7 +15,7 @@ struct ChecklistNotificationSettings: View {
         VStack(spacing: 20) {
             // Section Header
             HStack {
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: DS.Spacing.xxs) {
                     Text("Daily Checklist Reminders")
                         .font(.headline)
                         .foregroundColor(.white)
@@ -34,12 +34,12 @@ struct ChecklistNotificationSettings: View {
             }
             
             if appState.checklistNotificationsEnabled {
-                VStack(spacing: 16) {
+                VStack(spacing: DS.Spacing.md) {
                     Divider()
                         .background(Color.white.opacity(0.2))
                     
                     // Morning Reminder Settings
-                    VStack(spacing: 12) {
+                    VStack(spacing: DS.Spacing.sm) {
                         HStack {
                             Text("🌅 Morning Motivation")
                                 .font(.subheadline)
@@ -67,10 +67,10 @@ struct ChecklistNotificationSettings: View {
                             }
                         }
                     }
-                    .padding(.horizontal, 8)
+                    .padding(.horizontal, DS.Spacing.xs)
                     
                     // Evening Check-in Settings
-                    VStack(spacing: 12) {
+                    VStack(spacing: DS.Spacing.sm) {
                         HStack {
                             Text("🌙 Evening Check-in")
                                 .font(.subheadline)
@@ -98,19 +98,20 @@ struct ChecklistNotificationSettings: View {
                             }
                         }
                     }
-                    .padding(.horizontal, 8)
+                    .padding(.horizontal, DS.Spacing.xs)
                 }
             }
         }
         .padding()
         .background(
-            RoundedRectangle(cornerRadius: 16)
+            RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous)
                 .fill(.ultraThinMaterial)
                 .overlay(
-                    RoundedRectangle(cornerRadius: 16)
+                    RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous)
                         .stroke(Color.white.opacity(0.1), lineWidth: 1)
                 )
         )
+        .dsShadow(DS.Elevation.low)
     }
     
     private func triggerConfirmation() {
@@ -166,9 +167,9 @@ struct TimePickerCompact: View {
     }
     
     var body: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: DS.Spacing.xs) {
             // Hour Picker
-            VStack(spacing: 4) {
+            VStack(spacing: DS.Spacing.xxs) {
                 Text("Hour")
                     .font(.caption2)
                     .foregroundColor(.white.opacity(0.6))
@@ -197,7 +198,7 @@ struct TimePickerCompact: View {
                 .fontWeight(.semibold)
             
             // Minute Picker
-            VStack(spacing: 4) {
+            VStack(spacing: DS.Spacing.xxs) {
                 Text("Minute")
                     .font(.caption2)
                     .foregroundColor(.white.opacity(0.6))
@@ -219,7 +220,7 @@ struct TimePickerCompact: View {
             }
             
             // AM/PM Picker
-            VStack(spacing: 4) {
+            VStack(spacing: DS.Spacing.xxs) {
                 Text("Period")
                     .font(.caption2)
                     .foregroundColor(.white.opacity(0.6))
@@ -243,7 +244,7 @@ struct TimePickerCompact: View {
                 )
             }
         }
-        .padding(.horizontal, 8)
+        .padding(.horizontal, DS.Spacing.xs)
     }
 }
 

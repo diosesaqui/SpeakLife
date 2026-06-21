@@ -74,9 +74,9 @@ struct SectionDetailView: View {
                             .foregroundColor(.white)
                             .autocapitalization(.none)
                     }
-                    .padding(12)
+                    .padding(DS.Spacing.sm)
                     .background(
-                        RoundedRectangle(cornerRadius: 10)
+                        RoundedRectangle(cornerRadius: DS.Radius.sm, style: .continuous)
                             .fill(.ultraThinMaterial)
                     )
                     .padding(.horizontal)
@@ -84,7 +84,7 @@ struct SectionDetailView: View {
                     
                     // Sort options
                     ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 12) {
+                        HStack(spacing: DS.Spacing.sm) {
                             ForEach(SortOption.allCases, id: \.self) { option in
                                 SortChip(
                                     title: option.rawValue,
@@ -101,19 +101,21 @@ struct SectionDetailView: View {
                     // Items list
                     if items.isEmpty {
                         Spacer()
-                        VStack(spacing: 16) {
+                        VStack(spacing: DS.Spacing.md) {
                             Image(systemName: "music.note.list")
                                 .font(.system(size: 50))
                                 .foregroundColor(.white.opacity(0.5))
-                            
+                                .dsAppear()
+
                             Text("No items in this section")
-                                .font(.title3)
-                                .fontWeight(.semibold)
+                                .font(DS.Typography.headline)
                                 .foregroundColor(.white)
-                            
+                                .dsAppear(0.06)
+
                             Text("Check back later for new content")
-                                .font(.body)
+                                .font(DS.Typography.body)
                                 .foregroundColor(.white.opacity(0.7))
+                                .dsAppear(0.12)
                         }
                         Spacer()
                     } else if filteredItems.isEmpty {
@@ -122,7 +124,7 @@ struct SectionDetailView: View {
                         Spacer()
                     } else {
                         ScrollView(.vertical, showsIndicators: false) {
-                            LazyVStack(spacing: 12) {
+                            LazyVStack(spacing: DS.Spacing.sm) {
                                 ForEach(filteredItems) { item in
                                     CompactAudioCell(
                                         item: item,
@@ -159,19 +161,21 @@ struct SectionDetailView: View {
     }
     
     private var emptySearchView: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: DS.Spacing.md) {
             Image(systemName: "magnifyingglass")
                 .font(.system(size: 50))
                 .foregroundColor(.white.opacity(0.5))
-            
+                .dsAppear()
+
             Text("No results found")
-                .font(.title3)
-                .fontWeight(.semibold)
+                .font(DS.Typography.headline)
                 .foregroundColor(.white)
-            
+                .dsAppear(0.06)
+
             Text("Try adjusting your search or filters")
-                .font(.body)
+                .font(DS.Typography.body)
                 .foregroundColor(.white.opacity(0.7))
+                .dsAppear(0.12)
         }
     }
     

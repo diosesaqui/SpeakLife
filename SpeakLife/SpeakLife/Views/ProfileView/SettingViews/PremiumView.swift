@@ -39,11 +39,11 @@ struct PremiumView: View {
                         Gradients().speakLifeCYOCell
                             .ignoresSafeArea()
                         
-                        VStack(spacing: 32) {
+                        VStack(spacing: DS.Spacing.xl) {
                             Spacer()
-                            
+
                             // Header
-                            VStack(spacing: 16) {
+                            VStack(spacing: DS.Spacing.md) {
                                 Image(systemName: "crown.fill")
                                     .font(.system(size: 60))
                                     .foregroundColor(Color.yellow)
@@ -56,13 +56,13 @@ struct PremiumView: View {
                                     .font(.system(size: 18, weight: .regular, design: .rounded))
                                     .foregroundColor(.white.opacity(0.85))
                                     .multilineTextAlignment(.center)
-                                    .padding(.horizontal, 24)
+                                    .padding(.horizontal, DS.Spacing.lg)
                             }
                             
                             Spacer()
                             
                             // Action Buttons
-                            VStack(spacing: 16) {
+                            VStack(spacing: DS.Spacing.md) {
                                 Button(action: {
                                     AnalyticsService.shared.trackUserAction(
                                         "manage_subscription_tapped",
@@ -84,7 +84,7 @@ struct PremiumView: View {
                                     .frame(maxWidth: .infinity)
                                     .frame(height: 56)
                                     .background(Color.blue.opacity(0.8))
-                                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                                    .clipShape(RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous))
                                 }
                                 
                                 Button(action: {
@@ -107,14 +107,14 @@ struct PremiumView: View {
                                     .frame(height: 56)
                                     .background(Color.white.opacity(0.1))
                                     .overlay(
-                                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                        RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous)
                                             .stroke(Color.red.opacity(0.5), lineWidth: 1.5)
                                     )
-                                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                                    .clipShape(RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous))
                                 }
                             }
-                            .padding(.horizontal, 32)
-                            
+                            .padding(.horizontal, DS.Spacing.xl)
+
                             Spacer()
                         }
                         .padding(.top, 80)
@@ -179,10 +179,10 @@ struct CancellationConfirmationView: View {
                 // Background
                 Color.black.ignoresSafeArea()
                 
-                VStack(spacing: 24) {
+                VStack(spacing: DS.Spacing.lg) {
                     Spacer()
-                    
-                    VStack(spacing: 16) {
+
+                    VStack(spacing: DS.Spacing.md) {
                         Text("We're sorry to see you go!")
                             .font(.system(size: 28, weight: .bold, design: .rounded))
                             .foregroundColor(.white)
@@ -192,19 +192,19 @@ struct CancellationConfirmationView: View {
                             .font(.system(size: 16, weight: .regular))
                             .foregroundColor(.white.opacity(0.8))
                             .multilineTextAlignment(.center)
-                            .padding(.horizontal, 8)
-                        
+                            .padding(.horizontal, DS.Spacing.xs)
+
                         Text("Thanks for giving SpeakLife a try and remember to stay healthy and keep declaring God's word over your life every day!")
                             .font(.system(size: 16, weight: .regular))
                             .foregroundColor(.white.opacity(0.8))
                             .multilineTextAlignment(.center)
-                            .padding(.horizontal, 8)
+                            .padding(.horizontal, DS.Spacing.xs)
                     }
                     .padding(.horizontal, 20)
                     
                     Spacer()
-                    
-                    VStack(spacing: 16) {
+
+                    VStack(spacing: DS.Spacing.md) {
                         // Cancel Button
                         Button(action: {
                             AnalyticsService.shared.trackUserAction(

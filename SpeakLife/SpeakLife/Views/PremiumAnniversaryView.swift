@@ -110,13 +110,13 @@ struct PremiumAnniversaryView: View {
                             .font(Font.custom("AppleSDGothicNeo-Bold", size: 22, relativeTo: .title2))
                             .foregroundColor(.white)
                             .multilineTextAlignment(.center)
-                            .padding(.horizontal, 24)
+                            .padding(.horizontal, DS.Spacing.lg)
                         Text(milestone.subhead)
                             .font(Font.custom("AppleSDGothicNeo-Regular", size: 15, relativeTo: .body))
                             .foregroundColor(.white.opacity(0.75))
                             .italic()
                             .multilineTextAlignment(.center)
-                            .padding(.horizontal, 32)
+                            .padding(.horizontal, DS.Spacing.xl)
                     }
                     .opacity(contentOpacity)
 
@@ -149,7 +149,7 @@ struct PremiumAnniversaryView: View {
                                     )
                             )
                     )
-                    .padding(.horizontal, 24)
+                    .padding(.horizontal, DS.Spacing.lg)
                     .opacity(contentOpacity)
 
                     Spacer()
@@ -172,7 +172,8 @@ struct PremiumAnniversaryView: View {
                             )
                             .clipShape(RoundedRectangle(cornerRadius: 14))
                     }
-                    .padding(.horizontal, 24)
+                    .buttonStyle(.dsPressable(feel: .tapSolid))
+                    .padding(.horizontal, DS.Spacing.lg)
                     .padding(.bottom, 28)
                     .opacity(contentOpacity)
                 }

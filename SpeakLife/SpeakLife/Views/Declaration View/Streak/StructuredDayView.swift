@@ -47,16 +47,119 @@ struct DayProgressRing: View {
                     Text("🔥").font(.system(size: 13))
                     Text("\(streakCount) day streak")
                         .font(.system(size: 12, weight: .semibold))
-                        .foregroundColor(.orange)
+                        .foregroundColor(.white)
                 }
                 .padding(.horizontal, 10).padding(.vertical, 4)
-                .background(Capsule().fill(Color.orange.opacity(0.12)))
+                .background(Capsule().fill(DS.Gradient.ember))
+                .overlay(Capsule().stroke(Color.white.opacity(0.25), lineWidth: 1))
+                .shadow(color: Color.orange.opacity(0.45), radius: 8, x: 0, y: 3)
             }
         }
         .onAppear { withAnimation(.easeOut(duration: 0.9)) { animatedProgress = progress } }
         .onChange(of: completed) { _ in
             withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) { animatedProgress = progress }
         }
+    }
+}
+
+// MARK: - Week Streak Strip
+//
+// Week-at-a-glance row (S M T W T F S) modeled on Apple Fitness / Duolingo /
+// Haven. Visualizing the week so far is one of the strongest return-drivers in
+// habit apps: completed days read as earned, today is the obvious next move,
+// and a gap creates gentle "don't break it" pressure. Backed by real per-day
+// completion history from BurstCompletionTracker, so it never lies.
+
+struct WeekStreakStrip: View {
+    let currentStreak: Int
+    /// Last day the streak was earned. Lets the strip stay consistent with the
+    /// header streak even when the streak was restored/synced without a
+    /// per-day BurstCompletion record.
+    var lastCompletedDate: Date? = nil
+    @ObservedObject private var tracker = BurstCompletionTracker.shared
+    private let calendar = Calendar.current
+
+    private struct DayCell: Identifiable {
+        let id = UUID()
+        let label: String
+        let isToday: Bool
+        let isCompleted: Bool
+        let isFuture: Bool
+    }
+
+    /// The inclusive [start, end] day range the current streak covers, or nil.
+    private var streakRange: (start: Date, end: Date)? {
+        guard currentStreak > 0, let last = lastCompletedDate else { return nil }
+        let end = calendar.startOfDay(for: last)
+        guard let start = calendar.date(byAdding: .day, value: -(currentStreak - 1), to: end) else { return nil }
+        return (start, end)
+    }
+
+    private func isCompleted(_ date: Date) -> Bool {
+        // A day counts as done if a burst was actually recorded that day OR the
+        // current streak logically covers it — so the strip never contradicts
+        // the streak number shown in the header.
+        if tracker.completions.contains(where: { calendar.isDate($0.date, inSameDayAs: date) }) {
+            return true
+        }
+        if let range = streakRange {
+            return date >= range.start && date <= range.end
+        }
+        return false
+    }
+
+    private var days: [DayCell] {
+        let today = calendar.startOfDay(for: Date())
+        let weekday = calendar.component(.weekday, from: today) // 1 = Sunday
+        guard let startOfWeek = calendar.date(byAdding: .day, value: -(weekday - 1), to: today) else { return [] }
+        let symbols = ["S", "M", "T", "W", "T", "F", "S"]
+
+        return (0..<7).compactMap { offset in
+            guard let date = calendar.date(byAdding: .day, value: offset, to: startOfWeek) else { return nil }
+            return DayCell(
+                label: symbols[offset],
+                isToday: calendar.isDate(date, inSameDayAs: today),
+                isCompleted: isCompleted(date),
+                isFuture: date > today
+            )
+        }
+    }
+
+    var body: some View {
+        HStack(spacing: 0) {
+            ForEach(days) { day in
+                VStack(spacing: 6) {
+                    Text(day.label)
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundColor(.white.opacity(day.isFuture ? 0.3 : 0.6))
+                    ZStack {
+                        Circle()
+                            .fill(day.isCompleted ? Color.orange.opacity(0.9) : Color.white.opacity(0.08))
+                            .frame(width: 30, height: 30)
+                        if day.isToday {
+                            Circle()
+                                .stroke(Color.white.opacity(0.9), lineWidth: 2)
+                                .frame(width: 30, height: 30)
+                        }
+                        if day.isCompleted {
+                            Image(systemName: "flame.fill")
+                                .font(.system(size: 13, weight: .bold))
+                                .foregroundColor(.white)
+                        } else if !day.isFuture {
+                            Circle()
+                                .fill(Color.white.opacity(0.18))
+                                .frame(width: 5, height: 5)
+                        }
+                    }
+                }
+                .frame(maxWidth: .infinity)
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel(day.isCompleted ? "\(day.label), completed" : day.label)
+            }
+        }
+        .padding(.vertical, 12)
+        .padding(.horizontal, 8)
+        .dsGlass(cornerRadius: DS.Radius.md)
     }
 }
 
@@ -74,6 +177,8 @@ struct NextUpTaskCard: View {
         case .burst:       colors = [Color(hex: "#7C3AED"), Color(hex: "#4F46E5")]
         case .devotional:  colors = [Color(hex: "#0EA5E9"), Color(hex: "#0369A1")]
         case .audioTab:    colors = [Color(hex: "#059669"), Color(hex: "#065F46")]
+        case .bibleChat:   colors = [Color(hex: "#0D9488"), Color(hex: "#115E59")]
+        case .journal:     colors = [Color(hex: "#D97706"), Color(hex: "#92400E")]
         case .none:        colors = [Color(hex: "#B45309"), Color(hex: "#78350F")]
         }
         return LinearGradient(gradient: Gradient(colors: colors), startPoint: .topLeading, endPoint: .bottomTrailing)
@@ -84,6 +189,8 @@ struct NextUpTaskCard: View {
         case .burst:      return "Start Burst →"
         case .devotional: return "Open Devotional →"
         case .audioTab:   return "Listen Now →"
+        case .bibleChat:  return "Ask the Bible →"
+        case .journal:    return "Open Journal →"
         case .none:       return "Complete →"
         }
     }
@@ -93,7 +200,7 @@ struct NextUpTaskCard: View {
             HStack {
                 Text("NEXT UP")
                     .font(.system(size: 10, weight: .bold)).tracking(1.5)
-                    .foregroundColor(.white.opacity(0.7))
+                    .foregroundColor(DS.Palette.gold.opacity(0.9))
                 Spacer()
                 Text("\(task.estimatedMinutes) min")
                     .font(.system(size: 11, weight: .medium))
@@ -120,7 +227,7 @@ struct NextUpTaskCard: View {
             Spacer(minLength: 16)
 
             HStack {
-                Button(action: { UIImpactFeedbackGenerator(style: .medium).impactOccurred(); onNavigate(task) }) {
+                Button(action: { Juice.play(.tapSolid); onNavigate(task) }) {
                     Text(ctaLabel)
                         .font(.system(size: 15, weight: .semibold)).foregroundColor(.white)
                         .padding(.horizontal, 20).padding(.vertical, 11)
@@ -209,27 +316,30 @@ struct DayCelebrationView: View {
                 HStack(spacing: 8) {
                     Text("🔥").font(.system(size: 24))
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("\(streakCount) day streak").font(.system(size: 20, weight: .bold)).foregroundColor(.orange)
-                        Text("Keep going tomorrow").font(.system(size: 13)).foregroundColor(.white.opacity(0.6))
+                        Text("\(streakCount) day streak").font(.system(size: 20, weight: .bold)).foregroundColor(.white)
+                        Text("Keep going tomorrow").font(.system(size: 13)).foregroundColor(.white.opacity(0.85))
                     }
                 }
                 .padding(16)
-                .background(RoundedRectangle(cornerRadius: 16).fill(Color.orange.opacity(0.12))
-                    .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color.orange.opacity(0.25), lineWidth: 1)))
+                .background(RoundedRectangle(cornerRadius: 16).fill(DS.Gradient.ember)
+                    .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color.white.opacity(0.25), lineWidth: 1)))
+                .shadow(color: Color.orange.opacity(0.45), radius: 8, x: 0, y: 3)
                 .opacity(opacity)
             }
             Spacer()
             Button(action: onDismiss) {
                 Text("Done").font(.system(size: 17, weight: .semibold)).foregroundColor(.white)
                     .frame(maxWidth: .infinity).padding(.vertical, 16)
-                    .background(RoundedRectangle(cornerRadius: 16).fill(Color.green.opacity(0.3)))
+                    .background(RoundedRectangle(cornerRadius: 16).fill(DS.Gradient.brand))
                     .padding(.horizontal, 24)
-            }.opacity(opacity).padding(.bottom, 32)
+            }
+            .buttonStyle(.dsPressable(feel: .tapSolid))
+            .opacity(opacity).padding(.bottom, 32)
         }
         .onAppear {
             withAnimation(.spring(response: 0.5, dampingFraction: 0.6)) { scale = 1.0; opacity = 1.0 }
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                UINotificationFeedbackGenerator().notificationOccurred(.success)
+                Juice.play(.success)
             }
         }
     }
@@ -258,9 +368,6 @@ struct StructuredDayView: View {
                         insertion: .scale(scale: 0.9).combined(with: .opacity),
                         removal: .opacity))
             } else {
-                DayProgressRing(completed: completedTasks.count, total: tasks.count, streakCount: streakCount)
-                    .padding(.top, 8)
-
                 if let next = nextTask {
                     NextUpTaskCard(task: next, onNavigate: onNavigate, onToggle: onToggle)
                         .transition(.asymmetric(
@@ -273,7 +380,7 @@ struct StructuredDayView: View {
                     VStack(spacing: 6) {
                         HStack {
                             Text("UP NEXT").font(.system(size: 10, weight: .bold)).tracking(1.5)
-                                .foregroundColor(.white.opacity(0.35))
+                                .foregroundColor(DS.Palette.gold.opacity(0.9))
                             Spacer()
                         }.padding(.horizontal, 4)
                         ForEach(upcomingTasks) { UpcomingTaskRow(task: $0) }
@@ -284,7 +391,7 @@ struct StructuredDayView: View {
                     VStack(spacing: 6) {
                         HStack {
                             Text("COMPLETED").font(.system(size: 10, weight: .bold)).tracking(1.5)
-                                .foregroundColor(.white.opacity(0.35))
+                                .foregroundColor(DS.Palette.gold.opacity(0.9))
                             Spacer()
                         }.padding(.horizontal, 4)
                         ForEach(completedTasks) { task in
@@ -295,6 +402,6 @@ struct StructuredDayView: View {
                 }
             }
         }
-        .animation(.spring(response: 0.45, dampingFraction: 0.8), value: tasks.map { $0.isCompleted })
+        .animation(DS.Motion.smooth, value: tasks.map { $0.isCompleted })
     }
 }

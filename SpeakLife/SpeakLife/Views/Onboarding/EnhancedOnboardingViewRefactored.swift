@@ -208,69 +208,69 @@ struct EnhancedOnboardingViewRefactored: View {
     private func advance() {
         switch selection {
         case .testimonials:
-            impactMed.impactOccurred()
+            Juice.play(.tapLight)
             selection = .emotionalRecognition
             enhancedOnboardingTab = selection.rawValue
             
         case .emotionalRecognition:
-            impactMed.impactOccurred()
+            Juice.play(.tapLight)
             selection = .internalExperience
             enhancedOnboardingTab = selection.rawValue
             
         case .internalExperience:
-            impactMed.impactOccurred()
+            Juice.play(.tapLight)
             selection = .beliefGap
             enhancedOnboardingTab = selection.rawValue
             
         case .beliefGap:
-            impactMed.impactOccurred()
+            Juice.play(.tapLight)
             selection = .authorityReframe
             enhancedOnboardingTab = selection.rawValue
             
         case .authorityReframe:
-            impactMed.impactOccurred()
+            Juice.play(.tapLight)
             selection = .practiceAwareness
             enhancedOnboardingTab = selection.rawValue
             
         case .practiceAwareness:
-            impactMed.impactOccurred()
+            Juice.play(.tapLight)
             selection = .ahaMoment
             enhancedOnboardingTab = selection.rawValue
             
         case .ahaMoment:
-            impactMed.impactOccurred()
+            Juice.play(.tapLight)
             selection = .identityAspiration
             enhancedOnboardingTab = selection.rawValue
             
         case .identityAspiration:
-            impactMed.impactOccurred()
+            Juice.play(.tapLight)
             selection = .futurePacing
             enhancedOnboardingTab = selection.rawValue
             
         case .futurePacing:
-            impactMed.impactOccurred()
+            Juice.play(.tapLight)
             selection = .coreMessage
             enhancedOnboardingTab = selection.rawValue
             
         case .coreMessage:
-            impactMed.impactOccurred()
+            Juice.play(.tapLight)
             selection = .transitionToPaywall
             enhancedOnboardingTab = selection.rawValue
             
         case .transitionToPaywall:
-            impactMed.impactOccurred()
+            Juice.play(.tapLight)
             selection = .subscription
             enhancedOnboardingTab = selection.rawValue
             // Map user journey to categories for notifications
             mapJourneyToCategories()
             
         case .notification:
-            impactMed.impactOccurred()
+            Juice.play(.tapLight)
             selection = .review
             enhancedOnboardingTab = selection.rawValue
             
         case .review:
-            impactMed.impactOccurred()
+            Juice.play(.tapLight)
             dismissOnboarding()
             
         case .subscription:
@@ -284,7 +284,7 @@ struct EnhancedOnboardingViewRefactored: View {
                 "desired_identity": userJourney.desiredIdentity,
                 "future_outcome": userJourney.futureOutcome
             ])
-            impactMed.impactOccurred()
+            Juice.play(.tapLight)
             selection = .notification
             
         }

@@ -30,21 +30,26 @@ struct ThemeChooserView: View {
                             .foregroundColor(.white.opacity(0.9))
                             .multilineTextAlignment(.center)
                             .padding(.horizontal)
+                            .dsAppear(0)
 
                         Text("Select Font")
-                            .font(.headline)
+                            .font(DS.Typography.headline)
                             .foregroundColor(.white)
                             .padding(.horizontal)
+                            .dsAppear(0.06)
 
                         fontChooser(size: geometry.size)
+                            .dsAppear(0.12)
 
                         selectCustomImageView
                             .padding(.horizontal)
+                            .dsAppear(0.18)
 
                         Text("Choose Background Image 👇")
-                            .font(.headline)
+                            .font(DS.Typography.headline)
                             .foregroundColor(.white)
                             .padding(.horizontal)
+                            .dsAppear(0.24)
 
                         LazyVGrid(columns: twoColumnGrid, spacing: 16) {
                             ForEach(themesViewModel.themes.indices, id: \.self) { index in
@@ -111,7 +116,7 @@ struct ThemeChooserView: View {
         Button {
             if !subscriptionStore.isPremium {
                 presentPremiumView()
-                Selection.shared.selectionFeedback()
+                Juice.play(.tapLight)
             } else {
                 showingImagePicker = true
             }

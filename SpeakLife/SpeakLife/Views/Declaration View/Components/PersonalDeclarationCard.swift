@@ -379,9 +379,9 @@ struct PersonalDeclarationCard: View {
                     : Color(red: 0.38, green: 0.35, blue: 0.95).opacity(0.4),
                     radius: 12, x: 0, y: 6)
                 .scaleEffect(speakState == .recording ? 0.97 : 1.0)
-                .animation(.spring(response: 0.3, dampingFraction: 0.7), value: speakState)
+                .animation(DS.Motion.quick, value: speakState)
             }
-            .padding(.horizontal, 24)
+            .padding(.horizontal, DS.Spacing.lg)
         }
         .frame(height: 80)
     }
@@ -514,7 +514,7 @@ struct PersonalDeclarationCard: View {
         Task {
             do {
                 try await verifier.startRecording()
-                withAnimation(.spring()) { speakState = .recording }
+                withAnimation(DS.Motion.smooth) { speakState = .recording }
                 startPulseAnimation()
                 autoStopTimer = Timer.scheduledTimer(withTimeInterval: 90, repeats: false) { _ in
                     DispatchQueue.main.async { finishRecording() }
@@ -566,7 +566,7 @@ struct PersonalDeclarationCard: View {
         }
         lastSpokenDateStr = today
 
-        withAnimation(.spring()) { speakState = .success }
+        withAnimation(DS.Motion.smooth) { speakState = .success }
         withAnimation(.spring(response: 0.5, dampingFraction: 0.6).delay(0.1)) {
             successScale = 1.0
             successOpacity = 1.0
@@ -578,16 +578,18 @@ struct PersonalDeclarationCard: View {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
             withAnimation(.easeOut(duration: 0.3)) { dayBadgePulse = false }
         }
-        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+        // Completing a spoken declaration is a real win: reward it with the
+        // matched success sequence (light → medium → heavy) instead of a flat tap.
+        Juice.play(.success)
     }
 
     private func showTryAgain() {
-        withAnimation(.spring()) { speakState = .tryAgain }
+        withAnimation(DS.Motion.smooth) { speakState = .tryAgain }
         withAnimation(.spring(response: 0.5, dampingFraction: 0.6).delay(0.1)) {
             successScale = 1.0
             successOpacity = 1.0
         }
-        UINotificationFeedbackGenerator().notificationOccurred(.warning)
+        Juice.play(.warning)
     }
 
     private func dismissSuccess() {

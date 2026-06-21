@@ -326,10 +326,10 @@ struct SpeakLifeApp: App {
         if let deepLink = content.userInfo["deepLink"] as? String {
             switch deepLink {
             case "declarations":
-                tabViewModel.selectedTab = 0
+                tabViewModel.goToDeclarations()
                 return
             case "personalDeclaration":
-                tabViewModel.selectedTab = 0
+                tabViewModel.goToDeclarations()
                 appState.scrollToPersonalDeclaration = true
                 return
             case "message":
@@ -354,6 +354,11 @@ struct SpeakLifeApp: App {
         // Navigate to appropriate tab
         if content.userInfo["tab"] != nil {
             tabViewModel.goToAudio()
+        } else if content.userInfo["category"] != nil {
+            // Affirmation notification — surface it in the declaration feed,
+            // where setDeclaration(...) below displays it (the feed is tag 2
+            // now that the "Today" checklist owns the home tab).
+            tabViewModel.goToDeclarations()
         } else {
             tabViewModel.resetToHome()
         }

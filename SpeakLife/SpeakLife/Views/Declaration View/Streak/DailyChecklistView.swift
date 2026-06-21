@@ -394,8 +394,17 @@ struct TaskCompletionIndicator: View {
 
 struct HapticManager {
     static func impact(_ style: UIImpactFeedbackGenerator.FeedbackStyle) {
-        let generator = UIImpactFeedbackGenerator(style: style)
-        generator.impactOccurred()
+        // Route through the design system's matched-feedback layer so this
+        // wrapper respects the user's haptics setting and stays consistent
+        // with the rest of the app. Callers keep the same API.
+        switch style {
+        case .light, .soft:
+            Juice.play(.tapLight)
+        case .medium, .heavy, .rigid:
+            Juice.play(.tapSolid)
+        @unknown default:
+            Juice.play(.tapSolid)
+        }
     }
 }
 

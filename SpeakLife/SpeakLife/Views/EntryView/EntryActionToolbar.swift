@@ -13,10 +13,10 @@ struct EntryActionToolbar: View {
     let onCancel: () -> Void
     
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: DS.Spacing.sm) {
             // Progress info
             if !viewModel.text.isEmpty {
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: DS.Spacing.xxs) {
                     Text(viewModel.progressInfo)
                         .font(.system(size: 12, weight: .medium))
                         .foregroundColor(.white.opacity(0.7))
@@ -33,7 +33,7 @@ struct EntryActionToolbar: View {
             Spacer()
             
             // Buttons container with fixed width
-            HStack(spacing: 12) {
+            HStack(spacing: DS.Spacing.sm) {
                 // Cancel button
                 Button(action: onCancel) {
                     HStack(spacing: 6) {
@@ -44,17 +44,18 @@ struct EntryActionToolbar: View {
                             .lineLimit(1)
                     }
                     .foregroundColor(.white.opacity(0.7))
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 12)
+                    .padding(.horizontal, DS.Spacing.md)
+                    .padding(.vertical, DS.Spacing.sm)
                     .background(Color.white.opacity(0.1))
                     .cornerRadius(20)
                 }
+                .buttonStyle(.dsPressable(feel: .tapSolid))
                 .disabled(viewModel.isSaving)
                 .frame(minWidth: 80)
                 
                 // Save button
                 Button(action: onSave) {
-                    HStack(spacing: 8) {
+                    HStack(spacing: DS.Spacing.xs) {
                         if viewModel.isSaving {
                             ProgressView()
                                 .progressViewStyle(CircularProgressViewStyle(tint: .white))
@@ -70,20 +71,21 @@ struct EntryActionToolbar: View {
                     }
                     .foregroundColor(.white)
                     .padding(.horizontal, 20)
-                    .padding(.vertical, 12)
+                    .padding(.vertical, DS.Spacing.sm)
                     .background(
-                        viewModel.canSave ? 
-                        Color.blue.opacity(0.8) : 
+                        viewModel.canSave ?
+                        Color.blue.opacity(0.8) :
                         Color.white.opacity(0.2)
                     )
                     .cornerRadius(20)
                 }
+                .buttonStyle(.dsPressable(feel: .tapSolid))
                 .disabled(!viewModel.canSave || viewModel.isSaving)
                 .frame(minWidth: 90)
             }
         }
         .padding(.horizontal, 20)
-        .padding(.vertical, 16)
+        .padding(.vertical, DS.Spacing.md)
         .background(
             LinearGradient(
                 colors: [

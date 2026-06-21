@@ -39,6 +39,7 @@ struct TipsView: View {
                     .font(.title)
                     .foregroundColor(.black)
                     .padding()
+                    .dsAppear(0)
                 
                 Spacer()
                     .frame(height: 50)

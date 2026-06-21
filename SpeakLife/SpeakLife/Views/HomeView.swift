@@ -28,24 +28,33 @@ class TabViewModel: ObservableObject {
         }
     }
 
+    /// Tag of the declaration feed. It's the "Speak" tab (2) when the checklist
+    /// owns home, but the home tab (0) when the checklist kill switch is off.
+    /// HomeView sets this from the Remote Config flag.
+    var feedTabTag: Int = 2
+
     func goToAudio() {
         selectedTab = 1
     }
-    
-//    func goToChecklist() {
-//        selectedTab = 2  // Daily Checklist is at position 2
-//    }
+
+    func goToChecklist() {
+        selectedTab = 0  // "Today" checklist is the home tab (when enabled)
+    }
+
+    func goToDeclarations() {
+        selectedTab = feedTabTag  // Swipeable declaration feed
+    }
 
     func resetToHome() {
-        selectedTab = 0  // Go to Declarations (main home view)
+        selectedTab = 0  // Home tab — checklist when enabled, feed when not
     }
-    
+
     private func trackTabNavigation(from previousTab: Int, to newTab: Int) {
         // Keys are the actual .tag() values used as selectedTab (not positions).
         let tabNames = [
-            0: "declarations",
+            0: "today_checklist",
             1: "audio",
-            3: "create_your_own",
+            2: "declarations",
             4: "bible_chat",
             5: "profile"
         ]
@@ -99,12 +108,7 @@ struct HomeView: View {
     @State private var celebrationStreakCount = 0
     @State private var anniversaryMilestone: PremiumAnniversaryMilestone?
     @State private var yearInReviewStats: YearInReviewStats?
-    // Brief window after HomeView mounts where any email-capture sheet is held
-    // back so SKStoreReviewController (kicked off from the onboarding rating
-    // screen) has a clean scene to render in. iOS silently drops requestReview
-    // when a sheet is presenting over the active window.
-    @State private var suppressEmailSheets = false
-    
+
     private let currentVersion = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0.0"
 
     private static let streakReviewMilestones: Set<Int> = [3, 7, 14, 30, 60, 100, 365]
@@ -158,27 +162,6 @@ struct HomeView: View {
                                         devotionalViewModel.lastFetchDate = DateFormatter.localizedString(from: Date(), dateStyle: .short, timeStyle: .none)
                                     }
                                 }
-                            }
-                            .sheet(isPresented: Binding(
-                                get: { !suppressEmailSheets && appState.needEmail },
-                                set: { appState.needEmail = $0 }
-                            )) {
-                                EmailCaptureView()
-                            }
-                            .sheet(isPresented: Binding(
-                                get: { !suppressEmailSheets && subscriptionStore.showEmailCaptureAfterPurchase },
-                                set: { subscriptionStore.showEmailCaptureAfterPurchase = $0 }
-                            )) {
-                                EmailCaptureView(source: "post_purchase")
-                                    .environmentObject(appState)
-                            }
-                            .sheet(isPresented: Binding(
-                                get: { !suppressEmailSheets && subscriptionStore.showEmailConfirmAfterPurchase },
-                                set: { subscriptionStore.showEmailConfirmAfterPurchase = $0 }
-                            )) {
-                                EmailConfirmationView(storedEmail: appState.email, source: "post_purchase")
-                                    .environmentObject(appState)
-                                    .environmentObject(subscriptionStore)
                             }
                             .sheet(isPresented: $showSubscription, content: {
                                 OptimizedSubscriptionView {
@@ -272,17 +255,12 @@ struct HomeView: View {
                                 }
                                 .ignoresSafeArea()
                             }
-                            .fullScreenCover(isPresented: $showDailyBurstOnLaunch) {
-                                DailyDeclarationBurstView()
-                                    .environmentObject(declarationStore)
-                                    .environmentObject(themeStore)
-                                    .environmentObject(timerViewModel)
-                                    .environmentObject(streakViewModel)
-                                    .environmentObject(subscriptionStore)
-                            }
-                            .onReceive(NotificationCenter.default.publisher(for: Notification.Name("ShowDailyDeclarationBurst"))) { _ in
-                                showDailyBurstOnLaunch = true
-                            }
+                            // The Daily Burst is presented by DeclarationView's own
+                            // fullScreenCover (the "fully wired" one). Listening for
+                            // "ShowDailyDeclarationBurst" here too caused BOTH covers to
+                            // fire on a single notification, and SwiftUI can only present
+                            // one cover per context — so the burst appeared and was
+                            // immediately dismissed, forcing the user to trigger it twice.
                             // Daily first-open: show Structured Day plan instead of raw burst.
                             // The burst task is inside the checklist — users reach it naturally.
                             .fullScreenCover(isPresented: $showDailyStructuredDayOnLaunch) {
@@ -388,21 +366,37 @@ struct HomeView: View {
     var homeView: some View {
         ZStack(alignment: .top) {
             TabView(selection: $tabViewModel.selectedTab) {
-                declarationView
-                audioView
-               // bibleView
-                // dailyChecklistView // Moved to DeclarationView
-                // Bible Chat sits in the CENTER slot (highest-engagement position)
-                // and replaces the Warrior Room tab. enableAIFeatures is a kill-
-                // switch: off → fall back to Warrior Room (one toggle to revert).
-                if subscriptionStore.enableAIFeatures || BibleChatLocal.isDebug {
-                    bibleChatTabView
+                if subscriptionStore.checklistHomeEnabled {
+                    // "Today" checklist owns the home tab (tag 0) — the daily-habit
+                    // surface that gives a goal, a "done", and a reason to return.
+                    // The feed is demoted to its own "Speak" tab (tag 2); it's still
+                    // one tap away and is what the Daily Burst opens into.
+                    dailyChecklistView
+                    declarationTab(tag: 2, title: "Speak")
+                    audioView
+                    // Bible Chat sits in the CENTER slot; enableAIFeatures kill-
+                    // switch falls back to Warrior Room when off.
+                    if subscriptionStore.enableAIFeatures || BibleChatLocal.isDebug {
+                        bibleChatTabView
+                    } else {
+                        communityView
+                    }
+                    // createYourOwnView dropped from this layout's bar to stay within
+                    // the 5-tab limit; still reachable from the feed and Profile.
+                    profileView
                 } else {
-                    communityView
+                    // Kill switch off (Remote Config): revert to the legacy
+                    // feed-as-home layout so we can roll back if complaints spike.
+                    declarationTab(tag: 0, title: "Home")
+                    audioView
+                    if subscriptionStore.enableAIFeatures || BibleChatLocal.isDebug {
+                        bibleChatTabView
+                    } else {
+                        communityView
+                    }
+                    createYourOwnView
+                    profileView
                 }
-                createYourOwnView
-                profileView
-                    
                 }
                 .hideTabBar(if: appState.showScreenshotLabel)
                 .sheet(isPresented: $isPresented) {
@@ -411,7 +405,14 @@ struct HomeView: View {
                         .presentationDragIndicator(.visible)
                 }
                 .accentColor(Constants.DAMidBlue)
+                // Keep feed routing (notifications, deep links, Daily Burst) pointed
+                // at the right tab as the Remote Config layout flag resolves.
+                .onChange(of: subscriptionStore.checklistHomeEnabled) { enabled in
+                    tabViewModel.feedTabTag = enabled ? 2 : 0
+                }
                 .onAppear {
+                    PremiumHaptics.prepare() // warm the Taptic Engine so the first tap lands
+                    tabViewModel.feedTabTag = subscriptionStore.checklistHomeEnabled ? 2 : 0
                     checkForNewVersion()
                     checkForPersonalDeclarationMigration()
                     checkForPremiumAnniversary()
@@ -420,35 +421,6 @@ struct HomeView: View {
                         appState.firstOpen = false
                     }
                     UIScrollView.appearance().isScrollEnabled = true
-
-                    // First mount after onboarding: SubscriptionStore may have
-                    // pre-flagged showEmailCaptureAfterPurchase during the in-
-                    // onboarding paywall purchase. Hold any pending email sheet
-                    // for ~4s so the rating-screen SKStoreReviewController call
-                    // has a clean scene. Underlying flags are untouched; only
-                    // their .sheet bindings are gated.
-                    suppressEmailSheets = true
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 4.0) {
-                        suppressEmailSheets = false
-                    }
-
-                    // Email capture / confirmation for existing premium users.
-                    // Fires once only per path — guarded by separate UserDefaults keys.
-                    if subscriptionStore.isPremium {
-                        let alreadyCaptured    = UserDefaults.standard.bool(forKey: "hasShownEmailCapture")
-                        let alreadyConfirmed   = UserDefaults.standard.bool(forKey: "hasConfirmedPostPurchaseEmail")
-                        let hasStoredEmail     = !appState.email.isEmpty
-
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                            if hasStoredEmail && !alreadyConfirmed {
-                                // Has email locally → show confirmation popup to tag as post_purchase
-                                subscriptionStore.showEmailConfirmAfterPurchase = true
-                            } else if !hasStoredEmail && !alreadyCaptured {
-                                // No email at all → show capture sheet
-                                subscriptionStore.showEmailCaptureAfterPurchase = true
-                            }
-                        }
-                    }
                 }
                 .background(Color.clear)
                 .environment(\.colorScheme, .dark)
@@ -484,7 +456,7 @@ struct HomeView: View {
                                 .font(.headline)
                                 .foregroundColor(.white)
                                 .padding(.horizontal, 40)
-                                .padding(.vertical, 12)
+                                .padding(.vertical, DS.Spacing.sm)
                                 .background(
                                     RoundedRectangle(cornerRadius: 25)
                                         .fill(LinearGradient(
@@ -494,6 +466,7 @@ struct HomeView: View {
                                         ))
                                 )
                         }
+                        .buttonStyle(.dsPressable(feel: .tapSolid))
                     }
                     .transition(.scale.combined(with: .opacity))
                 }
@@ -509,15 +482,17 @@ struct HomeView: View {
         }
     }
     
-    var declarationView: some View {
+    // The declaration feed, parameterized so it can be the "Speak" tab (tag 2)
+    // under the checklist-home layout or the "Home" tab (tag 0) under the legacy
+    // feed-home layout.
+    func declarationTab(tag: Int, title: String) -> some View {
         DeclarationView()
             .id(appState.rootViewId)
-            .tag(0)
+            .tag(tag)
             .tabItem {
                 Image(systemName: "quote.bubble.fill")
                     .renderingMode(.original)
-                Text("Home")
-                
+                Text(title)
             }
     }
     
@@ -570,11 +545,12 @@ struct HomeView: View {
     }
     
     var dailyChecklistView: some View {
-        ModernDailyChecklistView(viewModel: streakViewModel)
-            .tag(2)
+        ModernDailyChecklistView(viewModel: streakViewModel, isHomeTab: true)
+            .tag(0)
             .tabItem {
-                Image(systemName: "checklist")
+                Image(systemName: "sun.max.fill")
                     .renderingMode(.original)
+                Text("Today")
             }
     }
     

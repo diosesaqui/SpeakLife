@@ -9,6 +9,9 @@ firebase-debug.*.log
 *.xcuserstate
 xcuserdata/
 
+# Backup files (e.g. project.pbxproj.bak left behind while editing)
+*.bak
+
 # Claude Code session/plan files (keep committed skills, ignore the rest)
 .claude/*
 !.claude/skills/

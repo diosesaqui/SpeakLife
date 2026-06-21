@@ -13,7 +13,7 @@ struct VoiceCorrectionsView: View {
     @State private var showAlternatives = false
     
     var body: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: DS.Spacing.xs) {
             // Confidence indicator
             if voiceManager.transcriptionConfidence > 0 && voiceManager.hasContent {
                 confidenceIndicator
@@ -29,7 +29,7 @@ struct VoiceCorrectionsView: View {
     }
     
     private var confidenceIndicator: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: DS.Spacing.xs) {
             Image(systemName: getConfidenceIcon())
                 .foregroundColor(getConfidenceColor())
                 .font(.system(size: 14))
@@ -44,17 +44,18 @@ struct VoiceCorrectionsView: View {
                         .font(.system(size: 12, weight: .medium))
                         .foregroundColor(.blue)
                 }
+                .buttonStyle(.dsPressable(feel: .tapSolid))
             }
-            
+
             Spacer()
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, DS.Spacing.xxs)
     }
     
     @ViewBuilder
     private var alternativesSection: some View {
         if showAlternatives {
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: DS.Spacing.xs) {
                 Text("Did you mean:")
                     .font(.system(size: 12, weight: .medium))
                     .foregroundColor(.white.opacity(0.6))
@@ -86,23 +87,26 @@ struct VoiceCorrectionsView: View {
                                 .foregroundColor(.white.opacity(0.5))
                                 .font(.system(size: 14))
                         }
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 8)
+                        .padding(.horizontal, DS.Spacing.sm)
+                        .padding(.vertical, DS.Spacing.xs)
                         .background(Color.white.opacity(0.1))
-                        .cornerRadius(8)
+                        .cornerRadius(DS.Radius.sm)
                     }
+                    .buttonStyle(.dsPressable(feel: .tapSolid))
                 }
-                
+
                 Button(action: { showAlternatives = false }) {
                     Text("Keep original")
                         .font(.system(size: 12, weight: .medium))
                         .foregroundColor(.white.opacity(0.6))
                 }
-                .padding(.top, 4)
+                .buttonStyle(.dsPressable(feel: .tapSolid))
+                .padding(.top, DS.Spacing.xxs)
             }
-            .padding(12)
+            .padding(DS.Spacing.sm)
             .background(Color.black.opacity(0.3))
-            .cornerRadius(12)
+            .cornerRadius(DS.Radius.sm)
+            .dsShadow(DS.Elevation.low)
             .transition(.asymmetric(
                 insertion: .scale.combined(with: .opacity),
                 removal: .scale.combined(with: .opacity)
@@ -147,7 +151,7 @@ struct VoiceQuickCorrections: View {
     
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 8) {
+            HStack(spacing: DS.Spacing.xs) {
                 ForEach(commonCorrections, id: \.0) { correction in
                     Button(action: {
                         applyCorrection(correction)
@@ -155,29 +159,31 @@ struct VoiceQuickCorrections: View {
                         Text(correction.0)
                             .font(.system(size: 12, weight: .medium))
                             .foregroundColor(.white)
-                            .padding(.horizontal, 12)
+                            .padding(.horizontal, DS.Spacing.sm)
                             .padding(.vertical, 6)
                             .background(Color.white.opacity(0.15))
-                            .cornerRadius(16)
+                            .cornerRadius(DS.Radius.md)
                     }
+                    .buttonStyle(.dsPressable(feel: .tapSolid))
                 }
                 
                 if voiceManager.voiceInputState == .error {
                     Button(action: {
                         voiceManager.startListening()
                     }) {
-                        HStack(spacing: 4) {
+                        HStack(spacing: DS.Spacing.xxs) {
                             Image(systemName: "arrow.clockwise")
                                 .font(.system(size: 11))
                             Text("Retry")
                         }
                         .font(.system(size: 12, weight: .medium))
                         .foregroundColor(.orange)
-                        .padding(.horizontal, 12)
+                        .padding(.horizontal, DS.Spacing.sm)
                         .padding(.vertical, 6)
                         .background(Color.orange.opacity(0.15))
-                        .cornerRadius(16)
+                        .cornerRadius(DS.Radius.md)
                     }
+                    .buttonStyle(.dsPressable(feel: .tapLight, haptics: false))
                 }
             }
             .padding(.horizontal, 20)

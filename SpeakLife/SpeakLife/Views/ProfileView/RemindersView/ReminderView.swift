@@ -34,7 +34,7 @@ struct ReminderView: View {
             NavigationView {
                 GeometryReader { geometry in
                     ScrollView {
-                        VStack(alignment: .center, spacing: 16) {
+                        VStack(alignment: .center, spacing: DS.Spacing.md) {
                             Text("Set up your daily reminders to make your declarations fit your daily routine")
                                 .foregroundColor(.white.opacity(0.8))
                                 .font(.callout)
@@ -44,7 +44,7 @@ struct ReminderView: View {
 
                             ForEach(reminderViewModel.reminderCellViewModel) { reminderVM in
                                 ReminderCell(reminderVM, showConfirmation: $showConfirmation)
-                                    .cornerRadius(16)
+                                    .cornerRadius(DS.Radius.md)
                                     .padding(.horizontal)
                             }
                             
@@ -166,14 +166,14 @@ struct ToastView: View {
             .font(.system(size: 14, weight: .semibold, design: .rounded))
             .foregroundColor(.white)
             .padding(.horizontal, 20)
-            .padding(.vertical, 12)
+            .padding(.vertical, DS.Spacing.sm)
             .background(
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous)
                     .fill(Color.black.opacity(colorScheme == .dark ? 0.7 : 0.85))
-                    .shadow(color: .black.opacity(0.3), radius: 8, x: 0, y: 4)
+                    .dsShadow(DS.Elevation.low)
             )
             .overlay(
-                RoundedRectangle(cornerRadius: 14)
+                RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous)
                     .stroke(Color.white.opacity(0.1), lineWidth: 0.5)
             )
             .transition(.move(edge: .bottom).combined(with: .opacity))

@@ -87,8 +87,15 @@ struct DevotionalsTutorial: View {
                                 .foregroundColor(.white)
                                 .background(
                                     Circle()
-                                        .fill(Color.blue.opacity(0.3))
+                                        .fill(
+                                            LinearGradient(
+                                                colors: [Color.blue.opacity(0.95), Color.blue.opacity(0.55)],
+                                                startPoint: .topLeading,
+                                                endPoint: .bottomTrailing
+                                            )
+                                        )
                                         .frame(width: 80, height: 80)
+                                        .shadow(color: Color.blue.opacity(0.5), radius: 8, x: 0, y: 4)
                                 )
                             
                             VStack(spacing: 8) {

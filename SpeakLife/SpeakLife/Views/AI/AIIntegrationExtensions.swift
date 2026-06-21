@@ -25,7 +25,7 @@ extension View {
 
 extension View {
     func withAIEnhancements(for declaration: Declaration) -> some View {
-        VStack(spacing: 16) {
+        VStack(spacing: DS.Spacing.md) {
             // Original content
             self
             
@@ -108,7 +108,7 @@ struct AIEnhancedSearchView: View {
             
             // AI search suggestions
             if !aiSuggestions.isEmpty {
-                VStack(alignment: .leading, spacing: 8) {
+                VStack(alignment: .leading, spacing: DS.Spacing.xs) {
                     Text("AI Suggestions")
                         .font(.headline)
                         .foregroundColor(.primary)
@@ -193,13 +193,13 @@ struct AIJournalAnalysisView: View {
     @State private var isAnalyzing = false
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: DS.Spacing.md) {
             Text("AI Journal Analysis")
                 .font(.headline)
             
             TextEditor(text: $journalText)
                 .frame(minHeight: 100)
-                .padding(8)
+                .padding(DS.Spacing.xs)
                 .background(Color.gray.opacity(0.1))
                 .cornerRadius(8)
                 .onChange(of: journalText) { newText in
@@ -223,7 +223,7 @@ struct AIJournalAnalysisView: View {
             }
             
             if !aiRecommendations.isEmpty {
-                VStack(alignment: .leading, spacing: 8) {
+                VStack(alignment: .leading, spacing: DS.Spacing.xs) {
                     Text("Declarations for Your Heart Today")
                         .font(.headline)
                     
@@ -260,7 +260,7 @@ struct JournalRecommendationRow: View {
     
     var body: some View {
         HStack {
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: DS.Spacing.xxs) {
                 Text(declaration.text.prefix(80) + "...")
                     .font(.subheadline)
                     .lineLimit(2)
@@ -276,13 +276,13 @@ struct JournalRecommendationRow: View {
                 // Add to favorites or navigate to declaration
             }
             .font(.caption)
-            .padding(.horizontal, 12)
+            .padding(.horizontal, DS.Spacing.sm)
             .padding(.vertical, 6)
             .background(Color.blue)
             .foregroundColor(.white)
             .cornerRadius(8)
         }
-        .padding(8)
+        .padding(DS.Spacing.xs)
         .background(Color.blue.opacity(0.05))
         .cornerRadius(8)
     }
@@ -318,7 +318,7 @@ struct AICrisisSupportView: View {
     @State private var supportContent: [Declaration] = []
     
     var body: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: DS.Spacing.md) {
             Text("🤗 Need Immediate Support?")
                 .font(.title2)
                 .fontWeight(.bold)
@@ -330,7 +330,7 @@ struct AICrisisSupportView: View {
             
             TextEditor(text: $crisisDescription)
                 .frame(height: 80)
-                .padding(8)
+                .padding(DS.Spacing.xs)
                 .background(Color.gray.opacity(0.1))
                 .cornerRadius(8)
             
@@ -346,7 +346,7 @@ struct AICrisisSupportView: View {
             .disabled(crisisDescription.isEmpty)
             
             if showingSupport {
-                VStack(alignment: .leading, spacing: 12) {
+                VStack(alignment: .leading, spacing: DS.Spacing.sm) {
                     Text("✨ God's Strength for You Right Now")
                         .font(.headline)
                         .foregroundColor(.green)
@@ -381,16 +381,16 @@ struct CrisisSupportRow: View {
     let declaration: Declaration
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: DS.Spacing.xs) {
             Text(declaration.text)
                 .font(.subheadline)
                 .foregroundColor(.primary)
-            
+
             HStack {
                 Text("Immediate comfort")
                     .font(.caption)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
+                    .padding(.horizontal, DS.Spacing.xs)
+                    .padding(.vertical, DS.Spacing.xxs)
                     .background(Color.green.opacity(0.2))
                     .foregroundColor(.green)
                     .cornerRadius(4)
@@ -404,7 +404,7 @@ struct CrisisSupportRow: View {
                 .foregroundColor(.blue)
             }
         }
-        .padding(12)
+        .padding(DS.Spacing.sm)
         .background(Color.green.opacity(0.05))
         .cornerRadius(8)
     }
@@ -417,7 +417,7 @@ struct AISettingsView: View {
     @EnvironmentObject var subscriptionStore: SubscriptionStore
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: DS.Spacing.md) {
             Text("AI Personalization")
                 .font(.title2)
                 .fontWeight(.bold)
@@ -437,7 +437,7 @@ struct AISettingsView: View {
             
             if subscriptionStore.isPremium {
                 // AI Performance Stats
-                VStack(alignment: .leading, spacing: 8) {
+                VStack(alignment: .leading, spacing: DS.Spacing.xs) {
                     Text("AI Performance")
                         .font(.headline)
                     
@@ -452,7 +452,7 @@ struct AISettingsView: View {
                 .cornerRadius(8)
                 
                 // AI Controls
-                VStack(spacing: 12) {
+                VStack(spacing: DS.Spacing.sm) {
                     Button("Retrain AI Models") {
                         Task {
                             await aiService.triggerModelRetraining()

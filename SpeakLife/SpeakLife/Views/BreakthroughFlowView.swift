@@ -67,18 +67,20 @@ struct BreakthroughFlowView: View {
 
             Text("\u{1F64F}")
                 .font(.system(size: 64))
+                .dsAppear(0)
 
-            VStack(spacing: 12) {
+            VStack(spacing: DS.Spacing.sm) {
                 Text("You're saying God came through?")
                     .font(.system(size: 24, weight: .bold, design: .rounded))
                     .foregroundColor(.white)
                     .multilineTextAlignment(.center)
-                    .padding(.horizontal, 32)
+                    .padding(.horizontal, DS.Spacing.xl)
 
                 Text("Day \(declaration.dayCount) of believing.")
                     .font(.system(size: 15))
                     .foregroundColor(.white.opacity(0.6))
             }
+            .dsAppear(0.06)
 
             Spacer()
 
@@ -92,12 +94,12 @@ struct BreakthroughFlowView: View {
                         .frame(height: 56)
                         .background(
                             RoundedRectangle(cornerRadius: 16)
-                                .fill(Color.green.opacity(0.85))
+                                .fill(DS.Gradient.gold)
                         )
                         .foregroundColor(.white)
-                        .padding(.horizontal, 24)
+                        .padding(.horizontal, DS.Spacing.lg)
                 }
-                .buttonStyle(PlainButtonStyle())
+                .buttonStyle(.dsPressable(feel: .tapSolid))
 
                 Button {
                     onDismiss()
@@ -106,15 +108,17 @@ struct BreakthroughFlowView: View {
                         .font(.system(size: 15, weight: .medium))
                         .foregroundColor(.white.opacity(0.5))
                 }
+                .buttonStyle(.dsPressable(feel: .tapSolid))
             }
-            .padding(.bottom, 48)
+            .padding(.bottom, DS.Spacing.xxl)
+            .dsAppear(0.12)
         }
     }
 
     // MARK: - Testimony
 
     private var testimonyView: some View {
-        VStack(spacing: 24) {
+        VStack(spacing: DS.Spacing.lg) {
             Spacer()
 
             VStack(spacing: 10) {
@@ -129,6 +133,7 @@ struct BreakthroughFlowView: View {
                     .font(.system(size: 15))
                     .foregroundColor(.white.opacity(0.55))
             }
+            .dsAppear(0)
 
             ZStack(alignment: .topLeading) {
                 RoundedRectangle(cornerRadius: 14)
@@ -150,7 +155,7 @@ struct BreakthroughFlowView: View {
                     .padding(10)
                     .frame(height: 140)
             }
-            .padding(.horizontal, 24)
+            .padding(.horizontal, DS.Spacing.lg)
 
             // Character count
             if !testimony.isEmpty {
@@ -167,7 +172,7 @@ struct BreakthroughFlowView: View {
                     .font(.system(size: 13))
                     .foregroundColor(.red.opacity(0.85))
                     .multilineTextAlignment(.center)
-                    .padding(.horizontal, 24)
+                    .padding(.horizontal, DS.Spacing.lg)
             }
 
             Spacer()
@@ -200,12 +205,12 @@ struct BreakthroughFlowView: View {
                     .frame(height: 56)
                     .background(
                         RoundedRectangle(cornerRadius: 16)
-                            .fill(Color.green.opacity(0.85))
+                            .fill(DS.Gradient.gold)
                     )
                     .foregroundColor(.white)
-                    .padding(.horizontal, 24)
+                    .padding(.horizontal, DS.Spacing.lg)
                 }
-                .buttonStyle(PlainButtonStyle())
+                .buttonStyle(.dsPressable(feel: .tapSolid))
                 .disabled(isSaving || testimonyViewModel.isSubmitting || testimony.count > 500)
 
                 // Keep Private — saves locally, doesn't post
@@ -217,6 +222,7 @@ struct BreakthroughFlowView: View {
                             .font(.system(size: 15, weight: .medium))
                             .foregroundColor(.white.opacity(0.4))
                     }
+                    .buttonStyle(.dsPressable(feel: .tapSolid))
                     .disabled(isSaving || testimonyViewModel.isSubmitting)
                 }
 
@@ -227,9 +233,10 @@ struct BreakthroughFlowView: View {
                         .font(.system(size: 14))
                         .foregroundColor(.white.opacity(0.25))
                 }
+                .buttonStyle(.dsPressable(feel: .tapSolid))
                 .disabled(isSaving || testimonyViewModel.isSubmitting)
             }
-            .padding(.bottom, 48)
+            .padding(.bottom, DS.Spacing.xxl)
         }
     }
 
@@ -241,10 +248,11 @@ struct BreakthroughFlowView: View {
 
             Text(sharedToWall ? "\u{1F64C}" : "\u{1F389}")
                 .font(.system(size: 80))
+                .dsAppear(0)
 
-            VStack(spacing: 12) {
+            VStack(spacing: DS.Spacing.sm) {
                 Text("Your faith moved mountains.")
-                    .font(.system(size: 26, weight: .bold, design: .rounded))
+                    .font(DS.Typography.title)
                     .foregroundColor(.white)
                     .multilineTextAlignment(.center)
 
@@ -264,7 +272,8 @@ struct BreakthroughFlowView: View {
                     .padding(.top, 4)
                 }
             }
-            .padding(.horizontal, 32)
+            .padding(.horizontal, DS.Spacing.xl)
+            .dsAppear(0.06)
 
             Spacer()
 
@@ -278,12 +287,12 @@ struct BreakthroughFlowView: View {
                         .frame(height: 56)
                         .background(
                             RoundedRectangle(cornerRadius: 16)
-                                .fill(Color(red: 0.2, green: 0.5, blue: 1.0))
+                                .fill(DS.Gradient.brand)
                         )
                         .foregroundColor(.white)
-                        .padding(.horizontal, 24)
+                        .padding(.horizontal, DS.Spacing.lg)
                 }
-                .buttonStyle(PlainButtonStyle())
+                .buttonStyle(.dsPressable(feel: .tapSolid))
 
                 Button {
                     appState.requestReviewIfEligible(trigger: .breakthroughCelebration)
@@ -293,8 +302,10 @@ struct BreakthroughFlowView: View {
                         .font(.system(size: 15, weight: .medium))
                         .foregroundColor(.white.opacity(0.45))
                 }
+                .buttonStyle(.dsPressable(feel: .tapSolid))
             }
-            .padding(.bottom, 48)
+            .padding(.bottom, DS.Spacing.xxl)
+            .dsAppear(0.12)
         }
     }
 

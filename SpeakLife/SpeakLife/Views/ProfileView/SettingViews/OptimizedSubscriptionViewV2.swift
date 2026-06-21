@@ -68,7 +68,7 @@ struct OptimizedSubscriptionViewV2: View {
                             // Spacer for sticky bottom
                             Spacer(minLength: 50)
                         }
-                        .padding(.horizontal, 24)
+                        .padding(.horizontal, DS.Spacing.lg)
                     }
                     
                     // Sticky Bottom Section
@@ -146,7 +146,7 @@ struct OptimizedSubscriptionViewV2: View {
     }
     
     private var headerSection: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: DS.Spacing.md) {
             // App Icon\
             Spacer().frame(height: 44)
             Image("appIconDisplay")
@@ -167,7 +167,7 @@ struct OptimizedSubscriptionViewV2: View {
     }
     
     private var heroSection: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: DS.Spacing.sm) {
             Text("Renew Your Mind. Respond Like Jesus")
                 .font(.system(size: 24, weight: .bold))
                 .foregroundColor(.white)
@@ -179,7 +179,7 @@ struct OptimizedSubscriptionViewV2: View {
                 .multilineTextAlignment(.center)
             
             // Rating
-            HStack(spacing: 4) {
+            HStack(spacing: DS.Spacing.xxs) {
                 ForEach(0..<5) { _ in
                     Image(systemName: "star.fill")
                         .font(.system(size: 12))
@@ -226,14 +226,14 @@ struct OptimizedSubscriptionViewV2: View {
     }
     
     private var socialProofSection: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: DS.Spacing.sm) {
             Text("Join 100,000+ believers transforming their minds in Christ")
                 .font(.system(size: 14, weight: .medium))
                 .foregroundColor(.white.opacity(0.9))
                 .multilineTextAlignment(.center)
-            
+
             // Mini testimonial
-            VStack(spacing: 8) {
+            VStack(spacing: DS.Spacing.xs) {
                 Text("\"This app changed my life. My anxiety is gone!\"")
                     .font(.system(size: 13, weight: .regular))
                     .foregroundColor(.white.opacity(0.8))
@@ -259,11 +259,11 @@ struct OptimizedSubscriptionViewV2: View {
     }
     
     private var stickyBottomSection: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: DS.Spacing.md) {
             // Pricing Option (Single for simplicity)
             Button(action: { selectedOption = "annual" }) {
                 HStack {
-                    VStack(alignment: .leading, spacing: 4) {
+                    VStack(alignment: .leading, spacing: DS.Spacing.xxs) {
                         HStack {
                             Text("Annual Plan")
                                 .font(.system(size: 16, weight: .semibold))
@@ -358,9 +358,9 @@ struct OptimizedSubscriptionViewV2: View {
                 .foregroundColor(.white.opacity(0.6))
             }
         }
-        .padding(.horizontal, 24)
+        .padding(.horizontal, DS.Spacing.lg)
         .padding(.vertical, 20)
-        .padding(.bottom, 8) // Extra bottom padding for home indicator
+        .padding(.bottom, DS.Spacing.xs) // Extra bottom padding for home indicator
     }
     
     // MARK: - Helper Functions
@@ -449,13 +449,13 @@ struct ValuePropRow: View {
     let description: String
     
     var body: some View {
-        HStack(alignment: .top, spacing: 16) {
+        HStack(alignment: .top, spacing: DS.Spacing.md) {
             Image(systemName: icon)
                 .font(.system(size: 24))
                 .foregroundColor(Constants.DAMidBlue)
                 .frame(width: 30, height: 30)
-            
-            VStack(alignment: .leading, spacing: 4) {
+
+            VStack(alignment: .leading, spacing: DS.Spacing.xxs) {
                 Text(title)
                     .font(.system(size: 15, weight: .semibold))
                     .foregroundColor(.white)

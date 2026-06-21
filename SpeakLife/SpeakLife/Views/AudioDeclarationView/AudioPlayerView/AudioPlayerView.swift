@@ -130,7 +130,7 @@ struct AudioPlayerView: View {
             .aspectRatio(contentMode: .fill)
             .frame(width: size, height: size)
             .clipped()
-            .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: DS.Radius.lg, style: .continuous))
             .shadow(radius: 12)
             .scaleEffect(viewModel.isPlaying ? 1.0 : 0.92)
             .animation(.spring(response: 0.4, dampingFraction: 0.7), value: viewModel.isPlaying)
@@ -152,7 +152,7 @@ struct AudioPlayerView: View {
 
     @ViewBuilder
     private func playerControls(proxy: GeometryProxy) -> some View {
-        VStack(spacing: 16) {
+        VStack(spacing: DS.Spacing.md) {
             // Progress slider
             if viewModel.duration > 0 {
                 Slider(
@@ -282,13 +282,13 @@ struct PersistentAudioBar: View {
     @State private var animatePulse = false
 
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: DS.Spacing.sm) {
             ZStack {
                 Image(viewModel.imageUrl)
                     .resizable()
                     .aspectRatio(contentMode: .fill)
                     .frame(width: 50, height: 50)
-                    .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                    .clipShape(RoundedRectangle(cornerRadius: DS.Radius.sm, style: .continuous))
                     .shadow(radius: 4)
 
                 if viewModel.isPlaying {
@@ -340,11 +340,11 @@ struct PersistentAudioBar: View {
                     .foregroundColor(.white.opacity(0.6))
             }
         }
-        .padding(.vertical, 8)
-        .padding(.horizontal, 16)
+        .padding(.vertical, DS.Spacing.xs)
+        .padding(.horizontal, DS.Spacing.md)
         .background(
             .ultraThinMaterial,
-            in: RoundedRectangle(cornerRadius: 20, style: .continuous)
+            in: RoundedRectangle(cornerRadius: DS.Radius.lg, style: .continuous)
         )
         .shadow(color: .black.opacity(0.2), radius: 10, x: 0, y: 4)
         .padding(.horizontal)

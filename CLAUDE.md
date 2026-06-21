@@ -39,11 +39,13 @@ Never use em dashes (—) or en dashes (–) in declaration text. They create ru
 - ❌ "God's banner over me is love—I live under His unfailing claim on my life."
 - ✅ "God's banner over me is love. I live under His unfailing, unbreakable claim on my life."
 
-### 8. Vocabulary Depth
+### 8. Vocabulary Depth (Rich, Never Obscure)
 Language must be spiritually rich, resonant, and precise. Declarations should feel weighty and specific — not flat or generic.
+- **Rich but never obscure.** Choose words that carry weight AND land instantly. The speaker should never have to stop and ask what a word means. If a word feels churchy, academic, or seminary-only, cut it for a plainer word that hits just as hard.
 - ❌ "God loves me and things are good." → flat
-- ✅ Words that carry weight: *rooted, sealed, unshakeable, commissioned, anchored, redeemed, established, radiant, dwelling*
-- Each declaration should feel like it cost something to write.
+- ❌ "I will never forget His precepts." → obscure, churchy, makes the eye stall
+- ✅ Words that carry weight and stay clear: *rooted, sealed, unshakeable, anchored, redeemed, radiant, dwelling, revive, breathe, broken, whole, free*
+- The test: weighty on the heart, effortless on the tongue. Each declaration should feel like it cost something to write, but nothing to understand.
 
 ### 9. JSON Structure (never change these field names)
 ```json
@@ -58,10 +60,36 @@ Language must be spiritually rich, resonant, and precise. Declarations should fe
 ### 10. Declaration Count
 Do not reduce the count of any category. If you replace a declaration, the total number stays the same.
 
+### 11. Emotional Resonance (Never Apathy)
+The one reaction a declaration must never produce is apathy. Every declaration is spoken over the speaker's own heart, and if it leaves them indifferent, it has failed — no matter how doctrinally correct it is. The eye should not be able to skim past it unmoved.
+
+- **Make them feel something.** Each declaration must stir a real emotion: awe, courage, comfort, holy defiance, longing, joy, or gratitude that genuinely moves. Aim for the line that gives chills or steadies a shaking heart.
+- **Emotion creates action.** Feeling is what moves the speaker to actually believe the Word and act on it. A declaration that only informs is dead weight; one that ignites is doing its job.
+- **Engage the senses and the stakes.** Use concrete, vivid, embodied language over abstract theology. Name what is at war and what is won. Let the speaker feel the weight of the promise, not just read it.
+- ❌ "God is able to help me with my health." → flat, forgettable, apathy-inducing.
+- ✅ "Sickness has no claim on this body. I am bought, healed, and untouchable in Christ." → stirs defiance and assurance.
+
+This rule works with Rules 6 and 8, not against them: power and vocabulary are the tools; *making the speaker feel something* is the goal.
+
+### 12. Command and Triumph (Authority, Not Confession)
+A declaration is an exercise of authority, not a journal entry or a prayer of resignation. The speaker rules over the body, the circumstance, and the feeling. Never the reverse.
+
+- **Command the problem out; call the solution forward.** Speak to the pain, sickness, fear, or lack and command it to stop. Speak the healing, peace, provision, or breakthrough forward into the actual situation.
+- **Truth triumphs LOUDLY over feeling.** You may name a symptom, fear, or feeling ONLY to overrule it. Never validate it, never let it stand, never end the line on it. The promise gets the last word, every time.
+- **Declare the concrete outcome over the real thing.** Renewal is declared over *my body*, provision over *my finances*, peace over *my mind*. Not a vague "something inside."
+- **Break the formula and name the stakes.** Vary the structure so no two lines march to the same cadence. Name the real war (the diagnosis, the dread, the empty account) only to put it under the speaker's feet.
+- ❌ "Some days my heart feels like it is giving out, and I say so honestly. But God is my strength." → concedes the feeling and lets it stand.
+- ✅ "Let my flesh say whatever it wants. The truth is louder. God is the strength of my heart, and what He holds does not fail." → names the feeling, then triumphs over it.
+
+This rule governs Rule 11: the emotion we trigger is the emotion of victory and authority, never resignation.
+
 ---
 
 ## File Location
-`SpeakLife/Preview Content/AffirmationData/declarationsv10.json`
+`SpeakLife/SpeakLife/Preview Content/AffirmationData/declarationsv10.json`
+(This is the copy the Xcode target bundles, per `DEVELOPMENT_ASSET_PATHS` and the
+project's Resources build phase. Edit THIS file. Do not recreate the old
+single-nested `SpeakLife/Preview Content/...` copy, which the build never used.)
 
 ## Development Branch
 Always develop on `claude/review-destiny-declarations-gVBrT` and push there.

@@ -33,13 +33,13 @@ struct AudioContentRow: View {
         Button(action: {
             handlePlay()
         }) {
-            HStack(spacing: 16) {
+            HStack(spacing: DS.Spacing.md) {
                 // Audio artwork
                 Image(audio.imageUrl)
                     .resizable()
                     .aspectRatio(contentMode: .fill)
                     .frame(width: 60, height: 60)
-                    .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                    .clipShape(RoundedRectangle(cornerRadius: DS.Radius.sm, style: .continuous))
                     .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
                 
                 VStack(alignment: .leading, spacing: 4) {
@@ -54,7 +54,7 @@ struct AudioContentRow: View {
                         .foregroundColor(.white.opacity(0.7))
                         .lineLimit(1)
                     
-                    HStack(spacing: 8) {
+                    HStack(spacing: DS.Spacing.xs) {
                         HStack(spacing: 4) {
                             Image(systemName: "play.fill")
                                 .font(.caption2)
@@ -87,7 +87,7 @@ struct AudioContentRow: View {
                 Image(systemName: "ellipsis.circle.fill")
                     .font(.title3)
                     .foregroundColor(.white.opacity(0.8))
-                    .padding(8)
+                    .padding(DS.Spacing.xs)
                     .background(Color.white.opacity(0.05))
                     .clipShape(Circle())
                     .contextMenu {
@@ -102,12 +102,12 @@ struct AudioContentRow: View {
                     }
             }
             .padding(.horizontal, 20)
-            .padding(.vertical, 12)
+            .padding(.vertical, DS.Spacing.sm)
             .background(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous)
                     .fill(.ultraThinMaterial)
                     .overlay(
-                        RoundedRectangle(cornerRadius: 16)
+                        RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous)
                             .strokeBorder(Color.white.opacity(0.08), lineWidth: 0.5)
                     )
                     .shadow(
@@ -119,7 +119,7 @@ struct AudioContentRow: View {
             )
             .scaleEffect(showRemoveAnimation ? 0.95 : 1.0)
             .opacity(showRemoveAnimation ? 0.7 : 1.0)
-            .animation(.spring(response: 0.3, dampingFraction: 0.7), value: showRemoveAnimation)
+            .animation(DS.Motion.quick, value: showRemoveAnimation)
             .animation(.spring(response: 0.4, dampingFraction: 0.8), value: shouldGlow)
         }
         .buttonStyle(PlainButtonStyle())
@@ -135,7 +135,7 @@ struct AudioContentRow: View {
     // MARK: - Actions
     
     private func handlePlay() {
-        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        Juice.play(.tapLight)
         
         withAnimation(.easeInOut(duration: 0.4)) {
             shouldGlow = true
@@ -150,9 +150,9 @@ struct AudioContentRow: View {
     }
     
     private func handleRemove() {
-        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+        Juice.play(.unfavorite)
         
-        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+        withAnimation(DS.Motion.quick) {
             showRemoveAnimation = true
         }
         
@@ -328,19 +328,22 @@ struct AudioFavoritesView: View {
                 .resizable()
                 .frame(width: 80, height: 80)
                 .foregroundColor(.white.opacity(0.6))
-            
+                .dsAppear()
+
             Text(searchText.isEmpty ? "No Audio Favorites Yet" : "No Results Found")
-                .font(.title2)
+                .font(DS.Typography.title)
                 .fontWeight(.semibold)
                 .foregroundColor(.white)
-            
-            Text(searchText.isEmpty ? 
+                .dsAppear(0.06)
+
+            Text(searchText.isEmpty ?
                  "Tap the heart icon on any audio to add it to your favorites." :
                  "Try adjusting your search terms.")
-                .font(.body)
+                .font(DS.Typography.body)
                 .foregroundColor(.white.opacity(0.7))
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 40)
+                .dsAppear(0.12)
             
             if searchText.isEmpty {
                 Button("Browse Audio") {
@@ -348,10 +351,10 @@ struct AudioFavoritesView: View {
                 }
                 .font(.headline)
                 .foregroundColor(.white)
-                .padding(.horizontal, 24)
-                .padding(.vertical, 12)
+                .padding(.horizontal, DS.Spacing.lg)
+                .padding(.vertical, DS.Spacing.sm)
                 .background(
-                    RoundedRectangle(cornerRadius: 12)
+                    RoundedRectangle(cornerRadius: DS.Radius.sm, style: .continuous)
                         .fill(Color.pink.opacity(0.8))
                 )
                 .padding(.top, 10)

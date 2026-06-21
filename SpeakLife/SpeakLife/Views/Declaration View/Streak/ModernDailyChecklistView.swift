@@ -7,6 +7,7 @@
 
 import SwiftUI
 import FirebaseAnalytics
+import CoreData
 
 struct ModernDailyChecklistView: View {
     @ObservedObject var viewModel: EnhancedStreakViewModel
@@ -15,48 +16,65 @@ struct ModernDailyChecklistView: View {
     @EnvironmentObject var devotionalViewModel: DevotionalViewModel
     @EnvironmentObject var audioDeclarationViewModel: AudioDeclarationViewModel
     @EnvironmentObject var tabViewModel: TabViewModel
+    @EnvironmentObject var themeViewModel: ThemeViewModel
+    @EnvironmentObject var declarationStore: DeclarationViewModel
     @Environment(\.dismiss) private var dismiss
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     private var isIPad: Bool { horizontalSizeClass == .regular }
     @State private var showInfoSheet = false
     @State private var showDevotional = false
+    @State private var showBibleChat = false
+    @State private var showJournal = false
     @State private var completedTasks = Set<String>()
     @State private var animateProgress = false
     @State private var celebrationScale: CGFloat = 1.0
     @State private var showCelebration = false
     var onClose: (() -> Void)? = nil
+    /// True when shown as the root "Today" tab (no modal chrome / close button).
+    var isHomeTab: Bool = false
 
     // MARK: - Task Navigation
 
     private func handleTaskNavigation(_ task: DailyTask) {
         switch task.navigationDestination {
         case .audioTab:
-            // Pick the best filter based on onboarding categories.
-            // We do NOT pick the episode here — audio content may not be loaded yet
-            // if the user hasn't visited the audio tab this session.
-            // AudioDeclarationView will pick and play the first unplayed episode
-            // via onReceive(contentByFilter) once the content finishes loading.
-            let userCategories = getUserTopCategories()
-            let availableFilterIds = audioDeclarationViewModel.dynamicFilters.map { $0.id }
-            let filterId = AudioRecommendationEngine.bestFilterId(
-                for: userCategories,
-                availableFilterIds: availableFilterIds.isEmpty ? ["speaklife"] : availableFilterIds
-            )
-            audioDeclarationViewModel.setSelectedFilter(filterId)
-            audioDeclarationViewModel.checklistAutoPlayPending = true
-            dismiss()
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
-                tabViewModel.goToAudio()
-            }
+            // Just open the Audio tab and let the user choose what to play —
+            // no forced filter, no autoplay.
+            if let onClose = onClose { onClose() } else { dismiss() }
+            tabViewModel.goToAudio()
         case .devotional:
             showDevotional = true
+        case .bibleChat:
+            showBibleChat = true
+        case .journal:
+            showJournal = true
         case .burst:
-            dismiss()
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                NotificationCenter.default.post(name: Notification.Name("ShowDailyDeclarationBurst"), object: nil)
-            }
+            openBurst()
         case .none:
             viewModel.completeTask(taskId: task.id)
+        }
+    }
+
+    /// Reuse the feed's fully-wired burst cover: surface the Speak tab, then ask
+    /// it to present the burst. Works whether the checklist is the root tab or a
+    /// sheet (dismiss is a no-op at a tab root).
+    private func openBurst() {
+        if let onClose = onClose { onClose() } else { dismiss() }
+        tabViewModel.goToDeclarations()
+        // Delay lets the feed tab mount and subscribe before we post (first
+        // launch may not have instantiated it yet).
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+            NotificationCenter.default.post(name: Notification.Name("ShowDailyDeclarationBurst"), object: nil)
+        }
+    }
+
+    /// Surface the user's Personal Declaration via the feed's existing card flow
+    /// (it loads from the repository and presents on this flag change).
+    private func openPersonalDeclaration() {
+        if let onClose = onClose { onClose() } else { dismiss() }
+        tabViewModel.goToDeclarations()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+            appState.scrollToPersonalDeclaration = true
         }
     }
 
@@ -70,6 +88,41 @@ struct ModernDailyChecklistView: View {
         return []
     }
 
+    /// Matches the declaration feed's themed backdrop (including a user-chosen
+    /// custom image) so the checklist reflects the theme the user picked. A dark
+    /// scrim keeps the white text and cards legible on lighter themes.
+    private var themeBackground: some View {
+        ZStack {
+            if themeViewModel.showUserSelectedImage, let image = themeViewModel.selectedImage {
+                Image(uiImage: image)
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+            } else {
+                Image(themeViewModel.selectedTheme.backgroundImageString)
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+            }
+            LinearGradient(
+                colors: [Color.black.opacity(0.45), Color.black.opacity(0.65)],
+                startPoint: .top, endPoint: .bottom
+            )
+        }
+        .ignoresSafeArea()
+    }
+
+    /// Time-aware, personalized greeting (Calm / Haven style). Falls back to a
+    /// plain greeting when no name was captured during onboarding.
+    private var greeting: String {
+        let base: String
+        switch Calendar.current.component(.hour, from: Date()) {
+        case 5..<12:  base = "Good morning"
+        case 12..<17: base = "Good afternoon"
+        default:      base = "Good evening"
+        }
+        let name = UserDefaults.standard.string(forKey: "userName") ?? ""
+        return name.isEmpty ? base : "\(base), \(name)"
+    }
+
     private var motivationalText: String {
         let hour = Calendar.current.component(.hour, from: Date())
         let completed = viewModel.todayChecklist.completedTasksCount
@@ -77,17 +130,17 @@ struct ModernDailyChecklistView: View {
         let streakEarned = viewModel.todayChecklist.isStreakEarned
 
         if completed == total {
-            return "All tasks complete — you went above and beyond! 🎉"
+            return "All ground taken today. 🎉 You went above and beyond."
         } else if streakEarned {
-            return "Streak secured! 🔥 Bonus tasks below for extra growth."
+            return "Today's ground is yours. 🔥 Bonus below for extra growth."
         } else if completed > 0 {
-            return "Great progress! Complete your Burst to lock in today's streak. 💪"
+            return "Great start. Speak your declarations and take more ground 💪"
         } else {
             switch hour {
-            case 5..<12: return "Start your day strong! Complete your Burst 🌅"
-            case 12..<17: return "Don't forget your Burst — streak is on the line! 💪"
-            case 17..<21: return "Complete your Burst before midnight to keep your streak 🔥"
-            default: return "End your day with purpose! 🙏"
+            case 5..<12:  return "Speak today's declarations and take more ground 🌅"
+            case 12..<17: return "Speak today's declarations and take more ground 🔥"
+            case 17..<21: return "Speak today's declarations and take more ground 🔥"
+            default:      return "Speak today's declarations and take more ground 🙏"
             }
         }
     }
@@ -95,119 +148,89 @@ struct ModernDailyChecklistView: View {
     var body: some View {
         ZStack {
             VStack(spacing: 0) {
-                // Modern header with TODAY emphasis
+                // MARK: Header — greeting, streak, and week-at-a-glance
                 VStack(spacing: 16) {
-                    HStack {
+                    HStack(alignment: .top) {
                         VStack(alignment: .leading, spacing: 4) {
-                            Text("Today's Tasks")
-                                .font(.title2)
-                                .fontWeight(.bold)
+                            Text(greeting)
+                                .font(.system(size: 30, weight: .bold, design: .rounded))
                                 .foregroundColor(.white)
-                            
-                            HStack(spacing: 6) {
-                                Text(Date().formatted(.dateTime.weekday(.wide).month().day()))
-                                    .font(.subheadline)
-                                    .foregroundColor(.white.opacity(0.7))
-                                
-//                                if viewModel.streakStats.currentStreak > 0 {
-//                                    Text("•")
-//                                        .foregroundColor(.white.opacity(0.5))
-//                                    HStack(spacing: 4) {
-//                                        Text("🔥")
-//                                        Text("\(viewModel.streakStats.currentStreak) day streak")
-//                                            .font(.subheadline)
-//                                            .foregroundColor(.orange)
-//                                    }
-//                                }
-                            }
+                                .shadow(color: .black.opacity(0.3), radius: 6, x: 0, y: 2)
+
+                            Text(Date().formatted(.dateTime.weekday(.wide).month().day()))
+                                .font(.subheadline)
+                                .foregroundColor(.white.opacity(0.6))
+                                .tracking(0.5)
                         }
-                        
+
                         Spacer()
-                        
-                        // Task counter instead of percentage
-//                        VStack(spacing: 4) {
-//                            Text("\(viewModel.todayChecklist.completedTasksCount)")
-//                                .font(.largeTitle)
-//                                .fontWeight(.bold)
-//                                .foregroundColor(.white)
-//                                .scaleEffect(celebrationScale)
-//                            Text("of \(viewModel.todayChecklist.tasks.count)")
-//                                .font(.caption)
-//                                .foregroundColor(.white.opacity(0.7))
-//                        }
-//                        .padding(.horizontal, 16)
-//                        .padding(.vertical, 8)
-//                        .background(
-//                            RoundedRectangle(cornerRadius: 12)
-//                                .fill(Color.white.opacity(0.1))
-//                        )
-//                        
-//                        // Devotional button
-//                        Button(action: { showDevotional = true }) {
-//                            VStack(spacing: 4) {
-//                                Image(systemName: "book.pages.fill")
-//                                    .font(.title)
-//                                    .fontWeight(.semibold)
-//                                    .foregroundColor(.white)
-//                                Text("Devotional")
-//                                    .font(.caption)
-//                                    .foregroundColor(.white.opacity(0.7))
-//                            }
-//                            .padding(.horizontal, 16)
-//                            .padding(.vertical, 8)
-//                            .background(
-//                                RoundedRectangle(cornerRadius: 12)
-//                                    .fill(Color.white.opacity(0.1))
-//                            )
-//                        }
-                        
-                        // Always show close button — fullScreenCover has no swipe-to-dismiss
-                        Button(action: {
-                            if let onClose = onClose {
-                                onClose()
-                            } else {
-                                dismiss()
+
+                        if viewModel.streakStats.currentStreak > 0 {
+                            HStack(spacing: 5) {
+                                Text("🔥").font(.system(size: 15))
+                                Text("\(viewModel.streakStats.currentStreak)")
+                                    .font(.system(size: 16, weight: .bold, design: .rounded))
+                                    .foregroundColor(.white)
                             }
-                        }) {
-                            Image(systemName: "xmark.circle.fill")
-                                .font(.title3)
-                                .foregroundColor(.white.opacity(0.5))
+                            .padding(.horizontal, DS.Spacing.sm)
+                            .padding(.vertical, 7)
+                            .background(Capsule().fill(DS.Gradient.ember))
+                            .overlay(Capsule().stroke(Color.white.opacity(0.25), lineWidth: 1))
+                            .shadow(color: Color.orange.opacity(0.45), radius: 8, x: 0, y: 3)
+                            .accessibilityLabel("\(viewModel.streakStats.currentStreak) day streak")
+                        }
+
+                        // Close button only when presented modally — the root
+                        // "Today" tab has nothing to dismiss to.
+                        if !isHomeTab {
+                            Button(action: {
+                                if let onClose = onClose {
+                                    onClose()
+                                } else {
+                                    dismiss()
+                                }
+                            }) {
+                                Image(systemName: "xmark.circle.fill")
+                                    .font(.title3)
+                                    .foregroundColor(.white.opacity(0.4))
+                            }
+                            .padding(.leading, 4)
                         }
                     }
-                    
-                    // Motivational text
-                    Text(motivationalText)
-                        .font(.subheadline)
-                        .foregroundColor(.white.opacity(0.9))
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                    
-                    // Clean progress bar
-                    GeometryReader { geometry in
-                        ZStack(alignment: .leading) {
-                            RoundedRectangle(cornerRadius: 4)
-                                .fill(Color.white.opacity(0.1))
-                                .frame(height: 8)
-                            
-                            RoundedRectangle(cornerRadius: 4)
-                                .fill(
-                                    LinearGradient(
-                                        colors: viewModel.todayChecklist.isCompleted ? 
-                                            [.green, .green.opacity(0.8)] : 
-                                            [.blue, .blue.opacity(0.8)],
-                                        startPoint: .leading,
-                                        endPoint: .trailing
-                                    )
-                                )
-                                .frame(width: geometry.size.width * viewModel.todayChecklist.completionProgress, height: 8)
-                                .animation(.spring(response: 0.5, dampingFraction: 0.8), value: viewModel.todayChecklist.completionProgress)
+
+                    // Week-at-a-glance streak strip (the marquee return-driver)
+                    WeekStreakStrip(
+                        currentStreak: viewModel.streakStats.currentStreak,
+                        lastCompletedDate: viewModel.streakStats.lastCompletedDate
+                    )
+
+                    // Hero progress panel: the day's focal point. A gradient ring
+                    // paired with the progress-aware nudge, floated on glass.
+                    HStack(spacing: DS.Spacing.md) {
+                        DSProgressRing(
+                            completed: viewModel.todayChecklist.completedTasksCount,
+                            total: viewModel.todayChecklist.tasks.count
+                        )
+                        VStack(alignment: .leading, spacing: DS.Spacing.xxs) {
+                            Text("TODAY'S PROGRESS")
+                                .font(.system(size: 11, weight: .bold))
+                                .tracking(1.4)
+                                .foregroundColor(DS.Palette.gold.opacity(0.9))
+                            Text(motivationalText)
+                                .font(.subheadline)
+                                .foregroundColor(.white.opacity(0.9))
+                                .fixedSize(horizontal: false, vertical: true)
                         }
+                        Spacer(minLength: 0)
                     }
-                    .frame(height: 8)
+                    .padding(DS.Spacing.md)
+                    .dsGlass(cornerRadius: DS.Radius.lg, strokeOpacity: 0.16, elevation: DS.Elevation.medium)
                 }
                 .padding(.horizontal, 20)
                 .padding(.top, 20)
                 .padding(.bottom, 16)
-                
+                .dsAppear(0)
+
                 // Scrollable content with cleaner layout
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 12) {
@@ -230,10 +253,23 @@ struct ModernDailyChecklistView: View {
                                 }
                             },
                             onNavigate: { task in handleTaskNavigation(task) },
-                            onAllComplete: { dismiss() }
+                            onAllComplete: {
+                                // "Done" on the day-complete celebration. As the
+                                // root Today tab there's nothing to dismiss, so send
+                                // the user into the declaration feed to keep going.
+                                // When opened modally, honor the real dismissal.
+                                if isHomeTab {
+                                    tabViewModel.goToDeclarations()
+                                } else if let onClose = onClose {
+                                    onClose()
+                                } else {
+                                    dismiss()
+                                }
+                            }
                         )
                         .padding(.horizontal, 20)
-                        
+                        .dsAppear(0.08)
+
                         // Only show upcoming tasks if current list isn't completed
                         if !viewModel.todayChecklist.isCompleted {
                             let upcomingTasks = viewModel.getUpcomingUnlocks(for: viewModel.streakStats.currentStreak)
@@ -278,6 +314,34 @@ struct ModernDailyChecklistView: View {
                             }
                         }
                         
+                        // Quick access — the four core daily destinations, always
+                        // reachable regardless of which tasks are unlocked today.
+                        VStack(spacing: 10) {
+                            HStack {
+                                Text("JUMP BACK IN")
+                                    .font(.system(size: 10, weight: .bold)).tracking(1.5)
+                                    .foregroundColor(.white.opacity(0.35))
+                                Spacer()
+                            }
+                            HStack(spacing: 10) {
+                                QuickActionTile(icon: "bolt.fill", label: "Burst",
+                                                tint: Color(hex: "#7C3AED"), action: openBurst)
+                                if appState.hasPersonalDeclaration {
+                                    QuickActionTile(icon: "hands.sparkles.fill", label: "My Word",
+                                                    tint: Color(hex: "#CA8A04")) { openPersonalDeclaration() }
+                                }
+                                QuickActionTile(icon: "book.fill", label: "Devotional",
+                                                tint: Color(hex: "#0EA5E9")) { showDevotional = true }
+                                QuickActionTile(icon: "bubble.left.and.text.bubble.right.fill", label: "Ask Bible",
+                                                tint: Color(hex: "#059669")) { showBibleChat = true }
+                                QuickActionTile(icon: "pencil.and.scribble", label: "Journal",
+                                                tint: Color(hex: "#B45309")) { showJournal = true }
+                            }
+                        }
+                        .padding(.horizontal, 20)
+                        .padding(.top, 12)
+                        .dsAppear(0.16)
+
                         // Bottom spacing for last task accessibility
                         Color.clear.frame(height: 80)
                     }
@@ -294,19 +358,24 @@ struct ModernDailyChecklistView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(
-            LinearGradient(
-                colors: [Color(red: 0.1, green: 0.15, blue: 0.3), Color(red: 0.02, green: 0.07, blue: 0.15)],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-            .ignoresSafeArea()
-        )
+        .background(themeBackground)
         .sheet(isPresented: $showInfoSheet) {
             DailyChecklistInfoSheet()
         }
         .sheet(isPresented: $showDevotional) {
             DevotionalView(viewModel: devotionalViewModel)
+        }
+        .sheet(isPresented: $showBibleChat) {
+            // The conversational Bible Chat (not the topic picker). Inject the
+            // env objects explicitly since SwiftUI doesn't reliably propagate
+            // them across the sheet hop.
+            BibleChatConversationView()
+                .environmentObject(subscriptionStore)
+                .environmentObject(appState)
+                .environmentObject(declarationStore)
+        }
+        .sheet(isPresented: $showJournal) {
+            JournalEntrySheet(category: getUserTopCategories().first)
         }
         // ── Streak celebrations & badges ──────────────────────────────────────
         // These fullScreenCovers were built in EnhancedStreakView but never wired
@@ -352,10 +421,13 @@ struct ModernDailyChecklistView: View {
         }
         .animation(.spring(response: 0.4, dampingFraction: 0.8), value: viewModel.showFreezeUsedMessage)
         .onAppear {
-            Analytics.logEvent("daily_checklist_viewed", parameters: [
+            // Routed through AnalyticsService so the home/checklist surface shows
+            // up in PostHog retention + funnels, not Firebase alone.
+            AnalyticsService.shared.track("home_checklist_viewed", parameters: [
                 "current_streak": viewModel.streakStats.currentStreak,
                 "completed_tasks": viewModel.todayChecklist.completedTasksCount,
-                "total_tasks": viewModel.todayChecklist.tasks.count
+                "total_tasks": viewModel.todayChecklist.tasks.count,
+                "is_streak_earned": viewModel.todayChecklist.isStreakEarned
             ])
         }
         .onChange(of: viewModel.todayChecklist.isCompleted) { isCompleted in
@@ -512,7 +584,7 @@ struct OptimizedTaskRow: View {
                     .frame(width: 80, height: 80)
                     .contentShape(Rectangle())
                     .onTapGesture {
-                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                        Juice.play(.tapLight)
                         withAnimation(.easeOut(duration: 0.1)) {
                             isPressed = true
                         }
@@ -625,6 +697,170 @@ struct InstantResponseButtonStyle: ButtonStyle {
             .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
             .opacity(configuration.isPressed ? 0.8 : 1.0)
             .animation(.easeOut(duration: 0.05), value: configuration.isPressed)
+    }
+}
+
+// MARK: - Quick Access Tile
+
+struct QuickActionTile: View {
+    let icon: String
+    let label: String
+    let tint: Color
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: {
+            Juice.play(.tapLight)
+            action()
+        }) {
+            VStack(spacing: DS.Spacing.xs) {
+                ZStack {
+                    Circle()
+                        .fill(
+                            LinearGradient(
+                                colors: [tint.opacity(0.95), tint.opacity(0.55)],
+                                startPoint: .topLeading, endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 52, height: 52)
+                        .shadow(color: tint.opacity(0.5), radius: 8, x: 0, y: 4)
+                    Image(systemName: icon)
+                        .font(.system(size: 20, weight: .bold))
+                        .foregroundColor(.white)
+                }
+                Text(label)
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.85))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.75)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, DS.Spacing.sm)
+            .dsGlass(cornerRadius: DS.Radius.md, strokeOpacity: 0.12, elevation: DS.Elevation.low)
+        }
+        .buttonStyle(.dsPressable(feel: .tapLight, haptics: false))
+    }
+}
+
+// MARK: - Journal Entry Sheet
+//
+// Lightweight, self-contained journaling surface saved via JournalRepository.
+// The prompt is seeded from the user's onboarding category so the reflection
+// connects to what brought them to SpeakLife.
+
+private struct ClearTextEditorBackground: ViewModifier {
+    func body(content: Content) -> some View {
+        if #available(iOS 16.0, *) {
+            content.scrollContentBackground(.hidden)
+        } else {
+            content
+        }
+    }
+}
+
+struct JournalEntrySheet: View {
+    let category: String?
+    @Environment(\.dismiss) private var dismiss
+    @State private var text: String = ""
+    @FocusState private var focused: Bool
+
+    private var prompt: String { JournalEntrySheet.prompt(for: category) }
+
+    var body: some View {
+        NavigationView {
+            ZStack {
+                LinearGradient(
+                    colors: [Color(red: 0.1, green: 0.15, blue: 0.3), Color(red: 0.02, green: 0.07, blue: 0.15)],
+                    startPoint: .top, endPoint: .bottom
+                ).ignoresSafeArea()
+
+                VStack(alignment: .leading, spacing: 16) {
+                    Text(prompt)
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundColor(.white)
+                        .padding(.top, 8)
+
+                    ZStack(alignment: .topLeading) {
+                        if text.isEmpty {
+                            Text("Write freely. No one sees this but you and God.")
+                                .font(.system(size: 15))
+                                .foregroundColor(.white.opacity(0.35))
+                                .padding(.top, 10)
+                                .padding(.leading, 6)
+                        }
+                        TextEditor(text: $text)
+                            .focused($focused)
+                            .font(.system(size: 16))
+                            .foregroundColor(.white)
+                            .modifier(ClearTextEditorBackground())
+                            .frame(maxHeight: .infinity)
+                    }
+                    .padding(12)
+                    .background(RoundedRectangle(cornerRadius: 14).fill(Color.white.opacity(0.06)))
+                }
+                .padding(20)
+            }
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Text("Journal").font(.system(size: 18, weight: .bold)).foregroundColor(.white)
+                }
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Close") { dismiss() }.foregroundColor(.white.opacity(0.7))
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") { save() }
+                        .fontWeight(.semibold)
+                        .disabled(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                }
+            }
+        }
+        .onAppear {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { focused = true }
+        }
+    }
+
+    private func save() {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { dismiss(); return }
+        let context = PersistenceController.shared.container.viewContext
+        let entry = JournalEntry(context: context)
+        entry.text = trimmed
+        entry.category = category
+        Task {
+            do {
+                try await JournalRepository(context: context).create(entry)
+                AnalyticsService.shared.track("journal_entry_saved", parameters: [
+                    "category": category ?? "none",
+                    "char_count": trimmed.count,
+                    "source": "checklist"
+                ])
+            } catch {
+                // Don't leave an orphaned inserted object that a later viewContext
+                // save could flush; discard it. performAndWait is the synchronous
+                // variant (the async perform overload would need `await` here).
+                context.performAndWait { context.delete(entry) }
+            }
+        }
+        PremiumHaptics.affirmationCompleted()
+        dismiss()
+    }
+
+    /// Category-seeded reflection prompt (onboarding-driven).
+    private static func prompt(for category: String?) -> String {
+        switch category?.lowercased() {
+        case "anxiety":               return "Where do you need God's peace today?"
+        case "healing", "innerhealing": return "Where are you inviting God to heal you?"
+        case "wealth":                return "Where are you trusting God to provide?"
+        case "love":                  return "Where do you need to receive or give God's love?"
+        case "faith":                 return "Where is God asking you to trust Him more?"
+        case "warfare":               return "What battle are you handing to God today?"
+        case "identity":              return "What truth about who you are in Christ do you need to remember?"
+        case "hope":                  return "Where do you need fresh hope today?"
+        case "wisdom":                return "What decision needs God's wisdom right now?"
+        case "destiny":               return "What is God stirring you toward?"
+        default:                      return "What is God showing you today?"
+        }
     }
 }
 

@@ -15,7 +15,7 @@ private struct SurveyOptionRow: View {
 
     var body: some View {
         Button(action: {
-            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            Juice.play(.tapLight)
             action()
         }) {
             HStack(spacing: 14) {
@@ -65,7 +65,7 @@ private struct SurveyCheckRow: View {
 
     var body: some View {
         Button(action: {
-            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            Juice.play(.tapLight)
             action()
         }) {
             HStack(spacing: 14) {
@@ -228,7 +228,7 @@ private struct TerritoryOptionRow: View {
 
     var body: some View {
         Button(action: {
-            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            Juice.play(.tapLight)
             action()
         }) {
             HStack(spacing: 14) {
@@ -570,8 +570,14 @@ struct SurveyGoalRevealScreen: View {
 
                     ZStack {
                         Circle()
-                            .fill(Color.white.opacity(0.1))
+                            .fill(
+                                LinearGradient(
+                                    colors: [DS.Palette.gold.opacity(0.95), DS.Palette.gold.opacity(0.55)],
+                                    startPoint: .topLeading, endPoint: .bottomTrailing
+                                )
+                            )
                             .frame(width: 72, height: 72)
+                            .shadow(color: DS.Palette.gold.opacity(0.5), radius: 8, x: 0, y: 4)
 
                         Image(systemName: goalWord.icon)
                             .font(.system(size: 32))
@@ -611,7 +617,7 @@ struct SurveyGoalRevealScreen: View {
                         VStack(spacing: 8) {
                             Text("YOUR INHERITANCE")
                                 .font(.system(size: 12, weight: .bold, design: .rounded))
-                                .foregroundColor(.white.opacity(0.5))
+                                .foregroundColor(DS.Palette.gold.opacity(0.9))
                                 .kerning(1.2)
 
                             Text(goalWord.rawValue)
@@ -752,14 +758,7 @@ struct SurveyQ8NotificationScreen: View {
             }
         }
         .padding(14)
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(Color.white.opacity(0.08))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 16)
-                        .stroke(Color.white.opacity(0.15), lineWidth: 1)
-                )
-        )
+        .dsGlass(cornerRadius: DS.Radius.md)
     }
 }
 
@@ -788,7 +787,7 @@ struct SurveyFirstDeclarationScreen: View {
             VStack(spacing: 24) {
                 Text("Speak this. Out loud. Right now.")
                     .font(.system(size: 13, weight: .semibold, design: .rounded))
-                    .foregroundColor(.white.opacity(0.5))
+                    .foregroundColor(DS.Palette.gold.opacity(0.9))
                     .kerning(0.8)
                     .multilineTextAlignment(.center)
                     .opacity(labelShown ? 1 : 0)
@@ -814,14 +813,7 @@ struct SurveyFirstDeclarationScreen: View {
                     }
                 }
                 .padding(28)
-                .background(
-                    RoundedRectangle(cornerRadius: 24, style: .continuous)
-                        .fill(Color.white.opacity(0.09))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 24, style: .continuous)
-                                .stroke(Color.white.opacity(0.2), lineWidth: 1)
-                        )
-                )
+                .dsGlass(cornerRadius: DS.Radius.lg)
                 .padding(.horizontal, 24)
                 .scaleEffect(cardShown ? 1 : 0.94)
                 .opacity(cardShown ? 1 : 0)
@@ -936,14 +928,7 @@ struct SurveyProductPositioningScreen: View {
                     )
                 }
                 .padding(4)
-                .background(
-                    RoundedRectangle(cornerRadius: 18)
-                        .fill(Color.white.opacity(0.06))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 18)
-                                .stroke(Color.white.opacity(0.15), lineWidth: 1)
-                        )
-                )
+                .dsGlass(cornerRadius: DS.Radius.md)
                 .padding(.horizontal, 28)
 
                 // Seed + scripture
@@ -959,14 +944,7 @@ struct SurveyProductPositioningScreen: View {
                 }
                 .padding(.vertical, 12)
                 .padding(.horizontal, 16)
-                .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color.white.opacity(0.06))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 12)
-                                .stroke(Color.white.opacity(0.1), lineWidth: 1)
-                        )
-                )
+                .dsGlass(cornerRadius: DS.Radius.sm)
                 .padding(.horizontal, 28)
             }
             .opacity(v ? 1 : 0)
@@ -1135,11 +1113,7 @@ struct SurveyCommitmentHoldScreen: View {
                         .lineSpacing(5)
                 }
                 .padding(24)
-                .background(
-                    RoundedRectangle(cornerRadius: 24)
-                        .fill(Color.white.opacity(0.08))
-                        .overlay(RoundedRectangle(cornerRadius: 24).stroke(Color.white.opacity(0.18), lineWidth: 1))
-                )
+                .dsGlass(cornerRadius: DS.Radius.lg)
                 .padding(.horizontal, 28)
             }
 
@@ -1243,7 +1217,7 @@ struct SurveyCommitmentHoldScreen: View {
 
     private func startHold() {
         guard phase == .idle else { return }
-        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+        Juice.play(.tapSolid)
         withAnimation(.easeInOut(duration: 0.3)) { phase = .holding }
         withAnimation(.easeInOut(duration: 0.5)) { glowOpacity = 1.0 }
         withAnimation(.easeInOut(duration: 1.4).repeatForever(autoreverses: true)) { ringScale = 1.15 }
@@ -1256,12 +1230,12 @@ struct SurveyCommitmentHoldScreen: View {
             let currentSecond = Int(elapsed)
             if currentSecond != lastHapticSecond && currentSecond > 0 && holdProgress < 1.0 {
                 lastHapticSecond = currentSecond
-                UIImpactFeedbackGenerator(style: .rigid).impactOccurred()
+                Juice.play(.tapSolid)
             }
             if holdProgress >= 1.0 {
                 timer.invalidate()
                 holdTimer = nil
-                UINotificationFeedbackGenerator().notificationOccurred(.success)
+                Juice.play(.success)
                 withAnimation(.easeInOut(duration: 0.45)) {
                     glowOpacity = 0
                     phase = .complete
@@ -1274,7 +1248,7 @@ struct SurveyCommitmentHoldScreen: View {
         guard phase == .holding else { return }
         holdTimer?.invalidate()
         holdTimer = nil
-        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        Juice.play(.tapLight)
         withAnimation(.easeOut(duration: 0.3)) { phase = .idle }
         withAnimation(.easeOut(duration: 0.4)) { glowOpacity = 0 }
         withAnimation(.easeOut(duration: 0.3)) { ringScale = 1.0 }
@@ -1409,7 +1383,7 @@ private struct QuizOptionRow: View {
 
     var body: some View {
         Button(action: {
-            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            Juice.play(.tapLight)
             action()
         }) {
             HStack(spacing: 14) {
@@ -1543,8 +1517,14 @@ struct SurveyQuizInsightScreen: View {
             VStack(spacing: 26) {
                 ZStack {
                     Circle()
-                        .fill(Color.white.opacity(0.10))
+                        .fill(
+                            LinearGradient(
+                                colors: [DS.Palette.gold.opacity(0.95), DS.Palette.gold.opacity(0.55)],
+                                startPoint: .topLeading, endPoint: .bottomTrailing
+                            )
+                        )
                         .frame(width: 96, height: 96)
+                        .shadow(color: DS.Palette.gold.opacity(0.5), radius: 8, x: 0, y: 4)
                     Image(systemName: "waveform")
                         .font(.system(size: 40))
                         .foregroundColor(.white)
@@ -1554,7 +1534,7 @@ struct SurveyQuizInsightScreen: View {
                 VStack(spacing: 14) {
                     Text("HERE'S THE SHIFT")
                         .font(.system(size: 12, weight: .bold, design: .rounded))
-                        .foregroundColor(.white.opacity(0.5))
+                        .foregroundColor(DS.Palette.gold.opacity(0.9))
                         .kerning(1.4)
                         .multilineTextAlignment(.center)
                         .planRevealStagger(v, delay: 0.08)
@@ -1702,7 +1682,7 @@ struct SurveyPlanBuildingScreen: View {
         let lineCount = lines.count
         for i in 1...lineCount {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.4 + Double(i - 1) * 0.9) {
-                UIImpactFeedbackGenerator(style: .soft).impactOccurred()
+                Juice.play(.tapLight)
                 withAnimation { visibleLines = i }
             }
         }
@@ -1791,7 +1771,7 @@ struct SurveyPlanRevealScreen: View {
                     VStack(spacing: 12) {
                         Text("YOUR PLAN IS READY")
                             .font(.system(size: 12, weight: .bold, design: .rounded))
-                            .foregroundColor(.white.opacity(0.5))
+                            .foregroundColor(DS.Palette.gold.opacity(0.9))
                             .kerning(1.4)
                             .planRevealStagger(v)
 
@@ -1825,14 +1805,7 @@ struct SurveyPlanRevealScreen: View {
                             detail: dailyRhythmDetail
                         )
                     }
-                    .background(
-                        RoundedRectangle(cornerRadius: 20, style: .continuous)
-                            .fill(Color.white.opacity(0.09))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 20, style: .continuous)
-                                    .stroke(Color.white.opacity(0.2), lineWidth: 1)
-                            )
-                    )
+                    .dsGlass(cornerRadius: DS.Radius.lg)
                     .padding(.horizontal, 24)
                     .planRevealStagger(v, delay: 0.18)
 
@@ -1845,6 +1818,25 @@ struct SurveyPlanRevealScreen: View {
                     .padding(.horizontal, 32)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .planRevealStagger(v, delay: 0.3)
+
+                    // Destination: the vivid won life this plan (and the unlock)
+                    // is building toward — the bridge from product to the user's
+                    // dream reality, landed right before the ask.
+                    VStack(spacing: 6) {
+                        Text("WHERE THIS TAKES YOU")
+                            .font(.system(size: 11, weight: .bold, design: .rounded))
+                            .foregroundColor(DS.Palette.gold.opacity(0.9))
+                            .kerning(1.2)
+                        Text(burden.dreamOutcome)
+                            .font(.system(size: 18, weight: .semibold, design: .rounded))
+                            .foregroundColor(.white)
+                            .multilineTextAlignment(.center)
+                            .lineSpacing(3)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .padding(.horizontal, 28)
+                    .padding(.top, 4)
+                    .planRevealStagger(v, delay: 0.36)
 
                     Spacer().frame(height: 8)
                 }

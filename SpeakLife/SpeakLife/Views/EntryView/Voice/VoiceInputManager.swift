@@ -121,7 +121,7 @@ class VoiceInputManager: NSObject, ObservableObject {
                 Task { @MainActor [weak self] in self?.stopListening() }
             }
 
-            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+            Juice.play(.tapSolid)
 
         } catch {
             voiceInputState = .error
@@ -138,7 +138,7 @@ class VoiceInputManager: NSObject, ObservableObject {
         maxDurationTimer = nil
 
         audioRecorder?.stop()
-        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        Juice.play(.tapLight)
 
         guard let url = recordingURL else {
             voiceInputState = .idle

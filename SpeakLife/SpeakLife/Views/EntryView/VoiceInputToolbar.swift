@@ -15,12 +15,12 @@ struct VoiceInputToolbar: View {
     @State private var showingVoiceTips = false
     
     var body: some View {
-        HStack(spacing: 16) {
+        HStack(spacing: DS.Spacing.md) {
             // Entry progress info
             entryProgressView
-            
+
             Spacer()
-            
+
             // Voice tips button (when not listening)
             if !voiceManager.isListening {
                 Button(action: { showingVoiceTips = true }) {
@@ -28,6 +28,7 @@ struct VoiceInputToolbar: View {
                         .font(.system(size: 16))
                         .foregroundColor(.white.opacity(0.6))
                 }
+                .buttonStyle(.dsPressable(feel: .tapSolid))
             }
             
             // Main voice input button
@@ -44,15 +45,16 @@ struct VoiceInputToolbar: View {
             }
         }
         .padding(.horizontal, 20)
-        .padding(.vertical, 12)
+        .padding(.vertical, DS.Spacing.sm)
         .background(
-            RoundedRectangle(cornerRadius: 16)
+            RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous)
                 .fill(Color.white.opacity(0.08))
                 .overlay(
-                    RoundedRectangle(cornerRadius: 16)
+                    RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous)
                         .stroke(Color.white.opacity(0.2), lineWidth: 1)
                 )
         )
+        .dsShadow(DS.Elevation.low)
         .alert("Microphone Permission Required", isPresented: $showingPermissionAlert) {
             Button("Settings") {
                 openSettings()
@@ -90,7 +92,7 @@ struct VoiceInputToolbar: View {
             
             // Voice input status
             if voiceManager.isListening {
-                HStack(spacing: 4) {
+                HStack(spacing: DS.Spacing.xxs) {
                     Circle()
                         .fill(Color.red)
                         .frame(width: 6, height: 6)
@@ -107,7 +109,7 @@ struct VoiceInputToolbar: View {
     
     @ViewBuilder
     private var voiceControlButtons: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: DS.Spacing.sm) {
             // Pause/Resume button
             Button(action: togglePauseResume) {
                 Image(systemName: voiceManager.voiceInputState == .paused ? "play.circle.fill" : "pause.circle.fill")
@@ -140,8 +142,7 @@ struct VoiceInputToolbar: View {
             voiceManager.startListening()
             
             // Haptic feedback
-            let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
-            impactFeedback.impactOccurred()
+            Juice.play(.tapSolid)
         } else {
             requestPermissions()
         }
@@ -166,8 +167,7 @@ struct VoiceInputToolbar: View {
         }
         
         // Gentle haptic feedback
-        let impactFeedback = UIImpactFeedbackGenerator(style: .light)
-        impactFeedback.impactOccurred()
+        Juice.play(.tapLight)
     }
     
     private func togglePauseResume() {
@@ -302,20 +302,21 @@ struct VoiceTipsView: View {
     var body: some View {
         NavigationView {
             ScrollView {
-                VStack(alignment: .leading, spacing: 24) {
+                VStack(alignment: .leading, spacing: DS.Spacing.lg) {
                     // Header
-                    VStack(alignment: .leading, spacing: 8) {
+                    VStack(alignment: .leading, spacing: DS.Spacing.xs) {
                         Text("Voice Input Tips")
                             .font(.title.bold())
                             .foregroundColor(.primary)
-                        
+
                         Text("Make the most of voice input for your spiritual journaling")
                             .font(.subheadline)
                             .foregroundColor(.secondary)
                     }
-                    
+                    .dsAppear(0)
+
                     // Tips
-                    VStack(spacing: 16) {
+                    VStack(spacing: DS.Spacing.md) {
                         TipCard(
                             icon: "mic.fill",
                             title: "Speak Clearly",
@@ -352,6 +353,7 @@ struct VoiceTipsView: View {
                             description: "Voice input captures the emotion and authenticity of your spiritual reflections better than typing alone."
                         )
                     }
+                    .dsAppear(0.06)
                 }
                 .padding(20)
             }
@@ -374,13 +376,13 @@ struct TipCard: View {
     let description: String
     
     var body: some View {
-        HStack(alignment: .top, spacing: 16) {
+        HStack(alignment: .top, spacing: DS.Spacing.md) {
             Image(systemName: icon)
                 .font(.system(size: 20))
                 .foregroundColor(.blue)
                 .frame(width: 30)
-            
-            VStack(alignment: .leading, spacing: 4) {
+
+            VStack(alignment: .leading, spacing: DS.Spacing.xxs) {
                 Text(title)
                     .font(.headline)
                     .foregroundColor(.primary)
@@ -391,9 +393,10 @@ struct TipCard: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
-        .padding(16)
+        .padding(DS.Spacing.md)
         .background(Color(.systemGray6))
-        .cornerRadius(12)
+        .cornerRadius(DS.Radius.sm)
+        .dsShadow(DS.Elevation.low)
     }
 }
 
