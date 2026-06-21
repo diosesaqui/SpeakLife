@@ -31,33 +31,36 @@
  *            "messageBody": "<the full, long message ...>"
  *          }'
  *
- *  Broadcast to every user with a stored token (omit "token", add "broadcast"):
+ *  Broadcast to everyone via the "allUsers" FCM topic (every device subscribes
+ *  to it on launch — see AppDelegate). Omit "token", add "broadcast":
  *    curl ... -d '{ "secret":"...", "broadcast":true, "title":"...",
  *                   "body":"...", "messageTitle":"...", "messageBody":"..." }'
+ *  (Or target a custom topic with "topic":"<name>".)
  *
- *  Add "dryRun": true to count recipients without actually sending.
+ *  Add "dryRun": true to validate without sending. Note: topic sends can't
+ *  report a subscriber count (FCM doesn't expose it) — a dry run only echoes
+ *  the target topic.
  * ─────────────────────────────────────────────────────────────────────────────
  */
 
 const { onRequest } = require('firebase-functions/v2/https');
 const { defineSecret } = require('firebase-functions/params');
 const { getApps, initializeApp } = require('firebase-admin/app');
-const { getFirestore } = require('firebase-admin/firestore');
 const { getMessaging } = require('firebase-admin/messaging');
 
 // prayerWallNotifications.js also calls initializeApp() at module load. When both
 // are pulled in via index.js, guard against double-init.
 if (getApps().length === 0) initializeApp();
 
-const db = getFirestore();
 const messaging = getMessaging();
 
 // Shared secret that gates who can send. Set via:
 //   firebase functions:secrets:set MSG_BROADCAST_SECRET
 const MSG_BROADCAST_SECRET = defineSecret('MSG_BROADCAST_SECRET');
 
-// FCM multicast accepts at most 500 tokens per call.
-const MULTICAST_CHUNK = 500;
+// Every device subscribes to this topic on launch (see AppDelegate), so a
+// single topic send reaches the whole user base — no per-user token store.
+const ALL_USERS_TOPIC = 'allUsers';
 
 // Build the message data payload. FCM data values must be strings, and empty
 // strings are dropped so the app's fallback (banner title/body) kicks in.
@@ -76,23 +79,6 @@ function buildApns() {
   return { payload: { aps: { sound: 'default' } } };
 }
 
-// Collect a deduped list of FCM tokens from the users collection.
-async function collectAllTokens() {
-  const snap = await db.collection('users').get();
-  const tokens = new Set();
-  snap.forEach((doc) => {
-    const token = doc.data().fcmToken;
-    if (typeof token === 'string' && token.length > 0) tokens.add(token);
-  });
-  return Array.from(tokens);
-}
-
-function chunk(arr, size) {
-  const out = [];
-  for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
-  return out;
-}
-
 exports.sendPersonalMessage = onRequest(
   { secrets: [MSG_BROADCAST_SECRET], cors: false },
   async (req, res) => {
@@ -105,6 +91,7 @@ exports.sendPersonalMessage = onRequest(
       secret,
       token,
       broadcast,
+      topic,
       dryRun,
       title,
       body,
@@ -147,36 +134,20 @@ exports.sendPersonalMessage = onRequest(
         return;
       }
 
-      // ── Broadcast to all stored tokens ───────────────────────────────────
-      if (broadcast === true) {
-        const tokens = await collectAllTokens();
+      // ── Broadcast to every device via the allUsers topic ─────────────────
+      if (broadcast === true || (typeof topic === 'string' && topic.trim())) {
+        const targetTopic =
+          typeof topic === 'string' && topic.trim()
+            ? topic.trim()
+            : ALL_USERS_TOPIC;
         if (dryRun) {
-          res.json({ mode: 'broadcast', dryRun: true, recipients: tokens.length });
+          // FCM doesn't expose topic subscriber counts, so a dry run can only
+          // confirm the target topic, not a recipient number.
+          res.json({ mode: 'topic', dryRun: true, topic: targetTopic });
           return;
         }
-        if (tokens.length === 0) {
-          res.json({ mode: 'broadcast', sent: 0, note: 'No tokens found.' });
-          return;
-        }
-
-        let success = 0;
-        let failure = 0;
-        for (const group of chunk(tokens, MULTICAST_CHUNK)) {
-          const resp = await messaging.sendEachForMulticast({
-            tokens: group,
-            notification,
-            data,
-            apns,
-          });
-          success += resp.successCount;
-          failure += resp.failureCount;
-        }
-        res.json({
-          mode: 'broadcast',
-          recipients: tokens.length,
-          success,
-          failure,
-        });
+        const id = await messaging.send({ notification, data, apns, topic: targetTopic });
+        res.json({ mode: 'topic', topic: targetTopic, messageId: id });
         return;
       }
 
