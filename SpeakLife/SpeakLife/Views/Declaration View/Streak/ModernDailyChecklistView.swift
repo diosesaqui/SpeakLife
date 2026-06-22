@@ -29,6 +29,9 @@ struct ModernDailyChecklistView: View {
     @State private var animateProgress = false
     @State private var celebrationScale: CGFloat = 1.0
     @State private var showCelebration = false
+    /// The user's saved personal declaration, loaded from the repository so the
+    /// feed can surface it as a tile at the bottom of Today.
+    @State private var personalDeclaration: PersonalDeclaration?
     var onClose: (() -> Void)? = nil
     /// True when shown as the root "Today" tab (no modal chrome / close button).
     var isHomeTab: Bool = false
@@ -342,6 +345,19 @@ struct ModernDailyChecklistView: View {
                         .padding(.top, 12)
                         .dsAppear(0.16)
 
+                        // Personal Declaration — the one thing the user is
+                        // believing God for, anchored at the bottom of Today as
+                        // a full tile (not just a quick-action icon) so it stays
+                        // front-of-mind every day until it comes to pass.
+                        if appState.hasPersonalDeclaration, let declaration = personalDeclaration {
+                            PersonalDeclarationFeedTile(declaration: declaration) {
+                                openPersonalDeclaration()
+                            }
+                            .padding(.horizontal, 20)
+                            .padding(.top, 16)
+                            .dsAppear(0.2)
+                        }
+
                         // Bottom spacing for last task accessibility
                         Color.clear.frame(height: 80)
                     }
@@ -429,6 +445,12 @@ struct ModernDailyChecklistView: View {
                 "total_tasks": viewModel.todayChecklist.tasks.count,
                 "is_streak_earned": viewModel.todayChecklist.isStreakEarned
             ])
+            // Load the personal declaration for the bottom-of-feed tile.
+            if appState.hasPersonalDeclaration {
+                Task {
+                    personalDeclaration = await DIContainer.shared.personalDeclarationRepository.load()
+                }
+            }
         }
         .onChange(of: viewModel.todayChecklist.isCompleted) { isCompleted in
             if isCompleted {
@@ -739,6 +761,82 @@ struct QuickActionTile: View {
             .dsGlass(cornerRadius: DS.Radius.md, strokeOpacity: 0.12, elevation: DS.Elevation.low)
         }
         .buttonStyle(.dsPressable(feel: .tapLight, haptics: false))
+    }
+}
+
+// MARK: - Personal Declaration Feed Tile
+//
+// A full-width tile pinned to the bottom of the Today feed. Unlike the small
+// "My Word" quick-action icon, this keeps the actual declaration text and the
+// day count visible so the user is reminded — every day — of the one thing
+// they're believing God for. Tapping it opens the full speak-it card.
+
+struct PersonalDeclarationFeedTile: View {
+    let declaration: PersonalDeclaration
+    let onTap: () -> Void
+
+    private let gold = Color(red: 1, green: 0.82, blue: 0.28)
+
+    var body: some View {
+        Button(action: {
+            Juice.play(.tapLight)
+            onTap()
+        }) {
+            VStack(alignment: .leading, spacing: 12) {
+                // Header — label + day count
+                HStack(spacing: 6) {
+                    Text("🙌").font(.system(size: 13))
+                    Text("YOUR DECLARATION")
+                        .font(.system(size: 11, weight: .bold, design: .rounded))
+                        .tracking(1.2)
+                        .foregroundColor(gold)
+                    Spacer()
+                    Text("Day \(declaration.dayCount) of believing")
+                        .font(.system(size: 11, weight: .semibold, design: .rounded))
+                        .foregroundColor(.white.opacity(0.5))
+                }
+
+                // Declaration text
+                Text(declaration.declarationText)
+                    .font(.system(size: 15, weight: .medium, design: .rounded))
+                    .foregroundColor(.white)
+                    .multilineTextAlignment(.leading)
+                    .lineLimit(3)
+                    .lineSpacing(2)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                // Footer — verse reference + speak affordance
+                HStack(spacing: 6) {
+                    Image(systemName: "book.closed.fill")
+                        .font(.system(size: 11))
+                        .foregroundColor(gold.opacity(0.8))
+                    Text(declaration.verseReference)
+                        .font(.system(size: 13, weight: .medium, design: .rounded))
+                        .foregroundColor(.white.opacity(0.55))
+                    Spacer()
+                    HStack(spacing: 5) {
+                        Image(systemName: "mic.fill")
+                            .font(.system(size: 11, weight: .semibold))
+                        Text("Speak it")
+                            .font(.system(size: 13, weight: .semibold, design: .rounded))
+                    }
+                    .foregroundColor(gold)
+                }
+            }
+            .padding(16)
+            .background(
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(Color.white.opacity(0.05))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 16)
+                            .strokeBorder(gold.opacity(0.25), lineWidth: 1)
+                    )
+            )
+        }
+        .buttonStyle(.dsPressable(feel: .tapLight, haptics: false))
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Your personal declaration, day \(declaration.dayCount). \(declaration.declarationText)")
+        .accessibilityHint("Opens your declaration to speak it")
     }
 }
 
