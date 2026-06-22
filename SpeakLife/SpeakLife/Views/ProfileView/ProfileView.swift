@@ -33,6 +33,7 @@ struct ProfileView: View {
     @EnvironmentObject var appState: AppState
     @EnvironmentObject var devotionalViewModel: DevotionalViewModel
     @EnvironmentObject var subscriptionStore: SubscriptionStore
+    @EnvironmentObject var themeViewModel: ThemeViewModel
     @AppStorage("useAnimatedText") private var useAnimatedText = true
     
     @State var result: Result<MFMailComposeResult, Error>? = nil
@@ -69,19 +70,35 @@ struct ProfileView: View {
         }
     }
     
+    /// Background mirrors the declaration feed: the user's custom image when set,
+    /// otherwise their selected theme. Falls back to nothing extra — a dark scrim
+    /// keeps the white text and list legible on lighter themes.
+    @ViewBuilder
+    private var profileBackground: some View {
+        Group {
+            if themeViewModel.showUserSelectedImage, let image = themeViewModel.selectedImage {
+                Image(uiImage: image)
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+            } else {
+                Image(themeViewModel.selectedTheme.backgroundImageString)
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+            }
+        }
+        .frame(width: UIScreen.main.bounds.size.width, height: UIScreen.main.bounds.size.height)
+        .edgesIgnoringSafeArea([.all])
+        .overlay(
+            Rectangle()
+                .fill(Color.black.opacity(0.2))
+                .edgesIgnoringSafeArea(.all)
+        )
+    }
+
     private var profileView: some View {
         navigationStack(content:
                             ZStack {
-            Image(subscriptionStore.onboardingBGImage)
-                .resizable()
-                .aspectRatio(contentMode: .fill)
-                .frame(width: UIScreen.main.bounds.size.width, height: UIScreen.main.bounds.size.height)
-                .edgesIgnoringSafeArea([.all])
-                .overlay(
-                    Rectangle()
-                        .fill(Color.black.opacity(0.2))
-                        .edgesIgnoringSafeArea(.all)
-                )
+            profileBackground
             VStack {
                 VStack {
             Spacer().frame(height: DS.Spacing.xs)
