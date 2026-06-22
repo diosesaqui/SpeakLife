@@ -385,7 +385,7 @@ final class AINotificationService {
         content.title = aiNotification.personalizedTitle
         content.body = aiNotification.personalizedMessage
         content.sound = .default
-        
+
         // Add AI-specific metadata
         content.userInfo = [
             "declarationId": aiNotification.declarationId,
@@ -396,20 +396,67 @@ final class AINotificationService {
             "confidence": aiNotification.confidence,
             "notificationType": aiNotification.notificationType.rawValue
         ]
-        
-        // Create trigger for the optimal time
+
         let calendar = Calendar.current
-        let components = calendar.dateComponents([.hour, .minute], from: aiNotification.optimalTime)
-        let trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: true)
-        
-        // Create request
-        let identifier = "ai_notification_\(aiNotification.declarationId)_\(components.hour ?? 0)"
+        let trigger: UNCalendarNotificationTrigger
+        let identifier: String
+
+        switch aiNotification.notificationType {
+        case .morning, .midday, .evening:
+            // Daily-slot notifications recur at a fixed time of day.
+            let components = calendar.dateComponents([.hour, .minute], from: aiNotification.optimalTime)
+            trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: true)
+            identifier = "ai_notification_\(aiNotification.declarationId)_\(components.hour ?? 0)"
+
+        case .crisis, .celebration, .reminder:
+            // One-shot notifications anchored to a specific moment (e.g. crisis
+            // support, a celebration, or the re-engagement "We've Missed You"
+            // push). These must NEVER repeat — a previous build scheduled them
+            // with repeats:true on hour/minute only, which turned a one-time
+            // "1 hour from now" re-engagement push into a permanent daily alarm
+            // that fired in the middle of the night. Fire once at the exact
+            // optimalTime, and skip entirely if that moment has already passed.
+            guard aiNotification.optimalTime > Date() else { return }
+            let components = calendar.dateComponents(
+                [.year, .month, .day, .hour, .minute],
+                from: aiNotification.optimalTime
+            )
+            trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: false)
+            identifier = "ai_notification_\(aiNotification.declarationId)"
+        }
+
         let request = UNNotificationRequest(identifier: identifier, content: content, trigger: trigger)
-        
+
         do {
             try await notificationCenter.add(request)
         } catch {
             print("❌ Failed to schedule notification: \(error)")
+        }
+    }
+
+    /// Removes legacy AI notifications that an earlier build scheduled as
+    /// *repeating* daily alarms when they were meant to fire once — most
+    /// visibly the re-engagement "We've Missed You" push, which a near-midnight
+    /// schedule pinned to ~1 AM every night. Matches by the stable declarationId
+    /// prefixes used for one-shot notifications and removes any that repeat.
+    /// Safe and cheap to call on every launch.
+    func cleanupLegacyRepeatingOneShots() {
+        let oneShotPrefixes = [
+            "ai_notification_re_engagement_gentle",
+            "ai_notification_crisis_support_immediate",
+            "ai_notification_celebration_achievement"
+        ]
+        notificationCenter.getPendingNotificationRequests { requests in
+            let staleIds = requests.compactMap { request -> String? in
+                guard oneShotPrefixes.contains(where: { request.identifier.hasPrefix($0) }),
+                      (request.trigger as? UNCalendarNotificationTrigger)?.repeats == true else {
+                    return nil
+                }
+                return request.identifier
+            }
+            guard !staleIds.isEmpty else { return }
+            self.notificationCenter.removePendingNotificationRequests(withIdentifiers: staleIds)
+            print("🩹 Removed \(staleIds.count) legacy repeating AI re-engagement notification(s)")
         }
     }
     
