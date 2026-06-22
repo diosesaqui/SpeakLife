@@ -510,7 +510,7 @@ enum SurveyGoalWord: String, CaseIterable, Identifiable {
         switch self {
         case .peace:      return .anxiety
         case .identity:   return .identity
-        case .purpose:    return .faith
+        case .purpose:    return .destiny
         case .joy:        return .joy
         case .confidence: return .confidence
         case .healing:    return .health
