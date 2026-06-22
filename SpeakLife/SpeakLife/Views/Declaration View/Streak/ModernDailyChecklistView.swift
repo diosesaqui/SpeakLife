@@ -18,6 +18,7 @@ struct ModernDailyChecklistView: View {
     @EnvironmentObject var tabViewModel: TabViewModel
     @EnvironmentObject var themeViewModel: ThemeViewModel
     @EnvironmentObject var declarationStore: DeclarationViewModel
+    @EnvironmentObject var timerViewModel: TimerViewModel
     @Environment(\.dismiss) private var dismiss
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     private var isIPad: Bool { horizontalSizeClass == .regular }
@@ -32,6 +33,13 @@ struct ModernDailyChecklistView: View {
     /// The user's saved personal declaration, loaded from the repository so the
     /// feed can surface it as a tile at the bottom of Today.
     @State private var personalDeclaration: PersonalDeclaration?
+    // Modal presentations surfaced directly on the Today tab (instead of routing
+    // the user over to the Speak feed and presenting there).
+    @State private var showDailyBurst = false
+    @State private var showPersonalDeclarationCard = false
+    @State private var showBreakthroughFlow = false
+    @State private var showNewDeclarationSheet = false
+    @State private var warriorRoomTestimonyPrefill: WarriorRoomTestimonyPrefill?
     var onClose: (() -> Void)? = nil
     /// True when shown as the root "Today" tab (no modal chrome / close button).
     var isHomeTab: Bool = false
@@ -58,27 +66,16 @@ struct ModernDailyChecklistView: View {
         }
     }
 
-    /// Reuse the feed's fully-wired burst cover: surface the Speak tab, then ask
-    /// it to present the burst. Works whether the checklist is the root tab or a
-    /// sheet (dismiss is a no-op at a tab root).
+    /// Present the daily burst right here on the Today tab instead of routing
+    /// the user over to the Speak feed.
     private func openBurst() {
-        if let onClose = onClose { onClose() } else { dismiss() }
-        tabViewModel.goToDeclarations()
-        // Delay lets the feed tab mount and subscribe before we post (first
-        // launch may not have instantiated it yet).
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
-            NotificationCenter.default.post(name: Notification.Name("ShowDailyDeclarationBurst"), object: nil)
-        }
+        showDailyBurst = true
     }
 
-    /// Surface the user's Personal Declaration via the feed's existing card flow
-    /// (it loads from the repository and presents on this flag change).
+    /// Present the user's Personal Declaration card right here on the Today tab
+    /// instead of routing over to the Speak feed.
     private func openPersonalDeclaration() {
-        if let onClose = onClose { onClose() } else { dismiss() }
-        tabViewModel.goToDeclarations()
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
-            appState.scrollToPersonalDeclaration = true
-        }
+        showPersonalDeclarationCard = true
     }
 
     private func getUserTopCategories() -> [String] {
@@ -393,6 +390,76 @@ struct ModernDailyChecklistView: View {
         }
         .sheet(isPresented: $showJournal) {
             JournalEntrySheet(category: getUserTopCategories().first)
+        }
+        // Daily burst — presented modally on Today. Env objects injected
+        // explicitly since SwiftUI doesn't reliably propagate them across the
+        // cover hop. (viewModel is the EnhancedStreakViewModel the burst wants.)
+        .fullScreenCover(isPresented: $showDailyBurst) {
+            DailyDeclarationBurstView()
+                .environmentObject(declarationStore)
+                .environmentObject(themeViewModel)
+                .environmentObject(timerViewModel)
+                .environmentObject(viewModel)
+                .environmentObject(subscriptionStore)
+        }
+        // Personal Declaration card — presented modally on Today. onBreakthrough
+        // dismisses this card, then surfaces the breakthrough flow (attached to
+        // the root below so it survives this sheet's dismissal).
+        .sheet(isPresented: $showPersonalDeclarationCard) {
+            if let declaration = personalDeclaration {
+                PersonalDeclarationCard(
+                    declaration: declaration,
+                    onBreakthrough: {
+                        showPersonalDeclarationCard = false
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                            showBreakthroughFlow = true
+                        }
+                    }
+                )
+            }
+        }
+        .fullScreenCover(isPresented: $showBreakthroughFlow) {
+            if let d = personalDeclaration {
+                BreakthroughFlowView(
+                    declaration: d,
+                    onDismiss: { showBreakthroughFlow = false },
+                    onSetNew: {
+                        showBreakthroughFlow = false
+                        showNewDeclarationSheet = true
+                    },
+                    onShareToWarriorRoom: { prefill in
+                        warriorRoomTestimonyPrefill = WarriorRoomTestimonyPrefill(text: prefill)
+                    }
+                )
+                .environmentObject(appState)
+            }
+        }
+        .sheet(item: $warriorRoomTestimonyPrefill) { prefill in
+            WarriorRoomTestimonyComposer(
+                initialText: prefill.text,
+                initialIsTestimony: true
+            )
+            .environmentObject(subscriptionStore)
+        }
+        // Set-a-new-declaration onboarding (reached from the breakthrough flow).
+        .fullScreenCover(isPresented: $showNewDeclarationSheet) {
+            GeometryReader { geo in
+                PersonalDeclarationOnboardingView(
+                    viewModel: DIContainer.shared.makePersonalDeclarationViewModel(),
+                    size: geo.size,
+                    flow: "app"
+                ) { newDeclaration in
+                    if newDeclaration != nil {
+                        appState.hasPersonalDeclaration = true
+                    }
+                    showNewDeclarationSheet = false
+                    Task {
+                        personalDeclaration = await DIContainer.shared.personalDeclarationRepository.load()
+                    }
+                }
+                .environmentObject(appState)
+            }
+            .ignoresSafeArea()
         }
         // ── Streak celebrations & badges ──────────────────────────────────────
         // These fullScreenCovers were built in EnhancedStreakView but never wired
