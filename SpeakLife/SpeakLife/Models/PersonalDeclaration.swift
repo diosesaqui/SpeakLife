@@ -18,8 +18,17 @@ struct PersonalDeclaration: Codable, Equatable {
 
     var isReceived: Bool { receivedDate != nil }
 
+    /// UserDefaults key for the canonical "days actually spoken" counter.
+    /// Written by `PersonalDeclarationCard` on the first speak of each new day.
+    static let completedDayCountKey = "personalDeclaration_completedDayCount"
+
+    /// "Day N" reflects the number of unique days the user has actually spoken
+    /// this declaration — not calendar drift since `startDate`. This keeps the
+    /// feed tile ("Day N of believing"), the breakthrough flow, and the full
+    /// card in sync; previously the tile counted calendar days while the card
+    /// counted spoken days, so they diverged whenever a day was skipped.
     var dayCount: Int {
-        max(1, (Calendar.current.dateComponents([.day], from: startDate, to: Date()).day ?? 0) + 1)
+        max(1, UserDefaults.standard.integer(forKey: Self.completedDayCountKey))
     }
 
     var category: DeclarationCategory? {

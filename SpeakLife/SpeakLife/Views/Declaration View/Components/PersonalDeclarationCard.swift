@@ -36,7 +36,7 @@ struct PersonalDeclarationCard: View {
     /// Count of unique calendar days the user has successfully spoken this
     /// declaration. Drives the "Day N" label so the number reflects work done,
     /// not calendar drift since the declaration was created.
-    @AppStorage("personalDeclaration_completedDayCount") private var completedDayCount: Int = 0
+    @AppStorage(PersonalDeclaration.completedDayCountKey) private var completedDayCount: Int = 0
 
     private var spokenToday: Bool {
         let today = ISO8601DateFormatter().string(from: Calendar.current.startOfDay(for: Date()))
