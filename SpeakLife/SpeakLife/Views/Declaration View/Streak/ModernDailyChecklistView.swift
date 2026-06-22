@@ -273,57 +273,16 @@ struct ModernDailyChecklistView: View {
                         .padding(.horizontal, 20)
                         .dsAppear(0.08)
 
-                        // Only show upcoming tasks if current list isn't completed
-                        if !viewModel.todayChecklist.isCompleted {
-                            let upcomingTasks = viewModel.getUpcomingUnlocks(for: viewModel.streakStats.currentStreak)
-                            if let nextTask = upcomingTasks.first {
-                                VStack(spacing: 8) {
-                                    HStack {
-                                        Image(systemName: "sparkles")
-                                            .font(.caption)
-                                            .foregroundColor(.yellow)
-                                        Text("Unlock tomorrow")
-                                            .font(.caption)
-                                            .fontWeight(.medium)
-                                            .foregroundColor(.white.opacity(0.6))
-                                        Spacer()
-                                    }
-                                    
-                                    HStack(spacing: 12) {
-                                        Image(systemName: nextTask.icon)
-                                            .font(.caption)
-                                            .foregroundColor(.white.opacity(0.4))
-                                            .frame(width: 24, height: 24)
-                                            .background(
-                                                Circle()
-                                                    .fill(Color.white.opacity(0.05))
-                                            )
-                                        
-                                        Text(nextTask.title)
-                                            .font(.footnote)
-                                            .foregroundColor(.white.opacity(0.5))
-                                        
-                                        Spacer()
-                                    }
-                                    .padding(12)
-                                    .background(
-                                        RoundedRectangle(cornerRadius: 10)
-                                            .fill(Color.white.opacity(0.03))
-                                    )
-                                }
-                                .padding(.horizontal, 20)
-                                .padding(.top, 8)
-                                .transition(.opacity.combined(with: .move(edge: .bottom)))
-                            }
-                        }
-                        
                         // Quick access — the four core daily destinations, always
                         // reachable regardless of which tasks are unlocked today.
+                        // Surfaced right under today's tasks so the actionable
+                        // jump-off points come before previews and teasers.
                         VStack(spacing: 10) {
                             HStack {
                                 Text("JUMP BACK IN")
-                                    .font(.system(size: 10, weight: .bold)).tracking(1.5)
-                                    .foregroundColor(.white.opacity(0.35))
+                                    .font(.system(size: 11, weight: .bold))
+                                    .tracking(1.4)
+                                    .foregroundColor(DS.Palette.gold.opacity(0.9))
                                 Spacer()
                             }
                             HStack(spacing: 10) {
@@ -343,7 +302,7 @@ struct ModernDailyChecklistView: View {
                         }
                         .padding(.horizontal, 20)
                         .padding(.top, 12)
-                        .dsAppear(0.16)
+                        .dsAppear(0.12)
 
                         // Personal Declaration — the one thing the user is
                         // believing God for, anchored at the bottom of Today as
@@ -355,7 +314,53 @@ struct ModernDailyChecklistView: View {
                             }
                             .padding(.horizontal, 20)
                             .padding(.top, 16)
-                            .dsAppear(0.2)
+                            .dsAppear(0.16)
+                        }
+
+                        // Unlock tomorrow — a closing "come back tomorrow" teaser.
+                        // Kept at the end so it caps the feed as a retention hook
+                        // rather than interrupting the actionable sections above.
+                        if !viewModel.todayChecklist.isCompleted {
+                            let upcomingTasks = viewModel.getUpcomingUnlocks(for: viewModel.streakStats.currentStreak)
+                            if let nextTask = upcomingTasks.first {
+                                VStack(spacing: 8) {
+                                    HStack {
+                                        Image(systemName: "sparkles")
+                                            .font(.caption)
+                                            .foregroundColor(.yellow)
+                                        Text("Unlock tomorrow")
+                                            .font(.caption)
+                                            .fontWeight(.medium)
+                                            .foregroundColor(.white.opacity(0.6))
+                                        Spacer()
+                                    }
+
+                                    HStack(spacing: 12) {
+                                        Image(systemName: nextTask.icon)
+                                            .font(.caption)
+                                            .foregroundColor(.white.opacity(0.4))
+                                            .frame(width: 24, height: 24)
+                                            .background(
+                                                Circle()
+                                                    .fill(Color.white.opacity(0.05))
+                                            )
+
+                                        Text(nextTask.title)
+                                            .font(.footnote)
+                                            .foregroundColor(.white.opacity(0.5))
+
+                                        Spacer()
+                                    }
+                                    .padding(12)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 10)
+                                            .fill(Color.white.opacity(0.03))
+                                    )
+                                }
+                                .padding(.horizontal, 20)
+                                .padding(.top, 20)
+                                .transition(.opacity.combined(with: .move(edge: .bottom)))
+                            }
                         }
 
                         // Bottom spacing for last task accessibility
