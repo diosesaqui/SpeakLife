@@ -373,14 +373,17 @@ struct HomeView: View {
                     // one tap away and is what the Daily Burst opens into.
                     dailyChecklistView
                     declarationTab(tag: 2, title: "Speak")
-                    audioView
-                    // Bible Chat sits in the CENTER slot; enableAIFeatures kill-
-                    // switch falls back to Warrior Room when off.
+                    // Bible Chat sits in the CENTER slot (most-tapped real estate);
+                    // enableAIFeatures kill-switch falls back to Warrior Room when off.
                     if subscriptionStore.enableAIFeatures || BibleChatLocal.isDebug {
                         bibleChatTabView
                     } else {
                         communityView
                     }
+                    // Audio follows the center slot. Visual order only — tags are
+                    // unchanged (audio=1, bibleChat=4) so routing (goToAudio, deep
+                    // links) and analytics (trackTabNavigation) still resolve.
+                    audioView
                     // createYourOwnView dropped from this layout's bar to stay within
                     // the 5-tab limit; still reachable from the feed and Profile.
                     profileView
