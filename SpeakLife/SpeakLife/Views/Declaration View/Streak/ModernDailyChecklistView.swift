@@ -363,19 +363,6 @@ struct ModernDailyChecklistView: View {
                             }
                         }
 
-                        // Personal Declaration — the one thing the user is
-                        // believing God for, anchored at the bottom of Today as
-                        // a full tile (not just a quick-action icon) so it stays
-                        // front-of-mind every day until it comes to pass.
-                        if appState.hasPersonalDeclaration, let declaration = personalDeclaration {
-                            PersonalDeclarationFeedTile(declaration: declaration) {
-                                openPersonalDeclaration()
-                            }
-                            .padding(.horizontal, 20)
-                            .padding(.top, 16)
-                            .dsAppear(0.2)
-                        }
-
                         // Bottom spacing for last task accessibility
                         Color.clear.frame(height: 80)
                     }
