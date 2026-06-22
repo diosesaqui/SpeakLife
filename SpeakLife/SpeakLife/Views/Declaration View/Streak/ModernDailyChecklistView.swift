@@ -288,10 +288,6 @@ struct ModernDailyChecklistView: View {
                             HStack(spacing: 10) {
                                 QuickActionTile(icon: "bolt.fill", label: "Burst",
                                                 tint: Color(hex: "#7C3AED"), action: openBurst)
-                                if appState.hasPersonalDeclaration {
-                                    QuickActionTile(icon: "hands.sparkles.fill", label: "My Word",
-                                                    tint: Color(hex: "#CA8A04")) { openPersonalDeclaration() }
-                                }
                                 QuickActionTile(icon: "book.fill", label: "Devotional",
                                                 tint: Color(hex: "#0EA5E9")) { showDevotional = true }
                                 QuickActionTile(icon: "bubble.left.and.text.bubble.right.fill", label: "Ask Bible",
@@ -771,9 +767,8 @@ struct QuickActionTile: View {
 
 // MARK: - Personal Declaration Feed Tile
 //
-// A full-width tile pinned to the bottom of the Today feed. Unlike the small
-// "My Word" quick-action icon, this keeps the actual declaration text and the
-// day count visible so the user is reminded — every day — of the one thing
+// A full-width tile in the Today feed that keeps the actual declaration text
+// and day count visible so the user is reminded — every day — of the one thing
 // they're believing God for. Tapping it opens the full speak-it card.
 
 struct PersonalDeclarationFeedTile: View {
