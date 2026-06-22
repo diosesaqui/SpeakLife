@@ -16,7 +16,10 @@ struct BadgeView: View {
     let showGlow: Bool
     let showParticles: Bool
     
-    init(badge: Badge, size: CGFloat = 120, showGlow: Bool = true, showParticles: Bool = true) {
+    // Default to a clean, static medal. Glow/particles are reserved for the
+    // unlock celebration, which opts in explicitly — keeping the collection and
+    // profile badges restrained instead of busy.
+    init(badge: Badge, size: CGFloat = 120, showGlow: Bool = false, showParticles: Bool = false) {
         self.badge = badge
         self.size = size
         self.showGlow = showGlow
@@ -52,69 +55,43 @@ struct BadgeContent: View {
     let size: CGFloat
     let showGlow: Bool
     
-    @State private var rotationAngle: Double = 0
     @State private var glowPulse: Double = 1.0
-    
+
     var body: some View {
         ZStack {
-            // Outer glow effect
+            // Soft single-tone glow — only on the celebration screen (showGlow).
+            // One restrained metal color, gently pulsing; no rainbow halo.
             if showGlow && badge.isUnlocked {
                 Circle()
                     .fill(
                         RadialGradient(
                             colors: [
-                                badge.type.primaryColor.opacity(badge.rarity.glowIntensity * glowPulse),
-                                badge.type.secondaryColor.opacity(badge.rarity.glowIntensity * 0.5 * glowPulse),
+                                badge.rarity.metalBase.opacity(badge.rarity.glowIntensity * 0.6 * glowPulse),
                                 Color.clear
                             ],
                             center: .center,
-                            startRadius: size * 0.3,
-                            endRadius: size * 0.8
+                            startRadius: size * 0.35,
+                            endRadius: size * 0.85
                         )
                     )
-                    .frame(width: size * 1.4, height: size * 1.4)
-                    .blur(radius: 8)
+                    .frame(width: size * 1.5, height: size * 1.5)
+                    .blur(radius: size * 0.08)
             }
-            
-            // Badge base ring
-            BadgeRing(
-                badge: badge,
-                size: size,
-                rotationAngle: rotationAngle
-            )
-            
-            // Badge center content
+
+            // Minted metal rim
+            BadgeRing(badge: badge, size: size)
+
+            // Embossed emblem on a dark coin face
             BadgeCenterContent(
                 badge: badge,
-                size: size * 0.6
+                size: size * 0.66
             )
-            
-            // Rarity indicator
-            if badge.isUnlocked {
-                BadgeRarityIndicator(
-                    rarity: badge.rarity,
-                    size: size * 0.2
-                )
-                .offset(x: size * 0.3, y: -size * 0.3)
-            }
         }
         .onAppear {
-            startAnimations()
-        }
-    }
-    
-    private func startAnimations() {
-        if badge.isUnlocked {
-            // Slow rotation for legendary badges
-            if badge.rarity == .legendary {
-                withAnimation(.linear(duration: 20).repeatForever(autoreverses: false)) {
-                    rotationAngle = 360
+            if showGlow && badge.isUnlocked {
+                withAnimation(.easeInOut(duration: 2.2).repeatForever(autoreverses: true)) {
+                    glowPulse = 1.25
                 }
-            }
-            
-            // Glow pulsing
-            withAnimation(.easeInOut(duration: 2).repeatForever(autoreverses: true)) {
-                glowPulse = badge.rarity == .legendary ? 1.3 : 1.1
             }
         }
     }
@@ -125,82 +102,39 @@ struct BadgeContent: View {
 struct BadgeRing: View {
     let badge: Badge
     let size: CGFloat
-    let rotationAngle: Double
-    
+
+    private var rimColors: [Color] {
+        badge.isUnlocked
+            ? badge.rarity.metalGradient
+            : [Color(white: 0.50), Color(white: 0.38), Color(white: 0.26)]
+    }
+
     var body: some View {
         ZStack {
-            // Shadow ring
+            // Soft, grounded drop shadow
             Circle()
-                .fill(Color.black.opacity(0.3))
+                .fill(Color.black.opacity(0.18))
                 .frame(width: size, height: size)
-                .offset(y: 4)
-                .blur(radius: 4)
-            
-            // Base ring
+                .offset(y: size * 0.02)
+                .blur(radius: size * 0.04)
+
+            // Beveled metal rim: light top-left to shadow bottom-right
             Circle()
-                .stroke(
+                .strokeBorder(
                     LinearGradient(
-                        colors: [
-                            Color(red: 0.1, green: 0.1, blue: 0.1),
-                            Color(red: 0.3, green: 0.3, blue: 0.3)
-                        ],
+                        colors: rimColors,
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     ),
-                    lineWidth: size * 0.08
+                    lineWidth: size * 0.07
                 )
-                .frame(width: size * 0.9, height: size * 0.9)
-            
-            // Rarity ring (colored)
-            if badge.isUnlocked {
-                Circle()
-                    .stroke(
-                        AngularGradient(
-                            colors: rarityGradientColors,
-                            center: .center,
-                            startAngle: .degrees(rotationAngle),
-                            endAngle: .degrees(rotationAngle + 360)
-                        ),
-                        lineWidth: size * 0.06
-                    )
-                    .frame(width: size * 0.85, height: size * 0.85)
-                
-                // Inner highlight ring
-                Circle()
-                    .stroke(
-                        LinearGradient(
-                            colors: [
-                                Color.white.opacity(0.8),
-                                Color.white.opacity(0.3),
-                                Color.clear
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ),
-                        lineWidth: size * 0.015
-                    )
-                    .frame(width: size * 0.75, height: size * 0.75)
-            } else {
-                // Locked ring
-                Circle()
-                    .stroke(
-                        Color.gray.opacity(0.5),
-                        lineWidth: size * 0.06
-                    )
-                    .frame(width: size * 0.85, height: size * 0.85)
-            }
+                .frame(width: size, height: size)
+
+            // Crisp inner edge for definition
+            Circle()
+                .stroke(Color.black.opacity(0.18), lineWidth: size * 0.008)
+                .frame(width: size * 0.86, height: size * 0.86)
         }
-    }
-    
-    private var rarityGradientColors: [Color] {
-        let baseColor = badge.rarity.ringColor
-        return [
-            baseColor,
-            baseColor.opacity(0.8),
-            Color.white.opacity(0.9),
-            baseColor.opacity(0.8),
-            baseColor
-        ]
     }
 }
 
@@ -210,62 +144,50 @@ struct BadgeCenterContent: View {
     let badge: Badge
     let size: CGFloat
     
-    @State private var iconScale: CGFloat = 1.0
-    
     var body: some View {
         ZStack {
-            // Background circle
+            // Dark coin face — lets the metal rim and emblem be the heroes
             Circle()
                 .fill(
-                    RadialGradient(
-                        colors: badge.isUnlocked ? centerGradientColors : lockedGradientColors,
-                        center: .center,
-                        startRadius: 0,
-                        endRadius: size * 0.5
+                    LinearGradient(
+                        colors: badge.isUnlocked
+                            ? [Color(white: 0.17), Color(white: 0.09)]
+                            : [Color(white: 0.20), Color(white: 0.12)],
+                        startPoint: .top,
+                        endPoint: .bottom
                     )
                 )
                 .frame(width: size, height: size)
-            
-            // Badge icon or lock
-            Group {
-                if badge.isUnlocked {
-                    // Badge type icon
-                    Image(systemName: badge.type.iconName)
-                        .font(.system(size: size * 0.4, weight: .bold))
-                        .foregroundColor(.white)
-                        .shadow(color: .black.opacity(0.5), radius: 2, x: 1, y: 1)
-                        .scaleEffect(iconScale)
-                } else {
-                    // Lock icon
-                    Image(systemName: "lock.fill")
-                        .font(.system(size: size * 0.35, weight: .bold))
-                        .foregroundColor(.gray)
-                }
+
+            // Faint top sheen
+            Circle()
+                .fill(
+                    LinearGradient(
+                        colors: [Color.white.opacity(0.16), Color.clear],
+                        startPoint: .top,
+                        endPoint: .center
+                    )
+                )
+                .frame(width: size, height: size)
+
+            // Emblem
+            if badge.isUnlocked {
+                Image(systemName: badge.type.iconName)
+                    .font(.system(size: size * 0.42, weight: .semibold))
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: [badge.rarity.metalHighlight, badge.rarity.metalBase],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                    )
+                    .shadow(color: .black.opacity(0.45), radius: size * 0.02, x: 0, y: size * 0.012)
+            } else {
+                Image(systemName: "lock.fill")
+                    .font(.system(size: size * 0.34, weight: .semibold))
+                    .foregroundColor(Color(white: 0.45))
             }
         }
-        .onAppear {
-            if badge.isUnlocked && badge.rarity == .legendary {
-                withAnimation(.easeInOut(duration: 1.5).repeatForever(autoreverses: true)) {
-                    iconScale = 1.1
-                }
-            }
-        }
-    }
-    
-    private var centerGradientColors: [Color] {
-        [
-            badge.type.primaryColor,
-            badge.type.secondaryColor,
-            badge.type.primaryColor.opacity(0.8)
-        ]
-    }
-    
-    private var lockedGradientColors: [Color] {
-        [
-            Color(red: 0.2, green: 0.2, blue: 0.2),
-            Color(red: 0.1, green: 0.1, blue: 0.1),
-            Color(red: 0.15, green: 0.15, blue: 0.15)
-        ]
     }
 }
 
