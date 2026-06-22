@@ -25,6 +25,10 @@ final class SavePersonalDeclarationUseCase {
             categoryRaw: match.category.rawValue,
             startDate: Date()
         )
+        // A new declaration starts fresh: clear the previous declaration's
+        // spoken-day tracking so "Day N" begins at Day 1 rather than inheriting
+        // the prior progress.
+        PersonalDeclaration.resetSpeakTracking()
         try await repository.save(declaration)
         notificationService.schedule(for: declaration, startTimeIndex: startTimeIndex)
         return declaration

@@ -28,11 +28,11 @@ struct PersonalDeclarationCard: View {
     @Environment(\.dismiss) private var dismiss
 
     // Spoken-today tracking
-    @AppStorage("personalDeclaration_lastSpokenDate") private var lastSpokenDateStr: String = ""
+    @AppStorage(PersonalDeclaration.lastSpokenDateKey) private var lastSpokenDateStr: String = ""
     /// How many times the user has spoken this declaration today. Resets to
     /// 1 on first speak of a new day, increments on subsequent speaks.
     /// Drives the tiered visual reward in `dayBadge`.
-    @AppStorage("personalDeclaration_dailySpeakCount") private var dailySpeakCount: Int = 0
+    @AppStorage(PersonalDeclaration.dailySpeakCountKey) private var dailySpeakCount: Int = 0
     /// Count of unique calendar days the user has successfully spoken this
     /// declaration. Drives the "Day N" label so the number reflects work done,
     /// not calendar drift since the declaration was created.
