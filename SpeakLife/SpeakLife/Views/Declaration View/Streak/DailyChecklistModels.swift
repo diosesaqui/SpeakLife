@@ -229,7 +229,12 @@ struct StreakStats: Codable {
     // Fix 4: Streak freeze — new users start with one; earn more at milestones
     var streakFreezeAvailable: Bool = true
     var streakFreezeUsedDate: Date?
-    
+    // Milestones (streak day numbers) that have already triggered a full
+    // celebration. Persisted so that breaking a streak and rebuilding past an
+    // already-celebrated milestone does NOT re-fire its celebration. Defaults
+    // empty; absent in older saved data and decodes cleanly.
+    var celebratedMilestones: Set<Int> = []
+
     mutating func updateStreak(for date: Date) {
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: date)

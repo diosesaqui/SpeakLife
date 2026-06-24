@@ -27,6 +27,10 @@ final class EnhancedStreakViewModel: ObservableObject {
     private let checklistKey = "dailyChecklist"
     private let streakStatsKey = "streakStats"
     private let hasAutoCompletedFirstTaskKey = "hasAutoCompletedFirstTask"
+
+    /// Streak days that earn a full-screen celebration. Every other completed
+    /// day gets only a haptic + the auto-collapsing completed banner.
+    static let celebrationMilestones: Set<Int> = [1, 3, 7, 14, 30, 50, 100, 200, 365]
     
     // MARK: - User Preferences
     /// Retrieves user's top 2 selected categories from UserDefaults
@@ -361,37 +365,59 @@ final class EnhancedStreakViewModel: ObservableObject {
             PremiumHaptics.newRecordSet()
         }
         
-        // Create celebration data
-        celebrationData = CompletionCelebration(
-            streakNumber: currentStreakNumber,
-            isNewRecord: isNewRecord,
-            motivationalMessage: CompletionCelebration.generateMessage(
-                for: currentStreakNumber,
-                isRecord: isNewRecord
-            ),
-            shareImage: generateShareImage()
-        )
-        
-        // Show fire animation first, then celebration, then badges
-        showFireAnimation = true
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-            self.showFireAnimation = false
-            self.showCompletionCelebration = true
+        // Decide whether this day earns a full-screen celebration.
+        // Meaningful = a not-yet-celebrated milestone day. Ordinary days get only
+        // the haptic above (including the distinct new-record haptic) plus the
+        // auto-collapsing completed banner, so celebrations stay rare and never
+        // re-fire after a streak is rebuilt.
+        //
+        // Note: we deliberately do NOT trigger on "new personal record." Because
+        // updateStreak() pins longestStreak to currentStreak on every completion,
+        // a user extending their all-time-best streak sets a new record EVERY
+        // day — so a record-based trigger would fire daily and defeat the goal.
+        let isMilestoneDay = Self.celebrationMilestones.contains(currentStreakNumber)
+        let isNewMilestone = isMilestoneDay && !streakStats.celebratedMilestones.contains(currentStreakNumber)
+
+        if isNewMilestone {
+            streakStats.celebratedMilestones.insert(currentStreakNumber)
         }
-        
+
+        if isNewMilestone {
+            // Create celebration data (share image is expensive — only build it
+            // when we're actually going to show the celebration)
+            celebrationData = CompletionCelebration(
+                streakNumber: currentStreakNumber,
+                isNewRecord: isNewRecord,
+                motivationalMessage: CompletionCelebration.generateMessage(
+                    for: currentStreakNumber,
+                    isRecord: isNewRecord
+                ),
+                shareImage: generateShareImage()
+            )
+
+            // Show fire animation first, then celebration, then badges
+            showFireAnimation = true
+
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                self.showFireAnimation = false
+                self.showCompletionCelebration = true
+            }
+        }
+
         saveData()
 
         // Fix 2: Cancel streak-at-risk notification since day is complete
         LifecycleNotificationService.shared.cancelStreakAtRiskNotification()
 
-        // Celebrate streak milestones (3/7/30/100) with a next-morning push.
-        // previousStreak = today's streak minus 1 (the value before today incremented it)
-        // — covers fresh starts (1 - 1 = 0), consecutive days, and post-break rebuilds.
-        LifecycleNotificationService.shared.scheduleStreakMilestoneIfNeeded(
-            currentStreak: currentStreakNumber,
-            previousStreak: currentStreakNumber - 1
-        )
+        // Celebrate streak milestones (3/7/30/100) with a next-morning push —
+        // only on a genuinely new milestone, so rebuilding past one after a break
+        // never re-fires the push.
+        if isNewMilestone {
+            LifecycleNotificationService.shared.scheduleStreakMilestoneIfNeeded(
+                currentStreak: currentStreakNumber,
+                previousStreak: currentStreakNumber - 1
+            )
+        }
 
         // Check for badges AFTER completing the day to ensure proper timing
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
@@ -465,12 +491,57 @@ final class EnhancedStreakViewModel: ObservableObject {
         // Also save current streak as simple integer for notifications to use
         userDefaults.set(streakStats.currentStreak, forKey: "currentStreak")
     }
+
+    #if DEBUG
+    // MARK: - Debug Helpers (compiled out of release)
+
+    /// Simulates completing today AS the given streak day, running the real
+    /// `completeDay()` path so celebration gating behaves exactly as in production.
+    /// Use to land on day 7, 30, etc. without grinding real days.
+    func debugCompleteAs(streakDay day: Int) {
+        let calendar = Calendar.current
+        if day <= 1 {
+            streakStats.currentStreak = 0
+            streakStats.lastCompletedDate = nil
+        } else {
+            streakStats.currentStreak = day - 1
+            streakStats.longestStreak = max(streakStats.longestStreak, day - 1)
+            streakStats.lastCompletedDate = calendar.date(byAdding: .day, value: -1, to: calendar.startOfDay(for: Date()))
+        }
+        todayChecklist.completedAt = nil
+        completeDay()
+    }
+
+    /// Simulates breaking the streak (as if several days were missed).
+    func debugBreakStreak() {
+        streakStats.currentStreak = 0
+        streakStats.lastCompletedDate = Calendar.current.date(byAdding: .day, value: -5, to: Date())
+        todayChecklist.completedAt = nil
+        saveData()
+    }
+
+    /// Forgets all celebrated milestones — re-arms every celebration for testing.
+    func debugClearCelebratedMilestones() {
+        streakStats.celebratedMilestones = []
+        saveData()
+    }
+    #endif
     
     private func loadData() {
         // Load streak stats first (needed for creating new checklist)
         if let statsData = userDefaults.data(forKey: streakStatsKey),
            let stats = try? JSONDecoder().decode(StreakStats.self, from: statsData) {
             streakStats = stats
+
+            // Migration: existing users have no celebrated-milestone history.
+            // Seed every milestone they've already reached (<= longest streak)
+            // so we never re-celebrate something they've clearly seen before.
+            if streakStats.celebratedMilestones.isEmpty && streakStats.longestStreak > 0 {
+                streakStats.celebratedMilestones = Self.celebrationMilestones.filter { $0 <= streakStats.longestStreak }
+                if let migrated = try? JSONEncoder().encode(streakStats) {
+                    userDefaults.set(migrated, forKey: streakStatsKey)
+                }
+            }
         }
         
         // Load checklist

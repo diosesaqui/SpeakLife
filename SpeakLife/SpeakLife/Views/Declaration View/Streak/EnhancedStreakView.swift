@@ -147,8 +147,46 @@ struct EnhancedStreakView: View {
                     }
             }
         }
+        #if DEBUG
+        .overlay(alignment: .bottom) { debugCelebrationPanel }
+        #endif
     }
-    
+
+    #if DEBUG
+    @State private var debugDay: Int = 7
+    @State private var showDebugPanel = false
+
+    @ViewBuilder
+    private var debugCelebrationPanel: some View {
+        if showDebugPanel {
+            VStack(spacing: 8) {
+                Text("Celebration tester").font(.caption.bold())
+                Stepper("Day: \(debugDay)", value: $debugDay, in: 1...400)
+                    .font(.caption)
+                HStack {
+                    Button("Complete as day \(debugDay)") { viewModel.debugCompleteAs(streakDay: debugDay) }
+                        .buttonStyle(.borderedProminent)
+                    Button("Break streak") { viewModel.debugBreakStreak() }
+                        .buttonStyle(.bordered)
+                }
+                .font(.caption2)
+                Button("Clear celebrated milestones") { viewModel.debugClearCelebratedMilestones() }
+                    .font(.caption2)
+                Button("Hide") { showDebugPanel = false }.font(.caption2)
+            }
+            .padding(10)
+            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+            .padding()
+        } else {
+            Button("🐞") { showDebugPanel = true }
+                .font(.caption)
+                .padding(6)
+                .background(.ultraThinMaterial, in: Circle())
+                .padding(8)
+        }
+    }
+    #endif
+
     // Helper function to categorize milestone types
     private func getMilestoneType(for streak: Int) -> String {
         switch streak {
