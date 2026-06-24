@@ -26,6 +26,7 @@ struct ModernDailyChecklistView: View {
     @State private var showDevotional = false
     @State private var showBibleChat = false
     @State private var showJournal = false
+    @State private var showWarriorRoom = false
     @State private var completedTasks = Set<String>()
     @State private var animateProgress = false
     @State private var celebrationScale: CGFloat = 1.0
@@ -291,6 +292,8 @@ struct ModernDailyChecklistView: View {
                                                 tint: Color(hex: "#059669")) { showBibleChat = true }
                                 QuickActionTile(icon: "pencil.and.scribble", label: "Journal",
                                                 tint: Color(hex: "#B45309")) { showJournal = true }
+                                QuickActionTile(icon: "hands.and.sparkles.fill", label: "Warrior Room",
+                                                tint: Color(hex: "#EC4899")) { showWarriorRoom = true }
                             }
                         }
                         .padding(.horizontal, 20)
@@ -390,6 +393,13 @@ struct ModernDailyChecklistView: View {
         }
         .sheet(isPresented: $showJournal) {
             JournalEntrySheet(category: getUserTopCategories().first)
+        }
+        // Warrior Room — the community prayer wall, surfaced from Today as a
+        // quick-access tile. subscriptionStore injected explicitly since SwiftUI
+        // doesn't reliably propagate env objects across the sheet hop.
+        .sheet(isPresented: $showWarriorRoom) {
+            PrayerWallView()
+                .environmentObject(subscriptionStore)
         }
         // Daily burst — presented modally on Today. Env objects injected
         // explicitly since SwiftUI doesn't reliably propagate them across the
