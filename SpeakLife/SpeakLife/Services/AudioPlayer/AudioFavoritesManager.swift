@@ -42,7 +42,7 @@ final class AudioFavoritesManager: ObservableObject {
     private var cancellables = Set<AnyCancellable>()
     private let fileManager = FileManager.default
     private let legacyFavoritesFileName = "audioFavorites.txt"
-    
+
     private var legacyFavoritesURL: URL {
         let documentsPath = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
         return documentsPath.appendingPathComponent(legacyFavoritesFileName)
@@ -67,8 +67,28 @@ final class AudioFavoritesManager: ObservableObject {
     private func updateFavoritesFromEntries(_ entries: [AudioFavoriteEntry]) {
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
-            self.favorites = entries.map { entry in
-                self.repository.toAudioDeclaration(entry)
+            // Split the synced entries into real, playable audio vs. junk. Junk
+            // is leaked schema-priming / test rows whose id is not a real audio
+            // file; they keep syncing down from CloudKit.
+            var real: [AudioDeclaration] = []
+            var junkIds: [String] = []
+            for entry in entries {
+                let audio = self.repository.toAudioDeclaration(entry)
+                if audio.isPlayableAudio {
+                    real.append(audio)
+                } else {
+                    junkIds.append(audio.id)
+                }
+            }
+            // Show only the real audio so junk never appears in (or inflates the
+            // count of) Favorites...
+            self.favorites = real
+            // ...and permanently purge it. Deletes propagate via CloudKit, so
+            // the junk stops returning to the user's other devices. Driven off
+            // the sync observer (not a one-time flag) so late-arriving junk is
+            // caught whenever it appears.
+            if !junkIds.isEmpty {
+                self.purgeJunkFavorites(audioIds: junkIds)
             }
         }
     }
@@ -221,7 +241,32 @@ final class AudioFavoritesManager: ObservableObject {
     }
     
     // MARK: - Private Methods
-    
+
+    /// Permanently removes junk favorites (leaked schema-priming / test rows
+    /// whose id is not a real, playable audio file) from Core Data. Because
+    /// favorites sync via NSPersistentCloudKitContainer, the deletes propagate
+    /// up to the user's iCloud too, so the junk stops syncing back down to their
+    /// other devices. Keyed only on whether the id is a playable audio file (the
+    /// reliable junk signal) so it can never delete a legitimate favorite, even
+    /// an older one that lacks a category tag. Idempotent: deleting an id that
+    /// is already gone is a harmless no-op.
+    private func purgeJunkFavorites(audioIds: [String]) {
+        Task {
+            var removed = 0
+            for id in audioIds {
+                do {
+                    try await self.repository.deleteByAudioId(id)
+                    removed += 1
+                } catch {
+                    print("❌ Failed to purge junk favorite \(id): \(error.localizedDescription)")
+                }
+            }
+            if removed > 0 {
+                print("🧹 Removed \(removed) junk audio favorite(s) that weren't real audio")
+            }
+        }
+    }
+
     /// Migrate legacy file-based favorites to Core Data
     private func migrateLegacyFavorites() {
         // Check if legacy file exists

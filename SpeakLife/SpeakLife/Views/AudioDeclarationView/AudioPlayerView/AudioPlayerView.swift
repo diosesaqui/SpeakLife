@@ -235,14 +235,14 @@ struct AudioPlayerView: View {
                         .foregroundColor(.white)
                 }
 
-                // Speed toggle — cycles 0.5× → 1× → 1.5× → 2× → 0.5×
+                // Speed toggle — cycles 0.75× → 1× → 1.5× → 2× → 0.75×
                 Button(action: {
                     let next: Float
                     switch viewModel.playbackSpeed {
-                    case 0.5:  next = 1.0
+                    case 0.75: next = 1.0
                     case 1.0:  next = 1.5
                     case 1.5:  next = 2.0
-                    case 2.0:  next = 0.5
+                    case 2.0:  next = 0.75
                     default:   next = 1.0
                     }
                     viewModel.changePlaybackSpeed(to: next)
@@ -264,7 +264,7 @@ struct AudioPlayerView: View {
     // Returns a short label for the current playback speed
     private var playbackSpeedLabel: String {
         switch viewModel.playbackSpeed {
-        case 0.5:  return "0.5×"
+        case 0.75: return "0.75×"
         case 1.5:  return "1.5×"
         case 2.0:  return "2×"
         default:   return "1×"
