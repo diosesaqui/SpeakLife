@@ -27,6 +27,7 @@ struct ModernDailyChecklistView: View {
     @State private var showBibleChat = false
     @State private var showJournal = false
     @State private var showWarriorRoom = false
+    @State private var showCreateYourOwn = false
     @State private var completedTasks = Set<String>()
     @State private var animateProgress = false
     @State private var celebrationScale: CGFloat = 1.0
@@ -283,6 +284,8 @@ struct ModernDailyChecklistView: View {
                                     .foregroundColor(DS.Palette.gold.opacity(0.9))
                                 Spacer()
                             }
+                            // Two rows of three so each tile keeps room to
+                            // breathe (five-in-a-row crowded the labels).
                             HStack(spacing: 10) {
                                 QuickActionTile(icon: "bolt.fill", label: "Burst",
                                                 tint: Color(hex: "#7C3AED"), action: openBurst)
@@ -290,8 +293,12 @@ struct ModernDailyChecklistView: View {
                                                 tint: Color(hex: "#0EA5E9")) { showDevotional = true }
                                 QuickActionTile(icon: "bubble.left.and.text.bubble.right.fill", label: "Ask Bible",
                                                 tint: Color(hex: "#059669")) { showBibleChat = true }
+                            }
+                            HStack(spacing: 10) {
                                 QuickActionTile(icon: "pencil.and.scribble", label: "Journal",
                                                 tint: Color(hex: "#B45309")) { showJournal = true }
+                                QuickActionTile(icon: "wand.and.stars", label: "Create Own",
+                                                tint: Color(hex: "#D97706")) { showCreateYourOwn = true }
                                 QuickActionTile(icon: "hands.and.sparkles.fill", label: "Community",
                                                 tint: Color(hex: "#EC4899")) { showWarriorRoom = true }
                             }
@@ -400,6 +407,15 @@ struct ModernDailyChecklistView: View {
         .sheet(isPresented: $showWarriorRoom) {
             PrayerWallView()
                 .environmentObject(subscriptionStore)
+        }
+        // Create Your Own — the full affirmations + journal builder. Opens on
+        // its Affirmations tab by default. Env objects injected explicitly since
+        // SwiftUI doesn't reliably propagate them across the sheet hop.
+        .sheet(isPresented: $showCreateYourOwn) {
+            CreateYourOwnView()
+                .environmentObject(subscriptionStore)
+                .environmentObject(appState)
+                .environmentObject(declarationStore)
         }
         // Daily burst — presented modally on Today. Env objects injected
         // explicitly since SwiftUI doesn't reliably propagate them across the
