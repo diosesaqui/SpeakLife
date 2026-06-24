@@ -26,6 +26,8 @@ struct PersonalDeclarationCard: View {
     let onBreakthrough: () -> Void
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    private var isIPad: Bool { horizontalSizeClass == .regular }
 
     // Spoken-today tracking
     @AppStorage(PersonalDeclaration.lastSpokenDateKey) private var lastSpokenDateStr: String = ""
@@ -92,24 +94,25 @@ struct PersonalDeclarationCard: View {
 
             VStack(spacing: 0) {
                 // Top bar: centered drag handle (iPhone sheet affordance) plus an
-                // explicit close button. The close button is required on iPad,
-                // where this card is presented as a fullScreenCover and there is
-                // no swipe-to-dismiss gesture.
+                // explicit close button on iPad, where this card is presented as a
+                // fullScreenCover with no swipe-to-dismiss gesture.
                 ZStack {
                     Capsule()
                         .fill(Color.white.opacity(0.2))
                         .frame(width: 36, height: 4)
 
-                    HStack {
-                        Spacer()
-                        Button(action: { dismiss() }) {
-                            Image(systemName: "xmark.circle.fill")
-                                .font(.system(size: 26))
-                                .foregroundColor(.white.opacity(0.5))
-                                .padding(.horizontal, 16)
-                                .contentShape(Rectangle())
+                    if isIPad {
+                        HStack {
+                            Spacer()
+                            Button(action: { dismiss() }) {
+                                Image(systemName: "xmark.circle.fill")
+                                    .font(.title2)
+                                    .foregroundColor(.white.opacity(0.5))
+                                    .padding(.horizontal, 16)
+                                    .contentShape(Rectangle())
+                            }
+                            .accessibilityLabel("Close")
                         }
-                        .accessibilityLabel("Close")
                     }
                 }
                 .padding(.top, 12)
