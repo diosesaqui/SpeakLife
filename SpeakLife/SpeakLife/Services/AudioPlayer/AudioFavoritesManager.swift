@@ -42,6 +42,10 @@ final class AudioFavoritesManager: ObservableObject {
     private var cancellables = Set<AnyCancellable>()
     private let fileManager = FileManager.default
     private let legacyFavoritesFileName = "audioFavorites.txt"
+
+    /// One-time gate so the junk-favorites purge only does a full scan once per
+    /// install. Bump the suffix if the cleanup criteria ever change.
+    private let junkFavoritesCleanupKey = "audioFavorites.junkCleanup.v1"
     
     private var legacyFavoritesURL: URL {
         let documentsPath = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
@@ -54,6 +58,7 @@ final class AudioFavoritesManager: ObservableObject {
         setupObservers()
         loadFavorites()
         migrateLegacyFavorites()
+        cleanUpNonAudioFavorites()
     }
     
     private func setupObservers() {
@@ -67,9 +72,12 @@ final class AudioFavoritesManager: ObservableObject {
     private func updateFavoritesFromEntries(_ entries: [AudioFavoriteEntry]) {
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
-            self.favorites = entries.map { entry in
-                self.repository.toAudioDeclaration(entry)
-            }
+            // Filter to real, categorized audio so leaked schema-priming / test
+            // rows that keep syncing down from CloudKit never show in (or inflate
+            // the count of) the user's Favorites, even before the purge runs.
+            self.favorites = entries
+                .map { self.repository.toAudioDeclaration($0) }
+                .filter { self.isRealAudioFavorite($0) }
         }
     }
     
@@ -221,7 +229,47 @@ final class AudioFavoritesManager: ObservableObject {
     }
     
     // MARK: - Private Methods
-    
+
+    /// A real favorite is backed by a playable audio file (its `audioId` is the
+    /// `.mp3` storage filename) AND carries a category tag. Every catalogued
+    /// audio satisfies both, so this only ever rejects leaked schema-priming /
+    /// test rows (e.g. "Schema initialization", "CloudKit Audio") that have no
+    /// real file and no category.
+    private func isRealAudioFavorite(_ audio: AudioDeclaration) -> Bool {
+        let hasCategory = !(audio.tag ?? "")
+            .trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        return audio.isPlayableAudio && hasCategory
+    }
+
+    /// Permanently removes favorites that aren't real, categorized audio from
+    /// Core Data. Because favorites sync via NSPersistentCloudKitContainer, the
+    /// deletes propagate up to the user's iCloud too, so the junk stops syncing
+    /// back down to their other devices. Gated by a local flag so the full scan
+    /// runs once; the display filter keeps any late-arriving junk hidden in the
+    /// meantime.
+    func cleanUpNonAudioFavorites() {
+        guard !UserDefaults.standard.bool(forKey: junkFavoritesCleanupKey) else { return }
+        Task {
+            do {
+                let entries = try await self.repository.fetch(predicate: nil)
+                var removed = 0
+                for entry in entries {
+                    let audio = self.repository.toAudioDeclaration(entry)
+                    if !self.isRealAudioFavorite(audio) {
+                        try await self.repository.delete(entry)
+                        removed += 1
+                    }
+                }
+                UserDefaults.standard.set(true, forKey: self.junkFavoritesCleanupKey)
+                if removed > 0 {
+                    print("🧹 Removed \(removed) junk audio favorite(s) that weren't real audio")
+                }
+            } catch {
+                print("❌ Junk favorites cleanup failed: \(error.localizedDescription)")
+            }
+        }
+    }
+
     /// Migrate legacy file-based favorites to Core Data
     private func migrateLegacyFavorites() {
         // Check if legacy file exists
