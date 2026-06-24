@@ -292,7 +292,7 @@ struct ModernDailyChecklistView: View {
                                                 tint: Color(hex: "#059669")) { showBibleChat = true }
                                 QuickActionTile(icon: "pencil.and.scribble", label: "Journal",
                                                 tint: Color(hex: "#B45309")) { showJournal = true }
-                                QuickActionTile(icon: "hands.and.sparkles.fill", label: "Warrior Room",
+                                QuickActionTile(icon: "hands.and.sparkles.fill", label: "Community",
                                                 tint: Color(hex: "#EC4899")) { showWarriorRoom = true }
                             }
                         }
