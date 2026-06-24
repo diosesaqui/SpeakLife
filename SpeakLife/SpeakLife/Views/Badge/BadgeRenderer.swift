@@ -191,41 +191,6 @@ struct BadgeCenterContent: View {
     }
 }
 
-// MARK: - Badge Rarity Indicator
-
-struct BadgeRarityIndicator: View {
-    let rarity: BadgeRarity
-    let size: CGFloat
-    
-    var body: some View {
-        ZStack {
-            // Background circle
-            Circle()
-                .fill(rarity.ringColor)
-                .frame(width: size, height: size)
-            
-            // Rarity stars
-            HStack(spacing: 1) {
-                ForEach(0..<starCount, id: \.self) { _ in
-                    Image(systemName: "star.fill")
-                        .font(.system(size: size * 0.25, weight: .bold))
-                        .foregroundColor(.white)
-                }
-            }
-        }
-        .shadow(color: .black.opacity(0.3), radius: 2, x: 1, y: 1)
-    }
-    
-    private var starCount: Int {
-        switch rarity {
-        case .common: return 1
-        case .rare: return 2
-        case .epic: return 3
-        case .legendary: return 4
-        }
-    }
-}
-
 // MARK: - Badge Particle Effects
 
 struct BadgeParticleEffect: View {

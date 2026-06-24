@@ -366,20 +366,23 @@ final class EnhancedStreakViewModel: ObservableObject {
         }
         
         // Decide whether this day earns a full-screen celebration.
-        // Meaningful = a not-yet-celebrated milestone day, or the day a new
-        // personal record is set (surpassing the previous best). Ordinary days
-        // get only the haptic above + the auto-collapsing completed banner, so
-        // celebrations stay rare and don't re-fire after a streak is rebuilt.
+        // Meaningful = a not-yet-celebrated milestone day. Ordinary days get only
+        // the haptic above (including the distinct new-record haptic) plus the
+        // auto-collapsing completed banner, so celebrations stay rare and never
+        // re-fire after a streak is rebuilt.
+        //
+        // Note: we deliberately do NOT trigger on "new personal record." Because
+        // updateStreak() pins longestStreak to currentStreak on every completion,
+        // a user extending their all-time-best streak sets a new record EVERY
+        // day — so a record-based trigger would fire daily and defeat the goal.
         let isMilestoneDay = Self.celebrationMilestones.contains(currentStreakNumber)
         let isNewMilestone = isMilestoneDay && !streakStats.celebratedMilestones.contains(currentStreakNumber)
-        let isRecordBreakingDay = longestStreakBefore > 0 && currentStreakNumber == longestStreakBefore + 1
-        let shouldFullCelebrate = isNewMilestone || isRecordBreakingDay
 
         if isNewMilestone {
             streakStats.celebratedMilestones.insert(currentStreakNumber)
         }
 
-        if shouldFullCelebrate {
+        if isNewMilestone {
             // Create celebration data (share image is expensive — only build it
             // when we're actually going to show the celebration)
             celebrationData = CompletionCelebration(
