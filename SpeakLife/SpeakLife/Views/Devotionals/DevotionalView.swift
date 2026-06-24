@@ -12,6 +12,8 @@ struct DevotionalView: View {
     
     @EnvironmentObject var subscriptionStore: SubscriptionStore
     @Environment(\.presentationMode) var presentationMode
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    private var isIPad: Bool { horizontalSizeClass == .regular }
     @StateObject var viewModel: DevotionalViewModel
     @EnvironmentObject var declarationViewModel: DeclarationViewModel
     @EnvironmentObject var appState: AppState
@@ -141,11 +143,28 @@ struct DevotionalView: View {
             }
             
         }
+        // Explicit close button on iPad, where this screen is presented as a
+        // fullScreenCover with no swipe-to-dismiss gesture.
+        .overlay(alignment: .topTrailing) {
+            if isIPad {
+                Button {
+                    presentationMode.wrappedValue.dismiss()
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.title2)
+                        .foregroundColor(.white.opacity(0.5))
+                        .padding(.top, 20)
+                        .padding(.trailing, 20)
+                        .contentShape(Rectangle())
+                }
+                .accessibilityLabel("Close")
+            }
+        }
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.willResignActiveNotification)) { _ in
             self.share = false
         }
     }
-    
+
     @ViewBuilder
     var dateLabel: some View {
         HStack {

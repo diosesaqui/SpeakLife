@@ -26,6 +26,8 @@ struct PersonalDeclarationCard: View {
     let onBreakthrough: () -> Void
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    private var isIPad: Bool { horizontalSizeClass == .regular }
 
     // Spoken-today tracking
     @AppStorage(PersonalDeclaration.lastSpokenDateKey) private var lastSpokenDateStr: String = ""
@@ -66,6 +68,11 @@ struct PersonalDeclarationCard: View {
     @State private var autoStopTimer: Timer?
     @State private var lastMatchPct: Double = 0
 
+    // Permission alert (shown in-app instead of silently yanking the user to
+    // the Settings app when mic/speech access isn't granted).
+    @State private var showPermissionDeniedAlert = false
+    @State private var permissionAlertMessage = ""
+
     // Animations
     @State private var successScale: CGFloat = 0.3
     @State private var successOpacity: Double = 0
@@ -86,12 +93,30 @@ struct PersonalDeclarationCard: View {
                 .ignoresSafeArea()
 
             VStack(spacing: 0) {
-                // Drag handle
-                Capsule()
-                    .fill(Color.white.opacity(0.2))
-                    .frame(width: 36, height: 4)
-                    .padding(.top, 12)
-                    .padding(.bottom, 24)
+                // Top bar: centered drag handle (iPhone sheet affordance) plus an
+                // explicit close button on iPad, where this card is presented as a
+                // fullScreenCover with no swipe-to-dismiss gesture.
+                ZStack {
+                    Capsule()
+                        .fill(Color.white.opacity(0.2))
+                        .frame(width: 36, height: 4)
+
+                    if isIPad {
+                        HStack {
+                            Spacer()
+                            Button(action: { dismiss() }) {
+                                Image(systemName: "xmark.circle.fill")
+                                    .font(.title2)
+                                    .foregroundColor(.white.opacity(0.5))
+                                    .padding(.horizontal, 16)
+                                    .contentShape(Rectangle())
+                            }
+                            .accessibilityLabel("Close")
+                        }
+                    }
+                }
+                .padding(.top, 12)
+                .padding(.bottom, 24)
 
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 0) {
@@ -232,6 +257,16 @@ struct PersonalDeclarationCard: View {
             autoStopTimer?.invalidate()
             autoStopTimer = nil
             verifier.cancel()
+        }
+        .alert("Permission Needed", isPresented: $showPermissionDeniedAlert) {
+            Button("Not Now", role: .cancel) { }
+            Button("Open Settings") {
+                if let url = URL(string: UIApplication.openSettingsURLString) {
+                    UIApplication.shared.open(url)
+                }
+            }
+        } message: {
+            Text(permissionAlertMessage)
         }
     }
 
@@ -531,9 +566,11 @@ struct PersonalDeclarationCard: View {
     }
 
     private func showPermissionAlert(for permission: String) {
-        // Open Settings so user can grant access
-        guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
-        UIApplication.shared.open(url)
+        // Surface an in-app alert rather than silently opening the Settings app.
+        // Auto-jumping to Settings on iPad felt like the app had crashed or
+        // booted the user out. The alert explains why and lets them choose.
+        permissionAlertMessage = "\(permission) access is turned off. To speak your declaration out loud, enable it in Settings."
+        showPermissionDeniedAlert = true
     }
 
     private func finishRecording() {
