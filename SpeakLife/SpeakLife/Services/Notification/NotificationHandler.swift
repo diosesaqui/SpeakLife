@@ -24,15 +24,17 @@ final class NotificationHandler: NSObject, ObservableObject, UNUserNotificationC
     
     /// Callback to process notification content
     /// Set by SpeakLifeApp on initial launch
-    var callback: ((UNNotificationContent) -> Void)? {
-        didSet {
-            // Process any pending notification when callback is set
-            processPendingNotificationIfNeeded()
-        }
-    }
-    
-    /// Stores notification content if received before callback is set (cold launch scenario)
+    var callback: ((UNNotificationContent) -> Void)?
+
+    /// Stores notification content if received before the UI is ready (cold
+    /// launch scenario). Replayed by SpeakLifeApp via
+    /// `replayPendingNotificationIfNeeded()` once the landing screen has
+    /// dismissed and the declaration feed is on screen.
     private var pendingNotificationContent: UNNotificationContent?
+
+    /// True when a cold-launch notification tap is buffered and waiting to be
+    /// replayed once the UI is ready.
+    var hasPendingNotification: Bool { pendingNotificationContent != nil }
     
     // MARK: - UNUserNotificationCenterDelegate
     
@@ -67,14 +69,21 @@ final class NotificationHandler: NSObject, ObservableObject, UNUserNotificationC
         completionHandler()
     }
     
-    // MARK: - Private Methods
-    
-    private func processPendingNotificationIfNeeded() {
+    // MARK: - Cold-launch replay
+
+    /// Replays a notification tap that arrived during cold launch, before the
+    /// UI was ready. SpeakLifeApp calls this once the landing screen has
+    /// dismissed and the declaration feed is on screen. Replaying earlier (the
+    /// moment the callback was set, while the landing screen was still up) fired
+    /// the deep-link / setDeclaration too soon — by the time the feed appeared,
+    /// its onAppear re-selected the default category and clobbered the tapped
+    /// declaration.
+    func replayPendingNotificationIfNeeded() {
         guard let pending = pendingNotificationContent,
               let callback = callback else { return }
-        
+
         pendingNotificationContent = nil
-        
+
         DispatchQueue.main.async {
             callback(pending)
         }

@@ -161,8 +161,24 @@ struct SpeakLifeApp: App {
                     // glow+icon spring ~0.7s, wordmark letter cascade,
                     // shimmer sweep, tagline, breath, then outgoing fade.
                     DispatchQueue.main.asyncAfter(deadline: .now() + 2.8) {
+                        // A cold-launch notification tap is buffered until now so it
+                        // lands as the feed appears. Processing it earlier (under the
+                        // landing screen) let HomeView's onAppear re-select the
+                        // onboarding category and clobber the tapped declaration.
+                        // Assert the processing guard BEFORE revealing the feed so
+                        // that onAppear skips its re-select, then replay the tap.
+                        let hasPendingTap = NotificationHandler.shared.hasPendingNotification
+                        if hasPendingTap {
+                            declarationStore.beginNotificationProcessing()
+                            notificationJustReceived = true
+                        }
+
                         withAnimation {
                             isShowingLanding = false
+                        }
+
+                        if hasPendingTap {
+                            NotificationHandler.shared.replayPendingNotificationIfNeeded()
                         }
 
                         // Daily checklist no longer auto-presents on launch — it was
