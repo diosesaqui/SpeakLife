@@ -671,6 +671,17 @@ final class DeclarationViewModel: ObservableObject {
         general = tempGen
     }
     
+    /// Asserts the notification-processing guard synchronously, up front.
+    /// On cold launch the tapped declaration is set via the async notification
+    /// replay, which lands a beat after HomeView's onAppear runs. Without this,
+    /// that onAppear sees `isProcessingNotification == false` and re-selects the
+    /// onboarding category, clobbering the tapped declaration. SpeakLifeApp
+    /// calls this before revealing the feed; setDeclaration then re-asserts it
+    /// and owns clearing it once the feed is ready.
+    func beginNotificationProcessing() {
+        isProcessingNotification = true
+    }
+
     /// Sets a declaration from a notification
     /// This method ensures the declaration is displayed regardless of current app state
     func setDeclaration(_ content: String, category: String) {
