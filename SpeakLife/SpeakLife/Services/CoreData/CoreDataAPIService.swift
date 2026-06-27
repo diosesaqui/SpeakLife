@@ -79,11 +79,16 @@ final class CoreDataAPIService: APIService {
                 var declarations: [Declaration] = []
                 
                 for entry in journalEntries {
+                    // Every JournalEntry is a personal journal, so surface it as
+                    // .myOwn regardless of the stored category. Older entries
+                    // created from the Today checklist were tagged with the user's
+                    // onboarding category; mapping to .myOwn here recovers them in
+                    // Profile > Create Your Own, which filters on category == .myOwn.
                     let declaration = Declaration(
                         text: entry.text ?? "",
                         book: entry.book,
                         bibleVerseText: entry.bibleVerseText,
-                        category: DeclarationCategory(rawValue: entry.category ?? "faith") ?? .faith,
+                        category: .myOwn,
                         categories: [],
                         isFavorite: entry.isFavorite,
                         contentType: .journal,
