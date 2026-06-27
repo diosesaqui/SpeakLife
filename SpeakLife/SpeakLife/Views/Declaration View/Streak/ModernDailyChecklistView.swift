@@ -1017,7 +1017,10 @@ struct JournalEntrySheet: View {
         let context = PersistenceController.shared.container.viewContext
         let entry = JournalEntry(context: context)
         entry.text = trimmed
-        entry.category = category
+        // Persist as `myOwn` so the entry shows up in Profile > Create Your Own,
+        // which filters journals on category == .myOwn. The onboarding `category`
+        // is only used to seed the prompt and analytics, not to tag storage.
+        entry.category = DeclarationCategory.myOwn.rawValue
         Task {
             do {
                 try await JournalRepository(context: context).create(entry)
