@@ -953,11 +953,13 @@ struct JournalEntrySheet: View {
     let category: String?
     @Environment(\.dismiss) private var dismiss
     @State private var text: String = ""
+    @State private var showSaveConfirmation = false
     @FocusState private var focused: Bool
 
     private var prompt: String { JournalEntrySheet.prompt(for: category) }
 
     var body: some View {
+        ZStack {
         NavigationView {
             ZStack {
                 LinearGradient(
@@ -1009,6 +1011,16 @@ struct JournalEntrySheet: View {
         .onAppear {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { focused = true }
         }
+
+            // Saved confirmation animation, matching the Create Your Own flow.
+            if showSaveConfirmation {
+                SaveConfirmationView(contentType: .journal) {
+                    dismiss()
+                }
+                .transition(.scale.combined(with: .opacity))
+                .zIndex(1)
+            }
+        }
     }
 
     private func save() {
@@ -1037,7 +1049,11 @@ struct JournalEntrySheet: View {
             }
         }
         PremiumHaptics.affirmationCompleted()
-        dismiss()
+        focused = false
+        // Show the saved animation; it dismisses the sheet when it completes.
+        withAnimation(.spring(response: 0.6, dampingFraction: 0.7)) {
+            showSaveConfirmation = true
+        }
     }
 
     /// Category-seeded reflection prompt (onboarding-driven).
