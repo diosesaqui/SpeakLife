@@ -954,6 +954,7 @@ struct JournalEntrySheet: View {
     @Environment(\.dismiss) private var dismiss
     @State private var text: String = ""
     @State private var showSaveConfirmation = false
+    @StateObject private var voiceManager = VoiceInputManager()
     @FocusState private var focused: Bool
 
     private var prompt: String { JournalEntrySheet.prompt(for: category) }
@@ -990,6 +991,9 @@ struct JournalEntrySheet: View {
                     }
                     .padding(12)
                     .background(RoundedRectangle(cornerRadius: 14).fill(Color.white.opacity(0.06)))
+
+                    // Voice dictation: speak the entry instead of typing.
+                    voiceControls
                 }
                 .padding(20)
             }
@@ -1011,6 +1015,12 @@ struct JournalEntrySheet: View {
         .onAppear {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { focused = true }
         }
+        .onChange(of: voiceManager.voiceInputState) { state in
+            // Recognition is final-only (no partial results), so the transcript
+            // is ready once the recorder finishes transcribing.
+            if state == .completed { appendTranscription(voiceManager.transcribedText) }
+        }
+        .onDisappear { voiceManager.stopListening() }
 
             // Saved confirmation animation, matching the Create Your Own flow.
             if showSaveConfirmation {
@@ -1021,6 +1031,82 @@ struct JournalEntrySheet: View {
                 .zIndex(1)
             }
         }
+    }
+
+    // MARK: - Voice dictation
+
+    private var isTranscribing: Bool {
+        voiceManager.voiceInputState == .processing || voiceManager.voiceInputState == .transcribing
+    }
+
+    @ViewBuilder
+    private var voiceControls: some View {
+        HStack(spacing: 12) {
+            Button(action: toggleVoice) {
+                Image(systemName: voiceManager.isListening ? "stop.circle.fill" : "mic.fill")
+                    .font(.system(size: 20, weight: .semibold))
+                    .foregroundColor(.white)
+                    .frame(width: 52, height: 52)
+                    .background(
+                        Circle().fill(voiceManager.isListening
+                                      ? Color.red.opacity(0.85)
+                                      : Color(hex: "#B45309"))
+                    )
+            }
+            .disabled(isTranscribing)
+
+            if voiceManager.isListening {
+                Text("Listening… tap to stop")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(.white.opacity(0.8))
+            } else if isTranscribing {
+                Text("Transcribing…")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(.white.opacity(0.8))
+            } else if let error = voiceManager.errorMessage {
+                Text(error)
+                    .font(.system(size: 13))
+                    .foregroundColor(.red.opacity(0.9))
+                    .lineLimit(2)
+            } else {
+                Text("Tap to speak your entry")
+                    .font(.system(size: 14))
+                    .foregroundColor(.white.opacity(0.45))
+            }
+
+            Spacer()
+        }
+    }
+
+    private func toggleVoice() {
+        if voiceManager.isListening {
+            voiceManager.stopListening()
+            return
+        }
+        focused = false
+        if voiceManager.hasPermissions {
+            voiceManager.startListening()
+        } else {
+            Task {
+                let granted = await voiceManager.requestPermissions()
+                if granted { voiceManager.startListening() }
+            }
+        }
+    }
+
+    /// Append a finished transcription to the entry, then clear it so the same
+    /// text isn't merged twice on the next state change.
+    private func appendTranscription(_ transcription: String) {
+        let trimmed = transcription.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+
+        if text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            text = trimmed
+        } else {
+            let separator = text.hasSuffix(" ") || text.hasSuffix("\n") ? "" : " "
+            text += separator + trimmed
+        }
+        voiceManager.clearTranscription()
     }
 
     private func save() {
