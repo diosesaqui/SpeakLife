@@ -121,6 +121,7 @@ struct ProfileView: View {
                        // howToUseRow
                         streakStatsRow
                       //  dailyBurstStatsRow
+                            quizRow
                            communityRow
                        // }
 
@@ -321,6 +322,27 @@ struct ProfileView: View {
     
     // The Warrior Room community wall lives here for users who want it (it was
     // removed from the main tab in favor of Bible Chat). PrayerWallView wraps its
+    @MainActor
+    private var quizRow: some View {
+        HStack {
+            Image(systemName: "lightbulb.fill")
+                .foregroundColor(Constants.DAMidBlue)
+            NavigationLink(destination: LazyView(QuizHomeView())) {
+                HStack {
+                    Text("Quizzes", comment: "Reminder row title")
+                    Spacer()
+                }
+            }
+            .simultaneousGesture(TapGesture().onEnded {
+                Event.trackUserAction(
+                    "quiz_opened",
+                    category: "profile",
+                    metadata: ["source": "profile_menu"]
+                )
+            })
+        }
+    }
+
     // own NavigationView, so present it as a sheet rather than pushing it.
     @MainActor
     private var communityRow: some View {
