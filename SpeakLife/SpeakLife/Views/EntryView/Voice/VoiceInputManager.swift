@@ -93,17 +93,24 @@ class VoiceInputManager: NSObject, ObservableObject {
 
             let url = FileManager.default.temporaryDirectory
                 .appendingPathComponent(UUID().uuidString)
-                .appendingPathExtension("m4a")
+                .appendingPathExtension("wav")
 
             // Use the session's actual sample rate — never hardcode 44100.
             // On iOS 26+ the hardware may negotiate a different rate and
             // AVAudioRecorder will crash during format init if they don't match.
             let sampleRate = session.sampleRate > 0 ? session.sampleRate : 44100.0
+            // Record lossless 16-bit linear PCM rather than compressed AAC. AAC
+            // discards high-frequency detail that the recognizer relies on for
+            // consonants, so feeding it uncompressed audio measurably improves
+            // transcription accuracy. The recognizer downsamples internally, so
+            // recording at the hardware rate is fine.
             let settings: [String: Any] = [
-                AVFormatIDKey: Int(kAudioFormatMPEG4AAC),
+                AVFormatIDKey: Int(kAudioFormatLinearPCM),
                 AVSampleRateKey: sampleRate,
                 AVNumberOfChannelsKey: 1,
-                AVEncoderAudioQualityKey: AVAudioQuality.high.rawValue
+                AVLinearPCMBitDepthKey: 16,
+                AVLinearPCMIsFloatKey: false,
+                AVLinearPCMIsBigEndianKey: false
             ]
 
             audioRecorder = try AVAudioRecorder(url: url, settings: settings)
@@ -308,8 +315,26 @@ class VoiceInputManager: NSObject, ObservableObject {
             "Godly wisdom", "Heavenly Father", "Christ Jesus",
             "Born again", "Saved by grace", "Walking in faith",
             "Armor of God", "Fruit of the Spirit", "Worship and praise"
-        ]
+        ] + biblicalProperNouns
     }
+
+    /// Proper nouns the recognizer routinely mis-hears (book names, divine
+    /// names, key figures). Biasing toward them via contextualStrings is the
+    /// single cheapest accuracy win for this domain. Kept well under Apple's
+    /// recommended ~100-phrase ceiling so it doesn't dilute the bias.
+    private let biblicalProperNouns: [String] = [
+        // Divine names
+        "Yahweh", "Jehovah", "Elohim", "Adonai", "Abba Father",
+        "El Shaddai", "Emmanuel", "Messiah", "Yeshua",
+        // Frequently-misheard book names
+        "Genesis", "Deuteronomy", "Joshua", "Nehemiah", "Psalms",
+        "Proverbs", "Ecclesiastes", "Isaiah", "Jeremiah", "Ezekiel",
+        "Habakkuk", "Zephaniah", "Zechariah", "Malachi", "Philippians",
+        "Colossians", "Thessalonians", "Philemon", "Hebrews", "Revelation",
+        // Key figures and places
+        "Abraham", "Moses", "Elijah", "Elisha", "Gideon",
+        "Apostle Paul", "Apostle Peter", "Mary Magdalene", "Nazareth", "Galilee"
+    ]
 }
 
 // MARK: - Convenience
