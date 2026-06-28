@@ -28,6 +28,9 @@ struct ModernDailyChecklistView: View {
     @State private var showJournal = false
     @State private var showWarriorRoom = false
     @State private var showCreateYourOwn = false
+    @State private var showQuizzes = false
+    @State private var showPrayers = false
+    @State private var showLoveLetter = false
     @State private var completedTasks = Set<String>()
     @State private var animateProgress = false
     @State private var celebrationScale: CGFloat = 1.0
@@ -302,6 +305,14 @@ struct ModernDailyChecklistView: View {
                                 QuickActionTile(icon: "hands.and.sparkles.fill", label: "Community",
                                                 tint: Color(hex: "#EC4899")) { showWarriorRoom = true }
                             }
+                            HStack(spacing: 10) {
+                                QuickActionTile(icon: "lightbulb.fill", label: "Quizzes",
+                                                tint: Color(hex: "#6366F1")) { showQuizzes = true }
+                                QuickActionTile(icon: "hands.sparkles.fill", label: "Prayers",
+                                                tint: Color(hex: "#14B8A6")) { showPrayers = true }
+                                QuickActionTile(icon: "heart.fill", label: "Love Letter",
+                                                tint: Color(hex: "#F43F5E")) { showLoveLetter = true }
+                            }
                         }
                         .padding(.horizontal, 20)
                         .padding(.top, 12)
@@ -416,6 +427,18 @@ struct ModernDailyChecklistView: View {
                 .environmentObject(subscriptionStore)
                 .environmentObject(appState)
                 .environmentObject(declarationStore)
+        }
+        // Quizzes, Prayers, and Father's Love Letter — moved here from the
+        // Profile section. Presented as sheets so iPhone gets swipe-to-dismiss
+        // (these views otherwise relied on a NavigationLink back button).
+        .sheet(isPresented: $showQuizzes) {
+            QuizHomeView()
+        }
+        .sheet(isPresented: $showPrayers) {
+            WarriorView()
+        }
+        .sheet(isPresented: $showLoveLetter) {
+            AbbasLoveView()
         }
         // Daily burst — presented modally on Today. Env objects injected
         // explicitly since SwiftUI doesn't reliably propagate them across the
