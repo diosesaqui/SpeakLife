@@ -106,6 +106,8 @@ struct BibleChatView: View {
                         .foregroundColor(.white.opacity(0.5))
                 }
             }
+            // Dictate the topic to search by voice.
+            VoiceDictationButton(text: $viewModel.searchText, size: 18, tint: .white.opacity(0.7))
         }
         .padding(.vertical, 12)
         .padding(.horizontal, 14)
@@ -572,6 +574,9 @@ struct BibleChatConversationView: View {
                     )
             )
             .animation(.easeInOut(duration: 0.2), value: inputFocused)
+
+            // Dictate the question by voice.
+            VoiceDictationButton(text: $viewModel.draft, size: 28)
 
             Button {
                 inputFocused = false
