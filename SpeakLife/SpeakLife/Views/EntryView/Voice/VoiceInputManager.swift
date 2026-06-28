@@ -46,6 +46,7 @@ class VoiceInputManager: NSObject, ObservableObject {
     private var audioLevelTimer: Timer?
     private var maxDurationTimer: Timer?
     private var sessionObservers: [NSObjectProtocol] = []
+    private var isInstallingModel = false
 
     // 60s keeps the uncompressed PCM file small (~5-6 MB) and stays within the
     // practical duration limit of server-based recognition, which can fail or
@@ -95,6 +96,12 @@ class VoiceInputManager: NSObject, ObservableObject {
             return
         }
         guard !isListening else { return }
+
+        // Start downloading the iOS 26 on-device model (if needed) now, so it's
+        // likely ready by the time the user stops speaking.
+        if #available(iOS 26.0, *) {
+            prewarmSpeechModel()
+        }
 
         do {
             let session = AVAudioSession.sharedInstance()
@@ -167,13 +174,18 @@ class VoiceInputManager: NSObject, ObservableObject {
             return
         }
 
-        // Surface recognizer unavailability (no network for server recognition,
-        // on-device model not ready) instead of silently producing no text.
-        guard let recognizer = speechRecognizer, recognizer.isAvailable else {
-            cleanup()
-            errorMessage = "Speech recognition is unavailable right now. Check your connection and try again."
-            voiceInputState = .error
-            return
+        // On iOS 26+ transcription runs fully on-device via SpeechAnalyzer, so a
+        // missing network / unavailable legacy recognizer must NOT block it.
+        // Only gate on the legacy recognizer for the SFSpeechRecognizer path.
+        if #available(iOS 26.0, *) {
+            // SpeechAnalyzer handles availability itself; proceed.
+        } else {
+            guard let recognizer = speechRecognizer, recognizer.isAvailable else {
+                cleanup()
+                errorMessage = "Speech recognition is unavailable right now. Check your connection and try again."
+                voiceInputState = .error
+                return
+            }
         }
 
         voiceInputState = .processing
@@ -260,6 +272,36 @@ class VoiceInputManager: NSObject, ObservableObject {
     }
 
     private func transcribe(url: URL) async -> TranscriptionResult {
+        // Prefer Apple's iOS 26 on-device model (SpeechAnalyzer) — it's markedly
+        // more accurate than the legacy recognizer. Fall back to
+        // SFSpeechRecognizer on older OSes, or when the iOS 26 model isn't
+        // installed yet or fails for this clip.
+        if #available(iOS 26.0, *) {
+            // Bounded so a stalled analyzer can't strand the caller on
+            // .processing forever; on timeout we fall through to the legacy path.
+            if let modern = await withTimeout(25, { await self.transcribeWithSpeechAnalyzer(url: url) }) {
+                return modern
+            }
+        }
+        return await transcribeLegacy(url: url)
+    }
+
+    /// Run an async operation with a wall-clock timeout. Returns nil if it does
+    /// not finish in time (and cancels it).
+    private func withTimeout<T: Sendable>(_ seconds: Double, _ operation: @escaping @Sendable () async -> T?) async -> T? {
+        await withTaskGroup(of: T?.self) { group in
+            group.addTask { await operation() }
+            group.addTask {
+                try? await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
+                return nil
+            }
+            let first = await group.next() ?? nil
+            group.cancelAll()
+            return first
+        }
+    }
+
+    private func transcribeLegacy(url: URL) async -> TranscriptionResult {
         guard let recognizer = speechRecognizer, recognizer.isAvailable else {
             return TranscriptionResult(text: "", confidence: 0, alternatives: [])
         }
@@ -322,6 +364,96 @@ class VoiceInputManager: NSObject, ObservableObject {
             // empty so the awaiting Task can't hang on .processing forever.
             DispatchQueue.global().asyncAfter(deadline: .now() + 20) {
                 finish(TranscriptionResult(text: "", confidence: 0, alternatives: []))
+            }
+        }
+    }
+
+    // MARK: - SpeechAnalyzer (iOS 26+)
+
+    /// Transcribe the recorded file with Apple's modern on-device model.
+    /// Returns nil (so the caller falls back to SFSpeechRecognizer) when the
+    /// language model isn't installed yet, the locale is unsupported, or
+    /// anything throws. SpeechAnalyzer has no custom-vocabulary API, so the
+    /// same `enhanceTranscription` post-processing is applied for proper nouns.
+    @available(iOS 26.0, *)
+    private func transcribeWithSpeechAnalyzer(url: URL) async -> TranscriptionResult? {
+        guard let locale = await SpeechTranscriber.supportedLocale(equivalentTo: Locale(identifier: "en-US")) else {
+            return nil
+        }
+
+        // If the on-device model for this locale isn't ready, kick off a
+        // background download and let this clip fall back to the legacy path so
+        // the user isn't blocked on a large first-run download.
+        let installed = await SpeechTranscriber.installedLocales
+        guard isLocaleInstalled(locale, in: installed) else {
+            installSpeechModel(for: locale)
+            return nil
+        }
+
+        do {
+            let transcriber = SpeechTranscriber(locale: locale, preset: .transcription)
+            let audioFile = try AVAudioFile(forReading: url)
+
+            // Collect finalized results as the analyzer processes the file.
+            async let collected = transcriber.results.reduce(into: AttributedString()) { acc, result in
+                acc += result.text
+            }
+
+            let analyzer = SpeechAnalyzer(modules: [transcriber])
+            guard let lastSample = try await analyzer.analyzeSequence(from: audioFile) else {
+                // No audio samples; finish the analyzer so it tears down cleanly.
+                try? await analyzer.finalizeAndFinishThroughEndOfInput()
+                return nil // empty/unreadable audio → let caller decide
+            }
+            try await analyzer.finalizeAndFinish(through: lastSample)
+
+            let text = String((try await collected).characters)
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !text.isEmpty else { return nil }
+            return TranscriptionResult(
+                text: enhanceTranscription(text),
+                confidence: 1,
+                alternatives: []
+            )
+        } catch {
+            return nil
+        }
+    }
+
+    /// Match an installable locale against the installed set by canonical
+    /// BCP-47 identifier. Comparing raw `.identifier` strings is unreliable
+    /// (e.g. "en_US" vs "en-US"), which would make us think the model is never
+    /// installed and silently never use SpeechAnalyzer.
+    private func isLocaleInstalled(_ locale: Locale, in installed: [Locale]) -> Bool {
+        let target = locale.identifier(.bcp47)
+        return installed.contains { $0.identifier(.bcp47) == target }
+    }
+
+    /// Background install of the SpeechAnalyzer language model. Guarded so the
+    /// prewarm-on-start and transcribe-on-stop paths can't kick off two
+    /// concurrent downloads for the same model.
+    @available(iOS 26.0, *)
+    private func installSpeechModel(for locale: Locale) {
+        guard !isInstallingModel else { return }
+        isInstallingModel = true
+        Task { @MainActor in
+            defer { isInstallingModel = false }
+            let transcriber = SpeechTranscriber(locale: locale, preset: .transcription)
+            if let request = try? await AssetInventory.assetInstallationRequest(supporting: [transcriber]) {
+                try? await request.downloadAndInstall()
+            }
+        }
+    }
+
+    /// Warm the on-device model when recording starts so it's likely ready by
+    /// the time the user stops speaking.
+    @available(iOS 26.0, *)
+    private func prewarmSpeechModel() {
+        Task {
+            guard let locale = await SpeechTranscriber.supportedLocale(equivalentTo: Locale(identifier: "en-US")) else { return }
+            let installed = await SpeechTranscriber.installedLocales
+            if !isLocaleInstalled(locale, in: installed) {
+                installSpeechModel(for: locale)
             }
         }
     }
