@@ -84,7 +84,6 @@ final class BibleViewModel: ObservableObject {
             
             // Load data sequentially to avoid complexity for now
             await loadBooks()
-            await loadDailyVerse()
             await loadVersions()
             
             await MainActor.run {
@@ -578,10 +577,7 @@ final class BibleViewModel: ObservableObject {
         if let book = selectedBook {
             await loadChapter(bookAbbrev: book.abbreviation.lowercased(), chapterNumber: selectedChapterNumber)
         }
-        
-        // Reload daily verse
-        await loadDailyVerse()
-        
+
         AnalyticsService.shared.trackUserAction(
             "bible_version_changed",
             category: "bible_settings",
@@ -707,8 +703,7 @@ final class BibleViewModel: ObservableObject {
         // Reload data after authentication
         Task {
             await loadBooks()
-            await loadDailyVerse()
-            
+
             // Retry any pending operations
             if let book = selectedBook {
                 await loadChapter(bookAbbrev: book.abbreviation.lowercased(), chapterNumber: selectedChapterNumber)
