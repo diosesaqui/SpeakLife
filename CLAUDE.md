@@ -82,6 +82,8 @@ A declaration does not argue with the problem, name it, or rebuke it. It declare
 
 Exception: the `warfare` category may still command the enemy directly, the way Jesus did in deliverance, because confronting the enemy is the point of that category. Everywhere else, call higher and never name the low.
 
+Also allowed everywhere: broad scriptural umbrella-promises that declare blanket victory over *any* attack, such as "No weapon formed against me prospers." These cover everything at once without dwelling on one specific fear, so they call higher rather than name a low thing.
+
 This replaces the old "name the war and command it out" approach: we no longer drag the problem into the light to fight it. We out-shine it.
 
 ### 13. Brevity Is Potency (Cut to the Bone)
