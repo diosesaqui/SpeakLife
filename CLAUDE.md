@@ -65,23 +65,53 @@ The one reaction a declaration must never produce is apathy. Every declaration i
 
 - **Make them feel something.** Each declaration must stir a real emotion: awe, courage, comfort, holy defiance, longing, joy, or gratitude that genuinely moves. Aim for the line that gives chills or steadies a shaking heart.
 - **Emotion creates action.** Feeling is what moves the speaker to actually believe the Word and act on it. A declaration that only informs is dead weight; one that ignites is doing its job.
-- **Engage the senses and the stakes.** Use concrete, vivid, embodied language over abstract theology. Name what is at war and what is won. Let the speaker feel the weight of the promise, not just read it.
+- **Engage the senses.** Use concrete, vivid, embodied language over abstract theology. Show the higher reality the speaker is stepping into, not the threat they are leaving. Let them feel the weight of the promise, not just read it.
 - ❌ "God is able to help me with my health." → flat, forgettable, apathy-inducing.
-- ✅ "Sickness has no claim on this body. I am bought, healed, and untouchable in Christ." → stirs defiance and assurance.
+- ✅ "I am healed, whole, and full of His life. This body carries the strength of Christ." → stirs assurance without naming the sickness.
 
 This rule works with Rules 6 and 8, not against them: power and vocabulary are the tools; *making the speaker feel something* is the goal.
 
-### 12. Command and Triumph (Authority, Not Confession)
-A declaration is an exercise of authority, not a journal entry or a prayer of resignation. The speaker rules over the body, the circumstance, and the feeling. Never the reverse.
+### 12. Call Higher (Declare the Greater Reality)
+A declaration does not argue with the problem, name it, or rebuke it. It declares the higher truth that makes the problem irrelevant, and calls the speaker up into it.
 
-- **Command the problem out; call the solution forward.** Speak to the pain, sickness, fear, or lack and command it to stop. Speak the healing, peace, provision, or breakthrough forward into the actual situation.
-- **Truth triumphs LOUDLY over feeling.** You may name a symptom, fear, or feeling ONLY to overrule it. Never validate it, never let it stand, never end the line on it. The promise gets the last word, every time.
-- **Declare the concrete outcome over the real thing.** Renewal is declared over *my body*, provision over *my finances*, peace over *my mind*. Not a vague "something inside."
-- **Break the formula and name the stakes.** Vary the structure so no two lines march to the same cadence. Name the real war (the diagnosis, the dread, the empty account) only to put it under the speaker's feet.
-- ❌ "Some days my heart feels like it is giving out, and I say so honestly. But God is my strength." → concedes the feeling and lets it stand.
-- ✅ "Let my flesh say whatever it wants. The truth is louder. God is the strength of my heart, and what He holds does not fail." → names the feeling, then triumphs over it.
+- **Never name the low thing.** Do not call out worry, fear, sickness, lack, or shame, even to overrule it. Skip straight to the higher reality that displaces it. The mind ruled by Christ has no room for anxiety, so you never have to mention anxiety at all.
+- **Declare exactly what is to come to pass, as already true.** Say the concrete reality the speaker is stepping into, not the thing they are leaving. Specific and scriptural, never vague.
+- **Hit the exact domain.** Declare over the real place the issue lives. Anxiety is in the mind, so declare a sound mind. Sickness is in the body, provision in the finances. Name the place plainly.
+- ❌ "Worry, settle down. My heart grows quiet in Him." → names the low thing, vague, wrong domain.
+- ✅ "I have the mind of Christ. It is clear, sound, and at rest." → claims the higher reality, concrete, right domain.
 
-This rule governs Rule 11: the emotion we trigger is the emotion of victory and authority, never resignation.
+Exception: the `warfare` category may still command the enemy directly, the way Jesus did in deliverance, because confronting the enemy is the point of that category. Everywhere else, call higher and never name the low.
+
+This replaces the old "name the war and command it out" approach: we no longer drag the problem into the light to fight it. We out-shine it.
+
+### 13. Brevity Is Potency (Cut to the Bone)
+Potency comes from compression. A declaration should hit like a hammer, not unfold like a paragraph. The longer it runs, the more the power leaks out before it lands.
+
+- **One or two sentences. Most lines 12 to 18 words, hard ceiling around 21.** Three sentences is a warning sign, not a target. If a third sentence exists, it is almost always fat: cut it or fold it into the line. The `health` category is the reference set for this bar (avg ~18 words).
+- **Never say the same truth twice.** The most common leak is a closing sentence that just rephrases the one before it ("My footing does not depend on my grip. It depends on His."). Keep the stronger half and delete the rest.
+- **Land the image and stop.** Do not explain the metaphor after it hits. Trust the line to do its work in the speaker's chest.
+- **Every word earns its place or dies.** Strip filler, throat-clearing, and connective padding. If removing a word does not change the meaning, remove it.
+- ❌ "Grace keeps me firm to the very end. I will stand blameless on the day of my Lord Jesus Christ, held by His hand. My footing does not depend on my grip. It depends on His." → 36 words; the last two sentences merely restate the first.
+- ✅ "Grace holds me blameless to the end. My standing rests on His grip, not mine." → same truth, half the words, twice the force.
+
+This rule sharpens Rules 6 and 12: still bold, still calling higher, but in the fewest words that land the blow. When brevity and completeness conflict, brevity wins.
+
+### 14. Speak It Like Jesus (Built for the Mouth)
+These are spoken out loud, with the authority Jesus carried when He healed and delivered. His words were short, direct, and final: "Be clean." "Get up." "Be opened." Write to that standard.
+
+- **Built for the mouth, not the eye.** Every line must be easy to say out loud in one breath, with a rhythm the tongue wants to follow. Read it aloud before keeping it. If you stumble, run out of air, or hit a word you would never say in real speech, cut it.
+- **Short sentences win.** Jesus healed in two to seven words. The first sentence should land the blow on its own.
+- **Zero filler.** Kill "just," "really," "very," "truly," and every connective crutch. Start on the strongest word.
+- **Faith speaks it done.** Say the outcome as finished and already possessed, never requested. "I have." "I am." "It is mine."
+
+### 15. Perfectly Clear (Say What You Mean)
+Every declaration must be understood instantly, the first time, by anyone. This outranks cleverness, imagery, and style.
+
+- **If a line could make someone ask "what does that mean?", it has failed.** Rewrite it in plain words that say the exact thing.
+- **No poetry, no riddles.** "I am undone," "my heart is quiet," "grace saved me with empty hands," "lit from the inside" are literary fog. Name the real thing plainly.
+- **Plain beats pretty, every time.** A clear line the speaker grasps in one read does more than a beautiful one they have to decode.
+- ❌ "Grace saved me with empty hands." → what does that even mean?
+- ✅ "I could not earn my way to God. He saved me by grace, and I am His forever." → instantly clear.
 
 ### 13. Brevity Is Potency (Cut to the Bone)
 Potency comes from compression. A declaration should hit like a hammer, not unfold like a paragraph. The longer it runs, the more the power leaks out before it lands.
