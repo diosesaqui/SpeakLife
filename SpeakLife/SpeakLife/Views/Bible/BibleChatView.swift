@@ -552,17 +552,21 @@ struct BibleChatConversationView: View {
     }
 
     private var inputBar: some View {
-        HStack(spacing: 10) {
+        // .bottom so the mic/send buttons stay pinned to the bottom as the
+        // field grows taller.
+        HStack(alignment: .bottom, spacing: 10) {
             TextField(
                 "",
                 text: $viewModel.draft,
-                prompt: Text("Ask about life or faith…").foregroundColor(.white.opacity(0.4))
+                prompt: Text("Ask about life or faith…").foregroundColor(.white.opacity(0.4)),
+                axis: .vertical
             )
             .textFieldStyle(.plain)
             .foregroundColor(.white)
             .focused($inputFocused)
-            .submitLabel(.send)
-            .onSubmit { viewModel.sendDraft(isPremium: subscriptionStore.isPremium) }
+            // Grow with the text up to 5 lines, then scroll internally, so the
+            // user can see everything they've typed.
+            .lineLimit(1...5)
             .padding(.vertical, 10)
             .padding(.horizontal, 14)
             .background(
