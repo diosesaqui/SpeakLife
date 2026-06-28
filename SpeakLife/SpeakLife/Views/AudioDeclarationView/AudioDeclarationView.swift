@@ -82,33 +82,37 @@ struct UpNextCell: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .layoutPriority(1)
 
-                    // Played toggle
-                    Button(action: {
-                        Juice.play(.tapSolid)
-                        progressStore.togglePlayed(item.id)
-                    }) {
-                        Image(systemName: progressStore.isPlayed(item.id) ? "checkmark.circle.fill" : "circle")
-                            .font(.system(size: 20, weight: .medium))
-                            .foregroundColor(progressStore.isPlayed(item.id) ? Color(red: 0.18, green: 0.78, blue: 0.45) : .white.opacity(0.7))
-                    }
-                    .buttonStyle(PlainButtonStyle())
-                    .contentShape(Circle())
-                    .frame(width: 44, height: 44)
-                    .accessibilityLabel(progressStore.isPlayed(item.id) ? "Mark as unplayed" : "Mark as played")
+                    // Trailing controls, kept tight together at the edge so the
+                    // title gets the space instead of a wide gap between them.
+                    HStack(spacing: 0) {
+                        // Played toggle
+                        Button(action: {
+                            Juice.play(.tapSolid)
+                            progressStore.togglePlayed(item.id)
+                        }) {
+                            Image(systemName: progressStore.isPlayed(item.id) ? "checkmark.circle.fill" : "circle")
+                                .font(.system(size: 20, weight: .medium))
+                                .foregroundColor(progressStore.isPlayed(item.id) ? Color(red: 0.18, green: 0.78, blue: 0.45) : .white.opacity(0.7))
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                        .contentShape(Circle())
+                        .frame(width: 38, height: 44)
+                        .accessibilityLabel(progressStore.isPlayed(item.id) ? "Mark as unplayed" : "Mark as played")
 
-                    // Favorite Button
-                    Button(action: {
-                        toggleFavorite()
-                    }) {
-                        Image(systemName: viewModel.favoritesManager.isFavorite(item) ? "heart.fill" : "heart")
-                            .font(.system(size: 20, weight: .medium))
-                            .foregroundColor(viewModel.favoritesManager.isFavorite(item) ? .pink : .white.opacity(0.7))
-                            .scaleEffect(showFavoriteAnimation ? 1.3 : 1.0)
-                            .animation(.spring(response: 0.3, dampingFraction: 0.6), value: showFavoriteAnimation)
+                        // Favorite Button
+                        Button(action: {
+                            toggleFavorite()
+                        }) {
+                            Image(systemName: viewModel.favoritesManager.isFavorite(item) ? "heart.fill" : "heart")
+                                .font(.system(size: 20, weight: .medium))
+                                .foregroundColor(viewModel.favoritesManager.isFavorite(item) ? .pink : .white.opacity(0.7))
+                                .scaleEffect(showFavoriteAnimation ? 1.3 : 1.0)
+                                .animation(.spring(response: 0.3, dampingFraction: 0.6), value: showFavoriteAnimation)
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                        .contentShape(Circle())
+                        .frame(width: 38, height: 44)
                     }
-                    .buttonStyle(PlainButtonStyle())
-                    .contentShape(Circle())
-                    .frame(width: 44, height: 44)
                 }
                 .contentShape(Rectangle())
                 .padding(.vertical, DS.Spacing.md)
