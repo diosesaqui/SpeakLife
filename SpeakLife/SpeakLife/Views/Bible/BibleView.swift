@@ -15,7 +15,6 @@ struct BibleView: View {
     @State private var showSettings = false
     @State private var showAuthSheet = false
     @State private var selectedTab = 0
-    @State private var showDailyVerseDetail = false
     @State private var showBibleChat = false
 
     /// `initialReference` (e.g. "John 3:16", from a chat answer) is handed to the
@@ -38,7 +37,6 @@ struct BibleView: View {
                     } else {
                         BibleBookSelectionView(
                             viewModel: viewModel,
-                            showDailyVerseDetail: $showDailyVerseDetail,
                             showBibleChat: $showBibleChat
                         )
                     }
@@ -109,18 +107,7 @@ struct BibleView: View {
                             Button(action: { showBookmarks.toggle() }) {
                                 Label("Bookmarks", systemImage: "bookmark.fill")
                             }
-                            
-                            Button(action: {
-                                Task { 
-                                    await viewModel.loadDailyVerse()
-                                    if viewModel.dailyVerse != nil {
-                                        showDailyVerseDetail = true
-                                    }
-                                }
-                            }) {
-                                Label("Daily Verse", systemImage: "quote.bubble.fill")
-                            }
-                            
+
                             Divider()
                             
                             Button(action: { showSettings.toggle() }) {
@@ -176,44 +163,6 @@ struct BibleView: View {
                     }
                 )
                 .preferredColorScheme(.dark)
-            }
-            .sheet(isPresented: $showDailyVerseDetail) {
-                if let dailyVerse = viewModel.dailyVerse {
-                    DailyVerseDetailView(verse: dailyVerse)
-                } else {
-                    // Loading view while verse is being fetched
-                    NavigationView {
-                        VStack(spacing: 20) {
-                            ProgressView()
-                                .progressViewStyle(CircularProgressViewStyle())
-                                .scaleEffect(1.5)
-                            
-                            Text("Loading Daily Verse...")
-                                .font(.system(size: 16, weight: .medium))
-                                .foregroundColor(.secondary)
-                        }
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .navigationTitle("Daily Verse")
-                        .navigationBarTitleDisplayMode(.inline)
-                        .toolbar {
-                            ToolbarItem(placement: .navigationBarTrailing) {
-                                Button("Cancel") {
-                                    showDailyVerseDetail = false
-                                }
-                            }
-                        }
-                    }
-                    .onAppear {
-                        Task {
-                            await viewModel.loadDailyVerse()
-                            if viewModel.dailyVerse == nil {
-                                // If still no verse after loading, dismiss
-                                showDailyVerseDetail = false
-                            }
-                        }
-                    }
-                }
-              //  .preferredColorScheme(.dark)
             }
             .onChange(of: viewModel.isAuthenticated) { newValue in
                 if newValue {
@@ -304,7 +253,6 @@ struct BibleView: View {
 // MARK: - Book Selection View
 struct BibleBookSelectionView: View {
     @ObservedObject var viewModel: BibleViewModel
-    @Binding var showDailyVerseDetail: Bool
     @Binding var showBibleChat: Bool
     @State private var selectedTestament = 0
 
@@ -348,14 +296,6 @@ struct BibleBookSelectionView: View {
                     }
                     .padding()
                 }
-            }
-            
-            // Daily Verse Card
-            if let dailyVerse = viewModel.dailyVerse {
-                DailyVerseCard(verse: dailyVerse) {
-                    showDailyVerseDetail = true
-                }
-                .padding()
             }
         }
     }
@@ -523,49 +463,6 @@ struct ChapterNumberButton: View {
                 )
         }
         .buttonStyle(ScaleButtonStyle())
-    }
-}
-
-// MARK: - Daily Verse Card
-struct DailyVerseCard: View {
-    let verse: RandomVerse
-    let onTap: () -> Void
-    
-    var body: some View {
-        Button(action: onTap) {
-            VStack(alignment: .leading, spacing: DS.Spacing.sm) {
-                HStack {
-                    Image(systemName: "quote.bubble.fill")
-                        .foregroundColor(Constants.DAMidBlue)
-                    Text("Verse of the Day")
-                        .font(.system(size: 14, weight: .semibold))
-                    Spacer()
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 12))
-                        .foregroundColor(.secondary)
-                }
-                
-                Text(verse.text)
-                    .font(.system(size: 14, design: .serif))
-                    .foregroundColor(.primary)
-                    .lineLimit(3)
-                    .multilineTextAlignment(.leading)
-                
-                Text("\(verse.book.name) \(verse.chapter):\(verse.number)")
-                    .font(.system(size: 12))
-                    .foregroundColor(Constants.DAMidBlue)
-            }
-            .padding()
-            .background(
-                RoundedRectangle(cornerRadius: DS.Radius.sm, style: .continuous)
-                    .fill(Color(UIColor.secondarySystemBackground))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: DS.Radius.sm, style: .continuous)
-                            .stroke(Constants.DAMidBlue.opacity(0.2), lineWidth: 1)
-                    )
-            )
-        }
-        .buttonStyle(PlainButtonStyle())
     }
 }
 
