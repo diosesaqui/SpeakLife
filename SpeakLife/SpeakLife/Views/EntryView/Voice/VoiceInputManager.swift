@@ -46,6 +46,7 @@ class VoiceInputManager: NSObject, ObservableObject {
     private var audioLevelTimer: Timer?
     private var maxDurationTimer: Timer?
     private var sessionObservers: [NSObjectProtocol] = []
+    private var isInstallingModel = false
 
     // 60s keeps the uncompressed PCM file small (~5-6 MB) and stays within the
     // practical duration limit of server-based recognition, which can fail or
@@ -276,11 +277,28 @@ class VoiceInputManager: NSObject, ObservableObject {
         // SFSpeechRecognizer on older OSes, or when the iOS 26 model isn't
         // installed yet or fails for this clip.
         if #available(iOS 26.0, *) {
-            if let modern = await transcribeWithSpeechAnalyzer(url: url) {
+            // Bounded so a stalled analyzer can't strand the caller on
+            // .processing forever; on timeout we fall through to the legacy path.
+            if let modern = await withTimeout(25, { await self.transcribeWithSpeechAnalyzer(url: url) }) {
                 return modern
             }
         }
         return await transcribeLegacy(url: url)
+    }
+
+    /// Run an async operation with a wall-clock timeout. Returns nil if it does
+    /// not finish in time (and cancels it).
+    private func withTimeout<T: Sendable>(_ seconds: Double, _ operation: @escaping @Sendable () async -> T?) async -> T? {
+        await withTaskGroup(of: T?.self) { group in
+            group.addTask { await operation() }
+            group.addTask {
+                try? await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
+                return nil
+            }
+            let first = await group.next() ?? nil
+            group.cancelAll()
+            return first
+        }
     }
 
     private func transcribeLegacy(url: URL) async -> TranscriptionResult {
@@ -367,13 +385,13 @@ class VoiceInputManager: NSObject, ObservableObject {
         // background download and let this clip fall back to the legacy path so
         // the user isn't blocked on a large first-run download.
         let installed = await SpeechTranscriber.installedLocales
-        guard installed.contains(where: { $0.identifier == locale.identifier }) else {
+        guard isLocaleInstalled(locale, in: installed) else {
             installSpeechModel(for: locale)
             return nil
         }
 
         do {
-            let transcriber = SpeechTranscriber(locale: locale, preset: .offlineTranscription)
+            let transcriber = SpeechTranscriber(locale: locale, preset: .transcription)
             let audioFile = try AVAudioFile(forReading: url)
 
             // Collect finalized results as the analyzer processes the file.
@@ -383,6 +401,8 @@ class VoiceInputManager: NSObject, ObservableObject {
 
             let analyzer = SpeechAnalyzer(modules: [transcriber])
             guard let lastSample = try await analyzer.analyzeSequence(from: audioFile) else {
+                // No audio samples; finish the analyzer so it tears down cleanly.
+                try? await analyzer.finalizeAndFinishThroughEndOfInput()
                 return nil // empty/unreadable audio → let caller decide
             }
             try await analyzer.finalizeAndFinish(through: lastSample)
@@ -400,11 +420,25 @@ class VoiceInputManager: NSObject, ObservableObject {
         }
     }
 
-    /// Idempotent background install of the SpeechAnalyzer language model.
+    /// Match an installable locale against the installed set by canonical
+    /// BCP-47 identifier. Comparing raw `.identifier` strings is unreliable
+    /// (e.g. "en_US" vs "en-US"), which would make us think the model is never
+    /// installed and silently never use SpeechAnalyzer.
+    private func isLocaleInstalled(_ locale: Locale, in installed: [Locale]) -> Bool {
+        let target = locale.identifier(.bcp47)
+        return installed.contains { $0.identifier(.bcp47) == target }
+    }
+
+    /// Background install of the SpeechAnalyzer language model. Guarded so the
+    /// prewarm-on-start and transcribe-on-stop paths can't kick off two
+    /// concurrent downloads for the same model.
     @available(iOS 26.0, *)
     private func installSpeechModel(for locale: Locale) {
-        Task.detached {
-            let transcriber = SpeechTranscriber(locale: locale, preset: .offlineTranscription)
+        guard !isInstallingModel else { return }
+        isInstallingModel = true
+        Task { @MainActor in
+            defer { isInstallingModel = false }
+            let transcriber = SpeechTranscriber(locale: locale, preset: .transcription)
             if let request = try? await AssetInventory.assetInstallationRequest(supporting: [transcriber]) {
                 try? await request.downloadAndInstall()
             }
@@ -418,7 +452,7 @@ class VoiceInputManager: NSObject, ObservableObject {
         Task {
             guard let locale = await SpeechTranscriber.supportedLocale(equivalentTo: Locale(identifier: "en-US")) else { return }
             let installed = await SpeechTranscriber.installedLocales
-            if !installed.contains(where: { $0.identifier == locale.identifier }) {
+            if !isLocaleInstalled(locale, in: installed) {
                 installSpeechModel(for: locale)
             }
         }
