@@ -312,6 +312,10 @@ final class AppState: ObservableObject {
         // Service-side flag (lifecycle_repaired_v1) keeps it one-shot.
         DispatchQueue.main.async {
             LifecycleNotificationService.shared.repairLifecycleIfNeeded()
+            // Remove legacy repeating "We've Missed You" re-engagement pushes
+            // that an earlier build pinned to a fixed (often middle-of-the-night)
+            // time, so existing users stop getting 1 AM notifications.
+            AINotificationService.shared.cleanupLegacyRepeatingOneShots()
         }
 
         // Validate and fix any invalid existing values

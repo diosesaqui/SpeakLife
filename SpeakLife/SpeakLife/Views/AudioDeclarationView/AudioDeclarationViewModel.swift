@@ -84,7 +84,7 @@ final class AudioDeclarationViewModel: ObservableObject {
             let data = try Data(contentsOf: fileURL)
             let decoder = JSONDecoder()
             let cachedAudios = try decoder.decode([AudioDeclaration].self, from: data)
-            self.allAudioFiles = cachedAudios
+            self.allAudioFiles = cachedAudios.filter { $0.isPlayableAudio }
             
             // Try to load cached filters
             if fileManager.fileExists(atPath: filtersURL.path) {
@@ -239,7 +239,7 @@ final class AudioDeclarationViewModel: ObservableObject {
         service.audio(version: version) { [weak self] welcome, audios in
             DispatchQueue.main.async { [weak self] in
                 guard let self = self else { return }
-                self.allAudioFiles = welcome?.audios ?? audios!
+                self.allAudioFiles = (welcome?.audios ?? audios ?? []).filter { $0.isPlayableAudio }
                 
                 self.setupDynamicFilters(welcome)
                 self.saveAudioDataToCache()
@@ -550,7 +550,20 @@ struct AudioDeclaration: Identifiable, Equatable, Codable, Comparable, Hashable 
       var isFavorite: Bool = false
       var favoriteId: String?
       var dateFavorited: Date?
-    
+
+    /// A real audio record's `id` is its Firebase Storage filename
+    /// (e.g. "speaklife-s3ep1.mp3"); playback resolves via
+    /// `storage.reference().child(id)`. Schema-priming / test rows that leak
+    /// into the remote `audioDevotionals.json` have ids that are not audio
+    /// files, so they could never play. Gate them out wherever the catalog is
+    /// loaded so junk records can't surface in the list, in any build.
+    var isPlayableAudio: Bool {
+        let name = id.lowercased()
+        return name.hasSuffix(".mp3") || name.hasSuffix(".m4a")
+            || name.hasSuffix(".wav") || name.hasSuffix(".aac")
+            || name.hasSuffix(".caf")
+    }
+
     // Initializer for creating new instances (used in AudioFiles.swift)
     init(id: String, title: String, subtitle: String, duration: String, imageUrl: String, 
          isPremium: Bool, tag: String? = nil, season: Int? = nil, episode: Int? = nil,

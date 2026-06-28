@@ -577,23 +577,39 @@ final class AIIntelligenceService: ObservableObject {
     }
     
     private func adjustForInactivity() async {
-        
-        // Schedule a gentle re-engagement notification
+
+        // Never tell an actively-engaged user "We've Missed You." A live streak
+        // or a recent app open means they're here — a re-engagement push would
+        // be wrong and erodes trust. (This guards the reported bug: a user on a
+        // 3-day streak receiving "missed you" notifications.)
+        let defaults = UserDefaults.standard
+        let currentStreak = defaults.integer(forKey: "currentStreak")
+        if currentStreak >= 1 {
+            return
+        }
+        if let lastOpen = defaults.object(forKey: "lifecycle_last_open_date") as? Date,
+           Date().timeIntervalSince(lastOpen) < 86400 {
+            return
+        }
+
+        // Schedule a gentle, ONE-TIME re-engagement notification at a humane
+        // daytime hour. Firing "1 hour from now" with no time-of-day guard could
+        // land in the middle of the night; clamp to the next 10 AM instead.
         let reEngagementNotification = AINotification(
             declarationId: "re_engagement_gentle",
             declarationCategory: "faith",
             personalizedTitle: "We've Missed You",
             personalizedMessage: "Your spiritual journey is waiting - here's some encouragement",
-            optimalTime: Date().addingTimeInterval(3600), // 1 hour from now
+            optimalTime: nextDaytimeReEngagementTime(),
             reason: "Re-engagement after inactivity",
             spiritualContext: "returning_user",
             confidence: 0.8,
             notificationType: .reminder
         )
-        
+
         // This would use your existing notification scheduling
         await notificationService.scheduleAINotification(reEngagementNotification)
-        
+
         // Adjust content to be more encouraging and less challenging
         let encouragingWeights = [
             "peace": 1.5,
@@ -607,7 +623,21 @@ final class AIIntelligenceService: ObservableObject {
             UserDefaults.standard.set(weightsData, forKey: "re_engagement_weights")
         }
     }
-    
+
+    /// Next occurrence of 10 AM. Re-engagement should arrive when a returning
+    /// user can actually act on it — never at 1 AM. If it's already past 10 AM
+    /// today, target 10 AM tomorrow.
+    private func nextDaytimeReEngagementTime() -> Date {
+        let calendar = Calendar.current
+        let now = Date()
+        let todayTen = calendar.date(bySettingHour: 10, minute: 0, second: 0, of: now) ?? now
+        if todayTen > now {
+            return todayTen
+        }
+        let tomorrow = calendar.date(byAdding: .day, value: 1, to: now) ?? now
+        return calendar.date(bySettingHour: 10, minute: 0, second: 0, of: tomorrow) ?? tomorrow
+    }
+
     private func boostSimilarContent(categories: [SpiritualContentCategory], score: Double) async {
         // Load current content weights
         var contentWeights = loadCurrentContentWeights()

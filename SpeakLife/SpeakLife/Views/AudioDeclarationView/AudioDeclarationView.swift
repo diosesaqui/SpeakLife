@@ -54,28 +54,33 @@ struct UpNextCell: View {
                             .font(.system(size: 17, weight: .semibold, design: .rounded))
                             .minimumScaleFactor(0.8)
                             .lineLimit(2)
-                        
+
                         Text(item.subtitle)
                             .font(.system(size: 13))
                             .foregroundColor(.gray)
-                            .lineLimit(2)
+                            .lineLimit(1)
                             .multilineTextAlignment(.leading)
-                        
+
                         HStack(spacing: 4) {
                             Image(systemName: "play.fill")
                                 .font(.caption)
                             Text(item.duration)
                                 .font(.system(size: 13))
                                 .foregroundColor(.gray)
-                            
+
                             if item.isPremium, !subscriptionStore.isPremium {
                                 Image(systemName: "lock")
                                     .font(.caption)
                             }
                         }
                     }
-                    
-                    Spacer()
+                    // Let the title/subtitle column claim all the leftover
+                    // horizontal space and win it over the trailing controls.
+                    // Without this the Spacer ate the slack and the name column
+                    // collapsed on narrow devices (titles truncated to a few
+                    // characters; "SpeakLife" even broke mid-word).
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .layoutPriority(1)
 
                     // Played toggle
                     Button(action: {

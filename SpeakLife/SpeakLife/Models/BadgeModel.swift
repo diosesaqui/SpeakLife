@@ -80,16 +80,46 @@ enum BadgeRarity: String, CaseIterable, Codable {
     var displayName: String {
         rawValue.capitalized
     }
-    
-    var ringColor: Color {
+
+    /// Refined metallic palette per tier: [highlight, base, shadow].
+    /// One restrained metal per rarity — no per-type rainbow — so badges read
+    /// as minted medals rather than candy. Drives the rim and emblem gradients.
+    var metalGradient: [Color] {
         switch self {
-        case .common: return Color(red: 0.7, green: 0.5, blue: 0.3) // Bronze
-        case .rare: return Color(red: 0.75, green: 0.75, blue: 0.75) // Silver
-        case .epic: return Color(red: 1.0, green: 0.84, blue: 0.0) // Gold
-        case .legendary: return Color(red: 0.9, green: 0.4, blue: 1.0) // Platinum/Purple
+        case .common: // Bronze
+            return [
+                Color(red: 0.85, green: 0.62, blue: 0.40),
+                Color(red: 0.60, green: 0.40, blue: 0.24),
+                Color(red: 0.36, green: 0.23, blue: 0.13)
+            ]
+        case .rare: // Silver
+            return [
+                Color(red: 0.96, green: 0.97, blue: 0.99),
+                Color(red: 0.72, green: 0.75, blue: 0.80),
+                Color(red: 0.42, green: 0.45, blue: 0.50)
+            ]
+        case .epic: // Gold
+            return [
+                Color(red: 1.00, green: 0.90, blue: 0.56),
+                Color(red: 0.92, green: 0.72, blue: 0.27),
+                Color(red: 0.56, green: 0.40, blue: 0.09)
+            ]
+        case .legendary: // Platinum / iridescent
+            return [
+                Color(red: 0.93, green: 0.91, blue: 1.00),
+                Color(red: 0.66, green: 0.62, blue: 0.88),
+                Color(red: 0.38, green: 0.34, blue: 0.60)
+            ]
         }
     }
-    
+
+    var metalHighlight: Color { metalGradient[0] }
+    var metalBase: Color { metalGradient[1] }
+    var metalShadow: Color { metalGradient[2] }
+
+    /// Single representative tone for text labels and small indicators.
+    var ringColor: Color { metalBase }
+
     var glowIntensity: Double {
         switch self {
         case .common: return 0.3

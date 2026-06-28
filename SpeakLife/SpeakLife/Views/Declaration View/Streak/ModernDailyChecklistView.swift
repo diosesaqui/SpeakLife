@@ -18,6 +18,7 @@ struct ModernDailyChecklistView: View {
     @EnvironmentObject var tabViewModel: TabViewModel
     @EnvironmentObject var themeViewModel: ThemeViewModel
     @EnvironmentObject var declarationStore: DeclarationViewModel
+    @EnvironmentObject var timerViewModel: TimerViewModel
     @Environment(\.dismiss) private var dismiss
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     private var isIPad: Bool { horizontalSizeClass == .regular }
@@ -25,10 +26,22 @@ struct ModernDailyChecklistView: View {
     @State private var showDevotional = false
     @State private var showBibleChat = false
     @State private var showJournal = false
+    @State private var showWarriorRoom = false
+    @State private var showCreateYourOwn = false
     @State private var completedTasks = Set<String>()
     @State private var animateProgress = false
     @State private var celebrationScale: CGFloat = 1.0
     @State private var showCelebration = false
+    /// The user's saved personal declaration, loaded from the repository so the
+    /// feed can surface it as a tile at the bottom of Today.
+    @State private var personalDeclaration: PersonalDeclaration?
+    // Modal presentations surfaced directly on the Today tab (instead of routing
+    // the user over to the Speak feed and presenting there).
+    @State private var showDailyBurst = false
+    @State private var showPersonalDeclarationCard = false
+    @State private var showBreakthroughFlow = false
+    @State private var showNewDeclarationSheet = false
+    @State private var warriorRoomTestimonyPrefill: WarriorRoomTestimonyPrefill?
     var onClose: (() -> Void)? = nil
     /// True when shown as the root "Today" tab (no modal chrome / close button).
     var isHomeTab: Bool = false
@@ -55,27 +68,16 @@ struct ModernDailyChecklistView: View {
         }
     }
 
-    /// Reuse the feed's fully-wired burst cover: surface the Speak tab, then ask
-    /// it to present the burst. Works whether the checklist is the root tab or a
-    /// sheet (dismiss is a no-op at a tab root).
+    /// Present the daily burst right here on the Today tab instead of routing
+    /// the user over to the Speak feed.
     private func openBurst() {
-        if let onClose = onClose { onClose() } else { dismiss() }
-        tabViewModel.goToDeclarations()
-        // Delay lets the feed tab mount and subscribe before we post (first
-        // launch may not have instantiated it yet).
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
-            NotificationCenter.default.post(name: Notification.Name("ShowDailyDeclarationBurst"), object: nil)
-        }
+        showDailyBurst = true
     }
 
-    /// Surface the user's Personal Declaration via the feed's existing card flow
-    /// (it loads from the repository and presents on this flag change).
+    /// Present the user's Personal Declaration card right here on the Today tab
+    /// instead of routing over to the Speak feed.
     private func openPersonalDeclaration() {
-        if let onClose = onClose { onClose() } else { dismiss() }
-        tabViewModel.goToDeclarations()
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
-            appState.scrollToPersonalDeclaration = true
-        }
+        showPersonalDeclarationCard = true
     }
 
     private func getUserTopCategories() -> [String] {
@@ -270,7 +272,57 @@ struct ModernDailyChecklistView: View {
                         .padding(.horizontal, 20)
                         .dsAppear(0.08)
 
-                        // Only show upcoming tasks if current list isn't completed
+                        // Quick access — the four core daily destinations, always
+                        // reachable regardless of which tasks are unlocked today.
+                        // Surfaced right under today's tasks so the actionable
+                        // jump-off points come before previews and teasers.
+                        VStack(spacing: 10) {
+                            HStack {
+                                Text("JUMP BACK IN")
+                                    .font(.system(size: 11, weight: .bold))
+                                    .tracking(1.4)
+                                    .foregroundColor(DS.Palette.gold.opacity(0.9))
+                                Spacer()
+                            }
+                            // Two rows of three so each tile keeps room to
+                            // breathe (five-in-a-row crowded the labels).
+                            HStack(spacing: 10) {
+                                QuickActionTile(icon: "bolt.fill", label: "Burst",
+                                                tint: Color(hex: "#7C3AED"), action: openBurst)
+                                QuickActionTile(icon: "book.fill", label: "Devotional",
+                                                tint: Color(hex: "#0EA5E9")) { showDevotional = true }
+                                QuickActionTile(icon: "bubble.left.and.text.bubble.right.fill", label: "Ask Bible",
+                                                tint: Color(hex: "#059669")) { showBibleChat = true }
+                            }
+                            HStack(spacing: 10) {
+                                QuickActionTile(icon: "pencil.and.scribble", label: "Journal",
+                                                tint: Color(hex: "#B45309")) { showJournal = true }
+                                QuickActionTile(icon: "wand.and.stars", label: "Create Own",
+                                                tint: Color(hex: "#D97706")) { showCreateYourOwn = true }
+                                QuickActionTile(icon: "hands.and.sparkles.fill", label: "Community",
+                                                tint: Color(hex: "#EC4899")) { showWarriorRoom = true }
+                            }
+                        }
+                        .padding(.horizontal, 20)
+                        .padding(.top, 12)
+                        .dsAppear(0.12)
+
+                        // Personal Declaration — the one thing the user is
+                        // believing God for, anchored at the bottom of Today as
+                        // a full tile (not just a quick-action icon) so it stays
+                        // front-of-mind every day until it comes to pass.
+                        if appState.hasPersonalDeclaration, let declaration = personalDeclaration {
+                            PersonalDeclarationFeedTile(declaration: declaration) {
+                                openPersonalDeclaration()
+                            }
+                            .padding(.horizontal, 20)
+                            .padding(.top, 16)
+                            .dsAppear(0.16)
+                        }
+
+                        // Unlock tomorrow — a closing "come back tomorrow" teaser.
+                        // Kept at the end so it caps the feed as a retention hook
+                        // rather than interrupting the actionable sections above.
                         if !viewModel.todayChecklist.isCompleted {
                             let upcomingTasks = viewModel.getUpcomingUnlocks(for: viewModel.streakStats.currentStreak)
                             if let nextTask = upcomingTasks.first {
@@ -285,7 +337,7 @@ struct ModernDailyChecklistView: View {
                                             .foregroundColor(.white.opacity(0.6))
                                         Spacer()
                                     }
-                                    
+
                                     HStack(spacing: 12) {
                                         Image(systemName: nextTask.icon)
                                             .font(.caption)
@@ -295,11 +347,11 @@ struct ModernDailyChecklistView: View {
                                                 Circle()
                                                     .fill(Color.white.opacity(0.05))
                                             )
-                                        
+
                                         Text(nextTask.title)
                                             .font(.footnote)
                                             .foregroundColor(.white.opacity(0.5))
-                                        
+
                                         Spacer()
                                     }
                                     .padding(12)
@@ -309,38 +361,10 @@ struct ModernDailyChecklistView: View {
                                     )
                                 }
                                 .padding(.horizontal, 20)
-                                .padding(.top, 8)
+                                .padding(.top, 20)
                                 .transition(.opacity.combined(with: .move(edge: .bottom)))
                             }
                         }
-                        
-                        // Quick access — the four core daily destinations, always
-                        // reachable regardless of which tasks are unlocked today.
-                        VStack(spacing: 10) {
-                            HStack {
-                                Text("JUMP BACK IN")
-                                    .font(.system(size: 10, weight: .bold)).tracking(1.5)
-                                    .foregroundColor(.white.opacity(0.35))
-                                Spacer()
-                            }
-                            HStack(spacing: 10) {
-                                QuickActionTile(icon: "bolt.fill", label: "Burst",
-                                                tint: Color(hex: "#7C3AED"), action: openBurst)
-                                if appState.hasPersonalDeclaration {
-                                    QuickActionTile(icon: "hands.sparkles.fill", label: "My Word",
-                                                    tint: Color(hex: "#CA8A04")) { openPersonalDeclaration() }
-                                }
-                                QuickActionTile(icon: "book.fill", label: "Devotional",
-                                                tint: Color(hex: "#0EA5E9")) { showDevotional = true }
-                                QuickActionTile(icon: "bubble.left.and.text.bubble.right.fill", label: "Ask Bible",
-                                                tint: Color(hex: "#059669")) { showBibleChat = true }
-                                QuickActionTile(icon: "pencil.and.scribble", label: "Journal",
-                                                tint: Color(hex: "#B45309")) { showJournal = true }
-                            }
-                        }
-                        .padding(.horizontal, 20)
-                        .padding(.top, 12)
-                        .dsAppear(0.16)
 
                         // Bottom spacing for last task accessibility
                         Color.clear.frame(height: 80)
@@ -376,6 +400,92 @@ struct ModernDailyChecklistView: View {
         }
         .sheet(isPresented: $showJournal) {
             JournalEntrySheet(category: getUserTopCategories().first)
+        }
+        // Warrior Room — the community prayer wall, surfaced from Today as a
+        // quick-access tile. subscriptionStore injected explicitly since SwiftUI
+        // doesn't reliably propagate env objects across the sheet hop.
+        .sheet(isPresented: $showWarriorRoom) {
+            PrayerWallView()
+                .environmentObject(subscriptionStore)
+        }
+        // Create Your Own — the full affirmations + journal builder. Opens on
+        // its Affirmations tab by default. Env objects injected explicitly since
+        // SwiftUI doesn't reliably propagate them across the sheet hop.
+        .sheet(isPresented: $showCreateYourOwn) {
+            CreateYourOwnView()
+                .environmentObject(subscriptionStore)
+                .environmentObject(appState)
+                .environmentObject(declarationStore)
+        }
+        // Daily burst — presented modally on Today. Env objects injected
+        // explicitly since SwiftUI doesn't reliably propagate them across the
+        // cover hop. (viewModel is the EnhancedStreakViewModel the burst wants.)
+        .fullScreenCover(isPresented: $showDailyBurst) {
+            DailyDeclarationBurstView()
+                .environmentObject(declarationStore)
+                .environmentObject(themeViewModel)
+                .environmentObject(timerViewModel)
+                .environmentObject(viewModel)
+                .environmentObject(subscriptionStore)
+        }
+        // Personal Declaration card — presented modally on Today. onBreakthrough
+        // dismisses this card, then surfaces the breakthrough flow (attached to
+        // the root below so it survives this sheet's dismissal).
+        .sheet(isPresented: $showPersonalDeclarationCard) {
+            if let declaration = personalDeclaration {
+                PersonalDeclarationCard(
+                    declaration: declaration,
+                    onBreakthrough: {
+                        showPersonalDeclarationCard = false
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                            showBreakthroughFlow = true
+                        }
+                    }
+                )
+            }
+        }
+        .fullScreenCover(isPresented: $showBreakthroughFlow) {
+            if let d = personalDeclaration {
+                BreakthroughFlowView(
+                    declaration: d,
+                    onDismiss: { showBreakthroughFlow = false },
+                    onSetNew: {
+                        showBreakthroughFlow = false
+                        showNewDeclarationSheet = true
+                    },
+                    onShareToWarriorRoom: { prefill in
+                        warriorRoomTestimonyPrefill = WarriorRoomTestimonyPrefill(text: prefill)
+                    }
+                )
+                .environmentObject(appState)
+            }
+        }
+        .sheet(item: $warriorRoomTestimonyPrefill) { prefill in
+            WarriorRoomTestimonyComposer(
+                initialText: prefill.text,
+                initialIsTestimony: true
+            )
+            .environmentObject(subscriptionStore)
+        }
+        // Set-a-new-declaration onboarding (reached from the breakthrough flow).
+        .fullScreenCover(isPresented: $showNewDeclarationSheet) {
+            GeometryReader { geo in
+                PersonalDeclarationOnboardingView(
+                    viewModel: DIContainer.shared.makePersonalDeclarationViewModel(),
+                    size: geo.size,
+                    flow: "app"
+                ) { newDeclaration in
+                    if newDeclaration != nil {
+                        appState.hasPersonalDeclaration = true
+                    }
+                    showNewDeclarationSheet = false
+                    Task {
+                        personalDeclaration = await DIContainer.shared.personalDeclarationRepository.load()
+                    }
+                }
+                .environmentObject(appState)
+            }
+            .ignoresSafeArea()
         }
         // ── Streak celebrations & badges ──────────────────────────────────────
         // These fullScreenCovers were built in EnhancedStreakView but never wired
@@ -429,6 +539,12 @@ struct ModernDailyChecklistView: View {
                 "total_tasks": viewModel.todayChecklist.tasks.count,
                 "is_streak_earned": viewModel.todayChecklist.isStreakEarned
             ])
+            // Load the personal declaration for the bottom-of-feed tile.
+            if appState.hasPersonalDeclaration {
+                Task {
+                    personalDeclaration = await DIContainer.shared.personalDeclarationRepository.load()
+                }
+            }
         }
         .onChange(of: viewModel.todayChecklist.isCompleted) { isCompleted in
             if isCompleted {
@@ -742,6 +858,81 @@ struct QuickActionTile: View {
     }
 }
 
+// MARK: - Personal Declaration Feed Tile
+//
+// A full-width tile in the Today feed that keeps the actual declaration text
+// and day count visible so the user is reminded — every day — of the one thing
+// they're believing God for. Tapping it opens the full speak-it card.
+
+struct PersonalDeclarationFeedTile: View {
+    let declaration: PersonalDeclaration
+    let onTap: () -> Void
+
+    private let gold = Color(red: 1, green: 0.82, blue: 0.28)
+
+    var body: some View {
+        Button(action: {
+            Juice.play(.tapLight)
+            onTap()
+        }) {
+            VStack(alignment: .leading, spacing: 12) {
+                // Header — label + day count
+                HStack(spacing: 6) {
+                    Text("🙌").font(.system(size: 13))
+                    Text("YOUR DECLARATION")
+                        .font(.system(size: 11, weight: .bold, design: .rounded))
+                        .tracking(1.2)
+                        .foregroundColor(gold)
+                    Spacer()
+                    Text("Day \(declaration.dayCount) of believing")
+                        .font(.system(size: 11, weight: .semibold, design: .rounded))
+                        .foregroundColor(.white.opacity(0.5))
+                }
+
+                // Declaration text
+                Text(declaration.declarationText)
+                    .font(.system(size: 15, weight: .medium, design: .rounded))
+                    .foregroundColor(.white)
+                    .multilineTextAlignment(.leading)
+                    .lineLimit(3)
+                    .lineSpacing(2)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                // Footer — verse reference + speak affordance
+                HStack(spacing: 6) {
+                    Image(systemName: "book.closed.fill")
+                        .font(.system(size: 11))
+                        .foregroundColor(gold.opacity(0.8))
+                    Text(declaration.verseReference)
+                        .font(.system(size: 13, weight: .medium, design: .rounded))
+                        .foregroundColor(.white.opacity(0.55))
+                    Spacer()
+                    HStack(spacing: 5) {
+                        Image(systemName: "mic.fill")
+                            .font(.system(size: 11, weight: .semibold))
+                        Text("Speak it")
+                            .font(.system(size: 13, weight: .semibold, design: .rounded))
+                    }
+                    .foregroundColor(gold)
+                }
+            }
+            .padding(16)
+            .background(
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(Color.white.opacity(0.05))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 16)
+                            .strokeBorder(gold.opacity(0.25), lineWidth: 1)
+                    )
+            )
+        }
+        .buttonStyle(.dsPressable(feel: .tapLight, haptics: false))
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Your personal declaration, day \(declaration.dayCount). \(declaration.declarationText)")
+        .accessibilityHint("Opens your declaration to speak it")
+    }
+}
+
 // MARK: - Journal Entry Sheet
 //
 // Lightweight, self-contained journaling surface saved via JournalRepository.
@@ -762,11 +953,15 @@ struct JournalEntrySheet: View {
     let category: String?
     @Environment(\.dismiss) private var dismiss
     @State private var text: String = ""
+    @State private var showSaveConfirmation = false
+    @StateObject private var voiceManager = VoiceInputManager()
+    @State private var voiceTask: Task<Void, Never>?
     @FocusState private var focused: Bool
 
     private var prompt: String { JournalEntrySheet.prompt(for: category) }
 
     var body: some View {
+        ZStack {
         NavigationView {
             ZStack {
                 LinearGradient(
@@ -797,6 +992,9 @@ struct JournalEntrySheet: View {
                     }
                     .padding(12)
                     .background(RoundedRectangle(cornerRadius: 14).fill(Color.white.opacity(0.06)))
+
+                    // Voice dictation: speak the entry instead of typing.
+                    voiceControls
                 }
                 .padding(20)
             }
@@ -818,6 +1016,114 @@ struct JournalEntrySheet: View {
         .onAppear {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { focused = true }
         }
+        .onChange(of: voiceManager.voiceInputState) { state in
+            // Recognition is final-only (no partial results), so the transcript
+            // is ready once the recorder finishes transcribing.
+            if state == .completed { appendTranscription(voiceManager.transcribedText) }
+        }
+        .onDisappear {
+            // Cancel a pending permission request so it can't call
+            // startListening() after the sheet is gone (which would leave an
+            // orphan recording + audio session running for the full timeout).
+            voiceTask?.cancel()
+            voiceManager.stopListening()
+        }
+
+            // Saved confirmation animation, matching the Create Your Own flow.
+            if showSaveConfirmation {
+                SaveConfirmationView(contentType: .journal) {
+                    dismiss()
+                }
+                .transition(.scale.combined(with: .opacity))
+                .zIndex(1)
+            }
+        }
+    }
+
+    // MARK: - Voice dictation
+
+    private var isTranscribing: Bool {
+        voiceManager.voiceInputState == .processing || voiceManager.voiceInputState == .transcribing
+    }
+
+    @ViewBuilder
+    private var voiceControls: some View {
+        HStack(spacing: 12) {
+            Button(action: toggleVoice) {
+                Image(systemName: voiceManager.isListening ? "stop.fill" : "mic.fill")
+                    .font(.system(size: 20, weight: .semibold))
+                    .foregroundColor(isTranscribing ? .white.opacity(0.4) : .white.opacity(0.95))
+                    .frame(width: 52, height: 52)
+                    .background(
+                        Circle().fill(voiceManager.isListening
+                                      ? AnyShapeStyle(Color.red)
+                                      : AnyShapeStyle(.ultraThinMaterial))
+                    )
+                    .overlay(
+                        Circle().stroke(Color.white.opacity(voiceManager.isListening ? 0 : 0.18), lineWidth: 1)
+                    )
+            }
+            .disabled(isTranscribing)
+
+            if voiceManager.isListening {
+                Text("Listening… tap to stop")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(.white.opacity(0.8))
+            } else if isTranscribing {
+                Text("Transcribing…")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(.white.opacity(0.8))
+            } else if let error = voiceManager.errorMessage {
+                Text(error)
+                    .font(.system(size: 13))
+                    .foregroundColor(.red.opacity(0.9))
+                    .lineLimit(2)
+            } else {
+                Text("Tap to speak your entry")
+                    .font(.system(size: 14))
+                    .foregroundColor(.white.opacity(0.45))
+            }
+
+            Spacer()
+        }
+    }
+
+    private func toggleVoice() {
+        if voiceManager.isListening {
+            voiceManager.stopListening()
+            return
+        }
+        focused = false
+        if voiceManager.hasPermissions {
+            voiceManager.startListening()
+        } else {
+            voiceTask = Task {
+                let granted = await voiceManager.requestPermissions()
+                // Bail if the sheet was dismissed while the permission prompt
+                // was up — otherwise we'd start recording on a gone view.
+                if Task.isCancelled { return }
+                if granted {
+                    voiceManager.startListening()
+                } else {
+                    voiceManager.errorMessage = "Microphone access is off. Enable it in Settings to dictate."
+                }
+            }
+        }
+    }
+
+    /// Append a finished transcription to the entry, then clear it so the same
+    /// text isn't merged twice on the next state change.
+    private func appendTranscription(_ transcription: String) {
+        let trimmed = transcription.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+
+        if text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            text = trimmed
+        } else {
+            let separator = text.hasSuffix(" ") || text.hasSuffix("\n") ? "" : " "
+            text += separator + trimmed
+        }
+        voiceManager.clearTranscription()
     }
 
     private func save() {
@@ -826,7 +1132,10 @@ struct JournalEntrySheet: View {
         let context = PersistenceController.shared.container.viewContext
         let entry = JournalEntry(context: context)
         entry.text = trimmed
-        entry.category = category
+        // Persist as `myOwn` so the entry shows up in Profile > Create Your Own,
+        // which filters journals on category == .myOwn. The onboarding `category`
+        // is only used to seed the prompt and analytics, not to tag storage.
+        entry.category = DeclarationCategory.myOwn.rawValue
         Task {
             do {
                 try await JournalRepository(context: context).create(entry)
@@ -843,7 +1152,11 @@ struct JournalEntrySheet: View {
             }
         }
         PremiumHaptics.affirmationCompleted()
-        dismiss()
+        focused = false
+        // Show the saved animation; it dismisses the sheet when it completes.
+        withAnimation(.spring(response: 0.6, dampingFraction: 0.7)) {
+            showSaveConfirmation = true
+        }
     }
 
     /// Category-seeded reflection prompt (onboarding-driven).
