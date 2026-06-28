@@ -1050,14 +1050,17 @@ struct JournalEntrySheet: View {
     private var voiceControls: some View {
         HStack(spacing: 12) {
             Button(action: toggleVoice) {
-                Image(systemName: voiceManager.isListening ? "stop.circle.fill" : "mic.fill")
+                Image(systemName: voiceManager.isListening ? "stop.fill" : "mic.fill")
                     .font(.system(size: 20, weight: .semibold))
-                    .foregroundColor(.white)
+                    .foregroundColor(isTranscribing ? .white.opacity(0.4) : .white.opacity(0.95))
                     .frame(width: 52, height: 52)
                     .background(
                         Circle().fill(voiceManager.isListening
-                                      ? Color.red.opacity(0.85)
-                                      : Color(hex: "#B45309"))
+                                      ? AnyShapeStyle(Color.red)
+                                      : AnyShapeStyle(.ultraThinMaterial))
+                    )
+                    .overlay(
+                        Circle().stroke(Color.white.opacity(voiceManager.isListening ? 0 : 0.18), lineWidth: 1)
                     )
             }
             .disabled(isTranscribing)
