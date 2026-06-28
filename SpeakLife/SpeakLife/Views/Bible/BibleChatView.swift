@@ -460,7 +460,7 @@ struct BibleChatConversationView: View {
                 .padding(.bottom, 12)
             }
             // Drag the conversation down to dismiss the keyboard.
-            .scrollDismissesKeyboard(.interactive)
+            .scrollDismissesKeyboard(.interactively)
             .onChange(of: viewModel.messages.count) { _ in
                 if let last = viewModel.messages.last {
                     withAnimation { proxy.scrollTo(last.id, anchor: .bottom) }
