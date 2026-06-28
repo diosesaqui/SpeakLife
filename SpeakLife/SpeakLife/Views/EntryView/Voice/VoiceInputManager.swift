@@ -45,12 +45,22 @@ class VoiceInputManager: NSObject, ObservableObject {
     private var recordingURL: URL?
     private var audioLevelTimer: Timer?
     private var maxDurationTimer: Timer?
+    private var sessionObservers: [NSObjectProtocol] = []
 
-    private let maxRecordingDuration: TimeInterval = 300 // 5 min
+    // 60s keeps the uncompressed PCM file small (~5-6 MB) and stays within the
+    // practical duration limit of server-based recognition, which can fail or
+    // return empty on longer single requests. Users can tap the mic again to
+    // dictate more; each result is appended.
+    private let maxRecordingDuration: TimeInterval = 60
 
     override init() {
         super.init()
         checkInitialPermissions()
+        registerSessionObservers()
+    }
+
+    deinit {
+        sessionObservers.forEach { NotificationCenter.default.removeObserver($0) }
     }
 
     // MARK: - Permissions
@@ -131,6 +141,10 @@ class VoiceInputManager: NSObject, ObservableObject {
             Juice.play(.tapSolid)
 
         } catch {
+            // setActive(true) may have already activated the session before the
+            // recorder threw; tear it down so we don't leave other audio ducked
+            // and the recording indicator stuck on.
+            cleanup()
             voiceInputState = .error
             errorMessage = "Could not start recording. Please try again."
         }
@@ -148,7 +162,17 @@ class VoiceInputManager: NSObject, ObservableObject {
         Juice.play(.tapLight)
 
         guard let url = recordingURL else {
+            cleanup()
             voiceInputState = .idle
+            return
+        }
+
+        // Surface recognizer unavailability (no network for server recognition,
+        // on-device model not ready) instead of silently producing no text.
+        guard let recognizer = speechRecognizer, recognizer.isAvailable else {
+            cleanup()
+            errorMessage = "Speech recognition is unavailable right now. Check your connection and try again."
+            voiceInputState = .error
             return
         }
 
@@ -161,7 +185,14 @@ class VoiceInputManager: NSObject, ObservableObject {
             transcribedText = result.text
             transcriptionConfidence = result.confidence
             alternativeTranscriptions = result.alternatives
-            voiceInputState = transcribedText.isEmpty ? .idle : .completed
+            if transcribedText.isEmpty {
+                // Don't strand the user on a silent "Transcribing…" dead-end.
+                errorMessage = "Didn't catch that. Please try speaking again."
+                voiceInputState = .error
+            } else {
+                errorMessage = nil
+                voiceInputState = .completed
+            }
         }
     }
 
@@ -172,6 +203,38 @@ class VoiceInputManager: NSObject, ObservableObject {
 
     func resumeListening() {
         // Not meaningful in recorder model
+    }
+
+    // MARK: - Session Interruptions
+
+    private func registerSessionObservers() {
+        let center = NotificationCenter.default
+        let session = AVAudioSession.sharedInstance()
+
+        sessionObservers.append(center.addObserver(
+            forName: AVAudioSession.interruptionNotification, object: session, queue: .main
+        ) { [weak self] note in
+            guard let raw = note.userInfo?[AVAudioSessionInterruptionTypeKey] as? UInt,
+                  AVAudioSession.InterruptionType(rawValue: raw) == .began else { return }
+            Task { @MainActor in self?.handleInterruption() }
+        })
+
+        // Headset/AirPods removed mid-recording deactivates the input route.
+        sessionObservers.append(center.addObserver(
+            forName: AVAudioSession.routeChangeNotification, object: session, queue: .main
+        ) { [weak self] note in
+            guard let raw = note.userInfo?[AVAudioSessionRouteChangeReasonKey] as? UInt,
+                  AVAudioSession.RouteChangeReason(rawValue: raw) == .oldDeviceUnavailable else { return }
+            Task { @MainActor in self?.handleInterruption() }
+        })
+    }
+
+    private func handleInterruption() {
+        // A phone call, Siri, or an unplugged headset deactivated our session
+        // mid-record. Stop cleanly so we transcribe what was captured instead of
+        // freezing on "Listening…" until the max-duration timer fires.
+        guard isListening else { return }
+        stopListening()
     }
 
     func clearTranscription() {
@@ -211,17 +274,27 @@ class VoiceInputManager: NSObject, ObservableObject {
                 request.taskHint = .dictation
             }
 
-            // resumed guards against double-resume (crash) and never-resume (hang).
-            // SFSpeechRecognitionTask can fire multiple partial callbacks even when
-            // shouldReportPartialResults = false on some OS versions.
-            var resumed = false
+            // The recognition handler runs on Speech's own queue and can fire
+            // more than once. Guard the single resume with a lock: an
+            // unsynchronized flag lets two callbacks both pass the check and
+            // resume the continuation twice, which is a fatal crash
+            // ("SWIFT TASK CONTINUATION MISUSE"). The lock also lets a timeout
+            // resume exactly once if the task never reports final/error.
+            let lock = NSLock()
+            var didResume = false
+            var task: SFSpeechRecognitionTask?
 
-            recognizer.recognitionTask(with: request) { result, error in
-                guard !resumed else { return }
+            func finish(_ result: TranscriptionResult) {
+                lock.lock()
+                if didResume { lock.unlock(); return }
+                didResume = true
+                lock.unlock()
+                task?.cancel()
+                continuation.resume(returning: result)
+            }
 
+            task = recognizer.recognitionTask(with: request) { result, error in
                 if let result = result, result.isFinal {
-                    resumed = true
-
                     let best = result.bestTranscription
                     var totalConf: Float = 0
                     for seg in best.segments { totalConf += seg.confidence }
@@ -232,17 +305,23 @@ class VoiceInputManager: NSObject, ObservableObject {
                         .map { $0.formattedString }
                         .filter { $0 != best.formattedString }
 
-                    continuation.resume(returning: TranscriptionResult(
+                    finish(TranscriptionResult(
                         text: self.enhanceTranscription(best.formattedString),
                         confidence: avgConf,
                         alternatives: Array(alts)
                     ))
                 } else if error != nil {
                     // Recognition failed — return empty rather than hang.
-                    resumed = true
-                    continuation.resume(returning: TranscriptionResult(text: "", confidence: 0, alternatives: []))
+                    finish(TranscriptionResult(text: "", confidence: 0, alternatives: []))
                 }
                 // Non-final partial with no error — wait for final result.
+            }
+
+            // Safety net: if the task delivers neither a final result nor an
+            // error (recognizer stalls or goes unavailable mid-task), resume
+            // empty so the awaiting Task can't hang on .processing forever.
+            DispatchQueue.global().asyncAfter(deadline: .now() + 20) {
+                finish(TranscriptionResult(text: "", confidence: 0, alternatives: []))
             }
         }
     }

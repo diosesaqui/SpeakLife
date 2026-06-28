@@ -955,6 +955,7 @@ struct JournalEntrySheet: View {
     @State private var text: String = ""
     @State private var showSaveConfirmation = false
     @StateObject private var voiceManager = VoiceInputManager()
+    @State private var voiceTask: Task<Void, Never>?
     @FocusState private var focused: Bool
 
     private var prompt: String { JournalEntrySheet.prompt(for: category) }
@@ -1020,7 +1021,13 @@ struct JournalEntrySheet: View {
             // is ready once the recorder finishes transcribing.
             if state == .completed { appendTranscription(voiceManager.transcribedText) }
         }
-        .onDisappear { voiceManager.stopListening() }
+        .onDisappear {
+            // Cancel a pending permission request so it can't call
+            // startListening() after the sheet is gone (which would leave an
+            // orphan recording + audio session running for the full timeout).
+            voiceTask?.cancel()
+            voiceManager.stopListening()
+        }
 
             // Saved confirmation animation, matching the Create Your Own flow.
             if showSaveConfirmation {
@@ -1087,9 +1094,16 @@ struct JournalEntrySheet: View {
         if voiceManager.hasPermissions {
             voiceManager.startListening()
         } else {
-            Task {
+            voiceTask = Task {
                 let granted = await voiceManager.requestPermissions()
-                if granted { voiceManager.startListening() }
+                // Bail if the sheet was dismissed while the permission prompt
+                // was up — otherwise we'd start recording on a gone view.
+                if Task.isCancelled { return }
+                if granted {
+                    voiceManager.startListening()
+                } else {
+                    voiceManager.errorMessage = "Microphone access is off. Enable it in Settings to dictate."
+                }
             }
         }
     }
