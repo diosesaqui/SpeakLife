@@ -459,6 +459,8 @@ struct BibleChatConversationView: View {
                 .padding(.top, 16)
                 .padding(.bottom, 12)
             }
+            // Drag the conversation down to dismiss the keyboard.
+            .scrollDismissesKeyboard(.interactive)
             .onChange(of: viewModel.messages.count) { _ in
                 if let last = viewModel.messages.last {
                     withAnimation { proxy.scrollTo(last.id, anchor: .bottom) }
@@ -567,6 +569,21 @@ struct BibleChatConversationView: View {
             // Grow with the text up to 5 lines, then scroll internally, so the
             // user can see everything they've typed.
             .lineLimit(1...5)
+            // A vertical-axis field inserts a newline on Return. For short Q&A
+            // that's not wanted, so treat a trailing newline as Send instead.
+            .onChange(of: viewModel.draft) { value in
+                guard value.hasSuffix("\n") else { return }
+                viewModel.draft = String(value.dropLast())
+                inputFocused = false
+                viewModel.sendDraft(isPremium: subscriptionStore.isPremium)
+            }
+            // Always offer an explicit way to dismiss the keyboard.
+            .toolbar {
+                ToolbarItemGroup(placement: .keyboard) {
+                    Spacer()
+                    Button("Done") { inputFocused = false }
+                }
+            }
             .padding(.vertical, 10)
             .padding(.horizontal, 14)
             .background(
