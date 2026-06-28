@@ -11,8 +11,8 @@ import SwiftUI
 
 struct VoiceDictationButton: View {
     @Binding var text: String
-    var size: CGFloat = 26
-    var tint: Color = Constants.gold
+    /// Glyph point size; the frosted circle is sized around it.
+    var size: CGFloat = 18
 
     @StateObject private var voiceManager = VoiceInputManager()
     @State private var voiceTask: Task<Void, Never>?
@@ -21,16 +21,27 @@ struct VoiceDictationButton: View {
         voiceManager.voiceInputState == .processing || voiceManager.voiceInputState == .transcribing
     }
 
-    private var iconColor: Color {
+    private var diameter: CGFloat { size + 16 }
+
+    private var glyphColor: Color {
         if isTranscribing { return .white.opacity(0.4) }
-        return voiceManager.isListening ? .red : tint
+        return voiceManager.isListening ? .white : .white.opacity(0.9)
     }
 
     var body: some View {
         Button(action: toggle) {
-            Image(systemName: voiceManager.isListening ? "stop.circle.fill" : "mic.fill")
-                .font(.system(size: size))
-                .foregroundColor(iconColor)
+            Image(systemName: voiceManager.isListening ? "stop.fill" : "mic.fill")
+                .font(.system(size: size, weight: .semibold))
+                .foregroundColor(glyphColor)
+                .frame(width: diameter, height: diameter)
+                .background(
+                    Circle().fill(voiceManager.isListening
+                                  ? AnyShapeStyle(Color.red)
+                                  : AnyShapeStyle(.ultraThinMaterial))
+                )
+                .overlay(
+                    Circle().stroke(Color.white.opacity(voiceManager.isListening ? 0 : 0.18), lineWidth: 1)
+                )
         }
         .disabled(isTranscribing)
         .accessibilityLabel(voiceManager.isListening ? "Stop dictation" : "Dictate")
