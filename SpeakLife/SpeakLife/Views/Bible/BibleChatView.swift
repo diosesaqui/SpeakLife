@@ -459,6 +459,8 @@ struct BibleChatConversationView: View {
                 .padding(.top, 16)
                 .padding(.bottom, 12)
             }
+            // Drag the conversation down to dismiss the keyboard.
+            .scrollDismissesKeyboard(.interactively)
             .onChange(of: viewModel.messages.count) { _ in
                 if let last = viewModel.messages.last {
                     withAnimation { proxy.scrollTo(last.id, anchor: .bottom) }
@@ -552,45 +554,74 @@ struct BibleChatConversationView: View {
     }
 
     private var inputBar: some View {
-        HStack(spacing: 10) {
-            TextField(
-                "",
-                text: $viewModel.draft,
-                prompt: Text("Ask about life or faith…").foregroundColor(.white.opacity(0.4))
-            )
-            .textFieldStyle(.plain)
-            .foregroundColor(.white)
-            .focused($inputFocused)
-            .submitLabel(.send)
-            .onSubmit { viewModel.sendDraft(isPremium: subscriptionStore.isPremium) }
-            .padding(.vertical, 10)
-            .padding(.horizontal, 14)
-            .background(
-                RoundedRectangle(cornerRadius: 20, style: .continuous)
-                    .fill(Color.white.opacity(0.08))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 20, style: .continuous)
-                            .stroke(inputFocused ? Constants.gold.opacity(0.55) : Color.white.opacity(0.10), lineWidth: 1)
-                    )
-            )
-            .animation(.easeInOut(duration: 0.2), value: inputFocused)
+        // .bottom so the mic/send buttons stay pinned to the bottom as the
+        // field grows taller. Sub-views are split out so each modifier chain
+        // type-checks on its own (the combined chain was complex enough to time
+        // out the SwiftUI type-checker on a clean/archive build).
+        HStack(alignment: .bottom, spacing: 10) {
+            messageField
 
             // Dictate the question by voice.
             VoiceDictationButton(text: $viewModel.draft, size: 20)
 
-            Button {
-                inputFocused = false
-                viewModel.sendDraft(isPremium: subscriptionStore.isPremium)
-            } label: {
-                Image(systemName: "arrow.up.circle.fill")
-                    .font(.system(size: 32))
-                    .foregroundColor(viewModel.canSend ? Constants.gold : .white.opacity(0.25))
-            }
-            .disabled(!viewModel.canSend)
+            sendButton
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
         .background(Color.black.opacity(0.2))
+    }
+
+    private var messageField: some View {
+        TextField(
+            "",
+            text: $viewModel.draft,
+            prompt: Text("Ask about life or faith…").foregroundColor(.white.opacity(0.4)),
+            axis: .vertical
+        )
+        .textFieldStyle(.plain)
+        .foregroundColor(.white)
+        .focused($inputFocused)
+        // Grow with the text up to 5 lines, then scroll internally, so the
+        // user can see everything they've typed.
+        .lineLimit(1...5)
+        // A vertical-axis field inserts a newline on Return. For short Q&A
+        // that's not wanted, so treat a trailing newline as Send instead.
+        .onChange(of: viewModel.draft) { value in
+            guard value.hasSuffix("\n") else { return }
+            viewModel.draft = String(value.dropLast())
+            inputFocused = false
+            viewModel.sendDraft(isPremium: subscriptionStore.isPremium)
+        }
+        // Always offer an explicit way to dismiss the keyboard.
+        .toolbar {
+            ToolbarItemGroup(placement: .keyboard) {
+                Spacer()
+                Button("Done") { inputFocused = false }
+            }
+        }
+        .padding(.vertical, 10)
+        .padding(.horizontal, 14)
+        .background(
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .fill(Color.white.opacity(0.08))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 20, style: .continuous)
+                        .stroke(inputFocused ? Constants.gold.opacity(0.55) : Color.white.opacity(0.10), lineWidth: 1)
+                )
+        )
+        .animation(.easeInOut(duration: 0.2), value: inputFocused)
+    }
+
+    private var sendButton: some View {
+        Button {
+            inputFocused = false
+            viewModel.sendDraft(isPremium: subscriptionStore.isPremium)
+        } label: {
+            Image(systemName: "arrow.up.circle.fill")
+                .font(.system(size: 32))
+                .foregroundColor(viewModel.canSend ? Constants.gold : .white.opacity(0.25))
+        }
+        .disabled(!viewModel.canSend)
     }
 }
 

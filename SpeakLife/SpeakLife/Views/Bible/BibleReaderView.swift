@@ -11,9 +11,11 @@ struct BibleReaderView: View {
     @ObservedObject var viewModel: BibleViewModel
     let chapter: ChapterDisplayModel
     
-    @State private var fontSize: CGFloat = 18
+    // Reader settings are persisted so they survive chapter navigation and
+    // view recreation (previously fontSize was @State and reset to 18 whenever
+    // the reader was rebuilt).
+    @AppStorage("BibleReaderFontSize") private var fontSize: Double = 18
     @State private var selectedVerse: VerseDisplayModel?
-    @State private var showVerseActions = false
     @State private var loadError = false
     @State private var currentChapterId: String = ""
     @AppStorage("BibleReaderFont") private var selectedFont = "Georgia"
@@ -48,7 +50,6 @@ struct BibleReaderView: View {
                                 fontName: selectedFont,
                                 onTap: {
                                     selectedVerse = verse
-                                    showVerseActions = true
                                 }
                             )
                             .id(verse.id)
@@ -126,15 +127,19 @@ struct BibleReaderView: View {
                 lineSpacing: $lineSpacing
             )
         }
-        .sheet(isPresented: $showVerseActions) {
-            if let verse = selectedVerse {
-                VerseActionsSheet(
-                    verse: verse,
-                    viewModel: viewModel,
-                    isPresented: $showVerseActions
+        // Bind presentation directly to the selected verse. Using a separate
+        // isPresented flag raced with setting selectedVerse and sometimes
+        // presented an empty (blank) sheet before the verse was assigned.
+        .sheet(item: $selectedVerse) { verse in
+            VerseActionsSheet(
+                verse: verse,
+                viewModel: viewModel,
+                isPresented: Binding(
+                    get: { selectedVerse != nil },
+                    set: { if !$0 { selectedVerse = nil } }
                 )
-                .presentationDetents([.medium])
-            }
+            )
+            .presentationDetents([.medium])
         }
     }
 }
@@ -142,21 +147,21 @@ struct BibleReaderView: View {
 // MARK: - Verse View
 struct VerseView: View {
     let verse: VerseDisplayModel
-    let fontSize: CGFloat
+    let fontSize: Double
     let fontName: String
     let onTap: () -> Void
-    
+
     var body: some View {
         HStack(alignment: .top, spacing: DS.Spacing.xs) {
             // Verse Number
             Text("\(verse.number)")
-                .font(.custom(fontName, size: fontSize * 0.7))
+                .font(.custom(fontName, size: CGFloat(fontSize * 0.7)))
                 .foregroundColor(.secondary)
                 .frame(minWidth: 30, alignment: .trailing)
-            
+
             // Verse Text
             Text(verse.text)
-                .font(.custom(fontName, size: fontSize))
+                .font(.custom(fontName, size: CGFloat(fontSize)))
                 .foregroundColor(.primary)
                 .fixedSize(horizontal: false, vertical: true)
                 .background(
@@ -181,7 +186,7 @@ struct VerseView: View {
 
 // MARK: - Reader Controls
 struct ReaderControlsView: View {
-    @Binding var fontSize: CGFloat
+    @Binding var fontSize: Double
     @Binding var fontName: String
     @Binding var lineSpacing: Double
     @State private var showControls = false

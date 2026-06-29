@@ -117,13 +117,11 @@ struct ProfileView: View {
                     
                     
                     Section(header: Text("Yours").font(.caption)) {
-                        AbbasLoveRow
                         createYourOwnRow
                        // howToUseRow
                         streakStatsRow
                       //  dailyBurstStatsRow
                             quizRow
-                           prayerRow
                            communityRow
                        // }
 
@@ -309,33 +307,6 @@ struct ProfileView: View {
     }
     */
     
-    @MainActor
-    private var quizRow: some View {
-        HStack {
-            Image(systemName: "lightbulb.fill")
-                .foregroundColor(Constants.DAMidBlue)
-            NavigationLink(destination: LazyView(QuizHomeView())) {
-                HStack {
-                    Text("Quizzes", comment: "Reminder row title")
-                    Spacer()
-//                        Image(systemName: "chevron.right")
-//                            .resizable()
-//                            .aspectRatio(contentMode: .fit)
-//                            .frame(width: 8)
-//                            .foregroundColor(Constants.DAMidBlue)
-                }
-            }
-            .simultaneousGesture(TapGesture().onEnded {
-                Event.trackUserAction(
-                    "quiz_opened",
-                    category: "profile",
-                    metadata: ["source": "profile_menu"]
-                )
-            })
-        }
-        
-    }
-    
     var musicRow: some View {
         HStack {
             Image(systemName: "music.note")
@@ -351,6 +322,27 @@ struct ProfileView: View {
     
     // The Warrior Room community wall lives here for users who want it (it was
     // removed from the main tab in favor of Bible Chat). PrayerWallView wraps its
+    @MainActor
+    private var quizRow: some View {
+        HStack {
+            Image(systemName: "lightbulb.fill")
+                .foregroundColor(Constants.DAMidBlue)
+            NavigationLink(destination: LazyView(QuizHomeView())) {
+                HStack {
+                    Text("Quizzes", comment: "Reminder row title")
+                    Spacer()
+                }
+            }
+            .simultaneousGesture(TapGesture().onEnded {
+                Event.trackUserAction(
+                    "quiz_opened",
+                    category: "profile",
+                    metadata: ["source": "profile_menu"]
+                )
+            })
+        }
+    }
+
     // own NavigationView, so present it as a sheet rather than pushing it.
     @MainActor
     private var communityRow: some View {
@@ -373,31 +365,6 @@ struct ProfileView: View {
         }
     }
 
-    @MainActor
-    private var prayerRow: some View {
-        HStack {
-            Image(systemName: "hands.sparkles.fill")
-                .foregroundColor(Constants.DAMidBlue)
-            NavigationLink(destination: LazyView(WarriorView())) {
-                HStack {
-                    Text("Prayers", comment:  "Prayers row title")
-                    Spacer()
-//                        Image(systemName: "chevron.right")
-//                            .resizable()
-//                            .aspectRatio(contentMode: .fit)
-//                            .frame(width: 8)
-//                            .foregroundColor(Constants.DAMidBlue)
-                }
-            }
-            .simultaneousGesture(TapGesture().onEnded {
-                Event.trackUserAction(
-                    "prayers_opened",
-                    category: "profile",
-                    metadata: ["source": "profile_menu"]
-                )
-            })
-        }
-    }
     
     @MainActor
     private var tipsRow: some View {
@@ -517,31 +484,6 @@ struct ProfileView: View {
         }
     }
     
-    @MainActor
-    private var AbbasLoveRow: some View {
-        HStack {
-            Image(systemName: "bolt.heart.fill")
-                .foregroundColor(Constants.DAMidBlue)
-            NavigationLink(destination: LazyView(AbbasLoveView())) {
-                HStack {
-                    Text("Father's Love Letter", comment:  "Love row title")
-                    Spacer()
-//                        Image(systemName: "chevron.right")
-//                            .resizable()
-//                            .aspectRatio(contentMode: .fit)
-//                            .frame(width: 8)
-//                            .foregroundColor(Constants.DAMidBlue)
-                }
-            }
-            .simultaneousGesture(TapGesture().onEnded {
-                Event.trackUserAction(
-                    "love_letter_opened",
-                    category: "profile",
-                    metadata: ["source": "profile_menu"]
-                )
-            })
-        }
-    }
     
     @MainActor
     private var howToUseRow: some View {

@@ -28,6 +28,9 @@ struct ModernDailyChecklistView: View {
     @State private var showJournal = false
     @State private var showWarriorRoom = false
     @State private var showCreateYourOwn = false
+    @State private var showBible = false
+    @State private var showPrayers = false
+    @State private var showLoveLetter = false
     @State private var completedTasks = Set<String>()
     @State private var animateProgress = false
     @State private var celebrationScale: CGFloat = 1.0
@@ -291,7 +294,7 @@ struct ModernDailyChecklistView: View {
                                                 tint: Color(hex: "#7C3AED"), action: openBurst)
                                 QuickActionTile(icon: "book.fill", label: "Devotional",
                                                 tint: Color(hex: "#0EA5E9")) { showDevotional = true }
-                                QuickActionTile(icon: "bubble.left.and.text.bubble.right.fill", label: "Ask Bible",
+                                QuickActionTile(icon: "bubble.left.and.text.bubble.right.fill", label: "Bible Chat",
                                                 tint: Color(hex: "#059669")) { showBibleChat = true }
                             }
                             HStack(spacing: 10) {
@@ -301,6 +304,14 @@ struct ModernDailyChecklistView: View {
                                                 tint: Color(hex: "#D97706")) { showCreateYourOwn = true }
                                 QuickActionTile(icon: "hands.and.sparkles.fill", label: "Community",
                                                 tint: Color(hex: "#EC4899")) { showWarriorRoom = true }
+                            }
+                            HStack(spacing: 10) {
+                                QuickActionTile(icon: "book.closed.fill", label: "Bible",
+                                                tint: Color(hex: "#4F46E5")) { showBible = true }
+                                QuickActionTile(icon: "hands.sparkles.fill", label: "Prayers",
+                                                tint: Color(hex: "#14B8A6")) { showPrayers = true }
+                                QuickActionTile(icon: "heart.fill", label: "Love Letter",
+                                                tint: Color(hex: "#F43F5E")) { showLoveLetter = true }
                             }
                         }
                         .padding(.horizontal, 20)
@@ -416,6 +427,20 @@ struct ModernDailyChecklistView: View {
                 .environmentObject(subscriptionStore)
                 .environmentObject(appState)
                 .environmentObject(declarationStore)
+        }
+        // Bible reader, Prayers, and Father's Love Letter — quick-access tiles.
+        // Presented as sheets so iPhone gets swipe-to-dismiss (these views
+        // otherwise relied on a NavigationLink back button).
+        .sheet(isPresented: $showBible) {
+            BibleView()
+                .environmentObject(subscriptionStore)
+                .preferredColorScheme(.dark)
+        }
+        .sheet(isPresented: $showPrayers) {
+            WarriorView()
+        }
+        .sheet(isPresented: $showLoveLetter) {
+            AbbasLoveView()
         }
         // Daily burst — presented modally on Today. Env objects injected
         // explicitly since SwiftUI doesn't reliably propagate them across the

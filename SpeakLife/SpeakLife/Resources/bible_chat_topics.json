@@ -87,6 +87,23 @@
       "reflection": "Is there a name God is bringing to mind right now? Tell Him: “I release them to You, because You have released me.”"
     },
     {
+      "id": "regret",
+      "title": "Regret",
+      "question": "What does the Bible say about regret?",
+      "icon": "arrow.uturn.up.circle.fill",
+      "accentHex": "#B0A0E8",
+      "summary": "God redeems your past and gives you a new beginning.",
+      "answer": "Regret looks backward and whispers that you are defined by your worst moments. The gospel looks at the same past and declares it covered. In Christ there is no condemnation, and your sins are removed as far as the east is from the west. God is not wringing His hands over what you wasted. He promises to restore the years the locusts have eaten. There is a difference between godly sorrow, which gently turns you toward God and leaves no regret, and the worldly grief that only drags you down. Bring the past to Jesus, receive His mercy, and step into the new thing He is doing. You cannot change what happened, but you are not the same person it happened to.",
+      "verses": [
+        { "reference": "2 Corinthians 7:10", "text": "Godly sorrow brings repentance that leads to salvation and leaves no regret, but worldly sorrow brings death.", "translation": "NIV" },
+        { "reference": "Philippians 3:13-14", "text": "But one thing I do: Forgetting what is behind and straining toward what is ahead, I press on toward the goal to win the prize for which God has called me heavenward in Christ Jesus.", "translation": "NIV" },
+        { "reference": "Romans 8:1", "text": "Therefore, there is now no condemnation for those who are in Christ Jesus.", "translation": "NIV" },
+        { "reference": "Joel 2:25", "text": "I will repay you for the years the locusts have eaten—the great locust and the young locust, the other locusts and the locust swarm—my great army that I sent among you.", "translation": "NIV" },
+        { "reference": "Isaiah 43:18-19", "text": "Forget the former things; do not dwell on the past. See, I am doing a new thing! Now it springs up; do you not perceive it? I am making a way in the wilderness and streams in the wasteland.", "translation": "NIV" }
+      ],
+      "reflection": "Name one thing you keep replaying with regret. Hand it to God and say: “You make all things new—including me.”"
+    },
+    {
       "id": "money",
       "title": "Money & Finances",
       "question": "What does the Bible say about money?",
@@ -170,6 +187,23 @@
         { "reference": "Revelation 21:4", "text": "He will wipe every tear from their eyes. There will be no more death or mourning or crying or pain, for the old order of things has passed away.", "translation": "NIV" }
       ],
       "reflection": "Tell God exactly what hurts. Then ask Him to meet you in it, not just remove it."
+    },
+    {
+      "id": "hope",
+      "title": "Hope",
+      "question": "What does the Bible say about hope?",
+      "icon": "sunrise.fill",
+      "accentHex": "#74D0B5",
+      "summary": "Hope is an anchor for the soul, sure and steadfast.",
+      "answer": "Biblical hope is not wishful thinking or crossed fingers. It is confident expectation rooted in the character of a God who keeps His promises. Scripture calls it an anchor for the soul, firm and secure, holding you steady when the storm says let go. This hope does not disappoint, because God has poured His love into your heart through the Holy Spirit. Even when you cannot see the way forward, the same God who raised Jesus from the dead is writing your story toward a good end. Hope is the muscle that suffering builds. Lift your eyes; your future is held by hands that were nailed to a cross and emptied a tomb.",
+      "verses": [
+        { "reference": "Romans 15:13", "text": "May the God of hope fill you with all joy and peace as you trust in him, so that you may overflow with hope by the power of the Holy Spirit.", "translation": "NIV" },
+        { "reference": "Hebrews 6:19", "text": "We have this hope as an anchor for the soul, firm and secure. It enters the inner sanctuary behind the curtain.", "translation": "NIV" },
+        { "reference": "Romans 5:5", "text": "And hope does not put us to shame, because God's love has been poured out into our hearts through the Holy Spirit, who has been given to us.", "translation": "NIV" },
+        { "reference": "Lamentations 3:22-23", "text": "Because of the Lord's great love we are not consumed, for his compassions never fail. They are new every morning; great is your faithfulness.", "translation": "NIV" },
+        { "reference": "Isaiah 40:31", "text": "But those who hope in the Lord will renew their strength. They will soar on wings like eagles; they will run and not grow weary, they will walk and not be faint.", "translation": "NIV" }
+      ],
+      "reflection": "Where do you need hope today? Speak it out: “God of hope, I trust You with this. My anchor holds.”"
     },
     {
       "id": "prayer",
