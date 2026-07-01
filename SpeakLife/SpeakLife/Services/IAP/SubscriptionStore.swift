@@ -207,7 +207,14 @@ final class SubscriptionStore: ObservableObject {
     @Published var currentDevotionalVersion: Int = 0
     @Published var remoteVersion: Int = 0
     @Published var audioRemoteVersion: Int = 0
-   
+
+    /// True once Remote Config has activated (or an ad-matched arm is present, or a
+    /// safety timeout elapsed). The onboarding A/B gate waits on this so a fresh
+    /// install locks the ASSIGNED experiment arm instead of the in-app default —
+    /// the first-session race that made every new install fall to the baseline
+    /// arm. Bounded by the timeout in init() so it can never hang the first run.
+    @Published var remoteConfigReady = false
+
     private var remoteConfig = RemoteConfig.remoteConfig()
     var cancellable: AnyCancellable?
     private var cancellables = Set<AnyCancellable>()
@@ -239,6 +246,17 @@ final class SubscriptionStore: ObservableObject {
 
         // Set up Remote Config real-time listener for automatic updates
         setupRemoteConfigListener()
+
+        // Onboarding A/B gate: an ad-matched arm needs no RC round-trip, so it's
+        // ready immediately; otherwise a hard timeout guarantees onboarding shows
+        // within a few seconds even if the RC fetch is slow, fails, or is offline.
+        if adOnboardingVariant != nil {
+            remoteConfigReady = true
+        } else {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 4) { [weak self] in
+                self?.remoteConfigReady = true
+            }
+        }
 
         fetchRemoteConfig() { [weak self] in
             Task {
@@ -359,6 +377,10 @@ final class SubscriptionStore: ObservableObject {
         // Empty until set in Remote Config; resolvedOnboardingVariant then falls
         // back to useQuizOnboarding so nothing changes for live users.
         onboardingVariant = remoteConfig["onboardingVariant"].stringValue
+
+        // Assigned A/B arm is now live from activated Remote Config; release the
+        // onboarding gate so the locked variant is the assigned one, not the default.
+        remoteConfigReady = true
 
         // High Conversion Paywall Flag
         useHighConversionPaywall = remoteConfig["useHighConversionPaywall"].boolValue

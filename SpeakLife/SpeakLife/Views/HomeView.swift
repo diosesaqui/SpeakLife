@@ -288,12 +288,20 @@ struct HomeView: View {
                             }
 
                 } else {
-                    // Onboarding A/B: quiz | product | identity | outcomes, selected
-                    // by Remote Config `onboardingVariant`. ATT is requested once
-                    // from SpeakLifeApp (delayed until active); requesting it
-                    // again here fired too early and dropped the prompt.
-                    onboardingFlow
-                        .onAppear { logOnboardingStarted() }
+                    // Onboarding A/B: quiz | product | identity | outcomes | warfare
+                    // | promises, selected by Remote Config `onboardingVariant`. Hold
+                    // the first render until Remote Config has activated so the LOCKED
+                    // arm is the assigned experiment arm, not the in-app default — the
+                    // race that put every fresh install into the baseline arm. Bounded
+                    // by SubscriptionStore's readiness timeout so it can never hang.
+                    // ATT is requested once from SpeakLifeApp (delayed until active);
+                    // requesting it again here fired too early and dropped the prompt.
+                    if subscriptionStore.remoteConfigReady {
+                        onboardingFlow
+                            .onAppear { logOnboardingStarted() }
+                    } else {
+                        onboardingLoadingView
+                    }
                 }
             }
             // Personalized push message — its own reader screen, separate from the
@@ -309,6 +317,18 @@ struct HomeView: View {
     }
 
     @State private var onboardingStartLogged = false
+
+    // Brief hold shown only when Remote Config hasn't activated yet on a fresh
+    // install (bounded by SubscriptionStore's readiness timeout). Prevents the
+    // A/B arm from locking to the in-app default before the assigned arm lands.
+    private var onboardingLoadingView: some View {
+        ZStack {
+            Color.black.ignoresSafeArea()
+            ProgressView()
+                .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                .scaleEffect(1.2)
+        }
+    }
 
     @ViewBuilder
     private var onboardingFlow: some View {
@@ -340,10 +360,22 @@ struct HomeView: View {
         // Freeze the variant before logging so a late ad deep link can't swap the
         // flow mid-run or desync started vs finished.
         subscriptionStore.lockOnboardingVariant()
+        let variant = subscriptionStore.onboardingVariantName
+        // Persist the arm as a user/person property in BOTH PostHog and Firebase so
+        // EVERY downstream event (retention, trial_started, subscription_started)
+        // segments by variant — not just the onboarding events. This is what makes
+        // retention/purchase breakdowns by arm possible.
+        AnalyticsService.shared.setUserProperty("onboarding_variant", value: variant)
         // Routed through AnalyticsService so the event reaches PostHog (the A/B
         // funnel) and Firebase, not just Firebase.
         AnalyticsService.shared.track("onboarding_started", parameters: [
-            "variant": subscriptionStore.onboardingVariantName
+            "variant": variant
+        ])
+        // Canonical experiment-exposure / activation event to key the A/B analysis
+        // off of. Fires once per install, after the arm is locked and assigned.
+        AnalyticsService.shared.track("experiment_exposure", parameters: [
+            "experiment": "onboarding_variant",
+            "variant": variant
         ])
     }
 
