@@ -592,13 +592,11 @@ struct BibleChatConversationView: View {
             inputFocused = false
             viewModel.sendDraft(isPremium: subscriptionStore.isPremium)
         }
-        // Always offer an explicit way to dismiss the keyboard.
-        .toolbar {
-            ToolbarItemGroup(placement: .keyboard) {
-                Spacer()
-                Button("Done") { inputFocused = false }
-            }
-        }
+        // No keyboard-toolbar "Done" button here: inside the tab's TabView the
+        // accessory item renders floating over the input bar's mic/send buttons
+        // instead of staying in the keyboard row. Dismissal is already covered
+        // three ways — drag the conversation down (.scrollDismissesKeyboard),
+        // Return (sends and dismisses), and the send button.
         .padding(.vertical, 10)
         .padding(.horizontal, 14)
         .background(
