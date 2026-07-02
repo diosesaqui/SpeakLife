@@ -236,10 +236,6 @@ struct SpeakLifeApp: App {
                     NotificationManager.shared.scheduleChecklistNotifications()
                 }
                 
-                // Check if we should show evening reminder for daily burst
-                DailyDeclarationReminderService.shared.refreshEveningReminderIfNeeded()
-                
-               
                 // update for next four days
                 if appState.lastNotificationSetDate < appState.lastNotificationSetDate.addingTimeInterval(fourDaysInSeconds), appState.notificationEnabled {
                     

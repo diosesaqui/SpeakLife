@@ -423,9 +423,6 @@ final class EnhancedStreakViewModel: ObservableObject {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
             self.checkForNewBadges()
         }
-        
-        // Schedule personalized notifications for tomorrow
-        schedulePersonalizedNotifications()
     }
     
     private func checkStreakValidity() {
@@ -1335,33 +1332,7 @@ final class EnhancedStreakViewModel: ObservableObject {
     }
     
     // MARK: - Notification Scheduling
-    
-    private func schedulePersonalizedNotifications() {
-        let completedActivities = todayChecklist.tasks.filter { $0.isCompleted }.map { $0.title }
-        let remainingActivities = todayChecklist.tasks.filter { !$0.isCompleted }.map { $0.title }
-        let userName = getUserName()
-        
-        // Schedule evening celebration notification for today
-        NotificationManager.shared.schedulePersonalizedChecklistNotification(
-            isEvening: true,
-            userName: userName,
-            currentStreak: streakStats.currentStreak,
-            completedActivities: completedActivities,
-            remainingActivities: remainingActivities,
-            totalActivities: todayChecklist.tasks.count
-        )
-        
-        // Schedule morning motivation notification for tomorrow
-        NotificationManager.shared.schedulePersonalizedChecklistNotification(
-            isEvening: false,
-            userName: userName,
-            currentStreak: streakStats.currentStreak,
-            completedActivities: [],
-            remainingActivities: [],
-            totalActivities: 0 // Not used for morning notifications
-        )
-    }
-    
+
     func scheduleEveningCheckIn() {
         // Cancel all old daily system notifications (no longer sent daily)
         NotificationManager.shared.notificationCenter.removePendingNotificationRequests(
@@ -1382,15 +1353,6 @@ final class EnhancedStreakViewModel: ObservableObject {
         }
     }
     
-    private func getUserName() -> String {
-        // Try to get user name from user defaults first
-        // Fallback to "Friend" if no name is available
-        if let name = userDefaults.string(forKey: "userName"), !name.isEmpty {
-            return name
-        } else {
-            return "Friend"
-        }
-    }
 }
 
 // MARK: - Legacy Compatibility

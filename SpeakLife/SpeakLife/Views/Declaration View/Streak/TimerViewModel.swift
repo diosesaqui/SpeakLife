@@ -387,28 +387,6 @@ final class TimerViewModel: ObservableObject {
 //        }
 //    }
 //
-    func scheduleDailyStreakReminder() {
-        let content = UNMutableNotificationContent()
-        content.title = "Daily Burst Ready! ⚡"
-        content.body = speakLifeArray.shuffled().first ?? "Your 7 morning declarations are ready. Tap to start your Daily Burst!"
-        content.sound = UNNotificationSound.default
-
-        var dateComponents = DateComponents()
-        dateComponents.hour = 8
-        dateComponents.minute = 0
-
-        let trigger = UNCalendarNotificationTrigger(dateMatching: dateComponents, repeats: true)
-
-        let request = UNNotificationRequest(identifier: "daily_speak_life_reminder", content: content, trigger: trigger)
-
-        UNUserNotificationCenter.current().add(request) { error in
-            if let error = error {
-                print("Error scheduling daily streak reminder: \(error.localizedDescription)")
-            } else {
-                print("Daily streak reminder scheduled ✅")
-            }
-        }
-    }
 }
 
 

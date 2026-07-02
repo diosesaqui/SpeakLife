@@ -88,7 +88,6 @@ final class AppDelegate: NSObject, MessagingDelegate {
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
        
         registerNotificationHandler()
-        NotificationManager.shared.checkForLowReminders()
         ApplicationDelegate.shared.application(
             application,
             didFinishLaunchingWithOptions: launchOptions

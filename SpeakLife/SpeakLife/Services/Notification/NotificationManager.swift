@@ -34,20 +34,6 @@ final class NotificationManager: NSObject {
         [DeclarationCategory.destiny, .gratitude, .faith, .identity, .grace, .joy, .rest]
     }
 
-    /// Rotated through the daily declaration batch so the notification list
-    /// doesn't read like 50 identical "SpeakLife" rows. Each slot picks a
-    /// different framing for the same declaration, which keeps banner-glance
-    /// engagement up over a 10-day batch.
-    fileprivate static let rotatingNotificationTitles: [String] = [
-        "Speak this over your day",
-        "60 seconds. Your turn.",
-        "A promise for you ✨",
-        "From the Word",
-        "Your declaration is ready",
-        "Truth, on demand",
-        "Speak life now"
-    ]
-
     private override init() {}
     
     private let notificationProcessor = NotificationProcessor(service: LocalAPIClient())
@@ -119,34 +105,6 @@ final class NotificationManager: NSObject {
         )
     }
 
-    func checkForLowReminders() {
-        UNUserNotificationCenter.current().getPendingNotificationRequests { requests in
-            if requests.isEmpty {
-                // Likely wiped on reboot or uninstall
-                DispatchQueue.main.async {
-                    self.scheduleReminder(
-                        title: "⚠️ Reminders ending!",
-                        body: "Tap to schedule more reminders.",
-                        date: Date().addingTimeInterval(10),
-                        id: "reschedule_prompt"
-                    )
-                }
-            }
-        }
-    }
-    
-    func scheduleReminder(title: String, body: String, date: Date, id: String) {
-        let content = UNMutableNotificationContent()
-        content.title = title
-        content.body = body
-        content.sound = .default
-
-        let trigger = UNCalendarNotificationTrigger(dateMatching: Calendar.current.dateComponents([.year, .month, .day, .hour, .minute], from: date), repeats: false)
-
-        let request = UNNotificationRequest(identifier: id, content: content, trigger: trigger)
-        UNUserNotificationCenter.current().add(request)
-    }
-
     func getNotificationData(for count: Int,
                                      categories: Set<DeclarationCategory>?)  ->  [NotificationProcessor.NotificationData] {
         var notificationData: [NotificationProcessor.NotificationData] = []
@@ -210,13 +168,8 @@ final class NotificationManager: NSObject {
                 // Skip slots that have already passed (only relevant for day 0)
                 guard targetDate > now else { continue }
 
-                // Rotate the title across the batch so users don't see "SpeakLife"
-                // 50 times in a row (banner blindness). Title changes are tied to the
-                // declaration index so each slot in a day gets a different angle.
                 let content = UNMutableNotificationContent()
-                content.title = Self.rotatingNotificationTitles[
-                    (idx + day) % Self.rotatingNotificationTitles.count
-                ]
+                content.title = "SpeakLife"
                 content.body = body
                 content.sound = UNNotificationSound.default
                 content.userInfo = ["category": decl.category]
@@ -538,158 +491,20 @@ final class NotificationManager: NSObject {
 
     /// Sweeps any leftover notification IDs from earlier app versions so they
     /// can't fire on users who upgraded mid-batch. Called from
-    /// registerNotifications() and on .active foreground.
+    /// registerNotifications() and on .active foreground. Includes the
+    /// personalized checklist morning/evening pushes, the "reminders ending"
+    /// prompt, and the legacy daily streak reminder — all retired to cut
+    /// daily notification volume.
     func scheduleChecklistNotifications() {
         notificationCenter.removePendingNotificationRequests(withIdentifiers: [
             "PersonalizedMorningNotification",
-            "FallbackEveningNotification"
+            "PersonalizedEveningNotification",
+            "FallbackEveningNotification",
+            "reschedule_prompt",
+            "daily_speak_life_reminder"
         ])
     }
 
-    // MARK: - Dynamic Checklist Notifications
-    
-    func schedulePersonalizedChecklistNotification(
-        isEvening: Bool,
-        userName: String = "Friend",
-        currentStreak: Int,
-        completedActivities: [String],
-        remainingActivities: [String],
-        totalActivities: Int
-    ) {
-        let id = isEvening ? "PersonalizedEveningNotification" : "PersonalizedMorningNotification"
-        
-        // Cancel existing personalized notification
-        notificationCenter.removePendingNotificationRequests(withIdentifiers: [id])
-        
-        // Don't schedule evening notification if all tasks are already completed
-        // This prevents unnecessary "congrats" notifications when user already knows they're done
-        if isEvening && remainingActivities.isEmpty && completedActivities.count == totalActivities {
-            // All tasks completed - skip evening notification as user is already aware
-            return
-        }
-        
-        let content = UNMutableNotificationContent()
-        content.title = "SpeakLife"
-        content.sound = UNNotificationSound.default
-        
-        if isEvening {
-            content.body = createEveningNotificationMessage(
-                userName: userName,
-                currentStreak: currentStreak,
-                completedActivities: completedActivities,
-                remainingActivities: remainingActivities,
-                totalActivities: totalActivities
-            )
-        } else {
-            content.body = createMorningNotificationMessage(
-                userName: userName,
-                currentStreak: currentStreak
-            )
-        }
-        
-        var dateComponents = DateComponents()
-        dateComponents.calendar = Calendar.autoupdatingCurrent
-        dateComponents.timeZone = TimeZone.autoupdatingCurrent
-        dateComponents.hour = isEvening ? 19 : 8
-        dateComponents.minute = 0
-        
-        // Morning notifications can repeat daily, but evening notifications need fresh content each day
-        let repeats = !isEvening
-        
-        if isEvening {
-            // For evening, schedule for today at 7 PM
-            let now = Date()
-            let calendar = Calendar.current
-            let currentHour = calendar.component(.hour, from: now)
-            let currentMinute = calendar.component(.minute, from: now)
-            
-            // If it's already close to 7 PM (within 30 minutes), delay by 30 minutes to allow more time for completion
-            if currentHour == 18 && currentMinute >= 30 {
-                // Schedule for 7:30 PM instead to give more time for task completion
-                dateComponents.hour = 19
-                dateComponents.minute = 30
-            }
-            
-            if currentHour < 19 || (currentHour == 19 && currentMinute < 30) {
-                // Schedule for today at 7 PM (or 7:30 PM) with specific date
-                let todayComponents = calendar.dateComponents([.year, .month, .day], from: now)
-                dateComponents.year = todayComponents.year
-                dateComponents.month = todayComponents.month
-                dateComponents.day = todayComponents.day
-            } else {
-                // Already past notification time, don't schedule for today
-                return
-            }
-        }
-        
-        let trigger = UNCalendarNotificationTrigger(dateMatching: dateComponents, repeats: repeats)
-        let request = UNNotificationRequest(identifier: id, content: content, trigger: trigger)
-        
-        notificationCenter.add(request) { error in
-            if let error = error {
-                print("Error scheduling personalized checklist notification: \(error)")
-            }
-        }
-    }
-    
-    private func createMorningNotificationMessage(userName: String, currentStreak: Int) -> String {
-        let templates = [
-            "🌅 Good morning \(userName)! Day \(currentStreak + 1) awaits - continue your amazing streak!",
-            "⚡ Rise and shine \(userName)! Ready to make day \(currentStreak + 1) count?",
-            "🔥 Morning warrior \(userName)! Your \(currentStreak + 1)-day journey with God begins now!",
-            "👑 \(userName), you're on fire! Day \(currentStreak + 1) of your spiritual journey starts now!",
-            "🌟 Hey \(userName)! Let's make day \(currentStreak + 1) your best spiritual day yet!"
-        ]
-        
-        return templates.randomElement() ?? "🌅 Good morning \(userName)! Time to continue your spiritual journey!"
-    }
-    
-    private func createEveningNotificationMessage(
-        userName: String,
-        currentStreak: Int,
-        completedActivities: [String],
-        remainingActivities: [String],
-        totalActivities: Int
-    ) -> String {
-        
-        let completedCount = completedActivities.count
-        let progress = "(\(completedCount)/\(totalActivities))"
-        
-        if remainingActivities.isEmpty {
-            // All completed - celebration messages
-            let celebrationTemplates = [
-                "🎉 Amazing \(userName)! You completed all \(totalActivities) activities today. Day \(currentStreak) strong!",
-                "✨ Perfect day \(userName)! \(totalActivities)/\(totalActivities) activities completed! 🔥",
-                "👑 Incredible \(userName)! You crushed all your spiritual goals today!",
-                "🌟 Outstanding \(userName)! Another perfect day in your \(currentStreak)-day streak!",
-                "🙌 Phenomenal \(userName)! All \(totalActivities) activities completed - you're unstoppable!"
-            ]
-            return celebrationTemplates.randomElement() ?? "🎉 Amazing work today \(userName)!"
-            
-        } else if completedCount > 0 {
-            // Partially completed - encouraging messages
-            let remaining = remainingActivities.prefix(2).joined(separator: ", ")
-            let partialTemplates = [
-                "💪 Great progress \(userName)! \(progress) Just \(remaining) left to complete your perfect day!",
-                "🔥 So close \(userName)! You've got \(remaining) remaining - finish strong!",
-                "⚡ Nice work \(userName)! \(progress) Only \(remaining) left for a complete day!",
-                "🌟 Keep going \(userName)! Just \(remaining) away from perfection \(progress)!"
-            ]
-            return partialTemplates.randomElement() ?? "💪 Keep going \(userName)! You're almost there!"
-            
-        } else {
-            // Nothing completed - gentle encouragement
-            let encouragementTemplates = [
-                "🕊️ Hey \(userName), there's still time! Spend a few moments with God before the day ends.",
-                "💛 \(userName), no pressure - even 5 minutes with God can transform your day!",
-                "🌙 It's okay \(userName)! God's grace is new every morning. Try one quick activity?",
-                "✨ \(userName), God's not keeping score - but you might feel amazing after just one activity!",
-                "🙏 \(userName), even a brief moment with God counts. Your heart matters to Him!"
-            ]
-            return encouragementTemplates.randomElement() ?? "🕊️ There's still time \(userName)! A few moments with God can make all the difference."
-        }
-    }
-    
     // MARK: - AI Enhanced Notifications
     
     private func shouldUseAINotifications() -> Bool {
