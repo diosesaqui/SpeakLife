@@ -817,9 +817,6 @@ struct DailyDeclarationBurstView: View {
                 timeSpent: timeSpent
             )
             
-            // Cancel the evening "complete your burst" reminder since it's now done
-            DailyDeclarationReminderService.shared.cancelEveningReminderAfterBurstCompletion()
-            
             // Automatically complete the daily burst task
             streakViewModel.completeTask(taskId: "complete_daily_burst")
 

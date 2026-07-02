@@ -276,10 +276,6 @@ struct SpeakLifeApp: App {
                     startTimeIndex: appState.personalDeclarationTimeIndex
                 )
 
-                // Check if we should show evening reminder for daily burst
-                DailyDeclarationReminderService.shared.refreshEveningReminderIfNeeded()
-                
-               
                 // Reschedule only when the current batch is close to running out.
                 // NotificationManager owns the threshold (it scales with the actual batch
                 // length, since count=10 fits ≤6 days of notifications under iOS's 64-pending
