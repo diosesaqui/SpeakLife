@@ -38,6 +38,24 @@ struct AppIconOption: Identifiable {
             previewImageName: "appIconSunriseDisplay",
             title: "Golden Sunrise",
             subtitle: "New mercies every morning"
+        ),
+        AppIconOption(
+            iconName: "AppIcon-Blossom",
+            previewImageName: "appIconBlossomDisplay",
+            title: "Cherry Blossom",
+            subtitle: "He makes everything beautiful in its time"
+        ),
+        AppIconOption(
+            iconName: "AppIcon-Hills",
+            previewImageName: "appIconHillsDisplay",
+            title: "Tuscan Hills",
+            subtitle: "He restores my soul"
+        ),
+        AppIconOption(
+            iconName: "AppIcon-Autumn",
+            previewImageName: "appIconAutumnDisplay",
+            title: "Autumn Woods",
+            subtitle: "Faithful in every season"
         )
     ]
 }
