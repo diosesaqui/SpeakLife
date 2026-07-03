@@ -1,0 +1,23 @@
+{
+  "images": [
+    {
+      "filename": "AutumnWoodsPreview.png",
+      "idiom": "universal",
+      "scale": "1x"
+    },
+    {
+      "filename": "AutumnWoodsPreview@2x.png",
+      "idiom": "universal",
+      "scale": "2x"
+    },
+    {
+      "filename": "AutumnWoodsPreview@3x.png",
+      "idiom": "universal",
+      "scale": "3x"
+    }
+  ],
+  "info": {
+    "author": "xcode",
+    "version": 1
+  }
+}

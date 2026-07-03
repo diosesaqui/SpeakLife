@@ -1,0 +1,23 @@
+{
+  "images": [
+    {
+      "filename": "TuscanHillsPreview.png",
+      "idiom": "universal",
+      "scale": "1x"
+    },
+    {
+      "filename": "TuscanHillsPreview@2x.png",
+      "idiom": "universal",
+      "scale": "2x"
+    },
+    {
+      "filename": "TuscanHillsPreview@3x.png",
+      "idiom": "universal",
+      "scale": "3x"
+    }
+  ],
+  "info": {
+    "author": "xcode",
+    "version": 1
+  }
+}
