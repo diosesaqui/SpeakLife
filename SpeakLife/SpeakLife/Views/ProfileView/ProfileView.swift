@@ -126,6 +126,7 @@ struct ProfileView: View {
                        // }
 
                         remindersRow
+                        appIconRow
                      //   widgetPreferencesRow
                        // favoritesRow
                         musicRow
@@ -284,6 +285,27 @@ struct ProfileView: View {
         
     }
     
+    @MainActor
+    private var appIconRow: some View {
+        HStack {
+            Image(systemName: "app.gift.fill")
+                .foregroundColor(Constants.DAMidBlue)
+            NavigationLink(destination: LazyView(AppIconPickerView())) {
+                HStack {
+                    Text("App Icon", comment: "App icon picker row title")
+                    Spacer()
+                }
+            }
+            .simultaneousGesture(TapGesture().onEnded {
+                Event.trackUserAction(
+                    "app_icon_picker_opened",
+                    category: "profile",
+                    metadata: ["source": "profile_menu"]
+                )
+            })
+        }
+    }
+
     // Temporarily commented out - will be activated in future update
     /*
     @MainActor

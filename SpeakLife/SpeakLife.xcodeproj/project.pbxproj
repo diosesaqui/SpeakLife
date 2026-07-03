@@ -292,6 +292,7 @@
 		7AA870CB28DACCB700134ADB /* PremiumView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AA870A628DACCB700134ADB /* PremiumView.swift */; };
 		7AA870CC28DACCB700134ADB /* SettingsRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AA870A728DACCB700134ADB /* SettingsRow.swift */; };
 		7AA870CD28DACCB700134ADB /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AA870A828DACCB700134ADB /* ProfileView.swift */; };
+		45A1B2C42F80000100D1C0DE /* AppIconPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45A1B2C32F80000100D1C0DE /* AppIconPickerView.swift */; };
 		7AA870CE28DACCB700134ADB /* FavoritesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AA870AA28DACCB700134ADB /* FavoritesView.swift */; };
 		7AA870CF28DACCB700134ADB /* MailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AA870AB28DACCB700134ADB /* MailView.swift */; };
 		7AA870D028DACCB700134ADB /* ReminderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AA870AD28DACCB700134ADB /* ReminderView.swift */; };
@@ -708,6 +709,7 @@
 		7AA870A628DACCB700134ADB /* PremiumView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PremiumView.swift; sourceTree = "<group>"; };
 		7AA870A728DACCB700134ADB /* SettingsRow.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SettingsRow.swift; sourceTree = "<group>"; };
 		7AA870A828DACCB700134ADB /* ProfileView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
+		45A1B2C32F80000100D1C0DE /* AppIconPickerView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppIconPickerView.swift; sourceTree = "<group>"; };
 		7AA870AA28DACCB700134ADB /* FavoritesView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FavoritesView.swift; sourceTree = "<group>"; };
 		7AA870AB28DACCB700134ADB /* MailView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MailView.swift; sourceTree = "<group>"; };
 		7AA870AD28DACCB700134ADB /* ReminderView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ReminderView.swift; sourceTree = "<group>"; };
@@ -1664,6 +1666,7 @@
 				7AF18C9D2A0DB056005A6E31 /* Tracker */,
 				7AA870B528DACCB700134ADB /* ProfileBarButton.swift */,
 				7AA870A828DACCB700134ADB /* ProfileView.swift */,
+				45A1B2C32F80000100D1C0DE /* AppIconPickerView.swift */,
 				918D0ED751C243E98A66C8E3 /* SpiritualGrowthView.swift */,
 				7AF46FC42A41326100A45C01 /* AbbasLoveView.swift */,
 				7AF18C8729FF8CEE005A6E31 /* TipsView.swift */,
@@ -2302,6 +2305,7 @@
 				453A831E2C9BF18500398ECE /* DeclarationMenuButton.swift in Sources */,
 				7AF18C982A0CC541005A6E31 /* DevotionalViewModel.swift in Sources */,
 				7AA870CD28DACCB700134ADB /* ProfileView.swift in Sources */,
+				45A1B2C42F80000100D1C0DE /* AppIconPickerView.swift in Sources */,
 				918D0ED751C243E98A66C8E4 /* SpiritualGrowthView.swift in Sources */,
 				81FE0DDC33BC402685CA44EE /* BurstCompletionModel.swift in Sources */,
 				7AA870DC28DACCB700134ADB /* TimeSlots.swift in Sources */,
@@ -2610,6 +2614,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				ASSETCATALOG_COMPILER_ALTERNATE_APPICON_NAMES = "AppIcon-Night AppIcon-Sunrise";
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = SpeakLife/SpeakLife.entitlements;
@@ -2635,7 +2640,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 4.39;
+				MARKETING_VERSION = 4.40;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Franchiz.SpeakLife;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -2652,6 +2657,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				ASSETCATALOG_COMPILER_ALTERNATE_APPICON_NAMES = "AppIcon-Night AppIcon-Sunrise";
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = SpeakLife/SpeakLife.entitlements;
@@ -2677,7 +2683,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 4.39;
+				MARKETING_VERSION = 4.40;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Franchiz.SpeakLife;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
