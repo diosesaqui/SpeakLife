@@ -1,15 +1,17 @@
 {
   "images" : [
     {
-      "filename" : "GoldenSunriseIcon.png",
+      "filename" : "GoldenSunrisePreview.png",
       "idiom" : "universal",
       "scale" : "1x"
     },
     {
+      "filename" : "GoldenSunrisePreview@2x.png",
       "idiom" : "universal",
       "scale" : "2x"
     },
     {
+      "filename" : "GoldenSunrisePreview@3x.png",
       "idiom" : "universal",
       "scale" : "3x"
     }

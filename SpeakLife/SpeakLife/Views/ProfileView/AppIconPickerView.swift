@@ -8,7 +8,6 @@
 //
 
 import SwiftUI
-import FirebaseAnalytics
 
 struct AppIconOption: Identifiable {
     /// Name passed to setAlternateIconName; nil means the primary icon.
@@ -47,7 +46,7 @@ struct AppIconPickerView: View {
 
     @State private var selectedIconName: String? = UIApplication.shared.alternateIconName
     @State private var errorMessage: String?
-    @State private var showError = false
+    @State private var isChangingIcon = false
 
     var body: some View {
         ZStack {
@@ -65,13 +64,13 @@ struct AppIconPickerView: View {
         }
         .navigationTitle("App Icon")
         .navigationBarTitleDisplayMode(.inline)
-        .alert("Couldn't Change Icon", isPresented: $showError) {
+        .alert("Couldn't Change Icon", isPresented: Binding(
+            get: { errorMessage != nil },
+            set: { if !$0 { errorMessage = nil } }
+        )) {
             Button("OK", role: .cancel) { }
         } message: {
-            Text(errorMessage ?? "Please try again.")
-        }
-        .onAppear {
-            Analytics.logEvent("app_icon_picker_opened", parameters: nil)
+            Text(errorMessage ?? "")
         }
     }
 
@@ -114,23 +113,25 @@ struct AppIconPickerView: View {
     }
 
     private func select(_ option: AppIconOption) {
-        guard option.iconName != selectedIconName else { return }
+        guard option.iconName != selectedIconName, !isChangingIcon else { return }
         guard UIApplication.shared.supportsAlternateIcons else {
             errorMessage = "Changing the app icon isn't supported on this device."
-            showError = true
             return
         }
 
+        isChangingIcon = true
         UIApplication.shared.setAlternateIconName(option.iconName) { error in
             DispatchQueue.main.async {
+                isChangingIcon = false
                 if let error {
                     errorMessage = error.localizedDescription
-                    showError = true
                 } else {
                     selectedIconName = option.iconName
-                    Analytics.logEvent("app_icon_changed", parameters: [
-                        "icon": option.id
-                    ])
+                    Event.trackUserAction(
+                        "app_icon_changed",
+                        category: "profile",
+                        metadata: ["icon": option.id]
+                    )
                 }
             }
         }
