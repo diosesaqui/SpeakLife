@@ -89,6 +89,7 @@ struct HighConversionPaywallView: View {
     /// glance. The longer two-line descriptions were too much to read. The
     /// personalized headline/subhead above still adapts to the user.
     private static let succinctValueProps: [String] = [
+        "Ask the Bible anything",
         "Quiet anxious thoughts",
         "Renew your mind daily",
         "Sleep in God's peace",
@@ -96,6 +97,7 @@ struct HighConversionPaywallView: View {
         "Walk in your identity"
     ]
     private static let succinctIcons: [String] = [
+        "bubble.left.and.bubble.right.fill",
         "quote.bubble.fill",
         "book.fill",
         "headphones",
@@ -289,9 +291,6 @@ struct HighConversionPaywallView: View {
                             starsOnlyBanner.padding(.top, 20)
                             benefitsSection.padding(.top, 20)
                             comparisonSection.padding(.top, 28)
-                            if let days = selectedPlanTrialDays {
-                                trialTimelineSection(days: days).padding(.top, DS.Spacing.lg)
-                            }
                             featuredTestimonial.padding(.top, DS.Spacing.lg)
                             remainingTestimonialsSection.padding(.top, DS.Spacing.lg)
                             Spacer(minLength: 20)
@@ -390,6 +389,13 @@ struct HighConversionPaywallView: View {
         let descs = Array(resolvedDescriptions.prefix(4))
         let props = Array(resolvedValueProps.prefix(4))
         return VStack(alignment: .leading, spacing: DS.Spacing.md) {
+            // Fixed lead row (not personalized): Bible chat applies to every
+            // burden/goal, and the comparison grid below already promises it.
+            HCBenefitRow(
+                icon: "bubble.left.and.bubble.right.fill",
+                title: "Ask the Bible anything",
+                description: "AI Bible chat answers your questions with Scripture the moment you need it."
+            )
             ForEach(0..<min(props.count, 4), id: \.self) { i in
                 HCBenefitRow(icon: icons[i], title: props[i], description: i < descs.count ? descs[i] : "")
             }
@@ -510,71 +516,6 @@ struct HighConversionPaywallView: View {
                 .font(.system(size: 13, weight: .bold))
                 .foregroundColor(.white.opacity(0.55))
         }
-    }
-
-    // MARK: - Trial Timeline (Blinkist pattern)
-    // Shows exactly how the free trial unfolds to defuse the "I'll forget and
-    // get charged" fear. Rendered only when the user is actually trial-eligible
-    // for the selected plan; day counts come from the real StoreKit intro offer.
-    private func trialTimelineSection(days: Int) -> some View {
-        VStack(alignment: .leading, spacing: 0) {
-            Text("How your free trial works")
-                .font(.system(size: 17, weight: .bold)).foregroundColor(.white)
-                .padding(.bottom, DS.Spacing.md)
-            trialTimelineStep(
-                icon: "lock.open.fill", title: "Today",
-                detail: "Full access unlocked. Speak your first declaration over your battle.",
-                showsLine: true
-            )
-            if days > 1 {
-                trialTimelineStep(
-                    icon: "bell.fill", title: "Day \(days - 1)",
-                    detail: "We'll remind you before your trial ends.",
-                    showsLine: true
-                )
-            }
-            trialTimelineStep(
-                icon: "star.fill", title: "Day \(days)",
-                detail: "Your subscription starts. Cancel anytime before.",
-                showsLine: false
-            )
-        }
-        .padding(18)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            RoundedRectangle(cornerRadius: 14)
-                .fill(Color.white.opacity(0.06))
-                .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.white.opacity(0.12), lineWidth: 1))
-        )
-        .padding(.horizontal, DS.Spacing.lg)
-    }
-
-    private func trialTimelineStep(icon: String, title: String, detail: String, showsLine: Bool) -> some View {
-        HStack(alignment: .top, spacing: 14) {
-            VStack(spacing: 0) {
-                Image(systemName: icon)
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundColor(Constants.DAMidBlue)
-                    .frame(width: 28, height: 28)
-                    .background(Circle().fill(Constants.DAMidBlue.opacity(0.18)))
-                if showsLine {
-                    Rectangle()
-                        .fill(Constants.DAMidBlue.opacity(0.35))
-                        .frame(width: 2)
-                        .frame(maxHeight: .infinity)
-                }
-            }
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title)
-                    .font(.system(size: 13, weight: .bold)).foregroundColor(.white)
-                Text(detail)
-                    .font(.system(size: 12.5)).foregroundColor(.white.opacity(0.75))
-                    .fixedSize(horizontal: false, vertical: true)
-                    .padding(.bottom, showsLine ? 16 : 0)
-            }
-            Spacer(minLength: 0)
-        }
-        .fixedSize(horizontal: false, vertical: true)
     }
 
     // MARK: - Featured Testimonial (above the fold, anxiety-first)
