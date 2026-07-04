@@ -90,7 +90,7 @@ struct SurveyPersonalizationEngine {
                 headline: "Find a Joy the World Cannot Steal.",
                 subheadline: "Not happiness. The real thing — deep, unshakeable, God-given joy.",
                 valueProps: [
-                    SurveyValueProp(icon: "sun.max.fill", title: "Joy that outlasts circumstances", description: "Daily declarations plant a gladness in you the world cannot take."),
+                    SurveyValueProp(icon: "sun.max.fill", title: "Joy that outlasts circumstances", description: "God's Word planted daily grows a gladness the world cannot take."),
                     SurveyValueProp(icon: "music.note", title: "Speak gladness over heaviness", description: "Declaring God's promises out loud lifts what the day tries to put on you."),
                     SurveyValueProp(icon: "arrow.counterclockwise.circle.fill", title: "Start mornings with His delight", description: "Audio devotionals tune your heart to God's joy before anything else speaks."),
                     SurveyValueProp(icon: "person.2.fill", title: "Rooted in the God of joy", description: "Join \(SocialProof.believersCount) believers whose joy is anchored in Christ, not circumstances.")
@@ -104,7 +104,7 @@ struct SurveyPersonalizationEngine {
                 headline: "Walk Like You Know Who Made You.",
                 subheadline: "God did not give you a spirit of fear. It's time to start living like it.",
                 valueProps: [
-                    SurveyValueProp(icon: "bolt.fill", title: "Bold in every room", description: "Daily declarations build confidence rooted in who made you, not how you feel."),
+                    SurveyValueProp(icon: "bolt.fill", title: "Bold in every room", description: "Daily declarations build confidence anchored in who made you, not how you feel."),
                     SurveyValueProp(icon: "crown.fill", title: "Speak boldness until it sticks", description: "Your voice agreeing with God's Word dismantles timidity at the root."),
                     SurveyValueProp(icon: "figure.stand", title: "Courage in your ears daily", description: "Audio devotionals remind you whose you are before doubt gets a word in."),
                     SurveyValueProp(icon: "person.2.fill", title: "Fearless in your identity", description: "Join \(SocialProof.believersCount) believers walking in God-given boldness every day.")
@@ -119,7 +119,7 @@ struct SurveyPersonalizationEngine {
                 subheadline: "Healing isn't just physical. SpeakLife speaks God's Word over your whole person.",
                 valueProps: [
                     SurveyValueProp(icon: "leaf.fill", title: "Speak life over your body", description: "Daily healing declarations put God's promises over every diagnosis and pain."),
-                    SurveyValueProp(icon: "heart.fill", title: "Declare healing out loud", description: "Spoken Scripture is how you take hold of what Jesus already paid for."),
+                    SurveyValueProp(icon: "heart.fill", title: "Faith stronger than fear", description: "Renew your mind daily until God's promises outweigh every report."),
                     SurveyValueProp(icon: "waveform.path.ecg", title: "Healing promises in your ears", description: "Audio devotionals soak your mind in God's restoring Word, morning and night."),
                     SurveyValueProp(icon: "person.2.fill", title: "Whole in body and soul", description: "Join \(SocialProof.believersCount) believers speaking God's healing over their lives.")
                 ],
