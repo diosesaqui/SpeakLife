@@ -42,6 +42,7 @@ struct ModernDailyChecklistView: View {
     // the user over to the Speak feed and presenting there).
     @State private var showDailyBurst = false
     @State private var showPersonalDeclarationCard = false
+    @State private var showPremium = false
     @State private var showBreakthroughFlow = false
     @State private var showNewDeclarationSheet = false
     @State private var warriorRoomTestimonyPrefill: WarriorRoomTestimonyPrefill?
@@ -183,6 +184,25 @@ struct ModernDailyChecklistView: View {
                             .overlay(Capsule().stroke(Color.white.opacity(0.25), lineWidth: 1))
                             .shadow(color: Color.orange.opacity(0.45), radius: 8, x: 0, y: 3)
                             .accessibilityLabel("\(viewModel.streakStats.currentStreak) day streak")
+                        }
+
+                        // Crown upgrade chip — non-subscribers only. Mirrors the
+                        // Speak feed's crown button so the paywall stays one tap
+                        // away now that Today owns the home tab.
+                        if !subscriptionStore.isPremium {
+                            Button(action: {
+                                showPremium = true
+                                Analytics.logEvent(Event.tryPremiumTapped, parameters: ["source": "today_tab"])
+                            }) {
+                                Image(systemName: "crown.fill")
+                                    .font(.system(size: 15, weight: .semibold))
+                                    .foregroundColor(DS.Palette.gold)
+                                    .frame(width: 34, height: 34)
+                                    .background(Circle().fill(Color.white.opacity(0.12)))
+                                    .overlay(Circle().stroke(Color.white.opacity(0.25), lineWidth: 1))
+                            }
+                            .accessibilityLabel("Upgrade to Premium")
+                            .padding(.leading, 4)
                         }
 
                         // Close button only when presented modally — the root
@@ -396,6 +416,14 @@ struct ModernDailyChecklistView: View {
         .background(themeBackground)
         .sheet(isPresented: $showInfoSheet) {
             DailyChecklistInfoSheet()
+        }
+        // Paywall from the header crown chip. Env objects injected explicitly
+        // since SwiftUI doesn't reliably propagate them across the sheet hop.
+        .sheet(isPresented: $showPremium) {
+            PremiumView()
+                .environmentObject(subscriptionStore)
+                .environmentObject(appState)
+                .environmentObject(declarationStore)
         }
         .sheet(isPresented: $showDevotional) {
             DevotionalView(viewModel: devotionalViewModel)
