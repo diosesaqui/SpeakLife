@@ -407,6 +407,7 @@ struct QuizOnboardingView: View {
         case rating            // App Store review prompt — slotted before paywall so every funnel-progress user sees it (ASO velocity); placed AFTER matched declaration so the user has had at least one personalized payoff and BEFORE personalDeclaration/paywall so it doesn't compete with the trial decision
         case personalDeclaration
         case commitmentHold
+        case testimonials      // App Store review wall — social proof right before the ask
         case paywall
         case notificationTime  // post-paywall: pick a window, then iOS permission prompt
     }
@@ -485,6 +486,10 @@ struct QuizOnboardingView: View {
                 case .commitmentHold:
                     SurveyCommitmentHoldScreen(size: size) {
                         advanceFromCommitmentHold()
+                    }
+                case .testimonials:
+                    TestimonialWallView(size: size, flow: "quiz") {
+                        advanceFromTestimonials()
                     }
                 case .paywall:
                     HighConversionPaywallView(callback: {
@@ -734,6 +739,11 @@ struct QuizOnboardingView: View {
             "segment": segment.rawValue,
             "total_duration_seconds": totalDuration
         ])
+        transition(to: .testimonials)
+    }
+
+    private func advanceFromTestimonials() {
+        Juice.play(.tapLight)
         transition(to: .paywall)
     }
 

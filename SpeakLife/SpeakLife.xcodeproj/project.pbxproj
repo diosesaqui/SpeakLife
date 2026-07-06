@@ -214,6 +214,7 @@
 		45C15A7A2F3084F7006171F5 /* WldehBibleAPIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45C15A792F3084F7006171F5 /* WldehBibleAPIService.swift */; };
 		45C15A8C2F31BEB7006171F5 /* NewOnboardingScreens.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45C15A8B2F31BEB7006171F5 /* NewOnboardingScreens.swift */; };
 		45C15A8E2F35751A006171F5 /* TestimonialsOnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45C15A8D2F35751A006171F5 /* TestimonialsOnboardingView.swift */; };
+		45C15AB42F400001006171F5 /* TestimonialWallView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45C15AB32F400001006171F5 /* TestimonialWallView.swift */; };
 		45C15A902F357857006171F5 /* LazyJSONLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45C15A8F2F357857006171F5 /* LazyJSONLoader.swift */; };
 		45C15A922F36FCCF006171F5 /* SpiritualWarfareOnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45C15A912F36FCCF006171F5 /* SpiritualWarfareOnboardingView.swift */; };
 		45C15A942F3704EB006171F5 /* SpiritualWarfareContentScreens.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45C15A932F3704EB006171F5 /* SpiritualWarfareContentScreens.swift */; };
@@ -630,6 +631,7 @@
 		45C15A792F3084F7006171F5 /* WldehBibleAPIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WldehBibleAPIService.swift; sourceTree = "<group>"; };
 		45C15A8B2F31BEB7006171F5 /* NewOnboardingScreens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewOnboardingScreens.swift; sourceTree = "<group>"; };
 		45C15A8D2F35751A006171F5 /* TestimonialsOnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestimonialsOnboardingView.swift; sourceTree = "<group>"; };
+		45C15AB32F400001006171F5 /* TestimonialWallView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestimonialWallView.swift; sourceTree = "<group>"; };
 		45C15A8F2F357857006171F5 /* LazyJSONLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LazyJSONLoader.swift; sourceTree = "<group>"; };
 		45C15A912F36FCCF006171F5 /* SpiritualWarfareOnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpiritualWarfareOnboardingView.swift; sourceTree = "<group>"; };
 		45C15A932F3704EB006171F5 /* SpiritualWarfareContentScreens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpiritualWarfareContentScreens.swift; sourceTree = "<group>"; };
@@ -1747,6 +1749,7 @@
 				45B07A412D24D98300EA2F5D /* WhatsNewView.swift */,
 				7AA870BF28DACCB700134ADB /* TimeNotificationStepper.swift */,
 				45C15A8D2F35751A006171F5 /* TestimonialsOnboardingView.swift */,
+				45C15AB32F400001006171F5 /* TestimonialWallView.swift */,
 				7AA870C028DACCB700134ADB /* IntroScene.swift */,
 				45F3E7552EAAAD38002B1F4E /* AffirmationsTutorial.swift */,
 				45F3E7592EAAAD41002B1F4E /* CreateYourOwnTutorial.swift */,
@@ -2216,6 +2219,7 @@
 				45F3E75E2EAAB36B002B1F4E /* DevotionalsTutorial.swift in Sources */,
 				0E1A8C97F61B9FB156F0F50F /* HowToUseSpeakLifeView.swift in Sources */,
 				45C15A8E2F35751A006171F5 /* TestimonialsOnboardingView.swift in Sources */,
+				45C15AB42F400001006171F5 /* TestimonialWallView.swift in Sources */,
 				7AA870CF28DACCB700134ADB /* MailView.swift in Sources */,
 				45F3E75B2EAAAD41002B1F4E /* CreateYourOwnTutorial.swift in Sources */,
 				7AF18C7D29FD1A67005A6E31 /* AdBanner.swift in Sources */,
@@ -2640,7 +2644,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 4.41;
+				MARKETING_VERSION = 4.42;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Franchiz.SpeakLife;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -2683,7 +2687,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 4.41;
+				MARKETING_VERSION = 4.42;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Franchiz.SpeakLife;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -2716,7 +2720,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 4.41;
+				MARKETING_VERSION = 4.42;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Franchiz.SpeakLife.PromisesWidget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
@@ -2746,7 +2750,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 4.41;
+				MARKETING_VERSION = 4.42;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Franchiz.SpeakLife.PromisesWidget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;

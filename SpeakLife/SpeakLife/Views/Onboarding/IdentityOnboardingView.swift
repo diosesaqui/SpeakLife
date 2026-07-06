@@ -104,6 +104,8 @@ struct IdentityOnboardingView: View {
                 savedDeclaration = declaration
                 advance()
             }
+        case .testimonials:
+            TestimonialWallView(size: size, flow: "identity") { advance() }
         case .paywall:
             HighConversionPaywallView(callback: { advance() }, source: "onboarding", isHardPaywall: true)
         case .notificationTime:
@@ -131,7 +133,8 @@ struct IdentityOnboardingView: View {
 
     private func advance() {
         Juice.play(.tapLight)
-        Analytics.logEvent("identity_step_completed", parameters: ["step": currentStep.rawValue])
+        // flow_schema 2 = testimonial wall inserted before paywall (absent/1 = original layout); bump when step raw values are renumbered again.
+        Analytics.logEvent("identity_step_completed", parameters: ["step": currentStep.rawValue, "flow_schema": 2])
 
         switch currentStep {
         case .notificationTime:
@@ -210,8 +213,9 @@ enum IdentityStep: Int, CaseIterable {
     case firstDeclaration = 5
     case personalDeclaration = 6
     case rating          = 7   // rating ask at the personal-declaration peak
-    case paywall         = 8
-    case notificationTime = 9  // terminal — completes onboarding
+    case testimonials    = 8   // App Store review wall — social proof right before the ask
+    case paywall         = 9
+    case notificationTime = 10 // terminal — completes onboarding
 
     var valueScreenIndex: Int? {
         let screens: [IdentityStep] = [.lie, .verdict, .named, .mechanism, .identityPicker]
