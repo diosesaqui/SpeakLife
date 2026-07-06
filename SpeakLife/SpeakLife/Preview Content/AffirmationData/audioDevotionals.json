@@ -587,7 +587,7 @@
             "episode": 1
         },
         {
-            "id": "speaklife-s3e11.mp3",
+            "id": "speaklife-s3ep11.mp3",
             "title": "Keep on Hearing",
             "subtitle": "S3 Episode 11",
             "duration": "2m",
@@ -596,17 +596,6 @@
             "tag": "speaklife",
             "season": 3,
             "episode": 11
-        },
-        {
-            "id": "speaklife-s3ep7.mp3",
-            "title": "A Sound Mind",
-            "subtitle": "S3 Episode 7",
-            "duration": "3m",
-            "imageUrl": "devotional",
-            "isPremium": true,
-            "tag": "speaklife",
-            "season": 3,
-            "episode": 7
         },
         {
             "id": "speaklife-s3ep10.mp3",
@@ -640,6 +629,17 @@
             "tag": "speaklife",
             "season": 3,
             "episode": 8
+        },
+        {
+            "id": "speaklife-s3ep7.mp3",
+            "title": "A Sound Mind",
+            "subtitle": "S3 Episode 7",
+            "duration": "3m",
+            "imageUrl": "devotional",
+            "isPremium": true,
+            "tag": "speaklife",
+            "season": 3,
+            "episode": 7
         },
         {
             "id": "speaklife-s3ep6.mp3",
