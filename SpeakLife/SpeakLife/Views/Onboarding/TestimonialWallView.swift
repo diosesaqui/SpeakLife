@@ -106,14 +106,14 @@ struct TestimonialWallView: View {
                             )
                     }
                 }
-                Text("US APP STORE RATING")
+                Text("APP STORE RATING")
                     .font(.system(size: 11, weight: .semibold, design: .rounded))
                     .tracking(2.0)
                     .foregroundColor(.white.opacity(0.5))
                     .padding(.top, 2)
             }
             .accessibilityElement(children: .ignore)
-            .accessibilityLabel("Rated 4.9 out of 5 stars on the US App Store")
+            .accessibilityLabel("Rated 4.9 out of 5 stars on the App Store")
 
             Text("Believers everywhere are\nspeaking life. Hear them.")
                 .font(.system(size: 25, weight: .bold, design: .rounded))
