@@ -161,6 +161,8 @@ struct ProductOnboardingView: View {
                 dailyMinutes: responses.dailyMinutes,
                 victoryEcho: responses.victoryEcho  // nil in quiz v1
             ) { advance() }
+        case .testimonials:
+            TestimonialWallView(size: size, flow: "product") { advance() }
         case .paywall:
             HighConversionPaywallView(callback: { advance() }, source: "onboarding", isHardPaywall: true)
         case .notificationTime:
@@ -186,8 +188,8 @@ struct ProductOnboardingView: View {
 
     private func advance() {
         Juice.play(.tapLight)
-        // flow_schema 2 = this branch's step layout (1 = pre-renumbering); bump when step raw values are renumbered again.
-        AnalyticsService.shared.track("product_step_completed", parameters: ["step": currentStep.rawValue, "flow_schema": 2])
+        // flow_schema 3 = testimonial wall inserted before paywall (2 = pre-testimonials, 1 = pre-renumbering); bump when step raw values are renumbered again.
+        AnalyticsService.shared.track("product_step_completed", parameters: ["step": currentStep.rawValue, "flow_schema": 3])
 
         // Leaving the category picker: stamp the segment so downstream paywall
         // events carry a meaningful segment for this arm (quiz sets its own).
@@ -252,7 +254,7 @@ struct ProductOnboardingView: View {
             "victory_looks_like": responses.victoryOutcome ?? "unknown",
             "belief": responses.beliefLevel ?? "unknown",
             "quiz_version": quizV2 ? "v2" : "v1",
-            "flow_schema": 2,  // joins with product_step_completed; bump when step raw values are renumbered again
+            "flow_schema": 3,  // joins with product_step_completed; bump when step raw values are renumbered again
             "set_personal_declaration": (savedDeclaration != nil) as NSNumber
         ])
 
@@ -305,8 +307,9 @@ enum ProductStep: Int, CaseIterable {
     case rating          = 14  // rating ask at the personal-declaration peak
     case planBuilding    = 15  // "building your plan" loader (transition, no bar)
     case planReveal      = 16  // named 30-day plan reveal — sets up the paywall ask
-    case paywall         = 17
-    case notificationTime = 18 // terminal — completes onboarding
+    case testimonials    = 17  // App Store review wall — social proof right before the ask
+    case paywall         = 18
+    case notificationTime = 19 // terminal — completes onboarding
 
     // Index within the value-led intro + quiz screens, used to drive the
     // progress bar (visible investment across the question screens too).

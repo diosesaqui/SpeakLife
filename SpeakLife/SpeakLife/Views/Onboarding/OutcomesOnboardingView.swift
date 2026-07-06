@@ -169,6 +169,8 @@ struct OutcomesOnboardingView: View {
                 dailyMinutes: responses.dailyMinutes,
                 victoryEcho: responses.victoryEcho  // nil in quiz v1
             ) { advance() }
+        case .testimonials:
+            TestimonialWallView(size: size, flow: "outcomes") { advance() }
         case .paywall:
             HighConversionPaywallView(callback: { advance() }, source: "onboarding", isHardPaywall: true)
         case .notificationTime:
@@ -194,8 +196,8 @@ struct OutcomesOnboardingView: View {
 
     private func advance() {
         Juice.play(.tapLight)
-        // flow_schema 2 = matched-to-warfare layout (stakes + experience recap + extended quiz + plan reveal); 1 = original short outcomes flow. Bump when step raw values are renumbered again.
-        AnalyticsService.shared.track("outcomes_step_completed", parameters: ["step": currentStep.rawValue, "flow_schema": 2])
+        // flow_schema 3 = testimonial wall inserted before paywall (2 = matched-to-warfare layout, 1 = original short outcomes flow). Bump when step raw values are renumbered again.
+        AnalyticsService.shared.track("outcomes_step_completed", parameters: ["step": currentStep.rawValue, "flow_schema": 3])
 
         // Leaving the outcome picker: stamp the segment so downstream paywall
         // events carry a meaningful segment for this arm (quiz sets its own).
@@ -260,7 +262,7 @@ struct OutcomesOnboardingView: View {
             "victory_looks_like": responses.victoryOutcome ?? "unknown",
             "belief": responses.beliefLevel ?? "unknown",
             "quiz_version": quizV2 ? "v2" : "v1",
-            "flow_schema": 2,  // joins with outcomes_step_completed; bump when step raw values are renumbered again
+            "flow_schema": 3,  // joins with outcomes_step_completed; bump when step raw values are renumbered again
             "set_personal_declaration": (savedDeclaration != nil) as NSNumber
         ])
 
@@ -315,8 +317,9 @@ enum OutcomesStep: Int, CaseIterable {
     case rating          = 16  // rating ask at the personal-declaration peak
     case planBuilding    = 17  // "building your plan" loader (transition, no bar)
     case planReveal      = 18  // named 30-day plan reveal — sets up the paywall ask
-    case paywall         = 19
-    case notificationTime = 20 // terminal — completes onboarding
+    case testimonials    = 19  // App Store review wall — social proof right before the ask
+    case paywall         = 20
+    case notificationTime = 21 // terminal — completes onboarding
 
     func valueScreenIndex(quizV2: Bool) -> Int? {
         var screens: [OutcomesStep] = [
