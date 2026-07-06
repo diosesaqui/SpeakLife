@@ -997,7 +997,7 @@ struct TermsConditionsView: View {
 
                 Text("10. Governing Law")
                     .font(.subheadline)
-                Text("* These Terms are governed by the laws of the United States and the state in which we are organized, without regard to conflict of law principles, except that the Federal Arbitration Act governs the arbitration provisions above.")
+                Text("* These Terms are governed by the laws of the United States and the State of Wyoming, without regard to conflict of law principles, except that the Federal Arbitration Act governs the arbitration provisions above.")
                     .font(.body)
 
                 Text("11. Changes to These Terms")
