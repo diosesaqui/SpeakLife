@@ -4,8 +4,8 @@
 //
 //  Full-page scrollable testimonial wall shown in every active onboarding
 //  arm right before the paywall. Stacks real App Store reviews (5-star,
-//  verbatim, no developer responses) under a 4.8-rating header so the user
-//  hits the pricing decision right after seeing the proof.
+//  verbatim, no developer responses, no dates) under a 4.9-rating header so
+//  the user hits the pricing decision right after seeing the proof.
 //
 //  Distinct from the dormant TestimonialsOnboardingView carousel: this is a
 //  scroll wall (all reviews visible by scrolling) with a sticky continue CTA.
@@ -21,6 +21,9 @@ struct TestimonialWallView: View {
     let onContinue: () -> Void
 
     @State private var v = false
+    // 4.9 = current US App Store rating (primary market). Update when it moves.
+    private static let rating = 4.9
+    @State private var displayedRating: Double = 0
 
     private static let starGold = Color(red: 1.0, green: 0.8, blue: 0)
 
@@ -41,31 +44,66 @@ struct TestimonialWallView: View {
                     }
                     .padding(.horizontal, 20)
 
-                    Spacer().frame(height: 12)
+                    Spacer().frame(height: 24)
                 }
             }
+            // Content dissolves just above the CTA instead of hard-stopping.
+            .mask(
+                VStack(spacing: 0) {
+                    Rectangle().fill(Color.black)
+                    LinearGradient(
+                        gradient: Gradient(colors: [.black, .clear]),
+                        startPoint: .top, endPoint: .bottom
+                    )
+                    .frame(height: 48)
+                }
+            )
 
             ProductContinueButton(label: "Continue →") { onContinue() }
-                .padding(.top, 10)
+                .padding(.top, 2)
                 .padding(.bottom, 36)
         }
+        // The wall always sits on the dark onboarding photo; pin the scheme so
+        // the card material never flips to its light appearance.
+        .environment(\.colorScheme, .dark)
         .onAppear {
             AnalyticsService.shared.track("testimonial_wall_shown", parameters: ["flow": flow])
             withAnimation { v = true }
         }
+        .task { await countUpRating() }
+    }
+
+    // Steps the big numeral 0.0 → 4.9 over ~0.6s (spring-free, ends exact).
+    private func countUpRating() async {
+        for value in stride(from: 0.7, through: Self.rating, by: 0.35) {
+            try? await Task.sleep(nanoseconds: 45_000_000)
+            withAnimation(.easeOut(duration: 0.08)) {
+                displayedRating = min(value, Self.rating)
+            }
+        }
+        withAnimation(.easeOut(duration: 0.1)) { displayedRating = Self.rating }
     }
 
     private var header: some View {
         VStack(spacing: 18) {
             VStack(spacing: 8) {
-                Text("4.8")
+                Text(String(format: "%.1f", displayedRating))
                     .font(.system(size: 64, weight: .bold, design: .rounded))
                     .foregroundColor(.white)
+                    .monospacedDigit()
+                    .contentTransition(.numericText(value: displayedRating))
                 HStack(spacing: 5) {
-                    ForEach(0..<5) { _ in
+                    ForEach(0..<5) { index in
                         Image(systemName: "star.fill")
                             .font(.system(size: 17, weight: .semibold))
                             .foregroundColor(Self.starGold)
+                            .scaleEffect(v ? 1 : 0.3)
+                            .opacity(v ? 1 : 0)
+                            .animation(
+                                .spring(response: 0.35, dampingFraction: 0.6)
+                                    .delay(0.15 + Double(index) * 0.09),
+                                value: v
+                            )
                     }
                 }
                 Text("APP STORE RATING")
@@ -74,6 +112,8 @@ struct TestimonialWallView: View {
                     .foregroundColor(.white.opacity(0.5))
                     .padding(.top, 2)
             }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("Rated 4.9 out of 5 stars on the App Store")
 
             Text("Believers everywhere are\nspeaking life. Hear them.")
                 .font(.system(size: 25, weight: .bold, design: .rounded))
@@ -105,6 +145,10 @@ struct TestimonialWallView: View {
                             .foregroundColor(Self.starGold)
                     }
                 }
+                // Every wall review is 5 stars; VoiceOver reads it once here
+                // instead of five star glyphs per card.
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("5 out of 5 stars")
                 Spacer()
                 Text(review.author)
                     .font(.system(size: 14, weight: .regular, design: .rounded))
@@ -123,12 +167,13 @@ struct TestimonialWallView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
             RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(Color.white.opacity(0.08))
+                .fill(.ultraThinMaterial)
                 .overlay(
                     RoundedRectangle(cornerRadius: 20, style: .continuous)
-                        .strokeBorder(Color.white.opacity(0.07), lineWidth: 1)
+                        .strokeBorder(Color.white.opacity(0.08), lineWidth: 1)
                 )
         )
+        .accessibilityElement(children: .combine)
     }
 }
 
