@@ -56,65 +56,79 @@ struct TestimonialWallView: View {
     }
 
     private var header: some View {
-        VStack(spacing: 14) {
-            VStack(spacing: 6) {
+        VStack(spacing: 18) {
+            VStack(spacing: 8) {
                 Text("4.8")
-                    .font(.system(size: 56, weight: .black, design: .rounded))
+                    .font(.system(size: 64, weight: .bold, design: .rounded))
                     .foregroundColor(.white)
-                HStack(spacing: 4) {
+                HStack(spacing: 5) {
                     ForEach(0..<5) { _ in
                         Image(systemName: "star.fill")
-                            .font(.system(size: 18))
+                            .font(.system(size: 17, weight: .semibold))
                             .foregroundColor(Self.starGold)
                     }
                 }
                 Text("APP STORE RATING")
                     .font(.system(size: 11, weight: .semibold, design: .rounded))
-                    .tracking(1.5)
-                    .foregroundColor(.white.opacity(0.55))
+                    .tracking(2.0)
+                    .foregroundColor(.white.opacity(0.5))
+                    .padding(.top, 2)
             }
 
             Text("Believers everywhere are\nspeaking life. Hear them.")
-                .font(.system(size: 24, weight: .bold, design: .rounded))
+                .font(.system(size: 25, weight: .bold, design: .rounded))
                 .foregroundColor(.white)
                 .multilineTextAlignment(.center)
+                .lineSpacing(2)
                 .fixedSize(horizontal: false, vertical: true)
         }
         .padding(.horizontal, 28)
-        .padding(.bottom, 6)
+        .padding(.bottom, 10)
     }
 
+    // Mirrors the App Store review card layout: bold title, then stars on the
+    // left with the reviewer name right-aligned, then the quote. No dates.
     private func reviewCard(_ review: WallReview) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(spacing: 3) {
-                ForEach(0..<5) { _ in
-                    Image(systemName: "star.fill")
-                        .font(.system(size: 13))
-                        .foregroundColor(Self.starGold)
-                }
-                Spacer()
-            }
-
+        VStack(alignment: .leading, spacing: 8) {
             if !review.title.isEmpty {
                 Text(review.title)
-                    .font(.system(size: 17, weight: .bold, design: .rounded))
+                    .font(.system(size: 17, weight: .semibold, design: .rounded))
                     .foregroundColor(.white)
                     .fixedSize(horizontal: false, vertical: true)
             }
 
+            HStack(alignment: .center) {
+                HStack(spacing: 2.5) {
+                    ForEach(0..<5) { _ in
+                        Image(systemName: "star.fill")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundColor(Self.starGold)
+                    }
+                }
+                Spacer()
+                Text(review.author)
+                    .font(.system(size: 14, weight: .regular, design: .rounded))
+                    .foregroundColor(.white.opacity(0.45))
+                    .lineLimit(1)
+            }
+
             Text(review.quote)
                 .font(.system(size: 15, weight: .regular, design: .rounded))
-                .foregroundColor(.white.opacity(0.9))
-                .lineSpacing(4)
+                .foregroundColor(.white.opacity(0.88))
+                .lineSpacing(5)
                 .fixedSize(horizontal: false, vertical: true)
-
-            Text("– \(review.author)")
-                .font(.system(size: 13, weight: .medium, design: .rounded))
-                .foregroundColor(.white.opacity(0.6))
+                .padding(.top, 4)
         }
-        .padding(18)
+        .padding(20)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .dsGlass(cornerRadius: DS.Radius.md)
+        .background(
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .fill(Color.white.opacity(0.08))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 20, style: .continuous)
+                        .strokeBorder(Color.white.opacity(0.07), lineWidth: 1)
+                )
+        )
     }
 }
 
