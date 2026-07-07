@@ -23,19 +23,21 @@ final class BatchFetchCoordinator {
     // MARK: - Batch Fetch All Favorites
     func fetchAllFavoritesOptimized() async -> (declarations: [Declaration], audio: [AudioDeclaration]) {
         await withCheckedContinuation { continuation in
-            Task {
+            // All fetching and object access must happen on the context's own
+            // queue; the context merges CloudKit changes concurrently and
+            // touching its objects from another thread crashes.
+            context.perform { [context] in
                 var declarations: [Declaration] = []
                 var audioDeclarations: [AudioDeclaration] = []
-                
+
                 do {
-                    // Batch fetch with optimized request
+                    // Fully materialize results; no lazy batch faulting so
+                    // nothing touches the context after the fetch returns
                     let declarationRequest = DeclarationFavoriteEntry.fetchRequest()
-                    declarationRequest.fetchBatchSize = 50
                     declarationRequest.returnsObjectsAsFaults = false
                     declarationRequest.relationshipKeyPathsForPrefetching = []
-                    
+
                     let audioRequest = AudioFavoriteEntry.fetchRequest()
-                    audioRequest.fetchBatchSize = 50
                     audioRequest.returnsObjectsAsFaults = false
                     
                     // Fetch declaration favorites
@@ -92,19 +94,17 @@ final class BatchFetchCoordinator {
     // MARK: - Batch Fetch MyOwn Content
     func fetchMyOwnContentOptimized() async -> [Declaration] {
         await withCheckedContinuation { continuation in
-            Task {
+            context.perform { [context] in
                 var declarations: [Declaration] = []
-                
+
                 do {
                     // Fetch journal entries
                     let journalRequest = JournalEntry.fetchRequest()
-                    journalRequest.fetchBatchSize = 50
                     journalRequest.returnsObjectsAsFaults = false
                     journalRequest.predicate = NSPredicate(format: "category == %@", "myOwn")
-                    
+
                     // Fetch affirmation entries
                     let affirmationRequest = AffirmationEntry.fetchRequest()
-                    affirmationRequest.fetchBatchSize = 50
                     affirmationRequest.returnsObjectsAsFaults = false
                     affirmationRequest.predicate = NSPredicate(format: "category == %@", "myOwn")
                     
