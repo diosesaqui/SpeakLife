@@ -37,6 +37,11 @@
  *                   "body":"...", "messageTitle":"...", "messageBody":"..." }'
  *  (Or target a custom topic with "topic":"<name>".)
  *
+ *  IMPORTANT: "token" and "broadcast"/"topic" are mutually exclusive. Sending
+ *  both is rejected with a 400 — a leftover test token would otherwise turn a
+ *  broadcast into a single-device send. In the iPhone Shortcut, make sure the
+ *  JSON body has NO "token" field when broadcasting.
+ *
  *  Add "dryRun": true to validate without sending. Note: topic sends can't
  *  report a subscriber count (FCM doesn't expose it) — a dry run only echoes
  *  the target topic.
@@ -122,6 +127,20 @@ exports.sendPersonalMessage = onRequest(
     const data = buildData(messageTitle, messageBody);
     const apns = buildApns();
 
+    // Ambiguous target: a leftover test "token" alongside "broadcast"/"topic"
+    // used to silently win, so a "broadcast" only ever reached the one test
+    // device. Refuse loudly instead of guessing.
+    const wantsTopic =
+      broadcast === true || (typeof topic === 'string' && topic.trim());
+    if (token && wantsTopic) {
+      res.status(400).json({
+        error:
+          'Provide either "token" (single test device) OR "broadcast"/"topic" — not both. ' +
+          'To reach all users, delete the "token" field and keep "broadcast": true.',
+      });
+      return;
+    }
+
     try {
       // ── Single device (testing) ──────────────────────────────────────────
       if (token) {
@@ -135,7 +154,7 @@ exports.sendPersonalMessage = onRequest(
       }
 
       // ── Broadcast to every device via the allUsers topic ─────────────────
-      if (broadcast === true || (typeof topic === 'string' && topic.trim())) {
+      if (wantsTopic) {
         const targetTopic =
           typeof topic === 'string' && topic.trim()
             ? topic.trim()

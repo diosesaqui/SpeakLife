@@ -65,6 +65,11 @@ if [[ -z "$TOKEN" && "$BROADCAST" -eq 0 ]]; then
   exit 1
 fi
 
+if [[ -n "$TOKEN" && "$BROADCAST" -eq 1 ]]; then
+  echo "Error: --test and --broadcast are mutually exclusive. Drop --test to reach all users." >&2
+  exit 1
+fi
+
 # Build JSON + POST in python3 (ships with macOS dev tools) so message text
 # with quotes/newlines is escaped safely — no shell-quoting headaches.
 MSG_FN_URL="$MSG_FN_URL" \
