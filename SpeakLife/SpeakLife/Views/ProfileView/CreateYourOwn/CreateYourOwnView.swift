@@ -9,6 +9,13 @@ import SwiftUI
 import FirebaseAnalytics
 
 
+// Wraps the entry editor's presentation state so new-entry (nil) and
+// edit-entry (declaration) flows share one item-driven cover.
+private struct EntrySheet: Identifiable {
+    let id = UUID()
+    let declaration: Declaration?
+}
+
 struct CreateYourOwnView: View {
     @EnvironmentObject var subscriptionStore: SubscriptionStore
     @EnvironmentObject var appState: AppState
@@ -16,8 +23,7 @@ struct CreateYourOwnView: View {
     @Environment(\.colorScheme) var colorScheme
     @StateObject private var syncMonitor = CloudKitSyncMonitor()
     @State private var showShareSheet = false
-    @State private var showFullScreenEntry = false
-    @State private var editingDeclaration: Declaration?
+    @State private var entrySheet: EntrySheet?
     @State private var selectedDeclaration: Declaration?
     @State private var animate = false
     @State private var selectedContentType: ContentType = .affirmation
@@ -53,16 +59,18 @@ struct CreateYourOwnView: View {
             configureView()
             
         }
-        .fullScreenCover(isPresented: $showFullScreenEntry) {
+        // Item-based presentation guarantees the tapped declaration is available
+        // when the cover's content is built, so editing always opens with the
+        // existing text populated on the first tap.
+        .fullScreenCover(item: $entrySheet) { sheet in
             FullScreenEntryView(
                 contentType: selectedContentType,
-                existingText: editingDeclaration?.text ?? "",
-                isEditing: editingDeclaration != nil,
-                editingDeclaration: editingDeclaration
+                existingText: sheet.declaration?.text ?? "",
+                isEditing: sheet.declaration != nil,
+                editingDeclaration: sheet.declaration
             )
             .environmentObject(declarationStore)
             .onDisappear {
-                editingDeclaration = nil
                 declarationStore.refreshCreateOwn()
                 appState.requestReviewIfEligible(trigger: .personalDeclarationCreated)
             }
@@ -291,7 +299,7 @@ struct CreateYourOwnView: View {
     }
     
     private var addButton: some View {
-        Button(action: { showFullScreenEntry = true }) {
+        Button(action: { entrySheet = EntrySheet(declaration: nil) }) {
             Image(systemName: "plus")
                 .font(.system(size: 22, weight: .bold))
                 .frame(width: 30, height: 30)
@@ -309,8 +317,7 @@ struct CreateYourOwnView: View {
             // Delete from store in background
             declarationStore.removeOwn(declaration: declaration)
         } else {
-            editingDeclaration = declaration
-            showFullScreenEntry = true
+            entrySheet = EntrySheet(declaration: declaration)
         }
     }
     
@@ -355,7 +362,7 @@ struct CreateYourOwnView: View {
     
     private var addAffirmationsButton: some View {
         Button(action: {
-            showFullScreenEntry = true
+            entrySheet = EntrySheet(declaration: nil)
         }) {
             Text("Create your own")
                 .font(.system(size: 18, weight: .semibold))
