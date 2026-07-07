@@ -173,5 +173,14 @@ service cloud.firestore {
     match /bibleChatUsage/{id} {
       allow read, write: if false;
     }
+
+    // ─── Scheduled broadcast messages ──────────────────────────────────
+    // Written exclusively by the sendPersonalMessage Cloud Function and
+    // delivered by processScheduledMessages via the admin SDK (which
+    // bypasses these rules). Clients must never see or touch queued sends.
+
+    match /scheduledMessages/{id} {
+      allow read, write: if false;
+    }
   }
 }
