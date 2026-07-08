@@ -12,6 +12,13 @@
  *   The iOS app routes deepLink == "message" to RemoteMessageView and shows the
  *   full messageBody (falling back to the banner title/body when absent).
  *
+ *   Every allUsers broadcast is ALSO written to the `speakLifeMessages`
+ *   Firestore collection, which backs the "Messages" tab in the app's
+ *   Community section — so the message history is visible to every user,
+ *   including those who install later or never tap the notification.
+ *   Single-device token sends (testing) and custom-topic sends are not
+ *   published there.
+ *
  * ─── Setup ──────────────────────────────────────────────────────────────────
  *  1. Set a shared secret (any random string) so only you can trigger sends:
  *       firebase functions:secrets:set MSG_BROADCAST_SECRET
@@ -83,6 +90,14 @@ const db = getFirestore();
 // via firestore.rules; only these functions touch it through the admin SDK.
 const SCHEDULED_COLLECTION = 'scheduledMessages';
 
+// Every allUsers broadcast is also published here so the app's Community
+// "Messages" tab can show the full history — including to users who install
+// after a message was sent or never tapped the notification. Read-only for
+// clients (see firestore.rules). Token (single-device test) sends and custom
+// topic sends are NOT published: only true everyone-broadcasts belong on the
+// public timeline.
+const MESSAGES_COLLECTION = 'speakLifeMessages';
+
 // Refuse schedules absurdly far out — almost always a typo'd year/timezone.
 const MAX_SCHEDULE_DAYS = 60;
 
@@ -109,6 +124,26 @@ function buildData(messageTitle, messageBody) {
 
 function buildApns() {
   return { payload: { aps: { sound: 'default' } } };
+}
+
+// Publish a delivered allUsers broadcast to the public timeline the app's
+// Community "Messages" tab reads. Resolves the display title/body with the
+// same fallback the iOS RemoteMessage uses (messageTitle/messageBody first,
+// banner title/body second). Never throws: the push already went out, so a
+// timeline write failure must not fail the send — it is logged instead.
+async function publishToMessagesTimeline(notification, data) {
+  try {
+    const title = (data.messageTitle || notification.title || '').trim();
+    const body = (data.messageBody || notification.body || '').trim();
+    if (!body) return;
+    await db.collection(MESSAGES_COLLECTION).add({
+      title,
+      body,
+      sentAt: FieldValue.serverTimestamp(),
+    });
+  } catch (err) {
+    console.error('publishToMessagesTimeline failed (push was still sent):', err);
+  }
 }
 
 // Resolve "delayMinutes" / "sendAt" into a future Date, or an error string.
@@ -324,6 +359,9 @@ exports.sendPersonalMessage = onRequest(
           return;
         }
         const id = await messaging.send({ notification, data, apns, topic: targetTopic });
+        if (targetTopic === ALL_USERS_TOPIC) {
+          await publishToMessagesTimeline(notification, data);
+        }
         res.json({ mode: 'topic', topic: targetTopic, messageId: id });
         return;
       }
@@ -376,6 +414,9 @@ exports.processScheduledMessages = onSchedule(
           sentAt: FieldValue.serverTimestamp(),
           messageId: id,
         });
+        if (!token && topic === ALL_USERS_TOPIC) {
+          await publishToMessagesTimeline(notification, data);
+        }
         console.log(`processScheduledMessages: sent ${doc.id} → ${token ? 'token' : `topic:${topic}`}`);
       } catch (err) {
         // Leave the error on the doc so a failed schedule is visible in the

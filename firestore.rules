@@ -182,5 +182,16 @@ service cloud.firestore {
     match /scheduledMessages/{id} {
       allow read, write: if false;
     }
+
+    // ─── Messages from SpeakLife (public broadcast timeline) ───────────
+    // Written exclusively by the sendPersonalMessage / processScheduledMessages
+    // Cloud Functions via the admin SDK whenever an allUsers broadcast is
+    // delivered. Backs the "Messages" tab in the app's Community section:
+    // anyone (including signed-out users) may read; clients never write.
+
+    match /speakLifeMessages/{id} {
+      allow read: if true;
+      allow write: if false;
+    }
   }
 }
