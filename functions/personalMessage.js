@@ -252,6 +252,14 @@ exports.sendPersonalMessage = onRequest(
     // both, so an explicit opt-out never silently lands on the public wall.
     const wantsSkipWall = skipWall === true || skipWall === 'true';
 
+    // Shortcuts "Ask Each Time" prompts submit empty strings when skipped.
+    // An empty delayMinutes/sendAt must mean "send now", not a 400 that
+    // silently kills the push (the Shortcut never surfaces the error).
+    const scheduleSendAt =
+      (typeof sendAt === 'string' && !sendAt.trim()) ? null : sendAt;
+    const scheduleDelayMinutes =
+      (typeof delayMinutes === 'string' && !delayMinutes.trim()) ? null : delayMinutes;
+
     // ── Manage scheduled sends ─────────────────────────────────────────────
     if (list === true) {
       const snap = await db
@@ -375,8 +383,8 @@ exports.sendPersonalMessage = onRequest(
     }
 
     // ── Scheduled send: store it; the cron delivers it when due ───────────
-    if (sendAt != null || delayMinutes != null) {
-      const { when, error } = parseSchedule(sendAt, delayMinutes);
+    if (scheduleSendAt != null || scheduleDelayMinutes != null) {
+      const { when, error } = parseSchedule(scheduleSendAt, scheduleDelayMinutes);
       if (error) {
         res.status(400).json({ error });
         return;
