@@ -288,13 +288,14 @@ exports.sendPersonalMessage = onRequest(
     const wantsSkipWall = skipWall === true ||
       (typeof skipWall === 'string' && skipWall.trim().toLowerCase() === 'true');
 
-    // Shortcuts "Ask Each Time" prompts submit empty strings when skipped.
-    // An empty delayMinutes/sendAt must mean "send now", not a 400 that
-    // silently kills the push (the Shortcut never surfaces the error).
-    const scheduleSendAt =
-      (typeof sendAt === 'string' && !sendAt.trim()) ? null : sendAt;
-    const scheduleDelayMinutes =
-      (typeof delayMinutes === 'string' && !delayMinutes.trim()) ? null : delayMinutes;
+    // Skipped Shortcuts prompts don't omit the field: a Text prompt submits
+    // an empty string and a Number prompt submits 0. Both must mean "send
+    // now", not a 400 that silently kills the push (the Shortcut never
+    // surfaces the error).
+    const isSkippedPrompt = (v) =>
+      v === 0 || v === '0' || (typeof v === 'string' && !v.trim());
+    const scheduleSendAt = isSkippedPrompt(sendAt) ? null : sendAt;
+    const scheduleDelayMinutes = isSkippedPrompt(delayMinutes) ? null : delayMinutes;
 
     // ── Manage scheduled sends ─────────────────────────────────────────────
     if (list === true) {
