@@ -248,9 +248,12 @@ exports.sendPersonalMessage = onRequest(
       return;
     }
 
-    // Shortcuts/curl often produce "true" (string) instead of true — honor
-    // both, so an explicit opt-out never silently lands on the public wall.
-    const wantsSkipWall = skipWall === true || skipWall === 'true';
+    // Shortcuts/curl often produce a string instead of a boolean, and typed
+    // prompt answers arrive with whatever capitalization the keyboard chose
+    // ("True"). Honor all of them, so an explicit opt-out never silently
+    // lands on the public wall.
+    const wantsSkipWall = skipWall === true ||
+      (typeof skipWall === 'string' && skipWall.trim().toLowerCase() === 'true');
 
     // Shortcuts "Ask Each Time" prompts submit empty strings when skipped.
     // An empty delayMinutes/sendAt must mean "send now", not a 400 that
