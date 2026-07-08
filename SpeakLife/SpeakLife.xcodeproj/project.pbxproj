@@ -247,6 +247,7 @@
 		45FF718E2E6294330048C523 /* declarationsv7_backup.json in Resources */ = {isa = PBXBuildFile; fileRef = 45FF718D2E6294330048C523 /* declarationsv7_backup.json */; };
 		45FF71912E64293D0048C523 /* ListenerMetricsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45FF718F2E64293D0048C523 /* ListenerMetricsService.swift */; };
 		503EFF467A63F444F830D175 /* PrayerWallView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E14CE42195E228734ACB9A2C /* PrayerWallView.swift */; };
+		4D5A9C3E1B7F42A08D6E2C11 /* SpeakLifeMessagesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D5A9C3E1B7F42A08D6E2C10 /* SpeakLifeMessagesView.swift */; };
 		63BFAA7702BD4A74B7B60D25 /* StructuredDayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F54505A7F8204E659571CE73 /* StructuredDayView.swift */; };
 		648AA3ADC45C405CBFB82934 /* AudioRecommendationEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0B7425FCF684D05A10C4758 /* AudioRecommendationEngine.swift */; };
 		7A00721828F8ED4A00965AF7 /* declarations.json in Resources */ = {isa = PBXBuildFile; fileRef = 7A00721728F8ED4A00965AF7 /* declarations.json */; };
@@ -802,6 +803,7 @@
 		DC73B2698B17B267C7A6F437 /* TrialExperienceService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TrialExperienceService.swift; sourceTree = "<group>"; };
 		DECL0001VERIF00001FILEREF /* DeclarationVerificationService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DeclarationVerificationService.swift; sourceTree = "<group>"; };
 		E14CE42195E228734ACB9A2C /* PrayerWallView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrayerWallView.swift; sourceTree = "<group>"; };
+		4D5A9C3E1B7F42A08D6E2C10 /* SpeakLifeMessagesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeakLifeMessagesView.swift; sourceTree = "<group>"; };
 		F0B7425FCF684D05A10C4758 /* AudioRecommendationEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioRecommendationEngine.swift; sourceTree = "<group>"; };
 		F54505A7F8204E659571CE73 /* StructuredDayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StructuredDayView.swift; sourceTree = "<group>"; };
 		F9A3081A52984B6AB0EECD7B /* StructuredDayLaunchTracker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StructuredDayLaunchTracker.swift; sourceTree = "<group>"; };
@@ -1873,6 +1875,7 @@
 				B0214EB35A67E7EF76115C40 /* PrayerWallPost.swift */,
 				6BA7EE898DF248C4EB6EDEB2 /* PrayerWallViewModel.swift */,
 				E14CE42195E228734ACB9A2C /* PrayerWallView.swift */,
+				4D5A9C3E1B7F42A08D6E2C10 /* SpeakLifeMessagesView.swift */,
 				4501F3A22F840A01008704F9 /* WarriorRoomTypes.swift */,
 				4501F3A42F840A01008704F9 /* Agreement.swift */,
 				35B4B5074F8CB5AB1E2EA0DC /* AppleSignInPromptView.swift */,
@@ -2180,6 +2183,7 @@
 				3D80B3F476D5A3B34421898E /* PrayerWallPost.swift in Sources */,
 				CF8E572E5459A038EEE73B3A /* PrayerWallViewModel.swift in Sources */,
 				503EFF467A63F444F830D175 /* PrayerWallView.swift in Sources */,
+				4D5A9C3E1B7F42A08D6E2C11 /* SpeakLifeMessagesView.swift in Sources */,
 				4501F3A12F840A01008704F9 /* WarriorRoomTypes.swift in Sources */,
 				4501F3A32F840A01008704F9 /* Agreement.swift in Sources */,
 				C1A98C89749C94FF718F1980 /* AppleSignInPromptView.swift in Sources */,

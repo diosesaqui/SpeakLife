@@ -21,6 +21,13 @@ struct RemoteMessage: Identifiable {
     let title: String
     let body: String
 
+    /// Direct construction — used by the Community "Messages" tab, which
+    /// reads past broadcasts from Firestore rather than a push payload.
+    init(title: String, body: String) {
+        self.title = title
+        self.body = body
+    }
+
     /// Builds a message from a notification's `userInfo`.
     ///
     /// - Returns: `nil` when there is no displayable body text, so callers can

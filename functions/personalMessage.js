@@ -12,6 +12,14 @@
  *   The iOS app routes deepLink == "message" to RemoteMessageView and shows the
  *   full messageBody (falling back to the banner title/body when absent).
  *
+ *   Every allUsers broadcast is ALSO written to the `speakLifeMessages`
+ *   Firestore collection, which backs the "Messages" tab in the app's
+ *   Community section — so the message history is visible to every user,
+ *   including those who install later or never tap the notification.
+ *   Single-device token sends (testing) and custom-topic sends are not
+ *   published there, and "skipWall": true opts any broadcast out (see the
+ *   Messages wall section below for that and typo deletion).
+ *
  * ─── Setup ──────────────────────────────────────────────────────────────────
  *  1. Set a shared secret (any random string) so only you can trigger sends:
  *       firebase functions:secrets:set MSG_BROADCAST_SECRET
@@ -55,6 +63,19 @@
  *    { "secret":"...", "list": true }            → list pending scheduled sends
  *    { "secret":"...", "cancel": "<doc id>" }    → cancel one before it sends
  *
+ *  ── Messages wall (Community → Messages tab) ─────────────────────────────
+ *  Every allUsers broadcast is also published to the public timeline the
+ *  app's Community "Messages" tab reads. To send a quick throwaway push
+ *  (holiday greeting etc.) WITHOUT putting it on the wall, add:
+ *    "skipWall": true
+ *  Works on immediate and scheduled sends. Every published send returns the
+ *  wall doc id as "wallMessageId" so a typo can be deleted right away.
+ *
+ *  Manage the wall (same URL, same secret — only you can do this; the app's
+ *  Firestore rules make the collection read-only for clients):
+ *    { "secret":"...", "listMessages": true }         → newest 25 wall posts
+ *    { "secret":"...", "deleteMessage": "<doc id>" }  → remove one from the wall
+ *
  *  Deploying this file the first time after adding scheduling:
  *    firebase deploy --only functions:sendPersonalMessage,functions:processScheduledMessages
  *
@@ -83,6 +104,14 @@ const db = getFirestore();
 // via firestore.rules; only these functions touch it through the admin SDK.
 const SCHEDULED_COLLECTION = 'scheduledMessages';
 
+// Every allUsers broadcast is also published here so the app's Community
+// "Messages" tab can show the full history — including to users who install
+// after a message was sent or never tapped the notification. Read-only for
+// clients (see firestore.rules). Token (single-device test) sends and custom
+// topic sends are NOT published: only true everyone-broadcasts belong on the
+// public timeline.
+const MESSAGES_COLLECTION = 'speakLifeMessages';
+
 // Refuse schedules absurdly far out — almost always a typo'd year/timezone.
 const MAX_SCHEDULE_DAYS = 60;
 
@@ -109,6 +138,33 @@ function buildData(messageTitle, messageBody) {
 
 function buildApns() {
   return { payload: { aps: { sound: 'default' } } };
+}
+
+// Publish a delivered broadcast to the public timeline the app's Community
+// "Messages" tab reads. The wall policy lives HERE, once, for both the
+// immediate and cron send paths: only allUsers-topic sends qualify, and
+// skipWall opts out. Resolves the display title/body with the same fallback
+// the iOS RemoteMessage uses (messageTitle/messageBody first, banner
+// title/body second). Never throws: the push already went out, so a
+// timeline write failure must not fail the send — it is logged instead.
+// Returns the wall doc id (null when skipped or failed) so senders can
+// delete a typo'd post immediately via "deleteMessage".
+async function publishToMessagesTimeline({ notification, data, topic, skipWall }) {
+  if (topic !== ALL_USERS_TOPIC || skipWall) return null;
+  try {
+    const title = (data.messageTitle || notification.title || '').trim();
+    const body = (data.messageBody || notification.body || '').trim();
+    if (!body) return null;
+    const ref = await db.collection(MESSAGES_COLLECTION).add({
+      title,
+      body,
+      sentAt: FieldValue.serverTimestamp(),
+    });
+    return ref.id;
+  } catch (err) {
+    console.error('publishToMessagesTimeline failed (push was still sent):', err);
+    return null;
+  }
 }
 
 // Resolve "delayMinutes" / "sendAt" into a future Date, or an error string.
@@ -181,6 +237,9 @@ exports.sendPersonalMessage = onRequest(
       delayMinutes,
       list,
       cancel,
+      skipWall,
+      listMessages,
+      deleteMessage,
     } = req.body || {};
 
     // Auth gate.
@@ -188,6 +247,10 @@ exports.sendPersonalMessage = onRequest(
       res.status(401).json({ error: 'Invalid or missing secret.' });
       return;
     }
+
+    // Shortcuts/curl often produce "true" (string) instead of true — honor
+    // both, so an explicit opt-out never silently lands on the public wall.
+    const wantsSkipWall = skipWall === true || skipWall === 'true';
 
     // ── Manage scheduled sends ─────────────────────────────────────────────
     if (list === true) {
@@ -223,6 +286,53 @@ exports.sendPersonalMessage = onRequest(
       }
       await ref.update({ status: 'cancelled', cancelledAt: FieldValue.serverTimestamp() });
       res.json({ mode: 'cancel', id: cancel.trim(), cancelled: true });
+      return;
+    }
+
+    // ── Manage the public messages wall ────────────────────────────────────
+    // Secret-gated, so only the sender can touch it — the app's Firestore
+    // rules make the collection read-only for every client.
+    if (listMessages === true) {
+      const snap = await db
+        .collection(MESSAGES_COLLECTION)
+        .orderBy('sentAt', 'desc')
+        .limit(25)
+        .get();
+      const messages = snap.docs.map((d) => ({
+        id: d.id,
+        sentAt: d.get('sentAt') ? d.get('sentAt').toDate().toISOString() : null,
+        title: d.get('title') || '',
+        // Preview only — enough to spot the post you're after.
+        body: (d.get('body') || '').slice(0, 120),
+      }));
+      res.json({ mode: 'listMessages', messages });
+      return;
+    }
+
+    if (typeof deleteMessage === 'string' && deleteMessage.trim()) {
+      const id = deleteMessage.trim();
+      // A path-style id (e.g. "speakLifeMessages/AbC123" copied from the
+      // Firestore console) would make .doc() throw synchronously and the
+      // request die with a bare 500 — reject it with a usable error instead.
+      if (id.includes('/')) {
+        res.status(400).json({
+          error: `"deleteMessage" must be a bare document id, not a path. Got "${id}".`,
+        });
+        return;
+      }
+      const ref = db.collection(MESSAGES_COLLECTION).doc(id);
+      const doc = await ref.get();
+      if (!doc.exists) {
+        res.status(404).json({ error: `No wall message with id "${id}".` });
+        return;
+      }
+      await ref.delete();
+      res.json({
+        mode: 'deleteMessage',
+        id,
+        deleted: true,
+        title: doc.get('title') || '',
+      });
       return;
     }
 
@@ -288,6 +398,7 @@ exports.sendPersonalMessage = onRequest(
         createdAt: FieldValue.serverTimestamp(),
         notification,
         data,
+        ...(wantsSkipWall ? { skipWall: true } : {}),
         ...(token ? { token } : { topic: targetTopic }),
       });
       res.json({
@@ -324,7 +435,13 @@ exports.sendPersonalMessage = onRequest(
           return;
         }
         const id = await messaging.send({ notification, data, apns, topic: targetTopic });
-        res.json({ mode: 'topic', topic: targetTopic, messageId: id });
+        const wallMessageId = await publishToMessagesTimeline({
+          notification,
+          data,
+          topic: targetTopic,
+          skipWall: wantsSkipWall,
+        });
+        res.json({ mode: 'topic', topic: targetTopic, messageId: id, wallMessageId });
         return;
       }
     } catch (err) {
@@ -363,7 +480,7 @@ exports.processScheduledMessages = onSchedule(
       });
       if (!claimed) continue;
 
-      const { notification, data, token, topic } = doc.data();
+      const { notification, data, token, topic, skipWall } = doc.data();
       try {
         const id = await messaging.send({
           notification,
@@ -371,10 +488,21 @@ exports.processScheduledMessages = onSchedule(
           apns: buildApns(),
           ...(token ? { token } : { topic }),
         });
+        // Publish to the wall BEFORE the status write so bookkeeping is one
+        // update: a second update failing after status:'sent' would flip a
+        // delivered broadcast to 'error' and invite a duplicate manual
+        // re-send. (Token docs have no topic, so the helper skips them.)
+        const wallMessageId = await publishToMessagesTimeline({
+          notification,
+          data,
+          topic,
+          skipWall,
+        });
         await doc.ref.update({
           status: 'sent',
           sentAt: FieldValue.serverTimestamp(),
           messageId: id,
+          ...(wallMessageId ? { wallMessageId } : {}),
         });
         console.log(`processScheduledMessages: sent ${doc.id} → ${token ? 'token' : `topic:${topic}`}`);
       } catch (err) {
