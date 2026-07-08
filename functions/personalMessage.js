@@ -218,6 +218,39 @@ function parseSchedule(sendAt, delayMinutes) {
 exports.sendPersonalMessage = onRequest(
   { secrets: [MSG_BROADCAST_SECRET], cors: false },
   async (req, res) => {
+    // Log every request (sanitized) and every response so functions:log can
+    // answer "what happened to my send" without client-side plumbing. Never
+    // log the secret or the message text.
+    {
+      const b = req.body || {};
+      console.log('sendPersonalMessage request:', JSON.stringify({
+        method: req.method,
+        broadcast: b.broadcast,
+        topic: b.topic,
+        token: b.token ? '<present>' : undefined,
+        skipWall: b.skipWall,
+        delayMinutes: b.delayMinutes,
+        sendAt: b.sendAt,
+        dryRun: b.dryRun,
+        list: b.list,
+        cancel: b.cancel,
+        listMessages: b.listMessages,
+        deleteMessage: b.deleteMessage,
+        hasTitle: !!b.title,
+        hasBody: !!b.body,
+        hasMessageTitle: !!b.messageTitle,
+        hasMessageBody: !!b.messageBody,
+      }));
+      const originalJson = res.json.bind(res);
+      res.json = (payload) => {
+        console.log(
+          `sendPersonalMessage response: HTTP ${res.statusCode || 200}`,
+          JSON.stringify(payload)
+        );
+        return originalJson(payload);
+      };
+    }
+
     if (req.method !== 'POST') {
       res.status(405).json({ error: 'Use POST.' });
       return;
