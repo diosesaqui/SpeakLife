@@ -195,7 +195,14 @@ struct PrayerWallView: View {
     // MARK: - Post List
 
     private var currentPosts: [PrayerWallPost] {
-        selectedTab == .wall ? viewModel.posts : viewModel.myPosts
+        switch selectedTab {
+        case .wall: return viewModel.posts
+        case .mine: return viewModel.myPosts
+        // The Messages tab renders its own content; an exhaustive switch
+        // keeps any future consumer of currentPosts from silently reading
+        // My Prayers data while Messages is showing.
+        case .messages: return []
+        }
     }
 
     // MARK: - Category Filter Bar

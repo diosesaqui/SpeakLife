@@ -16,13 +16,23 @@ import FirebaseFirestore
 
 // MARK: - Model
 
+/// Plain Codable (no @DocumentID / Timestamp fields) so the UserDefaults
+/// JSON cache actually round-trips — Firestore's @DocumentID throws under
+/// JSONEncoder/JSONDecoder, which would silently kill the cache.
 struct SpeakLifeMessage: Identifiable, Codable {
-    @DocumentID var id: String?
+    let id: String
     let title: String
     let body: String
     /// Optional: a doc read back in the same instant it was created can
     /// briefly have a nil server timestamp.
-    let sentAt: Timestamp?
+    let sentAt: Date?
+
+    init(document: DocumentSnapshot) {
+        self.id = document.documentID
+        self.title = document.get("title") as? String ?? ""
+        self.body = document.get("body") as? String ?? ""
+        self.sentAt = (document.get("sentAt") as? Timestamp)?.dateValue()
+    }
 }
 
 // MARK: - ViewModel
@@ -31,6 +41,7 @@ class SpeakLifeMessagesViewModel: ObservableObject {
     @Published var messages: [SpeakLifeMessage] = []
     @Published var isLoading = false
     @Published var hasMore = true
+    @Published var errorMessage: String?
 
     private let db = Firestore.firestore()
     private let collection = "speakLifeMessages"
@@ -42,24 +53,35 @@ class SpeakLifeMessagesViewModel: ObservableObject {
     /// so re-appearing (tab switches, sheet dismissals) doesn't reset the
     /// pagination cursor.
     private(set) var hasFetchedFromNetwork = false
-
-    init() {
-        loadCachedMessages()
-    }
+    private var hasLoadedCache = false
 
     func fetchIfNeeded() {
+        // Cache decode is deferred to the first tab open so app launch
+        // (PrayerWallView is built with the TabView) doesn't pay for it.
+        if !hasLoadedCache {
+            hasLoadedCache = true
+            loadCachedMessages()
+        }
         guard !hasFetchedFromNetwork else { return }
         fetch(reset: true)
     }
 
-    func refresh() {
-        fetch(reset: true)
+    /// Awaitable so pull-to-refresh keeps its indicator up until the data
+    /// actually lands instead of dismissing immediately.
+    func refresh() async {
+        await withCheckedContinuation { continuation in
+            fetch(reset: true) { continuation.resume() }
+        }
     }
 
-    func fetch(reset: Bool) {
-        guard !isLoading else { return }
+    func fetch(reset: Bool, completion: (() -> Void)? = nil) {
+        guard !isLoading else { completion?(); return }
+        // A load-more before the initial fetch ever completed would re-run
+        // the unanchored first-page query and append duplicates on top of
+        // cached data. Bail like the Warrior Room feed does.
+        if !reset && lastDocument == nil { completion?(); return }
         isLoading = true
-        if reset { lastDocument = nil }
+        errorMessage = nil
 
         var query: Query = db.collection(collection)
             .order(by: "sentAt", descending: true)
@@ -70,18 +92,34 @@ class SpeakLifeMessagesViewModel: ObservableObject {
 
         query.getDocuments { [weak self] snapshot, error in
             DispatchQueue.main.async {
+                defer { completion?() }
                 guard let self else { return }
                 self.isLoading = false
-                guard error == nil, let snapshot else { return }
+                guard error == nil, let snapshot else {
+                    self.errorMessage = "Error loading messages. Please try again."
+                    return
+                }
 
                 self.hasFetchedFromNetwork = true
-                let batch = snapshot.documents.compactMap {
-                    try? $0.data(as: SpeakLifeMessage.self)
+                let batch = snapshot.documents.map(SpeakLifeMessage.init)
+                if reset {
+                    self.messages = batch
+                    // A failed reset leaves the old cursor intact (it is only
+                    // replaced here, on success), so pagination stays valid.
+                    self.lastDocument = snapshot.documents.last
+                    self.cacheMessages()
+                } else {
+                    // Dedup by id — safety net against any edge case where
+                    // the same page arrives twice.
+                    let existingIds = Set(self.messages.map(\.id))
+                    self.messages += batch.filter { !existingIds.contains($0.id) }
+                    // Only advance the cursor when documents actually came
+                    // back; an empty page must not reset it to nil.
+                    if let last = snapshot.documents.last {
+                        self.lastDocument = last
+                    }
                 }
-                self.lastDocument = snapshot.documents.last
                 self.hasMore = snapshot.documents.count == self.batchSize
-                self.messages = reset ? batch : self.messages + batch
-                if reset { self.cacheMessages() }
             }
         }
     }
@@ -128,12 +166,20 @@ struct SpeakLifeMessagesListView: View {
                     emptyState
                         .frame(maxWidth: .infinity)
                 }
-                .refreshable { viewModel.refresh() }
+                .refreshable { await viewModel.refresh() }
             } else {
                 messageList
             }
         }
         .onAppear { viewModel.fetchIfNeeded() }
+        .alert("Error", isPresented: Binding(
+            get: { viewModel.errorMessage != nil },
+            set: { if !$0 { viewModel.errorMessage = nil } }
+        )) {
+            Button("OK") { viewModel.errorMessage = nil }
+        } message: {
+            Text(viewModel.errorMessage ?? "")
+        }
     }
 
     private var messageList: some View {
@@ -175,7 +221,7 @@ struct SpeakLifeMessagesListView: View {
             .padding(.top, DS.Spacing.xxs)
             .padding(.bottom, 30)
         }
-        .refreshable { viewModel.refresh() }
+        .refreshable { await viewModel.refresh() }
     }
 
     private var emptyState: some View {
@@ -210,7 +256,7 @@ struct SpeakLifeMessageCard: View {
                         .foregroundColor(Color(hex: "A78BFA"))
                     Spacer()
                     if let sentAt = message.sentAt {
-                        Text(sentAt.dateValue().formatted(date: .abbreviated, time: .omitted))
+                        Text(sentAt.formatted(date: .abbreviated, time: .omitted))
                             .font(Font.custom("AppleSDGothicNeo-Regular", size: 12, relativeTo: .caption))
                             .foregroundColor(.white.opacity(0.45))
                     }
@@ -236,15 +282,7 @@ struct SpeakLifeMessageCard: View {
                     .padding(.top, 2)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(DS.Spacing.md)
-            .background(
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(Color.white.opacity(0.08))
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 16)
-                    .stroke(Color.white.opacity(0.10), lineWidth: 1)
-            )
+            .dsCard()
         }
         .buttonStyle(.dsPressable(feel: .tapSolid))
     }

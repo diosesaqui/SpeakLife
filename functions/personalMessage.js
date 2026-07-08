@@ -140,14 +140,17 @@ function buildApns() {
   return { payload: { aps: { sound: 'default' } } };
 }
 
-// Publish a delivered allUsers broadcast to the public timeline the app's
-// Community "Messages" tab reads. Resolves the display title/body with the
-// same fallback the iOS RemoteMessage uses (messageTitle/messageBody first,
-// banner title/body second). Never throws: the push already went out, so a
+// Publish a delivered broadcast to the public timeline the app's Community
+// "Messages" tab reads. The wall policy lives HERE, once, for both the
+// immediate and cron send paths: only allUsers-topic sends qualify, and
+// skipWall opts out. Resolves the display title/body with the same fallback
+// the iOS RemoteMessage uses (messageTitle/messageBody first, banner
+// title/body second). Never throws: the push already went out, so a
 // timeline write failure must not fail the send — it is logged instead.
 // Returns the wall doc id (null when skipped or failed) so senders can
 // delete a typo'd post immediately via "deleteMessage".
-async function publishToMessagesTimeline(notification, data) {
+async function publishToMessagesTimeline({ notification, data, topic, skipWall }) {
+  if (topic !== ALL_USERS_TOPIC || skipWall) return null;
   try {
     const title = (data.messageTitle || notification.title || '').trim();
     const body = (data.messageBody || notification.body || '').trim();
@@ -245,6 +248,10 @@ exports.sendPersonalMessage = onRequest(
       return;
     }
 
+    // Shortcuts/curl often produce "true" (string) instead of true — honor
+    // both, so an explicit opt-out never silently lands on the public wall.
+    const wantsSkipWall = skipWall === true || skipWall === 'true';
+
     // ── Manage scheduled sends ─────────────────────────────────────────────
     if (list === true) {
       const snap = await db
@@ -303,16 +310,26 @@ exports.sendPersonalMessage = onRequest(
     }
 
     if (typeof deleteMessage === 'string' && deleteMessage.trim()) {
-      const ref = db.collection(MESSAGES_COLLECTION).doc(deleteMessage.trim());
+      const id = deleteMessage.trim();
+      // A path-style id (e.g. "speakLifeMessages/AbC123" copied from the
+      // Firestore console) would make .doc() throw synchronously and the
+      // request die with a bare 500 — reject it with a usable error instead.
+      if (id.includes('/')) {
+        res.status(400).json({
+          error: `"deleteMessage" must be a bare document id, not a path. Got "${id}".`,
+        });
+        return;
+      }
+      const ref = db.collection(MESSAGES_COLLECTION).doc(id);
       const doc = await ref.get();
       if (!doc.exists) {
-        res.status(404).json({ error: `No wall message with id "${deleteMessage.trim()}".` });
+        res.status(404).json({ error: `No wall message with id "${id}".` });
         return;
       }
       await ref.delete();
       res.json({
         mode: 'deleteMessage',
-        id: deleteMessage.trim(),
+        id,
         deleted: true,
         title: doc.get('title') || '',
       });
@@ -381,7 +398,7 @@ exports.sendPersonalMessage = onRequest(
         createdAt: FieldValue.serverTimestamp(),
         notification,
         data,
-        ...(skipWall === true ? { skipWall: true } : {}),
+        ...(wantsSkipWall ? { skipWall: true } : {}),
         ...(token ? { token } : { topic: targetTopic }),
       });
       res.json({
@@ -418,10 +435,12 @@ exports.sendPersonalMessage = onRequest(
           return;
         }
         const id = await messaging.send({ notification, data, apns, topic: targetTopic });
-        let wallMessageId = null;
-        if (targetTopic === ALL_USERS_TOPIC && skipWall !== true) {
-          wallMessageId = await publishToMessagesTimeline(notification, data);
-        }
+        const wallMessageId = await publishToMessagesTimeline({
+          notification,
+          data,
+          topic: targetTopic,
+          skipWall: wantsSkipWall,
+        });
         res.json({ mode: 'topic', topic: targetTopic, messageId: id, wallMessageId });
         return;
       }
@@ -469,15 +488,22 @@ exports.processScheduledMessages = onSchedule(
           apns: buildApns(),
           ...(token ? { token } : { topic }),
         });
+        // Publish to the wall BEFORE the status write so bookkeeping is one
+        // update: a second update failing after status:'sent' would flip a
+        // delivered broadcast to 'error' and invite a duplicate manual
+        // re-send. (Token docs have no topic, so the helper skips them.)
+        const wallMessageId = await publishToMessagesTimeline({
+          notification,
+          data,
+          topic,
+          skipWall,
+        });
         await doc.ref.update({
           status: 'sent',
           sentAt: FieldValue.serverTimestamp(),
           messageId: id,
+          ...(wallMessageId ? { wallMessageId } : {}),
         });
-        if (!token && topic === ALL_USERS_TOPIC && skipWall !== true) {
-          const wallMessageId = await publishToMessagesTimeline(notification, data);
-          if (wallMessageId) await doc.ref.update({ wallMessageId });
-        }
         console.log(`processScheduledMessages: sent ${doc.id} → ${token ? 'token' : `topic:${topic}`}`);
       } catch (err) {
         // Leave the error on the doc so a failed schedule is visible in the
