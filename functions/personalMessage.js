@@ -17,7 +17,8 @@
  *   Community section — so the message history is visible to every user,
  *   including those who install later or never tap the notification.
  *   Single-device token sends (testing) and custom-topic sends are not
- *   published there.
+ *   published there, and "skipWall": true opts any broadcast out (see the
+ *   Messages wall section below for that and typo deletion).
  *
  * ─── Setup ──────────────────────────────────────────────────────────────────
  *  1. Set a shared secret (any random string) so only you can trigger sends:
@@ -61,6 +62,19 @@
  *  Manage pending sends (same URL, same secret):
  *    { "secret":"...", "list": true }            → list pending scheduled sends
  *    { "secret":"...", "cancel": "<doc id>" }    → cancel one before it sends
+ *
+ *  ── Messages wall (Community → Messages tab) ─────────────────────────────
+ *  Every allUsers broadcast is also published to the public timeline the
+ *  app's Community "Messages" tab reads. To send a quick throwaway push
+ *  (holiday greeting etc.) WITHOUT putting it on the wall, add:
+ *    "skipWall": true
+ *  Works on immediate and scheduled sends. Every published send returns the
+ *  wall doc id as "wallMessageId" so a typo can be deleted right away.
+ *
+ *  Manage the wall (same URL, same secret — only you can do this; the app's
+ *  Firestore rules make the collection read-only for clients):
+ *    { "secret":"...", "listMessages": true }         → newest 25 wall posts
+ *    { "secret":"...", "deleteMessage": "<doc id>" }  → remove one from the wall
  *
  *  Deploying this file the first time after adding scheduling:
  *    firebase deploy --only functions:sendPersonalMessage,functions:processScheduledMessages
@@ -131,18 +145,22 @@ function buildApns() {
 // same fallback the iOS RemoteMessage uses (messageTitle/messageBody first,
 // banner title/body second). Never throws: the push already went out, so a
 // timeline write failure must not fail the send — it is logged instead.
+// Returns the wall doc id (null when skipped or failed) so senders can
+// delete a typo'd post immediately via "deleteMessage".
 async function publishToMessagesTimeline(notification, data) {
   try {
     const title = (data.messageTitle || notification.title || '').trim();
     const body = (data.messageBody || notification.body || '').trim();
-    if (!body) return;
-    await db.collection(MESSAGES_COLLECTION).add({
+    if (!body) return null;
+    const ref = await db.collection(MESSAGES_COLLECTION).add({
       title,
       body,
       sentAt: FieldValue.serverTimestamp(),
     });
+    return ref.id;
   } catch (err) {
     console.error('publishToMessagesTimeline failed (push was still sent):', err);
+    return null;
   }
 }
 
@@ -216,6 +234,9 @@ exports.sendPersonalMessage = onRequest(
       delayMinutes,
       list,
       cancel,
+      skipWall,
+      listMessages,
+      deleteMessage,
     } = req.body || {};
 
     // Auth gate.
@@ -258,6 +279,43 @@ exports.sendPersonalMessage = onRequest(
       }
       await ref.update({ status: 'cancelled', cancelledAt: FieldValue.serverTimestamp() });
       res.json({ mode: 'cancel', id: cancel.trim(), cancelled: true });
+      return;
+    }
+
+    // ── Manage the public messages wall ────────────────────────────────────
+    // Secret-gated, so only the sender can touch it — the app's Firestore
+    // rules make the collection read-only for every client.
+    if (listMessages === true) {
+      const snap = await db
+        .collection(MESSAGES_COLLECTION)
+        .orderBy('sentAt', 'desc')
+        .limit(25)
+        .get();
+      const messages = snap.docs.map((d) => ({
+        id: d.id,
+        sentAt: d.get('sentAt') ? d.get('sentAt').toDate().toISOString() : null,
+        title: d.get('title') || '',
+        // Preview only — enough to spot the post you're after.
+        body: (d.get('body') || '').slice(0, 120),
+      }));
+      res.json({ mode: 'listMessages', messages });
+      return;
+    }
+
+    if (typeof deleteMessage === 'string' && deleteMessage.trim()) {
+      const ref = db.collection(MESSAGES_COLLECTION).doc(deleteMessage.trim());
+      const doc = await ref.get();
+      if (!doc.exists) {
+        res.status(404).json({ error: `No wall message with id "${deleteMessage.trim()}".` });
+        return;
+      }
+      await ref.delete();
+      res.json({
+        mode: 'deleteMessage',
+        id: deleteMessage.trim(),
+        deleted: true,
+        title: doc.get('title') || '',
+      });
       return;
     }
 
@@ -323,6 +381,7 @@ exports.sendPersonalMessage = onRequest(
         createdAt: FieldValue.serverTimestamp(),
         notification,
         data,
+        ...(skipWall === true ? { skipWall: true } : {}),
         ...(token ? { token } : { topic: targetTopic }),
       });
       res.json({
@@ -359,10 +418,11 @@ exports.sendPersonalMessage = onRequest(
           return;
         }
         const id = await messaging.send({ notification, data, apns, topic: targetTopic });
-        if (targetTopic === ALL_USERS_TOPIC) {
-          await publishToMessagesTimeline(notification, data);
+        let wallMessageId = null;
+        if (targetTopic === ALL_USERS_TOPIC && skipWall !== true) {
+          wallMessageId = await publishToMessagesTimeline(notification, data);
         }
-        res.json({ mode: 'topic', topic: targetTopic, messageId: id });
+        res.json({ mode: 'topic', topic: targetTopic, messageId: id, wallMessageId });
         return;
       }
     } catch (err) {
@@ -401,7 +461,7 @@ exports.processScheduledMessages = onSchedule(
       });
       if (!claimed) continue;
 
-      const { notification, data, token, topic } = doc.data();
+      const { notification, data, token, topic, skipWall } = doc.data();
       try {
         const id = await messaging.send({
           notification,
@@ -414,8 +474,9 @@ exports.processScheduledMessages = onSchedule(
           sentAt: FieldValue.serverTimestamp(),
           messageId: id,
         });
-        if (!token && topic === ALL_USERS_TOPIC) {
-          await publishToMessagesTimeline(notification, data);
+        if (!token && topic === ALL_USERS_TOPIC && skipWall !== true) {
+          const wallMessageId = await publishToMessagesTimeline(notification, data);
+          if (wallMessageId) await doc.ref.update({ wallMessageId });
         }
         console.log(`processScheduledMessages: sent ${doc.id} → ${token ? 'token' : `topic:${topic}`}`);
       } catch (err) {
