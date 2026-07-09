@@ -96,20 +96,23 @@ struct ReminderView: View {
     
     private func registerNotifications() {
         if appState.notificationEnabled {
-            if declarationViewModel.selectedCategories.count == 0 {
-                NotificationManager.shared.registerNotifications(count: appState.notificationCount,
-                                                                 startTime: appState.startTimeIndex,
-                                                                 endTime: appState.endTimeIndex,
-                                                                 categories: nil)
-                
-            } else {
-                NotificationManager.shared.registerNotifications(count: appState.notificationCount,
-                                                                 startTime: appState.startTimeIndex,
-                                                                 endTime: appState.endTimeIndex,
-                                                                 categories: declarationViewModel.selectedCategories) {
-            
-                }
-            }
+            // Source the topic selection from appState.selectedNotificationCategories —
+            // the store that onboarding and the Notification Topics screen write.
+            // declarationViewModel.selectedCategories is the FEED/widget selection:
+            // onboarding never fills it and WidgetPreferencesView overwrites it, so
+            // reading it here re-registered reminders with the generic 7-topic mix
+            // (or widget picks) every time this screen closed, clobbering the
+            // user's chosen notification topics.
+            let parsed = Set(
+                appState.selectedNotificationCategories
+                    .components(separatedBy: ",")
+                    .compactMap { DeclarationCategory($0) }
+            )
+            let categories: Set<DeclarationCategory>? = parsed.isEmpty ? nil : parsed
+            NotificationManager.shared.registerNotifications(count: appState.notificationCount,
+                                                             startTime: appState.startTimeIndex,
+                                                             endTime: appState.endTimeIndex,
+                                                             categories: categories)
             appState.lastNotificationSetDate = Date()
         }
     }
