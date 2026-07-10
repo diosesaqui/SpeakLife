@@ -11,7 +11,6 @@ struct AudioListItemView: View {
     let item: AudioDeclaration
     let proxy: GeometryProxy
     let viewModel: AudioDeclarationViewModel
-    let audioViewModel: AudioPlayerViewModel
     let onItemTap: (AudioDeclaration) -> Void
     let onFavoriteSwipe: (AudioDeclaration) -> Void
     
@@ -21,8 +20,7 @@ struct AudioListItemView: View {
         }) {
             VStack {
                 UpNextCell(
-                    viewModel: viewModel, 
-                    audioViewModel: audioViewModel, 
+                    favoritesManager: viewModel.favoritesManager,
                     item: item
                 )
                 .frame(

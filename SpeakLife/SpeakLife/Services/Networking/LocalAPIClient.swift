@@ -125,17 +125,20 @@ final class LocalAPIClient: APIService {
     }
     
     private func loadAudioFromDisk(completion: @escaping([AudioDeclaration], APIError?) -> Void) {
-        let documentDirURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
-        let fileURL = documentDirURL.appendingPathComponent("audioDeclarations").appendingPathExtension("txt")
-        
-        guard let data = try? Data(contentsOf: fileURL),
-              let declarations = try? JSONDecoder().decode([AudioDeclaration].self, from: data) else {
-            print("Failed to load audio")
-            completion([], APIError.failedRequest)
-            return
+        // File IO + decode off the caller's (main) thread; the view model hops
+        // back to main before publishing.
+        DispatchQueue.global(qos: .userInitiated).async {
+            let documentDirURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+            let fileURL = documentDirURL.appendingPathComponent("audioDeclarations").appendingPathExtension("txt")
+
+            guard let data = try? Data(contentsOf: fileURL),
+                  let declarations = try? JSONDecoder().decode([AudioDeclaration].self, from: data) else {
+                print("Failed to load audio")
+                completion([], APIError.failedRequest)
+                return
+            }
+            completion(declarations, nil)
         }
-        completion(declarations, nil)
-        return
     }
     
     func save(declarations: [Declaration], completion: @escaping(Bool) -> Void) {
@@ -378,17 +381,26 @@ final class LocalAPIClient: APIService {
                 }
                 
                 if let data = data {
-                    do {
-                        let welcome = try JSONDecoder().decode(WelcomeAudio.self, from: data)
-                        let audios = Array(welcome.audios)
-                        
-                        self?.audioLocalVersion = version
-                        self?.save(audioDeclarations: audios) { success in
+                    // Firebase delivers this callback on the main queue; decode
+                    // and cache-write off main. The view model already hops back
+                    // to main before touching published state.
+                    DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+                        do {
+                            let welcome = try JSONDecoder().decode(WelcomeAudio.self, from: data)
+                            let audios = Array(welcome.audios)
+
+                            // Version watermark is read on the caller's thread
+                            // in audio(version:); keep the write on main so a
+                            // rapid second call can't race a background write.
+                            DispatchQueue.main.async {
+                                self?.audioLocalVersion = version
+                            }
+                            self?.save(audioDeclarations: audios) { success in
+                            }
+                            completion(welcome, nil)
+                        } catch {
+                            completion(nil, speaklifeFiles)
                         }
-                        completion(welcome, nil)
-                        return
-                    } catch {
-                        completion(nil, speaklifeFiles)
                     }
                 } else {
                     completion(nil, speaklifeFiles)

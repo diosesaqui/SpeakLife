@@ -23,9 +23,8 @@ struct OptimizedAudioCell: View {
         VStack(alignment: .leading, spacing: 0) {
             // Image with overlay
             ZStack(alignment: .topTrailing) {
-                Image(item.imageUrl)
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
+                ArtworkThumbnail(name: item.imageUrl,
+                                 size: CGSize(width: configuration.itemWidth, height: configuration.itemHeight * 0.65))
                     .frame(width: configuration.itemWidth, height: configuration.itemHeight * 0.65)
                     .clipped()
                     .overlay(
@@ -169,9 +168,7 @@ struct CompactAudioCell: View {
     var body: some View {
         HStack(spacing: DS.Spacing.sm) {
             // Thumbnail
-            Image(item.imageUrl)
-                .resizable()
-                .aspectRatio(contentMode: .fill)
+            ArtworkThumbnail(name: item.imageUrl, size: CGSize(width: 60, height: 60))
                 .frame(width: 60, height: 60)
                 .cornerRadius(DS.Radius.sm)
             

@@ -27,7 +27,7 @@ struct SectionedAudioView: View {
             ZStack {
                 // Main content
                 ScrollView(.vertical, showsIndicators: false) {
-                    VStack(spacing: DS.Spacing.lg) {
+                    LazyVStack(spacing: DS.Spacing.lg) {
                         // Pull to refresh indicator
                         if refreshing {
                             HStack {

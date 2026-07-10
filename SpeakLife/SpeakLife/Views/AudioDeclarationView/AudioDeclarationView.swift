@@ -12,25 +12,23 @@ import UIKit
 
 struct UpNextCell: View {
     @EnvironmentObject var subscriptionStore: SubscriptionStore
-    @ObservedObject var viewModel: AudioDeclarationViewModel
-    @ObservedObject var audioViewModel: AudioPlayerViewModel
-    @StateObject private var metricsService = ListenerMetricsService.shared
+    // Row observes only what it renders: heart state and played state.
+    // Observing the whole list view model here made every row re-render on
+    // any view-model publish (download ticks, filter changes, ...).
+    @ObservedObject var favoritesManager: AudioFavoritesManager
     @ObservedObject private var progressStore = AudioProgressStore.shared
 
     let item: AudioDeclaration
 
     @State private var showToast = false
+    @State private var toastMessage = ""
     @State private var isTapped = false
-    @State private var animateGlow = false
     @State private var showFavoriteAnimation = false
-    @State private var listenerCount: String? = nil
 
     var body: some View {
         ZStack {
                 HStack(spacing: DS.Spacing.md) {
-                    Image(item.imageUrl)
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
+                    ArtworkThumbnail(name: item.imageUrl, size: CGSize(width: 80, height: 80))
                         .frame(width: 80, height: 80)
                         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                         .shadow(color: .black.opacity(0.2), radius: 6, x: 0, y: 4)
@@ -103,9 +101,9 @@ struct UpNextCell: View {
                         Button(action: {
                             toggleFavorite()
                         }) {
-                            Image(systemName: viewModel.favoritesManager.isFavorite(item) ? "heart.fill" : "heart")
+                            Image(systemName: favoritesManager.isFavorite(item) ? "heart.fill" : "heart")
                                 .font(.system(size: 20, weight: .medium))
-                                .foregroundColor(viewModel.favoritesManager.isFavorite(item) ? .pink : .white.opacity(0.7))
+                                .foregroundColor(favoritesManager.isFavorite(item) ? .pink : .white.opacity(0.7))
                                 .scaleEffect(showFavoriteAnimation ? 1.3 : 1.0)
                                 .animation(.spring(response: 0.3, dampingFraction: 0.6), value: showFavoriteAnimation)
                         }
@@ -123,8 +121,7 @@ struct UpNextCell: View {
                         .fill(.ultraThinMaterial)
                         .overlay(
                             RoundedRectangle(cornerRadius: DS.Radius.lg, style: .continuous)
-                                .stroke(Color.white.opacity(animateGlow ? 0.15 : 0.06), lineWidth: animateGlow ? 1.5 : 0.5)
-                                .shadow(color: Color.blue.opacity(animateGlow ? 0.3 : 0), radius: animateGlow ? 10 : 0)
+                                .stroke(Color.white.opacity(0.06), lineWidth: 0.5)
                         )
                         .dsShadow(DS.Elevation.low)
                 )
@@ -142,27 +139,10 @@ struct UpNextCell: View {
                         }
                     }
                 }
-                .onAppear {
-                    // Fetch listener count for this audio
-//                    Task {
-//                        let metrics = await metricsService.fetchMetrics(for: [item.id], contentType: .audio)
-//                        // Debug: emoji print removed
-//                        if let count = metrics[item.id] {
-//                            let formatted = ListenerMetricsService.formatListenerCount(count)
-//                            print("📝 Setting listenerCount to: \(formatted ?? "nil")")
-//                            await MainActor.run {
-//                                listenerCount = formatted
-//                            }
-//                        } else {
-//                            print("❌ No count found for \(item.id)")
-//                        }
-//                    }
-                }
-
 
             if showToast {
                 VStack {
-                    Text(viewModel.favoritesManager.isFavorite(item) ? "Added to Favorites" : "Removed from Favorites")
+                    Text(toastMessage)
                         .foregroundColor(.white)
                         .padding(.horizontal, 16)
                         .padding(.vertical, 8)
@@ -194,10 +174,16 @@ struct UpNextCell: View {
                 showFavoriteAnimation = false
             }
             
+            // Capture intent before the async Core Data toggle: reading
+            // isFavorite after kicking it off shows the inverted message
+            // until the repository observer lands.
+            let wasFavorite = favoritesManager.isFavorite(item)
+
             // Toggle favorite status after animation
-            viewModel.favoritesManager.toggleFavorite(item)
-            
+            favoritesManager.toggleFavorite(item)
+
             // Show toast for feedback after toggle
+            toastMessage = wasFavorite ? "Removed from Favorites" : "Added to Favorites"
             showToast = true
             DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
                 withAnimation {
@@ -536,18 +522,34 @@ struct AudioDeclarationView: View {
                     item: item,
                     proxy: proxy,
                     viewModel: viewModel,
-                    audioViewModel: audioViewModel,
                     onItemTap: handleItemTap,
                     onFavoriteSwipe: handleFavoriteSwipeAction
                 )
+                .onAppear {
+                    viewModel.loadMoreIfNeeded(currentItem: item)
+                }
+            }
+
+            // Fallback pager: rows already on screen don't re-fire onAppear
+            // when a filter reset shrinks the window around them, which would
+            // strand the list at one page. The footer takes a new identity per
+            // window size, so its onAppear always fires when it's reachable.
+            if viewModel.canLoadMore {
+                Color.clear
+                    .frame(height: 1)
+                    .listRowBackground(Color.clear)
+                    .id("audio-list-pager-\(viewModel.visibleContent.count)")
+                    .onAppear {
+                        viewModel.loadNextPage()
+                    }
             }
         }
         .scrollContentBackground(.hidden)
         .background(.clear)
     }
-    
+
     private var currentFilteredContent: [AudioDeclaration] {
-        return viewModel.dynamicFilteredContent
+        return viewModel.visibleContent
     }
     
     @ViewBuilder
@@ -628,5 +630,55 @@ extension View {
             .background(.ultraThinMaterial)
             .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
             .shadow(color: .black.opacity(0.2), radius: 8, x: 0, y: 4)
+    }
+}
+
+// MARK: - Downsampled artwork
+
+/// Decodes asset-catalog artwork at its display size instead of full
+/// resolution. Each (asset, size) pair is decoded once, cached, and shared
+/// across every row that shows it, so scrolling never pays a full-size decode.
+enum ArtworkThumbnailCache {
+    private static let cache = NSCache<NSString, UIImage>()
+
+    static func thumbnail(named name: String, size: CGSize) -> UIImage {
+        let scale = UIScreen.main.scale
+        let target = CGSize(width: size.width * scale, height: size.height * scale)
+        let key = "\(name)-\(Int(target.width))x\(Int(target.height))" as NSString
+        if let cached = cache.object(forKey: key) { return cached }
+
+        guard let image = UIImage(named: name) else {
+            // Cache the miss too, or every body evaluation of a row with a
+            // bad asset name repeats the bundle lookup.
+            let empty = UIImage()
+            cache.setObject(empty, forKey: key)
+            return empty
+        }
+
+        // Scale so the thumbnail covers the target (aspect fill), matching how
+        // the rows crop it. Skip when the source is already near display size.
+        let sourceWidth = image.size.width * image.scale
+        let sourceHeight = image.size.height * image.scale
+        let fillScale = max(target.width / sourceWidth, target.height / sourceHeight)
+        guard fillScale < 0.85,
+              let thumbnail = image.preparingThumbnail(of: CGSize(width: sourceWidth * fillScale,
+                                                                  height: sourceHeight * fillScale)) else {
+            cache.setObject(image, forKey: key)
+            return image
+        }
+
+        cache.setObject(thumbnail, forKey: key)
+        return thumbnail
+    }
+}
+
+struct ArtworkThumbnail: View {
+    let name: String
+    let size: CGSize
+
+    var body: some View {
+        Image(uiImage: ArtworkThumbnailCache.thumbnail(named: name, size: size))
+            .resizable()
+            .aspectRatio(contentMode: .fill)
     }
 }

@@ -19,8 +19,15 @@ final class AudioDeclarationViewModel: ObservableObject {
     // the original order without a server refetch.
     private var curatedFilters: [FilterConfig] = []
     @Published var contentByFilter: [String: [AudioDeclaration]] = [:]  // All content organized by filter ID
-    @Published var selectedFilterId: String = "speaklife"  // Selected filter ID (set dynamically from server)
-    @Published var playedFilter: PlayedFilter = .all  // Played / Unplayed sub-filter
+    @Published var selectedFilterId: String = "speaklife" {  // Selected filter ID (set dynamically from server)
+        // didSet fires even on same-value assignment (the chip buttons assign
+        // unconditionally); without the guard a re-tap of the active chip
+        // would collapse the pagination window under the user's scroll.
+        didSet { if oldValue != selectedFilterId { refreshFilteredContent(resetPaging: true) } }
+    }
+    @Published var playedFilter: PlayedFilter = .all {  // Played / Unplayed sub-filter
+        didSet { if oldValue != playedFilter { refreshFilteredContent(resetPaging: true) } }
+    }
     // Set by checklist deep-link. AudioDeclarationView observes contentByFilter and
     // auto-plays the first unplayed episode once content is loaded.
     @Published var checklistAutoPlayPending: Bool = false
@@ -28,6 +35,15 @@ final class AudioDeclarationViewModel: ObservableObject {
     private(set) var allAudioFiles: [AudioDeclaration] = []
     @Published var downloadProgress: [String: Double] = [:]
     @Published var fetchingAudioIDs: Set<String> = []
+
+    // The list the UI renders. `filteredContent` is the full filtered set,
+    // recomputed only when its inputs change (never per body evaluation);
+    // `visibleContent` is the client-side page window over it so the List
+    // starts with a small number of live rows and grows as the user scrolls.
+    @Published private(set) var visibleContent: [AudioDeclaration] = []
+    private var filteredContent: [AudioDeclaration] = []
+    private let pageSize = 25
+    private var visibleCount = 25
 
     // Favorites manager
     let favoritesManager = AudioFavoritesManager()
@@ -38,17 +54,34 @@ final class AudioDeclarationViewModel: ObservableObject {
     private var cancellables = Set<AnyCancellable>()
     
     init() {
-        // Observe changes in favorites manager to trigger UI updates
-        favoritesManager.objectWillChange
+        // Rebuild the list on favorites changes only when the Favorites filter
+        // is showing; rows read heart state from favoritesManager directly, so
+        // a toggle elsewhere re-renders one row, not the whole list. The
+        // objectWillChange fallback keeps the Favorites chip badge count fresh.
+        // receive(on:) defers past @Published's willSet so we read post-update state.
+        favoritesManager.$favorites
+            .dropFirst()
+            .receive(on: DispatchQueue.main)
             .sink { [weak self] _ in
-                self?.objectWillChange.send()
+                guard let self = self else { return }
+                if self.selectedFilterId == "favorites" {
+                    self.refreshFilteredContent(resetPaging: false)
+                }
+                // Always nudge the view model: the Favorites chip badge reads
+                // favoritesManager.favoritesCount through the VM, and a change
+                // beyond the visible page publishes nothing on its own.
+                self.objectWillChange.send()
             }
             .store(in: &cancellables)
 
-        // Re-render list when played status changes (e.g. filter by played/unplayed)
+        // Played status only reshapes the list when a played/unplayed filter is
+        // active; the per-row checkmarks observe AudioProgressStore themselves.
         AudioProgressStore.shared.$playedIDs
+            .dropFirst()
+            .receive(on: DispatchQueue.main)
             .sink { [weak self] _ in
-                self?.objectWillChange.send()
+                guard let self = self, self.playedFilter != .all else { return }
+                self.refreshFilteredContent(resetPaging: false)
             }
             .store(in: &cancellables)
         
@@ -64,37 +97,52 @@ final class AudioDeclarationViewModel: ObservableObject {
             }
             .store(in: &cancellables)
         
-        // Load cached audio data on startup (ensure on main thread for @Published updates)
-        DispatchQueue.main.async { [weak self] in
-            self?.loadCachedAudioData()
-        }
+        // Load cached audio data on startup
+        loadCachedAudioData()
     }
-    
+
     private func loadCachedAudioData() {
-        let fileManager = FileManager.default
-        let documentDirURL = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
-        let fileURL = documentDirURL.appendingPathComponent("audioDeclarations").appendingPathExtension("txt")
-        let filtersURL = documentDirURL.appendingPathComponent("audioFilters").appendingPathExtension("txt")
-        
-        guard fileManager.fileExists(atPath: fileURL.path) else {
-            return
-        }
-        
-        do {
-            let data = try Data(contentsOf: fileURL)
-            let decoder = JSONDecoder()
-            let cachedAudios = try decoder.decode([AudioDeclaration].self, from: data)
-            self.allAudioFiles = cachedAudios.filter { $0.isPlayableAudio }
-            
-            // Try to load cached filters
-            if fileManager.fileExists(atPath: filtersURL.path) {
-                let filtersData = try Data(contentsOf: filtersURL)
-                let cachedFilters = try decoder.decode([FilterConfig].self, from: filtersData)
-                self.dynamicFilters = cachedFilters
+        // File IO + JSON decode happen off the main thread; only the
+        // @Published assignments hop back to main.
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            let fileManager = FileManager.default
+            let documentDirURL = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
+            let fileURL = documentDirURL.appendingPathComponent("audioDeclarations").appendingPathExtension("txt")
+            let filtersURL = documentDirURL.appendingPathComponent("audioFilters").appendingPathExtension("txt")
+
+            guard fileManager.fileExists(atPath: fileURL.path) else {
+                return
             }
-            
-            populateDynamicFiltersFromCache()
-        } catch {}
+
+            do {
+                let data = try Data(contentsOf: fileURL)
+                let decoder = JSONDecoder()
+                let cachedAudios = try decoder.decode([AudioDeclaration].self, from: data)
+                    .filter { $0.isPlayableAudio }
+
+                // Try to load cached filters
+                var cachedFilters: [FilterConfig]? = nil
+                if fileManager.fileExists(atPath: filtersURL.path) {
+                    let filtersData = try Data(contentsOf: filtersURL)
+                    cachedFilters = try decoder.decode([FilterConfig].self, from: filtersData)
+                }
+
+                DispatchQueue.main.async { [weak self] in
+                    guard let self = self else { return }
+                    // A fetch that completed while we were reading disk wins.
+                    // Without this guard the disk snapshot (started at init)
+                    // could land after a remote fetch and revert the catalog
+                    // for the whole session, since the version watermark has
+                    // already advanced.
+                    guard self.allAudioFiles.isEmpty else { return }
+                    self.allAudioFiles = cachedAudios
+                    if let cachedFilters = cachedFilters {
+                        self.dynamicFilters = cachedFilters
+                    }
+                    self.populateDynamicFiltersFromCache()
+                }
+            } catch {}
+        }
     }
     
     private func populateDynamicFiltersFromCache() {
@@ -177,36 +225,51 @@ final class AudioDeclarationViewModel: ObservableObject {
 
         curatedFilters = dynamicFilters
         applyPersonalization()
+        refreshFilteredContent(resetPaging: true)
     }
 
     private func saveAudioDataToCache() {
-        let fileManager = FileManager.default
-        let documentDirURL = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
-        let fileURL = documentDirURL.appendingPathComponent("audioDeclarations").appendingPathExtension("txt")
-        let filtersURL = documentDirURL.appendingPathComponent("audioFilters").appendingPathExtension("txt")
-        
-        do {
-            let encoder = JSONEncoder()
-            
-            // Save audio data
-            let data = try encoder.encode(allAudioFiles)
-            try data.write(to: fileURL)
-            
-            // Save the curated (pre-personalization) order so the cache always
-            // holds the canonical order. Falls back to the display order if the
-            // baseline was never captured.
-            let filtersToCache = curatedFilters.isEmpty ? dynamicFilters : curatedFilters
-            if !filtersToCache.isEmpty {
-                let filtersData = try encoder.encode(filtersToCache)
-                try filtersData.write(to: filtersURL)
+        // Snapshot on the caller's (main) thread, then encode + write off main.
+        let audiosToCache = allAudioFiles
+        // Save the curated (pre-personalization) order so the cache always
+        // holds the canonical order. Falls back to the display order if the
+        // baseline was never captured.
+        let filtersToCache = curatedFilters.isEmpty ? dynamicFilters : curatedFilters
+
+        DispatchQueue.global(qos: .utility).async {
+            let fileManager = FileManager.default
+            let documentDirURL = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
+            let fileURL = documentDirURL.appendingPathComponent("audioDeclarations").appendingPathExtension("txt")
+            let filtersURL = documentDirURL.appendingPathComponent("audioFilters").appendingPathExtension("txt")
+
+            do {
+                let encoder = JSONEncoder()
+
+                // Save audio data (.atomic: LocalAPIClient reads this same file
+                // from another queue and must never see a partial write)
+                let data = try encoder.encode(audiosToCache)
+                try data.write(to: fileURL, options: .atomic)
+
+                if !filtersToCache.isEmpty {
+                    let filtersData = try encoder.encode(filtersToCache)
+                    try filtersData.write(to: filtersURL, options: .atomic)
+                }
+            } catch {
+                // Failed to save cache, not critical
             }
-        } catch {
-            // Failed to save cache, not critical
         }
     }
     
-    // New dynamic filtered content
+    // The full filtered list. Cached — recomputed by refreshFilteredContent
+    // when an input changes, not on every body evaluation.
     var dynamicFilteredContent: [AudioDeclaration] {
+        filteredContent
+    }
+
+    /// Recomputes the filtered list from the current filter + played state.
+    /// `resetPaging` collapses the visible window back to the first page
+    /// (filter switches); in-place changes like a played toggle keep it.
+    private func refreshFilteredContent(resetPaging: Bool) {
         let base: [AudioDeclaration]
         if selectedFilterId == "favorites" {
             base = favoritesManager.getFavoritesSortedByDate()
@@ -215,10 +278,43 @@ final class AudioDeclarationViewModel: ObservableObject {
         }
 
         switch playedFilter {
-        case .all:      return base
-        case .played:   return base.filter { AudioProgressStore.shared.isPlayed($0.id) }
-        case .unplayed: return base.filter { !AudioProgressStore.shared.isPlayed($0.id) }
+        case .all:      filteredContent = base
+        case .played:   filteredContent = base.filter { AudioProgressStore.shared.isPlayed($0.id) }
+        case .unplayed: filteredContent = base.filter { !AudioProgressStore.shared.isPlayed($0.id) }
         }
+
+        if resetPaging {
+            visibleCount = pageSize
+        }
+        updateVisibleContent()
+    }
+
+    private func updateVisibleContent() {
+        let newVisible = Array(filteredContent.prefix(visibleCount))
+        if newVisible != visibleContent {
+            visibleContent = newVisible
+        }
+    }
+
+    var canLoadMore: Bool {
+        visibleContent.count < filteredContent.count
+    }
+
+    /// Extends the window by one page. Growth derives from the actual visible
+    /// count so a stale `visibleCount` (left inflated after a non-reset
+    /// refresh shrank the list) can never skew the math.
+    func loadNextPage() {
+        guard canLoadMore else { return }
+        visibleCount = visibleContent.count + pageSize
+        updateVisibleContent()
+    }
+
+    /// Called from the list rows' onAppear: when the user nears the end of the
+    /// visible window, extend it by another page.
+    func loadMoreIfNeeded(currentItem: AudioDeclaration) {
+        guard canLoadMore,
+              visibleContent.suffix(5).contains(where: { $0.id == currentItem.id }) else { return }
+        loadNextPage()
     }
     
     func fetchAudio(version: Int) {
@@ -240,8 +336,16 @@ final class AudioDeclarationViewModel: ObservableObject {
             DispatchQueue.main.async { [weak self] in
                 guard let self = self else { return }
                 self.allAudioFiles = (welcome?.audios ?? audios ?? []).filter { $0.isPlayableAudio }
-                
-                self.setupDynamicFilters(welcome)
+
+                if welcome != nil {
+                    self.setupDynamicFilters(welcome)
+                } else {
+                    // Disk/fallback path carries no filter configs.
+                    // setupDynamicFilters(nil) would clear contentByFilter and
+                    // repopulate nothing, blanking the list for the session;
+                    // rebuild groups + default filters from the audios instead.
+                    self.populateDynamicFiltersFromCache()
+                }
                 self.saveAudioDataToCache()
                 self.lastCachedAudioVersion = version
             }
@@ -317,6 +421,7 @@ final class AudioDeclarationViewModel: ObservableObject {
 
         curatedFilters = dynamicFilters
         applyPersonalization()
+        refreshFilteredContent(resetPaging: true)
     }
 
     // MARK: - Personalized Ordering
@@ -433,9 +538,14 @@ final class AudioDeclarationViewModel: ObservableObject {
         
         downloadTask.observe(.progress) { snapshot in
             if let progress = snapshot.progress {
+                let fraction = progress.fractionCompleted
                 DispatchQueue.main.async {
-                    self.downloadProgress[item.id] = progress.fractionCompleted
-                    
+                    // Firebase reports progress many times per second and every
+                    // update re-renders the list; only publish visible changes (≥1%).
+                    let current = self.downloadProgress[item.id] ?? 0
+                    if fraction >= 1.0 || abs(fraction - current) >= 0.01 {
+                        self.downloadProgress[item.id] = fraction
+                    }
                 }
             }
         }

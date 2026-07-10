@@ -54,7 +54,7 @@ struct HorizontalAudioSection: View {
             ZStack {
                 ScrollViewReader { scrollProxy in
                     ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: section.configuration.horizontalSpacing) {
+                        LazyHStack(spacing: section.configuration.horizontalSpacing) {
                             ForEach(Array(section.items.prefix(section.configuration.maxVisibleItems).enumerated()), id: \.element.id) { index, item in
                                 buildCell(for: item, at: index)
                                     .id("\(section.id)_\(item.id)")
@@ -151,9 +151,8 @@ struct FeaturedAudioCell: View {
     var body: some View {
         ZStack(alignment: .bottomLeading) {
             // Background image
-            Image(item.imageUrl)
-                .resizable()
-                .aspectRatio(contentMode: .fill)
+            ArtworkThumbnail(name: item.imageUrl,
+                             size: CGSize(width: configuration.itemWidth, height: configuration.itemHeight))
                 .frame(width: configuration.itemWidth, height: configuration.itemHeight)
                 .clipped()
                 .overlay(

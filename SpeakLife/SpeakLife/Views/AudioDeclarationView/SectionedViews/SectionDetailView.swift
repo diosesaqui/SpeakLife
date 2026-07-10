@@ -50,9 +50,12 @@ struct SectionDetailView: View {
         case .title:
             return filtered.sorted { $0.title < $1.title }
         case .duration:
-            return filtered.sorted { 
-                extractMinutes(from: $0.duration) < extractMinutes(from: $1.duration)
-            }
+            // Parse each duration once (O(n)) instead of inside the sort
+            // comparator (O(n log n) string parses per body evaluation).
+            return filtered
+                .map { (item: $0, minutes: extractMinutes(from: $0.duration)) }
+                .sorted { $0.minutes < $1.minutes }
+                .map(\.item)
         case .newest:
             return filtered.reversed()
         }

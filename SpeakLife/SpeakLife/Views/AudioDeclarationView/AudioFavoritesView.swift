@@ -12,8 +12,7 @@ import FirebaseAnalytics
 struct AudioContentRow: View {
     @Environment(\.colorScheme) var colorScheme
     @EnvironmentObject var subscriptionStore: SubscriptionStore
-    @StateObject private var favoritesManager = AudioFavoritesManager()
-    
+
     @State private var showShareSheet = false
     @State private var isPressed = false
     @State private var shouldGlow = false
@@ -35,9 +34,7 @@ struct AudioContentRow: View {
         }) {
             HStack(spacing: DS.Spacing.md) {
                 // Audio artwork
-                Image(audio.imageUrl)
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
+                ArtworkThumbnail(name: audio.imageUrl, size: CGSize(width: 60, height: 60))
                     .frame(width: 60, height: 60)
                     .clipShape(RoundedRectangle(cornerRadius: DS.Radius.sm, style: .continuous))
                     .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
@@ -151,13 +148,14 @@ struct AudioContentRow: View {
     
     private func handleRemove() {
         Juice.play(.unfavorite)
-        
+
         withAnimation(DS.Motion.quick) {
             showRemoveAnimation = true
         }
-        
+
+        // Removal itself is the parent's job — rows no longer each own an
+        // AudioFavoritesManager (one Core Data observer per row was expensive).
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-            favoritesManager.removeFavorite(withId: audio.id)
             onRemove?()
         }
     }
@@ -212,12 +210,6 @@ struct AudioFavoritesView: View {
                 audio.subtitle.localizedCaseInsensitiveContains(searchText) ||
                 (audio.tag?.localizedCaseInsensitiveContains(searchText) ?? false)
             }
-            
-            // Track search
-            AudioAnalytics.shared.trackFavoritesSearched(
-                searchTerm: searchText,
-                resultsCount: favorites.count
-            )
         }
         
         // Apply sorting
@@ -279,6 +271,16 @@ struct AudioFavoritesView: View {
                 }
             }
             .searchable(text: $searchText, prompt: "Search favorites...")
+            // Analytics moved out of sortedAndFilteredFavorites: a computed
+            // property runs on every body evaluation, so tracking there fired
+            // events on every re-render, not just actual searches.
+            .onChange(of: searchText) { newValue in
+                guard !newValue.isEmpty else { return }
+                AudioAnalytics.shared.trackFavoritesSearched(
+                    searchTerm: newValue,
+                    resultsCount: sortedAndFilteredFavorites.count
+                )
+            }
             .alert("Clear All Favorites", isPresented: $showClearAllAlert) {
                 Button("Cancel", role: .cancel) { }
                 Button("Clear All", role: .destructive) {
@@ -369,7 +371,7 @@ struct AudioFavoritesView: View {
                 AudioContentRow(audio) {
                     handleAudioPlay(audio)
                 } onRemove: {
-                    // Refresh handled automatically by @StateObject
+                    favoritesManager.removeFavorite(withId: audio.id)
                 }
                 .listRowBackground(Color.clear)
                 .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
