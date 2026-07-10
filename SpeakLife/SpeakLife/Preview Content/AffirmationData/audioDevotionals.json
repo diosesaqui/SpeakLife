@@ -10,7 +10,7 @@
         {
             "id": "declarations",
             "displayName": "Mountain-Moving Prayers",
-            "order": 5
+            "order": 2
         },
         {
             "id": "speaklife",
@@ -32,7 +32,7 @@
         {
             "id": "growWithJesus",
             "displayName": "Grow With Jesus",
-            "order": 2
+            "order": 5
         },
         {
             "id": "psalm91",
@@ -80,7 +80,7 @@
             "title": "The Spirit That Can’t Be Broken",
             "subtitle": "New Creation Ep 3",
             "duration": "3m",
-            "imageUrl": "heavenStairway",
+            "imageUrl": "lightHouse",
             "isPremium": true,
             "tag": "newcreation"
         },
@@ -89,7 +89,7 @@
             "title": "Born Again: Not Fixed, Replaced",
             "subtitle": "New Creation Ep 2",
             "duration": "3m",
-            "imageUrl": "heavenStairway",
+            "imageUrl": "lightHouse",
             "isPremium": true,
             "tag": "newcreation"
         },
@@ -98,7 +98,7 @@
             "title": "The Day Heaven Moved In",
             "subtitle": "New Creation Ep 1",
             "duration": "3m",
-            "imageUrl": "heavenStairway",
+            "imageUrl": "lightHouse",
             "isPremium": true,
             "tag": "newcreation"
         },
@@ -497,6 +497,17 @@
             "imageUrl": "godsHeart",
             "isPremium": true,
             "tag": "godsHeart"
+        },
+        {
+            "id": "speaklife-s4e9.mp3",
+            "title": "The Higher Law",
+            "subtitle": "SpeakLife",
+            "duration": "4m",
+            "imageUrl": "devotional",
+            "isPremium": true,
+            "tag": "speaklife",
+            "season": 4,
+            "episode": 9
         },
         {
             "id": "speaklife-s4e8.mp3",
@@ -1457,7 +1468,7 @@
             "title": "Living Victoriously in Christ",
             "subtitle": "Declaring Bible Verses to Walk in Victory Every Day",
             "duration": "3m",
-            "imageUrl": "sunsetMountain",
+            "imageUrl": "JesusOnCross",
             "isPremium": true,
             "tag": "declarations"
         },
@@ -1466,7 +1477,7 @@
             "title": "Abundance Declarations",
             "subtitle": "Unlocking Wealth, Prosperity, and Overflow Through Faith and Affirmation",
             "duration": "4m",
-            "imageUrl": "JesusHeaven",
+            "imageUrl": "JesusOnWater",
             "isPremium": true,
             "tag": "declarations"
         },
@@ -1502,7 +1513,7 @@
             "title": "Protection Promises",
             "subtitle": "Speaking Gods Word for Safety and Peace Over Your Life",
             "duration": "4m",
-            "imageUrl": "warriorAngel",
+            "imageUrl": "JesusPraying",
             "isPremium": true,
             "tag": "declarations"
         },
@@ -1538,7 +1549,7 @@
             "title": "Restoring Relationships",
             "subtitle": "Declaring Healing, Unity, and Love Over Marriages and Families",
             "duration": "3m",
-            "imageUrl": "breathTakingSunset",
+            "imageUrl": "doveSkies",
             "isPremium": true,
             "tag": "declarations"
         },
@@ -1556,7 +1567,7 @@
             "title": "Unstoppable in Him",
             "subtitle": "A New Year Declaration Rooted in Christ’s Power",
             "duration": "2m",
-            "imageUrl": "breathTakingSunset",
+            "imageUrl": "oceansunrise2",
             "isPremium": true,
             "tag": "declarations"
         },
