@@ -186,8 +186,10 @@ struct StreamlinedSpiritualWarfareFlow: View {
     private func registerNotifications() {
         if appState.notificationEnabled {
             var categories = Set(appState.selectedNotificationCategories.components(separatedBy: ",").compactMap({ DeclarationCategory($0) }))
-            // If this flow didn't populate categories, fall back to survey goal mapping
-            if categories.count <= 1 {
+            // Only fall back to the survey goal mapping when this flow didn't populate
+            // categories at all. A single selected category is a deliberate choice and
+            // must be respected exactly (matches the V8 heal in AppState).
+            if categories.isEmpty {
                 let engine = SurveyPersonalizationEngine(goalWordRaw: appState.surveyGoalWord)
                 categories = engine.goalWord?.notificationCategories ?? [.faith, .confidence, .wisdom, .destiny]
             }

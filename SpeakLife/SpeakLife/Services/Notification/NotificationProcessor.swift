@@ -100,6 +100,8 @@ final class NotificationProcessor {
 
                 // Ensure we have at least some notifications
                 if categoryReminders.isEmpty {
+                    // Warning:
+                    print("⚠️ NotificationProcessor: Selected categories \(categoryList.map { $0.rawValue }) matched no declarations — falling back to all categories")
                     let shuffled = allDeclarations.shuffled()
                     let fallbackCount = min(count, shuffled.count)
                     categoryReminders.append(contentsOf: shuffled.prefix(fallbackCount))
