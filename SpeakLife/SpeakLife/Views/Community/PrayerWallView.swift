@@ -27,10 +27,18 @@ struct PrayerWallView: View {
     @StateObject private var viewModel = PrayerWallViewModel()
     @ObservedObject private var appleSignIn = AppleSignInService.shared
 
-    @State private var selectedTab: PrayerTab = .wall
+    @State private var selectedTab: PrayerTab
     @State private var showPostForm = false
     @State private var showSignInPrompt = false
     @State private var agreementRequest: AgreementPresentationRequest?
+
+    /// - Parameter initialTab: The tab to land on when first shown. The
+    ///   notification reader's "See All SpeakLife Messages" CTA opens the
+    ///   Warrior Room straight onto Messages; everywhere else defaults to
+    ///   the prayer wall.
+    init(initialTab: PrayerTab = .wall) {
+        _selectedTab = State(initialValue: initialTab)
+    }
 
     // "Messages" tab — broadcast messages from SpeakLife, read from Firestore
     // so the full history is visible even to users who installed after a

@@ -59,6 +59,13 @@ struct RemoteMessageView: View {
 
     let message: RemoteMessage
 
+    /// When set, a secondary "See All SpeakLife Messages" CTA appears under
+    /// Amen. The owner dismisses this reader and surfaces the Community
+    /// Messages tab so the user can discover every past broadcast. Left nil
+    /// when the reader is opened FROM that Messages tab (they're already
+    /// there).
+    var onSeeAllMessages: (() -> Void)? = nil
+
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -109,20 +116,43 @@ struct RemoteMessageView: View {
                 }
                 .dsAppear(0.06)
 
-                Button {
-                    dismiss()
-                } label: {
-                    Text("Amen")
-                        .font(.system(size: 18, weight: .semibold, design: .rounded))
-                        .foregroundColor(Color(hex: "#0B0F1A"))
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 16)
-                        .background(
-                            RoundedRectangle(cornerRadius: 16)
-                                .fill(DS.Gradient.gold)
-                        )
+                VStack(spacing: 12) {
+                    Button {
+                        dismiss()
+                    } label: {
+                        Text("Amen")
+                            .font(.system(size: 18, weight: .semibold, design: .rounded))
+                            .foregroundColor(Color(hex: "#0B0F1A"))
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 16)
+                            .background(
+                                RoundedRectangle(cornerRadius: 16)
+                                    .fill(DS.Gradient.gold)
+                            )
+                    }
+                    .buttonStyle(.dsPressable(feel: .tapSolid))
+
+                    if let onSeeAllMessages {
+                        Button {
+                            onSeeAllMessages()
+                        } label: {
+                            Text("See All SpeakLife Messages")
+                                .font(.system(size: 16, weight: .semibold, design: .rounded))
+                                .foregroundColor(.white.opacity(0.92))
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 14)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 16)
+                                        .fill(Color.white.opacity(0.10))
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 16)
+                                                .stroke(Color.white.opacity(0.22), lineWidth: 1)
+                                        )
+                                )
+                        }
+                        .buttonStyle(.dsPressable(feel: .tapLight))
+                    }
                 }
-                .buttonStyle(.dsPressable(feel: .tapSolid))
                 .padding(.horizontal, 28)
                 .padding(.bottom, 28)
                 .dsAppear(0.12)

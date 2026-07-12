@@ -108,6 +108,9 @@ struct HomeView: View {
     @State private var celebrationStreakCount = 0
     @State private var anniversaryMilestone: PremiumAnniversaryMilestone?
     @State private var yearInReviewStats: YearInReviewStats?
+    // The Warrior Room's Messages tab, presented from the remote-message
+    // reader's "See All SpeakLife Messages" CTA.
+    @State private var showSpeakLifeMessages = false
 
     private let currentVersion = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0.0"
 
@@ -311,7 +314,28 @@ struct HomeView: View {
             // unmounted. Dismissal clears appState.remoteMessage.
             // Driven by a `deepLink == "message"` notification tap.
             .sheet(item: $appState.remoteMessage) { message in
-                RemoteMessageView(message: message)
+                RemoteMessageView(message: message) {
+                    // "See All SpeakLife Messages": close the reader, then
+                    // surface the Community Messages history. Presented as a
+                    // sheet (not a tab switch) because the Warrior Room only
+                    // occupies a tab slot when Bible Chat is disabled — this
+                    // works in every layout, matching the Today tab's
+                    // Community quick action.
+                    AnalyticsService.shared.track("speaklife_messages_opened", parameters: [
+                        "source": "notification_reader"
+                    ])
+                    appState.remoteMessage = nil
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                        showSpeakLifeMessages = true
+                    }
+                }
+            }
+            // The Warrior Room opened straight onto its Messages tab, reached
+            // from the reader CTA above (must be a separate presentation so it
+            // can appear after the reader sheet has dismissed).
+            .sheet(isPresented: $showSpeakLifeMessages) {
+                PrayerWallView(initialTab: .messages)
+                    .environmentObject(subscriptionStore)
             }
 
     }
