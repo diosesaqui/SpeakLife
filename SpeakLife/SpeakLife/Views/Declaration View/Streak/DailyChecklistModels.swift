@@ -329,9 +329,8 @@ struct CompletionCelebration {
 
 // MARK: - Foundation Week Audio Plan (Days 1-7)
 
-/// One day's recommended audio during the user's first week.
-struct FoundationAudioRecommendation {
-    let day: Int
+/// One recommendable audio in the foundation week (day-independent).
+struct FoundationAudio: Equatable {
     /// `AudioDeclaration.id` — the Firebase Storage filename the audio catalog
     /// keys on (e.g. "psalm9_11.mp3"). Must match the remote catalog exactly.
     let audioId: String
@@ -341,33 +340,148 @@ struct FoundationAudioRecommendation {
 }
 
 /// The curated listening sequence for the foundation week. Instead of sending
-/// new users into the open catalog, days 1-7 each name one specific audio so
-/// the first week lays a deliberate foundation: protection, long life,
-/// healing, peace, identity, victory, gratitude. After day 7 the listen task
-/// returns to the personalized category behavior.
+/// new users into the open catalog, days 1-7 each name one specific audio.
 ///
-/// All seven live under the "declarations" (Mountain-Moving Prayers) filter,
-/// so they exist in both the bundled and remote catalogs.
+/// The week is personalized from the user's onboarding signals: day 1 is
+/// always the Psalm 91 anchor (free, universal), then the personal
+/// declaration's category (strongest stated intent), then each onboarding-
+/// selected category, each mapped to the episode that hits its exact domain.
+/// Remaining days top up from the curated default week. After day 7 the
+/// listen task returns to the generic personalized-category behavior.
 enum FoundationAudioPlan {
-    static let week: [FoundationAudioRecommendation] = [
-        FoundationAudioRecommendation(day: 1, audioId: "psalm9_11.mp3",
-            title: "Psalm 91: A Shield of Protection", durationMinutes: 2),
-        FoundationAudioRecommendation(day: 2, audioId: "longlife_v2.mp3",
-            title: "Renewed Youth and Long Life Declaration", durationMinutes: 3),
-        FoundationAudioRecommendation(day: 3, audioId: "healed_v2.mp3",
-            title: "Healing Declarations", durationMinutes: 5),
-        FoundationAudioRecommendation(day: 4, audioId: "peace_v2.mp3",
-            title: "Peace Beyond Understanding", durationMinutes: 3),
-        FoundationAudioRecommendation(day: 5, audioId: "identity_v2.mp3",
-            title: "Identity in Christ", durationMinutes: 4),
-        FoundationAudioRecommendation(day: 6, audioId: "victorious_v2.mp3",
-            title: "Living Victoriously in Christ", durationMinutes: 3),
-        FoundationAudioRecommendation(day: 7, audioId: "gratitude_v2.mp3",
-            title: "A Heart of Gratitude", durationMinutes: 3),
+
+    // MARK: Recommendable episodes
+    // All verified against the audio catalog ("declarations" filter unless
+    // noted) so the deep-link always resolves.
+
+    static let psalm91 = FoundationAudio(audioId: "psalm9_11.mp3",
+        title: "Psalm 91: A Shield of Protection", durationMinutes: 2)
+    static let longLife = FoundationAudio(audioId: "longlife_v2.mp3",
+        title: "Renewed Youth and Long Life Declaration", durationMinutes: 3)
+    static let healing = FoundationAudio(audioId: "healed_v2.mp3",
+        title: "Healing Declarations", durationMinutes: 5)
+    static let peace = FoundationAudio(audioId: "peace_v2.mp3",
+        title: "Peace Beyond Understanding", durationMinutes: 3)
+    static let identityInChrist = FoundationAudio(audioId: "identity_v2.mp3",
+        title: "Identity in Christ", durationMinutes: 4)
+    static let victory = FoundationAudio(audioId: "victorious_v2.mp3",
+        title: "Living Victoriously in Christ", durationMinutes: 3)
+    static let gratitude = FoundationAudio(audioId: "gratitude_v2.mp3",
+        title: "A Heart of Gratitude", durationMinutes: 3)
+    static let warfare = FoundationAudio(audioId: "warfare_v2.mp3",
+        title: "Victory in Spiritual Warfare", durationMinutes: 3)
+    static let abundance = FoundationAudio(audioId: "prosperity_v2.mp3",
+        title: "Abundance Declarations", durationMinutes: 4)
+    static let protection = FoundationAudio(audioId: "godsprotection_v2.mp3",
+        title: "Protection Promises", durationMinutes: 4)
+    static let brokenhearted = FoundationAudio(audioId: "heartbreak_v2.mp3",
+        title: "Healing for the Brokenhearted", durationMinutes: 3)
+    static let children = FoundationAudio(audioId: "children_v2.mp3",
+        title: "Blessing Our Children", durationMinutes: 3)
+    static let miracles = FoundationAudio(audioId: "miracles_v2.mp3",
+        title: "Breakthrough and Miracles", durationMinutes: 3)
+    static let relationships = FoundationAudio(audioId: "restoration_v2.mp3",
+        title: "Restoring Relationships", durationMinutes: 3)
+    static let spiritualGrowth = FoundationAudio(audioId: "spiritualGrowth_v2.mp3",
+        title: "A Declaration for Spiritual Growth", durationMinutes: 4)
+    // "meditation" filter
+    static let godsLove = FoundationAudio(audioId: "loveMeditations.mp3",
+        title: "The Heart of God's Love", durationMinutes: 8)
+
+    /// Fallback sequence when onboarding gave no (or few) signals — the arc:
+    /// protection, long life, healing, peace, identity, victory, gratitude.
+    static let defaultWeek: [FoundationAudio] = [
+        psalm91, longLife, healing, peace, identityInChrist, victory, gratitude,
     ]
 
-    static func recommendation(forDay day: Int) -> FoundationAudioRecommendation? {
-        week.first { $0.day == day }
+    /// Lowercased `DeclarationCategory` rawValue → the episode that speaks to
+    /// that category's exact domain. Covers every category offered in the
+    /// onboarding pickers plus the common personal-declaration matches;
+    /// unmapped categories simply fall through to the default week.
+    static let categoryAudio: [String: FoundationAudio] = [
+        // Peace over the mind
+        "anxiety": peace, "fear": peace, "rest": peace,
+        "mentalhealth": peace, "anger": peace,
+        // Healing and the body
+        "health": healing, "wellness": healing,
+        // Who they are in Christ
+        "identity": identityInChrist, "confidence": identityInChrist,
+        // Faith and victory
+        "faith": victory,
+        // Growth and direction
+        "wisdom": spiritualGrowth, "grace": spiritualGrowth, "destiny": spiritualGrowth,
+        "spiritualgrowth": spiritualGrowth, "obedience": spiritualGrowth, "newseason": spiritualGrowth,
+        // Provision
+        "wealth": abundance, "work": abundance, "business": abundance,
+        "debt": abundance, "favor": abundance, "housing": abundance,
+        // Breakthrough when it looks impossible
+        "hope": miracles, "miracles": miracles, "hardtimes": miracles,
+        // Joy and thanksgiving
+        "joy": gratitude, "gratitude": gratitude, "praise": gratitude,
+        // Relationships and family
+        "marriage": relationships, "relationship": relationships, "friendship": relationships,
+        "parenting": children, "singleparent": children, "fertility": children,
+        // God's love
+        "love": godsLove, "godsheart": godsLove,
+        // The wounded heart
+        "innerhealing": brokenhearted, "grief": brokenhearted,
+        "divorce": brokenhearted, "forgiveness": brokenhearted,
+        // Warfare and deliverance
+        "warfare": warfare, "addiction": warfare,
+        // Protection
+        "godsprotection": protection,
+    ]
+
+    // MARK: Week building
+
+    /// Builds the personalized 7-day sequence. Pure — pass the stored signals
+    /// in. Day 1 is always Psalm 91; the personal declaration's category leads
+    /// day 2 (it's the one thing they said they're believing God for), then
+    /// the selected categories, then the default week fills the rest. Never
+    /// recommends the same episode twice in the week.
+    static func personalizedWeek(personalDeclarationCategory: String?,
+                                 selectedCategories: [String]) -> [FoundationAudio] {
+        var week: [FoundationAudio] = [psalm91]
+        func append(_ audio: FoundationAudio) {
+            guard week.count < 7, !week.contains(audio) else { return }
+            week.append(audio)
+        }
+
+        if let raw = personalDeclarationCategory,
+           let match = categoryAudio[raw.lowercased()] {
+            append(match)
+        }
+        // Selections are persisted from a Set, so stored order is arbitrary
+        // and can differ between launches. Sort so the same picks always
+        // yield the same week — otherwise a reshuffle between days could
+        // repeat one episode and skip another.
+        for category in selectedCategories.map({ $0.lowercased() }).sorted() {
+            if let match = categoryAudio[category] { append(match) }
+        }
+        for audio in defaultWeek { append(audio) }
+        return week
+    }
+
+    /// Today's recommendation, built from the stored onboarding signals:
+    /// the active personal declaration's category and the categories chosen
+    /// during onboarding (the same store the checklist personalizes from).
+    static func recommendation(forDay day: Int) -> FoundationAudio? {
+        guard (1...7).contains(day) else { return nil }
+        let week = personalizedWeek(
+            personalDeclarationCategory: PersonalDeclarationRepository.activeCategoryRaw(),
+            selectedCategories: storedSelectedCategories()
+        )
+        return day <= week.count ? week[day - 1] : nil
+    }
+
+    /// The onboarding category picks, as persisted by DeclarationViewModel.
+    private static func storedSelectedCategories(defaults: UserDefaults = .standard) -> [String] {
+        if let data = defaults.data(forKey: "userSelectedCategories"),
+           let categories = try? JSONDecoder().decode([String].self, from: data) {
+            return categories
+        }
+        if let single = defaults.string(forKey: "selectedCategory") { return [single] }
+        return []
     }
 }
 
@@ -790,14 +904,14 @@ struct TaskLibrary {
     /// curated sequence. Day 8+ has no recommendation and the tasks pass
     /// through untouched, restoring the personalized category behavior.
     private static func applyFoundationAudioPlan(to tasks: [DailyTask], day: Int) -> [DailyTask] {
-        guard let recommendation = FoundationAudioPlan.recommendation(forDay: day) else { return tasks }
+        guard let audio = FoundationAudioPlan.recommendation(forDay: day) else { return tasks }
         return tasks.map { task in
             guard task.id == "listen_audio" else { return task }
             var audioTask = task
-            audioTask.title = recommendation.title
-            audioTask.description = "Day \(recommendation.day) of 7: today's recommended audio for your foundation"
-            audioTask.estimatedMinutes = recommendation.durationMinutes
-            audioTask.recommendedAudioId = recommendation.audioId
+            audioTask.title = audio.title
+            audioTask.description = "Day \(day) of 7: today's recommended audio for your foundation"
+            audioTask.estimatedMinutes = audio.durationMinutes
+            audioTask.recommendedAudioId = audio.audioId
             return audioTask
         }
     }
