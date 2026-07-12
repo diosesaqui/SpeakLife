@@ -55,8 +55,14 @@ struct ModernDailyChecklistView: View {
     private func handleTaskNavigation(_ task: DailyTask) {
         switch task.navigationDestination {
         case .audioTab:
-            // Just open the Audio tab and let the user choose what to play —
-            // no forced filter, no autoplay.
+            // Foundation week (days 1-7): the task names one exact episode —
+            // deep-link straight to it so the user lands on today's audio.
+            if let recommendedAudioId = task.recommendedAudioId {
+                audioDeclarationViewModel.pendingChecklistDeepLink =
+                    .init(audioId: recommendedAudioId, requestedAt: Date())
+            }
+            // Day 8+: just open the Audio tab and let the user choose what to
+            // play — no forced filter, no autoplay.
             if let onClose = onClose { onClose() } else { dismiss() }
             tabViewModel.goToAudio()
         case .devotional:
@@ -85,13 +91,7 @@ struct ModernDailyChecklistView: View {
     }
 
     private func getUserTopCategories() -> [String] {
-        let defaults = UserDefaults.standard
-        if let data = defaults.data(forKey: "userSelectedCategories"),
-           let categories = try? JSONDecoder().decode([String].self, from: data) {
-            return Array(categories.prefix(2))
-        }
-        if let single = defaults.string(forKey: "selectedCategory") { return [single] }
-        return []
+        UserSelectedCategories.top()
     }
 
     /// Matches the declaration feed's themed backdrop (including a user-chosen

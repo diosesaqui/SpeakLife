@@ -321,21 +321,17 @@ struct AudioDeclarationView: View {
                 // Re-apply ordering now that Remote Config and favorites have
                 // loaded — covers existing users who don't rebuild filters on update.
                 viewModel.refreshPersonalization()
+                // Covers arriving from the checklist when this tab is already
+                // alive: contentByFilter won't re-emit, so onReceive alone
+                // would miss the pending deep-link.
+                attemptChecklistAutoPlay()
             }
             // Auto-play when arriving from daily checklist.
             // Uses onReceive on contentByFilter (a @Published dict) so it fires
             // both when content is already loaded AND when it finishes loading
             // for the first time — solving the empty-content timing issue.
-            .onReceive(viewModel.$contentByFilter) { byFilter in
-                guard viewModel.checklistAutoPlayPending else { return }
-                let content = byFilter[viewModel.selectedFilterId] ?? []
-                guard !content.isEmpty else { return } // wait for next emission
-                viewModel.checklistAutoPlayPending = false
-                let episode = content.first(where: { !AudioProgressStore.shared.isPlayed($0.id) }) ?? content.first
-                guard let ep = episode else { return }
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                    handleItemTap(ep)
-                }
+            .onReceive(viewModel.$contentByFilter) { _ in
+                attemptChecklistAutoPlay()
             }
             // Devotional Subscription Sheet
             .sheet(isPresented: $presentDevotionalSubscriptionView) {
@@ -568,6 +564,41 @@ struct AudioDeclarationView: View {
         }
     }
     
+    /// Resolves the pending checklist deep-link (the foundation week's exact
+    /// episode) once the catalog can. Consumed atomically: an expired link is
+    /// dropped, a resolved one plays, and a loaded catalog that no longer
+    /// contains the episode clears the link and leaves the user on the open
+    /// tab — never a surprise fallback onto an unrelated episode.
+    private func attemptChecklistAutoPlay() {
+        guard let deepLink = viewModel.pendingChecklistDeepLink else { return }
+
+        // Tap-to-play should resolve within seconds. A link this old means the
+        // catalog never loaded at the time (e.g. offline); playing it on some
+        // later visit would be unprompted audio the user never asked for.
+        guard Date().timeIntervalSince(deepLink.requestedAt) < 300 else {
+            viewModel.pendingChecklistDeepLink = nil
+            return
+        }
+
+        // Resolve against allAudioFiles, which is assigned in one shot —
+        // unlike contentByFilter, which is populated one filter at a time and
+        // emits partial snapshots that would misreport the catalog as loaded.
+        // Empty means still loading: keep the link and wait for the next
+        // emission.
+        guard !viewModel.allAudioFiles.isEmpty else { return }
+        viewModel.pendingChecklistDeepLink = nil
+
+        guard let episode = viewModel.allAudioFiles.first(where: { $0.id == deepLink.audioId }) else { return }
+        if let tag = episode.tag {
+            // Surface the filter the episode lives under so the list matches
+            // what's about to play.
+            viewModel.setSelectedFilter(tag)
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            handleItemTap(episode)
+        }
+    }
+
     private func handleItemTap(_ item: AudioDeclaration) {
         if item.isPremium, !subscriptionStore.isPremium {
             isPresentingPremiumView = true
