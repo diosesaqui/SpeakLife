@@ -36,18 +36,7 @@ final class EnhancedStreakViewModel: ObservableObject {
     /// Retrieves user's top 2 selected categories from UserDefaults
     /// - Returns: Array of category strings (max 2) for task personalization
     private func getUserTopCategories() -> [String] {
-        // Try to get categories from UserDefaults (stored by DeclarationViewModel)
-        if let categoriesData = userDefaults.data(forKey: "userSelectedCategories"),
-           let categories = try? JSONDecoder().decode([String].self, from: categoriesData) {
-            return Array(categories.prefix(2))
-        }
-        
-        // Fallback: use single selected category if available
-        if let selectedCategory = userDefaults.string(forKey: "selectedCategory") {
-            return [selectedCategory]
-        }
-        
-        return []
+        UserSelectedCategories.top()
     }
 
     /// The streak day the user is working on TODAY: the day already earned
@@ -346,22 +335,26 @@ final class EnhancedStreakViewModel: ObservableObject {
         // Capture longestStreak BEFORE updateStreak modifies it (fixes isNewRecord always being false)
         let longestStreakBefore = streakStats.longestStreak
         streakStats.updateStreak(for: today)
-        
-        // Update tasks for new streak milestone
-        updateTasksForNewStreak()
-        
+
         // BurstCompletionTracker is the authoritative source of truth (calculates from actual history).
         // streakStats can fall out of sync if checkStreakValidity() resets it incorrectly.
         // Use whichever value is higher to ensure we never show a lower streak than reality.
+        // This sync must run BEFORE updateTasksForNewStreak below: tasks (including
+        // the foundation week's "Day N of 7" audio) are generated from
+        // streakStats.currentStreak and are not regenerated afterwards, so a
+        // late rescue would leave a day-1 checklist next to a rescued streak.
         let burstStreak = BurstCompletionTracker.shared.currentStreak
         let currentStreakNumber = max(streakStats.currentStreak, burstStreak)
-        
+
         // Sync streakStats if it fell behind
         if currentStreakNumber > streakStats.currentStreak {
             streakStats.currentStreak = currentStreakNumber
             streakStats.longestStreak = max(streakStats.longestStreak, currentStreakNumber)
         }
-        
+
+        // Update tasks for new streak milestone
+        updateTasksForNewStreak()
+
         let isNewRecord = currentStreakNumber > longestStreakBefore
 
         // THE core retention event — fires the moment a streak day is earned.

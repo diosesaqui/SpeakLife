@@ -286,6 +286,11 @@ struct StreakStats: Codable {
                 // Use the freeze — protect the streak, mark it used
                 streakFreezeAvailable = false
                 streakFreezeUsedDate = Date()
+                // Bridge the gap so the next completion counts as consecutive.
+                // Without this, updateStreak's daysDifference > 1 branch would
+                // reset the very streak the freeze just spent itself
+                // protecting (and snap the foundation week back to day 1).
+                lastCompletedDate = calendar.date(byAdding: .day, value: -1, to: today)
                 // Notify the user next session that their freeze was used
                 UserDefaults.standard.set(true, forKey: "streakFreezeWasUsed")
                 return  // Don't reset streak
@@ -465,23 +470,87 @@ enum FoundationAudioPlan {
     /// Today's recommendation, built from the stored onboarding signals:
     /// the active personal declaration's category and the categories chosen
     /// during onboarding (the same store the checklist personalizes from).
+    ///
+    /// Each day's pick is PINNED once made (persisted day → audioId). The
+    /// signals are live and can change mid-week (new personal declaration via
+    /// the breakthrough flow, edited categories); positional indexing into a
+    /// rebuilt week would then repeat an already-heard episode and silently
+    /// skip the newly relevant one. Instead, a day keeps the episode it was
+    /// first given, and an unpinned day takes the highest-priority episode
+    /// not yet served — so a new signal's episode plays on the NEXT day
+    /// rather than landing in an already-past slot.
     static func recommendation(forDay day: Int) -> FoundationAudio? {
         guard (1...7).contains(day) else { return nil }
+
+        var assignments = loadDayAssignments()
+        if let pinnedId = assignments[day], let pinned = episode(forId: pinnedId) {
+            return pinned
+        }
+
         let week = personalizedWeek(
             personalDeclarationCategory: PersonalDeclarationRepository.activeCategoryRaw(),
-            selectedCategories: storedSelectedCategories()
+            selectedCategories: UserSelectedCategories.all()
         )
-        return day <= week.count ? week[day - 1] : nil
+        // First unpinned day past day 1 with no history (fresh pinning store,
+        // e.g. an app update landing mid-week): backfill earlier days
+        // positionally so today doesn't re-pick an episode those days already
+        // recommended under the old positional scheme.
+        if assignments.isEmpty && day > 1 {
+            for (index, audio) in week.prefix(day - 1).enumerated() {
+                assignments[index + 1] = audio.audioId
+            }
+        }
+        let served = Set(assignments.filter { $0.key != day }.values)
+        // week holds 7 distinct episodes and at most 6 other days are pinned,
+        // so a pick always exists.
+        guard let pick = week.first(where: { !served.contains($0.audioId) }) else { return nil }
+        assignments[day] = pick.audioId
+        saveDayAssignments(assignments)
+        return pick
     }
 
-    /// The onboarding category picks, as persisted by DeclarationViewModel.
-    private static func storedSelectedCategories(defaults: UserDefaults = .standard) -> [String] {
+    // MARK: Persisted day assignments
+
+    private static let dayAssignmentsKey = "foundationAudioDayAssignments"
+
+    private static func loadDayAssignments(defaults: UserDefaults = .standard) -> [Int: String] {
+        guard let data = defaults.data(forKey: dayAssignmentsKey),
+              let decoded = try? JSONDecoder().decode([Int: String].self, from: data) else { return [:] }
+        return decoded
+    }
+
+    private static func saveDayAssignments(_ assignments: [Int: String], defaults: UserDefaults = .standard) {
+        if let data = try? JSONEncoder().encode(assignments) {
+            defaults.set(data, forKey: dayAssignmentsKey)
+        }
+    }
+
+    private static func episode(forId id: String) -> FoundationAudio? {
+        if let match = defaultWeek.first(where: { $0.audioId == id }) { return match }
+        return categoryAudio.values.first(where: { $0.audioId == id })
+    }
+}
+
+// MARK: - User Selected Categories (shared reader)
+
+/// Single reader for the onboarding category picks that DeclarationViewModel
+/// persists ("userSelectedCategories", with the legacy "selectedCategory"
+/// fallback). The checklist personalization and the foundation audio plan all
+/// read through here so the key and encoding live in one place.
+enum UserSelectedCategories {
+    static func all(defaults: UserDefaults = .standard) -> [String] {
         if let data = defaults.data(forKey: "userSelectedCategories"),
            let categories = try? JSONDecoder().decode([String].self, from: data) {
             return categories
         }
         if let single = defaults.string(forKey: "selectedCategory") { return [single] }
         return []
+    }
+
+    /// The user's top picks, in stored order (the checklist personalizes
+    /// titles from the first two).
+    static func top(_ count: Int = 2, defaults: UserDefaults = .standard) -> [String] {
+        Array(all(defaults: defaults).prefix(count))
     }
 }
 

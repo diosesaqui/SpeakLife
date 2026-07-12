@@ -28,13 +28,16 @@ final class AudioDeclarationViewModel: ObservableObject {
     @Published var playedFilter: PlayedFilter = .all {  // Played / Unplayed sub-filter
         didSet { if oldValue != playedFilter { refreshFilteredContent(resetPaging: true) } }
     }
-    // Set by checklist deep-link. AudioDeclarationView observes contentByFilter and
-    // auto-plays the first unplayed episode once content is loaded.
-    @Published var checklistAutoPlayPending: Bool = false
-    // Foundation week deep-link: the exact episode id the checklist recommended
-    // for today. When set (alongside checklistAutoPlayPending), AudioDeclarationView
-    // plays this specific episode instead of the first unplayed one.
-    var checklistTargetAudioId: String? = nil
+    // Foundation week deep-link from the Today checklist: the exact episode to
+    // play. Consumed atomically by AudioDeclarationView once the catalog can
+    // resolve it. Carries its request time so a link that never resolved
+    // (e.g. tapped offline) expires instead of ghost-autoplaying on a later,
+    // unrelated visit to the tab.
+    struct ChecklistDeepLink {
+        let audioId: String
+        let requestedAt: Date
+    }
+    var pendingChecklistDeepLink: ChecklistDeepLink? = nil
     
     private(set) var allAudioFiles: [AudioDeclaration] = []
     @Published var downloadProgress: [String: Double] = [:]
