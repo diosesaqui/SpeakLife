@@ -31,6 +31,10 @@ final class AudioDeclarationViewModel: ObservableObject {
     // Set by checklist deep-link. AudioDeclarationView observes contentByFilter and
     // auto-plays the first unplayed episode once content is loaded.
     @Published var checklistAutoPlayPending: Bool = false
+    // Foundation week deep-link: the exact episode id the checklist recommended
+    // for today. When set (alongside checklistAutoPlayPending), AudioDeclarationView
+    // plays this specific episode instead of the first unplayed one.
+    var checklistTargetAudioId: String? = nil
     
     private(set) var allAudioFiles: [AudioDeclaration] = []
     @Published var downloadProgress: [String: Double] = [:]

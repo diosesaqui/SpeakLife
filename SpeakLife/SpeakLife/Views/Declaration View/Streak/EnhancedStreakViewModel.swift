@@ -49,7 +49,22 @@ final class EnhancedStreakViewModel: ObservableObject {
         
         return []
     }
-    
+
+    /// The streak day the user is working on TODAY: the day already earned
+    /// today, or the next day when today is still unearned. Task generation is
+    /// keyed to `currentStreak`, which only advances after the burst — so a
+    /// user opening the app on the morning of day 2 would otherwise still see
+    /// day 1's foundation audio. This gives the audio plan a day that rolls
+    /// over with the calendar. A broken streak resets it to 1, restarting the
+    /// foundation week from the top.
+    var workingStreakDay: Int {
+        if let last = streakStats.lastCompletedDate,
+           Calendar.current.isDateInToday(last) {
+            return max(1, streakStats.currentStreak)
+        }
+        return streakStats.currentStreak + 1
+    }
+
     // MARK: - Initialization
     init() {
         self.todayChecklist = Self.createTodayChecklist()
@@ -91,7 +106,8 @@ final class EnhancedStreakViewModel: ObservableObject {
         
         // Re-personalize all current tasks based on streak level
         let currentStreak = streakStats.currentStreak > 0 ? streakStats.currentStreak : 1
-        let freshTasks = TaskLibrary.getCoreTasksForStreak(currentStreak, userCategories: userCategories)
+        let freshTasks = TaskLibrary.getCoreTasksForStreak(currentStreak, userCategories: userCategories,
+                                                           foundationAudioDay: workingStreakDay)
         
         // Preserve completion status from existing tasks
         let existingCompletions = Dictionary(uniqueKeysWithValues: todayChecklist.tasks.map { 
@@ -173,7 +189,9 @@ final class EnhancedStreakViewModel: ObservableObject {
             "current_phase": todayChecklist.currentPhase.rawValue,
             "estimated_minutes": task.estimatedMinutes,
             "is_newly_unlocked": task.isNewlyUnlocked,
-            "is_burst": taskId == "complete_daily_burst"
+            "is_burst": taskId == "complete_daily_burst",
+            // Foundation week: which curated audio this listen task pointed at
+            "recommended_audio_id": task.recommendedAudioId ?? "none"
         ])
         
         todayChecklist.tasks[taskIndex].isCompleted = true
@@ -273,7 +291,8 @@ final class EnhancedStreakViewModel: ObservableObject {
         
         // Generate new task list for today based on current streak and user preferences
         let userCategories = getUserTopCategories()
-        let updatedTasks = TaskLibrary.getCoreTasksForStreak(currentStreak, userCategories: userCategories)
+        let updatedTasks = TaskLibrary.getCoreTasksForStreak(currentStreak, userCategories: userCategories,
+                                                             foundationAudioDay: workingStreakDay)
         
         // Preserve completion status for existing tasks
         let existingCompletions = Dictionary(uniqueKeysWithValues: todayChecklist.tasks.map { ($0.id, $0.isCompleted) })
@@ -296,7 +315,8 @@ final class EnhancedStreakViewModel: ObservableObject {
         let today = Calendar.current.startOfDay(for: Date())
         let phase = ProgressionPhase.getPhase(for: streakDay)
         let userCategories = getUserTopCategories()
-        let tasks = TaskLibrary.getCoreTasksForStreak(streakDay, userCategories: userCategories)
+        let tasks = TaskLibrary.getCoreTasksForStreak(streakDay, userCategories: userCategories,
+                                                      foundationAudioDay: workingStreakDay)
         
         return DailyChecklist(
             date: today,

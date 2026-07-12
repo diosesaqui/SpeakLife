@@ -321,21 +321,17 @@ struct AudioDeclarationView: View {
                 // Re-apply ordering now that Remote Config and favorites have
                 // loaded — covers existing users who don't rebuild filters on update.
                 viewModel.refreshPersonalization()
+                // Covers arriving from the checklist when this tab is already
+                // alive: contentByFilter won't re-emit, so onReceive alone
+                // would miss the pending deep-link.
+                attemptChecklistAutoPlay(viewModel.contentByFilter)
             }
             // Auto-play when arriving from daily checklist.
             // Uses onReceive on contentByFilter (a @Published dict) so it fires
             // both when content is already loaded AND when it finishes loading
             // for the first time — solving the empty-content timing issue.
             .onReceive(viewModel.$contentByFilter) { byFilter in
-                guard viewModel.checklistAutoPlayPending else { return }
-                let content = byFilter[viewModel.selectedFilterId] ?? []
-                guard !content.isEmpty else { return } // wait for next emission
-                viewModel.checklistAutoPlayPending = false
-                let episode = content.first(where: { !AudioProgressStore.shared.isPlayed($0.id) }) ?? content.first
-                guard let ep = episode else { return }
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                    handleItemTap(ep)
-                }
+                attemptChecklistAutoPlay(byFilter)
             }
             // Devotional Subscription Sheet
             .sheet(isPresented: $presentDevotionalSubscriptionView) {
@@ -568,6 +564,42 @@ struct AudioDeclarationView: View {
         }
     }
     
+    /// Resolves a pending checklist deep-link once content is available.
+    /// Foundation week (days 1-7) targets one exact episode; without a target
+    /// it falls back to the first unplayed episode in the selected filter.
+    private func attemptChecklistAutoPlay(_ byFilter: [String: [AudioDeclaration]]) {
+        guard viewModel.checklistAutoPlayPending else { return }
+
+        // Targeted recommendation: play the exact episode, switching to the
+        // filter it lives under so the list matches what's playing.
+        if let targetId = viewModel.checklistTargetAudioId {
+            for (filterId, items) in byFilter {
+                guard let episode = items.first(where: { $0.id == targetId }) else { continue }
+                viewModel.checklistAutoPlayPending = false
+                viewModel.checklistTargetAudioId = nil
+                viewModel.setSelectedFilter(filterId)
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    handleItemTap(episode)
+                }
+                return
+            }
+            // Catalog loaded but the target isn't in it (e.g. stale plan vs.
+            // remote data) — clear the target and fall through to the generic
+            // path. If nothing has loaded yet, keep waiting for content.
+            guard byFilter.values.contains(where: { !$0.isEmpty }) else { return }
+            viewModel.checklistTargetAudioId = nil
+        }
+
+        let content = byFilter[viewModel.selectedFilterId] ?? []
+        guard !content.isEmpty else { return } // wait for next emission
+        viewModel.checklistAutoPlayPending = false
+        let episode = content.first(where: { !AudioProgressStore.shared.isPlayed($0.id) }) ?? content.first
+        guard let ep = episode else { return }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            handleItemTap(ep)
+        }
+    }
+
     private func handleItemTap(_ item: AudioDeclaration) {
         if item.isPremium, !subscriptionStore.isPremium {
             isPresentingPremiumView = true

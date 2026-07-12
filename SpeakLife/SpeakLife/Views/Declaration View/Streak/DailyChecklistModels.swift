@@ -92,17 +92,22 @@ struct DailyTask: Identifiable, Codable {
     let type: TaskType
     let difficulty: DifficultyLevel
     let minimumStreakDay: Int
-    let estimatedMinutes: Int
+    var estimatedMinutes: Int
     var isCompleted: Bool = false
     var completedAt: Date?
     var isNewlyUnlocked: Bool = false
     var navigationDestination: TaskNavigationDestination = .none
+    /// Foundation week (days 1-7): the exact catalog episode this task points
+    /// at (`AudioDeclaration.id`). The checklist deep-links straight to it.
+    /// nil after the foundation week — the task opens the open audio tab.
+    var recommendedAudioId: String? = nil
 
     init(id: String, title: String, description: String, icon: String,
          category: TaskCategory, type: TaskType, difficulty: DifficultyLevel = .beginner,
          minimumStreakDay: Int = 1, estimatedMinutes: Int = 5,
          isCompleted: Bool = false, completedAt: Date? = nil,
-         navigationDestination: TaskNavigationDestination = .none) {
+         navigationDestination: TaskNavigationDestination = .none,
+         recommendedAudioId: String? = nil) {
         self.id = id
         self.title = title
         self.description = description
@@ -115,6 +120,7 @@ struct DailyTask: Identifiable, Codable {
         self.isCompleted = isCompleted
         self.completedAt = completedAt
         self.navigationDestination = navigationDestination
+        self.recommendedAudioId = recommendedAudioId
     }
 }
 
@@ -318,6 +324,50 @@ struct CompletionCelebration {
         default:
             return "🔥 \(streak) DAYS! Keep speaking life—heaven is listening!"
         }
+    }
+}
+
+// MARK: - Foundation Week Audio Plan (Days 1-7)
+
+/// One day's recommended audio during the user's first week.
+struct FoundationAudioRecommendation {
+    let day: Int
+    /// `AudioDeclaration.id` — the Firebase Storage filename the audio catalog
+    /// keys on (e.g. "psalm9_11.mp3"). Must match the remote catalog exactly.
+    let audioId: String
+    /// Exact catalog title, shown verbatim on the task card.
+    let title: String
+    let durationMinutes: Int
+}
+
+/// The curated listening sequence for the foundation week. Instead of sending
+/// new users into the open catalog, days 1-7 each name one specific audio so
+/// the first week lays a deliberate foundation: protection, long life,
+/// healing, peace, identity, victory, gratitude. After day 7 the listen task
+/// returns to the personalized category behavior.
+///
+/// All seven live under the "declarations" (Mountain-Moving Prayers) filter,
+/// so they exist in both the bundled and remote catalogs.
+enum FoundationAudioPlan {
+    static let week: [FoundationAudioRecommendation] = [
+        FoundationAudioRecommendation(day: 1, audioId: "psalm9_11.mp3",
+            title: "Psalm 91: A Shield of Protection", durationMinutes: 2),
+        FoundationAudioRecommendation(day: 2, audioId: "longlife_v2.mp3",
+            title: "Renewed Youth and Long Life Declaration", durationMinutes: 3),
+        FoundationAudioRecommendation(day: 3, audioId: "healed_v2.mp3",
+            title: "Healing Declarations", durationMinutes: 5),
+        FoundationAudioRecommendation(day: 4, audioId: "peace_v2.mp3",
+            title: "Peace Beyond Understanding", durationMinutes: 3),
+        FoundationAudioRecommendation(day: 5, audioId: "identity_v2.mp3",
+            title: "Identity in Christ", durationMinutes: 4),
+        FoundationAudioRecommendation(day: 6, audioId: "victorious_v2.mp3",
+            title: "Living Victoriously in Christ", durationMinutes: 3),
+        FoundationAudioRecommendation(day: 7, audioId: "gratitude_v2.mp3",
+            title: "A Heart of Gratitude", durationMinutes: 3),
+    ]
+
+    static func recommendation(forDay day: Int) -> FoundationAudioRecommendation? {
+        week.first { $0.day == day }
     }
 }
 
@@ -673,12 +723,19 @@ struct TaskLibrary {
         return reordered
     }
 
-    static func getCoreTasksForStreak(_ streakDay: Int, userCategories: [String] = []) -> [DailyTask] {
+    /// - Parameter foundationAudioDay: The day (1-7) whose curated audio the
+    ///   listen task should point at. Defaults to `streakDay`; the view model
+    ///   passes the working day so the recommendation advances each calendar
+    ///   day instead of waiting for the burst to bump the streak.
+    static func getCoreTasksForStreak(_ streakDay: Int, userCategories: [String] = [],
+                                      foundationAudioDay: Int? = nil) -> [DailyTask] {
+        let audioDay = foundationAudioDay ?? streakDay
         // Check if AI features are enabled for enhanced task generation
         if isAIEnabled() {
-            return burstFirst(getAIEnhancedTasks(streakDay: streakDay, userCategories: userCategories))
+            let aiTasks = getAIEnhancedTasks(streakDay: streakDay, userCategories: userCategories)
+            return burstFirst(applyFoundationAudioPlan(to: aiTasks, day: audioDay))
         }
-        
+
         // Standard task generation
         let phase = ProgressionPhase.getPhase(for: streakDay)
         let availableTasks = getAvailableTasks(for: streakDay)
@@ -720,8 +777,29 @@ struct TaskLibrary {
             tasks = tasks.map { personalizeTask($0, for: userCategories) }
         }
 
+        // Foundation week override runs AFTER personalization so the curated
+        // day-by-day audio wins over the generic category title on days 1-7.
+        tasks = applyFoundationAudioPlan(to: tasks, day: audioDay)
+
         // Burst must always be first — it's the only streak-earning task
         return burstFirst(tasks)
+    }
+
+    /// Days 1-7: points the listen task at that day's exact recommended audio
+    /// (title, duration, and deep-link id) so the first week builds on a
+    /// curated sequence. Day 8+ has no recommendation and the tasks pass
+    /// through untouched, restoring the personalized category behavior.
+    private static func applyFoundationAudioPlan(to tasks: [DailyTask], day: Int) -> [DailyTask] {
+        guard let recommendation = FoundationAudioPlan.recommendation(forDay: day) else { return tasks }
+        return tasks.map { task in
+            guard task.id == "listen_audio" else { return task }
+            var audioTask = task
+            audioTask.title = recommendation.title
+            audioTask.description = "Day \(recommendation.day) of 7: today's recommended audio for your foundation"
+            audioTask.estimatedMinutes = recommendation.durationMinutes
+            audioTask.recommendedAudioId = recommendation.audioId
+            return audioTask
+        }
     }
     
     static func getNewlyUnlockedTasks(currentStreak: Int, previousStreak: Int) -> [DailyTask] {
