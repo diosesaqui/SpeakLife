@@ -19,6 +19,12 @@
 //  every remote import: every device keeps the same survivor row (earliest
 //  createdAt, id as tie-break) and deletes the rest, and the deletes sync.
 //
+//  Threading model: all mutable coordination state (debounce work items,
+//  in-flight flags) is confined to the MAIN queue — notification handlers
+//  hop there first, because Core Data and UserDefaults notifications arrive
+//  on arbitrary posting threads. Core Data work runs on one serial
+//  background context created eagerly in init.
+//
 
 import Foundation
 import CoreData
@@ -34,23 +40,45 @@ final class ProgressSyncStore {
         static let dayCompletion = "dayCompletion"   // key = "yyyy-MM-dd" local day stamp
         static let listenedAudio = "listenedAudio"   // key = audio id
         static let counter = "counter"               // key = "<counterKey>|<deviceId>"
+
+        static let all: Set<String> = [dayCompletion, listenedAudio, counter]
     }
 
     /// Posted on the main queue after remote CloudKit changes have been
-    /// merged and deduped. userInfo["kinds"] is a Set<String> of event kinds
-    /// present in the store so observers can refresh what they care about.
+    /// merged and deduped. userInfo["kinds"] is always Kind.all — the store
+    /// cannot cheaply know which kinds changed (a deletion can empty a kind
+    /// entirely), so observers must refresh and decide for themselves.
     static let dataDidChange = Notification.Name("ProgressSyncStoreDataDidChange")
 
     // MARK: - Device identity
 
     private static let deviceIdKey = "sl_syncDeviceId"
+    private static let deviceIdVendorKey = "sl_syncDeviceIdVendor"
 
+    /// Stable per-device identifier for per-device counter rows.
+    ///
+    /// UserDefaults is restored onto new phones by iCloud/device-to-device
+    /// migration, which would make two live devices share one id and fight
+    /// over the same counter row. identifierForVendor is NOT carried over by
+    /// restore, so we pin the stored id to it and mint a fresh id when the
+    /// vendor id changes (the old row simply becomes another device's
+    /// contribution — nothing is lost).
     static var deviceId: String {
-        if let existing = UserDefaults.standard.string(forKey: deviceIdKey) {
-            return existing
+        let defaults = UserDefaults.standard
+        let currentVendor = UIDevice.current.identifierForVendor?.uuidString
+
+        if let existing = defaults.string(forKey: deviceIdKey) {
+            let storedVendor = defaults.string(forKey: deviceIdVendorKey)
+            if storedVendor == currentVendor || currentVendor == nil {
+                return existing
+            }
         }
+
         let fresh = UUID().uuidString
-        UserDefaults.standard.set(fresh, forKey: deviceIdKey)
+        defaults.set(fresh, forKey: deviceIdKey)
+        if let currentVendor = currentVendor {
+            defaults.set(currentVendor, forKey: deviceIdVendorKey)
+        }
         return fresh
     }
 
@@ -67,18 +95,19 @@ final class ProgressSyncStore {
     // MARK: - Private state
 
     private let container: NSPersistentCloudKitContainer
-    private lazy var context: NSManagedObjectContext = {
-        let ctx = container.newBackgroundContext()
-        ctx.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy
-        ctx.automaticallyMergesChangesFromParent = true
-        return ctx
-    }()
+    private let context: NSManagedObjectContext
 
+    // Main-queue-confined coordination state.
     private var remoteChangeWorkItem: DispatchWorkItem?
+    private var counterSyncInFlight = false
     private var started = false
 
     private init(container: NSPersistentCloudKitContainer = PersistenceController.shared.container) {
         self.container = container
+        let ctx = container.newBackgroundContext()
+        ctx.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy
+        ctx.automaticallyMergesChangesFromParent = true
+        self.context = ctx
     }
 
     deinit {
@@ -119,34 +148,49 @@ final class ProgressSyncStore {
     }
 
     @objc private func handleRemoteChange(_ notification: Notification) {
-        // Remote-change notifications arrive in bursts during an import —
-        // debounce so we dedup/notify once per burst, keeping sync smooth.
-        remoteChangeWorkItem?.cancel()
-        let work = DispatchWorkItem { [weak self] in
+        // NSPersistentStoreRemoteChange arrives on Core Data's posting
+        // thread, in bursts during an import. Hop to main so the debounce
+        // state has a single home, and coalesce the burst into one pass.
+        DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
-            self.dedupDuplicateEvents()
-            self.syncCounters()
-            self.notifyDataChanged()
+            self.remoteChangeWorkItem?.cancel()
+            let work = DispatchWorkItem { [weak self] in
+                guard let self = self else { return }
+                self.dedupDuplicateEvents { [weak self] in
+                    self?.syncCounters()
+                    self?.notifyDataChanged()
+                }
+            }
+            self.remoteChangeWorkItem = work
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5, execute: work)
         }
-        remoteChangeWorkItem = work
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5, execute: work)
     }
 
     // MARK: - Recording events
 
     /// Insert an event if no row with (kind, key) exists yet. If a row exists
     /// and `payload` is non-nil and different, the payload is refreshed.
-    func recordEvent(kind: String, key: String, payload: Data? = nil) {
-        recordEvents(kind: kind, items: [(key: key, payload: payload)])
+    /// `completion` is called on the main queue with whether the write
+    /// definitely persisted — callers gating one-time migrations MUST only
+    /// mark them done on success.
+    func recordEvent(kind: String, key: String, payload: Data? = nil, completion: ((Bool) -> Void)? = nil) {
+        recordEvents(kind: kind, items: [(key: key, payload: payload)], completion: completion)
     }
 
     /// Batch upsert. Existing (kind, key) rows are left in place (payload
     /// refreshed when it changed); missing rows are inserted. Never deletes.
-    func recordEvents(kind: String, items: [(key: String, payload: Data?)]) {
-        guard !items.isEmpty else { return }
+    func recordEvents(kind: String, items: [(key: String, payload: Data?)], completion: ((Bool) -> Void)? = nil) {
+        guard !items.isEmpty else {
+            DispatchQueue.main.async { completion?(true) }
+            return
+        }
         let device = Self.deviceId
         context.perform { [weak self] in
-            guard let self = self else { return }
+            guard let self = self else {
+                DispatchQueue.main.async { completion?(false) }
+                return
+            }
+            var succeeded = false
             do {
                 let request = ProgressEventEntry.fetchRequest()
                 request.predicate = NSPredicate(format: "kind == %@", kind)
@@ -178,30 +222,39 @@ final class ProgressSyncStore {
 
                 if changed {
                     try self.context.save()
-                    self.requestExport()
                 }
+                succeeded = true
             } catch {
                 print("ProgressSyncStore: recordEvents(\(kind)) failed - \(error.localizedDescription)")
             }
+            let result = succeeded
+            DispatchQueue.main.async { completion?(result) }
         }
     }
 
     /// Remove the event row for (kind, key) — e.g. the user manually
     /// un-marked an audio as played. The delete syncs to other devices.
-    func deleteEvent(kind: String, key: String) {
+    func deleteEvent(kind: String, key: String, completion: ((Bool) -> Void)? = nil) {
         context.perform { [weak self] in
-            guard let self = self else { return }
+            guard let self = self else {
+                DispatchQueue.main.async { completion?(false) }
+                return
+            }
+            var succeeded = false
             do {
                 let request = ProgressEventEntry.fetchRequest()
                 request.predicate = NSPredicate(format: "kind == %@ AND key == %@", kind, key)
                 let rows = try self.context.fetch(request)
-                guard !rows.isEmpty else { return }
-                rows.forEach(self.context.delete)
-                try self.context.save()
-                self.requestExport()
+                if !rows.isEmpty {
+                    rows.forEach(self.context.delete)
+                    try self.context.save()
+                }
+                succeeded = true
             } catch {
                 print("ProgressSyncStore: deleteEvent(\(kind), \(key)) failed - \(error.localizedDescription)")
             }
+            let result = succeeded
+            DispatchQueue.main.async { completion?(result) }
         }
     }
 
@@ -213,16 +266,22 @@ final class ProgressSyncStore {
         let createdAt: Date
     }
 
-    /// Synchronously fetch all events of a kind (deduped by key, keeping the
-    /// earliest row). Safe to call from any thread.
-    func events(ofKind kind: String) -> [Event] {
-        var result: [Event] = []
-        context.performAndWait {
+    /// Asynchronously fetch all events of a kind (deduped by key, keeping the
+    /// earliest row). `completion` runs on the main queue. Asynchronous by
+    /// design: a synchronous performAndWait here would block the caller
+    /// behind whatever import/dedup work the sync context is doing.
+    func events(ofKind kind: String, completion: @escaping ([Event]) -> Void) {
+        context.perform { [weak self] in
+            guard let self = self else {
+                DispatchQueue.main.async { completion([]) }
+                return
+            }
+            var result: [Event] = []
             do {
                 let request = ProgressEventEntry.fetchRequest()
                 request.predicate = NSPredicate(format: "kind == %@", kind)
                 request.sortDescriptors = [NSSortDescriptor(key: "createdAt", ascending: true)]
-                let rows = try context.fetch(request)
+                let rows = try self.context.fetch(request)
                 var seen = Set<String>()
                 for row in rows {
                     guard !seen.contains(row.key) else { continue }
@@ -234,90 +293,134 @@ final class ProgressSyncStore {
             } catch {
                 print("ProgressSyncStore: events(ofKind: \(kind)) failed - \(error.localizedDescription)")
             }
+            let events = result
+            DispatchQueue.main.async { completion(events) }
         }
-        return result
     }
 
     // MARK: - Lifetime counter sync
 
     /// Reconciles the whitelisted UserDefaults counters with per-device rows.
     ///
-    /// For each counter: this device's contribution is the local displayed
-    /// value minus the other-device sum applied at the last reconcile, so
-    /// local increments keep working untouched (views keep incrementing the
-    /// plain UserDefaults key). The displayed value never decreases.
+    /// The math is a strict three-phase pipeline so the UserDefaults
+    /// read-modify-write happens atomically on the main queue (where the UI
+    /// increments the counters) and can never swallow an increment:
+    ///   1. background: snapshot the per-device rows into plain values
+    ///   2. main: read + compute + write the defaults in one synchronous step
+    ///   3. background: push this device's contribution rows
+    /// Bookkeeping is monotonic — the displayed total and the applied
+    /// other-device sum never decrease, so temporarily missing rows (store
+    /// still loading, import incomplete) can't corrupt the contribution math.
     func syncCounters() {
-        let device = Self.deviceId
-        context.perform { [weak self] in
-            guard let self = self else { return }
-            do {
-                let request = ProgressEventEntry.fetchRequest()
-                request.predicate = NSPredicate(format: "kind == %@", Kind.counter)
-                let rows = try self.context.fetch(request)
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self, !self.counterSyncInFlight else { return }
+            self.counterSyncInFlight = true
 
-                var changed = false
-                let defaults = UserDefaults.standard
-
-                for counterKey in Self.syncedCounterKeys {
-                    let display = defaults.integer(forKey: counterKey)
-                    let othersAppliedKey = "sl_counterOthersSum_\(counterKey)"
-                    let lastOthersSum = defaults.integer(forKey: othersAppliedKey)
-                    let ownContribution = max(0, display - lastOthersSum)
-
-                    let ownRowKey = "\(counterKey)|\(device)"
-                    var othersSum = 0
-                    var ownRow: ProgressEventEntry?
-                    var seenOtherDevices = Set<String>()
-                    for row in rows where row.key.hasPrefix("\(counterKey)|") {
-                        if row.key == ownRowKey {
-                            // Duplicated own rows are unified by the dedup pass;
-                            // any one of them is fine to update here.
-                            if ownRow == nil { ownRow = row }
-                        } else if !seenOtherDevices.contains(row.key) {
-                            seenOtherDevices.insert(row.key)
-                            othersSum += Self.counterValue(from: row.payload)
+            let device = Self.deviceId
+            // Phase 1 (background): snapshot rows as plain values.
+            self.context.perform { [weak self] in
+                guard let self = self else { return }
+                var othersSumByCounter: [String: Int] = [:]
+                var ownValueByCounter: [String: Int] = [:]
+                do {
+                    let request = ProgressEventEntry.fetchRequest()
+                    request.predicate = NSPredicate(format: "kind == %@", Kind.counter)
+                    let rows = try self.context.fetch(request)
+                    for counterKey in Self.syncedCounterKeys {
+                        let prefix = "\(counterKey)|"
+                        let ownRowKey = "\(counterKey)|\(device)"
+                        var othersSum = 0
+                        var seenKeys = Set<String>()
+                        for row in rows where row.key.hasPrefix(prefix) {
+                            guard !seenKeys.contains(row.key) else { continue }
+                            seenKeys.insert(row.key)
+                            let value = Self.counterValue(from: row.payload)
+                            if row.key == ownRowKey {
+                                ownValueByCounter[counterKey] = value
+                            } else {
+                                othersSum += value
+                            }
                         }
+                        othersSumByCounter[counterKey] = othersSum
                     }
+                } catch {
+                    print("ProgressSyncStore: counter snapshot failed - \(error.localizedDescription)")
+                    DispatchQueue.main.async { self.counterSyncInFlight = false }
+                    return
+                }
 
-                    // Push this device's contribution (create or refresh row).
-                    let payload = Self.counterPayload(ownContribution)
-                    if let row = ownRow {
-                        if Self.counterValue(from: row.payload) != ownContribution {
-                            row.payload = payload
-                            row.lastModified = Date()
-                            changed = true
-                        }
-                    } else if ownContribution > 0 {
-                        let row = ProgressEventEntry(context: self.context)
-                        row.id = UUID()
-                        row.kind = Kind.counter
-                        row.key = ownRowKey
-                        row.payload = payload
-                        row.deviceId = device
-                        row.createdAt = Date()
-                        row.lastModified = Date()
-                        changed = true
-                    }
+                // Phase 2 (main): atomic read-compute-write of the defaults.
+                DispatchQueue.main.async { [weak self] in
+                    guard let self = self else { return }
+                    let defaults = UserDefaults.standard
+                    var desiredOwnValues: [String: Int] = [:]
 
-                    // Apply the merged total locally — never below what the
-                    // user already sees on this device.
-                    let mergedDisplay = max(display, ownContribution + othersSum)
-                    DispatchQueue.main.async {
-                        if defaults.integer(forKey: counterKey) < mergedDisplay {
+                    for counterKey in Self.syncedCounterKeys {
+                        let othersAppliedKey = "sl_counterOthersSum_\(counterKey)"
+                        let display = defaults.integer(forKey: counterKey)
+                        let appliedBefore = defaults.integer(forKey: othersAppliedKey)
+                        // Monotonic: never trust a SMALLER other-device sum —
+                        // rows can be temporarily invisible mid-import, and
+                        // lowering the baseline would reclassify other
+                        // devices' work as our own (permanent double count).
+                        let othersSum = max(othersSumByCounter[counterKey] ?? 0, appliedBefore)
+
+                        let ownContribution = max(0, display - othersSum)
+                        let mergedDisplay = max(display, ownContribution + othersSum)
+
+                        if mergedDisplay > display {
                             defaults.set(mergedDisplay, forKey: counterKey)
                         }
-                        if defaults.integer(forKey: othersAppliedKey) != othersSum {
+                        if othersSum > appliedBefore {
                             defaults.set(othersSum, forKey: othersAppliedKey)
+                        }
+                        desiredOwnValues[counterKey] = ownContribution
+                    }
+
+                    // Phase 3 (background): push contribution rows (monotonic).
+                    self.context.perform { [weak self] in
+                        guard let self = self else { return }
+                        defer { DispatchQueue.main.async { self.counterSyncInFlight = false } }
+                        do {
+                            let request = ProgressEventEntry.fetchRequest()
+                            request.predicate = NSPredicate(format: "kind == %@", Kind.counter)
+                            let rows = try self.context.fetch(request)
+                            var changed = false
+
+                            for counterKey in Self.syncedCounterKeys {
+                                let desired = desiredOwnValues[counterKey] ?? 0
+                                guard desired > 0 else { continue }
+                                let ownRowKey = "\(counterKey)|\(device)"
+                                let ownRows = rows.filter { $0.key == ownRowKey }
+
+                                if let row = ownRows.first {
+                                    // Counters only grow — never lower the row.
+                                    if desired > Self.counterValue(from: row.payload) {
+                                        row.payload = Self.counterPayload(desired)
+                                        row.lastModified = Date()
+                                        changed = true
+                                    }
+                                } else {
+                                    let row = ProgressEventEntry(context: self.context)
+                                    row.id = UUID()
+                                    row.kind = Kind.counter
+                                    row.key = ownRowKey
+                                    row.payload = Self.counterPayload(desired)
+                                    row.deviceId = device
+                                    row.createdAt = Date()
+                                    row.lastModified = Date()
+                                    changed = true
+                                }
+                            }
+
+                            if changed {
+                                try self.context.save()
+                            }
+                        } catch {
+                            print("ProgressSyncStore: counter push failed - \(error.localizedDescription)")
                         }
                     }
                 }
-
-                if changed {
-                    try self.context.save()
-                    self.requestExport()
-                }
-            } catch {
-                print("ProgressSyncStore: syncCounters failed - \(error.localizedDescription)")
             }
         }
     }
@@ -337,10 +440,13 @@ final class ProgressSyncStore {
 
     /// Collapses duplicate (kind, key) rows created concurrently on multiple
     /// devices. Deterministic on every device: the survivor is the row with
-    /// the earliest createdAt (id string as tie-break) and it inherits the
-    /// most recently modified payload, so no data is lost.
-    private func dedupDuplicateEvents() {
+    /// the earliest createdAt (id string as tie-break). The survivor inherits
+    /// the "best" payload so no data is lost: for counter rows that's the
+    /// LARGEST value (counters only grow); for everything else the most
+    /// recently modified payload.
+    private func dedupDuplicateEvents(completion: @escaping () -> Void) {
         context.perform { [weak self] in
+            defer { DispatchQueue.main.async { completion() } }
             guard let self = self else { return }
             do {
                 let request = ProgressEventEntry.fetchRequest()
@@ -359,23 +465,28 @@ final class ProgressSyncStore {
                         return (a.id?.uuidString ?? "") < (b.id?.uuidString ?? "")
                     }
                     let survivor = sorted[0]
-                    let newestPayloadRow = group.max { a, b in
+
+                    if survivor.kind == Kind.counter {
+                        let maxValue = group.map { Self.counterValue(from: $0.payload) }.max() ?? 0
+                        if Self.counterValue(from: survivor.payload) < maxValue {
+                            survivor.payload = Self.counterPayload(maxValue)
+                            survivor.lastModified = Date()
+                        }
+                    } else if let newest = group.max(by: { (a, b) in
                         (a.lastModified ?? .distantPast) < (b.lastModified ?? .distantPast)
-                    }
-                    if let newest = newestPayloadRow,
-                       newest !== survivor,
+                    }), newest !== survivor,
                        let payload = newest.payload,
                        survivor.payload != payload {
                         survivor.payload = payload
                         survivor.lastModified = newest.lastModified
                     }
+
                     sorted.dropFirst().forEach(self.context.delete)
                     changed = true
                 }
 
                 if changed {
                     try self.context.save()
-                    self.requestExport()
                 }
             } catch {
                 print("ProgressSyncStore: dedup failed - \(error.localizedDescription)")
@@ -386,33 +497,12 @@ final class ProgressSyncStore {
     // MARK: - Helpers
 
     private func notifyDataChanged() {
-        context.perform { [weak self] in
-            guard let self = self else { return }
-            let request = NSFetchRequest<NSFetchRequestResult>(entityName: "ProgressEventEntry")
-            request.propertiesToFetch = ["kind"]
-            request.returnsDistinctResults = true
-            request.resultType = .dictionaryResultType
-            let kinds: Set<String>
-            if let dictionaries = (try? self.context.fetch(request)) as? [[String: Any]] {
-                kinds = Set(dictionaries.compactMap { $0["kind"] as? String })
-            } else {
-                kinds = []
-            }
-            DispatchQueue.main.async {
-                NotificationCenter.default.post(
-                    name: Self.dataDidChange,
-                    object: nil,
-                    userInfo: ["kinds": kinds]
-                )
-            }
-        }
-    }
-
-    /// Nudge NSPersistentCloudKitContainer to export promptly so changes made
-    /// here show up on other devices fast.
-    private func requestExport() {
         DispatchQueue.main.async {
-            PersistenceController.shared.save()
+            NotificationCenter.default.post(
+                name: Self.dataDidChange,
+                object: nil,
+                userInfo: ["kinds": Kind.all]
+            )
         }
     }
 }

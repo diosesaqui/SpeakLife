@@ -119,46 +119,30 @@ final class EnhancedStreakViewModel: ObservableObject {
     }
 
     /// Merges progress synced from the user's other devices into the live
-    /// streak state. Strictly monotonic — values only ever move UP (max/union),
-    /// so a device can never lose a streak because another device synced.
+    /// streak state. Historical fields (longest streak, totals, milestones)
+    /// only ever move UP; the live currentStreak follows the most recent
+    /// completion (StreakStats.merging), so a broken streak is never
+    /// resurrected by a stale device's old blob.
     private func reconcileWithSyncedProgress() {
         var changed = false
+        let streakBefore = streakStats.currentStreak
 
         // 1. Fold in the synced streakStats blob (SyncedSettingsStore already
-        //    union-merged it with the other devices' copies).
+        //    union-merged it with the other devices' copies) using the same
+        //    merge rules the store uses, so the two can never disagree.
         if let data = userDefaults.data(forKey: streakStatsKey),
            let synced = try? JSONDecoder().decode(StreakStats.self, from: data) {
-            if synced.currentStreak > streakStats.currentStreak {
-                streakStats.currentStreak = synced.currentStreak
-                changed = true
-            }
-            if synced.longestStreak > streakStats.longestStreak {
-                streakStats.longestStreak = synced.longestStreak
-                changed = true
-            }
-            if synced.totalDaysCompleted > streakStats.totalDaysCompleted {
-                streakStats.totalDaysCompleted = synced.totalDaysCompleted
-                changed = true
-            }
-            if let syncedLast = synced.lastCompletedDate,
-               streakStats.lastCompletedDate.map({ syncedLast > $0 }) ?? true {
-                streakStats.lastCompletedDate = syncedLast
-                changed = true
-            }
-            let mergedMilestones = streakStats.celebratedMilestones.union(synced.celebratedMilestones)
-            if mergedMilestones != streakStats.celebratedMilestones {
-                streakStats.celebratedMilestones = mergedMilestones
-                changed = true
-            }
-            // A freeze spent on any device is spent everywhere.
-            if streakStats.streakFreezeAvailable && !synced.streakFreezeAvailable {
-                streakStats.streakFreezeAvailable = false
-                streakStats.streakFreezeUsedDate = synced.streakFreezeUsedDate
+            let merged = streakStats.merging(synced)
+            if merged != streakStats {
+                streakStats = merged
                 changed = true
             }
         }
 
         // 2. Heal from the merged burst history — the authoritative record.
+        //    (Safe to only raise here: the tracker derives its streak by
+        //    walking actual completion days back from today, so a broken
+        //    streak computes low and never inflates.)
         let tracker = BurstCompletionTracker.shared
         let burstStreak = tracker.currentStreak
         if burstStreak > streakStats.currentStreak {
@@ -181,8 +165,12 @@ final class EnhancedStreakViewModel: ObservableObject {
 
         // 3. If today's burst was completed on another device, reflect it in
         //    today's checklist — without re-firing celebrations or analytics
-        //    (the device that earned the day already did).
-        if tracker.hasTodaysCompletion(),
+        //    (the device that earned the day already did). Only touch the
+        //    checklist when it actually belongs to today: around midnight
+        //    this can run before the new-day rollover regenerates it, and
+        //    stamping yesterday's checklist would corrupt it.
+        if Calendar.current.isDateInToday(todayChecklist.date),
+           tracker.hasTodaysCompletion(),
            let index = todayChecklist.tasks.firstIndex(where: { $0.id == "complete_daily_burst" }),
            !todayChecklist.tasks[index].isCompleted {
             let completedAt = tracker.getTodaysCompletion()?.completedAt ?? Date()
@@ -196,6 +184,11 @@ final class EnhancedStreakViewModel: ObservableObject {
 
         if changed {
             saveData()
+            // A healed streak day changes which tasks (and which foundation
+            // audio) today should show — regenerate, preserving completions.
+            if streakStats.currentStreak != streakBefore {
+                refreshTasksWithUserCategories()
+            }
         }
     }
     
