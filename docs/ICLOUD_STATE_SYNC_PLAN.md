@@ -5,7 +5,7 @@ iPhone/iPad (or a reinstall) restores streaks, listened audio, reading progress,
 personalization automatically — the same way journals and favorites already do.
 
 **Date:** 2026-07-16
-**Status:** Research complete, implementation plan proposed.
+**Status:** Phases 0–4 implemented (see "Implementation status" at the bottom); restore-UX polish (Phase 5) pending.
 
 ---
 
@@ -229,3 +229,48 @@ Ambiguous, needs product call (defaults proposed):
 3. **Streak regression fear:** migration must never show a smaller streak than the user had. The max-of(local, derived) reconciliation stays in place for one release as a safety net, with analytics on disagreements.
 4. **Merge policy:** current store uses `NSMergeByPropertyObjectTrumpMergePolicy`; event-log design mostly sidesteps conflicts, but `SyncedSetting` updates should write `lastModified` and rely on the existing `CustomMergePolicy` semantics (wire `setupConflictResolution()` in, currently unused).
 5. **UserDefaults writes from multiple systems:** during transition, legacy keys remain as mirrors only — one writer (the new stores), many readers. Enforce via code review; the fragmented streak stores are the cautionary tale.
+
+---
+
+## Implementation status (2026-07-16)
+
+Shipped in this change set:
+
+- **Model:** `ProgressEventEntry` (generic append-only event log: kind + key + payload) and
+  `SyncedSetting` (generic key/value) added to `SpeakLife.xcdatamodel` — additive-only, CloudKit
+  compatible (no unique constraints; app-level dedup). One generic event entity instead of six
+  specific ones = one schema promotion, extensible to new kinds without model changes.
+- **`ProgressSyncStore`** (`Services/CoreData/ProgressSyncStore.swift`): upsert/dedup event engine
+  on a serial background context; deterministic cross-device dedup (earliest createdAt survives,
+  inherits newest payload); debounced remote-change handling; per-device counter rows summed for
+  display (`totalAffirmationsSpoken`, `totalVersesRead`, `totalSocialShares`,
+  `totalFavoritesAdded`) — increments on two devices are both kept, displayed totals never
+  decrease.
+- **`SyncedSettingsStore`** (`Services/CoreData/SyncedSettingsStore.swift`): whitelist-based
+  UserDefaults↔CloudKit mirror with a persisted three-way merge base. Per-key strategies:
+  last-writer-wins for plain prefs, `maxInt`/`boolOr` for monotonic progress, custom lossless
+  union mergers for `streakStats`, `UnlockedBadges`, `BibleBookmarks`, `BibleHighlights`,
+  `devotionalDictionary`, quiz completions, and Warrior Room reactions/agreements. Fresh installs
+  prefer the restored (synced) value on true conflicts; established devices keep the local one.
+  Call sites are untouched — remote values flow through UserDefaults into @AppStorage.
+- **Streaks:** `BurstCompletionTracker` pushes one `dayCompletion` event per unique local day
+  (idempotent, runs on every save + once at init for existing history) and union-merges remote
+  days into local history on CloudKit changes. `EnhancedStreakViewModel` heals live on merge:
+  streak numbers move only UP (max/union), today's checklist burst task is marked complete if the
+  day was earned on another device (without re-firing celebrations/analytics).
+- **Listened audio:** `AudioProgressStore` mirrors played IDs to `listenedAudio` events (one-time
+  local migration, event-log-as-truth refresh so manual un-marks propagate too).
+- **Wiring:** both stores start in `AppDelegate.didFinishLaunching`; files registered in the
+  Xcode project.
+
+Data-safety invariants held throughout: migrations are one-shot-flagged, idempotent, and purely
+additive; no local value is ever deleted or overwritten by an empty/undecodable remote blob;
+streak/counter merges are monotonic (never lower than what the user already sees).
+
+**Still to do before release:**
+1. **Promote the new record types (`CD_ProgressEventEntry`, `CD_SyncedSetting`) to the CloudKit
+   Production schema** in CloudKit Console after first Development-build run — release checklist.
+2. Phase 5 restore UX: "Restoring your progress…" state on fresh installs, sync status in
+   settings, `restored_user` analytics.
+3. QA matrix: two devices same day; gap + freeze; offline week; no-iCloud fallback; fresh install
+   restore; counter increments on both devices.

@@ -85,6 +85,118 @@ final class EnhancedStreakViewModel: ObservableObject {
             name: .NSCalendarDayChanged,
             object: nil
         )
+
+        // iCloud sync: heal streak stats when progress earned on the user's
+        // other devices arrives (burst history union, merged settings blob).
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleSyncedProgressChanged),
+            name: BurstCompletionTracker.historyMergedNotification,
+            object: nil
+        )
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleSyncedProgressChanged),
+            name: SyncedSettingsStore.settingsDidChange,
+            object: nil
+        )
+    }
+
+    // MARK: - iCloud Sync Healing
+
+    @objc private func handleSyncedProgressChanged(_ notification: Notification) {
+        guard Thread.isMainThread else {
+            DispatchQueue.main.async { [weak self] in self?.handleSyncedProgressChanged(notification) }
+            return
+        }
+        // For settings changes, only react when the streak blob was applied.
+        if notification.name == SyncedSettingsStore.settingsDidChange,
+           let keys = notification.userInfo?["keys"] as? Set<String>,
+           !keys.contains(streakStatsKey) {
+            return
+        }
+        reconcileWithSyncedProgress()
+    }
+
+    /// Merges progress synced from the user's other devices into the live
+    /// streak state. Strictly monotonic — values only ever move UP (max/union),
+    /// so a device can never lose a streak because another device synced.
+    private func reconcileWithSyncedProgress() {
+        var changed = false
+
+        // 1. Fold in the synced streakStats blob (SyncedSettingsStore already
+        //    union-merged it with the other devices' copies).
+        if let data = userDefaults.data(forKey: streakStatsKey),
+           let synced = try? JSONDecoder().decode(StreakStats.self, from: data) {
+            if synced.currentStreak > streakStats.currentStreak {
+                streakStats.currentStreak = synced.currentStreak
+                changed = true
+            }
+            if synced.longestStreak > streakStats.longestStreak {
+                streakStats.longestStreak = synced.longestStreak
+                changed = true
+            }
+            if synced.totalDaysCompleted > streakStats.totalDaysCompleted {
+                streakStats.totalDaysCompleted = synced.totalDaysCompleted
+                changed = true
+            }
+            if let syncedLast = synced.lastCompletedDate,
+               streakStats.lastCompletedDate.map({ syncedLast > $0 }) ?? true {
+                streakStats.lastCompletedDate = syncedLast
+                changed = true
+            }
+            let mergedMilestones = streakStats.celebratedMilestones.union(synced.celebratedMilestones)
+            if mergedMilestones != streakStats.celebratedMilestones {
+                streakStats.celebratedMilestones = mergedMilestones
+                changed = true
+            }
+            // A freeze spent on any device is spent everywhere.
+            if streakStats.streakFreezeAvailable && !synced.streakFreezeAvailable {
+                streakStats.streakFreezeAvailable = false
+                streakStats.streakFreezeUsedDate = synced.streakFreezeUsedDate
+                changed = true
+            }
+        }
+
+        // 2. Heal from the merged burst history — the authoritative record.
+        let tracker = BurstCompletionTracker.shared
+        let burstStreak = tracker.currentStreak
+        if burstStreak > streakStats.currentStreak {
+            streakStats.currentStreak = burstStreak
+            streakStats.longestStreak = max(streakStats.longestStreak, burstStreak)
+            changed = true
+        }
+        let uniqueDays = tracker.getUniqueDaysCount()
+        if uniqueDays > streakStats.totalDaysCompleted {
+            streakStats.totalDaysCompleted = uniqueDays
+            changed = true
+        }
+        if let latestDay = tracker.completions.map(\.date).max() {
+            let day = Calendar.current.startOfDay(for: latestDay)
+            if streakStats.lastCompletedDate.map({ day > $0 }) ?? true {
+                streakStats.lastCompletedDate = day
+                changed = true
+            }
+        }
+
+        // 3. If today's burst was completed on another device, reflect it in
+        //    today's checklist — without re-firing celebrations or analytics
+        //    (the device that earned the day already did).
+        if tracker.hasTodaysCompletion(),
+           let index = todayChecklist.tasks.firstIndex(where: { $0.id == "complete_daily_burst" }),
+           !todayChecklist.tasks[index].isCompleted {
+            let completedAt = tracker.getTodaysCompletion()?.completedAt ?? Date()
+            todayChecklist.tasks[index].isCompleted = true
+            todayChecklist.tasks[index].completedAt = completedAt
+            if todayChecklist.completedAt == nil && todayChecklist.isStreakEarned {
+                todayChecklist.completedAt = completedAt
+            }
+            changed = true
+        }
+
+        if changed {
+            saveData()
+        }
     }
     
     // MARK: - Task Personalization
