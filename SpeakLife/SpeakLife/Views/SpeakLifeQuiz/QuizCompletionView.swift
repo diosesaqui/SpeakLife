@@ -16,6 +16,23 @@ struct QuizCompletionView: View {
                 .animation(.easeInOut(duration: 6).repeatForever(autoreverses: true), value: animateGradient)
                 .ignoresSafeArea()
 
+            // Scrolls when content exceeds the screen (small devices, large
+            // Dynamic Type); stays vertically centered otherwise.
+            GeometryReader { geo in
+                ScrollView(showsIndicators: false) {
+                    completionContent
+                        .frame(minWidth: geo.size.width, minHeight: geo.size.height)
+                }
+            }
+        }
+        .onAppear {
+            animateStar = true
+            animateText = true
+            animateGradient = true
+        }
+    }
+
+    private var completionContent: some View {
             VStack(spacing: 30) {
                 // 🎉 Victory Message
                 Text("🎉 Quiz Complete!")
@@ -58,11 +75,5 @@ struct QuizCompletionView: View {
                 .padding(.horizontal, 40)
             }
             .padding()
-        }
-        .onAppear {
-            animateStar = true
-            animateText = true
-            animateGradient = true
-        }
     }
 }

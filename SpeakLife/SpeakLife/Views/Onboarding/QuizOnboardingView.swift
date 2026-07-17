@@ -902,23 +902,24 @@ private struct QuizQuestionScreen: View {
 
             Spacer().frame(height: 28)
 
-            VStack(spacing: 12) {
-                ForEach(primaryAnswers, id: \.self) { segment in
-                    AnswerButton(segment: segment, isPrimary: true) {
-                        onSelect(segment)
+            // Answers scroll when they exceed the remaining space (small
+            // devices) so no option is ever clipped or unreachable.
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 12) {
+                    ForEach(primaryAnswers, id: \.self) { segment in
+                        AnswerButton(segment: segment, isPrimary: true) {
+                            onSelect(segment)
+                        }
                     }
+
+                    AnswerButton(segment: .unsegmented, isPrimary: false) {
+                        onSelect(.unsegmented)
+                    }
+                    .padding(.top, 8)
                 }
+                .padding(.horizontal, 24)
+                .padding(.bottom, size.height * 0.04)
             }
-            .padding(.horizontal, 24)
-
-            Spacer().frame(height: 20)
-
-            AnswerButton(segment: .unsegmented, isPrimary: false) {
-                onSelect(.unsegmented)
-            }
-            .padding(.horizontal, 24)
-
-            Spacer()
         }
     }
 
@@ -1060,32 +1061,35 @@ private struct BeliefQuestionScreen: View {
 
             Spacer().frame(height: 24)
 
-            VStack(spacing: 10) {
-                ForEach(question.answers) { answer in
-                    Button(action: { onSelect(answer) }) {
-                        Text(answer.label)
-                            .font(.system(size: 15, weight: .medium))
-                            .foregroundColor(.white)
-                            .multilineTextAlignment(.leading)
-                            .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
-                            .padding(.vertical, 14)
-                            .padding(.horizontal, 18)
-                            .background(
-                                RoundedRectangle(cornerRadius: 14)
-                                    .fill(Color.white.opacity(0.10))
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 14)
-                                            .stroke(Color.white.opacity(0.22), lineWidth: 1)
-                                    )
-                            )
+            // Answers scroll when they exceed the remaining space (small
+            // devices) so no option is ever clipped or unreachable.
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 10) {
+                    ForEach(question.answers) { answer in
+                        Button(action: { onSelect(answer) }) {
+                            Text(answer.label)
+                                .font(.system(size: 15, weight: .medium))
+                                .foregroundColor(.white)
+                                .multilineTextAlignment(.leading)
+                                .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+                                .padding(.vertical, 14)
+                                .padding(.horizontal, 18)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 14)
+                                        .fill(Color.white.opacity(0.10))
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 14)
+                                                .stroke(Color.white.opacity(0.22), lineWidth: 1)
+                                        )
+                                )
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                        .accessibilityLabel(Text(answer.label))
                     }
-                    .buttonStyle(PlainButtonStyle())
-                    .accessibilityLabel(Text(answer.label))
                 }
+                .padding(.horizontal, 24)
+                .padding(.bottom, size.height * 0.04)
             }
-            .padding(.horizontal, 24)
-
-            Spacer()
         }
     }
 }

@@ -15,39 +15,47 @@ struct QuizExplanationView: View {
                 .ignoresSafeArea()
                 .animation(.easeInOut(duration: 6).repeatForever(autoreverses: true), value: animate)
 
-            VStack(spacing: 30) {
-                // 🧠 Title
-                Text("Let’s Learn")
-                    .font(.system(size: 34, weight: .bold))
-                    .foregroundColor(.white)
-                    .scaleEffect(animate ? 1.05 : 0.95)
-                    .opacity(animate ? 1 : 0)
-                    .animation(.easeInOut(duration: 1).repeatForever(), value: animate)
+            // Scrolls when the explanation exceeds the screen (small devices,
+            // large Dynamic Type); stays vertically centered otherwise.
+            GeometryReader { geo in
+                ScrollView(showsIndicators: false) {
+                    VStack(spacing: 30) {
+                        // 🧠 Title
+                        Text("Let’s Learn")
+                            .font(.system(size: 34, weight: .bold))
+                            .foregroundColor(.white)
+                            .scaleEffect(animate ? 1.05 : 0.95)
+                            .opacity(animate ? 1 : 0)
+                            .animation(.easeInOut(duration: 1).repeatForever(), value: animate)
 
-                // 📖 Revelation box
-                Text(explanation)
-                    .font(DS.Typography.body)
+                        // 📖 Revelation box
+                        Text(explanation)
+                            .font(DS.Typography.body)
+                            .padding()
+                            .dsGlass(cornerRadius: DS.Radius.lg)
+                            .foregroundColor(.white)
+                            .multilineTextAlignment(.center)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .padding(.horizontal)
+
+                        // ✅ Continue Button
+                        Button(action: onContinue) {
+                            Text("Continue")
+                                .font(.headline)
+                                .foregroundColor(DS.Palette.deepBlue)
+                                .padding()
+                                .frame(maxWidth: .infinity)
+                                .background(DS.Gradient.gold)
+                                .cornerRadius(15)
+                                .shadow(color: DS.Palette.gold.opacity(0.45), radius: 8, x: 0, y: 3)
+                        }
+                        .buttonStyle(.dsPressable(feel: .tapSolid))
+                        .padding(.horizontal)
+                    }
                     .padding()
-                    .dsGlass(cornerRadius: DS.Radius.lg)
-                    .foregroundColor(.white)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal)
-
-                // ✅ Continue Button
-                Button(action: onContinue) {
-                    Text("Continue")
-                        .font(.headline)
-                        .foregroundColor(DS.Palette.deepBlue)
-                        .padding()
-                        .frame(maxWidth: .infinity)
-                        .background(DS.Gradient.gold)
-                        .cornerRadius(15)
-                        .shadow(color: DS.Palette.gold.opacity(0.45), radius: 8, x: 0, y: 3)
+                    .frame(minWidth: geo.size.width, minHeight: geo.size.height)
                 }
-                .buttonStyle(.dsPressable(feel: .tapSolid))
-                .padding(.horizontal)
             }
-            .padding()
         }
         .onAppear {
             animate = true
