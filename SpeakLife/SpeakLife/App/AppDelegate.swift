@@ -130,7 +130,14 @@ final class AppDelegate: NSObject, MessagingDelegate {
             // Personalized audio category ordering ships dark; flip to true in
             // Remote Config (or via the A/B test) to promote each user's
             // best-matching categories to the front of the audio filter row.
-            "personalizedAudioOrderEnabled": false as NSNumber
+            "personalizedAudioOrderEnabled": false as NSNumber,
+            // Paywall product IDs — defaults mirror the compiled-in SKUs so a
+            // fresh install (offline / pre-fetch) still offers real products;
+            // Remote Config overrides once fetched. Read in
+            // SubscriptionStore.updateConfigValues.
+            "currentPremiumID": currentPremiumID as NSString,
+            "currentPremiumMonthly": currentMonthlyPremiumID as NSString,
+            "currentPremiumWeekly": weeklyID as NSString
         ])
 
         registerBGTask()

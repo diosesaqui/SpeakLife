@@ -205,9 +205,24 @@ final class SubscriptionStore: ObservableObject {
     //         a belief question follows it, and the plan reveal echoes the outcome
     @Published var useQuizV2 = false
 
+    // MARK: - Remote-Configured Product IDs
+    // Every paywall plan slot is driven by Firebase Remote Config:
+    //   annual  → "currentPremiumID"
+    //   monthly → "currentPremiumMonthly"
+    //   weekly  → "currentPremiumWeekly"
+    //   discount (welcome offer) → "discountID"
+    // Empty until the first activate; the resolved*ID accessors below fall
+    // back to the compiled-in default SKUs so an offline / pre-fetch install
+    // still offers real products. The discount SKU has no fallback on purpose:
+    // no configured discount means no welcome offer.
     @Published var yearlySubscription = ""
     @Published var monthlySubscription = ""
     @Published var discountSubscription = ""
+    @Published var weeklySubscription = ""
+
+    var resolvedYearlyID: String { yearlySubscription.isEmpty ? currentPremiumID : yearlySubscription }
+    var resolvedMonthlyID: String { monthlySubscription.isEmpty ? currentMonthlyPremiumID : monthlySubscription }
+    var resolvedWeeklyID: String { weeklySubscription.isEmpty ? weeklyID : weeklySubscription }
     
     @Published var onboardingBGImage = "moonlight2"
     @Published var backgroundImage = "moonlight2"
@@ -316,10 +331,21 @@ final class SubscriptionStore: ObservableObject {
                     let oldAudioVersion = self?.audioRemoteVersion ?? 0
                     let oldDevotionalVersion = self?.currentDevotionalVersion ?? 0
                     let oldRemoteVersion = self?.remoteVersion ?? 0
+                    let oldProductIDs = [self?.yearlySubscription, self?.monthlySubscription,
+                                         self?.weeklySubscription, self?.discountSubscription]
                     self?.updateConfigValues {}
                     let newAudioVersion = self?.audioRemoteVersion ?? 0
                     let newDevotionalVersion = self?.currentDevotionalVersion ?? 0
                     let newRemoteVersion = self?.remoteVersion ?? 0
+                    let newProductIDs = [self?.yearlySubscription, self?.monthlySubscription,
+                                         self?.weeklySubscription, self?.discountSubscription]
+
+                    // If Remote Config repointed any paywall SKU, reload the
+                    // StoreKit products so currentOffered* (and every price on
+                    // screen) reflects the newly configured subscription.
+                    if newProductIDs != oldProductIDs {
+                        Task { await self?.requestProducts() }
+                    }
 
                     // If audio version changed, notify the app
                     if newAudioVersion > oldAudioVersion && newAudioVersion > 0 {
@@ -358,6 +384,7 @@ final class SubscriptionStore: ObservableObject {
         yearlySubscription = remoteConfig["currentPremiumID"].stringValue
         monthlySubscription = remoteConfig["currentPremiumMonthly"].stringValue
         discountSubscription = remoteConfig["discountID"].stringValue
+        weeklySubscription = remoteConfig["currentPremiumWeekly"].stringValue
         showSubscription = remoteConfig["showSubscription"].boolValue
         onboardingBGImage = remoteConfig["onboardingImage"].stringValue
         backgroundImage = remoteConfig["backgroundImage"].stringValue
@@ -553,8 +580,12 @@ final class SubscriptionStore: ObservableObject {
     @MainActor
     func requestProducts() async {
         do {
-            // Request products from the App Store using the identifiers defined in InAppId
-            let storeProducts = try await Product.products(for: InAppId.all)
+            // Request the union of the compiled-in catalog and whatever Remote
+            // Config currently points at, so a Firebase-side SKU change (even
+            // to an id missing from InAppId.all) still loads and displays.
+            let configuredIDs = [resolvedYearlyID, resolvedMonthlyID, resolvedWeeklyID, discountSubscription]
+                .filter { !$0.isEmpty }
+            let storeProducts = try await Product.products(for: Set(InAppId.all + configuredIDs))
 
             var newSubscriptions: [Product] = []
             var newNonConsumables: [Product] = [] // New list for non-consumables
@@ -567,13 +598,13 @@ final class SubscriptionStore: ObservableObject {
                     if product.id == discountSubscription {
                         currentOfferedDiscount = product
                     }
-                    if product.id == monthlySubscription {
+                    if product.id == resolvedMonthlyID {
                         currentOfferedPremiumMonthly = product
                     }
-                    if product.id == weeklyID {
+                    if product.id == resolvedWeeklyID {
                         currentOfferedWeekly = product
                     }
-                    if product.id == yearlySubscription {
+                    if product.id == resolvedYearlyID {
                         currentOfferedPremium = product
                     }
                 case .nonConsumable:
