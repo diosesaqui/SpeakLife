@@ -27,62 +27,71 @@ struct QuizQuestionView: View {
                 }
             }
         } else {
-            VStack(spacing: 20) {
-                ProgressView(value: Double(questionIndex + 1), total: Double(questions.count))
-                    .progressViewStyle(LinearProgressViewStyle(tint: .cyan))
-                    .padding()
-                    .dsAppear(0)
+            // Scrolls when content exceeds the screen (small devices, large
+            // Dynamic Type) so answer buttons are never clipped or unreachable.
+            GeometryReader { geo in
+                ZStack {
+                    ScrollView(showsIndicators: false) {
+                        VStack(spacing: 20) {
+                            ProgressView(value: Double(questionIndex + 1), total: Double(questions.count))
+                                .progressViewStyle(LinearProgressViewStyle(tint: .cyan))
+                                .padding()
+                                .dsAppear(0)
 
-                Image("appIconDisplay")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(height: 180)
-                        .cornerRadius(20)
-                        .shadow(radius: 5)
-                        .padding(.horizontal)
-                        .dsAppear(0.06)
+                            Image("appIconDisplay")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(height: geo.size.height < 700 ? 120 : 180)
+                                .cornerRadius(20)
+                                .shadow(radius: 5)
+                                .padding(.horizontal)
+                                .dsAppear(0.06)
 
+                            Text(questions[questionIndex].question)
+                                .font(DS.Typography.headline)
+                                .multilineTextAlignment(.center)
+                                .fixedSize(horizontal: false, vertical: true)
+                                .dsAppear(0.12)
 
-                Text(questions[questionIndex].question)
-                    .font(DS.Typography.headline)
-                    .multilineTextAlignment(.center)
-                    .dsAppear(0.12)
-
-                ForEach(0..<4) { index in
-                    Button(action: {
-                        withAnimation {
-                            selectedIndex = index
-                            showFeedback = true
-                            isAnswerCorrect = index == questions[questionIndex].correctAnswerIndex
-                            if isAnswerCorrect {
-                                showCelebration = true
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 2.2) {
-                                    showCelebration = false
-                                    nextQuestion()
+                            ForEach(0..<4) { index in
+                                Button(action: {
+                                    withAnimation {
+                                        selectedIndex = index
+                                        showFeedback = true
+                                        isAnswerCorrect = index == questions[questionIndex].correctAnswerIndex
+                                        if isAnswerCorrect {
+                                            showCelebration = true
+                                            DispatchQueue.main.asyncAfter(deadline: .now() + 2.2) {
+                                                showCelebration = false
+                                                nextQuestion()
+                                            }
+                                        } else {
+                                            showExplanation = true
+                                        }
+                                    }
+                                }) {
+                                    Text(questions[questionIndex].answers[index])
+                                        .padding()
+                                        .frame(maxWidth: .infinity)
+                                        .fixedSize(horizontal: false, vertical: true)
+                                        .background(buttonColor(for: index))
+                                        .foregroundColor(.cyan)
+                                        .cornerRadius(10)
                                 }
-                            } else {
-                                showExplanation = true
+                                .buttonStyle(.dsPressable(feel: .tapSolid))
+                                .disabled(showFeedback)
                             }
                         }
-                    }) {
-                        Text(questions[questionIndex].answers[index])
-                            .padding()
-                            .frame(maxWidth: .infinity)
-                            .background(buttonColor(for: index))
-                            .foregroundColor(.cyan)
-                            .cornerRadius(10)
+                        .padding([.leading, .trailing])
+                        .padding(.bottom, 24)
                     }
-                    .buttonStyle(.dsPressable(feel: .tapSolid))
-                    .disabled(showFeedback)
-                }
 
-                if showCelebration {
-                    QuizConfettiView()
-    
+                    if showCelebration {
+                        QuizConfettiView()
+                            .allowsHitTesting(false)
+                    }
                 }
-
             }
-            .padding([.leading, .trailing])
         }
     }
 
