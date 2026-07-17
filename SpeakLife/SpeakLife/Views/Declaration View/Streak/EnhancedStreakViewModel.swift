@@ -61,6 +61,13 @@ final class EnhancedStreakViewModel: ObservableObject {
         self.badgeManager = BadgeManager()
         
         loadData()  // This now handles checkStreakValidity internally when needed
+
+        // Heal the badge against the authoritative per-day burst history right
+        // at launch. Without this, an undercounted streakStats (day earned on
+        // another device, or a burst recorded without its checklist task) only
+        // healed when an iCloud sync event happened to fire.
+        reconcileWithSyncedProgress()
+
         checkForNewBadges()
         
         // Refresh tasks with user categories after loading

@@ -152,6 +152,7 @@
 		4597E1E42E3FDC66009D6C66 /* EnhancedStreakViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4597E1E32E3FDC66009D6C66 /* EnhancedStreakViewModelTests.swift */; };
 		4597E1E72E3FDC79009D6C66 /* StreakDisplayTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4597E1E52E3FDC79009D6C66 /* StreakDisplayTests.swift */; };
 		4597E1E82E3FDC79009D6C66 /* StreakStatsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4597E1E62E3FDC79009D6C66 /* StreakStatsTests.swift */; };
+		4597E1F02F97A10100D6C001 /* BurstStreakCalculationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4597E1EF2F97A10100D6C001 /* BurstStreakCalculationTests.swift */; };
 		4597E1EB2E3FEC72009D6C66 /* AudioAnalytics.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4597E1E92E3FEC72009D6C66 /* AudioAnalytics.swift */; };
 		4597E1EC2E3FEC72009D6C66 /* AudioFavoritesManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4597E1EA2E3FEC72009D6C66 /* AudioFavoritesManager.swift */; };
 		4597E1EE2E3FECCA009D6C66 /* AudioFavoritesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4597E1ED2E3FECCA009D6C66 /* AudioFavoritesView.swift */; };
@@ -574,6 +575,7 @@
 		4597E1E32E3FDC66009D6C66 /* EnhancedStreakViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnhancedStreakViewModelTests.swift; sourceTree = "<group>"; };
 		4597E1E52E3FDC79009D6C66 /* StreakDisplayTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StreakDisplayTests.swift; sourceTree = "<group>"; };
 		4597E1E62E3FDC79009D6C66 /* StreakStatsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StreakStatsTests.swift; sourceTree = "<group>"; };
+		4597E1EF2F97A10100D6C001 /* BurstStreakCalculationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BurstStreakCalculationTests.swift; sourceTree = "<group>"; };
 		4597E1E92E3FEC72009D6C66 /* AudioAnalytics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioAnalytics.swift; sourceTree = "<group>"; };
 		4597E1EA2E3FEC72009D6C66 /* AudioFavoritesManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioFavoritesManager.swift; sourceTree = "<group>"; };
 		4597E1ED2E3FECCA009D6C66 /* AudioFavoritesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioFavoritesView.swift; sourceTree = "<group>"; };
@@ -888,6 +890,7 @@
 				4597E1E32E3FDC66009D6C66 /* EnhancedStreakViewModelTests.swift */,
 				4597E1E52E3FDC79009D6C66 /* StreakDisplayTests.swift */,
 				4597E1E62E3FDC79009D6C66 /* StreakStatsTests.swift */,
+				4597E1EF2F97A10100D6C001 /* BurstStreakCalculationTests.swift */,
 				456885292B428D77007B1EBB /* NotificationManagerTests.swift */,
 				4568852B2B428FE2007B1EBB /* SpeakLifeTests-Bridging-Header.h */,
 				450720DA2BAFFB4A0029EE2B /* TimerViewModelTests.swift */,
@@ -2094,6 +2097,7 @@
 				45B5A8302DDC14B4006DE6AA /* DevotionalTests.swift in Sources */,
 				4597E1E72E3FDC79009D6C66 /* StreakDisplayTests.swift in Sources */,
 				4597E1E82E3FDC79009D6C66 /* StreakStatsTests.swift in Sources */,
+				4597E1F02F97A10100D6C001 /* BurstStreakCalculationTests.swift in Sources */,
 				4568852A2B428D77007B1EBB /* NotificationManagerTests.swift in Sources */,
 				450720DB2BAFFB4A0029EE2B /* TimerViewModelTests.swift in Sources */,
 				4597E1E22E3FDC5C009D6C66 /* DailyChecklistTests.swift in Sources */,
