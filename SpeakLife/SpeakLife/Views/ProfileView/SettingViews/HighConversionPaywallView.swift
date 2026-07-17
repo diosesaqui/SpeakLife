@@ -904,7 +904,7 @@ struct HighConversionPaywallView: View {
     }
 
     private var cleanIllustrationCard: some View {
-        Image("headerSubscription2")
+        Image("cleanPaywallHero")
             .resizable()
             .aspectRatio(contentMode: .fill)
             .frame(maxWidth: .infinity)
