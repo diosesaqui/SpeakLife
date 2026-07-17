@@ -33,6 +33,12 @@ let currentPremiumID = "SpeakLife1YR29"
 let lifetimeID = "SpeakLifeLifetime"
 let devotionals = "Devotionals30SL"
 let weeklyID = "SpeakLife1Wk5"
+/// Remote Config-resolved weekly SKU currently on offer; mirrors
+/// SubscriptionStore.resolvedWeeklyID so the legacy per-SKU copy helpers
+/// (Product.subTitle / costDescription below) still recognize a repointed
+/// weekly product. Starts at the compiled default; updated by
+/// updateConfigValues, same pattern as yearlyID / monthlyID above.
+var weeklyProductID = weeklyID
 
 extension Notification.Name {
     /// Posted when an ad deep link assigns an onboarding variant (see
@@ -186,6 +192,14 @@ final class SubscriptionStore: ObservableObject {
     // true  = succinct feature-based props (high_conversion_succinct_v1)
     @Published var useSuccinctPaywallValueProps = false
 
+    // MARK: - Clean Paywall Layout A/B Test
+    // false = current dark high-conversion layout (default)
+    // true  = light minimal layout (high_conversion_clean_v1): wordmark,
+    //         headline, illustration, two plan cards, Continue — no
+    //         testimonials or benefit lists. Takes precedence over the
+    //         succinct-props flag since it replaces the whole layout.
+    @Published var useCleanPaywallVariant = false
+
     // MARK: - Weekly Plan A/B Test
     // false = show Monthly as the non-annual option (default)
     // true  = show Weekly ($SpeakLife1Wk5) instead of Monthly on the paywall
@@ -197,9 +211,24 @@ final class SubscriptionStore: ObservableObject {
     //         a belief question follows it, and the plan reveal echoes the outcome
     @Published var useQuizV2 = false
 
+    // MARK: - Remote-Configured Product IDs
+    // Every paywall plan slot is driven by Firebase Remote Config:
+    //   annual  → "currentPremiumID"
+    //   monthly → "currentPremiumMonthly"
+    //   weekly  → "currentPremiumWeekly"
+    //   discount (welcome offer) → "discountID"
+    // Empty until the first activate; the resolved*ID accessors below fall
+    // back to the compiled-in default SKUs so an offline / pre-fetch install
+    // still offers real products. The discount SKU has no fallback on purpose:
+    // no configured discount means no welcome offer.
     @Published var yearlySubscription = ""
     @Published var monthlySubscription = ""
     @Published var discountSubscription = ""
+    @Published var weeklySubscription = ""
+
+    var resolvedYearlyID: String { yearlySubscription.isEmpty ? currentPremiumID : yearlySubscription }
+    var resolvedMonthlyID: String { monthlySubscription.isEmpty ? currentMonthlyPremiumID : monthlySubscription }
+    var resolvedWeeklyID: String { weeklySubscription.isEmpty ? weeklyID : weeklySubscription }
     
     @Published var onboardingBGImage = "moonlight2"
     @Published var backgroundImage = "moonlight2"
@@ -274,8 +303,16 @@ final class SubscriptionStore: ObservableObject {
     
     func fetchRemoteConfig() async {
         await withCheckedContinuation { continuation in
-            remoteConfig.fetchAndActivate { _, _ in
-                continuation.resume()
+            remoteConfig.fetchAndActivate { [weak self] _, _ in
+                // Activation alone doesn't propagate values into the store's
+                // @Published mirrors — updateConfigValues does (and reloads
+                // StoreKit products if a paywall SKU was repointed). Without
+                // this, the foreground-refresh path activated new config that
+                // the app never applied.
+                DispatchQueue.main.async {
+                    self?.updateConfigValues {}
+                    continuation.resume()
+                }
             }
         }
     }
@@ -286,7 +323,11 @@ final class SubscriptionStore: ObservableObject {
             guard let self = self else { return }
             if let error = error {
                 print("Remote Config fetch failed: \(error.localizedDescription)")
-                completion()
+                // Still apply config: a previous session's activated values or
+                // the registered in-app defaults. Without this, product-ID
+                // strings sit at "" and the legacy per-SKU copy helpers can't
+                // label the fallback products' billing cadence correctly.
+                self.updateConfigValues(completion: completion)
                 return
             }
             
@@ -308,6 +349,9 @@ final class SubscriptionStore: ObservableObject {
                     let oldAudioVersion = self?.audioRemoteVersion ?? 0
                     let oldDevotionalVersion = self?.currentDevotionalVersion ?? 0
                     let oldRemoteVersion = self?.remoteVersion ?? 0
+                    // updateConfigValues itself detects a repointed paywall
+                    // SKU and reloads StoreKit products, so every config-apply
+                    // path (not just this listener) gets the same behavior.
                     self?.updateConfigValues {}
                     let newAudioVersion = self?.audioRemoteVersion ?? 0
                     let newDevotionalVersion = self?.currentDevotionalVersion ?? 0
@@ -344,12 +388,25 @@ final class SubscriptionStore: ObservableObject {
         }
     }
     
+    /// True after the first updateConfigValues run. Guards the SKU-change
+    /// product reload below: the very first apply must not fire it, because
+    /// init's fetch completion already requests products once.
+    private var hasAppliedRemoteConfigOnce = false
+
     private func updateConfigValues(completion: @escaping() -> Void) {
+        // Snapshot the effective SKUs before applying, so any config-apply
+        // path (init fetch, error fallback, foreground refresh, real-time
+        // listener) detects a repointed product the same way.
+        let previousProductIDs = [resolvedYearlyID, resolvedMonthlyID, resolvedWeeklyID, discountSubscription]
+
         showDevotionalSubscription = remoteConfig["showDevotionalSubscription"].boolValue
         showOneTimeSubscription = remoteConfig["showOneTimeSubscription"].boolValue
-        yearlySubscription = remoteConfig["currentPremiumID"].stringValue
-        monthlySubscription = remoteConfig["currentPremiumMonthly"].stringValue
-        discountSubscription = remoteConfig["discountID"].stringValue
+        // Product IDs are typed by hand in the Firebase console — trim stray
+        // whitespace so an invisible space can't silently break matching.
+        yearlySubscription = remoteConfig["currentPremiumID"].stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        monthlySubscription = remoteConfig["currentPremiumMonthly"].stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        discountSubscription = remoteConfig["discountID"].stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        weeklySubscription = remoteConfig["currentPremiumWeekly"].stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
         showSubscription = remoteConfig["showSubscription"].boolValue
         onboardingBGImage = remoteConfig["onboardingImage"].stringValue
         backgroundImage = remoteConfig["backgroundImage"].stringValue
@@ -390,6 +447,9 @@ final class SubscriptionStore: ObservableObject {
         // Paywall Value Props A/B Test
         useSuccinctPaywallValueProps = remoteConfig["useSuccinctPaywallValueProps"].boolValue
 
+        // Clean Paywall Layout A/B Test (unset key resolves false — ships dormant)
+        useCleanPaywallVariant = remoteConfig["useCleanPaywallVariant"].boolValue
+
         // Weekly Plan A/B Test
         useWeeklyPlan = remoteConfig["useWeeklyPlan"].boolValue
 
@@ -418,9 +478,22 @@ final class SubscriptionStore: ObservableObject {
             }
         }
         
-        yearlyID = yearlySubscription
-        monthlyID = monthlySubscription
+        // Mirror the RESOLVED ids into the legacy globals the per-SKU copy
+        // helpers compare against, so fallback products (offline / pre-fetch)
+        // and repointed SKUs are still labeled with the right billing cadence.
+        // discountID stays raw on purpose: no configured discount, no offer.
+        yearlyID = resolvedYearlyID
+        monthlyID = resolvedMonthlyID
         discountID = discountSubscription
+        weeklyProductID = resolvedWeeklyID
+
+        // If this apply repointed any paywall SKU, reload StoreKit products so
+        // currentOffered* (and every price on screen) follows Firebase live.
+        let newProductIDs = [resolvedYearlyID, resolvedMonthlyID, resolvedWeeklyID, discountSubscription]
+        if hasAppliedRemoteConfigOnce, newProductIDs != previousProductIDs {
+            Task { await requestProducts() }
+        }
+        hasAppliedRemoteConfigOnce = true
         completion()
 
     }
@@ -542,11 +615,27 @@ final class SubscriptionStore: ObservableObject {
     @MainActor
     func requestProducts() async {
         do {
-            // Request products from the App Store using the identifiers defined in InAppId
-            let storeProducts = try await Product.products(for: InAppId.all)
+            // Request the union of the compiled-in catalog and whatever Remote
+            // Config currently points at, so a Firebase-side SKU change (even
+            // to an id missing from InAppId.all) still loads and displays.
+            let configuredIDs = [resolvedYearlyID, resolvedMonthlyID, resolvedWeeklyID, discountSubscription]
+                .filter { !$0.isEmpty }
+            let storeProducts = try await Product.products(for: Set(InAppId.all + configuredIDs))
 
             var newSubscriptions: [Product] = []
             var newNonConsumables: [Product] = [] // New list for non-consumables
+
+            // Reset the configurable offered slots before re-matching so a
+            // Remote Config repoint can never leave a stale product on sale:
+            // after a successful fetch these reflect exactly what the current
+            // config loaded (nil if the configured SKU failed to load —
+            // placeholder shown, never a phantom or retired product). Reset
+            // and re-match run synchronously on the main actor, so views
+            // never observe the intermediate nil.
+            currentOfferedDiscount = nil
+            currentOfferedPremiumMonthly = nil
+            currentOfferedWeekly = nil
+            currentOfferedPremium = nil
 
             // Filter the products into categories based on their type
             for product in storeProducts {
@@ -556,13 +645,13 @@ final class SubscriptionStore: ObservableObject {
                     if product.id == discountSubscription {
                         currentOfferedDiscount = product
                     }
-                    if product.id == monthlySubscription {
+                    if product.id == resolvedMonthlyID {
                         currentOfferedPremiumMonthly = product
                     }
-                    if product.id == weeklyID {
+                    if product.id == resolvedWeeklyID {
                         currentOfferedWeekly = product
                     }
-                    if product.id == yearlySubscription {
+                    if product.id == resolvedYearlyID {
                         currentOfferedPremium = product
                     }
                 case .nonConsumable:
@@ -857,7 +946,7 @@ extension Product {
         } else if id == yearlyID {
             let monthly = getMonthlyAmount(price: price)
             return "First 7 days free, then \(displayPrice)/yr."
-        } else if id == weeklyID {
+        } else if id == weeklyProductID {
             return "\(displayPrice)/wk."
         } else {
            return "\(displayPrice)/mo."
@@ -888,7 +977,7 @@ extension Product {
             return "7 days Free, then \(monthly)month, billed annually at \(displayPrice)/year. Cancel anytime."
         } else if id == lifetimeID {
             return "Pay once, own it for life!"
-        } else if id == weeklyID {
+        } else if id == weeklyProductID {
                 return "\(displayPrice)/per week. Cancel anytime."
         } else {
             return "Just \(displayPrice) per month. Cancel anytime."
