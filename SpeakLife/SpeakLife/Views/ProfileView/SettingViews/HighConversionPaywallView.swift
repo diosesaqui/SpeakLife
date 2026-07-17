@@ -8,6 +8,9 @@
 //    - "high_conversion_v1"          (benefit-based personalized props)
 //    - "high_conversion_succinct_v1" (succinct outcome-based props, A/B via
 //      Remote Config flag useSuccinctPaywallValueProps)
+//    - "high_conversion_clean_v1"    (light minimal layout: headline +
+//      illustration + two plan cards + Continue, A/B via Remote Config flag
+//      useCleanPaywallVariant — takes precedence over the succinct flag)
 //
 
 import SwiftUI
@@ -82,7 +85,14 @@ struct HighConversionPaywallView: View {
     /// Variant string sent to Firebase Analytics on every paywall event so the
     /// A/B between benefit-based and feature-based copy can be compared.
     private var paywallVariant: String {
-        subscriptionStore.useSuccinctPaywallValueProps ? "high_conversion_succinct_v1" : "high_conversion_v1"
+        if isCleanVariant { return "high_conversion_clean_v1" }
+        return subscriptionStore.useSuccinctPaywallValueProps ? "high_conversion_succinct_v1" : "high_conversion_v1"
+    }
+
+    /// Light minimal layout A/B (Remote Config: useCleanPaywallVariant). Swaps
+    /// the whole layout, so it wins over the succinct-props flag.
+    private var isCleanVariant: Bool {
+        subscriptionStore.useCleanPaywallVariant
     }
 
     /// Short, scannable value props. Title-only, 3–5 words each — readable in a
@@ -209,6 +219,26 @@ struct HighConversionPaywallView: View {
         let pct = Int(((yearly - a) / yearly * 100).rounded())
         return pct > 0 ? pct : nil
     }
+    /// Per-week equivalent of the annual price (clean variant's right-hand
+    /// price on the Annual card). StoreKit price ÷ 52, product's own locale.
+    private var annualPerWeek: String {
+        guard let p = subscriptionStore.currentOfferedPremium,
+              let s = localizedPrice(p.price / 52, in: p) else { return pricePlaceholder }
+        return s
+    }
+    /// What a full year actually costs on the non-annual plan (weekly×52 or
+    /// monthly×12). This is the clean variant's strikethrough anchor on the
+    /// Annual card and the honesty subline on the non-annual card — a real
+    /// derived cost, never an invented anchor price.
+    private var nonAnnualYearlyEquivalent: String? {
+        if showWeeklyPlan, let w = subscriptionStore.currentOfferedWeekly {
+            return localizedPrice(w.price * 52, in: w)
+        }
+        if let m = subscriptionStore.currentOfferedPremiumMonthly {
+            return localizedPrice(m.price * 12, in: m)
+        }
+        return nil
+    }
 
     // Non-annual plan follows the useWeeklyPlan flag (Weekly vs Monthly), but
     // only honors Weekly when that product actually loaded from StoreKit —
@@ -263,7 +293,16 @@ struct HighConversionPaywallView: View {
     // MARK: - Body
     var body: some View {
         ZStack {
-            backgroundGradient.ignoresSafeArea()
+            // The clean variant is a light layout; the mission and welcome
+            // screens keep the dark gradient regardless of variant.
+            Group {
+                if isCleanVariant && !showMissionScreen && !showWelcomeOffer {
+                    cleanBackground
+                } else {
+                    backgroundGradient
+                }
+            }
+            .ignoresSafeArea()
 
             if showMissionScreen {
                 // Post-purchase mission screen. Same state-swap pattern as the
@@ -284,19 +323,23 @@ struct HighConversionPaywallView: View {
                 )
                 .transition(.opacity)
             } else {
-                VStack(spacing: 0) {
-                    ScrollView(showsIndicators: false) {
-                        VStack(spacing: 0) {
-                            headerSection
-                            starsOnlyBanner.padding(.top, 20)
-                            benefitsSection.padding(.top, 20)
-                            comparisonSection.padding(.top, 28)
-                            featuredTestimonial.padding(.top, DS.Spacing.lg)
-                            remainingTestimonialsSection.padding(.top, DS.Spacing.lg)
-                            Spacer(minLength: 20)
+                if isCleanVariant {
+                    cleanVariantLayout
+                } else {
+                    VStack(spacing: 0) {
+                        ScrollView(showsIndicators: false) {
+                            VStack(spacing: 0) {
+                                headerSection
+                                starsOnlyBanner.padding(.top, 20)
+                                benefitsSection.padding(.top, 20)
+                                comparisonSection.padding(.top, 28)
+                                featuredTestimonial.padding(.top, DS.Spacing.lg)
+                                remainingTestimonialsSection.padding(.top, DS.Spacing.lg)
+                                Spacer(minLength: 20)
+                            }
                         }
+                        stickyBottomSection
                     }
-                    stickyBottomSection
                 }
 
                 if showCloseButton && !effectiveIsHardPaywall { closeButton }
@@ -798,13 +841,217 @@ struct HighConversionPaywallView: View {
                     }
                 }) {
                     Image(systemName: "xmark.circle.fill").font(.system(size: 28))
-                        .foregroundColor(.white.opacity(0.6)).background(Circle().fill(Color.black.opacity(0.2)))
+                        .foregroundColor(isCleanVariant ? Color.gray.opacity(0.45) : .white.opacity(0.6))
+                        .background(Circle().fill(isCleanVariant ? Color.black.opacity(0.05) : Color.black.opacity(0.2)))
                 }
                 .padding(.top, 56).padding(.trailing, 20)
             }
             Spacer()
         }
         .transition(.opacity)
+    }
+
+    // MARK: - Clean Variant Layout (high_conversion_clean_v1)
+    // Light minimal format modeled on top-converting meditation-app paywalls:
+    // wordmark → headline → illustration → Annual (anchored) vs non-annual plan
+    // cards → Continue → legal links. Shares every handler with the dark layout
+    // (makePurchase, restore, close, welcome offer, mission screen), so only
+    // the presentation differs — analytics stay joinable via paywallVariant.
+
+    private var cleanBackground: Color { Color(red: 0.99, green: 0.99, blue: 1.0) }
+    private var cleanInk: Color { Color(red: 0.10, green: 0.12, blue: 0.18) }
+    private var cleanSubInk: Color { Color(red: 0.44, green: 0.47, blue: 0.54) }
+    private var cleanStroke: Color { Color(red: 0.87, green: 0.89, blue: 0.93) }
+
+    private var cleanVariantLayout: some View {
+        VStack(spacing: 0) {
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 0) {
+                    cleanWordmark.padding(.top, 16)
+                    cleanPageDots.padding(.top, 14)
+                    Text(resolvedHeadline)
+                        .font(.system(size: 27, weight: .bold))
+                        .foregroundColor(cleanInk)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 28).padding(.top, 14)
+                    Text(resolvedSubheadline)
+                        .font(.system(size: 15))
+                        .foregroundColor(cleanSubInk)
+                        .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .padding(.horizontal, 32).padding(.top, 6)
+                    cleanIllustrationCard.padding(.top, 18)
+                    Spacer(minLength: 16)
+                }
+            }
+            cleanBottomSection
+        }
+    }
+
+    private var cleanWordmark: some View {
+        (Text("Speak").foregroundColor(cleanInk) + Text("Life").foregroundColor(Constants.DAMidBlue))
+            .font(.system(size: 18, weight: .bold, design: .rounded))
+    }
+
+    // Decorative progress dots matching the reference format (paywall reads as
+    // the current step of a short flow).
+    private var cleanPageDots: some View {
+        HStack(spacing: 6) {
+            Capsule().fill(cleanInk.opacity(0.7)).frame(width: 18, height: 5)
+            Circle().fill(cleanInk.opacity(0.22)).frame(width: 5, height: 5)
+            Circle().fill(cleanInk.opacity(0.22)).frame(width: 5, height: 5)
+        }
+    }
+
+    private var cleanIllustrationCard: some View {
+        Image("headerSubscription2")
+            .resizable()
+            .aspectRatio(contentMode: .fill)
+            .frame(maxWidth: .infinity)
+            .frame(height: 230)
+            .clipShape(RoundedRectangle(cornerRadius: 18))
+            .overlay(RoundedRectangle(cornerRadius: 18).stroke(cleanStroke, lineWidth: 1))
+            .padding(.horizontal, 24)
+    }
+
+    private var cleanBottomSection: some View {
+        VStack(spacing: 12) {
+            cleanPlanCard(
+                plan: .annual,
+                title: "Annual",
+                rightPrice: annualPerWeek,
+                rightUnit: "/week",
+                // Anchor only shown when annual is genuinely cheaper than a
+                // year of the non-annual plan (same guard as the SAVE badge).
+                struck: annualSavingsPercent != nil ? nonAnnualYearlyEquivalent : nil,
+                subline: "\(annualPrice) per year",
+                badge: "MOST POPULAR"
+            )
+            .padding(.top, 10) // room for the badge overhang
+            cleanPlanCard(
+                plan: nonAnnualPlan,
+                title: nonAnnualTitle,
+                rightPrice: nonAnnualPrice,
+                rightUnit: showWeeklyPlan ? "/week" : "/month",
+                struck: nil,
+                subline: cleanNonAnnualSubline,
+                badge: nil
+            )
+            cleanTrialLine
+            cleanContinueButton
+            cleanBottomLinks
+        }
+        .padding(.horizontal, 20)
+        .padding(.top, 6)
+        // Outer view ignores the bottom safe area, so this must clear the
+        // home indicator (34pt) on its own.
+        .padding(.bottom, 34)
+    }
+
+    private var cleanNonAnnualSubline: String {
+        let cadence = showWeeklyPlan ? "weekly" : "monthly"
+        guard let yearly = nonAnnualYearlyEquivalent else { return "Billed \(cadence)." }
+        return "\(yearly) /year if billed \(cadence)."
+    }
+
+    private func cleanPlanCard(plan: PlanType, title: String, rightPrice: String, rightUnit: String, struck: String?, subline: String, badge: String?) -> some View {
+        let isSelected = selectedPlan == plan
+        return Button(action: {
+            withAnimation(.easeInOut(duration: 0.15)) { selectedPlan = plan }
+            AnalyticsService.shared.track("paywall_plan_switched", parameters: ["plan": plan.rawValue, "variant": paywallVariant, "segment": segmentParam])
+        }) {
+            ZStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 5) {
+                    HStack(spacing: 8) {
+                        Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                            .font(.system(size: 18))
+                            .foregroundColor(isSelected ? Constants.DAMidBlue : cleanStroke)
+                        Text(title)
+                            .font(.system(size: 16, weight: .bold))
+                            .foregroundColor(cleanInk)
+                        Spacer()
+                        (Text(rightPrice).font(.system(size: 16, weight: .semibold))
+                            + Text(" \(rightUnit)").font(.system(size: 13, weight: .medium)))
+                            .foregroundColor(cleanInk)
+                    }
+                    HStack(spacing: 5) {
+                        if let struck {
+                            Text(struck)
+                                .font(.system(size: 13))
+                                .foregroundColor(cleanSubInk.opacity(0.8))
+                                .strikethrough(true, color: cleanSubInk.opacity(0.8))
+                        }
+                        Text(subline)
+                            .font(.system(size: 13))
+                            .foregroundColor(cleanSubInk)
+                    }
+                    .padding(.leading, 26)
+                }
+                .padding(.horizontal, 14).padding(.vertical, 14)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(
+                    RoundedRectangle(cornerRadius: 14)
+                        .fill(isSelected ? Constants.DAMidBlue.opacity(0.06) : Color.white)
+                        .overlay(RoundedRectangle(cornerRadius: 14).stroke(isSelected ? Constants.DAMidBlue : cleanStroke, lineWidth: isSelected ? 1.5 : 1))
+                )
+                if let badge {
+                    Text(badge)
+                        .font(.system(size: 10, weight: .bold))
+                        .tracking(0.5)
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 10).padding(.vertical, 4)
+                        .background(Capsule().fill(Constants.DAMidBlue))
+                        .offset(y: -11)
+                }
+            }
+        }
+        .buttonStyle(PlainButtonStyle())
+    }
+
+    // Same autocharge-fear reassurance as the dark layout's trial callout —
+    // real per-plan eligibility, real StoreKit day count, never hardcoded.
+    @ViewBuilder
+    private var cleanTrialLine: some View {
+        if selectedPlanTrialDays != nil {
+            HStack(spacing: 6) {
+                Image(systemName: "checkmark.circle.fill")
+                    .foregroundColor(Constants.DAMidBlue).font(.system(size: 13))
+                Text(trialCalloutText)
+                    .font(.system(size: 12.5, weight: .medium))
+                    .foregroundColor(cleanSubInk)
+            }
+        }
+    }
+
+    private var cleanContinueButton: some View {
+        Button(action: makePurchase) {
+            Group {
+                if declarationStore.isPurchasing {
+                    ProgressView()
+                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                } else {
+                    Text(selectedPlanTrialDays != nil ? "Start Free Trial" : "Continue")
+                        .font(.system(size: 17, weight: .bold)).foregroundColor(.white)
+                }
+            }
+            .frame(maxWidth: .infinity).padding(.vertical, 16)
+            .background(
+                RoundedRectangle(cornerRadius: 14)
+                    .fill(LinearGradient(colors: [Constants.DAMidBlue, Constants.DAMidBlue.opacity(0.85)], startPoint: .leading, endPoint: .trailing))
+            )
+        }
+        .disabled(declarationStore.isPurchasing)
+        .opacity(declarationStore.isPurchasing ? 0.7 : 1.0)
+        .buttonStyle(PlainButtonStyle())
+    }
+
+    private var cleanBottomLinks: some View {
+        HStack(spacing: DS.Spacing.lg) {
+            Button("Restore Purchases", action: restore)
+            Link("Terms", destination: URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!)
+            Button("Privacy") { showPrivacyPolicy = true }
+        }
+        .font(.system(size: 12)).foregroundColor(cleanSubInk)
     }
 
     // MARK: - Welcome Offer Gate
@@ -1051,6 +1298,17 @@ fileprivate func introTrialDays(for product: Product?, isEligible: Bool) -> Int?
     case .year:  return offer.period.value * 365
     @unknown default: return nil
     }
+}
+
+// MARK: - Shared Currency Helper
+/// Formats an arbitrary derived amount (price ÷ 52, price × 12, …) in the
+/// product's own locale and currency — never a hardcoded "$". nil if
+/// formatting fails.
+fileprivate func localizedPrice(_ amount: Decimal, in product: Product) -> String? {
+    let formatter = NumberFormatter()
+    formatter.numberStyle = .currency
+    formatter.locale = product.priceFormatStyle.locale
+    return formatter.string(from: NSDecimalNumber(decimal: amount))
 }
 
 // MARK: - Shared Per-Month Price Helper

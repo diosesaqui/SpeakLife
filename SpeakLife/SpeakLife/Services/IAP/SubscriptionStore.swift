@@ -186,6 +186,14 @@ final class SubscriptionStore: ObservableObject {
     // true  = succinct feature-based props (high_conversion_succinct_v1)
     @Published var useSuccinctPaywallValueProps = false
 
+    // MARK: - Clean Paywall Layout A/B Test
+    // false = current dark high-conversion layout (default)
+    // true  = light minimal layout (high_conversion_clean_v1): wordmark,
+    //         headline, illustration, two plan cards, Continue — no
+    //         testimonials or benefit lists. Takes precedence over the
+    //         succinct-props flag since it replaces the whole layout.
+    @Published var useCleanPaywallVariant = false
+
     // MARK: - Weekly Plan A/B Test
     // false = show Monthly as the non-annual option (default)
     // true  = show Weekly ($SpeakLife1Wk5) instead of Monthly on the paywall
@@ -389,6 +397,9 @@ final class SubscriptionStore: ObservableObject {
 
         // Paywall Value Props A/B Test
         useSuccinctPaywallValueProps = remoteConfig["useSuccinctPaywallValueProps"].boolValue
+
+        // Clean Paywall Layout A/B Test (unset key resolves false — ships dormant)
+        useCleanPaywallVariant = remoteConfig["useCleanPaywallVariant"].boolValue
 
         // Weekly Plan A/B Test
         useWeeklyPlan = remoteConfig["useWeeklyPlan"].boolValue
