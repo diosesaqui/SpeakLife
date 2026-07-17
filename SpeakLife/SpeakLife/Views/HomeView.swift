@@ -307,6 +307,27 @@ struct HomeView: View {
                     }
                 }
             }
+            // iCloud restore: a returning user installing on a new device has
+            // already been through onboarding — the synced "onboarded" flag
+            // arrives with the first CloudKit import shortly after launch.
+            // The moment it lands, skip onboarding and drop them straight
+            // into their restored app. Attached at the container level so it
+            // is live during the landing window and the onboarding branch.
+            // Deliberately does NOT fire onboarding_finished, so the
+            // onboarding A/B conversion funnel is not polluted with restores.
+            .onReceive(NotificationCenter.default.publisher(for: SyncedSettingsStore.settingsDidChange)) { notification in
+                guard !appState.isOnboarded,
+                      let keys = notification.userInfo?["keys"] as? Set<String>,
+                      keys.contains("onboarded"),
+                      UserDefaults.standard.bool(forKey: "onboarded") else { return }
+                AnalyticsService.shared.track("onboarding_bypassed_icloud_restore", parameters: [
+                    "variant": subscriptionStore.onboardingVariantName
+                ])
+                withAnimation {
+                    appState.isOnboarded = true
+                    LifecycleNotificationService.shared.scheduleLifecycleNotifications()
+                }
+            }
             // Personalized push message — its own reader screen, separate from the
             // declaration feed. Attached at the container level (not inside the
             // onboarded branch) so a tapped message still presents during the
