@@ -251,7 +251,17 @@ class BurstCompletionTracker: ObservableObject {
     private func calculateCurrentStreak() -> Int {
         var consecutiveDays = 0
         var currentDate = calendar.startOfDay(for: Date())
-        
+
+        // A streak is alive until today actually ends: if today's burst isn't
+        // done yet, count back from yesterday instead of reporting 0. Starting
+        // strictly at today made this 0 every morning, which silently defeated
+        // the streakStats heals in EnhancedStreakViewModel and left the badge
+        // stuck below the real completed-day history.
+        if !completions.contains(where: { calendar.startOfDay(for: $0.date) == currentDate }) {
+            guard let yesterday = calendar.date(byAdding: .day, value: -1, to: currentDate) else { return 0 }
+            currentDate = yesterday
+        }
+
         // Check consecutive days starting from today going backwards
         for _ in 0..<365 {  // Check up to a year back
             // Count day as complete if there's at least one completion that day
