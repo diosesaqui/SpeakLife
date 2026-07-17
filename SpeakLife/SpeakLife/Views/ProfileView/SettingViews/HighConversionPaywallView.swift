@@ -90,9 +90,13 @@ struct HighConversionPaywallView: View {
     }
 
     /// Light minimal layout A/B (Remote Config: useCleanPaywallVariant). Swaps
-    /// the whole layout, so it wins over the succinct-props flag.
+    /// the whole layout, so it wins over the succinct-props flag. Latched on
+    /// first appear so a Remote Config activation while the paywall is on
+    /// screen can't swap the layout mid-decision — which would also desync
+    /// impression vs conversion variant attribution in the A/B readout.
+    @State private var lockedCleanVariant: Bool?
     private var isCleanVariant: Bool {
-        subscriptionStore.useCleanPaywallVariant
+        lockedCleanVariant ?? subscriptionStore.useCleanPaywallVariant
     }
 
     /// Short, scannable value props. Title-only, 3–5 words each — readable in a
@@ -800,7 +804,7 @@ struct HighConversionPaywallView: View {
             }) {
                 Text("Can't afford full price? Pay what you can →")
                     .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.white.opacity(0.7))
+                    .foregroundColor(isCleanVariant ? cleanSubInk : .white.opacity(0.7))
                     .padding(.vertical, 4)
             }
             .buttonStyle(PlainButtonStyle())
@@ -939,6 +943,9 @@ struct HighConversionPaywallView: View {
             )
             cleanTrialLine
             cleanContinueButton
+            // Same Remote Config-gated link as the dark layout, so enabling
+            // showPayWhatYouCanCTA reaches both A/B arms.
+            payWhatYouCanCTA
             cleanBottomLinks
         }
         .padding(.horizontal, 20)
@@ -1126,6 +1133,11 @@ struct HighConversionPaywallView: View {
 
     // MARK: - Lifecycle
     private func onAppear() {
+        // Latch the layout variant BEFORE the impression events below fire,
+        // so every event this session reports the variant actually shown.
+        if lockedCleanVariant == nil {
+            lockedCleanVariant = subscriptionStore.useCleanPaywallVariant
+        }
         timeOnPaywall = Date()
         selectedPlan = .annual
         // Check actual trial eligibility from Apple (re-run via onChange when
@@ -1301,14 +1313,12 @@ fileprivate func introTrialDays(for product: Product?, isEligible: Bool) -> Int?
 }
 
 // MARK: - Shared Currency Helper
-/// Formats an arbitrary derived amount (price ÷ 52, price × 12, …) in the
-/// product's own locale and currency — never a hardcoded "$". nil if
-/// formatting fails.
+/// Formats an arbitrary derived amount (price ÷ 52, price × 12, …) with the
+/// product's own storefront format style, so the currency symbol and locale
+/// always match the product's real displayPrice — never a hardcoded "$" and
+/// never the device locale's default currency.
 fileprivate func localizedPrice(_ amount: Decimal, in product: Product) -> String? {
-    let formatter = NumberFormatter()
-    formatter.numberStyle = .currency
-    formatter.locale = product.priceFormatStyle.locale
-    return formatter.string(from: NSDecimalNumber(decimal: amount))
+    amount.formatted(product.priceFormatStyle)
 }
 
 // MARK: - Shared Per-Month Price Helper
@@ -1316,11 +1326,7 @@ fileprivate func localizedPrice(_ amount: Decimal, in product: Product) -> Strin
 /// product's own locale and currency (never a hardcoded "$"). Shared by the
 /// main paywall and WelcomeOfferView. nil if formatting fails.
 fileprivate func perMonthString(yearlyProduct: Product) -> String? {
-    let monthly = yearlyProduct.price / 12
-    let formatter = NumberFormatter()
-    formatter.numberStyle = .currency
-    formatter.locale = yearlyProduct.priceFormatStyle.locale
-    return formatter.string(from: NSDecimalNumber(decimal: monthly))
+    localizedPrice(yearlyProduct.price / 12, in: yearlyProduct)
 }
 
 // MARK: - Welcome Offer (decline-path recovery screen)
