@@ -227,7 +227,7 @@ enum ProgressionPhase: String, CaseIterable, Codable {
 }
 
 // MARK: - Streak Statistics
-struct StreakStats: Codable {
+struct StreakStats: Codable, Equatable {
     var currentStreak: Int = 0
     var longestStreak: Int = 0
     var totalDaysCompleted: Int = 0
@@ -270,6 +270,52 @@ struct StreakStats: Codable {
         lastCompletedDate = today
     }
     
+    /// Merges streak stats from another device (iCloud sync). Used by both
+    /// SyncedSettingsStore's blob merger and EnhancedStreakViewModel's live
+    /// heal so the two can never drift apart.
+    ///
+    /// Rules: truly monotonic fields (longest streak, total days, celebrated
+    /// milestones) merge as max/union. The LIVE fields (currentStreak and
+    /// the freeze state) are NOT monotonic — a streak legitimately resets —
+    /// so they follow the side whose lastCompletedDate is most recent: the
+    /// device that actually completed a day last knows the current truth.
+    /// A max() here would resurrect broken streaks forever.
+    func merging(_ other: StreakStats) -> StreakStats {
+        var merged = self
+        merged.longestStreak = max(longestStreak, other.longestStreak)
+        merged.totalDaysCompleted = max(totalDaysCompleted, other.totalDaysCompleted)
+        merged.celebratedMilestones = celebratedMilestones.union(other.celebratedMilestones)
+
+        switch (lastCompletedDate, other.lastCompletedDate) {
+        case (let mine?, let theirs?):
+            if theirs > mine {
+                merged.currentStreak = other.currentStreak
+                merged.streakFreezeAvailable = other.streakFreezeAvailable
+                merged.streakFreezeUsedDate = other.streakFreezeUsedDate
+            } else if theirs == mine {
+                // Same last-completed day on both sides: the higher count is
+                // the real one (a fresh install starts at 0/1), and a freeze
+                // spent anywhere is spent (symmetric, so devices converge).
+                merged.currentStreak = max(currentStreak, other.currentStreak)
+                merged.streakFreezeAvailable = streakFreezeAvailable && other.streakFreezeAvailable
+                switch (streakFreezeUsedDate, other.streakFreezeUsedDate) {
+                case (let a?, let b?): merged.streakFreezeUsedDate = max(a, b)
+                case (nil, let b?): merged.streakFreezeUsedDate = b
+                default: break
+                }
+            }
+            merged.lastCompletedDate = max(mine, theirs)
+        case (nil, let theirs?):
+            merged.currentStreak = other.currentStreak
+            merged.lastCompletedDate = theirs
+            merged.streakFreezeAvailable = other.streakFreezeAvailable
+            merged.streakFreezeUsedDate = other.streakFreezeUsedDate
+        default:
+            break
+        }
+        return merged
+    }
+
     mutating func checkStreakValidity() {
         guard let lastDate = lastCompletedDate else {
             currentStreak = 0

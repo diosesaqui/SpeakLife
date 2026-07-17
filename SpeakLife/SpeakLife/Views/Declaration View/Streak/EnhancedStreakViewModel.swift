@@ -85,6 +85,111 @@ final class EnhancedStreakViewModel: ObservableObject {
             name: .NSCalendarDayChanged,
             object: nil
         )
+
+        // iCloud sync: heal streak stats when progress earned on the user's
+        // other devices arrives (burst history union, merged settings blob).
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleSyncedProgressChanged),
+            name: BurstCompletionTracker.historyMergedNotification,
+            object: nil
+        )
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleSyncedProgressChanged),
+            name: SyncedSettingsStore.settingsDidChange,
+            object: nil
+        )
+    }
+
+    // MARK: - iCloud Sync Healing
+
+    @objc private func handleSyncedProgressChanged(_ notification: Notification) {
+        guard Thread.isMainThread else {
+            DispatchQueue.main.async { [weak self] in self?.handleSyncedProgressChanged(notification) }
+            return
+        }
+        // For settings changes, only react when the streak blob was applied.
+        if notification.name == SyncedSettingsStore.settingsDidChange,
+           let keys = notification.userInfo?["keys"] as? Set<String>,
+           !keys.contains(streakStatsKey) {
+            return
+        }
+        reconcileWithSyncedProgress()
+    }
+
+    /// Merges progress synced from the user's other devices into the live
+    /// streak state. Historical fields (longest streak, totals, milestones)
+    /// only ever move UP; the live currentStreak follows the most recent
+    /// completion (StreakStats.merging), so a broken streak is never
+    /// resurrected by a stale device's old blob.
+    private func reconcileWithSyncedProgress() {
+        var changed = false
+        let streakBefore = streakStats.currentStreak
+
+        // 1. Fold in the synced streakStats blob (SyncedSettingsStore already
+        //    union-merged it with the other devices' copies) using the same
+        //    merge rules the store uses, so the two can never disagree.
+        if let data = userDefaults.data(forKey: streakStatsKey),
+           let synced = try? JSONDecoder().decode(StreakStats.self, from: data) {
+            let merged = streakStats.merging(synced)
+            if merged != streakStats {
+                streakStats = merged
+                changed = true
+            }
+        }
+
+        // 2. Heal from the merged burst history — the authoritative record.
+        //    (Safe to only raise here: the tracker derives its streak by
+        //    walking actual completion days back from today, so a broken
+        //    streak computes low and never inflates.)
+        let tracker = BurstCompletionTracker.shared
+        let burstStreak = tracker.currentStreak
+        if burstStreak > streakStats.currentStreak {
+            streakStats.currentStreak = burstStreak
+            streakStats.longestStreak = max(streakStats.longestStreak, burstStreak)
+            changed = true
+        }
+        let uniqueDays = tracker.getUniqueDaysCount()
+        if uniqueDays > streakStats.totalDaysCompleted {
+            streakStats.totalDaysCompleted = uniqueDays
+            changed = true
+        }
+        if let latestDay = tracker.completions.map(\.date).max() {
+            let day = Calendar.current.startOfDay(for: latestDay)
+            if streakStats.lastCompletedDate.map({ day > $0 }) ?? true {
+                streakStats.lastCompletedDate = day
+                changed = true
+            }
+        }
+
+        // 3. If today's burst was completed on another device, reflect it in
+        //    today's checklist — without re-firing celebrations or analytics
+        //    (the device that earned the day already did). Only touch the
+        //    checklist when it actually belongs to today: around midnight
+        //    this can run before the new-day rollover regenerates it, and
+        //    stamping yesterday's checklist would corrupt it.
+        if Calendar.current.isDateInToday(todayChecklist.date),
+           tracker.hasTodaysCompletion(),
+           let index = todayChecklist.tasks.firstIndex(where: { $0.id == "complete_daily_burst" }),
+           !todayChecklist.tasks[index].isCompleted {
+            let completedAt = tracker.getTodaysCompletion()?.completedAt ?? Date()
+            todayChecklist.tasks[index].isCompleted = true
+            todayChecklist.tasks[index].completedAt = completedAt
+            if todayChecklist.completedAt == nil && todayChecklist.isStreakEarned {
+                todayChecklist.completedAt = completedAt
+            }
+            changed = true
+        }
+
+        if changed {
+            saveData()
+            // A healed streak day changes which tasks (and which foundation
+            // audio) today should show — regenerate, preserving completions.
+            if streakStats.currentStreak != streakBefore {
+                refreshTasksWithUserCategories()
+            }
+        }
     }
     
     // MARK: - Task Personalization

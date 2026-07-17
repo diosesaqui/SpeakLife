@@ -496,6 +496,22 @@ final class PersistenceController {
     
     // MARK: - CloudKit Schema Initialization
     private func initializeCloudKitSchema() {
+        #if DEBUG
+        // Push the full model schema (incl. ProgressEventEntry/SyncedSetting)
+        // to the CloudKit DEVELOPMENT environment so the record types exist
+        // before any real data is written. Release builds use the Production
+        // environment, where the schema must be promoted via CloudKit
+        // Console — this call is dev-only by design.
+        DispatchQueue.global(qos: .utility).async { [container] in
+            do {
+                try container.initializeCloudKitSchema(options: [])
+                print("CloudKit development schema initialized")
+            } catch {
+                print("CloudKit schema initialization failed (non-fatal): \(error.localizedDescription)")
+            }
+        }
+        #endif
+
         // Simple schema check - just verify entities can be queried
         let backgroundContext = container.newBackgroundContext()
         backgroundContext.perform {
@@ -505,7 +521,9 @@ final class PersistenceController {
                 _ = try backgroundContext.count(for: AffirmationEntry.fetchRequest())
                 _ = try backgroundContext.count(for: DeclarationFavoriteEntry.fetchRequest())
                 _ = try backgroundContext.count(for: AudioFavoriteEntry.fetchRequest())
-                
+                _ = try backgroundContext.count(for: ProgressEventEntry.fetchRequest())
+                _ = try backgroundContext.count(for: SyncedSetting.fetchRequest())
+
                 print("CloudKit schema check completed")
             } catch {
                 print("CloudKit schema initialization check failed: \(error)")

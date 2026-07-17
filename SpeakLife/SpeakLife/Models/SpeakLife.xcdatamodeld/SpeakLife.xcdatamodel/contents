@@ -56,6 +56,32 @@
             <fetchIndexElement property="createdAt" type="Binary" order="descending"/>
         </fetchIndex>
     </entity>
+    <entity name="ProgressEventEntry" representedClassName="ProgressEventEntry" syncable="YES">
+        <attribute name="kind" attributeType="String" defaultValueString="" usedWithCloudKit="YES"/>
+        <attribute name="key" attributeType="String" defaultValueString="" usedWithCloudKit="YES"/>
+        <attribute name="payload" optional="YES" attributeType="Binary" usedWithCloudKit="YES"/>
+        <attribute name="deviceId" attributeType="String" defaultValueString="" usedWithCloudKit="YES"/>
+        <attribute name="createdAt" attributeType="Date" defaultDateTimeInterval="0" usedWithCloudKit="YES"/>
+        <attribute name="lastModified" attributeType="Date" defaultDateTimeInterval="0" usedWithCloudKit="YES"/>
+        <attribute name="id" optional="YES" attributeType="UUID" usedWithCloudKit="YES"/>
+        <fetchIndex name="byKind">
+            <fetchIndexElement property="kind" type="Binary" order="ascending"/>
+        </fetchIndex>
+        <fetchIndex name="byKindAndKey">
+            <fetchIndexElement property="kind" type="Binary" order="ascending"/>
+            <fetchIndexElement property="key" type="Binary" order="ascending"/>
+        </fetchIndex>
+    </entity>
+    <entity name="SyncedSetting" representedClassName="SyncedSetting" syncable="YES">
+        <attribute name="key" attributeType="String" defaultValueString="" usedWithCloudKit="YES"/>
+        <attribute name="value" optional="YES" attributeType="Binary" usedWithCloudKit="YES"/>
+        <attribute name="deviceId" attributeType="String" defaultValueString="" usedWithCloudKit="YES"/>
+        <attribute name="lastModified" attributeType="Date" defaultDateTimeInterval="0" usedWithCloudKit="YES"/>
+        <attribute name="id" optional="YES" attributeType="UUID" usedWithCloudKit="YES"/>
+        <fetchIndex name="byKey">
+            <fetchIndexElement property="key" type="Binary" order="ascending"/>
+        </fetchIndex>
+    </entity>
     <entity name="DeclarationFavoriteEntry" representedClassName="DeclarationFavoriteEntry" syncable="YES">
         <attribute name="declarationId" attributeType="String" defaultValueString="" usedWithCloudKit="YES"/>
         <attribute name="text" attributeType="String" defaultValueString="" usedWithCloudKit="YES"/>

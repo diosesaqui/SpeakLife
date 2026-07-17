@@ -106,6 +106,26 @@ class BurstCompletionTracker: ObservableObject {
         calculateCurrentStrength()
         generateWeeklyData()
         generateMonthlyTrend()
+
+        // iCloud sync: push the full local history up once (the flag is only
+        // set when the write definitely persisted, so a failed push retries
+        // next launch), then merge in completions earned on the user's other
+        // devices whenever CloudKit delivers them. Both directions are
+        // unions — days are only ever added, never removed, so no device can
+        // lose streak history.
+        if !UserDefaults.standard.bool(forKey: Self.historyPushedFlagKey) {
+            pushCompletionsToSync(fullHistory: true)
+        }
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleSyncDataChanged),
+            name: ProgressSyncStore.dataDidChange,
+            object: nil
+        )
+    }
+
+    deinit {
+        NotificationCenter.default.removeObserver(self)
     }
     
     // MARK: - Public Methods
@@ -349,11 +369,15 @@ class BurstCompletionTracker: ObservableObject {
     }
     
     // MARK: - Persistence
-    
+
     private func saveCompletions() {
         if let encoded = try? JSONEncoder().encode(completions) {
             UserDefaults.standard.set(encoded, forKey: userDefaultsKey)
         }
+        // Only today's completion can be new here — the full history was
+        // pushed once at init. Re-encoding the whole history on every save
+        // would waste CPU and CloudKit traffic for rows that never change.
+        pushCompletionsToSync(fullHistory: false)
     }
     
     private func loadCompletions() {
@@ -361,5 +385,161 @@ class BurstCompletionTracker: ObservableObject {
            let decoded = try? JSONDecoder().decode([BurstCompletion].self, from: data) {
             completions = decoded
         }
+    }
+
+    // MARK: - iCloud Sync (union merge, never lossy)
+
+    /// Posted after remote burst completions have been merged into the local
+    /// history, so streak consumers can heal their derived stats.
+    static let historyMergedNotification = Notification.Name("BurstCompletionHistoryMerged")
+
+    /// Set only after the full local history has definitely persisted to the
+    /// sync store, so a failed push retries on the next launch.
+    private static let historyPushedFlagKey = "sl_burstHistoryPushedToSync_v1"
+    /// completedAt timestamps of completions that arrived FROM other devices.
+    /// Those must never be re-pushed: re-stamping them with this device's
+    /// timezone could mint a new event key for a day another device already
+    /// recorded, duplicating rows forever.
+    private static let remoteMergedTimestampsKey = "sl_remoteMergedBurstTimestamps"
+
+    private static let dayStampFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.calendar = Calendar.current
+        formatter.timeZone = TimeZone.current
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter
+    }()
+
+    static func dayStamp(for date: Date) -> String {
+        dayStampFormatter.string(from: date)
+    }
+
+    private var remoteMergedTimestamps: Set<TimeInterval> {
+        get {
+            let array = UserDefaults.standard.array(forKey: Self.remoteMergedTimestampsKey) as? [TimeInterval] ?? []
+            return Set(array)
+        }
+        set {
+            UserDefaults.standard.set(Array(newValue), forKey: Self.remoteMergedTimestampsKey)
+        }
+    }
+
+    /// Upserts one dayCompletion event per unique local day this device
+    /// earned itself. Existing rows are left untouched (idempotent).
+    /// `fullHistory: false` pushes only today's completion — the common
+    /// per-save case, avoiding a full-history re-encode every save.
+    private func pushCompletionsToSync(fullHistory: Bool) {
+        let mergedFromRemote = remoteMergedTimestamps
+        let today = calendar.startOfDay(for: Date())
+        let candidates = completions.filter { completion in
+            guard !mergedFromRemote.contains(completion.completedAt.timeIntervalSince1970) else { return false }
+            return fullHistory || calendar.startOfDay(for: completion.date) == today
+        }
+        guard !candidates.isEmpty else {
+            if fullHistory {
+                // Nothing to migrate — an empty history is trivially pushed.
+                UserDefaults.standard.set(true, forKey: Self.historyPushedFlagKey)
+            }
+            return
+        }
+
+        var firstPerDay: [String: BurstCompletion] = [:]
+        for completion in candidates {
+            let stamp = Self.dayStamp(for: completion.date)
+            if let existing = firstPerDay[stamp] {
+                if completion.completedAt < existing.completedAt {
+                    firstPerDay[stamp] = completion
+                }
+            } else {
+                firstPerDay[stamp] = completion
+            }
+        }
+        let items = firstPerDay.map { stamp, completion in
+            (key: stamp, payload: try? JSONEncoder().encode(completion))
+        }
+        ProgressSyncStore.shared.recordEvents(kind: ProgressSyncStore.Kind.dayCompletion, items: items) { success in
+            if fullHistory && success {
+                UserDefaults.standard.set(true, forKey: Self.historyPushedFlagKey)
+            }
+        }
+    }
+
+    @objc private func handleSyncDataChanged(_ notification: Notification) {
+        if let kinds = notification.userInfo?["kinds"] as? Set<String>,
+           !kinds.contains(ProgressSyncStore.Kind.dayCompletion) {
+            return
+        }
+        // Asynchronous fetch — never block the main thread behind the sync
+        // context's import/dedup work. The completion runs on main, where
+        // the @Published completions array must be mutated anyway.
+        ProgressSyncStore.shared.events(ofKind: ProgressSyncStore.Kind.dayCompletion) { [weak self] events in
+            self?.mergeRemoteDayCompletions(events)
+        }
+    }
+
+    /// Adds any day completed on another device that this device has never
+    /// seen. Purely additive: local history is never rewritten or removed.
+    /// Runs on the main queue.
+    private func mergeRemoteDayCompletions(_ events: [ProgressSyncStore.Event]) {
+        guard !events.isEmpty else { return }
+
+        // Dedup on BOTH axes: exact completion identity (completedAt is an
+        // instant, identical across devices for the same completion) and the
+        // LOCAL calendar day. The event key was stamped in the writing
+        // device's timezone, so comparing keys alone would re-append the
+        // same completion forever when the timezones differ.
+        let localTimestamps = Set(completions.map { $0.completedAt.timeIntervalSince1970 })
+        let localDays = Set(completions.map { calendar.startOfDay(for: $0.date) })
+        var merged: [BurstCompletion] = []
+        var mergedDays = Set<Date>()
+        var mergedTimestampLedger = remoteMergedTimestamps
+
+        for event in events {
+            var candidate: BurstCompletion?
+            if let payload = event.payload,
+               let completion = try? JSONDecoder().decode(BurstCompletion.self, from: payload) {
+                candidate = completion
+            } else if let day = Self.dayStampFormatter.date(from: event.key) {
+                // Payload missing or unreadable — still count the day so the
+                // streak survives, with neutral details.
+                candidate = BurstCompletion(
+                    date: calendar.startOfDay(for: day),
+                    completedAt: event.createdAt,
+                    declarationCount: 0,
+                    timeSpent: 0,
+                    spiritualStrengthScore: 50
+                )
+            }
+            guard let completion = candidate else { continue }
+
+            let timestamp = completion.completedAt.timeIntervalSince1970
+            let localDay = calendar.startOfDay(for: completion.date)
+            guard !localTimestamps.contains(timestamp),
+                  !localDays.contains(localDay),
+                  !mergedDays.contains(localDay) else { continue }
+
+            merged.append(completion)
+            mergedDays.insert(localDay)
+            mergedTimestampLedger.insert(timestamp)
+        }
+
+        guard !merged.isEmpty else { return }
+
+        #if DEBUG
+        print("☁️ BurstCompletionTracker: merged \(merged.count) day(s) from other devices")
+        #endif
+
+        remoteMergedTimestamps = mergedTimestampLedger
+        completions = (completions + merged).sorted { $0.date < $1.date }
+        if let encoded = try? JSONEncoder().encode(completions) {
+            UserDefaults.standard.set(encoded, forKey: userDefaultsKey)
+        }
+
+        calculateCurrentStrength()
+        generateWeeklyData()
+        generateMonthlyTrend()
+
+        NotificationCenter.default.post(name: Self.historyMergedNotification, object: nil)
     }
 }

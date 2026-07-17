@@ -86,8 +86,15 @@ final class AppDelegate: NSObject, MessagingDelegate {
     }
     
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
-       
+
         registerNotificationHandler()
+
+        // iCloud progress sync: mirror streaks, listened audio, counters, and
+        // whitelisted preferences across the user's devices via CloudKit.
+        // Both stores are additive/merge-only, so starting them is safe even
+        // before the first CloudKit import completes.
+        ProgressSyncStore.shared.start()
+        SyncedSettingsStore.shared.start()
         ApplicationDelegate.shared.application(
             application,
             didFinishLaunchingWithOptions: launchOptions

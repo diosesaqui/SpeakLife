@@ -177,6 +177,9 @@
 		4597E2412E419D7D009D6C66 /* JournalEntry+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4597E23E2E419D7D009D6C66 /* JournalEntry+CoreDataProperties.swift */; };
 		4597E2422E419D7D009D6C66 /* AffirmationEntry+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4597E23A2E419D7D009D6C66 /* AffirmationEntry+CoreDataClass.swift */; };
 		4597E2432E419D7D009D6C66 /* JournalEntry+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4597E23D2E419D7D009D6C66 /* JournalEntry+CoreDataClass.swift */; };
+		C51B236DD3473456D9E06024 /* ProgressSyncEntities.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93A3056C832114EB72B5ECFD /* ProgressSyncEntities.swift */; };
+		1D987CB8235BF3A621A02EAA /* ProgressSyncStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2105F142D07765CD483ED529 /* ProgressSyncStore.swift */; };
+		ED7901DE681FF568C926597F /* SyncedSettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94596EC3C2CC4E23390BCB70 /* SyncedSettingsStore.swift */; };
 		4597E2442E419D7D009D6C66 /* AffirmationEntry+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4597E23B2E419D7D009D6C66 /* AffirmationEntry+CoreDataProperties.swift */; };
 		4597E2472E419DB4009D6C66 /* CoreDataDeclarationViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4597E2452E419DB4009D6C66 /* CoreDataDeclarationViewModel.swift */; };
 		4597E24E2E419DDF009D6C66 /* AffirmationRepositoryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4597E2482E419DDF009D6C66 /* AffirmationRepositoryTests.swift */; };
@@ -596,6 +599,9 @@
 		4597E23B2E419D7D009D6C66 /* AffirmationEntry+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AffirmationEntry+CoreDataProperties.swift"; sourceTree = "<group>"; };
 		4597E23C2E419D7D009D6C66 /* CoreDataExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreDataExtensions.swift; sourceTree = "<group>"; };
 		4597E23D2E419D7D009D6C66 /* JournalEntry+CoreDataClass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "JournalEntry+CoreDataClass.swift"; sourceTree = "<group>"; };
+		93A3056C832114EB72B5ECFD /* ProgressSyncEntities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressSyncEntities.swift; sourceTree = "<group>"; };
+		2105F142D07765CD483ED529 /* ProgressSyncStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressSyncStore.swift; sourceTree = "<group>"; };
+		94596EC3C2CC4E23390BCB70 /* SyncedSettingsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncedSettingsStore.swift; sourceTree = "<group>"; };
 		4597E23E2E419D7D009D6C66 /* JournalEntry+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "JournalEntry+CoreDataProperties.swift"; sourceTree = "<group>"; };
 		4597E2452E419DB4009D6C66 /* CoreDataDeclarationViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreDataDeclarationViewModel.swift; sourceTree = "<group>"; };
 		4597E2482E419DDF009D6C66 /* AffirmationRepositoryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AffirmationRepositoryTests.swift; sourceTree = "<group>"; };
@@ -1190,6 +1196,8 @@
 				4597E2562E41C181009D6C66 /* CloudKitSyncMonitor.swift */,
 				4597E2302E419CEA009D6C66 /* CoreDataAPIService.swift */,
 				4597E2312E419CEA009D6C66 /* PersistenceController.swift */,
+				2105F142D07765CD483ED529 /* ProgressSyncStore.swift */,
+				94596EC3C2CC4E23390BCB70 /* SyncedSettingsStore.swift */,
 				CC406F19EF64575C52B3CF43 /* PerformanceOptimization */,
 			);
 			name = CoreData;
@@ -1207,6 +1215,7 @@
 				4525D8D82F4AC12800571394 /* DeclarationFavoriteEntry+CoreDataProperties.swift */,
 				4597E23C2E419D7D009D6C66 /* CoreDataExtensions.swift */,
 				4597E23D2E419D7D009D6C66 /* JournalEntry+CoreDataClass.swift */,
+				93A3056C832114EB72B5ECFD /* ProgressSyncEntities.swift */,
 				4597E23E2E419D7D009D6C66 /* JournalEntry+CoreDataProperties.swift */,
 			);
 			path = CoreData;
@@ -2350,6 +2359,9 @@
 				4597E2332E419CEA009D6C66 /* JournalRepository.swift in Sources */,
 				45567D722F29F6FA00382072 /* FirebaseAuthService.swift in Sources */,
 				4597E2342E419CEA009D6C66 /* PersistenceController.swift in Sources */,
+				C51B236DD3473456D9E06024 /* ProgressSyncEntities.swift in Sources */,
+				1D987CB8235BF3A621A02EAA /* ProgressSyncStore.swift in Sources */,
+				ED7901DE681FF568C926597F /* SyncedSettingsStore.swift in Sources */,
 				4597E2352E419CEA009D6C66 /* DataMigrationManager.swift in Sources */,
 				4525D7D22F3DC87E00571394 /* DailyDeclarationReminderService.swift in Sources */,
 				D2AD4D1C5D81425897424332 /* StructuredDayLaunchTracker.swift in Sources */,
@@ -2648,7 +2660,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 4.45;
+				MARKETING_VERSION = 4.46;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Franchiz.SpeakLife;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -2691,7 +2703,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 4.45;
+				MARKETING_VERSION = 4.46;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Franchiz.SpeakLife;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -2724,7 +2736,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 4.45;
+				MARKETING_VERSION = 4.46;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Franchiz.SpeakLife.PromisesWidget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
@@ -2754,7 +2766,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 4.45;
+				MARKETING_VERSION = 4.46;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Franchiz.SpeakLife.PromisesWidget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
