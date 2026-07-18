@@ -327,6 +327,17 @@ struct HomeView: View {
                     appState.isOnboarded = true
                     LifecycleNotificationService.shared.scheduleLifecycleNotifications()
                 }
+                // A restored user is likely a subscriber, but this device may
+                // not have refreshed its App Store receipt yet (launch-time
+                // syncPurchases posts an empty receipt on a device that never
+                // purchased). Force a restore once so premium unlocks with
+                // zero taps; harmless no-op for free users.
+                Task {
+                    let restored = await subscriptionStore.restore()
+                    AnalyticsService.shared.track("icloud_restore_auto_restore_purchases", parameters: [
+                        "restored_premium": restored
+                    ])
+                }
             }
             // Personalized push message — its own reader screen, separate from the
             // declaration feed. Attached at the container level (not inside the
