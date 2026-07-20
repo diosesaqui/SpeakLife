@@ -107,6 +107,13 @@ final class EnhancedStreakViewModel: ObservableObject {
             name: SyncedSettingsStore.settingsDidChange,
             object: nil
         )
+        // Bonus-task completions cross devices as taskCompletion events.
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleProgressEventsChanged),
+            name: ProgressSyncStore.dataDidChange,
+            object: nil
+        )
     }
 
     // MARK: - iCloud Sync Healing
@@ -116,11 +123,10 @@ final class EnhancedStreakViewModel: ObservableObject {
             DispatchQueue.main.async { [weak self] in self?.handleSyncedProgressChanged(notification) }
             return
         }
-        // For settings changes, only react when the streak or checklist blob
-        // was applied.
+        // For settings changes, only react when the streak blob was applied.
         if notification.name == SyncedSettingsStore.settingsDidChange,
            let keys = notification.userInfo?["keys"] as? Set<String>,
-           !keys.contains(streakStatsKey), !keys.contains(checklistKey) {
+           !keys.contains(streakStatsKey) {
             return
         }
         reconcileWithSyncedProgress()
@@ -181,41 +187,22 @@ final class EnhancedStreakViewModel: ObservableObject {
            tracker.hasTodaysCompletion(),
            let index = todayChecklist.tasks.firstIndex(where: { $0.id == "complete_daily_burst" }),
            !todayChecklist.tasks[index].isCompleted {
+            let wasChecklistComplete = todayChecklist.isCompleted
             let completedAt = tracker.getTodaysCompletion()?.completedAt ?? Date()
             todayChecklist.tasks[index].isCompleted = true
             todayChecklist.tasks[index].completedAt = completedAt
             if todayChecklist.completedAt == nil && todayChecklist.isStreakEarned {
                 todayChecklist.completedAt = completedAt
             }
+            // The day is done — clear the now-wrong "streak at risk" push and
+            // refresh the evening check-in with the real progress (the local
+            // completion path does both; the synced path must too).
+            LifecycleNotificationService.shared.cancelStreakAtRiskNotification()
+            scheduleEveningCheckIn()
+            if !wasChecklistComplete && todayChecklist.isCompleted {
+                checklistCompletionSyncedRemotely = true
+            }
             changed = true
-        }
-
-        // 4. Overlay bonus-task completions from the synced checklist blob
-        //    (SyncedSettingsStore just union-merged it with other devices').
-        //    The burst step above only proves the streak task; this carries
-        //    devotional/audio/gratitude etc. Additive only — tasks are never
-        //    un-completed — and matched by id, since task definitions are
-        //    personalized per device. Same no-celebration rule as the burst.
-        if Calendar.current.isDateInToday(todayChecklist.date),
-           let checklistData = userDefaults.data(forKey: checklistKey),
-           let synced = try? JSONDecoder().decode(DailyChecklist.self, from: checklistData),
-           Calendar.current.isDate(synced.date, inSameDayAs: todayChecklist.date) {
-            let syncedById = Dictionary(synced.tasks.map { ($0.id, $0) },
-                                        uniquingKeysWith: { first, _ in first })
-            for index in todayChecklist.tasks.indices {
-                guard !todayChecklist.tasks[index].isCompleted,
-                      let syncedTask = syncedById[todayChecklist.tasks[index].id],
-                      syncedTask.isCompleted else { continue }
-                todayChecklist.tasks[index].isCompleted = true
-                todayChecklist.tasks[index].completedAt = syncedTask.completedAt ?? Date()
-                changed = true
-            }
-            if todayChecklist.completedAt == nil,
-               let syncedDone = synced.completedAt,
-               todayChecklist.isStreakEarned {
-                todayChecklist.completedAt = syncedDone
-                changed = true
-            }
         }
 
         if changed {
@@ -226,6 +213,85 @@ final class EnhancedStreakViewModel: ObservableObject {
                 refreshTasksWithUserCategories()
             }
         }
+    }
+
+    // MARK: - Synced Task Completions (bonus tasks, via event log)
+
+    /// True while the most recent full-checklist completion came from another
+    /// device. The checklist view consumes this to skip the full-screen
+    /// celebration — the device that earned it already celebrated.
+    private var checklistCompletionSyncedRemotely = false
+
+    func consumeRemoteCompletionFlag() -> Bool {
+        let wasRemote = checklistCompletionSyncedRemotely
+        checklistCompletionSyncedRemotely = false
+        return wasRemote
+    }
+
+    @objc private func handleProgressEventsChanged(_ notification: Notification) {
+        if let kinds = notification.userInfo?["kinds"] as? Set<String>,
+           !kinds.contains(ProgressSyncStore.Kind.taskCompletion) {
+            return
+        }
+        // Asynchronous fetch; the completion runs on main, where the
+        // @Published checklist must be mutated anyway.
+        ProgressSyncStore.shared.events(ofKind: ProgressSyncStore.Kind.taskCompletion) { [weak self] events in
+            self?.applySyncedTaskCompletions(events)
+        }
+    }
+
+    /// Overlays bonus-task completions earned on other devices (taskCompletion
+    /// events, one row per day+task, union-merged by CloudKit) onto today's
+    /// checklist. Additive only, matched by id, and deliberately EXCLUDES the
+    /// burst task: the streak day is only ever credited through the
+    /// authoritative BurstCompletionTracker channel (step 3 above), so a
+    /// checklist row can never mark a day earned ahead of the streak record.
+    /// Runs on the main queue.
+    private func applySyncedTaskCompletions(_ events: [ProgressSyncStore.Event]) {
+        guard Thread.isMainThread else {
+            DispatchQueue.main.async { [weak self] in self?.applySyncedTaskCompletions(events) }
+            return
+        }
+        guard Calendar.current.isDateInToday(todayChecklist.date) else { return }
+
+        let todayPrefix = BurstCompletionTracker.dayStamp(for: Date()) + "|"
+        let wasChecklistComplete = todayChecklist.isCompleted
+        var changed = false
+
+        for event in events where event.key.hasPrefix(todayPrefix) {
+            let taskId = String(event.key.dropFirst(todayPrefix.count))
+            guard taskId != "complete_daily_burst",
+                  let index = todayChecklist.tasks.firstIndex(where: { $0.id == taskId }),
+                  !todayChecklist.tasks[index].isCompleted else { continue }
+            todayChecklist.tasks[index].isCompleted = true
+            todayChecklist.tasks[index].completedAt = Self.taskCompletionDate(from: event.payload) ?? event.createdAt
+            changed = true
+        }
+
+        guard changed else { return }
+        if !wasChecklistComplete && todayChecklist.isCompleted {
+            checklistCompletionSyncedRemotely = true
+        }
+        saveData()
+        // Progress changed — refresh the evening check-in so it doesn't nag
+        // about tasks already finished on another device.
+        scheduleEveningCheckIn()
+        checkForNewBadges()
+    }
+
+    private static func taskCompletionKey(taskId: String) -> String {
+        "\(BurstCompletionTracker.dayStamp(for: Date()))|\(taskId)"
+    }
+
+    private static func taskCompletionPayload(completedAt: Date) -> Data? {
+        try? JSONSerialization.data(withJSONObject: ["completedAt": completedAt.timeIntervalSince1970])
+    }
+
+    private static func taskCompletionDate(from payload: Data?) -> Date? {
+        guard let payload = payload,
+              let object = try? JSONSerialization.jsonObject(with: payload) as? [String: Any],
+              let epoch = object["completedAt"] as? Double else { return nil }
+        return Date(timeIntervalSince1970: epoch)
     }
     
     // MARK: - Task Personalization
@@ -326,7 +392,18 @@ final class EnhancedStreakViewModel: ObservableObject {
         
         todayChecklist.tasks[taskIndex].isCompleted = true
         todayChecklist.tasks[taskIndex].completedAt = Date()
-        
+
+        // Mirror bonus-task completions to iCloud so the user's other devices
+        // show them too. The burst is excluded: its day is carried by the
+        // authoritative BurstCompletionTracker dayCompletion event.
+        if taskId != "complete_daily_burst" {
+            ProgressSyncStore.shared.recordEvent(
+                kind: ProgressSyncStore.Kind.taskCompletion,
+                key: Self.taskCompletionKey(taskId: taskId),
+                payload: Self.taskCompletionPayload(completedAt: Date())
+            )
+        }
+
         // Premium celebration feedback
         PremiumHaptics.affirmationCompleted()
         AudioDelightManager.shared.playGentleSuccess()
@@ -348,19 +425,36 @@ final class EnhancedStreakViewModel: ObservableObject {
     func uncompleteTask(taskId: String) {
         guard let taskIndex = todayChecklist.tasks.firstIndex(where: { $0.id == taskId }),
               todayChecklist.tasks[taskIndex].isCompleted else { return }
-        
+
         todayChecklist.tasks[taskIndex].isCompleted = false
         todayChecklist.tasks[taskIndex].completedAt = nil
-        
+
         // If day was completed but now a task is unchecked, mark day as incomplete
         if todayChecklist.completedAt != nil {
             todayChecklist.completedAt = nil
         }
-        
+
+        // Deleting the synced event propagates the un-check (and stops this
+        // device's own row from resurrecting it).
+        if taskId != "complete_daily_burst" {
+            ProgressSyncStore.shared.deleteEvent(
+                kind: ProgressSyncStore.Kind.taskCompletion,
+                key: Self.taskCompletionKey(taskId: taskId)
+            )
+        }
+
         saveData()
     }
-    
+
     func resetDay() {
+        // Clear today's synced completion events so the reset sticks instead
+        // of being re-overlaid from iCloud.
+        for task in todayChecklist.tasks where task.isCompleted && task.id != "complete_daily_burst" {
+            ProgressSyncStore.shared.deleteEvent(
+                kind: ProgressSyncStore.Kind.taskCompletion,
+                key: Self.taskCompletionKey(taskId: task.id)
+            )
+        }
         let currentStreak = max(1, streakStats.currentStreak)
         todayChecklist = createProgressiveChecklist(for: currentStreak)
         saveData()
