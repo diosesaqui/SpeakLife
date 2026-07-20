@@ -601,9 +601,13 @@ struct ModernDailyChecklistView: View {
         }
         .onChange(of: viewModel.todayChecklist.isCompleted) { isCompleted in
             if isCompleted {
+                // Skip when the final completion arrived via iCloud sync —
+                // the device that earned it already celebrated.
+                guard !viewModel.consumeRemoteCompletionFlag() else { return }
+
                 // Show celebration immediately
                 showCelebration = true
-                
+
                 // Hide celebration after 3 seconds
                 DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
                     withAnimation(.easeOut(duration: 0.8)) {

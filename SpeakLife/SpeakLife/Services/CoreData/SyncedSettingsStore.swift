@@ -81,11 +81,12 @@ final class SyncedSettingsStore {
                   strategy: .custom(mergeStreakStats),
                   equivalence: streakStatsEquivalent),
 
-        // Today's checklist: same-day checklists merge per-task (a task
-        // completed on either device is completed everywhere).
-        SyncedKey(key: "dailyChecklist",
-                  strategy: .custom(mergeDailyChecklist),
-                  equivalence: dailyChecklistEquivalent),
+        // NOTE: "dailyChecklist" is deliberately NOT synced here. The blob is
+        // owned by EnhancedStreakViewModel (day rollover, per-device task
+        // personalization); syncing it created a second owner and a
+        // day-winner rule that fought the VM. Task completions cross devices
+        // as ProgressSyncStore "taskCompletion" events instead — union by
+        // construction, and deleting the event propagates an un-check.
 
         // Progress-bearing blobs — union merges, nothing ever dropped.
         SyncedKey(key: "UnlockedBadges",
@@ -597,8 +598,12 @@ final class SyncedSettingsStore {
         switch (a, b) {
         case (nil, nil): return true
         case (let a?, let b?):
+            // Byte-equal is always semantically equal — skip the decode cost
+            // (blob equivalences JSON-decode both sides, and identical bytes
+            // are the common case for a single-device user).
+            if valuesEqual(a, b) { return true }
             if let equivalence = entry.equivalence { return equivalence(a, b) }
-            return valuesEqual(a, b)
+            return false
         default: return false
         }
     }
@@ -671,59 +676,6 @@ final class SyncedSettingsStore {
         let decodedB = (b as? Data).flatMap { try? JSONDecoder().decode(StreakStats.self, from: $0) }
         if let decodedA = decodedA, let decodedB = decodedB { return decodedA == decodedB }
         return valuesEqual(a, b)
-    }
-
-    /// Today's checklist (DailyChecklist as JSON Data). Same local day on
-    /// both sides: overlay remote task completions onto the LOCAL task list
-    /// (task definitions are personalized per device, so only completion
-    /// state crosses over) — a task completed on either device is completed.
-    /// Different days: the newer day's checklist wins outright.
-    private static func mergeDailyChecklist(_ local: Any, _ remote: Any) -> Any {
-        let decodedLocal = (local as? Data).flatMap { try? JSONDecoder().decode(DailyChecklist.self, from: $0) }
-        let decodedRemote = (remote as? Data).flatMap { try? JSONDecoder().decode(DailyChecklist.self, from: $0) }
-        guard var localChecklist = decodedLocal else { return decodedRemote != nil ? remote : local }
-        guard let remoteChecklist = decodedRemote else { return local }
-
-        let calendar = Calendar.current
-        let localDay = calendar.startOfDay(for: localChecklist.date)
-        let remoteDay = calendar.startOfDay(for: remoteChecklist.date)
-        if localDay != remoteDay {
-            return remoteDay > localDay ? remote : local
-        }
-
-        let remoteById = Dictionary(remoteChecklist.tasks.map { ($0.id, $0) },
-                                    uniquingKeysWith: { first, _ in first })
-        var changed = false
-        for index in localChecklist.tasks.indices {
-            guard !localChecklist.tasks[index].isCompleted,
-                  let remoteTask = remoteById[localChecklist.tasks[index].id],
-                  remoteTask.isCompleted else { continue }
-            localChecklist.tasks[index].isCompleted = true
-            localChecklist.tasks[index].completedAt = remoteTask.completedAt ?? remoteChecklist.completedAt
-            changed = true
-        }
-        if localChecklist.completedAt == nil,
-           let remoteDone = remoteChecklist.completedAt,
-           localChecklist.isStreakEarned {
-            localChecklist.completedAt = remoteDone
-            changed = true
-        }
-        guard changed else { return local }
-        return (try? JSONEncoder().encode(localChecklist)) ?? local
-    }
-
-    /// Same-day + same completed-task set = equivalent, regardless of task
-    /// definitions or encoding bytes (task lists are personalized per device
-    /// and byte layouts differ, so raw comparison would ping-pong pushes).
-    private static func dailyChecklistEquivalent(_ a: Any, _ b: Any) -> Bool {
-        let decodedA = (a as? Data).flatMap { try? JSONDecoder().decode(DailyChecklist.self, from: $0) }
-        let decodedB = (b as? Data).flatMap { try? JSONDecoder().decode(DailyChecklist.self, from: $0) }
-        guard let checklistA = decodedA, let checklistB = decodedB else { return valuesEqual(a, b) }
-        let calendar = Calendar.current
-        return calendar.startOfDay(for: checklistA.date) == calendar.startOfDay(for: checklistB.date)
-            && Set(checklistA.tasks.filter(\.isCompleted).map(\.id))
-                == Set(checklistB.tasks.filter(\.isCompleted).map(\.id))
-            && (checklistA.completedAt != nil) == (checklistB.completedAt != nil)
     }
 
     /// Union of two JSON-encoded arrays of objects (Data blobs), keyed by a

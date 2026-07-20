@@ -40,8 +40,9 @@ final class ProgressSyncStore {
         static let dayCompletion = "dayCompletion"   // key = "yyyy-MM-dd" local day stamp
         static let listenedAudio = "listenedAudio"   // key = audio id
         static let counter = "counter"               // key = "<counterKey>|<deviceId>"
+        static let taskCompletion = "taskCompletion" // key = "<dayStamp>|<taskId>" (bonus checklist tasks)
 
-        static let all: Set<String> = [dayCompletion, listenedAudio, counter]
+        static let all: Set<String> = [dayCompletion, listenedAudio, counter, taskCompletion]
     }
 
     /// Posted on the main queue after remote CloudKit changes have been
