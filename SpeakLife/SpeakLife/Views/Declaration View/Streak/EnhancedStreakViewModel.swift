@@ -116,10 +116,11 @@ final class EnhancedStreakViewModel: ObservableObject {
             DispatchQueue.main.async { [weak self] in self?.handleSyncedProgressChanged(notification) }
             return
         }
-        // For settings changes, only react when the streak blob was applied.
+        // For settings changes, only react when the streak or checklist blob
+        // was applied.
         if notification.name == SyncedSettingsStore.settingsDidChange,
            let keys = notification.userInfo?["keys"] as? Set<String>,
-           !keys.contains(streakStatsKey) {
+           !keys.contains(streakStatsKey), !keys.contains(checklistKey) {
             return
         }
         reconcileWithSyncedProgress()
@@ -187,6 +188,34 @@ final class EnhancedStreakViewModel: ObservableObject {
                 todayChecklist.completedAt = completedAt
             }
             changed = true
+        }
+
+        // 4. Overlay bonus-task completions from the synced checklist blob
+        //    (SyncedSettingsStore just union-merged it with other devices').
+        //    The burst step above only proves the streak task; this carries
+        //    devotional/audio/gratitude etc. Additive only — tasks are never
+        //    un-completed — and matched by id, since task definitions are
+        //    personalized per device. Same no-celebration rule as the burst.
+        if Calendar.current.isDateInToday(todayChecklist.date),
+           let checklistData = userDefaults.data(forKey: checklistKey),
+           let synced = try? JSONDecoder().decode(DailyChecklist.self, from: checklistData),
+           Calendar.current.isDate(synced.date, inSameDayAs: todayChecklist.date) {
+            let syncedById = Dictionary(synced.tasks.map { ($0.id, $0) },
+                                        uniquingKeysWith: { first, _ in first })
+            for index in todayChecklist.tasks.indices {
+                guard !todayChecklist.tasks[index].isCompleted,
+                      let syncedTask = syncedById[todayChecklist.tasks[index].id],
+                      syncedTask.isCompleted else { continue }
+                todayChecklist.tasks[index].isCompleted = true
+                todayChecklist.tasks[index].completedAt = syncedTask.completedAt ?? Date()
+                changed = true
+            }
+            if todayChecklist.completedAt == nil,
+               let syncedDone = synced.completedAt,
+               todayChecklist.isStreakEarned {
+                todayChecklist.completedAt = syncedDone
+                changed = true
+            }
         }
 
         if changed {
