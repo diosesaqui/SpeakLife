@@ -139,6 +139,7 @@ final class ProgressSyncStore {
         // Initial pass shortly after launch, once the persistent stores have
         // had a moment to load (store loading is asynchronous).
         DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) { [weak self] in
+            self?.pruneStaleTaskCompletions()
             self?.syncCounters()
             self?.notifyDataChanged()
         }
@@ -435,6 +436,43 @@ final class ProgressSyncStore {
               let object = try? JSONSerialization.jsonObject(with: payload) as? [String: Any],
               let value = object["v"] as? Int else { return 0 }
         return value
+    }
+
+    // MARK: - Pruning
+
+    /// taskCompletion rows only matter for the current day (the checklist
+    /// regenerates daily); dayCompletion rows are the permanent streak
+    /// history and are NEVER pruned. Rows older than this are deleted so the
+    /// table doesn't grow forever (~4 rows/day), and the deletes sync.
+    private static let taskCompletionRetentionDays = 30
+
+    private func pruneStaleTaskCompletions() {
+        guard let cutoffDate = Calendar.current.date(
+            byAdding: .day,
+            value: -Self.taskCompletionRetentionDays,
+            to: Date()
+        ) else { return }
+        // Keys are "yyyy-MM-dd|taskId", so a lexicographic compare against
+        // the cutoff day stamp selects exactly the older days ("…-20|x" <
+        // "…-21", while same-day keys sort above the bare stamp and survive).
+        let cutoffStamp = BurstCompletionTracker.dayStamp(for: cutoffDate)
+        context.perform { [weak self] in
+            guard let self = self else { return }
+            do {
+                let request = ProgressEventEntry.fetchRequest()
+                request.predicate = NSPredicate(format: "kind == %@ AND key < %@",
+                                                Kind.taskCompletion, cutoffStamp)
+                let stale = try self.context.fetch(request)
+                guard !stale.isEmpty else { return }
+                stale.forEach(self.context.delete)
+                try self.context.save()
+                #if DEBUG
+                print("ProgressSyncStore: pruned \(stale.count) stale taskCompletion row(s)")
+                #endif
+            } catch {
+                print("ProgressSyncStore: prune failed - \(error.localizedDescription)")
+            }
+        }
     }
 
     // MARK: - Dedup (CloudKit cannot enforce uniqueness)
