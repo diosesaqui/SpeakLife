@@ -11,6 +11,9 @@
 //    - "high_conversion_clean_v1"    (light minimal layout: headline +
 //      illustration + two plan cards + Continue, A/B via Remote Config flag
 //      useCleanPaywallVariant — takes precedence over the succinct flag)
+//    - "high_conversion_clean_dark_v1" (same clean layout skinned with the
+//      classic dark gradient/colors, via useCleanPaywallDarkTheme on top of
+//      useCleanPaywallVariant)
 //
 
 import SwiftUI
@@ -85,11 +88,13 @@ struct HighConversionPaywallView: View {
     /// Variant string sent to Firebase Analytics on every paywall event so the
     /// A/B between benefit-based and feature-based copy can be compared.
     private var paywallVariant: String {
-        if isCleanVariant { return "high_conversion_clean_v1" }
+        if isCleanVariant {
+            return isCleanDarkTheme ? "high_conversion_clean_dark_v1" : "high_conversion_clean_v1"
+        }
         return subscriptionStore.useSuccinctPaywallValueProps ? "high_conversion_succinct_v1" : "high_conversion_v1"
     }
 
-    /// Light minimal layout A/B (Remote Config: useCleanPaywallVariant). Swaps
+    /// Clean minimal layout A/B (Remote Config: useCleanPaywallVariant). Swaps
     /// the whole layout, so it wins over the succinct-props flag. Latched on
     /// first appear so a Remote Config activation while the paywall is on
     /// screen can't swap the layout mid-decision — which would also desync
@@ -97,6 +102,16 @@ struct HighConversionPaywallView: View {
     @State private var lockedCleanVariant: Bool?
     private var isCleanVariant: Bool {
         lockedCleanVariant ?? subscriptionStore.useCleanPaywallVariant
+    }
+
+    /// Dark skin for the clean layout (Remote Config: useCleanPaywallDarkTheme,
+    /// only meaningful when the clean layout is on): same minimal format,
+    /// themed with the high-conversion paywall's dark gradient + colors so the
+    /// paywall keeps visual continuity with the dark onboarding flows. Latched
+    /// alongside the layout for the same attribution reason.
+    @State private var lockedCleanDarkTheme: Bool?
+    private var isCleanDarkTheme: Bool {
+        isCleanVariant && (lockedCleanDarkTheme ?? subscriptionStore.useCleanPaywallDarkTheme)
     }
 
     /// Short, scannable value props. Title-only, 3–5 words each — readable in a
@@ -297,10 +312,10 @@ struct HighConversionPaywallView: View {
     // MARK: - Body
     var body: some View {
         ZStack {
-            // The clean variant is a light layout; the mission and welcome
-            // screens keep the dark gradient regardless of variant.
+            // The clean variant is light unless its dark theme is on; the
+            // mission and welcome screens keep the dark gradient regardless.
             Group {
-                if isCleanVariant && !showMissionScreen && !showWelcomeOffer {
+                if isCleanVariant && !isCleanDarkTheme && !showMissionScreen && !showWelcomeOffer {
                     cleanBackground
                 } else {
                     backgroundGradient
@@ -845,8 +860,8 @@ struct HighConversionPaywallView: View {
                     }
                 }) {
                     Image(systemName: "xmark.circle.fill").font(.system(size: 28))
-                        .foregroundColor(isCleanVariant ? Color.gray.opacity(0.45) : .white.opacity(0.6))
-                        .background(Circle().fill(isCleanVariant ? Color.black.opacity(0.05) : Color.black.opacity(0.2)))
+                        .foregroundColor(isCleanVariant && !isCleanDarkTheme ? Color.gray.opacity(0.45) : .white.opacity(0.6))
+                        .background(Circle().fill(isCleanVariant && !isCleanDarkTheme ? Color.black.opacity(0.05) : Color.black.opacity(0.2)))
                 }
                 .padding(.top, 56).padding(.trailing, 20)
             }
@@ -855,17 +870,36 @@ struct HighConversionPaywallView: View {
         .transition(.opacity)
     }
 
-    // MARK: - Clean Variant Layout (high_conversion_clean_v1)
-    // Light minimal format modeled on top-converting meditation-app paywalls:
+    // MARK: - Clean Variant Layout (high_conversion_clean_v1 / _dark_v1)
+    // Minimal format modeled on top-converting meditation-app paywalls:
     // wordmark → headline → illustration → Annual (anchored) vs non-annual plan
-    // cards → Continue → legal links. Shares every handler with the dark layout
-    // (makePurchase, restore, close, welcome offer, mission screen), so only
-    // the presentation differs — analytics stay joinable via paywallVariant.
+    // cards → Continue → legal links. Shares every handler with the classic
+    // layout (makePurchase, restore, close, welcome offer, mission screen), so
+    // only the presentation differs — analytics stay joinable via paywallVariant.
+    //
+    // The palette is theme-aware: light (white page, navy ink) by default, or
+    // the high-conversion paywall's dark gradient + white ink when
+    // useCleanPaywallDarkTheme is on — everything below reads these four
+    // colors, so the whole layout reskins from this one spot.
 
     private var cleanBackground: Color { Color(red: 0.99, green: 0.99, blue: 1.0) }
-    private var cleanInk: Color { Color(red: 0.10, green: 0.12, blue: 0.18) }
-    private var cleanSubInk: Color { Color(red: 0.44, green: 0.47, blue: 0.54) }
-    private var cleanStroke: Color { Color(red: 0.87, green: 0.89, blue: 0.93) }
+    private var cleanInk: Color {
+        isCleanDarkTheme ? .white : Color(red: 0.10, green: 0.12, blue: 0.18)
+    }
+    private var cleanSubInk: Color {
+        isCleanDarkTheme ? .white.opacity(0.65) : Color(red: 0.44, green: 0.47, blue: 0.54)
+    }
+    private var cleanStroke: Color {
+        isCleanDarkTheme ? .white.opacity(0.18) : Color(red: 0.87, green: 0.89, blue: 0.93)
+    }
+    /// Plan-card fill, mirroring the classic dark layout's card treatment when
+    /// the dark theme is on (translucent white card, stronger selected tint).
+    private func cleanCardFill(isSelected: Bool) -> Color {
+        if isCleanDarkTheme {
+            return isSelected ? Constants.DAMidBlue.opacity(0.22) : Color.white.opacity(0.06)
+        }
+        return isSelected ? Constants.DAMidBlue.opacity(0.06) : Color.white
+    }
 
     private var cleanVariantLayout: some View {
         VStack(spacing: 0) {
@@ -998,7 +1032,7 @@ struct HighConversionPaywallView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .background(
                     RoundedRectangle(cornerRadius: 14)
-                        .fill(isSelected ? Constants.DAMidBlue.opacity(0.06) : Color.white)
+                        .fill(cleanCardFill(isSelected: isSelected))
                         .overlay(RoundedRectangle(cornerRadius: 14).stroke(isSelected ? Constants.DAMidBlue : cleanStroke, lineWidth: isSelected ? 1.5 : 1))
                 )
                 if let badge {
@@ -1133,10 +1167,13 @@ struct HighConversionPaywallView: View {
 
     // MARK: - Lifecycle
     private func onAppear() {
-        // Latch the layout variant BEFORE the impression events below fire,
-        // so every event this session reports the variant actually shown.
+        // Latch the layout variant and theme BEFORE the impression events
+        // below fire, so every event this session reports the variant shown.
         if lockedCleanVariant == nil {
             lockedCleanVariant = subscriptionStore.useCleanPaywallVariant
+        }
+        if lockedCleanDarkTheme == nil {
+            lockedCleanDarkTheme = subscriptionStore.useCleanPaywallDarkTheme
         }
         timeOnPaywall = Date()
         selectedPlan = .annual

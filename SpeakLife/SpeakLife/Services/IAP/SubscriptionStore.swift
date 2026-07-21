@@ -200,6 +200,14 @@ final class SubscriptionStore: ObservableObject {
     //         succinct-props flag since it replaces the whole layout.
     @Published var useCleanPaywallVariant = false
 
+    // MARK: - Clean Paywall Dark Theme A/B Test
+    // Only meaningful when useCleanPaywallVariant is true.
+    // false = clean layout on white (high_conversion_clean_v1, default)
+    // true  = same minimal clean layout skinned with the high-conversion
+    //         paywall's dark gradient + colors (high_conversion_clean_dark_v1),
+    //         preserving visual continuity with the dark onboarding flows.
+    @Published var useCleanPaywallDarkTheme = false
+
     // MARK: - Weekly Plan A/B Test
     // false = show Monthly as the non-annual option (default)
     // true  = show Weekly ($SpeakLife1Wk5) instead of Monthly on the paywall
@@ -449,6 +457,7 @@ final class SubscriptionStore: ObservableObject {
 
         // Clean Paywall Layout A/B Test (unset key resolves false — ships dormant)
         useCleanPaywallVariant = remoteConfig["useCleanPaywallVariant"].boolValue
+        useCleanPaywallDarkTheme = remoteConfig["useCleanPaywallDarkTheme"].boolValue
 
         // Weekly Plan A/B Test
         useWeeklyPlan = remoteConfig["useWeeklyPlan"].boolValue
