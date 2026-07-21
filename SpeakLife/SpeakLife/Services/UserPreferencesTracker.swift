@@ -109,7 +109,7 @@ final class UserPreferencesTracker: ObservableObject {
         if let belief = personalDeclarationBelief, !belief.isEmpty {
             return PaywallCopy(
                 headline: "You just declared what you're taking back.",
-                subheadline: "SpeakLife will send you this declaration every single day until it comes to pass. Don't let a day go unclaimed.",
+                subheadline: "This declaration, every morning, until it comes to pass.",
                 valueProps: [
                     "Your personal declaration — delivered every morning until it's fully received.",
                     "Speak first. Possess first. The ground is yours — claim it daily.",

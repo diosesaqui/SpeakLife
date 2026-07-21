@@ -45,7 +45,7 @@ struct SurveyPersonalizationEngine {
         switch word {
         case .peace:
             return SurveyPaywallCopy(
-                headline: "Anxiety Has Had Enough of You.",
+                headline: "Wake up to peace, not panic.",
                 subheadline: "3 minutes of God's Word every morning rewires how your brain responds to fear.",
                 valueProps: [
                     SurveyValueProp(icon: "wind", title: "Quiet the 3am thoughts", description: "Daily declarations rewire your mind until God's peace is your first response."),
@@ -59,7 +59,7 @@ struct SurveyPersonalizationEngine {
             )
         case .identity:
             return SurveyPaywallCopy(
-                headline: "It's Time to Know Who God Says You Are.",
+                headline: "Know who God says you are.",
                 subheadline: "You've believed the lie long enough. God wrote a different story about you.",
                 valueProps: [
                     SurveyValueProp(icon: "sparkles", title: "Silence the 'not enough' lie", description: "Daily declarations replace the old story with what God actually says about you."),
@@ -73,8 +73,8 @@ struct SurveyPersonalizationEngine {
             )
         case .purpose:
             return SurveyPaywallCopy(
-                headline: "Your Calling Is Waiting to Be Walked Into.",
-                subheadline: "God wrote your destiny before you were born. SpeakLife helps you walk into it.",
+                headline: "Walk into your calling.",
+                subheadline: "God wrote your destiny before you were born. Speak it until you're living it.",
                 valueProps: [
                     SurveyValueProp(icon: "flame.fill", title: "Walk into your calling", description: "Daily declarations align your steps with the destiny God wrote for you."),
                     SurveyValueProp(icon: "map.fill", title: "Speak direction over confusion", description: "Declare God's plans out loud until clarity replaces second-guessing."),
@@ -87,7 +87,7 @@ struct SurveyPersonalizationEngine {
             )
         case .joy:
             return SurveyPaywallCopy(
-                headline: "Find a Joy the World Cannot Steal.",
+                headline: "Find a joy the world cannot steal.",
                 subheadline: "Not happiness. The real thing — deep, unshakeable, God-given joy.",
                 valueProps: [
                     SurveyValueProp(icon: "sun.max.fill", title: "Joy that outlasts circumstances", description: "God's Word planted daily grows a gladness the world cannot take."),
@@ -101,7 +101,7 @@ struct SurveyPersonalizationEngine {
             )
         case .confidence:
             return SurveyPaywallCopy(
-                headline: "Walk Like You Know Who Made You.",
+                headline: "Walk like you know who made you.",
                 subheadline: "God did not give you a spirit of fear. It's time to start living like it.",
                 valueProps: [
                     SurveyValueProp(icon: "bolt.fill", title: "Bold in every room", description: "Daily declarations build confidence anchored in who made you, not how you feel."),
@@ -115,7 +115,7 @@ struct SurveyPersonalizationEngine {
             )
         case .healing:
             return SurveyPaywallCopy(
-                headline: "What Broke — God Restores.",
+                headline: "What broke, God restores.",
                 subheadline: "Healing isn't just physical. SpeakLife speaks God's Word over your whole person.",
                 valueProps: [
                     SurveyValueProp(icon: "leaf.fill", title: "Speak life over your body", description: "Daily healing declarations put God's promises over every diagnosis and pain."),
@@ -129,7 +129,7 @@ struct SurveyPersonalizationEngine {
             )
         case .prosperity:
             return SurveyPaywallCopy(
-                headline: "You Were Made to Walk in Overflow.",
+                headline: "You were made to walk in overflow.",
                 subheadline: "God's Word has more to say about abundance than you've been taught. Start speaking it.",
                 valueProps: [
                     SurveyValueProp(icon: "star.fill", title: "Break the scarcity mindset", description: "Daily abundance declarations renew how you see provision, money, and overflow."),
