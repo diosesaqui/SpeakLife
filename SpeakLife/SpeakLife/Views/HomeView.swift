@@ -347,6 +347,25 @@ struct HomeView: View {
                     ])
                 }
             }
+            // Healing pass for devices already stuck in the restored-but-
+            // never-asked state (the bypass above only fires the moment the
+            // synced onboarded flag first arrives; a device that restored on
+            // an earlier build missed the prompt forever). An onboarded user
+            // whose iOS permission is still notDetermined can only be that
+            // broken state — normal onboarding always resolves the prompt —
+            // so ask once. Self-limiting: answering the prompt means
+            // notDetermined never matches again. Delayed a few seconds so it
+            // can never collide with the ATT prompt (iOS drops one of two
+            // simultaneous system alerts).
+            .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
+                guard appState.isOnboarded else { return }
+                UNUserNotificationCenter.current().getNotificationSettings { settings in
+                    guard settings.authorizationStatus == .notDetermined else { return }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 4.0) {
+                        requestNotificationPermissionForRestoredUser()
+                    }
+                }
+            }
             // Personalized push message — its own reader screen, separate from the
             // declaration feed. Attached at the container level (not inside the
             // onboarded branch) so a tapped message still presents during the
