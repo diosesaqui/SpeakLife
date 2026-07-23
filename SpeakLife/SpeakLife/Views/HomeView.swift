@@ -8,6 +8,7 @@
 import SwiftUI
 import FacebookCore
 import FirebaseAnalytics
+import UserNotifications
 let resources: [MusicResources] = [.sethpiano, .washed, .rainstorm, .everpresent]
 
 struct MusicResources {
@@ -325,8 +326,15 @@ struct HomeView: View {
                 ])
                 withAnimation {
                     appState.isOnboarded = true
-                    LifecycleNotificationService.shared.scheduleLifecycleNotifications()
                 }
+                // Onboarding is the ONLY place the app requests notification
+                // permission (AppDelegate deliberately never prompts at
+                // launch), so a bypassed restore must ask here — otherwise
+                // this install never registers with iOS: the app doesn't even
+                // appear in Settings → Notifications and no reminder can ever
+                // fire. Permission is per-device; the user already granted it
+                // on their other device, so one prompt here is expected.
+                requestNotificationPermissionForRestoredUser()
                 // A restored user is likely a subscriber, but this device may
                 // not have refreshed its App Store receipt yet (launch-time
                 // syncPurchases posts an empty receipt on a device that never
@@ -451,6 +459,58 @@ struct HomeView: View {
             LifecycleNotificationService.shared.scheduleLifecycleNotifications()
             Analytics.logEvent("onBoardingFinished", parameters: nil)
         }
+    }
+
+    /// iCloud-restored users skip onboarding, which is the only flow that
+    /// requests notification permission — so the bypass asks here instead.
+    /// Once granted, reminders are scheduled from the SYNCED preferences
+    /// (times/count/categories restored from the user's other device).
+    private func requestNotificationPermissionForRestoredUser() {
+        let center = UNUserNotificationCenter.current()
+        center.getNotificationSettings { settings in
+            switch settings.authorizationStatus {
+            case .authorized, .provisional:
+                DispatchQueue.main.async {
+                    appState.notificationEnabled = true
+                    scheduleRestoredNotifications()
+                }
+            case .notDetermined:
+                center.requestAuthorization(options: [.alert, .sound, .badge]) { granted, _ in
+                    DispatchQueue.main.async {
+                        appState.notificationEnabled = granted
+                        AnalyticsService.shared.track("icloud_restore_notification_permission", parameters: [
+                            "granted": granted
+                        ])
+                        if granted {
+                            UIApplication.shared.registerForRemoteNotifications()
+                            scheduleRestoredNotifications()
+                        }
+                    }
+                }
+            default:
+                // Denied/restricted on this device — nothing to schedule.
+                break
+            }
+        }
+    }
+
+    private func scheduleRestoredNotifications() {
+        // Prefer the reminder categories restored via settings sync; fall
+        // back to onboarding's defaults when none have synced yet.
+        let restored = appState.selectedNotificationCategories
+            .split(separator: ",")
+            .compactMap { DeclarationCategory(rawValue: String($0)) }
+        let categories: Set<DeclarationCategory> = restored.isEmpty
+            ? [.faith, .confidence, .wisdom, .speaklife]
+            : Set(restored)
+        NotificationManager.shared.registerNotifications(
+            count: appState.notificationCount,
+            startTime: appState.startTimeIndex,
+            endTime: appState.endTimeIndex,
+            categories: categories
+        )
+        appState.lastNotificationSetDate = Date()
+        LifecycleNotificationService.shared.scheduleLifecycleNotifications()
     }
 
     @ViewBuilder
