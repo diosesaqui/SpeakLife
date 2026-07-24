@@ -136,7 +136,13 @@ struct StreamlinedSpiritualWarfareFlow: View {
             case .subscription:
                 selection = .notification
             case .notification:
-                selection = .rating
+                // Rating is the terminal slide and remote-gated
+                // (onboardingRatingEnabled); when off, onboarding completes here.
+                if subscriptionStore.onboardingRatingEnabled {
+                    selection = .rating
+                } else {
+                    completeOnboarding()
+                }
             case .rating:
                 completeOnboarding()
             }

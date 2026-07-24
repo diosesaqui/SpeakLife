@@ -214,6 +214,11 @@ struct ProductOnboardingView: View {
             if !quizV2, ProductStep(rawValue: nextRaw) == .belief {
                 nextRaw += 1
             }
+            // Rating ask is remote-gated (onboardingRatingEnabled); when off,
+            // skip straight past it to the next step.
+            if ProductStep(rawValue: nextRaw) == .rating, !subscriptionStore.onboardingRatingEnabled {
+                nextRaw += 1
+            }
             guard let next = ProductStep(rawValue: nextRaw) else {
                 assertionFailure("ProductOnboardingView.advance(): no successor for \(currentStep). .notificationTime should be terminal.")
                 onComplete()

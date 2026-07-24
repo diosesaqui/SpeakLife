@@ -140,7 +140,12 @@ struct IdentityOnboardingView: View {
         case .notificationTime:
             applyResponsesAndComplete()
         default:
-            let nextRaw = currentStep.rawValue + 1
+            var nextRaw = currentStep.rawValue + 1
+            // Rating ask is remote-gated (onboardingRatingEnabled); when off,
+            // skip straight past it to the next step.
+            if IdentityStep(rawValue: nextRaw) == .rating, !subscriptionStore.onboardingRatingEnabled {
+                nextRaw += 1
+            }
             guard let next = IdentityStep(rawValue: nextRaw) else {
                 assertionFailure("IdentityOnboardingView.advance(): no successor for \(currentStep). .notificationTime should be terminal.")
                 onComplete()
