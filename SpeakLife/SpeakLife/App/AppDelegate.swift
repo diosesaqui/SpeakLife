@@ -127,6 +127,9 @@ final class AppDelegate: NSObject, MessagingDelegate {
             // Checklist home tab is on by default; flip to false in Remote Config
             // to revert to the feed-as-home layout if complaints spike.
             "checklistHomeEnabled": true as NSNumber,
+            // Onboarding rating ask ships on; flip to false in Remote Config to
+            // skip the rating step in every onboarding flow.
+            "onboardingRatingEnabled": true as NSNumber,
             // Personalized audio category ordering ships dark; flip to true in
             // Remote Config (or via the A/B test) to promote each user's
             // best-matching categories to the front of the audio filter row.

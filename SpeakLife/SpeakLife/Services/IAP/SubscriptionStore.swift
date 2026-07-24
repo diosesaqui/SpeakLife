@@ -171,7 +171,14 @@ final class SubscriptionStore: ObservableObject {
     // in AppDelegate's Remote Config defaults); set `checklistHomeEnabled` to
     // false in Remote Config to revert to the feed-as-home layout.
     @Published var checklistHomeEnabled = true
-    
+
+    // MARK: - Onboarding Rating Ask Flag
+    // Kill switch for the App Store rating ask inside every onboarding flow.
+    // Defaults true (registered in AppDelegate's Remote Config defaults); set
+    // `onboardingRatingEnabled` to false in Remote Config and each flow skips
+    // the rating step, advancing straight to the screen after it.
+    @Published var onboardingRatingEnabled = true
+
     // MARK: - High Conversion Paywall Flag
     @Published var useHighConversionPaywall = false
     // Soft-onboarding-paywall switch. RC key kept as "showPayWhatYouCanLink" for
@@ -428,6 +435,7 @@ final class SubscriptionStore: ObservableObject {
         showTestimonyTab = remoteConfig["showTestimonyTab"].boolValue
         offerFreeTrial = remoteConfig["offerFreeTrial"].boolValue
         checklistHomeEnabled = remoteConfig["checklistHomeEnabled"].boolValue
+        onboardingRatingEnabled = remoteConfig["onboardingRatingEnabled"].boolValue
 
         // Enhanced Onboarding Toggle from Remote Config
         useEnhancedOnboarding = remoteConfig["useEnhancedOnboarding"].boolValue

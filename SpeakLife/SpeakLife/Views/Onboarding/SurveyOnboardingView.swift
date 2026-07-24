@@ -193,7 +193,13 @@ struct SurveyOnboardingView: View {
                     )
                     appState.lastNotificationSetDate = Date()
                 }
-                withAnimation(.easeInOut(duration: 0.35)) { currentStep = .rating }
+                // Rating is the terminal step and remote-gated
+                // (onboardingRatingEnabled); when off, onboarding completes here.
+                if subscriptionStore.onboardingRatingEnabled {
+                    withAnimation(.easeInOut(duration: 0.35)) { currentStep = .rating }
+                } else {
+                    onComplete()
+                }
             }
         }
     }

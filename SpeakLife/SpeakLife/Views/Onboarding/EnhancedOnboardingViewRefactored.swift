@@ -266,8 +266,14 @@ struct EnhancedOnboardingViewRefactored: View {
             
         case .notification:
             Juice.play(.tapLight)
-            selection = .review
-            enhancedOnboardingTab = selection.rawValue
+            // Review ask is the terminal slide and remote-gated
+            // (onboardingRatingEnabled); when off, onboarding completes here.
+            if subscriptionStore.onboardingRatingEnabled {
+                selection = .review
+                enhancedOnboardingTab = selection.rawValue
+            } else {
+                dismissOnboarding()
+            }
             
         case .review:
             Juice.play(.tapLight)

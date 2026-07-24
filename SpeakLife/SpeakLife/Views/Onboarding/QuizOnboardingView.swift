@@ -722,6 +722,12 @@ struct QuizOnboardingView: View {
         // App Store review prompt at the emotional peak — right after the user
         // has spoken their OWN declaration aloud — and still BEFORE the paywall
         // so it never competes with or gets soured by the pricing decision.
+        // Remote-gated (onboardingRatingEnabled); when off, continue straight
+        // to the commitment hold.
+        guard subscriptionStore.onboardingRatingEnabled else {
+            transition(to: .commitmentHold)
+            return
+        }
         AnalyticsService.shared.track("onboarding_rating_step_shown", parameters: [
             "segment": segment.rawValue,
             "position": "post_personal_declaration"

@@ -222,6 +222,11 @@ struct OutcomesOnboardingView: View {
             if !quizV2, OutcomesStep(rawValue: nextRaw) == .belief {
                 nextRaw += 1
             }
+            // Rating ask is remote-gated (onboardingRatingEnabled); when off,
+            // skip straight past it to the next step.
+            if OutcomesStep(rawValue: nextRaw) == .rating, !subscriptionStore.onboardingRatingEnabled {
+                nextRaw += 1
+            }
             guard let next = OutcomesStep(rawValue: nextRaw) else {
                 assertionFailure("OutcomesOnboardingView.advance(): no successor for \(currentStep). .notificationTime should be terminal.")
                 onComplete()

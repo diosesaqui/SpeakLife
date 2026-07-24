@@ -8,6 +8,7 @@
 import SwiftUI
 import StoreKit
 import FirebaseAnalytics
+import FirebaseRemoteConfig
 
 final class AppState: ObservableObject {
     @Published var rootViewId = UUID()
@@ -364,6 +365,15 @@ final class AppState: ObservableObject {
     /// triggers (every favorite tap, every devotional share, etc.) and to
     /// re-open the budget for returning users after a fresh app release.
     func requestReviewIfEligible(trigger: ReviewTrigger) {
+        // Onboarding rating ask is remote-gated (onboardingRatingEnabled).
+        // Enforce the kill switch at the presentation choke point too, so no
+        // onboarding surface — present or future — can bypass it even if its
+        // flow forgets the navigation-level skip. Non-onboarding triggers
+        // (streaks, shares, anniversaries) are unaffected.
+        if case .onboardingRatingScreen = trigger,
+           !RemoteConfig.remoteConfig()["onboardingRatingEnabled"].boolValue {
+            return
+        }
         // Serialize the throttle check and write on main so two near-simultaneous
         // callers can't both pass the guard and double-log to Analytics.
         DispatchQueue.main.async {
