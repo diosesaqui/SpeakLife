@@ -147,11 +147,18 @@ struct AudioPlayerView: View {
             Text(viewModel.subtitle)
                 .font(.subheadline)
                 .foregroundColor(.white.opacity(0.75))
+                // Wraps to two lines on narrow screens — keep it centred like the title.
+                .multilineTextAlignment(.center)
         }
     }
 
     @ViewBuilder
     private func playerControls(proxy: GeometryProxy) -> some View {
+        // Smaller iPhones (SE / mini, 375pt wide) get slightly trimmed controls so the
+        // transport row keeps comfortable spacing instead of bunching up edge to edge.
+        let isCompact = horizontalSizeClass == .compact && proxy.size.width <= 375
+        let playButtonDiameter: CGFloat = isCompact ? 72 : 80
+
         VStack(spacing: DS.Spacing.md) {
             // Progress slider
             if viewModel.duration > 0 {
@@ -179,24 +186,32 @@ struct AudioPlayerView: View {
                     .font(.subheadline)
             }
 
-            // Playback buttons
-            HStack(spacing: 40) {
+            // Playback buttons.
+            // Gaps are flexible (capped at 40) rather than fixed, so the row can never
+            // grow wider than the screen on narrow iPhones. The enclosing vertical
+            // ScrollView anchors its content at the leading edge, so any overflow here
+            // gets clipped off the right side instead of being centred.
+            HStack(spacing: 0) {
                 // Repeat
                 Button(action: { viewModel.repeatTrack() }) {
                     Image(systemName: "repeat")
-                        .font(.title2)
+                        .font(isCompact ? .title3 : .title2)
                         .foregroundColor(viewModel.onRepeat ? .yellow : .white)
                         .opacity(viewModel.onRepeat ? 1.0 : 0.6)
                 }
+
+                controlGap
 
                 // Skip back 15s
                 Button(action: {
                     viewModel.seek(to: max(viewModel.currentTime - 15, 0))
                 }) {
                     Image(systemName: "gobackward.15")
-                        .font(.title)
+                        .font(isCompact ? .title2 : .title)
                         .foregroundColor(.white)
                 }
+
+                controlGap
 
                 // Play / Pause
                 Button(action: {
@@ -213,12 +228,12 @@ struct AudioPlayerView: View {
                     ZStack {
                         Circle()
                             .fill(Color.white.opacity(0.1))
-                            .frame(width: 80, height: 80)
+                            .frame(width: playButtonDiameter, height: playButtonDiameter)
                             .scaleEffect(isPlayingPulse ? 1.08 : 1.0)
                             .shadow(color: .white.opacity(0.25), radius: 10, x: 0, y: 4)
 
                         Image(systemName: viewModel.isPlaying ? "pause.fill" : "play.fill")
-                            .font(.system(size: 30, weight: .bold))
+                            .font(.system(size: isCompact ? 26 : 30, weight: .bold))
                             .foregroundColor(.white)
                             .scaleEffect(isPlayingPulse ? 1.1 : 1.0)
                             .transition(.scale.combined(with: .opacity))
@@ -226,14 +241,18 @@ struct AudioPlayerView: View {
                     }
                 }
 
+                controlGap
+
                 // Skip forward 30s
                 Button(action: {
                     viewModel.seek(to: min(viewModel.currentTime + 30, viewModel.duration))
                 }) {
                     Image(systemName: "goforward.30")
-                        .font(.title)
+                        .font(isCompact ? .title2 : .title)
                         .foregroundColor(.white)
                 }
+
+                controlGap
 
                 // Speed toggle — cycles 0.75× → 1× → 1.5× → 2× → 0.75×
                 Button(action: {
@@ -250,15 +269,30 @@ struct AudioPlayerView: View {
                     Text(playbackSpeedLabel)
                         .font(.system(size: 13, weight: .bold, design: .rounded))
                         .foregroundColor(.white)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
+                        // Fixed size so the row geometry doesn't shift when the label
+                        // changes width (e.g. "1×" → "0.75×").
+                        .frame(width: 52, height: 28)
                         .background(Capsule().fill(Color.white.opacity(0.2)))
-                        .frame(minWidth: 44)
+                        // Keep a 44pt tap target without growing the capsule; the row's
+                        // height is set by the play button, so this costs no layout.
+                        .frame(height: 44)
+                        .contentShape(Rectangle())
                 }
             }
+            // Transport glyphs are fixed geometry; cap their Dynamic Type growth so the
+            // row still fits at accessibility text sizes.
+            .dynamicTypeSize(...DynamicTypeSize.accessibility1)
             .padding(.top, 4)
             .padding(.bottom, 24)
         }
+    }
+
+    /// Flexible gap between transport controls: shrinks on narrow screens,
+    /// never grows past the original 40pt spacing on large ones.
+    private var controlGap: some View {
+        Spacer(minLength: DS.Spacing.sm).frame(maxWidth: 40)
     }
 
     // Returns a short label for the current playback speed
