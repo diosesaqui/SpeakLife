@@ -8,6 +8,13 @@
 import SwiftUI
 
 
+/// Keeps a proportionally-derived dimension inside sane bounds, so percentages scale the
+/// layout without letting any element get too cramped on a small phone or oversized on
+/// an iPad.
+private func clamp(_ value: CGFloat, _ lower: CGFloat, _ upper: CGFloat) -> CGFloat {
+    min(max(value, lower), upper)
+}
+
 
 struct AudioPlayerView: View {
     @ObservedObject var viewModel: AudioPlayerViewModel
@@ -19,6 +26,8 @@ struct AudioPlayerView: View {
 
     var body: some View {
         GeometryReader { proxy in
+            let metrics = Metrics(size: proxy.size, sizeClass: horizontalSizeClass)
+
             ZStack {
                 // Background Blur
                 if let uiImage = UIImage(named: viewModel.imageUrl) {
@@ -31,26 +40,31 @@ struct AudioPlayerView: View {
 
                 // ScrollView ensures nothing is clipped on smaller/constrained sheets
                 ScrollView(.vertical, showsIndicators: false) {
-                    VStack(spacing: 20) {
+                    VStack(spacing: metrics.stackSpacing) {
                         // Sheet grabber
                         RoundedRectangle(cornerRadius: 3)
                             .fill(Color.white.opacity(0.3))
-                            .frame(width: 40, height: 4)
-                            .padding(.top, 8)
+                            .frame(width: metrics.grabberWidth, height: 4)
+                            .padding(.top, DS.Spacing.xs)
 
-                        if horizontalSizeClass == .regular {
+                        if metrics.isRegularWidth {
                             // ─── iPad layout: image + controls side-by-side in landscape,
                             //     or image capped + scrollable in portrait sheet
-                            iPadLayout(proxy: proxy)
+                            iPadLayout(metrics: metrics)
                         } else {
-                            // ─── iPhone layout (original, unchanged)
-                            iPhoneLayout(proxy: proxy)
+                            // ─── iPhone layout
+                            iPhoneLayout(metrics: metrics)
                         }
                     }
-                    .padding()
-                    // Ensure content is always at least as tall as the container so it
-                    // centres when there's plenty of room, but scrolls when it's tight.
-                    .frame(minHeight: proxy.size.height)
+                    .padding(.horizontal, metrics.horizontalPadding)
+                    .padding(.vertical, DS.Spacing.md)
+                    // Pin the content to the viewport width. A vertical ScrollView never
+                    // constrains its content's width, so a single oversized child would
+                    // widen the whole stack — shoving every centred row right and
+                    // clipping the overflow off the trailing edge.
+                    // Height is a minimum so content centres when there's room and
+                    // scrolls when it's tight.
+                    .frame(width: proxy.size.width, minHeight: proxy.size.height)
                 }
             }
         }
@@ -65,63 +79,101 @@ struct AudioPlayerView: View {
         }
     }
 
+    // MARK: - Layout Metrics
+
+    /// Every dimension on this screen is derived from the container size rather than
+    /// hard-coded points, so the layout scales from a 375pt iPhone SE up to an iPad
+    /// without any single element outgrowing the width available to it.
+    private struct Metrics {
+        let size: CGSize
+        let isRegularWidth: Bool
+
+        init(size: CGSize, sizeClass: UserInterfaceSizeClass?) {
+            self.size = size
+            self.isRegularWidth = sizeClass == .regular
+        }
+
+        var isLandscape: Bool { size.width > size.height }
+
+        /// 5% of the width, clamped so it stays sensible at both extremes.
+        var horizontalPadding: CGFloat { clamp(size.width * 0.05, 16, 32) }
+
+        /// Width left for content once the outer padding is removed.
+        var contentWidth: CGFloat { max(size.width - horizontalPadding * 2, 0) }
+
+        /// In iPad landscape the art and the controls split the row, so the controls
+        /// get roughly half the content width — sizing them off the full screen width
+        /// would overflow their column.
+        var controlsWidth: CGFloat {
+            guard isRegularWidth, isLandscape else { return contentWidth }
+            return max((contentWidth - columnSpacing) / 2, 0)
+        }
+
+        var columnSpacing: CGFloat { clamp(size.width * 0.03, 20, 40) }
+        var stackSpacing: CGFloat { clamp(size.height * 0.024, 12, 24) }
+        var grabberWidth: CGFloat { clamp(size.width * 0.11, 36, 56) }
+
+        /// Square cover art, capped against both the width and height budgets so the
+        /// controls below always keep their room.
+        func coverSize(widthFraction: CGFloat) -> CGFloat {
+            min(contentWidth * widthFraction, size.height * 0.38)
+        }
+
+        // ─── Transport controls, all proportional to the row that holds them.
+        var playButtonDiameter: CGFloat { clamp(controlsWidth * 0.23, 60, 88) }
+        var playGlyphSize: CGFloat { playButtonDiameter * 0.375 }
+        var skipGlyphSize: CGFloat { clamp(controlsWidth * 0.085, 22, 32) }
+        var repeatGlyphSize: CGFloat { clamp(controlsWidth * 0.07, 18, 26) }
+        var speedPillWidth: CGFloat { clamp(controlsWidth * 0.15, 44, 60) }
+        var speedPillHeight: CGFloat { clamp(speedPillWidth * 0.55, 24, 32) }
+        var speedFontSize: CGFloat { clamp(speedPillWidth * 0.25, 12, 16) }
+
+        /// Gaps flex between these bounds, so the row fills wide screens at its original
+        /// 40pt rhythm and tightens on narrow ones instead of overflowing.
+        var minControlGap: CGFloat { clamp(controlsWidth * 0.03, 8, 16) }
+        var maxControlGap: CGFloat { clamp(controlsWidth * 0.11, 20, 40) }
+    }
+
     // MARK: - iPhone Layout (portrait-focused, original feel)
 
     @ViewBuilder
-    private func iPhoneLayout(proxy: GeometryProxy) -> some View {
-        let coverSize = coverImageSize(proxy: proxy, fraction: 0.70)
-
-        VStack(spacing: 20) {
-            coverArt(size: coverSize)
+    private func iPhoneLayout(metrics: Metrics) -> some View {
+        VStack(spacing: metrics.stackSpacing) {
+            coverArt(size: metrics.coverSize(widthFraction: 0.78))
 
             trackInfo
 
-            playerControls(proxy: proxy)
+            playerControls(metrics: metrics)
         }
     }
 
     // MARK: - iPad Layout (adapts to both portrait sheet and landscape full-screen)
 
     @ViewBuilder
-    private func iPadLayout(proxy: GeometryProxy) -> some View {
-        let isLandscape = proxy.size.width > proxy.size.height
-
-        if isLandscape {
+    private func iPadLayout(metrics: Metrics) -> some View {
+        if metrics.isLandscape {
             // Side-by-side: art on left, controls on right
-            HStack(alignment: .center, spacing: 40) {
-                let coverSize = min(proxy.size.height * 0.55, proxy.size.width * 0.38)
-                coverArt(size: coverSize)
+            HStack(alignment: .center, spacing: metrics.columnSpacing) {
+                coverArt(size: min(metrics.size.height * 0.55, metrics.controlsWidth))
                     .frame(maxWidth: .infinity)
 
-                VStack(spacing: 20) {
+                VStack(spacing: metrics.stackSpacing) {
                     trackInfo
-                    playerControls(proxy: proxy)
+                    playerControls(metrics: metrics)
                 }
                 .frame(maxWidth: .infinity)
             }
-            .padding(.horizontal, 24)
         } else {
             // Portrait sheet: cap image so controls always stay visible
-            let coverSize = coverImageSize(proxy: proxy, fraction: 0.50)
-
-            VStack(spacing: 20) {
-                coverArt(size: coverSize)
+            VStack(spacing: metrics.stackSpacing) {
+                coverArt(size: metrics.coverSize(widthFraction: 0.56))
                 trackInfo
-                playerControls(proxy: proxy)
+                playerControls(metrics: metrics)
             }
         }
     }
 
     // MARK: - Shared Sub-views
-
-    /// Calculates a square cover image size capped to both width and height budgets.
-    private func coverImageSize(proxy: GeometryProxy, fraction: CGFloat) -> CGFloat {
-        // Never let the art exceed `fraction` of width OR 38% of available height,
-        // so controls always have room below.
-        let byWidth  = proxy.size.width * fraction
-        let byHeight = proxy.size.height * 0.38
-        return min(byWidth, byHeight)
-    }
 
     @ViewBuilder
     private func coverArt(size: CGFloat) -> some View {
@@ -147,11 +199,13 @@ struct AudioPlayerView: View {
             Text(viewModel.subtitle)
                 .font(.subheadline)
                 .foregroundColor(.white.opacity(0.75))
+                // Wraps to two lines on narrow screens — keep it centred like the title.
+                .multilineTextAlignment(.center)
         }
     }
 
     @ViewBuilder
-    private func playerControls(proxy: GeometryProxy) -> some View {
+    private func playerControls(metrics: Metrics) -> some View {
         VStack(spacing: DS.Spacing.md) {
             // Progress slider
             if viewModel.duration > 0 {
@@ -167,36 +221,41 @@ struct AudioPlayerView: View {
 
                 HStack {
                     Text(formatTime(viewModel.currentTime))
-                    Spacer()
+                    Spacer(minLength: DS.Spacing.xs)
                     Text(formatTime(viewModel.duration))
                 }
                 .font(.caption)
                 .foregroundColor(.white.opacity(0.8))
-                .padding(.horizontal)
+                .monospacedDigit()
             } else {
                 Text("Loading...")
                     .foregroundColor(.white)
                     .font(.subheadline)
             }
 
-            // Playback buttons
-            HStack(spacing: 40) {
+            // Playback buttons. Sizes and gaps are proportional to the row's own width,
+            // so the five controls always fit instead of overflowing narrow screens.
+            HStack(spacing: 0) {
                 // Repeat
                 Button(action: { viewModel.repeatTrack() }) {
                     Image(systemName: "repeat")
-                        .font(.title2)
+                        .font(.system(size: metrics.repeatGlyphSize))
                         .foregroundColor(viewModel.onRepeat ? .yellow : .white)
                         .opacity(viewModel.onRepeat ? 1.0 : 0.6)
                 }
+
+                controlGap(metrics)
 
                 // Skip back 15s
                 Button(action: {
                     viewModel.seek(to: max(viewModel.currentTime - 15, 0))
                 }) {
                     Image(systemName: "gobackward.15")
-                        .font(.title)
+                        .font(.system(size: metrics.skipGlyphSize))
                         .foregroundColor(.white)
                 }
+
+                controlGap(metrics)
 
                 // Play / Pause
                 Button(action: {
@@ -213,12 +272,12 @@ struct AudioPlayerView: View {
                     ZStack {
                         Circle()
                             .fill(Color.white.opacity(0.1))
-                            .frame(width: 80, height: 80)
+                            .frame(width: metrics.playButtonDiameter, height: metrics.playButtonDiameter)
                             .scaleEffect(isPlayingPulse ? 1.08 : 1.0)
                             .shadow(color: .white.opacity(0.25), radius: 10, x: 0, y: 4)
 
                         Image(systemName: viewModel.isPlaying ? "pause.fill" : "play.fill")
-                            .font(.system(size: 30, weight: .bold))
+                            .font(.system(size: metrics.playGlyphSize, weight: .bold))
                             .foregroundColor(.white)
                             .scaleEffect(isPlayingPulse ? 1.1 : 1.0)
                             .transition(.scale.combined(with: .opacity))
@@ -226,14 +285,18 @@ struct AudioPlayerView: View {
                     }
                 }
 
+                controlGap(metrics)
+
                 // Skip forward 30s
                 Button(action: {
                     viewModel.seek(to: min(viewModel.currentTime + 30, viewModel.duration))
                 }) {
                     Image(systemName: "goforward.30")
-                        .font(.title)
+                        .font(.system(size: metrics.skipGlyphSize))
                         .foregroundColor(.white)
                 }
+
+                controlGap(metrics)
 
                 // Speed toggle — cycles 0.75× → 1× → 1.5× → 2× → 0.75×
                 Button(action: {
@@ -248,17 +311,31 @@ struct AudioPlayerView: View {
                     viewModel.changePlaybackSpeed(to: next)
                 }) {
                     Text(playbackSpeedLabel)
-                        .font(.system(size: 13, weight: .bold, design: .rounded))
+                        .font(.system(size: metrics.speedFontSize, weight: .bold, design: .rounded))
                         .foregroundColor(.white)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
+                        // Fixed width so the row geometry doesn't shift when the label
+                        // changes width (e.g. "1×" → "0.75×").
+                        .frame(width: metrics.speedPillWidth, height: metrics.speedPillHeight)
                         .background(Capsule().fill(Color.white.opacity(0.2)))
-                        .frame(minWidth: 44)
+                        // Keep a 44pt tap target without growing the capsule; the row's
+                        // height is set by the play button, so this costs no layout.
+                        .frame(height: 44)
+                        .contentShape(Rectangle())
                 }
             }
-            .padding(.top, 4)
-            .padding(.bottom, 24)
+            .frame(maxWidth: .infinity)
+            .padding(.top, DS.Spacing.xxs)
+            .padding(.bottom, DS.Spacing.lg)
         }
+    }
+
+    /// Flexible gap between transport controls: tightens on narrow screens and opens up
+    /// to the original 40pt rhythm on wide ones, so the row fits without ever clipping.
+    private func controlGap(_ metrics: Metrics) -> some View {
+        Spacer(minLength: metrics.minControlGap)
+            .frame(maxWidth: metrics.maxControlGap)
     }
 
     // Returns a short label for the current playback speed
