@@ -18,6 +18,8 @@ chat or session as they come up, so nothing gets lost between conversations.
 - [ ] [upkeep] Upgrade Cloud Functions to Node.js 22 before 2026-10-30 deadline — see `docs/TODO-functions-upkeep.md` (added 2026-06-15)
 - [ ] [upkeep] Upgrade `firebase-functions` SDK to latest (has breaking changes) — see `docs/TODO-functions-upkeep.md` (added 2026-06-15)
 - [ ] [release] Confirm App Store build number (`CURRENT_PROJECT_VERSION`) is bumped before the next upload (added 2026-06-15)
+- [ ] [feature] The Secret Place / Presence timed session — spec ready, needs founder decisions on voice + Phase 3 scope; see `PRESENCE_FEATURE_SPEC.md` (added 2026-07-27)
+- [ ] [upkeep] File the Apple **Family Controls** entitlement request — long approval lead time, gates any Faith Lock style app-blocking (added 2026-07-27)
 
 ## Done
 
