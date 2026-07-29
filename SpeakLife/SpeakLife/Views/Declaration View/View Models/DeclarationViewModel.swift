@@ -76,7 +76,7 @@ final class DeclarationViewModel: ObservableObject {
             if selectedCategory == .favorites {
                 // Only shuffle on category change or initial load
                 if declarations.isEmpty || oldValue.isEmpty {
-                    declarations = favorites.shuffled()
+                    declarations = affirmationsOnly(favorites).shuffled()
                     showVerse = false
                 }
             }
@@ -94,10 +94,17 @@ final class DeclarationViewModel: ObservableObject {
     @Published var createOwn: [Declaration] = [] {
         didSet {
             if selectedCategory == .myOwn {
-                declarations = createOwn.filter { $0.contentType == .affirmation }.shuffled()
+                declarations = affirmationsOnly(createOwn).shuffled()
                 showVerse = false
             }
         }
+    }
+
+    /// Journal entries share the `.myOwn` category with personal affirmations, but
+    /// they are private writing — never feed content. Every path that fills the
+    /// swipeable timeline or the widget runs its source through this first.
+    private func affirmationsOnly(_ content: [Declaration]) -> [Declaration] {
+        content.filter { $0.contentType == .affirmation }
     }
     
     @Published var isFetching = false
@@ -223,9 +230,9 @@ final class DeclarationViewModel: ObservableObject {
             self.refreshFavoritesFromCoreData()
             
             // Batch widget syncs into a single timeline reload to preserve WidgetKit's daily budget.
-            let favoriteTexts = self.favorites.map { $0.text }
+            let favoriteTexts = self.affirmationsOnly(self.favorites).map { $0.text }
             WidgetDataBridge.shared.syncDeclarationFavorites(favoriteTexts, reloadTimeline: false)
-            WidgetDataBridge.shared.syncFullDeclarationsToWidget(self.allDeclarations, reloadTimeline: false)
+            WidgetDataBridge.shared.syncFullDeclarationsToWidget(self.affirmationsOnly(self.allDeclarations), reloadTimeline: false)
             self.syncCategorizedDeclarationsToWidget(reloadTimeline: false)
             WidgetDataBridge.shared.reloadWidgetTimelines()
             self.errorMessage = error?.localizedDescription
@@ -441,9 +448,9 @@ final class DeclarationViewModel: ObservableObject {
         }
         
         favorites = mergedFavorites
-        
+
         // Update widget with new favorites
-        let favoriteTexts = favorites.map { $0.text }
+        let favoriteTexts = affirmationsOnly(favorites).map { $0.text }
         WidgetDataBridge.shared.syncDeclarationFavorites(favoriteTexts)
     }
     
@@ -618,10 +625,13 @@ final class DeclarationViewModel: ObservableObject {
             completion(general)
         }  else if category == .favorites {
             refreshFavorites()
-            completion(favorites)
+            completion(affirmationsOnly(favorites))
         } else if category == .myOwn {
             refreshCreateOwn()
-            completion(createOwn)
+            // `createOwn` carries journal entries too. `choose(_:)` assigns this
+            // result straight onto `declarations`, so it has to be filtered here
+            // or it clobbers the filtering the `createOwn` observer just did.
+            completion(affirmationsOnly(createOwn))
         } else {
             let declarations = allDeclarations.filter { $0.category == category }
             allDeclarationsDict[category] = declarations
@@ -806,7 +816,7 @@ final class DeclarationViewModel: ObservableObject {
         ]
         
         // Group declarations by widget categories
-        for declaration in allDeclarations {
+        for declaration in affirmationsOnly(allDeclarations) {
             let categoryKeys = categoryMapping[declaration.category] ?? ["General"]
             
             for categoryKey in categoryKeys {
@@ -818,12 +828,14 @@ final class DeclarationViewModel: ObservableObject {
         }
         
         // Always include user's favorites and personal declarations
-        if !favorites.isEmpty {
-            categorizedDeclarations["Favorites"] = favorites.map { $0.text }
+        let favoriteAffirmations = affirmationsOnly(favorites)
+        if !favoriteAffirmations.isEmpty {
+            categorizedDeclarations["Favorites"] = favoriteAffirmations.map { $0.text }
         }
-        
-        if !createOwn.isEmpty {
-            categorizedDeclarations["Personal"] = createOwn.map { $0.text }
+
+        let ownAffirmations = affirmationsOnly(createOwn)
+        if !ownAffirmations.isEmpty {
+            categorizedDeclarations["Personal"] = ownAffirmations.map { $0.text }
         }
         
         // Sync to widget
