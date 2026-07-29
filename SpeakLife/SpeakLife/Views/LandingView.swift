@@ -177,7 +177,7 @@ struct LandingView: View {
                 }
             }
 
-            Text("Speak God's Word over your life.")
+            Text("Speak God's promises. Walk in victory.")
                 .font(Font.custom("AppleSDGothicNeo-Regular", size: 15))
                 .italic()
                 .foregroundColor(.white.opacity(0.82))
