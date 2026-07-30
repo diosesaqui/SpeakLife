@@ -31,7 +31,7 @@ final class DataMigrationManager {
         let migrationKey = "HasMigratedToCoreData"
         if UserDefaults.standard.bool(forKey: migrationKey) {
             // Track that user already migrated
-            Analytics.logEvent("core_data_migration_skipped", parameters: [
+            AnalyticsService.shared.track("core_data_migration_skipped", parameters: [
                 "reason": "already_migrated"
             ])
             return
@@ -39,7 +39,7 @@ final class DataMigrationManager {
         
         // Track migration start
         let migrationStartTime = Date()
-        Analytics.logEvent("core_data_migration_started", parameters: [:])
+        AnalyticsService.shared.track("core_data_migration_started", parameters: [:])
         
         try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
             legacyAPIService.declarations { [weak self] declarations, error, _ in
@@ -50,7 +50,7 @@ final class DataMigrationManager {
                 
                 if let error = error {
                     // Track API error
-                    Analytics.logEvent("core_data_migration_failed", parameters: [
+                    AnalyticsService.shared.track("core_data_migration_failed", parameters: [
                         "error_type": "api_error",
                         "error_description": error.localizedDescription
                     ])
@@ -80,7 +80,7 @@ final class DataMigrationManager {
                         }
                         
                         // Track successful migration
-                        Analytics.logEvent("core_data_migration_success", parameters: [
+                        AnalyticsService.shared.track("core_data_migration_success", parameters: [
                             "total_entries": migrationResult.totalEntries,
                             "journal_entries": migrationResult.journalEntries,
                             "affirmation_entries": migrationResult.affirmationEntries,
@@ -91,7 +91,7 @@ final class DataMigrationManager {
                         continuation.resume()
                     } catch {
                         // Track migration failure
-                        Analytics.logEvent("core_data_migration_failed", parameters: [
+                        AnalyticsService.shared.track("core_data_migration_failed", parameters: [
                             "error_type": "core_data_error",
                             "error_description": error.localizedDescription,
                             "migration_duration_seconds": Int(Date().timeIntervalSince(migrationStartTime))
@@ -148,7 +148,7 @@ final class DataMigrationManager {
     // MARK: - Clean Up Legacy Data
     func cleanUpLegacyData() {
         guard let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else {
-            Analytics.logEvent("legacy_cleanup_failed", parameters: [
+            AnalyticsService.shared.track("legacy_cleanup_failed", parameters: [
                 "error": "documents_directory_not_found"
             ])
             return
@@ -159,16 +159,16 @@ final class DataMigrationManager {
         do {
             if FileManager.default.fileExists(atPath: declarationsURL.path) {
                 try FileManager.default.removeItem(at: declarationsURL)
-                Analytics.logEvent("legacy_cleanup_success", parameters: [
+                AnalyticsService.shared.track("legacy_cleanup_success", parameters: [
                     "file_removed": "declarations.json"
                 ])
             } else {
-                Analytics.logEvent("legacy_cleanup_skipped", parameters: [
+                AnalyticsService.shared.track("legacy_cleanup_skipped", parameters: [
                     "reason": "file_not_found"
                 ])
             }
         } catch {
-            Analytics.logEvent("legacy_cleanup_failed", parameters: [
+            AnalyticsService.shared.track("legacy_cleanup_failed", parameters: [
                 "error": error.localizedDescription
             ])
         }

@@ -68,7 +68,7 @@ struct OnboardingView: View {
 
                     // SCREEN 5: Daily Commitment — sets expectation before paywall
                     DailyCommitmentScreen(size: geometry.size) {
-                        Analytics.logEvent("onboarding_commitment_done", parameters: nil)
+                        AnalyticsService.shared.track("onboarding_commitment_done")
                         advance()
                     }
                     .tag(Tab.dailyCommitment)
@@ -118,7 +118,7 @@ struct OnboardingView: View {
             setSelection()
             UIScrollView.appearance().isScrollEnabled = false
             setupAppearance()
-            Analytics.logEvent(Event.freshInstall, parameters: nil)
+            AnalyticsService.shared.track(Event.freshInstall)
             // Start background music on onboarding launch
             AudioPlayerService.shared.playSound(files: resources)
         }
@@ -149,47 +149,47 @@ struct OnboardingView: View {
             Juice.play(.tapLight)
             selection = .categorySelect
             onboardingTab = selection.rawValue
-            Analytics.logEvent("onboarding_hook_done", parameters: nil)
+            AnalyticsService.shared.track("onboarding_hook_done")
 
         case .categorySelect:
             Juice.play(.tapLight)
             selection = .livePreview
             onboardingTab = selection.rawValue
-            Analytics.logEvent("onboarding_category_done", parameters: nil)
+            AnalyticsService.shared.track("onboarding_category_done")
 
         case .livePreview:
             Juice.play(.tapLight)
             selection = .socialProof
             onboardingTab = selection.rawValue
-            Analytics.logEvent("onboarding_preview_done", parameters: nil)
+            AnalyticsService.shared.track("onboarding_preview_done")
 
         case .socialProof:
             Juice.play(.tapLight)
             selection = .dailyCommitment
             onboardingTab = selection.rawValue
-            Analytics.logEvent("onboarding_social_proof_done", parameters: nil)
+            AnalyticsService.shared.track("onboarding_social_proof_done")
 
         case .dailyCommitment:
             Juice.play(.tapLight)
             selection = .personalDeclaration
             onboardingTab = selection.rawValue
-            Analytics.logEvent("onboarding_commitment_done", parameters: nil)
+            AnalyticsService.shared.track("onboarding_commitment_done")
 
         case .personalDeclaration:
             Juice.play(.tapLight)
             selection = .subscription
             onboardingTab = selection.rawValue
-            Analytics.logEvent("onboarding_personal_declaration_done", parameters: nil)
+            AnalyticsService.shared.track("onboarding_personal_declaration_done")
 
         case .subscription:
             Juice.play(.tapLight)
             selection = .notification
             onboardingTab = selection.rawValue
-            Analytics.logEvent("onboarding_subscription_done", parameters: nil)
+            AnalyticsService.shared.track("onboarding_subscription_done")
 
         case .notification:
             Juice.play(.tapLight)
-            Analytics.logEvent("onboarding_notification_done", parameters: nil)
+            AnalyticsService.shared.track("onboarding_notification_done")
             dismissOnboarding()
         }
     }
@@ -259,7 +259,7 @@ struct OnboardingView: View {
         withAnimation {
             appState.isOnboarded = true
             LifecycleNotificationService.shared.scheduleLifecycleNotifications()
-            Analytics.logEvent("onBoardingFinished", parameters: nil)
+            AnalyticsService.shared.track("onBoardingFinished")
         }
     }
 }

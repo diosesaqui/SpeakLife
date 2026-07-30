@@ -352,7 +352,7 @@ struct ModernDailyChecklistView: View {
         }
         .animation(.spring(response: 0.4, dampingFraction: 0.8), value: viewModel.showFreezeUsedMessage)
         .onAppear {
-            Analytics.logEvent("daily_checklist_viewed", parameters: [
+            AnalyticsService.shared.track("daily_checklist_viewed", parameters: [
                 "current_streak": viewModel.streakStats.currentStreak,
                 "completed_tasks": viewModel.todayChecklist.completedTasksCount,
                 "total_tasks": viewModel.todayChecklist.tasks.count

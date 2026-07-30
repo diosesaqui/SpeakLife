@@ -366,7 +366,7 @@ struct OptimizedSubscriptionViewV2: View {
     // MARK: - Helper Functions
     
     private func setupView() {
-        Analytics.logEvent("subscription_view_appeared", parameters: nil)
+        AnalyticsService.shared.track("subscription_view_appeared")
     }
     
     private func startCloseButtonTimer() {
@@ -380,7 +380,7 @@ struct OptimizedSubscriptionViewV2: View {
     private func makePurchase() {
         guard let product = selectedProduct else { return }
         
-        Analytics.logEvent("subscription_initiated", parameters: [
+        AnalyticsService.shared.track("subscription_initiated", parameters: [
             "product_type": selectedOption,
             "price": selectedOption == "annual" ? yearlyPrice : monthlyPrice
         ])
@@ -390,7 +390,7 @@ struct OptimizedSubscriptionViewV2: View {
                 let purchased = try await subscriptionStore.purchase(product, paywallName: "OptimizedSubscriptionV2_Onboarding")
                 // Only advance if purchase was successful
                 if purchased {
-                    Analytics.logEvent("subscription_success", parameters: [
+                    AnalyticsService.shared.track("subscription_success", parameters: [
                         "product_type": selectedOption,
                         "paywall_name": "OptimizedSubscriptionV2_Onboarding"
                     ])
@@ -404,7 +404,7 @@ struct OptimizedSubscriptionViewV2: View {
             } catch {
                 errorMessage = "Purchase failed. Please try again."
                 isShowingError = true
-                Analytics.logEvent("subscription_failed", parameters: [
+                AnalyticsService.shared.track("subscription_failed", parameters: [
                     "error": error.localizedDescription
                 ])
             }

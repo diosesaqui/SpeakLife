@@ -30,7 +30,7 @@ struct FirstDeclarationGuideView: View {
                     HStack {
                         if isDismissible {
                             Button(action: {
-                                Analytics.logEvent("DeclarationPromptDismissed", parameters: nil)
+                                AnalyticsService.shared.track("DeclarationPromptDismissed")
                                 dismiss()
                                 action()
                             }) {
@@ -105,7 +105,7 @@ struct FirstDeclarationGuideView: View {
             withAnimation(.easeInOut(duration: 0.8).delay(0.3)) {
                 animateContent = true
             }
-            Analytics.logEvent("FirstDeclarationGuideViewed", parameters: nil)
+            AnalyticsService.shared.track("FirstDeclarationGuideViewed")
         }
     }
     
@@ -282,7 +282,7 @@ struct FirstDeclarationGuideView: View {
                     saveDeclaration()
                     
                     // Log analytics
-                    Analytics.logEvent("FirstDeclarationCreated", parameters: [
+                    AnalyticsService.shared.track("FirstDeclarationCreated", parameters: [
                         "text_length": declarationText.count
                     ])
                     
@@ -297,7 +297,7 @@ struct FirstDeclarationGuideView: View {
             // Show "Maybe Later" option only in dismissible mode
             if isDismissible {
                 Button("Maybe Later") {
-                    Analytics.logEvent("DeclarationPromptPostponed", parameters: nil)
+                    AnalyticsService.shared.track("DeclarationPromptPostponed")
                     dismiss()
                     action()
                 }

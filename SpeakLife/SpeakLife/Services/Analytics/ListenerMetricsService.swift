@@ -30,7 +30,7 @@ final class ListenerMetricsService: ObservableObject {
     // MARK: - Track Listen Event
     func trackListen(contentId: String, contentType: ContentMetricType) {
         // Track in Firebase Analytics (free)
-        Analytics.logEvent("content_listened", parameters: [
+        AnalyticsService.shared.track("content_listened", parameters: [
             "content_id": contentId,
             "content_type": contentType.rawValue,
             "timestamp": Date().timeIntervalSince1970

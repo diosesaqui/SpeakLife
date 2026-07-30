@@ -139,7 +139,7 @@ struct PolishedCrossOnboardingFlow: View {
         .preferredColorScheme(.dark)
         .onAppear {
             UIScrollView.appearance().isScrollEnabled = false
-            Analytics.logEvent("PolishedCrossOnboarding_Started", parameters: nil)
+            AnalyticsService.shared.track("PolishedCrossOnboarding_Started")
         }
     }
     
@@ -183,7 +183,7 @@ struct PolishedCrossOnboardingFlow: View {
     
     func askNotificationPermission() {
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { success, error in
-            Analytics.logEvent("notification_permission", parameters: ["granted": success])
+            AnalyticsService.shared.track("notification_permission", parameters: ["granted": success])
             if success {
                 DispatchQueue.main.async {
                     DailyDeclarationReminderService.shared.isEnabled = true
@@ -200,7 +200,7 @@ struct PolishedCrossOnboardingFlow: View {
     }
     
     private func completeOnboarding() {
-        Analytics.logEvent("PolishedCrossOnboarding_Completed", parameters: [
+        AnalyticsService.shared.track("PolishedCrossOnboarding_Completed", parameters: [
             "limitations_selected": selectedLimitations.joined(separator: ","),
             "desires_selected": selectedDesires.joined(separator: ",")
         ])

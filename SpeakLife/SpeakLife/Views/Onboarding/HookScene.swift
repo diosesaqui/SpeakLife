@@ -93,7 +93,7 @@ struct HookScene: View {
                         colors: [.blue, .purple],
                         buttonTitle: "Walk in My New Identity →",
                         action: {
-                            Analytics.logEvent("HookScreenContinue", parameters: nil)
+                            AnalyticsService.shared.track("HookScreenContinue")
                             callBack()
                         }
                     )
@@ -116,7 +116,7 @@ struct HookScene: View {
         }
         .onAppear {
             animateContent()
-            Analytics.logEvent("HookScreenShown", parameters: nil)
+            AnalyticsService.shared.track("HookScreenShown")
         }
     }
     

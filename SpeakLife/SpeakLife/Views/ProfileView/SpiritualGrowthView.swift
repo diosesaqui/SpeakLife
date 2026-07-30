@@ -102,7 +102,7 @@ struct SpiritualGrowthView: View {
             withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
                 animateEntrance = true
             }
-            Analytics.logEvent("spiritual_growth_viewed", parameters: [
+            AnalyticsService.shared.track("spiritual_growth_viewed", parameters: [
                 "strength_level": burstTracker.strengthLevel.rawValue,
                 "current_score": burstTracker.currentStrengthScore
             ])

@@ -197,7 +197,7 @@ struct ProfileView: View {
     var body: some View {
         profileView
 //            .onAppear {
-//                Analytics.logEvent(Event.profileTapped, parameters: nil)
+//                AnalyticsService.shared.track(Event.profileTapped)
 //            }
             .environment(\.colorScheme, .dark)
     }
@@ -444,7 +444,7 @@ struct ProfileView: View {
         .contentShape(Rectangle())
         .onTapGesture {
             showStreakStats = true
-            Analytics.logEvent("Profile_StreakStats_Tapped", parameters: [
+            AnalyticsService.shared.track("Profile_StreakStats_Tapped", parameters: [
                 "current_streak": stats.currentStreak,
                 "badges_earned": earnedBadges.count
             ])
@@ -501,7 +501,7 @@ struct ProfileView: View {
             // Add slight delay to ensure proper state transition
             DispatchQueue.main.async {
                 showSpiritualGrowth = true
-                Analytics.logEvent("Profile_DailyBurstStats_Tapped", parameters: nil)
+                AnalyticsService.shared.track("Profile_DailyBurstStats_Tapped")
             }
         }
     }
@@ -606,7 +606,7 @@ struct ProfileView: View {
     private var shareRow: some View {
         SettingsRow(isPresentingContentView: $isPresentingContentView, imageTitle: "square.and.arrow.up.fill", title: "Share SpeakLife", viewToPresent: EmptyView()) {
             shareApp()
-            Analytics.logEvent(Event.shareSpeakLifeTapped, parameters: nil)
+            AnalyticsService.shared.track(Event.shareSpeakLifeTapped)
         }
     }
     
@@ -670,7 +670,7 @@ struct ProfileView: View {
         Button(action: {
             let userID = Purchases.shared.appUserID
             UIPasteboard.general.string = userID
-            Analytics.logEvent("support_id_copied", parameters: nil)
+            AnalyticsService.shared.track("support_id_copied")
             withAnimation {
                 showSupportIDCopied = true
             }

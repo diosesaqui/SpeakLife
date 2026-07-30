@@ -79,7 +79,7 @@ final class StreakIntegrationManager: ObservableObject {
     }
     
     private func logAction(_ action: String) {
-        Analytics.logEvent(action, parameters: nil)
+        AnalyticsService.shared.track(action)
     }
 }
 

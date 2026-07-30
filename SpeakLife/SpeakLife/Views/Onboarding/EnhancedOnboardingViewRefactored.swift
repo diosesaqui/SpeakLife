@@ -161,7 +161,7 @@ struct EnhancedOnboardingViewRefactored: View {
             setSelection()
             UIScrollView.appearance().isScrollEnabled = false
             setupAppearance()
-            Analytics.logEvent("EnhancedOnboardingStarted", parameters: nil)
+            AnalyticsService.shared.track("EnhancedOnboardingStarted")
         }
     }
 
@@ -281,7 +281,7 @@ struct EnhancedOnboardingViewRefactored: View {
             
         case .subscription:
 //            mapJourneyToCategories()
-            Analytics.logEvent("EnhancedOnboardingCompleted", parameters: [
+            AnalyticsService.shared.track("EnhancedOnboardingCompleted", parameters: [
                 "emotional_needs": userJourney.emotionalNeeds.joined(separator: ","),
                 "internal_experience": userJourney.internalExperience,
                 "belief_gap": userJourney.beliefGap,
@@ -384,7 +384,7 @@ struct EnhancedOnboardingViewRefactored: View {
             appState.isOnboarded = true
             LifecycleNotificationService.shared.scheduleLifecycleNotifications()
             appState.hasCompletedEnhancedOnboarding = true
-            Analytics.logEvent("EnhancedOnboardingFinished", parameters: nil)
+            AnalyticsService.shared.track("EnhancedOnboardingFinished")
         }
     }
     

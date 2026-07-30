@@ -256,7 +256,7 @@ struct OfferPageView: View {
                 }
                 
                 // Keep existing event for backward compatibility
-                Analytics.logEvent(iap, parameters: nil)
+                AnalyticsService.shared.track(iap)
                 callBack()
             }
         } catch StoreError.failedVerification {
@@ -652,7 +652,7 @@ struct SubscriptionView: View {
                     // trial_started fires from SubscriptionStore.purchase — single source of truth
 
                     // Keep existing event for backward compatibility
-                    Analytics.logEvent(currentSelection.id, parameters: nil)
+                    AnalyticsService.shared.track(currentSelection.id)
                     callback?()
                 }
             } catch {

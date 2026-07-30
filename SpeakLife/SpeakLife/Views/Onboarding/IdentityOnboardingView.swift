@@ -74,7 +74,7 @@ struct IdentityOnboardingView: View {
             }
         }
         .ignoresSafeArea()
-        .onAppear { Analytics.logEvent("identity_onboarding_started", parameters: nil) }
+        .onAppear { AnalyticsService.shared.track("identity_onboarding_started") }
     }
 
     @ViewBuilder
@@ -134,7 +134,7 @@ struct IdentityOnboardingView: View {
     private func advance() {
         Juice.play(.tapLight)
         // flow_schema 2 = testimonial wall inserted before paywall (absent/1 = original layout); bump when step raw values are renumbered again.
-        Analytics.logEvent("identity_step_completed", parameters: ["step": currentStep.rawValue, "flow_schema": 2])
+        AnalyticsService.shared.track("identity_step_completed", parameters: ["step": currentStep.rawValue, "flow_schema": 2])
 
         switch currentStep {
         case .notificationTime:
@@ -175,7 +175,7 @@ struct IdentityOnboardingView: View {
             appState.personalDeclarationTimeIndex = notifTime.startTimeIndex
         }
         appState.hasPersonalDeclaration = savedDeclaration != nil
-        Analytics.logEvent("identity_onboarding_completed", parameters: [
+        AnalyticsService.shared.track("identity_onboarding_completed", parameters: [
             "goal_word": goalWord.rawValue,
             "burden": responses.heaviestBurden?.rawValue ?? "unknown",
             "set_personal_declaration": (savedDeclaration != nil) as NSNumber
@@ -186,7 +186,7 @@ struct IdentityOnboardingView: View {
 
     private func requestNotificationPermissionThenComplete(categories: Set<DeclarationCategory>) {
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { granted, _ in
-            Analytics.logEvent("notification_permission", parameters: ["granted": granted, "source": "identity_onboarding"])
+            AnalyticsService.shared.track("notification_permission", parameters: ["granted": granted, "source": "identity_onboarding"])
             DispatchQueue.main.async {
                 appState.notificationEnabled = granted
                 if granted {
@@ -393,7 +393,7 @@ private struct IdentityLieScreen: View {
                 .identityStagger(v, delay: 0.36)
         }
         .onAppear {
-            Analytics.logEvent("identity_lie_shown", parameters: nil)
+            AnalyticsService.shared.track("identity_lie_shown")
             withAnimation { v = true }
         }
     }
@@ -450,7 +450,7 @@ private struct IdentityVerdictScreen: View {
                 .identityStagger(v, delay: 0.46)
         }
         .onAppear {
-            Analytics.logEvent("identity_verdict_shown", parameters: nil)
+            AnalyticsService.shared.track("identity_verdict_shown")
             withAnimation { v = true }
         }
     }
@@ -525,7 +525,7 @@ private struct IdentityNamedScreen: View {
                 .identityStagger(v, delay: 0.62)
         }
         .onAppear {
-            Analytics.logEvent("identity_named_shown", parameters: nil)
+            AnalyticsService.shared.track("identity_named_shown")
             withAnimation { v = true }
         }
     }
@@ -596,7 +596,7 @@ private struct IdentityMechanismScreen: View {
                 .identityStagger(v, delay: 0.42)
         }
         .onAppear {
-            Analytics.logEvent("identity_mechanism_shown", parameters: nil)
+            AnalyticsService.shared.track("identity_mechanism_shown")
             withAnimation { v = true }
         }
     }
@@ -677,7 +677,7 @@ private struct IdentityPickerScreen: View {
                 .padding(.top, 8).padding(.bottom, 36)
         }
         .onAppear {
-            Analytics.logEvent("identity_picker_shown", parameters: nil)
+            AnalyticsService.shared.track("identity_picker_shown")
             withAnimation { v = true }
         }
     }

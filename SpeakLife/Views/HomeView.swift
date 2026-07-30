@@ -247,7 +247,7 @@ struct HomeView: View {
                         withAnimation {
                             appState.isOnboarded = true
                             LifecycleNotificationService.shared.scheduleLifecycleNotifications()
-                            Analytics.logEvent("onBoardingFinished", parameters: nil)
+                            AnalyticsService.shared.track("onBoardingFinished")
                         }
                     }
                     .ignoresSafeArea()

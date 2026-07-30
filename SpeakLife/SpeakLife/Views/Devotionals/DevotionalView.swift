@@ -59,7 +59,7 @@ struct DevotionalView: View {
         if subscriptionStore.isPremium || !viewModel.devotionalLimitReached || subscriptionStore.isInDevotionalPremium {
             devotionalView
                 .onAppear {
-                    Analytics.logEvent(Event.devotionalTapped, parameters: nil)
+                    AnalyticsService.shared.track(Event.devotionalTapped)
                 }
                 .alert(isPresented: $viewModel.hasError) {
                     Alert(title: Text(viewModel.errorString))
@@ -265,7 +265,7 @@ struct DevotionalView: View {
         Button {
             share.toggle()
             appState.requestReviewIfEligible(trigger: .devotionalShared)
-            Analytics.logEvent(Event.devotionalShared, parameters: ["devotionalID": viewModel.devotionalId])
+            AnalyticsService.shared.track(Event.devotionalShared, parameters: ["devotionalID": viewModel.devotionalId])
         } label: {
             Image(systemName: "square.and.arrow.up")
                 .resizable()

@@ -120,7 +120,7 @@ struct EmotionalHookScreen: View {
             withAnimation(.easeOut(duration: 0.7)) { headlineVisible = true }
             withAnimation(.easeOut(duration: 0.7).delay(0.3)) { subVisible = true }
             withAnimation(.easeOut(duration: 0.5).delay(0.9)) { buttonVisible = true }
-            Analytics.logEvent("onboarding_hook_shown", parameters: nil)
+            AnalyticsService.shared.track("onboarding_hook_shown")
         }
     }
 
@@ -230,7 +230,7 @@ struct TransformationSocialProofScreen: View {
             withAnimation(.easeOut(duration: 0.6).delay(0.4)) { card1Visible = true }
             withAnimation(.easeOut(duration: 0.6).delay(0.65)) { card2Visible = true }
             withAnimation(.easeOut(duration: 0.5).delay(0.9)) { buttonVisible = true }
-            Analytics.logEvent("onboarding_social_proof_shown", parameters: nil)
+            AnalyticsService.shared.track("onboarding_social_proof_shown")
         }
     }
 
@@ -430,7 +430,7 @@ struct CategorySelectScreen: View {
                             }
                             let cats = Set(selectionVM.selectedExperiences)
                             appState.selectedNotificationCategories = cats.map { $0.rawValue }.joined(separator: ",")
-                            Analytics.logEvent("onboarding_category_selected", parameters: [
+                            AnalyticsService.shared.track("onboarding_category_selected", parameters: [
                                 "count": NSNumber(value: selectionVM.selectedExperiences.count),
                                 "categories": selectionVM.selectedExperiences.map { $0.rawValue }.joined(separator: ",") as NSString
                             ])
@@ -461,7 +461,7 @@ struct CategorySelectScreen: View {
         .onAppear {
             withAnimation(.easeOut(duration: 0.7)) { titleVisible = true }
             withAnimation(.easeOut(duration: 0.6).delay(0.35)) { gridVisible = true }
-            Analytics.logEvent("onboarding_category_shown", parameters: nil)
+            AnalyticsService.shared.track("onboarding_category_shown")
         }
     }
 
@@ -960,7 +960,7 @@ struct SelfDiagnosisScreen: View {
                                     selectedOption = option.0
                                 }
                                 if option.0 == "speak" {
-                                    Analytics.logEvent("self_diagnosis_correct", parameters: nil)
+                                    AnalyticsService.shared.track("self_diagnosis_correct")
                                 }
                                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                                     onContinue()
@@ -1332,7 +1332,7 @@ struct MicroCommitmentScreen: View {
                                 withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
                                     selectedOption = option.0
                                 }
-                                Analytics.logEvent(option.2, parameters: nil)
+                                AnalyticsService.shared.track(option.2)
                                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                                     onContinue()
                                 }
@@ -1789,7 +1789,7 @@ struct LiveDeclarationPreviewScreen: View {
             withAnimation(.easeOut(duration: 0.5).delay(0.9)) {
                 buttonVisible = true
             }
-            Analytics.logEvent("onboarding_preview_shown", parameters: nil)
+            AnalyticsService.shared.track("onboarding_preview_shown")
         }
     }
 
@@ -1930,7 +1930,7 @@ struct AudioFeatureScreen: View {
             withAnimation(.easeOut(duration: 0.8)) { headerVisible = true }
             withAnimation(.spring(response: 0.6, dampingFraction: 0.8).delay(0.4)) { cardVisible = true }
             withAnimation(.easeOut(duration: 0.5).delay(0.8)) { buttonVisible = true }
-            Analytics.logEvent("onboarding_audio_feature_shown", parameters: nil)
+            AnalyticsService.shared.track("onboarding_audio_feature_shown")
         }
     }
 
@@ -2064,7 +2064,7 @@ struct DailyDevotionalFeatureScreen: View {
             withAnimation(.easeOut(duration: 0.8)) { headerVisible = true }
             withAnimation(.spring(response: 0.6, dampingFraction: 0.8).delay(0.4)) { cardVisible = true }
             withAnimation(.easeOut(duration: 0.5).delay(0.8)) { buttonVisible = true }
-            Analytics.logEvent("onboarding_devotional_feature_shown", parameters: nil)
+            AnalyticsService.shared.track("onboarding_devotional_feature_shown")
         }
     }
 
@@ -2238,7 +2238,7 @@ struct WarriorRoomFeatureScreen: View {
             withAnimation(.easeOut(duration: 0.5).delay(0.35)) { cardVisible = true }
             withAnimation(.easeOut(duration: 0.5).delay(0.5)) { postsVisible = true }
             withAnimation(.easeOut(duration: 0.5).delay(0.85)) { buttonVisible = true }
-            Analytics.logEvent("onboarding_warrior_room_shown", parameters: nil)
+            AnalyticsService.shared.track("onboarding_warrior_room_shown")
         }
     }
 
@@ -2385,7 +2385,7 @@ struct DailyCommitmentScreen: View {
             }
         }
         .onAppear {
-            Analytics.logEvent("onboarding_commitment_shown", parameters: nil)
+            AnalyticsService.shared.track("onboarding_commitment_shown")
             withAnimation(.easeOut(duration: 0.6)) { headerVisible = true }
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
                 withAnimation { timelinesVisible = true }

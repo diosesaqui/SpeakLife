@@ -198,7 +198,7 @@ struct DeclarationView: View {
         if !showSpeakAloudBanner {
             Button(action: {
                 activeSheet = .loveLetter
-                Analytics.logEvent("love_letter_opened", parameters: nil)
+                AnalyticsService.shared.track("love_letter_opened")
             }) {
                 Image(systemName: "envelope.fill")
                     .font(.system(size: 16, weight: .medium))
@@ -224,7 +224,7 @@ struct DeclarationView: View {
             let isDone = streakViewModel.todayChecklist.isStreakEarned
             Button(action: {
                 activeSheet = .dailyChecklist
-                Analytics.logEvent("checkList_opened", parameters: nil)
+                AnalyticsService.shared.track("checkList_opened")
             }) {
                 Image(systemName: "checklist")
                     .font(.system(size: 16, weight: .medium))
@@ -275,7 +275,7 @@ struct DeclarationView: View {
         if !showSpeakAloudBanner {
             Button(action: {
                 showDailyBurst = true
-                Analytics.logEvent("daily_burst_opened", parameters: [
+                AnalyticsService.shared.track("daily_burst_opened", parameters: [
                     "source": "home_screen"
                 ])
             }) {
@@ -537,26 +537,26 @@ struct DeclarationView: View {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
             self.activeSheet = .createYourOwn
         }
-        Analytics.logEvent(Event.tryPremiumTapped, parameters: nil)
+        AnalyticsService.shared.track(Event.tryPremiumTapped)
     }
     private func premiumView()  {
         activeSheet = .premium
-        Analytics.logEvent(Event.tryPremiumTapped, parameters: nil)
+        AnalyticsService.shared.track(Event.tryPremiumTapped)
     }
     
     private func loveLetter()  {
         activeSheet = .loveLetter
-        Analytics.logEvent(Event.tryPremiumTapped, parameters: nil)
+        AnalyticsService.shared.track(Event.tryPremiumTapped)
     }
     
     private func dailyChecklist() {
         activeSheet = .dailyChecklist
-        Analytics.logEvent("daily_checklist_opened", parameters: nil)
+        AnalyticsService.shared.track("daily_checklist_opened")
     }
     
     private func showTimerSheet() {
         activeSheet = .timerStreak
-        Analytics.logEvent("timer_streak_opened", parameters: nil)
+        AnalyticsService.shared.track("timer_streak_opened")
     }
     
     private func shareApp() {

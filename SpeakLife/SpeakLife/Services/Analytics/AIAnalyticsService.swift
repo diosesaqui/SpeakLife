@@ -35,7 +35,7 @@ final class AIAnalyticsService: ObservableObject {
         
         parameters.merge(context) { (_, new) in new }
         
-        Analytics.logEvent("ai_feature_usage", parameters: parameters)
+        AnalyticsService.shared.track("ai_feature_usage", parameters: parameters)
         
         // Also track with existing analytics
         AnalyticsService.shared.trackUserAction(
@@ -66,7 +66,7 @@ final class AIAnalyticsService: ObservableObject {
             "timestamp": Date().iso8601String
         ]
         
-        Analytics.logEvent("ai_recommendation_performance", parameters: performanceData)
+        AnalyticsService.shared.track("ai_recommendation_performance", parameters: performanceData)
         
         // Track conversion funnel
         trackRecommendationFunnel(userAction: userAction, confidence: confidence)
@@ -92,7 +92,7 @@ final class AIAnalyticsService: ObservableObject {
             "timestamp": Date().iso8601String
         ]
         
-        Analytics.logEvent("ai_personalized_category_performance", parameters: categoryData)
+        AnalyticsService.shared.track("ai_personalized_category_performance", parameters: categoryData)
         
     }
     
@@ -115,7 +115,7 @@ final class AIAnalyticsService: ObservableObject {
             "timestamp": Date().iso8601String
         ]
         
-        Analytics.logEvent("ai_model_performance", parameters: modelData)
+        AnalyticsService.shared.track("ai_model_performance", parameters: modelData)
         
     }
     
@@ -137,7 +137,7 @@ final class AIAnalyticsService: ObservableObject {
             "timestamp": Date().iso8601String
         ]
         
-        Analytics.logEvent("ai_behavior_change_detected", parameters: changeData)
+        AnalyticsService.shared.track("ai_behavior_change_detected", parameters: changeData)
         
     }
     
@@ -168,7 +168,7 @@ final class AIAnalyticsService: ObservableObject {
             experienceData["feedback_sentiment"] = analyzeFeedbackSentiment(feedback)
         }
         
-        Analytics.logEvent("ai_user_experience", parameters: experienceData)
+        AnalyticsService.shared.track("ai_user_experience", parameters: experienceData)
         
         print("⭐ User Experience: \(feature.rawValue) - satisfaction: \(satisfactionScore)/5")
     }
@@ -199,7 +199,7 @@ final class AIAnalyticsService: ObservableObject {
             conversionData["conversion_value"] = value
         }
         
-        Analytics.logEvent("ai_conversion_impact", parameters: conversionData)
+        AnalyticsService.shared.track("ai_conversion_impact", parameters: conversionData)
         
         // Track revenue attribution
         if attributedToAI && conversionType == .subscription {
@@ -226,7 +226,7 @@ final class AIAnalyticsService: ObservableObject {
             "timestamp": Date().iso8601String
         ]
         
-        Analytics.logEvent("ai_ab_test_result", parameters: testData)
+        AnalyticsService.shared.track("ai_ab_test_result", parameters: testData)
         
     }
     
@@ -244,7 +244,7 @@ final class AIAnalyticsService: ObservableObject {
             "timestamp": Date().iso8601String
         ]
         
-        Analytics.logEvent("ai_feature_flag_usage", parameters: flagData)
+        AnalyticsService.shared.track("ai_feature_flag_usage", parameters: flagData)
         
     }
     
@@ -268,7 +268,7 @@ final class AIAnalyticsService: ObservableObject {
             "timestamp": Date().iso8601String
         ]
         
-        Analytics.logEvent("ai_error_occurred", parameters: errorData)
+        AnalyticsService.shared.track("ai_error_occurred", parameters: errorData)
         
         // Also log to existing error tracking
         AnalyticsService.shared.trackError("ai_\(component.rawValue)", message: errorMessage)
@@ -295,7 +295,7 @@ final class AIAnalyticsService: ObservableObject {
             "timestamp": Date().iso8601String
         ]
         
-        Analytics.logEvent("ai_performance_metrics", parameters: performanceData)
+        AnalyticsService.shared.track("ai_performance_metrics", parameters: performanceData)
         
         print("⚡ Performance: \(operation.rawValue) - \(Int(executionTime * 1000))ms")
     }
@@ -313,7 +313,7 @@ final class AIAnalyticsService: ObservableObject {
         case .completed: funnelStage = "recommendation_completed"
         }
         
-        Analytics.logEvent("ai_recommendation_funnel", parameters: [
+        AnalyticsService.shared.track("ai_recommendation_funnel", parameters: [
             "funnel_stage": funnelStage,
             "confidence": confidence,
             "timestamp": Date().iso8601String
@@ -331,7 +331,7 @@ final class AIAnalyticsService: ObservableObject {
             revenueData["specific_ai_feature"] = feature.rawValue
         }
         
-        Analytics.logEvent("ai_revenue_attribution", parameters: revenueData)
+        AnalyticsService.shared.track("ai_revenue_attribution", parameters: revenueData)
     }
     
     private func calculateEngagementQuality(action: RecommendationUserAction, time: TimeInterval) -> String {

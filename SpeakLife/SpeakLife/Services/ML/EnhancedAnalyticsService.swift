@@ -100,7 +100,7 @@ final class EnhancedAnalyticsService: ObservableObject {
         
         saveUserBehaviorProfile()
         
-        Analytics.logEvent("spiritual_journey_tracked", parameters: [
+        AnalyticsService.shared.track("spiritual_journey_tracked", parameters: [
             "mood": currentMood,
             "journal_sentiment": journalSentiment,
             "recommendation_accepted": recommendationAccepted,
@@ -125,7 +125,7 @@ final class EnhancedAnalyticsService: ObservableObject {
         
         saveUserBehaviorProfile()
         
-        Analytics.logEvent("contextual_usage", parameters: [
+        AnalyticsService.shared.track("contextual_usage", parameters: [
             "time_of_day": timeOfDay,
             "day_of_week": dayOfWeek,
             "session_type": sessionType,
@@ -140,7 +140,7 @@ final class EnhancedAnalyticsService: ObservableObject {
         confidence: Double,
         userFeedback: String? = nil
     ) {
-        Analytics.logEvent("recommendation_interaction", parameters: [
+        AnalyticsService.shared.track("recommendation_interaction", parameters: [
             "recommendation_id": recommendationId,
             "accepted": accepted,
             "reason": reason,
@@ -162,7 +162,7 @@ final class EnhancedAnalyticsService: ObservableObject {
         userEngagement: Double,
         spiritualFocus: [SpiritualContentCategory]
     ) {
-        Analytics.logEvent("personal_category_created", parameters: [
+        AnalyticsService.shared.track("personal_category_created", parameters: [
             "category_name": categoryName,
             "content_count": contentIds.count,
             "engagement_score": userEngagement,
@@ -176,7 +176,7 @@ final class EnhancedAnalyticsService: ObservableObject {
         completionRate: Double,
         userSatisfaction: Int // 1-5 rating
     ) {
-        Analytics.logEvent("ai_task_completed", parameters: [
+        AnalyticsService.shared.track("ai_task_completed", parameters: [
             "task_id": taskId,
             "task_type": taskType,
             "completion_rate": completionRate,

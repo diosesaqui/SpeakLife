@@ -627,7 +627,7 @@ struct OptimizedSubscriptionView: View {
                     // trial_started fires from SubscriptionStore.purchase — single source of truth
 
                     // Keep existing event for backward compatibility
-                    Analytics.logEvent("subscription_started", parameters: [
+                    AnalyticsService.shared.track("subscription_started", parameters: [
                         "product_id": selectedProduct.id,
                         "price": selectedProduct.price,
                         "duration": selectedProduct.subscription?.subscriptionPeriod.debugDescription ?? "unknown"

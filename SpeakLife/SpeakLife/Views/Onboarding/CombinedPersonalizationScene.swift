@@ -108,7 +108,7 @@ struct CombinedPersonalizationScene: View {
                                     UserPreferencesTracker.shared.trackCategorySelection(category.rawValue)
                                 }
                                 
-                                Analytics.logEvent("CombinedOnboardingComplete", parameters: [
+                                AnalyticsService.shared.track("CombinedOnboardingComplete", parameters: [
                                     "categories_selected": viewModel.selectedExperiences.count,
                                     "categories": viewModel.selectedExperiences.map { $0.rawValue }.joined(separator: ",")
                                 ])
@@ -143,7 +143,7 @@ struct CombinedPersonalizationScene: View {
         }
         .onAppear {
             animateContent()
-            Analytics.logEvent("CombinedPersonalizationShown", parameters: nil)
+            AnalyticsService.shared.track("CombinedPersonalizationShown")
         }
     }
     

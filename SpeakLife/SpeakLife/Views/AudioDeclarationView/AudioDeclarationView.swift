@@ -312,12 +312,12 @@ struct AudioDeclarationView: View {
                         .presentationDetents([.large])
                         .onAppear {
                             audioViewModel.lastSelectedItem = item
-                            Analytics.logEvent("audio_played", parameters: ["id": item.id])
+                            AnalyticsService.shared.track("audio_played", parameters: ["id": item.id])
                         }
                 }
             }
             .onAppear() {
-                Analytics.logEvent("AudioScreenLoaded", parameters: nil)
+                AnalyticsService.shared.track("AudioScreenLoaded")
                 // Re-apply ordering now that Remote Config and favorites have
                 // loaded — covers existing users who don't rebuild filters on update.
                 viewModel.refreshPersonalization()
@@ -377,7 +377,7 @@ struct AudioDeclarationView: View {
             ForEach(viewModel.dynamicFilters, id: \.id) { filterConfig in
                 Button(action: {
                     viewModel.selectedFilterId = filterConfig.id
-                    Analytics.logEvent("audio_filter_tapped", parameters: [
+                    AnalyticsService.shared.track("audio_filter_tapped", parameters: [
                         "filter_id": filterConfig.id,
                         "position": viewModel.dynamicFilters.firstIndex(where: { $0.id == filterConfig.id }) ?? -1,
                         "personalized": viewModel.isPersonalizedOrderEnabled

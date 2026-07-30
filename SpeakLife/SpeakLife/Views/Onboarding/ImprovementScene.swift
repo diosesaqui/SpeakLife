@@ -89,7 +89,7 @@ class ImprovementViewModel: ObservableObject {
             selectedExperiences.append(experience)
             // Track for personalization
             UserPreferencesTracker.shared.trackCategorySelection(experience.rawValue)
-            Analytics.logEvent(experience.rawValue, parameters: nil)
+            AnalyticsService.shared.track(experience.rawValue)
         }
     }
 }

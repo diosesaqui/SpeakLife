@@ -94,7 +94,7 @@ struct PremiumView: View {
                                         metadata: ["source": "premium_view"]
                                     )
                                     showCancelConfirmation = true
-                                    Analytics.logEvent("cancel_button_tapped", parameters: ["source": "premium_view"])
+                                    AnalyticsService.shared.track("cancel_button_tapped", parameters: ["source": "premium_view"])
                                 }) {
                                     HStack {
                                         Image(systemName: "xmark.circle")

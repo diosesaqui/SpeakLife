@@ -770,7 +770,7 @@ struct DailyDeclarationBurstView: View {
         
         topController.present(activityVC, animated: true)
         
-        Analytics.logEvent("daily_burst_shared", parameters: [
+        AnalyticsService.shared.track("daily_burst_shared", parameters: [
             "streak": burstTracker.currentStreak,
             "strength_score": burstTracker.currentStrengthScore
         ])

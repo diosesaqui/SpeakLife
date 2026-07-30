@@ -86,7 +86,7 @@ struct ReminderView: View {
                 registerNotifications()
             }
             .onAppear {
-                Analytics.logEvent(Event.remindersTapped, parameters: nil)
+                AnalyticsService.shared.track(Event.remindersTapped)
                 askNotificationPermission { showAlert in
                     self.showAlert = showAlert
                 }

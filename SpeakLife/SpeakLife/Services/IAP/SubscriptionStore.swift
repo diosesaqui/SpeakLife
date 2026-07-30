@@ -739,7 +739,7 @@ final class SubscriptionStore: ObservableObject {
 
         guard purchased else {
             // User cancelled or purchase is pending
-            Analytics.logEvent("purchase_cancelled", parameters: [
+            AnalyticsService.shared.track("purchase_cancelled", parameters: [
                 "product_id": product.id,
                 "paywall_name": paywallName
             ])
@@ -798,7 +798,7 @@ final class SubscriptionStore: ObservableObject {
             Event.trackTikTokPremiumPurchase(value: priceValue, currency: currency)
         }
 
-        Analytics.logEvent(Event.premiumSucceeded, parameters: [
+        AnalyticsService.shared.track(Event.premiumSucceeded, parameters: [
             "product_id": product.id,
             "value": priceValue,
             "currency": currency,

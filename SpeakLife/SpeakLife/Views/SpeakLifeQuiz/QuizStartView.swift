@@ -37,7 +37,7 @@ struct QuizStartView: View {
         }
         .padding()
         .onAppear {
-            Analytics.logEvent(quizTitle.replacingOccurrences(of: " ", with: ""), parameters: nil)
+            AnalyticsService.shared.track(quizTitle.replacingOccurrences(of: " ", with: ""))
         }
     }
         

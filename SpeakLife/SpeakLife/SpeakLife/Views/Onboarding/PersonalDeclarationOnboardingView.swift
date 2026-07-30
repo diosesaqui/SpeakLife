@@ -105,7 +105,7 @@ struct PersonalDeclarationOnboardingView: View {
         }
         .frame(width: size.width, height: size.height)
         .onAppear {
-            Analytics.logEvent("personal_declaration_screen_shown", parameters: nil)
+            AnalyticsService.shared.track("personal_declaration_screen_shown")
             withAnimation(.easeOut(duration: 0.7)) { titleAppeared = true }
             withAnimation(.easeOut(duration: 0.7).delay(0.35)) { micAppeared = true }
             withAnimation(.easeInOut(duration: 2.2).repeatForever(autoreverses: true)) {
@@ -648,7 +648,7 @@ struct PersonalDeclarationOnboardingView: View {
                                 )
                                 appState.hasPersonalDeclaration = true
                                 UserPreferencesTracker.shared.personalDeclarationBelief = declaration.beliefText
-                                Analytics.logEvent("personal_declaration_saved", parameters: [
+                                AnalyticsService.shared.track("personal_declaration_saved", parameters: [
                                     "category": declaration.categoryRaw as NSString
                                 ])
                                 onComplete(declaration)
