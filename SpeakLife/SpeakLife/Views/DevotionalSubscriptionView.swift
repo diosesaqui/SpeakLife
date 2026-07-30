@@ -60,7 +60,7 @@ struct DevotionalSubscriptionView: View {
     func buy() async {
         do {
             if try await subscriptionStore.purchaseWithID([devotionals], paywallName: "DevotionalSubscription") {
-                Analytics.logEvent(devotionals, parameters: ["paywall_name": "DevotionalSubscription"])
+                AnalyticsService.shared.track(devotionals, parameters: ["paywall_name": "DevotionalSubscription"])
                 subscriptionStore.lastDevotionalPurchaseDate = Date()
             }
         } catch StoreError.failedVerification {

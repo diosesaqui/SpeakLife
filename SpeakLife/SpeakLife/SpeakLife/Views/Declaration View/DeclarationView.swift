@@ -182,7 +182,7 @@ struct DeclarationView: View {
         if !showSpeakAloudBanner {
             Button(action: {
                 activeSheet = .loveLetter
-                Analytics.logEvent("love_letter_opened", parameters: nil)
+                AnalyticsService.shared.track("love_letter_opened")
             }) {
                 Image(systemName: "envelope.fill")
                     .font(.system(size: 16, weight: .medium))
@@ -205,7 +205,7 @@ struct DeclarationView: View {
         if !showSpeakAloudBanner {
             Button(action: {
                 activeSheet = .dailyChecklist
-                Analytics.logEvent("checkList_opened", parameters: nil)
+                AnalyticsService.shared.track("checkList_opened")
             }) {
                 Image(systemName: "checklist")
                     .font(.system(size: 16, weight: .medium))
@@ -228,7 +228,7 @@ struct DeclarationView: View {
         if !showSpeakAloudBanner {
             Button(action: {
                 showDailyBurst = true
-                Analytics.logEvent("daily_burst_opened", parameters: [
+                AnalyticsService.shared.track("daily_burst_opened", parameters: [
                     "source": "home_screen"
                 ])
             }) {
@@ -507,29 +507,29 @@ struct DeclarationView: View {
             self.activeSheet = .createYourOwn
         }
         
-        Analytics.logEvent(Event.tryPremiumTapped, parameters: nil)
+        AnalyticsService.shared.track(Event.tryPremiumTapped)
     }
     private func premiumView()  {
         // Timer continues running - don't save
         activeSheet = .premium
-        Analytics.logEvent(Event.tryPremiumTapped, parameters: nil)
+        AnalyticsService.shared.track(Event.tryPremiumTapped)
     }
     
     private func loveLetter()  {
         // Timer continues running - don't save
         activeSheet = .loveLetter
-        Analytics.logEvent(Event.tryPremiumTapped, parameters: nil)
+        AnalyticsService.shared.track(Event.tryPremiumTapped)
     }
     
     private func dailyChecklist() {
         // Timer continues running - don't save
         activeSheet = .dailyChecklist
-        Analytics.logEvent("daily_checklist_opened", parameters: nil)
+        AnalyticsService.shared.track("daily_checklist_opened")
     }
     
     private func showTimerSheet() {
         activeSheet = .timerStreak
-        Analytics.logEvent("timer_streak_opened", parameters: nil)
+        AnalyticsService.shared.track("timer_streak_opened")
     }
     
     private func shareApp() {
@@ -586,7 +586,7 @@ struct DeclarationView: View {
                    
                     reviewTry += 1
                     appState.lastReviewRequestSetDate = Date()
-                    Analytics.logEvent(Event.leaveReviewShown, parameters: nil)
+                    AnalyticsService.shared.track(Event.leaveReviewShown)
                     
                 }
             }
@@ -598,7 +598,7 @@ struct DeclarationView: View {
                     SKStoreReviewController.requestReview(in: scene)
                     reviewTry += 1
                     appState.lastReviewRequestSetDate = Date()
-                    Analytics.logEvent(Event.leaveReviewShown, parameters: nil)
+                    AnalyticsService.shared.track(Event.leaveReviewShown)
                 }
             }
         }
@@ -612,7 +612,7 @@ struct DeclarationView: View {
                     SKStoreReviewController.requestReview(in: scene)
                     reviewTry += 1
                     appState.lastReviewRequestSetDate = Date()
-                    Analytics.logEvent(Event.leaveReviewShown, parameters: nil)
+                    AnalyticsService.shared.track(Event.leaveReviewShown)
                 }
             }
         }

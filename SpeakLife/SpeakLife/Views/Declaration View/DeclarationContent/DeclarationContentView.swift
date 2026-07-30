@@ -210,7 +210,7 @@ struct DeclarationContentView: View {
                 viewModel.setCurrent(declaration)
                 
                 // Track swipe event
-                Analytics.logEvent("swipe_affirmation", parameters: [
+                AnalyticsService.shared.track("swipe_affirmation", parameters: [
                     "declaration_id": declaration.id,
                     "declaration_index": newIndex,
                     "category": declaration.category

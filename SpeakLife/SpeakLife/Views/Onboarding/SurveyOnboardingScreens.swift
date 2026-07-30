@@ -330,7 +330,7 @@ struct SurveyQ1BurdenScreen: View {
             SurveyContinueButton(isEnabled: responses.heaviestBurden != nil, action: onContinue)
                 .padding(.top, 8).padding(.bottom, 36)
         }
-        .onAppear { Analytics.logEvent("survey_q1_shown", parameters: nil) }
+        .onAppear { AnalyticsService.shared.track("survey_q1_shown") }
     }
 }
 
@@ -383,7 +383,7 @@ struct SurveyQ2DurationScreen: View {
             SurveyContinueButton(isEnabled: responses.burdenDuration != nil, action: onContinue)
                 .padding(.top, 8).padding(.bottom, 36)
         }
-        .onAppear { Analytics.logEvent("survey_q2_shown", parameters: nil) }
+        .onAppear { AnalyticsService.shared.track("survey_q2_shown") }
     }
 }
 
@@ -424,7 +424,7 @@ struct SurveyMergedBarriersScreen: View {
             SurveyContinueButton(isEnabled: !responses.barriers.isEmpty, action: onContinue)
                 .padding(.top, 8).padding(.bottom, 36)
         }
-        .onAppear { Analytics.logEvent("survey_merged_barriers_shown", parameters: nil) }
+        .onAppear { AnalyticsService.shared.track("survey_merged_barriers_shown") }
     }
 }
 
@@ -505,7 +505,7 @@ struct SurveyInterstitialBScreen: View {
             .animation(.easeOut(duration: 0.5).delay(0.35), value: v)
         }
         .onAppear {
-            Analytics.logEvent("survey_interstitial_b_shown", parameters: nil)
+            AnalyticsService.shared.track("survey_interstitial_b_shown")
             withAnimation {
                 v = true
             }
@@ -547,7 +547,7 @@ struct SurveyQ5DeclarationExpScreen: View {
             Spacer()
         }
         .onAppear {
-            Analytics.logEvent("survey_q5_shown", parameters: nil)
+            AnalyticsService.shared.track("survey_q5_shown")
         }
     }
 }
@@ -651,7 +651,7 @@ struct SurveyGoalRevealScreen: View {
             .animation(.easeOut(duration: 0.4).delay(0.6), value: chv)
         }
         .onAppear {
-            Analytics.logEvent("survey_goal_reveal_shown", parameters: ["goal_word": goalWord.rawValue])
+            AnalyticsService.shared.track("survey_goal_reveal_shown", parameters: ["goal_word": goalWord.rawValue])
             withAnimation {
                 cv = true
             }
@@ -956,7 +956,7 @@ struct SurveyProductPositioningScreen: View {
                 .padding(.bottom, 36)
         }
         .onAppear {
-            Analytics.logEvent("survey_product_positioning_shown", parameters: nil)
+            AnalyticsService.shared.track("survey_product_positioning_shown")
             withAnimation(.easeOut(duration: 0.6)) {
                 v = true
             }
@@ -1013,7 +1013,7 @@ struct SurveyTakeAStandScreen: View {
         .contentShape(Rectangle())
         .onTapGesture { advance(isSkip: true) }
         .onAppear {
-            Analytics.logEvent("onboarding_takeAStand_view", parameters: nil)
+            AnalyticsService.shared.track("onboarding_takeAStand_view")
             withAnimation { line1Opacity = 1 }
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                 withAnimation { line2Opacity = 1 }
@@ -1029,7 +1029,7 @@ struct SurveyTakeAStandScreen: View {
         guard !hasAdvanced else { return }
         hasAdvanced = true
         let event = isSkip ? "onboarding_takeAStand_skip" : "onboarding_takeAStand_advance"
-        Analytics.logEvent(event, parameters: nil)
+        AnalyticsService.shared.track(event)
         onContinue()
     }
 }
@@ -1090,7 +1090,7 @@ struct SurveyCommitmentHoldScreen: View {
             }
         }
         .onAppear {
-            Analytics.logEvent("survey_commitment_hold_shown", parameters: nil)
+            AnalyticsService.shared.track("survey_commitment_hold_shown")
             withAnimation(.easeOut(duration: 0.6)) { appeared = true }
         }
     }
@@ -1208,7 +1208,7 @@ struct SurveyCommitmentHoldScreen: View {
             Spacer()
 
             SurveyContinueButton(label: "Let's Go →") {
-                Analytics.logEvent("survey_commitment_sealed", parameters: nil)
+                AnalyticsService.shared.track("survey_commitment_sealed")
                 onContinue()
             }
             .padding(.bottom, 36)

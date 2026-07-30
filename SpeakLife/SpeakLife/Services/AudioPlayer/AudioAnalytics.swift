@@ -20,7 +20,7 @@ final class AudioAnalytics {
     func trackFavoriteToggle(audio: AudioDeclaration, isFavorited: Bool) {
         let eventName = isFavorited ? Event.audioFavoriteTapped : Event.audioUnfavoriteTapped
         
-        Analytics.logEvent(eventName, parameters: [
+        AnalyticsService.shared.track(eventName, parameters: [
             "audio_id": audio.id,
             "audio_title": audio.title,
             "audio_category": audio.tag ?? "unknown",
@@ -33,7 +33,7 @@ final class AudioAnalytics {
     
     /// Track when favorited audio is played
     func trackFavoriteAudioPlayed(audio: AudioDeclaration, playSource: PlaySource = .favoritesList) {
-        Analytics.logEvent(Event.favoriteAudioPlayed, parameters: [
+        AnalyticsService.shared.track(Event.favoriteAudioPlayed, parameters: [
             "audio_id": audio.id,
             "audio_title": audio.title,
             "audio_category": audio.tag ?? "unknown",
@@ -46,7 +46,7 @@ final class AudioAnalytics {
     
     /// Track when favorites category is viewed
     func trackFavoritesCategoryViewed(favoritesCount: Int, sortOrder: FavoritesSortOrder = .dateAdded) {
-        Analytics.logEvent(Event.favoritesCategoryViewed, parameters: [
+        AnalyticsService.shared.track(Event.favoritesCategoryViewed, parameters: [
             "favorites_count": favoritesCount,
             "sort_order": sortOrder.rawValue,
             "view_timestamp": Date().iso8601String
@@ -56,7 +56,7 @@ final class AudioAnalytics {
     
     /// Track when favorited audio is shared
     func trackFavoriteAudioShared(audio: AudioDeclaration, shareMethod: ShareMethod) {
-        Analytics.logEvent(Event.favoriteAudioShared, parameters: [
+        AnalyticsService.shared.track(Event.favoriteAudioShared, parameters: [
             "audio_id": audio.id,
             "audio_title": audio.title,
             "audio_category": audio.tag ?? "unknown",
@@ -69,7 +69,7 @@ final class AudioAnalytics {
     
     /// Track when favorite is removed
     func trackFavoriteRemoved(audio: AudioDeclaration, removeSource: RemoveSource = .favoritesList) {
-        Analytics.logEvent(Event.favoriteAudioRemoved, parameters: [
+        AnalyticsService.shared.track(Event.favoriteAudioRemoved, parameters: [
             "audio_id": audio.id,
             "audio_title": audio.title,
             "audio_category": audio.tag ?? "unknown",
@@ -81,7 +81,7 @@ final class AudioAnalytics {
     
     /// Track when all favorites are cleared
     func trackFavoritesCleared(count: Int) {
-        Analytics.logEvent(Event.favoritesCleared, parameters: [
+        AnalyticsService.shared.track(Event.favoritesCleared, parameters: [
             "cleared_count": count,
             "clear_timestamp": Date().iso8601String
         ])
@@ -90,7 +90,7 @@ final class AudioAnalytics {
     
     /// Track favorites sorting behavior
     func trackFavoritesSorted(sortOrder: FavoritesSortOrder, favoritesCount: Int) {
-        Analytics.logEvent(Event.favoritesSorted, parameters: [
+        AnalyticsService.shared.track(Event.favoritesSorted, parameters: [
             "sort_order": sortOrder.rawValue,
             "favorites_count": favoritesCount,
             "sort_timestamp": Date().iso8601String
@@ -100,7 +100,7 @@ final class AudioAnalytics {
     
     /// Track favorites search behavior
     func trackFavoritesSearched(searchTerm: String, resultsCount: Int) {
-        Analytics.logEvent(Event.favoritesSearched, parameters: [
+        AnalyticsService.shared.track(Event.favoritesSearched, parameters: [
             "search_term": searchTerm.lowercased(),
             "results_count": resultsCount,
             "search_timestamp": Date().iso8601String
@@ -110,7 +110,7 @@ final class AudioAnalytics {
     
     /// Track when user replays a favorite audio
     func trackFavoriteAudioReplay(audio: AudioDeclaration) {
-        Analytics.logEvent(Event.favoriteAudioReplayStarted, parameters: [
+        AnalyticsService.shared.track(Event.favoriteAudioReplayStarted, parameters: [
             "audio_id": audio.id,
             "audio_title": audio.title,
             "audio_category": audio.tag ?? "unknown",
@@ -121,7 +121,7 @@ final class AudioAnalytics {
     
     /// Track favoriting from audio player
     func trackFavoriteFromPlayer(audio: AudioDeclaration, playbackProgress: Double) {
-        Analytics.logEvent(Event.favoriteFromPlayer, parameters: [
+        AnalyticsService.shared.track(Event.favoriteFromPlayer, parameters: [
             "audio_id": audio.id,
             "audio_title": audio.title,
             "audio_category": audio.tag ?? "unknown",
@@ -133,7 +133,7 @@ final class AudioAnalytics {
     
     /// Track unfavoriting from audio player
     func trackUnfavoriteFromPlayer(audio: AudioDeclaration, playbackProgress: Double) {
-        Analytics.logEvent(Event.unfavoriteFromPlayer, parameters: [
+        AnalyticsService.shared.track(Event.unfavoriteFromPlayer, parameters: [
             "audio_id": audio.id,
             "audio_title": audio.title,
             "audio_category": audio.tag ?? "unknown",
@@ -147,7 +147,7 @@ final class AudioAnalytics {
     
     /// Track comprehensive favorites session data
     func trackFavoritesSession(duration: TimeInterval, actionsPerformed: Int, audioPlayed: Int) {
-        Analytics.logEvent("favorites_session_completed", parameters: [
+        AnalyticsService.shared.track("favorites_session_completed", parameters: [
             "session_duration": duration,
             "actions_performed": actionsPerformed,
             "audio_played": audioPlayed,
@@ -158,7 +158,7 @@ final class AudioAnalytics {
     
     /// Track user behavior patterns for recommendations
     func trackFavoritesBehaviorPattern(categories: [String], averageListenDuration: TimeInterval) {
-        Analytics.logEvent("favorites_behavior_pattern", parameters: [
+        AnalyticsService.shared.track("favorites_behavior_pattern", parameters: [
             "favorite_categories": categories.joined(separator: ","),
             "avg_listen_duration": averageListenDuration,
             "pattern_timestamp": Date().iso8601String
@@ -170,7 +170,7 @@ final class AudioAnalytics {
     
     /// Track how users discover content they later favorite
     func trackDiscoveryToFavorite(audio: AudioDeclaration, discoverySource: DiscoverySource, timeToFavorite: TimeInterval) {
-        Analytics.logEvent("discovery_to_favorite", parameters: [
+        AnalyticsService.shared.track("discovery_to_favorite", parameters: [
             "audio_id": audio.id,
             "audio_title": audio.title,
             "discovery_source": discoverySource.rawValue,
@@ -181,7 +181,7 @@ final class AudioAnalytics {
     }
     
     func trackAudioFetch(audio: AudioDeclaration, discoverySource: DiscoverySource) {
-        Analytics.logEvent("audio_fetch", parameters: [
+        AnalyticsService.shared.track("audio_fetch", parameters: [
             "audio_id": audio.id,
             "audio_title": audio.title,
             "discovery_source": discoverySource.rawValue

@@ -81,7 +81,7 @@ struct CancelInterventionView: View {
         }
         .navigationViewStyle(.stack)
         .onAppear {
-            Analytics.logEvent("cancel_intervention_shown", parameters: [
+            AnalyticsService.shared.track("cancel_intervention_shown", parameters: [
                 "user_category": preferencesTracker.primaryCategory.rawValue
             ])
         }
@@ -117,7 +117,7 @@ struct CancelInterventionView: View {
                         ForEach(CancelReason.allCases, id: \.self) { reason in
                             Button(action: {
                                 selectedReason = reason
-                                Analytics.logEvent("cancel_reason_selected", parameters: ["reason": reason.rawValue as NSString])
+                                AnalyticsService.shared.track("cancel_reason_selected", parameters: ["reason": reason.rawValue as NSString])
                                 withAnimation { step = .retention }
                             }) {
                                 HStack {
@@ -142,7 +142,7 @@ struct CancelInterventionView: View {
 
             // Skip to confirm
             Button(action: {
-                Analytics.logEvent("cancel_skipped_reason", parameters: [:])
+                AnalyticsService.shared.track("cancel_skipped_reason", parameters: [:])
                 withAnimation { step = .confirm }
             }) {
                 Text("Skip & cancel anyway")
@@ -189,7 +189,7 @@ struct CancelInterventionView: View {
                 VStack(spacing: 12) {
                     // Stay button
                     Button(action: {
-                        Analytics.logEvent("cancel_intervention_retained", parameters: [
+                        AnalyticsService.shared.track("cancel_intervention_retained", parameters: [
                             "reason": reason.rawValue,
                             "step": "retention"
                         ])
@@ -205,7 +205,7 @@ struct CancelInterventionView: View {
 
                     // Proceed to discount offers
                     Button(action: {
-                        Analytics.logEvent("cancel_intervention_not_retained", parameters: ["reason": reason.rawValue])
+                        AnalyticsService.shared.track("cancel_intervention_not_retained", parameters: ["reason": reason.rawValue])
                         withAnimation { step = .discount }
                     }) {
                         Text("I still want to cancel")
@@ -241,7 +241,7 @@ struct CancelInterventionView: View {
             Spacer()
             VStack(spacing: 16) {
                 Button(action: {
-                    Analytics.logEvent("cancel_intervention_stayed_last_chance", parameters: [:])
+                    AnalyticsService.shared.track("cancel_intervention_stayed_last_chance", parameters: [:])
                     isPresented = false
                 }) {
                     Text("Actually, I'll stay")
@@ -252,7 +252,7 @@ struct CancelInterventionView: View {
                 .buttonStyle(PlainButtonStyle())
 
                 Button(action: {
-                    Analytics.logEvent("cancel_confirmed_proceed", parameters: [:])
+                    AnalyticsService.shared.track("cancel_confirmed_proceed", parameters: [:])
                     isPresented = false
                     onProceedToCancel()
                 }) {
@@ -332,7 +332,7 @@ struct CancelInterventionView: View {
             }
 
             Button(action: {
-                Analytics.logEvent("cancel_intervention_declined_discount", parameters: [:])
+                AnalyticsService.shared.track("cancel_intervention_declined_discount", parameters: [:])
                 withAnimation { step = .confirm }
             }) {
                 Text("No thanks, cancel my subscription")
@@ -405,14 +405,14 @@ struct CancelInterventionView: View {
         do {
             let success = try await subscriptionStore.purchase(product, paywallName: "cancel_intervention")
             if success {
-                Analytics.logEvent("cancel_intervention_discount_purchased", parameters: [
+                AnalyticsService.shared.track("cancel_intervention_discount_purchased", parameters: [
                     "product_id": product.id as NSString
                 ])
                 isPresented = false
             }
         } catch {
             purchaseError = "Purchase failed. Please try again."
-            Analytics.logEvent("cancel_intervention_discount_failed", parameters: [
+            AnalyticsService.shared.track("cancel_intervention_discount_failed", parameters: [
                 "product_id": product.id as NSString
             ])
         }

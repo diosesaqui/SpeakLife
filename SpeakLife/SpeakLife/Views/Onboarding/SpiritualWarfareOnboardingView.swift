@@ -198,7 +198,7 @@ struct SpiritualWarfareOnboardingView: View {
             setSelection()
             UIScrollView.appearance().isScrollEnabled = false
             setupAppearance()
-            Analytics.logEvent("SpiritualWarfareOnboardingStarted", parameters: nil)
+            AnalyticsService.shared.track("SpiritualWarfareOnboardingStarted")
         }
     }
 
@@ -305,7 +305,7 @@ struct SpiritualWarfareOnboardingView: View {
         
         if nextTab == .subscription {
             // Track pre-subscription analytics
-            Analytics.logEvent("SpiritualWarfare_PreSubscription", parameters: [
+            AnalyticsService.shared.track("SpiritualWarfare_PreSubscription", parameters: [
                 "identified_thoughts": userJourney.identifiedThoughts.joined(separator: ","),
                 "selected_benefit": userJourney.selectedBenefit,
                 "commitment": userJourney.commitment
@@ -365,20 +365,20 @@ struct SpiritualWarfareOnboardingView: View {
     func askNotificationPermission() {
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { success, error in
             if success {
-                Analytics.logEvent("notification_permission_granted", parameters: nil)
+                AnalyticsService.shared.track("notification_permission_granted")
                 advance()
             } else if let _ = error {
-                Analytics.logEvent("notification_permission_error", parameters: nil)
+                AnalyticsService.shared.track("notification_permission_error")
                 advance()
             } else {
-                Analytics.logEvent("notification_permission_denied", parameters: nil)
+                AnalyticsService.shared.track("notification_permission_denied")
                 advance()
             }
         }
     }
     
     private func endOnboarding() {
-        Analytics.logEvent("SpiritualWarfareOnboardingCompleted", parameters: [
+        AnalyticsService.shared.track("SpiritualWarfareOnboardingCompleted", parameters: [
             "identified_thoughts_count": userJourney.identifiedThoughts.count,
             "commitment": userJourney.commitment
         ])

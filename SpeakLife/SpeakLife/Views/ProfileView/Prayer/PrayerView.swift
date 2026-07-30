@@ -33,7 +33,7 @@ struct PrayerView: View {
                                     .padding()
                                     .onTapGesture {
                                         let prayerCategory = prayerViewModel.sectionData[index].title
-                                        Analytics.logEvent("\(prayerCategory) prayer tapped", parameters: nil)
+                                        AnalyticsService.shared.track("\(prayerCategory) prayer tapped")
                                     }
                             }
                         }

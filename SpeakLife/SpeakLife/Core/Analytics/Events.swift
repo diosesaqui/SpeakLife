@@ -108,12 +108,12 @@ extension Event {
     static func trackTikTokAppInstall() {
         // InstallApp is auto-tracked by SDK, but we can manually track it too
         TikTokBusiness.trackTTEvent(.init(eventName:"LaunchAPP"))
-        Analytics.logEvent("tiktok_app_install", parameters: nil)
+        AnalyticsService.shared.track("tiktok_app_install")
     }
     
     static func trackTikTokAppLaunch() {
         TikTokBusiness.trackTTEvent(.init(eventName: "LAUNCHAPP"))
-        Analytics.logEvent("tiktok_app_launch", parameters: nil)
+        AnalyticsService.shared.track("tiktok_app_launch")
     }
     
     static func trackTikTokPremiumPurchase(value: Double, currency: String = "USD") {
@@ -124,7 +124,7 @@ extension Event {
         TikTokBusiness.trackTTEvent(ttEvent)
         
         // Also log to Firebase with revenue
-        Analytics.logEvent("tiktok_purchase", parameters: [
+        AnalyticsService.shared.track("tiktok_purchase", parameters: [
             "value": value,
             "currency": currency
         ])
@@ -132,7 +132,7 @@ extension Event {
     
     static func trackTikTokContentView(contentType: String, contentId: String) {
         TikTokBusiness.trackTTEvent(.init(eventName:"ViewContent"))
-        Analytics.logEvent("tiktok_view_content", parameters: [
+        AnalyticsService.shared.track("tiktok_view_content", parameters: [
             "content_type": contentType,
             "content_id": contentId
         ])
@@ -140,7 +140,7 @@ extension Event {
     
     static func trackTikTokShare(contentType: String) {
         TikTokBusiness.trackTTEvent(.init(eventName:"Share"))
-        Analytics.logEvent("tiktok_share", parameters: [
+        AnalyticsService.shared.track("tiktok_share", parameters: [
             "content_type": contentType
         ])
     }
@@ -151,7 +151,7 @@ extension Event {
         if let category = category {
             params["category"] = category
         }
-        Analytics.logEvent("tiktok_engagement", parameters: params)
+        AnalyticsService.shared.track("tiktok_engagement", parameters: params)
     }
     
     // MARK: - Bible Events
@@ -160,7 +160,7 @@ extension Event {
         if let metadata = metadata {
             params.merge(metadata) { _, new in new }
         }
-        Analytics.logEvent(bibleVerseBookmarked, parameters: params)
+        AnalyticsService.shared.track(bibleVerseBookmarked, parameters: params)
     }
     
     static func trackHighlight(_ action: String, metadata: [String: Any]? = nil) {
@@ -168,6 +168,6 @@ extension Event {
         if let metadata = metadata {
             params.merge(metadata) { _, new in new }
         }
-        Analytics.logEvent(bibleVerseHighlighted, parameters: params)
+        AnalyticsService.shared.track(bibleVerseHighlighted, parameters: params)
     }
 }

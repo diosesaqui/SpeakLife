@@ -116,7 +116,7 @@ struct DemoExperienceView: View {
                                 
                                 // Mark demo as completed
                                 appState.hasCompletedDemo = true
-                                Analytics.logEvent("demo_declaration_spoken", parameters: nil)
+                                AnalyticsService.shared.track("demo_declaration_spoken")
                             }
                             
                             // Auto advance after celebration

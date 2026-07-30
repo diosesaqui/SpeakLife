@@ -219,7 +219,7 @@ struct CategoryChooserView: View {
                                 
                                 viewModel.choose(category) { success in
                                     if success {
-                                        Analytics.logEvent(Event.categoryChooserTapped, parameters: ["category": category.rawValue])
+                                        AnalyticsService.shared.track(Event.categoryChooserTapped, parameters: ["category": category.rawValue])
                                         self.presentationMode.wrappedValue.dismiss()
                                     }
                                 }
@@ -247,7 +247,7 @@ struct CategoryChooserView: View {
                                 
                                 viewModel.choose(category) { success in
                                     if success {
-                                        Analytics.logEvent(Event.categoryChooserTapped, parameters: ["category": category.rawValue])
+                                        AnalyticsService.shared.track(Event.categoryChooserTapped, parameters: ["category": category.rawValue])
                                         self.presentationMode.wrappedValue.dismiss()
                                     }
                                 }
@@ -276,8 +276,8 @@ struct CategoryChooserView: View {
                                 
                                 viewModel.choose(category) { success in
                                     if success {
-                                        Analytics.logEvent(Event.categoryChooserTapped, parameters: ["declaration_category": category.rawValue as NSString])
-                                        Analytics.logEvent(category.rawValue, parameters: nil)
+                                        AnalyticsService.shared.track(Event.categoryChooserTapped, parameters: ["declaration_category": category.rawValue as NSString])
+                                        AnalyticsService.shared.track(category.rawValue)
                                         self.presentationMode.wrappedValue.dismiss()
                                     }
                                 }

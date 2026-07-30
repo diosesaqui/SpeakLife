@@ -74,7 +74,7 @@ struct AbbasLoveView: View {
     @EnvironmentObject var appState: AppState
 
     init() {
-        Analytics.logEvent("LoveLetterOpened", parameters: nil)
+        AnalyticsService.shared.track("LoveLetterOpened")
     }
     var body: some View {
         GeometryReader { proxy in

@@ -185,7 +185,7 @@ struct GenericOnboardingScreen: View {
     private func handleContinue() {
         guard canContinue else { return }
         
-        Analytics.logEvent(content.analyticsEvent, parameters: [
+        AnalyticsService.shared.track(content.analyticsEvent, parameters: [
             "selections": selectedOptions.joined(separator: ",")
         ])
         

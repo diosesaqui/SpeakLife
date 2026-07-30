@@ -290,7 +290,7 @@ struct BreakthroughFlowView: View {
 
             await MainActor.run {
                 appState.hasPersonalDeclaration = false
-                Analytics.logEvent("personal_declaration_received", parameters: [
+                AnalyticsService.shared.track("personal_declaration_received", parameters: [
                     "days_believed": declaration.dayCount as NSNumber,
                     "shared_to_wall": shareToWall as NSNumber
                 ])

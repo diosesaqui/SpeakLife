@@ -18,7 +18,7 @@ struct QuizQuestionView: View {
         if quizCompleted {
             QuizCompletionView().onAppear {
                 progressManager.markQuizComplete(quizTitle)
-                Analytics.logEvent(quizTitle.replacingOccurrences(of: " ", with: ""), parameters: nil)
+                AnalyticsService.shared.track(quizTitle.replacingOccurrences(of: " ", with: ""))
             }
         } else if showExplanation {
                 if !isAnswerCorrect {

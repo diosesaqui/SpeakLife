@@ -53,7 +53,7 @@ struct SurveyOnboardingView: View {
             }
         }
         .ignoresSafeArea()
-        .onAppear { Analytics.logEvent("survey_onboarding_started", parameters: nil) }
+        .onAppear { AnalyticsService.shared.track("survey_onboarding_started") }
     }
 
     // Split into two @ViewBuilder properties to stay within SwiftUI's 10-branch ViewBuilder limit
@@ -119,7 +119,7 @@ struct SurveyOnboardingView: View {
 
     private func advance() {
         Juice.play(.tapLight)
-        Analytics.logEvent("survey_step_completed", parameters: ["step": currentStep.rawValue])
+        AnalyticsService.shared.track("survey_step_completed", parameters: ["step": currentStep.rawValue])
 
         switch currentStep {
         case .rating:
@@ -165,7 +165,7 @@ struct SurveyOnboardingView: View {
             appState.personalDeclarationTimeIndex = notifTime.startTimeIndex
         }
         appState.hasPersonalDeclaration = savedDeclaration != nil
-        Analytics.logEvent("survey_onboarding_completed", parameters: [
+        AnalyticsService.shared.track("survey_onboarding_completed", parameters: [
             "goal_word": goalWord.rawValue,
             "burden": responses.heaviestBurden?.rawValue ?? "unknown",
             "declaration_style": responses.primaryDeclarationStyle?.rawValue ?? "none",
@@ -177,7 +177,7 @@ struct SurveyOnboardingView: View {
 
     private func requestNotificationPermissionThenAdvanceToRating(categories: Set<DeclarationCategory>) {
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { granted, _ in
-            Analytics.logEvent("notification_permission", parameters: ["granted": granted, "source": "survey_onboarding"])
+            AnalyticsService.shared.track("notification_permission", parameters: ["granted": granted, "source": "survey_onboarding"])
             DispatchQueue.main.async {
                 appState.notificationEnabled = granted
                 if granted {

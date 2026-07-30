@@ -155,7 +155,7 @@ final class BibleChatAIService {
         let (data, response) = try await session.data(for: request)
         guard let http = response as? HTTPURLResponse else { throw BibleChatAIError.network }
         guard http.statusCode == 200 else {
-            Analytics.logEvent("bible_chat_http_error", parameters: ["status": http.statusCode])
+            AnalyticsService.shared.track("bible_chat_http_error", parameters: ["status": http.statusCode])
             throw BibleChatAIError.server
         }
 

@@ -112,7 +112,7 @@ struct StreamlinedSpiritualWarfareFlow: View {
         .preferredColorScheme(.dark)
         .onAppear {
             UIScrollView.appearance().isScrollEnabled = false
-            Analytics.logEvent("StreamlinedOnboarding_Started", parameters: nil)
+            AnalyticsService.shared.track("StreamlinedOnboarding_Started")
         }
     }
 
@@ -168,7 +168,7 @@ struct StreamlinedSpiritualWarfareFlow: View {
             UserPreferencesTracker.shared.trackCategorySelection(category.rawValue)
         }
 
-        Analytics.logEvent("onboarding_categories_selected", parameters: [
+        AnalyticsService.shared.track("onboarding_categories_selected", parameters: [
             "categories": categories.map { $0.rawValue }.joined(separator: ",") as NSString,
             "count": NSNumber(value: categories.count)
         ])
@@ -176,7 +176,7 @@ struct StreamlinedSpiritualWarfareFlow: View {
 
     func askNotificationPermission() {
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { success, error in
-            Analytics.logEvent("notification_permission", parameters: ["granted": success])
+            AnalyticsService.shared.track("notification_permission", parameters: ["granted": success])
             DispatchQueue.main.async {
                 appState.notificationEnabled = success
 
@@ -208,7 +208,7 @@ struct StreamlinedSpiritualWarfareFlow: View {
     }
 
     private func completeOnboarding() {
-       // Analytics.logEvent("StreamlinedOnboarding_Completed")
+       // AnalyticsService.shared.track("StreamlinedOnboarding_Completed")
         withAnimation {
             appState.isOnboarded = true
             LifecycleNotificationService.shared.scheduleLifecycleNotifications()

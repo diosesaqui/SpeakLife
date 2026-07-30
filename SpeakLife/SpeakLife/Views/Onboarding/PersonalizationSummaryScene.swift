@@ -123,7 +123,7 @@ struct PersonalizationSummaryScene: View {
                         colors: [.blue, .purple],
                         buttonTitle: "Continue →",
                         action: {
-                            Analytics.logEvent("PersonalizationSummaryDone", parameters: [
+                            AnalyticsService.shared.track("PersonalizationSummaryDone", parameters: [
                                 "categories_count": selectedCategories.count,
                                 "categories": selectedCategories.map { $0.rawValue }.joined(separator: ",")
                             ])
@@ -149,7 +149,7 @@ struct PersonalizationSummaryScene: View {
         }
         .onAppear {
             animateContent()
-            Analytics.logEvent("PersonalizationSummaryShown", parameters: nil)
+            AnalyticsService.shared.track("PersonalizationSummaryShown")
         }
     }
     

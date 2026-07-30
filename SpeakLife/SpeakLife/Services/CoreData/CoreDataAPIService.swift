@@ -57,9 +57,9 @@ final class CoreDataAPIService: APIService {
             do {
                 try await migrationManager.migrateLegacyData()
                 // Track that Core Data service was initialized successfully
-                Analytics.logEvent("core_data_service_initialized", parameters: [:])
+                AnalyticsService.shared.track("core_data_service_initialized", parameters: [:])
             } catch {
-                Analytics.logEvent("core_data_service_init_failed", parameters: [
+                AnalyticsService.shared.track("core_data_service_init_failed", parameters: [
                     "error": error.localizedDescription
                 ])
                 print("Migration failed: \(error)")

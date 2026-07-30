@@ -107,7 +107,7 @@ struct IntentsBarView: View {
     private func chooseWallPaper() {
         // Timer continues running - don't save
         self.isPresentingThemeChooser = true
-        Analytics.logEvent(Event.themeChangerTapped, parameters: nil)
+        AnalyticsService.shared.track(Event.themeChangerTapped)
     }
     
     private func presentDevotional() {
@@ -127,6 +127,6 @@ struct IntentsBarView: View {
     
     private func premiumView()  {
         self.isPresentingPremiumView = true
-        Analytics.logEvent(Event.tryPremiumTapped, parameters: nil)
+        AnalyticsService.shared.track(Event.tryPremiumTapped)
     }
 }

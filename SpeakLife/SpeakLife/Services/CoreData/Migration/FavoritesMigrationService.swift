@@ -126,7 +126,7 @@ final class FavoritesMigrationService {
         """)
         
         // Track migration analytics
-        Analytics.logEvent("favorites_migration_completed", parameters: [
+        AnalyticsService.shared.track("favorites_migration_completed", parameters: [
             "total_migrated": totalMigrated,
             "total_skipped": totalSkipped,
             "total_failed": totalFailed,

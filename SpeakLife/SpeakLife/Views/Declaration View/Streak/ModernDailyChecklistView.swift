@@ -192,7 +192,7 @@ struct ModernDailyChecklistView: View {
                         if !subscriptionStore.isPremium {
                             Button(action: {
                                 showPremium = true
-                                Analytics.logEvent(Event.tryPremiumTapped, parameters: ["source": "today_tab"])
+                                AnalyticsService.shared.track(Event.tryPremiumTapped, parameters: ["source": "today_tab"])
                             }) {
                                 Image(systemName: "crown.fill")
                                     .font(.system(size: 15, weight: .semibold))

@@ -102,7 +102,7 @@ struct CategoryButtonRow: View  {
     private func displayCategoryView() {
         if !subscriptionStore.isPremium {
             isPresentingPremiumView = true
-            Analytics.logEvent(Event.tryPremiumTapped, parameters: nil)
+            AnalyticsService.shared.track(Event.tryPremiumTapped)
         } else {
             isPresentingCategoryList = true
         }

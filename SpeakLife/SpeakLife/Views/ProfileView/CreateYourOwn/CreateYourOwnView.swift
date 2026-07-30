@@ -78,7 +78,7 @@ struct CreateYourOwnView: View {
         .onAppear()  {
             loadCreateOwn()
             refreshLocalDeclarations()
-            Analytics.logEvent(Event.createYourOwnTapped, parameters: nil)
+            AnalyticsService.shared.track(Event.createYourOwnTapped)
             
             // Force refresh in case CloudKit import happened
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {

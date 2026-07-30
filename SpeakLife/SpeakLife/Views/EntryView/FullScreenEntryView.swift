@@ -102,7 +102,7 @@ struct FullScreenEntryView: View {
             // Save confirmation overlay
             if showingSaveConfirmation {
                 SaveConfirmationView(contentType: contentType) {
-                    Analytics.logEvent(contentType.rawValue + "new_entry_saved", parameters: nil)
+                    AnalyticsService.shared.track(contentType.rawValue + "new_entry_saved")
                     dismiss()
                 }
                 .transition(.scale.combined(with: .opacity))
@@ -121,7 +121,7 @@ struct FullScreenEntryView: View {
             }
         }
         .onAppear {
-            Analytics.logEvent(contentType.rawValue + ".fullscreen_entry_view_appeared", parameters: nil)
+            AnalyticsService.shared.track(contentType.rawValue + ".fullscreen_entry_view_appeared")
         }
 
         .alert("Discard Changes?", isPresented: $showingDiscardAlert) {

@@ -384,7 +384,7 @@ struct OnboardingDailyBurstScreen: View {
             animateInDeclaration()
         }
         
-        Analytics.logEvent("Onboarding_DailyBurst_Started", parameters: nil)
+        AnalyticsService.shared.track("Onboarding_DailyBurst_Started")
     }
     
     private func resetAnimationStates() {
@@ -448,7 +448,7 @@ struct OnboardingDailyBurstScreen: View {
                 }
             }
             
-            Analytics.logEvent("Onboarding_DailyBurst_Declaration", parameters: [
+            AnalyticsService.shared.track("Onboarding_DailyBurst_Declaration", parameters: [
                 "index": currentDeclarationIndex + 1
             ])
         } else {
@@ -497,7 +497,7 @@ struct OnboardingDailyBurstScreen: View {
                 completionOpacity = 1
             }
             
-            Analytics.logEvent("Onboarding_DailyBurst_Completed", parameters: nil)
+            AnalyticsService.shared.track("Onboarding_DailyBurst_Completed")
         }
     }
 }

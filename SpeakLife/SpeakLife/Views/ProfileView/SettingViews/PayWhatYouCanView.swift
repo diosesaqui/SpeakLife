@@ -53,7 +53,7 @@ struct PayWhatYouCanView: View {
         }
         .onAppear {
             selectedProduct = allProducts.first
-            Analytics.logEvent("pay_what_you_can_viewed", parameters: nil)
+            AnalyticsService.shared.track("pay_what_you_can_viewed")
         }
         .alert("Purchase Error", isPresented: $isShowingError) {
             Button("OK", role: .cancel) {}
@@ -245,7 +245,7 @@ struct PayWhatYouCanView: View {
     private func makePurchase() {
         guard let product = selectedProduct else { return }
         Juice.play(.tapLight)
-        Analytics.logEvent("pay_what_you_can_tapped", parameters: [
+        AnalyticsService.shared.track("pay_what_you_can_tapped", parameters: [
             "product_id": product.id,
             "price": NSDecimalNumber(decimal: product.price).doubleValue
         ])

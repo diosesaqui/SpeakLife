@@ -48,7 +48,7 @@ final class LifecycleNotificationService {
             guard settings.authorizationStatus == .authorized else { return }
             self.scheduleAll(from: installDate)
             UserDefaults.standard.set(true, forKey: self.kLifecycleScheduled)
-            Analytics.logEvent("lifecycle_notifications_scheduled", parameters: [:])
+            AnalyticsService.shared.track("lifecycle_notifications_scheduled", parameters: [:])
         }
     }
 
@@ -73,7 +73,7 @@ final class LifecycleNotificationService {
             guard settings.authorizationStatus == .authorized else { return }
             self.scheduleAll(from: installDate)
             UserDefaults.standard.set(true, forKey: healFlag)
-            Analytics.logEvent("lifecycle_notifications_repaired", parameters: [:])
+            AnalyticsService.shared.track("lifecycle_notifications_repaired", parameters: [:])
         }
     }
 
@@ -193,7 +193,7 @@ final class LifecycleNotificationService {
             let request = UNNotificationRequest(identifier: id, content: content, trigger: trigger)
             self.center.add(request, withCompletionHandler: nil)
         }
-        Analytics.logEvent("streak_milestone_scheduled", parameters: ["streak": currentStreak])
+        AnalyticsService.shared.track("streak_milestone_scheduled", parameters: ["streak": currentStreak])
         return true
     }
 
@@ -255,7 +255,7 @@ final class LifecycleNotificationService {
             let request = UNNotificationRequest(identifier: "streak_break", content: content, trigger: trigger)
             self.center.add(request, withCompletionHandler: nil)
         }
-        Analytics.logEvent("streak_break_notification_scheduled", parameters: ["previous_streak": previousStreak])
+        AnalyticsService.shared.track("streak_break_notification_scheduled", parameters: ["previous_streak": previousStreak])
     }
 
     // MARK: - Lapsed Re-engagement
@@ -295,7 +295,7 @@ final class LifecycleNotificationService {
         let request = UNNotificationRequest(identifier: id, content: content, trigger: trigger)
         center.add(request) { error in
             if let error = error {
-                Analytics.logEvent("lifecycle_notification_error", parameters: ["id": id, "error": error.localizedDescription])
+                AnalyticsService.shared.track("lifecycle_notification_error", parameters: ["id": id, "error": error.localizedDescription])
             }
         }
     }
