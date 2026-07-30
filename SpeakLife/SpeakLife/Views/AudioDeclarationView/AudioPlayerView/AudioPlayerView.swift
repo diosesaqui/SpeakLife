@@ -64,7 +64,7 @@ struct AudioPlayerView: View {
                     // clipping the overflow off the trailing edge.
                     // Height is a minimum so content centres when there's room and
                     // scrolls when it's tight.
-                    .frame(width: proxy.size.width, minHeight: proxy.size.height)
+                    .frame(width: proxy.size.width, height: proxy.size.height)
                 }
             }
         }
