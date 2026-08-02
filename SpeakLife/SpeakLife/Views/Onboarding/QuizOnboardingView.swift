@@ -91,28 +91,6 @@ enum QuizSegment: String, CaseIterable {
         }
     }
 
-    var paywallHeadline: String {
-        switch self {
-        case .battlefieldMind:   return "Take every thought captive."
-        case .believerAuthority: return "Stop begging. Start agreeing."
-        case .alreadyYours:      return "Claim what's already yours."
-        case .hisHeart:          return "Hear Him speak love over you."
-        case .unsegmented:       return "Speak life today."
-        }
-    }
-
-    // Trial details live in the plan section below, so the subhead leads with the
-    // promise instead of repeating "Start your 3-day free trial."
-    var paywallSubheadline: String {
-        switch self {
-        case .battlefieldMind:   return "Speak truth before the next 3am wake-up."
-        case .believerAuthority: return "Speak God's Word with authority, every day."
-        case .alreadyYours:      return "Everything He's already given, claimed daily."
-        case .hisHeart:          return "Receive His love every single morning."
-        case .unsegmented:       return "Join \(SocialProof.believersCount) believers who do this daily."
-        }
-    }
-
     var primaryCategory: DeclarationCategory {
         switch self {
         case .battlefieldMind:   return .anxiety

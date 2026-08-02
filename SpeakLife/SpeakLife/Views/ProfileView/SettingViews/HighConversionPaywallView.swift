@@ -138,64 +138,54 @@ struct HighConversionPaywallView: View {
         SurveyPersonalizationEngine(goalWordRaw: appState.surveyGoalWord)
     }
 
-    /// Active quiz segment, if the user came through QuizOnboardingView (Treatment cohort).
-    /// Takes priority over survey copy because it reflects the specific ad-matched framing.
-    /// Returns nil for the `unsegmented` cohort so they fall through to the
-    /// surveyEngine-personalized headline (driven by their burden choice), which
-    /// is more specific than the generic "Speak life today" unsegmented copy.
-    private var quizSegment: QuizSegment? {
-        guard let seg = QuizSegment(rawValue: appState.onboardingSegment),
-              seg != .unsegmented else { return nil }
-        return seg
-    }
-
     /// Segment-tagged analytics property. Empty string when the user came through
     /// the Control onboarding so paywall events stay backward-compatible.
     private var segmentParam: String {
         appState.onboardingSegment
     }
 
-    /// True when the user just completed PersonalDeclaration in the onboarding
-    /// flow. This is the warmest emotional anchor in the funnel — they literally
-    /// spoke their own declaration aloud seconds ago. We reference that moment
-    /// in the paywall headline + subhead for max continuity.
-    private var hasFreshPersonalDeclaration: Bool {
-        if let belief = preferencesTracker.personalDeclarationBelief, !belief.isEmpty {
-            return true
-        }
-        return false
-    }
+    // MARK: - Transformation Headline
+    // Both layouts lead with the same promise: build faith, release it, and
+    // walk in divine health, peace, and provision. The headline names the
+    // transformation the subscription is actually for, rather than the burden
+    // the user arrived with or the feature list — so the clean-vs-dark A/B
+    // compares layout, not copy. Personalization stays below the fold in the
+    // value props (and in the subheadline, which speaks the same
+    // transformation through the goal the user came in for).
+    private static let transformationHeadline = "Build your faith. Release it."
+    private static let transformationSubheadline =
+        "Speak God's Word daily until you walk in divine health, peace, and provision."
 
-    /// Burden goal word (peace / healing / identity / etc.) — drives the
-    /// continuity subhead for personal-declaration users so the promise is
-    /// specific to what they actually need, not generic.
-    private var burdenStyleLabel: String? {
-        guard let goalWord = SurveyGoalWord(rawValue: appState.surveyGoalWord) else { return nil }
-        return goalWord.styleLabel.lowercased()
-    }
+    private var resolvedHeadline: String { Self.transformationHeadline }
 
-    /// Resolved copy priority:
-    /// 1. PersonalDeclaration continuity — emotionally warmest moment, names the promise
-    /// 2. Quiz segment — ad-match
-    /// 3. Survey engine — goal word personalization
-    /// 4. Category fallback
-    private var resolvedHeadline: String {
-        if hasFreshPersonalDeclaration {
-            return "Speak it daily until it comes to pass."
-        }
-        if let segment = quizSegment { return segment.paywallHeadline }
-        return surveyEngine.hasSurveyData ? surveyEngine.paywallCopy.headline : copy.headline
-    }
     private var resolvedSubheadline: String {
-        if hasFreshPersonalDeclaration {
-            if let burden = burdenStyleLabel {
-                return "Your \(burden) declaration — in your mouth every morning. Until you possess it."
-            }
-            return "Your declaration — in your mouth every morning. Until you possess it."
-        }
-        if let segment = quizSegment { return segment.paywallSubheadline }
-        return surveyEngine.hasSurveyData ? surveyEngine.paywallCopy.subheadline : copy.subheadline
+        goalTransformationSubheadline ?? Self.transformationSubheadline
     }
+
+    /// The transformation promise, led by the goal the user picked in
+    /// onboarding so it lands in the domain they actually came for. Every
+    /// variant still ends in the same place: health, peace, and provision.
+    /// nil when no goal was captured, which falls back to the general line.
+    private var goalTransformationSubheadline: String? {
+        guard let goalWord = SurveyGoalWord(rawValue: appState.surveyGoalWord) else { return nil }
+        switch goalWord {
+        case .peace:
+            return "Speak God's Word daily until peace rules your mind, and health and provision follow."
+        case .healing:
+            return "Speak God's Word daily until divine health fills your body, and peace and provision follow."
+        case .prosperity:
+            return "Speak God's Word daily until provision overflows, and divine health and peace follow."
+        case .identity:
+            return "Speak God's Word daily until you know who you are, and walk in health, peace, and provision."
+        case .confidence:
+            return "Speak God's Word daily until boldness rises, and you walk in health, peace, and provision."
+        case .purpose:
+            return "Speak God's Word daily until you walk out your calling in divine health, peace, and provision."
+        case .joy:
+            return "Speak God's Word daily until joy fills you, and you walk in health, peace, and provision."
+        }
+    }
+
     private var resolvedValueProps: [String] {
         surveyEngine.hasSurveyData ? surveyEngine.paywallCopy.valueProps.map { $0.title } : copy.valueProps
     }
