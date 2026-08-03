@@ -153,6 +153,42 @@ final class DailyChecklistTests: XCTestCase {
         XCTAssertLessThanOrEqual(day7Tasks.count, day30Tasks.count)
     }
     
+    func testListenTask_ShouldSurviveEveryPhase() {
+        // When: Walk one day out of each phase, well past the foundation week
+        for streakDay in [1, 7, 8, 15, 30, 31, 60, 100, 365] {
+            let tasks = TaskLibrary.getCoreTasksForStreak(streakDay)
+
+            // Then: Hearing the Word is a lifelong habit — the listen task is
+            // on the checklist every single day, not just days 1-7
+            XCTAssertTrue(tasks.contains { $0.id == "listen_audio" },
+                          "Listen task went missing on day \(streakDay)")
+            XCTAssertTrue(tasks.contains { $0.id == "complete_daily_burst" },
+                          "Burst task went missing on day \(streakDay)")
+        }
+    }
+
+    func testListenTask_ShouldOnlyAssignAnAudioDuringFoundationWeek() {
+        // When: Inside the foundation week
+        for day in 1...7 {
+            let listen = TaskLibrary.getCoreTasksForStreak(day).first { $0.id == "listen_audio" }
+
+            // Then: The task deep-links to that day's curated episode
+            XCTAssertNotNil(listen?.recommendedAudioId,
+                            "Day \(day) of the foundation week should recommend an audio")
+        }
+
+        // When: Past the foundation week
+        for day in [8, 20, 45, 120] {
+            let listen = TaskLibrary.getCoreTasksForStreak(day).first { $0.id == "listen_audio" }
+
+            // Then: The task stays, but goes open-ended — no assigned episode
+            XCTAssertNotNil(listen, "Day \(day) should still have a listen task")
+            XCTAssertNil(listen?.recommendedAudioId,
+                         "Day \(day) should not assign a specific audio")
+            XCTAssertEqual(listen?.navigationDestination, .audioTab)
+        }
+    }
+
     func testGetNewlyUnlockedTasks_ShouldReturnOnlyNewTasks() {
         // When: Get newly unlocked tasks between day 1 and day 7
         let newTasks = TaskLibrary.getNewlyUnlockedTasks(currentStreak: 7, previousStreak: 1)

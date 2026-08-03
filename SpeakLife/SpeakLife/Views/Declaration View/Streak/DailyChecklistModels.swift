@@ -982,6 +982,15 @@ struct TaskLibrary {
         return reordered
     }
 
+    /// The foundation habits that never graduate. Past the foundation week the
+    /// phase mixes narrow down to make room for growth/impact/mastery work, but
+    /// speaking (burst) and hearing (audio) are lifelong daily habits, not
+    /// first-week exercises — they stay on the checklist forever.
+    /// Order follows `foundationTasks`, not the id list.
+    private static func keepers(_ ids: [String]) -> [DailyTask] {
+        foundationTasks.filter { ids.contains($0.id) }
+    }
+
     /// - Parameter foundationAudioDay: The day (1-7) whose curated audio the
     ///   listen task should point at. Defaults to `streakDay`; the view model
     ///   passes the working day so the recommendation advances each calendar
@@ -992,7 +1001,7 @@ struct TaskLibrary {
         // Check if AI features are enabled for enhanced task generation
         if isAIEnabled() {
             let aiTasks = getAIEnhancedTasks(streakDay: streakDay, userCategories: userCategories)
-            return burstFirst(applyFoundationAudioPlan(to: aiTasks, day: audioDay))
+            return burstFirst(applyAudioPlan(to: aiTasks, day: audioDay))
         }
 
         // Standard task generation
@@ -1010,25 +1019,24 @@ struct TaskLibrary {
             
         case .growth:
             // Mix foundation and growth tasks
-            let foundation = Array(foundationTasks.prefix(2)) // Keep core habits
+            let foundation = keepers(["complete_daily_burst", "read_devotional", "listen_audio"])
             let growth = availableTasks.filter { $0.category == .growth }
-            tasks = foundation + Array(growth.prefix(2))
-            
+            tasks = foundation + Array(growth.prefix(1))
+
         case .impact:
             // Mix foundation, growth, and impact tasks
-            let foundation = Array(foundationTasks.prefix(1)) // Keep one core habit
+            let foundation = keepers(["complete_daily_burst", "listen_audio"])
             let growth = Array(growthTasks.filter { $0.minimumStreakDay <= streakDay }.prefix(1))
             let impact = availableTasks.filter { $0.category == .impact }
-            tasks = foundation + growth + Array(impact.prefix(2))
-            
+            tasks = foundation + growth + Array(impact.prefix(1))
+
         case .mastery:
             // Advanced combination with all categories
-            let foundation = Array(foundationTasks.prefix(1))
-            let growth = Array(growthTasks.filter { $0.minimumStreakDay <= streakDay }.prefix(1))
+            let foundation = keepers(["complete_daily_burst", "listen_audio"])
             let impact = Array(impactTasks.filter { $0.minimumStreakDay <= streakDay }.prefix(1))
             let mastery = availableTasks.filter { $0.category == .mastery }
 
-            tasks = foundation + growth + impact + Array(mastery.prefix(1))
+            tasks = foundation + impact + Array(mastery.prefix(1))
         }
         
         // Personalize tasks based on user categories
@@ -1036,9 +1044,10 @@ struct TaskLibrary {
             tasks = tasks.map { personalizeTask($0, for: userCategories) }
         }
 
-        // Foundation week override runs AFTER personalization so the curated
-        // day-by-day audio wins over the generic category title on days 1-7.
-        tasks = applyFoundationAudioPlan(to: tasks, day: audioDay)
+        // The audio plan runs AFTER personalization so the curated day-by-day
+        // pick (days 1-7) and the open-ended prompt (day 8+) both win over the
+        // generic category title.
+        tasks = applyAudioPlan(to: tasks, day: audioDay)
 
         // Burst must always be first — it's the only streak-earning task
         return burstFirst(tasks)
@@ -1046,17 +1055,27 @@ struct TaskLibrary {
 
     /// Days 1-7: points the listen task at that day's exact recommended audio
     /// (title, duration, and deep-link id) so the first week builds on a
-    /// curated sequence. Day 8+ has no recommendation and the tasks pass
-    /// through untouched, restoring the personalized category behavior.
-    private static func applyFoundationAudioPlan(to tasks: [DailyTask], day: Int) -> [DailyTask] {
-        guard let audio = FoundationAudioPlan.recommendation(forDay: day) else { return tasks }
+    /// curated sequence.
+    ///
+    /// Day 8+: the curated week is over, so the task goes open-ended — no
+    /// assigned episode, no deep link, just an invitation to play whatever
+    /// builds their faith today. The listen task itself never goes away; faith
+    /// keeps coming by hearing long after the foundation week ends.
+    private static func applyAudioPlan(to tasks: [DailyTask], day: Int) -> [DailyTask] {
+        let audio = FoundationAudioPlan.recommendation(forDay: day)
         return tasks.map { task in
             guard task.id == "listen_audio" else { return task }
             var audioTask = task
-            audioTask.title = audio.title
-            audioTask.description = "Day \(day) of 7: today's recommended audio for your foundation"
-            audioTask.estimatedMinutes = audio.durationMinutes
-            audioTask.recommendedAudioId = audio.audioId
+            if let audio {
+                audioTask.title = audio.title
+                audioTask.description = "Day \(day) of 7: today's recommended audio for your foundation"
+                audioTask.estimatedMinutes = audio.durationMinutes
+                audioTask.recommendedAudioId = audio.audioId
+            } else {
+                audioTask.title = "Listen to Grow Your Faith"
+                audioTask.description = "Play a favorite, or anything that builds your faith today"
+                audioTask.recommendedAudioId = nil
+            }
             return audioTask
         }
     }
@@ -1137,40 +1156,38 @@ struct TaskLibrary {
     private static func selectGrowthTasksWithAI(availableTasks: [DailyTask], userBehavior: [String: Any], streakDay: Int) -> [DailyTask] {
         // AI-enhanced growth task selection
         let baseGrowthTasks = availableTasks.filter { $0.category == .growth }
-        let foundationTasks = availableTasks.filter { $0.category == .foundation }
-        
+
         // AI determines optimal mix based on user progress
-        var tasks = Array(foundationTasks.prefix(2))
-        tasks.append(contentsOf: Array(baseGrowthTasks.prefix(2)))
-        
+        var tasks = keepers(["complete_daily_burst", "read_devotional", "listen_audio"])
+        tasks.append(contentsOf: Array(baseGrowthTasks.prefix(1)))
+
         return tasks
     }
-    
+
     private static func selectImpactTasksWithAI(availableTasks: [DailyTask], userBehavior: [String: Any], streakDay: Int) -> [DailyTask] {
         // AI-enhanced impact task selection
         let impactTasks = availableTasks.filter { $0.category == .impact }
         let growthTasks = availableTasks.filter { $0.category == .growth }
-        let foundationTasks = availableTasks.filter { $0.category == .foundation }
-        
+
         // AI balances challenge and foundation
-        var tasks = Array(foundationTasks.prefix(1))
-        tasks.append(contentsOf: Array(growthTasks.prefix(2)))
+        var tasks = keepers(["complete_daily_burst", "listen_audio"])
+        tasks.append(contentsOf: Array(growthTasks.prefix(1)))
         tasks.append(contentsOf: Array(impactTasks.prefix(1)))
-        
+
         return tasks
     }
-    
+
     private static func selectMasteryTasksWithAI(availableTasks: [DailyTask], userBehavior: [String: Any], streakDay: Int) -> [DailyTask] {
         // AI-enhanced mastery task selection
         let masteryTasks = availableTasks.filter { $0.category == .mastery }
         let impactTasks = availableTasks.filter { $0.category == .impact }
-        let growthTasks = availableTasks.filter { $0.category == .growth }
-        
-        // AI creates advanced spiritual practice combinations
-        var tasks = Array(growthTasks.prefix(1))
-        tasks.append(contentsOf: Array(impactTasks.prefix(2)))
+
+        // AI creates advanced spiritual practice combinations. Burst and audio
+        // ride along — a 100-day streak still needs the task that earns it.
+        var tasks = keepers(["complete_daily_burst", "listen_audio"])
+        tasks.append(contentsOf: Array(impactTasks.prefix(1)))
         tasks.append(contentsOf: Array(masteryTasks.prefix(1)))
-        
+
         return tasks
     }
     
