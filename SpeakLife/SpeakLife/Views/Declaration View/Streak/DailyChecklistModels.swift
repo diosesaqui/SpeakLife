@@ -637,8 +637,8 @@ struct TaskLibrary {
     static let foundationTasks: [DailyTask] = [
         DailyTask(
             id: "complete_daily_burst",
-            title: "Complete Daily Burst",
-            description: "Speak your 7 daily declarations to release your faith",
+            title: "Speak Your Daily Burst",
+            description: "Seven declarations out loud. This is how you release your faith.",
             icon: "bolt.circle.fill",
             category: .foundation,
             type: .speak,
@@ -719,8 +719,11 @@ struct TaskLibrary {
             }
             
         case "complete_daily_burst":
+            // Keep the "this is how you release your faith" signal in the
+            // personalized copy too — it's the whole point of the task, and
+            // naming the category shouldn't cost the user the reason.
             if let primaryCategory = topCategories.first {
-                personalizedTask.description = "Experience your 7 daily declarations with focus on \(formatCategoryName(primaryCategory))"
+                personalizedTask.description = "Seven \(formatCategoryName(primaryCategory)) declarations out loud. This is how you release your faith."
             }
             
         case "journal_insight":

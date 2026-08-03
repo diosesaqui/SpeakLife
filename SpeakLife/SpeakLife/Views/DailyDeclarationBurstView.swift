@@ -207,7 +207,7 @@ struct DailyDeclarationBurstView: View {
                         .font(DS.Typography.title)
                         .foregroundColor(.white)
 
-                    Text("Speak life over your day with 7 powerful declarations")
+                    Text("Seven declarations out loud. This is how you release your faith.")
                         .font(.system(size: 18))
                         .foregroundColor(.white.opacity(0.9))
                         .multilineTextAlignment(.center)
