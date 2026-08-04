@@ -1384,71 +1384,77 @@ private struct CloserPledgeScreen: View {
         ZStack(alignment: .top) {
             CloserHero(art: .pledge, height: size.height * 0.34)
 
-            ScrollView(showsIndicators: false) {
-                VStack(spacing: 0) {
-                    Spacer().frame(height: size.height * 0.27)
+            VStack(spacing: 0) {
+                ScrollView(showsIndicators: false) {
+                    VStack(spacing: 0) {
+                        Spacer().frame(height: size.height * 0.27)
 
-                    CloserHeadline(
-                        leading: "Get closer to God, ",
-                        highlight: "starting today",
-                        trailing: ".",
-                        size: 30
-                    )
-                    .padding(.horizontal, 26)
-                    .closerStagger(v, delay: 0.05)
+                        CloserHeadline(
+                            leading: "Get closer to God, ",
+                            highlight: "starting today",
+                            trailing: ".",
+                            size: 30
+                        )
+                        .padding(.horizontal, 26)
+                        .closerStagger(v, delay: 0.05)
 
-                    Spacer().frame(height: 16)
+                        Spacer().frame(height: 16)
 
-                    Text("The next thirty days, you speak His Word over \(burden.pledgePhrase) instead of hoping something changes. Here's what walks with you:")
-                        .font(.system(size: 15, weight: .regular, design: .rounded))
-                        .foregroundColor(.white.opacity(0.66))
-                        .multilineTextAlignment(.center)
-                        .lineSpacing(3)
-                        .padding(.horizontal, 28)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .closerStagger(v, delay: 0.12)
+                        Text("The next thirty days, you speak His Word over \(burden.pledgePhrase) instead of hoping something changes. Here's what walks with you:")
+                            .font(.system(size: 15, weight: .regular, design: .rounded))
+                            .foregroundColor(.white.opacity(0.66))
+                            .multilineTextAlignment(.center)
+                            .lineSpacing(3)
+                            .padding(.horizontal, 28)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .closerStagger(v, delay: 0.12)
 
-                    Spacer().frame(height: 22)
+                        Spacer().frame(height: 22)
 
-                    VStack(alignment: .leading, spacing: 14) {
-                        ForEach(Array(commitments.enumerated()), id: \.offset) { _, line in
-                            HStack(alignment: .top, spacing: 12) {
-                                Image(systemName: "checkmark")
-                                    .font(.system(size: 14, weight: .bold))
-                                    .foregroundColor(DS.Palette.gold)
-                                    .frame(width: 18)
-                                Text(line)
-                                    .font(.system(size: 16, weight: .regular, design: .rounded))
-                                    .foregroundColor(.white.opacity(0.92))
-                                    .fixedSize(horizontal: false, vertical: true)
-                                Spacer(minLength: 0)
+                        VStack(alignment: .leading, spacing: 14) {
+                            ForEach(Array(commitments.enumerated()), id: \.offset) { _, line in
+                                HStack(alignment: .top, spacing: 12) {
+                                    Image(systemName: "checkmark")
+                                        .font(.system(size: 14, weight: .bold))
+                                        .foregroundColor(DS.Palette.gold)
+                                        .frame(width: 18)
+                                    Text(line)
+                                        .font(.system(size: 16, weight: .regular, design: .rounded))
+                                        .foregroundColor(.white.opacity(0.92))
+                                        .fixedSize(horizontal: false, vertical: true)
+                                    Spacer(minLength: 0)
+                                }
                             }
                         }
+                        .padding(.horizontal, 30)
+                        .closerStagger(v, delay: 0.2)
+
+                        Spacer().frame(height: 24)
+
+                        CloserVerseCard(
+                            verse: "Come near to God and he will come near to you.",
+                            reference: "James 4:8"
+                        )
+                        .padding(.horizontal, 26)
+                        .closerStagger(v, delay: 0.28)
+
+                        Spacer().frame(height: 24)
                     }
-                    .padding(.horizontal, 30)
-                    .closerStagger(v, delay: 0.2)
-
-                    Spacer().frame(height: 24)
-
-                    CloserVerseCard(
-                        verse: "Come near to God and he will come near to you.",
-                        reference: "James 4:8"
-                    )
-                    .padding(.horizontal, 26)
-                    .closerStagger(v, delay: 0.28)
-
-                    Spacer().frame(height: 28)
-
-                    CloserCTAButton(label: "I'm In") {
-                        AnalyticsService.shared.track("closer_pledge_accepted", parameters: [
-                            "burden": burden.rawValue
-                        ])
-                        onContinue()
-                    }
-                    .closerStagger(v, delay: 0.34)
-
-                    Spacer().frame(height: CloserInsets.ctaBottom)
                 }
+
+                // Pinned OUTSIDE the scroll view, the way every other screen in
+                // this arm does it. Inside, the content ran just long enough to
+                // push it under the fold, so the arm's commitment beat needed a
+                // scroll before it could be tapped.
+                CloserCTAButton(label: "I'm In") {
+                    AnalyticsService.shared.track("closer_pledge_accepted", parameters: [
+                        "burden": burden.rawValue
+                    ])
+                    onContinue()
+                }
+                .padding(.top, 8)
+                .padding(.bottom, CloserInsets.ctaBottom)
+                .closerStagger(v, delay: 0.34)
             }
         }
         .onAppear {
