@@ -29,5 +29,9 @@ struct Constants {
     static let brightYellow = Color(red: 1.0, green: 0.835, blue: 0.310)
     static let navBlue = Color(hex: "#4DA6FF")
     static let SLBlue = Color(#colorLiteral(red: 0.1, green: 0.15, blue: 0.3, alpha: 1))
+    static let SLGold   = Color(red: 0xC9/255, green: 0xA2/255, blue: 0x27/255)  // accent
+    static let SLAmber  = Color(red: 0xE3/255, green: 0xA6/255, blue: 0x3C/255)  // highlight
+    static let SLPaper  = Color(red: 0xF2/255, green: 0xF0/255, blue: 0xEA/255)  // body text
+    static let SLMuted  = Color(red: 0x6E/255, green: 0x8C/255, blue: 0xC4/255)  // secondary text
 }
 
