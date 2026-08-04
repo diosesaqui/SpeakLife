@@ -293,7 +293,7 @@ struct HomeView: View {
 
                 } else {
                     // Onboarding A/B: quiz | product | identity | outcomes | warfare
-                    // | promises, selected by Remote Config `onboardingVariant`. Hold
+                    // | promises | closer, selected by Remote Config `onboardingVariant`. Hold
                     // the first render until Remote Config has activated so the LOCKED
                     // arm is the assigned experiment arm, not the in-app default — the
                     // race that put every fresh install into the baseline arm. Bounded
@@ -433,6 +433,9 @@ struct HomeView: View {
                 .ignoresSafeArea()
         case .promises:
             PromisesOnboardingView(size: UIScreen.main.bounds.size) { finishOnboarding() }
+                .ignoresSafeArea()
+        case .closer:
+            CloserOnboardingView(size: UIScreen.main.bounds.size) { finishOnboarding() }
                 .ignoresSafeArea()
         }
     }

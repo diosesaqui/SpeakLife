@@ -94,7 +94,7 @@ final class SubscriptionStore: ObservableObject {
     @Published var useQuizOnboarding = true
 
     // MARK: - Onboarding A/B variant (single switch for which flow shows)
-    // Remote Config key `onboardingVariant`: "quiz" | "product" | "identity" | "outcomes" | "warfare" | "promises".
+    // Remote Config key `onboardingVariant`: "quiz" | "product" | "identity" | "outcomes" | "warfare" | "promises" | "closer".
     // Empty/unset falls back to the legacy useQuizOnboarding boolean so live
     // users are unaffected until the string key is set in Remote Config.
     @Published var onboardingVariant: String = ""
@@ -110,7 +110,7 @@ final class SubscriptionStore: ObservableObject {
         UserDefaults.standard.string(forKey: SubscriptionStore.adOnboardingKey)
 
     enum OnboardingVariant: String {
-        case quiz, product, identity, outcomes, warfare, promises
+        case quiz, product, identity, outcomes, warfare, promises, closer
         init?(code: String) { self.init(rawValue: code.lowercased()) }
     }
 
@@ -178,6 +178,18 @@ final class SubscriptionStore: ObservableObject {
     // `onboardingRatingEnabled` to false in Remote Config and each flow skips
     // the rating step, advancing straight to the screen after it.
     @Published var onboardingRatingEnabled = true
+
+    // MARK: - Closer Arm Pledge Flag
+    // Isolates the one element of the `closer` arm that could plausibly go
+    // NEGATIVE. The "I'm In" pledge lands between the plan reveal and the
+    // paywall: it may convert via commitment-and-consistency, or it may
+    // discharge the very tension the paywall needs by handing the user a sense
+    // of completion one screen early. Splitting `closerPledgeEnabled` gives a
+    // cheap 2-cell inside the arm instead of spending a whole extra variant on
+    // it. Defaults true (registered in AppDelegate's Remote Config defaults);
+    // when false the flow advances straight from the plan reveal to the
+    // testimonial wall. Only the `closer` arm reads this.
+    @Published var closerPledgeEnabled = true
 
     // MARK: - High Conversion Paywall Flag
     @Published var useHighConversionPaywall = false
@@ -436,6 +448,7 @@ final class SubscriptionStore: ObservableObject {
         offerFreeTrial = remoteConfig["offerFreeTrial"].boolValue
         checklistHomeEnabled = remoteConfig["checklistHomeEnabled"].boolValue
         onboardingRatingEnabled = remoteConfig["onboardingRatingEnabled"].boolValue
+        closerPledgeEnabled = remoteConfig["closerPledgeEnabled"].boolValue
 
         // Enhanced Onboarding Toggle from Remote Config
         useEnhancedOnboarding = remoteConfig["useEnhancedOnboarding"].boolValue

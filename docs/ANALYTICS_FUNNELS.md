@@ -62,8 +62,8 @@ From finishing onboarding through to a paid conversion.
 The cross-variant experiment funnel. Every onboarding flow now fires a unified
 `onboarding_started` → `onboarding_finished` pair from `HomeView`, tagged with
 the chosen arm, so the variants (`product` / `identity` / `quiz` / `outcomes` /
-`warfare`, selected by Remote Config `onboardingVariant`) compare head-to-head.
-`warfare` is the default arm from app **v4.28+**.
+`warfare` / `promises` / `closer`, selected by Remote Config `onboardingVariant`)
+compare head-to-head. `warfare` is the default arm from app **v4.28+**.
 These route through `AnalyticsService`, so PostHog and Firebase both receive them.
 
 **PostHog insight:** [Onboarding A/B — Winner by Variant](https://us.posthog.com/project/455580/insights/QfVRKZ3H)
@@ -74,7 +74,7 @@ These route through `AnalyticsService`, so PostHog and Firebase both receive the
 | 2 | `onboarding_finished` | Completed onboarding |
 | 3 | `subscription_started` | Started a trial or paid sub |
 
-**Breakdown:** event property `variant` (`product` / `identity` / `quiz` / `outcomes` / `warfare`). Dynamic, so new arms appear automatically.
+**Breakdown:** event property `variant` (`product` / `identity` / `quiz` / `outcomes` / `warfare` / `promises` / `closer`). Dynamic, so new arms appear automatically.
 **Funnel settings:** conversion window `14 days`, order `ordered`.
 
 `onboarding_finished` also carries `converted` (bool) and `conversion_type`
@@ -95,6 +95,53 @@ arms' noise.
 
 > Populates from app **v4.28+** (when `warfare` is the default); reads zero until
 > warfare traffic lands.
+
+### 3b. The `closer` arm (visual-system test)
+
+`closer` is the first arm that changes the *look* rather than only the angle:
+a flat SpeakLife-navy canvas with full-bleed cinematic hero art, a segmented progress bar,
+full-width gold CTAs, two binary yes/no agreement screens in the front half, and
+an "I'm In" pledge screen between the plan reveal and the paywall. The quiz and
+the whole back-half are identical to `outcomes`, so a `closer` vs `outcomes` cut
+isolates the visual system + nearness angle, not funnel depth.
+
+Arm-specific events, useful for reading *where* it wins or loses:
+
+| Event | Properties | Why it matters |
+|-------|-----------|----------------|
+| `closer_scene_shown` | `scene` (`nearness` / `spoken`) | Front-half narrative reach |
+| `closer_agreement_shown` | `question` (`longing` / `drift`) | Agreement-ladder reach |
+| `closer_agreement_answered` | `question`, `answer` (`yes` / `no`) | Whether the ladder actually gets a yes |
+| `closer_growth_shown` | — | Proof-curve screen reach |
+| `closer_rhythm_shown` | — | Streak/reminder screen reach |
+| `closer_picker_shown` | — | Seeding-picker reach |
+| `closer_pledge_shown` / `closer_pledge_accepted` | `burden` | **Pledge take-rate — the arm's key novel step** |
+| `closer_step_completed` | `step`, `flow_schema` | Per-step drop-off |
+| `closer_onboarding_completed` | `wants_closer`, `has_drifted`, + the standard quiz fields | Completion + agreement mix |
+
+The one number worth watching beyond conversion: `closer_pledge_accepted` /
+`closer_pledge_shown`. If the pledge take-rate is high but paywall conversion is
+not, the commitment beat is landing and the *price* is the blocker, not the flow.
+
+#### The pledge cell (`closerPledgeEnabled`)
+
+The pledge is the one element of this arm that could plausibly go **negative** —
+it may convert through commitment-and-consistency, or it may discharge the
+tension the paywall runs on by handing the user a sense of completion one screen
+early. Rather than spend a whole extra variant on that question, it sits behind
+Remote Config `closerPledgeEnabled` (default `true`). Set it to `false` to run
+the no-pledge cell; the plan reveal then leads straight into the testimonial
+wall.
+
+`pledge_enabled` (bool) is stamped on `closer_onboarding_started`,
+`closer_step_completed`, and `closer_onboarding_completed`, so **break any
+`closer` funnel down by it** to read the two cells. It is stamped at funnel
+entry, not at the pledge, so users who drop before reaching the pledge still
+count into the right cell. The flag is frozen at the flow's first appearance, so
+a realtime Remote Config activation cannot move a user between cells mid-run.
+
+Split traffic within `closer` 50/50 to read it; leave it at the default if you
+only want the arm-vs-arm result first.
 
 ---
 
