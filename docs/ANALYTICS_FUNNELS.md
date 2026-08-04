@@ -99,7 +99,7 @@ arms' noise.
 ### 3b. The `closer` arm (visual-system test)
 
 `closer` is the first arm that changes the *look* rather than only the angle:
-pure-black canvas with full-bleed cinematic hero art, a segmented progress bar,
+a flat SpeakLife-navy canvas with full-bleed cinematic hero art, a segmented progress bar,
 full-width gold CTAs, two binary yes/no agreement screens in the front half, and
 an "I'm In" pledge screen between the plan reveal and the paywall. The quiz and
 the whole back-half are identical to `outcomes`, so a `closer` vs `outcomes` cut

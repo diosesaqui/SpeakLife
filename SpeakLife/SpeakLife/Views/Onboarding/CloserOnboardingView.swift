@@ -26,10 +26,12 @@
 //  Two things are deliberately different from the other arms, and they are the
 //  point of the test:
 //
-//    • Visual system. Pure-black canvas with full-bleed cinematic hero art
-//      dissolving into the background, a segmented progress bar, and full-width
+//    • Visual system. A flat SpeakLife-navy canvas with full-bleed cinematic
+//      hero art dissolving into it, a segmented progress bar, and full-width
 //      gold CTAs — instead of the shared blurred theme background, gold icon
-//      circles, and capsule buttons every other arm uses.
+//      circles, and capsule buttons every other arm uses. (The reference flow
+//      uses pure black; navy keeps the same cinematic contrast without the
+//      shared quiz screens reading as dead space, and stays on brand.)
 //    • Agreement ladder. Two binary yes/no micro-commitments in the front half
 //      instead of statement-only screens, so the user is saying yes before the
 //      quiz ever starts.
@@ -82,7 +84,7 @@ struct CloserOnboardingView: View {
 
     var body: some View {
         ZStack(alignment: .top) {
-            Color.black.ignoresSafeArea()
+            CloserTheme.canvas.ignoresSafeArea()
 
             currentStepView
                 .transition(.asymmetric(
@@ -98,7 +100,7 @@ struct CloserOnboardingView: View {
                         total: CloserStep.totalValueScreens(quizV2: quizV2)
                     )
                     .padding(.horizontal, 24)
-                    .padding(.top, size.height * 0.055)
+                    .padding(.top, CloserInsets.top + 12)
                     Spacer()
                 }
                 .allowsHitTesting(false)
@@ -365,6 +367,51 @@ enum CloserStep: Int, CaseIterable {
     static func totalValueScreens(quizV2: Bool) -> Int { quizV2 ? 15 : 14 }
 }
 
+// MARK: - Canvas + insets
+
+/// The arm's canvas. Built on the SpeakLife brand navy rather than the pure
+/// black the reference flow uses: black left the shared quiz screens (which
+/// draw white type with no background of their own) sitting on dead space, and
+/// it read as a different app rather than a different flow. The navy keeps the
+/// cinematic, high-contrast feel while staying unmistakably SpeakLife, and the
+/// amber CTA glow pops harder against it than it did against black.
+private enum CloserTheme {
+    static let canvasTop    = Color(hex: "#16213F")
+    static let canvasMid    = DS.Palette.deepBlue
+    static let canvasBottom = Color(hex: "#0A0F1F")
+
+    static let canvas = LinearGradient(
+        colors: [canvasTop, canvasMid, canvasBottom],
+        startPoint: .top, endPoint: .bottom
+    )
+}
+
+/// Window safe-area insets, read from UIKit.
+///
+/// HomeView applies `.ignoresSafeArea()` to every onboarding arm from the
+/// outside, which zeroes out the insets a SwiftUI GeometryReader would report
+/// in here — that is why the other arms position chrome with percentages of
+/// screen height. Those percentages predate the Dynamic Island: 5.5% of an
+/// iPhone 15 Pro's height is 47pt, which lands the progress bar underneath a
+/// 59pt status bar. Reading the window directly is stable across every device
+/// and is what keeps the bar and the CTAs clear of the hardware.
+private enum CloserInsets {
+    private static var keyWindow: UIWindow? {
+        UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .flatMap { $0.windows }
+            .first { $0.isKeyWindow }
+    }
+
+    /// Falls back to the common notch height if no window is available yet.
+    static var top: CGFloat { keyWindow?.safeAreaInsets.top ?? 47 }
+    static var bottom: CGFloat { keyWindow?.safeAreaInsets.bottom ?? 34 }
+
+    /// Standard bottom padding for a primary CTA: clear of the home indicator
+    /// on every device, comfortable on the ones without one.
+    static var ctaBottom: CGFloat { bottom + 24 }
+}
+
 // MARK: - Hero art
 
 /// The cinematic hero images this arm is built around. Each falls back to the
@@ -399,10 +446,10 @@ private struct CloserHero: View {
                     .resizable()
                     .aspectRatio(contentMode: .fill)
             } else {
-                // Asset not shipped yet — fall back to a neutral dark wash so
+                // Asset not shipped yet — fall back to a wash of the canvas so
                 // the screen still composes correctly.
                 LinearGradient(
-                    colors: [Color(hex: "#1A1A1E"), Color.black],
+                    colors: [CloserTheme.canvasTop, CloserTheme.canvasMid],
                     startPoint: .top, endPoint: .bottom
                 )
             }
@@ -410,11 +457,24 @@ private struct CloserHero: View {
         .frame(width: UIScreen.main.bounds.width, height: height)
         .clipped()
         .saturation(monochrome ? 0 : 1)
+        // Tint the lower half toward the canvas BEFORE fading it out. The art
+        // dissolves to black on its own, and black over navy would read as a
+        // smudge at the seam; tinting first makes the handoff invisible.
+        .overlay(
+            LinearGradient(
+                stops: [
+                    .init(color: .clear, location: 0.40),
+                    .init(color: CloserTheme.canvasMid.opacity(0.75), location: 0.80),
+                    .init(color: CloserTheme.canvasMid, location: 1.0)
+                ],
+                startPoint: .top, endPoint: .bottom
+            )
+        )
         .mask(
             LinearGradient(
                 stops: [
                     .init(color: .black, location: 0.0),
-                    .init(color: .black, location: 0.62),
+                    .init(color: .black, location: 0.55),
                     .init(color: .clear, location: 1.0)
                 ],
                 startPoint: .top, endPoint: .bottom
@@ -682,7 +742,7 @@ private struct CloserSceneScreen: View {
                 Spacer()
 
                 CloserCTAButton(label: scene.buttonLabel) { onContinue() }
-                    .padding(.bottom, 42)
+                    .padding(.bottom, CloserInsets.ctaBottom)
                     .closerStagger(v, delay: 0.36)
             }
         }
@@ -769,7 +829,7 @@ private struct CloserAgreementScreen: View {
                 Spacer()
 
                 CloserCTAButton(isEnabled: answer != nil) { onContinue() }
-                    .padding(.bottom, 42)
+                    .padding(.bottom, CloserInsets.ctaBottom)
             }
         }
         .onAppear {
@@ -917,7 +977,7 @@ private struct CloserGrowthScreen: View {
             Spacer()
 
             CloserCTAButton { onContinue() }
-                .padding(.bottom, 42)
+                .padding(.bottom, CloserInsets.ctaBottom)
                 .closerStagger(v, delay: 0.36)
         }
         .onAppear {
@@ -1049,7 +1109,7 @@ private struct CloserRhythmScreen: View {
             Spacer()
 
             CloserCTAButton { onContinue() }
-                .padding(.bottom, 42)
+                .padding(.bottom, CloserInsets.ctaBottom)
                 .closerStagger(v, delay: 0.44)
         }
         .onAppear {
@@ -1183,7 +1243,10 @@ private struct CloserPickerScreen: View {
         VStack(spacing: 0) {
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 22) {
-                    Spacer().frame(height: size.height * 0.11)
+                    // Clear the progress bar by a fixed amount rather than a
+                    // percentage of height — 11% of a tall phone left only ~20pt
+                    // of air under the bar.
+                    Spacer().frame(height: CloserInsets.top + 46)
 
                     VStack(spacing: 12) {
                         CloserHeadline(
@@ -1212,13 +1275,13 @@ private struct CloserPickerScreen: View {
                     .padding(.horizontal, 20)
                     .closerStagger(v, delay: 0.2)
 
-                    Spacer().frame(height: 8)
+                    Spacer().frame(height: 20)
                 }
             }
 
             CloserCTAButton(isEnabled: responses.heaviestBurden != nil, action: onContinue)
                 .padding(.top, 8)
-                .padding(.bottom, 42)
+                .padding(.bottom, CloserInsets.ctaBottom)
         }
         .onAppear {
             AnalyticsService.shared.track("closer_picker_shown")
@@ -1360,7 +1423,7 @@ private struct CloserPledgeScreen: View {
                     }
                     .closerStagger(v, delay: 0.34)
 
-                    Spacer().frame(height: 42)
+                    Spacer().frame(height: CloserInsets.ctaBottom)
                 }
             }
         }
