@@ -94,7 +94,7 @@ final class SubscriptionStore: ObservableObject {
     @Published var useQuizOnboarding = true
 
     // MARK: - Onboarding A/B variant (single switch for which flow shows)
-    // Remote Config key `onboardingVariant`: "quiz" | "product" | "identity" | "outcomes" | "warfare" | "promises".
+    // Remote Config key `onboardingVariant`: "quiz" | "product" | "identity" | "outcomes" | "warfare" | "promises" | "closer".
     // Empty/unset falls back to the legacy useQuizOnboarding boolean so live
     // users are unaffected until the string key is set in Remote Config.
     @Published var onboardingVariant: String = ""
@@ -110,7 +110,7 @@ final class SubscriptionStore: ObservableObject {
         UserDefaults.standard.string(forKey: SubscriptionStore.adOnboardingKey)
 
     enum OnboardingVariant: String {
-        case quiz, product, identity, outcomes, warfare, promises
+        case quiz, product, identity, outcomes, warfare, promises, closer
         init?(code: String) { self.init(rawValue: code.lowercased()) }
     }
 

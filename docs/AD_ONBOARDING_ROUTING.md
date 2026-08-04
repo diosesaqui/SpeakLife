@@ -23,7 +23,7 @@ experiment. The variant is **frozen** once onboarding appears
 (`lockOnboardingVariant`) so a late link can't swap the flow mid-run. An
 `onboarding_variant_assigned` event (`{ variant, source }`) fires for analytics.
 
-## The four variants
+## The variants
 
 | Ad creative angle / hook | `ob=` value |
 |---|---|
@@ -31,6 +31,9 @@ experiment. The variant is **frozen** once onboarding appears
 | "Peace in 60 seconds" / anxiety / the storm | `product` |
 | "Picture your breakthrough" / health, provision, peace, victory | `outcomes` |
 | "Answer 3 questions…" interactive hook | `quiz` |
+| "The enemy has been stealing from you" / the fight | `warfare` |
+| "God's promises have never failed" / trust and activate | `promises` |
+| "Feel closer to God" / drifted away, come back near | `closer` |
 
 ## Branch setup (one-time)
 
