@@ -131,6 +131,9 @@ final class AppDelegate: NSObject, MessagingDelegate {
             // Onboarding rating ask ships on; flip to false in Remote Config to
             // skip the rating step in every onboarding flow.
             "onboardingRatingEnabled": true as NSNumber,
+            // "I'm In" pledge inside the closer onboarding arm ships on; flip to
+            // false in Remote Config to run the arm's no-pledge cell.
+            "closerPledgeEnabled": true as NSNumber,
             // Personalized audio category ordering ships dark; flip to true in
             // Remote Config (or via the A/B test) to promote each user's
             // best-matching categories to the front of the audio filter row.

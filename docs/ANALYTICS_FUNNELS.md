@@ -123,6 +123,26 @@ The one number worth watching beyond conversion: `closer_pledge_accepted` /
 `closer_pledge_shown`. If the pledge take-rate is high but paywall conversion is
 not, the commitment beat is landing and the *price* is the blocker, not the flow.
 
+#### The pledge cell (`closerPledgeEnabled`)
+
+The pledge is the one element of this arm that could plausibly go **negative** —
+it may convert through commitment-and-consistency, or it may discharge the
+tension the paywall runs on by handing the user a sense of completion one screen
+early. Rather than spend a whole extra variant on that question, it sits behind
+Remote Config `closerPledgeEnabled` (default `true`). Set it to `false` to run
+the no-pledge cell; the plan reveal then leads straight into the testimonial
+wall.
+
+`pledge_enabled` (bool) is stamped on `closer_onboarding_started`,
+`closer_step_completed`, and `closer_onboarding_completed`, so **break any
+`closer` funnel down by it** to read the two cells. It is stamped at funnel
+entry, not at the pledge, so users who drop before reaching the pledge still
+count into the right cell. The flag is frozen at the flow's first appearance, so
+a realtime Remote Config activation cannot move a user between cells mid-run.
+
+Split traffic within `closer` 50/50 to read it; leave it at the default if you
+only want the arm-vs-arm result first.
+
 ---
 
 ## Key event reference

@@ -21,7 +21,10 @@
 //  personalization quiz the warfare/outcomes/promises arms run, and the proven
 //  back-half — with one insertion: an "I'm In" PLEDGE screen between the plan
 //  reveal and the social-proof wall, so the user makes an explicit commitment
-//  immediately before the ask.
+//  immediately before the ask. The pledge is remote-gated
+//  (`closerPledgeEnabled`), giving a 2-cell split inside the arm: it is the one
+//  element here that could plausibly go negative, since a sense of completion
+//  one screen early may discharge the tension the paywall runs on.
 //
 //  Two things are deliberately different from the other arms, and they are the
 //  point of the test:
@@ -80,6 +83,11 @@ struct CloserOnboardingView: View {
     @State private var quizV2Snapshot: Bool? = nil
     private var quizV2: Bool { quizV2Snapshot ?? subscriptionStore.useQuizV2 }
 
+    // Pledge cell, frozen the same way and for the same reason: a user must not
+    // be counted into one cell at funnel entry and then walk the other one.
+    @State private var pledgeEnabledSnapshot: Bool? = nil
+    private var pledgeEnabled: Bool { pledgeEnabledSnapshot ?? subscriptionStore.closerPledgeEnabled }
+
     private var valueScreenIndex: Int? { currentStep.valueScreenIndex(quizV2: quizV2) }
 
     var body: some View {
@@ -109,7 +117,12 @@ struct CloserOnboardingView: View {
         .ignoresSafeArea()
         .onAppear {
             if quizV2Snapshot == nil { quizV2Snapshot = subscriptionStore.useQuizV2 }
-            AnalyticsService.shared.track("closer_onboarding_started")
+            if pledgeEnabledSnapshot == nil { pledgeEnabledSnapshot = subscriptionStore.closerPledgeEnabled }
+            // Stamp the pledge cell at funnel entry so the two cells are
+            // separable even for users who drop before reaching the pledge.
+            AnalyticsService.shared.track("closer_onboarding_started", parameters: [
+                "pledge_enabled": pledgeEnabled as NSNumber
+            ])
         }
     }
 
@@ -222,7 +235,11 @@ struct CloserOnboardingView: View {
     private func advance() {
         Juice.play(.tapLight)
         // flow_schema 1 = original closer arc (nearness → pledge → paywall). Bump when step raw values are renumbered.
-        AnalyticsService.shared.track("closer_step_completed", parameters: ["step": currentStep.rawValue, "flow_schema": 1])
+        AnalyticsService.shared.track("closer_step_completed", parameters: [
+            "step": currentStep.rawValue,
+            "flow_schema": 1,
+            "pledge_enabled": pledgeEnabled as NSNumber
+        ])
 
         // Leaving the closeness picker: stamp the segment so downstream paywall
         // events carry a meaningful segment for this arm (quiz sets its own).
@@ -250,6 +267,12 @@ struct CloserOnboardingView: View {
             // Rating ask is remote-gated (onboardingRatingEnabled); when off,
             // skip straight past it to the next step.
             if CloserStep(rawValue: nextRaw) == .rating, !subscriptionStore.onboardingRatingEnabled {
+                nextRaw += 1
+            }
+            // Pledge is remote-gated (closerPledgeEnabled) so this arm can run a
+            // no-pledge cell; when off, the plan reveal leads straight into the
+            // testimonial wall.
+            if CloserStep(rawValue: nextRaw) == .pledge, !pledgeEnabled {
                 nextRaw += 1
             }
             guard let next = CloserStep(rawValue: nextRaw) else {
@@ -294,6 +317,7 @@ struct CloserOnboardingView: View {
             "victory_looks_like": responses.victoryOutcome ?? "unknown",
             "belief": responses.beliefLevel ?? "unknown",
             "quiz_version": quizV2 ? "v2" : "v1",
+            "pledge_enabled": pledgeEnabled as NSNumber,
             "flow_schema": 1,  // joins with closer_step_completed; bump when step raw values are renumbered
             "set_personal_declaration": (savedDeclaration != nil) as NSNumber
         ])
