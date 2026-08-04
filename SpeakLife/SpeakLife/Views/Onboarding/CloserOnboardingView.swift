@@ -726,12 +726,24 @@ private struct CloserSceneScreen: View {
     let onContinue: () -> Void
     @State private var v = false
 
+    private var hasArt: Bool { scene.art.assetName != nil }
+
     var body: some View {
         ZStack(alignment: .top) {
-            CloserHero(art: scene.art, height: size.height * 0.48)
+            if hasArt {
+                CloserHero(art: scene.art, height: size.height * 0.48)
+            }
 
             VStack(spacing: 0) {
-                Spacer().frame(height: size.height * 0.40)
+                // With hero art the copy is offset to sit below it. Without,
+                // that offset would open the screen on a half-height empty
+                // band, so the top spacer goes flexible and the copy centers
+                // against the Spacer above the CTA instead.
+                if hasArt {
+                    Spacer().frame(height: size.height * 0.40)
+                } else {
+                    Spacer(minLength: CloserInsets.top + 32)
+                }
 
                 VStack(spacing: 16) {
                     Text(scene.eyebrow)
@@ -825,12 +837,22 @@ private struct CloserAgreementScreen: View {
     let onContinue: () -> Void
     @State private var v = false
 
+    private var hasArt: Bool { question.art.assetName != nil }
+
     var body: some View {
         ZStack(alignment: .top) {
-            CloserHero(art: question.art, height: size.height * 0.52, monochrome: true)
+            if hasArt {
+                CloserHero(art: question.art, height: size.height * 0.52, monochrome: true)
+            }
 
             VStack(spacing: 0) {
-                Spacer().frame(height: size.height * 0.46)
+                // See CloserSceneScreen: fixed offset under the art, centered
+                // when there is no art to sit under.
+                if hasArt {
+                    Spacer().frame(height: size.height * 0.46)
+                } else {
+                    Spacer(minLength: CloserInsets.top + 32)
+                }
 
                 Text(question.question)
                     .font(.system(size: 27, weight: .bold, design: .rounded))
@@ -1372,6 +1394,8 @@ private struct CloserPledgeScreen: View {
     let onContinue: () -> Void
     @State private var v = false
 
+    private var hasArt: Bool { CloserArt.pledge.assetName != nil }
+
     private let commitments: [String] = [
         "Declarations written for what you're carrying",
         "Bible Chat when you need an answer tonight",
@@ -1382,12 +1406,15 @@ private struct CloserPledgeScreen: View {
 
     var body: some View {
         ZStack(alignment: .top) {
-            CloserHero(art: .pledge, height: size.height * 0.34)
+            if hasArt {
+                CloserHero(art: .pledge, height: size.height * 0.34)
+            }
 
             VStack(spacing: 0) {
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 0) {
-                        Spacer().frame(height: size.height * 0.27)
+                        // Reserve the hero band only when there is a hero.
+                        Spacer().frame(height: hasArt ? size.height * 0.27 : CloserInsets.top + 28)
 
                         CloserHeadline(
                             leading: "Get closer to God, ",
