@@ -27,27 +27,15 @@ struct PrayerWallView: View {
     @StateObject private var viewModel = PrayerWallViewModel()
     @ObservedObject private var appleSignIn = AppleSignInService.shared
 
-    @State private var selectedTab: PrayerTab
+    @State private var selectedTab: PrayerTab = .wall
     @State private var showPostForm = false
     @State private var showSignInPrompt = false
     @State private var agreementRequest: AgreementPresentationRequest?
 
-    /// - Parameter initialTab: The tab to land on when first shown. The
-    ///   notification reader's "See All SpeakLife Messages" CTA opens the
-    ///   Warrior Room straight onto Messages; everywhere else defaults to
-    ///   the prayer wall.
-    init(initialTab: PrayerTab = .wall) {
-        _selectedTab = State(initialValue: initialTab)
-    }
-
-    // "Messages" tab — broadcast messages from SpeakLife, read from Firestore
-    // so the full history is visible even to users who installed after a
-    // message was sent. Tapping a card opens the same RemoteMessageView
-    // reader (Amen CTA) that a notification tap shows.
-    @StateObject private var messagesViewModel = SpeakLifeMessagesViewModel()
-    @State private var selectedMessage: RemoteMessage?
-
-    enum PrayerTab { case wall, mine, messages }
+    // Broadcast messages from SpeakLife used to live here as a third segment,
+    // which buried them two taps deep. They now own a top-level dashboard tab
+    // (SpeakLifeInboxView).
+    enum PrayerTab { case wall, mine }
 
     var body: some View {
         NavigationView {
@@ -79,11 +67,7 @@ struct PrayerWallView: View {
                             .dsAppear(0.06)
                     }
 
-                    if selectedTab == .messages {
-                        SpeakLifeMessagesListView(viewModel: messagesViewModel) { message in
-                            selectedMessage = RemoteMessage(title: message.title, body: message.body)
-                        }
-                    } else if viewModel.isLoading && currentPosts.isEmpty {
+                    if viewModel.isLoading && currentPosts.isEmpty {
                         Spacer()
                         ProgressView()
                             .progressViewStyle(CircularProgressViewStyle(tint: .white))
@@ -104,20 +88,16 @@ struct PrayerWallView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    // Composer writes prayer posts — irrelevant on the
-                    // read-only Messages tab, so hide it there.
-                    if selectedTab != .messages {
-                        Button {
-                            if appleSignIn.isSignedIn {
-                                showPostForm = true
-                            } else {
-                                showSignInPrompt = true
-                            }
-                        } label: {
-                            Image(systemName: "square.and.pencil")
-                                .foregroundColor(.white)
-                                .font(.system(size: 18, weight: .medium))
+                    Button {
+                        if appleSignIn.isSignedIn {
+                            showPostForm = true
+                        } else {
+                            showSignInPrompt = true
                         }
+                    } label: {
+                        Image(systemName: "square.and.pencil")
+                            .foregroundColor(.white)
+                            .font(.system(size: 18, weight: .medium))
                     }
                 }
             }
@@ -131,9 +111,6 @@ struct PrayerWallView: View {
         .sheet(isPresented: $showSignInPrompt) {
             AppleSignInPromptView(appleSignIn: appleSignIn)
                 .environmentObject(subscriptionStore)
-        }
-        .sheet(item: $selectedMessage) { message in
-            RemoteMessageView(message: message)
         }
         .sheet(item: $agreementRequest) { request in
             AgreementPromptSheet(
@@ -176,7 +153,6 @@ struct PrayerWallView: View {
         HStack(spacing: 0) {
             tabButton("Warrior Room", tab: .wall)
             tabButton("My Prayers", tab: .mine)
-            tabButton("Messages", tab: .messages)
         }
         .background(Color.white.opacity(0.12))
         .clipShape(RoundedRectangle(cornerRadius: 10))
@@ -206,10 +182,6 @@ struct PrayerWallView: View {
         switch selectedTab {
         case .wall: return viewModel.posts
         case .mine: return viewModel.myPosts
-        // The Messages tab renders its own content; an exhaustive switch
-        // keeps any future consumer of currentPosts from silently reading
-        // My Prayers data while Messages is showing.
-        case .messages: return []
         }
     }
 

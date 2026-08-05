@@ -56,7 +56,7 @@ class TabViewModel: ObservableObject {
             0: "today_checklist",
             1: "audio",
             2: "declarations",
-            4: "bible_chat",
+            4: "inbox",
             5: "profile"
         ]
         
@@ -109,8 +109,8 @@ struct HomeView: View {
     @State private var celebrationStreakCount = 0
     @State private var anniversaryMilestone: PremiumAnniversaryMilestone?
     @State private var yearInReviewStats: YearInReviewStats?
-    // The Warrior Room's Messages tab, presented from the remote-message
-    // reader's "See All SpeakLife Messages" CTA.
+    // The Inbox, presented from the remote-message reader's
+    // "See All SpeakLife Messages" CTA.
     @State private var showSpeakLifeMessages = false
 
     private let currentVersion = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0.0"
@@ -375,11 +375,10 @@ struct HomeView: View {
             .sheet(item: $appState.remoteMessage) { message in
                 RemoteMessageView(message: message) {
                     // "See All SpeakLife Messages": close the reader, then
-                    // surface the Community Messages history. Presented as a
-                    // sheet (not a tab switch) because the Warrior Room only
-                    // occupies a tab slot when Bible Chat is disabled — this
-                    // works in every layout, matching the Today tab's
-                    // Community quick action.
+                    // surface the Inbox history. Presented as a sheet rather
+                    // than a tab switch so it still lands correctly when the
+                    // reader was opened over onboarding or the landing window,
+                    // before the tab bar exists.
                     AnalyticsService.shared.track("speaklife_messages_opened", parameters: [
                         "source": "notification_reader"
                     ])
@@ -389,11 +388,10 @@ struct HomeView: View {
                     }
                 }
             }
-            // The Warrior Room opened straight onto its Messages tab, reached
-            // from the reader CTA above (must be a separate presentation so it
-            // can appear after the reader sheet has dismissed).
+            // The Inbox, reached from the reader CTA above (must be a separate
+            // presentation so it can appear after the reader sheet dismisses).
             .sheet(isPresented: $showSpeakLifeMessages) {
-                PrayerWallView(initialTab: .messages)
+                SpeakLifeInboxView()
                     .environmentObject(subscriptionStore)
             }
 
@@ -546,15 +544,12 @@ struct HomeView: View {
                     // one tap away and is what the Daily Burst opens into.
                     dailyChecklistView
                     declarationTab(tag: 2, title: "Speak")
-                    // Bible Chat sits in the CENTER slot (most-tapped real estate);
-                    // enableAIFeatures kill-switch falls back to Warrior Room when off.
-                    if subscriptionStore.enableAIFeatures || BibleChatLocal.isDebug {
-                        bibleChatTabView
-                    } else {
-                        communityView
-                    }
+                    // Inbox sits in the CENTER slot (most-tapped real estate) —
+                    // it took over from Bible Chat, which is still reachable from
+                    // the Today tile and the Bible reader.
+                    speakLifeInboxView
                     // Audio follows the center slot. Visual order only — tags are
-                    // unchanged (audio=1, bibleChat=4) so routing (goToAudio, deep
+                    // unchanged (audio=1, inbox=4) so routing (goToAudio, deep
                     // links) and analytics (trackTabNavigation) still resolve.
                     audioView
                     // createYourOwnView dropped from this layout's bar to stay within
@@ -565,11 +560,7 @@ struct HomeView: View {
                     // feed-as-home layout so we can roll back if complaints spike.
                     declarationTab(tag: 0, title: "Home")
                     audioView
-                    if subscriptionStore.enableAIFeatures || BibleChatLocal.isDebug {
-                        bibleChatTabView
-                    } else {
-                        communityView
-                    }
+                    speakLifeInboxView
                     createYourOwnView
                     profileView
                 }
@@ -739,6 +730,9 @@ struct HomeView: View {
 //            }
 //    }
     
+    // Not currently in the tab bar — the Inbox took the slot. The Warrior Room
+    // is reached from the Today checklist tile and Profile. Kept so it can be
+    // dropped back into a slot without rebuilding it.
     var communityView: some View {
         PrayerWallView()
             .tag(4)
@@ -754,13 +748,17 @@ struct HomeView: View {
             }
     }
 
-    var bibleChatTabView: some View {
-        BibleChatConversationView()
+    // The Inbox owns the center slot. Broadcast messages used to be a third
+    // segment inside the Warrior Room — two taps deep and rarely found — so
+    // they were promoted to their own tab. Bible Chat gave up this slot but is
+    // still one tap away from the Today checklist tile and the Bible reader.
+    var speakLifeInboxView: some View {
+        SpeakLifeInboxView()
             .tag(4) // keep tag 4 so existing deep-links/selection still resolve
             .tabItem {
-                Image(systemName: "bubble.left.and.text.bubble.right.fill")
+                Image(systemName: "envelope.fill")
                     .renderingMode(.original)
-                Text("Bible Chat")
+                Text("Inbox")
             }
     }
     

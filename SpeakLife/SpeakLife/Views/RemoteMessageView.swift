@@ -21,8 +21,8 @@ struct RemoteMessage: Identifiable {
     let title: String
     let body: String
 
-    /// Direct construction — used by the Community "Messages" tab, which
-    /// reads past broadcasts from Firestore rather than a push payload.
+    /// Direct construction — used by the Inbox tab, which reads past
+    /// broadcasts from Firestore rather than a push payload.
     init(title: String, body: String) {
         self.title = title
         self.body = body
@@ -60,10 +60,9 @@ struct RemoteMessageView: View {
     let message: RemoteMessage
 
     /// When set, a secondary "See All SpeakLife Messages" CTA appears under
-    /// Amen. The owner dismisses this reader and surfaces the Community
-    /// Messages tab so the user can discover every past broadcast. Left nil
-    /// when the reader is opened FROM that Messages tab (they're already
-    /// there).
+    /// Amen. The owner dismisses this reader and surfaces the Inbox so the
+    /// user can discover every past broadcast. Left nil when the reader is
+    /// opened FROM the Inbox (they're already there).
     var onSeeAllMessages: (() -> Void)? = nil
 
     @Environment(\.dismiss) private var dismiss
