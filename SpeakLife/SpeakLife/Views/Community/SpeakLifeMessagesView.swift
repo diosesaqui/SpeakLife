@@ -157,31 +157,37 @@ struct SpeakLifeInboxView: View {
 
     var body: some View {
         NavigationView {
-            ZStack {
-                Image(subscriptionStore.onboardingBGImage)
-                    .resizable()
-                    .scaledToFill()
-                    .frame(width: UIScreen.main.bounds.width,
-                           height: UIScreen.main.bounds.height)
-                    .clipped()
-                    .ignoresSafeArea()
+            VStack(spacing: 0) {
+                header
+                    .padding(.horizontal, DS.Spacing.lg)
+                    .padding(.top, DS.Spacing.xs)
+                    .padding(.bottom, DS.Spacing.sm)
+                    .dsAppear(0)
 
-                Color.black.opacity(0.50)
-                    .ignoresSafeArea()
-
-                VStack(spacing: 0) {
-                    header
-                        .padding(.horizontal, DS.Spacing.lg)
-                        .padding(.top, DS.Spacing.xs)
-                        .padding(.bottom, DS.Spacing.sm)
-                        .dsAppear(0)
-
-                    SpeakLifeMessagesListView(viewModel: viewModel) { message in
-                        selectedMessage = RemoteMessage(title: message.title,
-                                                        body: message.body)
-                    }
+                SpeakLifeMessagesListView(viewModel: viewModel) { message in
+                    selectedMessage = RemoteMessage(title: message.title,
+                                                    body: message.body)
                 }
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            // The backdrop is a .background modifier rather than a ZStack
+            // sibling so only IT bleeds under the status and nav bars. As a
+            // sibling its .ignoresSafeArea() grew the whole stack, which
+            // pulled the content up until the inline title drew on top of the
+            // first card.
+            .background(
+                ZStack {
+                    Image(subscriptionStore.onboardingBGImage)
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: UIScreen.main.bounds.width,
+                               height: UIScreen.main.bounds.height)
+                        .clipped()
+
+                    Color.black.opacity(0.50)
+                }
+                .ignoresSafeArea()
+            )
             .navigationTitle("Inbox")
             .navigationBarTitleDisplayMode(.inline)
             .toolbarColorScheme(.dark, for: .navigationBar)
