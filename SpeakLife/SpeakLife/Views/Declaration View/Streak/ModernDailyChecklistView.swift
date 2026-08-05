@@ -25,6 +25,7 @@ struct ModernDailyChecklistView: View {
     @State private var showInfoSheet = false
     @State private var showDevotional = false
     @State private var showBibleChat = false
+    @State private var showInbox = false
     @State private var showJournal = false
     @State private var showWarriorRoom = false
     @State private var showCreateYourOwn = false
@@ -314,8 +315,11 @@ struct ModernDailyChecklistView: View {
                                                 tint: Color(hex: "#7C3AED"), action: openBurst)
                                 QuickActionTile(icon: "book.fill", label: "Devotional",
                                                 tint: Color(hex: "#0EA5E9")) { showDevotional = true }
-                                QuickActionTile(icon: "bubble.left.and.text.bubble.right.fill", label: "Bible Chat",
-                                                tint: Color(hex: "#059669")) { showBibleChat = true }
+                                // Bible Chat owns its own tab, so this slot goes
+                                // to the Inbox instead — broadcast messages had
+                                // no surface of their own until now.
+                                QuickActionTile(icon: "envelope.fill", label: "Inbox",
+                                                tint: Color(hex: "#059669")) { showInbox = true }
                             }
                             HStack(spacing: 10) {
                                 QuickActionTile(icon: "pencil.and.scribble", label: "Journal",
@@ -429,13 +433,21 @@ struct ModernDailyChecklistView: View {
             DevotionalView(viewModel: devotionalViewModel)
         }
         .sheet(isPresented: $showBibleChat) {
-            // The conversational Bible Chat (not the topic picker). Inject the
-            // env objects explicitly since SwiftUI doesn't reliably propagate
-            // them across the sheet hop.
+            // The conversational Bible Chat (not the topic picker). Still reached
+            // from a daily task's .bibleChat destination even though the quick
+            // action now points at the Inbox. Inject the env objects explicitly
+            // since SwiftUI doesn't reliably propagate them across the sheet hop.
             BibleChatConversationView()
                 .environmentObject(subscriptionStore)
                 .environmentObject(appState)
                 .environmentObject(declarationStore)
+        }
+        // Inbox — every message SpeakLife has broadcast. subscriptionStore
+        // injected explicitly since SwiftUI doesn't reliably propagate env
+        // objects across the sheet hop.
+        .sheet(isPresented: $showInbox) {
+            SpeakLifeInboxView()
+                .environmentObject(subscriptionStore)
         }
         .sheet(isPresented: $showJournal) {
             JournalEntrySheet(category: getUserTopCategories().first)

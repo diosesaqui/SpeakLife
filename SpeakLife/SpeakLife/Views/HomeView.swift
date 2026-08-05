@@ -109,8 +109,8 @@ struct HomeView: View {
     @State private var celebrationStreakCount = 0
     @State private var anniversaryMilestone: PremiumAnniversaryMilestone?
     @State private var yearInReviewStats: YearInReviewStats?
-    // The Warrior Room's Messages tab, presented from the remote-message
-    // reader's "See All SpeakLife Messages" CTA.
+    // The Inbox, presented from the remote-message reader's
+    // "See All SpeakLife Messages" CTA.
     @State private var showSpeakLifeMessages = false
 
     private let currentVersion = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0.0"
@@ -375,11 +375,10 @@ struct HomeView: View {
             .sheet(item: $appState.remoteMessage) { message in
                 RemoteMessageView(message: message) {
                     // "See All SpeakLife Messages": close the reader, then
-                    // surface the Community Messages history. Presented as a
-                    // sheet (not a tab switch) because the Warrior Room only
-                    // occupies a tab slot when Bible Chat is disabled — this
-                    // works in every layout, matching the Today tab's
-                    // Community quick action.
+                    // surface the Inbox history. Presented as a sheet rather
+                    // than a tab switch so it still lands correctly when the
+                    // reader was opened over onboarding or the landing window,
+                    // before the tab bar exists.
                     AnalyticsService.shared.track("speaklife_messages_opened", parameters: [
                         "source": "notification_reader"
                     ])
@@ -389,11 +388,10 @@ struct HomeView: View {
                     }
                 }
             }
-            // The Warrior Room opened straight onto its Messages tab, reached
-            // from the reader CTA above (must be a separate presentation so it
-            // can appear after the reader sheet has dismissed).
+            // The Inbox, reached from the reader CTA above (must be a separate
+            // presentation so it can appear after the reader sheet dismisses).
             .sheet(isPresented: $showSpeakLifeMessages) {
-                PrayerWallView(initialTab: .messages)
+                SpeakLifeInboxView()
                     .environmentObject(subscriptionStore)
             }
 

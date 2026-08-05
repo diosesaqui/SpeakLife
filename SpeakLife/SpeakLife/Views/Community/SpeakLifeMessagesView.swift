@@ -2,13 +2,15 @@
 //  SpeakLifeMessagesView.swift
 //  SpeakLife
 //
-//  "Messages" tab in the Community (Warrior Room) section — a public
-//  timeline of every broadcast message sent through the sendPersonalMessage
-//  Cloud Function. The function writes each allUsers broadcast to the
-//  `speakLifeMessages` Firestore collection, so the history is visible to
-//  every user, including those who installed after a message was sent or
-//  never tapped its push notification. Tapping a card opens the same
-//  RemoteMessageView sheet (with the Amen CTA) a notification tap shows.
+//  The "Inbox" — a public timeline of every broadcast message sent through
+//  the sendPersonalMessage Cloud Function. The function writes each allUsers
+//  broadcast to the `speakLifeMessages` Firestore collection, so the history
+//  is visible to every user, including those who installed after a message
+//  was sent or never tapped its push notification. Tapping a card opens the
+//  same RemoteMessageView sheet (with the Amen CTA) a notification tap shows.
+//
+//  This used to be a third segment inside the Warrior Room, which buried it
+//  two taps deep. It now owns a top-level dashboard tab (SpeakLifeInboxView).
 //
 
 import SwiftUI
@@ -142,11 +144,68 @@ class SpeakLifeMessagesViewModel: ObservableObject {
     }
 }
 
+// MARK: - Inbox Screen
+
+/// Top-level "Inbox" tab: every broadcast SpeakLife has sent, newest first.
+/// Owns the message list, its view model, and the single reader sheet that
+/// serves every card. Also presented as a sheet from the notification
+/// reader's "See All SpeakLife Messages" CTA.
+struct SpeakLifeInboxView: View {
+    @EnvironmentObject var subscriptionStore: SubscriptionStore
+    @StateObject private var viewModel = SpeakLifeMessagesViewModel()
+    @State private var selectedMessage: RemoteMessage?
+
+    var body: some View {
+        NavigationView {
+            ZStack {
+                Image(subscriptionStore.onboardingBGImage)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: UIScreen.main.bounds.width,
+                           height: UIScreen.main.bounds.height)
+                    .clipped()
+                    .ignoresSafeArea()
+
+                Color.black.opacity(0.50)
+                    .ignoresSafeArea()
+
+                VStack(spacing: 0) {
+                    header
+                        .padding(.horizontal, DS.Spacing.lg)
+                        .padding(.top, DS.Spacing.xs)
+                        .padding(.bottom, DS.Spacing.sm)
+                        .dsAppear(0)
+
+                    SpeakLifeMessagesListView(viewModel: viewModel) { message in
+                        selectedMessage = RemoteMessage(title: message.title,
+                                                        body: message.body)
+                    }
+                }
+            }
+            .navigationTitle("Inbox")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbarColorScheme(.dark, for: .navigationBar)
+        }
+        .navigationViewStyle(.stack)
+        .sheet(item: $selectedMessage) { message in
+            RemoteMessageView(message: message)
+        }
+    }
+
+    private var header: some View {
+        Text("Every word God has put on our heart for you.")
+            .font(Font.custom("AppleSDGothicNeo-Regular", size: 14, relativeTo: .body))
+            .foregroundColor(.white.opacity(0.65))
+            .multilineTextAlignment(.center)
+            .frame(maxWidth: .infinity)
+    }
+}
+
 // MARK: - List View
 
-/// Content for the "Messages" tab. Rendered by PrayerWallView below its
-/// segmented control; the parent owns the reader sheet via `onSelect` so a
-/// single sheet serves every card.
+/// The message list itself. Kept separate from `SpeakLifeInboxView` so the
+/// owner supplies the reader sheet via `onSelect` — one sheet in the
+/// hierarchy serves every card.
 struct SpeakLifeMessagesListView: View {
     @ObservedObject var viewModel: SpeakLifeMessagesViewModel
     let onSelect: (SpeakLifeMessage) -> Void
