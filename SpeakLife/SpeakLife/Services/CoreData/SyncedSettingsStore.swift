@@ -113,11 +113,12 @@ final class SyncedSettingsStore {
         // Monotonic progress scalars.
         SyncedKey(key: "abbasLoveLetterIndex", strategy: .maxInt),
         SyncedKey(key: "personalDeclaration_completedDayCount", strategy: .maxInt),
-        // Inbox read watermark (epoch seconds of the newest message seen), so
-        // the unread badge clears on every device once it is read on one.
-        // maxInt is what makes that safe: a device that has been offline can
-        // never push an older watermark and resurrect messages already read.
-        SyncedKey(key: InboxUnreadTracker.watermarkKey, strategy: .maxInt),
+        // Inbox read pointer — the broadcast sequence number the user has read
+        // up to — so the unread badge clears on every device once it is read
+        // on one. maxInt is exactly the right rule for a read pointer: the
+        // furthest-read device wins, so a device that has been offline can
+        // never push a stale pointer and resurrect messages already read.
+        SyncedKey(key: InboxUnreadTracker.readSeqKey, strategy: .maxInt),
 
         // One-way flags.
         SyncedKey(key: "onboarded", strategy: .boolOr),

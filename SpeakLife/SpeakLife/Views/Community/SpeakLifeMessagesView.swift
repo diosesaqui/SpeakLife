@@ -148,16 +148,27 @@ class SpeakLifeMessagesViewModel: ObservableObject {
 
 /// Drives the red badge on the dashboard's Inbox tile.
 ///
-/// Read state is a single watermark — the epoch second of the newest message
-/// the user has seen — rather than a per-message read set, so it stays one
-/// small number no matter how long the history grows.
+/// Two integers, subtracted. The server keeps a monotonic broadcast sequence
+/// in one tiny public doc (`speakLifeMessagesMeta/summary`, bumped by the same
+/// Cloud Function that publishes a message); the device keeps the sequence it
+/// last read. The badge is the difference.
 ///
-/// It lives in UserDefaults under a key whitelisted in `SyncedSettingsStore`
-/// with the `.maxInt` strategy, which is what makes it sync: the store mirrors
-/// it through the app's existing Core Data + CloudKit stack, and merging by
-/// max means a device that is behind can never un-read what another device
-/// already cleared. No sign-in required — it rides the user's iCloud account,
-/// same as their streaks and favorites.
+/// That shape buys three things a "count the unread documents" approach can't:
+/// the count arrives from a **single-document snapshot listener**, so it costs
+/// one read rather than a collection scan per dashboard visit; the listener
+/// pushes a new badge **live** the instant a broadcast lands, with no polling
+/// and nothing to refresh on foreground; and Firestore serves that doc from
+/// its **offline cache**, so the badge paints at launch with no network.
+///
+/// Read state is one small number however long the history grows, and it
+/// syncs because its UserDefaults key is whitelisted in `SyncedSettingsStore`
+/// under the `.maxInt` strategy — mirrored to the user's other devices through
+/// the app's Core Data + CloudKit stack (`NSPersistentCloudKitContainer`,
+/// container `iCloud.com.franchiz.speaklife`). Merging by max is exactly the
+/// right rule for a read pointer: the furthest-read device wins, so a device
+/// that has been offline for a week can never resurrect messages already read
+/// somewhere else. No sign-in involved — it follows the iCloud account, same
+/// as streaks and favorites.
 final class InboxUnreadTracker: ObservableObject {
 
     static let shared = InboxUnreadTracker()
@@ -165,82 +176,101 @@ final class InboxUnreadTracker: ObservableObject {
     @Published private(set) var unreadCount = 0
 
     /// Whitelisted in SyncedSettingsStore — keep the two in step.
-    static let watermarkKey = "inboxLastReadAt"
+    static let readSeqKey = "inboxReadSeq"
 
     private let db = Firestore.firestore()
-    private let collection = "speakLifeMessages"
-    private var isRefreshing = false
+    private let metaCollection = "speakLifeMessagesMeta"
+    private let metaDocument = "summary"
+
+    private var listener: ListenerRegistration?
+    /// Newest sequence the server has published. 0 until the doc arrives.
+    private var publishedSeq = 0
+    /// True while the Inbox is on screen, so a message landing mid-read is
+    /// counted as read instead of badging the tile the user is looking at.
+    private var isViewing = false
+
+    /// Block-based observers deregister by token, not by `self`.
+    private var syncObserver: NSObjectProtocol?
 
     private init() {
-        // A fresh install starts caught up. Without this the watermark is 0
-        // and a brand-new user opens the app to a badge showing the entire
-        // broadcast history.
-        if UserDefaults.standard.object(forKey: Self.watermarkKey) == nil {
-            UserDefaults.standard.set(Int(Date().timeIntervalSince1970),
-                                      forKey: Self.watermarkKey)
-        }
-
-        // Another device reading the Inbox lands here as a synced-settings
-        // apply, so this device's badge clears without waiting for a relaunch.
-        NotificationCenter.default.addObserver(
+        // Another device reading the Inbox arrives as a synced-settings apply,
+        // so this device's badge clears without waiting for a relaunch.
+        syncObserver = NotificationCenter.default.addObserver(
             forName: SyncedSettingsStore.settingsDidChange,
             object: nil,
             queue: .main
         ) { [weak self] notification in
             let keys = notification.userInfo?["keys"] as? Set<String>
-            guard keys?.contains(Self.watermarkKey) == true else { return }
-            self?.refresh()
-        }
-
-        // Today's onAppear doesn't fire for a tab that was already on screen
-        // when the app was backgrounded, so recount on foreground too — that
-        // is exactly when a message the user was pushed is waiting.
-        NotificationCenter.default.addObserver(
-            forName: UIApplication.didBecomeActiveNotification,
-            object: nil,
-            queue: .main
-        ) { [weak self] _ in
-            self?.refresh()
+            guard keys?.contains(Self.readSeqKey) == true else { return }
+            self?.recompute()
         }
     }
 
-    private var watermark: Int {
-        get { UserDefaults.standard.integer(forKey: Self.watermarkKey) }
-        set { UserDefaults.standard.set(newValue, forKey: Self.watermarkKey) }
+    deinit {
+        listener?.remove()
+        if let syncObserver {
+            NotificationCenter.default.removeObserver(syncObserver)
+        }
     }
 
-    /// Server-side count of messages newer than the watermark. An aggregation
-    /// query so the badge costs one read instead of pulling down every
-    /// document just to count them.
-    func refresh() {
-        guard !isRefreshing else { return }
-        isRefreshing = true
+    private var readSeq: Int {
+        get { UserDefaults.standard.integer(forKey: Self.readSeqKey) }
+        set { UserDefaults.standard.set(newValue, forKey: Self.readSeqKey) }
+    }
 
-        let since = Timestamp(date: Date(timeIntervalSince1970: TimeInterval(watermark)))
-        db.collection(collection)
-            .whereField("sentAt", isGreaterThan: since)
-            .count
-            .getAggregation(source: .server) { [weak self] snapshot, error in
-                DispatchQueue.main.async {
-                    guard let self else { return }
-                    self.isRefreshing = false
-                    // Leave the last known count alone on failure — a flaky
-                    // network shouldn't blank a badge that is really there.
-                    guard error == nil, let snapshot else { return }
-                    self.unreadCount = snapshot.count.intValue
+    /// Begin watching the counter. Idempotent — call it from anywhere the
+    /// badge is about to be shown.
+    func start() {
+        guard listener == nil else { return }
+        listener = db.collection(metaCollection)
+            .document(metaDocument)
+            .addSnapshotListener { [weak self] snapshot, _ in
+                guard let self else { return }
+                // On error the snapshot is nil: keep the last known sequence
+                // rather than collapsing the badge to zero.
+                guard let snapshot else { return }
+                let seq = (snapshot.get("seq") as? NSNumber)?.intValue ?? 0
+                self.publishedSeq = seq
+                self.seedReadSeqIfNeeded(to: seq)
+                // A broadcast landing while the Inbox is open is already read.
+                if self.isViewing {
+                    self.markRead()
+                } else {
+                    self.recompute()
                 }
             }
     }
 
-    /// The user has seen the list. `date` is the newest loaded message's
-    /// timestamp; messages are ordered newest-first, so that is the high
-    /// water mark for everything on screen.
-    func markRead(upTo date: Date?) {
-        guard let date else { return }
-        let stamp = Int(date.timeIntervalSince1970)
-        guard stamp > watermark else { return }
-        watermark = stamp
-        unreadCount = 0
+    /// A device with no read history starts caught up, so a brand-new user
+    /// isn't greeted by a badge counting the entire broadcast history.
+    private func seedReadSeqIfNeeded(to seq: Int) {
+        guard UserDefaults.standard.object(forKey: Self.readSeqKey) == nil else { return }
+        readSeq = seq
+    }
+
+    private func recompute() {
+        let unread = max(0, publishedSeq - readSeq)
+        guard unread != unreadCount else { return }
+        unreadCount = unread
+    }
+
+    /// The Inbox is on screen. Everything published so far counts as read, and
+    /// so does anything that lands while it stays open — which also covers the
+    /// race where the user opens the Inbox before the counter has loaded.
+    func beginViewing() {
+        isViewing = true
+        markRead()
+    }
+
+    func endViewing() {
+        isViewing = false
+    }
+
+    private func markRead() {
+        if publishedSeq > readSeq {
+            readSeq = publishedSeq
+        }
+        recompute()
     }
 }
 
@@ -269,12 +299,14 @@ struct SpeakLifeInboxView: View {
                                                     body: message.body)
                 }
             }
-            // Seeing the list is reading it. onAppear covers the cached-paint
-            // case; onChange catches the live fetch landing a moment later.
-            .onAppear { markLoadedMessagesRead() }
-            .onChange(of: viewModel.messages.first?.id) { _, _ in
-                markLoadedMessagesRead()
+            // Seeing the list is reading it. The tracker holds a "viewing"
+            // flag rather than taking a one-shot mark, so it doesn't matter
+            // whether the counter loads before or after this screen opens.
+            .onAppear {
+                InboxUnreadTracker.shared.start()
+                InboxUnreadTracker.shared.beginViewing()
             }
+            .onDisappear { InboxUnreadTracker.shared.endViewing() }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             // The backdrop is a .background modifier rather than a ZStack
             // sibling so only IT bleeds under the status and nav bars. As a
@@ -302,12 +334,6 @@ struct SpeakLifeInboxView: View {
         .sheet(item: $selectedMessage) { message in
             RemoteMessageView(message: message)
         }
-    }
-
-    /// Messages arrive newest-first, so the first one is the high water mark
-    /// for everything the user can see.
-    private func markLoadedMessagesRead() {
-        InboxUnreadTracker.shared.markRead(upTo: viewModel.messages.first?.sentAt)
     }
 
     private var header: some View {

@@ -615,10 +615,10 @@ struct ModernDailyChecklistView: View {
                     personalDeclaration = await DIContainer.shared.personalDeclarationRepository.load()
                 }
             }
-            // Recount unread messages for the Inbox tile's badge. Runs on every
-            // return to Today, so a message that arrived while the app was
-            // backgrounded shows up without a relaunch.
-            inboxUnread.refresh()
+            // Start watching the broadcast counter that drives the Inbox
+            // tile's badge. Idempotent, and the listener keeps the badge live
+            // from then on — no polling, nothing to refresh on foreground.
+            inboxUnread.start()
         }
         .onChange(of: viewModel.todayChecklist.isCompleted) { isCompleted in
             if isCompleted {
