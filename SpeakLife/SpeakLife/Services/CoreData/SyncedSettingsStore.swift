@@ -188,6 +188,15 @@ final class SyncedSettingsStore {
     private static let stampsKey = "sl_syncedSettingsStamps"       // [String: Double] remote lastModified at last reconcile
     private static let initializedKey = "sl_settingsSyncInitialized"
 
+    /// True once a reconcile pass has completed at least once on this device,
+    /// so iCloud has had its chance to restore synced values. Callers that
+    /// want to write a "starting point" for a whitelisted key must wait for
+    /// this — otherwise they can beat the restore and, under `.maxInt`,
+    /// permanently overwrite the user's real value with a fresh default.
+    static var hasReconciled: Bool {
+        UserDefaults.standard.object(forKey: initializedKey) != nil
+    }
+
     // MARK: - Private state
 
     private let container: NSPersistentCloudKitContainer

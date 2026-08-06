@@ -185,9 +185,6 @@ final class InboxUnreadTracker: ObservableObject {
     private var listener: ListenerRegistration?
     /// Newest sequence the server has published. 0 until the doc arrives.
     private var publishedSeq = 0
-    /// True while the Inbox is on screen, so a message landing mid-read is
-    /// counted as read instead of badging the tile the user is looking at.
-    private var isViewing = false
 
     /// Block-based observers deregister by token, not by `self`.
     private var syncObserver: NSObjectProtocol?
@@ -232,41 +229,42 @@ final class InboxUnreadTracker: ObservableObject {
                 let seq = (snapshot.get("seq") as? NSNumber)?.intValue ?? 0
                 self.publishedSeq = seq
                 self.seedReadSeqIfNeeded(to: seq)
-                // A broadcast landing while the Inbox is open is already read.
-                if self.isViewing {
-                    self.markRead()
-                } else {
-                    self.recompute()
-                }
+                self.recompute()
             }
     }
 
-    /// A device with no read history starts caught up, so a brand-new user
-    /// isn't greeted by a badge counting the entire broadcast history.
+    /// Give a device with no read history a starting point, so a brand-new
+    /// user isn't greeted by a badge counting the entire broadcast history.
+    ///
+    /// Deliberately waits for the settings store to have reconciled once.
+    /// Seeding "caught up" before iCloud restores this user's real pointer
+    /// would write a HIGHER value than their true one — and since the key
+    /// merges by max, that stale-but-higher number would then propagate out
+    /// and clear the badge on the devices where they genuinely have unread
+    /// messages. Waiting costs a new user nothing: their badge is armed from
+    /// the second launch, and they cannot have unread broadcasts from before
+    /// they installed. Until a baseline exists, `recompute` shows nothing.
     private func seedReadSeqIfNeeded(to seq: Int) {
         guard UserDefaults.standard.object(forKey: Self.readSeqKey) == nil else { return }
+        guard SyncedSettingsStore.hasReconciled else { return }
         readSeq = seq
     }
 
     private func recompute() {
+        // No baseline yet — this device hasn't seeded one and iCloud hasn't
+        // restored one. Show nothing rather than badging the whole history.
+        guard UserDefaults.standard.object(forKey: Self.readSeqKey) != nil else {
+            if unreadCount != 0 { unreadCount = 0 }
+            return
+        }
         let unread = max(0, publishedSeq - readSeq)
         guard unread != unreadCount else { return }
         unreadCount = unread
     }
 
-    /// The Inbox is on screen. Everything published so far counts as read, and
-    /// so does anything that lands while it stays open — which also covers the
-    /// race where the user opens the Inbox before the counter has loaded.
-    func beginViewing() {
-        isViewing = true
-        markRead()
-    }
-
-    func endViewing() {
-        isViewing = false
-    }
-
-    private func markRead() {
+    /// Everything published so far counts as read. Also establishes the
+    /// baseline on a device that never got one seeded.
+    func markRead() {
         if publishedSeq > readSeq {
             readSeq = publishedSeq
         }
@@ -283,6 +281,7 @@ final class InboxUnreadTracker: ObservableObject {
 struct SpeakLifeInboxView: View {
     @EnvironmentObject var subscriptionStore: SubscriptionStore
     @StateObject private var viewModel = SpeakLifeMessagesViewModel()
+    @ObservedObject private var unread = InboxUnreadTracker.shared
     @State private var selectedMessage: RemoteMessage?
 
     var body: some View {
@@ -299,14 +298,19 @@ struct SpeakLifeInboxView: View {
                                                     body: message.body)
                 }
             }
-            // Seeing the list is reading it. The tracker holds a "viewing"
-            // flag rather than taking a one-shot mark, so it doesn't matter
-            // whether the counter loads before or after this screen opens.
+            // Seeing the list is reading it. Marking on appear handles the
+            // normal case; reacting to the count going positive handles a
+            // counter that lands after this screen opened, and a broadcast
+            // arriving while it is still open. Driven off the published count
+            // rather than a "currently viewing" flag on the tracker — a flag
+            // that failed to clear would silently swallow every future badge.
             .onAppear {
-                InboxUnreadTracker.shared.start()
-                InboxUnreadTracker.shared.beginViewing()
+                unread.start()
+                unread.markRead()
             }
-            .onDisappear { InboxUnreadTracker.shared.endViewing() }
+            .onChange(of: unread.unreadCount) { _, count in
+                if count > 0 { unread.markRead() }
+            }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             // The backdrop is a .background modifier rather than a ZStack
             // sibling so only IT bleeds under the status and nav bars. As a
