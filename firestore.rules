@@ -193,5 +193,17 @@ service cloud.firestore {
       allow read: if true;
       allow write: if false;
     }
+
+    // ─── Inbox badge counter ───────────────────────────────────────────
+    // A single doc (speakLifeMessagesMeta/summary) holding a monotonic
+    // broadcast sequence number, incremented by the same Cloud Functions
+    // that publish to the timeline above. The app watches it to badge the
+    // Inbox without counting the collection. Public read like the messages
+    // themselves; clients never write.
+
+    match /speakLifeMessagesMeta/{id} {
+      allow read: if true;
+      allow write: if false;
+    }
   }
 }

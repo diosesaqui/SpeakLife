@@ -113,6 +113,12 @@ final class SyncedSettingsStore {
         // Monotonic progress scalars.
         SyncedKey(key: "abbasLoveLetterIndex", strategy: .maxInt),
         SyncedKey(key: "personalDeclaration_completedDayCount", strategy: .maxInt),
+        // Inbox read pointer — the broadcast sequence number the user has read
+        // up to — so the unread badge clears on every device once it is read
+        // on one. maxInt is exactly the right rule for a read pointer: the
+        // furthest-read device wins, so a device that has been offline can
+        // never push a stale pointer and resurrect messages already read.
+        SyncedKey(key: InboxUnreadTracker.readSeqKey, strategy: .maxInt),
 
         // One-way flags.
         SyncedKey(key: "onboarded", strategy: .boolOr),
@@ -181,6 +187,15 @@ final class SyncedSettingsStore {
     private static let baseKey = "sl_syncedSettingsBase"           // [String: Data] value at last reconcile
     private static let stampsKey = "sl_syncedSettingsStamps"       // [String: Double] remote lastModified at last reconcile
     private static let initializedKey = "sl_settingsSyncInitialized"
+
+    /// True once a reconcile pass has completed at least once on this device,
+    /// so iCloud has had its chance to restore synced values. Callers that
+    /// want to write a "starting point" for a whitelisted key must wait for
+    /// this — otherwise they can beat the restore and, under `.maxInt`,
+    /// permanently overwrite the user's real value with a fresh default.
+    static var hasReconciled: Bool {
+        UserDefaults.standard.object(forKey: initializedKey) != nil
+    }
 
     // MARK: - Private state
 

@@ -112,6 +112,14 @@ const SCHEDULED_COLLECTION = 'scheduledMessages';
 // public timeline.
 const MESSAGES_COLLECTION = 'speakLifeMessages';
 
+// One tiny public doc holding a monotonic broadcast sequence number. The app
+// watches it with a single-document snapshot listener and badges the Inbox
+// with (seq − the seq it last read), so an unread count costs one document
+// read instead of counting the whole collection on every dashboard visit,
+// and the badge appears live the moment a broadcast lands.
+const MESSAGES_META_COLLECTION = 'speakLifeMessagesMeta';
+const MESSAGES_META_DOC = 'summary';
+
 // Refuse schedules absurdly far out — almost always a typo'd year/timezone.
 const MAX_SCHEDULE_DAYS = 60;
 
@@ -160,10 +168,39 @@ async function publishToMessagesTimeline({ notification, data, topic, skipWall }
       body,
       sentAt: FieldValue.serverTimestamp(),
     });
+    // Own try/catch inside — a counter failure must not cost us the wall id.
+    await bumpInboxCounter();
     return ref.id;
   } catch (err) {
     console.error('publishToMessagesTimeline failed (push was still sent):', err);
     return null;
+  }
+}
+
+// Bump the Inbox badge counter. Deliberately monotonic — never decremented,
+// not even by "deleteMessage".
+//
+// A true document count would go backwards on a delete, and that gap would
+// then swallow the NEXT real broadcast: a user who had read everything
+// (readSeq == count) sees the count drop to count−1 on the delete and climb
+// back to count on the next send, leaving the badge at zero for a message
+// they never saw. A sequence that only climbs can at worst leave the badge
+// one high after a typo is pulled, and that self-heals the moment the user
+// opens the Inbox, which snaps their readSeq back to the current seq.
+//
+// Never throws: the push and the wall post already succeeded, so a counter
+// write failure must not fail the send.
+async function bumpInboxCounter() {
+  try {
+    await db
+      .collection(MESSAGES_META_COLLECTION)
+      .doc(MESSAGES_META_DOC)
+      .set(
+        { seq: FieldValue.increment(1), latestSentAt: FieldValue.serverTimestamp() },
+        { merge: true }
+      );
+  } catch (err) {
+    console.error('bumpInboxCounter failed (message was still published):', err);
   }
 }
 

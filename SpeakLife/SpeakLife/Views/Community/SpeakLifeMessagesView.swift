@@ -144,6 +144,134 @@ class SpeakLifeMessagesViewModel: ObservableObject {
     }
 }
 
+// MARK: - Unread Tracking
+
+/// Drives the red badge on the dashboard's Inbox tile.
+///
+/// Two integers, subtracted. The server keeps a monotonic broadcast sequence
+/// in one tiny public doc (`speakLifeMessagesMeta/summary`, bumped by the same
+/// Cloud Function that publishes a message); the device keeps the sequence it
+/// last read. The badge is the difference.
+///
+/// That shape buys three things a "count the unread documents" approach can't:
+/// the count arrives from a **single-document snapshot listener**, so it costs
+/// one read rather than a collection scan per dashboard visit; the listener
+/// pushes a new badge **live** the instant a broadcast lands, with no polling
+/// and nothing to refresh on foreground; and Firestore serves that doc from
+/// its **offline cache**, so the badge paints at launch with no network.
+///
+/// Read state is one small number however long the history grows, and it
+/// syncs because its UserDefaults key is whitelisted in `SyncedSettingsStore`
+/// under the `.maxInt` strategy — mirrored to the user's other devices through
+/// the app's Core Data + CloudKit stack (`NSPersistentCloudKitContainer`,
+/// container `iCloud.com.franchiz.speaklife`). Merging by max is exactly the
+/// right rule for a read pointer: the furthest-read device wins, so a device
+/// that has been offline for a week can never resurrect messages already read
+/// somewhere else. No sign-in involved — it follows the iCloud account, same
+/// as streaks and favorites.
+final class InboxUnreadTracker: ObservableObject {
+
+    static let shared = InboxUnreadTracker()
+
+    @Published private(set) var unreadCount = 0
+
+    /// Whitelisted in SyncedSettingsStore — keep the two in step.
+    static let readSeqKey = "inboxReadSeq"
+
+    private let db = Firestore.firestore()
+    private let metaCollection = "speakLifeMessagesMeta"
+    private let metaDocument = "summary"
+
+    private var listener: ListenerRegistration?
+    /// Newest sequence the server has published. 0 until the doc arrives.
+    private var publishedSeq = 0
+
+    /// Block-based observers deregister by token, not by `self`.
+    private var syncObserver: NSObjectProtocol?
+
+    private init() {
+        // Another device reading the Inbox arrives as a synced-settings apply,
+        // so this device's badge clears without waiting for a relaunch.
+        syncObserver = NotificationCenter.default.addObserver(
+            forName: SyncedSettingsStore.settingsDidChange,
+            object: nil,
+            queue: .main
+        ) { [weak self] notification in
+            let keys = notification.userInfo?["keys"] as? Set<String>
+            guard keys?.contains(Self.readSeqKey) == true else { return }
+            self?.recompute()
+        }
+    }
+
+    deinit {
+        listener?.remove()
+        if let syncObserver {
+            NotificationCenter.default.removeObserver(syncObserver)
+        }
+    }
+
+    private var readSeq: Int {
+        get { UserDefaults.standard.integer(forKey: Self.readSeqKey) }
+        set { UserDefaults.standard.set(newValue, forKey: Self.readSeqKey) }
+    }
+
+    /// Begin watching the counter. Idempotent — call it from anywhere the
+    /// badge is about to be shown.
+    func start() {
+        guard listener == nil else { return }
+        listener = db.collection(metaCollection)
+            .document(metaDocument)
+            .addSnapshotListener { [weak self] snapshot, _ in
+                guard let self else { return }
+                // On error the snapshot is nil: keep the last known sequence
+                // rather than collapsing the badge to zero.
+                guard let snapshot else { return }
+                let seq = (snapshot.get("seq") as? NSNumber)?.intValue ?? 0
+                self.publishedSeq = seq
+                self.seedReadSeqIfNeeded(to: seq)
+                self.recompute()
+            }
+    }
+
+    /// Give a device with no read history a starting point, so a brand-new
+    /// user isn't greeted by a badge counting the entire broadcast history.
+    ///
+    /// Deliberately waits for the settings store to have reconciled once.
+    /// Seeding "caught up" before iCloud restores this user's real pointer
+    /// would write a HIGHER value than their true one — and since the key
+    /// merges by max, that stale-but-higher number would then propagate out
+    /// and clear the badge on the devices where they genuinely have unread
+    /// messages. Waiting costs a new user nothing: their badge is armed from
+    /// the second launch, and they cannot have unread broadcasts from before
+    /// they installed. Until a baseline exists, `recompute` shows nothing.
+    private func seedReadSeqIfNeeded(to seq: Int) {
+        guard UserDefaults.standard.object(forKey: Self.readSeqKey) == nil else { return }
+        guard SyncedSettingsStore.hasReconciled else { return }
+        readSeq = seq
+    }
+
+    private func recompute() {
+        // No baseline yet — this device hasn't seeded one and iCloud hasn't
+        // restored one. Show nothing rather than badging the whole history.
+        guard UserDefaults.standard.object(forKey: Self.readSeqKey) != nil else {
+            if unreadCount != 0 { unreadCount = 0 }
+            return
+        }
+        let unread = max(0, publishedSeq - readSeq)
+        guard unread != unreadCount else { return }
+        unreadCount = unread
+    }
+
+    /// Everything published so far counts as read. Also establishes the
+    /// baseline on a device that never got one seeded.
+    func markRead() {
+        if publishedSeq > readSeq {
+            readSeq = publishedSeq
+        }
+        recompute()
+    }
+}
+
 // MARK: - Inbox Screen
 
 /// Top-level "Inbox" tab: every broadcast SpeakLife has sent, newest first.
@@ -153,6 +281,7 @@ class SpeakLifeMessagesViewModel: ObservableObject {
 struct SpeakLifeInboxView: View {
     @EnvironmentObject var subscriptionStore: SubscriptionStore
     @StateObject private var viewModel = SpeakLifeMessagesViewModel()
+    @ObservedObject private var unread = InboxUnreadTracker.shared
     @State private var selectedMessage: RemoteMessage?
 
     var body: some View {
@@ -168,6 +297,19 @@ struct SpeakLifeInboxView: View {
                     selectedMessage = RemoteMessage(title: message.title,
                                                     body: message.body)
                 }
+            }
+            // Seeing the list is reading it. Marking on appear handles the
+            // normal case; reacting to the count going positive handles a
+            // counter that lands after this screen opened, and a broadcast
+            // arriving while it is still open. Driven off the published count
+            // rather than a "currently viewing" flag on the tracker — a flag
+            // that failed to clear would silently swallow every future badge.
+            .onAppear {
+                unread.start()
+                unread.markRead()
+            }
+            .onChange(of: unread.unreadCount) { _, count in
+                if count > 0 { unread.markRead() }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             // The backdrop is a .background modifier rather than a ZStack

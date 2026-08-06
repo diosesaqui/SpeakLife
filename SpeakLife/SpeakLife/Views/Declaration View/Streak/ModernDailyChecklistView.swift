@@ -26,6 +26,10 @@ struct ModernDailyChecklistView: View {
     @State private var showDevotional = false
     @State private var showBibleChat = false
     @State private var showInbox = false
+    /// Drives the red badge on the Inbox tile. A shared singleton rather than
+    /// @StateObject — it outlives this view and is read from a background
+    /// refresh, so the view observes it instead of owning it.
+    @ObservedObject private var inboxUnread = InboxUnreadTracker.shared
     @State private var showJournal = false
     @State private var showWarriorRoom = false
     @State private var showCreateYourOwn = false
@@ -319,7 +323,8 @@ struct ModernDailyChecklistView: View {
                                 // to the Inbox instead — broadcast messages had
                                 // no surface of their own until now.
                                 QuickActionTile(icon: "envelope.fill", label: "Inbox",
-                                                tint: Color(hex: "#059669")) { showInbox = true }
+                                                tint: Color(hex: "#059669"),
+                                                badgeCount: inboxUnread.unreadCount) { showInbox = true }
                             }
                             HStack(spacing: 10) {
                                 QuickActionTile(icon: "pencil.and.scribble", label: "Journal",
@@ -610,6 +615,10 @@ struct ModernDailyChecklistView: View {
                     personalDeclaration = await DIContainer.shared.personalDeclarationRepository.load()
                 }
             }
+            // Start watching the broadcast counter that drives the Inbox
+            // tile's badge. Idempotent, and the listener keeps the badge live
+            // from then on — no polling, nothing to refresh on foreground.
+            inboxUnread.start()
         }
         .onChange(of: viewModel.todayChecklist.isCompleted) { isCompleted in
             if isCompleted {
@@ -891,6 +900,8 @@ struct QuickActionTile: View {
     let icon: String
     let label: String
     let tint: Color
+    /// Unread count shown as a red badge on the icon. 0 hides it.
+    var badgeCount: Int = 0
     let action: () -> Void
 
     var body: some View {
@@ -913,6 +924,14 @@ struct QuickActionTile: View {
                         .font(.system(size: 20, weight: .bold))
                         .foregroundColor(.white)
                 }
+                .overlay(alignment: .topTrailing) {
+                    if badgeCount > 0 {
+                        unreadBadge
+                            .offset(x: 5, y: -3)
+                            .transition(.scale.combined(with: .opacity))
+                    }
+                }
+                .animation(.spring(response: 0.35, dampingFraction: 0.7), value: badgeCount)
                 Text(label)
                     .font(.system(size: 11, weight: .semibold))
                     .foregroundColor(.white.opacity(0.85))
@@ -924,6 +943,26 @@ struct QuickActionTile: View {
             .dsGlass(cornerRadius: DS.Radius.md, strokeOpacity: 0.12, elevation: DS.Elevation.low)
         }
         .buttonStyle(.dsPressable(feel: .tapLight, haptics: false))
+    }
+
+    /// Caps at 9+ so a long absence can't stretch the pill across the icon.
+    private var unreadBadge: some View {
+        Text(badgeCount > 9 ? "9+" : "\(badgeCount)")
+            .font(.system(size: 11, weight: .bold, design: .rounded))
+            .foregroundColor(.white)
+            .padding(.horizontal, 5)
+            .frame(minWidth: 19, minHeight: 19)
+            .background(
+                Capsule()
+                    .fill(Color(hex: "#EF4444"))
+                    .shadow(color: Color.black.opacity(0.35), radius: 3, x: 0, y: 1)
+            )
+            // Ring in the card's own dark backdrop so the badge reads as
+            // lifted off the icon rather than painted onto it.
+            .overlay(
+                Capsule().stroke(Color.black.opacity(0.45), lineWidth: 1.5)
+            )
+            .accessibilityLabel("\(badgeCount) unread")
     }
 }
 
