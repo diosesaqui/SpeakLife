@@ -185,14 +185,22 @@ final class InboxUnreadTracker: ObservableObject {
     private var listener: ListenerRegistration?
     /// Newest sequence the server has published. 0 until the doc arrives.
     private var publishedSeq = 0
+    /// The counter doc has actually been delivered. Seeding before this would
+    /// pin the baseline at 0 and then badge the entire history when the real
+    /// sequence lands a moment later.
+    private var hasSnapshot = false
+    /// iCloud has had its chance to restore this user's pointer.
+    private var restoreWindowClosed = false
 
     /// Block-based observers deregister by token, not by `self`.
-    private var syncObserver: NSObjectProtocol?
+    private var observers: [NSObjectProtocol] = []
 
     private init() {
+        let center = NotificationCenter.default
+
         // Another device reading the Inbox arrives as a synced-settings apply,
         // so this device's badge clears without waiting for a relaunch.
-        syncObserver = NotificationCenter.default.addObserver(
+        observers.append(center.addObserver(
             forName: SyncedSettingsStore.settingsDidChange,
             object: nil,
             queue: .main
@@ -200,14 +208,29 @@ final class InboxUnreadTracker: ObservableObject {
             let keys = notification.userInfo?["keys"] as? Set<String>
             guard keys?.contains(Self.readSeqKey) == true else { return }
             self?.recompute()
+        })
+
+        // The first CloudKit import settling is the real "iCloud has spoken"
+        // signal. PersistenceController posts one of these either way, and
+        // SyncedSettingsStore reconciles immediately after — the short grace
+        // gives that reconcile time to write a restored pointer to
+        // UserDefaults before this device considers seeding its own.
+        for name in ["CloudKitImportCompleted", "CloudKitImportFailed"] {
+            observers.append(center.addObserver(
+                forName: NSNotification.Name(name),
+                object: nil,
+                queue: .main
+            ) { [weak self] _ in
+                DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
+                    self?.closeRestoreWindow()
+                }
+            })
         }
     }
 
     deinit {
         listener?.remove()
-        if let syncObserver {
-            NotificationCenter.default.removeObserver(syncObserver)
-        }
+        observers.forEach(NotificationCenter.default.removeObserver)
     }
 
     private var readSeq: Int {
@@ -219,6 +242,14 @@ final class InboxUnreadTracker: ObservableObject {
     /// badge is about to be shown.
     func start() {
         guard listener == nil else { return }
+
+        // Backstop: a device that never reaches iCloud still gets a working
+        // badge on this launch. Set beyond SyncedSettingsStore's own 120s
+        // no-network timeout so its reconcile has genuinely had its turn.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 150) { [weak self] in
+            self?.closeRestoreWindow()
+        }
+
         listener = db.collection(metaCollection)
             .document(metaDocument)
             .addSnapshotListener { [weak self] snapshot, _ in
@@ -226,28 +257,42 @@ final class InboxUnreadTracker: ObservableObject {
                 // On error the snapshot is nil: keep the last known sequence
                 // rather than collapsing the badge to zero.
                 guard let snapshot else { return }
-                let seq = (snapshot.get("seq") as? NSNumber)?.intValue ?? 0
-                self.publishedSeq = seq
-                self.seedReadSeqIfNeeded(to: seq)
+                self.publishedSeq = (snapshot.get("seq") as? NSNumber)?.intValue ?? 0
+                self.hasSnapshot = true
+                self.seedReadSeqIfNeeded()
                 self.recompute()
             }
+    }
+
+    /// Both halves of the baseline decision are async and can finish in either
+    /// order, so each one calls this and the last to arrive does the work.
+    private func closeRestoreWindow() {
+        guard !restoreWindowClosed else { return }
+        restoreWindowClosed = true
+        seedReadSeqIfNeeded()
+        recompute()
     }
 
     /// Give a device with no read history a starting point, so a brand-new
     /// user isn't greeted by a badge counting the entire broadcast history.
     ///
-    /// Deliberately waits for the settings store to have reconciled once.
-    /// Seeding "caught up" before iCloud restores this user's real pointer
-    /// would write a HIGHER value than their true one — and since the key
-    /// merges by max, that stale-but-higher number would then propagate out
-    /// and clear the badge on the devices where they genuinely have unread
-    /// messages. Waiting costs a new user nothing: their badge is armed from
-    /// the second launch, and they cannot have unread broadcasts from before
-    /// they installed. Until a baseline exists, `recompute` shows nothing.
-    private func seedReadSeqIfNeeded(to seq: Int) {
+    /// Waits for iCloud to have spoken. Seeding "caught up" before a restore
+    /// lands would write a HIGHER pointer than the user's real one — and since
+    /// the key merges by max, that number would propagate out and clear the
+    /// badge on the devices where they genuinely have unread messages.
+    ///
+    /// The wait is the first CloudKit import settling, NOT merely a settings
+    /// reconcile having run: SyncedSettingsStore stamps itself initialized on
+    /// its first pass a few seconds after launch, which on a fresh install
+    /// happens well before the import has pulled anything down. Waiting on the
+    /// import closes the race properly and still arms the badge on this
+    /// launch — for a brand-new user the import completes almost immediately
+    /// (there is nothing to pull), and for an existing user on a new device
+    /// the slower path is exactly the one that protects their unread count.
+    private func seedReadSeqIfNeeded() {
+        guard hasSnapshot, restoreWindowClosed else { return }
         guard UserDefaults.standard.object(forKey: Self.readSeqKey) == nil else { return }
-        guard SyncedSettingsStore.hasReconciled else { return }
-        readSeq = seq
+        readSeq = publishedSeq
     }
 
     private func recompute() {
