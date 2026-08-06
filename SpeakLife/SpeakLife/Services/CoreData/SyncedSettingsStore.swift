@@ -113,6 +113,11 @@ final class SyncedSettingsStore {
         // Monotonic progress scalars.
         SyncedKey(key: "abbasLoveLetterIndex", strategy: .maxInt),
         SyncedKey(key: "personalDeclaration_completedDayCount", strategy: .maxInt),
+        // Inbox read watermark (epoch seconds of the newest message seen), so
+        // the unread badge clears on every device once it is read on one.
+        // maxInt is what makes that safe: a device that has been offline can
+        // never push an older watermark and resurrect messages already read.
+        SyncedKey(key: InboxUnreadTracker.watermarkKey, strategy: .maxInt),
 
         // One-way flags.
         SyncedKey(key: "onboarded", strategy: .boolOr),
