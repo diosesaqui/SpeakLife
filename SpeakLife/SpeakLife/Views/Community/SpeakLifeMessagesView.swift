@@ -169,6 +169,15 @@ class SpeakLifeMessagesViewModel: ObservableObject {
 /// that has been offline for a week can never resurrect messages already read
 /// somewhere else. No sign-in involved — it follows the iCloud account, same
 /// as streaks and favorites.
+///
+/// The pointer comes in two halves, and the split is what keeps this simple.
+/// The synced key is written *only* when the user actually reads, never as a
+/// starting-point guess — so it can never carry a value past the user's real
+/// one and clear the badge on their other devices. A device with no history
+/// falls back to a local-only baseline it can seed the instant the counter
+/// arrives. A synced pointer restored later takes precedence over that
+/// baseline, so an existing user on a new phone gets their unread count back
+/// once iCloud catches up. No waiting on the import, no timers, no races.
 final class InboxUnreadTracker: ObservableObject {
 
     static let shared = InboxUnreadTracker()
@@ -182,25 +191,24 @@ final class InboxUnreadTracker: ObservableObject {
     private let metaCollection = "speakLifeMessagesMeta"
     private let metaDocument = "summary"
 
+    /// Per-device starting point, deliberately NOT synced. A device with no
+    /// read history uses this so a new install isn't badged with the entire
+    /// broadcast history. Because it never leaves the device, seeding it is
+    /// instant and can't clear the badge on the user's other devices — which
+    /// is the whole reason the synced pointer below is never seeded.
+    private static let baselineKey = "inboxBaselineSeq"
+
     private var listener: ListenerRegistration?
     /// Newest sequence the server has published. 0 until the doc arrives.
     private var publishedSeq = 0
-    /// The counter doc has actually been delivered. Seeding before this would
-    /// pin the baseline at 0 and then badge the entire history when the real
-    /// sequence lands a moment later.
-    private var hasSnapshot = false
-    /// iCloud has had its chance to restore this user's pointer.
-    private var restoreWindowClosed = false
 
     /// Block-based observers deregister by token, not by `self`.
-    private var observers: [NSObjectProtocol] = []
+    private var syncObserver: NSObjectProtocol?
 
     private init() {
-        let center = NotificationCenter.default
-
         // Another device reading the Inbox arrives as a synced-settings apply,
         // so this device's badge clears without waiting for a relaunch.
-        observers.append(center.addObserver(
+        syncObserver = NotificationCenter.default.addObserver(
             forName: SyncedSettingsStore.settingsDidChange,
             object: nil,
             queue: .main
@@ -208,48 +216,31 @@ final class InboxUnreadTracker: ObservableObject {
             let keys = notification.userInfo?["keys"] as? Set<String>
             guard keys?.contains(Self.readSeqKey) == true else { return }
             self?.recompute()
-        })
-
-        // The first CloudKit import settling is the real "iCloud has spoken"
-        // signal. PersistenceController posts one of these either way, and
-        // SyncedSettingsStore reconciles immediately after — the short grace
-        // gives that reconcile time to write a restored pointer to
-        // UserDefaults before this device considers seeding its own.
-        for name in ["CloudKitImportCompleted", "CloudKitImportFailed"] {
-            observers.append(center.addObserver(
-                forName: NSNotification.Name(name),
-                object: nil,
-                queue: .main
-            ) { [weak self] _ in
-                DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
-                    self?.closeRestoreWindow()
-                }
-            })
         }
     }
 
     deinit {
         listener?.remove()
-        observers.forEach(NotificationCenter.default.removeObserver)
+        if let syncObserver {
+            NotificationCenter.default.removeObserver(syncObserver)
+        }
     }
 
-    private var readSeq: Int {
-        get { UserDefaults.standard.integer(forKey: Self.readSeqKey) }
-        set { UserDefaults.standard.set(newValue, forKey: Self.readSeqKey) }
+    private static func storedInt(_ key: String) -> Int? {
+        (UserDefaults.standard.object(forKey: key) as? NSNumber)?.intValue
+    }
+
+    /// The synced pointer once it exists — restored from iCloud, or written
+    /// here the first time the user reads. The local baseline until then, so
+    /// a restore that lands late still wins and brings their unread back.
+    private var effectiveReadSeq: Int? {
+        Self.storedInt(Self.readSeqKey) ?? Self.storedInt(Self.baselineKey)
     }
 
     /// Begin watching the counter. Idempotent — call it from anywhere the
     /// badge is about to be shown.
     func start() {
         guard listener == nil else { return }
-
-        // Backstop: a device that never reaches iCloud still gets a working
-        // badge on this launch. Set beyond SyncedSettingsStore's own 120s
-        // no-network timeout so its reconcile has genuinely had its turn.
-        DispatchQueue.main.asyncAfter(deadline: .now() + 150) { [weak self] in
-            self?.closeRestoreWindow()
-        }
-
         listener = db.collection(metaCollection)
             .document(metaDocument)
             .addSnapshotListener { [weak self] snapshot, _ in
@@ -258,60 +249,32 @@ final class InboxUnreadTracker: ObservableObject {
                 // rather than collapsing the badge to zero.
                 guard let snapshot else { return }
                 self.publishedSeq = (snapshot.get("seq") as? NSNumber)?.intValue ?? 0
-                self.hasSnapshot = true
-                self.seedReadSeqIfNeeded()
+                // Safe to seed the instant the counter lands, because the
+                // baseline is local-only. No waiting on iCloud, no timers.
+                if Self.storedInt(Self.baselineKey) == nil {
+                    UserDefaults.standard.set(self.publishedSeq, forKey: Self.baselineKey)
+                }
                 self.recompute()
             }
     }
 
-    /// Both halves of the baseline decision are async and can finish in either
-    /// order, so each one calls this and the last to arrive does the work.
-    private func closeRestoreWindow() {
-        guard !restoreWindowClosed else { return }
-        restoreWindowClosed = true
-        seedReadSeqIfNeeded()
-        recompute()
-    }
-
-    /// Give a device with no read history a starting point, so a brand-new
-    /// user isn't greeted by a badge counting the entire broadcast history.
-    ///
-    /// Waits for iCloud to have spoken. Seeding "caught up" before a restore
-    /// lands would write a HIGHER pointer than the user's real one — and since
-    /// the key merges by max, that number would propagate out and clear the
-    /// badge on the devices where they genuinely have unread messages.
-    ///
-    /// The wait is the first CloudKit import settling, NOT merely a settings
-    /// reconcile having run: SyncedSettingsStore stamps itself initialized on
-    /// its first pass a few seconds after launch, which on a fresh install
-    /// happens well before the import has pulled anything down. Waiting on the
-    /// import closes the race properly and still arms the badge on this
-    /// launch — for a brand-new user the import completes almost immediately
-    /// (there is nothing to pull), and for an existing user on a new device
-    /// the slower path is exactly the one that protects their unread count.
-    private func seedReadSeqIfNeeded() {
-        guard hasSnapshot, restoreWindowClosed else { return }
-        guard UserDefaults.standard.object(forKey: Self.readSeqKey) == nil else { return }
-        readSeq = publishedSeq
-    }
-
     private func recompute() {
-        // No baseline yet — this device hasn't seeded one and iCloud hasn't
-        // restored one. Show nothing rather than badging the whole history.
-        guard UserDefaults.standard.object(forKey: Self.readSeqKey) != nil else {
+        // Counter hasn't arrived yet, so there is no baseline to measure from.
+        guard let read = effectiveReadSeq else {
             if unreadCount != 0 { unreadCount = 0 }
             return
         }
-        let unread = max(0, publishedSeq - readSeq)
+        let unread = max(0, publishedSeq - read)
         guard unread != unreadCount else { return }
         unreadCount = unread
     }
 
-    /// Everything published so far counts as read. Also establishes the
-    /// baseline on a device that never got one seeded.
+    /// Everything published so far counts as read. The only writer of the
+    /// synced pointer — read state leaves this device only when the user
+    /// actually reads, never as a "starting point" guess.
     func markRead() {
-        if publishedSeq > readSeq {
-            readSeq = publishedSeq
+        if publishedSeq > (effectiveReadSeq ?? 0) {
+            UserDefaults.standard.set(publishedSeq, forKey: Self.readSeqKey)
         }
         recompute()
     }
