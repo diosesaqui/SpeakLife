@@ -101,6 +101,7 @@ final class EnforcementService: ObservableObject {
     private let calendar: Calendar
     private let progressKey = "enforcementProgress"
     private let pendingCelebrationKey = "enforcementPendingCelebration"
+    private let assemblySeedKey = "enforcementAssemblySeed"
 
     init(defaults: UserDefaults = .standard,
          calendar: Calendar = .current,
@@ -150,20 +151,27 @@ final class EnforcementService: ObservableObject {
 
     /// Reads the guarded snapshot, so this is safe to call from the notification
     /// scheduler as well as from a view body.
+    ///
+    /// An assembled campaign travels inside progress, so it resolves without the
+    /// declaration pool — which the scheduler does not have on its queue.
     var activeEnforcement: Enforcement? {
-        let snapshot = progressSnapshot
-        guard snapshot.isActive, let id = snapshot.activeEnforcementId else { return nil }
-        return enforcement(id: id)
+        resolve(progressSnapshot)
     }
 
-    /// The day the user is working on right now, or nil when no Enforcement is running.
+    /// The day the user is working on right now, or nil when nothing is running.
     var activeDay: EnforcementDay? {
         // One snapshot for both reads — taking two could straddle a mutation and
         // pair a campaign with a day number from the next one.
         let snapshot = progressSnapshot
-        guard snapshot.isActive, let id = snapshot.activeEnforcementId,
-              let enforcement = enforcement(id: id) else { return nil }
+        guard let enforcement = resolve(snapshot) else { return nil }
         return enforcement.day(snapshot.currentDay)
+    }
+
+    private func resolve(_ snapshot: EnforcementProgress) -> Enforcement? {
+        guard snapshot.isActive else { return nil }
+        if let assembled = snapshot.assembledEnforcement { return assembled }
+        guard let id = snapshot.activeEnforcementId else { return nil }
+        return enforcement(id: id)
     }
 
     /// Mirrors `SubscriptionStore.enforcementEnabled` for callers that have no
@@ -220,18 +228,65 @@ final class EnforcementService: ObservableObject {
 
     // MARK: - Mutations
 
-    /// Starts a campaign. Premium-gated — this is the only gate.
+    /// Starts one of the hand-authored campaigns. Premium-gated — the only gate.
     @discardableResult
     func startEnforcement(id: String, isPremium: Bool) -> Bool {
         guard isPremium, enforcement(id: id) != nil else { return false }
+        begin(id: id, assembled: nil)
+        return true
+    }
+
+    /// Starts a campaign built for what the user actually said they're facing.
+    ///
+    /// An authored campaign wins when its category is the top match — those have
+    /// a deliberate day-to-day arc that a draw from the pool cannot reproduce.
+    /// Everything else assembles from the reviewed declarations, which is what
+    /// takes coverage from four categories to twenty-nine.
+    ///
+    /// - Parameter pool: `declarationsv10.json`, passed in by the caller because
+    ///   it loads asynchronously and this service must stay usable from the
+    ///   notification scheduler, which has no access to it.
+    /// - Returns: the campaign that started, or nil if nothing could be built.
+    @discardableResult
+    func startMatched(primary: DeclarationCategory,
+                      secondaries: [DeclarationCategory] = [],
+                      pool: [Declaration],
+                      isPremium: Bool) -> Enforcement? {
+        guard isPremium else { return nil }
+
+        // Authored campaigns take precedence for their own category.
+        if let authored = catalog.first(where: { $0.theme.caseInsensitiveCompare(primary.rawValue) == .orderedSame }) {
+            begin(id: authored.id, assembled: nil)
+            return authored
+        }
+
+        guard let assembled = EnforcementAssembler.assemble(
+            primary: primary, secondaries: secondaries,
+            pool: pool, seed: assemblySeed
+        ) else { return nil }
+
+        begin(id: assembled.id, assembled: assembled)
+        return assembled
+    }
+
+    /// Stable per install, so a campaign draws the same lines every launch while
+    /// two users facing the same thing don't get identical weeks.
+    private var assemblySeed: String {
+        if let existing = defaults.string(forKey: assemblySeedKey) { return existing }
+        let seed = UUID().uuidString
+        defaults.set(seed, forKey: assemblySeedKey)
+        return seed
+    }
+
+    private func begin(id: String, assembled: Enforcement?) {
         mutateProgress { p in
             let history = p.completedEnforcementIds
             p = EnforcementProgress()
             p.activeEnforcementId = id
+            p.assembledEnforcement = assembled
             p.startedOn = Date()
             p.completedEnforcementIds = history
         }
-        return true
     }
 
     /// Marks today's Enforcement day complete. Called when the daily burst completes.

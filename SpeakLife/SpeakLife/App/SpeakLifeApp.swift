@@ -367,8 +367,15 @@ struct SpeakLifeApp: App {
         // Mark that we just received a notification
         notificationJustReceived = true
         
-        // Navigate to appropriate tab
-        if content.userInfo["tab"] != nil {
+        // Navigate to appropriate tab.
+        // The Enforcement prompt is checked FIRST and deliberately carries no
+        // `category` key: the branch below renders a push body AS a declaration
+        // in the feed, and this body is a question ("What are you walking
+        // through?"), not something to speak over yourself.
+        if content.userInfo["enforcementPrompt"] != nil {
+            tabViewModel.resetToHome()   // the Today tab, where the card lives
+            AnalyticsService.shared.track("enforcement_prompt_tapped")
+        } else if content.userInfo["tab"] != nil {
             tabViewModel.goToAudio()
         } else if content.userInfo["category"] != nil {
             // Affirmation notification — surface it in the declaration feed,

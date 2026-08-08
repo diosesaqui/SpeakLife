@@ -178,6 +178,7 @@ final class NotificationManager: NSObject {
                 // always exact; the push carries the theme and the day's line.
                 var enforcementTitle: String?
                 var enforcementCategory: String?
+                var isEnforcementPrompt = false
                 if idx == 0, let enforcement = activeEnforcement {
                     let projected = min(enforcementStartDay + day, Enforcement.length)
                     if let enforcementDay = enforcement.day(projected) {
@@ -185,6 +186,14 @@ final class NotificationManager: NSObject {
                         enforcementTitle = enforcement.title
                         enforcementCategory = enforcement.theme
                     }
+                } else if idx == 0, let prompt = EnforcementPrompt.copy(forDayOffset: day) {
+                    // No campaign running: once a week, slot 0 invites them to
+                    // name what they're walking through. Same slot the anchor
+                    // would occupy, so the two can never collide and the pending
+                    // count is unchanged either way.
+                    body = prompt.body
+                    enforcementTitle = prompt.title
+                    isEnforcementPrompt = true
                 }
 
                 // Calculate the exact fire date for this day + time slot
@@ -201,7 +210,14 @@ final class NotificationManager: NSObject {
                 content.title = enforcementTitle ?? "SpeakLife"
                 content.body = body
                 content.sound = UNNotificationSound.default
-                content.userInfo = ["category": enforcementCategory ?? decl.category]
+                if isEnforcementPrompt {
+                    // No `category` key: that one routes to the declaration feed
+                    // and renders the body AS a declaration. This body is a
+                    // question, not something to speak over yourself.
+                    content.userInfo = ["enforcementPrompt": true]
+                } else {
+                    content.userInfo = ["category": enforcementCategory ?? decl.category]
+                }
 
                 let finalComponents = calendar.dateComponents(
                     [.year, .month, .day, .hour, .minute], from: targetDate)
