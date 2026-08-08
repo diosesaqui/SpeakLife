@@ -82,6 +82,8 @@ class DailyDeclarationReminderService: ObservableObject {
     /// instead of every day reading "Your Daily Burst is ready!" until the user starts
     /// banner-blinding past it.
     private func scheduleMorningReminders() {
+        let burstTime = Self.burstTimeAvoidingUserReminders()
+
         for (weekday, copy) in Self.morningCopyByWeekday.enumerated() {
             let content = UNMutableNotificationContent()
             content.title = copy.title
@@ -91,8 +93,8 @@ class DailyDeclarationReminderService: ObservableObject {
             content.userInfo = ["action": "daily_declaration_burst"]
 
             var dateComponents = DateComponents()
-            dateComponents.hour = 7
-            dateComponents.minute = 30
+            dateComponents.hour = burstTime.hour
+            dateComponents.minute = burstTime.minute
             dateComponents.weekday = weekday + 1 // Sunday=1 in DateComponents
 
             let trigger = UNCalendarNotificationTrigger(dateMatching: dateComponents, repeats: true)
@@ -107,6 +109,61 @@ class DailyDeclarationReminderService: ObservableObject {
                 }
             }
         }
+    }
+
+    // MARK: - Burst Timing
+
+    /// Minimum gap, in minutes, we allow between the Daily Burst and the
+    /// nearest notification from the user's own reminder batch.
+    private static let minGapMinutes = 60
+
+    /// Candidate morning slots for the burst, in preference order. 7:30 is the
+    /// long-standing default; the rest are fallbacks when the user's own
+    /// reminders sit on top of it.
+    private static let burstCandidates: [(hour: Int, minute: Int)] = [
+        (7, 30), (8, 30), (9, 0), (9, 30), (10, 0), (6, 30)
+    ]
+
+    /// The Daily Burst used to be pinned to 7:30am while the default reminder
+    /// window starts at 7:00am (`startTimeIndex` 14) — so out of the box, most
+    /// users caught two SpeakLife pushes thirty minutes apart every morning,
+    /// which is the fastest way to train someone to swipe us away.
+    ///
+    /// Pick the first candidate slot that sits at least `minGapMinutes` from
+    /// every notification in the user's own batch. We shift the burst rather
+    /// than drop it: the burst is the habit anchor, and skipping it whenever a
+    /// content reminder happens to be nearby would silently delete it for
+    /// anyone on the default settings. If every candidate collides (a very
+    /// dense reminder schedule), fall back to 7:30 and accept the overlap.
+    private static func burstTimeAvoidingUserReminders() -> (hour: Int, minute: Int) {
+        let defaults = UserDefaults.standard
+        let fallback = burstCandidates[0]
+
+        // No reminder batch scheduled → nothing to collide with.
+        guard defaults.bool(forKey: "notificationEnabled") else { return fallback }
+
+        let count = defaults.integer(forKey: "notificationCount")
+        let start = defaults.integer(forKey: "startTimeIndex")
+        let end = defaults.integer(forKey: "endTimeIndex")
+        guard count > 0, end > start else { return fallback }
+
+        let userSlots = NotificationManager.shared.distributeTimes(
+            startTime: start,
+            endTime: end,
+            count: count
+        )
+        guard !userSlots.isEmpty else { return fallback }
+
+        let userMinutes = userSlots.map { $0.hour * 60 + $0.minute }
+
+        for candidate in burstCandidates {
+            let candidateMinutes = candidate.hour * 60 + candidate.minute
+            let clearOfAll = userMinutes.allSatisfy {
+                abs($0 - candidateMinutes) >= minGapMinutes
+            }
+            if clearOfAll { return candidate }
+        }
+        return fallback
     }
 
     // MARK: - Rotated Copy

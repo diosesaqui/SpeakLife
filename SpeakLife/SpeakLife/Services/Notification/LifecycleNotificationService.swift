@@ -80,7 +80,9 @@ final class LifecycleNotificationService {
     /// Call on every app open (cold launch + warm foreground)
     func onAppOpen() {
         UserDefaults.standard.set(Date(), forKey: kLastOpenDate)
-        // Cancel any pending lapsed re-engagement since user came back
+        // Cancel any pending lapsed re-engagement since user came back.
+        // "lapsed_d10" is retired but still listed so devices carrying a
+        // pending one from a previous build get it cleared on next launch.
         center.removePendingNotificationRequests(withIdentifiers: ["lapsed_d5", "lapsed_d10"])
         // Re-schedule lapsed detection
         scheduleLapsedDetection()
@@ -260,6 +262,11 @@ final class LifecycleNotificationService {
 
     // MARK: - Lapsed Re-engagement
 
+    /// One re-engagement push, not two. `lapsed_d10` was retired: it only ever
+    /// reached someone who had already ignored `lapsed_d5`, so it was a second
+    /// ask of the least receptive audience we have. The d5 push stays because
+    /// it's re-armed on every app open and therefore only fires on genuine
+    /// absence.
     private func scheduleLapsedDetection() {
         center.getNotificationSettings { [weak self] settings in
             guard settings.authorizationStatus == .authorized else { return }
@@ -268,12 +275,6 @@ final class LifecycleNotificationService {
                 title: "Your mind is waiting for you 🙏",
                 body: "You haven't declared in a few days. The enemy loves silence. Come back and speak life over yourself today.",
                 delayHours: 5 * 24
-            )
-            self?.scheduleImmediate(
-                id: "lapsed_d10",
-                title: "Still thinking about you ❤️",
-                body: "SpeakLife works when you show up. 60 seconds of declarations is all it takes. Your breakthrough is one open away.",
-                delayHours: 10 * 24
             )
         }
     }

@@ -250,15 +250,27 @@ exports.onPrayerAnswered = onDocumentUpdated(
 
 // ═══════════════════════════════════════════════════════════════════════════
 // 4. onNewPrayerPost
-//    Fires when a new prayerWall document is created. Sends a topic
-//    broadcast to all `prayerWall` subscribers. Copy adapts based on the
-//    post type:
-//      - Testimony (isAnswered: true at creation) → celebration framing
-//      - Prayer request (isAnswered: false / unset) → prayer framing
-//    The poster's own device suppresses the notification client-side using
-//    the `posterDeviceId` payload key (NotificationHandler.swift).
+//    PAUSED — this fired a topic broadcast to every `prayerWall` subscriber
+//    on EVERY post creation, with no throttle, no per-user cap and no
+//    dedupe. On an active wall that is unbounded push volume, and devices
+//    auto-subscribe to the topic the moment they open the Warrior Room —
+//    there is no opt-in and no in-app way to turn it off. It was the single
+//    largest source of notifications outside the user's own reminders.
+//
+//    The export is commented out below. To fully stop it, the deployed
+//    function must also be deleted from production:
+//        firebase functions:delete onNewPrayerPost
+//    Commenting out the source alone does NOT stop the live function.
+//
+//    Author-targeted pushes (onPrayerCountIncremented, onPrayerAnswered)
+//    are unaffected — those are earned and low-volume.
+//
+//    To bring community broadcasts back, prefer a throttled once-daily
+//    digest over per-post fanout, and gate the topic subscription behind a
+//    real user-facing toggle.
 // ═══════════════════════════════════════════════════════════════════════════
 
+/*
 exports.onNewPrayerPost = onDocumentCreated(
   'prayerWall/{postId}',
   async (event) => {
@@ -287,6 +299,7 @@ exports.onNewPrayerPost = onDocumentCreated(
     });
   }
 );
+*/
 
 // ═══════════════════════════════════════════════════════════════════════════
 // 5. onPostFlagged

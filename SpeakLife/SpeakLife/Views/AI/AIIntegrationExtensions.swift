@@ -36,30 +36,13 @@ extension View {
 }
 
 // MARK: - NotificationManager AI Integration
-
-extension NotificationManager {
-    
-    /// Enhanced notification registration with AI
-    func registerAINotifications(
-        count: Int = 3,
-        startTime: Int = 7,
-        endTime: Int = 21,
-        categories: Set<DeclarationCategory>? = nil,
-        callback: (() -> Void)? = nil
-    ) {
-        Task {
-            // Use AI notifications for premium users
-            await AINotificationService.shared.schedulePersonalizedNotifications(
-                count: count,
-                timeRange: startTime...endTime
-            )
-            
-            DispatchQueue.main.async {
-                callback?()
-            }
-        }
-    }
-}
+//
+// REMOVED: registerAINotifications. It had no callers, and the
+// schedulePersonalizedNotifications it wrapped would have installed three
+// *repeating daily* generic pushes ("Midday Boost", "Evening Peace",
+// "Your Spiritual Moment") on top of the user's own reminder batch — and once
+// wiped every pending request in the process. Reminder scheduling goes through
+// NotificationManager.registerNotifications only.
 
 // MARK: - DeclarationViewModel AI Integration
 
@@ -311,71 +294,10 @@ struct AIWidgetContentProvider {
 }
 
 // MARK: - Crisis Support Integration
-
-struct AICrisisSupportView: View {
-    @State private var crisisDescription = ""
-    @State private var showingSupport = false
-    @State private var supportContent: [Declaration] = []
-    
-    var body: some View {
-        VStack(spacing: DS.Spacing.md) {
-            Text("🤗 Need Immediate Support?")
-                .font(.title2)
-                .fontWeight(.bold)
-            
-            Text("Describe what you're facing, and AI will provide immediate spiritual support")
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-                .multilineTextAlignment(.center)
-            
-            TextEditor(text: $crisisDescription)
-                .frame(height: 80)
-                .padding(DS.Spacing.xs)
-                .background(Color.gray.opacity(0.1))
-                .cornerRadius(8)
-            
-            Button("Get Immediate Support") {
-                provideCrisisSupport()
-            }
-            .font(.headline)
-            .foregroundColor(.white)
-            .frame(maxWidth: .infinity)
-            .padding()
-            .background(Color.red)
-            .cornerRadius(12)
-            .disabled(crisisDescription.isEmpty)
-            
-            if showingSupport {
-                VStack(alignment: .leading, spacing: DS.Spacing.sm) {
-                    Text("✨ God's Strength for You Right Now")
-                        .font(.headline)
-                        .foregroundColor(.green)
-                    
-                    ForEach(supportContent) { declaration in
-                        CrisisSupportRow(declaration: declaration)
-                    }
-                }
-                .transition(.opacity.combined(with: .move(edge: .bottom)))
-            }
-        }
-        .padding()
-    }
-    
-    private func provideCrisisSupport() {
-        AIIntelligenceService.shared.provideCrisisSupport(crisisDescription)
-        
-        withAnimation(.easeInOut(duration: 0.5)) {
-            showingSupport = true
-        }
-        
-        // This would be replaced with actual crisis support content
-        supportContent = [
-            Declaration(text: "God is with you in this storm. His strength is made perfect in your weakness.", category: .strength),
-            Declaration(text: "You are not alone. The Lord your God is with you wherever you go.", category: .protection),
-            Declaration(text: "This too shall pass. God's love for you never changes.", category: .peace)
-        ]
-    }
-}
+//
+// REMOVED: AICrisisSupportView. It was never instantiated anywhere in the app
+// and was the sole entry point to the "Strength for Right Now" push scheduled
+// one minute out. Deleted along with that push path.
 
 struct CrisisSupportRow: View {
     let declaration: Declaration

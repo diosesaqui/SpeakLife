@@ -25,8 +25,10 @@ final class AIIntelligenceService: ObservableObject {
     private let enhancedAnalytics = EnhancedAnalyticsService.shared
     private let mlTaskLibrary = MLTaskLibrary.shared
     private let trainingPipeline = CreateMLTrainingPipeline.shared
-    private let notificationService = AINotificationService.shared
-    
+    // No notification dependency: this service no longer schedules any push.
+    // All user-facing pushes are owned by LifecycleNotificationService,
+    // DailyDeclarationReminderService and NotificationManager.
+
     // MARK: - State Management
     private var cancellables = Set<AnyCancellable>()
     private let processingQueue = DispatchQueue(label: "ai.intelligence", qos: .userInitiated)
@@ -179,47 +181,14 @@ final class AIIntelligenceService: ObservableObject {
     }
     
     // MARK: - Crisis & Celebration Handling
-    
-    func handleSpiritualCrisis(_ situation: String) async {
-        
-        // Immediate support notification
-        await notificationService.scheduleImmediateSupport(for: situation)
-        
-        // Update user's current life season
-        enhancedAnalytics.trackSpiritualJourney(
-            currentMood: "crisis",
-            prayerRequests: [situation],
-            journalSentiment: -0.8,
-            recommendationAccepted: true,
-            strugglingAreas: [situation]
-        )
-        
-        // Generate crisis-specific recommendations
-        let crisisRecommendations = await generateCrisisSupport(for: situation)
-        await cacheEmergencyContent(crisisRecommendations)
-        
-        // Trigger immediate content update
-        await updatePersonalizedContent()
-    }
-    
-    func celebrateAchievement(_ achievement: String) async {
-        
-        // Celebration notification
-        await notificationService.scheduleCelebration(for: achievement)
-        
-        // Update user's journey
-        enhancedAnalytics.trackSpiritualJourney(
-            currentMood: "celebration",
-            prayerRequests: [],
-            journalSentiment: 0.9,
-            recommendationAccepted: true,
-            growthAreas: [achievement]
-        )
-        
-        // Update spiritual maturity if significant achievement
-        await updateSpiritualMaturity(basedOn: achievement)
-    }
-    
+    //
+    // REMOVED: handleSpiritualCrisis / celebrateAchievement and their pushes
+    // ("Strength for Right Now" at +1min, "Celebrating Your Victory! 🎉" at
+    // +5min). Both chains were unreachable — the only entry points were
+    // AICrisisSupportView (never instantiated) and celebrateWithUser (no
+    // callers). The celebration push also duplicated the real streak-milestone
+    // push in LifecycleNotificationService, which is the one users actually get.
+
     // MARK: - Learning & Adaptation
     
     func triggerModelRetraining() async {
@@ -457,11 +426,11 @@ final class AIIntelligenceService: ObservableObject {
                 enhancedAnalytics.userBehaviorProfile.spiritualMaturityLevel = newMaturity
                 
                 
-                // Trigger content adaptation
+                // Trigger content adaptation. No push here — streak milestones
+                // in LifecycleNotificationService are the one celebration
+                // channel; a second "Celebrating Your Victory!" fired minutes
+                // later just stacked on top of it.
                 await adaptContentToMaturity(newMaturity)
-                
-                // Send congratulatory notification
-                await notificationService.scheduleCelebration(for: "Spiritual Growth to \(newMaturity.displayName)")
             }
         }
     }
@@ -576,40 +545,15 @@ final class AIIntelligenceService: ObservableObject {
         }
     }
     
+    /// Softens recommended content for a user who has drifted. Deliberately
+    /// sends NO push: re-engagement is owned end-to-end by
+    /// `LifecycleNotificationService.scheduleLifecycleNotifications` /
+    /// `lapsed_d5`, which is anchored to real app-open dates and re-armed on
+    /// every launch. This method used to also fire a "We've Missed You" push
+    /// off a Combine debounce on the behavior profile — a second, uncoordinated
+    /// re-engagement channel with weaker copy that could double up with
+    /// lapsed_d5. Content weighting only from here on.
     private func adjustForInactivity() async {
-
-        // Never tell an actively-engaged user "We've Missed You." A live streak
-        // or a recent app open means they're here — a re-engagement push would
-        // be wrong and erodes trust. (This guards the reported bug: a user on a
-        // 3-day streak receiving "missed you" notifications.)
-        let defaults = UserDefaults.standard
-        let currentStreak = defaults.integer(forKey: "currentStreak")
-        if currentStreak >= 1 {
-            return
-        }
-        if let lastOpen = defaults.object(forKey: "lifecycle_last_open_date") as? Date,
-           Date().timeIntervalSince(lastOpen) < 86400 {
-            return
-        }
-
-        // Schedule a gentle, ONE-TIME re-engagement notification at a humane
-        // daytime hour. Firing "1 hour from now" with no time-of-day guard could
-        // land in the middle of the night; clamp to the next 10 AM instead.
-        let reEngagementNotification = AINotification(
-            declarationId: "re_engagement_gentle",
-            declarationCategory: "faith",
-            personalizedTitle: "We've Missed You",
-            personalizedMessage: "Your spiritual journey is waiting - here's some encouragement",
-            optimalTime: nextDaytimeReEngagementTime(),
-            reason: "Re-engagement after inactivity",
-            spiritualContext: "returning_user",
-            confidence: 0.8,
-            notificationType: .reminder
-        )
-
-        // This would use your existing notification scheduling
-        await notificationService.scheduleAINotification(reEngagementNotification)
-
         // Adjust content to be more encouraging and less challenging
         let encouragingWeights = [
             "peace": 1.5,
@@ -622,20 +566,6 @@ final class AIIntelligenceService: ObservableObject {
         if let weightsData = try? encoder.encode(encouragingWeights) {
             UserDefaults.standard.set(weightsData, forKey: "re_engagement_weights")
         }
-    }
-
-    /// Next occurrence of 10 AM. Re-engagement should arrive when a returning
-    /// user can actually act on it — never at 1 AM. If it's already past 10 AM
-    /// today, target 10 AM tomorrow.
-    private func nextDaytimeReEngagementTime() -> Date {
-        let calendar = Calendar.current
-        let now = Date()
-        let todayTen = calendar.date(bySettingHour: 10, minute: 0, second: 0, of: now) ?? now
-        if todayTen > now {
-            return todayTen
-        }
-        let tomorrow = calendar.date(byAdding: .day, value: 1, to: now) ?? now
-        return calendar.date(bySettingHour: 10, minute: 0, second: 0, of: tomorrow) ?? tomorrow
     }
 
     private func boostSimilarContent(categories: [SpiritualContentCategory], score: Double) async {
@@ -773,19 +703,6 @@ extension AIIntelligenceService {
         return await contentCategorization.interpretSearchIntent(query)
     }
     
-    /// Call this when user needs crisis support
-    func provideCrisisSupport(_ situation: String) {
-        Task {
-            await handleSpiritualCrisis(situation)
-        }
-    }
-    
-    /// Call this when user achieves something
-    func celebrateWithUser(_ achievement: String) {
-        Task {
-            await celebrateAchievement(achievement)
-        }
-    }
 }
 
 // MARK: - SwiftUI Integration
