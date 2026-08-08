@@ -512,7 +512,18 @@ enum SurveyGoalWord: String, CaseIterable, Identifiable {
         case .identity:   return .identity
         case .purpose:    return .faith
         case .joy:        return .joy
-        case .confidence: return .confidence
+        // Maps to identity, not the matching `.confidence` case. That category
+        // is declared in the enum but has ZERO declarations in
+        // declarationsv10.json, and this is a live path: the "I'm not in crisis,
+        // I just know there's MORE and I refuse to settle" burden resolves here
+        // in all seven onboarding arms (labelled "Victory over the attack" in
+        // the default warfare arm). Sending it through meant the home feed hit
+        // its empty-category branch and notifications scheduled against a
+        // category with nothing to send. Boldness lives in identity content
+        // anyway — knowing who God says you are is what the confidence copy
+        // promises. Point this back at `.confidence` only once that category
+        // has real declarations behind it.
+        case .confidence: return .identity
         case .healing:    return .health
         case .prosperity: return .wealth
         }
@@ -520,11 +531,17 @@ enum SurveyGoalWord: String, CaseIterable, Identifiable {
 
     var notificationCategories: Set<DeclarationCategory> {
         switch self {
+        // No `.confidence` anywhere below: it has zero declarations (see
+        // declarationCategory above). It used to appear in three of these
+        // seven sets, so identity and purpose users were also carrying a dead
+        // category into their notification mix — it diluted their rotation
+        // rather than breaking it, which is why it went unnoticed. Every
+        // category listed here is content-backed as of declarationsv10.
         case .peace:      return [.anxiety, .faith, .rest, .grace]
-        case .identity:   return [.identity, .grace, .confidence, .faith]
-        case .purpose:    return [.destiny, .faith, .confidence, .wisdom]
+        case .identity:   return [.identity, .grace, .wisdom, .faith]
+        case .purpose:    return [.destiny, .faith, .identity, .wisdom]
         case .joy:        return [.joy, .gratitude, .praise, .faith]
-        case .confidence: return [.confidence, .identity, .faith, .wisdom]
+        case .confidence: return [.identity, .grace, .faith, .wisdom]
         case .healing:    return [.health, .faith, .grace, .rest]
         case .prosperity: return [.wealth, .faith, .favor, .work]
         }

@@ -314,6 +314,16 @@ final class AppState: ObservableObject {
                     + [
                         [.faith, .confidence, .wisdom, .destiny],
                         [.faith, .confidence, .wisdom, .speaklife],
+                        // Pre-fix SurveyGoalWord sets. These three used to carry
+                        // `.confidence`, which was dropped once we learned that
+                        // category has no declarations. They are listed literally
+                        // because the patterns above are computed from the CURRENT
+                        // enum — without these, a user who stored the old shape and
+                        // has not run this heal yet would no longer match, and V8
+                        // would silently stop collapsing them.
+                        [.identity, .grace, .confidence, .faith],   // was .identity
+                        [.destiny, .faith, .confidence, .wisdom],   // was .purpose
+                        [.confidence, .identity, .faith, .wisdom],  // was .confidence
                     ]
                 if autoWidenedPatterns.contains(storedSet),
                    let single = DeclarationCategory(rawValue: defaults.string(forKey: "selectedCategory") ?? ""),
@@ -327,6 +337,51 @@ final class AppState: ObservableObject {
             }
         }
         defaults.set(true, forKey: "notificationCategoriesCollapsedV1")
+
+        // Heal users already stranded on `.confidence`, which is declared in the
+        // enum but has zero declarations in declarationsv10.json. Anyone who
+        // picked "I'm not in crisis, I just know there's MORE and I refuse to
+        // settle" — every onboarding arm has it, and the default warfare arm
+        // labels it "Victory over the attack" — was written straight into that
+        // category. Their daily pushes had nothing to draw from and their feed
+        // hit its empty-category branch. Fixing the mapping in SurveyTypes only
+        // helps new users; these values are already on disk.
+        //
+        // Runs AFTER the V8 collapse above deliberately: V8 may legitimately
+        // collapse a widened set down TO `confidence` (when that was the stored
+        // single category), and this pass then rewrites the result.
+        if defaults.object(forKey: "confidenceCategoryHealedV1") == nil {
+            let dead = DeclarationCategory.confidence.rawValue
+            let replacement = DeclarationCategory.identity.rawValue
+            var healed = false
+
+            if defaults.string(forKey: "selectedCategory") == dead {
+                defaults.set(replacement, forKey: "selectedCategory")
+                healed = true
+            }
+
+            let storedRaw = defaults.string(forKey: "selectedNotificationCategories") ?? ""
+            if storedRaw.split(separator: ",").contains(where: { $0 == Substring(dead) }) {
+                // Swap, dedupe, preserve order. A set that was only `confidence`
+                // becomes only `identity`; a wider set simply loses the dead entry
+                // (identity may already be present, hence the dedupe).
+                var seen = Set<String>()
+                let rebuilt = storedRaw
+                    .split(separator: ",")
+                    .map { $0 == Substring(dead) ? replacement : String($0) }
+                    .filter { seen.insert($0).inserted }
+                defaults.set(rebuilt.joined(separator: ","), forKey: "selectedNotificationCategories")
+                healed = true
+            }
+
+            if healed {
+                print("🩹 confidence heal: remapped empty .confidence → .identity")
+                DispatchQueue.main.async {
+                    NotificationManager.shared.rescheduleFromUserDefaults()
+                }
+            }
+        }
+        defaults.set(true, forKey: "confidenceCategoryHealedV1")
 
         // Heal lifecycle pushes (D1-D30) that were wiped by the legacy
         // removeAllPendingNotificationRequests() bug in NotificationManager.
