@@ -83,10 +83,21 @@ final class DeclarationViewModel: ObservableObject {
         }
     }
     
+    /// True only while `general` holds an arc-ordered feed (see
+    /// `refreshGeneral`). It describes the CURRENT contents of `general`, so
+    /// every writer sets it immediately before assigning. Default false and
+    /// only ever flipped true by the arc path, which is what keeps the shuffle
+    /// below byte-identical for every user without an arc.
+    private var generalIsArcOrdered = false
+
     @Published var general: [Declaration] = [] {
         didSet  {
             if selectedCategory == .general {
-                declarations = general.shuffled()
+                // The 30-day arc's whole value is its ORDER — day 1 leads, the
+                // days already walked sit behind it. Shuffling would throw
+                // away the only thing the arc contributes. Without an arc this
+                // is the same shuffle it has always been.
+                declarations = generalIsArcOrdered ? general : general.shuffled()
             }
         }
     }
@@ -182,6 +193,7 @@ final class DeclarationViewModel: ObservableObject {
                             let destiny = self.allDeclarations.filter({ $0.category == .destiny })
                             let identity = self.allDeclarations.filter({ $0.category == .identity })
                             let love = self.allDeclarations.filter({ $0.category == .love })
+                            self.generalIsArcOrdered = false
                             general = destiny + identity + love
                         }
                         self.fetchDeclarations(isInitialLoad: true)
@@ -583,6 +595,7 @@ final class DeclarationViewModel: ObservableObject {
                     let destiny = self.allDeclarations.filter({ $0.category == .destiny })
                     let identity = self.allDeclarations.filter({ $0.category == .identity })
                     let love = self.allDeclarations.filter({ $0.category == .love })
+                    self.generalIsArcOrdered = false
                     general = destiny + identity + love
                     self.resetListToTop = true
                     completion(true)
@@ -594,8 +607,17 @@ final class DeclarationViewModel: ObservableObject {
             }
             
             // Always update declarations when explicitly choosing a category
-            // The user tapped it, so they expect it to change
-            let shuffled = declarations.shuffled()
+            // The user tapped it, so they expect it to change.
+            //
+            // `refreshGeneral` already ran inside `fetchDeclarations(for:)`, so
+            // `generalIsArcOrdered` describes what it just handed back. An
+            // arc-ordered general feed is passed through unshuffled for the
+            // same reason the `general` observer skips its shuffle; every other
+            // category, and every user without an arc, shuffles exactly as
+            // before.
+            let shuffled = (category == .general && self.generalIsArcOrdered)
+                ? declarations
+                : declarations.shuffled()
             self.declarations = shuffled
             self.resetListToTop = true
             
@@ -678,7 +700,60 @@ final class DeclarationViewModel: ObservableObject {
             let affirmations = allDeclarations.filter { $0.category == category }
             tempGen.append(contentsOf: affirmations)
         }
+
+        // ─── AI-curated 30-day arc ────────────────────────────────────────
+        // The only change to this method's behaviour, and it is fully additive:
+        // `declarationArcFeed` returns nil for every user without a stored arc
+        // (which is everyone until `declarationArcEnabled` is turned on), and
+        // the two lines below are then exactly what this method has always
+        // been. With an arc, the feed opens on the day the arc chose for today
+        // instead of a shuffle of three thousand lines.
+        if let arcFeed = declarationArcFeed(union: tempGen) {
+            generalIsArcOrdered = true
+            general = arcFeed
+            return
+        }
+
+        generalIsArcOrdered = false
         general = tempGen
+    }
+
+    /// Today's arc declaration, the days already walked behind it, then the
+    /// user's normal category union — or nil when there is no usable arc, in
+    /// which case the caller keeps today's behaviour untouched.
+    ///
+    /// The union is kept (shuffled, as it always was) rather than replaced, so
+    /// the feed is still infinite. The arc changes what the user opens on; it
+    /// does not take content away.
+    ///
+    /// Nil in every one of these cases:
+    ///   - the Remote Config flag is off (the default),
+    ///   - no arc has been built for this user,
+    ///   - the arc's IDs no longer resolve against the declarations file this
+    ///     device is running (a content update can retire a line).
+    private func declarationArcFeed(union: [Declaration]) -> [Declaration]? {
+        guard DeclarationArcBuilder.isEnabled else { return nil }
+
+        // Advancing here rather than on a timer is deliberate: the cursor
+        // should count days the user actually showed up, and a feed rebuild is
+        // the user showing up. `DeclarationArc.advanced` bounds it to one move
+        // per calendar day, so this is idempotent no matter how often the feed
+        // is refreshed.
+        guard let arc = DeclarationArcRepository.advanceIfNeeded() else { return nil }
+
+        let ids = arc.feedDeclarationIDs
+        guard !ids.isEmpty, !allDeclarations.isEmpty else { return nil }
+
+        let affirmations = allDeclarations.filter { $0.contentType == .affirmation }
+        let byID = Dictionary(
+            affirmations.map { ($0.id, $0) },
+            uniquingKeysWith: { first, _ in first }
+        )
+        let front = ids.compactMap { byID[$0] }
+        guard !front.isEmpty else { return nil }
+
+        let frontIDs = Set(front.map { $0.id })
+        return front + union.filter { !frontIDs.contains($0.id) }.shuffled()
     }
 
     /// Floats this week's Weekly Focus declarations for *today* to the front of

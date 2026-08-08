@@ -46,6 +46,20 @@ final class RevenueCatManager {
         info.entitlements[Self.premiumEntitlement]?.isActive == true
     }
 
+    /// Current premium state as a plain Bool, safe to call from anywhere.
+    ///
+    /// For the AI proxies' `isPremiumClaim`: they are not main-actor bound and
+    /// have no route to `SubscriptionStore`, and they must not import
+    /// RevenueCat just to name `CustomerInfo`. False on any doubt (Purchases
+    /// not configured, lookup failed) — the claim is only a hint anyway, since
+    /// the Cloud Function re-checks with RevenueCat server-side and its answer
+    /// wins whenever RC responds.
+    func isPremiumActiveNow() async -> Bool {
+        guard Purchases.isConfigured else { return false }
+        guard let info = try? await Purchases.shared.customerInfo() else { return false }
+        return isPremiumActive(info)
+    }
+
     func isDevotionalActive(_ info: CustomerInfo) -> Bool {
         info.entitlements[Self.devotionalEntitlement]?.isActive == true
     }

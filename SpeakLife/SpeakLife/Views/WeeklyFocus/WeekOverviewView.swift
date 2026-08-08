@@ -19,6 +19,11 @@ struct WeekOverviewView: View {
     let focus: WeeklyFocus
     /// True when the answer arrived after days had already been consumed.
     let isPartialWeek: Bool
+    /// This week's bucket devotional, when there is one. Optional and defaulted
+    /// so the screen keeps its Phase 1 property: everything it needs is already
+    /// on the record, so it has no loading state and cannot fail. The
+    /// devotional appears if and when it resolves, and its absence is silent.
+    let devotional: WeeklyFocusDevotional?
     let onCompleteDay: ((Int) -> Void)?
     let onMarkResolved: (() -> Void)?
     let onDone: (() -> Void)?
@@ -36,11 +41,13 @@ struct WeekOverviewView: View {
     init(focus: WeeklyFocus,
          declarations: [Declaration],
          isPartialWeek: Bool = false,
+         devotional: WeeklyFocusDevotional? = nil,
          onCompleteDay: ((Int) -> Void)? = nil,
          onMarkResolved: (() -> Void)? = nil,
          onDone: (() -> Void)? = nil) {
         self.focus = focus
         self.isPartialWeek = isPartialWeek
+        self.devotional = devotional
         self.onCompleteDay = onCompleteDay
         self.onMarkResolved = onMarkResolved
         self.onDone = onDone
@@ -74,6 +81,7 @@ struct WeekOverviewView: View {
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: DS.Spacing.md) {
                         header
+                        devotionalCard
                         ForEach(0..<7, id: \.self) { day in
                             dayRow(day)
                         }
@@ -145,12 +153,74 @@ struct WeekOverviewView: View {
     /// Names the angle rather than the source. "Week 2 on this, from a
     /// different side" is a promise the content actually keeps; "we picked this
     /// from your onboarding answers" is trivia.
+    ///
+    /// Phase 2's framing line, when the week has one, beats all four: it names
+    /// what was actually heard instead of which rung produced the week.
     private var subtitle: String {
+        if let line = focus.framingLine?.trimmingCharacters(in: .whitespacesAndNewlines),
+           !line.isEmpty {
+            return line
+        }
         switch focus.angle {
         case .promise:   return "Seven days of what God says about this."
         case .identity:  return "Week two. Same need, from who you already are."
         case .authority: return "Week three. This week you speak to it."
         case .escalate:  return "You've carried this a while. Let's go deeper."
+        }
+    }
+
+    // MARK: - Bucket devotional
+    //
+    // One devotional per (needBucket, weekOfYear), written once and read by
+    // everyone carrying that kind of need this week. It says nothing about this
+    // individual and must not: the shared body is what makes the whole thing
+    // affordable. The only personal line is `devotionalFraming`, which quotes
+    // words they already gave us and costs nothing to produce.
+
+    @ViewBuilder
+    private var devotionalCard: some View {
+        if let devotional {
+            VStack(alignment: .leading, spacing: 10) {
+                Text("THIS WEEK'S WORD")
+                    .font(.system(size: 10, weight: .bold))
+                    .kerning(1.2)
+                    .foregroundColor(.yellow.opacity(0.8))
+
+                Text(devotional.title)
+                    .font(.system(size: 18, weight: .bold, design: .rounded))
+                    .foregroundColor(.white)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                if let framing = focus.devotionalFraming {
+                    Text(framing)
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundColor(.white.opacity(0.55))
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                Text(devotional.body)
+                    .font(.system(size: 15))
+                    .foregroundColor(.white.opacity(0.88))
+                    .lineSpacing(4)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                if devotional.hasVerse {
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text("\u{201C}\(devotional.verseText)\u{201D}")
+                            .font(.system(size: 14, weight: .medium, design: .serif))
+                            .foregroundColor(.white.opacity(0.82))
+                            .fixedSize(horizontal: false, vertical: true)
+                        Text(devotional.verseReference)
+                            .font(.system(size: 12))
+                            .foregroundColor(.white.opacity(0.45))
+                    }
+                    .padding(.top, 2)
+                }
+            }
+            .padding(16)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .dsGlass(cornerRadius: DS.Radius.md, strokeOpacity: 0.18)
+            .transition(.opacity)
         }
     }
 

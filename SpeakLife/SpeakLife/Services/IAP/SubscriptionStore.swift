@@ -501,7 +501,44 @@ final class SubscriptionStore: ObservableObject {
             remoteConfig["weeklyFocusEnabled"].boolValue,
             forKey: "weeklyFocusEnabled"
         )
-        
+
+        // Weekly Focus Phase 2/3 flags. Same pattern and same reason: the read
+        // side is a plain UserDefaults lookup inside services that are not
+        // main-actor bound and have no route to this store, so the flag is
+        // mirrored once here rather than published. Both are registered FALSE
+        // in AppDelegate, so a pre-fetch launch (and any user on an unset
+        // Remote Config) gets Phase 1 behaviour exactly.
+        UserDefaults.standard.set(
+            remoteConfig["weeklyFocusRemoteSelection"].boolValue,
+            forKey: WeeklyFocusFlags.remoteSelection
+        )
+        UserDefaults.standard.set(
+            remoteConfig["weeklyFocusDevotionalsEnabled"].boolValue,
+            forKey: WeeklyFocusFlags.devotionals
+        )
+
+        // AI-curated 30-day declaration arc. SHIPS OFF: an unset Remote Config
+        // key resolves false, and there is no AppDelegate default registered
+        // for it, so every existing install stays on today's flat category
+        // feed until this is deliberately turned on. Written straight to
+        // UserDefaults for the same reason weeklyFocusEnabled is —
+        // DeclarationArcBuilder and DeclarationViewModel both read it off the
+        // defaults, and a second @Published copy is how a kill switch ends up
+        // half-flipped.
+        UserDefaults.standard.set(
+            remoteConfig[DeclarationArcBuilder.featureFlagKey].boolValue,
+            forKey: DeclarationArcBuilder.featureFlagKey
+        )
+
+        // Routes Bible Chat to `bibleChatPersonal` (the profile-aware fork)
+        // instead of the production `bibleChat` function. Off unless Remote
+        // Config says otherwise, so the live path stays the default and
+        // backing personalization out is a flag flip, not a redeploy.
+        UserDefaults.standard.set(
+            remoteConfig["bibleChatPersonalized"].boolValue,
+            forKey: "bibleChatPersonalized"
+        )
+
         // Declarations file name from Remote Config — only upgrade, never downgrade
         let remoteDeclarationsFileName = remoteConfig["declarationsFileName"].stringValue
         if !remoteDeclarationsFileName.isEmpty {

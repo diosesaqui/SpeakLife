@@ -51,6 +51,12 @@ final class WeeklyFocusViewModel: ObservableObject {
     /// consumed, which changes the confirmation copy to "the rest of your week".
     @Published private(set) var didRebuildPartialWeek = false
 
+    /// This week's bucket devotional, shared by everyone carrying the same kind
+    /// of need. nil until it resolves, and nil forever when the flag is off,
+    /// the user is free, or the fetch failed — the week is complete without it,
+    /// so the overview simply omits the section.
+    @Published private(set) var devotional: WeeklyFocusDevotional? = nil
+
     /// Where this presentation was opened from — push | card | interstitial.
     /// Stamped onto every check-in event so answer rate can be split by surface.
     var surface: String = "card"
@@ -63,6 +69,9 @@ final class WeeklyFocusViewModel: ObservableObject {
     private let completeDayUseCase: CompleteWeeklyDayUseCase
     private let matchUseCase: MatchDeclarationUseCase
     private let speechService: SpeechTranscriptionProtocol
+    /// Phase 3. Its own kill switch, defaulted off, and every failure returns
+    /// nil rather than throwing — so this dependency cannot affect the week.
+    private let devotionalService: WeeklyFocusDevotionalService
     private let defaults: UserDefaults
 
     private var openedAt = Date()
@@ -74,6 +83,7 @@ final class WeeklyFocusViewModel: ObservableObject {
          completeDayUseCase: CompleteWeeklyDayUseCase,
          matchUseCase: MatchDeclarationUseCase,
          speechService: SpeechTranscriptionProtocol,
+         devotionalService: WeeklyFocusDevotionalService = WeeklyFocusDevotionalService(),
          defaults: UserDefaults = .standard) {
         self.repository = repository
         self.buildUseCase = buildUseCase
@@ -81,6 +91,7 @@ final class WeeklyFocusViewModel: ObservableObject {
         self.completeDayUseCase = completeDayUseCase
         self.matchUseCase = matchUseCase
         self.speechService = speechService
+        self.devotionalService = devotionalService
         self.defaults = defaults
     }
 
@@ -109,6 +120,20 @@ final class WeeklyFocusViewModel: ObservableObject {
         let built = await buildUseCase.execute()
         focus = built
         await applyPendingAnswerIfNeeded(isPremium: isPremium)
+        // Deliberately AFTER the pending-answer commit: that can replace the
+        // week (and with it the bucket), and fetching against the old bucket
+        // first would pay to generate a devotional nobody is going to read.
+        guard isPremium else { return }
+        Task { [weak self] in await self?.loadDevotional() }
+    }
+
+    /// Fetches this week's bucket devotional. Cheap by construction: memoized
+    /// per launch, cached on device for the week, and served from a Firestore
+    /// document shared by every user in the bucket. Only the first user in a
+    /// given `(bucket, week)` pays for a generation.
+    private func loadDevotional() async {
+        guard let focus else { return }
+        devotional = await devotionalService.devotional(for: focus)
     }
 
     /// Resets the sheet to a fresh ask. Called when the sheet is presented so a
@@ -292,6 +317,11 @@ final class WeeklyFocusViewModel: ObservableObject {
             didRebuildPartialWeek = result.isPartialWeek
             clearPendingAnswer()
             step = .week
+            // Detached from the submit path on purpose. A cache MISS here is a
+            // live generation, and the seven days arriving instantly is the
+            // whole reason anyone answers a second Sunday — the devotional
+            // fills in behind the screen that is already on it.
+            Task { [weak self] in await self?.loadDevotional() }
         } catch {
             errorMessage = "Something went wrong. Please try again."
         }

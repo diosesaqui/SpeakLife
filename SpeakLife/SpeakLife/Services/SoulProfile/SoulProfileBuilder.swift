@@ -114,6 +114,14 @@ enum SoulProfileBuilder {
         DIContainer.shared.soulProfileRepository.saveNow(profile)
         appState.hasSoulProfile = true
 
+        // The 30-day arc, built once, from the profile that was just written.
+        // Fire-and-forget by contract: this returns immediately, no-ops
+        // entirely while `declarationArcEnabled` is off (the default), and its
+        // only failure mode is "no arc", which leaves the feed exactly as it is
+        // today. Nothing about onboarding waits on it or can fail because of
+        // it — see DeclarationArcBuilder's header for the fallback ladder.
+        DeclarationArcBuilder.buildAtOnboardingCompletion(profile: profile)
+
         AnalyticsService.shared.track("soul_profile_captured", parameters: [
             "variant": variant,
             "quiz_version": quizVersion,

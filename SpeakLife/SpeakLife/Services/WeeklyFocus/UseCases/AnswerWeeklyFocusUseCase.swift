@@ -60,6 +60,9 @@ final class AnswerWeeklyFocusUseCase {
             categoryRaw: built.categoryRaw,
             declarationIDs: Self.mergeDays(existing: existing, built: built, consumedDays: consumedDays),
             audioCategoryRaw: built.audioCategoryRaw,
+            // Phase 2 only, and only on the answered path — the line names what
+            // was just heard, so the provisional week's (nil) never wins.
+            framingLine: built.framingLine,
             carryOverCount: 0,
             completedDays: existing?.completedDays ?? [],
             answeredAt: now,

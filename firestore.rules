@@ -184,6 +184,43 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // ─── 30-day declaration arc usage metering ─────────────────────────
+    // Written exclusively by the declarationArc Cloud Function via the admin
+    // SDK (which bypasses these rules). Holds the rolling rate-limit window
+    // and token usage totals. The cap here is two calls per rolling 24h
+    // because an arc is built once in a user's lifetime, so a client that
+    // could write this document could mint unlimited arcs — server-only.
+
+    match /declarationArcUsage/{id} {
+      allow read, write: if false;
+    }
+
+    // ─── Weekly Focus usage metering ───────────────────────────────────
+    // Written exclusively by the weeklyFocus / weeklyFocusDevotional Cloud
+    // Functions via the admin SDK (which bypasses these rules). Holds the
+    // rolling rate-limit window and token usage totals — a client that could
+    // write here could lift its own rate limit, so it stays server-only.
+
+    match /weeklyFocusUsage/{id} {
+      allow read, write: if false;
+    }
+
+    // ─── Weekly Focus bucket devotionals (shared cache) ────────────────
+    // One document per (needBucket, weekOfYear), generated on the FIRST
+    // request for that key by weeklyFocusDevotional and then served to every
+    // user in that bucket. Written and read exclusively by that function via
+    // the admin SDK.
+    //
+    // Closed to clients even for reads, and deliberately so: this is a cache
+    // whose whole cost model is "one generation per occupied bucket per
+    // week". A client-readable cache is a client-enumerable one, and the
+    // premium gate that decides who gets a devotional lives in the function,
+    // not here. The app receives the content in the function's response.
+
+    match /weeklyFocusDevotionals/{key} {
+      allow read, write: if false;
+    }
+
     // ─── Scheduled broadcast messages ──────────────────────────────────
     // Written exclusively by the sendPersonalMessage Cloud Function and
     // delivered by processScheduledMessages via the admin SDK (which

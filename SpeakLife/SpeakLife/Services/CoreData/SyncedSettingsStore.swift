@@ -156,6 +156,18 @@ final class SyncedSettingsStore {
         // side's older weeks are already present on the winner.
         SyncedKey(key: WeeklyFocusRepository.storageKey, strategy: .lastWriterWins),
 
+        // The 30-day declaration arc. Follows the user across devices for the
+        // same reason the Anchor and the SoulProfile do: it is built once, at
+        // onboarding, and a second device should pick the journey up on the day
+        // they are actually on rather than restarting them at day 1.
+        //
+        // lastWriterWins is right here even though the record carries a day
+        // cursor. The arc's ID list is immutable after creation, so the only
+        // field that can genuinely diverge is `dayCursor`, and the device that
+        // wrote most recently is by definition the one the user just opened —
+        // which is exactly the device whose cursor is correct.
+        SyncedKey(key: DeclarationArcRepository.storageKey, strategy: .lastWriterWins),
+
         // Appearance & experience preferences.
         SyncedKey(key: "theme", strategy: .lastWriterWins),
         SyncedKey(key: "fontString", strategy: .lastWriterWins),

@@ -25,6 +25,17 @@ final class DIContainer {
     /// UserDefaults-backed with a fire-and-forget Firestore mirror.
     lazy var soulProfileRepository: SoulProfileRepositoryProtocol = SoulProfileRepository()
 
+    // MARK: - Declaration Arc
+
+    /// The 30-day arc under `declaration_arc_v1`, synced by SyncedSettingsStore.
+    ///
+    /// The builder is deliberately NOT wired here. It is a stateless enum with
+    /// injectable dependencies called from exactly one place
+    /// (`SoulProfileBuilder.captureAtOnboardingCompletion`), and giving it a
+    /// container slot would imply a lifecycle it does not have — an arc is
+    /// built once per user, not held.
+    lazy var declarationArcRepository: DeclarationArcRepositoryProtocol = DeclarationArcRepository()
+
     // MARK: - Weekly Focus
 
     /// Last 12 weeks under `weekly_focus_history_v1`, synced by SyncedSettingsStore.
@@ -33,19 +44,42 @@ final class DIContainer {
     lazy var weeklyCheckInScheduler: WeeklyCheckInSchedulerProtocol = WeeklyCheckInScheduler()
 
     /// Deliberately `KeywordDeclarationMatcher`, not `declarationMatcher` above.
-    /// The whole premise of Weekly Focus Phase 1 is that a week costs zero LLM
-    /// calls, so the answer rate can be measured before any generation spend —
-    /// wiring the Claude-backed matcher here would quietly put a network call
-    /// (and a bill) behind every Sunday for every user, answered or not.
-    /// Phase 2 moves selection behind the `/weeklyFocus` Cloud Function; this
-    /// is the line that changes then.
+    /// The whole premise of Weekly Focus is that an unanswered week costs zero
+    /// LLM calls — wiring the Claude-backed matcher here would quietly put a
+    /// network call (and a bill) behind every Sunday for every user, answered
+    /// or not. It stays the classifier even in Phase 2: on the answered path
+    /// the remote selector re-classifies server-side and its category wins, and
+    /// on every other rung this is the only classifier that runs.
+    ///
+    /// The SELECTOR is what Phase 2 changes. `WeeklyFocusRemoteSelector` is a
+    /// strict superset of the keyword one: it holds it as its own fallback and
+    /// hands straight back to it unless the Remote Config flag
+    /// (`weeklyFocusRemoteSelection`, default OFF) is on AND this week is being
+    /// built from an answer the user just gave. So with the flag off — and on
+    /// every silent week regardless of the flag — this line behaves exactly as
+    /// it did in Phase 1, including making no network call at all.
     lazy var weeklyFocusBuilder: WeeklyFocusBuilderProtocol = WeeklyFocusBuilder(
         repository: weeklyFocusRepository,
         personalDeclarationRepository: personalDeclarationRepository,
         soulProfileRepository: soulProfileRepository,
         matcher: KeywordDeclarationMatcher(),
+        selector: WeeklyFocusRemoteSelector(),
         declarationProvider: LocalDeclarationProvider()
     )
+
+    /// Bucket devotionals. `@MainActor` (it memoizes), so it is built by the
+    /// factories below rather than held as a lazy var here.
+    @MainActor
+    func makeWeeklyFocusDevotionalService() -> WeeklyFocusDevotionalService {
+        WeeklyFocusDevotionalService()
+    }
+
+    /// The 3+ carry-over offer, and the "at most once per need" bookkeeping
+    /// behind it.
+    @MainActor
+    func makeWeeklyFocusEscalation() -> WeeklyFocusEscalation {
+        WeeklyFocusEscalation()
+    }
 
     func makeBuildWeeklyFocusUseCase() -> BuildWeeklyFocusUseCase {
         BuildWeeklyFocusUseCase(
@@ -70,7 +104,8 @@ final class DIContainer {
             // (one verse + one declaration) has to cost nothing, or a free user
             // who answers every Sunday and never converts stops being free.
             matchUseCase: MatchDeclarationUseCase(matcher: KeywordDeclarationMatcher()),
-            speechService: speechTranscriptionService
+            speechService: speechTranscriptionService,
+            devotionalService: makeWeeklyFocusDevotionalService()
         )
     }
 

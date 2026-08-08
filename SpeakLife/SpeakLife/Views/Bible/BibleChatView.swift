@@ -337,6 +337,21 @@ struct BibleChatConversationView: View {
     @State private var heroAppeared = false
     @FocusState private var inputFocused: Bool
 
+    /// Optional opening text, dropped into the composer (never sent) when the
+    /// chat is opened from somewhere that already knows what the person is
+    /// carrying — today the Weekly Focus escalation, which arrives with a need
+    /// they have restated four Sundays running.
+    ///
+    /// A DRAFT and not a sent message on purpose: they can edit or delete it,
+    /// and nothing is spent until they choose to send. An explicit initializer
+    /// (rather than a defaulted stored property) so the existing zero-argument
+    /// call sites keep compiling unchanged.
+    private let prefillPrompt: String?
+
+    init(prefillPrompt: String? = nil) {
+        self.prefillPrompt = prefillPrompt
+    }
+
     private let starters: [BibleChatTopic] = (try? BibleChatService.shared.loadTopics()) ?? []
 
     private var greeting: String {
@@ -432,7 +447,16 @@ struct BibleChatConversationView: View {
                     )
                 }
         }
-        .onAppear { AnalyticsService.shared.trackScreenView("bible_chat_conversation") }
+        .onAppear {
+            AnalyticsService.shared.trackScreenView("bible_chat_conversation")
+            // Only ever fills an untouched composer on an empty chat, so
+            // re-appearing (backgrounding, a sheet closing) can never overwrite
+            // something the user has typed.
+            if let prefillPrompt, !prefillPrompt.isEmpty,
+               viewModel.messages.isEmpty, viewModel.draft.isEmpty {
+                viewModel.draft = prefillPrompt
+            }
+        }
     }
 
     private var transcript: some View {

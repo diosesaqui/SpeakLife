@@ -34,7 +34,11 @@ final class WeeklyFocusBuilder: WeeklyFocusBuilderProtocol {
     /// the whole point of Phase 1 is that a week costs zero LLM calls so the
     /// answer rate can be measured before any generation spend.
     private let matcher: DeclarationMatcherProtocol
-    private let selector: WeeklyFocusContentSelector
+    /// `WeeklyFocusSelecting`, not the concrete keyword selector: Phase 2 wires
+    /// `WeeklyFocusRemoteSelector` here behind a Remote Config flag and the
+    /// ladder must not be able to tell the difference. The remote one wraps the
+    /// keyword one as its own fallback, so this stays "cannot fail" either way.
+    private let selector: WeeklyFocusSelecting
     private let declarationProvider: WeeklyFocusDeclarationProviding
     private let defaults: UserDefaults
 
@@ -42,7 +46,7 @@ final class WeeklyFocusBuilder: WeeklyFocusBuilderProtocol {
          personalDeclarationRepository: PersonalDeclarationRepositoryProtocol,
          soulProfileRepository: SoulProfileRepositoryProtocol,
          matcher: DeclarationMatcherProtocol = KeywordDeclarationMatcher(),
-         selector: WeeklyFocusContentSelector = WeeklyFocusContentSelector(),
+         selector: WeeklyFocusSelecting = WeeklyFocusContentSelector(),
          declarationProvider: WeeklyFocusDeclarationProviding,
          defaults: UserDefaults = .standard) {
         self.repository = repository
@@ -60,7 +64,7 @@ final class WeeklyFocusBuilder: WeeklyFocusBuilderProtocol {
         let theme = await resolveTheme(for: weekStart, answer: answer)
         let pool = await declarationProvider.loadDeclarations()
 
-        let selection = selector.select(
+        let selection = await selector.selectWeek(
             input: WeeklyFocusSelectionInput(
                 needText: theme.needText,
                 needBucket: theme.needBucket,
@@ -68,20 +72,36 @@ final class WeeklyFocusBuilder: WeeklyFocusBuilderProtocol {
                 varietyCategory: theme.varietyCategory,
                 angle: theme.angle,
                 carryOverCount: theme.carryOverCount,
-                weekStart: weekStart
+                weekStart: weekStart,
+                // ONLY the `.userAnswered` rung. This single flag is what keeps
+                // "an unanswered week costs zero LLM calls" true after Phase 2 —
+                // the remote selector refuses to leave the device without it, so
+                // carry-over, anchor, profile, behavioral and default weeks stay
+                // local and free no matter which selector is wired in.
+                isFreshAnswer: theme.source == .userAnswered
             ),
             from: pool
         )
+
+        // A selector that classified the need itself (the remote one) knows
+        // better than the keyword matcher that produced `theme`. It reads the
+        // whole sentence rather than scanning for words, and the bucket it
+        // returns is the key of the devotional cache shared across users — so
+        // when it answers, its answer wins. The keyword selector returns nil
+        // here and the theme stands, which is Phase 1 unchanged.
+        let categoryRaw = selection.categoryRaw ?? theme.category.rawValue
+        let needBucket = selection.needBucket ?? theme.needBucket
 
         return WeeklyFocus(
             weekStart: weekStart,
             source: theme.source,
             angle: theme.angle,
             needText: theme.needText,
-            needBucket: theme.needBucket,
-            categoryRaw: theme.category.rawValue,
+            needBucket: needBucket,
+            categoryRaw: categoryRaw,
             declarationIDs: selection.declarationIDs,
             audioCategoryRaw: selection.audioCategoryRaw,
+            framingLine: selection.framingLine,
             carryOverCount: theme.carryOverCount,
             answeredAt: theme.source == .userAnswered ? Date() : nil
         )

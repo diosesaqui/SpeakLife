@@ -114,6 +114,13 @@ struct WeeklyFocus: Codable, Equatable, Identifiable {
     /// Feeds the existing audio filter ordering as its highest-priority input.
     let audioCategoryRaw: String
 
+    /// One sentence naming what was heard, written by the model that selected
+    /// the week (Phase 2). nil on every keyword-selected week, including every
+    /// week built before Phase 2 shipped — the property is Optional so the
+    /// synthesized decoder reads those older records with `decodeIfPresent`
+    /// and they keep working untouched.
+    let framingLine: String?
+
     var carryOverCount: Int
     /// 0...6, relative to `weekStart`.
     var completedDays: Set<Int>
@@ -341,6 +348,7 @@ struct WeeklyFocus: Codable, Equatable, Identifiable {
         categoryRaw: String,
         declarationIDs: [String],
         audioCategoryRaw: String,
+        framingLine: String? = nil,
         carryOverCount: Int = 0,
         completedDays: Set<Int> = [],
         answeredAt: Date? = nil,
@@ -355,6 +363,7 @@ struct WeeklyFocus: Codable, Equatable, Identifiable {
         self.categoryRaw = categoryRaw
         self.declarationIDs = declarationIDs
         self.audioCategoryRaw = audioCategoryRaw
+        self.framingLine = framingLine
         self.carryOverCount = carryOverCount
         self.completedDays = completedDays
         self.answeredAt = answeredAt

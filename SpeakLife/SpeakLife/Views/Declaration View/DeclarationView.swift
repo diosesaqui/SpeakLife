@@ -94,6 +94,9 @@ struct DeclarationView: View {
     /// push | card — which surface opened the sheet. Stamped onto every
     /// check-in event so answer rate is splittable by surface.
     @State private var weeklyCheckInSurface = "card"
+    /// The 3+ carry-over offer. Presented at most once per need — the policy
+    /// lives in `WeeklyFocusEscalation`, not here.
+    @State private var showWeeklyFocusEscalation = false
     
     private var cancellables = Set<AnyCancellable>()
     
@@ -181,8 +184,28 @@ struct DeclarationView: View {
                 // get the ask, the echo, and one matched verse.
                 guard isPremium else { return }
                 viewModel.applyWeeklyFocus(focus)
+                offerWeeklyFocusEscalationIfNeeded(focus)
             }
         }
+    }
+
+    /// Three or more weeks on the same unmoved need. Phase 1 already changed
+    /// the question and fired `weekly_focus_escalated`; this is the part that
+    /// does something about it.
+    ///
+    /// Gated to premium for the same reason the week is: the two doors it opens
+    /// (Bible Chat and the Anchor) are the premium surfaces, and a free user
+    /// carrying a need for a month is a paywall conversation, not this one.
+    /// `WeeklyFocusEscalation` owns "at most once per need"; this only asks.
+    @MainActor
+    private func offerWeeklyFocusEscalationIfNeeded(_ focus: WeeklyFocus) {
+        let escalation = DIContainer.shared.makeWeeklyFocusEscalation()
+        guard escalation.shouldOffer(for: focus) else { return }
+        // Marked on PRESENTATION, not on action: a user who closes it has
+        // answered, and re-asking every Sunday is the nag the whole escalation
+        // path exists to avoid.
+        escalation.markOffered(for: focus)
+        showWeeklyFocusEscalation = true
     }
 
     // Personal Declaration compact button shown in top row — always visible
@@ -509,6 +532,34 @@ struct DeclarationView: View {
             .environmentObject(appState)
             .environmentObject(subscriptionStore)
             .environmentObject(viewModel)
+        }
+        // Three-plus weeks on the same unmoved need. Full-screen, like the
+        // check-in itself: this is the app saying it noticed, and a card
+        // peeking out behind it would undercut that.
+        .fullScreenCover(isPresented: $showWeeklyFocusEscalation) {
+            if let focus = weeklyFocus {
+                WeeklyFocusEscalationSheet(
+                    focus: focus,
+                    // Only worth offering when there is an unreceived Anchor to
+                    // mark. `hasPersonalDeclaration` is the same flag the
+                    // Anchor button in the top row reads.
+                    showsAnchorOption: appState.hasPersonalDeclaration,
+                    onOpenAnchor: {
+                        showWeeklyFocusEscalation = false
+                        // Reuse the existing Anchor card, whose "It Came to
+                        // Pass" button runs the breakthrough flow. One
+                        // definition of what a breakthrough is.
+                        Task {
+                            loadedDeclaration = await DIContainer.shared.personalDeclarationRepository.load()
+                            activeSheet = .personalDeclaration
+                        }
+                    },
+                    onDismiss: { showWeeklyFocusEscalation = false }
+                )
+                .environmentObject(appState)
+                .environmentObject(subscriptionStore)
+                .environmentObject(viewModel)
+            }
         }
         // The `weeklyFocus` deep link (Sunday push) sets this from
         // SpeakLifeApp.handleNotificationContent, possibly before this view

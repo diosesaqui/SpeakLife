@@ -138,6 +138,18 @@ final class AppDelegate: NSObject, MessagingDelegate {
             // Config to silence the Sunday push and pull the feed card without
             // an App Store release. Weeks already built keep working.
             "weeklyFocusEnabled": true as NSNumber,
+            // Weekly Focus Phase 2: route the answered week's declaration
+            // selection through the /weeklyFocus Cloud Function instead of the
+            // local keyword selector. DEFAULT OFF — this is the first line of
+            // the feature that costs money, so it ships dark and is turned on
+            // deliberately. Off, the app behaves exactly as Phase 1 did; on,
+            // every failure still falls back to the keyword selector.
+            // Unanswered weeks make no call either way.
+            "weeklyFocusRemoteSelection": false as NSNumber,
+            // Weekly Focus Phase 3: the shared (needBucket, weekOfYear)
+            // devotional on the week overview. DEFAULT OFF, same reasoning.
+            // Generated lazily, so an unoccupied bucket costs nothing.
+            "weeklyFocusDevotionalsEnabled": false as NSNumber,
             // Personalized audio category ordering ships dark; flip to true in
             // Remote Config (or via the A/B test) to promote each user's
             // best-matching categories to the front of the audio filter row.

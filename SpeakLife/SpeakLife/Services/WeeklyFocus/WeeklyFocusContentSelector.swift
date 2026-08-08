@@ -34,6 +34,17 @@ struct WeeklyFocusSelectionInput {
     /// Seeds the deterministic shuffle: the same week always resolves to the
     /// same declarations (so a rebuild is stable), a different week does not.
     let weekStart: Date
+
+    /// True ONLY when this week is being built from an answer the user just
+    /// typed or spoke. Every other rung of the ladder (carry-over, anchor,
+    /// profile, behavioral, default) leaves it false.
+    ///
+    /// This is the flag that keeps "an unanswered week costs zero" true after
+    /// Phase 2: `WeeklyFocusRemoteSelector` refuses to make a network call
+    /// unless it is set, so the four silent rungs stay local and free no matter
+    /// which selector is wired in. It is a `var` with a default purely so the
+    /// memberwise initializer keeps working for the Phase 1 call sites.
+    var isFreshAnswer: Bool = false
 }
 
 struct WeeklyFocusSelection {
@@ -41,6 +52,21 @@ struct WeeklyFocusSelection {
     /// slices evenly.
     let declarationIDs: [String]
     let audioCategoryRaw: String
+
+    /// Set only by a selector that classified the need itself (Phase 2's remote
+    /// path). The keyword selector leaves these nil, because the category and
+    /// bucket were already decided by `KeywordDeclarationMatcher` before it ran
+    /// and echoing them back would just be the builder's own input.
+    ///
+    /// When present the builder prefers them: a model reading the user's whole
+    /// sentence classifies it better than a keyword table, and the bucket is
+    /// what keys the shared devotional cache, so it has to come from whoever
+    /// actually decided the category.
+    var categoryRaw: String? = nil
+    var needBucket: String? = nil
+    /// One sentence naming what was heard, shown above the week. nil on the
+    /// keyword path — the overview falls back to its angle-based subtitle.
+    var framingLine: String? = nil
 }
 
 // MARK: - Selector
@@ -165,7 +191,12 @@ final class WeeklyFocusContentSelector {
     /// The alternative — three contiguous slices — front-loads every strongest
     /// declaration into Sunday and leaves Saturday with the weakest of the set.
     /// Round-robin gives every day one strong line, one middle, one tail.
-    private static func sequence(_ picked: [Declaration]) -> [Declaration] {
+    ///
+    /// Internal rather than private so `WeeklyFocusRemoteSelector` deals the
+    /// model's ranked list across the week the same way. Two implementations of
+    /// day sequencing would mean a remotely-selected week and a keyword week
+    /// paced differently for no reason anyone could see.
+    static func sequence(_ picked: [Declaration]) -> [Declaration] {
         guard picked.count >= 7 else { return picked }
         var days: [[Declaration]] = Array(repeating: [], count: 7)
         for (rank, declaration) in picked.enumerated() {

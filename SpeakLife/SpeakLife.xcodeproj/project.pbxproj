@@ -371,6 +371,17 @@
 		6013BBBB000000000000BB13 /* WeeklyCheckInSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6013AAAA000000000000AA13 /* WeeklyCheckInSheet.swift */; };
 		6014BBBB000000000000BB14 /* WeeklyFocusCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6014AAAA000000000000AA14 /* WeeklyFocusCard.swift */; };
 		6015BBBB000000000000BB15 /* WeekOverviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6015AAAA000000000000AA15 /* WeekOverviewView.swift */; };
+		6016BBBB000000000000BB16 /* WeeklyFocusSelecting.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6016AAAA000000000000AA16 /* WeeklyFocusSelecting.swift */; };
+		6017BBBB000000000000BB17 /* WeeklyFocusRemoteSelector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6017AAAA000000000000AA17 /* WeeklyFocusRemoteSelector.swift */; };
+		6018BBBB000000000000BB18 /* WeeklyFocusDevotionalService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6018AAAA000000000000AA18 /* WeeklyFocusDevotionalService.swift */; };
+		6019BBBB000000000000BB19 /* WeeklyFocusEscalation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6019AAAA000000000000AA19 /* WeeklyFocusEscalation.swift */; };
+		6020BBBB000000000000BB20 /* WeeklyFocusEscalationSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6020AAAA000000000000AA20 /* WeeklyFocusEscalationSheet.swift */; };
+		7001BBBB000000000000BB01 /* DeclarationArc.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7001AAAA000000000000AA01 /* DeclarationArc.swift */; };
+		7002BBBB000000000000BB02 /* DeclarationArcProtocols.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7002AAAA000000000000AA02 /* DeclarationArcProtocols.swift */; };
+		7003BBBB000000000000BB03 /* DeclarationArcRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7003AAAA000000000000AA03 /* DeclarationArcRepository.swift */; };
+		7004BBBB000000000000BB04 /* DeclarationArcSelector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7004AAAA000000000000AA04 /* DeclarationArcSelector.swift */; };
+		7005BBBB000000000000BB05 /* DeclarationArcService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7005AAAA000000000000AA05 /* DeclarationArcService.swift */; };
+		7006BBBB000000000000BB06 /* DeclarationArcBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7006AAAA000000000000AA06 /* DeclarationArcBuilder.swift */; };
 		B0002222222222222222BBBB /* DeclarationContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0002222222222222222AAAA /* DeclarationContent.swift */; };
 		B0003333333333333333BBBB /* DeclarationMatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0003333333333333333AAAA /* DeclarationMatcher.swift */; };
 		B0004444444444444444BBBB /* PersonalDeclarationRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0004444444444444444AAAA /* PersonalDeclarationRepository.swift */; };
@@ -810,6 +821,17 @@
 		6013AAAA000000000000AA13 /* WeeklyCheckInSheet.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = WeeklyCheckInSheet.swift; sourceTree = "<group>"; };
 		6014AAAA000000000000AA14 /* WeeklyFocusCard.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = WeeklyFocusCard.swift; sourceTree = "<group>"; };
 		6015AAAA000000000000AA15 /* WeekOverviewView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = WeekOverviewView.swift; sourceTree = "<group>"; };
+		6016AAAA000000000000AA16 /* WeeklyFocusSelecting.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = WeeklyFocusSelecting.swift; sourceTree = "<group>"; };
+		6017AAAA000000000000AA17 /* WeeklyFocusRemoteSelector.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = WeeklyFocusRemoteSelector.swift; sourceTree = "<group>"; };
+		6018AAAA000000000000AA18 /* WeeklyFocusDevotionalService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = WeeklyFocusDevotionalService.swift; sourceTree = "<group>"; };
+		6019AAAA000000000000AA19 /* WeeklyFocusEscalation.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = WeeklyFocusEscalation.swift; sourceTree = "<group>"; };
+		6020AAAA000000000000AA20 /* WeeklyFocusEscalationSheet.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = WeeklyFocusEscalationSheet.swift; sourceTree = "<group>"; };
+		7001AAAA000000000000AA01 /* DeclarationArc.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DeclarationArc.swift; sourceTree = "<group>"; };
+		7002AAAA000000000000AA02 /* DeclarationArcProtocols.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DeclarationArcProtocols.swift; sourceTree = "<group>"; };
+		7003AAAA000000000000AA03 /* DeclarationArcRepository.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DeclarationArcRepository.swift; sourceTree = "<group>"; };
+		7004AAAA000000000000AA04 /* DeclarationArcSelector.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DeclarationArcSelector.swift; sourceTree = "<group>"; };
+		7005AAAA000000000000AA05 /* DeclarationArcService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DeclarationArcService.swift; sourceTree = "<group>"; };
+		7006AAAA000000000000AA06 /* DeclarationArcBuilder.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DeclarationArcBuilder.swift; sourceTree = "<group>"; };
 		A0002222222222222222AAAA /* DeclarationContent.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DeclarationContent.swift; sourceTree = "<group>"; };
 		A0003333333333333333AAAA /* DeclarationMatcher.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DeclarationMatcher.swift; sourceTree = "<group>"; };
 		A0004444444444444444AAAA /* PersonalDeclarationRepository.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PersonalDeclarationRepository.swift; sourceTree = "<group>"; };
@@ -1526,6 +1548,7 @@
 				A0001111111111111111AAAA /* PersonalDeclaration.swift */,
 				5001AAAA000000000000AAA1 /* SoulProfile.swift */,
 				6001AAAA000000000000AA01 /* WeeklyFocus.swift */,
+				7001AAAA000000000000AA01 /* DeclarationArc.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -1554,6 +1577,7 @@
 				C0010000000000000001AAAA /* SurveyPersonalizationEngine.swift */,
 				5000CCCC000000000000CCC0 /* SoulProfile */,
 				6000CCCC000000000000CCC0 /* WeeklyFocus */,
+				7000CCCC000000000000CCC0 /* DeclarationArc */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -1921,6 +1945,9 @@
 				6006AAAA000000000000AA06 /* WeeklyFocusBuilder.swift */,
 				6007AAAA000000000000AA07 /* WeeklyCheckInScheduler.swift */,
 				6008AAAA000000000000AA08 /* WeeklyFocusContentSelector.swift */,
+				6017AAAA000000000000AA17 /* WeeklyFocusRemoteSelector.swift */,
+				6018AAAA000000000000AA18 /* WeeklyFocusDevotionalService.swift */,
+				6019AAAA000000000000AA19 /* WeeklyFocusEscalation.swift */,
 				6000CCCC000000000000CCC1 /* Protocols */,
 				6000CCCC000000000000CCC2 /* UseCases */,
 			);
@@ -1933,6 +1960,7 @@
 				6002AAAA000000000000AA02 /* WeeklyFocusRepositoryProtocol.swift */,
 				6003AAAA000000000000AA03 /* WeeklyFocusBuilderProtocol.swift */,
 				6004AAAA000000000000AA04 /* WeeklyCheckInSchedulerProtocol.swift */,
+				6016AAAA000000000000AA16 /* WeeklyFocusSelecting.swift */,
 			);
 			path = Protocols;
 			sourceTree = "<group>";
@@ -1953,8 +1981,29 @@
 				6013AAAA000000000000AA13 /* WeeklyCheckInSheet.swift */,
 				6014AAAA000000000000AA14 /* WeeklyFocusCard.swift */,
 				6015AAAA000000000000AA15 /* WeekOverviewView.swift */,
+				6020AAAA000000000000AA20 /* WeeklyFocusEscalationSheet.swift */,
 			);
 			path = WeeklyFocus;
+			sourceTree = "<group>";
+		};
+		7000CCCC000000000000CCC0 /* DeclarationArc */ = {
+			isa = PBXGroup;
+			children = (
+				7003AAAA000000000000AA03 /* DeclarationArcRepository.swift */,
+				7004AAAA000000000000AA04 /* DeclarationArcSelector.swift */,
+				7005AAAA000000000000AA05 /* DeclarationArcService.swift */,
+				7006AAAA000000000000AA06 /* DeclarationArcBuilder.swift */,
+				7000CCCC000000000000CCC1 /* Protocols */,
+			);
+			path = DeclarationArc;
+			sourceTree = "<group>";
+		};
+		7000CCCC000000000000CCC1 /* Protocols */ = {
+			isa = PBXGroup;
+			children = (
+				7002AAAA000000000000AA02 /* DeclarationArcProtocols.swift */,
+			);
+			path = Protocols;
 			sourceTree = "<group>";
 		};
 		A1B2C3D4E5F60000A1B2C3D4 /* PersonalDeclaration */ = {
@@ -2539,6 +2588,17 @@
 				6013BBBB000000000000BB13 /* WeeklyCheckInSheet.swift in Sources */,
 				6014BBBB000000000000BB14 /* WeeklyFocusCard.swift in Sources */,
 				6015BBBB000000000000BB15 /* WeekOverviewView.swift in Sources */,
+				6016BBBB000000000000BB16 /* WeeklyFocusSelecting.swift in Sources */,
+				6017BBBB000000000000BB17 /* WeeklyFocusRemoteSelector.swift in Sources */,
+				6018BBBB000000000000BB18 /* WeeklyFocusDevotionalService.swift in Sources */,
+				6019BBBB000000000000BB19 /* WeeklyFocusEscalation.swift in Sources */,
+				6020BBBB000000000000BB20 /* WeeklyFocusEscalationSheet.swift in Sources */,
+				7001BBBB000000000000BB01 /* DeclarationArc.swift in Sources */,
+				7002BBBB000000000000BB02 /* DeclarationArcProtocols.swift in Sources */,
+				7003BBBB000000000000BB03 /* DeclarationArcRepository.swift in Sources */,
+				7004BBBB000000000000BB04 /* DeclarationArcSelector.swift in Sources */,
+				7005BBBB000000000000BB05 /* DeclarationArcService.swift in Sources */,
+				7006BBBB000000000000BB06 /* DeclarationArcBuilder.swift in Sources */,
 				B0002222222222222222BBBB /* DeclarationContent.swift in Sources */,
 				B0003333333333333333BBBB /* DeclarationMatcher.swift in Sources */,
 				CL00DE00000000003333BBBB /* ClaudeDeclarationMatcher.swift in Sources */,

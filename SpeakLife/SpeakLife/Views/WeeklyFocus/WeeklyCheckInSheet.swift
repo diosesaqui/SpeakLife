@@ -428,6 +428,7 @@ struct WeeklyCheckInSheet: View {
                 focus: focus,
                 declarations: declarationStore.allAvailableDeclarations,
                 isPartialWeek: viewModel.didRebuildPartialWeek,
+                devotional: viewModel.devotional,
                 onCompleteDay: { day in
                     Task { await viewModel.completeDay(day) }
                 },
