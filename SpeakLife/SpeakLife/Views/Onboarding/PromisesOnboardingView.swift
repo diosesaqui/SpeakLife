@@ -357,7 +357,7 @@ private enum PromiseScene {
 
     var eyebrow: String {
         switch self {
-        // Not "START HERE" — the storm opener owns screen one now.
+        // Screen one is the storm opener; this is the thesis, not the doorway.
         case .proven:    return "WHAT YOU'RE STANDING ON"
         case .question:  return "THE REAL QUESTION"
         case .yours:     return "THE PART MOST PEOPLE MISS"

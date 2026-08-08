@@ -678,7 +678,7 @@ private enum CloserScene {
     var eyebrow: String {
         switch self {
         case .storm:    return "SPEAKLIFE · PRAY LIKE JESUS"
-        // Not "START HERE" — the storm opener owns screen one now.
+        // Screen one is the storm opener; this is the invitation, not the doorway.
         case .nearness: return "THE INVITATION"
         case .spoken:   return "HOW THE DISTANCE CLOSES"
         }
