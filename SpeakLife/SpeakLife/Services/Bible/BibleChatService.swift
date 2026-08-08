@@ -124,11 +124,36 @@ final class BibleChatAIService {
     // → Run → Arguments → Environment Variables) and run `firebase emulators:start`.
     // DEBUG builds will then hit the local emulator. Without the env var, and in
     // all Release builds, it always uses the production cloud URL.
-    private static let cloudEndpoint = URL(string: "https://us-central1-speaklife-3e5c4.cloudfunctions.net/bibleChat")!
-    private static let emulatorEndpoint = URL(string: "http://127.0.0.1:5001/speaklife-3e5c4/us-central1/bibleChat")!
+    // Two functions, not one. `bibleChat` is the long-running production
+    // proxy and is left exactly as deployed; `bibleChatPersonal` is a fork of
+    // it that additionally renders the user's SoulProfile into the prompt.
+    // Routing is a Remote Config flag rather than an edit to the live path, so
+    // enabling personalization is a flag flip and backing it out is instant,
+    // with no redeploy of the function that already works. Both meter into the
+    // same bibleChatUsage document, so free-message counts stay correct
+    // whichever way a user is routed.
+    private static func cloudEndpoint(personalized: Bool) -> URL {
+        let name = personalized ? "bibleChatPersonal" : "bibleChat"
+        return URL(string: "https://us-central1-speaklife-3e5c4.cloudfunctions.net/\(name)")!
+    }
+
+    private static func emulatorEndpoint(personalized: Bool) -> URL {
+        let name = personalized ? "bibleChatPersonal" : "bibleChat"
+        return URL(string: "http://127.0.0.1:5001/speaklife-3e5c4/us-central1/\(name)")!
+    }
+
+    /// Remote Config `bibleChatPersonalized`, mirrored to UserDefaults by
+    /// SubscriptionStore like the other AI flags. Defaults to false, so an
+    /// unconfigured project keeps hitting the production function.
+    private var usesPersonalizedEndpoint: Bool {
+        UserDefaults.standard.bool(forKey: "bibleChatPersonalized")
+    }
 
     private var endpoint: URL {
-        BibleChatLocal.usesEmulator ? Self.emulatorEndpoint : Self.cloudEndpoint
+        let personalized = usesPersonalizedEndpoint
+        return BibleChatLocal.usesEmulator
+            ? Self.emulatorEndpoint(personalized: personalized)
+            : Self.cloudEndpoint(personalized: personalized)
     }
 
     private let session: URLSession
@@ -164,7 +189,12 @@ final class BibleChatAIService {
         // `requestPayload` — appUserId is already a top-level field here).
         // No profile (skipped onboarding, or an install that predates it) means
         // the key is simply absent and the request is what it has always been.
-        if let profile = SoulProfileRepository.loadSync(), !profile.isEmpty,
+        // Only the personalized function reads this. Production `bibleChat`
+        // ignores unknown body keys, so sending it there would be harmless —
+        // but it is the user's own words about their life, and it should not
+        // travel to an endpoint that has no use for it.
+        if usesPersonalizedEndpoint,
+           let profile = SoulProfileRepository.loadSync(), !profile.isEmpty,
            let encodedProfile = SoulProfileFirestoreMirror.firestorePayload(for: profile) {
             payload["profile"] = encodedProfile
         }
