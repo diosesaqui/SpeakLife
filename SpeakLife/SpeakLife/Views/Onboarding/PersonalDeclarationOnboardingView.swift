@@ -4,6 +4,7 @@
 //
 
 import SwiftUI
+import UIKit
 
 // MARK: - Ambient Orb (background atmosphere)
 
@@ -75,6 +76,16 @@ struct PersonalDeclarationOnboardingView: View {
     @State private var glowPulse = false
     @State private var skipDelayElapsed = false
 
+    // Every onboarding arm wraps this screen in `.ignoresSafeArea()`, and the
+    // screen pins itself to `size` — between them, SwiftUI's automatic keyboard
+    // avoidance has nothing to push against, so the typing states rendered at
+    // full screen height and the keyboard sat on top of the primary CTA. Both
+    // "Find My Declaration" and "Generate My Declaration" were buried, with no
+    // way to dismiss the keyboard: a user who typed their answer could not
+    // submit it. Lift the content manually instead.
+    @State private var keyboardHeight: CGFloat = 0
+    private var keyboardUp: Bool { keyboardHeight > 0 }
+
     // The quiet escape hatch: visible after a short delay on the input state,
     // and immediately whenever a failure message is showing.
     private var skipVisible: Bool {
@@ -93,34 +104,64 @@ struct PersonalDeclarationOnboardingView: View {
                 endPoint: .bottom
             )
             .ignoresSafeArea()
+            // Tapping the backdrop puts the keyboard away. The CTA is reachable
+            // without this now, but a full-screen typing state with no way out
+            // is the thing that made the bug unrecoverable.
+            .contentShape(Rectangle())
+            .onTapGesture { hideKeyboard() }
 
             // ── Ambient orbs ─────────────────────────────────────────────
-            AmbientOrb(
-                color: Color(red: 0.2, green: 0.4, blue: 1.0),
-                size: 320,
-                offset: CGSize(width: -80, height: -180)
-            )
-            AmbientOrb(
-                color: Color(red: 0.5, green: 0.2, blue: 0.9),
-                size: 260,
-                offset: CGSize(width: 100, height: 160)
-            )
-            AmbientOrb(
-                color: Color(red: 0.1, green: 0.6, blue: 0.8),
-                size: 200,
-                offset: CGSize(width: -60, height: 280)
-            )
+            // Decorative only — never swallow a tap meant for the backdrop.
+            Group {
+                AmbientOrb(
+                    color: Color(red: 0.2, green: 0.4, blue: 1.0),
+                    size: 320,
+                    offset: CGSize(width: -80, height: -180)
+                )
+                AmbientOrb(
+                    color: Color(red: 0.5, green: 0.2, blue: 0.9),
+                    size: 260,
+                    offset: CGSize(width: 100, height: 160)
+                )
+                AmbientOrb(
+                    color: Color(red: 0.1, green: 0.6, blue: 0.8),
+                    size: 200,
+                    offset: CGSize(width: -60, height: 280)
+                )
+            }
+            .allowsHitTesting(false)
 
             // ── Step content ─────────────────────────────────────────────
-            switch viewModel.step {
-            case .input:                        inputView
-            case .focusChoice(let categories):  focusChoiceView(categories: categories)
-            case .clarify:                      clarifyView
-            case .matching:                     matchingView
-            case .result:                       resultView
+            Group {
+                switch viewModel.step {
+                case .input:                        inputView
+                case .focusChoice(let categories):  focusChoiceView(categories: categories)
+                case .clarify:                      clarifyView
+                case .matching:                     matchingView
+                case .result:                       resultView
+                }
             }
+            // Squeeze the step into the space the keyboard leaves. The steps
+            // that type also tighten their own top padding (see `keyboardUp`)
+            // so nothing runs off the top of the shortened box.
+            .padding(.bottom, keyboardHeight)
         }
         .frame(width: size.width, height: size.height)
+        // Every present call site already disables automatic avoidance by
+        // ignoring the safe area from the outside. Saying so here too keeps the
+        // manual lift the single source of truth, so a future call site that
+        // does not ignore it cannot double-shift the content.
+        .ignoresSafeArea(.keyboard, edges: .bottom)
+        .onKeyboardHeightChange { height in
+            keyboardHeight = height
+        }
+        .toolbar {
+            ToolbarItemGroup(placement: .keyboard) {
+                Spacer()
+                Button("Done") { hideKeyboard() }
+                    .font(.system(size: 16, weight: .semibold, design: .rounded))
+            }
+        }
         .onAppear {
             AnalyticsService.shared.track("personal_declaration_screen_shown", parameters: ["flow": flow])
             withAnimation(.easeOut(duration: 0.7)) { titleAppeared = true }
@@ -138,7 +179,7 @@ struct PersonalDeclarationOnboardingView: View {
 
     private var inputView: some View {
         VStack(spacing: 0) {
-            Spacer().frame(height: size.height * 0.11)
+            Spacer().frame(height: size.height * (keyboardUp ? 0.045 : 0.11))
 
             // Title block
             VStack(spacing: 14) {
@@ -191,7 +232,7 @@ struct PersonalDeclarationOnboardingView: View {
                 .allowsHitTesting(skipVisible)
                 .animation(.easeIn(duration: 0.4), value: skipVisible)
 
-            Spacer().frame(height: size.height * 0.05)
+            Spacer().frame(height: size.height * (keyboardUp ? 0.02 : 0.05))
         }
     }
 
@@ -201,6 +242,12 @@ struct PersonalDeclarationOnboardingView: View {
         Button("Skip for now") { skip() }
             .font(.system(size: 14, weight: .regular, design: .rounded))
             .foregroundColor(.white.opacity(0.5))
+    }
+
+    private func hideKeyboard() {
+        UIApplication.shared.sendAction(
+            #selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil
+        )
     }
 
     private func skip() {
@@ -466,7 +513,7 @@ struct PersonalDeclarationOnboardingView: View {
 
     private var clarifyView: some View {
         VStack(spacing: 0) {
-            Spacer().frame(height: size.height * 0.12)
+            Spacer().frame(height: size.height * (keyboardUp ? 0.05 : 0.12))
 
             VStack(spacing: 12) {
                 Text("🤔")
@@ -485,7 +532,7 @@ struct PersonalDeclarationOnboardingView: View {
                     .padding(.horizontal, 32)
             }
 
-            Spacer().frame(height: 32)
+            Spacer().frame(height: keyboardUp ? 16 : 32)
 
             // Editable text field pre-filled with what they already said
             ZStack(alignment: .topLeading) {
