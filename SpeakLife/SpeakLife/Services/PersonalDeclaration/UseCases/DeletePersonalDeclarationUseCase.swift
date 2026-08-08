@@ -1,11 +1,15 @@
 //
-//  MarkDeclarationReceivedUseCase.swift
+//  DeletePersonalDeclarationUseCase.swift
 //  SpeakLife
+//
+//  Removing a declaration is not the same as marking it received: nothing came
+//  to pass, the user simply isn't carrying it any more. No testimony, no
+//  celebration — just drop it and re-slot the remaining reminders.
 //
 
 import Foundation
 
-final class MarkDeclarationReceivedUseCase {
+final class DeletePersonalDeclarationUseCase {
     private let repository: PersonalDeclarationRepositoryProtocol
     private let notificationService: DeclarationNotificationServiceProtocol
 
@@ -15,19 +19,16 @@ final class MarkDeclarationReceivedUseCase {
         self.notificationService = notificationService
     }
 
-    /// Marks one declaration as answered and reschedules the rest.
-    /// - Returns: the declarations the user is still believing for. Callers use
-    ///   this to decide whether `hasPersonalDeclaration` should stay true.
+    /// - Returns: the declarations the user is still believing for.
     @discardableResult
-    func execute(id: UUID, testimony: String?, startTimeIndex: Int) async throws -> [PersonalDeclaration] {
-        try await repository.markReceived(id: id, testimony: testimony)
+    func execute(id: UUID, startTimeIndex: Int) async throws -> [PersonalDeclaration] {
+        try await repository.delete(id: id)
         notificationService.cancel(id: id)
 
         let remaining = await repository.loadActive()
         if remaining.isEmpty {
             notificationService.cancelAll()
         } else {
-            // Reminder times are positional, so closing one out re-slots the rest.
             notificationService.scheduleAll(remaining, startTimeIndex: startTimeIndex)
         }
         return remaining

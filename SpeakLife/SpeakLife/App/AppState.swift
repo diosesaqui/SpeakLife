@@ -121,6 +121,10 @@ final class AppState: ObservableObject {
     // Personal Declaration
     @AppStorage("hasPersonalDeclaration") var hasPersonalDeclaration = false
     @AppStorage("scrollToPersonalDeclaration") var scrollToPersonalDeclaration = false
+    /// UUID string of the declaration a tapped reminder was for. The user can be
+    /// believing for several things at once, so the deep link has to name which
+    /// one instead of defaulting to the first. Empty when unknown.
+    @AppStorage("pendingPersonalDeclarationId") var pendingPersonalDeclarationId = ""
     
     // Track when app was last backgrounded to prevent stale audio from restarting
     @AppStorage("lastBackgroundDate") var lastBackgroundDate: Date?

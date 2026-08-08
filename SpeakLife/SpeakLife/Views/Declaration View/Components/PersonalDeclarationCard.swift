@@ -22,6 +22,8 @@ private let kMatchThreshold = 0.65
 
 struct PersonalDeclarationCard: View {
 
+    /// The declaration as it was when the card opened. `progress` carries the
+    /// live copy — speak counters advance as the user speaks.
     let declaration: PersonalDeclaration
     let onBreakthrough: () -> Void
 
@@ -29,27 +31,20 @@ struct PersonalDeclarationCard: View {
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     private var isIPad: Bool { horizontalSizeClass == .regular }
 
-    // Spoken-today tracking
-    @AppStorage(PersonalDeclaration.lastSpokenDateKey) private var lastSpokenDateStr: String = ""
-    /// How many times the user has spoken this declaration today. Resets to
-    /// 1 on first speak of a new day, increments on subsequent speaks.
-    /// Drives the tiered visual reward in `dayBadge`.
-    @AppStorage(PersonalDeclaration.dailySpeakCountKey) private var dailySpeakCount: Int = 0
-    /// Count of unique calendar days the user has successfully spoken this
-    /// declaration. Drives the "Day N" label so the number reflects work done,
-    /// not calendar drift since the declaration was created.
-    @AppStorage(PersonalDeclaration.completedDayCountKey) private var completedDayCount: Int = 0
+    /// Speak progress for *this* declaration. A user carrying several burdens
+    /// gets a separate streak for each, so the counters live on the record
+    /// rather than in shared UserDefaults keys.
+    @State private var progress: PersonalDeclaration
 
-    private var spokenToday: Bool {
-        let today = ISO8601DateFormatter().string(from: Calendar.current.startOfDay(for: Date()))
-        return lastSpokenDateStr == today
+    init(declaration: PersonalDeclaration, onBreakthrough: @escaping () -> Void) {
+        self.declaration = declaration
+        self.onBreakthrough = onBreakthrough
+        _progress = State(initialValue: declaration)
     }
 
     /// The number of speaks recorded for *today* — zero if the stored count
-    /// is from a previous day (the badge view normalises this on render).
-    private var todaySpeakCount: Int {
-        spokenToday ? dailySpeakCount : 0
-    }
+    /// is from a previous day.
+    private var todaySpeakCount: Int { progress.todaySpeakCount }
 
     // Pulse animation for the highest streak tier.
     @State private var dayBadgePulse = false
@@ -80,9 +75,7 @@ struct PersonalDeclarationCard: View {
     @State private var ringOpacity: [Double] = [0.5, 0.35, 0.2]
     @State private var cardAppear = false
 
-    private var dayCount: Int {
-        max(1, completedDayCount)
-    }
+    private var dayCount: Int { progress.dayCount }
 
     var body: some View {
         ZStack {
@@ -249,6 +242,16 @@ struct PersonalDeclarationCard: View {
             verifier.prepare(declarationText: declaration.declarationText)
             withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
                 cardAppear = true
+            }
+            // Re-read progress rather than trusting the copy the parent handed
+            // us: it may be stale, and SwiftUI can reuse this view's @State
+            // across presentations of different declarations.
+            let id = declaration.id
+            Task {
+                let latest = await DIContainer.shared.personalDeclarationRepository.loadAll()
+                if let current = latest.first(where: { $0.id == id }) {
+                    await MainActor.run { progress = current }
+                }
             }
         }
         .onDisappear {
@@ -589,19 +592,21 @@ struct PersonalDeclarationCard: View {
     }
 
     private func showSuccess() {
-        let today = ISO8601DateFormatter().string(from: Calendar.current.startOfDay(for: Date()))
-        // First speak of the day resets the counter to 1; subsequent speaks
-        // increment so the day badge can give richer visual rewards for
-        // repeated declaration ("the more you speak, the better the visual").
-        // First speak on a new day also bumps `completedDayCount` so "Day N"
-        // tracks unique completion days, not calendar drift since save.
-        if lastSpokenDateStr == today {
-            dailySpeakCount += 1
-        } else {
-            dailySpeakCount = 1
-            completedDayCount += 1
+        // First speak of the day resets the daily counter to 1 and bumps
+        // "Day N"; subsequent speaks only raise the daily counter, so the day
+        // badge can give richer visual rewards for repeated declaration
+        // ("the more you speak, the better the visual").
+        //
+        // The badge updates immediately off local state; the write goes through
+        // the repository so the record — and every other surface reading it —
+        // stays in step.
+        progress.recordSpeak()
+        let id = progress.id
+        Task {
+            if let saved = try? await DIContainer.shared.personalDeclarationRepository.recordSpeak(id: id) {
+                await MainActor.run { progress = saved }
+            }
         }
-        lastSpokenDateStr = today
 
         withAnimation(DS.Motion.smooth) { speakState = .success }
         withAnimation(.spring(response: 0.5, dampingFraction: 0.6).delay(0.1)) {

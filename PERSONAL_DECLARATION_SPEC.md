@@ -1237,8 +1237,73 @@ Taps "It Came to Pass" → testimony → celebration
 - AI-powered matching (keyword matching ships first)
 - CloudKit / cross-device sync (UserDefaults is sufficient for MVP)
 - Social testimony sharing
-- Multiple simultaneous declarations
+- ~~Multiple simultaneous declarations~~ → shipped, see below
 - Analytics events (add after validating feature retention impact)
+
+---
+
+# v2 — Multiple Declarations (Premium)
+
+One declaration covers one slice of a life. Users are rarely believing for only
+one thing: a healing *and* a marriage *and* a job. Premium users can now carry a
+declaration for each burden; free users still anchor on one.
+
+**Limits** — `PersonalDeclarationLimits`: free `1`, premium `5`. Enforced at the
+entry points (so the user sees the paywall, not an error) and again in
+`SavePersonalDeclarationUseCase` as a backstop.
+
+## Storage
+
+`personal_declaration_v1` (single record) → `personal_declarations_v2` (ordered
+list, oldest first). The v1 record is migrated in place on first read and the
+migration is flagged (`personal_declarations_migratedToV2`) so emptying the list
+never re-imports it.
+
+Speak progress (`completedDayCount`, `dailySpeakCount`, `lastSpokenDate`) moved
+off globally-named UserDefaults keys and **onto each record**. Per-declaration
+UserDefaults keys could never have been whitelisted by `SyncedSettingsStore`,
+which syncs fixed key names; on the record they ride along with the list. The
+legacy keys are folded into the migrated record so an existing user's "Day N"
+survives the upgrade.
+
+`SyncedSettingsStore` merges the list as a **union by id**, taking the
+further-prayed side of each counter — a phone left in a drawer must never be
+able to overwrite a Day 40 streak.
+
+## Repository / protocol
+
+```swift
+func save(_:)                 // upsert by id
+func load() -> PersonalDeclaration?   // first still-active (back-compat)
+func loadAll() -> [PersonalDeclaration]
+func loadActive() -> [PersonalDeclaration]
+func markReceived(id:testimony:)
+func recordSpeak(id:) -> PersonalDeclaration?
+func delete(id:)
+func clear()
+```
+
+## Notifications
+
+One daily reminder per active declaration, identifier
+`personal_declaration_reminder_<uuid>`, staggered 45 minutes apart from the
+user's chosen time so several burdens don't all buzz in the same minute. Each
+reminder carries `declarationId` in `userInfo`, so a tapped notification opens
+that exact declaration (`AppState.pendingPersonalDeclarationId`).
+
+`DeclarationNotificationServiceProtocol` is now
+`scheduleAll(_:startTimeIndex:)` / `cancel(id:)` / `cancelAll()`. Reminder times
+are positional, so adding, deleting, or answering one re-slots the whole set.
+
+## Views
+
+| Surface | Behaviour |
+|---|---|
+| `MyDeclarationsView` (new) | The list: active declarations, an Answered section with testimonies, add (premium-gated), long-press to mark received or remove. Owns the card, breakthrough flow, and add flow. |
+| Today feed tile | Shows the first declaration not yet spoken today, with "N of M left today". Links to the list. |
+| Feed top-bar icon | Opens the list (was: the single card). |
+| `PersonalDeclarationCard` | Unchanged UX; counters now come from the record and are written through `recordSpeak(id:)`. |
+| `BreakthroughFlowView` | Clears `hasPersonalDeclaration` only when nothing is left on the altar. |
 
 ---
 

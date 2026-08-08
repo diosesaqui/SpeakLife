@@ -70,17 +70,13 @@ struct DeclarationView: View {
         var id: Int { hashValue }
     }
     @State private var showSpeakAloudBanner = false
-    @State private var showBreakthroughFlow = false
-    @State private var showNewDeclarationSheet = false
     /// Drives the pulse animation on the checklist icon when the user has
     /// pending tasks for the day. Toggled by the autoreverse animation below.
     @State private var checklistPulse = false
-    /// Identifiable prefill for the Warrior Room testimony composer.
-    /// Set when the Breakthrough flow's "Share Testimony" button fires —
-    /// presenting the prefilled composer is how we celebrate.
-    @State private var warriorRoomTestimonyPrefill: WarriorRoomTestimonyPrefill?
     @StateObject private var speechSynthesizer = SpeechSynthesizer()
-    @State private var loadedDeclaration: PersonalDeclaration? = nil
+    /// Set when a personal declaration reminder is tapped, so the list opens
+    /// straight onto that declaration's card.
+    @State private var deepLinkedDeclarationId: UUID? = nil
     
     private var cancellables = Set<AnyCancellable>()
     
@@ -111,64 +107,40 @@ struct DeclarationView: View {
         }
     }
     
-    // Personal Declaration compact button shown in top row — always visible
-    @ViewBuilder
+    // Personal Declaration compact button shown in top row — always visible.
+    // Opens the full list of what the user is believing for (a premium user can
+    // be carrying several); the list owns creating, speaking, and closing them out.
     private var personalDeclarationButton: some View {
-        if appState.hasPersonalDeclaration {
-            // Active declaration — gold filled hands icon
-            Button {
-                Task {
-                    loadedDeclaration = await DIContainer.shared.personalDeclarationRepository.load()
-                    activeSheet = .personalDeclaration
-                }
-            } label: {
-                Image(systemName: "hands.sparkles.fill")
-                    .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(.yellow)
-                    .frame(width: 44, height: 44)
-                    .background(
-                        Circle()
-                            .fill(Color.black.opacity(0.7))
-                            .overlay(
-                                Circle()
-                                    .stroke(Color.yellow.opacity(0.4), lineWidth: 1)
-                            )
-                    )
-            }
-            .buttonStyle(PlainButtonStyle())
-            .onAppear {
-                Task {
-                    loadedDeclaration = await DIContainer.shared.personalDeclarationRepository.load()
-                }
-            }
-            .onChange(of: appState.scrollToPersonalDeclaration) { shouldScroll in
-                if shouldScroll {
-                    Task {
-                        loadedDeclaration = await DIContainer.shared.personalDeclarationRepository.load()
-                        activeSheet = .personalDeclaration
-                        appState.scrollToPersonalDeclaration = false
-                    }
-                }
-            }
-        } else {
-            // No active declaration — dimmed outline, tap to create
-            Button {
-                showNewDeclarationSheet = true
-            } label: {
-                Image(systemName: "hands.sparkles")
-                    .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(.white.opacity(0.4))
-                    .frame(width: 44, height: 44)
-                    .background(
-                        Circle()
-                            .fill(Color.black.opacity(0.5))
-                            .overlay(
-                                Circle()
-                                    .stroke(Color.white.opacity(0.15), lineWidth: 1)
-                            )
-                    )
-            }
-            .buttonStyle(PlainButtonStyle())
+        let hasActive = appState.hasPersonalDeclaration
+
+        return Button {
+            activeSheet = .personalDeclaration
+        } label: {
+            Image(systemName: hasActive ? "hands.sparkles.fill" : "hands.sparkles")
+                .font(.system(size: 16, weight: .medium))
+                .foregroundColor(hasActive ? Color.yellow : Color.white.opacity(0.4))
+                .frame(width: 44, height: 44)
+                .background(
+                    Circle()
+                        .fill(Color.black.opacity(hasActive ? 0.7 : 0.5))
+                        .overlay(
+                            Circle()
+                                .stroke(
+                                    hasActive ? Color.yellow.opacity(0.4) : Color.white.opacity(0.15),
+                                    lineWidth: 1
+                                )
+                        )
+                )
+        }
+        .buttonStyle(PlainButtonStyle())
+        .onChange(of: appState.scrollToPersonalDeclaration) { shouldScroll in
+            guard shouldScroll else { return }
+            // The id of the declaration whose reminder was tapped is read by the
+            // list, which opens straight onto that card.
+            deepLinkedDeclarationId = UUID(uuidString: appState.pendingPersonalDeclarationId)
+            appState.pendingPersonalDeclarationId = ""
+            activeSheet = .personalDeclaration
+            appState.scrollToPersonalDeclaration = false
         }
     }
 
@@ -404,26 +376,6 @@ struct DeclarationView: View {
         .onReceive(NotificationCenter.default.publisher(for: Notification.Name("ShowDailyDeclarationBurst"))) { _ in
             showDailyBurst = true
         }
-        // Top-level cover — handles both "create first declaration" and "set new after breakthrough"
-        .fullScreenCover(isPresented: $showNewDeclarationSheet) {
-            GeometryReader { geo in
-                PersonalDeclarationOnboardingView(
-                    viewModel: DIContainer.shared.makePersonalDeclarationViewModel(),
-                    size: geo.size,
-                    flow: "app"
-                ) { newDeclaration in
-                    if newDeclaration != nil {
-                        appState.hasPersonalDeclaration = true
-                    }
-                    showNewDeclarationSheet = false
-                    Task {
-                        loadedDeclaration = await DIContainer.shared.personalDeclarationRepository.load()
-                    }
-                }
-                .environmentObject(appState)
-            }
-            .ignoresSafeArea()
-        }
         .onAppear(perform: handleOnAppear)
         .onDisappear(perform: handleOnDisappear)
     }
@@ -449,45 +401,12 @@ struct DeclarationView: View {
             TimerStreakDetailView(timerViewModel: timerViewModel)
 
         case .personalDeclaration:
-            if let declaration = loadedDeclaration {
-                PersonalDeclarationCard(
-                    declaration: declaration,
-                    onBreakthrough: {
-                        activeSheet = nil
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                            showBreakthroughFlow = true
-                        }
-                    }
-                )
-                .fullScreenCover(isPresented: $showBreakthroughFlow) {
-                    if let d = loadedDeclaration {
-                        BreakthroughFlowView(
-                            declaration: d,
-                            onDismiss: { showBreakthroughFlow = false },
-                            onSetNew: {
-                                showBreakthroughFlow = false
-                                showNewDeclarationSheet = true
-                            },
-                            onShareToWarriorRoom: { prefill in
-                                warriorRoomTestimonyPrefill = WarriorRoomTestimonyPrefill(text: prefill)
-                            }
-                        )
-                        .environmentObject(appState)
-                    }
-                }
-                .sheet(item: $warriorRoomTestimonyPrefill) { prefill in
-                    WarriorRoomTestimonyComposer(
-                        initialText: prefill.text,
-                        initialIsTestimony: true
-                    )
-                    .environmentObject(subscriptionStore)
-                }
-
-            } else {
-                ProgressView().tint(.white)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .background(Color(red: 0.06, green: 0.08, blue: 0.18))
-            }
+            // Owns the whole loop: the list, each declaration's card, adding a
+            // new one, and the breakthrough celebration.
+            MyDeclarationsView(initialDeclarationId: deepLinkedDeclarationId)
+                .environmentObject(appState)
+                .environmentObject(subscriptionStore)
+                .onDisappear { deepLinkedDeclarationId = nil }
         }
     }
     

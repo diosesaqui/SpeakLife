@@ -138,8 +138,15 @@ final class SyncedSettingsStore {
         SyncedKey(key: "userTopCategories", strategy: .lastWriterWins),
         SyncedKey(key: "foundationAudioDayAssignments", strategy: .lastWriterWins),
 
-        // Personal declaration.
-        SyncedKey(key: "personal_declaration_v1", strategy: .lastWriterWins),
+        // Personal declaration. The v2 list is progress-bearing — each record
+        // carries its own "Day N" and spoken-today counters — so it merges as a
+        // union by id rather than letting one device's list overwrite another's.
+        // The v1 single-record key stays whitelisted so devices still on the old
+        // build keep syncing; upgraded devices migrate v1 once and ignore it after.
+        SyncedKey(key: PersonalDeclarationRepository.storageKey,
+                  strategy: .custom(mergePersonalDeclarations),
+                  equivalence: personalDeclarationsEquivalent),
+        SyncedKey(key: PersonalDeclarationRepository.legacyStorageKey, strategy: .lastWriterWins),
         SyncedKey(key: "personalDeclaration_lastSpokenDate", strategy: .lastWriterWins),
 
         // Appearance & experience preferences.
@@ -715,6 +722,55 @@ final class SyncedSettingsStore {
         if let string = item[idField] as? String { return string }
         if let value = item[idField] { return String(describing: value) }
         return String(describing: item)
+    }
+
+    /// Union of the personal declarations list. Every record the user has
+    /// created on any device is kept; where both sides know a declaration, the
+    /// one that has been prayed further wins each counter. Losing a "Day 40" to
+    /// a phone that has been in a drawer would gut the whole point of the feature.
+    private static func mergePersonalDeclarations(_ local: Any, _ remote: Any) -> Any {
+        let decodedLocal = (local as? Data).flatMap { try? JSONDecoder().decode([PersonalDeclaration].self, from: $0) }
+        let decodedRemote = (remote as? Data).flatMap { try? JSONDecoder().decode([PersonalDeclaration].self, from: $0) }
+        guard let localList = decodedLocal else { return decodedRemote != nil ? remote : local }
+        guard let remoteList = decodedRemote else { return local }
+
+        var merged = localList
+        for remoteDeclaration in remoteList {
+            if let index = merged.firstIndex(where: { $0.id == remoteDeclaration.id }) {
+                merged[index] = mergeDeclaration(merged[index], remoteDeclaration)
+            } else {
+                merged.append(remoteDeclaration)
+            }
+        }
+        // Oldest first keeps the list — and therefore the staggered reminder
+        // times — stable across devices.
+        merged.sort { $0.startDate < $1.startDate }
+        guard merged != localList else { return local }
+        return (try? JSONEncoder().encode(merged)) ?? local
+    }
+
+    private static func mergeDeclaration(_ a: PersonalDeclaration,
+                                         _ b: PersonalDeclaration) -> PersonalDeclaration {
+        var merged = a
+        merged.completedDayCount = max(a.completedDayCount, b.completedDayCount)
+        // Whichever device spoke it most recently owns today's repeat count.
+        if b.lastSpokenDate > a.lastSpokenDate {
+            merged.lastSpokenDate = b.lastSpokenDate
+            merged.dailySpeakCount = b.dailySpeakCount
+        } else if a.lastSpokenDate == b.lastSpokenDate {
+            merged.dailySpeakCount = max(a.dailySpeakCount, b.dailySpeakCount)
+        }
+        // A breakthrough is one-way: once received anywhere, received everywhere.
+        if merged.receivedDate == nil { merged.receivedDate = b.receivedDate }
+        if (merged.testimony ?? "").isEmpty { merged.testimony = b.testimony }
+        return merged
+    }
+
+    private static func personalDeclarationsEquivalent(_ a: Any, _ b: Any) -> Bool {
+        let decodedA = (a as? Data).flatMap { try? JSONDecoder().decode([PersonalDeclaration].self, from: $0) }
+        let decodedB = (b as? Data).flatMap { try? JSONDecoder().decode([PersonalDeclaration].self, from: $0) }
+        guard let listA = decodedA, let listB = decodedB else { return valuesEqual(a, b) }
+        return listA.sorted { $0.startDate < $1.startDate } == listB.sorted { $0.startDate < $1.startDate }
     }
 
     /// Union of the read-devotionals dictionary ([DateComponents: Bool] as

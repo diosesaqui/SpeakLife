@@ -38,24 +38,28 @@ final class DIContainer {
         )
     }
 
-    /// Re-schedules the personal declaration daily push using the user's current
-    /// `startTimeIndex`. Needed because `schedule(for:startTimeIndex:)` only runs at
+    func makeDeleteDeclarationUseCase() -> DeletePersonalDeclarationUseCase {
+        DeletePersonalDeclarationUseCase(
+            repository: personalDeclarationRepository,
+            notificationService: declarationNotificationService
+        )
+    }
+
+    /// Re-schedules the personal declaration daily pushes using the user's current
+    /// `startTimeIndex`. Needed because `scheduleAll(_:startTimeIndex:)` only runs at
     /// save time — if the user saved before granting iOS permission, or before our
     /// V3 migration moved their startTimeIndex out of the midnight slot, the push
     /// either never landed or has been firing at the old (stale) time. Idempotent:
     /// if no active declaration exists, this is a no-op.
     func rescheduleActivePersonalDeclarationIfNeeded(startTimeIndex: Int) {
         Task { [personalDeclarationRepository, declarationNotificationService] in
-            guard let active = await personalDeclarationRepository.load() else {
-                print("🟡 PD reschedule skipped: no declaration in repo (load returned nil — either never saved, cleared, or decode failed silently)")
-                return
-            }
-            guard !active.isReceived else {
-                print("🟡 PD reschedule skipped: declaration marked received on \(active.receivedDate.map(String.init(describing:)) ?? "?")")
+            let active = await personalDeclarationRepository.loadActive()
+            guard !active.isEmpty else {
+                print("🟡 PD reschedule skipped: no active declarations in repo (never saved, cleared, all received, or decode failed silently)")
                 return
             }
             await MainActor.run {
-                declarationNotificationService.schedule(for: active, startTimeIndex: startTimeIndex)
+                declarationNotificationService.scheduleAll(active, startTimeIndex: startTimeIndex)
             }
         }
     }

@@ -40,15 +40,32 @@ struct ModernDailyChecklistView: View {
     @State private var animateProgress = false
     @State private var celebrationScale: CGFloat = 1.0
     @State private var showCelebration = false
-    /// The user's saved personal declaration, loaded from the repository so the
-    /// feed can surface it as a tile at the bottom of Today.
-    @State private var personalDeclaration: PersonalDeclaration?
+    /// Everything the user is currently believing God for, oldest first. A
+    /// premium user can be carrying several at once.
+    @State private var activeDeclarations: [PersonalDeclaration] = []
+    /// The one the Today feed puts in front of them: the first they haven't
+    /// spoken yet today, falling back to the first if they've spoken them all.
+    private var personalDeclaration: PersonalDeclaration? {
+        activeDeclarations.first(where: { !$0.spokenToday }) ?? activeDeclarations.first
+    }
+    /// The link under the declaration tile: a way into the full list, and for
+    /// single-declaration users the nudge that they can carry more than one.
+    private var seeAllDeclarationsLabel: String {
+        activeDeclarations.count > 1
+            ? "See all \(activeDeclarations.count)"
+            : "Believing for something else too?"
+    }
     // Modal presentations surfaced directly on the Today tab (instead of routing
     // the user over to the Speak feed and presenting there).
     @State private var showDailyBurst = false
     @State private var showPersonalDeclarationCard = false
+    @State private var showMyDeclarations = false
     @State private var showPremium = false
     @State private var showBreakthroughFlow = false
+    /// Pinned when the user taps "It Came to Pass" — the computed
+    /// `personalDeclaration` can move to another burden once this one is closed
+    /// out, so the celebration holds onto the exact declaration it's for.
+    @State private var breakthroughDeclaration: PersonalDeclaration?
     @State private var showNewDeclarationSheet = false
     @State private var warriorRoomTestimonyPrefill: WarriorRoomTestimonyPrefill?
     var onClose: (() -> Void)? = nil
@@ -89,10 +106,23 @@ struct ModernDailyChecklistView: View {
         showDailyBurst = true
     }
 
-    /// Present the user's Personal Declaration card right here on the Today tab
-    /// instead of routing over to the Speak feed.
+    /// Present the user's Personal Declaration right here on the Today tab
+    /// instead of routing over to the Speak feed. One declaration goes straight
+    /// to its card; several open the list so they can work through them.
     private func openPersonalDeclaration() {
-        showPersonalDeclarationCard = true
+        if activeDeclarations.count > 1 {
+            showMyDeclarations = true
+        } else {
+            showPersonalDeclarationCard = true
+        }
+    }
+
+    private func reloadPersonalDeclarations() async {
+        let active = await DIContainer.shared.personalDeclarationRepository.loadActive()
+        await MainActor.run {
+            activeDeclarations = active
+            appState.hasPersonalDeclaration = !active.isEmpty
+        }
     }
 
     private func getUserTopCategories() -> [String] {
@@ -352,8 +382,27 @@ struct ModernDailyChecklistView: View {
                         // a full tile (not just a quick-action icon) so it stays
                         // front-of-mind every day until it comes to pass.
                         if appState.hasPersonalDeclaration, let declaration = personalDeclaration {
-                            PersonalDeclarationFeedTile(declaration: declaration) {
-                                openPersonalDeclaration()
+                            VStack(spacing: 8) {
+                                PersonalDeclarationFeedTile(
+                                    declaration: declaration,
+                                    totalCount: activeDeclarations.count,
+                                    remainingToday: activeDeclarations.filter { !$0.spokenToday }.count
+                                ) {
+                                    openPersonalDeclaration()
+                                }
+
+                                // Doubles as the way in to the full list and the
+                                // nudge that they can be believing for more than
+                                // one thing at a time.
+                                Button {
+                                    Juice.play(.tapLight)
+                                    showMyDeclarations = true
+                                } label: {
+                                    Text(seeAllDeclarationsLabel)
+                                        .font(.system(size: 13, weight: .semibold, design: .rounded))
+                                        .foregroundColor(.white.opacity(0.5))
+                                }
+                                .buttonStyle(.dsPressable(feel: .tapLight, haptics: false))
                             }
                             .padding(.horizontal, 20)
                             .padding(.top, 16)
@@ -501,11 +550,16 @@ struct ModernDailyChecklistView: View {
         // Personal Declaration card — presented modally on Today. onBreakthrough
         // dismisses this card, then surfaces the breakthrough flow (attached to
         // the root below so it survives this sheet's dismissal).
-        .sheet(isPresented: $showPersonalDeclarationCard) {
+        .sheet(isPresented: $showPersonalDeclarationCard, onDismiss: {
+            // Speaking it updates the per-declaration counters, so re-read to
+            // refresh the tile's day count and spoken-today state.
+            Task { await reloadPersonalDeclarations() }
+        }) {
             if let declaration = personalDeclaration {
                 PersonalDeclarationCard(
                     declaration: declaration,
                     onBreakthrough: {
+                        breakthroughDeclaration = declaration
                         showPersonalDeclarationCard = false
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                             showBreakthroughFlow = true
@@ -514,8 +568,19 @@ struct ModernDailyChecklistView: View {
                 )
             }
         }
-        .fullScreenCover(isPresented: $showBreakthroughFlow) {
-            if let d = personalDeclaration {
+        // The full list of everything they're believing for.
+        .sheet(isPresented: $showMyDeclarations, onDismiss: {
+            Task { await reloadPersonalDeclarations() }
+        }) {
+            MyDeclarationsView()
+                .environmentObject(appState)
+                .environmentObject(subscriptionStore)
+        }
+        .fullScreenCover(isPresented: $showBreakthroughFlow, onDismiss: {
+            breakthroughDeclaration = nil
+            Task { await reloadPersonalDeclarations() }
+        }) {
+            if let d = breakthroughDeclaration {
                 BreakthroughFlowView(
                     declaration: d,
                     onDismiss: { showBreakthroughFlow = false },
@@ -549,9 +614,7 @@ struct ModernDailyChecklistView: View {
                         appState.hasPersonalDeclaration = true
                     }
                     showNewDeclarationSheet = false
-                    Task {
-                        personalDeclaration = await DIContainer.shared.personalDeclarationRepository.load()
-                    }
+                    Task { await reloadPersonalDeclarations() }
                 }
                 .environmentObject(appState)
             }
@@ -609,11 +672,9 @@ struct ModernDailyChecklistView: View {
                 "total_tasks": viewModel.todayChecklist.tasks.count,
                 "is_streak_earned": viewModel.todayChecklist.isStreakEarned
             ])
-            // Load the personal declaration for the bottom-of-feed tile.
+            // Load what they're believing for, for the bottom-of-feed tile.
             if appState.hasPersonalDeclaration {
-                Task {
-                    personalDeclaration = await DIContainer.shared.personalDeclarationRepository.load()
-                }
+                Task { await reloadPersonalDeclarations() }
             }
             // Start watching the broadcast counter that drives the Inbox
             // tile's badge. Idempotent, and the listener keeps the badge live
@@ -974,9 +1035,26 @@ struct QuickActionTile: View {
 
 struct PersonalDeclarationFeedTile: View {
     let declaration: PersonalDeclaration
+    /// How many things the user is believing for in total.
+    var totalCount: Int = 1
+    /// How many of those they still haven't spoken today.
+    var remainingToday: Int = 1
     let onTap: () -> Void
 
     private let gold = Color(red: 1, green: 0.82, blue: 0.28)
+
+    private var headerLabel: String {
+        totalCount > 1 ? "WHAT I'M BELIEVING FOR" : "YOUR DECLARATION"
+    }
+
+    /// With several burdens on the altar, "3 left today" is the number that
+    /// actually moves them; with one, the day count carries more weight.
+    private var trailingLabel: String {
+        guard totalCount > 1 else { return "Day \(declaration.dayCount) of believing" }
+        return remainingToday == 0
+            ? "All \(totalCount) spoken today"
+            : "\(remainingToday) of \(totalCount) left today"
+    }
 
     var body: some View {
         Button(action: {
@@ -984,15 +1062,15 @@ struct PersonalDeclarationFeedTile: View {
             onTap()
         }) {
             VStack(alignment: .leading, spacing: 12) {
-                // Header — label + day count
+                // Header — label + progress
                 HStack(spacing: 6) {
                     Text("🙌").font(.system(size: 13))
-                    Text("YOUR DECLARATION")
+                    Text(headerLabel)
                         .font(.system(size: 11, weight: .bold, design: .rounded))
                         .tracking(1.2)
                         .foregroundColor(gold)
                     Spacer()
-                    Text("Day \(declaration.dayCount) of believing")
+                    Text(trailingLabel)
                         .font(.system(size: 11, weight: .semibold, design: .rounded))
                         .foregroundColor(.white.opacity(0.5))
                 }
@@ -1036,7 +1114,7 @@ struct PersonalDeclarationFeedTile: View {
         }
         .buttonStyle(.dsPressable(feel: .tapLight, haptics: false))
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("Your personal declaration, day \(declaration.dayCount). \(declaration.declarationText)")
+        .accessibilityLabel("Your personal declaration, day \(declaration.dayCount). \(trailingLabel). \(declaration.declarationText)")
         .accessibilityHint("Opens your declaration to speak it")
     }
 }

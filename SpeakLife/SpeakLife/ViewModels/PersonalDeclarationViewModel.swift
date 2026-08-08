@@ -86,12 +86,18 @@ final class PersonalDeclarationViewModel: ObservableObject {
         }
     }
 
-    func saveAndContinue(startTimeIndex: Int) async throws -> PersonalDeclaration {
+    /// - Parameter limit: how many active declarations the user may carry. The
+    ///   entry points gate on this up front, so hitting it here means something
+    ///   slipped through and the flow surfaces the error rather than silently
+    ///   dropping what they just declared.
+    func saveAndContinue(startTimeIndex: Int,
+                         limit: Int = PersonalDeclarationLimits.premium) async throws -> PersonalDeclaration {
         guard let match else { throw PersonalDeclarationError.noMatch }
         return try await saveUseCase.execute(
             beliefText: inputText,
             match: match,
-            startTimeIndex: startTimeIndex
+            startTimeIndex: startTimeIndex,
+            limit: limit
         )
     }
 

@@ -365,6 +365,8 @@
 		B000DDDDDDDDDDDDDDDDEEEE /* PersonalDeclarationOnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A000DDDDDDDDDDDDDDDDEEEE /* PersonalDeclarationOnboardingView.swift */; };
 		B000EEEEEEEEEEEEEEEEEFFF /* PersonalDeclarationCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = A000EEEEEEEEEEEEEEEEEFFF /* PersonalDeclarationCard.swift */; };
 		B000FFFFFFFFFFFFFFFFFFFF /* BreakthroughFlowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A000FFFFFFFFFFFFFFFFFFFF /* BreakthroughFlowView.swift */; };
+		MD00DECL0000000001BUILDFL /* MyDeclarationsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = MD00DECL0000000001FILEREF /* MyDeclarationsView.swift */; };
+		MD00DECL0000000002BUILDFL /* DeletePersonalDeclarationUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = MD00DECL0000000002FILEREF /* DeletePersonalDeclarationUseCase.swift */; };
 		B3443A27A06B1D7578E6B584 /* WidgetIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59BFF68BFA515EAC0AC88C85 /* WidgetIntents.swift */; };
 		BCC8A7200000000000000001 /* BibleChatTopic.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCC8A7100000000000000001 /* BibleChatTopic.swift */; };
 		BCC8A7200000000000000002 /* BibleChatService.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCC8A7100000000000000002 /* BibleChatService.swift */; };
@@ -784,6 +786,8 @@
 		A000DDDDDDDDDDDDDDDDEEEE /* PersonalDeclarationOnboardingView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PersonalDeclarationOnboardingView.swift; sourceTree = "<group>"; };
 		A000EEEEEEEEEEEEEEEEEFFF /* PersonalDeclarationCard.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PersonalDeclarationCard.swift; sourceTree = "<group>"; };
 		A000FFFFFFFFFFFFFFFFFFFF /* BreakthroughFlowView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BreakthroughFlowView.swift; sourceTree = "<group>"; };
+		MD00DECL0000000001FILEREF /* MyDeclarationsView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MyDeclarationsView.swift; sourceTree = "<group>"; };
+		MD00DECL0000000002FILEREF /* DeletePersonalDeclarationUseCase.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DeletePersonalDeclarationUseCase.swift; sourceTree = "<group>"; };
 		A1B2C3D4E5F6A7B82026AA00 /* SpeakingPowerEffect.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeakingPowerEffect.swift; sourceTree = "<group>"; };
 		AC33C8C421764DF3961EA018 /* OnboardingDailyBurstScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingDailyBurstScreen.swift; sourceTree = "<group>"; };
 		B0214EB35A67E7EF76115C40 /* PrayerWallPost.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrayerWallPost.swift; sourceTree = "<group>"; };
@@ -1017,6 +1021,7 @@
 				45567D692F29E3FF00382072 /* TimerButtonView.swift */,
 				A000EEEEEEEEEEEEEEEEEFFF /* PersonalDeclarationCard.swift */,
 				HIGH0001DECL000001FILEREF /* HighlightedDeclarationText.swift */,
+				MD00DECL0000000001FILEREF /* MyDeclarationsView.swift */,
 			);
 			path = Components;
 			sourceTree = "<group>";
@@ -1880,6 +1885,7 @@
 				A0008888888888888888AAAA /* MatchDeclarationUseCase.swift */,
 				A0009999999999999999AAAA /* SavePersonalDeclarationUseCase.swift */,
 				A000AAAAAAAAAAAAAAAAABBB /* MarkDeclarationReceivedUseCase.swift */,
+				MD00DECL0000000002FILEREF /* DeletePersonalDeclarationUseCase.swift */,
 			);
 			path = UseCases;
 			sourceTree = "<group>";
@@ -2429,6 +2435,8 @@
 				B000DDDDDDDDDDDDDDDDEEEE /* PersonalDeclarationOnboardingView.swift in Sources */,
 				B000EEEEEEEEEEEEEEEEEFFF /* PersonalDeclarationCard.swift in Sources */,
 				B000FFFFFFFFFFFFFFFFFFFF /* BreakthroughFlowView.swift in Sources */,
+				MD00DECL0000000001BUILDFL /* MyDeclarationsView.swift in Sources */,
+				MD00DECL0000000002BUILDFL /* DeletePersonalDeclarationUseCase.swift in Sources */,
 				D0010000000000000001BBBB /* SurveyPersonalizationEngine.swift in Sources */,
 				D0030000000000000003BBBB /* SurveyOnboardingScreens.swift in Sources */,
 				D0040000000000000004BBBB /* SurveyOnboardingView.swift in Sources */,

@@ -319,15 +319,19 @@ struct BreakthroughFlowView: View {
         let prefill = warriorRoomPrefill
         isSaving = true
         Task {
-            try? await markReceivedUseCase.execute(
+            // The user can be believing for several things at once — closing one
+            // out only clears the flag when nothing is left on the altar.
+            let remaining = try? await markReceivedUseCase.execute(
                 id: declaration.id,
-                testimony: testimony.isEmpty ? nil : testimony
+                testimony: testimony.isEmpty ? nil : testimony,
+                startTimeIndex: appState.personalDeclarationTimeIndex
             )
             await MainActor.run {
-                appState.hasPersonalDeclaration = false
+                appState.hasPersonalDeclaration = !(remaining ?? []).isEmpty
                 AnalyticsService.shared.track("personal_declaration_received", parameters: [
                     "days_believed": declaration.dayCount as NSNumber,
                     "shared_to_wall": true as NSNumber,
+                    "still_believing_for": (remaining ?? []).count as NSNumber,
                 ])
                 isSaving = false
                 callback(prefill)
@@ -340,7 +344,11 @@ struct BreakthroughFlowView: View {
         isSaving = true
         Task {
             // Save locally
-            try? await markReceivedUseCase.execute(id: declaration.id, testimony: testimony)
+            let remaining = try? await markReceivedUseCase.execute(
+                id: declaration.id,
+                testimony: testimony,
+                startTimeIndex: appState.personalDeclarationTimeIndex
+            )
 
             // Post to Prayer Wall if user opted in
             if shareToWall, let text = testimony, !text.isEmpty {
@@ -348,10 +356,11 @@ struct BreakthroughFlowView: View {
             }
 
             await MainActor.run {
-                appState.hasPersonalDeclaration = false
+                appState.hasPersonalDeclaration = !(remaining ?? []).isEmpty
                 AnalyticsService.shared.track("personal_declaration_received", parameters: [
                     "days_believed": declaration.dayCount as NSNumber,
-                    "shared_to_wall": shareToWall as NSNumber
+                    "shared_to_wall": shareToWall as NSNumber,
+                    "still_believing_for": (remaining ?? []).count as NSNumber
                 ])
                 sharedToWall = shareToWall && !(testimony?.isEmpty ?? true)
                 isSaving = false
