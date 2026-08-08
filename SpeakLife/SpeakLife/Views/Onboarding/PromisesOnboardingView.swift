@@ -8,11 +8,13 @@
 //  variable is whether you'll trust them and put them to work over your own
 //  life. The narrative arc is:
 //
-//    0. Proven        — God's promises have never failed, not once (the thesis)
-//    1. The question  — it was never IF they work; it's whether you'll trust them
-//    2. Yours too     — the promise has your name on it, not just someone else's
-//    3. Activation    — a promise you SPEAK goes to work (the app's core mechanic)
-//    4. Every area    — nothing in your life sits outside the promise
+//    0. Pray like Jesus — the store-listing promise, delivered on screen one:
+//                         He spoke to the storm, and that is how you pray here
+//    1. Proven        — God's promises have never failed, not once (the thesis)
+//    2. The question  — it was never IF they work; it's whether you'll trust them
+//    3. Yours too     — the promise has your name on it, not just someone else's
+//    4. Activation    — you speak it daily until it settles (the app's core rhythm)
+//    5. Every area    — nothing in your life sits outside the promise
 //
 //  Then a product-capability recap, a "which promise will you activate first?"
 //  picker (which seeds the home feed), the same extended personalization quiz
@@ -42,7 +44,7 @@ struct PromisesOnboardingView: View {
     // seeding logic work unchanged. Only `heaviestBurden` and `notificationTime`
     // are set here (the promise picker writes `heaviestBurden`).
     @StateObject private var responses = SurveyResponses()
-    @State private var currentStep: PromisesStep = .proven
+    @State private var currentStep: PromisesStep = .storm
     @State private var savedDeclaration: PersonalDeclaration? = nil
 
     // Quiz v2 flag, frozen at the flow's first appearance (mirroring
@@ -95,6 +97,7 @@ struct PromisesOnboardingView: View {
     @ViewBuilder
     private var currentStepView: some View {
         switch currentStep {
+        case .storm:     StormOpenerScreen(size: size, flow: "promises") { advance() }
         case .proven:    PromiseSceneScreen(size: size, scene: .proven) { advance() }
         case .question:  PromiseSceneScreen(size: size, scene: .question) { advance() }
         case .yours:     PromiseSceneScreen(size: size, scene: .yours) { advance() }
@@ -194,8 +197,8 @@ struct PromisesOnboardingView: View {
 
     private func advance() {
         Juice.play(.tapLight)
-        // flow_schema 2 = testimonial wall inserted before paywall (1 = original promises arc). Bump when step raw values are renumbered.
-        AnalyticsService.shared.track("promises_step_completed", parameters: ["step": currentStep.rawValue, "flow_schema": 2])
+        // flow_schema 3 = storm opener prepended as step 0 (2 = testimonial wall inserted before paywall, 1 = original promises arc). Bump when step raw values are renumbered.
+        AnalyticsService.shared.track("promises_step_completed", parameters: ["step": currentStep.rawValue, "flow_schema": 3])
 
         // Leaving the promise picker: stamp the segment so downstream paywall
         // events carry a meaningful segment for this arm (quiz sets its own).
@@ -265,7 +268,7 @@ struct PromisesOnboardingView: View {
             "victory_looks_like": responses.victoryOutcome ?? "unknown",
             "belief": responses.beliefLevel ?? "unknown",
             "quiz_version": quizV2 ? "v2" : "v1",
-            "flow_schema": 2,  // joins with promises_step_completed; bump when step raw values are renumbered
+            "flow_schema": 3,  // joins with promises_step_completed; bump when step raw values are renumbered
             "set_personal_declaration": (savedDeclaration != nil) as NSNumber
         ])
 
@@ -299,41 +302,42 @@ struct PromisesOnboardingView: View {
 
 enum PromisesStep: Int, CaseIterable {
     // Trust-and-activation narrative screens
-    case proven         = 0   // God's promises have never failed (the thesis)
-    case question       = 1   // it was never IF they work; it's whether you'll trust them
-    case yours          = 2   // the promise has your name on it, not just someone else's
-    case activate       = 3   // a promise you SPEAK goes to work (the core mechanic)
-    case everyArea      = 4   // nothing in your life sits outside the promise
-    case experience     = 5   // product-capability recap (matching warfare/outcomes/product)
-    case promisePicker  = 6   // pick the promise to activate first (seeds the feed)
+    case storm          = 0   // "Pray Like Jesus" — the store listing, answered on screen one
+    case proven         = 1   // God's promises have never failed (the thesis)
+    case question       = 2   // it was never IF they work; it's whether you'll trust them
+    case yours          = 3   // the promise has your name on it, not just someone else's
+    case activate       = 4   // you speak it daily until it settles (the core rhythm)
+    case everyArea      = 5   // nothing in your life sits outside the promise
+    case experience     = 6   // product-capability recap (matching warfare/outcomes/product)
+    case promisePicker  = 7   // pick the promise to activate first (seeds the feed)
     // Extended personalization quiz (shared screens in SurveyOnboardingScreens)
-    case battleDuration = 7   // Q2: how long has this been going on?
-    case alreadyTried   = 8   // Q3: what have you already tried?
-    case insight        = 9   // micro-insight interstitial (reading vs speaking)
-    case hitsHardest    = 10  // Q4: when does it hit hardest? (preselects notification time)
-    case connectStyle   = 11  // Q5: connect style (quiz v1) or victory outcome (quiz v2)
-    case belief         = 12  // quiz v2 only: do you believe God wants more? (v1 skips it)
-    case dailyMinutes   = 13  // Q6: how much time daily? (drives plan reveal rhythm)
+    case battleDuration = 8   // Q2: how long has this been going on?
+    case alreadyTried   = 9   // Q3: what have you already tried?
+    case insight        = 10  // micro-insight interstitial (reading vs speaking)
+    case hitsHardest    = 11  // Q4: when does it hit hardest? (preselects notification time)
+    case connectStyle   = 12  // Q5: connect style (quiz v1) or victory outcome (quiz v2)
+    case belief         = 13  // quiz v2 only: do you believe God wants more? (v1 skips it)
+    case dailyMinutes   = 14  // Q6: how much time daily? (drives plan reveal rhythm)
     // Shared back-half (reused from the survey flow)
-    case firstDeclaration = 14
-    case personalDeclaration = 15
-    case rating          = 16  // rating ask at the personal-declaration peak
-    case planBuilding    = 17  // "building your plan" loader (transition, no bar)
-    case planReveal      = 18  // named 30-day plan reveal — sets up the paywall ask
-    case testimonials    = 19  // App Store review wall — social proof right before the ask
-    case paywall         = 20
-    case notificationTime = 21 // terminal — completes onboarding
+    case firstDeclaration = 15
+    case personalDeclaration = 16
+    case rating          = 17  // rating ask at the personal-declaration peak
+    case planBuilding    = 18  // "building your plan" loader (transition, no bar)
+    case planReveal      = 19  // named 30-day plan reveal — sets up the paywall ask
+    case testimonials    = 20  // App Store review wall — social proof right before the ask
+    case paywall         = 21
+    case notificationTime = 22 // terminal — completes onboarding
 
     func valueScreenIndex(quizV2: Bool) -> Int? {
         var screens: [PromisesStep] = [
-            .proven, .question, .yours, .activate, .everyArea, .experience, .promisePicker,
+            .storm, .proven, .question, .yours, .activate, .everyArea, .experience, .promisePicker,
             .battleDuration, .alreadyTried, .insight, .hitsHardest, .connectStyle, .belief, .dailyMinutes
         ]
         if !quizV2 { screens.removeAll { $0 == .belief } }
         return screens.firstIndex(of: self).map { $0 + 1 }
     }
 
-    static func totalValueScreens(quizV2: Bool) -> Int { quizV2 ? 14 : 13 }
+    static func totalValueScreens(quizV2: Bool) -> Int { quizV2 ? 15 : 14 }
 }
 
 // MARK: - Promise scene content
@@ -353,7 +357,8 @@ private enum PromiseScene {
 
     var eyebrow: String {
         switch self {
-        case .proven:    return "START HERE"
+        // Screen one is the storm opener; this is the thesis, not the doorway.
+        case .proven:    return "WHAT YOU'RE STANDING ON"
         case .question:  return "THE REAL QUESTION"
         case .yours:     return "THE PART MOST PEOPLE MISS"
         case .activate:  return "HOW A PROMISE GOES TO WORK"
@@ -366,7 +371,9 @@ private enum PromiseScene {
         case .proven:    return "God's promises have\nnever failed. Not once."
         case .question:  return "It was never\nif they work."
         case .yours:     return "Every promise\nhas your name on it."
-        case .activate:  return "A promise you speak\ngoes to work."
+        // The opener already taught "speak it, don't beg for it." This screen
+        // moves the idea forward to the daily rhythm instead of restating it.
+        case .activate:  return "You speak it until\nit settles in you."
         case .everyArea: return "Nothing is left\noutside the promise."
         }
     }
@@ -380,7 +387,7 @@ private enum PromiseScene {
         case .yours:
             return "It's easy to believe God comes through for someone else. Everything changes the moment you believe He meant them for you, over your body, your home, your future."
         case .activate:
-            return "Left on the page, it stays a someday. Spoken over your life, it moves. Speak it daily until your heart catches up to what's already yours."
+            return "One promise, out loud, over your own life, every day. Not to convince God. To settle it in you, until your heart catches up to what's already yours."
         case .everyArea:
             return "Your peace. Your health. Your family. Your provision. There's no corner of your life His Word doesn't reach. You activate it one area at a time."
         }

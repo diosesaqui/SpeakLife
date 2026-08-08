@@ -7,12 +7,14 @@
 //  demonstrates the best-case life that speaking God's Word produces, the
 //  "after" the user is reaching for. The narrative arc is:
 //
-//    0. The stakes        — the cost of staying where you are (the fear trigger,
+//    0. Pray like Jesus   — the store-listing promise, delivered on screen one:
+//                           He spoke to the storm, and that is how you pray here
+//    1. The stakes        — the cost of staying where you are (the fear trigger,
 //                           so the dream-first flow still carries both angles)
-//    1. Health restored   — a body walking in the healing already paid for
-//    2. Open doors        — provision, opportunity, breakthrough
-//    3. Peace in your home — the storm stilled, relationships mended
-//    4. Victorious identity — authority over warfare + who you are in Christ
+//    2. Health restored   — a body walking in the healing already paid for
+//    3. Open doors        — provision, opportunity, breakthrough
+//    4. Peace in your home — the storm stilled, relationships mended
+//    5. Victorious identity — authority over warfare + who you are in Christ
 //
 //  Then a product-capability recap, a "which breakthrough do you most need to
 //  see?" picker (which seeds the home feed), the same extended personalization
@@ -42,7 +44,7 @@ struct OutcomesOnboardingView: View {
     // seeding logic work unchanged. Only `heaviestBurden` and `notificationTime`
     // are set here (the outcome picker writes `heaviestBurden`).
     @StateObject private var responses = SurveyResponses()
-    @State private var currentStep: OutcomesStep = .stakes
+    @State private var currentStep: OutcomesStep = .storm
     @State private var savedDeclaration: PersonalDeclaration? = nil
 
     // Quiz v2 flag, frozen at the flow's first appearance (mirroring
@@ -97,6 +99,7 @@ struct OutcomesOnboardingView: View {
     @ViewBuilder
     private var currentStepView: some View {
         switch currentStep {
+        case .storm:     StormOpenerScreen(size: size, flow: "outcomes") { advance() }
         case .stakes:    OutcomeStakesScreen(size: size) { advance() }
         case .health:    OutcomeVisionScreen(size: size, vision: .health) { advance() }
         case .provision: OutcomeVisionScreen(size: size, vision: .provision) { advance() }
@@ -196,8 +199,8 @@ struct OutcomesOnboardingView: View {
 
     private func advance() {
         Juice.play(.tapLight)
-        // flow_schema 3 = testimonial wall inserted before paywall (2 = matched-to-warfare layout, 1 = original short outcomes flow). Bump when step raw values are renumbered again.
-        AnalyticsService.shared.track("outcomes_step_completed", parameters: ["step": currentStep.rawValue, "flow_schema": 3])
+        // flow_schema 4 = storm opener prepended as step 0 (3 = testimonial wall inserted before paywall, 2 = matched-to-warfare layout, 1 = original short outcomes flow). Bump when step raw values are renumbered again.
+        AnalyticsService.shared.track("outcomes_step_completed", parameters: ["step": currentStep.rawValue, "flow_schema": 4])
 
         // Leaving the outcome picker: stamp the segment so downstream paywall
         // events carry a meaningful segment for this arm (quiz sets its own).
@@ -267,7 +270,7 @@ struct OutcomesOnboardingView: View {
             "victory_looks_like": responses.victoryOutcome ?? "unknown",
             "belief": responses.beliefLevel ?? "unknown",
             "quiz_version": quizV2 ? "v2" : "v1",
-            "flow_schema": 3,  // joins with outcomes_step_completed; bump when step raw values are renumbered again
+            "flow_schema": 4,  // joins with outcomes_step_completed; bump when step raw values are renumbered again
             "set_personal_declaration": (savedDeclaration != nil) as NSNumber
         ])
 
@@ -301,41 +304,42 @@ struct OutcomesOnboardingView: View {
 
 enum OutcomesStep: Int, CaseIterable {
     // Outcome-demonstration screens
-    case stakes         = 0   // the cost of staying where you are (the fear trigger)
-    case health         = 1
-    case provision      = 2
-    case peace          = 3
-    case identity       = 4   // warfare authority + new identity in Christ
-    case experience     = 5   // product-capability recap (matching warfare/product)
-    case outcomePicker  = 6   // pick the breakthrough to see first (seeds the feed)
+    case storm          = 0   // "Pray Like Jesus" — the store listing, answered on screen one
+    case stakes         = 1   // the cost of staying where you are (the fear trigger)
+    case health         = 2
+    case provision      = 3
+    case peace          = 4
+    case identity       = 5   // warfare authority + new identity in Christ
+    case experience     = 6   // product-capability recap (matching warfare/product)
+    case outcomePicker  = 7   // pick the breakthrough to see first (seeds the feed)
     // Extended personalization quiz (shared screens in SurveyOnboardingScreens)
-    case battleDuration = 7   // Q2: how long has this been going on?
-    case alreadyTried   = 8   // Q3: what have you already tried?
-    case insight        = 9   // micro-insight interstitial (reading vs speaking)
-    case hitsHardest    = 10  // Q4: when does it hit hardest? (preselects notification time)
-    case connectStyle   = 11  // Q5: connect style (quiz v1) or victory outcome (quiz v2)
-    case belief         = 12  // quiz v2 only: do you believe God wants more? (v1 skips it)
-    case dailyMinutes   = 13  // Q6: how much time daily? (drives plan reveal rhythm)
+    case battleDuration = 8   // Q2: how long has this been going on?
+    case alreadyTried   = 9   // Q3: what have you already tried?
+    case insight        = 10  // micro-insight interstitial (reading vs speaking)
+    case hitsHardest    = 11  // Q4: when does it hit hardest? (preselects notification time)
+    case connectStyle   = 12  // Q5: connect style (quiz v1) or victory outcome (quiz v2)
+    case belief         = 13  // quiz v2 only: do you believe God wants more? (v1 skips it)
+    case dailyMinutes   = 14  // Q6: how much time daily? (drives plan reveal rhythm)
     // Shared back-half (reused from the survey flow)
-    case firstDeclaration = 14
-    case personalDeclaration = 15
-    case rating          = 16  // rating ask at the personal-declaration peak
-    case planBuilding    = 17  // "building your plan" loader (transition, no bar)
-    case planReveal      = 18  // named 30-day plan reveal — sets up the paywall ask
-    case testimonials    = 19  // App Store review wall — social proof right before the ask
-    case paywall         = 20
-    case notificationTime = 21 // terminal — completes onboarding
+    case firstDeclaration = 15
+    case personalDeclaration = 16
+    case rating          = 17  // rating ask at the personal-declaration peak
+    case planBuilding    = 18  // "building your plan" loader (transition, no bar)
+    case planReveal      = 19  // named 30-day plan reveal — sets up the paywall ask
+    case testimonials    = 20  // App Store review wall — social proof right before the ask
+    case paywall         = 21
+    case notificationTime = 22 // terminal — completes onboarding
 
     func valueScreenIndex(quizV2: Bool) -> Int? {
         var screens: [OutcomesStep] = [
-            .stakes, .health, .provision, .peace, .identity, .experience, .outcomePicker,
+            .storm, .stakes, .health, .provision, .peace, .identity, .experience, .outcomePicker,
             .battleDuration, .alreadyTried, .insight, .hitsHardest, .connectStyle, .belief, .dailyMinutes
         ]
         if !quizV2 { screens.removeAll { $0 == .belief } }
         return screens.firstIndex(of: self).map { $0 + 1 }
     }
 
-    static func totalValueScreens(quizV2: Bool) -> Int { quizV2 ? 14 : 13 }
+    static func totalValueScreens(quizV2: Bool) -> Int { quizV2 ? 15 : 14 }
 }
 
 // MARK: - Outcome content
