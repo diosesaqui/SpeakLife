@@ -70,9 +70,11 @@ struct EnforcementCard: View {
                 .foregroundColor(.white)
                 .fixedSize(horizontal: false, vertical: true)
 
-            Text(day.anchorBook)
-                .font(.system(size: 12, weight: .medium))
-                .foregroundColor(.white.opacity(0.55))
+            if !day.anchorBook.isEmpty {
+                Text(day.anchorBook)
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(.white.opacity(0.55))
+            }
 
             HStack(spacing: DS.Spacing.xs) {
                 Button {

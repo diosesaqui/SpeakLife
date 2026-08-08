@@ -124,6 +124,12 @@ enum EnforcementAssembler {
             guard declaration.category == category else { continue }
             guard declaration.contentType == .affirmation else { continue }
             guard !usedTexts.contains(declaration.text) else { continue }
+            // ~98 declarations in the pool carry no scripture reference. The card
+            // shows the reference under the line and the push appends it, so an
+            // empty one leaves a blank row and a push trailing in " ~ ".
+            // Every offered category has well over seven referenced declarations,
+            // so requiring one costs no coverage.
+            guard let book = declaration.book, !book.isEmpty else { continue }
             matching.append(declaration)
         }
         return matching.sorted { a, b in

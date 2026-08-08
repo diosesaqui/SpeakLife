@@ -89,6 +89,32 @@ final class EnforcementAssemblerTests: XCTestCase {
         }
     }
 
+    /// The card shows the reference under the line and the push appends it, so a
+    /// declaration without one leaves a blank row and a push trailing in " ~ ".
+    func testAssembly_SkipsDeclarationsWithNoScriptureReference() {
+        var pool = declarations(.hope, 7)
+        pool += (1...20).map { n in
+            Declaration(text: "hope unreferenced \(n)", book: nil,
+                        bibleVerseText: nil, category: .hope)
+        }
+        let result = EnforcementAssembler.assemble(primary: .hope, pool: pool, seed: "s")
+
+        XCTAssertEqual(result?.days.count, Enforcement.length)
+        for day in result?.days ?? [] {
+            XCTAssertFalse(day.anchorBook.isEmpty,
+                           "day \(day.dayNumber) has no reference: \(day.anchorText)")
+            XCTAssertFalse(day.anchorText.contains("unreferenced"))
+        }
+    }
+
+    func testAssembly_ReturnsNilWhenOnlyUnreferencedDeclarationsExist() {
+        let pool = (1...20).map { n in
+            Declaration(text: "no ref \(n)", book: nil, bibleVerseText: nil, category: .favor)
+        }
+        XCTAssertNil(EnforcementAssembler.assemble(primary: .favor, pool: pool, seed: "s"),
+                     "better no campaign than seven blank references")
+    }
+
     func testAssembly_ReturnsNilWhenPoolTooThin() {
         let pool = declarations(.grief, 3)   // fewer than seven
         XCTAssertNil(EnforcementAssembler.assemble(primary: .grief, pool: pool, seed: "s"))

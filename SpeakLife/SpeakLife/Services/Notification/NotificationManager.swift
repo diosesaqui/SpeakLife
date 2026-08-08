@@ -182,7 +182,13 @@ final class NotificationManager: NSObject {
                 if idx == 0, let enforcement = activeEnforcement {
                     let projected = min(enforcementStartDay + day, Enforcement.length)
                     if let enforcementDay = enforcement.day(projected) {
-                        body = enforcementDay.anchorText + " ~ " + enforcementDay.anchorBook
+                        // Belt and braces: assembly already requires a reference,
+                        // but an authored campaign or future content edit could
+                        // ship one without, and " ~ " with nothing after it is a
+                        // visible defect in the push.
+                        body = enforcementDay.anchorBook.isEmpty
+                            ? enforcementDay.anchorText
+                            : enforcementDay.anchorText + " ~ " + enforcementDay.anchorBook
                         enforcementTitle = enforcement.title
                         enforcementCategory = enforcement.theme
                     }
