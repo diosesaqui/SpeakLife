@@ -491,6 +491,16 @@ final class SubscriptionStore: ObservableObject {
 
         // Sync to UserDefaults for TaskLibrary access
         UserDefaults.standard.set(enableAIFeatures, forKey: "enableAIFeatures")
+
+        // Weekly Focus kill switch. Written straight to UserDefaults rather
+        // than held as a @Published here because AppState owns the read side
+        // (@AppStorage("weeklyFocusEnabled")) and two copies of one flag is how
+        // a kill switch ends up half-flipped. Registered true by default in
+        // AppDelegate, so a pre-fetch launch still has the feature.
+        UserDefaults.standard.set(
+            remoteConfig["weeklyFocusEnabled"].boolValue,
+            forKey: "weeklyFocusEnabled"
+        )
         
         // Declarations file name from Remote Config — only upgrade, never downgrade
         let remoteDeclarationsFileName = remoteConfig["declarationsFileName"].stringValue

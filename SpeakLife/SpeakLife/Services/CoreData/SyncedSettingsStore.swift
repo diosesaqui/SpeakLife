@@ -147,6 +147,15 @@ final class SyncedSettingsStore {
         SyncedKey(key: SoulProfileRepository.storageKey, strategy: .lastWriterWins),
         SyncedKey(key: "personalDeclaration_lastSpokenDate", strategy: .lastWriterWins),
 
+        // Weekly Focus history — the last 12 weeks, as one JSON array blob.
+        // lastWriterWins rather than a union merge: the array is week-keyed and
+        // a single device owns the current week (it's built locally on first
+        // open), so the only realistic conflict is two devices building the
+        // same week from the same local inputs — which produce the same week.
+        // The history behind it is append-only in practice, and the losing
+        // side's older weeks are already present on the winner.
+        SyncedKey(key: WeeklyFocusRepository.storageKey, strategy: .lastWriterWins),
+
         // Appearance & experience preferences.
         SyncedKey(key: "theme", strategy: .lastWriterWins),
         SyncedKey(key: "fontString", strategy: .lastWriterWins),

@@ -344,6 +344,12 @@ struct SpeakLifeApp: App {
                 tabViewModel.goToDeclarations()
                 appState.scrollToPersonalDeclaration = true
                 return
+            case "weeklyFocus":
+                // The Sunday check-in. Same mechanism as the personal
+                // declaration above — land on the feed, then raise the sheet.
+                tabViewModel.goToDeclarations()
+                appState.presentWeeklyCheckIn = true
+                return
             case "message":
                 // Personalized push message — open its own reader screen rather
                 // than navigating the home feed. The full (possibly long) text is

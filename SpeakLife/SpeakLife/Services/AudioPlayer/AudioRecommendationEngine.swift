@@ -110,6 +110,11 @@ final class AudioRecommendationEngine {
     /// (declaration, onboarding picks) outweighs revealed behavior (engagement,
     /// favorites, plays); the second-choice filter in a mapping is halved.
     private enum Weight {
+        /// This week's stated need. Ranked above the personal declaration on
+        /// purpose: the Anchor is the long-running commitment (months), the
+        /// week is what they said they need help with *now*, and when the two
+        /// disagree the more recent statement should steer the audio tab.
+        static let weeklyFocus         = 160.0
         static let personalDeclaration = 100.0
         static let selectedCategory    = 30.0
         static let engagement          = 12.0
@@ -138,6 +143,8 @@ final class AudioRecommendationEngine {
     ///
     /// - Parameters:
     ///   - filters: Curated filter list, already in its intended order.
+    ///   - weeklyFocusCategory: `DeclarationCategory` rawValue of this week's
+    ///     Weekly Focus, if a week has been built. Highest-weighted signal.
     ///   - personalDeclarationCategory: `DeclarationCategory` rawValue of the
     ///     user's active personal declaration, if any.
     ///   - selectedCategories: `DeclarationCategory` rawValues chosen during
@@ -149,6 +156,7 @@ final class AudioRecommendationEngine {
     ///   - maxPromoted: Cap on how many filters float to the front.
     static func personalizedOrder(
         filters: [FilterConfig],
+        weeklyFocusCategory: String? = nil,
         personalDeclarationCategory: String?,
         selectedCategories: [String],
         engagementCategories: [String: Double] = [:],
@@ -173,22 +181,28 @@ final class AudioRecommendationEngine {
             }
         }
 
-        // 1. Personal declaration — strongest intent.
+        // 1. This week's Weekly Focus — the most recent stated intent, so it
+        // leads. Additive to the two signals below rather than replacing them:
+        // a week with no answer still resolves to a category off the fallback
+        // ladder, and that is a better guess than none.
+        scoreMapping(for: weeklyFocusCategory, base: Weight.weeklyFocus)
+
+        // 2. Personal declaration — the long-running commitment.
         scoreMapping(for: personalDeclarationCategory, base: Weight.personalDeclaration)
 
-        // 2. Onboarding-selected categories — earlier picks weighted slightly higher.
+        // 3. Onboarding-selected categories — earlier picks weighted slightly higher.
         for (index, category) in selectedCategories.enumerated() {
             let positionFactor = max(0.5, 1.0 - Double(index) * 0.1)
             scoreMapping(for: category, base: Weight.selectedCategory * positionFactor)
         }
 
-        // 3. Recency-weighted category engagement (capped so it stays a
+        // 4. Recency-weighted category engagement (capped so it stays a
         // secondary signal beneath stated intent).
         for (category, strength) in engagementCategories {
             scoreMapping(for: category, base: Weight.engagement * min(strength, Weight.engagementStrengthCap))
         }
 
-        // 4. Revealed behavior — favorites and plays map straight to a filter id.
+        // 5. Revealed behavior — favorites and plays map straight to a filter id.
         for (filterId, count) in favoritesByFilterId {
             add(filterId, Weight.favorite * Double(min(count, Weight.favoriteCountCap)))
         }

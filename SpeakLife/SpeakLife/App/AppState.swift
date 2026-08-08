@@ -127,6 +127,20 @@ final class AppState: ObservableObject {
     // Personal Declaration
     @AppStorage("hasPersonalDeclaration") var hasPersonalDeclaration = false
     @AppStorage("scrollToPersonalDeclaration") var scrollToPersonalDeclaration = false
+
+    // Weekly Focus — the Sunday check-in layer. Additive to the Personal
+    // Declaration above, never a replacement: the Anchor's day count keeps
+    // climbing while the week resets every Sunday by design.
+    //
+    // Set by the `weeklyFocus` deep link (and by the feed card) to present the
+    // check-in sheet. Persisted rather than @Published for the same reason
+    // scrollToPersonalDeclaration is: a cold-launch notification tap sets it
+    // before any view exists to observe it.
+    @AppStorage("presentWeeklyCheckIn") var presentWeeklyCheckIn: Bool = false
+    // Kill switch, mirrored from Remote Config `weeklyFocusEnabled` in
+    // SubscriptionStore.updateConfigValues (same pattern as enableAIFeatures).
+    // Defaults true so a fresh install has the feature before the first fetch.
+    @AppStorage("weeklyFocusEnabled") var weeklyFocusEnabled: Bool = true
     
     // Track when app was last backgrounded to prevent stale audio from restarting
     @AppStorage("lastBackgroundDate") var lastBackgroundDate: Date?

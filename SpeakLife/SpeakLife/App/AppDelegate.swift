@@ -134,6 +134,10 @@ final class AppDelegate: NSObject, MessagingDelegate {
             // "I'm In" pledge inside the closer onboarding arm ships on; flip to
             // false in Remote Config to run the arm's no-pledge cell.
             "closerPledgeEnabled": true as NSNumber,
+            // Weekly Focus (Sunday check-in) ships on; flip to false in Remote
+            // Config to silence the Sunday push and pull the feed card without
+            // an App Store release. Weeks already built keep working.
+            "weeklyFocusEnabled": true as NSNumber,
             // Personalized audio category ordering ships dark; flip to true in
             // Remote Config (or via the A/B test) to promote each user's
             // best-matching categories to the front of the audio filter row.

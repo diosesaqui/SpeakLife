@@ -680,6 +680,43 @@ final class DeclarationViewModel: ObservableObject {
         }
         general = tempGen
     }
+
+    /// Floats this week's Weekly Focus declarations for *today* to the front of
+    /// the feed, in the order the selector sequenced them.
+    ///
+    /// Deliberately additive rather than a replacement feed: the rest of the
+    /// user's category content stays exactly where it was, just behind today's
+    /// three. A week the user never answered still resolves to a category off
+    /// the fallback ladder, so this is never an empty promotion.
+    ///
+    /// No-ops while a notification tap is being processed — that path pins a
+    /// specific declaration to the front and re-ordering underneath it is the
+    /// same clobber `isProcessingNotification` already exists to prevent.
+    ///
+    /// - Returns: true when the order actually changed.
+    @discardableResult
+    func applyWeeklyFocus(_ focus: WeeklyFocus?) -> Bool {
+        guard !isProcessingNotification else { return false }
+        guard let focus else { return false }
+
+        let todaysIDs = focus.todaysDeclarationIDs
+        guard !todaysIDs.isEmpty, !declarations.isEmpty else { return false }
+
+        let byID = Dictionary(
+            allDeclarations.map { ($0.id, $0) },
+            uniquingKeysWith: { first, _ in first }
+        )
+        let promoted = todaysIDs.compactMap { byID[$0] }
+        guard !promoted.isEmpty else { return false }
+
+        let promotedIDs = Set(promoted.map { $0.id })
+        let rest = declarations.filter { !promotedIDs.contains($0.id) }
+        let reordered = promoted + rest
+        guard reordered.map({ $0.id }) != declarations.map({ $0.id }) else { return false }
+
+        declarations = reordered
+        return true
+    }
     
     /// Asserts the notification-processing guard synchronously, up front.
     /// On cold launch the tapped declaration is set via the async notification

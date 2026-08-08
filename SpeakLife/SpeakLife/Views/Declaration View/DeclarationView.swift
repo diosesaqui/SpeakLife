@@ -81,6 +81,19 @@ struct DeclarationView: View {
     @State private var warriorRoomTestimonyPrefill: WarriorRoomTestimonyPrefill?
     @StateObject private var speechSynthesizer = SpeechSynthesizer()
     @State private var loadedDeclaration: PersonalDeclaration? = nil
+
+    // Weekly Focus. The week itself is held as plain state here — the card only
+    // needs the record, and the check-in sheet builds its own view model when
+    // it is presented (same pattern as PersonalDeclarationOnboardingView).
+    @State private var weeklyFocus: WeeklyFocus? = nil
+    /// Session-local mirror of the persisted "not now". The persisted flag is
+    /// what survives a relaunch; this is what makes the tap feel instant,
+    /// since nothing on this view observes UserDefaults.
+    @State private var weeklyFocusCardDismissed = false
+    @State private var showWeeklyCheckIn = false
+    /// push | card — which surface opened the sheet. Stamped onto every
+    /// check-in event so answer rate is splittable by surface.
+    @State private var weeklyCheckInSurface = "card"
     
     private var cancellables = Set<AnyCancellable>()
     
@@ -102,6 +115,7 @@ struct DeclarationView: View {
     private func overlayContent(_ geometry: GeometryProxy) -> some View {
         VStack {
             topButtonsRow(geometry)
+            weeklyFocusCard
             Spacer()
             if appState.showIntentBar {
                 IntentsBarView(viewModel: viewModel, themeViewModel: themeViewModel)
@@ -111,6 +125,66 @@ struct DeclarationView: View {
         }
     }
     
+    // MARK: - Weekly Focus
+    //
+    // Layer 2 of the Sunday ask, and the one that actually converts. Push
+    // tap-through is low single digits, so the notification is the invitation
+    // and this card is the capture surface. It shows only inside the ask window
+    // (Sunday 7 PM → Monday 11:59 PM local), only while the week is unanswered,
+    // and only until dismissed for that window.
+    //
+    // Both tiers see the ask. The gate is inside the sheet, after the answer.
+    @ViewBuilder
+    private var weeklyFocusCard: some View {
+        if let focus = weeklyFocus,
+           !weeklyFocusCardDismissed,
+           !appState.showScreenshotLabel,
+           focus.shouldShowCard(enabled: appState.weeklyFocusEnabled) {
+            WeeklyFocusCard(
+                question: focus.question,
+                isEscalating: focus.isEscalating,
+                onSpeak: { presentWeeklyCheckIn(surface: "card") },
+                onDismiss: { dismissWeeklyFocusCard(focus) }
+            )
+            .padding(.top, 6)
+            .transition(.opacity.combined(with: .move(edge: .top)))
+        }
+    }
+
+    private func presentWeeklyCheckIn(surface: String) {
+        weeklyCheckInSurface = surface
+        showWeeklyCheckIn = true
+    }
+
+    private func dismissWeeklyFocusCard(_ focus: WeeklyFocus) {
+        focus.dismissCard()
+        AnalyticsService.shared.track("weekly_checkin_skipped", parameters: ["surface": "card"])
+        withAnimation(DS.Motion.smooth) { weeklyFocusCardDismissed = true }
+    }
+
+    /// Builds this week (idempotent — at most one build per week, purely local,
+    /// no network) and re-orders the feed from it. Runs on appear and whenever
+    /// entitlement flips, since a mid-week subscribe applies the answer the
+    /// user already gave on the free tier rather than asking again.
+    private func loadWeeklyFocus() {
+        guard appState.weeklyFocusEnabled else { return }
+        let isPremium = subscriptionStore.isPremium
+        Task {
+            let focus = await DIContainer.shared.makeBuildWeeklyFocusUseCase().execute()
+            await MainActor.run {
+                weeklyFocus = focus
+                // The session-local "not now" clears on every reload; the
+                // persisted flag inside `shouldShowCard` is what keeps a
+                // dismissed card down for the rest of *this* window.
+                weeklyFocusCardDismissed = false
+                // The week's declarations are premium content. Free users still
+                // get the ask, the echo, and one matched verse.
+                guard isPremium else { return }
+                viewModel.applyWeeklyFocus(focus)
+            }
+        }
+    }
+
     // Personal Declaration compact button shown in top row — always visible
     @ViewBuilder
     private var personalDeclarationButton: some View {
@@ -424,6 +498,32 @@ struct DeclarationView: View {
             }
             .ignoresSafeArea()
         }
+        // Weekly Focus check-in. Full-screen rather than a sheet because the
+        // payoff (the seven days) has to arrive without a card peeking out
+        // behind it — the result IS the reward for answering.
+        .fullScreenCover(isPresented: $showWeeklyCheckIn, onDismiss: loadWeeklyFocus) {
+            WeeklyCheckInSheet(
+                viewModel: DIContainer.shared.makeWeeklyFocusViewModel(),
+                surface: weeklyCheckInSurface
+            )
+            .environmentObject(appState)
+            .environmentObject(subscriptionStore)
+            .environmentObject(viewModel)
+        }
+        // The `weeklyFocus` deep link (Sunday push) sets this from
+        // SpeakLifeApp.handleNotificationContent, possibly before this view
+        // exists — so it is read here rather than pushed at us.
+        .onChange(of: appState.presentWeeklyCheckIn) { shouldPresent in
+            guard shouldPresent else { return }
+            appState.presentWeeklyCheckIn = false
+            guard appState.weeklyFocusEnabled else { return }
+            presentWeeklyCheckIn(surface: "push")
+        }
+        // A mid-week subscribe has an answer waiting: rebuilding on the
+        // entitlement flip is what turns it into a week without re-asking.
+        .onChange(of: subscriptionStore.isPremium) { _ in
+            loadWeeklyFocus()
+        }
         .onAppear(perform: handleOnAppear)
         .onDisappear(perform: handleOnDisappear)
     }
@@ -524,6 +624,15 @@ struct DeclarationView: View {
         premiumCount += 1
         shareApp()
         timerViewModel.debugFixStreak()
+        loadWeeklyFocus()
+        // A cold-launch push tap sets this before the view exists, so onChange
+        // never fires for it — catch that case here.
+        if appState.presentWeeklyCheckIn {
+            appState.presentWeeklyCheckIn = false
+            if appState.weeklyFocusEnabled {
+                presentWeeklyCheckIn(surface: "push")
+            }
+        }
     }
     
     private func handleOnDisappear() {

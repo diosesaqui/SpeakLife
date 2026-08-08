@@ -464,6 +464,12 @@ final class AudioDeclarationViewModel: ObservableObject {
 
             newOrder = AudioRecommendationEngine.personalizedOrder(
                 filters: curatedFilters,
+                // This week's focus, read synchronously the same way the
+                // personal declaration below is — the filter order is built in
+                // one pass and can't await. Nil until a week exists, which is
+                // exactly the pre-Weekly-Focus behaviour. Additive: it joins
+                // the two existing signals rather than replacing either.
+                weeklyFocusCategory: WeeklyFocusRepository.activeAudioCategoryRaw(),
                 personalDeclarationCategory: PersonalDeclarationRepository.activeCategoryRaw(),
                 selectedCategories: selected,
                 engagementCategories: engagementCategoryStrengths(),

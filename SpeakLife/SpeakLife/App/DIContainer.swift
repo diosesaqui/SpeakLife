@@ -25,6 +25,55 @@ final class DIContainer {
     /// UserDefaults-backed with a fire-and-forget Firestore mirror.
     lazy var soulProfileRepository: SoulProfileRepositoryProtocol = SoulProfileRepository()
 
+    // MARK: - Weekly Focus
+
+    /// Last 12 weeks under `weekly_focus_history_v1`, synced by SyncedSettingsStore.
+    lazy var weeklyFocusRepository: WeeklyFocusRepositoryProtocol = WeeklyFocusRepository()
+
+    lazy var weeklyCheckInScheduler: WeeklyCheckInSchedulerProtocol = WeeklyCheckInScheduler()
+
+    /// Deliberately `KeywordDeclarationMatcher`, not `declarationMatcher` above.
+    /// The whole premise of Weekly Focus Phase 1 is that a week costs zero LLM
+    /// calls, so the answer rate can be measured before any generation spend —
+    /// wiring the Claude-backed matcher here would quietly put a network call
+    /// (and a bill) behind every Sunday for every user, answered or not.
+    /// Phase 2 moves selection behind the `/weeklyFocus` Cloud Function; this
+    /// is the line that changes then.
+    lazy var weeklyFocusBuilder: WeeklyFocusBuilderProtocol = WeeklyFocusBuilder(
+        repository: weeklyFocusRepository,
+        personalDeclarationRepository: personalDeclarationRepository,
+        soulProfileRepository: soulProfileRepository,
+        matcher: KeywordDeclarationMatcher(),
+        declarationProvider: LocalDeclarationProvider()
+    )
+
+    func makeBuildWeeklyFocusUseCase() -> BuildWeeklyFocusUseCase {
+        BuildWeeklyFocusUseCase(
+            repository: weeklyFocusRepository,
+            builder: weeklyFocusBuilder,
+            scheduler: weeklyCheckInScheduler
+        )
+    }
+
+    @MainActor
+    func makeWeeklyFocusViewModel() -> WeeklyFocusViewModel {
+        WeeklyFocusViewModel(
+            repository: weeklyFocusRepository,
+            buildUseCase: makeBuildWeeklyFocusUseCase(),
+            answerUseCase: AnswerWeeklyFocusUseCase(
+                repository: weeklyFocusRepository,
+                builder: weeklyFocusBuilder,
+                scheduler: weeklyCheckInScheduler
+            ),
+            completeDayUseCase: CompleteWeeklyDayUseCase(repository: weeklyFocusRepository),
+            // Keyword matching again, for the same reason: the free tier's echo
+            // (one verse + one declaration) has to cost nothing, or a free user
+            // who answers every Sunday and never converts stops being free.
+            matchUseCase: MatchDeclarationUseCase(matcher: KeywordDeclarationMatcher()),
+            speechService: speechTranscriptionService
+        )
+    }
+
     @MainActor
     func makePersonalDeclarationViewModel() -> PersonalDeclarationViewModel {
         PersonalDeclarationViewModel(
