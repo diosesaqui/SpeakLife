@@ -1,0 +1,15 @@
+{
+  "name": "speaklife-competitive-monitor",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Daily competitive intelligence monitor for SpeakLife using Firecrawl",
+  "main": "monitor.mjs",
+  "scripts": {
+    "start": "node monitor.mjs",
+    "test": "node monitor.mjs --dry-run"
+  },
+  "dependencies": {
+    "@mendable/firecrawl-js": "^1.0.0",
+    "dotenv": "^16.0.0"
+  }
+}
