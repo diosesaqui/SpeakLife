@@ -2,9 +2,12 @@
 //  ClaudeDeclarationMatcher.swift
 //  SpeakLife
 //
-//  Uses the Anthropic Messages API to generate a personalized declaration and
-//  Bible verse from the user's free-form prayer need. Falls back to
-//  KeywordDeclarationMatcher when offline or when no API key is configured.
+//  Generates a personalized declaration and Bible verse from the user's
+//  free-form prayer need by calling the `declarationMatch` Firebase Cloud
+//  Function. That function holds the Anthropic key in Secret Manager, owns the
+//  declaration-writing rules, and rate-limits per user — the device never sees
+//  the key. Falls back to KeywordDeclarationMatcher on any failure, so a
+//  network blip, a rate limit, or a bad generation still yields a declaration.
 //
 
 import Foundation
@@ -23,18 +26,18 @@ final class ClaudeDeclarationMatcher: DeclarationMatcherProtocol {
     // MARK: - DeclarationMatcherProtocol
 
     func match(input: String) async -> DeclarationMatch {
-        let apiKey = AnthropicConfig.apiKey
-        guard !apiKey.isEmpty else {
-            print("🔑 [Claude] API key is empty — falling back to keyword matcher")
-            AnalyticsService.shared.track("claude_fallback", parameters: ["reason": "no_key"])
-            return await fallback.match(input: input)
-        }
-        print("🔑 [Claude] API key found, prefix: \(String(apiKey.prefix(12)))...")
         do {
-            let result = try await callClaude(input: input, apiKey: apiKey)
+            let result = try await callDeclarationMatch(input: input)
             print("✅ [Claude] Match succeeded, category: \(result.category.rawValue)")
             AnalyticsService.shared.track("claude_success", parameters: ["category": result.category.rawValue])
             return result
+        } catch ClaudeError.rateLimited {
+            // The daily cap is a normal, expected outcome — not an error state.
+            // Keyword matching covers it silently, tagged so it's separable in
+            // analytics from real failures.
+            print("⏳ [Claude] Rate limited — falling back to keyword matcher")
+            AnalyticsService.shared.track("claude_fallback", parameters: ["reason": "rate_limited"])
+            return await fallback.match(input: input)
         } catch {
             print("❌ [Claude] Error: \(error) — falling back to keyword matcher")
             AnalyticsService.shared.track("claude_fallback", parameters: ["reason": "\(error)"])
@@ -49,43 +52,36 @@ final class ClaudeDeclarationMatcher: DeclarationMatcherProtocol {
 
     // MARK: - Private
 
-    private func callClaude(input: String, apiKey: String) async throws -> DeclarationMatch {
-        var request = URLRequest(url: AnthropicConfig.apiURL)
+    private func callDeclarationMatch(input: String) async throws -> DeclarationMatch {
+        var request = URLRequest(url: AnthropicConfig.endpoint)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue(apiKey, forHTTPHeaderField: "x-api-key")
-        request.setValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
         request.timeoutInterval = 15
 
-        let body = ClaudeRequest(
-            model: AnthropicConfig.model,
-            maxTokens: 512,
-            system: AnthropicConfig.systemPrompt,
-            messages: [.init(role: "user", content: "User need: \(input)")]
-        )
-        request.httpBody = try JSONEncoder().encode(body)
+        // Same identity Bible Chat keys its metering off, so one person's usage
+        // is one row regardless of which AI surface they hit.
+        let payload: [String: Any] = [
+            "appUserId": RevenueCatManager.shared.appUserID,
+            "input": input
+        ]
+        request.httpBody = try JSONSerialization.data(withJSONObject: payload)
 
         let (data, response) = try await session.data(for: request)
-        if let http = response as? HTTPURLResponse {
-            print("📡 [Claude] HTTP status: \(http.statusCode)")
-            if http.statusCode != 200 {
-                let body = String(data: data, encoding: .utf8) ?? ""
-                print("📡 [Claude] Error body: \(body.prefix(400))")
-                AnalyticsService.shared.track("claude_http_error", parameters: ["status": http.statusCode, "body": String(body.prefix(100))])
-                throw ClaudeError.httpError(statusCode: http.statusCode)
-            }
-        } else {
+        guard let http = response as? HTTPURLResponse else {
             throw ClaudeError.httpError(statusCode: 0)
         }
+        print("📡 [Claude] HTTP status: \(http.statusCode)")
 
-        let claude = try JSONDecoder().decode(ClaudeResponse.self, from: data)
-        guard let text = claude.content.first(where: { $0.type == "text" })?.text else {
-            throw ClaudeError.emptyResponse
+        if http.statusCode == 429 { throw ClaudeError.rateLimited }
+
+        guard http.statusCode == 200 else {
+            // Status code only. Never log the response body — it can echo request
+            // metadata into Firebase Analytics.
+            AnalyticsService.shared.track("claude_http_error", parameters: ["status": http.statusCode])
+            throw ClaudeError.httpError(statusCode: http.statusCode)
         }
 
-        let jsonData = try extractJSON(from: text)
-        let parsed = try JSONDecoder().decode(DeclarationJSON.self, from: jsonData)
-
+        let parsed = try JSONDecoder().decode(DeclarationJSON.self, from: data)
         let category = DeclarationCategory(rawValue: parsed.category) ?? .faith
         return DeclarationMatch(
             category: category,
@@ -95,54 +91,18 @@ final class ClaudeDeclarationMatcher: DeclarationMatcherProtocol {
             isConfident: true
         )
     }
-
-    private func extractJSON(from text: String) throws -> Data {
-        guard let start = text.firstIndex(of: "{"),
-              let end = text.lastIndex(of: "}") else {
-            throw ClaudeError.invalidJSON
-        }
-        let jsonString = String(text[start...end])
-        guard let data = jsonString.data(using: .utf8) else {
-            throw ClaudeError.invalidJSON
-        }
-        return data
-    }
 }
 
 // MARK: - Supporting Types
 
 private enum ClaudeError: Error {
     case httpError(statusCode: Int)
-    case emptyResponse
-    case invalidJSON
+    case rateLimited
 }
 
-private struct ClaudeRequest: Encodable {
-    let model: String
-    let maxTokens: Int
-    let system: String
-    let messages: [Message]
-
-    struct Message: Encodable {
-        let role: String
-        let content: String
-    }
-
-    enum CodingKeys: String, CodingKey {
-        case model, system, messages
-        case maxTokens = "max_tokens"
-    }
-}
-
-private struct ClaudeResponse: Decodable {
-    let content: [ContentBlock]
-
-    struct ContentBlock: Decodable {
-        let type: String
-        let text: String?
-    }
-}
-
+/// The function's success envelope. It returns the declaration fields flat at
+/// the top level (plus `remainingToday` and `usage`, which the client ignores),
+/// so there's no Anthropic response shape left to unwrap on device.
 private struct DeclarationJSON: Decodable {
     let category: String
     let declarationText: String

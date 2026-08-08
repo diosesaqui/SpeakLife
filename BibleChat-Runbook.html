@@ -130,9 +130,10 @@
   <table>
     <tr><th>File</th><th>What it is</th></tr>
     <tr><td><code>functions/bibleChat.js</code></td><td>The whole proxy: system prompt, premium check, free limit, Claude call, usage logging. <b>This is the main file you'll edit.</b></td></tr>
+    <tr><td><code>functions/declarationMatch.js</code></td><td>The onboarding declaration generator: declaration-writing rules, per-user daily rate limit, Claude call, usage logging. Same key, same shape as <code>bibleChat.js</code>.</td></tr>
     <tr><td><code>functions/index.js</code></td><td>Lists all functions so deploys find them.</td></tr>
     <tr><td><code>functions/package.json</code></td><td>Dependencies (incl. <code>@anthropic-ai/sdk</code>).</td></tr>
-    <tr><td><code>firestore.rules</code></td><td>Locks the <code>bibleChatUsage</code> usage collection to server-only.</td></tr>
+    <tr><td><code>firestore.rules</code></td><td>Locks the <code>bibleChatUsage</code> and <code>declarationMatchUsage</code> collections to server-only.</td></tr>
   </table>
   <h3>iOS app (Swift)</h3>
   <table>
@@ -145,26 +146,38 @@
 
   <!-- API KEY -->
   <h2 id="apikey"><span class="ic">⚠</span>The API key — read this</h2>
-  <div class="callout warn">
-    <b>There are TWO separate Anthropic keys. Don't confuse them.</b>
-    The onboarding/declaration generator and the Bible Chat function read from <i>different</i> places.
+  <div class="callout note">
+    <b>There is ONE Anthropic key, in ONE place: Secret Manager.</b>
+    Both AI features — Bible Chat and the onboarding declaration generator — now go through Cloud Functions that read the same secret server-side. The key never reaches a phone.
   </div>
   <table>
-    <tr><th></th><th>Onboarding / Declarations</th><th>Bible Chat</th></tr>
-    <tr><td><b>Key lives in</b></td><td>Firebase <b>Remote Config</b><br><code>anthropic_api_key</code></td><td>Firebase <b>Secret Manager</b><br><code>ANTHROPIC_API_KEY</code></td></tr>
-    <tr><td><b>Read by</b></td><td>The app, on the device</td><td>The Cloud Function, server-side</td></tr>
-    <tr><td><b>Set via</b></td><td>Firebase Console → Remote Config</td><td><code>firebase functions:secrets:set</code></td></tr>
+    <tr><th></th><th>Bible Chat</th><th>Onboarding / Declarations</th></tr>
+    <tr><td><b>Cloud Function</b></td><td><code>bibleChat</code></td><td><code>declarationMatch</code></td></tr>
+    <tr><td><b>Key lives in</b></td><td colspan="2">Firebase <b>Secret Manager</b> → <code>ANTHROPIC_API_KEY</code> (one secret, both functions bind it)</td></tr>
+    <tr><td><b>Read by</b></td><td colspan="2">The Cloud Function, server-side. Never the app.</td></tr>
+    <tr><td><b>Set via</b></td><td colspan="2"><code>firebase functions:secrets:set</code></td></tr>
   </table>
-  <p>If onboarding works but Bible Chat returns a 401 "invalid x-api-key," the <b>Secret Manager</b> value is wrong. Fix it by copying the working value from Remote Config into the secret:</p>
+  <p>If either feature returns a 401 "invalid x-api-key," the <b>Secret Manager</b> value is wrong. Set it and redeploy <i>both</i> functions — a deploy is what rebinds the new value:</p>
   <pre><code><span class="cmd">cd</span> functions
 <span class="cmd">firebase</span> functions:secrets:set ANTHROPIC_API_KEY    <span style="color:#6c7ba8"># paste key at the masked prompt</span>
-<span class="cmd">firebase</span> deploy --only functions:bibleChat       <span style="color:#6c7ba8"># required: rebinds the new value</span></code></pre>
-  <div class="callout warn">
-    <b>If you ever rotate the key in the Anthropic console, update BOTH places</b> — Remote Config <i>and</i> the secret — or one of the two features will break.
-  </div>
+<span class="cmd">firebase</span> deploy --only functions:bibleChat,functions:declarationMatch</code></pre>
   <div class="callout note">
     <b>Setting a secret tip</b> — the label is <code>ANTHROPIC_API_KEY</code>; the key (<code>sk-ant-…</code>) goes in the masked <i>"Enter a value"</i> prompt that appears <i>after</i>. Never paste the key as the name.
   </div>
+
+  <h3>Rotating the key</h3>
+  <p>Steady state is simple: create the new key in the Anthropic console, <code>firebase functions:secrets:set ANTHROPIC_API_KEY</code>, redeploy both functions, then revoke the old key. One place, one command.</p>
+  <div class="callout warn">
+    <b>The legacy <code>anthropic_api_key</code> Remote Config value — order matters.</b>
+    Older app builds fetched a usable Anthropic key from Remote Config and called <code>api.anthropic.com</code> directly from the device. Until those builds age out, that value is still a live key on phones, and the retirement steps must run in this order:
+  </div>
+  <table>
+    <tr><th>#</th><th>Step</th><th>Why this order</th></tr>
+    <tr><td>1</td><td>Deploy <code>declarationMatch</code></td><td>The endpoint must exist before any client points at it.</td></tr>
+    <tr><td>2</td><td>Ship the client build that calls the function</td><td>New builds stop reading the Remote Config key entirely.</td></tr>
+    <tr><td>3</td><td>Blank <code>anthropic_api_key</code> in Remote Config</td><td>Old builds hit their existing empty-key guard and degrade cleanly to local keyword matching. No crash, no broken onboarding.</td></tr>
+    <tr><td>4</td><td><b>Then</b> rotate the key in the Anthropic console + Secret Manager</td><td>Rotating before step 3 just pushes a working <i>new</i> key down to old devices, which is the exact exposure you were trying to close.</td></tr>
+  </table>
 
   <!-- PROMPT -->
   <h2 id="prompt"><span class="ic">◆</span>Edit the AI's behavior (tone, rules, scripture)</h2>

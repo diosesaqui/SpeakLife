@@ -2,33 +2,30 @@
 //  AnthropicConfig.swift
 //  SpeakLife
 //
+//  Endpoint config for the personalized-declaration generator.
+//
+//  The Anthropic API key, the model name, and the declaration-writing system
+//  prompt all used to live here and were shipped to the device (the key arrived
+//  via Remote Config at launch). They now live server-side in
+//  `functions/declarationMatch.js`, which holds the key in Secret Manager,
+//  enforces a per-user rate limit, and meters token usage. All that's left on
+//  the device is which URL to call.
+//
 
 import Foundation
 
 enum AnthropicConfig {
-    // Set by SubscriptionStore on app launch from Firebase Remote Config.
-    static var apiKey: String = ""
+    // us-central1 HTTPS function for the speaklife-3e5c4 project.
+    //
+    // Local testing: set the scheme env var USE_FIREBASE_EMULATOR=1 (Edit Scheme
+    // → Run → Arguments → Environment Variables) and run `firebase emulators:start`.
+    // DEBUG builds will then hit the local emulator. Without the env var, and in
+    // all Release builds, it always uses the production cloud URL. Same switch
+    // Bible Chat uses — see BibleChatLocal.usesEmulator.
+    private static let cloudEndpoint = URL(string: "https://us-central1-speaklife-3e5c4.cloudfunctions.net/declarationMatch")!
+    private static let emulatorEndpoint = URL(string: "http://127.0.0.1:5001/speaklife-3e5c4/us-central1/declarationMatch")!
 
-    static let apiURL = URL(string: "https://api.anthropic.com/v1/messages")!
-    static let model = "claude-haiku-4-5-20251001"
-
-    static let systemPrompt = """
-    You are a biblical declaration generator for SpeakLife, a Christian faith app used by over 1 million believers daily. Given a user's prayer need or spiritual struggle, generate a personalized declaration they will speak aloud every day.
-
-    STRICT RULES:
-    - First person ONLY: I / me / my / mine (never "you" or "your")
-    - Present/active tense: "I am", "I walk", "I have", "I receive"
-    - Bold and direct — no weak qualifiers (no "maybe", "I hope", "I'm trying")
-    - No em dashes (—) or en dashes (–). Use periods to separate thoughts.
-    - Spiritually rich vocabulary: rooted, sealed, commissioned, anchored, redeemed, established, unshakeable, radiant, dwelling, called, ordained
-    - 2–4 sentences maximum. Short and punchy is powerful.
-    - The declaration must feel weighty, specific, and personal — not generic.
-    - NIV Bible preferred for verse text.
-
-    CATEGORIES — return the exact rawValue string, nothing else:
-    health, wealth, anxiety, fear, love, relationship, marriage, parenting, destiny, identity, rest, joy, favor, grace, godsprotection, warfare, addiction, confidence, wisdom, innerHealing, spiritualGrowth, miracles, hardtimes, friendship, purity, hope, grief, fertility, salvation, education, housing, divorce, wellness, mentalHealth, forgiveness, newSeason, singleParent, anger, faith, debt, business, work, praise, gratitude
-
-    Respond ONLY with valid JSON — no markdown, no code fences, no explanation. Exact format:
-    {"category":"categoryname","declarationText":"First-person declaration here.","verseText":"Exact scripture text here.","verseReference":"Book Chapter:Verse"}
-    """
+    static var endpoint: URL {
+        BibleChatLocal.usesEmulator ? emulatorEndpoint : cloudEndpoint
+    }
 }
