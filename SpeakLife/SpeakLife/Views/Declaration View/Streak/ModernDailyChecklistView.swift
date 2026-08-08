@@ -30,6 +30,10 @@ struct ModernDailyChecklistView: View {
     /// @StateObject — it outlives this view and is read from a background
     /// refresh, so the view observes it instead of owning it.
     @ObservedObject private var inboxUnread = InboxUnreadTracker.shared
+    /// Same reasoning as `inboxUnread`: the Enforcement outlives this view and is
+    /// advanced from the burst, so the view observes the shared service rather
+    /// than owning it.
+    @ObservedObject private var enforcementService = EnforcementService.shared
     @State private var showJournal = false
     @State private var showWarriorRoom = false
     @State private var showCreateYourOwn = false
@@ -298,6 +302,44 @@ struct ModernDailyChecklistView: View {
                 // Scrollable content with cleaner layout
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 12) {
+                        // The active campaign sits above today's tasks: it's the
+                        // reason the user came back, so it leads. Renders nothing
+                        // until the user clears the foundation week.
+                        if subscriptionStore.enforcementEnabled {
+                            EnforcementCard(
+                                service: enforcementService,
+                                isPremium: subscriptionStore.isPremium,
+                                totalDaysCompleted: viewModel.totalDaysCompleted,
+                                onStart: { enforcement in
+                                    guard enforcementService.startEnforcement(id: enforcement.id,
+                                                                  isPremium: subscriptionStore.isPremium) else { return }
+                                    AnalyticsService.shared.track("enforcement_started",
+                                                                  parameters: ["theme": enforcement.theme])
+                                },
+                                onOpenAudio: { day in
+                                    audioDeclarationViewModel.pendingChecklistDeepLink =
+                                        .init(audioId: day.audioId, requestedAt: Date())
+                                    if let onClose = onClose { onClose() } else { dismiss() }
+                                    tabViewModel.goToAudio()
+                                },
+                                onLockedTap: {
+                                    AnalyticsService.shared.track("enforcement_locked_tapped")
+                                    AnalyticsService.shared.trackPaywallImpression(paywallId: "enforcement_card")
+                                    showPremium = true
+                                },
+                                onSwitch: {
+                                    let snapshot = enforcementService.progressSnapshot
+                                    AnalyticsService.shared.track("enforcement_abandoned", parameters: [
+                                        "enforcement_id": snapshot.activeEnforcementId ?? "unknown",
+                                        "last_day": snapshot.currentDay
+                                    ])
+                                    enforcementService.abandon()
+                                }
+                            )
+                            .padding(.horizontal, 20)
+                            .dsAppear(0.04)
+                        }
+
                         // Today's Tasks Section
                         StructuredDayView(
                             tasks: viewModel.todayChecklist.tasks,
@@ -489,6 +531,29 @@ struct ModernDailyChecklistView: View {
         }
         .sheet(isPresented: $showDevotional) {
             DevotionalView(viewModel: devotionalViewModel)
+        }
+        // Day 7. Presented full-screen so the win gets the whole screen, and so
+        // the next-Enforcement offer isn't one swipe from being dismissed by accident.
+        //
+        // Bound with `item:` rather than `isPresented:` + `if let`. With the
+        // latter, clearing `justCompleted` before flipping the bool renders the
+        // cover with no content — a blank full-screen sheet the user cannot
+        // dismiss. Here the nil assignment IS the dismissal, so the two can't
+        // disagree, and the campaign that finished is non-optional inside.
+        .fullScreenCover(item: $enforcementService.justCompleted) { completed in
+            EnforcementCompletionView(
+                completed: completed,
+                nextOptions: enforcementService.catalog.filter { $0.id != completed.id },
+                isPremium: subscriptionStore.isPremium,
+                onStartNext: { enforcement in
+                    guard enforcementService.startEnforcement(id: enforcement.id,
+                                                  isPremium: subscriptionStore.isPremium) else { return }
+                    AnalyticsService.shared.track("enforcement_started",
+                                                  parameters: ["theme": enforcement.theme, "source": "completion"])
+                    enforcementService.justCompleted = nil
+                },
+                onDone: { enforcementService.justCompleted = nil }
+            )
         }
         .sheet(isPresented: $showBibleChat) {
             // The conversational Bible Chat (not the topic picker). Still reached
@@ -684,6 +749,18 @@ struct ModernDailyChecklistView: View {
             // tile's badge. Idempotent, and the listener keeps the badge live
             // from then on — no polling, nothing to refresh on foreground.
             inboxUnread.start()
+            // Fires only when the card is an actual OFFER — eligible with nothing
+            // running. Firing it for an active campaign too would inflate the
+            // denominator every day of every campaign and make start-rate look
+            // permanently broken. Read start-rate as a ratio against this, never
+            // as a raw count: the release-day backlog spikes it, then settles.
+            if subscriptionStore.enforcementEnabled,
+               !enforcementService.progress.isActive,
+               enforcementService.isEligible(totalDaysCompleted: viewModel.totalDaysCompleted) {
+                AnalyticsService.shared.track("enforcement_offered", parameters: [
+                    "is_premium": subscriptionStore.isPremium
+                ])
+            }
         }
         .onChange(of: viewModel.todayChecklist.isCompleted) { isCompleted in
             if isCompleted {

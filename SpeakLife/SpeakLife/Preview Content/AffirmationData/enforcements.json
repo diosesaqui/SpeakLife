@@ -1,0 +1,317 @@
+{
+  "version": 1,
+  "enforcements": [
+    {
+      "id": "peace",
+      "title": "Enforcing Peace",
+      "tagline": "Seven days of a mind that is clear, sound, and at rest.",
+      "theme": "anxiety",
+      "days": [
+        {
+          "dayNumber": 1,
+          "anchorText": "I have the mind of Christ. It is clear, sound, and at rest.",
+          "anchorVerse": "For who has understood the mind of the Lord so as to instruct him? But we have the mind of Christ.",
+          "anchorBook": "1 Corinthians 2:16",
+          "anchorTranslation": "ESV",
+          "audioId": "peace_v2.mp3",
+          "audioTitle": "Peace Beyond Understanding",
+          "audioMinutes": 3
+        },
+        {
+          "dayNumber": 2,
+          "anchorText": "God's peace guards my heart and mind right now. It stands watch over me while I rest.",
+          "anchorVerse": "And the peace of God, which surpasses all understanding, will guard your hearts and your minds in Christ Jesus.",
+          "anchorBook": "Philippians 4:7",
+          "anchorTranslation": "ESV",
+          "audioId": "godsprotection_v2.mp3",
+          "audioTitle": "Protection Promises",
+          "audioMinutes": 4
+        },
+        {
+          "dayNumber": 3,
+          "anchorText": "My mind is fixed on Him, so He keeps me in perfect peace. I am steady today.",
+          "anchorVerse": "You keep him in perfect peace whose mind is stayed on you, because he trusts in you.",
+          "anchorBook": "Isaiah 26:3",
+          "anchorTranslation": "ESV",
+          "audioId": "loveMeditations.mp3",
+          "audioTitle": "The Heart of God's Love",
+          "audioMinutes": 8
+        },
+        {
+          "dayNumber": 4,
+          "anchorText": "I lie down and sleep in peace. God alone keeps me safe through the night.",
+          "anchorVerse": "In peace I will both lie down and sleep; for you alone, O Lord, make me dwell in safety.",
+          "anchorBook": "Psalm 4:8",
+          "anchorTranslation": "ESV",
+          "audioId": "psalm9_11.mp3",
+          "audioTitle": "Psalm 91: A Shield of Protection",
+          "audioMinutes": 2
+        },
+        {
+          "dayNumber": 5,
+          "anchorText": "God gave me power, love, and a sound mind. I think clearly and I decide with strength.",
+          "anchorVerse": "For God has not given us a spirit of fear, but of power and of love and of a sound mind.",
+          "anchorBook": "2 Timothy 1:7",
+          "anchorTranslation": "NKJV",
+          "audioId": "identity_v2.mp3",
+          "audioTitle": "Identity in Christ",
+          "audioMinutes": 4
+        },
+        {
+          "dayNumber": 6,
+          "anchorText": "He leads me beside quiet waters and restores my soul. I walk through today unhurried and whole.",
+          "anchorVerse": "He makes me to lie down in green pastures; He leads me beside the still waters. He restores my soul; He leads me in the paths of righteousness for His name's sake.",
+          "anchorBook": "Psalm 23:2-3",
+          "anchorTranslation": "NKJV",
+          "audioId": "gratitude_v2.mp3",
+          "audioTitle": "A Heart of Gratitude",
+          "audioMinutes": 3
+        },
+        {
+          "dayNumber": 7,
+          "anchorText": "I come to Jesus and He gives me rest. My soul is settled in Him today.",
+          "anchorVerse": "Come to me, all who labor and are heavy laden, and I will give you rest.",
+          "anchorBook": "Matthew 11:28",
+          "anchorTranslation": "ESV",
+          "audioId": "victorious_v2.mp3",
+          "audioTitle": "Living Victoriously in Christ",
+          "audioMinutes": 3
+        }
+      ]
+    },
+    {
+      "id": "provision",
+      "title": "Enforcing Provision",
+      "tagline": "Seven days of standing as a child of the God who owns everything.",
+      "theme": "wealth",
+      "days": [
+        {
+          "dayNumber": 1,
+          "anchorText": "My God supplies every need from His glorious riches. I lack no good thing today.",
+          "anchorVerse": "And my God will supply every need of yours according to his riches in glory in Christ Jesus.",
+          "anchorBook": "Philippians 4:19",
+          "anchorTranslation": "ESV",
+          "audioId": "prosperity_v2.mp3",
+          "audioTitle": "Abundance Declarations",
+          "audioMinutes": 4
+        },
+        {
+          "dayNumber": 2,
+          "anchorText": "The Lord is my shepherd. I have everything I need, and He leads me to more.",
+          "anchorVerse": "The Lord is my shepherd; I shall not want.",
+          "anchorBook": "Psalm 23:1",
+          "anchorTranslation": "NKJV",
+          "audioId": "gratitude_v2.mp3",
+          "audioTitle": "A Heart of Gratitude",
+          "audioMinutes": 3
+        },
+        {
+          "dayNumber": 3,
+          "anchorText": "I give thanks over what is already in my hands. God multiplies it as I give thanks.",
+          "anchorVerse": "Then he ordered the crowds to sit down on the grass, and taking the five loaves and the two fish, he looked up to heaven and said a blessing. Then he broke the loaves and gave them to the disciples, and the disciples gave them to the crowds.",
+          "anchorBook": "Matthew 14:19",
+          "anchorTranslation": "ESV",
+          "audioId": "psalm9_11.mp3",
+          "audioTitle": "Psalm 91: A Shield of Protection",
+          "audioMinutes": 2
+        },
+        {
+          "dayNumber": 4,
+          "anchorText": "God gives me the power to produce wealth. My work in His hands becomes increase.",
+          "anchorVerse": "And you shall remember the Lord your God, for it is He who gives you power to get wealth, that He may establish His covenant which He swore to your fathers, as it is this day.",
+          "anchorBook": "Deuteronomy 8:18",
+          "anchorTranslation": "NKJV",
+          "audioId": "miracles_v2.mp3",
+          "audioTitle": "Breakthrough and Miracles",
+          "audioMinutes": 3
+        },
+        {
+          "dayNumber": 5,
+          "anchorText": "Grace overflows to me so I always have enough. I have plenty left to give away.",
+          "anchorVerse": "And God is able to make all grace abound to you, so that having all sufficiency in all things at all times, you may abound in every good work.",
+          "anchorBook": "2 Corinthians 9:8",
+          "anchorTranslation": "ESV",
+          "audioId": "identity_v2.mp3",
+          "audioTitle": "Identity in Christ",
+          "audioMinutes": 4
+        },
+        {
+          "dayNumber": 6,
+          "anchorText": "I seek God's kingdom first and He adds everything else. My Father knows exactly what I need.",
+          "anchorVerse": "But seek first the kingdom of God and his righteousness, and all these things will be added to you.",
+          "anchorBook": "Matthew 6:33",
+          "anchorTranslation": "ESV",
+          "audioId": "spiritualGrowth_v2.mp3",
+          "audioTitle": "A Declaration for Spiritual Growth",
+          "audioMinutes": 4
+        },
+        {
+          "dayNumber": 7,
+          "anchorText": "God gave me His own Son. He freely gives me everything else along with Him.",
+          "anchorVerse": "He who did not spare his own Son but gave him up for us all, how will he not also with him graciously give us all things?",
+          "anchorBook": "Romans 8:32",
+          "anchorTranslation": "ESV",
+          "audioId": "victorious_v2.mp3",
+          "audioTitle": "Living Victoriously in Christ",
+          "audioMinutes": 3
+        }
+      ]
+    },
+    {
+      "id": "healing",
+      "title": "Enforcing Healing",
+      "tagline": "Seven days of speaking wholeness over this body.",
+      "theme": "health",
+      "days": [
+        {
+          "dayNumber": 1,
+          "anchorText": "By His wounds I am healed. This body carries the wholeness Jesus already paid for.",
+          "anchorVerse": "He himself bore our sins in his body on the tree, that we might die to sin and live to righteousness. By his wounds you have been healed.",
+          "anchorBook": "1 Peter 2:24",
+          "anchorTranslation": "ESV",
+          "audioId": "healed_v2.mp3",
+          "audioTitle": "Healing Declarations",
+          "audioMinutes": 5
+        },
+        {
+          "dayNumber": 2,
+          "anchorText": "God heals my body and renews my strength. I forget none of His benefits toward me.",
+          "anchorVerse": "Bless the Lord, O my soul, and forget not all His benefits: who forgives all your iniquities, who heals all your diseases.",
+          "anchorBook": "Psalm 103:2-3",
+          "anchorTranslation": "NKJV",
+          "audioId": "longlife_v2.mp3",
+          "audioTitle": "Renewed Youth and Long Life Declaration",
+          "audioMinutes": 3
+        },
+        {
+          "dayNumber": 3,
+          "anchorText": "God's words are life to me and health to my whole body. I keep them in front of me.",
+          "anchorVerse": "For they are life to those who find them, and health to all their flesh.",
+          "anchorBook": "Proverbs 4:22",
+          "anchorTranslation": "NKJV",
+          "audioId": "psalm9_11.mp3",
+          "audioTitle": "Psalm 91: A Shield of Protection",
+          "audioMinutes": 2
+        },
+        {
+          "dayNumber": 4,
+          "anchorText": "The Spirit who raised Jesus lives in me. He gives life to my mortal body today.",
+          "anchorVerse": "If the Spirit of him who raised Jesus from the dead dwells in you, he who raised Christ Jesus from the dead will also give life to your mortal bodies through his Spirit who dwells in you.",
+          "anchorBook": "Romans 8:11",
+          "anchorTranslation": "ESV",
+          "audioId": "miracles_v2.mp3",
+          "audioTitle": "Breakthrough and Miracles",
+          "audioMinutes": 3
+        },
+        {
+          "dayNumber": 5,
+          "anchorText": "God restores health to me and heals my wounds. His work in my body is thorough.",
+          "anchorVerse": "For I will restore health to you, and your wounds I will heal, declares the Lord, because they have called you an outcast: 'It is Zion, for whom no one cares!'",
+          "anchorBook": "Jeremiah 30:17",
+          "anchorTranslation": "ESV",
+          "audioId": "godsprotection_v2.mp3",
+          "audioTitle": "Protection Promises",
+          "audioMinutes": 4
+        },
+        {
+          "dayNumber": 6,
+          "anchorText": "God satisfies me with long life. My days are full, strong, and numbered by Him.",
+          "anchorVerse": "With long life I will satisfy him, and show him My salvation.",
+          "anchorBook": "Psalm 91:16",
+          "anchorTranslation": "NKJV",
+          "audioId": "peace_v2.mp3",
+          "audioTitle": "Peace Beyond Understanding",
+          "audioMinutes": 3
+        },
+        {
+          "dayNumber": 7,
+          "anchorText": "I prosper and walk in health, and my soul thrives. God's wholeness reaches every part of me.",
+          "anchorVerse": "Beloved, I pray that you may prosper in all things and be in health, just as your soul prospers.",
+          "anchorBook": "3 John 1:2",
+          "anchorTranslation": "NKJV",
+          "audioId": "victorious_v2.mp3",
+          "audioTitle": "Living Victoriously in Christ",
+          "audioMinutes": 3
+        }
+      ]
+    },
+    {
+      "id": "warfare",
+      "title": "Enforcing Victory",
+      "tagline": "Seven days of enforcing a verdict that was already rendered.",
+      "theme": "warfare",
+      "days": [
+        {
+          "dayNumber": 1,
+          "anchorText": "Every power against me was disarmed at the cross. I enforce that verdict, I do not chase it.",
+          "anchorVerse": "He disarmed the rulers and authorities and put them to open shame, by triumphing over them in him.",
+          "anchorBook": "Colossians 2:15",
+          "anchorTranslation": "ESV",
+          "audioId": "warfare_v2.mp3",
+          "audioTitle": "Victory in Spiritual Warfare",
+          "audioMinutes": 3
+        },
+        {
+          "dayNumber": 2,
+          "anchorText": "Jesus gave me authority over all the power of the enemy. Nothing shall by any means hurt me.",
+          "anchorVerse": "Behold, I give you the authority to trample on serpents and scorpions, and over all the power of the enemy, and nothing shall by any means hurt you.",
+          "anchorBook": "Luke 10:19",
+          "anchorTranslation": "NKJV",
+          "audioId": "psalm9_11.mp3",
+          "audioTitle": "Psalm 91: A Shield of Protection",
+          "audioMinutes": 2
+        },
+        {
+          "dayNumber": 3,
+          "anchorText": "No weapon formed against me prospers. Every accusing voice is silenced in the court of my God.",
+          "anchorVerse": "No weapon formed against you shall prosper, and every tongue which rises against you in judgment you shall condemn. This is the heritage of the servants of the Lord, and their righteousness is from Me, says the Lord.",
+          "anchorBook": "Isaiah 54:17",
+          "anchorTranslation": "NKJV",
+          "audioId": "godsprotection_v2.mp3",
+          "audioTitle": "Protection Promises",
+          "audioMinutes": 4
+        },
+        {
+          "dayNumber": 4,
+          "anchorText": "I am submitted to God, so I resist the devil. Enemy, you flee. That is settled.",
+          "anchorVerse": "Submit yourselves therefore to God. Resist the devil, and he will flee from you.",
+          "anchorBook": "James 4:7",
+          "anchorTranslation": "ESV",
+          "audioId": "identity_v2.mp3",
+          "audioTitle": "Identity in Christ",
+          "audioMinutes": 4
+        },
+        {
+          "dayNumber": 5,
+          "anchorText": "Greater is He who lives in me than he who is in the world. I already overcame.",
+          "anchorVerse": "You are of God, little children, and have overcome them, because He who is in you is greater than he who is in the world.",
+          "anchorBook": "1 John 4:4",
+          "anchorTranslation": "NKJV",
+          "audioId": "victorious_v2.mp3",
+          "audioTitle": "Living Victoriously in Christ",
+          "audioMinutes": 3
+        },
+        {
+          "dayNumber": 6,
+          "anchorText": "I put on the full armor of God. I stand my ground and I do not move.",
+          "anchorVerse": "Put on the whole armor of God, that you may be able to stand against the schemes of the devil.",
+          "anchorBook": "Ephesians 6:11",
+          "anchorTranslation": "ESV",
+          "audioId": "miracles_v2.mp3",
+          "audioTitle": "Breakthrough and Miracles",
+          "audioMinutes": 3
+        },
+        {
+          "dayNumber": 7,
+          "anchorText": "I overcome by the blood of the Lamb and the word of my testimony. The victory is mine.",
+          "anchorVerse": "And they overcame him by the blood of the Lamb and by the word of their testimony, and they did not love their lives to the death.",
+          "anchorBook": "Revelation 12:11",
+          "anchorTranslation": "NKJV",
+          "audioId": "spiritualGrowth_v2.mp3",
+          "audioTitle": "A Declaration for Spiritual Growth",
+          "audioMinutes": 4
+        }
+      ]
+    }
+  ]
+}

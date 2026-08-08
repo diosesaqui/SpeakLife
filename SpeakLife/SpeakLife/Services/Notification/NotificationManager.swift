@@ -147,6 +147,13 @@ final class NotificationManager: NSObject {
         let now = Date()
         let calendar = Calendar.autoupdatingCurrent
 
+        // An active Enforcement takes over slot 0 of each day. It REPLACES a slot
+        // rather than adding one: the 64-pending budget documented above has no
+        // headroom, so an Enforcement must cost zero net notifications.
+        let activeEnforcement = EnforcementService.shared.enabledActiveDay != nil
+            ? EnforcementService.shared.activeEnforcement : nil
+        let enforcementStartDay = EnforcementService.shared.progress.currentDay
+
         for day in 0..<daysAhead {
             for (idx, declaration) in declarations.enumerated() {
                 // For variety, cycle through all available declarations across days
@@ -156,6 +163,28 @@ final class NotificationManager: NSObject {
                 var body = decl.body
                 if decl.book.count > 1 {
                     body += " ~ " + decl.book
+                }
+
+                // Slot 0 carries the Enforcement's anchor for that day, projected
+                // forward one day at a time and clamped at the final day.
+                //
+                // Deliberately NO "Day 4 of 7" counter in the push. The batch is
+                // scheduled up to 10 days ahead and an Enforcement only advances when
+                // the user actually speaks their burst, so a projected counter
+                // runs ahead of the truth for exactly the person who has stopped
+                // showing up — the one we're trying to win back. Telling them
+                // "Day 6 of 7" when they're on day 3 reads as an app that isn't
+                // paying attention. The counter stays in the app, where it is
+                // always exact; the push carries the theme and the day's line.
+                var enforcementTitle: String?
+                var enforcementCategory: String?
+                if idx == 0, let enforcement = activeEnforcement {
+                    let projected = min(enforcementStartDay + day, Enforcement.length)
+                    if let enforcementDay = enforcement.day(projected) {
+                        body = enforcementDay.anchorText + " ~ " + enforcementDay.anchorBook
+                        enforcementTitle = enforcement.title
+                        enforcementCategory = enforcement.theme
+                    }
                 }
 
                 // Calculate the exact fire date for this day + time slot
@@ -169,10 +198,10 @@ final class NotificationManager: NSObject {
                 guard targetDate > now else { continue }
 
                 let content = UNMutableNotificationContent()
-                content.title = "SpeakLife"
+                content.title = enforcementTitle ?? "SpeakLife"
                 content.body = body
                 content.sound = UNNotificationSound.default
-                content.userInfo = ["category": decl.category]
+                content.userInfo = ["category": enforcementCategory ?? decl.category]
 
                 let finalComponents = calendar.dateComponents(
                     [.year, .month, .day, .hour, .minute], from: targetDate)

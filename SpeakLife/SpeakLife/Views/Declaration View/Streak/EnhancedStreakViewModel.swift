@@ -303,7 +303,8 @@ final class EnhancedStreakViewModel: ObservableObject {
         // Re-personalize all current tasks based on streak level
         let currentStreak = streakStats.currentStreak > 0 ? streakStats.currentStreak : 1
         let freshTasks = TaskLibrary.getCoreTasksForStreak(currentStreak, userCategories: userCategories,
-                                                           foundationAudioDay: workingStreakDay)
+                                                           foundationAudioDay: workingStreakDay,
+                                                           enforcementDay: EnforcementService.shared.enabledActiveDay)
         
         // Preserve completion status from existing tasks
         let existingCompletions = Dictionary(uniqueKeysWithValues: todayChecklist.tasks.map { 
@@ -414,7 +415,32 @@ final class EnhancedStreakViewModel: ObservableObject {
         if todayChecklist.isStreakEarned && todayChecklist.completedAt == nil {
             completeDay()
         }
-        
+
+        // The burst also advances an active Enforcement, so the user has one action to
+        // do, not two. Idempotent per calendar day, and deliberately not
+        // premium-gated so a lapsed subscriber still finishes their campaign.
+        if taskId == "complete_daily_burst", EnforcementService.shared.isEnabled {
+            let enforcementId = EnforcementService.shared.progress.activeEnforcementId
+            switch EnforcementService.shared.advanceIfNeeded() {
+            case .advanced(let day):
+                AnalyticsService.shared.track("enforcement_day_completed", parameters: [
+                    "enforcement_id": enforcementId ?? "unknown",
+                    "day": day - 1
+                ])
+            case .completed(let id, let elapsedDays):
+                AnalyticsService.shared.track("enforcement_day_completed", parameters: [
+                    "enforcement_id": id, "day": Enforcement.length
+                ])
+                // elapsed_days > 7 means they dropped off and came back, which is
+                // the behavior worth measuring — not just clean 7-day runs.
+                AnalyticsService.shared.track("enforcement_completed", parameters: [
+                    "enforcement_id": id, "elapsed_days": elapsedDays
+                ])
+            case .notActive, .alreadyAdvancedToday:
+                break
+            }
+        }
+
         saveData()
         checkForNewBadges()
         
@@ -516,7 +542,8 @@ final class EnhancedStreakViewModel: ObservableObject {
         // Generate new task list for today based on current streak and user preferences
         let userCategories = getUserTopCategories()
         let updatedTasks = TaskLibrary.getCoreTasksForStreak(currentStreak, userCategories: userCategories,
-                                                             foundationAudioDay: workingStreakDay)
+                                                             foundationAudioDay: workingStreakDay,
+                                                           enforcementDay: EnforcementService.shared.enabledActiveDay)
         
         // Preserve completion status for existing tasks
         let existingCompletions = Dictionary(uniqueKeysWithValues: todayChecklist.tasks.map { ($0.id, $0.isCompleted) })
@@ -540,7 +567,8 @@ final class EnhancedStreakViewModel: ObservableObject {
         let phase = ProgressionPhase.getPhase(for: streakDay)
         let userCategories = getUserTopCategories()
         let tasks = TaskLibrary.getCoreTasksForStreak(streakDay, userCategories: userCategories,
-                                                      foundationAudioDay: workingStreakDay)
+                                                      foundationAudioDay: workingStreakDay,
+                                                           enforcementDay: EnforcementService.shared.enabledActiveDay)
         
         return DailyChecklist(
             date: today,
@@ -1547,7 +1575,8 @@ final class EnhancedStreakViewModel: ObservableObject {
         )
         
         let previousBadgeCount = badgeManager.unlockedBadgeCount
-        badgeManager.checkForNewBadges(streakStats: streakStats, userStats: userStats)
+        badgeManager.checkForNewBadges(streakStats: streakStats, userStats: userStats,
+                                       completedEnforcementIds: EnforcementService.shared.progress.completedEnforcementIds)
         
         // Only show badge unlock if a NEW badge was unlocked this check
         if let newBadge = badgeManager.recentlyUnlocked,
