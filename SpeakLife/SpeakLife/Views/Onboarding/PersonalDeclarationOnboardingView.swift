@@ -179,14 +179,23 @@ struct PersonalDeclarationOnboardingView: View {
 
     private var inputView: some View {
         VStack(spacing: 0) {
-            Spacer().frame(height: size.height * (keyboardUp ? 0.045 : 0.11))
+            // Fixed while typing rather than a share of screen height: the tall
+            // phones don't need the extra top margin, and the short one — the
+            // only device where this gets tight — can't spare it.
+            Spacer().frame(height: keyboardUp ? 20 : size.height * 0.11)
 
             // Title block
             VStack(spacing: 14) {
+                // Two lines, always. At 30pt the first line overflows a 4.7"
+                // screen and wraps to three, which is exactly the device with
+                // no height to spare once the keyboard is up; the scale factor
+                // makes the height predictable instead of device-dependent.
                 Text("What's one thing you're\ntrusting God for?")
-                    .font(.system(size: 30, weight: .bold, design: .rounded))
+                    .font(.system(size: keyboardUp ? 26 : 30, weight: .bold, design: .rounded))
                     .foregroundColor(.white)
                     .multilineTextAlignment(.center)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.85)
                     .padding(.horizontal, 24)
                     .opacity(titleAppeared ? 1 : 0)
                     .offset(y: titleAppeared ? 0 : 18)
@@ -202,15 +211,29 @@ struct PersonalDeclarationOnboardingView: View {
 //                    .animation(.easeOut(duration: 0.6).delay(0.12), value: titleAppeared)
             }
 
+            // Kept while typing — it is permission to be raw, which matters
+            // most at the moment they are actually writing. Held to two lines
+            // for the same reason as the title above.
             Text("Don't filter it. Don't make it sound \"right.\"\nJust speak what's on your heart.")
                 .font(.system(size: 14, weight: .regular, design: .rounded))
                 .foregroundColor(.white.opacity(0.5))
                 .multilineTextAlignment(.center)
+                .lineLimit(2)
+                .minimumScaleFactor(0.85)
                 .padding(.horizontal, 40)
                 .opacity(titleAppeared ? 1 : 0)
                 .animation(.easeOut(duration: 0.6).delay(0.25), value: titleAppeared)
 
-            Spacer()
+            // Keyboard down, the block floats centered — that is the mic state,
+            // and it should sit in the middle of the screen. Keyboard up, these
+            // flexible spacers would still split the slack evenly and leave the
+            // answer box hanging in the middle of a half-height screen, so they
+            // go fixed: the prompt keeps the top and the box rises to meet it.
+            if keyboardUp {
+                Spacer().frame(height: 22)
+            } else {
+                Spacer()
+            }
 
             if viewModel.showTextInput {
                 textInputBlock
@@ -225,14 +248,26 @@ struct PersonalDeclarationOnboardingView: View {
                     .animation(.spring(response: 0.5, dampingFraction: 0.7).delay(0.35), value: micAppeared)
             }
 
-            Spacer()
+            if keyboardUp {
+                Spacer().frame(height: 14)
+            } else {
+                Spacer()
+            }
 
             skipButton
                 .opacity(skipVisible ? 1 : 0)
                 .allowsHitTesting(skipVisible)
                 .animation(.easeIn(duration: 0.4), value: skipVisible)
 
-            Spacer().frame(height: size.height * (keyboardUp ? 0.02 : 0.05))
+            // With the spacers above pinned, this is the only flexible one left
+            // while typing: it soaks up whatever the answer box leaves once the
+            // box hits its cap, so the column stays top-anchored on a big phone
+            // instead of drifting back to center.
+            if keyboardUp {
+                Spacer(minLength: size.height * 0.02)
+            } else {
+                Spacer().frame(height: size.height * 0.05)
+            }
         }
     }
 
@@ -408,7 +443,15 @@ struct PersonalDeclarationOnboardingView: View {
                     .font(.system(size: 15))
                     .padding(10)
             }
-            .frame(height: 110)
+            // While typing, the box takes the space the pinned spacers gave
+            // back, so the CTA lands just above the keys with no dead band in
+            // between. Capped so it doesn't become a cavern on a large phone,
+            // and never below the old fixed height. Unchanged with the keyboard
+            // down: min and max both resolve to 110.
+            // The low bound is the safety valve: on the shortest screen the box
+            // gives height back rather than pushing the CTA off the bottom, and
+            // 76pt still shows three lines of what they are typing.
+            .frame(minHeight: keyboardUp ? 76 : 110, maxHeight: keyboardUp ? 220 : 110)
             .padding(.horizontal, 24)
 
             if let error = viewModel.errorMessage {
