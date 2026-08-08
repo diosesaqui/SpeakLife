@@ -100,9 +100,34 @@ final class UserPreferencesTracker: ObservableObject {
         saveTopCategories()
     }
 
-    /// Set during onboarding after Personal Declaration is saved.
-    /// In-memory only — needed for paywall personalization in that session.
-    var personalDeclarationBelief: String? = nil
+    /// The user's own words from the Personal Declaration step — the warmest
+    /// personalization signal the paywall has.
+    ///
+    /// Written during onboarding right after the declaration is saved, and
+    /// re-hydrated from `personal_declaration_v1` on first read afterwards.
+    /// This used to be a plain in-memory var, so the personalized paywall copy
+    /// silently reverted to generic after any app relaunch even though the raw
+    /// text was sitting in the repository the whole time.
+    var personalDeclarationBelief: String? {
+        get {
+            if !didHydrateBelief {
+                didHydrateBelief = true
+                if cachedBelief == nil {
+                    cachedBelief = PersonalDeclarationRepository.activeBeliefText()
+                }
+            }
+            return cachedBelief
+        }
+        set {
+            // An explicit write always wins and closes hydration, so setting
+            // nil (e.g. on clear) is not undone by a later disk read.
+            didHydrateBelief = true
+            cachedBelief = newValue
+        }
+    }
+
+    private var cachedBelief: String?
+    private var didHydrateBelief = false
 
     func getDynamicPaywallCopy() -> PaywallCopy {
         // Personal Declaration overrides all other copy — highest personalization signal

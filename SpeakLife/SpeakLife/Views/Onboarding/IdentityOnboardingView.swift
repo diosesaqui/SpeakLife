@@ -136,6 +136,14 @@ struct IdentityOnboardingView: View {
         // flow_schema 2 = testimonial wall inserted before paywall (absent/1 = original layout); bump when step raw values are renumbered again.
         AnalyticsService.shared.track("identity_step_completed", parameters: ["step": currentStep.rawValue, "flow_schema": 2])
 
+        // Leaving the identity picker: stamp the segment so downstream paywall
+        // events carry a meaningful segment for this arm (quiz sets its own).
+        // Without this the identity arm was invisible to segment-based paywall
+        // copy — every other variant has had this block since launch.
+        if currentStep == .identityPicker, let burden = responses.heaviestBurden {
+            appState.onboardingSegment = "identity_\(burden.shortLabel)"
+        }
+
         switch currentStep {
         case .notificationTime:
             applyResponsesAndComplete()
@@ -175,6 +183,16 @@ struct IdentityOnboardingView: View {
             appState.personalDeclarationTimeIndex = notifTime.startTimeIndex
         }
         appState.hasPersonalDeclaration = savedDeclaration != nil
+        // Capture what this arm learned. It asks the fewest questions of the
+        // seven, so most fields land nil — that's expected, the profile is
+        // built to be partial. Shared mapping — see SoulProfileBuilder.
+        SoulProfileBuilder.captureAtOnboardingCompletion(
+            responses: responses,
+            appState: appState,
+            variant: "identity",
+            quizVersion: "v1",
+            anchorBeliefText: savedDeclaration?.beliefText
+        )
         AnalyticsService.shared.track("identity_onboarding_completed", parameters: [
             "goal_word": goalWord.rawValue,
             "burden": responses.heaviestBurden?.rawValue ?? "unknown",

@@ -254,6 +254,16 @@ struct PromisesOnboardingView: View {
             appState.personalDeclarationTimeIndex = notifTime.startTimeIndex
         }
         appState.hasPersonalDeclaration = savedDeclaration != nil
+        // Capture everything this arm learned. Shared mapping — see
+        // SoulProfileBuilder; also back-fills the notification window when the
+        // user skipped the time picker.
+        SoulProfileBuilder.captureAtOnboardingCompletion(
+            responses: responses,
+            appState: appState,
+            variant: "promises",
+            quizVersion: quizV2 ? "v2" : "v1",
+            anchorBeliefText: savedDeclaration?.beliefText
+        )
         AnalyticsService.shared.track("promises_onboarding_completed", parameters: [
             "goal_word": goalWord.rawValue,
             "burden": responses.heaviestBurden?.rawValue ?? "unknown",

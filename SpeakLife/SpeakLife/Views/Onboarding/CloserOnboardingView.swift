@@ -304,6 +304,19 @@ struct CloserOnboardingView: View {
             appState.personalDeclarationTimeIndex = notifTime.startTimeIndex
         }
         appState.hasPersonalDeclaration = savedDeclaration != nil
+        // Capture everything this arm learned, including the two closeness
+        // answers that exist only here. Shared mapping — see SoulProfileBuilder;
+        // also back-fills the notification window when the user skipped the
+        // time picker.
+        SoulProfileBuilder.captureAtOnboardingCompletion(
+            responses: responses,
+            appState: appState,
+            variant: "closer",
+            quizVersion: quizV2 ? "v2" : "v1",
+            anchorBeliefText: savedDeclaration?.beliefText,
+            wantsCloser: wantsCloser,
+            hasDrifted: hasDrifted
+        )
         AnalyticsService.shared.track("closer_onboarding_completed", parameters: [
             "goal_word": goalWord.rawValue,
             "burden": responses.heaviestBurden?.rawValue ?? "unknown",

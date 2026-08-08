@@ -124,6 +124,7 @@ final class SyncedSettingsStore {
         SyncedKey(key: "onboarded", strategy: .boolOr),
         SyncedKey(key: "hasCompletedEnhancedOnboarding", strategy: .boolOr),
         SyncedKey(key: "hasPersonalDeclaration", strategy: .boolOr),
+        SyncedKey(key: "hasSoulProfile", strategy: .boolOr),
 
         // Identity & personalization.
         SyncedKey(key: "userName", strategy: .lastWriterWins),
@@ -140,6 +141,10 @@ final class SyncedSettingsStore {
 
         // Personal declaration.
         SyncedKey(key: "personal_declaration_v1", strategy: .lastWriterWins),
+        // Onboarding capture. Follows the user across devices for the same
+        // reason the personal declaration does — it's answered once, and a
+        // second device should never meet them as a stranger.
+        SyncedKey(key: SoulProfileRepository.storageKey, strategy: .lastWriterWins),
         SyncedKey(key: "personalDeclaration_lastSpokenDate", strategy: .lastWriterWins),
 
         // Appearance & experience preferences.

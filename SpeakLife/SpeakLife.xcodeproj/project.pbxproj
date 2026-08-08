@@ -351,6 +351,11 @@
 		A1B2C3D4E5F6A7B82026AA01 /* SpeakingPowerEffect.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6A7B82026AA00 /* SpeakingPowerEffect.swift */; };
 		AC33C8C521764DF3961EA018 /* OnboardingDailyBurstScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC33C8C421764DF3961EA018 /* OnboardingDailyBurstScreen.swift */; };
 		B0001111111111111111BBBB /* PersonalDeclaration.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0001111111111111111AAAA /* PersonalDeclaration.swift */; };
+		5001BBBB000000000000BBB1 /* SoulProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5001AAAA000000000000AAA1 /* SoulProfile.swift */; };
+		5002BBBB000000000000BBB2 /* SoulProfileRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5002AAAA000000000000AAA2 /* SoulProfileRepository.swift */; };
+		5003BBBB000000000000BBB3 /* SoulProfileFirestoreMirror.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5003AAAA000000000000AAA3 /* SoulProfileFirestoreMirror.swift */; };
+		5004BBBB000000000000BBB4 /* SoulProfileBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5004AAAA000000000000AAA4 /* SoulProfileBuilder.swift */; };
+		5005BBBB000000000000BBB5 /* SoulProfileProtocols.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5005AAAA000000000000AAA5 /* SoulProfileProtocols.swift */; };
 		B0002222222222222222BBBB /* DeclarationContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0002222222222222222AAAA /* DeclarationContent.swift */; };
 		B0003333333333333333BBBB /* DeclarationMatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0003333333333333333AAAA /* DeclarationMatcher.swift */; };
 		B0004444444444444444BBBB /* PersonalDeclarationRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0004444444444444444AAAA /* PersonalDeclarationRepository.swift */; };
@@ -770,6 +775,11 @@
 		93A3056C832114EB72B5ECFD /* ProgressSyncEntities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressSyncEntities.swift; sourceTree = "<group>"; };
 		94596EC3C2CC4E23390BCB70 /* SyncedSettingsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncedSettingsStore.swift; sourceTree = "<group>"; };
 		A0001111111111111111AAAA /* PersonalDeclaration.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PersonalDeclaration.swift; sourceTree = "<group>"; };
+		5001AAAA000000000000AAA1 /* SoulProfile.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SoulProfile.swift; sourceTree = "<group>"; };
+		5002AAAA000000000000AAA2 /* SoulProfileRepository.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SoulProfileRepository.swift; sourceTree = "<group>"; };
+		5003AAAA000000000000AAA3 /* SoulProfileFirestoreMirror.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SoulProfileFirestoreMirror.swift; sourceTree = "<group>"; };
+		5004AAAA000000000000AAA4 /* SoulProfileBuilder.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SoulProfileBuilder.swift; sourceTree = "<group>"; };
+		5005AAAA000000000000AAA5 /* SoulProfileProtocols.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SoulProfileProtocols.swift; sourceTree = "<group>"; };
 		A0002222222222222222AAAA /* DeclarationContent.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DeclarationContent.swift; sourceTree = "<group>"; };
 		A0003333333333333333AAAA /* DeclarationMatcher.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DeclarationMatcher.swift; sourceTree = "<group>"; };
 		A0004444444444444444AAAA /* PersonalDeclarationRepository.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PersonalDeclarationRepository.swift; sourceTree = "<group>"; };
@@ -1482,6 +1492,7 @@
 				451AECE82E4EE7A000C1490E /* BootcampModels.swift */,
 				458BBE6F2D1F8A3D0035985F /* AudioFiles.swift */,
 				A0001111111111111111AAAA /* PersonalDeclaration.swift */,
+				5001AAAA000000000000AAA1 /* SoulProfile.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -1508,6 +1519,7 @@
 				DC73B2698B17B267C7A6F437 /* TrialExperienceService.swift */,
 				A1B2C3D4E5F60000A1B2C3D4 /* PersonalDeclaration */,
 				C0010000000000000001AAAA /* SurveyPersonalizationEngine.swift */,
+				5000CCCC000000000000CCC0 /* SoulProfile */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -1847,6 +1859,25 @@
 				7AF18C9E2A0DB06C005A6E31 /* TrackerView.swift */,
 			);
 			path = Tracker;
+			sourceTree = "<group>";
+		};
+		5000CCCC000000000000CCC0 /* SoulProfile */ = {
+			isa = PBXGroup;
+			children = (
+				5002AAAA000000000000AAA2 /* SoulProfileRepository.swift */,
+				5003AAAA000000000000AAA3 /* SoulProfileFirestoreMirror.swift */,
+				5004AAAA000000000000AAA4 /* SoulProfileBuilder.swift */,
+				5000CCCC000000000000CCC1 /* Protocols */,
+			);
+			path = SoulProfile;
+			sourceTree = "<group>";
+		};
+		5000CCCC000000000000CCC1 /* Protocols */ = {
+			isa = PBXGroup;
+			children = (
+				5005AAAA000000000000AAA5 /* SoulProfileProtocols.swift */,
+			);
+			path = Protocols;
 			sourceTree = "<group>";
 		};
 		A1B2C3D4E5F60000A1B2C3D4 /* PersonalDeclaration */ = {
@@ -2411,6 +2442,11 @@
 				8C81294FE8FD42174F375CFB /* LifecycleNotificationService.swift in Sources */,
 				20F4D11E6F9CB2FA07540EE7 /* TrialExperienceService.swift in Sources */,
 				B0001111111111111111BBBB /* PersonalDeclaration.swift in Sources */,
+				5001BBBB000000000000BBB1 /* SoulProfile.swift in Sources */,
+				5002BBBB000000000000BBB2 /* SoulProfileRepository.swift in Sources */,
+				5003BBBB000000000000BBB3 /* SoulProfileFirestoreMirror.swift in Sources */,
+				5004BBBB000000000000BBB4 /* SoulProfileBuilder.swift in Sources */,
+				5005BBBB000000000000BBB5 /* SoulProfileProtocols.swift in Sources */,
 				B0002222222222222222BBBB /* DeclarationContent.swift in Sources */,
 				B0003333333333333333BBBB /* DeclarationMatcher.swift in Sources */,
 				CL00DE00000000003333BBBB /* ClaudeDeclarationMatcher.swift in Sources */,

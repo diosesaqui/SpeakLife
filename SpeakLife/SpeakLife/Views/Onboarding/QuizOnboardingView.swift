@@ -418,6 +418,9 @@ struct QuizOnboardingView: View {
     @State private var currentBeliefAnswer: BeliefAnswer? = nil
     @State private var selectedBurden: HeaviestBurden? = nil
     @State private var savedPersonalDeclaration: PersonalDeclaration? = nil
+    /// Every belief answer the user picks, in order, so the `isConfident`
+    /// signal survives into the SoulProfile instead of only reaching analytics.
+    @State private var beliefAnswerLog: [SoulProfile.BeliefAnswer] = []
     @State private var quizShownAt: Date = Date()
     @State private var stepEnteredAt: Date = Date()
 
@@ -626,6 +629,18 @@ struct QuizOnboardingView: View {
             "is_confident": answer.isConfident,
             "segment": segment.rawValue
         ])
+        // Keep one record per question — the sequence has no back navigation
+        // today, but a re-answer must replace rather than duplicate.
+        let record = SoulProfile.BeliefAnswer(
+            questionId: question.analyticsId,
+            answerId: answer.id,
+            isConfident: answer.isConfident
+        )
+        if let existing = beliefAnswerLog.firstIndex(where: { $0.questionId == record.questionId }) {
+            beliefAnswerLog[existing] = record
+        } else {
+            beliefAnswerLog.append(record)
+        }
         withAnimation(.easeInOut(duration: 0.3)) {
             currentBeliefAnswer = answer
         }
@@ -780,6 +795,21 @@ struct QuizOnboardingView: View {
                 "notification_time": notifTime.rawValue
             ])
         }
+        // Capture what this arm learned. Its shape differs from the survey arms
+        // — a QuizSegment plus six belief answers instead of the extended quiz —
+        // but it goes through the same builder. `notificationResponses` only
+        // carries the burden and the picked time, so the burden is passed
+        // explicitly from our own state.
+        SoulProfileBuilder.captureAtOnboardingCompletion(
+            responses: notificationResponses,
+            appState: appState,
+            variant: "quiz",
+            quizVersion: Self.quizVersion,
+            anchorBeliefText: savedPersonalDeclaration?.beliefText,
+            burdenOverride: selectedBurden,
+            quizSegment: segment.rawValue,
+            beliefAnswers: beliefAnswerLog
+        )
         finishOnboarding()
     }
 

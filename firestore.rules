@@ -215,5 +215,35 @@ service cloud.firestore {
       allow read: if true;
       allow write: if false;
     }
+
+    // ─── Soul profiles (onboarding capture) ────────────────────────────
+    // Doc id is the RevenueCat appUserId — the same identity bibleChat
+    // meters on. Written once by the client at onboarding completion so
+    // server-side personalization (Bible Chat context, Weekly Focus) can
+    // read it via the admin SDK.
+    //
+    // Server-only, exactly like bibleChatUsage and declarationMatchUsage.
+    //
+    // The app has no anonymous Firebase Auth, so most users have no
+    // request.auth at all and the doc id is a RevenueCat id rather than an
+    // auth uid. There is no uid to bind ownership to at the rules layer,
+    // which means any client-writable form of this rule is open-write: a
+    // shape check like `request.resource.data.appUserId == uid` is trivially
+    // satisfied by choosing both values, so it bounds the size of each
+    // document but not the number of them. That is an unauthenticated,
+    // billed write path into production, and it reintroduces exactly the
+    // client-trust assumption the declarationMatch proxy removed.
+    //
+    // So the profile is written server-side by the Cloud Function that
+    // receives it (the admin SDK bypasses these rules), never by the device.
+    // Reads stay closed regardless — these documents hold the user's own
+    // words about their life and nothing client-side needs them back.
+    //
+    // If anonymous auth ever lands, `request.auth.uid == uid` would make a
+    // direct client write safe and this can be revisited.
+
+    match /soulProfiles/{uid} {
+      allow read, write: if false;
+    }
   }
 }

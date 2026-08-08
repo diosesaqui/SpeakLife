@@ -130,7 +130,8 @@ final class NotificationManager: NSObject {
                                       count: Int,
                                       callback: (() -> Void)? = nil) {
 
-        let hourMinute = distributeTimes(startTime: startTime, endTime: endTime, count: count)
+        let evenTimes = distributeTimes(startTime: startTime, endTime: endTime, count: count)
+        let hourMinute = applyStruggleBias(to: evenTimes, startTime: startTime, endTime: endTime)
 
         guard hourMinute.count > 1 else { callback?(); return }
         guard declarations.count >= count else { callback?(); return }
@@ -357,7 +358,90 @@ final class NotificationManager: NSObject {
 
         return result
     }
-    
+
+    // MARK: - "When does it hit hardest?" bias
+    //
+    // Onboarding asks every user when their battle hits — night ("3am wake-ups
+    // and racing thoughts") / morning / midday / evening — and then, until now,
+    // threw the answer away and asked them separately to pick a notification
+    // time. SoulProfile keeps it, and this is where it earns its keep.
+    //
+    // POLICY (deliberately conservative and additive):
+    //
+    //  1. The user's own window is never overridden. Whatever start/end they
+    //     picked on the notification screen is honored exactly — this method
+    //     only decides *which slots inside that window* get used, never the
+    //     window itself. (The other half of the wiring, in SoulProfileBuilder,
+    //     only fills the window when the user picked nothing at all.)
+    //
+    //  2. We guarantee ONE notification lands near their struggle hour. If the
+    //     even spread already puts a push within `anchorToleranceMinutes` of it,
+    //     nothing moves at all — the common case is a no-op.
+    //
+    //  3. Otherwise we MOVE the single nearest slot onto the anchor. We never
+    //     add a push: total volume is unchanged, and the rest of the day keeps
+    //     its even spread. Notification count was already cut from 10/day to 5
+    //     because volume was driving users to switch reminders off entirely.
+    //
+    //  4. If the anchor falls outside their window, it is clamped to the window
+    //     edge nearest the struggle. We never fire outside the hours they
+    //     agreed to.
+    //
+    //  5. `night` anchors at 10:30 PM, not 3:00 AM. The useful intervention for
+    //     3am racing thoughts is the truth they carry INTO sleep; an app-fired
+    //     3am alert would wake the users who were actually sleeping and is the
+    //     fastest way to get notifications disabled.
+
+    /// Minutes-from-midnight anchor for each raw `hits_hardest` answer.
+    private func struggleAnchorMinutes(for hitsHardest: String) -> Int? {
+        switch hitsHardest {
+        case "morning": return 7 * 60          // 7:00 AM — before the world gets loud
+        case "midday":  return 13 * 60         // 1:00 PM — into the afternoon pressure
+        case "evening": return 21 * 60         // 9:00 PM — when everything goes quiet
+        case "night":   return 22 * 60 + 30    // 10:30 PM — armed before sleep (see 5 above)
+        default:        return nil
+        }
+    }
+
+    /// Slots already this close to the anchor count as covered; no slot moves.
+    private let anchorToleranceMinutes = 45
+
+    /// Moves at most one slot so the user's struggle hour is covered. Returns
+    /// `times` unchanged whenever there is no answer, no room, or no need.
+    func applyStruggleBias(to times: [(hour: Int, minute: Int)],
+                           startTime: Int,
+                           endTime: Int) -> [(hour: Int, minute: Int)] {
+        guard times.count > 1 else { return times }
+        guard let raw = SoulProfileRepository.hitsHardestRaw(),
+              let anchor = struggleAnchorMinutes(for: raw) else { return times }
+
+        // start/end are 30-minute slot indices from midnight (TimeSlots), so
+        // index × 30 is minutes-from-midnight. A window where end <= start
+        // wraps past midnight; leave those alone rather than guess.
+        let windowStart = startTime * 30
+        let windowEnd = endTime * 30
+        guard windowEnd > windowStart else { return times }
+
+        let target = min(max(anchor, windowStart), windowEnd)
+
+        var biased = times
+        let minutes = biased.map { $0.hour * 60 + $0.minute }
+
+        // Already covered — the overwhelmingly common case.
+        if minutes.contains(where: { abs($0 - target) <= anchorToleranceMinutes }) {
+            return times
+        }
+
+        // Sacrifice the closest slot so the even spread is disturbed as little
+        // as possible.
+        guard let nearest = minutes.indices.min(by: {
+            abs(minutes[$0] - target) < abs(minutes[$1] - target)
+        }) else { return times }
+
+        biased[nearest] = (hour: target / 60, minute: target % 60)
+        return biased
+    }
+
     func notificationsPending(completion: @escaping(Bool, Int?) -> Void) {
         notificationCenter.getPendingNotificationRequests { requests in
             if requests.count > 0 {

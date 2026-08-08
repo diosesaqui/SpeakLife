@@ -118,6 +118,12 @@ final class AppState: ObservableObject {
         }
     }
 
+    // Soul Profile — everything onboarding collected, captured at completion.
+    // The record itself lives under `soul_profile_v1` (SoulProfileRepository);
+    // this flag is just the cheap "is there one?" check for callers that would
+    // otherwise decode the blob to find out.
+    @AppStorage("hasSoulProfile") var hasSoulProfile = false
+
     // Personal Declaration
     @AppStorage("hasPersonalDeclaration") var hasPersonalDeclaration = false
     @AppStorage("scrollToPersonalDeclaration") var scrollToPersonalDeclaration = false

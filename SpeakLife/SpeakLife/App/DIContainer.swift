@@ -19,6 +19,12 @@ final class DIContainer {
     lazy var declarationNotificationService: DeclarationNotificationServiceProtocol = DeclarationNotificationService()
     lazy var speechTranscriptionService: SpeechTranscriptionProtocol = SpeechTranscriptionService()
 
+    // MARK: - Soul Profile
+
+    /// Everything onboarding learns, persisted once at completion.
+    /// UserDefaults-backed with a fire-and-forget Firestore mirror.
+    lazy var soulProfileRepository: SoulProfileRepositoryProtocol = SoulProfileRepository()
+
     @MainActor
     func makePersonalDeclarationViewModel() -> PersonalDeclarationViewModel {
         PersonalDeclarationViewModel(

@@ -28,6 +28,18 @@ final class PersonalDeclarationRepository: PersonalDeclarationRepositoryProtocol
         return declaration.categoryRaw
     }
 
+    /// Synchronous read of the active personal declaration's raw belief text —
+    /// the user's own words. Lets `UserPreferencesTracker` re-hydrate its
+    /// paywall personalization on a cold launch instead of silently falling
+    /// back to generic copy. Returns nil when none is saved or the text is blank.
+    static func activeBeliefText(defaults: UserDefaults = .standard) -> String? {
+        guard let data = defaults.data(forKey: storageKey),
+              let declaration = try? JSONDecoder().decode(PersonalDeclaration.self, from: data)
+        else { return nil }
+        let trimmed = declaration.beliefText.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? nil : trimmed
+    }
+
     func save(_ declaration: PersonalDeclaration) async throws {
         let data = try JSONEncoder().encode(declaration)
         defaults.set(data, forKey: key)
