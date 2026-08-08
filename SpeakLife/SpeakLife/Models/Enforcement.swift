@@ -84,6 +84,16 @@ struct EnforcementCatalog: Codable {
 /// Enforcement expire on the calendar defeats the feature.
 struct EnforcementProgress: Codable, Equatable {
     var activeEnforcementId: String?
+    /// The campaign itself, when it was assembled from the declaration pool
+    /// rather than read from `enforcements.json`.
+    ///
+    /// Stored whole, deliberately. Assembly needs the full 3,156-declaration
+    /// pool, which loads asynchronously and is not available to the notification
+    /// scheduler on a background queue. Persisting the assembled result means the
+    /// campaign is built exactly once — at start, on the main thread, where the
+    /// pool is in hand — and every later reader just decodes it. It also
+    /// guarantees day 3 is the same line next week as it is today.
+    var assembledEnforcement: Enforcement?
     var startedOn: Date?
     var completedDayNumbers: Set<Int> = []
     /// Only ever used to make advancement idempotent within a calendar day.
@@ -116,6 +126,7 @@ struct EnforcementProgress: Codable, Equatable {
             completedEnforcementIds.append(activeEnforcementId)
         }
         activeEnforcementId = nil
+        assembledEnforcement = nil
         startedOn = nil
         completedDayNumbers = []
         lastAdvancedOn = nil

@@ -26,10 +26,18 @@ struct EnforcementCard: View {
     let onLockedTap: () -> Void
     /// Active user chose to drop this campaign and pick a different one.
     let onSwitch: () -> Void
+    /// User described what they're walking through. The caller matches it to
+    /// categories and assembles the week, calling back with whether a campaign
+    /// actually started so the card can keep their text on a failure.
+    let onDescribe: (String, @escaping (Bool) -> Void) -> Void
 
     /// Confirms before dropping a campaign — the days already spoken are lost,
     /// and it sits next to the audio button, so a mis-tap must not wipe progress.
     @State private var confirmingSwitch = false
+    /// What the user typed. Local so a slow match never blocks the field.
+    @State private var situation = ""
+    @State private var isMatching = false
+    @State private var matchFailed = false
 
     var body: some View {
         if service.isEligible(totalDaysCompleted: totalDaysCompleted) {
@@ -62,9 +70,11 @@ struct EnforcementCard: View {
                 .foregroundColor(.white)
                 .fixedSize(horizontal: false, vertical: true)
 
-            Text(day.anchorBook)
-                .font(.system(size: 12, weight: .medium))
-                .foregroundColor(.white.opacity(0.55))
+            if !day.anchorBook.isEmpty {
+                Text(day.anchorBook)
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(.white.opacity(0.55))
+            }
 
             HStack(spacing: DS.Spacing.xs) {
                 Button {
@@ -147,6 +157,22 @@ struct EnforcementCard: View {
                 .foregroundColor(.white.opacity(0.92))
                 .fixedSize(horizontal: false, vertical: true)
 
+            // The real entry point. Four fixed themes can't know that this week
+            // is different from last week; their own words can.
+            situationField
+
+            if matchFailed {
+                Text("Couldn't build a week from that. Try naming it more plainly, or pick a theme below.")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(DS.Palette.gold.opacity(0.9))
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            Text("or pick a theme")
+                .font(.system(size: 12, weight: .medium))
+                .foregroundColor(.white.opacity(0.45))
+                .padding(.top, 2)
+
             // The theme matching their strongest onboarding signal leads, but
             // every theme stays one tap away — this is a suggestion, not a route.
             let recommended = service.recommendedEnforcement()
@@ -188,6 +214,70 @@ struct EnforcementCard: View {
         }
         .buttonStyle(PlainButtonStyle())
         .accessibilityLabel("Enforce the victory. Premium feature. Tap to learn more.")
+    }
+
+    /// "What are you walking through?" — the input that makes the week theirs.
+    private var situationField: some View {
+        HStack(spacing: 8) {
+            TextField(text: $situation, axis: .vertical) {
+                Text("What are you walking through?")
+                    .foregroundColor(.white.opacity(0.45))
+            }
+                .font(.system(size: 15, weight: .medium))
+                .foregroundColor(.white)
+                .lineLimit(1...3)
+                .disabled(isMatching)
+                .submitLabel(.go)
+                .onSubmit(submitSituation)
+
+            Button(action: submitSituation) {
+                if isMatching {
+                    ProgressView()
+                        .progressViewStyle(.circular)
+                        .tint(.white)
+                        .frame(width: 30, height: 30)
+                } else {
+                    Image(systemName: "arrow.right.circle.fill")
+                        .font(.system(size: 24))
+                        .foregroundColor(canSubmit ? DS.Palette.gold : .white.opacity(0.25))
+                }
+            }
+            .buttonStyle(PlainButtonStyle())
+            .disabled(!canSubmit || isMatching)
+            .accessibilityLabel("Build my week")
+        }
+        .padding(.horizontal, DS.Spacing.sm)
+        .padding(.vertical, 10)
+        .background(
+            RoundedRectangle(cornerRadius: DS.Radius.sm, style: .continuous)
+                .fill(Color.white.opacity(0.10))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: DS.Radius.sm, style: .continuous)
+                .stroke(Color.white.opacity(0.18), lineWidth: 1)
+        )
+    }
+
+    private var canSubmit: Bool {
+        situation.trimmingCharacters(in: .whitespacesAndNewlines).count >= 3
+    }
+
+    private func submitSituation() {
+        let text = situation.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard text.count >= 3, !isMatching else { return }
+        isMatching = true
+        matchFailed = false
+        onDescribe(text) { started in
+            isMatching = false
+            if started {
+                // The card flips to its active state; the field goes with it.
+                situation = ""
+            } else {
+                // Keep what they wrote. Losing someone's description of a hard
+                // week and showing nothing is the worst version of this failing.
+                matchFailed = true
+            }
+        }
     }
 
     // MARK: - Shared pieces

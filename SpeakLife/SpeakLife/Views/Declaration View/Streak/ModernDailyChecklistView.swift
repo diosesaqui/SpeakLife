@@ -137,6 +137,61 @@ struct ModernDailyChecklistView: View {
         UserSelectedCategories.top()
     }
 
+    /// Turns "my marriage is falling apart and I can't sleep" into a seven-day
+    /// week built from the reviewed declaration pool.
+    ///
+    /// `match` is the Claude call (with a local keyword fallback baked in, so a
+    /// dead network still produces a category). `matchAll` is a purely local
+    /// keyword scan, so the secondary themes cost nothing extra.
+    private func startMatchedEnforcement(from text: String,
+                                         completion: @escaping (Bool) -> Void) {
+        Task {
+            let matcher = DIContainer.shared.declarationMatcher
+            let primary = await matcher.match(input: text).category
+            let secondaries = matcher.matchAll(input: text)
+                .filter { $0 != primary }
+                .filter { EnforcementAssembler.isCampaignable($0) }
+
+            let pool = await MainActor.run { declarationStore.allAvailableDeclarations }
+            let topSecondaries = Array(secondaries.prefix(2))
+
+            // Let Claude choose the seven from the reviewed pool, reading their
+            // actual sentence rather than a keyword bucket. It returns indexes,
+            // never text, so nothing unreviewed can slip in. Any failure falls
+            // through to keyword assembly, which always produces a real week.
+            let candidates = await MainActor.run {
+                enforcementService.curationCandidates(primary: primary,
+                                                      secondaries: topSecondaries,
+                                                      pool: pool)
+            }
+            let curated = await EnforcementCurator.curate(situation: text,
+                                                          candidates: candidates)
+
+            await MainActor.run {
+                let started: Enforcement?
+                if let curated {
+                    started = enforcementService.startCurated(curated, primary: primary,
+                                                              isPremium: subscriptionStore.isPremium)
+                } else {
+                    started = enforcementService.startMatched(
+                        primary: primary,
+                        secondaries: topSecondaries,
+                        pool: pool,
+                        isPremium: subscriptionStore.isPremium
+                    )
+                }
+                if let started {
+                    AnalyticsService.shared.track("enforcement_started", parameters: [
+                        "theme": started.theme,
+                        "source": curated != nil ? "curated" : "matched",
+                        "secondaries": topSecondaries.map(\.rawValue).joined(separator: ",")
+                    ])
+                }
+                completion(started != nil)
+            }
+        }
+    }
+
     /// Matches the declaration feed's themed backdrop (including a user-chosen
     /// custom image) so the checklist reflects the theme the user picked. A dark
     /// scrim keeps the white text and cards legible on lighter themes.
@@ -334,6 +389,9 @@ struct ModernDailyChecklistView: View {
                                         "last_day": snapshot.currentDay
                                     ])
                                     enforcementService.abandon()
+                                },
+                                onDescribe: { text, completion in
+                                    startMatchedEnforcement(from: text, completion: completion)
                                 }
                             )
                             .padding(.horizontal, 20)
