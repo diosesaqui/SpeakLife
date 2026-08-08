@@ -311,6 +311,23 @@ struct BreakthroughFlowView: View {
 
     // MARK: - Save
 
+    /// Marks this declaration received and reports what the user is still
+    /// believing for. A failed write must not read as "nothing left" — that
+    /// would clear `hasPersonalDeclaration` while other declarations are live,
+    /// hiding them from a feed that only reloads when the flag is set.
+    private func markReceivedCountingRemaining(testimony: String?) async -> [PersonalDeclaration] {
+        do {
+            return try await markReceivedUseCase.execute(
+                id: declaration.id,
+                testimony: testimony,
+                startTimeIndex: appState.personalDeclarationTimeIndex
+            )
+        } catch {
+            print("❌ markReceived failed: \(error.localizedDescription)")
+            return await DIContainer.shared.personalDeclarationRepository.loadActive()
+        }
+    }
+
     /// Marks the personal declaration as received locally, then hands off
     /// to the parent to present the Warrior Room composer. Skips the
     /// in-flow celebration screen — posting the testimony in the Warrior
@@ -319,15 +336,15 @@ struct BreakthroughFlowView: View {
         let prefill = warriorRoomPrefill
         isSaving = true
         Task {
-            try? await markReceivedUseCase.execute(
-                id: declaration.id,
-                testimony: testimony.isEmpty ? nil : testimony
-            )
+            // The user can be believing for several things at once — closing one
+            // out only clears the flag when nothing is left on the altar.
+            let remaining = await markReceivedCountingRemaining(testimony: testimony.isEmpty ? nil : testimony)
             await MainActor.run {
-                appState.hasPersonalDeclaration = false
+                appState.hasPersonalDeclaration = !remaining.isEmpty
                 AnalyticsService.shared.track("personal_declaration_received", parameters: [
                     "days_believed": declaration.dayCount as NSNumber,
                     "shared_to_wall": true as NSNumber,
+                    "still_believing_for": remaining.count as NSNumber,
                 ])
                 isSaving = false
                 callback(prefill)
@@ -340,7 +357,7 @@ struct BreakthroughFlowView: View {
         isSaving = true
         Task {
             // Save locally
-            try? await markReceivedUseCase.execute(id: declaration.id, testimony: testimony)
+            let remaining = await markReceivedCountingRemaining(testimony: testimony)
 
             // Post to Prayer Wall if user opted in
             if shareToWall, let text = testimony, !text.isEmpty {
@@ -348,10 +365,11 @@ struct BreakthroughFlowView: View {
             }
 
             await MainActor.run {
-                appState.hasPersonalDeclaration = false
+                appState.hasPersonalDeclaration = !remaining.isEmpty
                 AnalyticsService.shared.track("personal_declaration_received", parameters: [
                     "days_believed": declaration.dayCount as NSNumber,
-                    "shared_to_wall": shareToWall as NSNumber
+                    "shared_to_wall": shareToWall as NSNumber,
+                    "still_believing_for": remaining.count as NSNumber
                 ])
                 sharedToWall = shareToWall && !(testimony?.isEmpty ?? true)
                 isSaving = false

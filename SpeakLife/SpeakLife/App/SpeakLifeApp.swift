@@ -342,6 +342,10 @@ struct SpeakLifeApp: App {
                 return
             case "personalDeclaration":
                 tabViewModel.goToDeclarations()
+                // Reminders carry the declaration they're for so the app opens
+                // that exact one rather than whichever is first in the list.
+                appState.pendingPersonalDeclarationId =
+                    content.userInfo["declarationId"] as? String ?? ""
                 appState.scrollToPersonalDeclaration = true
                 return
             case "message":

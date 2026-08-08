@@ -62,6 +62,11 @@ struct PersonalDeclarationOnboardingView: View {
     /// shared screen by surface. Defaults to "quiz" for the quiz flow's
     /// existing call site.
     var flow: String = "quiz"
+    /// How many active declarations the user may carry. Onboarding and the
+    /// after-breakthrough flows only ever add to an empty or near-empty set, so
+    /// they take the system cap; the declarations list passes the user's real
+    /// (premium-aware) limit because that's where a second one gets added.
+    var limit: Int = PersonalDeclarationLimits.premium
     let onComplete: (PersonalDeclaration?) -> Void
 
     @State private var titleAppeared = false
@@ -703,7 +708,8 @@ struct PersonalDeclarationOnboardingView: View {
                     // Personal declaration push has its own dedicated time setting,
                     // independent of the content batch window (startTimeIndex).
                     let declaration = try await viewModel.saveAndContinue(
-                        startTimeIndex: appState.personalDeclarationTimeIndex
+                        startTimeIndex: appState.personalDeclarationTimeIndex,
+                        limit: limit
                     )
                     appState.hasPersonalDeclaration = true
                     UserPreferencesTracker.shared.personalDeclarationBelief = declaration.beliefText
@@ -712,6 +718,8 @@ struct PersonalDeclarationOnboardingView: View {
                         "flow": flow
                     ])
                     onComplete(declaration)
+                } catch let error as PersonalDeclarationLimitError {
+                    viewModel.errorMessage = error.errorDescription
                 } catch {
                     viewModel.errorMessage = "Something went wrong. Please try again."
                 }
