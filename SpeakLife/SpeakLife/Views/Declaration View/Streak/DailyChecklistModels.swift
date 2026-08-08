@@ -998,13 +998,16 @@ struct TaskLibrary {
     ///   listen task should point at. Defaults to `streakDay`; the view model
     ///   passes the working day so the recommendation advances each calendar
     ///   day instead of waiting for the burst to bump the streak.
+    /// - Parameter enforcementDay: the active Enforcement's day, when one is running. Takes
+    ///   precedence over `foundationAudioDay` for the listen task.
     static func getCoreTasksForStreak(_ streakDay: Int, userCategories: [String] = [],
-                                      foundationAudioDay: Int? = nil) -> [DailyTask] {
+                                      foundationAudioDay: Int? = nil,
+                                      enforcementDay: EnforcementDay? = nil) -> [DailyTask] {
         let audioDay = foundationAudioDay ?? streakDay
         // Check if AI features are enabled for enhanced task generation
         if isAIEnabled() {
             let aiTasks = getAIEnhancedTasks(streakDay: streakDay, userCategories: userCategories)
-            return burstFirst(applyAudioPlan(to: aiTasks, day: audioDay))
+            return burstFirst(applyAudioPlan(to: aiTasks, day: audioDay, enforcementDay: enforcementDay))
         }
 
         // Standard task generation
@@ -1048,9 +1051,9 @@ struct TaskLibrary {
         }
 
         // The audio plan runs AFTER personalization so the curated day-by-day
-        // pick (days 1-7) and the open-ended prompt (day 8+) both win over the
-        // generic category title.
-        tasks = applyAudioPlan(to: tasks, day: audioDay)
+        // pick (days 1-7), the open-ended prompt (day 8+), and an active Enforcement's
+        // day all win over the generic category title.
+        tasks = applyAudioPlan(to: tasks, day: audioDay, enforcementDay: enforcementDay)
 
         // Burst must always be first — it's the only streak-earning task
         return burstFirst(tasks)
@@ -1064,7 +1067,25 @@ struct TaskLibrary {
     /// assigned episode, no deep link, just an invitation to play whatever
     /// builds their faith today. The listen task itself never goes away; faith
     /// keeps coming by hearing long after the foundation week ends.
-    private static func applyAudioPlan(to tasks: [DailyTask], day: Int) -> [DailyTask] {
+    ///
+    /// - Parameter enforcementDay: When an Enforcement is running it owns the listen task —
+    ///   its curated day beats both the foundation week's pick and the day-8+
+    ///   open prompt, because the Enforcement is the arc the user actually signed up
+    ///   for. Nil restores the pre-Enforcement behavior exactly.
+    private static func applyAudioPlan(to tasks: [DailyTask], day: Int,
+                                       enforcementDay: EnforcementDay? = nil) -> [DailyTask] {
+        if let enforcementDay {
+            return tasks.map { task in
+                guard task.id == "listen_audio" else { return task }
+                var audioTask = task
+                audioTask.title = enforcementDay.audioTitle
+                audioTask.description = "Day \(enforcementDay.dayNumber) of \(Enforcement.length)"
+                audioTask.estimatedMinutes = enforcementDay.audioMinutes
+                audioTask.recommendedAudioId = enforcementDay.audioId
+                return audioTask
+            }
+        }
+
         let audio = FoundationAudioPlan.recommendation(forDay: day)
         return tasks.map { task in
             guard task.id == "listen_audio" else { return task }

@@ -39,7 +39,8 @@ enum BadgeType: String, CaseIterable, Codable {
     case spiritual = "spiritual"
     case social = "social"
     case milestone = "milestone"
-    
+    case enforcement = "enforcement"
+
     var iconName: String {
         switch self {
         case .streak: return "flame.fill"
@@ -47,6 +48,7 @@ enum BadgeType: String, CaseIterable, Codable {
         case .spiritual: return "heart.fill"
         case .social: return "person.3.fill"
         case .milestone: return "crown.fill"
+        case .enforcement: return "shield.fill"
         }
     }
     
@@ -57,6 +59,7 @@ enum BadgeType: String, CaseIterable, Codable {
         case .spiritual: return .purple
         case .social: return .green
         case .milestone: return .yellow
+        case .enforcement: return .indigo
         }
     }
     
@@ -67,6 +70,7 @@ enum BadgeType: String, CaseIterable, Codable {
         case .spiritual: return .pink
         case .social: return .mint
         case .milestone: return .orange
+        case .enforcement: return .purple
         }
     }
 }
@@ -145,6 +149,8 @@ enum AchievementRequirement: Codable, Equatable {
     case consecutiveWeeks(Int)
     case perfectWeek
     case firstDay
+    /// A finished seven-day Enforcement, keyed by `Enforcement.id`.
+    case enforcementCompleted(String)
     // Removed untracked requirements:
     // case affirmationsSpoken(Int)
     // case versesRead(Int)
@@ -159,6 +165,7 @@ enum AchievementRequirement: Codable, Equatable {
         case .totalDaysCompleted(let days): return 1000 + days
         case .consecutiveWeeks(let weeks): return 2000 + weeks
         case .perfectWeek: return 2100
+        case .enforcementCompleted: return 3000
         }
     }
     
@@ -174,6 +181,8 @@ enum AchievementRequirement: Codable, Equatable {
             return "Complete all tasks for 7 days straight"
         case .firstDay:
             return "Complete your first day"
+        case .enforcementCompleted:
+            return "Finish a seven-day stand"
         }
     }
 }
@@ -330,8 +339,49 @@ class BadgeManager: ObservableObject {
                 requirement: .consecutiveWeeks(4),
                 unlockedAt: getBadgeUnlockDate(.consecutiveWeeks(4)),
                 isUnlocked: isBadgeUnlocked(.consecutiveWeeks(4))
+            ),
+
+            // Enforcement badges — one per campaign. Ids match `enforcements.json`.
+            Badge(
+                type: .enforcement,
+                rarity: .rare,
+                title: "Peace Holder",
+                description: "Seven days enforcing a mind that is clear, sound, and at rest.",
+                requirement: .enforcementCompleted("peace"),
+                unlockedAt: getBadgeUnlockDate(.enforcementCompleted("peace")),
+                isUnlocked: isBadgeUnlocked(.enforcementCompleted("peace"))
+            ),
+
+            Badge(
+                type: .enforcement,
+                rarity: .rare,
+                title: "Provision Holder",
+                description: "Seven days standing as a child of the God who owns everything.",
+                requirement: .enforcementCompleted("provision"),
+                unlockedAt: getBadgeUnlockDate(.enforcementCompleted("provision")),
+                isUnlocked: isBadgeUnlocked(.enforcementCompleted("provision"))
+            ),
+
+            Badge(
+                type: .enforcement,
+                rarity: .rare,
+                title: "Healing Holder",
+                description: "Seven days enforcing wholeness over your body.",
+                requirement: .enforcementCompleted("healing"),
+                unlockedAt: getBadgeUnlockDate(.enforcementCompleted("healing")),
+                isUnlocked: isBadgeUnlocked(.enforcementCompleted("healing"))
+            ),
+
+            Badge(
+                type: .enforcement,
+                rarity: .epic,
+                title: "Ground Holder",
+                description: "Seven days enforcing a verdict that was already rendered.",
+                requirement: .enforcementCompleted("warfare"),
+                unlockedAt: getBadgeUnlockDate(.enforcementCompleted("warfare")),
+                isUnlocked: isBadgeUnlocked(.enforcementCompleted("warfare"))
             )
-            
+
             // Removed social shares, favorites, categories, etc. until we can properly track them
         ]
         
@@ -351,19 +401,26 @@ class BadgeManager: ObservableObject {
     
     // MARK: - Badge Unlocking Logic
     
-    func checkForNewBadges(streakStats: StreakStats, userStats: UserStats) {
+    /// - Parameter completedEnforcementIds: `EnforcementProgress.completedEnforcementIds`. Defaults
+    ///   empty so existing callers are unaffected.
+    func checkForNewBadges(streakStats: StreakStats, userStats: UserStats,
+                           completedEnforcementIds: [String] = []) {
         let potentialBadges = allBadges.filter { !$0.isUnlocked }
         let badgeStats = streakStats.toBadgeStreakStats()
-        
+
         for badge in potentialBadges {
-            if shouldUnlockBadge(badge.requirement, streakStats: badgeStats, userStats: userStats) {
+            if shouldUnlockBadge(badge.requirement, streakStats: badgeStats, userStats: userStats,
+                                 completedEnforcementIds: completedEnforcementIds) {
                 unlockBadge(badge)
             }
         }
     }
-    
-    private func shouldUnlockBadge(_ requirement: AchievementRequirement, streakStats: Badge.StreakStatsForBadges, userStats: UserStats) -> Bool {
+
+    private func shouldUnlockBadge(_ requirement: AchievementRequirement, streakStats: Badge.StreakStatsForBadges, userStats: UserStats,
+                                   completedEnforcementIds: [String] = []) -> Bool {
         switch requirement {
+        case .enforcementCompleted(let enforcementId):
+            return completedEnforcementIds.contains(enforcementId)
         case .firstDay:
             return streakStats.totalDaysCompleted >= 1
         case .streakDays(let days):

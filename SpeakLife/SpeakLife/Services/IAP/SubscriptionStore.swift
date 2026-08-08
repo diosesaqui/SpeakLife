@@ -172,6 +172,12 @@ final class SubscriptionStore: ObservableObject {
     // false in Remote Config to revert to the feed-as-home layout.
     @Published var checklistHomeEnabled = true
 
+    // MARK: - Seven-Day Enforcement Flag
+    // Kill switch for Enforcement campaigns. Defaults true (registered in AppDelegate's
+    // Remote Config defaults); set `enforcementEnabled` to false in Remote Config to
+    // take every Enforcement surface dark at once.
+    @Published var enforcementEnabled = true
+
     // MARK: - Onboarding Rating Ask Flag
     // Kill switch for the App Store rating ask inside every onboarding flow.
     // Defaults true (registered in AppDelegate's Remote Config defaults); set
@@ -447,6 +453,7 @@ final class SubscriptionStore: ObservableObject {
         showTestimonyTab = remoteConfig["showTestimonyTab"].boolValue
         offerFreeTrial = remoteConfig["offerFreeTrial"].boolValue
         checklistHomeEnabled = remoteConfig["checklistHomeEnabled"].boolValue
+        enforcementEnabled = remoteConfig["enforcementEnabled"].boolValue
         onboardingRatingEnabled = remoteConfig["onboardingRatingEnabled"].boolValue
         closerPledgeEnabled = remoteConfig["closerPledgeEnabled"].boolValue
 

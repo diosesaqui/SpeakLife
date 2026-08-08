@@ -128,6 +128,12 @@ final class AppDelegate: NSObject, MessagingDelegate {
             // Checklist home tab is on by default; flip to false in Remote Config
             // to revert to the feed-as-home layout if complaints spike.
             "checklistHomeEnabled": true as NSNumber,
+            // Seven-day Enforcement campaigns ship on. Flip to false in Remote Config
+            // and every Enforcement surface goes dark at once: the Today card stops
+            // rendering, the checklist audio task falls back to
+            // FoundationAudioPlan, and the daily push reverts to the rotating
+            // declaration. No orphaned state either way.
+            "enforcementEnabled": true as NSNumber,
             // Onboarding rating ask ships on; flip to false in Remote Config to
             // skip the rating step in every onboarding flow.
             "onboardingRatingEnabled": true as NSNumber,
