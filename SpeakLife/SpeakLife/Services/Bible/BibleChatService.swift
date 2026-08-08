@@ -145,11 +145,30 @@ final class BibleChatAIService {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.timeoutInterval = 30
 
-        let payload: [String: Any] = [
+        var payload: [String: Any] = [
             "appUserId": RevenueCatManager.shared.appUserID,
             "isPremiumClaim": isPremium,
             "messages": messages.map { ["role": $0.role.rawValue, "content": $0.text] }
         ]
+
+        // Onboarding already learned what this person is carrying; without it the
+        // chat meets them as a stranger. The function renders a whitelisted
+        // subset into a SECOND, uncached system block (per-user text inside the
+        // cached one would destroy the prompt-cache discount for everyone).
+        //
+        // Read synchronously off UserDefaults rather than through DIContainer:
+        // this service is not main-actor isolated, and `loadSync` is the same
+        // accessor NotificationManager already uses off the async path.
+        // Encoding goes through SoulProfileFirestoreMirror so there is exactly
+        // one definition of the wire shape (`firestorePayload`, not
+        // `requestPayload` — appUserId is already a top-level field here).
+        // No profile (skipped onboarding, or an install that predates it) means
+        // the key is simply absent and the request is what it has always been.
+        if let profile = SoulProfileRepository.loadSync(), !profile.isEmpty,
+           let encodedProfile = SoulProfileFirestoreMirror.firestorePayload(for: profile) {
+            payload["profile"] = encodedProfile
+        }
+
         request.httpBody = try JSONSerialization.data(withJSONObject: payload)
 
         let (data, response) = try await session.data(for: request)
