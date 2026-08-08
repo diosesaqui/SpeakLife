@@ -254,6 +254,7 @@
 		503EFF467A63F444F830D175 /* PrayerWallView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E14CE42195E228734ACB9A2C /* PrayerWallView.swift */; };
 		63BFAA7702BD4A74B7B60D25 /* StructuredDayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F54505A7F8204E659571CE73 /* StructuredDayView.swift */; };
 		648AA3ADC45C405CBFB82934 /* AudioRecommendationEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0B7425FCF684D05A10C4758 /* AudioRecommendationEngine.swift */; };
+		6E4ECF67F6C2D9DB23D61702 /* EnforcementCurator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 454B7279C7BC47FE4958B35B /* EnforcementCurator.swift */; };
 		72E1295B965A677DFEBEAFE6 /* EnforcementAssemblerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22AA3DB55D995F75A5AB5090 /* EnforcementAssemblerTests.swift */; };
 		777A9CAA49E076B40146EB48 /* EnforcementCompletionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0CE4BBB786820DC2A78A8766 /* EnforcementCompletionView.swift */; };
 		7A00721828F8ED4A00965AF7 /* declarations.json in Resources */ = {isa = PBXBuildFile; fileRef = 7A00721728F8ED4A00965AF7 /* declarations.json */; };
@@ -523,6 +524,7 @@
 		454807842E3F3CAA00B8C71B /* BadgeRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BadgeRenderer.swift; sourceTree = "<group>"; };
 		454807852E3F3CAA00B8C71B /* BadgeUnlockView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BadgeUnlockView.swift; sourceTree = "<group>"; };
 		4548078A2E3F3E1D00B8C71B /* BadgeTestView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BadgeTestView.swift; sourceTree = "<group>"; };
+		454B7279C7BC47FE4958B35B /* EnforcementCurator.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = EnforcementCurator.swift; sourceTree = "<group>"; };
 		45567D252F27239A00382072 /* EnhancedOnboardingScreensRefactored.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnhancedOnboardingScreensRefactored.swift; sourceTree = "<group>"; };
 		45567D272F2723FE00382072 /* EnhancedOnboardingViewRefactored.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnhancedOnboardingViewRefactored.swift; sourceTree = "<group>"; };
 		45567D292F27251400382072 /* EnhancedOnboardingModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnhancedOnboardingModels.swift; sourceTree = "<group>"; };
@@ -1950,6 +1952,7 @@
 				7741C133A99C37C522656293 /* EnforcementService.swift */,
 				736FF1AF45BE35BE1A337D85 /* EnforcementAssembler.swift */,
 				5B64B95A70F46A1D56E36FEC /* EnforcementPrompt.swift */,
+				454B7279C7BC47FE4958B35B /* EnforcementCurator.swift */,
 			);
 			name = Enforcement;
 			path = Enforcement;
@@ -2509,6 +2512,7 @@
 				777A9CAA49E076B40146EB48 /* EnforcementCompletionView.swift in Sources */,
 				E18DB3B971C4054C9E7728AB /* EnforcementAssembler.swift in Sources */,
 				C9FE7E610CE348133F2E06CC /* EnforcementPrompt.swift in Sources */,
+				6E4ECF67F6C2D9DB23D61702 /* EnforcementCurator.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -89,7 +89,40 @@ struct DailyDeclarationBurstView: View {
     
     private func loadDynamicDeclarations() {
         var selectedDeclarations: [(text: String, verse: String, category: String)] = []
-        
+
+        // 0. An active Enforcement owns the burst.
+        //
+        // The burst is BOTH the streak-earning action and the thing that advances
+        // a campaign. Without this, someone completes "day 4 of Enforcing Peace"
+        // by speaking seven random declarations from whatever category happens to
+        // be selected — the campaign's words would live only on the card and in
+        // the push, and what actually comes out of their mouth would have nothing
+        // to do with the week they chose. That makes the campaign decoration.
+        //
+        // Today's anchor leads; the rest of the week fills in behind it.
+        if EnforcementService.shared.isEnabled,
+           let enforcement = EnforcementService.shared.activeEnforcement {
+            let today = EnforcementService.shared.progressSnapshot.currentDay
+            let ordered = enforcement.days.sorted { lhs, rhs in
+                if lhs.dayNumber == today { return true }
+                if rhs.dayNumber == today { return false }
+                return lhs.dayNumber < rhs.dayNumber
+            }
+            for day in ordered.prefix(burstDeclarationCount) {
+                selectedDeclarations.append((day.anchorText, day.anchorBook, enforcement.themeName))
+            }
+            if selectedDeclarations.count == burstDeclarationCount {
+                morningDeclarations = selectedDeclarations
+                isLoadingDeclarations = false
+                print("📱 Daily Burst: speaking \(enforcement.title), day \(today)")
+                return
+            }
+            // A campaign is always seven days, so this shouldn't happen. If it
+            // ever does, top up from the normal pool rather than show a
+            // half-empty burst.
+            selectedDeclarations.removeAll()
+        }
+
         // 1. Get favorites from viewModel
         let favorites = viewModel.favorites
         

@@ -183,6 +183,46 @@ final class EnforcementAssemblerTests: XCTestCase {
                      "a book of the Bible is not a life situation")
     }
 
+    // MARK: - Curated path
+
+    /// Claude returns indexes, never text, so a curated week is still made
+    /// entirely of reviewed declarations — in the order it chose.
+    func testCurated_PreservesTheChosenOrder() {
+        let picked = declarations(.addiction, Enforcement.length)
+        let result = EnforcementAssembler.assemble(curated: picked, primary: .addiction)
+
+        XCTAssertEqual(result?.days.map(\.anchorText), picked.map(\.text))
+        XCTAssertEqual(result?.days.map(\.dayNumber), Array(1...Enforcement.length))
+        XCTAssertEqual(result?.theme, DeclarationCategory.addiction.rawValue)
+    }
+
+    func testCurated_RejectsWrongDayCount() {
+        XCTAssertNil(EnforcementAssembler.assemble(curated: declarations(.hope, 5), primary: .hope))
+        XCTAssertNil(EnforcementAssembler.assemble(curated: declarations(.hope, 9), primary: .hope))
+    }
+
+    /// The shortlist the curator sees must be reviewed content only: right
+    /// categories, and every one carrying a scripture reference.
+    func testCurationCandidates_SpanTheMatchedCategoriesAndAreReferenced() {
+        var pool = declarations(.marriage, 10) + declarations(.rest, 10)
+        pool += [Declaration(text: "no ref", book: nil, bibleVerseText: nil, category: .marriage)]
+
+        let candidates = EnforcementAssembler.candidates(for: [.marriage, .rest],
+                                                         in: pool, seed: "s")
+        XCTAssertEqual(candidates.count, 20)
+        XCTAssertFalse(candidates.contains { $0.text == "no ref" })
+        XCTAssertTrue(candidates.contains { $0.category == .marriage })
+        XCTAssertTrue(candidates.contains { $0.category == .rest })
+    }
+
+    func testCurationCandidates_ExcludeBookCategories() {
+        let pool = declarations(.psalms, 20) + declarations(.joy, 10)
+        let candidates = EnforcementAssembler.candidates(for: [.psalms, .joy], in: pool, seed: "s")
+
+        XCTAssertFalse(candidates.contains { $0.category == .psalms })
+        XCTAssertEqual(candidates.count, 10)
+    }
+
     // MARK: - Against the real shipped pool
 
     /// The whole premise is that someone facing addiction or a failing marriage

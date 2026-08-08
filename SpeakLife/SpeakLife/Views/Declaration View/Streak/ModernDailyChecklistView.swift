@@ -152,18 +152,39 @@ struct ModernDailyChecklistView: View {
                 .filter { $0 != primary }
                 .filter { EnforcementAssembler.isCampaignable($0) }
 
+            let pool = await MainActor.run { declarationStore.allAvailableDeclarations }
+            let topSecondaries = Array(secondaries.prefix(2))
+
+            // Let Claude choose the seven from the reviewed pool, reading their
+            // actual sentence rather than a keyword bucket. It returns indexes,
+            // never text, so nothing unreviewed can slip in. Any failure falls
+            // through to keyword assembly, which always produces a real week.
+            let candidates = await MainActor.run {
+                enforcementService.curationCandidates(primary: primary,
+                                                      secondaries: topSecondaries,
+                                                      pool: pool)
+            }
+            let curated = await EnforcementCurator.curate(situation: text,
+                                                          candidates: candidates)
+
             await MainActor.run {
-                let started = enforcementService.startMatched(
-                    primary: primary,
-                    secondaries: Array(secondaries.prefix(2)),
-                    pool: declarationStore.allAvailableDeclarations,
-                    isPremium: subscriptionStore.isPremium
-                )
+                let started: Enforcement?
+                if let curated {
+                    started = enforcementService.startCurated(curated, primary: primary,
+                                                              isPremium: subscriptionStore.isPremium)
+                } else {
+                    started = enforcementService.startMatched(
+                        primary: primary,
+                        secondaries: topSecondaries,
+                        pool: pool,
+                        isPremium: subscriptionStore.isPremium
+                    )
+                }
                 if let started {
                     AnalyticsService.shared.track("enforcement_started", parameters: [
                         "theme": started.theme,
-                        "source": "described",
-                        "secondaries": secondaries.prefix(2).map(\.rawValue).joined(separator: ",")
+                        "source": curated != nil ? "curated" : "matched",
+                        "secondaries": topSecondaries.map(\.rawValue).joined(separator: ",")
                     ])
                 }
                 completion(started != nil)

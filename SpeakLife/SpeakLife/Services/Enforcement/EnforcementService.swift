@@ -269,6 +269,30 @@ final class EnforcementService: ObservableObject {
         return assembled
     }
 
+    /// Starts a campaign Claude curated from the user's own words.
+    ///
+    /// The declarations still come from the reviewed pool — the model returned
+    /// indexes, not text — so this is the same content with a better ordering
+    /// and a better fit to what they described.
+    @discardableResult
+    func startCurated(_ curated: [Declaration],
+                      primary: DeclarationCategory,
+                      isPremium: Bool) -> Enforcement? {
+        guard isPremium,
+              let enforcement = EnforcementAssembler.assemble(curated: curated, primary: primary)
+        else { return nil }
+        begin(id: enforcement.id, assembled: enforcement)
+        return enforcement
+    }
+
+    /// The reviewed declarations to put in front of the curator.
+    func curationCandidates(primary: DeclarationCategory,
+                            secondaries: [DeclarationCategory],
+                            pool: [Declaration]) -> [Declaration] {
+        EnforcementAssembler.candidates(for: [primary] + secondaries,
+                                        in: pool, seed: assemblySeed)
+    }
+
     /// Stable per install, so a campaign draws the same lines every launch while
     /// two users facing the same thing don't get identical weeks.
     private var assemblySeed: String {

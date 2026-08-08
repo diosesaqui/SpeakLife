@@ -111,6 +111,49 @@ enum EnforcementAssembler {
         )
     }
 
+    /// Builds a campaign from an explicit, already-ordered set of declarations —
+    /// the path used when Claude has curated the week from the user's own words.
+    /// The declarations still come from the reviewed pool; only the choosing and
+    /// the ordering came from the model.
+    static func assemble(curated: [Declaration],
+                         primary: DeclarationCategory) -> Enforcement? {
+        guard curated.count == Enforcement.length else { return nil }
+        let days = curated.enumerated().map { index, declaration -> EnforcementDay in
+            let audio = audioFor(declaration.category)
+            return EnforcementDay(
+                dayNumber: index + 1,
+                anchorText: declaration.text,
+                anchorVerse: declaration.bibleVerseText ?? "",
+                anchorBook: declaration.book ?? "",
+                anchorTranslation: "",
+                audioId: audio.audioId,
+                audioTitle: audio.title,
+                audioMinutes: audio.durationMinutes
+            )
+        }
+        return Enforcement(
+            id: "curated_" + primary.rawValue,
+            title: "Enforcing " + primary.name,
+            tagline: "Seven days built around what you're walking through.",
+            theme: primary.rawValue,
+            days: days
+        )
+    }
+
+    /// The reviewed declarations worth putting in front of the curator: right
+    /// categories, affirmations only, and each carrying a scripture reference.
+    static func candidates(for categories: [DeclarationCategory],
+                           in pool: [Declaration],
+                           seed: String) -> [Declaration] {
+        var result: [Declaration] = []
+        var used = Set<String>()
+        for category in categories where isCampaignable(category) {
+            result += candidates(in: pool, category: category, excluding: used, seed: seed)
+            used.formUnion(result.map(\.text))
+        }
+        return result
+    }
+
     // MARK: - Internals
 
     /// Split out and explicitly typed: as one chained filter/filter/sorted the
