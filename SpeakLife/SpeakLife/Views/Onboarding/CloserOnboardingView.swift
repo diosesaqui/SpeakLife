@@ -9,12 +9,15 @@
 //  right now, and speaking His Word is what closes the distance. The narrative
 //  arc is:
 //
-//    0. Nearness    — God is nearer than you feel; the invitation is open
-//    1. Longing     — yes/no: do you want to feel closer than you do now?
-//    2. Growth      — the proof curve: closeness compounds when you speak daily
-//    3. Drift       — yes/no: have you started strong with God and then drifted?
-//    4. Spoken      — the mechanism: read alone it stays a page, spoken it moves
-//    5. Rhythm      — reminders + streaks are what carry you past the drift
+//    0. Pray like Jesus — the store-listing promise, delivered on screen one:
+//                         He spoke to the storm, and that is how you pray here
+//    1. Nearness    — God is nearer than you feel; the invitation is open
+//    2. Longing     — yes/no: do you want to feel closer than you do now?
+//    3. Growth      — the proof curve: closeness compounds when you speak daily
+//    4. Drift       — yes/no: have you started strong with God and then drifted?
+//    5. Spoken      — the mechanism: said out loud, His Word becomes what your
+//                     heart actually believes about Him
+//    6. Rhythm      — reminders + streaks are what carry you past the drift
 //
 //  Then the product-capability recap, a "where do you most want to feel Him
 //  move first?" picker (which seeds the home feed), the same extended
@@ -68,7 +71,7 @@ struct CloserOnboardingView: View {
     // seeding logic work unchanged. Only `heaviestBurden` and `notificationTime`
     // are set here (the closeness picker writes `heaviestBurden`).
     @StateObject private var responses = SurveyResponses()
-    @State private var currentStep: CloserStep = .nearness
+    @State private var currentStep: CloserStep = .storm
     @State private var savedDeclaration: PersonalDeclaration? = nil
 
     // The two front-half agreement answers. Recorded for analytics only — they
@@ -129,6 +132,10 @@ struct CloserOnboardingView: View {
     @ViewBuilder
     private var currentStepView: some View {
         switch currentStep {
+        case .storm:
+            // Same copy as StormOpenerScreen, rendered through this arm's
+            // navy/hero system. Keep the two in sync.
+            CloserSceneScreen(size: size, scene: .storm) { advance() }
         case .nearness:
             CloserSceneScreen(size: size, scene: .nearness) { advance() }
         case .longingQ:
@@ -234,10 +241,10 @@ struct CloserOnboardingView: View {
 
     private func advance() {
         Juice.play(.tapLight)
-        // flow_schema 1 = original closer arc (nearness → pledge → paywall). Bump when step raw values are renumbered.
+        // flow_schema 2 = storm opener prepended as step 0 (1 = original closer arc, nearness → pledge → paywall). Bump when step raw values are renumbered.
         AnalyticsService.shared.track("closer_step_completed", parameters: [
             "step": currentStep.rawValue,
-            "flow_schema": 1,
+            "flow_schema": 2,
             "pledge_enabled": pledgeEnabled as NSNumber
         ])
 
@@ -318,7 +325,7 @@ struct CloserOnboardingView: View {
             "belief": responses.beliefLevel ?? "unknown",
             "quiz_version": quizV2 ? "v2" : "v1",
             "pledge_enabled": pledgeEnabled as NSNumber,
-            "flow_schema": 1,  // joins with closer_step_completed; bump when step raw values are renumbered
+            "flow_schema": 2,  // joins with closer_step_completed; bump when step raw values are renumbered
             "set_personal_declaration": (savedDeclaration != nil) as NSNumber
         ])
 
@@ -352,43 +359,44 @@ struct CloserOnboardingView: View {
 
 enum CloserStep: Int, CaseIterable {
     // Nearness narrative + agreement ladder
-    case nearness        = 0   // God is nearer than you feel (the invitation)
-    case longingQ        = 1   // yes/no: do you want to feel closer than you do now?
-    case growth          = 2   // the proof curve: closeness compounds when you speak
-    case driftQ          = 3   // yes/no: have you started strong and then drifted?
-    case spoken          = 4   // the mechanism: a word spoken is a word that moves
-    case rhythm          = 5   // reminders + streaks carry you past the drift
-    case experience      = 6   // product-capability recap (shared with the other arms)
-    case closenessPicker = 7   // where do you want to feel Him move first? (seeds the feed)
+    case storm           = 0   // "Pray Like Jesus" — the store listing, answered on screen one
+    case nearness        = 1   // God is nearer than you feel (the invitation)
+    case longingQ        = 2   // yes/no: do you want to feel closer than you do now?
+    case growth          = 3   // the proof curve: closeness compounds when you speak
+    case driftQ          = 4   // yes/no: have you started strong and then drifted?
+    case spoken          = 5   // the mechanism: spoken daily, His Word is what the heart believes
+    case rhythm          = 6   // reminders + streaks carry you past the drift
+    case experience      = 7   // product-capability recap (shared with the other arms)
+    case closenessPicker = 8   // where do you want to feel Him move first? (seeds the feed)
     // Extended personalization quiz (shared screens in SurveyOnboardingScreens)
-    case battleDuration  = 8   // Q2: how long has this been going on?
-    case alreadyTried    = 9   // Q3: what have you already tried?
-    case insight         = 10  // micro-insight interstitial (reading vs speaking)
-    case hitsHardest     = 11  // Q4: when does it hit hardest? (preselects notification time)
-    case connectStyle    = 12  // Q5: connect style (quiz v1) or victory outcome (quiz v2)
-    case belief          = 13  // quiz v2 only: do you believe God wants more? (v1 skips it)
-    case dailyMinutes    = 14  // Q6: how much time daily? (drives plan reveal rhythm)
+    case battleDuration  = 9   // Q2: how long has this been going on?
+    case alreadyTried    = 10  // Q3: what have you already tried?
+    case insight         = 11  // micro-insight interstitial (reading vs speaking)
+    case hitsHardest     = 12  // Q4: when does it hit hardest? (preselects notification time)
+    case connectStyle    = 13  // Q5: connect style (quiz v1) or victory outcome (quiz v2)
+    case belief          = 14  // quiz v2 only: do you believe God wants more? (v1 skips it)
+    case dailyMinutes    = 15  // Q6: how much time daily? (drives plan reveal rhythm)
     // Shared back-half (reused from the survey flow)
-    case firstDeclaration    = 15
-    case personalDeclaration = 16
-    case rating              = 17  // rating ask at the personal-declaration peak
-    case planBuilding        = 18  // "building your plan" loader (transition, no bar)
-    case planReveal          = 19  // named 30-day plan reveal
-    case pledge              = 20  // unique to this arm: the "I'm In" commitment
-    case testimonials        = 21  // App Store review wall — social proof right before the ask
-    case paywall             = 22
-    case notificationTime    = 23  // terminal — completes onboarding
+    case firstDeclaration    = 16
+    case personalDeclaration = 17
+    case rating              = 18  // rating ask at the personal-declaration peak
+    case planBuilding        = 19  // "building your plan" loader (transition, no bar)
+    case planReveal          = 20  // named 30-day plan reveal
+    case pledge              = 21  // unique to this arm: the "I'm In" commitment
+    case testimonials        = 22  // App Store review wall — social proof right before the ask
+    case paywall             = 23
+    case notificationTime    = 24  // terminal — completes onboarding
 
     func valueScreenIndex(quizV2: Bool) -> Int? {
         var screens: [CloserStep] = [
-            .nearness, .longingQ, .growth, .driftQ, .spoken, .rhythm, .experience, .closenessPicker,
+            .storm, .nearness, .longingQ, .growth, .driftQ, .spoken, .rhythm, .experience, .closenessPicker,
             .battleDuration, .alreadyTried, .insight, .hitsHardest, .connectStyle, .belief, .dailyMinutes
         ]
         if !quizV2 { screens.removeAll { $0 == .belief } }
         return screens.firstIndex(of: self).map { $0 + 1 }
     }
 
-    static func totalValueScreens(quizV2: Bool) -> Int { quizV2 ? 15 : 14 }
+    static func totalValueScreens(quizV2: Bool) -> Int { quizV2 ? 16 : 15 }
 }
 
 // MARK: - Canvas + insets
@@ -443,6 +451,7 @@ private enum CloserInsets {
 /// always renderable — a missing catalog entry degrades to the old look rather
 /// than to an empty frame.
 private enum CloserArt: String {
+    case storm  = "closerStorm"
     case dawn   = "closerDawn"
     case prayer = "closerPrayer"
     case bible  = "closerBible"
@@ -656,10 +665,11 @@ private struct CloserVerseCard: View {
 // MARK: - Narrative scene content
 
 private enum CloserScene {
-    case nearness, spoken
+    case storm, nearness, spoken
 
     var art: CloserArt {
         switch self {
+        case .storm:    return .storm
         case .nearness: return .dawn
         case .spoken:   return .spoken
         }
@@ -667,7 +677,9 @@ private enum CloserScene {
 
     var eyebrow: String {
         switch self {
-        case .nearness: return "START HERE"
+        case .storm:    return "SPEAKLIFE · PRAY LIKE JESUS"
+        // Not "START HERE" — the storm opener owns screen one now.
+        case .nearness: return "THE INVITATION"
         case .spoken:   return "HOW THE DISTANCE CLOSES"
         }
     }
@@ -675,22 +687,28 @@ private enum CloserScene {
     // Headline split so one phrase carries the gold.
     var headline: (leading: String, highlight: String, trailing: String) {
         switch self {
+        case .storm:    return ("Jesus didn't ask the storm to calm down. ", "He spoke to it.", "")
         case .nearness: return ("God is ", "closer", " than you feel right now.")
-        case .spoken:   return ("A word you ", "speak", " is a word that moves.")
+        // The opener already taught "speak it, don't beg for it." This screen
+        // moves the idea forward to what speaking does to your heart.
+        case .spoken:   return ("Speak it daily, and your heart ", "catches up", ".")
         }
     }
 
     var body: String {
         switch self {
+        case .storm:
+            return "That's how you'll pray here. You won't beg the storm to pass. You'll speak God's Word straight at it, out loud, the way He did."
         case .nearness:
             return "He never stepped back. The distance you feel is not where He is. Draw near, and He closes the gap Himself."
         case .spoken:
-            return "Left on the page, His Word stays information. Spoken over your life, it becomes the thing your heart starts to believe."
+            return "Left on the page, His Word stays information. Said out loud over your life, it becomes what your heart actually believes about Him."
         }
     }
 
     var verse: String {
         switch self {
+        case .storm:    return "He got up, rebuked the wind and said to the waves, \"Quiet! Be still!\" Then the wind died down and it was completely calm."
         case .nearness: return "Come near to God and he will come near to you."
         case .spoken:   return "The tongue has the power of life and death."
         }
@@ -698,6 +716,7 @@ private enum CloserScene {
 
     var reference: String {
         switch self {
+        case .storm:    return "Mark 4:39"
         case .nearness: return "James 4:8"
         case .spoken:   return "Proverbs 18:21"
         }
@@ -705,13 +724,24 @@ private enum CloserScene {
 
     var buttonLabel: String {
         switch self {
+        case .storm:    return "Teach Me to Pray Like That"
         case .nearness: return "I Want That"
         case .spoken:   return "Continue"
         }
     }
 
+    /// The storm line is the longest headline in the arm and wraps to four
+    /// lines at the default size; a step down keeps it inside the hero band.
+    var headlineSize: CGFloat {
+        switch self {
+        case .storm: return 27
+        default:     return 30
+        }
+    }
+
     var analyticsName: String {
         switch self {
+        case .storm:    return "storm"
         case .nearness: return "nearness"
         case .spoken:   return "spoken"
         }
@@ -755,7 +785,8 @@ private struct CloserSceneScreen: View {
                     CloserHeadline(
                         leading: scene.headline.leading,
                         highlight: scene.headline.highlight,
-                        trailing: scene.headline.trailing
+                        trailing: scene.headline.trailing,
+                        size: scene.headlineSize
                     )
                     .padding(.horizontal, 26)
                     .closerStagger(v, delay: 0.12)
@@ -784,6 +815,11 @@ private struct CloserSceneScreen: View {
         }
         .onAppear {
             AnalyticsService.shared.track("closer_scene_shown", parameters: ["scene": scene.analyticsName])
+            // Also fired by StormOpenerScreen in the other arms, so the new
+            // screen-one is comparable across every arm that carries it.
+            if scene == .storm {
+                AnalyticsService.shared.track("storm_opener_shown", parameters: ["flow": "closer"])
+            }
             withAnimation { v = true }
         }
     }

@@ -109,7 +109,7 @@ Arm-specific events, useful for reading *where* it wins or loses:
 
 | Event | Properties | Why it matters |
 |-------|-----------|----------------|
-| `closer_scene_shown` | `scene` (`nearness` / `spoken`) | Front-half narrative reach |
+| `closer_scene_shown` | `scene` (`storm` / `nearness` / `spoken`) | Front-half narrative reach |
 | `closer_agreement_shown` | `question` (`longing` / `drift`) | Agreement-ladder reach |
 | `closer_agreement_answered` | `question`, `answer` (`yes` / `no`) | Whether the ladder actually gets a yes |
 | `closer_growth_shown` | — | Proof-curve screen reach |
@@ -142,6 +142,23 @@ a realtime Remote Config activation cannot move a user between cells mid-run.
 
 Split traffic within `closer` 50/50 to read it; leave it at the default if you
 only want the arm-vs-arm result first.
+
+### 3c. The storm opener (screen one, `outcomes` / `promises` / `closer`)
+
+The App Store listing is **"SpeakLife: Pray Like Jesus — Victory Over Every
+Storm."** Screen one of these three arms now answers that line directly ("Jesus
+didn't ask the storm to calm down. He spoke to it.") so the listing reads as the
+hook instead of an unexplained promise the user carries through the whole flow.
+
+| Event | Properties | Why it matters |
+|-------|-----------|----------------|
+| `storm_opener_shown` | `flow` (`outcomes` / `promises` / `closer`) | Screen-one reach; the denominator for everything after it |
+
+Because the opener is prepended as step 0, every step raw value in those three
+arms shifted by one. **`flow_schema` was bumped on all three** — `outcomes` 3→4,
+`promises` 2→3, `closer` 1→2 — so filter any per-step funnel to the new schema
+before comparing step numbers across builds. Pre-bump data is not comparable
+step-for-step.
 
 ---
 

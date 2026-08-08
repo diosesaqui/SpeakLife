@@ -1546,7 +1546,11 @@ struct SurveyQuizInsightScreen: View {
                         .fixedSize(horizontal: false, vertical: true)
                         .planRevealStagger(v, delay: 0.14)
 
-                    Text("Most believers read about peace and feel better for an hour. Jesus spoke to storms, and they obeyed. Your plan is built around your voice, because faith comes by hearing, and hearing by the word of God.")
+                    // Deliberately a callback, not a re-teach: the arms that
+                    // open on StormOpenerScreen have already been told what
+                    // Jesus did to a storm, so this line points back to it
+                    // instead of stating it again.
+                    Text("Most believers read about peace and feel better for an hour. You already know what one word from Jesus did to a storm. Your plan is built around your voice, because faith comes by hearing, and hearing by the word of God.")
                         .font(.system(size: 17, weight: .regular, design: .rounded))
                         .foregroundColor(.white.opacity(0.75))
                         .multilineTextAlignment(.center)
@@ -1906,6 +1910,117 @@ struct SurveyPlanRevealScreen: View {
                 .font(.system(size: 14, weight: .regular, design: .rounded))
                 .foregroundColor(.white.opacity(0.8))
                 .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+}
+
+// MARK: - Storm Opener (screen one — closes the store-listing gap)
+
+/// The first screen after install. The App Store listing now promises
+/// "SpeakLife: Pray Like Jesus — Victory Over Every Storm", and a new user who
+/// lands on a narrative screen that never explains that line has to hold an
+/// unanswered question through the whole flow. This screen answers it in one
+/// line — Jesus spoke to the storm instead of asking it to settle, and that is
+/// what praying like Him means here — so the listing reads as the hook rather
+/// than as a bait-and-switch.
+///
+/// Shared by the arms that use the standard blurred-background system
+/// (outcomes, promises). The closer arm renders the same copy through its own
+/// navy/hero visual system; keep the wording in sync with `CloserScene.storm`.
+struct StormOpenerScreen: View {
+    let size: CGSize
+    /// Which onboarding arm is showing this screen ("outcomes" | "promises").
+    let flow: String
+    let onContinue: () -> Void
+
+    @State private var v = false
+
+    var body: some View {
+        VStack(spacing: 0) {
+            Spacer()
+
+            VStack(spacing: 26) {
+                ZStack {
+                    Circle()
+                        .fill(DS.Gradient.gold)
+                        .frame(width: 96, height: 96)
+                        .shadow(color: DS.Palette.gold.opacity(0.45), radius: 12, x: 0, y: 6)
+                    Image(systemName: "cloud.bolt.rain.fill")
+                        .font(.system(size: 38))
+                        .foregroundColor(.white)
+                }
+                .planRevealStagger(v)
+
+                VStack(spacing: 14) {
+                    Text("SPEAKLIFE · PRAY LIKE JESUS")
+                        .font(.system(size: 12, weight: .bold, design: .rounded))
+                        .foregroundColor(DS.Palette.gold.opacity(0.9))
+                        .kerning(1.4)
+                        .multilineTextAlignment(.center)
+                        .planRevealStagger(v, delay: 0.08)
+
+                    // Line breaks are chosen to fit the narrowest supported
+                    // phone at this size; the scale factor is the safety net.
+                    Text("Jesus didn't ask the\nstorm to calm down.\nHe spoke to it.")
+                        .font(.system(size: 28, weight: .bold, design: .rounded))
+                        .foregroundColor(.white)
+                        .multilineTextAlignment(.center)
+                        .lineLimit(3)
+                        .minimumScaleFactor(0.8)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .planRevealStagger(v, delay: 0.14)
+
+                    Text("That's how you'll pray here. You won't beg the storm to pass. You'll speak God's Word straight at it, out loud, the way He did.")
+                        .font(.system(size: 17, weight: .regular, design: .rounded))
+                        .foregroundColor(.white.opacity(0.75))
+                        .multilineTextAlignment(.center)
+                        .lineSpacing(4)
+                        .padding(.horizontal, 22)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .planRevealStagger(v, delay: 0.22)
+                }
+
+                VStack(spacing: 4) {
+                    Text("\"He got up, rebuked the wind and said to the waves, 'Quiet! Be still!' Then the wind died down and it was completely calm.\"")
+                        .font(.system(size: 15, weight: .regular, design: .serif))
+                        .italic()
+                        .foregroundColor(.white.opacity(0.8))
+                        .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Text("Mark 4:39")
+                        .font(.system(size: 12, weight: .medium, design: .rounded))
+                        .foregroundColor(.white.opacity(0.45))
+                }
+                .padding(.horizontal, 28)
+                .planRevealStagger(v, delay: 0.32)
+            }
+            .padding(.horizontal, 28)
+
+            Spacer()
+
+            // Gold capsule rather than the shared white `SurveyContinueButton`:
+            // this screen sits next to each arm's own narrative screens, which
+            // all use the gold CTA, and screen one is the branding moment.
+            Button(action: onContinue) {
+                Text("Teach Me to Pray Like That →")
+                    .font(.system(size: 17, weight: .bold, design: .rounded))
+                    .foregroundColor(DS.Palette.deepBlue)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 56)
+                    .background(
+                        Capsule()
+                            .fill(DS.Gradient.gold)
+                            .shadow(color: DS.Palette.gold.opacity(0.45), radius: 14, x: 0, y: 6)
+                    )
+            }
+            .buttonStyle(.dsPressable(feel: .tapSolid))
+            .padding(.horizontal, 28)
+            .padding(.bottom, 36)
+            .planRevealStagger(v, delay: 0.42)
+        }
+        .onAppear {
+            AnalyticsService.shared.track("storm_opener_shown", parameters: ["flow": flow])
+            withAnimation { v = true }
         }
     }
 }
