@@ -22,6 +22,9 @@ week's declarations, audio, and devotionals.
 - Every answer is a free, high-signal input for personalization that costs one
   LLM call per user per week.
 
+**Premium feature.** The generated week is gated behind the `premium`
+entitlement. Free users still get the Sunday ask — see *Entitlement* below.
+
 **Non-goal:** this is not a replacement for the personal declaration. See below.
 
 ---
@@ -51,6 +54,54 @@ So Weekly Focus is a **second, additive layer**:
 
 The Anchor is untouched by anything in this spec. If a weekly answer repeatedly
 matches the Anchor, that's a signal worth surfacing — not a conflict to resolve.
+
+---
+
+## Entitlement
+
+Weekly Focus is **premium**. But the gate goes *after* the answer, not before the
+ask — the moment a user has just spoken their need aloud is the highest-investment
+point in the week, and it's the wrong moment to show them a locked door with
+nothing behind it.
+
+### What each tier gets
+
+| | Free | Premium |
+|---|---|---|
+| Sunday push + feed card | ✅ | ✅ |
+| Check-in sheet, voice input | ✅ | ✅ |
+| Answer echoed back with a matched verse | ✅ (keyword match, no LLM) | ✅ |
+| The 7-day week (declarations, audio, devotionals) | 🔒 Paywall | ✅ |
+| Carry-over / fallback ladder | — | ✅ |
+
+Free users answer, see their need reflected back with one verse and one
+declaration, and then hit the paywall on *"Here's your week."* Same structure the
+onboarding personal declaration already uses (`PERSONAL_DECLARATION_SPEC.md`,
+Gap 4): capture at peak investment, then ask.
+
+Critically, the free path costs **zero LLM calls** — it uses the existing
+`KeywordDeclarationMatcher`. A free user who answers every Sunday and never
+converts costs nothing but a local notification.
+
+### Enforcement
+
+Server-side, following `bibleChat.js:74-96` exactly: RevenueCat
+`/v1/subscribers/{appUserId}` checked for the `premium` entitlement, authoritative
+when it answers, with the client's `isPremiumClaim` used **only** when RevenueCat
+is unreachable or the secret is unset. An RC outage must never lock out a paying
+user mid-week.
+
+Client-side gating is presentation only — it decides whether to show the week or
+the paywall. It is not the security boundary.
+
+Feature flag: Remote Config `weeklyFocusEnabled`, mirroring `enableAIFeatures`.
+
+### When premium lapses
+
+Let the current week finish. It's already built, already cached, and costs
+nothing more to serve — yanking content mid-week reads as punitive and buys
+nothing. No new week is built after it ends; the Sunday card falls back to the
+free experience.
 
 ---
 
@@ -366,14 +417,22 @@ and being a real bill.
 
 | Week type | LLM calls | Notes |
 |---|---|---|
-| Answered | 1 per user | Classify → bucket, select IDs, write framing line. One call does all three. |
-| Carry-over (0–2) | **0** | Reuses stored `needBucket`, rotates IDs locally, reuses cached devotionals |
-| Anchor / profile / behavioral | **0** | Pure local retrieval |
+| Free user, any answer | **0** | Keyword match only. Paywall before generation. |
+| Premium, answered | 1 per user | Classify → bucket, select IDs, write framing line. One call does all three. |
+| Premium, carry-over (0–2) | **0** | Reuses stored `needBucket`, rotates IDs locally, reuses cached devotionals |
+| Premium, anchor / profile / behavioral | **0** | Pure local retrieval |
 | Escalation (carryOver 3+) | 1 per user | Rare by construction |
-| Bucket devotionals | ~20 per week total | Shared across all users |
+| Bucket devotionals | 1 per *occupied* bucket per week | Shared across every user in that bucket |
 
 Unanswered weeks cost nothing. That property is worth protecting as the feature
 evolves — it's what makes weekly personalization viable at scale.
+
+**Generate buckets lazily.** Bucket caching amortizes across users, so gating to
+premium shrinks the population each bucket is spread over. Generating all ~20
+buckets on a schedule would mean paying for buckets nobody is in that week.
+Instead, generate a bucket's devotional on first request and cache it — bucket
+count then stops mattering for cost, and the number can be tuned for content
+quality alone.
 
 ---
 
@@ -392,11 +451,27 @@ POST /weeklyFocus
 → { needBucket, categoryRaw, declarationIDs[], framingLine }
 ```
 
-**Prerequisite:** `ClaudeDeclarationMatcher` currently calls
-`api.anthropic.com` directly with a key delivered via Remote Config
-(`SubscriptionStore.swift:493`), with no rate limit, metering, or spend cap.
-Adding a second per-user-per-week generation path on top of that materially
-increases exposure. Move the matcher behind the Cloud Function first.
+Returns `{ needsPaywall: true }` for non-premium callers before doing any model
+work, mirroring `bibleChat.js:165-168`.
+
+**Prerequisite: move `ClaudeDeclarationMatcher` behind the proxy first.**
+
+Today it calls `api.anthropic.com` directly, using a key fetched at runtime from
+Remote Config (`SubscriptionStore.swift:493`). Fetching rather than compiling the
+key in is the better of the two client-side options — it can be rotated without
+an App Store release and it does not appear in a binary strings dump. But the
+usable key still reaches the device: Remote Config caches fetched values to disk
+in the app container, and `AnthropicConfig.apiKey` is a static var readable by a
+debugger on a jailbroken device or via a MITM proxy with a user-installed CA.
+There is no rate limit, no metering, and no spend cap behind it.
+
+This is the exact rationale `bibleChat.js:5-9` gives for why chat was built as a
+proxy. Note that premium-gating Weekly Focus does **not** reduce this exposure —
+the matcher runs during onboarding, free and ungated, for 100% of installs.
+
+Two related cleanups on the same file: `ClaudeDeclarationMatcher.swift:32` prints
+the key prefix to the console, and `:74` ships 100 chars of Anthropic's error body
+into Firebase Analytics.
 
 The full CLAUDE.md declaration rules and the `bibleChat.js` safety block should
 be the system prompt for **any** generation path, not just this one.
@@ -416,14 +491,22 @@ Instrument as an experiment from day one — the PostHog wiring already exists.
 | `weekly_checkin_skipped` | `surface` |
 | `weekly_focus_day_completed` | `day_index`, `source` |
 | `weekly_focus_escalated` | `need_bucket`, `carry_over_count` |
+| `weekly_focus_paywall_shown` | `need_bucket`, `weeks_answered_free` |
+| `weekly_focus_paywall_converted` | `need_bucket`, `weeks_answered_free` |
 
-**Primary metric:** D28 retention, split by answered vs. never-answered. If
-answering does not move D28, the feature is ceremony — and that's worth learning
-in week three rather than month six.
+**Primary metric:** D28 retention among premium users, split by answered vs.
+never-answered. If answering does not move D28, the feature is ceremony — and
+that's worth learning in week three rather than month six.
 
 **Secondary:** answer rate by surface (tells you whether the card or the
 interstitial is doing the work), and week-completion rate by `source` (tells you
 whether fallback weeks are as good as answered ones).
+
+**Conversion:** free→premium rate off `weekly_focus_paywall_shown`, and whether
+it climbs with `weeks_answered_free`. If a free user answering three Sundays in a
+row converts materially better than one answering once, the free ask is earning
+its place and the gate is in the right spot. If not, the ask should probably be
+premium-only too.
 
 ---
 
@@ -438,6 +521,9 @@ whether fallback weeks are as good as answered ones).
 | Timezone change mid-week | `weekStart` is stored absolute. Local notification re-anchors on next fire. |
 | Same need 3 weeks running | Escalation path fires once |
 | Marks Anchor "It Came to Pass" mid-week | Week continues unchanged. The two layers are independent. |
+| Premium lapses mid-week | Current week finishes. No new week after it. Card reverts to free experience. |
+| Subscribes mid-week after answering free | Build the week immediately from the answer already captured. Don't make them re-answer. |
+| RevenueCat unreachable | Fall back to client `isPremiumClaim` (`bibleChat.js:151-156`). Never lock out a payer. |
 | Offline Sunday evening | Ladder is fully local. Answered path queues and retries; falls back to keyword matching on failure, mirroring `ClaudeDeclarationMatcher`. |
 | App not opened for 3 weeks | Build only the current week on next launch. Don't backfill history. |
 
@@ -473,8 +559,13 @@ whether fallback weeks are as good as answered ones).
 
 **Phase 1 — the loop, no AI.** `WeeklyFocus` model, repository, builder with the
 full fallback ladder, local Sunday notification, feed card, check-in sheet, week
-overview. Content selection is keyword-based (reuse `KeywordDeclarationMatcher`)
-and pulls from `declarationsv10.json`. Audio ordering wired.
+overview, **and the premium gate plus paywall handoff**. Content selection is
+keyword-based (reuse `KeywordDeclarationMatcher`) and pulls from
+`declarationsv10.json`. Audio ordering wired.
+
+The gate ships in Phase 1, not later — retrofitting an entitlement onto a feature
+users already have free is a support problem, and the free/premium split changes
+what the check-in sheet does on submit.
 
 Shippable and measurable on its own. If the answer rate is near zero, that's the
 answer, and no LLM work was spent finding out.
@@ -496,9 +587,11 @@ Carry-over angle progression turns on here.
 1. **7:00 PM Sunday default** — worth deriving from `hitsHardest` (`night` users
    later, `morning` users earlier), or is a fixed evening slot better because the
    ask is about *planning*, not the pain itself? Leaning fixed.
-2. **Bucket count.** ~20 is a guess. Too few and devotionals feel generic; too
-   many and the cache stops paying for itself. Should be tuned on real answer
-   text after Phase 1.
-3. **Free vs. premium.** The Anchor is free and ungated. Weekly Focus could be
-   the premium hook, or free with generated devotionals gated. Free is the safer
-   default while retention impact is unproven.
+2. **Bucket count.** ~20 is a guess. With lazy generation it no longer drives
+   cost, so tune it purely on whether devotionals feel specific enough. Needs
+   real answer text from Phase 1 to settle.
+3. **Should free users get the ask at all?** Currently yes — they answer, get one
+   verse back, and hit the paywall on the week. The bet is that speaking the need
+   aloud makes the paywall convert better than a cold one. If
+   `weekly_focus_paywall_shown` → conversion doesn't beat the baseline paywall,
+   make the whole feature premium-only and drop the free ask.
