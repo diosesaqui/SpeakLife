@@ -12,10 +12,8 @@ struct WhatsNewBottomSheet: View {
     let version: String
     let features = [
        // "NEW Bible Tab",
-        "Change Your App Icon in the Profile Tab",
-        "New Themes",
-        "New Bible Chat",
-        "Warrior Room Moved to Profile",
+        "Multiple personal declaration",
+        "New Weekly Enforcement",
        // "New Spiritual Faith Tree 🌳"
     ]
 
