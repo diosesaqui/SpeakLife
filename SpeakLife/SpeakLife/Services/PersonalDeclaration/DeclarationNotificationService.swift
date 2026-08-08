@@ -18,6 +18,11 @@ final class DeclarationNotificationService: DeclarationNotificationServiceProtoc
     /// its own moment in the day.
     private static let staggerMinutes = 45
 
+    /// Latest a staggered reminder may land (9:30 PM). Past this the stagger
+    /// runs backwards from the user's chosen time instead of forwards: someone
+    /// who picked 10 PM wants their declarations at night, not at 1 AM.
+    private static let latestReminderMinute = 21 * 60 + 30
+
     private static func identifier(for id: UUID) -> String {
         identifierPrefix + id.uuidString
     }
@@ -63,6 +68,25 @@ final class DeclarationNotificationService: DeclarationNotificationServiceProtoc
 
     // MARK: - Private
 
+    /// Minute-of-day for one declaration's reminder.
+    ///
+    /// `startTimeIndex` is a 30-minute slot from midnight (12 = 6:00 AM,
+    /// 16 = 8:00 AM, 24 = 12:00 PM). Reminders fan out from there, forwards
+    /// where the day has room and backwards where it doesn't, so the whole set
+    /// stays inside the waking hours the user actually chose.
+    static func minuteOfDay(slot: Int, total: Int, startTimeIndex: Int) -> Int {
+        let start = (startTimeIndex * 30) % (24 * 60)
+        let span = max(0, total - 1) * staggerMinutes
+        // Running backwards, the last declaration takes the chosen time and the
+        // first sits earliest, so the reminders still arrive in list order.
+        let minute = start + span <= latestReminderMinute
+            ? start + slot * staggerMinutes
+            : start - (max(0, total - 1) - slot) * staggerMinutes
+        // Backwards only runs when the start is late enough that it can't reach
+        // midnight, but clamp anyway rather than schedule a negative hour.
+        return min(max(minute, 0), 24 * 60 - 1)
+    }
+
     private func schedule(_ declaration: PersonalDeclaration,
                           slot: Int,
                           of total: Int,
@@ -81,9 +105,7 @@ final class DeclarationNotificationService: DeclarationNotificationServiceProtoc
             "declarationId": declaration.id.uuidString
         ]
 
-        // startTimeIndex = 30-min slots from midnight
-        // e.g. index 12 = 6:00 AM, index 16 = 8:00 AM, index 24 = 12:00 PM
-        let totalMinutes = (startTimeIndex * 30 + slot * Self.staggerMinutes) % (24 * 60)
+        let totalMinutes = Self.minuteOfDay(slot: slot, total: total, startTimeIndex: startTimeIndex)
         var components = DateComponents()
         components.hour = totalMinutes / 60
         components.minute = totalMinutes % 60

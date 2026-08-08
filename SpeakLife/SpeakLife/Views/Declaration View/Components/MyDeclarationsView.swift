@@ -91,7 +91,11 @@ struct MyDeclarationsView: View {
                     breakthroughDeclaration = nil
                     Task { @MainActor in
                         await reload()
-                        startAdding()
+                        // SwiftUI drops a cover raised in the same tick another
+                        // is dismissing, so let the celebration finish leaving.
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                            startAdding()
+                        }
                     }
                 },
                 onShareToWarriorRoom: { prefill in

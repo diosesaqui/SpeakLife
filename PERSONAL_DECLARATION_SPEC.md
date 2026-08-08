@@ -1255,9 +1255,21 @@ entry points (so the user sees the paywall, not an error) and again in
 ## Storage
 
 `personal_declaration_v1` (single record) → `personal_declarations_v2` (ordered
-list, oldest first). The v1 record is migrated in place on first read and the
-migration is flagged (`personal_declarations_migratedToV2`) so emptying the list
-never re-imports it.
+list, oldest first). The v1 record is migrated in place on first read, and the
+migration flag (`personal_declarations_migratedToV2`) is only set once a record
+has actually been imported — setting it on the way in would lose the declaration
+of anyone whose v1 record arrives from iCloud a moment after first launch, which
+is exactly the reinstall case the migration exists for.
+
+**Deletes are tombstones** (`deletedDate`), never removals. The list merges
+across devices as a union by id, so a record that simply vanished locally would
+be handed back — reminder and all — by the next reconcile. Tombstones are
+filtered out of every read; only the stored blob and the merge see them.
+
+**A partially unreadable blob is salvaged element by element** rather than read
+as empty. Every write is a read-modify-write, so treating a bad read as empty
+would let the next save overwrite whatever survived. The original blob is parked
+under `personal_declarations_v2_unreadable` before anything replaces it.
 
 Speak progress (`completedDayCount`, `dailySpeakCount`, `lastSpokenDate`) moved
 off globally-named UserDefaults keys and **onto each record**. Per-declaration
@@ -1287,9 +1299,13 @@ func clear()
 
 One daily reminder per active declaration, identifier
 `personal_declaration_reminder_<uuid>`, staggered 45 minutes apart from the
-user's chosen time so several burdens don't all buzz in the same minute. Each
-reminder carries `declarationId` in `userInfo`, so a tapped notification opens
-that exact declaration (`AppState.pendingPersonalDeclarationId`).
+user's chosen time so several burdens don't all buzz in the same minute. The
+stagger runs forwards where the day has room and **backwards past 9:30 PM**, so
+someone who picked 10 PM gets their declarations at night rather than at 1 AM;
+running backwards, the last declaration takes the chosen time so reminders still
+arrive in list order. Each reminder carries `declarationId` in `userInfo`, so a
+tapped notification opens that exact declaration
+(`AppState.pendingPersonalDeclarationId`).
 
 `DeclarationNotificationServiceProtocol` is now
 `scheduleAll(_:startTimeIndex:)` / `cancel(id:)` / `cancelAll()`. Reminder times

@@ -48,6 +48,10 @@ struct ModernDailyChecklistView: View {
     private var personalDeclaration: PersonalDeclaration? {
         activeDeclarations.first(where: { !$0.spokenToday }) ?? activeDeclarations.first
     }
+    /// Computed once per body pass instead of once per tile subview.
+    private var declarationsLeftToday: Int {
+        activeDeclarations.filter { !$0.spokenToday }.count
+    }
     /// The link under the declaration tile: a way into the full list, and for
     /// single-declaration users the nudge that they can carry more than one.
     private var seeAllDeclarationsLabel: String {
@@ -386,7 +390,7 @@ struct ModernDailyChecklistView: View {
                                 PersonalDeclarationFeedTile(
                                     declaration: declaration,
                                     totalCount: activeDeclarations.count,
-                                    remainingToday: activeDeclarations.filter { !$0.spokenToday }.count
+                                    remainingToday: declarationsLeftToday
                                 ) {
                                     openPersonalDeclaration()
                                 }

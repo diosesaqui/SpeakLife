@@ -15,6 +15,11 @@ struct PersonalDeclaration: Codable, Equatable, Identifiable {
     let startDate: Date
     var receivedDate: Date?
     var testimony: String?
+    /// Set when the user stops carrying this declaration. A tombstone rather
+    /// than a real delete: the list is merged across devices as a union by id,
+    /// so a removed record has to stay visible-as-removed or the next iCloud
+    /// reconcile would hand it straight back.
+    var deletedDate: Date?
 
     // MARK: - Speak Tracking
     //
@@ -33,7 +38,7 @@ struct PersonalDeclaration: Codable, Equatable, Identifiable {
 
     enum CodingKeys: String, CodingKey {
         case id, beliefText, declarationText, verse, verseReference
-        case categoryRaw, startDate, receivedDate, testimony
+        case categoryRaw, startDate, receivedDate, testimony, deletedDate
         case completedDayCount, dailySpeakCount, lastSpokenDate
     }
 
@@ -46,6 +51,7 @@ struct PersonalDeclaration: Codable, Equatable, Identifiable {
          startDate: Date,
          receivedDate: Date? = nil,
          testimony: String? = nil,
+         deletedDate: Date? = nil,
          completedDayCount: Int = 0,
          dailySpeakCount: Int = 0,
          lastSpokenDate: String = "") {
@@ -58,6 +64,7 @@ struct PersonalDeclaration: Codable, Equatable, Identifiable {
         self.startDate = startDate
         self.receivedDate = receivedDate
         self.testimony = testimony
+        self.deletedDate = deletedDate
         self.completedDayCount = completedDayCount
         self.dailySpeakCount = dailySpeakCount
         self.lastSpokenDate = lastSpokenDate
@@ -76,16 +83,26 @@ struct PersonalDeclaration: Codable, Equatable, Identifiable {
         startDate = try container.decode(Date.self, forKey: .startDate)
         receivedDate = try container.decodeIfPresent(Date.self, forKey: .receivedDate)
         testimony = try container.decodeIfPresent(String.self, forKey: .testimony)
+        deletedDate = try container.decodeIfPresent(Date.self, forKey: .deletedDate)
         completedDayCount = try container.decodeIfPresent(Int.self, forKey: .completedDayCount) ?? 0
         dailySpeakCount = try container.decodeIfPresent(Int.self, forKey: .dailySpeakCount) ?? 0
         lastSpokenDate = try container.decodeIfPresent(String.self, forKey: .lastSpokenDate) ?? ""
     }
 
     var isReceived: Bool { receivedDate != nil }
+    /// True once the user has stopped carrying this one. Filtered out of every
+    /// read; only the sync merge and the stored blob ever see it.
+    var isDeleted: Bool { deletedDate != nil }
+
+    /// Shared because `todayKey` is read once per declaration per render (the
+    /// feed counts how many are still unspoken today), and building an
+    /// ISO8601DateFormatter costs far more than the formatting itself.
+    /// Formatters are safe to share for formatting.
+    private static let dayFormatter = ISO8601DateFormatter()
 
     /// Today, in the format `lastSpokenDate` is written in.
     static var todayKey: String {
-        ISO8601DateFormatter().string(from: Calendar.current.startOfDay(for: Date()))
+        dayFormatter.string(from: Calendar.current.startOfDay(for: Date()))
     }
 
     /// True once the user has successfully spoken this declaration today.

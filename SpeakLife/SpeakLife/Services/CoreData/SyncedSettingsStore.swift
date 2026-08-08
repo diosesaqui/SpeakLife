@@ -763,6 +763,9 @@ final class SyncedSettingsStore {
         // A breakthrough is one-way: once received anywhere, received everywhere.
         if merged.receivedDate == nil { merged.receivedDate = b.receivedDate }
         if (merged.testimony ?? "").isEmpty { merged.testimony = b.testimony }
+        // So is putting one down. Without this the union would hand a removed
+        // declaration back on the next reconcile, reminder and all.
+        if merged.deletedDate == nil { merged.deletedDate = b.deletedDate }
         return merged
     }
 
