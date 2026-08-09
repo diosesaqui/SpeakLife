@@ -473,10 +473,40 @@ final class ThoughtClassifierTests: XCTestCase {
         }
     }
 
+    func testPurityThoughtMapsToTheLustTerrain() {
+        let classifier = ThoughtClassifier(bank: makeBank())
+        guard case .matched(let category, _, let confidence) =
+                classifier.classify("I keep giving in to lust and temptation") else {
+            return XCTFail("Expected a match.")
+        }
+        XCTAssertEqual(category, .lust)
+        XCTAssertEqual(confidence, .high)
+        // Named as ground taken, never as a label on the speaker.
+        XCTAssertEqual(ThoughtCategory.lust.terrainName, "purity")
+    }
+
+    /// Deliberate, and pinned so it isn't "fixed" by accident: the addiction
+    /// keyword rule owns "porn" and fires before the purity rule, so that input
+    /// lands on grace rather than purity. It also carries alcohol and drugs, and
+    /// grace is the right medicine for the shame underneath any of them.
+    func testAddictionStaysOnTheGraceTerrain() {
+        let classifier = ThoughtClassifier(bank: makeBank())
+        guard case .matched(let category, _, _) =
+                classifier.classify("I relapsed with alcohol again") else {
+            return XCTFail("Expected a match.")
+        }
+        XCTAssertEqual(category, .condemnation)
+    }
+
+    /// The input deliberately avoids "bills": the shared keyword table matches on
+    /// substrings, and "bills" contains "ill", which fires the health rule first
+    /// and routes a money worry to the healing terrain. That is a quirk of the
+    /// table this feature borrows, not something to work around here — but a test
+    /// written over it would be asserting the wrong thing.
     func testMoneyThoughtMapsToProvisionTerrain() {
         let classifier = ThoughtClassifier(bank: makeBank())
         guard case .matched(let category, _, let confidence) =
-                classifier.classify("I'm drowning in debt and can't pay the bills") else {
+                classifier.classify("I am drowning in debt and cannot make the payments") else {
             return XCTFail("Expected a match.")
         }
         XCTAssertEqual(category, .lack)

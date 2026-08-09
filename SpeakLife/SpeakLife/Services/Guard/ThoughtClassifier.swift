@@ -15,7 +15,7 @@
 //  The classifier reuses `MatchRule.defaults` — the same keyword table the
 //  personal-declaration matcher runs on — rather than growing a second, rival
 //  list of keywords that would drift out of agreement with it. It maps the
-//  resulting `DeclarationCategory` onto one of the eight Guard terrains.
+//  resulting `DeclarationCategory` onto one of the nine Guard terrains.
 //
 //  Crisis routing runs FIRST, before any matching, via the shared
 //  `SituationScreen`. Same screen, same words, same support address as the
@@ -44,7 +44,7 @@ enum ThoughtClassification: Equatable {
     }
 }
 
-/// Classifies free text into one of the eight terrains, entirely on device.
+/// Classifies free text into one of the nine terrains, entirely on device.
 struct ThoughtClassifier {
 
     private let matcher: KeywordDeclarationMatcher
@@ -82,7 +82,7 @@ struct ThoughtClassifier {
 
         // Low confidence: a general identity declaration, which is true of them
         // whatever the thought was. `.inadequacy` is the identity terrain, so
-        // the fallback stays inside the same eight and needs no special case
+        // the fallback stays inside the same nine and needs no special case
         // downstream.
         let fallbackCategory = ThoughtCategory.inadequacy
         let thought = counter(for: fallbackCategory, matching: text) ?? Self.lastResort

@@ -30,7 +30,7 @@ final class TakeItCaptiveService: ObservableObject {
     static let shared = TakeItCaptiveService()
 
     /// A thought is not served again until this many days have passed. At one
-    /// rep a day against a 120-entry bank, this is comfortably satisfiable.
+    /// rep a day against a 135-entry bank, this is comfortably satisfiable.
     static let repeatCooldownDays = 60
 
     /// Reps completed before intensity 3 is unlocked. Never open a new user with
@@ -247,8 +247,8 @@ final class TakeItCaptiveService: ObservableObject {
     private static let neverServedBonus = 10_000
 
     /// The free tier's fixed set: the first N of each category, in bank order.
-    /// Deterministic on purpose — every free install sees the same 24, which is
-    /// what makes the paid bank ("the full 120, rotating") a real difference
+    /// Deterministic on purpose — every free install sees the same 27, which is
+    /// what makes the paid bank ("the full 135, rotating") a real difference
     /// rather than a number on a table.
     func freeSlice() -> [IncomingThought] {
         var perCategory: [ThoughtCategory: Int] = [:]

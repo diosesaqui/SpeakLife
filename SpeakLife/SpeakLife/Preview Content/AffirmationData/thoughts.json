@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "count": 120,
+  "count": 135,
   "thoughts": [
     {
       "id": "thought_fear_001",
@@ -1051,6 +1051,156 @@
       "verseText": "He tends his flock like a shepherd: He gathers the lambs in his arms and carries them close to his heart; he gently leads those that have young.",
       "book": "Isaiah 40:11",
       "declarationCategory": "rest"
+    },
+    {
+      "id": "thought_lust_001",
+      "text": "One look will not hurt anything.",
+      "category": "lust",
+      "intensity": 1,
+      "counterDeclaration": "My eyes rest on what is good. What I put on my screen honors God.",
+      "verseText": "I will refuse to look at anything vile and vulgar.",
+      "book": "Psalm 101:3a",
+      "declarationCategory": "purity"
+    },
+    {
+      "id": "thought_lust_002",
+      "text": "Nobody sees what you do alone.",
+      "category": "lust",
+      "intensity": 1,
+      "counterDeclaration": "My integrity guides me. Alone or in a crowd, I am the same person.",
+      "verseText": "The integrity of the upright guides them, but the unfaithful are destroyed by their duplicity.",
+      "book": "Proverbs 11:3",
+      "declarationCategory": "purity"
+    },
+    {
+      "id": "thought_lust_003",
+      "text": "You can stop whenever you want to.",
+      "category": "lust",
+      "intensity": 1,
+      "counterDeclaration": "The Spirit grows self-control in me like living fruit. His strength holds me steady.",
+      "verseText": "But the fruit of the Spirit is love, joy, peace, forbearance, kindness, goodness, faithfulness, gentleness and self-control. Against such things there is no law.",
+      "book": "Galatians 5:22-23",
+      "declarationCategory": "purity"
+    },
+    {
+      "id": "thought_lust_004",
+      "text": "Your mind is your own business.",
+      "category": "lust",
+      "intensity": 1,
+      "counterDeclaration": "My thoughts rest on what is true, lovely, and pure.",
+      "verseText": "Finally, brothers and sisters, whatever is true, whatever is noble, whatever is right, whatever is pure, whatever is lovely, whatever is admirable, if anything is excellent or praiseworthy, think about such things.",
+      "book": "Philippians 4:8",
+      "declarationCategory": "purity"
+    },
+    {
+      "id": "thought_lust_005",
+      "text": "It is not hurting anyone.",
+      "category": "lust",
+      "intensity": 1,
+      "counterDeclaration": "I carry my body in holiness and honor. I honor everyone around me.",
+      "verseText": "That each of you should learn to control your own body in a way that is holy and honorable.",
+      "book": "1 Thessalonians 4:4",
+      "declarationCategory": "purity"
+    },
+    {
+      "id": "thought_lust_006",
+      "text": "This is just how you are wired.",
+      "category": "lust",
+      "intensity": 2,
+      "counterDeclaration": "God gave me a new heart. It is soft, awake, and alive to His voice.",
+      "verseText": "I will give you a new heart and put a new spirit in you; I will remove from you your heart of stone and give you a heart of flesh.",
+      "book": "Ezekiel 36:26",
+      "declarationCategory": "purity"
+    },
+    {
+      "id": "thought_lust_007",
+      "text": "You will always want what you should not.",
+      "category": "lust",
+      "intensity": 2,
+      "counterDeclaration": "I walk by the Spirit. He leads my desires, and they follow Him gladly.",
+      "verseText": "So I say, walk by the Spirit, and you will not gratify the desires of the flesh.",
+      "book": "Galatians 5:16",
+      "declarationCategory": "purity"
+    },
+    {
+      "id": "thought_lust_008",
+      "text": "You have fought this for years and nothing has changed.",
+      "category": "lust",
+      "intensity": 2,
+      "counterDeclaration": "Inwardly God renews me day after day. I wake up new every morning.",
+      "verseText": "Therefore we do not lose heart. Though outwardly we are wasting away, yet inwardly we are being renewed day by day.",
+      "book": "2 Corinthians 4:16",
+      "declarationCategory": "purity"
+    },
+    {
+      "id": "thought_lust_009",
+      "text": "God will not come near you until you clean yourself up.",
+      "category": "lust",
+      "intensity": 2,
+      "counterDeclaration": "I draw near to God with a sincere heart. I come boldly, sprinkled clean.",
+      "verseText": "Let us draw near to God with a sincere heart and with the full assurance that faith brings, having our hearts sprinkled to cleanse us from a guilty conscience and having our bodies washed with pure water.",
+      "book": "Hebrews 10:22",
+      "declarationCategory": "purity"
+    },
+    {
+      "id": "thought_lust_010",
+      "text": "Everyone would leave if they knew.",
+      "category": "lust",
+      "intensity": 2,
+      "counterDeclaration": "I walk in the light. The blood of Jesus keeps my friendships open and honest.",
+      "verseText": "But if we walk in the light, as he is in the light, we have fellowship with one another, and the blood of Jesus, his Son, purifies us from all sin.",
+      "book": "1 John 1:7",
+      "declarationCategory": "purity"
+    },
+    {
+      "id": "thought_lust_011",
+      "text": "You will never be free of this.",
+      "category": "lust",
+      "intensity": 3,
+      "counterDeclaration": "Grace trains me to live for God. I live upright and free.",
+      "verseText": "For the grace of God has appeared that offers salvation to all people. It teaches us to say \"No\" to ungodliness and worldly passions, and to live self-controlled, upright and godly lives in this present age.",
+      "book": "Titus 2:11-12",
+      "declarationCategory": "purity"
+    },
+    {
+      "id": "thought_lust_012",
+      "text": "You are too dirty for God to use.",
+      "category": "lust",
+      "intensity": 3,
+      "counterDeclaration": "I am washed by the blood of Jesus. I stand justified and clean before God.",
+      "verseText": "But you were washed, you were sanctified, you were justified in the name of the Lord Jesus Christ and by the Spirit of our God.",
+      "book": "1 Corinthians 6:11",
+      "declarationCategory": "purity"
+    },
+    {
+      "id": "thought_lust_013",
+      "text": "Purity was never possible for you.",
+      "category": "lust",
+      "intensity": 3,
+      "counterDeclaration": "God created a pure heart in me. My spirit is steady and set on Him.",
+      "verseText": "Create in me a pure heart, O God, and renew a steadfast spirit within me.",
+      "book": "Psalm 51:10",
+      "declarationCategory": "purity"
+    },
+    {
+      "id": "thought_lust_014",
+      "text": "You already gave in, so the day is lost.",
+      "category": "lust",
+      "intensity": 3,
+      "counterDeclaration": "God keeps me from stumbling and presents me faultless before His glory.",
+      "verseText": "Now to him who is able to keep you from stumbling and to present you before his glorious presence without fault and with great joy.",
+      "book": "Jude 1:24",
+      "declarationCategory": "purity"
+    },
+    {
+      "id": "thought_lust_015",
+      "text": "This is who you really are underneath.",
+      "category": "lust",
+      "intensity": 3,
+      "counterDeclaration": "I am new in Christ. The old is gone and my desires are made new.",
+      "verseText": "Therefore, if anyone is in Christ, the new creation has come: The old has gone, the new is here!",
+      "book": "2 Corinthians 5:17",
+      "declarationCategory": "purity"
     },
     {
       "id": "thought_conf_001",

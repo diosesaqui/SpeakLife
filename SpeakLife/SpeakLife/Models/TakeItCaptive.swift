@@ -25,7 +25,7 @@ import Foundation
 
 // MARK: - Category
 
-/// The eight terrains a thought comes in on.
+/// The nine terrains a thought comes in on.
 ///
 /// Terrain, not pathology, deliberately: this is where ground gets taken, not a
 /// diagnosis of the speaker. Nothing in the UI ever says "you struggle with
@@ -39,6 +39,7 @@ enum ThoughtCategory: String, Codable, CaseIterable, Identifiable {
     case inadequacy
     case abandonment
     case confusion
+    case lust
 
     var id: String { rawValue }
 
@@ -54,17 +55,26 @@ enum ThoughtCategory: String, Codable, CaseIterable, Identifiable {
         case .inadequacy:   return "identity"
         case .abandonment:  return "God's nearness"
         case .confusion:    return "clarity"
+        case .lust:         return "purity"
         }
     }
 
     /// The declaration categories this terrain draws its counters from. Used by
     /// the escape hatch to turn a `DeclarationCategory` from the shared matcher
-    /// into one of these eight.
+    /// into one of these nine.
     static func from(_ declarationCategory: DeclarationCategory) -> ThoughtCategory? {
         switch declarationCategory {
         case .fear, .godsprotection, .warfare, .anxiety:
             return .fear
-        case .grace, .forgiveness, .purity, .addiction, .salvation:
+        case .purity:
+            return .lust
+        // `.addiction` deliberately stays on grace rather than moving to `.lust`
+        // with purity. It also carries alcohol, drugs, and every other
+        // compulsion, and the keyword rule that owns it fires before the purity
+        // rule — so routing it here would send someone fighting a bottle to
+        // declarations about their eyes. Grace and freedom are the right
+        // medicine for the shame underneath any of them.
+        case .grace, .forgiveness, .addiction, .salvation:
             return .condemnation
         case .wealth, .debt, .housing, .work, .business, .education:
             return .lack
