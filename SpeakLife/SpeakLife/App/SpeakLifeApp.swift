@@ -346,7 +346,16 @@ struct SpeakLifeApp: App {
                 // that exact one rather than whichever is first in the list.
                 appState.pendingPersonalDeclarationId =
                     content.userInfo["declarationId"] as? String ?? ""
-                appState.scrollToPersonalDeclaration = true
+                // Forced false -> true on separate runloops so the observer sees
+                // a real transition. The flag is @AppStorage and therefore
+                // survives launches, so it can already be true from a tap that
+                // landed while the feed was not mounted. Assigning true over
+                // true is not a change, `onChange` never fires, and the deep
+                // link silently does nothing.
+                appState.scrollToPersonalDeclaration = false
+                DispatchQueue.main.async {
+                    appState.scrollToPersonalDeclaration = true
+                }
                 return
             case "message":
                 // Personalized push message — open its own reader screen rather
