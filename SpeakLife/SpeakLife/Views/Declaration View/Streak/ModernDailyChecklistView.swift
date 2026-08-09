@@ -377,6 +377,12 @@ struct ModernDailyChecklistView: View {
                                     if let onClose = onClose { onClose() } else { dismiss() }
                                     tabViewModel.goToAudio()
                                 },
+                                onOpenBurst: {
+                                    AnalyticsService.shared.track("enforcement_burst_opened", parameters: [
+                                        "day": enforcementService.progressSnapshot.currentDay
+                                    ])
+                                    openBurst()
+                                },
                                 onLockedTap: {
                                     AnalyticsService.shared.track("enforcement_locked_tapped")
                                     AnalyticsService.shared.trackPaywallImpression(paywallId: "enforcement_card")
@@ -434,10 +440,45 @@ struct ModernDailyChecklistView: View {
                         .padding(.horizontal, 20)
                         .dsAppear(0.08)
 
+                        // Personal Declaration — the one thing the user is
+                        // believing God for. Above the quick-action grid, not
+                        // below it: everything above this point is something to
+                        // DO, and the grid is a set of doorways. This card has a
+                        // "Speak it" mic on it, so it belongs with the actions.
+                        // It is also the only card on Today made of the user's
+                        // own words, which outranks a shortcut to the Bible.
+                        if appState.hasPersonalDeclaration, let declaration = personalDeclaration {
+                            VStack(spacing: 8) {
+                                PersonalDeclarationFeedTile(
+                                    declaration: declaration,
+                                    totalCount: activeDeclarations.count,
+                                    remainingToday: declarationsLeftToday
+                                ) {
+                                    openPersonalDeclaration()
+                                }
+
+                                // Doubles as the way in to the full list and the
+                                // nudge that they can be believing for more than
+                                // one thing at a time.
+                                Button {
+                                    Juice.play(.tapLight)
+                                    showMyDeclarations = true
+                                } label: {
+                                    Text(seeAllDeclarationsLabel)
+                                        .font(.system(size: 13, weight: .semibold, design: .rounded))
+                                        .foregroundColor(.white.opacity(0.5))
+                                }
+                                .buttonStyle(.dsPressable(feel: .tapLight, haptics: false))
+                            }
+                            .padding(.horizontal, 20)
+                            .padding(.top, 16)
+                            .dsAppear(0.12)
+                        }
+
                         // Quick access — the four core daily destinations, always
                         // reachable regardless of which tasks are unlocked today.
-                        // Surfaced right under today's tasks so the actionable
-                        // jump-off points come before previews and teasers.
+                        // Sits below the actions above: these are doorways, not
+                        // today's work.
                         VStack(spacing: 10) {
                             HStack {
                                 Text("JUMP BACK IN")
@@ -479,39 +520,7 @@ struct ModernDailyChecklistView: View {
                         }
                         .padding(.horizontal, 20)
                         .padding(.top, 12)
-                        .dsAppear(0.12)
-
-                        // Personal Declaration — the one thing the user is
-                        // believing God for, anchored at the bottom of Today as
-                        // a full tile (not just a quick-action icon) so it stays
-                        // front-of-mind every day until it comes to pass.
-                        if appState.hasPersonalDeclaration, let declaration = personalDeclaration {
-                            VStack(spacing: 8) {
-                                PersonalDeclarationFeedTile(
-                                    declaration: declaration,
-                                    totalCount: activeDeclarations.count,
-                                    remainingToday: declarationsLeftToday
-                                ) {
-                                    openPersonalDeclaration()
-                                }
-
-                                // Doubles as the way in to the full list and the
-                                // nudge that they can be believing for more than
-                                // one thing at a time.
-                                Button {
-                                    Juice.play(.tapLight)
-                                    showMyDeclarations = true
-                                } label: {
-                                    Text(seeAllDeclarationsLabel)
-                                        .font(.system(size: 13, weight: .semibold, design: .rounded))
-                                        .foregroundColor(.white.opacity(0.5))
-                                }
-                                .buttonStyle(.dsPressable(feel: .tapLight, haptics: false))
-                            }
-                            .padding(.horizontal, 20)
-                            .padding(.top, 16)
-                            .dsAppear(0.16)
-                        }
+                        .dsAppear(0.16)
 
                         // Unlock tomorrow — a closing "come back tomorrow" teaser.
                         // Kept at the end so it caps the feed as a retention hook

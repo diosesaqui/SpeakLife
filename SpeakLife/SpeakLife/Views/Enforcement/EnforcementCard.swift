@@ -9,6 +9,15 @@
 //  unread count, no red. A user with a 200-day streak should never feel they've
 //  fallen behind on something that didn't exist yesterday.
 //
+//  Structure note: a campaign is NOT a second thing to do. `DailyDeclarationBurstView`
+//  hands the whole Burst to the active campaign, and `complete_daily_burst` is
+//  what advances a day — so this card is a lens on the Burst, not a parallel
+//  track. It used to read as its own system (its own seven-dot rail competing
+//  with the week strip, audio as the loudest button) and users reasonably
+//  concluded that playing the audio was how you completed a day. Hence: speaking
+//  the Burst is the primary CTA, audio is secondary, and there is no second
+//  progress rail — the day count in the eyebrow carries it.
+//
 
 import SwiftUI
 
@@ -22,6 +31,9 @@ struct EnforcementCard: View {
     let onStart: (Enforcement) -> Void
     /// Active user tapped into today's audio.
     let onOpenAudio: (EnforcementDay) -> Void
+    /// Active user tapped the primary CTA — speaking the Burst is the action
+    /// that actually advances the campaign, so it is the button on the card.
+    let onOpenBurst: () -> Void
     /// Non-premium user tapped anywhere on the locked card.
     let onLockedTap: () -> Void
     /// Active user chose to drop this campaign and pick a different one.
@@ -38,6 +50,9 @@ struct EnforcementCard: View {
     @State private var situation = ""
     @State private var isMatching = false
     @State private var matchFailed = false
+    /// Set when what they typed is too thin to build a week from. Cleared as
+    /// soon as they start editing, so the message never outlives the input.
+    @State private var inputError: String?
 
     var body: some View {
         if service.isEligible(totalDaysCompleted: totalDaysCompleted) {
@@ -61,9 +76,7 @@ struct EnforcementCard: View {
     private func activeCard(enforcement: Enforcement, day: EnforcementDay) -> some View {
         VStack(alignment: .leading, spacing: DS.Spacing.sm) {
             eyebrow("DAY \(service.progress.currentDay) OF \(Enforcement.length) · \(enforcement.title.uppercased())")
-                .accessibilityHidden(true)
-
-            dayRail
+                .accessibilityLabel("Day \(service.progress.currentDay) of \(Enforcement.length), \(enforcement.title)")
 
             Text(day.anchorText)
                 .font(.system(size: 17, weight: .semibold, design: .rounded))
@@ -76,22 +89,40 @@ struct EnforcementCard: View {
                     .foregroundColor(.white.opacity(0.55))
             }
 
+            // The action that actually advances the day, named as such. This is
+            // the whole answer to "how do I complete it?" — no explanation
+            // needed when the button on the campaign is the one that moves it.
+            Button(action: onOpenBurst) {
+                HStack(spacing: 8) {
+                    Image(systemName: "bolt.fill")
+                        .font(.system(size: 15, weight: .bold))
+                    Text("Speak today's Burst")
+                        .font(.system(size: 15, weight: .bold, design: .rounded))
+                }
+                .foregroundColor(DS.Palette.deepBlue)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 12)
+                .background(Capsule().fill(DS.Gradient.gold))
+            }
+            .buttonStyle(.dsPressable(feel: .tapSolid))
+            .accessibilityLabel("Speak today's Burst, day \(service.progress.currentDay) of \(Enforcement.length)")
+            .padding(.top, 2)
+
             HStack(spacing: DS.Spacing.xs) {
+                // Demoted to a quiet row: it is worth having (it warms them up
+                // before they speak) but it does not advance anything, so it
+                // must not look like the thing to press.
                 Button {
                     onOpenAudio(day)
                 } label: {
-                    HStack(spacing: 8) {
+                    HStack(spacing: 6) {
                         Image(systemName: "play.circle.fill")
-                            .font(.system(size: 16, weight: .semibold))
-                        Text("\(day.audioTitle) · \(day.audioMinutes) min")
                             .font(.system(size: 14, weight: .semibold))
+                        Text("\(day.audioTitle) · \(day.audioMinutes) min")
+                            .font(.system(size: 13, weight: .medium))
                             .lineLimit(1)
                     }
-                    .foregroundColor(.white)
-                    .padding(.horizontal, DS.Spacing.sm)
-                    .padding(.vertical, 9)
-                    .background(Capsule().fill(Color.white.opacity(0.14)))
-                    .overlay(Capsule().stroke(Color.white.opacity(0.22), lineWidth: 1))
+                    .foregroundColor(.white.opacity(0.7))
                 }
                 .buttonStyle(PlainButtonStyle())
                 .accessibilityLabel("Play today's audio, \(day.audioTitle)")
@@ -104,11 +135,10 @@ struct EnforcementCard: View {
                     confirmingSwitch = true
                 } label: {
                     Image(systemName: "arrow.triangle.2.circlepath")
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.65))
-                        .frame(width: 34, height: 34)
-                        .background(Circle().fill(Color.white.opacity(0.10)))
-                        .overlay(Circle().stroke(Color.white.opacity(0.18), lineWidth: 1))
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(.white.opacity(0.55))
+                        .frame(width: 30, height: 30)
+                        .background(Circle().fill(Color.white.opacity(0.08)))
                 }
                 .buttonStyle(PlainButtonStyle())
                 .accessibilityLabel("Switch to a different enforcement")
@@ -124,27 +154,11 @@ struct EnforcementCard: View {
         }
     }
 
-    /// Seven dots: filled for days done, ringed for today, hollow ahead.
-    private var dayRail: some View {
-        HStack(spacing: 7) {
-            ForEach(1...Enforcement.length, id: \.self) { day in
-                let done = service.progress.completedDayNumbers.contains(day)
-                let isToday = day == service.progress.currentDay
-                Circle()
-                    .fill(done ? AnyShapeStyle(DS.Gradient.gold) : AnyShapeStyle(Color.white.opacity(0.14)))
-                    .frame(width: 11, height: 11)
-                    .overlay(
-                        Circle().stroke(
-                            isToday ? DS.Palette.gold : Color.white.opacity(0.22),
-                            lineWidth: isToday ? 2 : 1
-                        )
-                    )
-            }
-            Spacer(minLength: 0)
-        }
-        .accessibilityElement()
-        .accessibilityLabel("Day \(service.progress.currentDay) of \(Enforcement.length)")
-    }
+    // The seven-dot day rail used to live here. Removed deliberately: the Today
+    // header already carries a seven-item progress row (the week strip), and two
+    // of them on one screen — tracking the same daily action with different
+    // meanings — is what made a campaign read as a separate track to keep up
+    // with. "DAY 3 OF 7" in the eyebrow says the same thing in less space.
 
     // MARK: - Invitation
 
@@ -152,14 +166,30 @@ struct EnforcementCard: View {
         VStack(alignment: .leading, spacing: DS.Spacing.sm) {
             eyebrow("ENFORCE THE VICTORY")
 
-            Text("Seven days standing on what Jesus already won.")
-                .font(.system(size: 16, weight: .medium, design: .rounded))
-                .foregroundColor(.white.opacity(0.92))
+            Text("What area of life do you need victory in?")
+                .font(.system(size: 16, weight: .semibold, design: .rounded))
+                .foregroundColor(.white.opacity(0.95))
+                .fixedSize(horizontal: false, vertical: true)
+
+            // States the contract before they type. The feature already works
+            // this way — DailyDeclarationBurstView hands the whole Burst to the
+            // active campaign — it just never said so, so nothing connected what
+            // someone typed here to the words that came out of their mouth.
+            Text("Say it in a sentence. For seven days your Daily Burst is built around it.")
+                .font(.system(size: 13, weight: .regular, design: .rounded))
+                .foregroundColor(.white.opacity(0.6))
                 .fixedSize(horizontal: false, vertical: true)
 
             // The real entry point. Four fixed themes can't know that this week
             // is different from last week; their own words can.
             situationField
+
+            if let inputError {
+                Text(inputError)
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(DS.Palette.gold.opacity(0.9))
+                    .fixedSize(horizontal: false, vertical: true)
+            }
 
             if matchFailed {
                 Text("Couldn't build a week from that. Try naming it more plainly, or pick a theme below.")
@@ -168,9 +198,12 @@ struct EnforcementCard: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
 
-            Text("or pick a theme")
+            // Demoted from a co-equal option. Presented level with the field,
+            // the chips taught people to answer with a theme name — one word,
+            // which is the least the curator can work with.
+            Text("or start from a theme")
                 .font(.system(size: 12, weight: .medium))
-                .foregroundColor(.white.opacity(0.45))
+                .foregroundColor(.white.opacity(0.4))
                 .padding(.top, 2)
 
             // The theme matching their strongest onboarding signal leads, but
@@ -216,11 +249,17 @@ struct EnforcementCard: View {
         .accessibilityLabel("Enforce the victory. Premium feature. Tap to learn more.")
     }
 
-    /// "What are you walking through?" — the input that makes the week theirs.
+    /// The input that makes the week theirs.
+    ///
+    /// The placeholder is a worked example rather than another instruction: it
+    /// shows the length that produces a good week, which is the one thing a
+    /// question mark cannot communicate. Asked "what area of life do you need
+    /// victory in?" with no example, people answer with an area — one or two
+    /// words — and the curator has nothing to read.
     private var situationField: some View {
         HStack(spacing: 8) {
             TextField(text: $situation, axis: .vertical) {
-                Text("What are you walking through?")
+                Text("e.g. I'm under attack at work and I'm exhausted")
                     .foregroundColor(.white.opacity(0.45))
             }
                 .font(.system(size: 15, weight: .medium))
@@ -229,6 +268,10 @@ struct EnforcementCard: View {
                 .disabled(isMatching)
                 .submitLabel(.go)
                 .onSubmit(submitSituation)
+                .onChange(of: situation) { _ in
+                    if inputError != nil { inputError = nil }
+                    if matchFailed { matchFailed = false }
+                }
 
             Button(action: submitSituation) {
                 if isMatching {
@@ -265,6 +308,22 @@ struct EnforcementCard: View {
     private func submitSituation() {
         let text = situation.trimmingCharacters(in: .whitespacesAndNewlines)
         guard text.count >= 3, !isMatching else { return }
+
+        // Validated on submit, not by disabling the arrow. A greyed-out button
+        // with no explanation is where this went wrong before: someone types the
+        // name of a theme, nothing happens, and there is nothing to learn from.
+        // Let the tap through and answer it.
+        do {
+            try DeclarationInputValidator.validate(text)
+        } catch {
+            AnalyticsService.shared.track("enforcement_input_rejected", parameters: [
+                "reason": "\(error)", "length": text.count
+            ])
+            inputError = "A few more words. A sentence about what you're facing gives you seven days that actually fit."
+            return
+        }
+
+        inputError = nil
         isMatching = true
         matchFailed = false
         onDescribe(text) { started in
