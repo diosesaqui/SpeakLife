@@ -350,14 +350,46 @@ struct DayCelebrationView: View {
 struct StructuredDayView: View {
     let tasks: [DailyTask]
     let streakCount: Int
+    /// True when an Enforcement campaign is on screen above this view carrying
+    /// its own "Speak today's Burst" CTA.
+    ///
+    /// The checklist deliberately sorts the Burst first so it headlines NEXT UP
+    /// — right until a campaign card sits directly above it doing the same job,
+    /// at which point the user gets two loud buttons, stacked, for one action.
+    /// The campaign owns the Burst then (it is what banks the day), so the
+    /// hero slot goes to the next thing the user hasn't done. The Burst still
+    /// counts toward the day and still gates the streak; it just stops being
+    /// announced twice.
+    var burstOwnedByCampaign: Bool = false
     let onToggle: (String) -> Void
     let onNavigate: (DailyTask) -> Void
     let onAllComplete: () -> Void
 
+    /// Matches the id the checklist generator and `EnhancedStreakViewModel`
+    /// both key the Burst off.
+    private static let burstTaskId = "complete_daily_burst"
+
     private var completedTasks: [DailyTask] { tasks.filter { $0.isCompleted } }
     private var incompleteTasks: [DailyTask] { tasks.filter { !$0.isCompleted } }
-    private var nextTask: DailyTask? { incompleteTasks.first }
-    private var upcomingTasks: [DailyTask] { incompleteTasks.dropFirst().map { $0 } }
+
+    /// What may headline NEXT UP. Everything incomplete, minus the Burst when
+    /// the campaign card is already carrying it.
+    private var heroCandidates: [DailyTask] {
+        guard burstOwnedByCampaign else { return incompleteTasks }
+        return incompleteTasks.filter { $0.id != Self.burstTaskId }
+    }
+
+    private var nextTask: DailyTask? { heroCandidates.first }
+
+    /// Everything else still outstanding — including the Burst when it lost the
+    /// hero slot, so it stays visible in the day rather than disappearing.
+    /// Filtered by the hero's id rather than `dropFirst()`, which would drop
+    /// the wrong task once the hero is no longer the first one.
+    private var upcomingTasks: [DailyTask] {
+        guard let heroId = nextTask?.id else { return incompleteTasks }
+        return incompleteTasks.filter { $0.id != heroId }
+    }
+
     private var allDone: Bool { tasks.allSatisfy { $0.isCompleted } }
 
     var body: some View {
