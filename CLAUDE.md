@@ -33,6 +33,9 @@ Each declaration must clearly connect to its category theme. A generic declarati
 - Direct and bold. No weak qualifiers ("I think", "maybe", "I hope to").
 - Short punchy sentences are powerful — use them.
 - Avoid filler phrases. Every word must earn its place.
+- **Never soften a promise scripture makes.** Boldness and faith are what make a declaration work at all. If the verse says it, declare it finished and say it flat. Psalm 1:3 says "whatever they do prospers", so the declaration says *"whatever I do prospers"*, not "I build steadily and well". Isaiah 53:5 says "by his wounds we are healed", so someone with cancer declares *"I am healed and this body makes a full recovery"*, not "God is able to help me".
+- **The limit is the verse, never squeamishness.** The only thing that may hold a declaration back is that scripture does not actually promise it. Grief gets joy (John 16:22, Psalm 126:5). A struggling mind gets the mind of Christ (1 Corinthians 2:16). Infertility gets a full womb (Genesis 17:16, Psalm 113:9, Exodus 23:26). Do not import outside caution over a promise the Bible plainly makes.
+- **Two things scripture never promises**, so declarations never claim them: that another free person will change, return, or believe, and any specific outcome no verse states. Declare God's faithfulness toward them and the speaker's own standing instead.
 
 ### 7. No Dashes
 Never use em dashes (—) or en dashes (–) in declaration text. They create run-on compound thoughts. Break into two clean sentences instead.
