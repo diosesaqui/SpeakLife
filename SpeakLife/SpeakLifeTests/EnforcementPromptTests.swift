@@ -49,8 +49,8 @@ final class EnforcementPromptTests: XCTestCase {
 
     /// The next date matching the prompt weekday, so tests don't depend on when
     /// they happen to run.
-    private func nextPromptDay() -> Date {
-        var date = Date()
+    private func nextPromptDay(after start: Date = Date()) -> Date {
+        var date = start
         for _ in 0..<8 {
             if calendar.component(.weekday, from: date) == EnforcementPrompt.promptWeekday {
                 return date
@@ -161,6 +161,59 @@ final class EnforcementPromptTests: XCTestCase {
                 XCTAssertFalse(full.contains(phrase),
                                "\"\(phrase)\" assumes a storm: \(copy.body)")
             }
+        }
+    }
+
+    /// Every variant leads with the alert emoji so the banner is recognisable at
+    /// a glance as the weekly campaign prompt rather than a devotional push.
+    func testPrompt_EveryVariantIsFlaggedAsAnAlert() {
+        for copy in EnforcementPrompt.rotation {
+            XCTAssertTrue(copy.title.hasPrefix("🚨 "), "no alert flag on: \(copy.title)")
+            XCTAssertFalse(copy.body.contains("🚨"), "emoji belongs in the title only: \(copy.body)")
+        }
+    }
+
+    /// The first prompt a user ever sees must be one of the explanatory ones.
+    ///
+    /// This used to index on `weekOfYear`, so the entry point was whatever the
+    /// calendar happened to land on and someone becoming eligible in week 33
+    /// opened on rotation[3]. Harmless when every variant read alike, wrong now
+    /// that the first three exist to explain "seven days" to someone who has
+    /// never run a campaign.
+    func testPrompt_FirstEverPromptStartsAtTheExplanatoryEnd() {
+        seedTenure(30)
+        let service = makeService()
+
+        // A date deliberately deep in the year, where the old modulo landed mid-array.
+        var date = nextPromptDay(after: calendar.date(from: DateComponents(year: 2026, month: 8, day: 1))!)
+        let first = EnforcementPrompt.copy(forDayOffset: 0, now: date, calendar: calendar,
+                                           service: service, defaults: defaults)
+        XCTAssertEqual(first?.title, EnforcementPrompt.rotation[0].title)
+
+        // And it advances one step per week from there, not per calendar week.
+        for expected in 1..<EnforcementPrompt.rotation.count {
+            date = calendar.date(byAdding: .day, value: 7, to: date)!
+            let copy = EnforcementPrompt.copy(forDayOffset: 0, now: date, calendar: calendar,
+                                              service: service, defaults: defaults)
+            XCTAssertEqual(copy?.title, EnforcementPrompt.rotation[expected].title,
+                           "week \(expected) landed on the wrong variant")
+        }
+    }
+
+    /// The batch is rebuilt many times a day, and every rebuild re-reads every
+    /// day offset. An anchor date survives that; a counter would race ahead by
+    /// dozens per rebuild and shuffle the copy under the user.
+    func testPrompt_RepeatedReadsDoNotAdvanceTheRotation() {
+        seedTenure(30)
+        let service = makeService()
+        let sunday = nextPromptDay()
+
+        let first = EnforcementPrompt.copy(forDayOffset: 0, now: sunday, calendar: calendar,
+                                           service: service, defaults: defaults)
+        for _ in 0..<25 {
+            let again = EnforcementPrompt.copy(forDayOffset: 0, now: sunday, calendar: calendar,
+                                               service: service, defaults: defaults)
+            XCTAssertEqual(again?.title, first?.title, "copy changed on a re-read of the same week")
         }
     }
 
