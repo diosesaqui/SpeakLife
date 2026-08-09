@@ -381,7 +381,8 @@ final class EnhancedStreakViewModel: ObservableObject {
                                                            foundationAudioDay: workingStreakDay,
                                                            enforcementDay: EnforcementService.shared.enabledActiveDay,
                                                            personalDeclarations: PersonalDeclarationRepository.todayProgress(),
-                                                           guardCompletedToday: TakeItCaptiveService.shared.enabledCompletedToday)
+                                                           guardCompletedToday: TakeItCaptiveService.shared.enabledCompletedToday,
+                                                           totalDaysCompleted: totalDaysCompleted)
         
         // Preserve completion status from existing tasks
         let existingCompletions = Dictionary(uniqueKeysWithValues: todayChecklist.tasks.map { 
@@ -427,7 +428,8 @@ final class EnhancedStreakViewModel: ObservableObject {
                                                            foundationAudioDay: workingStreakDay,
                                                            enforcementDay: EnforcementService.shared.enabledActiveDay,
                                                            personalDeclarations: PersonalDeclarationRepository.todayProgress(),
-                                                           guardCompletedToday: TakeItCaptiveService.shared.enabledCompletedToday)
+                                                           guardCompletedToday: TakeItCaptiveService.shared.enabledCompletedToday,
+                                                           totalDaysCompleted: totalDaysCompleted)
 
         // Completions must survive: starting a campaign after speaking today's
         // Burst must not un-check it and hand back a streak day already banked.
@@ -700,7 +702,8 @@ final class EnhancedStreakViewModel: ObservableObject {
                                                              foundationAudioDay: workingStreakDay,
                                                            enforcementDay: EnforcementService.shared.enabledActiveDay,
                                                            personalDeclarations: PersonalDeclarationRepository.todayProgress(),
-                                                           guardCompletedToday: TakeItCaptiveService.shared.enabledCompletedToday)
+                                                           guardCompletedToday: TakeItCaptiveService.shared.enabledCompletedToday,
+                                                           totalDaysCompleted: totalDaysCompleted)
         
         // Preserve completion status for existing tasks
         let existingCompletions = Dictionary(uniqueKeysWithValues: todayChecklist.tasks.map { ($0.id, $0.isCompleted) })
@@ -730,7 +733,8 @@ final class EnhancedStreakViewModel: ObservableObject {
                                                       foundationAudioDay: workingStreakDay,
                                                            enforcementDay: EnforcementService.shared.enabledActiveDay,
                                                            personalDeclarations: PersonalDeclarationRepository.todayProgress(),
-                                                           guardCompletedToday: TakeItCaptiveService.shared.enabledCompletedToday)
+                                                           guardCompletedToday: TakeItCaptiveService.shared.enabledCompletedToday,
+                                                           totalDaysCompleted: totalDaysCompleted)
         
         return DailyChecklist(
             date: today,

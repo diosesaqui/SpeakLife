@@ -39,6 +39,9 @@ struct ModernDailyChecklistView: View {
     /// owning it.
     @ObservedObject private var takeItCaptiveService = TakeItCaptiveService.shared
     @State private var showTakeItCaptive = false
+    /// True when Siri / Shortcuts / the lock screen opened the drill, so the
+    /// flow can tell an interception apart from the day's task.
+    @State private var takeItCaptiveFromIntent = false
     @State private var showJournal = false
     @State private var showWarriorRoom = false
     @State private var showCreateYourOwn = false
@@ -128,7 +131,8 @@ struct ModernDailyChecklistView: View {
     /// Guarding — the fifth pillar. Presented right here on Today rather than
     /// routed to a tab of its own: the whole promise is under 60 seconds, and a
     /// tab switch spends the first five of them.
-    private func openTakeItCaptive() {
+    private func openTakeItCaptive(fromIntent: Bool = false) {
+        takeItCaptiveFromIntent = fromIntent
         showTakeItCaptive = true
     }
 
@@ -725,6 +729,7 @@ struct ModernDailyChecklistView: View {
         .fullScreenCover(isPresented: $showTakeItCaptive) {
             TakeItCaptiveFlowView(
                 service: takeItCaptiveService,
+                launchedFromIntent: takeItCaptiveFromIntent,
                 onCompleted: {
                     // The row is derived from the service, so the checklist has
                     // to be rebuilt for the tick to appear.
@@ -975,12 +980,24 @@ struct ModernDailyChecklistView: View {
             // screen, and the row's tick is derived from today's rep — so both
             // are re-read on appear rather than trusted from the last build.
             takeItCaptiveService.refreshGround()
-            // Siri / Shortcuts / lock screen asked for the drill. Consumed
-            // exactly once, and only when it's fresh — see consumePendingLaunch.
+            // Siri / Shortcuts / lock screen asked for the drill on a COLD
+            // launch. Consumed exactly once, and only when it's fresh — see
+            // consumePendingLaunch. The warm case is the onChange below.
             if subscriptionStore.guardEnabled,
                TakeItCaptiveService.consumePendingLaunch() {
-                showTakeItCaptive = true
+                takeItCaptiveService.launchRequestedAt = nil
+                openTakeItCaptive(fromIntent: true)
             }
+        }
+        // The warm case: the app was already running, so onAppear never fires
+        // again and the persisted stamp alone would sit there unread.
+        .onChange(of: takeItCaptiveService.launchRequestedAt) { _, requested in
+            guard requested != nil, subscriptionStore.guardEnabled, !showTakeItCaptive else { return }
+            takeItCaptiveService.launchRequestedAt = nil
+            // Consume the persisted stamp too, so the next cold appear doesn't
+            // present the drill a second time for the same request.
+            _ = TakeItCaptiveService.consumePendingLaunch()
+            openTakeItCaptive(fromIntent: true)
         }
         .onChange(of: viewModel.todayChecklist.isCompleted) { isCompleted in
             if isCompleted {

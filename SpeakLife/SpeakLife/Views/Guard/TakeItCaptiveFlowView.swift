@@ -24,14 +24,19 @@ struct TakeItCaptiveFlowView: View {
     @Environment(\.dismiss) private var dismiss
 
     @ObservedObject var service: TakeItCaptiveService
+
+    /// True when Siri / Shortcuts / the lock screen opened this.
+    ///
+    /// It does NOT hard-code the source to `.interrupt`. If the user hasn't done
+    /// today's rep yet, a Siri launch IS today's rep and must tick the checklist
+    /// row — anything else means asking them to do it twice. Only a second
+    /// launch on a day already banked is a true interrupt. `begin()` resolves it.
+    var launchedFromIntent: Bool = false
+
     /// Called when a rep is banked, so the checklist can tick its row.
     var onCompleted: (() -> Void)?
     /// The flow needs the paywall but does not own it — the host presents it.
     var onNeedsPremium: (() -> Void)?
-
-    /// Where the rep came from. `.daily` from the checklist row, `.interrupt`
-    /// from the App Intent / Siri.
-    var source: CapturedThought.Source = .daily
 
     private enum Stage: Equatable {
         case incoming
@@ -43,9 +48,14 @@ struct TakeItCaptiveFlowView: View {
 
     @State private var stage: Stage = .incoming
     @State private var thought: IncomingThought?
-    /// Set when the escape hatch supplied the thought, so the log and the
-    /// analytics record the real source.
+    /// Where the THOUGHT came from — the bank, the user's own words, or an
+    /// interrupt. Recorded in the log. Distinct from `completesDailyRep`.
     @State private var activeSource: CapturedThought.Source = .daily
+    /// Whether finishing this run banks the day's rep and ticks the checklist
+    /// row. Fixed at `begin()` from the entry point, and NOT changed by the
+    /// escape hatch: someone who opened the daily drill and typed their own
+    /// thought has still done today's rep.
+    @State private var completesDailyRep = true
     @State private var startedAt = Date()
     /// Set once `begin()` has run and come back empty.
     ///
@@ -111,24 +121,30 @@ struct TakeItCaptiveFlowView: View {
             .transition(.opacity)
 
         case .answer:
-            ThoughtAnswerView(thought: thought) {
-                withAnimation(DS.Motion.smooth) { stage = .replace }
-            }
+            ThoughtAnswerView(
+                thought: thought,
+                onContinue: { withAnimation(DS.Motion.smooth) { stage = .replace } },
+                onClose: { dismiss() }
+            )
             .transition(.opacity)
 
         case .replace:
-            ReplaceDeclarationView(thought: thought) { spoken, method, duration in
-                AnalyticsService.shared.track("guard_declaration_spoken", parameters: [
-                    "method": method,
-                    "duration_ms": Int(duration * 1000),
-                    "category": thought.category.rawValue
-                ])
-                // `method` is threaded through rather than stashed in @State
-                // first: a State write is not guaranteed to be readable back in
-                // the same pass, and this value has to reach the completion
-                // event intact.
-                complete(thought: thought, spoken: spoken, method: method)
-            }
+            ReplaceDeclarationView(
+                thought: thought,
+                onSpoken: { spoken, method, duration in
+                    AnalyticsService.shared.track("guard_declaration_spoken", parameters: [
+                        "method": method,
+                        "duration_ms": Int(duration * 1000),
+                        "category": thought.category.rawValue
+                    ])
+                    // `method` is threaded through rather than stashed in @State
+                    // first: a State write is not guaranteed to be readable back
+                    // in the same pass, and this value has to reach the
+                    // completion event intact.
+                    complete(thought: thought, spoken: spoken, method: method)
+                },
+                onClose: { dismiss() }
+            )
             .transition(.opacity)
 
         case .ground(let total):
@@ -142,6 +158,10 @@ struct TakeItCaptiveFlowView: View {
                 // separately and risking the two disagreeing.
                 onMatched: { _, matched, _ in
                     service.recordEscapeHatchUse(isPremium: subscriptionStore.isPremium)
+                    // Only the THOUGHT's origin changes. `completesDailyRep`
+                    // stays as `begin()` set it, so someone who opened the daily
+                    // drill and typed their own thought still banks the day and
+                    // still gets the checklist tick they came for.
                     activeSource = .escapeHatch
                     self.thought = matched
                     withAnimation(DS.Motion.smooth) { stage = .replace }
@@ -177,7 +197,11 @@ struct TakeItCaptiveFlowView: View {
 
     private func begin() {
         guard thought == nil else { return }
-        activeSource = source
+        // A Siri launch is today's rep unless today's rep is already banked;
+        // only then is it a genuine interrupt. See `launchedFromIntent`.
+        let dayAlreadyBanked = service.isCompletedToday
+        completesDailyRep = !dayAlreadyBanked
+        activeSource = (launchedFromIntent && dayAlreadyBanked) ? .interrupt : .daily
         startedAt = Date()
         let served = service.thought(isPremium: subscriptionStore.isPremium)
         thought = served
@@ -186,7 +210,8 @@ struct TakeItCaptiveFlowView: View {
             return
         }
         AnalyticsService.shared.track("guard_task_started", parameters: [
-            "source": source.rawValue,
+            "source": activeSource.rawValue,
+            "entry": launchedFromIntent ? "app_intent" : "checklist",
             "category": served.category.rawValue,
             "intensity": served.intensity
         ])
@@ -199,7 +224,8 @@ struct TakeItCaptiveFlowView: View {
                 ? CapturedThought.escapeHatchDeclarationId
                 : thought.id,
             source: activeSource,
-            spoken: spoken
+            spoken: spoken,
+            completesDailyRep: completesDailyRep
         )
         AnalyticsService.shared.track("guard_task_completed", parameters: [
             "total_duration_ms": Int(Date().timeIntervalSince(startedAt) * 1000),

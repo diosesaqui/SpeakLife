@@ -74,9 +74,11 @@ final class TakeItCaptiveServiceTests: XCTestCase {
         XCTAssertEqual(service.groundTaken, 0)
 
         let first = service.takeGround(category: .fear, thoughtId: "a",
-                                       source: .escapeHatch, spoken: true)
+                                       source: .escapeHatch, spoken: true,
+                                       completesDailyRep: false)
         let second = service.takeGround(category: .lack, thoughtId: "b",
-                                        source: .escapeHatch, spoken: true)
+                                        source: .escapeHatch, spoken: true,
+                                        completesDailyRep: false)
         XCTAssertEqual(first, 1)
         XCTAssertEqual(second, 2)
 
@@ -92,13 +94,16 @@ final class TakeItCaptiveServiceTests: XCTestCase {
         let service = makeService()
 
         XCTAssertEqual(service.takeGround(category: .fear, thoughtId: "a",
-                                          source: .daily, spoken: true), 1)
+                                          source: .daily, spoken: true,
+                                          completesDailyRep: true), 1)
         XCTAssertEqual(service.takeGround(category: .fear, thoughtId: "a",
-                                          source: .daily, spoken: true), 1)
-        XCTAssertTrue(service.completedToday)
+                                          source: .daily, spoken: true,
+                                          completesDailyRep: true), 1)
+        XCTAssertTrue(service.isCompletedToday)
 
         XCTAssertEqual(service.takeGround(category: .lack, thoughtId: "b",
-                                          source: .escapeHatch, spoken: true), 2)
+                                          source: .escapeHatch, spoken: true,
+                                          completesDailyRep: false), 2)
     }
 
     // MARK: - Intensity ladder
@@ -127,6 +132,46 @@ final class TakeItCaptiveServiceTests: XCTestCase {
         defaults.set(TakeItCaptiveService.intensityThreeUnlocksAfter,
                      forKey: "guardCompletionCount")
         XCTAssertEqual(service.intensityCeiling(), 3)
+    }
+
+    /// Escape-hatch reps must not advance the intensity ladder.
+    ///
+    /// Counting every rep let fourteen hatch entries on day one unlock intensity
+    /// 3 on day two, straight through the gentle opening the ladder exists to
+    /// protect — and someone reaching for the hatch that often is precisely the
+    /// person who should not be handed the heaviest thought in the bank.
+    func testEscapeHatchRepsDoNotAdvanceTheIntensityLadder() {
+        let service = makeService()
+        // Put the seven-day gentle window behind us so only the rep count is
+        // in play.
+        let old = Calendar.current.date(byAdding: .day, value: -30, to: Date())!
+        defaults.set(TakeItCaptiveService.dayStamp(old, calendar: .current),
+                     forKey: "guardFirstOpenedDay")
+
+        for index in 0..<(TakeItCaptiveService.intensityThreeUnlocksAfter * 2) {
+            service.takeGround(category: .fear, thoughtId: "hatch\(index)",
+                               source: .escapeHatch, spoken: true, completesDailyRep: false)
+        }
+        XCTAssertEqual(service.intensityCeiling(), 2,
+                       "Only day-reps earn the ladder.")
+    }
+
+    /// The row's tick is derived, so a stale cached boolean pre-ticks the new
+    /// day at midnight. `isCompletedToday` re-derives from the stored stamp.
+    func testCompletionDoesNotCarryOverToTheNextDay() {
+        let service = makeService()
+        service.takeGround(category: .fear, thoughtId: "a", source: .daily,
+                           spoken: true, completesDailyRep: true)
+        XCTAssertTrue(service.isCompletedToday)
+
+        // Rewind the stored stamp by a day — the same state the app is in the
+        // morning after a completed rep.
+        let yesterday = Calendar.current.date(byAdding: .day, value: -1, to: Date())!
+        defaults.set(TakeItCaptiveService.dayStamp(yesterday, calendar: .current),
+                     forKey: "guardLastCompletedDay")
+
+        XCTAssertFalse(service.isCompletedToday,
+                       "Yesterday's rep must not tick today's row.")
     }
 
     // MARK: - Pinning
@@ -167,6 +212,42 @@ final class TakeItCaptiveServiceTests: XCTestCase {
         XCTAssertTrue(sliceIds.contains(served!.id))
     }
 
+    /// The rotation must keep rotating after the pool is exhausted.
+    ///
+    /// The free pool is 24 against a 60-day cooldown, so from about day 25 every
+    /// candidate has been served and the cooldown filter relaxes away. A flat
+    /// "has been served" penalty scored them all identically, the id tie-break
+    /// fired, and the same thought came back every single day — a free user's
+    /// drill quietly froze. Scoring by days-since turns that into least-recently-
+    /// used instead.
+    func testRotationKeepsMovingOnceEveryThoughtHasBeenServed() {
+        let service = makeService()
+        let calendar = Calendar.current
+
+        // Lift the intensity ceiling to 3 so the whole fixture bank is eligible
+        // and the exhaustion path — not the ladder — is what's being measured.
+        let old = calendar.date(byAdding: .day, value: -60, to: Date())!
+        defaults.set(TakeItCaptiveService.dayStamp(old, calendar: calendar),
+                     forKey: "guardFirstOpenedDay")
+        defaults.set(TakeItCaptiveService.intensityThreeUnlocksAfter,
+                     forKey: "guardCompletionCount")
+
+        // Every thought served, each on a different day, all inside the cooldown
+        // so the relaxation path is the one under test.
+        var served: [String: String] = [:]
+        for (offset, thought) in service.bank.enumerated() {
+            let day = calendar.date(byAdding: .day, value: -(offset + 1), to: Date())!
+            served[thought.id] = TakeItCaptiveService.dayStamp(day, calendar: calendar)
+        }
+        defaults.set(served, forKey: "guardServedThoughts")
+
+        let pick = service.thought(isPremium: true)
+        XCTAssertNotNil(pick)
+        // The oldest served entry is the last one in the loop above.
+        XCTAssertEqual(pick?.id, service.bank.last?.id,
+                       "Exhausted pool must serve the least-recently-seen thought, not the first by id.")
+    }
+
     // MARK: - Escape-hatch quota
 
     func testFreeEscapeHatchesRunOutAndPremiumIsUnlimited() {
@@ -198,7 +279,8 @@ final class TakeItCaptiveServiceTests: XCTestCase {
         service.takeGround(category: .fear,
                            thoughtId: CapturedThought.escapeHatchDeclarationId,
                            source: .escapeHatch,
-                           spoken: true)
+                           spoken: true,
+                           completesDailyRep: true)
 
         let captures = service.recentCaptures()
         XCTAssertEqual(captures.count, 1)
@@ -215,9 +297,12 @@ final class TakeItCaptiveServiceTests: XCTestCase {
 
     func testStrongestTerrainFollowsEngagement() {
         let service = makeService()
-        service.takeGround(category: .lack, thoughtId: "a", source: .escapeHatch, spoken: true)
-        service.takeGround(category: .lack, thoughtId: "b", source: .escapeHatch, spoken: true)
-        service.takeGround(category: .fear, thoughtId: "c", source: .escapeHatch, spoken: true)
+        service.takeGround(category: .lack, thoughtId: "a", source: .escapeHatch,
+                           spoken: true, completesDailyRep: false)
+        service.takeGround(category: .lack, thoughtId: "b", source: .escapeHatch,
+                           spoken: true, completesDailyRep: false)
+        service.takeGround(category: .fear, thoughtId: "c", source: .escapeHatch,
+                           spoken: true, completesDailyRep: false)
 
         XCTAssertEqual(service.strongestTerrain(), .lack)
         // And it is named as ground, never as a diagnosis.
@@ -254,22 +339,38 @@ final class TakeItCaptiveServiceTests: XCTestCase {
 /// appears and disappears is part of the contract.
 final class GuardChecklistRowTests: XCTestCase {
 
+    private let tenured = TaskLibrary.guardIntroducedAfterDaysCompleted + 10
+
     func testRowIsAbsentWhenThePillarIsDark() {
         // nil = kill switch off, or the bank failed to load.
-        let tasks = TaskLibrary.getCoreTasksForStreak(30, guardCompletedToday: nil)
+        let tasks = TaskLibrary.getCoreTasksForStreak(30, guardCompletedToday: nil,
+                                                      totalDaysCompleted: tenured)
         XCTAssertFalse(tasks.contains { $0.id == TaskLibrary.guardTaskId },
                        "A task nobody can finish is worse than no task.")
     }
 
     func testRowIsHeldBackUntilTheCoreLoopHasTakenHold() {
-        for day in 1..<TaskLibrary.guardIntroducedOnDay {
-            let tasks = TaskLibrary.getCoreTasksForStreak(day, guardCompletedToday: false)
+        for days in 0..<TaskLibrary.guardIntroducedAfterDaysCompleted {
+            let tasks = TaskLibrary.getCoreTasksForStreak(days + 1, guardCompletedToday: false,
+                                                          totalDaysCompleted: days)
             XCTAssertFalse(tasks.contains { $0.id == TaskLibrary.guardTaskId },
-                           "Day \(day) must stay light so the streak is easy to earn.")
+                           "The first days must stay light so the streak is easy to earn.")
         }
-        let tasks = TaskLibrary.getCoreTasksForStreak(TaskLibrary.guardIntroducedOnDay,
-                                                      guardCompletedToday: false)
+        let tasks = TaskLibrary.getCoreTasksForStreak(
+            3, guardCompletedToday: false,
+            totalDaysCompleted: TaskLibrary.guardIntroducedAfterDaysCompleted)
         XCTAssertTrue(tasks.contains { $0.id == TaskLibrary.guardTaskId })
+    }
+
+    /// The regression this pins is the worst one the feature could ship: gating
+    /// the row on `currentStreak` deleted the pillar for two days the morning a
+    /// streak broke — punishing someone for a lapse by removing the tool, on the
+    /// exact day they need it most. Tenure is monotonic, so it cannot happen.
+    func testABrokenStreakNeverRemovesThePillar() {
+        let tasks = TaskLibrary.getCoreTasksForStreak(0, guardCompletedToday: false,
+                                                      totalDaysCompleted: 200)
+        XCTAssertTrue(tasks.contains { $0.id == TaskLibrary.guardTaskId },
+                      "A 200-day user whose streak just died must keep Guarding.")
     }
 
     /// Guarding is a lifelong daily habit like speaking and hearing, not a
@@ -278,14 +379,16 @@ final class GuardChecklistRowTests: XCTestCase {
     /// narrows.
     func testRowSurvivesEveryPhase() {
         for day in [3, 7, 8, 30, 31, 99, 100, 365] {
-            let tasks = TaskLibrary.getCoreTasksForStreak(day, guardCompletedToday: false)
+            let tasks = TaskLibrary.getCoreTasksForStreak(day, guardCompletedToday: false,
+                                                          totalDaysCompleted: day)
             XCTAssertTrue(tasks.contains { $0.id == TaskLibrary.guardTaskId },
                           "Guard row went missing on day \(day)")
         }
     }
 
     func testRowSitsDirectlyBehindTheBurst() {
-        let tasks = TaskLibrary.getCoreTasksForStreak(30, guardCompletedToday: false)
+        let tasks = TaskLibrary.getCoreTasksForStreak(30, guardCompletedToday: false,
+                                                      totalDaysCompleted: tenured)
         guard let burst = tasks.firstIndex(where: { $0.id == "complete_daily_burst" }),
               let guardRow = tasks.firstIndex(where: { $0.id == TaskLibrary.guardTaskId }) else {
             return XCTFail("Both rows should be present.")
@@ -294,17 +397,20 @@ final class GuardChecklistRowTests: XCTestCase {
     }
 
     func testRowCompletionIsDerivedFromTheService() {
-        let done = TaskLibrary.getCoreTasksForStreak(30, guardCompletedToday: true)
+        let done = TaskLibrary.getCoreTasksForStreak(30, guardCompletedToday: true,
+                                                     totalDaysCompleted: tenured)
         XCTAssertEqual(done.first { $0.id == TaskLibrary.guardTaskId }?.isCompleted, true)
 
-        let notDone = TaskLibrary.getCoreTasksForStreak(30, guardCompletedToday: false)
+        let notDone = TaskLibrary.getCoreTasksForStreak(30, guardCompletedToday: false,
+                                                        totalDaysCompleted: tenured)
         XCTAssertEqual(notDone.first { $0.id == TaskLibrary.guardTaskId }?.isCompleted, false)
     }
 
     /// Adding a pillar must not change what earns a streak. Someone who never
     /// opens Guarding has lost nothing.
     func testGuardNeverGatesTheStreak() {
-        var tasks = TaskLibrary.getCoreTasksForStreak(30, guardCompletedToday: false)
+        var tasks = TaskLibrary.getCoreTasksForStreak(30, guardCompletedToday: false,
+                                                      totalDaysCompleted: tenured)
         for index in tasks.indices where tasks[index].id == "complete_daily_burst" {
             tasks[index].isCompleted = true
         }
@@ -316,7 +422,8 @@ final class GuardChecklistRowTests: XCTestCase {
     /// The row never names the low thing. No "anxious", no "negative", no
     /// "your thought" — see rule 2 of the guardrails.
     func testRowCopyNeverAccusesTheUser() {
-        let tasks = TaskLibrary.getCoreTasksForStreak(30, guardCompletedToday: false)
+        let tasks = TaskLibrary.getCoreTasksForStreak(30, guardCompletedToday: false,
+                                                      totalDaysCompleted: tenured)
         guard let row = tasks.first(where: { $0.id == TaskLibrary.guardTaskId }) else {
             return XCTFail("Expected the Guard row.")
         }

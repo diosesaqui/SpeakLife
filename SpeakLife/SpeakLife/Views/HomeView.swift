@@ -89,6 +89,9 @@ struct HomeView: View {
     @EnvironmentObject var audioDeclarationViewModel: AudioDeclarationViewModel
     @EnvironmentObject var tabViewModel: TabViewModel
     @EnvironmentObject var streakViewModel: EnhancedStreakViewModel
+    /// Observed here only to route an App Intent launch to the Today tab, which
+    /// owns the drill. See the `onChange` on the TabView.
+    @ObservedObject private var takeItCaptiveService = TakeItCaptiveService.shared
     @Binding var isShowingLanding: Bool
     @Binding var showDailyBurstOnLaunch: Bool
     @Binding var showDailyStructuredDayOnLaunch: Bool
@@ -583,6 +586,15 @@ struct HomeView: View {
                 // at the right tab as the Remote Config layout flag resolves.
                 .onChange(of: subscriptionStore.checklistHomeEnabled) { enabled in
                     tabViewModel.feedTabTag = enabled ? 2 : 0
+                }
+                // Siri / Shortcuts / the lock screen asked for the Guard drill
+                // while the app was already open. The drill lives on the Today
+                // tab, so if the user is somewhere else we have to bring them
+                // there — otherwise the intent looks like it did nothing. The
+                // tab itself clears the request and presents the flow.
+                .onChange(of: takeItCaptiveService.launchRequestedAt) { _, requested in
+                    guard requested != nil, subscriptionStore.guardEnabled else { return }
+                    tabViewModel.goToChecklist()
                 }
                 .onAppear {
                     PremiumHaptics.prepare() // warm the Taptic Engine so the first tap lands

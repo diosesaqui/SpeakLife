@@ -235,6 +235,9 @@ struct IncomingThoughtView: View {
 struct ThoughtAnswerView: View {
     let thought: IncomingThought
     let onContinue: () -> Void
+    /// Every screen in this full-screen flow carries a way out. A cover with no
+    /// close control is a trap.
+    let onClose: () -> Void
 
     var body: some View {
         ZStack {
@@ -243,6 +246,17 @@ struct ThoughtAnswerView: View {
                 .ignoresSafeArea()
 
             VStack(spacing: DS.Spacing.lg) {
+                HStack {
+                    Spacer()
+                    Button(action: onClose) {
+                        Image(systemName: "xmark")
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundColor(.white.opacity(0.32))
+                            .frame(width: 32, height: 32)
+                    }
+                    .accessibilityLabel("Close")
+                }
+
                 Spacer()
 
                 Text("HERE'S WHAT GOD SAYS")

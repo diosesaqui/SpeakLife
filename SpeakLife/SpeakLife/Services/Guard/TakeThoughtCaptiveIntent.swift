@@ -36,6 +36,8 @@ struct TakeThoughtCaptiveIntent: AppIntent {
     @MainActor
     func perform() async throws -> some IntentResult {
         TakeItCaptiveService.requestPendingLaunch()
+        // Also poke the live service, for the warm case — see `launchRequestedAt`.
+        TakeItCaptiveService.shared.launchRequestedAt = Date()
         AnalyticsService.shared.track("guard_intent_invoked", parameters: ["surface": "app_intent"])
         return .result()
     }
@@ -47,11 +49,20 @@ extension TakeItCaptiveService {
 
     /// Set by the App Intent, read by the Today tab.
     ///
-    /// Persisted rather than held in memory because a cold launch runs
-    /// `perform()` before any view exists — an in-memory flag would be set and
-    /// then never observed, and the user would watch the app open to the home
-    /// screen having asked Siri for the drill. The flag is consumed exactly
-    /// once, so it cannot re-trigger on the next launch.
+    /// TWO mechanisms, because the intent has two very different arrival cases
+    /// and neither one covers the other:
+    ///
+    /// - **Cold launch.** `perform()` runs before any view exists, so an
+    ///   in-memory flag would be set and never observed — the user would watch
+    ///   the app open to the home screen having just asked Siri for the drill.
+    ///   The persisted stamp survives that gap and is consumed on first appear.
+    /// - **Warm app, wrong tab.** `onAppear` does not fire for a tab that is
+    ///   already on screen or already built, so the persisted stamp alone left
+    ///   the intent doing nothing at all. The published `launchRequestedAt`
+    ///   drives a tab switch and the presentation.
+    ///
+    /// The persisted stamp is consumed exactly once, so the two cannot both fire
+    /// and double-present.
     private static let pendingLaunchKey = "guardPendingIntentLaunch"
 
     static func requestPendingLaunch(defaults: UserDefaults = .standard) {

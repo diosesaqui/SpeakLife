@@ -27,6 +27,10 @@ struct ReplaceDeclarationView: View {
     ///   - method: "mic" or "hold", for the speak-rate metric.
     ///   - duration: how long the speaking step took.
     let onSpoken: (_ spoken: Bool, _ method: String, _ duration: TimeInterval) -> Void
+    /// Leaving without speaking. The drill must always have a way out — a
+    /// full-screen cover with no close control is a trap, and trapping someone
+    /// inside a screen that is asking them to speak is the worst place to do it.
+    let onClose: () -> Void
 
     @StateObject private var voice = VoicePresenceService()
     @State private var startedAt = Date()
@@ -55,6 +59,20 @@ struct ReplaceDeclarationView: View {
                 .allowsHitTesting(false)
 
             VStack(spacing: DS.Spacing.lg) {
+                HStack {
+                    Spacer()
+                    Button(action: {
+                        voice.stop()
+                        onClose()
+                    }) {
+                        Image(systemName: "xmark")
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundColor(.white.opacity(0.35))
+                            .frame(width: 32, height: 32)
+                    }
+                    .accessibilityLabel("Close")
+                }
+
                 Spacer(minLength: 0)
 
                 Text("SPEAK IT")
@@ -105,6 +123,13 @@ struct ReplaceDeclarationView: View {
         .onChange(of: voice.heardVoice) { _, heard in
             guard heard, !settled else { return }
             settle(method: "mic")
+        }
+        // The mic window closed with nothing heard. Hand them the hold button
+        // rather than leaving the screen sitting on "Listening…" forever. Not
+        // framed as a failure — see `holdControl`.
+        .onChange(of: voice.timedOutWithoutVoice) { _, timedOut in
+            guard timedOut, !settled else { return }
+            usingHoldFallback = true
         }
         .alert("Turn on the mic?", isPresented: $showMicRationale) {
             Button("Not now", role: .cancel) { usingHoldFallback = true }

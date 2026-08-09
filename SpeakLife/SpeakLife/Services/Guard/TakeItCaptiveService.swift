@@ -53,8 +53,21 @@ final class TakeItCaptiveService: ObservableObject {
     @Published private(set) var todaysThought: IncomingThought?
     /// Cumulative ground. Mirrored from the synced counter so views can bind.
     @Published private(set) var groundTaken: Int = 0
-    /// True once today's rep is finished. Drives the checklist row's tick.
+    /// SwiftUI mirror of `isCompletedToday`, for views that want to observe it.
+    ///
+    /// **Never read this to decide anything.** It is a cached boolean, and the
+    /// day it was cached on is not stored alongside it — so at midnight it still
+    /// says `true` for yesterday. Every decision reads `isCompletedToday`, which
+    /// re-derives from the stored day stamp. The bug this note exists for: the
+    /// checklist rebuild at rollover pre-ticked the new day's Guard row.
     @Published private(set) var completedToday: Bool = false
+
+    /// Stamped by `TakeThoughtCaptiveIntent` when the app is already running.
+    /// `HomeView` switches to the Today tab on it and `ModernDailyChecklistView`
+    /// presents the drill; both clear it. See the note in
+    /// `TakeThoughtCaptiveIntent.swift` for why the persisted stamp is not
+    /// enough on its own.
+    @Published var launchRequestedAt: Date?
 
     private(set) var bank: [IncomingThought] = []
 
@@ -204,15 +217,34 @@ final class TakeItCaptiveService: ObservableObject {
         }
     }
 
-    /// Higher is better. Engagement lifts a category; having been served
-    /// recently pushes it down.
+    /// Higher is better. Engagement lifts a category; recency pushes down.
+    ///
+    /// Recency is measured in DAYS, not as a boolean "has been served".
+    ///
+    /// That distinction is the whole function. The free pool holds 24 thoughts
+    /// against a 60-day cooldown, so from about day 25 every candidate has been
+    /// served and the cooldown filter relaxes away. With a flat penalty every
+    /// candidate then scored identically, the id tie-break fired, and the same
+    /// thought was served every single day from then on — a free user's drill
+    /// quietly froze. Scoring by how long ago turns the exhausted case into a
+    /// proper least-recently-used rotation instead.
     private func score(_ thought: IncomingThought,
                        weights: [String: Int],
                        served: [String: String]) -> Int {
-        var value = (weights[thought.category.rawValue] ?? 0) * 10
-        if served[thought.id] != nil { value -= 100 }
-        return value
+        let engagementBonus = (weights[thought.category.rawValue] ?? 0) * 10
+        guard let servedDay = served[thought.id],
+              let servedDate = Self.date(from: servedDay, calendar: calendar) else {
+            // Never served always wins, whatever the weighting says. A thought
+            // they have not seen beats one they have.
+            return engagementBonus + Self.neverServedBonus
+        }
+        let daysAgo = calendar.dateComponents([.day], from: servedDate, to: Date()).day ?? 0
+        return engagementBonus + min(max(daysAgo, 0), Self.neverServedBonus - 1)
     }
+
+    /// Big enough that no engagement weighting can lift a recently-served
+    /// thought over an unseen one, and that a served thought can never reach it.
+    private static let neverServedBonus = 10_000
 
     /// The free tier's fixed set: the first N of each category, in bank order.
     /// Deterministic on purpose — every free install sees the same 24, which is
@@ -240,30 +272,49 @@ final class TakeItCaptiveService: ObservableObject {
 
     // MARK: - Completing a rep
 
-    /// Banks the rep. Idempotent within a calendar day for the daily drill, so a
-    /// double-tap cannot inflate the count; escape-hatch and interrupt reps are
-    /// each their own ground and always count.
+    /// Banks the rep.
+    ///
+    /// - Parameter source: where the THOUGHT came from — the bank, the escape
+    ///   hatch, or an interrupt. Recorded in the log.
+    /// - Parameter completesDailyRep: whether this rep was the day's drill.
+    ///
+    /// These two are deliberately separate. Someone who opens the daily drill
+    /// and taps "Something else is on my mind" has still done today's rep, and
+    /// the checklist row they launched from has to tick — but the log should
+    /// record honestly that the thought was their own, not one we served. Fusing
+    /// the two left that row unchecked after a completed drill.
+    ///
+    /// Idempotent within a calendar day when `completesDailyRep` is true, so a
+    /// double-tap cannot inflate the count. Extra reps beyond the day's drill
+    /// are each their own ground and always count.
     ///
     /// - Returns: the new cumulative total.
     @discardableResult
     func takeGround(category: ThoughtCategory,
                     thoughtId: String,
                     source: CapturedThought.Source,
-                    spoken: Bool) -> Int {
+                    spoken: Bool,
+                    completesDailyRep: Bool) -> Int {
         let today = Self.dayStamp(Date(), calendar: calendar)
-        if source == .daily, defaults.string(forKey: lastCompletedDayKey) == today {
+        if completesDailyRep, defaults.string(forKey: lastCompletedDayKey) == today {
             return groundTaken
         }
 
         let total = GroundTaken.take(defaults: defaults)
         groundTaken = total
 
-        if source == .daily {
+        if completesDailyRep {
             defaults.set(today, forKey: lastCompletedDayKey)
             completedToday = true
             pushRecentCategory(category)
+            // Only day-reps advance the intensity ladder. Counting every rep let
+            // fourteen escape-hatch entries on day one unlock intensity 3 on day
+            // two, which is exactly the gentle opening the ladder exists to
+            // protect. Someone reaching for the hatch that often is carrying
+            // enough already.
+            defaults.set(defaults.integer(forKey: completionCountKey) + 1,
+                         forKey: completionCountKey)
         }
-        defaults.set(defaults.integer(forKey: completionCountKey) + 1, forKey: completionCountKey)
         bumpEngagement(category)
         appendLog(CapturedThought(id: UUID(), date: Date(), source: source,
                                   category: category, thoughtId: thoughtId, spoken: spoken))
@@ -280,7 +331,8 @@ final class TakeItCaptiveService: ObservableObject {
     func refreshGround() {
         let total = GroundTaken.total(defaults: defaults)
         if total != groundTaken { groundTaken = total }
-        completedToday = Self.isToday(defaults.string(forKey: lastCompletedDayKey), calendar: calendar)
+        let done = isCompletedToday
+        if done != completedToday { completedToday = done }
     }
 
     // MARK: - Kill switch
@@ -292,15 +344,22 @@ final class TakeItCaptiveService: ObservableObject {
         RemoteConfig.remoteConfig()["guardEnabled"].boolValue
     }
 
-    /// `completedToday`, or nil when the pillar is dark — the kill switch is
+    /// Whether today's rep is done, re-derived from the stored day stamp on
+    /// every read rather than cached. The authoritative answer — see the note
+    /// on `completedToday`.
+    var isCompletedToday: Bool {
+        Self.isToday(defaults.string(forKey: lastCompletedDayKey), calendar: calendar)
+    }
+
+    /// `isCompletedToday`, or nil when the pillar is dark — the kill switch is
     /// off, or the bank failed to load and there is nothing to drill with.
     /// `TaskLibrary` reads this: nil leaves the checklist row out entirely
     /// rather than offering a task that cannot be finished.
     ///
-    /// Tests exercise `completedToday` directly to stay clear of Remote Config.
+    /// Tests exercise `isCompletedToday` directly to stay clear of Remote Config.
     var enabledCompletedToday: Bool? {
         guard isEnabled, !bank.isEmpty else { return nil }
-        return completedToday
+        return isCompletedToday
     }
 
     // MARK: - Escape hatch quota

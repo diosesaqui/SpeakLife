@@ -38,6 +38,13 @@ final class VoicePresenceService: NSObject, ObservableObject {
     /// Set when the mic was refused. The view swaps in the press-and-hold
     /// fallback and never asks again.
     @Published private(set) var permissionDenied = false
+    /// The mic was armed for the full window and heard nothing.
+    ///
+    /// Without a terminal state the screen sat on "Listening…" while nothing was
+    /// listening, with no way forward — someone whose mic is muted by a case, or
+    /// who got interrupted, was simply stuck. The view swaps to press-and-hold
+    /// when this flips.
+    @Published private(set) var timedOutWithoutVoice = false
 
     /// Above this normalized level counts as speech rather than room noise.
     private let voiceThreshold: Float = 0.18
@@ -52,6 +59,14 @@ final class VoicePresenceService: NSObject, ObservableObject {
     private var meterTimer: Timer?
     private var maxDurationTimer: Timer?
     private var voiceSince: Date?
+    /// Whether THIS service activated the shared audio session.
+    ///
+    /// `stop()` is called unconditionally on dismissal, on the mic-denied path,
+    /// and on the hold fallback — and deactivating a session we never activated
+    /// tears down whatever else in the app was using it. Someone running the
+    /// drill with worship playing had the music killed by a screen that never
+    /// opened the mic at all.
+    private var didActivateSession = false
 
     private var recordingURL: URL {
         FileManager.default.temporaryDirectory.appendingPathComponent("guard_voice_presence.m4a")
@@ -100,6 +115,7 @@ final class VoicePresenceService: NSObject, ObservableObject {
             // during quiet time with worship playing.
             try session.setCategory(.record, mode: .measurement, options: .duckOthers)
             try session.setActive(true, options: .notifyOthersOnDeactivation)
+            didActivateSession = true
 
             // Use the session's negotiated rate — never hardcode 44100. On some
             // OS versions AVAudioRecorder traps during format init when they
@@ -123,6 +139,7 @@ final class VoicePresenceService: NSObject, ObservableObject {
 
         levels = []
         heardVoice = false
+        timedOutWithoutVoice = false
         voiceSince = nil
         isListening = true
 
@@ -130,9 +147,17 @@ final class VoicePresenceService: NSObject, ObservableObject {
             Task { @MainActor [weak self] in self?.sampleLevel() }
         }
         maxDurationTimer = Timer.scheduledTimer(withTimeInterval: maxListenSeconds, repeats: false) { [weak self] _ in
-            Task { @MainActor [weak self] in self?.stop() }
+            Task { @MainActor [weak self] in self?.timeOut() }
         }
         return true
+    }
+
+    /// The window closed with nothing heard. Stops the mic AND says so, so the
+    /// view has something to react to instead of a silent dead end.
+    private func timeOut() {
+        guard isListening, !heardVoice else { return }
+        stop()
+        timedOutWithoutVoice = true
     }
 
     /// Stops and cleans up. Safe to call repeatedly, and safe to call when never
@@ -147,7 +172,11 @@ final class VoicePresenceService: NSObject, ObservableObject {
         // The audio is the one thing this feature could keep and must not. It
         // goes the moment listening ends.
         try? FileManager.default.removeItem(at: recordingURL)
-        try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+        // Only if we activated it. See `didActivateSession`.
+        if didActivateSession {
+            didActivateSession = false
+            try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+        }
     }
 
     /// The no-mic path. Same verdict, same log, no second-class treatment.

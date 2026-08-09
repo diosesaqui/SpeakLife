@@ -1188,14 +1188,17 @@ struct TaskLibrary {
     ///   no task.
     /// - Parameter guardCompletedToday: whether today's Take It Captive rep is
     ///   done. nil leaves the row out entirely — that is the state when the
-    ///   pillar is switched off in Remote Config, when the thought bank failed
-    ///   to load, or before the habit is introduced. A task with nothing behind
-    ///   it is worse than no task.
+    ///   pillar is switched off in Remote Config or when the thought bank failed
+    ///   to load. A task with nothing behind it is worse than no task.
+    /// - Parameter totalDaysCompleted: `StreakStats.totalDaysCompleted`, the
+    ///   monotonic tenure counter. Gates when Guarding is introduced. Never
+    ///   `currentStreak` — see `guardIntroducedAfterDaysCompleted`.
     static func getCoreTasksForStreak(_ streakDay: Int, userCategories: [String] = [],
                                       foundationAudioDay: Int? = nil,
                                       enforcementDay: EnforcementDay? = nil,
                                       personalDeclarations: PersonalDeclaration.Progress? = nil,
-                                      guardCompletedToday: Bool? = nil) -> [DailyTask] {
+                                      guardCompletedToday: Bool? = nil,
+                                      totalDaysCompleted: Int = 0) -> [DailyTask] {
         let audioDay = foundationAudioDay ?? streakDay
         // Check if AI features are enabled for enhanced task generation
         if isAIEnabled() {
@@ -1203,7 +1206,7 @@ struct TaskLibrary {
             let planned = applyAudioPlan(to: aiTasks, day: audioDay, enforcementDay: enforcementDay)
             let owned = markCampaignOwned(planned, enforcementDay: enforcementDay)
             let guarded = withGuard(burstFirst(owned), completedToday: guardCompletedToday,
-                                    streakDay: streakDay)
+                                    totalDaysCompleted: totalDaysCompleted)
             return withPersonalDeclaration(guarded, progress: personalDeclarations)
         }
 
@@ -1257,7 +1260,7 @@ struct TaskLibrary {
         // the front and the Burst directly behind it. Reversing these lets
         // burstFirst hoist the Burst back over the declaration.
         let guarded = withGuard(burstFirst(tasks), completedToday: guardCompletedToday,
-                                streakDay: streakDay)
+                                totalDaysCompleted: totalDaysCompleted)
         return withPersonalDeclaration(guarded, progress: personalDeclarations)
     }
 
@@ -1285,12 +1288,20 @@ struct TaskLibrary {
 
     static let guardTaskId = "take_it_captive"
 
-    /// The streak day Guarding is introduced on.
+    /// How many completed days the user needs behind them before Guarding
+    /// appears.
     ///
-    /// Not day 1. The first day is deliberately light (Burst, devotional, audio)
+    /// Not day 1: the first day is deliberately light (Burst, devotional, audio)
     /// so the streak is easy to earn, and day 2 already introduces gratitude.
-    /// Guarding arrives on day 3, once the core loop has actually taken hold.
-    static let guardIntroducedOnDay = 3
+    /// Guarding arrives once the core loop has actually taken hold.
+    ///
+    /// **Measured in `totalDaysCompleted`, never `currentStreak`** — the same
+    /// call `EnforcementService` makes, for the same reason. The streak zeroes
+    /// on a break; tenure does not. Gating on the streak made a broken streak
+    /// delete the pillar for two days, which is precisely the
+    /// you-failed-at-guarding-your-mind punishment this feature's guardrails
+    /// forbid — and it fired on the exact morning someone needs it most.
+    static let guardIntroducedAfterDaysCompleted = 2
 
     /// Adds the Guarding row — the fifth pillar.
     ///
@@ -1312,9 +1323,10 @@ struct TaskLibrary {
     /// this feature, and one who never opens it has lost nothing at all.
     private static func withGuard(_ tasks: [DailyTask],
                                   completedToday: Bool?,
-                                  streakDay: Int) -> [DailyTask] {
+                                  totalDaysCompleted: Int) -> [DailyTask] {
         var result = tasks.filter { $0.id != guardTaskId }
-        guard let completedToday, streakDay >= guardIntroducedOnDay else { return result }
+        guard let completedToday,
+              totalDaysCompleted >= guardIntroducedAfterDaysCompleted else { return result }
 
         var task = DailyTask(
             id: guardTaskId,
@@ -1327,7 +1339,9 @@ struct TaskLibrary {
             category: .foundation,
             type: .speak,
             difficulty: .beginner,
-            minimumStreakDay: guardIntroducedOnDay,
+            // Metadata only — this row is injected, never filtered by
+            // `getAvailableTasks`, so the real gate is the tenure check above.
+            minimumStreakDay: 1,
             estimatedMinutes: 1,
             navigationDestination: .takeItCaptive
         )
