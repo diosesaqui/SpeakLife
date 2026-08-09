@@ -49,6 +49,25 @@ final class PersonalDeclarationRepository: PersonalDeclarationRepositoryProtocol
             .categoryRaw
     }
 
+    /// How many declarations the user is carrying and how many are already
+    /// spoken today. nil when they carry none, which is how the checklist knows
+    /// to leave the row out entirely rather than show a task nobody can finish.
+    ///
+    /// Synchronous for the same reason as `activeCategoryRaw`: the checklist
+    /// generator is not async and also runs on the notification scheduler's
+    /// queue, where there is nothing to await on.
+    static func todayProgress(defaults: UserDefaults = .standard) -> PersonalDeclaration.Progress? {
+        let active = PersonalDeclarationRepository(defaults: defaults)
+            .readAll()
+            .filter { !$0.isReceived }
+        guard !active.isEmpty else { return nil }
+        // Same choice the feed made: lead with what they still owe today.
+        let headline = active.first(where: { !$0.spokenToday }) ?? active[0]
+        return PersonalDeclaration.Progress(total: active.count,
+                                            spokenToday: active.filter(\.spokenToday).count,
+                                            headline: headline.declarationText)
+    }
+
     // MARK: - Reads
 
     func load() async -> PersonalDeclaration? {
