@@ -154,23 +154,36 @@ struct DeclarationView: View {
     private func openPendingPersonalDeclaration() {
         guard appState.scrollToPersonalDeclaration else { return }
 
-        // Clear the flags first. If anything below fails to present, the deep
-        // link is spent rather than left latched for the next tap to trip over.
-        let pendingId = appState.pendingPersonalDeclarationId
-        appState.pendingPersonalDeclarationId = ""
-        appState.scrollToPersonalDeclaration = false
-
+        // The flags are NOT cleared here. They are cleared in the sheet's
+        // onAppear, once the list is actually on screen. Clearing up front looks
+        // safer but makes every dropped presentation permanent, and there are
+        // several ways to drop one. Leaving them set is safe now that `onAppear`
+        // and `onChange` both retry: a miss self-heals on the next appearance
+        // instead of latching, which was the original bug.
+        //
         // Empty id means the reminder predates per-declaration deep links; the
-        // list then opens on its own without preselecting a card.
-        deepLinkedDeclarationId = UUID(uuidString: pendingId)
+        // list then opens without preselecting a card.
+        deepLinkedDeclarationId = UUID(uuidString: appState.pendingPersonalDeclarationId)
 
-        // A different sheet may already be up (the tap can arrive while the user
-        // is mid-flow). Setting `activeSheet` straight across does not re-present
-        // in SwiftUI, so dismiss first and open on the next runloop.
-        if activeSheet != nil && activeSheet != .personalDeclaration {
-            activeSheet = nil
-            DispatchQueue.main.async { activeSheet = .personalDeclaration }
-        } else {
+        // Everything currently covering this view has to come down first, not
+        // just `activeSheet`. The Burst runs in a fullScreenCover and the mail
+        // composer in its own sheet, and with either up SwiftUI silently drops a
+        // sheet assignment. `.personalDeclaration` counts as "already up" too:
+        // re-assigning it is a no-op, and `MyDeclarationsView` has latched
+        // `didHandleDeepLink`, so a reminder for a *different* declaration would
+        // navigate nowhere. Tearing it down forces a fresh list on the new id.
+        let somethingIsPresented = activeSheet != nil || showDailyBurst || isShowingMailView
+        guard somethingIsPresented else {
+            activeSheet = .personalDeclaration
+            return
+        }
+
+        activeSheet = nil
+        showDailyBurst = false
+        isShowingMailView = false
+        // asyncAfter, not async: a plain async lands mid-dismissal animation and
+        // the presentation is dropped. 0.4s clears the ~0.35s sheet dismissal.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
             activeSheet = .personalDeclaration
         }
     }
@@ -444,6 +457,14 @@ struct DeclarationView: View {
             MyDeclarationsView(initialDeclarationId: deepLinkedDeclarationId)
                 .environmentObject(appState)
                 .environmentObject(subscriptionStore)
+                // The deep link is spent here, not at the point it was routed:
+                // this is the first moment we know the list actually presented.
+                // Anything that drops the presentation leaves the flags set, and
+                // the next onAppear retries instead of losing the reminder.
+                .onAppear {
+                    appState.scrollToPersonalDeclaration = false
+                    appState.pendingPersonalDeclarationId = ""
+                }
                 .onDisappear { deepLinkedDeclarationId = nil }
         }
     }
