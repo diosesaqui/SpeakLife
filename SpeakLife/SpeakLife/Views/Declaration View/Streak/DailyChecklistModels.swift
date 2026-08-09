@@ -1194,7 +1194,7 @@ struct TaskLibrary {
             let aiTasks = getAIEnhancedTasks(streakDay: streakDay, userCategories: userCategories)
             let planned = applyAudioPlan(to: aiTasks, day: audioDay, enforcementDay: enforcementDay)
             let owned = markCampaignOwned(planned, enforcementDay: enforcementDay)
-            return burstFirst(withPersonalDeclaration(owned, progress: personalDeclarations))
+            return withPersonalDeclaration(burstFirst(owned), progress: personalDeclarations)
         }
 
         // Standard task generation
@@ -1242,10 +1242,11 @@ struct TaskLibrary {
         // day all win over the generic category title.
         tasks = applyAudioPlan(to: tasks, day: audioDay, enforcementDay: enforcementDay)
         tasks = markCampaignOwned(tasks, enforcementDay: enforcementDay)
-        tasks = withPersonalDeclaration(tasks, progress: personalDeclarations)
 
-        // Burst must always be first — it's the only streak-earning task
-        return burstFirst(tasks)
+        // burstFirst first, THEN the declaration, so the declaration ends up at
+        // the front and the Burst directly behind it. Reversing these lets
+        // burstFirst hoist the Burst back over the declaration.
+        return withPersonalDeclaration(burstFirst(tasks), progress: personalDeclarations)
     }
 
     /// Adds the declaration row, or replaces it if a caller already had one.
@@ -1257,13 +1258,15 @@ struct TaskLibrary {
                                                 progress: PersonalDeclaration.Progress?) -> [DailyTask] {
         var result = tasks.filter { $0.id != personalDeclarationTaskId }
         guard let progress else { return result }
-        // Inserted at 0, not after the Burst's current index. `burstFirst` runs
-        // after this and moves the Burst to the front, so anchoring to where the
-        // Burst happens to sit right now lands this mid-list on any path that
-        // doesn't already have it first. At 0 it ends up directly behind the
-        // Burst once burstFirst has run, which is where it belongs: the user's
-        // own words outrank the devotional and the audio, and only the Burst
-        // outranks them.
+        // Front of the list, ahead of the Burst.
+        //
+        // The Burst has other ways in and gets finished by them: an active
+        // campaign completes it from its own CTA, and the quick-action grid
+        // links straight to it. The declaration has no second entry point, and
+        // it is the only row made of the user's own words.
+        //
+        // Runs AFTER `burstFirst`, not before, or that call would move the Burst
+        // back over the top of it.
         result.insert(personalDeclarationTask(progress), at: 0)
         return result
     }
