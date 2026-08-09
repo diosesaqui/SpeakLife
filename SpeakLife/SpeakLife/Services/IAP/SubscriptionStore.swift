@@ -212,11 +212,6 @@ final class SubscriptionStore: ObservableObject {
     // link stays hidden everywhere until Remote Config sets showPayWhatYouCanCTA.
     @Published var showPayWhatYouCanCTA = false
 
-    // MARK: - Paywall Value Props A/B Test
-    // false = benefit-based personalized props (high_conversion_v1)
-    // true  = succinct feature-based props (high_conversion_succinct_v1)
-    @Published var useSuccinctPaywallValueProps = false
-
     // MARK: - Clean Paywall Layout A/B Test
     // false = current dark high-conversion layout (default)
     // true  = light minimal layout (high_conversion_clean_v1): wordmark,
@@ -232,28 +227,6 @@ final class SubscriptionStore: ObservableObject {
     //         paywall's dark gradient + colors (high_conversion_clean_dark_v1),
     //         preserving visual continuity with the dark onboarding flows.
     @Published var useCleanPaywallDarkTheme = false
-
-    // MARK: - Storm Paywall Copy (live default + Remote Config kill switch)
-    // true (default) = "Pray like Jesus / speak to every storm" repositioned
-    //         copy: storm headline + subhead + storm value props + free-anchored
-    //         CTA. Variant strings gain a "storm" segment
-    //         (high_conversion_storm_v1 etc.) so the change point reads as a
-    //         before/after in analytics. Layout is untouched — composes with
-    //         the clean-layout and dark-theme flags.
-    // false = legacy copy stack (personalized headline hierarchy), reachable
-    //         only by setting the useStormPaywallCopy key to false in the
-    //         Remote Config console (kill switch).
-    @Published var useStormPaywallCopy = true
-
-    // MARK: - Trial Timeline A/B Test (Blinkist pattern)
-    // false = single-line trial callout above the CTA (default)
-    // true  = "Here's how your free trial works" Today / reminder / charge-day
-    //         timeline in place of the single line, shown only when the
-    //         selected plan is genuinely trial-eligible. The reminder step is
-    //         truthful: TrialExperienceService schedules the day n-1 and last
-    //         day pushes. Independent flag so its effect is separable from the
-    //         storm-copy test (paywall events carry a `trial_timeline` param).
-    @Published var useTrialTimelinePaywall = false
 
     // MARK: - Weekly Plan A/B Test
     // false = show Monthly as the non-annual option (default)
@@ -502,22 +475,9 @@ final class SubscriptionStore: ObservableObject {
         showPayWhatYouCanLink = remoteConfig["showPayWhatYouCanLink"].boolValue
         showPayWhatYouCanCTA = remoteConfig["showPayWhatYouCanCTA"].boolValue
 
-        // Paywall Value Props A/B Test
-        useSuccinctPaywallValueProps = remoteConfig["useSuccinctPaywallValueProps"].boolValue
-
         // Clean Paywall Layout A/B Test (unset key resolves false — ships dormant)
         useCleanPaywallVariant = remoteConfig["useCleanPaywallVariant"].boolValue
         useCleanPaywallDarkTheme = remoteConfig["useCleanPaywallDarkTheme"].boolValue
-
-        // Storm Paywall Copy: ships ON. The key is a kill switch, honored only
-        // when explicitly set in the console — an absent key resolves to a
-        // static false and must not stomp the on-by-default value.
-        if remoteConfig["useStormPaywallCopy"].source == .remote {
-            useStormPaywallCopy = remoteConfig["useStormPaywallCopy"].boolValue
-        }
-
-        // Trial Timeline A/B Test (unset key resolves false — ships dormant)
-        useTrialTimelinePaywall = remoteConfig["useTrialTimelinePaywall"].boolValue
 
         // Weekly Plan A/B Test
         useWeeklyPlan = remoteConfig["useWeeklyPlan"].boolValue

@@ -4,26 +4,17 @@
 //
 //  Data-driven paywall - Remote Config flag: useHighConversionPaywall
 //  Fixes: 70% abandon rate, missing price anchor, weak social proof
+//  Copy is the "Pray like Jesus — speak to every storm" positioning
+//  (unconditional; supersedes the old personalized-headline stack, retired
+//  variants high_conversion_v1 / _succinct_v1 / _clean_v1 / _clean_dark_v1).
 //  Tracks paywallVariant on all events:
-//    - "high_conversion_v1"          (benefit-based personalized props)
-//    - "high_conversion_succinct_v1" (succinct outcome-based props, A/B via
-//      Remote Config flag useSuccinctPaywallValueProps)
-//    - "high_conversion_clean_v1"    (light minimal layout: headline +
-//      illustration + two plan cards + Continue, A/B via Remote Config flag
-//      useCleanPaywallVariant — takes precedence over the succinct flag)
-//    - "high_conversion_clean_dark_v1" (same clean layout skinned with the
+//    - "high_conversion_storm_v1"            (classic dark layout)
+//    - "high_conversion_storm_clean_v1"      (light minimal layout via
+//      Remote Config flag useCleanPaywallVariant: headline + illustration +
+//      two plan cards + Continue)
+//    - "high_conversion_storm_clean_dark_v1" (clean layout skinned with the
 //      classic dark gradient/colors, via useCleanPaywallDarkTheme on top of
 //      useCleanPaywallVariant)
-//    - "high_conversion_storm_v1" / "high_conversion_storm_clean_v1" /
-//      "high_conversion_storm_clean_dark_v1" ("Pray like Jesus — speak to
-//      every storm" repositioned copy — the shipped DEFAULT; the
-//      useStormPaywallCopy Remote Config key is a kill switch back to the
-//      legacy copy stack. Composes with the layout flags, so the storm
-//      segment slots into whichever layout variant is live)
-//  Separate from the variant string, every paywall event carries a
-//  `trial_timeline` param ("true"/"false") for the Blinkist-style trial
-//  timeline A/B (useTrialTimelinePaywall) so its effect reads independently
-//  of the copy test.
 //
 
 import SwiftUI
@@ -95,37 +86,14 @@ struct HighConversionPaywallView: View {
         isHardPaywall && !subscriptionStore.showPayWhatYouCanLink
     }
 
-    /// Variant string sent to Firebase Analytics on every paywall event so the
-    /// A/B between benefit-based and feature-based copy can be compared.
+    /// Variant string sent to Firebase Analytics on every paywall event. The
+    /// "storm" segment marks the repositioned copy's release point so the
+    /// rollout reads as a before/after against the retired variant names.
     private var paywallVariant: String {
         if isCleanVariant {
-            if isStormCopy {
-                return isCleanDarkTheme ? "high_conversion_storm_clean_dark_v1" : "high_conversion_storm_clean_v1"
-            }
-            return isCleanDarkTheme ? "high_conversion_clean_dark_v1" : "high_conversion_clean_v1"
+            return isCleanDarkTheme ? "high_conversion_storm_clean_dark_v1" : "high_conversion_storm_clean_v1"
         }
-        if isStormCopy { return "high_conversion_storm_v1" }
-        return subscriptionStore.useSuccinctPaywallValueProps ? "high_conversion_succinct_v1" : "high_conversion_v1"
-    }
-
-    /// Storm copy — the "Pray like Jesus / speak to every storm"
-    /// repositioning, ON by default (useStormPaywallCopy in Remote Config is
-    /// the kill switch). Overrides the headline, subhead, value props, and
-    /// CTA wording in whichever layout is live. Latched on first appear for
-    /// the same impression-vs-conversion attribution reason as the
-    /// clean-layout latch below.
-    @State private var lockedStormCopy: Bool?
-    private var isStormCopy: Bool {
-        lockedStormCopy ?? subscriptionStore.useStormPaywallCopy
-    }
-
-    /// Trial timeline A/B (Remote Config: useTrialTimelinePaywall) — the
-    /// Blinkist-style "How your free trial works" block. Independent of the
-    /// storm copy flag; every paywall event carries `trial_timeline` so the
-    /// two tests read separately. Latched for attribution like the others.
-    @State private var lockedTrialTimeline: Bool?
-    private var isTrialTimelineOn: Bool {
-        lockedTrialTimeline ?? subscriptionStore.useTrialTimelinePaywall
+        return "high_conversion_storm_v1"
     }
 
     /// Clean minimal layout A/B (Remote Config: useCleanPaywallVariant). Swaps
@@ -148,30 +116,9 @@ struct HighConversionPaywallView: View {
         isCleanVariant && (lockedCleanDarkTheme ?? subscriptionStore.useCleanPaywallDarkTheme)
     }
 
-    /// Short, scannable value props. Title-only, 3–5 words each — readable in a
-    /// glance. The longer two-line descriptions were too much to read. The
-    /// personalized headline/subhead above still adapts to the user.
-    private static let succinctValueProps: [String] = [
-        "Ask the Bible anything",
-        "Quiet anxious thoughts",
-        "Renew your mind daily",
-        "Sleep in God's peace",
-        "Speak over your battles",
-        "Walk in your identity"
-    ]
-    private static let succinctIcons: [String] = [
-        "bubble.left.and.bubble.right.fill",
-        "quote.bubble.fill",
-        "book.fill",
-        "headphones",
-        "megaphone.fill",
-        "crown.fill"
-    ]
-
-    /// Storm-copy value props (useStormPaywallCopy): same scannable one-line
-    /// format as the succinct set, rewritten through the "speak to the storm"
-    /// positioning. Lead with the mechanism (the exact Word, spoken), then
-    /// speed, coverage, audio, chat, and social proof.
+    /// Storm value props: scannable one-line format, written through the
+    /// "speak to the storm" positioning. Lead with the mechanism (the exact
+    /// Word, spoken), then speed, coverage, audio, chat, and social proof.
     private static let stormValueProps: [(icon: String, title: String)] = [
         ("wind", "The exact Word for your exact storm"),
         ("timer", "Peace in under 60 seconds"),
@@ -180,21 +127,6 @@ struct HighConversionPaywallView: View {
         ("bubble.left.and.bubble.right.fill", "Ask the Bible anything"),
         ("person.2.fill", "\(SocialProof.believersCount) believers speaking life daily")
     ]
-
-    private var surveyEngine: SurveyPersonalizationEngine {
-        SurveyPersonalizationEngine(goalWordRaw: appState.surveyGoalWord)
-    }
-
-    /// Active quiz segment, if the user came through QuizOnboardingView (Treatment cohort).
-    /// Takes priority over survey copy because it reflects the specific ad-matched framing.
-    /// Returns nil for the `unsegmented` cohort so they fall through to the
-    /// surveyEngine-personalized headline (driven by their burden choice), which
-    /// is more specific than the generic "Speak life today" unsegmented copy.
-    private var quizSegment: QuizSegment? {
-        guard let seg = QuizSegment(rawValue: appState.onboardingSegment),
-              seg != .unsegmented else { return nil }
-        return seg
-    }
 
     /// Segment-tagged analytics property. Empty string when the user came through
     /// the Control onboarding so paywall events stay backward-compatible.
@@ -221,56 +153,24 @@ struct HighConversionPaywallView: View {
         return goalWord.styleLabel.lowercased()
     }
 
-    /// Resolved copy priority:
-    /// 0. Storm copy A/B — uniform repositioned headline (keeps the
-    ///    personal-declaration continuity moment, reframed to the storm)
-    /// 1. PersonalDeclaration continuity — emotionally warmest moment, names the promise
-    /// 2. Quiz segment — ad-match
-    /// 3. Survey engine — goal word personalization
-    /// 4. Category fallback
+    /// Storm copy resolution: one uniform headline, with the subhead carrying
+    /// the personalization. The fresh-personal-declaration moment (they spoke
+    /// their own declaration aloud seconds ago) keeps its continuity framing;
+    /// the survey goal word (peace / healing / identity / …) names the promise
+    /// when we have it.
     private var resolvedHeadline: String {
-        if isStormCopy {
-            return hasFreshPersonalDeclaration
-                ? "You just spoke to your storm."
-                : "Pray like Jesus. Speak to your storm."
-        }
-        if hasFreshPersonalDeclaration {
-            return "Speak it daily until it comes to pass."
-        }
-        if let segment = quizSegment { return segment.paywallHeadline }
-        return surveyEngine.hasSurveyData ? surveyEngine.paywallCopy.headline : copy.headline
+        hasFreshPersonalDeclaration
+            ? "You just spoke to your storm."
+            : "Pray like Jesus. Speak to your storm."
     }
     private var resolvedSubheadline: String {
-        if isStormCopy {
-            if hasFreshPersonalDeclaration {
-                return "Jesus stilled a sea with three words. Keep speaking yours every morning until it obeys."
-            }
-            if let burden = burdenStyleLabel {
-                return "Your \(burden) declarations, in your mouth every morning, until the storm obeys."
-            }
-            return "He stilled a sea with three words. SpeakLife puts the exact Word for your storm in your mouth every morning."
-        }
         if hasFreshPersonalDeclaration {
-            if let burden = burdenStyleLabel {
-                return "Your \(burden) declaration — in your mouth every morning. Until you possess it."
-            }
-            return "Your declaration — in your mouth every morning. Until you possess it."
+            return "Jesus stilled a sea with three words. Keep speaking yours every morning until it obeys."
         }
-        if let segment = quizSegment { return segment.paywallSubheadline }
-        return surveyEngine.hasSurveyData ? surveyEngine.paywallCopy.subheadline : copy.subheadline
-    }
-    private var resolvedValueProps: [String] {
-        surveyEngine.hasSurveyData ? surveyEngine.paywallCopy.valueProps.map { $0.title } : copy.valueProps
-    }
-    private var resolvedDescriptions: [String] {
-        surveyEngine.hasSurveyData
-            ? surveyEngine.paywallCopy.valueProps.map { $0.description }
-            : [
-                "Daily declarations rewire your mind until God's Word becomes your first response.",
-                "Spoken truth is your greatest weapon. It is exactly how Jesus defeated every attack.",
-                "Faith comes by hearing. Audio devotionals put Scripture in your ears morning and night.",
-                "Know your identity in Christ so deeply that fear, doubt, and shame lose their grip."
-              ]
+        if let burden = burdenStyleLabel {
+            return "Your \(burden) declarations, in your mouth every morning, until the storm obeys."
+        }
+        return "He stilled a sea with three words. SpeakLife puts the exact Word for your storm in your mouth every morning."
     }
     enum PlanType: String {
         case annual = "annual"
@@ -370,8 +270,6 @@ struct HighConversionPaywallView: View {
             subscriptionStore.currentOfferedWeekly?.id
         ].map { $0 ?? "" }.joined(separator: "|")
     }
-    private var copy: UserPreferencesTracker.PaywallCopy { preferencesTracker.getDynamicPaywallCopy() }
-
     // MARK: - Body
     var body: some View {
         ZStack {
@@ -495,56 +393,11 @@ struct HighConversionPaywallView: View {
         }
     }
 
-    // MARK: - Benefits
-    // Personalized value props (default) adapt to the user's burden/goal via the
-    // survey engine; the succinct generic list is the A/B variant behind the
-    // useSuccinctPaywallValueProps flag. (Reverted: forcing succinct on everyone
-    // removed paywall personalization and tracked with a yearly-trial decline.)
-    @ViewBuilder
+    // MARK: - Benefits (storm value props)
     private var benefitsSection: some View {
-        if isStormCopy {
-            stormBenefitsSection
-        } else if subscriptionStore.useSuccinctPaywallValueProps {
-            succinctBenefitsSection
-        } else {
-            personalizedBenefitsSection
-        }
-    }
-
-    private var stormBenefitsSection: some View {
         VStack(alignment: .leading, spacing: 14) {
             ForEach(0..<Self.stormValueProps.count, id: \.self) { i in
                 HCSuccinctBenefitRow(icon: Self.stormValueProps[i].icon, title: Self.stormValueProps[i].title)
-            }
-        }
-        .padding(.horizontal, DS.Spacing.lg)
-    }
-
-    private var personalizedBenefitsSection: some View {
-        let icons = ["quote.bubble.fill", "shield.fill", "eye.fill", "person.circle.fill"]
-        let descs = Array(resolvedDescriptions.prefix(4))
-        let props = Array(resolvedValueProps.prefix(4))
-        return VStack(alignment: .leading, spacing: DS.Spacing.md) {
-            // Fixed lead row (not personalized): Bible chat applies to every
-            // burden/goal, and the comparison grid below already promises it.
-            HCBenefitRow(
-                icon: "bubble.left.and.bubble.right.fill",
-                title: "Ask the Bible anything",
-                description: "AI Bible chat answers your questions with Scripture the moment you need it."
-            )
-            ForEach(0..<min(props.count, 4), id: \.self) { i in
-                HCBenefitRow(icon: icons[i], title: props[i], description: i < descs.count ? descs[i] : "")
-            }
-        }
-        .padding(.horizontal, DS.Spacing.lg)
-    }
-
-    private var succinctBenefitsSection: some View {
-        let props = Self.succinctValueProps
-        let icons = Self.succinctIcons
-        return VStack(alignment: .leading, spacing: 14) {
-            ForEach(0..<props.count, id: \.self) { i in
-                HCSuccinctBenefitRow(icon: icons[i], title: props[i])
             }
         }
         .padding(.horizontal, DS.Spacing.lg)
@@ -726,7 +579,7 @@ struct HighConversionPaywallView: View {
                 .frame(height: 20)
             VStack(spacing: 18) {
                 planSelectorSection
-                trialTermsSection
+                trialCallout
                // closingLine
                 ctaButton
                 trialReassuranceLine
@@ -786,26 +639,6 @@ struct HighConversionPaywallView: View {
         .buttonStyle(PlainButtonStyle())
     }
 
-    // MARK: - Trial Terms (callout line, or Blinkist timeline when the A/B is on)
-    // The timeline only renders for a genuinely trial-eligible plan with a
-    // trial long enough to have distinct reminder and end days (>= 3); every
-    // other case keeps the single-line callout, so the autocharge fear is
-    // always answered one way or the other.
-    @ViewBuilder
-    private var trialTermsSection: some View {
-        if isTrialTimelineOn, let days = selectedPlanTrialDays, days >= 3 {
-            HCTrialTimelineView(
-                trialDays: days,
-                ink: .white.opacity(0.92),
-                subInk: .white.opacity(0.6),
-                accent: Constants.DAMidBlue,
-                track: Color.white.opacity(0.18)
-            )
-        } else {
-            trialCallout
-        }
-    }
-
     // MARK: - Trial Callout (clarity-first: addresses the autocharge fear).
     // Day count is read from the selected plan's real StoreKit intro offer —
     // never hardcoded — and only shown when this user is actually eligible.
@@ -835,14 +668,15 @@ struct HighConversionPaywallView: View {
     }
 
     // MARK: - CTA
-    // Storm arm follows the free-anchored short-CTA evidence: the day count
-    // makes "free" concrete ("Try 7 Days Free"), and the non-trial fallback
-    // drops to a plain "Continue" (the consistently winning minimal CTA).
+    // Free-anchored short CTA: the real StoreKit day count makes "free"
+    // concrete ("Try 7 Days Free"); the non-trial fallback is a plain
+    // "Continue" (the consistently winning minimal CTA). Shared by both
+    // layouts' buttons.
     private var ctaText: String {
         if let days = selectedPlanTrialDays {
-            return isStormCopy ? "Try \(days) Days Free" : "Start Free Trial"
+            return "Try \(days) Days Free"
         }
-        return isStormCopy ? "Continue" : "Start Taking Ground →"
+        return "Continue"
     }
 
     private var ctaButton: some View {
@@ -949,8 +783,7 @@ struct HighConversionPaywallView: View {
                         "variant": paywallVariant,
                         "plan_viewed": selectedPlan.rawValue,
                         "seconds_on_paywall": Int(Date().timeIntervalSince(timeOnPaywall)),
-                        "segment": segmentParam,
-                        "trial_timeline": String(isTrialTimelineOn)
+                        "segment": segmentParam
                     ])
                     if canShowWelcomeOffer {
                         welcomeOfferShown = true
@@ -1075,7 +908,7 @@ struct HighConversionPaywallView: View {
                 subline: cleanNonAnnualSubline,
                 badge: nil
             )
-            cleanTrialTermsSection
+            cleanTrialLine
             cleanContinueButton
             // Same Remote Config-gated link as the dark layout, so enabling
             // showPayWhatYouCanCTA reaches both A/B arms.
@@ -1149,24 +982,6 @@ struct HighConversionPaywallView: View {
         .buttonStyle(PlainButtonStyle())
     }
 
-    // Clean-layout counterpart of trialTermsSection: same timeline gate, the
-    // clean palette. Falls back to the single trial line (which itself only
-    // renders when trial-eligible).
-    @ViewBuilder
-    private var cleanTrialTermsSection: some View {
-        if isTrialTimelineOn, let days = selectedPlanTrialDays, days >= 3 {
-            HCTrialTimelineView(
-                trialDays: days,
-                ink: cleanInk,
-                subInk: cleanSubInk,
-                accent: Constants.DAMidBlue,
-                track: cleanStroke
-            )
-        } else {
-            cleanTrialLine
-        }
-    }
-
     // Same autocharge-fear reassurance as the dark layout's trial callout —
     // real per-plan eligibility, real StoreKit day count, never hardcoded.
     @ViewBuilder
@@ -1182,16 +997,6 @@ struct HighConversionPaywallView: View {
         }
     }
 
-    /// Clean layout CTA: keeps its minimal "Continue" fallback in both arms;
-    /// the storm arm makes the trial case free-anchored with the real day
-    /// count, same as the classic layout's storm CTA.
-    private var cleanCtaText: String {
-        if let days = selectedPlanTrialDays {
-            return isStormCopy ? "Try \(days) Days Free" : "Start Free Trial"
-        }
-        return "Continue"
-    }
-
     private var cleanContinueButton: some View {
         Button(action: makePurchase) {
             Group {
@@ -1199,7 +1004,7 @@ struct HighConversionPaywallView: View {
                     ProgressView()
                         .progressViewStyle(CircularProgressViewStyle(tint: .white))
                 } else {
-                    Text(cleanCtaText)
+                    Text(ctaText)
                         .font(.system(size: 17, weight: .bold)).foregroundColor(.white)
                 }
             }
@@ -1303,12 +1108,6 @@ struct HighConversionPaywallView: View {
         if lockedCleanDarkTheme == nil {
             lockedCleanDarkTheme = subscriptionStore.useCleanPaywallDarkTheme
         }
-        if lockedStormCopy == nil {
-            lockedStormCopy = subscriptionStore.useStormPaywallCopy
-        }
-        if lockedTrialTimeline == nil {
-            lockedTrialTimeline = subscriptionStore.useTrialTimelinePaywall
-        }
         timeOnPaywall = Date()
         selectedPlan = .annual
         // Check actual trial eligibility from Apple (re-run via onChange when
@@ -1318,14 +1117,12 @@ struct HighConversionPaywallView: View {
             "variant": paywallVariant,
             "user_category": preferencesTracker.primaryCategory.rawValue,
             "initial_plan": "annual",
-            "segment": segmentParam,
-            "trial_timeline": String(isTrialTimelineOn)
+            "segment": segmentParam
         ])
         AnalyticsService.shared.track("paywall_shown", parameters: [
             "segment": segmentParam,
             "source": source,
-            "variant": paywallVariant,
-            "trial_timeline": String(isTrialTimelineOn)
+            "variant": paywallVariant
         ])
         if !effectiveIsHardPaywall {
             DispatchQueue.main.asyncAfter(deadline: .now() + 4) {
@@ -1367,8 +1164,7 @@ struct HighConversionPaywallView: View {
             "plan": selectedPlan.rawValue,
             "user_category": preferencesTracker.primaryCategory.rawValue,
             "product_id": product.id,
-            "segment": segmentParam,
-            "trial_timeline": String(isTrialTimelineOn)
+            "segment": segmentParam
         ])
         AnalyticsService.shared.track("paywall_subscribe_tapped", parameters: [
             "segment": segmentParam,
@@ -1386,8 +1182,7 @@ struct HighConversionPaywallView: View {
                         metadata: ["variant": paywallVariant, "plan": selectedPlan.rawValue,
                                    "user_category": preferencesTracker.primaryCategory.rawValue,
                                    "seconds_to_convert": Int(Date().timeIntervalSince(timeOnPaywall)),
-                                   "segment": segmentParam,
-                                   "trial_timeline": String(isTrialTimelineOn)]
+                                   "segment": segmentParam]
                     )
                     // NOTE: trial_started is fired by SubscriptionStore.purchase —
                     // the single source of truth, correctly gated on the purchased
@@ -1431,81 +1226,6 @@ struct HighConversionPaywallView: View {
                 errorMessage = restored ? "Purchases restored" : "No purchases found to restore."
                 isShowingError = true
             }
-        }
-    }
-}
-
-// MARK: - Benefit Row Component
-private struct HCBenefitRow: View {
-    let icon: String; let title: String; let description: String
-    var body: some View {
-        HStack(alignment: .top, spacing: 14) {
-            Image(systemName: icon).font(.system(size: 20, weight: .medium))
-                .foregroundColor(Constants.DAMidBlue).frame(width: 26)
-            VStack(alignment: .leading, spacing: 3) {
-                Text(title).font(.system(size: 14, weight: .semibold)).foregroundColor(.white)
-                Text(description).font(.system(size: 12)).foregroundColor(.white.opacity(0.65)).fixedSize(horizontal: false, vertical: true)
-            }
-            Spacer()
-        }
-    }
-}
-
-// MARK: - Trial Timeline (Blinkist pattern)
-/// "How your free trial works" — the transparency block that answers the
-/// forget-to-cancel fear with the actual trial mechanics instead of a single
-/// reassurance line. Every claim in it is real: full access is immediate, the
-/// day n-1 reminder is scheduled by TrialExperienceService (9:00am local push),
-/// and the day count comes from the selected plan's StoreKit intro offer.
-/// Theme colors are injected so the same component renders on the dark
-/// gradient and the clean light layout.
-private struct HCTrialTimelineView: View {
-    let trialDays: Int
-    let ink: Color
-    let subInk: Color
-    let accent: Color
-    let track: Color
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            Text("How your free trial works")
-                .font(.system(size: 14, weight: .bold))
-                .foregroundColor(ink)
-                .padding(.bottom, 10)
-            row(icon: "lock.open.fill", day: "Today",
-                text: "Full access unlocked. Start speaking life today.")
-            row(icon: "bell.fill", day: "Day \(trialDays - 1)",
-                text: "We send you a reminder that your trial is ending.")
-            row(icon: "star.fill", day: "Day \(trialDays)",
-                text: "Trial ends. Cancel anytime before and pay nothing.", isLast: true)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-    }
-
-    private func row(icon: String, day: String, text: String, isLast: Bool = false) -> some View {
-        HStack(alignment: .top, spacing: 12) {
-            VStack(spacing: 0) {
-                ZStack {
-                    Circle().fill(accent.opacity(0.22)).frame(width: 26, height: 26)
-                    Image(systemName: icon)
-                        .font(.system(size: 11, weight: .semibold))
-                        .foregroundColor(accent)
-                }
-                if !isLast {
-                    Rectangle().fill(track).frame(width: 2, height: 18)
-                }
-            }
-            VStack(alignment: .leading, spacing: 1) {
-                Text(day)
-                    .font(.system(size: 12.5, weight: .bold))
-                    .foregroundColor(ink)
-                Text(text)
-                    .font(.system(size: 12))
-                    .foregroundColor(subInk)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            .padding(.bottom, isLast ? 0 : 6)
-            Spacer(minLength: 0)
         }
     }
 }

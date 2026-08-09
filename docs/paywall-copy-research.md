@@ -75,9 +75,9 @@ dropped the thread.
 Money+ministry: our generosity line + pay-what-you-can is the right category
 pattern (Hallow/Glorify both wrap commerce in stewardship). Keep it.
 
-## 4. The sharper copy (implemented, flag-gated)
+## 4. The sharper copy (live — unconditional, no flags)
 
-### `useStormPaywallCopy` → variants `high_conversion_storm_v1` / `_storm_clean_v1` / `_storm_clean_dark_v1`
+### Variants report as `high_conversion_storm_v1` / `_storm_clean_v1` / `_storm_clean_dark_v1`
 
 **Headline (default):**
 > **Pray like Jesus. Speak to your storm.**
@@ -104,53 +104,40 @@ is uniform in the storm arm so the reposition reads cleanly in analytics; the
 subhead carries the personalization (goal word / fresh declaration), which the
 evidence says is where the +15% lives.
 
-### `useTrialTimelinePaywall` → `trial_timeline` param on every paywall event
+## 5. How to read it out
 
-Blinkist block replacing the single trial line (both layouts, only when the selected
-plan is genuinely trial-eligible and ≥3 days):
-
-> **How your free trial works**
-> 🔓 **Today** — Full access unlocked. Start speaking life today.
-> 🔔 **Day 2** — We send you a reminder that your trial is ending.
-> ⭐ **Day 3** — Trial ends. Cancel anytime before and pay nothing.
-
-Every line is true: TrialExperienceService schedules the day n−1 (9:00am) and
-last-day pushes. Independent flag so its effect is separable from the copy test.
-
-## 5. How to run it
-
-1. **Storm copy ships ON by default** (headline, subhead, value props, CTA). The
-   `useStormPaywallCopy` Remote Config key is a kill switch: it is only honored
-   when explicitly set in the console, so an absent key can't stomp the default.
-   Set it to `false` remotely to revert to the legacy copy stack.
-2. **Trial timeline stays dormant** behind `useTrialTimelinePaywall` (Boolean,
-   default `false`) — flip it to start that test separately.
-3. Read out in PostHog: funnel `paywall_shown → paywall_cta_tapped → trial_started`
-   broken down by `variant`. The storm rollout reads as a **before/after** at the
-   release date (storm variants carry a `storm` segment in the name); the timeline
-   test reads concurrently via the `trial_timeline` property.
-4. Guardrails: watch `paywall_dismissed` seconds-on-paywall and the trial→paid rate
-   (a change that boosts trials but tanks paid conversion is a loss). If the storm
-   copy underperforms the 30-day baseline (11.6% dark / 19.6% clean shown→trial),
-   kill it from the console — no release needed.
+The storm copy ships unconditionally — no Remote Config flags. The rollout reads
+as a **before/after** in PostHog: funnel `paywall_shown → paywall_cta_tapped →
+trial_started` broken down by `variant` — storm impressions carry the new
+`high_conversion_storm_*` names, so the release date is the comparison line
+against the 30-day baseline (11.6% dark / 19.6% clean shown→trial). Guardrails:
+`paywall_dismissed` seconds-on-paywall and the trial→paid rate (a change that
+boosts trials but tanks paid conversion is a loss). Reverting means reverting
+the commit.
 
 ## 6. Recommendations not implemented here (next levers, in order)
 
 1. **Send more traffic to the clean light layout** — it's beating the dark layout
    19.6% vs 11.6% on shown→trial. Confirm with ~2 more weeks of volume, then make
    it the default. Stop testing the clean-dark skin (5.1%, losing).
-2. **Trial structure test before any price test** — highest documented win-rate
+2. **Blinkist trial timeline** — "How your free trial works": 🔓 Today full
+   access · 🔔 Day 2 we remind you (true — TrialExperienceService schedules the
+   pushes) · ⭐ Day 3 trial ends, cancel before and pay nothing. Strongest
+   documented paywall pattern (+23% trials). A build was drafted and removed with
+   the no-more-flags decision (recoverable from git history at commit efb37ab);
+   ship it unconditionally if wanted.
+3. **Trial structure test before any price test** — highest documented win-rate
    category (59.6%). E.g. 7-day vs 3-day trial on annual.
-3. **Behavior-change testimonial** — if a real review exists in the vein of "this
+4. **Behavior-change testimonial** — if a real review exists in the vein of "this
    app got me speaking God's Word every day when nothing else did," lead the
    featured-testimonial slot with it (behavior proof beats outcome proof in the
    faith category). Do not fabricate one.
-4. **Seasonal challenge engine (Hallow's real machine)** — a named, dated, free
+5. **Seasonal challenge engine (Hallow's real machine)** — a named, dated, free
    communal challenge ("40 Days of Speaking to the Storm") with the content inside
    the trial; Lent/Advent function as twice-yearly Black Fridays (Hallow: 25x
    downloads on Ash Wednesday, $10M months). This is the biggest lever on this
    list and it's marketing + content, not paywall code.
-5. **Storm-frame the App Store listing** to match ("the exact Word for your exact
+6. **Storm-frame the App Store listing** to match ("the exact Word for your exact
    storm") so ad → store → onboarding → paywall says one thing.
 
 ## Sources
