@@ -133,14 +133,45 @@ struct DeclarationView: View {
                 )
         }
         .buttonStyle(PlainButtonStyle())
-        .onChange(of: appState.scrollToPersonalDeclaration) { shouldScroll in
-            guard shouldScroll else { return }
-            // The id of the declaration whose reminder was tapped is read by the
-            // list, which opens straight onto that card.
-            deepLinkedDeclarationId = UUID(uuidString: appState.pendingPersonalDeclarationId)
-            appState.pendingPersonalDeclarationId = ""
+    }
+
+    /// Opens the declaration a tapped reminder was for.
+    ///
+    /// Called from `.onChange` (feed already on screen) AND from `onAppear`
+    /// (feed wasn't mounted when the tap landed). Both are required.
+    ///
+    /// `scrollToPersonalDeclaration` is `@AppStorage`, so it survives launches,
+    /// but it used to be consumed by `.onChange` alone — which only fires on a
+    /// transition. Any tap arriving while this view was not mounted (user on the
+    /// Today, Audio, or Profile tab, or a cold launch) left the flag stuck at
+    /// true with nobody to clear it. Every later tap then set true over true,
+    /// which is not a change, so the deep link silently stopped working and
+    /// never recovered.
+    ///
+    /// It showed up for people carrying several declarations first: three
+    /// reminders a day instead of one means three times the chance of tapping
+    /// while some other tab is up, and one is enough to latch it forever.
+    private func openPendingPersonalDeclaration() {
+        guard appState.scrollToPersonalDeclaration else { return }
+
+        // Clear the flags first. If anything below fails to present, the deep
+        // link is spent rather than left latched for the next tap to trip over.
+        let pendingId = appState.pendingPersonalDeclarationId
+        appState.pendingPersonalDeclarationId = ""
+        appState.scrollToPersonalDeclaration = false
+
+        // Empty id means the reminder predates per-declaration deep links; the
+        // list then opens on its own without preselecting a card.
+        deepLinkedDeclarationId = UUID(uuidString: pendingId)
+
+        // A different sheet may already be up (the tap can arrive while the user
+        // is mid-flow). Setting `activeSheet` straight across does not re-present
+        // in SwiftUI, so dismiss first and open on the next runloop.
+        if activeSheet != nil && activeSheet != .personalDeclaration {
+            activeSheet = nil
+            DispatchQueue.main.async { activeSheet = .personalDeclaration }
+        } else {
             activeSheet = .personalDeclaration
-            appState.scrollToPersonalDeclaration = false
         }
     }
 
@@ -376,6 +407,13 @@ struct DeclarationView: View {
         .onReceive(NotificationCenter.default.publisher(for: Notification.Name("ShowDailyDeclarationBurst"))) { _ in
             showDailyBurst = true
         }
+        // On `body`, not on the personal-declaration button. That button lives
+        // inside `overlayContent`, which is not rendered while
+        // `showScreenshotLabel` is set, so the observer could be absent from the
+        // hierarchy exactly when a tap needed it.
+        .onChange(of: appState.scrollToPersonalDeclaration) { _ in
+            openPendingPersonalDeclaration()
+        }
         .onAppear(perform: handleOnAppear)
         .onDisappear(perform: handleOnDisappear)
     }
@@ -443,6 +481,10 @@ struct DeclarationView: View {
         premiumCount += 1
         shareApp()
         timerViewModel.debugFixStreak()
+        // Picks up a reminder tapped while this view was not mounted, including
+        // one left over from a previous launch. Without it the flag can only be
+        // cleared by a transition that will never come.
+        openPendingPersonalDeclaration()
     }
     
     private func handleOnDisappear() {
