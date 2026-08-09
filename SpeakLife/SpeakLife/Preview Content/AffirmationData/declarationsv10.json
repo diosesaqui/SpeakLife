@@ -1,5 +1,5 @@
 {
-  "count": 3052,
+  "count": 3176,
   "version": 10,
   "declarations": [
     {
@@ -18315,515 +18315,650 @@
       "category": "proverbs"
     },
     {
-             "text": "No closed door can stop the fulfillment of the destiny I have prepared for you.",
-             "book": "- Jesus",
-             "isFavorite": false,
-             "category": "destiny"
-         },
-         {
-             "text": "I hold the keys to every door, and I will open the right ones for you.",
-             "book": "- Jesus",
-             "isFavorite": false,
-             "category": "destiny"
-         },
-         {
-             "text": "Closed doors are opportunities for My supernatural intervention in your life.",
-             "book": "- Jesus",
-             "isFavorite": false,
-             "category": "destiny"
-         },
-         {
-             "text": "I am the God of breakthroughs; trust me to break through every closed door for you.",
-             "book": "- Jesus",
-             "isFavorite": false,
-             "category": "destiny"
-         },
-         {
-             "text": "I walk with God, and His blessing rests on the work of my hands.",
-             "book": "Psalm 1:1",
-             "isFavorite": false,
-             "category": "destiny"
-         },
-         {
-             "text": "I am blessed coming in and blessed going out.",
-             "isFavorite": false,
-             "category": "destiny"
-         },
-         {
-             "text": "I step into my assignment with steady courage. God has already gone ahead of me.",
-             "isFavorite": false,
-             "category": "destiny"
- },
-  {
-             "text": "Every morning God sets a fresh assignment in front of me.",
-             "isFavorite": false,
-             "category": "destiny"
-  },
- {
-     "text": "I know what God made me for, and I am doing it now.",
-     "isFavorite": false,
-     "category": "destiny"
-   },
-   {
-     "text": "The right doors open for me at the right time. I walk through them.",
-     "isFavorite": false,
-     "category": "destiny"
-   },
-   {
-     "text": "I have endurance for the long assignment. God renews my strength every morning.",
-     "isFavorite": false,
-     "category": "destiny"
-   },
-   {
-     "text": "God goes before me and prepares the way I have not walked yet.",
-     "isFavorite": false,
-     "category": "destiny"
-   },
-   {
-     "text": "My gifts serve real people and change real lives.",
-     "isFavorite": false,
-     "category": "destiny"
-   },
-   {
-     "text": "I grow wiser every day, and God builds me to carry what He promised.",
-     "isFavorite": false,
-     "category": "destiny"
-   },
-   {
-     "text": "I say yes to God before I see the whole plan. He fills in every step.",
-     "isFavorite": false,
-     "category": "destiny"
-   },
-   {
-     "text": "I run my own race. God set the lane, and I stay in it.",
-     "isFavorite": false,
-     "category": "destiny"
-   },
-   {
-     "text": "God opens doors for me that no one can shut.",
-     "isFavorite": false,
-     "category": "destiny"
-   },
-   {
-     "text": "God sends the right people to stand with me and carry the vision.",
-     "isFavorite": false,
-     "category": "destiny"
-   },
-   {
-     "text": "God funds every vision He gives me. The resources arrive on time.",
-     "isFavorite": false,
-     "category": "destiny"
-   },
-   {
-     "text": "The Spirit of God speaks inside me, and I hear Him clearly.",
-     "isFavorite": false,
-     "category": "destiny"
-   },
-   {
-     "text": "I show up every day, and God multiplies what I put my hand to.",
-     "isFavorite": false,
-     "category": "destiny"
-   },
-   {
-     "text": "What God builds through me outlives me. My children inherit the blessing.",
-     "isFavorite": false,
-     "category": "destiny"
-   },
-   {
-     "text": "Joy fuels me in the work God gave me. I never run empty.",
-     "isFavorite": false,
-     "category": "destiny"
-   },
-   {
-     "text": "God's plans for me are good. He designed my whole life on purpose.",
-     "isFavorite": false,
-     "category": "destiny"
-   },
-   {
-     "text": "God made me on purpose, for a purpose. Nothing about me is an accident.",
-     "isFavorite": false,
-     "category": "destiny"
-   },
-   {
-     "text": "God gives me everything I need to finish what He assigned me.",
-     "isFavorite": false,
-     "category": "destiny"
-   },
-   {
-     "text": "Right now I am walking in exactly what God planned for my life.",
-     "isFavorite": false,
-     "category": "destiny"
-   },
-   {
-     "text": "I take bold steps, and God steadies every one of them.",
-     "isFavorite": false,
-     "category": "destiny"
-   },
-   {
-     "text": "What God assigned to me is mine. No one else can carry it.",
-     "isFavorite": false,
-     "category": "destiny"
-   },
-   {
-     "text": "My gift makes room for me. It brings me before great people.",
-     "isFavorite": false,
-     "category": "destiny"
-   },
-   {
-     "text": "God's favor surrounds me like a shield. It speaks for me before I do.",
-     "isFavorite": false,
-     "category": "destiny"
-   },
-   {
-     "text": "I do not run on my own strength. God's grace carries the whole assignment.",
-     "isFavorite": false,
-     "category": "destiny"
-   },
-   {
-     "text": "The Lord sets my steps and makes my path straight.",
-     "isFavorite": false,
-     "category": "destiny"
-   },
-   {
-     "text": "Every promise God spoke over my life comes to pass. His timing is perfect.",
-     "isFavorite": false,
-     "category": "destiny"
-   },
-   {
-     "text": "God gives skill to my hands. My work is excellent, and people notice.",
-     "isFavorite": false,
-     "category": "destiny"
-   },
-   {
-     "text": "God's purpose for my life is being fulfilled through me right now.",
-     "isFavorite": false,
-     "category": "destiny"
-   },
-   {
-     "text": "I speak up in the rooms God puts me in. My voice carries His authority.",
-     "isFavorite": false,
-     "category": "destiny"
-   },
-   {
-     "text": "The Lord finishes the good work He started in me.",
-     "isFavorite": false,
-     "category": "destiny"
-   },
-   {
-     "text": "God has been preparing me for this my whole life. I am ready.",
-     "isFavorite": false,
-     "category": "destiny"
-   },
-   {
-       "text": "I am complete in Christ. Nothing is missing from what God gave me to do.",
-       "isFavorite": false,
-       "category": "destiny"
-   },
-   {
-       "text": "I seek first God's kingdom, and everything I need is added to me.",
-       "isFavorite": false,
-       "category": "destiny"
-   },
-   {
-       "text": "My God supplies all my needs!",
-       "isFavorite": false,
-       "category": "destiny"
-   },
-   {
-       "text": "I am seated with Christ in heavenly places.",
-       "isFavorite": false,
-       "category": "destiny"
-   },
-   {
-       "text": "I am God's masterpiece, created for good works He prepared in advance.",
-       "isFavorite": false,
-       "category": "destiny"
-   },
-   {
-       "text": "I overcome the world through my faith in Jesus.",
-       "isFavorite": false,
-       "category": "destiny"
-   },
-   {
-       "text": "Christ gives me strength for everything He has called me to do.",
-       "isFavorite": false,
-       "category": "destiny"
-   },
-   {
-       "text": "Jesus already won. I live from His victory, not toward it.",
-       "isFavorite": false,
-       "category": "destiny"
-   },
-   {
-       "text": "God chose me before the world began.",
-       "isFavorite": false,
-       "category": "destiny"
-   },
-   {
-       "text": "I am victorious because of Jesus.",
-       "isFavorite": false,
-       "category": "destiny"
-   },
-   {
-       "text": "I am more than a conqueror!",
-       "isFavorite": false,
-       "category": "destiny"
-   },
-   {
-       "text": "I am the head and not the tail.",
-       "isFavorite": false,
-       "category": "destiny"
-   },
-   {
-       "text": "I am above and never beneath.",
-       "isFavorite": false,
-       "category": "destiny"
-   },
-   {
-       "text": "As Jesus is, so am I in this world.",
-       "isFavorite": false,
-       "category": "destiny"
-   },
-   {
-       "text": "No weapon formed against me prospers!",
-       "isFavorite": false,
-       "category": "destiny"
-   },
-   {
-       "text": "I have the mind of Christ!",
-       "isFavorite": false,
-       "category": "destiny"
-   },
-   {
-       "text": "My youth is renewed like the eagle's.",
-       "isFavorite": false,
-       "category": "destiny"
-   },
-   {
-       "text": "I am grateful for a new day!",
-       "isFavorite": false,
-       "category": "destiny"
-   },
-   {
-       "text": "I am thankful for the vision God planted in me.",
-       "isFavorite": false,
-       "category": "destiny"
-   },
-   {
-       "text": "I am thankful for eyes that see opportunity and ears that hear God.",
-       "isFavorite": false,
-       "category": "destiny"
-   },
-   {
-       "text": "I am thankful for a sharp mind that carries God's ideas.",
-       "isFavorite": false,
-       "category": "destiny"
-   },
-   {
-       "text": "I am thankful for a strong body that can carry the assignment.",
-       "isFavorite": false,
-       "category": "destiny"
-   },{
-       "text": "God brought me this far, and He is not finished with me.",
-       "isFavorite": false,
-       "category": "destiny"
-   }, {
-       "text": "I tread on lions and cobras. They are crushed under my feet.",
-       "isFavorite": false,
-       "category": "destiny"
-   },{
-       "text": "This is the day the Lord made. I step into what He created me for.",
-       "isFavorite": false,
-       "category": "destiny"
-   },
-   {
-       "text": "My words carry authority. I speak to my day, and it lines up.",
-       "isFavorite": false,
-       "category": "destiny"
-   },
-   {
-       "text": "There is no condemnation for you who believes in me.",
-       "isFavorite": false,
-       "category": "grace",
-       "book": "Jesus"
-   },
-   {
-       "text": "Jesus won it all for me. His victory is my starting line.",
-       "isFavorite": false,
-       "category": "grace"
-   },
-   {
-       "text": "My future is settled. Heaven is my home, and I live free today.",
-       "isFavorite": false,
-       "category": "destiny"
-   },
-   {
-       "text": "My name is written in the Book of Life!",
-       "isFavorite": false,
-       "category": "destiny"
-   },
-   {
-       "text": "The choices I make today build the life God promised me.",
-       "isFavorite": false,
-       "category": "destiny"
-   },
-   {
-       "text": "I am filled with wisdom, and I know what to do next.",
-       "isFavorite": false,
-       "category": "destiny"
-   },
-   {
-       "text": "I move in peace and joy through every season.",
-       "isFavorite": false,
-       "category": "destiny"
-   },
-   {
-       "text": "I bring every decision to God before I make it.",
-       "isFavorite": false,
-       "category": "destiny"
-   },
-   {
-       "text": "God gives me answers no one else has.",
-       "isFavorite": false,
-       "category": "destiny"
-   },
-   {
-       "text": "I trust God with the plan for my life.",
-       "isFavorite": false,
-       "category": "destiny"
-   },
-   {
-       "text": "God is in every detail of my life, down to the smallest one.",
-       "isFavorite": false,
-       "category": "destiny"
-   },
-   {
-       "text": "I am a warrior!",
-       "isFavorite": false,
-       "category": "destiny"
-   },{
-       "text": "God's hand holds me steady, and I keep moving forward.",
-       "isFavorite": false,
-       "category": "destiny"
-   },
-   {
-       "text": "Nothing I face is too big for God.",
-       "isFavorite": false,
-       "category": "destiny"
-   },
-   {
-       "text": "Today I take one real step toward what God showed me.",
-       "isFavorite": false,
-       "category": "destiny"
-   },
-   {
-       "text": "God turns my experience into wisdom. I get sharper every year.",
-       "isFavorite": false,
-       "category": "destiny"
-   },
-   {
-       "text": "I take action today. Faith moves my feet.",
-       "isFavorite": false,
-       "category": "destiny"
-   },
-   {
-       "text": "I stay teachable. God keeps showing me more.",
-       "isFavorite": false,
-       "category": "destiny"
-   },
-   {
-       "text": "I take care of my body. It carries me the whole distance.",
-       "isFavorite": false,
-       "category": "destiny"
-   },
-   {
-       "text": "I love the life God gave me and the road I am on.",
-       "isFavorite": false,
-       "category": "destiny"
-   },
-   {
-       "text": "Life is a gift. I am thankful for every chapter God writes.",
-       "isFavorite": false,
-       "category": "destiny"
-   },
-   {
-       "text": "In every season I trust God. He has never missed once.",
-       "isFavorite": false,
-       "category": "destiny"
-   },{
-       "text": "Abundance is part of my inheritance, and I use it to bless others.",
-       "isFavorite": false,
-       "category": "destiny"
-   },{
-       "text": "Strong health is part of my inheritance. My body keeps pace with my calling.",
-       "isFavorite": false,
-       "category": "destiny"
-   },{
-       "text": "Joy and gratitude lift me higher. They are my strength every day.",
-       "isFavorite": false,
-       "category": "destiny"
-   },{
-       "text": "Jesus gave His life so I could live full and pour into others.",
-       "isFavorite": false,
-       "category": "destiny"
-   },
-   {
-       "text": "I am confident, faithful, and bold.",
-       "isFavorite": false,
-       "category": "destiny"
-   },
-   {
-       "text": "I have a clear vision for my life. I write it down and run.",
-       "isFavorite": false,
-       "category": "destiny"
-   },
-   {
-       "text": "I am alive on purpose today. God still has work for my hands.",
-       "isFavorite": false,
-       "category": "destiny"
-   },
-   {
-       "text": "I guard my heart, because everything I build flows from it.",
-       "isFavorite": false,
-       "category": "destiny"
-   },
-   {
-       "text": "God takes pleasure in my prosperity.",
-       "isFavorite": false,
-       "category": "destiny"
-   },
-   {
-       "text": "I am faithful with what God put in my hands, so He gives me more.",
-       "isFavorite": false,
-       "category": "destiny"
-   },{
-       "text": "God builds my character to match the size of what He is giving me.",
-       "isFavorite": false,
-       "category": "destiny"
-   }, {
-       "text": "I move when God says move, and I wait when He says wait.",
-       "isFavorite": false,
-       "category": "destiny"
-   },{
-       "text": "Everything I need to become who God made me is already in me.",
-       "isFavorite": false,
-       "category": "destiny"
-   },{
-       "text": "My words have power, so I speak only what I want to see.",
-       "isFavorite": false,
-       "category": "destiny"
-   },{
-       "text": "God and I are partners. He gives the vision, I do the work.",
-       "isFavorite": false,
-       "category": "destiny"
-   },{
-       "text": "I can change the atmosphere with my words.",
-       "isFavorite": false,
-       "category": "destiny"
-   },{
-       "text": "I am bold as a lion!",
-       "isFavorite": false,
-       "category": "destiny"
-   }
+      "text": "No closed door can stop the fulfillment of the destiny I have prepared for you.",
+      "book": "- Jesus",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "I hold the keys to every door, and I will open the right ones for you.",
+      "book": "- Jesus",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "Closed doors are opportunities for My supernatural intervention in your life.",
+      "book": "- Jesus",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "I am the God of breakthroughs; trust me to break through every closed door for you.",
+      "book": "- Jesus",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "I walk with God, and His blessing rests on the work of my hands.",
+      "book": "Psalm 1:1",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "I am blessed coming in and blessed going out.",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "I step into my assignment with steady courage. God has already gone ahead of me.",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "Every morning God sets a fresh assignment in front of me.",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "I know what God made me for, and I am doing it now.",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "The right doors open for me at the right time. I walk through them.",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "I have endurance for the long assignment. God renews my strength every morning.",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "God goes before me and prepares the way I have not walked yet.",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "My gifts serve real people and change real lives.",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "I grow wiser every day, and God builds me to carry what He promised.",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "I say yes to God before I see the whole plan. He fills in every step.",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "I run my own race. God set the lane, and I stay in it.",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "God opens doors for me that no one can shut.",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "God sends the right people to stand with me and carry the vision.",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "God funds every vision He gives me. The resources arrive on time.",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "The Spirit of God speaks inside me, and I hear Him clearly.",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "I show up every day, and God multiplies what I put my hand to.",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "What God builds through me outlives me. My children inherit the blessing.",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "Joy fuels me in the work God gave me. I never run empty.",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "God's plans for me are good. He designed my whole life on purpose.",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "God made me on purpose, for a purpose. Nothing about me is an accident.",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "God gives me everything I need to finish what He assigned me.",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "Right now I am walking in exactly what God planned for my life.",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "I take bold steps, and God steadies every one of them.",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "What God assigned to me is mine. No one else can carry it.",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "My gift makes room for me. It brings me before great people.",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "God's favor surrounds me like a shield. It speaks for me before I do.",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "I do not run on my own strength. God's grace carries the whole assignment.",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "The Lord sets my steps and makes my path straight.",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "Every promise God spoke over my life comes to pass. His timing is perfect.",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "God gives skill to my hands. My work is excellent, and people notice.",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "God's purpose for my life is being fulfilled through me right now.",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "I speak up in the rooms God puts me in. My voice carries His authority.",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "The Lord finishes the good work He started in me.",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "God has been preparing me for this my whole life. I am ready.",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "I am complete in Christ. Nothing is missing from what God gave me to do.",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "I seek first God's kingdom, and everything I need is added to me.",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "My God supplies all my needs!",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "I am seated with Christ in heavenly places.",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "I am God's masterpiece, created for good works He prepared in advance.",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "I overcome the world through my faith in Jesus.",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "Christ gives me strength for everything He has called me to do.",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "Jesus already won. I live from His victory, not toward it.",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "God chose me before the world began.",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "I am victorious because of Jesus.",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "I am more than a conqueror!",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "I am the head and not the tail.",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "I am above and never beneath.",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "As Jesus is, so am I in this world.",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "No weapon formed against me prospers!",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "I have the mind of Christ!",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "My youth is renewed like the eagle's.",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "I am grateful for a new day!",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "I am thankful for the vision God planted in me.",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "I am thankful for eyes that see opportunity and ears that hear God.",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "I am thankful for a sharp mind that carries God's ideas.",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "I am thankful for a strong body that can carry the assignment.",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "God brought me this far, and He is not finished with me.",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "I tread on lions and cobras. They are crushed under my feet.",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "This is the day the Lord made. I step into what He created me for.",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "My words carry authority. I speak to my day, and it lines up.",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "There is no condemnation for you who believes in me.",
+      "isFavorite": false,
+      "category": "grace",
+      "book": "Jesus"
+    },
+    {
+      "text": "Jesus won it all for me. His victory is my starting line.",
+      "isFavorite": false,
+      "category": "grace"
+    },
+    {
+      "text": "My future is settled. Heaven is my home, and I live free today.",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "My name is written in the Book of Life!",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "The choices I make today build the life God promised me.",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "I am filled with wisdom, and I know what to do next.",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "I move in peace and joy through every season.",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "I bring every decision to God before I make it.",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "God gives me answers no one else has.",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "I trust God with the plan for my life.",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "God is in every detail of my life, down to the smallest one.",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "I am a warrior!",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "God's hand holds me steady, and I keep moving forward.",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "Nothing I face is too big for God.",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "Today I take one real step toward what God showed me.",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "God turns my experience into wisdom. I get sharper every year.",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "I take action today. Faith moves my feet.",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "I stay teachable. God keeps showing me more.",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "I take care of my body. It carries me the whole distance.",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "I love the life God gave me and the road I am on.",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "Life is a gift. I am thankful for every chapter God writes.",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "In every season I trust God. He has never missed once.",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "Abundance is part of my inheritance, and I use it to bless others.",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "Strong health is part of my inheritance. My body keeps pace with my calling.",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "Joy and gratitude lift me higher. They are my strength every day.",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "Jesus gave His life so I could live full and pour into others.",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "I am confident, faithful, and bold.",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "I have a clear vision for my life. I write it down and run.",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "I am alive on purpose today. God still has work for my hands.",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "I guard my heart, because everything I build flows from it.",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "God takes pleasure in my prosperity.",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "I am faithful with what God put in my hands, so He gives me more.",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "God builds my character to match the size of what He is giving me.",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "I move when God says move, and I wait when He says wait.",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "Everything I need to become who God made me is already in me.",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "My words have power, so I speak only what I want to see.",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "God and I are partners. He gives the vision, I do the work.",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "I can change the atmosphere with my words.",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "I am bold as a lion!",
+      "isFavorite": false,
+      "category": "destiny"
+    },
+    {
+      "text": "God's favor rests on me and He establishes the work of my hands. What I build, He steadies.",
+      "bibleVerseText": "May the favor of the Lord our God rest on us; establish the work of our hands for us. Yes, establish the work of our hands.",
+      "book": "Psalm 90:17",
+      "category": "business"
+    },
+    {
+      "text": "God gives me the ability to produce wealth. That ability is His gift, already in me.",
+      "bibleVerseText": "But remember the Lord your God, for it is he who gives you the ability to produce wealth, and so confirms his covenant, which he swore to your ancestors, as it is today.",
+      "book": "Deuteronomy 8:18",
+      "category": "business"
+    },
+    {
+      "text": "I commit whatever I do to the Lord and He establishes my plans. This business rests on His word.",
+      "bibleVerseText": "Commit to the Lord whatever you do, and he will establish your plans.",
+      "book": "Proverbs 16:3",
+      "category": "business"
+    },
+    {
+      "text": "God began this good work in me and He carries it on to completion. He finishes what He starts.",
+      "bibleVerseText": "being confident of this, that he who began a good work in you will carry it on to completion until the day of Christ Jesus.",
+      "book": "Philippians 1:6",
+      "category": "business"
+    },
+    {
+      "text": "The Spirit of God fills me with wisdom, knowledge, and every kind of skill. Heaven put it there.",
+      "bibleVerseText": "and I have filled him with the Spirit of God, with wisdom, with understanding, with knowledge and with all kinds of skills.",
+      "book": "Exodus 31:3",
+      "category": "business"
+    },
+    {
+      "text": "I am skilled in my work, so I serve before kings. My craft opens doors no contact could.",
+      "bibleVerseText": "Do you see someone skilled in their work? They will serve before kings; they will not serve before officials of low rank.",
+      "book": "Proverbs 22:29",
+      "category": "business"
+    },
+    {
+      "text": "I refuse to despise the day of small things. God's eyes rejoice over the work in my hands.",
+      "bibleVerseText": "Who dares despise the day of small things, since the seven eyes of the Lord that range throughout the earth will rejoice when they see the chosen capstone in the hand of Zerubbabel?",
+      "book": "Zechariah 4:10",
+      "category": "business"
+    },
+    {
+      "text": "The God of heaven gives me success. I am His servant, and I start building.",
+      "bibleVerseText": "I answered them by saying, “The God of heaven will give us success. We his servants will start rebuilding, but as for you, you have no share in Jerusalem or any claim or historic right to it.”",
+      "book": "Nehemiah 2:20",
+      "category": "business"
+    },
+    {
+      "text": "The Lord builds this house with me, so my labor is never wasted. He guards what I make.",
+      "bibleVerseText": "Unless the Lord builds the house, the builders labor in vain. Unless the Lord watches over the city, the guards stand watch in vain.",
+      "book": "Psalm 127:1",
+      "category": "business"
+    },
+    {
+      "text": "I plant the seed and I water it, and God makes it grow. The increase is His work.",
+      "bibleVerseText": "I planted the seed, Apollos watered it, but God has been making it grow.",
+      "book": "1 Corinthians 3:6",
+      "category": "business"
+    },
+    {
+      "text": "The Lord teaches me what is best and directs me in the way I should go.",
+      "bibleVerseText": "This is what the Lord says, your Redeemer, the Holy One of Israel: “I am the Lord your God, who teaches you what is best for you, who directs you in the way you should go.”",
+      "book": "Isaiah 48:17",
+      "category": "business"
+    },
+    {
+      "text": "My plans are diligent, and diligent plans lead to profit. I build steadily and I build well.",
+      "bibleVerseText": "The plans of the diligent lead to profit as surely as haste leads to poverty.",
+      "book": "Proverbs 21:5",
+      "category": "business"
+    },
+    {
+      "text": "God blesses me abundantly. I have all I need to abound in every good work.",
+      "bibleVerseText": "And God is able to bless you abundantly, so that in all things at all times, having all that you need, you will abound in every good work.",
+      "book": "2 Corinthians 9:8",
+      "category": "business"
+    },
+    {
+      "text": "The blessing of the Lord brings me wealth without painful toil. His increase comes clean.",
+      "bibleVerseText": "The blessing of the Lord brings wealth, without painful toil for it.",
+      "book": "Proverbs 10:22",
+      "category": "business"
+    },
+    {
+      "text": "I am faithful with a few things, so my Master puts me in charge of many.",
+      "bibleVerseText": "His master replied, “Well done, good and faithful servant! You have been faithful with a few things; I will put you in charge of many things. Come and share your master’s happiness!”",
+      "book": "Matthew 25:21",
+      "category": "business"
+    },
+    {
+      "text": "By wisdom I build this house, and through understanding it stands established. God supplies both to me freely.",
+      "bibleVerseText": "By wisdom a house is built, and through understanding it is established.",
+      "book": "Proverbs 24:3",
+      "category": "business"
+    },
+    {
+      "text": "God goes before me and levels the mountains. Gates of bronze open and iron bars give way.",
+      "bibleVerseText": "I will go before you and will level the mountains; I will break down gates of bronze and cut through bars of iron.",
+      "book": "Isaiah 45:2",
+      "category": "business"
+    },
+    {
+      "text": "I work at it with all my heart because I work for the Lord. This business is worship.",
+      "bibleVerseText": "Whatever you do, work at it with all your heart, as working for the Lord, not for human masters.",
+      "book": "Colossians 3:23",
+      "category": "business"
+    },
+    {
+      "text": "I plan my course, and the Lord establishes my steps. My direction is secure in Him.",
+      "bibleVerseText": "In their hearts humans plan their course, but the Lord establishes their steps.",
+      "book": "Proverbs 16:9",
+      "category": "business"
+    },
+    {
+      "text": "I am generous, so I prosper. I refresh others, and I am refreshed in return.",
+      "bibleVerseText": "A generous person will prosper; whoever refreshes others will be refreshed.",
+      "book": "Proverbs 11:25",
+      "category": "business"
+    }
   ]
 }
