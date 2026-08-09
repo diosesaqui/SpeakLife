@@ -484,6 +484,58 @@ final class EnforcementAssemblerTests: XCTestCase {
         }
     }
 
+    // MARK: - Campaign titles
+
+    /// The title is the loudest type on the card, and it used to be built from
+    /// `name`, a browse label. That shipped "Enforcing Warfare & Victory",
+    /// "Enforcing Anxiety & Worry" and "Enforcing Hard Times" — the card
+    /// announcing that the user is enforcing the thing they came here to beat.
+    func testTitle_NamesTheVictoryNeverTheStruggle() {
+        let expected: [DeclarationCategory: String] = [
+            .warfare:   "Enforcing Victory",
+            .anxiety:   "Enforcing Peace",
+            .fear:      "Enforcing Courage",
+            .hardtimes: "Enforcing Strength",
+            .addiction: "Enforcing Freedom",
+            .health:    "Enforcing Healing",
+            .wealth:    "Enforcing Provision",
+            .business:  "Enforcing Increase"
+        ]
+        let pool = declarations(.faith, 40)
+        for (category, title) in expected {
+            let assembled = EnforcementAssembler.assemble(primary: category, pool: pool, seed: "s")
+            XCTAssertEqual(assembled?.title, title, "\(category.rawValue) titled wrong")
+
+            let curated = EnforcementAssembler.assemble(curated: declarations(.faith, Enforcement.length),
+                                                        primary: category)
+            XCTAssertEqual(curated?.title, title, "\(category.rawValue) curated title drifted from assembled")
+        }
+    }
+
+    /// Guards the whole surface, not just the eight above: no campaign title may
+    /// contain a word for the thing being fought.
+    func testTitle_NeverContainsAStrugglingWord() {
+        let forbidden = ["anxiety", "worry", "fear", "hard times", "addiction",
+                         "warfare", "grief", "divorce", "debt", "sick", "depress"]
+        for category in DeclarationCategory.allCases
+        where EnforcementAssembler.isCampaignable(category) {
+            let title = "Enforcing \(category.enforcementTitle)".lowercased()
+            for word in forbidden {
+                XCTAssertFalse(title.contains(word),
+                               "\(category.rawValue) produces \"\(title)\", which names the struggle")
+            }
+        }
+    }
+
+    /// The hand-authored campaigns set the pattern the assembled path has to
+    /// match, so a theme present in both must read the same either way.
+    func testTitle_AssembledMatchesTheHandAuthoredCatalogPattern() {
+        XCTAssertEqual("Enforcing " + DeclarationCategory.warfare.enforcementTitle, "Enforcing Victory")
+        XCTAssertEqual("Enforcing " + DeclarationCategory.anxiety.enforcementTitle, "Enforcing Peace")
+        XCTAssertEqual("Enforcing " + DeclarationCategory.wealth.enforcementTitle, "Enforcing Provision")
+        XCTAssertEqual("Enforcing " + DeclarationCategory.health.enforcementTitle, "Enforcing Healing")
+    }
+
     /// The one message in the app that must not be wrong, and the one most
     /// likely to drift now that two screens show it.
     func testReachOutCopy_OffersTheSupportAddressAfterAPerson() {
