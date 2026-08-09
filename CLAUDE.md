@@ -4,6 +4,17 @@
 
 All declarations in `declarationsv10.json` must follow these rules without exception.
 
+**Why the rules are what they are.** Faith to speak it is what lets God get to
+work. The declaration is not a mood, a reminder, or a nice thought to read. It is
+a line someone says out loud in their own voice over their own body, marriage,
+mind, or money, and the saying is the point. Every rule below serves that single
+moment: first person because they are the one speaking, present tense because
+faith says it done, one sentence because the mouth cannot carry a paragraph with
+conviction, plain words because you cannot speak in faith a line you had to stop
+and decode, and bold because a hedged sentence gives faith nothing to stand on.
+A declaration the speaker cannot say with their whole chest has already failed,
+however true and well-crafted it is.
+
 ### 1. First-Person Only
 Every declaration must be spoken in the first person. Use **I / me / my / mine**.
 - ✅ "I am walking in God's favor."
