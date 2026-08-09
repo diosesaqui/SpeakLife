@@ -85,7 +85,12 @@ final class EnhancedStreakViewModel: ObservableObject {
         // of a new day), or on the user's other device before this one opened.
         // Announce it now rather than waiting for a background/foreground
         // round trip that may never come this session.
-        showFreezeUsedBannerIfNeeded()
+        //
+        // The hop off init is the one place it is needed: this view model is
+        // built inside a SwiftUI view's initializer, and publishing from there
+        // would be a change made during a view update. Everywhere else the
+        // banner is raised synchronously on main.
+        DispatchQueue.main.async { [weak self] in self?.showFreezeUsedBannerIfNeeded() }
 
         checkForNewBadges()
         
@@ -801,9 +806,7 @@ final class EnhancedStreakViewModel: ObservableObject {
         userDefaults.set(false, forKey: Self.freezeUsedFlagKey)
         guard userDefaults.string(forKey: Self.freezeBannerShownKey) != identity else { return }
         userDefaults.set(identity, forKey: Self.freezeBannerShownKey)
-        DispatchQueue.main.async {
-            self.showFreezeUsedMessage = true
-        }
+        showFreezeUsedMessage = true
     }
 
     @objc private func appDidBecomeActive() {

@@ -332,3 +332,128 @@ final class StreakFreezeTests: XCTestCase {
         XCTAssertFalse(stats.streakFreezeAvailable)
     }
 }
+
+// MARK: - Freeze banner delivery (view-model level)
+
+/// The banner is bounded by the freeze's IDENTITY, and that identity
+/// (streakFreezeCoveredDay) travels in the synced streakStats blob — NOT in
+/// the flag that announces it. So the receiving device must fold the blob in
+/// before it reads the identity.
+///
+/// These drive the real NotificationCenter path through EnhancedStreakViewModel
+/// because the ordering is the whole point: a struct-level test cannot see it.
+/// Reading the identity too early stamps today's date instead of the covered
+/// day, and since the flag syncs one-way (boolOr) and comes back later, the
+/// banner then fires a second time — the exact thing the identity prevents.
+final class StreakFreezeBannerTests: XCTestCase {
+
+    private var viewModel: EnhancedStreakViewModel!
+    private var savedCompletions: [BurstCompletion] = []
+    private let cal = Calendar.current
+
+    private let freezeUsedKey = "streakFreezeWasUsed"
+    private let bannerShownKey = "streakFreezeBannerShownFor"
+    private var scratchKeys: [String] { ["dailyChecklist", "streakStats", freezeUsedKey, bannerShownKey] }
+
+    override func setUp() {
+        super.setUp()
+        // reconcileWithSyncedProgress heals from the shared burst history;
+        // empty it so these tests see only the blob they seed. Never saved to
+        // UserDefaults, and restored in tearDown.
+        savedCompletions = BurstCompletionTracker.shared.completions
+        BurstCompletionTracker.shared.completions = []
+
+        scratchKeys.forEach { UserDefaults.standard.removeObject(forKey: $0) }
+        // Built with the flag already clear, so init cannot consume it first.
+        viewModel = EnhancedStreakViewModel()
+    }
+
+    override func tearDown() {
+        viewModel = nil
+        BurstCompletionTracker.shared.completions = savedCompletions
+        scratchKeys.forEach { UserDefaults.standard.removeObject(forKey: $0) }
+        super.tearDown()
+    }
+
+    private func day(_ daysAgo: Int) -> Date {
+        cal.startOfDay(for: cal.date(byAdding: .day, value: -daysAgo, to: Date())!)
+    }
+
+    /// Exactly what SyncedSettingsStore does when the other device's blob
+    /// wins: write the merged value to UserDefaults, then post the applied
+    /// keys. The view model's in-memory copy is untouched until it reconciles.
+    private func deliverSyncedFreeze(coveredDay: Date) throws {
+        var synced = StreakStats()
+        synced.currentStreak = 5
+        synced.longestStreak = 5
+        synced.lastCompletedDate = day(1)          // bridged there by the freeze
+        synced.streakFreezeAvailable = false
+        synced.streakFreezeUsedDate = coveredDay
+        synced.streakFreezeCoveredDay = coveredDay
+
+        UserDefaults.standard.set(try JSONEncoder().encode(synced), forKey: "streakStats")
+        UserDefaults.standard.set(true, forKey: freezeUsedKey)
+
+        NotificationCenter.default.post(
+            name: SyncedSettingsStore.settingsDidChange,
+            object: nil,
+            userInfo: ["keys": Set(["streakStats", freezeUsedKey])]
+        )
+    }
+
+    /// THE ordering regression test.
+    func testBanner_IdentityComesFromTheSyncedBlobNotTheStaleInMemoryCopy() throws {
+        let coveredDay = day(8)
+        // This device never spent the freeze, so its in-memory stats know
+        // nothing about it — the exact state that made announcing before
+        // reconciling read the wrong identity.
+        XCTAssertNil(viewModel.streakStats.streakFreezeCoveredDay)
+
+        try deliverSyncedFreeze(coveredDay: coveredDay)
+
+        XCTAssertTrue(viewModel.showFreezeUsedMessage,
+                      "The receiving device must explain why the number moved")
+        XCTAssertEqual(viewModel.streakStats.streakFreezeCoveredDay, coveredDay,
+                       "precondition: the synced blob was folded in")
+
+        let stamp = UserDefaults.standard.string(forKey: bannerShownKey)
+        XCTAssertEqual(stamp, BurstCompletionTracker.dayStamp(for: coveredDay),
+            "The banner must be stamped with the freeze's covered day. Announcing before "
+            + "reconcileWithSyncedProgress() stamps today instead, because the identity only "
+            + "arrives with the blob.")
+        XCTAssertNotEqual(stamp, BurstCompletionTracker.dayStamp(for: Date()))
+    }
+
+    /// streakFreezeWasUsed syncs one-way (boolOr), so a remote row still
+    /// holding true is pushed back later. The identity stamp is the only thing
+    /// standing between that and a second banner for one freeze.
+    func testBanner_RedeliveredFlagDoesNotFireASecondTime() throws {
+        let coveredDay = day(8)
+        try deliverSyncedFreeze(coveredDay: coveredDay)
+        XCTAssertTrue(viewModel.showFreezeUsedMessage)
+
+        // The banner auto-dismisses, then the still-true flag comes back.
+        viewModel.showFreezeUsedMessage = false
+        try deliverSyncedFreeze(coveredDay: coveredDay)
+
+        XCTAssertFalse(viewModel.showFreezeUsedMessage,
+                       "One freeze, one banner — a redelivered flag must not re-raise it")
+        XCTAssertFalse(UserDefaults.standard.bool(forKey: freezeUsedKey),
+                       "The flag is still consumed locally on every delivery")
+    }
+
+    /// The flag can arrive WITHOUT the streak blob in the same key set. That
+    /// path still has to announce, so it cannot simply be folded into the
+    /// reconcile branch.
+    func testBanner_FlagArrivingWithoutTheStreakBlobStillAnnounces() {
+        UserDefaults.standard.set(true, forKey: freezeUsedKey)
+
+        NotificationCenter.default.post(
+            name: SyncedSettingsStore.settingsDidChange,
+            object: nil,
+            userInfo: ["keys": Set([freezeUsedKey])]
+        )
+
+        XCTAssertTrue(viewModel.showFreezeUsedMessage)
+    }
+}
