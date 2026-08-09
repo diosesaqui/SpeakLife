@@ -99,8 +99,11 @@ struct EnforcementCard: View {
     @ViewBuilder
     private func activeCard(enforcement: Enforcement, day: EnforcementDay) -> some View {
         VStack(alignment: .leading, spacing: DS.Spacing.sm) {
-            eyebrow("DAY \(service.progress.currentDay) OF \(Enforcement.length) · \(enforcement.title.uppercased())")
-                .accessibilityLabel("Day \(service.progress.currentDay) of \(Enforcement.length), \(enforcement.title)")
+            // displayTitle, not title: a campaign begun before the naming fix
+            // has "Enforcing Warfare & Victory" persisted in its blob, and this
+            // is the loudest type on the card.
+            eyebrow("DAY \(service.progress.currentDay) OF \(Enforcement.length) · \(enforcement.displayTitle.uppercased())")
+                .accessibilityLabel("Day \(service.progress.currentDay) of \(Enforcement.length), \(enforcement.displayTitle)")
 
             Text(day.anchorText)
                 .font(.system(size: 17, weight: .semibold, design: .rounded))

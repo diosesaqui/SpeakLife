@@ -41,7 +41,10 @@ struct EnforcementCompletionView: View {
                         .font(.system(size: 17, weight: .medium, design: .rounded))
                         .foregroundColor(.white.opacity(0.7))
 
-                    Text(completed.title)
+                    // The celebration blob is persisted whole, so a week begun
+                    // before the naming fix would be congratulated for
+                    // finishing "Enforcing Warfare & Victory".
+                    Text(completed.displayTitle)
                         .font(.system(size: 30, weight: .bold, design: .rounded))
                         .foregroundColor(.white)
                         .multilineTextAlignment(.center)
@@ -67,7 +70,7 @@ struct EnforcementCompletionView: View {
                                 onStartNext(enforcement)
                             } label: {
                                 HStack {
-                                    Text(enforcement.title)
+                                    Text(enforcement.displayTitle)
                                         .font(.system(size: 16, weight: .semibold, design: .rounded))
                                     Spacer()
                                     Image(systemName: "chevron.right")

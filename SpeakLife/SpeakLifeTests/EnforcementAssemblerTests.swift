@@ -527,6 +527,39 @@ final class EnforcementAssemblerTests: XCTestCase {
         }
     }
 
+    /// A generated campaign is persisted whole, title included, and synced to
+    /// iCloud that way. Fixing the naming only helps campaigns started after the
+    /// fix ships; anyone mid-week keeps "Enforcing Warfare & Victory" on the
+    /// loudest line of the card for seven more days unless the title is
+    /// re-derived on read.
+    func testDisplayTitle_CorrectsACampaignPersistedBeforeTheNamingFix() {
+        let stale = Enforcement(
+            id: "assembled_warfare",
+            title: "Enforcing Warfare & Victory",   // what the old code wrote
+            tagline: "t",
+            theme: DeclarationCategory.warfare.rawValue,
+            days: []
+        )
+        XCTAssertEqual(stale.displayTitle, "Enforcing Victory")
+
+        let staleAnxiety = Enforcement(id: "curated_anxiety", title: "Enforcing Anxiety & Worry",
+                                       tagline: "t", theme: DeclarationCategory.anxiety.rawValue, days: [])
+        XCTAssertEqual(staleAnxiety.displayTitle, "Enforcing Peace")
+    }
+
+    /// Hand-authored titles are deliberate content and must survive untouched.
+    func testDisplayTitle_LeavesHandAuthoredCampaignsAlone() {
+        let authored = Enforcement(id: "warfare_week", title: "Enforcing Victory",
+                                   tagline: "t", theme: DeclarationCategory.warfare.rawValue, days: [])
+        XCTAssertFalse(authored.isGenerated)
+        XCTAssertEqual(authored.displayTitle, "Enforcing Victory")
+
+        // Even a catalog title that differs from what we'd generate is kept.
+        let custom = Enforcement(id: "anxiety_week", title: "Enforcing Peace",
+                                 tagline: "t", theme: DeclarationCategory.anxiety.rawValue, days: [])
+        XCTAssertEqual(custom.displayTitle, "Enforcing Peace")
+    }
+
     /// The hand-authored campaigns set the pattern the assembled path has to
     /// match, so a theme present in both must read the same either way.
     func testTitle_AssembledMatchesTheHandAuthoredCatalogPattern() {
