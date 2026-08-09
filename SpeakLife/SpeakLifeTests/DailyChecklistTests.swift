@@ -427,30 +427,33 @@ final class DailyChecklistTests: XCTestCase {
         }
     }
 
-    /// The Burst stays first; the declaration sits directly behind it, ahead of
-    /// the devotional and the audio.
-    func testDeclarationTask_SitsRightAfterTheBurst() {
+    /// The declaration leads, the Burst sits directly behind it.
+    ///
+    /// The Burst has other ways in and gets finished by them: an active campaign
+    /// completes it from its own CTA, and the quick-action grid links straight
+    /// to it. The declaration has no second entry point.
+    func testDeclarationTask_LeadsWithTheBurstBehindIt() {
         withStandardTasks {
             let ids = TaskLibrary.getCoreTasksForStreak(10, personalDeclarations: progress(total: 1, spoken: 0))
                 .map(\.id)
-            XCTAssertEqual(ids.first, "complete_daily_burst")
-            XCTAssertEqual(ids.dropFirst().first, TaskLibrary.personalDeclarationTaskId)
+            XCTAssertEqual(ids.first, TaskLibrary.personalDeclarationTaskId)
+            XCTAssertEqual(ids.dropFirst().first, "complete_daily_burst")
         }
     }
 
     /// It has to land behind the Burst on every path, not just the one where the
     /// Burst was already first. Anchoring the insert to the Burst's current
     /// index put the row mid-list whenever `burstFirst` still had work to do.
-    func testDeclarationTask_SitsBehindTheBurstEvenWhenTheBurstStartsElsewhere() {
+    func testDeclarationTask_LeadsOnEveryPathNotJustTheStandardOne() {
         withStandardTasks {
             for streakDay in [1, 7, 10, 15, 30, 60] {
                 let ids = TaskLibrary.getCoreTasksForStreak(streakDay,
                                                             personalDeclarations: progress(total: 2, spoken: 1))
                     .map(\.id)
                 guard ids.contains("complete_daily_burst") else { continue }
-                XCTAssertEqual(ids.first, "complete_daily_burst", "day \(streakDay)")
-                XCTAssertEqual(ids.dropFirst().first, TaskLibrary.personalDeclarationTaskId,
-                               "day \(streakDay) put the declaration at \(ids)")
+                XCTAssertEqual(ids.first, TaskLibrary.personalDeclarationTaskId, "day \(streakDay)")
+                XCTAssertEqual(ids.dropFirst().first, "complete_daily_burst",
+                               "day \(streakDay) ordered as \(ids)")
             }
         }
     }

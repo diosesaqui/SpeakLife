@@ -458,10 +458,14 @@ final class EnhancedStreakViewModel: ObservableObject {
         guard !hasAlreadyAutoCompleted else { return }
         
         // Only auto-complete if demo was completed and no tasks have been completed yet
+        // The Burst by id, not whatever happens to be first. The demo IS the
+        // Burst, and the first row is no longer it — the declaration sits ahead
+        // of it now. Worse, `completeTask` refuses the declaration id by design,
+        // so targeting position would silently no-op while still setting the
+        // has-auto-completed flag, and the user would never get the credit.
         guard hasCompletedDemo,
-              !todayChecklist.tasks.isEmpty,
               todayChecklist.completedTasksCount == 0,
-              let firstTask = todayChecklist.tasks.first,
+              let firstTask = todayChecklist.tasks.first(where: { $0.id == "complete_daily_burst" }),
               !firstTask.isCompleted else { return }
         
         // Mark that we've auto-completed so it won't happen again
