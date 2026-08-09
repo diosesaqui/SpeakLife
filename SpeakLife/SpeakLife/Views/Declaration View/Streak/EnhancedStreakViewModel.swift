@@ -380,7 +380,8 @@ final class EnhancedStreakViewModel: ObservableObject {
         let freshTasks = TaskLibrary.getCoreTasksForStreak(currentStreak, userCategories: userCategories,
                                                            foundationAudioDay: workingStreakDay,
                                                            enforcementDay: EnforcementService.shared.enabledActiveDay,
-                                                           personalDeclarations: PersonalDeclarationRepository.todayProgress())
+                                                           personalDeclarations: PersonalDeclarationRepository.todayProgress(),
+                                                           guardCompletedToday: TakeItCaptiveService.shared.enabledCompletedToday)
         
         // Preserve completion status from existing tasks
         let existingCompletions = Dictionary(uniqueKeysWithValues: todayChecklist.tasks.map { 
@@ -389,11 +390,14 @@ final class EnhancedStreakViewModel: ObservableObject {
         
         todayChecklist.tasks = freshTasks.map { task in
             var updatedTask = task
-            // The declaration row is derived from how many are spoken today, so
-            // it must never inherit a stale value. Carrying one forward would
-            // show it done after a rebuild that saw a new declaration added, or
-            // undone after one was spoken on another device.
+            // The declaration and Guarding rows are derived — from how many
+            // declarations are spoken today, and from whether today's rep is
+            // done — so neither may inherit a stale value. Carrying one forward
+            // would show the declaration row done after a rebuild that saw a new
+            // declaration added, or the Guard row done on a day whose rep has
+            // not been taken yet.
             if task.id != TaskLibrary.personalDeclarationTaskId,
+               task.id != TaskLibrary.guardTaskId,
                let (wasCompleted, completedAt) = existingCompletions[task.id] {
                 updatedTask.isCompleted = wasCompleted
                 updatedTask.completedAt = completedAt
@@ -422,7 +426,8 @@ final class EnhancedStreakViewModel: ObservableObject {
                                                            userCategories: getUserTopCategories(),
                                                            foundationAudioDay: workingStreakDay,
                                                            enforcementDay: EnforcementService.shared.enabledActiveDay,
-                                                           personalDeclarations: PersonalDeclarationRepository.todayProgress())
+                                                           personalDeclarations: PersonalDeclarationRepository.todayProgress(),
+                                                           guardCompletedToday: TakeItCaptiveService.shared.enabledCompletedToday)
 
         // Completions must survive: starting a campaign after speaking today's
         // Burst must not un-check it and hand back a streak day already banked.
@@ -432,11 +437,14 @@ final class EnhancedStreakViewModel: ObservableObject {
 
         todayChecklist.tasks = freshTasks.map { task in
             var updatedTask = task
-            // The declaration row is derived from how many are spoken today, so
-            // it must never inherit a stale value. Carrying one forward would
-            // show it done after a rebuild that saw a new declaration added, or
-            // undone after one was spoken on another device.
+            // The declaration and Guarding rows are derived — from how many
+            // declarations are spoken today, and from whether today's rep is
+            // done — so neither may inherit a stale value. Carrying one forward
+            // would show the declaration row done after a rebuild that saw a new
+            // declaration added, or the Guard row done on a day whose rep has
+            // not been taken yet.
             if task.id != TaskLibrary.personalDeclarationTaskId,
+               task.id != TaskLibrary.guardTaskId,
                let (wasCompleted, completedAt) = existingCompletions[task.id] {
                 updatedTask.isCompleted = wasCompleted
                 updatedTask.completedAt = completedAt
@@ -503,6 +511,13 @@ final class EnhancedStreakViewModel: ObservableObject {
         // would record a task-completion event, creating a second source of
         // truth that could disagree with the declarations across devices.
         guard taskId != TaskLibrary.personalDeclarationTaskId else { return }
+        // Same rule, same reason: the Guarding row is earned by rejecting the
+        // thought and SPEAKING the counter out loud. Ticking it by hand would
+        // record ground the user never took, and the next rebuild — which
+        // re-derives it from TakeItCaptiveService — would undo the tick anyway.
+        // The row's tap opens the drill instead (see
+        // ModernDailyChecklistView.handleTaskNavigation).
+        guard taskId != TaskLibrary.guardTaskId else { return }
         guard let taskIndex = todayChecklist.tasks.firstIndex(where: { $0.id == taskId }),
               !todayChecklist.tasks[taskIndex].isCompleted else { return }
         
@@ -585,6 +600,10 @@ final class EnhancedStreakViewModel: ObservableObject {
     func uncompleteTask(taskId: String) {
         // Same reason as `completeTask`: derived state, not user-settable.
         guard taskId != TaskLibrary.personalDeclarationTaskId else { return }
+        // And ground taken is never given back — there is no code path in this
+        // feature that lowers the count, so there must not be one that unticks
+        // the row it came from.
+        guard taskId != TaskLibrary.guardTaskId else { return }
         guard let taskIndex = todayChecklist.tasks.firstIndex(where: { $0.id == taskId }),
               todayChecklist.tasks[taskIndex].isCompleted else { return }
 
@@ -680,7 +699,8 @@ final class EnhancedStreakViewModel: ObservableObject {
         let updatedTasks = TaskLibrary.getCoreTasksForStreak(currentStreak, userCategories: userCategories,
                                                              foundationAudioDay: workingStreakDay,
                                                            enforcementDay: EnforcementService.shared.enabledActiveDay,
-                                                           personalDeclarations: PersonalDeclarationRepository.todayProgress())
+                                                           personalDeclarations: PersonalDeclarationRepository.todayProgress(),
+                                                           guardCompletedToday: TakeItCaptiveService.shared.enabledCompletedToday)
         
         // Preserve completion status for existing tasks
         let existingCompletions = Dictionary(uniqueKeysWithValues: todayChecklist.tasks.map { ($0.id, $0.isCompleted) })
@@ -689,6 +709,7 @@ final class EnhancedStreakViewModel: ObservableObject {
             var updatedTask = task
             // Derived, so never inherited. See the note on the other rebuild.
             if task.id != TaskLibrary.personalDeclarationTaskId,
+               task.id != TaskLibrary.guardTaskId,
                let wasCompleted = existingCompletions[task.id] {
                 updatedTask.isCompleted = wasCompleted
                 if wasCompleted {
@@ -708,7 +729,8 @@ final class EnhancedStreakViewModel: ObservableObject {
         let tasks = TaskLibrary.getCoreTasksForStreak(streakDay, userCategories: userCategories,
                                                       foundationAudioDay: workingStreakDay,
                                                            enforcementDay: EnforcementService.shared.enabledActiveDay,
-                                                           personalDeclarations: PersonalDeclarationRepository.todayProgress())
+                                                           personalDeclarations: PersonalDeclarationRepository.todayProgress(),
+                                                           guardCompletedToday: TakeItCaptiveService.shared.enabledCompletedToday)
         
         return DailyChecklist(
             date: today,

@@ -34,6 +34,11 @@ struct ModernDailyChecklistView: View {
     /// advanced from the burst, so the view observes the shared service rather
     /// than owning it.
     @ObservedObject private var enforcementService = EnforcementService.shared
+    /// Same reasoning: the Guard service outlives this view (the App Intent can
+    /// drive it before any view exists), so the view observes it rather than
+    /// owning it.
+    @ObservedObject private var takeItCaptiveService = TakeItCaptiveService.shared
+    @State private var showTakeItCaptive = false
     @State private var showJournal = false
     @State private var showWarriorRoom = false
     @State private var showCreateYourOwn = false
@@ -113,9 +118,18 @@ struct ModernDailyChecklistView: View {
                 ])
             }
             openBurst()
+        case .takeItCaptive:
+            openTakeItCaptive()
         case .none:
             viewModel.completeTask(taskId: task.id)
         }
+    }
+
+    /// Guarding — the fifth pillar. Presented right here on Today rather than
+    /// routed to a tab of its own: the whole promise is under 60 seconds, and a
+    /// tab switch spends the first five of them.
+    private func openTakeItCaptive() {
+        showTakeItCaptive = true
     }
 
     /// Present the daily burst right here on the Today tab instead of routing
@@ -537,6 +551,13 @@ struct ModernDailyChecklistView: View {
                                     openPersonalDeclaration()
                                     return
                                 }
+                                // Same again for Guarding: the row is earned by
+                                // speaking, so a tap on the checkbox opens the
+                                // drill rather than bouncing off a no-op.
+                                guard taskId != TaskLibrary.guardTaskId else {
+                                    openTakeItCaptive()
+                                    return
+                                }
                                 if task.isCompleted {
                                     viewModel.uncompleteTask(taskId: taskId)
                                     completedTasks.remove(taskId)
@@ -696,6 +717,29 @@ struct ModernDailyChecklistView: View {
         }
         .sheet(isPresented: $showDevotional) {
             DevotionalView(viewModel: devotionalViewModel)
+        }
+        // Guarding. Full-screen, not a sheet: the INCOMING screen only works if
+        // the thought is the only thing on the display, and a sheet leaves the
+        // warm Today tab visible behind it — which is exactly the contrast the
+        // flow spends its first two screens building.
+        .fullScreenCover(isPresented: $showTakeItCaptive) {
+            TakeItCaptiveFlowView(
+                service: takeItCaptiveService,
+                onCompleted: {
+                    // The row is derived from the service, so the checklist has
+                    // to be rebuilt for the tick to appear.
+                    viewModel.refreshTasksForCampaignChange()
+                },
+                onNeedsPremium: {
+                    // Deferred: the flow dismisses itself first, and presenting
+                    // the paywall in the same runloop as a full-screen cover's
+                    // dismissal drops it silently.
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                        showPremium = true
+                    }
+                }
+            )
+            .environmentObject(subscriptionStore)
         }
         // Day 7. Presented full-screen so the win gets the whole screen, and so
         // the next-Enforcement offer isn't one swipe from being dismissed by accident.
@@ -926,6 +970,16 @@ struct ModernDailyChecklistView: View {
                 AnalyticsService.shared.track("enforcement_offered", parameters: [
                     "is_premium": subscriptionStore.isPremium
                 ])
+            }
+            // Ground taken can arrive from another device while this view is off
+            // screen, and the row's tick is derived from today's rep — so both
+            // are re-read on appear rather than trusted from the last build.
+            takeItCaptiveService.refreshGround()
+            // Siri / Shortcuts / lock screen asked for the drill. Consumed
+            // exactly once, and only when it's fresh — see consumePendingLaunch.
+            if subscriptionStore.guardEnabled,
+               TakeItCaptiveService.consumePendingLaunch() {
+                showTakeItCaptive = true
             }
         }
         .onChange(of: viewModel.todayChecklist.isCompleted) { isCompleted in

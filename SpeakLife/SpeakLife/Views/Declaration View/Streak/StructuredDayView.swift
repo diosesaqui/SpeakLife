@@ -181,6 +181,9 @@ struct NextUpTaskCard: View {
         case .journal:     colors = [Color(hex: "#D97706"), Color(hex: "#92400E")]
         // Gold, because it is the only card made of the user's own words.
         case .personalDeclaration: colors = [Color(hex: "#B7791F"), Color(hex: "#7B341E")]
+        // Steel, not brand warmth. Guarding is the pillar that holds ground,
+        // and the card should read as armor next to the others.
+        case .takeItCaptive: colors = [Color(hex: "#334155"), Color(hex: "#0F172A")]
         case .none:        colors = [Color(hex: "#B45309"), Color(hex: "#78350F")]
         }
         return LinearGradient(gradient: Gradient(colors: colors), startPoint: .topLeading, endPoint: .bottomTrailing)
@@ -194,6 +197,7 @@ struct NextUpTaskCard: View {
         case .bibleChat:  return "Ask the Bible →"
         case .journal:    return "Open Journal →"
         case .personalDeclaration: return "Speak It →"
+        case .takeItCaptive: return "Take It Captive →"
         case .none:       return "Complete →"
         }
     }

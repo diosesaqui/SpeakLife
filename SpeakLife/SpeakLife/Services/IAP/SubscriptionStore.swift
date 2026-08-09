@@ -178,6 +178,13 @@ final class SubscriptionStore: ObservableObject {
     // take every Enforcement surface dark at once.
     @Published var enforcementEnabled = true
 
+    // MARK: - Guarding Flag (Take It Captive)
+    // Kill switch for the fifth pillar. Defaults true (registered in AppDelegate's
+    // Remote Config defaults); set `guardEnabled` to false in Remote Config and the
+    // checklist stops building the Guard row, which is the feature's only entry
+    // point outside the App Intent.
+    @Published var guardEnabled = true
+
     // MARK: - Onboarding Rating Ask Flag
     // Kill switch for the App Store rating ask inside every onboarding flow.
     // Defaults true (registered in AppDelegate's Remote Config defaults); set
@@ -449,6 +456,7 @@ final class SubscriptionStore: ObservableObject {
         offerFreeTrial = remoteConfig["offerFreeTrial"].boolValue
         checklistHomeEnabled = remoteConfig["checklistHomeEnabled"].boolValue
         enforcementEnabled = remoteConfig["enforcementEnabled"].boolValue
+        guardEnabled = remoteConfig["guardEnabled"].boolValue
         onboardingRatingEnabled = remoteConfig["onboardingRatingEnabled"].boolValue
         closerPledgeEnabled = remoteConfig["closerPledgeEnabled"].boolValue
 

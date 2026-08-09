@@ -81,6 +81,8 @@ enum TaskNavigationDestination: String, Codable {
     case bibleChat
     case journal
     case personalDeclaration
+    /// Guarding — the fifth pillar. Opens the Take It Captive drill.
+    case takeItCaptive
 }
 
 // MARK: - Enhanced Daily Task Model
@@ -1184,17 +1186,25 @@ struct TaskLibrary {
     ///   are spoken today. nil leaves the row out entirely, which is right for
     ///   anyone who has not started one — a task nobody can finish is worse than
     ///   no task.
+    /// - Parameter guardCompletedToday: whether today's Take It Captive rep is
+    ///   done. nil leaves the row out entirely — that is the state when the
+    ///   pillar is switched off in Remote Config, when the thought bank failed
+    ///   to load, or before the habit is introduced. A task with nothing behind
+    ///   it is worse than no task.
     static func getCoreTasksForStreak(_ streakDay: Int, userCategories: [String] = [],
                                       foundationAudioDay: Int? = nil,
                                       enforcementDay: EnforcementDay? = nil,
-                                      personalDeclarations: PersonalDeclaration.Progress? = nil) -> [DailyTask] {
+                                      personalDeclarations: PersonalDeclaration.Progress? = nil,
+                                      guardCompletedToday: Bool? = nil) -> [DailyTask] {
         let audioDay = foundationAudioDay ?? streakDay
         // Check if AI features are enabled for enhanced task generation
         if isAIEnabled() {
             let aiTasks = getAIEnhancedTasks(streakDay: streakDay, userCategories: userCategories)
             let planned = applyAudioPlan(to: aiTasks, day: audioDay, enforcementDay: enforcementDay)
             let owned = markCampaignOwned(planned, enforcementDay: enforcementDay)
-            return withPersonalDeclaration(burstFirst(owned), progress: personalDeclarations)
+            let guarded = withGuard(burstFirst(owned), completedToday: guardCompletedToday,
+                                    streakDay: streakDay)
+            return withPersonalDeclaration(guarded, progress: personalDeclarations)
         }
 
         // Standard task generation
@@ -1246,7 +1256,9 @@ struct TaskLibrary {
         // burstFirst first, THEN the declaration, so the declaration ends up at
         // the front and the Burst directly behind it. Reversing these lets
         // burstFirst hoist the Burst back over the declaration.
-        return withPersonalDeclaration(burstFirst(tasks), progress: personalDeclarations)
+        let guarded = withGuard(burstFirst(tasks), completedToday: guardCompletedToday,
+                                streakDay: streakDay)
+        return withPersonalDeclaration(guarded, progress: personalDeclarations)
     }
 
     /// Adds the declaration row, or replaces it if a caller already had one.
@@ -1268,6 +1280,66 @@ struct TaskLibrary {
         // Runs AFTER `burstFirst`, not before, or that call would move the Burst
         // back over the top of it.
         result.insert(personalDeclarationTask(progress), at: 0)
+        return result
+    }
+
+    static let guardTaskId = "take_it_captive"
+
+    /// The streak day Guarding is introduced on.
+    ///
+    /// Not day 1. The first day is deliberately light (Burst, devotional, audio)
+    /// so the streak is easy to earn, and day 2 already introduces gratitude.
+    /// Guarding arrives on day 3, once the core loop has actually taken hold.
+    static let guardIntroducedOnDay = 3
+
+    /// Adds the Guarding row — the fifth pillar.
+    ///
+    /// Injected here rather than added to `foundationTasks` on purpose. The
+    /// foundation phase takes `prefix(5)` of that array and the later phases
+    /// pick from it by id, so a sixth entry would silently drop out of the
+    /// checklist somewhere around day 8. Guarding is a lifelong daily habit like
+    /// speaking and hearing, not a first-week exercise, so it rides the same
+    /// injector path the personal declaration does and survives every phase.
+    ///
+    /// **Completion is derived, never toggled.** It is done when today's rep is
+    /// finished and not before, so the row cannot be ticked without actually
+    /// speaking the counter-declaration out loud — which is the entire feature.
+    /// `EnhancedStreakViewModel.completeTask` refuses this id for that reason.
+    ///
+    /// **It never earns the streak.** `DailyChecklist.isStreakEarned` reads the
+    /// Burst alone, so this changes the day's "N of M" and nothing else. A user
+    /// who guards their mind but skips the Burst has still not lost a streak to
+    /// this feature, and one who never opens it has lost nothing at all.
+    private static func withGuard(_ tasks: [DailyTask],
+                                  completedToday: Bool?,
+                                  streakDay: Int) -> [DailyTask] {
+        var result = tasks.filter { $0.id != guardTaskId }
+        guard let completedToday, streakDay >= guardIntroducedOnDay else { return result }
+
+        var task = DailyTask(
+            id: guardTaskId,
+            title: "Take a Thought Captive",
+            // Never names the low thing. No "anxious thought", no "negative
+            // thinking" — the row describes the higher ground being taken, not
+            // the intruder being removed.
+            description: "One thought. Reject it, and speak the truth out loud.",
+            icon: "shield.lefthalf.filled",
+            category: .foundation,
+            type: .speak,
+            difficulty: .beginner,
+            minimumStreakDay: guardIntroducedOnDay,
+            estimatedMinutes: 1,
+            navigationDestination: .takeItCaptive
+        )
+        task.isCompleted = completedToday
+
+        // Directly behind the Burst. Speaking leads; guarding holds what
+        // speaking took.
+        if let burstIndex = result.firstIndex(where: { $0.id == "complete_daily_burst" }) {
+            result.insert(task, at: min(burstIndex + 1, result.count))
+        } else {
+            result.append(task)
+        }
         return result
     }
 

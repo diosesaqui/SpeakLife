@@ -7,6 +7,18 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		TIC00SVC000000000000001B /* TakeItCaptiveService.swift in Sources */ = {isa = PBXBuildFile; fileRef = TIC00SVC000000000000001A /* TakeItCaptiveService.swift */; };
+		TIC00SVC000000000000002B /* ThoughtClassifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = TIC00SVC000000000000002A /* ThoughtClassifier.swift */; };
+		TIC00SVC000000000000003B /* VoicePresenceService.swift in Sources */ = {isa = PBXBuildFile; fileRef = TIC00SVC000000000000003A /* VoicePresenceService.swift */; };
+		TIC00SVC000000000000004B /* TakeThoughtCaptiveIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = TIC00SVC000000000000004A /* TakeThoughtCaptiveIntent.swift */; };
+		TIC00VW0000000000000001B /* TakeItCaptiveFlowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = TIC00VW0000000000000001A /* TakeItCaptiveFlowView.swift */; };
+		TIC00VW0000000000000002B /* IncomingThoughtView.swift in Sources */ = {isa = PBXBuildFile; fileRef = TIC00VW0000000000000002A /* IncomingThoughtView.swift */; };
+		TIC00VW0000000000000003B /* ReplaceDeclarationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = TIC00VW0000000000000003A /* ReplaceDeclarationView.swift */; };
+		TIC00VW0000000000000004B /* GroundTakenView.swift in Sources */ = {isa = PBXBuildFile; fileRef = TIC00VW0000000000000004A /* GroundTakenView.swift */; };
+		TIC00VW0000000000000005B /* EscapeHatchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = TIC00VW0000000000000005A /* EscapeHatchView.swift */; };
+		TIC00MDL000000000000001B /* TakeItCaptive.swift in Sources */ = {isa = PBXBuildFile; fileRef = TIC00MDL000000000000001A /* TakeItCaptive.swift */; };
+		TIC00RES000000000000001B /* thoughts.json in Resources */ = {isa = PBXBuildFile; fileRef = TIC00RES000000000000001A /* thoughts.json */; };
+		TIC00TST000000000000001B /* TakeItCaptiveServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TIC00TST000000000000001A /* TakeItCaptiveServiceTests.swift */; };
 		01ED29F757107A93D56507E0 /* WidgetIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59BFF68BFA515EAC0AC88C85 /* WidgetIntents.swift */; };
 		0E1A8C97F61B9FB156F0F50F /* HowToUseSpeakLifeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74DAA35385DD02F8B0DCADE5 /* HowToUseSpeakLifeView.swift */; };
 		1D987CB8235BF3A621A02EAA /* ProgressSyncStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2105F142D07765CD483ED529 /* ProgressSyncStore.swift */; };
@@ -448,6 +460,18 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		TIC00SVC000000000000001A /* TakeItCaptiveService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TakeItCaptiveService.swift; sourceTree = "<group>"; };
+		TIC00SVC000000000000002A /* ThoughtClassifier.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ThoughtClassifier.swift; sourceTree = "<group>"; };
+		TIC00SVC000000000000003A /* VoicePresenceService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = VoicePresenceService.swift; sourceTree = "<group>"; };
+		TIC00SVC000000000000004A /* TakeThoughtCaptiveIntent.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TakeThoughtCaptiveIntent.swift; sourceTree = "<group>"; };
+		TIC00VW0000000000000001A /* TakeItCaptiveFlowView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TakeItCaptiveFlowView.swift; sourceTree = "<group>"; };
+		TIC00VW0000000000000002A /* IncomingThoughtView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IncomingThoughtView.swift; sourceTree = "<group>"; };
+		TIC00VW0000000000000003A /* ReplaceDeclarationView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ReplaceDeclarationView.swift; sourceTree = "<group>"; };
+		TIC00VW0000000000000004A /* GroundTakenView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GroundTakenView.swift; sourceTree = "<group>"; };
+		TIC00VW0000000000000005A /* EscapeHatchView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EscapeHatchView.swift; sourceTree = "<group>"; };
+		TIC00MDL000000000000001A /* TakeItCaptive.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TakeItCaptive.swift; sourceTree = "<group>"; };
+		TIC00TST000000000000001A /* TakeItCaptiveServiceTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TakeItCaptiveServiceTests.swift; sourceTree = "<group>"; };
+		TIC00RES000000000000001A /* thoughts.json */ = {isa = PBXFileReference; includeInIndex = 1; path = thoughts.json; sourceTree = "<group>"; };
 		067C652453504C60AD4342E8 /* AdaptiveSheetModifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdaptiveSheetModifier.swift; sourceTree = "<group>"; };
 		0CE4BBB786820DC2A78A8766 /* EnforcementCompletionView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = EnforcementCompletionView.swift; sourceTree = "<group>"; };
 		2105F142D07765CD483ED529 /* ProgressSyncStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressSyncStore.swift; sourceTree = "<group>"; };
@@ -900,6 +924,31 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		TIC00GRP000000000000001A /* Guard */ = {
+			isa = PBXGroup;
+			children = (
+				TIC00SVC000000000000001A /* TakeItCaptiveService.swift */,
+				TIC00SVC000000000000002A /* ThoughtClassifier.swift */,
+				TIC00SVC000000000000003A /* VoicePresenceService.swift */,
+				TIC00SVC000000000000004A /* TakeThoughtCaptiveIntent.swift */,
+			);
+			name = Guard;
+			path = Guard;
+			sourceTree = "<group>";
+		};
+		TIC00GRP000000000000002A /* Guard */ = {
+			isa = PBXGroup;
+			children = (
+				TIC00VW0000000000000001A /* TakeItCaptiveFlowView.swift */,
+				TIC00VW0000000000000002A /* IncomingThoughtView.swift */,
+				TIC00VW0000000000000003A /* ReplaceDeclarationView.swift */,
+				TIC00VW0000000000000004A /* GroundTakenView.swift */,
+				TIC00VW0000000000000005A /* EscapeHatchView.swift */,
+			);
+			name = Guard;
+			path = Guard;
+			sourceTree = "<group>";
+		};
 		1322CBF2A657C03EC44A50F3 /* Enforcement */ = {
 			isa = PBXGroup;
 			children = (
@@ -921,6 +970,7 @@
 		2F740F5F29D4014500E89E7F /* SpeakLifeTests */ = {
 			isa = PBXGroup;
 			children = (
+				TIC00TST000000000000001A /* TakeItCaptiveServiceTests.swift */,
 				4501F3A62F840A01008704F9 /* WarriorRoomTypesTests.swift */,
 				4501F3A82F840A01008704F9 /* PrayerWallPostTests.swift */,
 				4501F3AA2F840A01008704F9 /* PrayerWallViewModelTests.swift */,
@@ -1368,6 +1418,7 @@
 		7A00721628F8ED4A00965AF7 /* AffirmationData */ = {
 			isa = PBXGroup;
 			children = (
+				TIC00RES000000000000001A /* thoughts.json */,
 				45C15A772F2E9B21006171F5 /* declarationsv10.json */,
 				457D531A2D964AA10098A49A /* audioDevotionals.json */,
 				45FF718D2E6294330048C523 /* declarationsv7_backup.json */,
@@ -1481,6 +1532,7 @@
 		7AA8706528DACB3500134ADB /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				TIC00GRP000000000000002A /* Guard */,
 				458510D82B159B0D00230EE5 /* LandingView.swift */,
 				7A601440294E574500CD2103 /* HomeView.swift */,
 				45FACE0012345678ABCDEF02 /* RemoteMessageView.swift */,
@@ -1513,6 +1565,7 @@
 		7AA8706628DACB3F00134ADB /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				TIC00MDL000000000000001A /* TakeItCaptive.swift */,
 				45567D4C2F29C98500382072 /* Bible */,
 				4597E23F2E419D7D009D6C66 /* CoreData */,
 				7AA8706B28DACC4E00134ADB /* DailyDeclaration.swift */,
@@ -1534,6 +1587,7 @@
 		7AA8706728DACB5100134ADB /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				TIC00GRP000000000000001A /* Guard */,
 				45567D712F29F6FA00382072 /* Auth */,
 				45BC74622EDA4CB5003AC964 /* PaywallTriggerManager.swift */,
 				45BC74642EDA53FF003AC964 /* UserPreferencesTracker.swift */,
@@ -2102,6 +2156,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				TIC00RES000000000000001B /* thoughts.json in Resources */,
 				45A4A3A52D7BF62600DFCEB7 /* declarationsv7.json in Resources */,
 				45D6402B2CD218AE006F05AD /* declarationsv5.json in Resources */,
 				45A4A3D12D86B86100DFCEB7 /* washed.mp3 in Resources */,
@@ -2145,6 +2200,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				TIC00TST000000000000001B /* TakeItCaptiveServiceTests.swift in Sources */,
 				4501F3A52F840A01008704F9 /* WarriorRoomTypesTests.swift in Sources */,
 				4501F3A72F840A01008704F9 /* PrayerWallPostTests.swift in Sources */,
 				4501F3A92F840A01008704F9 /* PrayerWallViewModelTests.swift in Sources */,
@@ -2178,6 +2234,16 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				TIC00SVC000000000000001B /* TakeItCaptiveService.swift in Sources */,
+				TIC00SVC000000000000002B /* ThoughtClassifier.swift in Sources */,
+				TIC00SVC000000000000003B /* VoicePresenceService.swift in Sources */,
+				TIC00SVC000000000000004B /* TakeThoughtCaptiveIntent.swift in Sources */,
+				TIC00VW0000000000000001B /* TakeItCaptiveFlowView.swift in Sources */,
+				TIC00VW0000000000000002B /* IncomingThoughtView.swift in Sources */,
+				TIC00VW0000000000000003B /* ReplaceDeclarationView.swift in Sources */,
+				TIC00VW0000000000000004B /* GroundTakenView.swift in Sources */,
+				TIC00VW0000000000000005B /* EscapeHatchView.swift in Sources */,
+				TIC00MDL000000000000001B /* TakeItCaptive.swift in Sources */,
 				45BC76442EFD2775003AC964 /* ModernCelebrationView.swift in Sources */,
 				45BCBA9A2C360245001F28C4 /* BibleStory.swift in Sources */,
 				458B6B1F2BA6D5CF0001BEFE /* TimerViewModel.swift in Sources */,

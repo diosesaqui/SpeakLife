@@ -1,0 +1,1206 @@
+{
+  "version": 1,
+  "count": 120,
+  "thoughts": [
+    {
+      "id": "thought_fear_001",
+      "text": "It's going to fall apart.",
+      "category": "fear",
+      "intensity": 1,
+      "counterDeclaration": "God is my rock and my fortress. I stand on ground that does not move.",
+      "verseText": "The Lord is my rock, my fortress and my deliverer; my God is my rock, in whom I take refuge, my shield and the horn of my salvation, my stronghold.",
+      "book": "Psalm 18:2",
+      "declarationCategory": "godsprotection"
+    },
+    {
+      "id": "thought_fear_002",
+      "text": "You won't be able to handle what's coming.",
+      "category": "fear",
+      "intensity": 1,
+      "counterDeclaration": "God upholds me with His righteous right hand. I am steady and strong.",
+      "verseText": "So do not fear, for I am with you; do not be dismayed, for I am your God. I will strengthen you and help you; I will uphold you with my righteous right hand.",
+      "book": "Isaiah 41:10",
+      "declarationCategory": "godsprotection"
+    },
+    {
+      "id": "thought_fear_003",
+      "text": "Something bad is about to happen.",
+      "category": "fear",
+      "intensity": 1,
+      "counterDeclaration": "I dwell in the secret place of the Most High. I rest in His shadow.",
+      "verseText": "Whoever dwells in the shelter of the Most High will rest in the shadow of the Almighty.",
+      "book": "Psalm 91:1",
+      "declarationCategory": "godsprotection"
+    },
+    {
+      "id": "thought_fear_004",
+      "text": "You are not safe here.",
+      "category": "fear",
+      "intensity": 1,
+      "counterDeclaration": "The Most High covers me with His wings. His faithfulness is my shield.",
+      "verseText": "He will cover you with his feathers, and under his wings you will find refuge; his faithfulness will be your shield and rampart.",
+      "book": "Psalm 91:4",
+      "declarationCategory": "godsprotection"
+    },
+    {
+      "id": "thought_fear_005",
+      "text": "You will never sleep through the night again.",
+      "category": "fear",
+      "intensity": 1,
+      "counterDeclaration": "I lie down and sleep in peace. God alone makes me dwell in safety.",
+      "verseText": "In peace I will lie down and sleep, for you alone, Lord, make me dwell in safety.",
+      "book": "Psalm 4:8",
+      "declarationCategory": "godsprotection"
+    },
+    {
+      "id": "thought_fear_006",
+      "text": "Everything you built is about to come apart.",
+      "category": "fear",
+      "intensity": 2,
+      "counterDeclaration": "I trust the Lord. I stand like Mount Zion, unshaken forever.",
+      "verseText": "Those who trust in the Lord are like Mount Zion, which cannot be shaken but endures forever.",
+      "book": "Psalm 125:1",
+      "declarationCategory": "godsprotection"
+    },
+    {
+      "id": "thought_fear_007",
+      "text": "Nobody is watching out for you.",
+      "category": "fear",
+      "intensity": 2,
+      "counterDeclaration": "My Keeper never sleeps. All night His eyes are on me.",
+      "verseText": "he will not let your foot slip— he who watches over you will not slumber; indeed, he who watches over Israel will neither slumber nor sleep.",
+      "book": "Psalm 121:3-4",
+      "declarationCategory": "godsprotection"
+    },
+    {
+      "id": "thought_fear_008",
+      "text": "One phone call and your whole life changes.",
+      "category": "fear",
+      "intensity": 2,
+      "counterDeclaration": "The Lord watches over my going out and my coming in, now and forevermore.",
+      "verseText": "The Lord will watch over your coming and going both now and forevermore.",
+      "book": "Psalm 121:8",
+      "declarationCategory": "godsprotection"
+    },
+    {
+      "id": "thought_fear_009",
+      "text": "You should be afraid of what they will do to you.",
+      "category": "fear",
+      "intensity": 2,
+      "counterDeclaration": "The Lord is my helper. I stand with confidence before anyone.",
+      "verseText": "So we say with confidence, 'The Lord is my helper; I will not be afraid. What can mere mortals do to me?'",
+      "book": "Hebrews 13:6",
+      "declarationCategory": "godsprotection"
+    },
+    {
+      "id": "thought_fear_010",
+      "text": "Your family is not protected.",
+      "category": "fear",
+      "intensity": 2,
+      "counterDeclaration": "The angel of the Lord camps around me. I am surrounded day and night.",
+      "verseText": "The angel of the Lord encamps around those who fear him, and he delivers them.",
+      "book": "Psalm 34:7",
+      "declarationCategory": "godsprotection"
+    },
+    {
+      "id": "thought_fear_011",
+      "text": "You are going to lose everything.",
+      "category": "fear",
+      "intensity": 3,
+      "counterDeclaration": "God sets a hedge around everything I have. He blesses the work of my hands.",
+      "verseText": "Have you not put a hedge around him and his household and everything he has? You have blessed the work of his hands, so that his flocks and herds are spread throughout the land.",
+      "book": "Job 1:10",
+      "declarationCategory": "godsprotection"
+    },
+    {
+      "id": "thought_fear_012",
+      "text": "There is nowhere left to run.",
+      "category": "fear",
+      "intensity": 3,
+      "counterDeclaration": "The name of the Lord is a strong tower. I run in and I am safe.",
+      "verseText": "The name of the Lord is a fortified tower; the righteous run to it and are safe.",
+      "book": "Proverbs 18:10",
+      "declarationCategory": "godsprotection"
+    },
+    {
+      "id": "thought_fear_013",
+      "text": "The worst thing you can imagine is exactly what is coming.",
+      "category": "fear",
+      "intensity": 3,
+      "counterDeclaration": "The Lord is my light, my salvation, and the stronghold of my life.",
+      "verseText": "The Lord is my light and my salvation— whom shall I fear? The Lord is the stronghold of my life— of whom shall I be afraid?",
+      "book": "Psalm 27:1",
+      "declarationCategory": "godsprotection"
+    },
+    {
+      "id": "thought_fear_014",
+      "text": "You are on your own in this one.",
+      "category": "fear",
+      "intensity": 3,
+      "counterDeclaration": "The Lord goes ahead of me into every tomorrow. He never leaves me.",
+      "verseText": "The Lord himself goes before you and will be with you; he will never leave you nor forsake you.",
+      "book": "Deuteronomy 31:8",
+      "declarationCategory": "godsprotection"
+    },
+    {
+      "id": "thought_fear_015",
+      "text": "This is bigger than your God.",
+      "category": "fear",
+      "intensity": 3,
+      "counterDeclaration": "Greater is He who is in me than he who is in the world.",
+      "verseText": "You, dear children, are from God and have overcome them, because the one who is in you is greater than the one who is in the world.",
+      "book": "1 John 4:4",
+      "declarationCategory": "godsprotection"
+    },
+    {
+      "id": "thought_cond_001",
+      "text": "You have done too much for God to use you.",
+      "category": "condemnation",
+      "intensity": 1,
+      "counterDeclaration": "In Christ there is no condemnation over me. Not one charge stands.",
+      "verseText": "Therefore, there is now no condemnation for those who are in Christ Jesus,",
+      "book": "Romans 8:1",
+      "declarationCategory": "grace"
+    },
+    {
+      "id": "thought_cond_002",
+      "text": "God is disappointed in you.",
+      "category": "condemnation",
+      "intensity": 1,
+      "counterDeclaration": "The blood of Jesus bought me back. I am forgiven, and the price is paid.",
+      "verseText": "In him we have redemption through his blood, the forgiveness of sins, in accordance with the riches of God's grace",
+      "book": "Ephesians 1:7",
+      "declarationCategory": "grace"
+    },
+    {
+      "id": "thought_cond_003",
+      "text": "You should be further along by now.",
+      "category": "condemnation",
+      "intensity": 1,
+      "counterDeclaration": "Jesus said it is finished. I rest in His grace, fully accepted.",
+      "verseText": "When he had received the drink, Jesus said, 'It is finished.' With that, he bowed his head and gave up his spirit.",
+      "book": "John 19:30",
+      "declarationCategory": "grace"
+    },
+    {
+      "id": "thought_cond_004",
+      "text": "You have to earn your way back.",
+      "category": "condemnation",
+      "intensity": 1,
+      "counterDeclaration": "I am saved by grace through faith. God gave it and I received it.",
+      "verseText": "For it is by grace you have been saved, through faith—and this is not from yourselves, it is the gift of God—not by works, so that no one can boast.",
+      "book": "Ephesians 2:8-9",
+      "declarationCategory": "grace"
+    },
+    {
+      "id": "thought_cond_005",
+      "text": "That prayer is not getting through today.",
+      "category": "condemnation",
+      "intensity": 1,
+      "counterDeclaration": "I come to the throne of grace bold and welcome. Mercy meets me here.",
+      "verseText": "Let us then approach God's throne of grace with confidence, so that we may receive mercy and find grace to help us in our time of need.",
+      "book": "Hebrews 4:16",
+      "declarationCategory": "grace"
+    },
+    {
+      "id": "thought_cond_006",
+      "text": "God keeps a record of what you did.",
+      "category": "condemnation",
+      "intensity": 2,
+      "counterDeclaration": "God made me alive with Christ. Every charge against me is cancelled.",
+      "verseText": "When you were dead in your sins and in the uncircumcision of your flesh, God made you alive with Christ. He forgave us all our sins, having canceled the charge of our legal indebtedness, which stood against us and condemned us; he has taken it away, nailing it to the cross.",
+      "book": "Colossians 2:13-14",
+      "declarationCategory": "grace"
+    },
+    {
+      "id": "thought_cond_007",
+      "text": "You are a hypocrite for even opening this app.",
+      "category": "condemnation",
+      "intensity": 2,
+      "counterDeclaration": "I am justified freely by His grace. My right standing is a gift.",
+      "verseText": "and all are justified freely by his grace through the redemption that came by Christ Jesus.",
+      "book": "Romans 3:24",
+      "declarationCategory": "grace"
+    },
+    {
+      "id": "thought_cond_008",
+      "text": "You will never be clean.",
+      "category": "condemnation",
+      "intensity": 2,
+      "counterDeclaration": "God made me white as snow. I am clean before Him forever.",
+      "verseText": "'Come now, let us settle the matter,' says the Lord. 'Though your sins are like scarlet, they shall be as white as snow; though they are red as crimson, they shall be like wool.'",
+      "book": "Isaiah 1:18",
+      "declarationCategory": "grace"
+    },
+    {
+      "id": "thought_cond_009",
+      "text": "You keep going back to the same thing.",
+      "category": "condemnation",
+      "intensity": 2,
+      "counterDeclaration": "I live under grace, and His favor governs my whole life.",
+      "verseText": "For sin shall no longer be your master, because you are not under the law, but under grace.",
+      "book": "Romans 6:14",
+      "declarationCategory": "grace"
+    },
+    {
+      "id": "thought_cond_010",
+      "text": "You are forgiven only until the next time.",
+      "category": "condemnation",
+      "intensity": 2,
+      "counterDeclaration": "God's mercy meets me fresh every morning. His faithfulness is great.",
+      "verseText": "Because of the Lord's great love we are not consumed, for his compassions never fail. They are new every morning; great is your faithfulness.",
+      "book": "Lamentations 3:22-23",
+      "declarationCategory": "grace"
+    },
+    {
+      "id": "thought_cond_011",
+      "text": "You went too far this time.",
+      "category": "condemnation",
+      "intensity": 3,
+      "counterDeclaration": "Grace runs further than my need, and God always pours out more.",
+      "verseText": "The law was brought in so that the trespass might increase. But where sin increased, grace increased all the more,",
+      "book": "Romans 5:20",
+      "declarationCategory": "grace"
+    },
+    {
+      "id": "thought_cond_012",
+      "text": "God tolerates you. He does not delight in you.",
+      "category": "condemnation",
+      "intensity": 3,
+      "counterDeclaration": "God adopted me through Jesus because it pleased Him. I am His own.",
+      "verseText": "he predestined us for adoption to sonship through Jesus Christ, in accordance with his pleasure and will— to the praise of his glorious grace, which he has freely given us in the One he loves.",
+      "book": "Ephesians 1:5-6",
+      "declarationCategory": "grace"
+    },
+    {
+      "id": "thought_cond_013",
+      "text": "Your past disqualifies you.",
+      "category": "condemnation",
+      "intensity": 3,
+      "counterDeclaration": "I am a new creation in Christ, the old is gone and everything about me is new.",
+      "verseText": "Therefore, if anyone is in Christ, the new creation has come: The old has gone, the new is here!",
+      "book": "2 Corinthians 5:17",
+      "declarationCategory": "grace"
+    },
+    {
+      "id": "thought_cond_014",
+      "text": "You are not really saved.",
+      "category": "condemnation",
+      "intensity": 3,
+      "counterDeclaration": "God sealed me with His Spirit. My inheritance is guaranteed.",
+      "verseText": "And you also were included in Christ when you heard the message of truth, the gospel of your salvation. When you believed, you were marked in him with a seal, the promised Holy Spirit, who is a deposit guaranteeing our inheritance until the redemption of those who are God's possession—to the praise of his glory.",
+      "book": "Ephesians 1:13-14",
+      "declarationCategory": "grace"
+    },
+    {
+      "id": "thought_cond_015",
+      "text": "Your conscience will never be quiet.",
+      "category": "condemnation",
+      "intensity": 3,
+      "counterDeclaration": "The blood of Christ cleanses my conscience. I serve the living God.",
+      "verseText": "How much more, then, will the blood of Christ, who through the eternal Spirit offered himself unblemished to God, cleanse our consciences from acts that lead to death, so that we may serve the living God!",
+      "book": "Hebrews 9:14",
+      "declarationCategory": "grace"
+    },
+    {
+      "id": "thought_lack_001",
+      "text": "There will not be enough.",
+      "category": "lack",
+      "intensity": 1,
+      "counterDeclaration": "My God meets every need from His endless riches. I have more than enough.",
+      "verseText": "And my God will meet all your needs according to the riches of his glory in Christ Jesus.",
+      "book": "Philippians 4:19",
+      "declarationCategory": "wealth"
+    },
+    {
+      "id": "thought_lack_002",
+      "text": "You will always be behind on the bills.",
+      "category": "lack",
+      "intensity": 1,
+      "counterDeclaration": "The Lord is my shepherd. He leads me into more than enough today.",
+      "verseText": "The Lord is my shepherd, I lack nothing.",
+      "book": "Psalm 23:1",
+      "declarationCategory": "wealth"
+    },
+    {
+      "id": "thought_lack_003",
+      "text": "The money runs out this month.",
+      "category": "lack",
+      "intensity": 1,
+      "counterDeclaration": "I seek God's kingdom first, and He adds everything else. My provision is settled.",
+      "verseText": "But seek first his kingdom and his righteousness, and all these things will be given to you as well.",
+      "book": "Matthew 6:33",
+      "declarationCategory": "wealth"
+    },
+    {
+      "id": "thought_lack_004",
+      "text": "You cannot afford to be generous.",
+      "category": "lack",
+      "intensity": 1,
+      "counterDeclaration": "I give, and it comes back pressed down, shaken together, running over into my lap.",
+      "verseText": "Give, and it will be given to you. A good measure, pressed down, shaken together and running over, will be poured into your lap. For with the measure you use, it will be measured to you.",
+      "book": "Luke 6:38",
+      "declarationCategory": "wealth"
+    },
+    {
+      "id": "thought_lack_005",
+      "text": "Your work is not going anywhere.",
+      "category": "lack",
+      "intensity": 1,
+      "counterDeclaration": "God establishes the work of my hands. Everything I build prospers and lasts.",
+      "verseText": "May the favor of the Lord our God rest on us; establish the work of our hands for us— yes, establish the work of our hands.",
+      "book": "Psalm 90:17",
+      "declarationCategory": "wealth"
+    },
+    {
+      "id": "thought_lack_006",
+      "text": "You will never get out of debt.",
+      "category": "lack",
+      "intensity": 2,
+      "counterDeclaration": "Heaven's storehouse opens over my work. I lend to many and borrow from none.",
+      "verseText": "The Lord will open the heavens, the storehouse of his bounty, to send rain on your land in season and to bless all the work of your hands. You will lend to many nations but will borrow from none.",
+      "book": "Deuteronomy 28:12",
+      "declarationCategory": "wealth"
+    },
+    {
+      "id": "thought_lack_007",
+      "text": "People like you do not get ahead.",
+      "category": "lack",
+      "intensity": 2,
+      "counterDeclaration": "The blessing of the Lord makes me rich. He gives increase with rest and joy.",
+      "verseText": "The blessing of the LORD brings wealth, without painful toil for it.",
+      "book": "Proverbs 10:22",
+      "declarationCategory": "wealth"
+    },
+    {
+      "id": "thought_lack_008",
+      "text": "God provides for everyone else, not you.",
+      "category": "lack",
+      "intensity": 2,
+      "counterDeclaration": "My Father feeds the birds. He provides for my family far more richly.",
+      "verseText": "Look at the birds of the air; they do not sow or reap or store away in barns, and yet your heavenly Father feeds them. Are you not much more valuable than they?",
+      "book": "Matthew 6:26",
+      "declarationCategory": "wealth"
+    },
+    {
+      "id": "thought_lack_009",
+      "text": "You are one bad month from losing it all.",
+      "category": "lack",
+      "intensity": 2,
+      "counterDeclaration": "God blesses me abundantly, so I abound in every good work.",
+      "verseText": "And God is able to bless you abundantly, so that in all things at all times, having all that you need, you will abound in every good work.",
+      "book": "2 Corinthians 9:8",
+      "declarationCategory": "wealth"
+    },
+    {
+      "id": "thought_lack_010",
+      "text": "You made the wrong call with money and now you pay for it.",
+      "category": "lack",
+      "intensity": 2,
+      "counterDeclaration": "I commit my finances to the Lord. He establishes my plans and my increase.",
+      "verseText": "Commit to the Lord whatever you do, and he will establish your plans.",
+      "book": "Proverbs 16:3",
+      "declarationCategory": "wealth"
+    },
+    {
+      "id": "thought_lack_011",
+      "text": "You will always be poor.",
+      "category": "lack",
+      "intensity": 3,
+      "counterDeclaration": "God gives me power to produce wealth. My increase carries His covenant and His purpose.",
+      "verseText": "But remember the Lord your God, for it is he who gives you the ability to produce wealth, and so confirms his covenant, which he swore to your ancestors, as it is today.",
+      "book": "Deuteronomy 8:18",
+      "declarationCategory": "wealth"
+    },
+    {
+      "id": "thought_lack_012",
+      "text": "There is no way out of this hole.",
+      "category": "lack",
+      "intensity": 3,
+      "counterDeclaration": "God throws open heaven's floodgates over me. He pours out more than I can store.",
+      "verseText": "Bring the whole tithe into the storehouse, that there may be food in my house. Test me in this, says the Lord Almighty, and see if I will not throw open the floodgates of heaven and pour out so much blessing that there will not be room enough to store it.",
+      "book": "Malachi 3:10",
+      "declarationCategory": "wealth"
+    },
+    {
+      "id": "thought_lack_013",
+      "text": "You will have to do this without any help.",
+      "category": "lack",
+      "intensity": 3,
+      "counterDeclaration": "God gave me His own Son. With Him He freely gives me all things.",
+      "verseText": "He who did not spare his own Son, but gave him up for us all—how will he not also, along with him, graciously give us all things?",
+      "book": "Romans 8:32",
+      "declarationCategory": "wealth"
+    },
+    {
+      "id": "thought_lack_014",
+      "text": "Your children will inherit this struggle.",
+      "category": "lack",
+      "intensity": 3,
+      "counterDeclaration": "I am blessed to be a blessing. The increase never stops with me.",
+      "verseText": "I will make you into a great nation, and I will bless you; I will make your name great, and you will be a blessing.",
+      "book": "Genesis 12:2",
+      "declarationCategory": "wealth"
+    },
+    {
+      "id": "thought_lack_015",
+      "text": "You already missed your chance.",
+      "category": "lack",
+      "intensity": 3,
+      "counterDeclaration": "The Lord is my Provider. My supply is ready before I ever arrive.",
+      "verseText": "So Abraham called that place The Lord Will Provide. And to this day it is said, 'On the mountain of the Lord it will be provided.'",
+      "book": "Genesis 22:14",
+      "declarationCategory": "wealth"
+    },
+    {
+      "id": "thought_rej_001",
+      "text": "Nobody actually wants you around.",
+      "category": "rejection",
+      "intensity": 1,
+      "counterDeclaration": "I am a member of God's household. I am home.",
+      "verseText": "Consequently, you are no longer foreigners and strangers, but fellow citizens with God's people and also members of his household.",
+      "book": "Ephesians 2:19",
+      "declarationCategory": "love"
+    },
+    {
+      "id": "thought_rej_002",
+      "text": "They are only tolerating you.",
+      "category": "rejection",
+      "intensity": 1,
+      "counterDeclaration": "I am chosen, holy, and dearly loved. That love makes me gentle with people.",
+      "verseText": "Therefore, as God's chosen people, holy and dearly loved, clothe yourselves with compassion, kindness, humility, gentleness and patience.",
+      "book": "Colossians 3:12",
+      "declarationCategory": "love"
+    },
+    {
+      "id": "thought_rej_003",
+      "text": "You do not belong here.",
+      "category": "rejection",
+      "intensity": 1,
+      "counterDeclaration": "God redeemed me and calls me by name. I am wanted, and I am loved.",
+      "verseText": "But now, this is what the Lord says—he who created you, Jacob, he who formed you, Israel: 'Do not fear, for I have redeemed you; I have summoned you by name; you are mine.'",
+      "book": "Isaiah 43:1",
+      "declarationCategory": "love"
+    },
+    {
+      "id": "thought_rej_004",
+      "text": "You are too much for people.",
+      "category": "rejection",
+      "intensity": 1,
+      "counterDeclaration": "The Lord delights in me and rejoices over me with singing.",
+      "verseText": "The Lord your God is with you, the Mighty Warrior who saves. He will take great delight in you; in his love he will no longer rebuke you, but will rejoice over you with singing.",
+      "book": "Zephaniah 3:17",
+      "declarationCategory": "love"
+    },
+    {
+      "id": "thought_rej_005",
+      "text": "If they really knew you, they would leave.",
+      "category": "rejection",
+      "intensity": 1,
+      "counterDeclaration": "God knows my every thought. He sees all of me and loves all of me.",
+      "verseText": "You have searched me, Lord, and you know me. You know when I sit and when I rise; you perceive my thoughts from afar.",
+      "book": "Psalm 139:1-2",
+      "declarationCategory": "love"
+    },
+    {
+      "id": "thought_rej_006",
+      "text": "You will always be the one left out.",
+      "category": "rejection",
+      "intensity": 2,
+      "counterDeclaration": "Jesus calls me His friend, not His servant. He holds nothing back.",
+      "verseText": "I no longer call you servants, because a servant does not know his master's business. Instead, I have called you friends, for everything that I learned from my Father I have made known to you.",
+      "book": "John 15:15",
+      "declarationCategory": "love"
+    },
+    {
+      "id": "thought_rej_007",
+      "text": "They chose someone else over you.",
+      "category": "rejection",
+      "intensity": 2,
+      "counterDeclaration": "I am precious and honored in God's sight. He would trade nations for me.",
+      "verseText": "Since you are precious and honored in my sight, and because I love you, I will give people in exchange for you, nations in exchange for your life.",
+      "book": "Isaiah 43:4",
+      "declarationCategory": "love"
+    },
+    {
+      "id": "thought_rej_008",
+      "text": "Nobody is going to check on you.",
+      "category": "rejection",
+      "intensity": 2,
+      "counterDeclaration": "As I trust the Lord, His unfailing love surrounds me.",
+      "verseText": "Many are the woes of the wicked, but the Lord's unfailing love surrounds the one who trusts in him.",
+      "book": "Psalm 32:10",
+      "declarationCategory": "love"
+    },
+    {
+      "id": "thought_rej_009",
+      "text": "You are easy to replace.",
+      "category": "rejection",
+      "intensity": 2,
+      "counterDeclaration": "The Father chose me in love before the world began.",
+      "verseText": "For he chose us in him before the creation of the world to be holy and blameless in his sight. In love.",
+      "book": "Ephesians 1:4",
+      "declarationCategory": "love"
+    },
+    {
+      "id": "thought_rej_010",
+      "text": "You are going to end up alone.",
+      "category": "rejection",
+      "intensity": 2,
+      "counterDeclaration": "Mountains may shake and hills may fall, but God's love for me never moves.",
+      "verseText": "Though the mountains be shaken and the hills be removed, yet my unfailing love for you will not be shaken nor my covenant of peace be removed, says the Lord, who has compassion on you.",
+      "book": "Isaiah 54:10",
+      "declarationCategory": "love"
+    },
+    {
+      "id": "thought_rej_011",
+      "text": "Even the people who love you are tired of you.",
+      "category": "rejection",
+      "intensity": 3,
+      "counterDeclaration": "God loves me with an everlasting love. His kindness never fails.",
+      "verseText": "The Lord appeared to us in the past, saying: 'I have loved you with an everlasting love; I have drawn you with unfailing kindness.'",
+      "book": "Jeremiah 31:3",
+      "declarationCategory": "love"
+    },
+    {
+      "id": "thought_rej_012",
+      "text": "You were left before and it will happen again.",
+      "category": "rejection",
+      "intensity": 3,
+      "counterDeclaration": "Nothing in all creation can separate me from God's love.",
+      "verseText": "For I am convinced that neither death nor life, neither angels nor demons, neither the present nor the future, nor any powers, neither height nor depth, nor anything else in all creation, will be able to separate us from the love of God that is in Christ Jesus our Lord.",
+      "book": "Romans 8:38-39",
+      "declarationCategory": "love"
+    },
+    {
+      "id": "thought_rej_013",
+      "text": "You have to earn your place at the table.",
+      "category": "rejection",
+      "intensity": 3,
+      "counterDeclaration": "God loved me first, long before I turned toward Him.",
+      "verseText": "We love because he first loved us.",
+      "book": "1 John 4:19",
+      "declarationCategory": "love"
+    },
+    {
+      "id": "thought_rej_014",
+      "text": "God accepts you but He does not want you.",
+      "category": "rejection",
+      "intensity": 3,
+      "counterDeclaration": "The Father has lavished His love on me, and He calls me His child.",
+      "verseText": "See what great love the Father has lavished on us, that we should be called children of God! And that is what we are!",
+      "book": "1 John 3:1",
+      "declarationCategory": "love"
+    },
+    {
+      "id": "thought_rej_015",
+      "text": "There is something in you that makes people leave.",
+      "category": "rejection",
+      "intensity": 3,
+      "counterDeclaration": "God brought me to His table, and His banner over me is love.",
+      "verseText": "He has taken me to the banquet hall, and his banner over me is love.",
+      "book": "Song of Solomon 2:4",
+      "declarationCategory": "love"
+    },
+    {
+      "id": "thought_sick_001",
+      "text": "This is not going to get better.",
+      "category": "sickness",
+      "intensity": 1,
+      "counterDeclaration": "By His wounds I am healed. Wholeness runs from my head to my feet.",
+      "verseText": "But he was pierced for our transgressions, he was crushed for our iniquities; the punishment that brought us peace was on him, and by his wounds we are healed.",
+      "book": "Isaiah 53:5",
+      "declarationCategory": "health"
+    },
+    {
+      "id": "thought_sick_002",
+      "text": "Your body is falling apart.",
+      "category": "sickness",
+      "intensity": 1,
+      "counterDeclaration": "God knit every part of me together. My whole frame works the way He made it.",
+      "verseText": "I praise you because I am fearfully and wonderfully made; your works are wonderful, I know that full well.",
+      "book": "Psalm 139:14",
+      "declarationCategory": "health"
+    },
+    {
+      "id": "thought_sick_003",
+      "text": "You will be this tired forever.",
+      "category": "sickness",
+      "intensity": 1,
+      "counterDeclaration": "I wait on the Lord, and my strength is renewed. I run and never tire.",
+      "verseText": "but those who hope in the Lord will renew their strength. They will soar on wings like eagles; they will run and not grow weary, they will walk and not be faint.",
+      "book": "Isaiah 40:31",
+      "declarationCategory": "health"
+    },
+    {
+      "id": "thought_sick_004",
+      "text": "Your strength is not coming back.",
+      "category": "sickness",
+      "intensity": 1,
+      "counterDeclaration": "God gives me strength and fills me with fresh power.",
+      "verseText": "He gives strength to the weary and increases the power of the weak.",
+      "book": "Isaiah 40:29",
+      "declarationCategory": "health"
+    },
+    {
+      "id": "thought_sick_005",
+      "text": "Rest will not help you.",
+      "category": "sickness",
+      "intensity": 1,
+      "counterDeclaration": "I walk in good health as my soul grows strong.",
+      "verseText": "Dear friend, I pray that you may enjoy good health and that all may go well with you, even as your soul is getting along well.",
+      "book": "3 John 1:2",
+      "declarationCategory": "health"
+    },
+    {
+      "id": "thought_sick_006",
+      "text": "This pain is permanent.",
+      "category": "sickness",
+      "intensity": 2,
+      "counterDeclaration": "He carried it in His own body on the cross. Healing belongs to me now.",
+      "verseText": "He himself bore our sins in his body on the cross, so that we might die to sins and live for righteousness; by his wounds you have been healed.",
+      "book": "1 Peter 2:24",
+      "declarationCategory": "health"
+    },
+    {
+      "id": "thought_sick_007",
+      "text": "The treatment is not going to work.",
+      "category": "sickness",
+      "intensity": 2,
+      "counterDeclaration": "The Lord is the God who heals me. That is His name over my life.",
+      "verseText": "He said, 'I am the Lord, who heals you.'",
+      "book": "Exodus 15:26",
+      "declarationCategory": "health"
+    },
+    {
+      "id": "thought_sick_008",
+      "text": "You will end up like the rest of your family.",
+      "category": "sickness",
+      "intensity": 2,
+      "counterDeclaration": "Christ redeemed me at the cross. Health is my inheritance.",
+      "verseText": "Christ redeemed us from the curse of the law by becoming a curse for us, for it is written: “Cursed is everyone who is hung on a pole.”",
+      "book": "Galatians 3:13",
+      "declarationCategory": "health"
+    },
+    {
+      "id": "thought_sick_009",
+      "text": "Your mind is slipping.",
+      "category": "sickness",
+      "intensity": 2,
+      "counterDeclaration": "I have the mind of Christ. My thinking is clear, sharp, and sound.",
+      "verseText": "“Who has known the mind of the Lord so as to instruct him?” But we have the mind of Christ.",
+      "book": "1 Corinthians 2:16",
+      "declarationCategory": "health"
+    },
+    {
+      "id": "thought_sick_010",
+      "text": "You will never feel like yourself again.",
+      "category": "sickness",
+      "intensity": 2,
+      "counterDeclaration": "I am a new creation in Christ. His life renews me cell by cell.",
+      "verseText": "Therefore, if anyone is in Christ, the new creation has come: The old has gone, the new is here!",
+      "book": "2 Corinthians 5:17",
+      "declarationCategory": "health"
+    },
+    {
+      "id": "thought_sick_011",
+      "text": "The diagnosis is the final word.",
+      "category": "sickness",
+      "intensity": 3,
+      "counterDeclaration": "God calls into being what He promises. My body lines up with His Word.",
+      "verseText": "the God who gives life to the dead and calls into being things that were not.",
+      "book": "Romans 4:17",
+      "declarationCategory": "health"
+    },
+    {
+      "id": "thought_sick_012",
+      "text": "Healing is for other people.",
+      "category": "sickness",
+      "intensity": 3,
+      "counterDeclaration": "Jesus carried my weakness away. I am healed and strong.",
+      "verseText": "This was to fulfill what was spoken through the prophet Isaiah: 'He took up our infirmities and bore our diseases.'",
+      "book": "Matthew 8:17",
+      "declarationCategory": "health"
+    },
+    {
+      "id": "thought_sick_013",
+      "text": "This body is beyond repair.",
+      "category": "sickness",
+      "intensity": 3,
+      "counterDeclaration": "The Spirit who raised Jesus lives in me. He gives life to every organ.",
+      "verseText": "And if the Spirit of him who raised Jesus from the dead is living in you, he who raised Christ from the dead will also give life to your mortal bodies because of his Spirit who lives in you.",
+      "book": "Romans 8:11",
+      "declarationCategory": "health"
+    },
+    {
+      "id": "thought_sick_014",
+      "text": "You are running out of time.",
+      "category": "sickness",
+      "intensity": 3,
+      "counterDeclaration": "I stay fresh and green in every season, bearing fruit all my days.",
+      "verseText": "They will still bear fruit in old age, they will stay fresh and green,",
+      "book": "Psalm 92:14",
+      "declarationCategory": "health"
+    },
+    {
+      "id": "thought_sick_015",
+      "text": "God is not going to heal this.",
+      "category": "sickness",
+      "intensity": 3,
+      "counterDeclaration": "The Son rises over me with healing in His rays. I walk in that light.",
+      "verseText": "But for you who revere my name, the sun of righteousness will rise with healing in its rays. And you will go out and frolic like well-fed calves.",
+      "book": "Malachi 4:2",
+      "declarationCategory": "health"
+    },
+    {
+      "id": "thought_inad_001",
+      "text": "You are not enough for this.",
+      "category": "inadequacy",
+      "intensity": 1,
+      "counterDeclaration": "I am complete in Christ. Nothing in me is missing or unfinished.",
+      "verseText": "and in Christ you have been brought to fullness. He is the head over every power and authority.",
+      "book": "Colossians 2:10",
+      "declarationCategory": "identity"
+    },
+    {
+      "id": "thought_inad_002",
+      "text": "Everyone else knows what they are doing except you.",
+      "category": "inadequacy",
+      "intensity": 1,
+      "counterDeclaration": "God's Spirit in me carries power, love, and a sound mind.",
+      "verseText": "For the Spirit God gave us does not make us timid, but gives us power, love and self-discipline.",
+      "book": "2 Timothy 1:7",
+      "declarationCategory": "identity"
+    },
+    {
+      "id": "thought_inad_003",
+      "text": "You are going to embarrass yourself.",
+      "category": "inadequacy",
+      "intensity": 1,
+      "counterDeclaration": "Christ strengthens me, so I do everything He sets in front of me.",
+      "verseText": "I can do all things through Christ who strengthens me.",
+      "book": "Philippians 4:13",
+      "declarationCategory": "identity"
+    },
+    {
+      "id": "thought_inad_004",
+      "text": "You do not have what it takes.",
+      "category": "inadequacy",
+      "intensity": 1,
+      "counterDeclaration": "I am strong in the Lord. His mighty power moves through me.",
+      "verseText": "Finally, be strong in the Lord and in his mighty power.",
+      "book": "Ephesians 6:10",
+      "declarationCategory": "identity"
+    },
+    {
+      "id": "thought_inad_005",
+      "text": "You are a fraud.",
+      "category": "inadequacy",
+      "intensity": 1,
+      "counterDeclaration": "God made me fearfully and wonderfully. I know that full well.",
+      "verseText": "I praise you because I am fearfully and wonderfully made; your works are wonderful, I know that full well.",
+      "book": "Psalm 139:14",
+      "declarationCategory": "identity"
+    },
+    {
+      "id": "thought_inad_006",
+      "text": "They are about to find out you cannot do this.",
+      "category": "inadequacy",
+      "intensity": 2,
+      "counterDeclaration": "I am God's handiwork, made for good works He prepared before my first breath.",
+      "verseText": "For we are God's handiwork, created in Christ Jesus to do good works, which God prepared in advance for us to do.",
+      "book": "Ephesians 2:10",
+      "declarationCategory": "identity"
+    },
+    {
+      "id": "thought_inad_007",
+      "text": "You always fall short.",
+      "category": "inadequacy",
+      "intensity": 2,
+      "counterDeclaration": "Through Christ who loves me, I am more than a conqueror.",
+      "verseText": "No, in all these things we are more than conquerors through him who loved us.",
+      "book": "Romans 8:37",
+      "declarationCategory": "identity"
+    },
+    {
+      "id": "thought_inad_008",
+      "text": "You are the weak link.",
+      "category": "inadequacy",
+      "intensity": 2,
+      "counterDeclaration": "The One who lives in me is greater than anyone in the world.",
+      "verseText": "You, dear children, are from God and have overcome them, because the one who is in you is greater than the one who is in the world.",
+      "book": "1 John 4:4",
+      "declarationCategory": "identity"
+    },
+    {
+      "id": "thought_inad_009",
+      "text": "You have nothing worth saying.",
+      "category": "inadequacy",
+      "intensity": 2,
+      "counterDeclaration": "I am Christ's ambassador. The King speaks through me, and I carry His authority.",
+      "verseText": "We are therefore Christ's ambassadors, as though God were making his appeal through us. We implore you on Christ's behalf: Be reconciled to God.",
+      "book": "2 Corinthians 5:20",
+      "declarationCategory": "identity"
+    },
+    {
+      "id": "thought_inad_010",
+      "text": "Somebody better should be doing this.",
+      "category": "inadequacy",
+      "intensity": 2,
+      "counterDeclaration": "Out of all the earth, God reached for me. I am His treasured possession.",
+      "verseText": "For you are a people holy to the Lord your God. The Lord your God has chosen you out of all the peoples on the face of the earth to be his people, his treasured possession.",
+      "book": "Deuteronomy 7:6",
+      "declarationCategory": "identity"
+    },
+    {
+      "id": "thought_inad_011",
+      "text": "You are wasting everyone's time.",
+      "category": "inadequacy",
+      "intensity": 3,
+      "counterDeclaration": "I am a city on a hill. My light cannot be hidden.",
+      "verseText": "You are the light of the world. A town built on a hill cannot be hidden.",
+      "book": "Matthew 5:14",
+      "declarationCategory": "identity"
+    },
+    {
+      "id": "thought_inad_012",
+      "text": "You will never measure up.",
+      "category": "inadequacy",
+      "intensity": 3,
+      "counterDeclaration": "I have peace with God through Jesus. The verdict is in.",
+      "verseText": "Therefore, since we have been justified through faith, we have peace with God through our Lord Jesus Christ.",
+      "book": "Romans 5:1",
+      "declarationCategory": "identity"
+    },
+    {
+      "id": "thought_inad_013",
+      "text": "You are too broken to be used.",
+      "category": "inadequacy",
+      "intensity": 3,
+      "counterDeclaration": "God remade me in His likeness. Righteousness is who I am now.",
+      "verseText": "and to put on the new self, created to be like God in true righteousness and holiness.",
+      "book": "Ephesians 4:24",
+      "declarationCategory": "identity"
+    },
+    {
+      "id": "thought_inad_014",
+      "text": "You do not deserve the good things you have.",
+      "category": "inadequacy",
+      "intensity": 3,
+      "counterDeclaration": "I am accepted in the Beloved. God welcomes me with open arms.",
+      "verseText": "to the praise of the glory of His grace, by which He made us accepted in the Beloved.",
+      "book": "Ephesians 1:6",
+      "declarationCategory": "identity"
+    },
+    {
+      "id": "thought_inad_015",
+      "text": "You are nobody.",
+      "category": "inadequacy",
+      "intensity": 3,
+      "counterDeclaration": "My name is written in heaven. Nothing on earth can erase it.",
+      "verseText": "However, do not rejoice that the spirits submit to you, but rejoice that your names are written in heaven.",
+      "book": "Luke 10:20",
+      "declarationCategory": "identity"
+    },
+    {
+      "id": "thought_aband_001",
+      "text": "God has forgotten about you.",
+      "category": "abandonment",
+      "intensity": 1,
+      "counterDeclaration": "God engraved my name on the palms of His hands. He cannot forget me.",
+      "verseText": "See, I have engraved you on the palms of my hands; your walls are ever before me.",
+      "book": "Isaiah 49:16",
+      "declarationCategory": "love"
+    },
+    {
+      "id": "thought_aband_002",
+      "text": "Your prayers are hitting the ceiling.",
+      "category": "abandonment",
+      "intensity": 1,
+      "counterDeclaration": "I bring every request to my Father with thanks. My heart settles.",
+      "verseText": "Do not be anxious about anything, but in every situation, by prayer and petition, with thanksgiving, present your requests to God.",
+      "book": "Philippians 4:6",
+      "declarationCategory": "rest"
+    },
+    {
+      "id": "thought_aband_003",
+      "text": "God moved on to someone who deserves His attention.",
+      "category": "abandonment",
+      "intensity": 1,
+      "counterDeclaration": "I am the beloved of the Lord. I rest against His shoulder all day.",
+      "verseText": "Let the beloved of the Lord rest secure in him, for he shields him all day long, and the one the Lord loves rests between his shoulders.",
+      "book": "Deuteronomy 33:12",
+      "declarationCategory": "rest"
+    },
+    {
+      "id": "thought_aband_004",
+      "text": "You are carrying this alone.",
+      "category": "abandonment",
+      "intensity": 1,
+      "counterDeclaration": "I roll my whole load onto the Lord. He carries it and me.",
+      "verseText": "Cast your cares on the Lord and he will sustain you; he will never let the righteous be shaken.",
+      "book": "Psalm 55:22",
+      "declarationCategory": "rest"
+    },
+    {
+      "id": "thought_aband_005",
+      "text": "God stopped listening a while ago.",
+      "category": "abandonment",
+      "intensity": 1,
+      "counterDeclaration": "My soul finds rest in God alone. He is my only hope.",
+      "verseText": "Yes, my soul, find rest in God; my hope comes from him.",
+      "book": "Psalm 62:5",
+      "declarationCategory": "rest"
+    },
+    {
+      "id": "thought_aband_006",
+      "text": "He answered everyone else's prayer, not yours.",
+      "category": "abandonment",
+      "intensity": 2,
+      "counterDeclaration": "I cast every care on Him, because He cares for me.",
+      "verseText": "Cast all your anxiety on him because he cares for you.",
+      "book": "1 Peter 5:7",
+      "declarationCategory": "rest"
+    },
+    {
+      "id": "thought_aband_007",
+      "text": "You are not on God's mind today.",
+      "category": "abandonment",
+      "intensity": 2,
+      "counterDeclaration": "Every morning God lifts the load off my back. I walk light all day.",
+      "verseText": "Praise be to the Lord, to God our Savior, who daily bears our burdens.",
+      "book": "Psalm 68:19",
+      "declarationCategory": "rest"
+    },
+    {
+      "id": "thought_aband_008",
+      "text": "This silence means He left.",
+      "category": "abandonment",
+      "intensity": 2,
+      "counterDeclaration": "I come to Jesus. He takes the load and gives my soul rest.",
+      "verseText": "Come to me, all you who are weary and burdened, and I will give you rest.",
+      "book": "Matthew 11:28",
+      "declarationCategory": "rest"
+    },
+    {
+      "id": "thought_aband_009",
+      "text": "You have waited too long for this to be God.",
+      "category": "abandonment",
+      "intensity": 2,
+      "counterDeclaration": "I wait quietly before the Lord. His timing is good and never late.",
+      "verseText": "Be still before the Lord and wait patiently for him; do not fret when people succeed in their ways, when they carry out their wicked schemes.",
+      "book": "Psalm 37:7",
+      "declarationCategory": "rest"
+    },
+    {
+      "id": "thought_aband_010",
+      "text": "God is far away right now.",
+      "category": "abandonment",
+      "intensity": 2,
+      "counterDeclaration": "I dwell in the shelter of the Most High and rest in His shadow.",
+      "verseText": "Whoever dwells in the shelter of the Most High will rest in the shadow of the Almighty.",
+      "book": "Psalm 91:1",
+      "declarationCategory": "rest"
+    },
+    {
+      "id": "thought_aband_011",
+      "text": "God gave up on you.",
+      "category": "abandonment",
+      "intensity": 3,
+      "counterDeclaration": "I am held in the hand of Jesus. No one takes me out.",
+      "verseText": "I give them eternal life, and they shall never perish; no one will snatch them out of my hand.",
+      "book": "John 10:28",
+      "declarationCategory": "rest"
+    },
+    {
+      "id": "thought_aband_012",
+      "text": "You are on your own from here.",
+      "category": "abandonment",
+      "intensity": 3,
+      "counterDeclaration": "The Lord Himself is my portion. What I have is enough.",
+      "verseText": "Keep your lives free from the love of money and be content with what you have, because God has said, \"Never will I leave you; never will I forsake you.\"",
+      "book": "Hebrews 13:5",
+      "declarationCategory": "rest"
+    },
+    {
+      "id": "thought_aband_013",
+      "text": "He was never really with you.",
+      "category": "abandonment",
+      "intensity": 3,
+      "counterDeclaration": "The Lord fights for me. I stand still and let Him win.",
+      "verseText": "The Lord will fight for you; you need only to be still.",
+      "book": "Exodus 14:14",
+      "declarationCategory": "rest"
+    },
+    {
+      "id": "thought_aband_014",
+      "text": "Nobody is coming to help.",
+      "category": "abandonment",
+      "intensity": 3,
+      "counterDeclaration": "The battle is not mine but God's. The outcome is already His.",
+      "verseText": "This is what the Lord says to you: \"Do not be afraid or discouraged because of this vast army. For the battle is not yours, but God's.\"",
+      "book": "2 Chronicles 20:15",
+      "declarationCategory": "rest"
+    },
+    {
+      "id": "thought_aband_015",
+      "text": "God stopped caring about this part of your life.",
+      "category": "abandonment",
+      "intensity": 3,
+      "counterDeclaration": "He gathers me in His arms and leads me gently, never rushed.",
+      "verseText": "He tends his flock like a shepherd: He gathers the lambs in his arms and carries them close to his heart; he gently leads those that have young.",
+      "book": "Isaiah 40:11",
+      "declarationCategory": "rest"
+    },
+    {
+      "id": "thought_conf_001",
+      "text": "You made the whole thing up.",
+      "category": "confusion",
+      "intensity": 1,
+      "counterDeclaration": "Faith is certainty about what I hope for and proof of what I cannot see.",
+      "verseText": "Now faith is confidence in what we hope for and assurance about what we do not see.",
+      "book": "Hebrews 11:1",
+      "declarationCategory": "faith"
+    },
+    {
+      "id": "thought_conf_002",
+      "text": "You do not know what you are doing.",
+      "category": "confusion",
+      "intensity": 1,
+      "counterDeclaration": "I know my God, so I stand firm and take bold action.",
+      "verseText": "The people who know their God shall stand firm and take action.",
+      "book": "Daniel 11:32",
+      "declarationCategory": "faith"
+    },
+    {
+      "id": "thought_conf_003",
+      "text": "God is not going to tell you what to do.",
+      "category": "confusion",
+      "intensity": 1,
+      "counterDeclaration": "God speaks and it happens. His promise is settled, and I stand on it.",
+      "verseText": "God is not human, that he should lie, not a human being, that he should change his mind. Does he speak and then not act? Does he promise and not fulfill?",
+      "book": "Numbers 23:19",
+      "declarationCategory": "faith"
+    },
+    {
+      "id": "thought_conf_004",
+      "text": "You cannot trust what you heard.",
+      "category": "confusion",
+      "intensity": 1,
+      "counterDeclaration": "Faith rises in me every time I hear the word about Christ.",
+      "verseText": "Consequently, faith comes from hearing the message, and the message is heard through the word about Christ.",
+      "book": "Romans 10:17",
+      "declarationCategory": "faith"
+    },
+    {
+      "id": "thought_conf_005",
+      "text": "Your faith is not real faith.",
+      "category": "confusion",
+      "intensity": 1,
+      "counterDeclaration": "Faith the size of a seed is enough for me. God grows what I plant.",
+      "verseText": "He replied, 'Because you have so little faith. Truly I tell you, if you have faith as small as a mustard seed, you can say to this mountain, Move from here to there, and it will move. Nothing will be impossible for you.'",
+      "book": "Matthew 17:20",
+      "declarationCategory": "faith"
+    },
+    {
+      "id": "thought_conf_006",
+      "text": "None of this is working.",
+      "category": "confusion",
+      "intensity": 2,
+      "counterDeclaration": "Every promise of God is Yes in Christ. I answer with a roaring Amen.",
+      "verseText": "For no matter how many promises God has made, they are 'Yes' in Christ. And so through him the 'Amen' is spoken by us to the glory of God.",
+      "book": "2 Corinthians 1:20",
+      "declarationCategory": "faith"
+    },
+    {
+      "id": "thought_conf_007",
+      "text": "You are too far gone to believe again.",
+      "category": "confusion",
+      "intensity": 2,
+      "counterDeclaration": "God stays faithful. He cannot deny Himself, and His grip on me never loosens.",
+      "verseText": "If we are faithless, he remains faithful, for he cannot disown himself.",
+      "book": "2 Timothy 2:13",
+      "declarationCategory": "faith"
+    },
+    {
+      "id": "thought_conf_008",
+      "text": "The promise was for someone else.",
+      "category": "confusion",
+      "intensity": 2,
+      "counterDeclaration": "I am Abraham's child by faith. Every promise spoken over him is mine.",
+      "verseText": "Understand, then, that those who have faith are children of Abraham.",
+      "book": "Galatians 3:7",
+      "declarationCategory": "faith"
+    },
+    {
+      "id": "thought_conf_009",
+      "text": "You have prayed about this long enough.",
+      "category": "confusion",
+      "intensity": 2,
+      "counterDeclaration": "The moment I pray, I count it received. It is already mine.",
+      "verseText": "Therefore I tell you, whatever you ask for in prayer, believe that you have received it, and it will be yours.",
+      "book": "Mark 11:24",
+      "declarationCategory": "faith"
+    },
+    {
+      "id": "thought_conf_010",
+      "text": "You are just talking to yourself.",
+      "category": "confusion",
+      "intensity": 2,
+      "counterDeclaration": "His word lives in my mouth. I speak it, and it works.",
+      "verseText": "But what does it say? 'The word is near you; it is in your mouth and in your heart,' that is, the message concerning faith that we proclaim.",
+      "book": "Romans 10:8",
+      "declarationCategory": "faith"
+    },
+    {
+      "id": "thought_conf_011",
+      "text": "Doubt means you never believed.",
+      "category": "confusion",
+      "intensity": 3,
+      "counterDeclaration": "Everything is possible for the one who believes, and I believe.",
+      "verseText": "Everything is possible for one who believes.",
+      "book": "Mark 9:23",
+      "declarationCategory": "faith"
+    },
+    {
+      "id": "thought_conf_012",
+      "text": "You will never know which way to go.",
+      "category": "confusion",
+      "intensity": 3,
+      "counterDeclaration": "I move when God says move, before I see where it leads.",
+      "verseText": "By faith Abraham, when called to go to a place he would later receive as his inheritance, obeyed and went, even though he did not know where he was going.",
+      "book": "Hebrews 11:8",
+      "declarationCategory": "faith"
+    },
+    {
+      "id": "thought_conf_013",
+      "text": "What you see is the truth. The promise is not.",
+      "category": "confusion",
+      "intensity": 3,
+      "counterDeclaration": "What I see is passing. What God promised is forever, and my eyes stay there.",
+      "verseText": "So we fix our eyes not on what is seen, but on what is unseen, since what is seen is temporary, but what is unseen is eternal.",
+      "book": "2 Corinthians 4:18",
+      "declarationCategory": "faith"
+    },
+    {
+      "id": "thought_conf_014",
+      "text": "God's word does not apply to your situation.",
+      "category": "confusion",
+      "intensity": 3,
+      "counterDeclaration": "No word from God ever fails. I anchor my whole life to what He said.",
+      "verseText": "For no word from God will ever fail.",
+      "book": "Luke 1:37",
+      "declarationCategory": "faith"
+    },
+    {
+      "id": "thought_conf_015",
+      "text": "You have believed for nothing.",
+      "category": "confusion",
+      "intensity": 3,
+      "counterDeclaration": "I hold my confession without wavering. The One who promised me is faithful.",
+      "verseText": "Let us hold unswervingly to the hope we profess, for he who promised is faithful.",
+      "book": "Hebrews 10:23",
+      "declarationCategory": "faith"
+    }
+  ]
+}

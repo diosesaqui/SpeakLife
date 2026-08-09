@@ -134,6 +134,12 @@ final class AppDelegate: NSObject, MessagingDelegate {
             // FoundationAudioPlan, and the daily push reverts to the rotating
             // declaration. No orphaned state either way.
             "enforcementEnabled": true as NSNumber,
+            // Guarding (Take It Captive) ships on. Flip to false in Remote Config
+            // and the fifth pillar goes dark at once: the checklist row stops
+            // being built and the flow has no entry point. Nothing is orphaned —
+            // ground already taken is a plain synced counter and survives the
+            // switch being thrown either way.
+            "guardEnabled": true as NSNumber,
             // Onboarding rating ask ships on; flip to false in Remote Config to
             // skip the rating step in every onboarding flow.
             "onboardingRatingEnabled": true as NSNumber,
