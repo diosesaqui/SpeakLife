@@ -418,6 +418,20 @@ struct StructuredDayView: View {
     let onNavigate: (DailyTask) -> Void
     let onAllComplete: () -> Void
 
+    /// Rendered after the active tasks and BEFORE the COMPLETED list.
+    ///
+    /// The personal declaration goes here. It used to sit below this whole view,
+    /// which put it under COMPLETED, so it sank one row further every time a
+    /// task was ticked. By evening the one thing the user is believing God for
+    /// was the last thing on the screen, under a list of things they had already
+    /// finished. Completed work is a receipt; it should never outrank a live
+    /// prayer.
+    ///
+    /// AnyView rather than a generic `@ViewBuilder` parameter: there is one call
+    /// site, and a generic would put a type parameter on every reference to this
+    /// view for no benefit.
+    var interlude: AnyView? = nil
+
     private var completedTasks: [DailyTask] { tasks.filter { $0.isCompleted } }
     private var incompleteTasks: [DailyTask] { tasks.filter { !$0.isCompleted } }
 
@@ -441,6 +455,11 @@ struct StructuredDayView: View {
                     .transition(.asymmetric(
                         insertion: .scale(scale: 0.9).combined(with: .opacity),
                         removal: .opacity))
+                // Also shown here. This branch renders no COMPLETED list to sit
+                // above, and dropping the interlude on the day everything is
+                // done would make the declaration vanish exactly when the user
+                // has time for it.
+                interlude
             } else {
                 if let next = nextTask {
                     NextUpTaskCard(task: next, onNavigate: onNavigate, onToggle: onToggle)
@@ -460,6 +479,8 @@ struct StructuredDayView: View {
                         ForEach(upcomingTasks) { UpcomingTaskRow(task: $0, onNavigate: onNavigate) }
                     }
                 }
+
+                interlude
 
                 if !completedTasks.isEmpty {
                     VStack(spacing: 6) {

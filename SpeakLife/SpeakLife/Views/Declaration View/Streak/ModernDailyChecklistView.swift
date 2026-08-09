@@ -146,6 +146,39 @@ struct ModernDailyChecklistView: View {
         UserSelectedCategories.top()
     }
 
+    /// The one thing the user is believing God for, handed to `StructuredDayView`
+    /// so it renders above COMPLETED rather than below the whole list.
+    ///
+    /// nil when they have none, which is what keeps the slot empty instead of
+    /// leaving a gap in the stack.
+    private var personalDeclarationTile: AnyView? {
+        guard appState.hasPersonalDeclaration, let declaration = personalDeclaration else { return nil }
+        return AnyView(
+            VStack(spacing: 8) {
+                PersonalDeclarationFeedTile(
+                    declaration: declaration,
+                    totalCount: activeDeclarations.count,
+                    remainingToday: declarationsLeftToday
+                ) {
+                    openPersonalDeclaration()
+                }
+
+                // Doubles as the way in to the full list and the nudge that they
+                // can be believing for more than one thing at a time.
+                Button {
+                    Juice.play(.tapLight)
+                    showMyDeclarations = true
+                } label: {
+                    Text(seeAllDeclarationsLabel)
+                        .font(.system(size: 13, weight: .semibold, design: .rounded))
+                        .foregroundColor(.white.opacity(0.5))
+                }
+                .buttonStyle(.dsPressable(feel: .tapLight, haptics: false))
+            }
+            .padding(.top, 4)
+        )
+    }
+
     /// Whether today's Daily Burst is already checked off.
     ///
     /// The Enforcement card needs this and can't see it: a campaign begun after
@@ -508,45 +541,21 @@ struct ModernDailyChecklistView: View {
                                 } else {
                                     dismiss()
                                 }
-                            }
+                            },
+                            // Sits between the active tasks and COMPLETED.
+                            //
+                            // It used to render below this whole view, which put
+                            // it under the completed list, so it sank a row
+                            // every time a task was ticked. By evening the one
+                            // thing the user is believing God for was the last
+                            // thing on the screen, beneath a list of finished
+                            // work. Above the tasks would have demoted NEXT UP,
+                            // which is the day's action; here it keeps that and
+                            // still outranks a receipt.
+                            interlude: personalDeclarationTile
                         )
                         .padding(.horizontal, 20)
                         .dsAppear(0.08)
-
-                        // Personal Declaration — the one thing the user is
-                        // believing God for. Above the quick-action grid, not
-                        // below it: everything above this point is something to
-                        // DO, and the grid is a set of doorways. This card has a
-                        // "Speak it" mic on it, so it belongs with the actions.
-                        // It is also the only card on Today made of the user's
-                        // own words, which outranks a shortcut to the Bible.
-                        if appState.hasPersonalDeclaration, let declaration = personalDeclaration {
-                            VStack(spacing: 8) {
-                                PersonalDeclarationFeedTile(
-                                    declaration: declaration,
-                                    totalCount: activeDeclarations.count,
-                                    remainingToday: declarationsLeftToday
-                                ) {
-                                    openPersonalDeclaration()
-                                }
-
-                                // Doubles as the way in to the full list and the
-                                // nudge that they can be believing for more than
-                                // one thing at a time.
-                                Button {
-                                    Juice.play(.tapLight)
-                                    showMyDeclarations = true
-                                } label: {
-                                    Text(seeAllDeclarationsLabel)
-                                        .font(.system(size: 13, weight: .semibold, design: .rounded))
-                                        .foregroundColor(.white.opacity(0.5))
-                                }
-                                .buttonStyle(.dsPressable(feel: .tapLight, haptics: false))
-                            }
-                            .padding(.horizontal, 20)
-                            .padding(.top, 16)
-                            .dsAppear(0.12)
-                        }
 
                         // Quick access — the four core daily destinations, always
                         // reachable regardless of which tasks are unlocked today.
