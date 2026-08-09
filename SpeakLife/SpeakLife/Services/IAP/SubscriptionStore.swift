@@ -233,6 +233,25 @@ final class SubscriptionStore: ObservableObject {
     //         preserving visual continuity with the dark onboarding flows.
     @Published var useCleanPaywallDarkTheme = false
 
+    // MARK: - Storm Paywall Copy A/B Test
+    // false = current copy stack (personalized headline hierarchy, default)
+    // true  = "Pray like Jesus / speak to every storm" repositioned copy:
+    //         storm headline + subhead + storm value props. Variant strings
+    //         gain a "storm" segment (high_conversion_storm_v1 etc.) so the
+    //         A/B reads cleanly in analytics. Layout is untouched — the flag
+    //         composes with the clean-layout and dark-theme flags.
+    @Published var useStormPaywallCopy = false
+
+    // MARK: - Trial Timeline A/B Test (Blinkist pattern)
+    // false = single-line trial callout above the CTA (default)
+    // true  = "Here's how your free trial works" Today / reminder / charge-day
+    //         timeline in place of the single line, shown only when the
+    //         selected plan is genuinely trial-eligible. The reminder step is
+    //         truthful: TrialExperienceService schedules the day n-1 and last
+    //         day pushes. Independent flag so its effect is separable from the
+    //         storm-copy test (paywall events carry a `trial_timeline` param).
+    @Published var useTrialTimelinePaywall = false
+
     // MARK: - Weekly Plan A/B Test
     // false = show Monthly as the non-annual option (default)
     // true  = show Weekly ($SpeakLife1Wk5) instead of Monthly on the paywall
@@ -486,6 +505,12 @@ final class SubscriptionStore: ObservableObject {
         // Clean Paywall Layout A/B Test (unset key resolves false — ships dormant)
         useCleanPaywallVariant = remoteConfig["useCleanPaywallVariant"].boolValue
         useCleanPaywallDarkTheme = remoteConfig["useCleanPaywallDarkTheme"].boolValue
+
+        // Storm Paywall Copy A/B Test (unset key resolves false — ships dormant)
+        useStormPaywallCopy = remoteConfig["useStormPaywallCopy"].boolValue
+
+        // Trial Timeline A/B Test (unset key resolves false — ships dormant)
+        useTrialTimelinePaywall = remoteConfig["useTrialTimelinePaywall"].boolValue
 
         // Weekly Plan A/B Test
         useWeeklyPlan = remoteConfig["useWeeklyPlan"].boolValue

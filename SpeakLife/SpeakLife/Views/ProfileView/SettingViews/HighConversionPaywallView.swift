@@ -14,6 +14,15 @@
 //    - "high_conversion_clean_dark_v1" (same clean layout skinned with the
 //      classic dark gradient/colors, via useCleanPaywallDarkTheme on top of
 //      useCleanPaywallVariant)
+//    - "high_conversion_storm_v1" / "high_conversion_storm_clean_v1" /
+//      "high_conversion_storm_clean_dark_v1" ("Pray like Jesus — speak to
+//      every storm" repositioned copy via useStormPaywallCopy; composes with
+//      the layout flags, so the storm segment slots into whichever layout
+//      variant is live)
+//  Separate from the variant string, every paywall event carries a
+//  `trial_timeline` param ("true"/"false") for the Blinkist-style trial
+//  timeline A/B (useTrialTimelinePaywall) so its effect reads independently
+//  of the copy test.
 //
 
 import SwiftUI
@@ -89,9 +98,32 @@ struct HighConversionPaywallView: View {
     /// A/B between benefit-based and feature-based copy can be compared.
     private var paywallVariant: String {
         if isCleanVariant {
+            if isStormCopy {
+                return isCleanDarkTheme ? "high_conversion_storm_clean_dark_v1" : "high_conversion_storm_clean_v1"
+            }
             return isCleanDarkTheme ? "high_conversion_clean_dark_v1" : "high_conversion_clean_v1"
         }
+        if isStormCopy { return "high_conversion_storm_v1" }
         return subscriptionStore.useSuccinctPaywallValueProps ? "high_conversion_succinct_v1" : "high_conversion_v1"
+    }
+
+    /// Storm copy A/B (Remote Config: useStormPaywallCopy) — the "Pray like
+    /// Jesus / speak to every storm" repositioning. Overrides the headline,
+    /// subhead, value props, and CTA wording in whichever layout is live.
+    /// Latched on first appear for the same impression-vs-conversion
+    /// attribution reason as the clean-layout latch below.
+    @State private var lockedStormCopy: Bool?
+    private var isStormCopy: Bool {
+        lockedStormCopy ?? subscriptionStore.useStormPaywallCopy
+    }
+
+    /// Trial timeline A/B (Remote Config: useTrialTimelinePaywall) — the
+    /// Blinkist-style "How your free trial works" block. Independent of the
+    /// storm copy flag; every paywall event carries `trial_timeline` so the
+    /// two tests read separately. Latched for attribution like the others.
+    @State private var lockedTrialTimeline: Bool?
+    private var isTrialTimelineOn: Bool {
+        lockedTrialTimeline ?? subscriptionStore.useTrialTimelinePaywall
     }
 
     /// Clean minimal layout A/B (Remote Config: useCleanPaywallVariant). Swaps
@@ -132,6 +164,19 @@ struct HighConversionPaywallView: View {
         "headphones",
         "megaphone.fill",
         "crown.fill"
+    ]
+
+    /// Storm-copy value props (useStormPaywallCopy): same scannable one-line
+    /// format as the succinct set, rewritten through the "speak to the storm"
+    /// positioning. Lead with the mechanism (the exact Word, spoken), then
+    /// speed, coverage, audio, chat, and social proof.
+    private static let stormValueProps: [(icon: String, title: String)] = [
+        ("wind", "The exact Word for your exact storm"),
+        ("timer", "Peace in under 60 seconds"),
+        ("megaphone.fill", "Declarations over your health, home, and mind"),
+        ("headphones", "God's Word in your ears morning and night"),
+        ("bubble.left.and.bubble.right.fill", "Ask the Bible anything"),
+        ("person.2.fill", "\(SocialProof.believersCount) believers speaking life daily")
     ]
 
     private var surveyEngine: SurveyPersonalizationEngine {
@@ -175,11 +220,18 @@ struct HighConversionPaywallView: View {
     }
 
     /// Resolved copy priority:
+    /// 0. Storm copy A/B — uniform repositioned headline (keeps the
+    ///    personal-declaration continuity moment, reframed to the storm)
     /// 1. PersonalDeclaration continuity — emotionally warmest moment, names the promise
     /// 2. Quiz segment — ad-match
     /// 3. Survey engine — goal word personalization
     /// 4. Category fallback
     private var resolvedHeadline: String {
+        if isStormCopy {
+            return hasFreshPersonalDeclaration
+                ? "You just spoke to your storm."
+                : "Pray like Jesus. Speak to your storm."
+        }
         if hasFreshPersonalDeclaration {
             return "Speak it daily until it comes to pass."
         }
@@ -187,6 +239,15 @@ struct HighConversionPaywallView: View {
         return surveyEngine.hasSurveyData ? surveyEngine.paywallCopy.headline : copy.headline
     }
     private var resolvedSubheadline: String {
+        if isStormCopy {
+            if hasFreshPersonalDeclaration {
+                return "Jesus stilled a sea with three words. Keep speaking yours every morning until it obeys."
+            }
+            if let burden = burdenStyleLabel {
+                return "Your \(burden) declarations, in your mouth every morning, until the storm obeys."
+            }
+            return "He stilled a sea with three words. SpeakLife puts the exact Word for your storm in your mouth every morning."
+        }
         if hasFreshPersonalDeclaration {
             if let burden = burdenStyleLabel {
                 return "Your \(burden) declaration — in your mouth every morning. Until you possess it."
@@ -439,11 +500,22 @@ struct HighConversionPaywallView: View {
     // removed paywall personalization and tracked with a yearly-trial decline.)
     @ViewBuilder
     private var benefitsSection: some View {
-        if subscriptionStore.useSuccinctPaywallValueProps {
+        if isStormCopy {
+            stormBenefitsSection
+        } else if subscriptionStore.useSuccinctPaywallValueProps {
             succinctBenefitsSection
         } else {
             personalizedBenefitsSection
         }
+    }
+
+    private var stormBenefitsSection: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            ForEach(0..<Self.stormValueProps.count, id: \.self) { i in
+                HCSuccinctBenefitRow(icon: Self.stormValueProps[i].icon, title: Self.stormValueProps[i].title)
+            }
+        }
+        .padding(.horizontal, DS.Spacing.lg)
     }
 
     private var personalizedBenefitsSection: some View {
@@ -652,7 +724,7 @@ struct HighConversionPaywallView: View {
                 .frame(height: 20)
             VStack(spacing: 18) {
                 planSelectorSection
-                trialCallout
+                trialTermsSection
                // closingLine
                 ctaButton
                 trialReassuranceLine
@@ -712,6 +784,26 @@ struct HighConversionPaywallView: View {
         .buttonStyle(PlainButtonStyle())
     }
 
+    // MARK: - Trial Terms (callout line, or Blinkist timeline when the A/B is on)
+    // The timeline only renders for a genuinely trial-eligible plan with a
+    // trial long enough to have distinct reminder and end days (>= 3); every
+    // other case keeps the single-line callout, so the autocharge fear is
+    // always answered one way or the other.
+    @ViewBuilder
+    private var trialTermsSection: some View {
+        if isTrialTimelineOn, let days = selectedPlanTrialDays, days >= 3 {
+            HCTrialTimelineView(
+                trialDays: days,
+                ink: .white.opacity(0.92),
+                subInk: .white.opacity(0.6),
+                accent: Constants.DAMidBlue,
+                track: Color.white.opacity(0.18)
+            )
+        } else {
+            trialCallout
+        }
+    }
+
     // MARK: - Trial Callout (clarity-first: addresses the autocharge fear).
     // Day count is read from the selected plan's real StoreKit intro offer —
     // never hardcoded — and only shown when this user is actually eligible.
@@ -741,9 +833,14 @@ struct HighConversionPaywallView: View {
     }
 
     // MARK: - CTA
+    // Storm arm follows the free-anchored short-CTA evidence: the day count
+    // makes "free" concrete ("Try 7 Days Free"), and the non-trial fallback
+    // drops to a plain "Continue" (the consistently winning minimal CTA).
     private var ctaText: String {
-        if selectedPlanTrialDays != nil { return "Start Free Trial" }
-        return "Start Taking Ground →"
+        if let days = selectedPlanTrialDays {
+            return isStormCopy ? "Try \(days) Days Free" : "Start Free Trial"
+        }
+        return isStormCopy ? "Continue" : "Start Taking Ground →"
     }
 
     private var ctaButton: some View {
@@ -850,7 +947,8 @@ struct HighConversionPaywallView: View {
                         "variant": paywallVariant,
                         "plan_viewed": selectedPlan.rawValue,
                         "seconds_on_paywall": Int(Date().timeIntervalSince(timeOnPaywall)),
-                        "segment": segmentParam
+                        "segment": segmentParam,
+                        "trial_timeline": String(isTrialTimelineOn)
                     ])
                     if canShowWelcomeOffer {
                         welcomeOfferShown = true
@@ -975,7 +1073,7 @@ struct HighConversionPaywallView: View {
                 subline: cleanNonAnnualSubline,
                 badge: nil
             )
-            cleanTrialLine
+            cleanTrialTermsSection
             cleanContinueButton
             // Same Remote Config-gated link as the dark layout, so enabling
             // showPayWhatYouCanCTA reaches both A/B arms.
@@ -1049,6 +1147,24 @@ struct HighConversionPaywallView: View {
         .buttonStyle(PlainButtonStyle())
     }
 
+    // Clean-layout counterpart of trialTermsSection: same timeline gate, the
+    // clean palette. Falls back to the single trial line (which itself only
+    // renders when trial-eligible).
+    @ViewBuilder
+    private var cleanTrialTermsSection: some View {
+        if isTrialTimelineOn, let days = selectedPlanTrialDays, days >= 3 {
+            HCTrialTimelineView(
+                trialDays: days,
+                ink: cleanInk,
+                subInk: cleanSubInk,
+                accent: Constants.DAMidBlue,
+                track: cleanStroke
+            )
+        } else {
+            cleanTrialLine
+        }
+    }
+
     // Same autocharge-fear reassurance as the dark layout's trial callout —
     // real per-plan eligibility, real StoreKit day count, never hardcoded.
     @ViewBuilder
@@ -1064,6 +1180,16 @@ struct HighConversionPaywallView: View {
         }
     }
 
+    /// Clean layout CTA: keeps its minimal "Continue" fallback in both arms;
+    /// the storm arm makes the trial case free-anchored with the real day
+    /// count, same as the classic layout's storm CTA.
+    private var cleanCtaText: String {
+        if let days = selectedPlanTrialDays {
+            return isStormCopy ? "Try \(days) Days Free" : "Start Free Trial"
+        }
+        return "Continue"
+    }
+
     private var cleanContinueButton: some View {
         Button(action: makePurchase) {
             Group {
@@ -1071,7 +1197,7 @@ struct HighConversionPaywallView: View {
                     ProgressView()
                         .progressViewStyle(CircularProgressViewStyle(tint: .white))
                 } else {
-                    Text(selectedPlanTrialDays != nil ? "Start Free Trial" : "Continue")
+                    Text(cleanCtaText)
                         .font(.system(size: 17, weight: .bold)).foregroundColor(.white)
                 }
             }
@@ -1175,6 +1301,12 @@ struct HighConversionPaywallView: View {
         if lockedCleanDarkTheme == nil {
             lockedCleanDarkTheme = subscriptionStore.useCleanPaywallDarkTheme
         }
+        if lockedStormCopy == nil {
+            lockedStormCopy = subscriptionStore.useStormPaywallCopy
+        }
+        if lockedTrialTimeline == nil {
+            lockedTrialTimeline = subscriptionStore.useTrialTimelinePaywall
+        }
         timeOnPaywall = Date()
         selectedPlan = .annual
         // Check actual trial eligibility from Apple (re-run via onChange when
@@ -1184,12 +1316,14 @@ struct HighConversionPaywallView: View {
             "variant": paywallVariant,
             "user_category": preferencesTracker.primaryCategory.rawValue,
             "initial_plan": "annual",
-            "segment": segmentParam
+            "segment": segmentParam,
+            "trial_timeline": String(isTrialTimelineOn)
         ])
         AnalyticsService.shared.track("paywall_shown", parameters: [
             "segment": segmentParam,
             "source": source,
-            "variant": paywallVariant
+            "variant": paywallVariant,
+            "trial_timeline": String(isTrialTimelineOn)
         ])
         if !effectiveIsHardPaywall {
             DispatchQueue.main.asyncAfter(deadline: .now() + 4) {
@@ -1231,7 +1365,8 @@ struct HighConversionPaywallView: View {
             "plan": selectedPlan.rawValue,
             "user_category": preferencesTracker.primaryCategory.rawValue,
             "product_id": product.id,
-            "segment": segmentParam
+            "segment": segmentParam,
+            "trial_timeline": String(isTrialTimelineOn)
         ])
         AnalyticsService.shared.track("paywall_subscribe_tapped", parameters: [
             "segment": segmentParam,
@@ -1249,7 +1384,8 @@ struct HighConversionPaywallView: View {
                         metadata: ["variant": paywallVariant, "plan": selectedPlan.rawValue,
                                    "user_category": preferencesTracker.primaryCategory.rawValue,
                                    "seconds_to_convert": Int(Date().timeIntervalSince(timeOnPaywall)),
-                                   "segment": segmentParam]
+                                   "segment": segmentParam,
+                                   "trial_timeline": String(isTrialTimelineOn)]
                     )
                     // NOTE: trial_started is fired by SubscriptionStore.purchase —
                     // the single source of truth, correctly gated on the purchased
@@ -1309,6 +1445,65 @@ private struct HCBenefitRow: View {
                 Text(description).font(.system(size: 12)).foregroundColor(.white.opacity(0.65)).fixedSize(horizontal: false, vertical: true)
             }
             Spacer()
+        }
+    }
+}
+
+// MARK: - Trial Timeline (Blinkist pattern)
+/// "How your free trial works" — the transparency block that answers the
+/// forget-to-cancel fear with the actual trial mechanics instead of a single
+/// reassurance line. Every claim in it is real: full access is immediate, the
+/// day n-1 reminder is scheduled by TrialExperienceService (9:00am local push),
+/// and the day count comes from the selected plan's StoreKit intro offer.
+/// Theme colors are injected so the same component renders on the dark
+/// gradient and the clean light layout.
+private struct HCTrialTimelineView: View {
+    let trialDays: Int
+    let ink: Color
+    let subInk: Color
+    let accent: Color
+    let track: Color
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Text("How your free trial works")
+                .font(.system(size: 14, weight: .bold))
+                .foregroundColor(ink)
+                .padding(.bottom, 10)
+            row(icon: "lock.open.fill", day: "Today",
+                text: "Full access unlocked. Start speaking life today.")
+            row(icon: "bell.fill", day: "Day \(trialDays - 1)",
+                text: "We send you a reminder that your trial is ending.")
+            row(icon: "star.fill", day: "Day \(trialDays)",
+                text: "Trial ends. Cancel anytime before and pay nothing.", isLast: true)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func row(icon: String, day: String, text: String, isLast: Bool = false) -> some View {
+        HStack(alignment: .top, spacing: 12) {
+            VStack(spacing: 0) {
+                ZStack {
+                    Circle().fill(accent.opacity(0.22)).frame(width: 26, height: 26)
+                    Image(systemName: icon)
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundColor(accent)
+                }
+                if !isLast {
+                    Rectangle().fill(track).frame(width: 2, height: 18)
+                }
+            }
+            VStack(alignment: .leading, spacing: 1) {
+                Text(day)
+                    .font(.system(size: 12.5, weight: .bold))
+                    .foregroundColor(ink)
+                Text(text)
+                    .font(.system(size: 12))
+                    .foregroundColor(subInk)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .padding(.bottom, isLast ? 0 : 6)
+            Spacer(minLength: 0)
         }
     }
 }
