@@ -84,13 +84,21 @@ final class EnforcementService: ObservableObject {
     /// appears an in-memory-only flag would silently swallow the one celebration
     /// the user earned — along with the next-campaign offer that follows it,
     /// which is the whole re-entry hook.
+    /// Stored whole rather than by id: `finish()` clears `assembledEnforcement`,
+    /// so a completed curated campaign cannot be looked up again afterwards —
+    /// its id was never in the catalog and its content is now gone. Persisting
+    /// the campaign itself is the only way the celebration survives a kill.
     @Published var justCompleted: Enforcement? {
         didSet {
             guard justCompleted?.id != oldValue?.id else { return }
-            if let id = justCompleted?.id {
-                defaults.set(id, forKey: pendingCelebrationKey)
+            if let enforcement = justCompleted {
+                defaults.set(enforcement.id, forKey: pendingCelebrationKey)
+                if let data = try? JSONEncoder().encode(enforcement) {
+                    defaults.set(data, forKey: pendingCelebrationBlobKey)
+                }
             } else {
                 defaults.removeObject(forKey: pendingCelebrationKey)
+                defaults.removeObject(forKey: pendingCelebrationBlobKey)
             }
         }
     }
@@ -101,6 +109,7 @@ final class EnforcementService: ObservableObject {
     private let calendar: Calendar
     private let progressKey = "enforcementProgress"
     private let pendingCelebrationKey = "enforcementPendingCelebration"
+    private let pendingCelebrationBlobKey = "enforcementPendingCelebrationBlob"
     private let assemblySeedKey = "enforcementAssemblySeed"
 
     init(defaults: UserDefaults = .standard,
@@ -119,7 +128,11 @@ final class EnforcementService: ObservableObject {
         // Re-arm a celebration that was earned but never shown. Property
         // observers don't fire for assignments inside an initializer, so this
         // won't loop back through didSet.
-        if let pendingId = defaults.string(forKey: pendingCelebrationKey) {
+        if let data = defaults.data(forKey: pendingCelebrationBlobKey),
+           let stored = try? JSONDecoder().decode(Enforcement.self, from: data) {
+            self.justCompleted = stored
+        } else if let pendingId = defaults.string(forKey: pendingCelebrationKey) {
+            // Installs that banked a celebration before the blob existed.
             self.justCompleted = self.catalog.first { $0.id == pendingId }
         }
     }
@@ -326,8 +339,12 @@ final class EnforcementService: ObservableObject {
         // racing (burst on main, anything else off it) can't both see the same
         // day as un-advanced and burn two days for one burst.
         mutateProgress { p in
-            guard p.isActive, let id = p.activeEnforcementId,
-                  let enforcement = self.enforcement(id: id) else {
+            // `resolve`, not `enforcement(id:)`. An assembled or curated campaign
+            // lives in `p.assembledEnforcement` and its id ("curated_warfare") is
+            // not in the catalog, so a catalog-only lookup returned nil and this
+            // reported `.notActive` for it — no day was ever banked, and every
+            // campaign built from the user's own words sat on day 1 forever.
+            guard p.isActive, let enforcement = self.resolve(p) else {
                 result = .notActive
                 return
             }

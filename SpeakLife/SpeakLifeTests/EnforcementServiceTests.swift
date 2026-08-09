@@ -133,6 +133,62 @@ final class EnforcementServiceTests: XCTestCase {
         XCTAssertEqual(service.progressSnapshot.currentDay, 2)
     }
 
+    // MARK: - Curated campaigns advance too
+    //
+    // These shipped stuck on day 1. `advanceIfNeeded` resolved the active
+    // campaign with a catalog lookup, but a curated or assembled campaign's id
+    // ("curated_warfare") is not in the catalog — the campaign travels inside
+    // progress — so every week built from the user's own words reported
+    // `.notActive` and never banked a day. Every other test here starts an
+    // authored campaign, which is exactly why nothing caught it.
+
+    /// Starts a curated campaign, whose id is deliberately absent from the catalog.
+    @discardableResult
+    private func startCurated() -> String? {
+        let declarations = (1...Enforcement.length).map { n in
+            Declaration(text: "Curated anchor \(n)",
+                        book: "Book \(n):\(n)",
+                        bibleVerseText: "Verse \(n)",
+                        category: .warfare)
+        }
+        service.startCurated(declarations, primary: .warfare, isPremium: true)
+        return service.progressSnapshot.activeEnforcementId
+    }
+
+    func testAdvance_CuratedCampaignNotInCatalog_StillAdvances() {
+        let id = startCurated()
+        XCTAssertNotNil(service.activeEnforcement, "precondition: a campaign is running")
+        XCTAssertNil(service.enforcement(id: id ?? ""),
+                     "precondition: a curated id is not in the catalog")
+
+        XCTAssertEqual(service.advanceIfNeeded(), .advanced(toDay: 2))
+        XCTAssertEqual(service.progressSnapshot.currentDay, 2)
+    }
+
+    func testAdvance_CuratedCampaignReachesCompletion() {
+        let id = startCurated()
+
+        for i in stride(from: Enforcement.length, through: 2, by: -1) {
+            service.advanceIfNeeded(now: daysAgo(i))
+        }
+        XCTAssertEqual(service.advanceIfNeeded(now: Date()),
+                       .completed(enforcementId: id ?? "", elapsedDays: Enforcement.length))
+        XCTAssertFalse(service.progressSnapshot.isActive)
+        XCTAssertEqual(service.justCompleted?.id, id)
+    }
+
+    /// `finish()` clears `assembledEnforcement`, so a finished curated campaign
+    /// can never be looked up again — the celebration must carry its own copy.
+    func testCompletion_CuratedCelebrationSurvivesRelaunch() {
+        let id = startCurated()
+        advance(Enforcement.length)
+        XCTAssertEqual(service.justCompleted?.id, id)
+
+        let relaunched = EnforcementService(defaults: defaults, calendar: .current, catalog: catalog)
+        XCTAssertEqual(relaunched.justCompleted?.id, id,
+                       "a curated campaign's celebration must survive a relaunch too")
+    }
+
     /// Two bursts in one day must not burn two Enforcement days.
     func testAdvance_TwiceInOneDay_OnlyCountsOnce() {
         service.startEnforcement(id: "peace", isPremium: true)
