@@ -103,6 +103,8 @@ This replaces the old "name the war and command it out" approach: we no longer d
 ### 13. One Sentence. No Fluff.
 Potency comes from compression. A declaration should hit like a hammer, not unfold like a paragraph. The longer it runs, the more the power leaks out before it lands.
 
+**Scope: life-situation categories only.** The 33 Bible-book categories (`psalms`, `john`, `romans`, `genesis`…) are read-through-a-book content, not lines someone speaks over their marriage or their body. `EnforcementAssembler.bookCategories` already keeps them out of campaign matching, and the longer expository style suits them. They are deliberately left at the older two-sentence standard. **Do not "fix" them** — an audit will flag ~1,200 of them and every one of those flags is a false positive.
+
 - **One sentence. Not two.** This is the hard rule, not a preference. A second sentence is almost always the first one restated, explained, or softened. Fold what matters into the single line and delete the rest.
 - **Roughly 10 to 18 words.** Shorter is fine and often stronger. The `business` category is the current reference set (median 13 words, all single-sentence).
 - **Fully intentional.** Every word is aimed. If removing a word does not change the meaning, it was fluff and it dies.
