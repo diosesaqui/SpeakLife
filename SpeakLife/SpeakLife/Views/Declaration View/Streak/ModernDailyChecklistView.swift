@@ -130,8 +130,15 @@ struct ModernDailyChecklistView: View {
     private func openPersonalDeclaration() {
         if activeDeclarations.count > 1 {
             showMyDeclarations = true
-        } else {
+        } else if personalDeclaration != nil {
             showPersonalDeclarationCard = true
+        } else {
+            // The row can briefly outlive the list: the async load hasn't
+            // returned yet, or the last one was just closed out or deleted. The
+            // card sheet renders nothing without a declaration, so a tap would
+            // present an empty sheet. The list handles empty properly and offers
+            // a way to start a new one.
+            showMyDeclarations = true
         }
     }
 
@@ -140,6 +147,13 @@ struct ModernDailyChecklistView: View {
         await MainActor.run {
             activeDeclarations = active
             appState.hasPersonalDeclaration = !active.isEmpty
+            // The checklist row is derived from this list, so every local change
+            // has to re-derive it: speaking one, adding one, closing one out.
+            // Without this the row is only correct after a remote sync or the
+            // next day's rollover — speak a declaration and it stays unchecked
+            // for the rest of the session, and the user cannot tick it by hand
+            // because completeTask refuses the id by design.
+            viewModel.refreshTasksForCampaignChange()
         }
     }
 
@@ -154,9 +168,14 @@ struct ModernDailyChecklistView: View {
     /// now, so repeating its text here would be the same duplication the badge
     /// and the audio pointer were removed for. This is a doorway, not a copy.
     ///
+    /// Shown whenever they carry at least one, not only when they carry several.
+    /// Gating on `count > 1` made `seeAllDeclarationsLabel`'s other branch
+    /// unreachable and left single-declaration users with no route from Today
+    /// into the list at all — which is also where they'd go to add a second.
+    ///
     /// nil when they carry none, so the slot collapses instead of leaving a gap.
     private var personalDeclarationTile: AnyView? {
-        guard appState.hasPersonalDeclaration, activeDeclarations.count > 1 else { return nil }
+        guard appState.hasPersonalDeclaration, !activeDeclarations.isEmpty else { return nil }
         return AnyView(
             Button {
                 Juice.play(.tapLight)
@@ -509,6 +528,15 @@ struct ModernDailyChecklistView: View {
                             streakCount: viewModel.streakStats.currentStreak,
                             onToggle: { taskId in
                                 guard let task = viewModel.todayChecklist.tasks.first(where: { $0.id == taskId }) else { return }
+                                // The declaration row is earned by speaking, so
+                                // the view model refuses to complete it. Send the
+                                // tap to the declaration instead of running the
+                                // celebration bounce over a no-op, which reads as
+                                // success and does nothing.
+                                guard taskId != TaskLibrary.personalDeclarationTaskId else {
+                                    openPersonalDeclaration()
+                                    return
+                                }
                                 if task.isCompleted {
                                     viewModel.uncompleteTask(taskId: taskId)
                                     completedTasks.remove(taskId)

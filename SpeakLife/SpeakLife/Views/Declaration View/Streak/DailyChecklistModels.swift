@@ -1257,10 +1257,14 @@ struct TaskLibrary {
                                                 progress: PersonalDeclaration.Progress?) -> [DailyTask] {
         var result = tasks.filter { $0.id != personalDeclarationTaskId }
         guard let progress else { return result }
-        // Right after the Burst. It is the user's own words, so it outranks the
-        // devotional and the audio, and only the Burst outranks it.
-        let insertAt = result.firstIndex { $0.id == "complete_daily_burst" }.map { $0 + 1 } ?? 0
-        result.insert(personalDeclarationTask(progress), at: min(insertAt, result.count))
+        // Inserted at 0, not after the Burst's current index. `burstFirst` runs
+        // after this and moves the Burst to the front, so anchoring to where the
+        // Burst happens to sit right now lands this mid-list on any path that
+        // doesn't already have it first. At 0 it ends up directly behind the
+        // Burst once burstFirst has run, which is where it belongs: the user's
+        // own words outrank the devotional and the audio, and only the Burst
+        // outranks them.
+        result.insert(personalDeclarationTask(progress), at: 0)
         return result
     }
 

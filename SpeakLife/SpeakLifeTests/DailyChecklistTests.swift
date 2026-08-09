@@ -438,6 +438,23 @@ final class DailyChecklistTests: XCTestCase {
         }
     }
 
+    /// It has to land behind the Burst on every path, not just the one where the
+    /// Burst was already first. Anchoring the insert to the Burst's current
+    /// index put the row mid-list whenever `burstFirst` still had work to do.
+    func testDeclarationTask_SitsBehindTheBurstEvenWhenTheBurstStartsElsewhere() {
+        withStandardTasks {
+            for streakDay in [1, 7, 10, 15, 30, 60] {
+                let ids = TaskLibrary.getCoreTasksForStreak(streakDay,
+                                                            personalDeclarations: progress(total: 2, spoken: 1))
+                    .map(\.id)
+                guard ids.contains("complete_daily_burst") else { continue }
+                XCTAssertEqual(ids.first, "complete_daily_burst", "day \(streakDay)")
+                XCTAssertEqual(ids.dropFirst().first, TaskLibrary.personalDeclarationTaskId,
+                               "day \(streakDay) put the declaration at \(ids)")
+            }
+        }
+    }
+
     /// Tapping the row opens the declaration rather than doing nothing.
     func testDeclarationTask_NavigatesToTheDeclaration() {
         withStandardTasks {
