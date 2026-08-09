@@ -276,10 +276,12 @@ struct EnforcementCard: View {
             // active campaign — it just never said so, so nothing connected what
             // someone typed here to the words that came out of their mouth.
             //
-            // "A fight or a goal" is doing real work: plenty of people open this
-            // in a good week with a vision rather than a storm, and a question
-            // that only admits storms sends them away with nothing.
-            Text("Name a fight or a goal. Your Daily Burst is built around it for seven days.")
+            // "Something you're believing for" is doing real work: plenty of
+            // people open this in a good week with a vision rather than a storm,
+            // and a question that only admits storms sends them away with
+            // nothing. It's also the app's own language for this already —
+            // the personal declaration feature counts "days of believing".
+            Text("Name a fight, or something you're believing for. Your Daily Burst is built around it for seven days.")
                 .font(.system(size: 13, weight: .regular, design: .rounded))
                 .foregroundColor(.white.opacity(0.6))
                 .fixedSize(horizontal: false, vertical: true)
@@ -375,9 +377,10 @@ struct EnforcementCard: View {
     /// victory in?" with no example, people answer with an area — one or two
     /// words — and the curator has nothing to read.
     ///
-    /// The example alternates between a fight and a vision so neither kind of
-    /// week looks like the wrong answer. It turns over daily rather than
-    /// randomly: a placeholder that changed mid-session would read as a glitch.
+    /// The example alternates between a fight and something they're believing
+    /// for, so neither kind of week looks like the wrong answer. It turns over
+    /// daily rather than randomly: a placeholder that changed mid-session would
+    /// read as a glitch.
     private var situationField: some View {
         HStack(spacing: 8) {
             TextField(text: $situation, axis: .vertical) {
@@ -441,7 +444,7 @@ struct EnforcementCard: View {
             AnalyticsService.shared.track("enforcement_input_rejected", parameters: [
                 "reason": "\(error)", "length": text.count
             ])
-            inputError = "A few more words. A sentence about the fight or the goal gives you seven days that actually fit."
+            inputError = "A few more words. A sentence about the fight, or what you're believing for, gives you seven days that actually fit."
             return
         }
 

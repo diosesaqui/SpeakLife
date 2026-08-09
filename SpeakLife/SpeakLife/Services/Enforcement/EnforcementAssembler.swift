@@ -48,7 +48,8 @@ enum EnforcementAssembler {
     /// Book categories are deliberately absent: `isCampaignable` already keeps
     /// them out of matching, so an entry for them would never be read.
     static let contentFallbacks: [DeclarationCategory: [DeclarationCategory]] = [
-        // Vision and calling — someone with no storm, only a goal.
+        // Vision and calling — someone with no storm, only something they're
+        // believing God for.
         .business:        [.destiny, .work, .wealth, .favor],
         .newSeason:       [.destiny, .hope, .identity],
         .education:       [.wisdom, .destiny, .favor],
