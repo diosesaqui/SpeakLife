@@ -124,11 +124,52 @@ final class EnforcementPromptTests: XCTestCase {
         for copy in EnforcementPrompt.rotation {
             XCTAssertFalse(copy.title.isEmpty)
             XCTAssertFalse(copy.body.isEmpty)
-            // iOS truncates long bodies in the banner; keep them readable.
-            XCTAssertLessThanOrEqual(copy.body.count, 180, "body too long: \(copy.body)")
-            XCTAssertLessThanOrEqual(copy.title.count, 48, "title too long: \(copy.title)")
-            // Every push carries exactly one anchor scripture.
-            XCTAssertTrue(copy.body.contains("("), "no scripture reference in: \(copy.body)")
+            // A lock-screen banner shows roughly two lines. Past this the tail
+            // truncates, and the tail is where the offer lives — which is what
+            // went wrong with the previous copy at 140 to 190 characters.
+            XCTAssertLessThanOrEqual(copy.body.count, 90, "body too long: \(copy.body)")
+            XCTAssertLessThanOrEqual(copy.title.count, 30, "title too long: \(copy.title)")
         }
+    }
+
+    /// This notification has exactly one job: make the exchange obvious. Ask for
+    /// one thing, promise seven days built on it. A variant missing either half
+    /// is a banner someone reads and has no reason to answer.
+    func testPrompt_EveryVariantStatesTheExchange() {
+        for copy in EnforcementPrompt.rotation {
+            let full = (copy.title + " " + copy.body).lowercased()
+
+            let asks = ["name", "tell us", "what are you"].contains { full.contains($0) }
+            XCTAssertTrue(asks, "no ask in: \(copy.title) / \(copy.body)")
+
+            let promises = full.contains("we'll build")
+            XCTAssertTrue(promises, "no offer in: \(copy.title) / \(copy.body)")
+
+            let namesTheWeek = ["seven days", "the week"].contains { full.contains($0) }
+            XCTAssertTrue(namesTheWeek, "doesn't say what they get in: \(copy.body)")
+        }
+    }
+
+    /// The old copy said "what you're walking through", which only invites a
+    /// storm. Someone opening the app in a good week reads that as not for them,
+    /// and the card itself was widened to admit a goal.
+    func testPrompt_NoVariantAssumesAStorm() {
+        let stormOnly = ["walking through", "going through", "struggling", "hard time", "suffering"]
+        for copy in EnforcementPrompt.rotation {
+            let full = (copy.title + " " + copy.body).lowercased()
+            for phrase in stormOnly {
+                XCTAssertFalse(full.contains(phrase),
+                               "\"\(phrase)\" assumes a storm: \(copy.body)")
+            }
+        }
+    }
+
+    /// Weekly send. Fewer than four and the loop is noticeable within a month.
+    func testPrompt_RotationIsDeepEnoughForAWeeklySend() {
+        XCTAssertGreaterThanOrEqual(EnforcementPrompt.rotation.count, 4)
+        let titles = EnforcementPrompt.rotation.map(\.title)
+        XCTAssertEqual(Set(titles).count, titles.count, "duplicate title in the rotation")
+        let bodies = EnforcementPrompt.rotation.map(\.body)
+        XCTAssertEqual(Set(bodies).count, bodies.count, "duplicate body in the rotation")
     }
 }

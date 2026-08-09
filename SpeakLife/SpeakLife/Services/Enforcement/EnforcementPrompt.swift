@@ -19,15 +19,36 @@ enum EnforcementPrompt {
         let body: String
     }
 
-    /// Rotated so someone who ignores it three weeks running doesn't see the
-    /// same words each time. Ordered by strength: the verdict frame leads.
+    /// Six variants, so a weekly send doesn't repeat inside a quarter.
+    ///
+    /// Every one states the exchange plainly: name one thing, get seven days
+    /// built on it. That is the only job this notification has, and the previous
+    /// copy buried it. Those ran 140 to 190 characters, which truncates on a
+    /// lock screen — and the part that got cut was the second half, where the
+    /// offer lived. Someone scanning the banner saw a question and no reason to
+    /// answer it.
+    ///
+    /// No scripture references here, deliberately. Each costs about twelve
+    /// characters that the offer needs more, and this is a prompt asking for
+    /// input rather than a devotional. The teaching is the seven days they get
+    /// afterward.
+    ///
+    /// Every variant admits a fight OR something they're believing for. The old
+    /// copy only invited a storm ("what you're walking through"), so anyone
+    /// opening the app in a good week read it as not for them.
     static let rotation: [Copy] = [
-        Copy(title: "What are you enforcing this week?",
-             body: "The verdict came down at the cross. Name one thing you're walking through and stand on it for seven days. \"It is finished.\" (John 19:30)"),
-        Copy(title: "Start with hearing",
-             body: "Whatever you're facing this week, don't speak at it first. Hear the Word on it until faith rises. Tell us what it is and we'll set your seven days. (Rom 10:17)"),
-        Copy(title: "Fresh week, fresh mercies",
-             body: "New mercies this morning. What do you want to stand on for the next seven days? Name it and we'll build the week around His promises. (Lam 3:22-23)")
+        Copy(title: "Name one thing",
+             body: "A fight or a promise. We'll build seven days of Scripture on it."),
+        Copy(title: "Set your week",
+             body: "Tell us what you're facing or believing for. We'll build the seven days."),
+        Copy(title: "What are you standing on?",
+             body: "Name it, and we'll build seven days of declarations around it."),
+        Copy(title: "One thing, seven days",
+             body: "Tell us what you're carrying. We'll build the week's declarations on it."),
+        Copy(title: "Sunday reset",
+             body: "Name one thing you're up against or believing for. We'll build the week."),
+        Copy(title: "Don't drift into Monday",
+             body: "Name one thing. We'll build seven days of Scripture around it.")
     ]
 
     /// Which day of the scheduling batch carries the prompt, and the copy for it.
