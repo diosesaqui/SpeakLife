@@ -394,6 +394,115 @@ final class EnforcementAssemblerTests: XCTestCase {
         XCTAssertTrue(noCandidates.isEmpty, "curator would get an empty shortlist for: \(noCandidates)")
     }
 
+    // MARK: - Screening what we won't build a week on
+    //
+    // The expensive failure here is not a miss — Claude backstops those inside
+    // `curate`. It's a false positive: telling a grieving or furious person that
+    // what they're carrying is out of bounds. So the false-positive test below
+    // is the one that matters most, and it's the one to extend first whenever a
+    // phrase is added to the local screen.
+
+    func testScreen_DeclinesAnotherPersonsPartner() {
+        let inputs = [
+            "I'm believing for someone else's husband to notice me",
+            "I want another man's wife",
+            "I'm believing he will leave his wife for me",
+            "I'm tired of being his side chick"
+        ]
+        for input in inputs {
+            XCTAssertEqual(SituationScreen.screen(input),
+                           .redirect(.anotherPersonsPartner),
+                           "not screened: \(input)")
+        }
+    }
+
+    func testScreen_DeclinesHarmToAnother() {
+        let inputs = [
+            "I want to get revenge on my brother",
+            "I'm believing God will make him suffer for what he did",
+            "I want to ruin his life the way he ruined mine",
+            "I hope she dies"
+        ]
+        for input in inputs {
+            XCTAssertEqual(SituationScreen.screen(input),
+                           .redirect(.harmToAnother),
+                           "not screened: \(input)")
+        }
+    }
+
+    func testScreen_CatchesSelfHarmAndDoesNotBuildACampaign() {
+        let inputs = [
+            "I want to kill myself",
+            "I have no reason to live anymore",
+            "everyone would be better off without me",
+            "I have been suicidal for weeks"
+        ]
+        for input in inputs {
+            XCTAssertEqual(SituationScreen.screen(input), .reachOut, "not caught: \(input)")
+        }
+    }
+
+    /// The one that must never regress. Every line here is something a real
+    /// believer types on a bad day, and every one collides with a phrase on the
+    /// screen lists. If any of these starts getting declined, the feature is
+    /// telling hurting people their pain is out of bounds.
+    func testScreen_LetsThroughHardButLegitimateInput() {
+        let inputs = [
+            // Collides with the self-harm list, means the opposite.
+            "I want to die to self and live for Christ",
+            "I'm learning to die daily like Paul said",
+            // Grief and death of others — not self-harm.
+            "my husband died in March and I can't breathe",
+            "my dad is dying of cancer and I'm believing for a miracle",
+            // An affair done TO them: the most common painful input there is.
+            "I'm believing for my marriage after my husband's affair",
+            "my wife had an affair and I want our family restored",
+            // Money owed — collides with a revenge phrasing we deliberately cut.
+            "I'm believing God will make them pay me what they owe",
+            // Anger, doubt, and desperation are all allowed.
+            "I am furious at God right now and I don't know why He let this happen",
+            "I hate my job and every day feels pointless",
+            "my wife left me and I started drinking again",
+            // Ordinary vision input.
+            "I'm believing God to start my own business"
+        ]
+        for input in inputs {
+            XCTAssertEqual(SituationScreen.screen(input), .standable,
+                           "wrongly screened: \(input)")
+        }
+    }
+
+    func testScreen_MapsClaudeDeclineCodes() {
+        XCTAssertEqual(EnforcementCurator.redirect(forCode: "another_persons_partner"),
+                       .anotherPersonsPartner)
+        XCTAssertEqual(EnforcementCurator.redirect(forCode: "harm_to_another"),
+                       .harmToAnother)
+    }
+
+    /// A model that invents a reason has still said it won't back this. Guessing
+    /// a week from that is the one outcome worse than a vague message.
+    func testScreen_UnknownDeclineCodeStillDeclines() {
+        XCTAssertEqual(EnforcementCurator.redirect(forCode: "something_new"), .unscriptural)
+        XCTAssertEqual(EnforcementCurator.redirect(forCode: ""), .unscriptural)
+    }
+
+    /// A redirect that offers a week we can't actually build is a second dead
+    /// end stacked on the first.
+    func testScreen_EveryOfferedRedirectBuildsARealWeek() {
+        guard let url = Bundle.main.url(forResource: "declarationsv10", withExtension: "json"),
+              let data = try? Data(contentsOf: url),
+              let pool = try? JSONDecoder().decode(WelcomeResponse.self, from: data).declarations,
+              !pool.isEmpty else {
+            return XCTFail("declarationsv10.json missing or undecodable")
+        }
+        let offered: [SituationScreen.Redirect] = [.anotherPersonsPartner, .harmToAnother, .unscriptural]
+        for redirect in offered {
+            guard let category = redirect.offerCategory else { continue }
+            XCTAssertNotNil(EnforcementAssembler.assemble(primary: category, pool: pool, seed: "s"),
+                            "\(redirect.reason) offers \(category.rawValue), which can't fill a week")
+        }
+    }
+
     /// Pulls the comma-separated list that follows the `CATEGORIES` heading in
     /// the Claude system prompt, so the test tracks the prompt instead of a copy.
     private func categoriesClaudeCanReturn() -> [String] {

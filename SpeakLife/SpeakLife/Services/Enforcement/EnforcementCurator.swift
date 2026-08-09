@@ -19,6 +19,145 @@
 
 import Foundation
 
+/// What we can honestly hand someone seven days of scripture for.
+///
+/// Without this, "I'm believing for another man's wife to leave him for me"
+/// matches `marriage` and `love` cleanly and the app builds a week of
+/// declarations aimed at it. That is worse than failing: it puts scripture in
+/// someone's mouth over something scripture does not say.
+///
+/// Two layers, because neither is enough on its own:
+///
+/// 1. **This local screen.** Unmistakable phrases only. It runs before any
+///    network call, so a dead connection cannot skip it — which matters,
+///    because when the network is down both Claude layers fall back to keyword
+///    matching and this is the only guard left standing.
+/// 2. **Claude, inside `curate`.** It reads intent the way a keyword list never
+///    will, and catches the wording nobody thought to enumerate.
+///
+/// Precision over recall on layer 1, deliberately. A false positive tells a
+/// grieving person their pain is out of bounds, which is far more costly than a
+/// miss that layer 2 picks up. Every phrase below was checked against the real
+/// input it could collide with — "my husband's affair", "believing God will
+/// make them pay what they owe", "I want to die to self" — and the ones that
+/// collided were removed rather than tightened.
+///
+/// The answer is never a scolding. We decline the object, name the real need
+/// underneath it, and offer to build the week on that instead. Someone who
+/// typed something they shouldn't stand on still opened this app wanting God.
+enum SituationScreen {
+
+    struct Redirect: Equatable {
+        /// Short code for analytics. Never shown to anyone.
+        let reason: String
+        /// What the person reads.
+        let message: String
+        /// The week we can honestly build instead. Nil when there's nothing
+        /// specific to offer and the right move is letting them retype.
+        let offerTitle: String?
+        let offerCategory: DeclarationCategory?
+
+        static let anotherPersonsPartner = Redirect(
+            reason: "another_persons_partner",
+            message: "We won't build a week on someone else's marriage. But God has a covenant love with your name on it, and that will hold for seven days.",
+            offerTitle: "Stand on God's love for me",
+            offerCategory: .love
+        )
+
+        static let harmToAnother = Redirect(
+            reason: "harm_to_another",
+            message: "Scripture won't put another person's harm in your mouth. What was done to you is real, though. Let's build the week on what heals you.",
+            offerTitle: "Stand on my healing",
+            offerCategory: .innerHealing
+        )
+
+        /// Claude saw something it can't back but that doesn't fit either box.
+        static let unscriptural = Redirect(
+            reason: "unscriptural",
+            message: "We couldn't find scripture to stand on for that one. Tell us what's underneath it and we'll build the week on ground that holds.",
+            offerTitle: nil,
+            offerCategory: nil
+        )
+    }
+
+    enum Verdict: Equatable {
+        case standable
+        case redirect(Redirect)
+        /// Someone said they want to end their life. No campaign and no
+        /// correction — seven days of declarations is not what this moment is.
+        case reachOut
+    }
+
+    static func screen(_ input: String) -> Verdict {
+        let text = input.lowercased().replacingOccurrences(of: "\u{2019}", with: "'")
+
+        if unambiguousSelfHarm.contains(where: text.contains) { return .reachOut }
+        if ambiguousSelfHarm.contains(where: text.contains),
+           !selfHarmExemptions.contains(where: text.contains) { return .reachOut }
+
+        if partnerPhrases.contains(where: text.contains) { return .redirect(.anotherPersonsPartner) }
+        if harmPhrases.contains(where: text.contains) { return .redirect(.harmToAnother) }
+
+        return .standable
+    }
+
+    /// Possessive constructions that cannot mean anything else. Deliberately
+    /// missing: "a married man", "an affair", "affair with" — each collides
+    /// with the most common legitimate input of all, someone believing for
+    /// their own marriage after their spouse's affair.
+    static let partnerPhrases = [
+        "someone else's husband", "someone elses husband",
+        "someone else's wife", "someone elses wife",
+        "somebody else's husband", "somebody elses husband",
+        "somebody else's wife", "somebody elses wife",
+        "another man's wife", "another mans wife",
+        "another woman's husband", "another womans husband",
+        "leave his wife", "leave her husband",
+        "side chick", "my mistress", "his mistress"
+    ]
+
+    /// Deliberately missing: "make him/her/them pay" — "believing God will make
+    /// them pay me what they owe" is a debt campaign, not a curse.
+    static let harmPhrases = [
+        "get revenge", "take revenge", "get back at",
+        "make him suffer", "make her suffer", "make them suffer",
+        "ruin his life", "ruin her life", "ruin their life",
+        "hope he dies", "hope she dies", "hope they die",
+        "curse him", "curse her", "curse them"
+    ]
+
+    static let unambiguousSelfHarm = [
+        "kill myself", "killing myself",
+        "end my life", "ending my life",
+        "take my own life", "taking my own life",
+        "no reason to live", "nothing to live for",
+        "better off dead", "better off without me",
+        "hurt myself", "harm myself",
+        "suicidal", "suicide"
+    ]
+
+    /// These need the rest of the sentence before they mean anything.
+    static let ambiguousSelfHarm = ["want to die", "wanna die", "don't want to live", "dont want to live"]
+
+    /// "I want to die to self" is Romans 6, not a crisis. So is dying to sin,
+    /// to the flesh, and dying daily. Checked only against the ambiguous list,
+    /// so it can never suppress "kill myself".
+    static let selfHarmExemptions = [
+        "die to self", "die to sin", "die to my flesh", "die to the flesh",
+        "dying to self", "dying to sin", "dying to my flesh", "die daily"
+    ]
+}
+
+/// What came back from describing a situation. The card needs more than a Bool:
+/// a decline keeps their text and offers a different week, a failure keeps their
+/// text and says try again, and they must not look the same.
+enum EnforcementStartResult: Equatable {
+    case started
+    case failed
+    case declined(SituationScreen.Redirect)
+    case reachOut
+}
+
 enum EnforcementCurator {
 
     /// How many candidates to put in front of the model. Enough to choose well,
@@ -31,16 +170,30 @@ enum EnforcementCurator {
         let wasCurated: Bool
     }
 
+    /// The second screening layer, and the reason it lives here rather than in
+    /// its own call: Claude is already reading the sentence to choose the week,
+    /// so refusing to choose costs nothing extra.
+    enum Outcome: Equatable {
+        case curated([Declaration])
+        /// Claude read it and won't back it.
+        case declined(SituationScreen.Redirect)
+        /// No key, no network, or an unparseable reply. The caller falls
+        /// through to keyword assembly: a dead connection must never cost
+        /// someone a legitimate week.
+        case unavailable
+    }
+
     /// - Parameters:
     ///   - situation: the user's own words.
     ///   - candidates: reviewed declarations from the matched categories.
-    /// - Returns: seven declarations in the order they should be spoken.
+    /// - Returns: seven declarations in the order they should be spoken, a
+    ///   decline, or `.unavailable`.
     static func curate(situation: String,
                        candidates: [Declaration],
-                       session: URLSession = .shared) async -> [Declaration]? {
-        guard candidates.count >= Enforcement.length else { return nil }
+                       session: URLSession = .shared) async -> Outcome {
+        guard candidates.count >= Enforcement.length else { return .unavailable }
         let apiKey = AnthropicConfig.apiKey
-        guard !apiKey.isEmpty else { return nil }
+        guard !apiKey.isEmpty else { return .unavailable }
 
         let shortlist = Array(candidates.prefix(candidateLimit))
         let numbered = shortlist.enumerated()
@@ -60,6 +213,10 @@ enum EnforcementCurator {
         \(numbered)
 
         Return only JSON: {"days":[<seven distinct indexes, in order>]}
+
+        If you cannot back what they are asking for, return \
+        {"decline":"<code>"} instead, using one of: another_persons_partner, \
+        harm_to_another, unscriptural.
         """
 
         var request = URLRequest(url: AnthropicConfig.apiURL)
@@ -77,6 +234,15 @@ enum EnforcementCurator {
             write declarations; you only choose from the numbered list you are \
             given. Prefer a set that speaks to the person's actual situation and \
             builds across the week. Respond with JSON only.
+
+            Decline only when scripture plainly cannot back what they are asking \
+            for: another person's spouse or partner, harm or loss coming to \
+            someone, or an outright sin named as the thing they want. \
+            Everything a believer could honestly bring to God is fine to \
+            curate, including bitter, angry, doubting, or desperate wording, \
+            and including anger at God himself. Grief, divorce, addiction, \
+            bankruptcy, an affair done to them, and hating their job are all \
+            normal weeks. When unsure, curate.
             """,
             messages: [.init(role: "user", content: prompt)]
         )
@@ -88,35 +254,55 @@ enum EnforcementCurator {
                 let status = (response as? HTTPURLResponse)?.statusCode ?? 0
                 AnalyticsService.shared.track("enforcement_curation_failed",
                                               parameters: ["reason": "http_\(status)"])
-                return nil
+                return .unavailable
             }
             let decoded = try JSONDecoder().decode(ClaudeCurationResponse.self, from: data)
             guard let text = decoded.content.first(where: { $0.type == "text" })?.text,
                   let json = extractJSON(from: text),
-                  let picks = try? JSONDecoder().decode(CuratedDays.self, from: json) else {
+                  let picks = try? JSONDecoder().decode(CuratedResponse.self, from: json) else {
                 AnalyticsService.shared.track("enforcement_curation_failed",
                                               parameters: ["reason": "unparseable"])
-                return nil
+                return .unavailable
+            }
+
+            // A decline is an answer, not a failure. It must never fall through
+            // to keyword assembly, which would build the week Claude just
+            // refused to build.
+            if let code = picks.decline, !code.isEmpty {
+                AnalyticsService.shared.track("enforcement_input_screened",
+                                              parameters: ["verdict": code, "layer": "claude"])
+                return .declined(redirect(forCode: code))
             }
 
             // Trust nothing: drop out-of-range and duplicate indexes rather than
             // crash or serve the same line twice.
             var seen = Set<Int>()
-            let chosen = picks.days
+            let chosen = (picks.days ?? [])
                 .filter { $0 >= 0 && $0 < shortlist.count && seen.insert($0).inserted }
                 .map { shortlist[$0] }
 
             guard chosen.count == Enforcement.length else {
                 AnalyticsService.shared.track("enforcement_curation_failed",
                                               parameters: ["reason": "wrong_count_\(chosen.count)"])
-                return nil
+                return .unavailable
             }
             AnalyticsService.shared.track("enforcement_curated")
-            return chosen
+            return .curated(chosen)
         } catch {
             AnalyticsService.shared.track("enforcement_curation_failed",
                                           parameters: ["reason": "\(error)"])
-            return nil
+            return .unavailable
+        }
+    }
+
+    /// An unrecognized code still declines. A model that invents a reason has
+    /// still told us it won't back this, and guessing a week from that is the
+    /// one thing worse than a vague message.
+    static func redirect(forCode code: String) -> SituationScreen.Redirect {
+        switch code {
+        case SituationScreen.Redirect.anotherPersonsPartner.reason: return .anotherPersonsPartner
+        case SituationScreen.Redirect.harmToAnother.reason:         return .harmToAnother
+        default:                                                    return .unscriptural
         }
     }
 
@@ -148,6 +334,8 @@ private struct ClaudeCurationResponse: Decodable {
     struct Block: Decodable { let type: String; let text: String? }
 }
 
-private struct CuratedDays: Decodable {
-    let days: [Int]
+/// Both fields optional: the model answers with one or the other, never both.
+private struct CuratedResponse: Decodable {
+    let days: [Int]?
+    let decline: String?
 }

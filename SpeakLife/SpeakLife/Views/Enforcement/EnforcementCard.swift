@@ -57,7 +57,9 @@ struct EnforcementCard: View {
     /// User described what they're walking through. The caller matches it to
     /// categories and assembles the week, calling back with whether a campaign
     /// actually started so the card can keep their text on a failure.
-    let onDescribe: (String, @escaping (Bool) -> Void) -> Void
+    let onDescribe: (String, @escaping (EnforcementStartResult) -> Void) -> Void
+    /// User took the week we offered in place of the one we declined.
+    let onStandOn: (DeclarationCategory) -> Void
 
     /// Confirms before dropping a campaign — the days already spoken are lost,
     /// and it sits next to the audio button, so a mis-tap must not wipe progress.
@@ -69,6 +71,11 @@ struct EnforcementCard: View {
     /// Set when what they typed is too thin to build a week from. Cleared as
     /// soon as they start editing, so the message never outlives the input.
     @State private var inputError: String?
+    /// Set when we won't build a week on what they asked for. Holds the message
+    /// and the week we can offer instead.
+    @State private var redirect: SituationScreen.Redirect?
+    /// Someone said they want to end their life. Not a campaign state.
+    @State private var showReachOut = false
 
     var body: some View {
         if service.isEligible(totalDaysCompleted: totalDaysCompleted) {
@@ -297,6 +304,14 @@ struct EnforcementCard: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
 
+            if showReachOut {
+                reachOutNotice
+            }
+
+            if let redirect {
+                redirectNotice(redirect)
+            }
+
             if matchFailed {
                 // No longer reachable by wording: EnforcementAssembler walks a
                 // fallback chain, so every category the matcher can return
@@ -396,6 +411,8 @@ struct EnforcementCard: View {
                 .onChange(of: situation) { _ in
                     if inputError != nil { inputError = nil }
                     if matchFailed { matchFailed = false }
+                    if redirect != nil { redirect = nil }
+                    if showReachOut { showReachOut = false }
                 }
 
             Button(action: submitSituation) {
@@ -426,6 +443,71 @@ struct EnforcementCard: View {
         )
     }
 
+    // MARK: - When we won't build the week
+
+    /// Declines the object, names the need underneath it, and offers the week we
+    /// can honestly build. Never a lecture, and never a dead end: someone who
+    /// typed something they shouldn't stand on still opened this app wanting God,
+    /// and sending them away with only a "no" wastes that.
+    private func redirectNotice(_ redirect: SituationScreen.Redirect) -> some View {
+        VStack(alignment: .leading, spacing: DS.Spacing.xs) {
+            Text(redirect.message)
+                .font(.system(size: 13, weight: .medium))
+                .foregroundColor(.white.opacity(0.85))
+                .fixedSize(horizontal: false, vertical: true)
+
+            if let title = redirect.offerTitle, let category = redirect.offerCategory {
+                Button {
+                    AnalyticsService.shared.track("enforcement_redirect_accepted",
+                                                  parameters: ["reason": redirect.reason,
+                                                               "category": category.rawValue])
+                    situation = ""
+                    self.redirect = nil
+                    onStandOn(category)
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: "arrow.turn.down.right")
+                            .font(.system(size: 13, weight: .semibold))
+                        Text(title)
+                            .font(.system(size: 14, weight: .bold, design: .rounded))
+                    }
+                    .foregroundColor(DS.Palette.deepBlue)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 10)
+                    .background(Capsule().fill(DS.Gradient.gold))
+                }
+                .buttonStyle(.dsPressable(feel: .tapSolid))
+                .accessibilityLabel(title)
+            }
+        }
+        .padding(DS.Spacing.sm)
+        .background(
+            RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous)
+                .fill(Color.white.opacity(0.07))
+        )
+    }
+
+    /// Not a campaign state. Someone said they want to end their life, and the
+    /// honest answer is a person, not seven days of declarations. No correction,
+    /// no scripture argument, nothing to submit.
+    private var reachOutNotice: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("Please don't carry this alone.")
+                .font(.system(size: 15, weight: .bold, design: .rounded))
+                .foregroundColor(.white)
+            Text("Reach out to someone you trust right now, before anything else. You are not a burden, and you are not too far gone.")
+                .font(.system(size: 13, weight: .medium))
+                .foregroundColor(.white.opacity(0.85))
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(DS.Spacing.sm)
+        .background(
+            RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous)
+                .fill(Color.white.opacity(0.07))
+        )
+    }
+
     private var canSubmit: Bool {
         situation.trimmingCharacters(in: .whitespacesAndNewlines).count >= 3
     }
@@ -451,15 +533,24 @@ struct EnforcementCard: View {
         inputError = nil
         isMatching = true
         matchFailed = false
-        onDescribe(text) { started in
+        redirect = nil
+        showReachOut = false
+        onDescribe(text) { result in
             isMatching = false
-            if started {
+            switch result {
+            case .started:
                 // The card flips to its active state; the field goes with it.
                 situation = ""
-            } else {
+            case .failed:
                 // Keep what they wrote. Losing someone's description of a hard
                 // week and showing nothing is the worst version of this failing.
                 matchFailed = true
+            case .declined(let redirect):
+                // Their words stay in the field. Wiping them would read as the
+                // app deleting what they said, on top of refusing it.
+                self.redirect = redirect
+            case .reachOut:
+                showReachOut = true
             }
         }
     }

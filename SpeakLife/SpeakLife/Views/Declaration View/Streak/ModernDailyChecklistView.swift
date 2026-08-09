@@ -170,7 +170,25 @@ struct ModernDailyChecklistView: View {
     /// dead network still produces a category). `matchAll` is a purely local
     /// keyword scan, so the secondary themes cost nothing extra.
     private func startMatchedEnforcement(from text: String,
-                                         completion: @escaping (Bool) -> Void) {
+                                         completion: @escaping (EnforcementStartResult) -> Void) {
+        // Runs before anything touches the network, so a dead connection can't
+        // skip it. That matters: offline, both Claude calls below fall back to
+        // keyword matching and this is the only screen left standing.
+        switch SituationScreen.screen(text) {
+        case .reachOut:
+            AnalyticsService.shared.track("enforcement_input_screened",
+                                          parameters: ["verdict": "reach_out", "layer": "local"])
+            completion(.reachOut)
+            return
+        case .redirect(let redirect):
+            AnalyticsService.shared.track("enforcement_input_screened",
+                                          parameters: ["verdict": redirect.reason, "layer": "local"])
+            completion(.declined(redirect))
+            return
+        case .standable:
+            break
+        }
+
         Task {
             let matcher = DIContainer.shared.declarationMatcher
             let primary = await matcher.match(input: text).category
@@ -190,13 +208,23 @@ struct ModernDailyChecklistView: View {
                                                       secondaries: topSecondaries,
                                                       pool: pool)
             }
-            let curated = await EnforcementCurator.curate(situation: text,
+            let outcome = await EnforcementCurator.curate(situation: text,
                                                           candidates: candidates)
 
             await MainActor.run {
+                // A decline is an answer. It must not fall through to keyword
+                // assembly, which would cheerfully build the week Claude just
+                // refused to build.
+                if case .declined(let redirect) = outcome {
+                    completion(.declined(redirect))
+                    return
+                }
+
                 let started: Enforcement?
-                if let curated {
-                    started = enforcementService.startCurated(curated, primary: primary,
+                var curated = false
+                if case .curated(let days) = outcome {
+                    curated = true
+                    started = enforcementService.startCurated(days, primary: primary,
                                                               isPremium: subscriptionStore.isPremium)
                 } else {
                     started = enforcementService.startMatched(
@@ -209,12 +237,31 @@ struct ModernDailyChecklistView: View {
                 if let started {
                     AnalyticsService.shared.track("enforcement_started", parameters: [
                         "theme": started.theme,
-                        "source": curated != nil ? "curated" : "matched",
+                        "source": curated ? "curated" : "matched",
                         "secondaries": topSecondaries.map(\.rawValue).joined(separator: ",")
                     ])
                 }
-                completion(started != nil)
+                completion(started != nil ? .started : .failed)
             }
+        }
+    }
+
+    /// Starts the week we offered instead of the one we declined. Straight
+    /// assembly: they picked a theme off a button, so there is no sentence left
+    /// for Claude to read.
+    private func standOn(_ category: DeclarationCategory) {
+        let started = enforcementService.startMatched(
+            primary: category,
+            secondaries: [],
+            pool: declarationStore.allAvailableDeclarations,
+            isPremium: subscriptionStore.isPremium
+        )
+        if let started {
+            AnalyticsService.shared.track("enforcement_started", parameters: [
+                "theme": started.theme,
+                "source": "redirect",
+                "secondaries": ""
+            ])
         }
     }
 
@@ -425,7 +472,8 @@ struct ModernDailyChecklistView: View {
                                 },
                                 onDescribe: { text, completion in
                                     startMatchedEnforcement(from: text, completion: completion)
-                                }
+                                },
+                                onStandOn: { category in standOn(category) }
                             )
                             .padding(.horizontal, 20)
                             .dsAppear(0.04)
