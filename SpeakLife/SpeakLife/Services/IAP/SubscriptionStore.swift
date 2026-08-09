@@ -233,14 +233,17 @@ final class SubscriptionStore: ObservableObject {
     //         preserving visual continuity with the dark onboarding flows.
     @Published var useCleanPaywallDarkTheme = false
 
-    // MARK: - Storm Paywall Copy A/B Test
-    // false = current copy stack (personalized headline hierarchy, default)
-    // true  = "Pray like Jesus / speak to every storm" repositioned copy:
-    //         storm headline + subhead + storm value props. Variant strings
-    //         gain a "storm" segment (high_conversion_storm_v1 etc.) so the
-    //         A/B reads cleanly in analytics. Layout is untouched — the flag
-    //         composes with the clean-layout and dark-theme flags.
-    @Published var useStormPaywallCopy = false
+    // MARK: - Storm Paywall Copy (live default + Remote Config kill switch)
+    // true (default) = "Pray like Jesus / speak to every storm" repositioned
+    //         copy: storm headline + subhead + storm value props + free-anchored
+    //         CTA. Variant strings gain a "storm" segment
+    //         (high_conversion_storm_v1 etc.) so the change point reads as a
+    //         before/after in analytics. Layout is untouched — composes with
+    //         the clean-layout and dark-theme flags.
+    // false = legacy copy stack (personalized headline hierarchy), reachable
+    //         only by setting the useStormPaywallCopy key to false in the
+    //         Remote Config console (kill switch).
+    @Published var useStormPaywallCopy = true
 
     // MARK: - Trial Timeline A/B Test (Blinkist pattern)
     // false = single-line trial callout above the CTA (default)
@@ -506,8 +509,12 @@ final class SubscriptionStore: ObservableObject {
         useCleanPaywallVariant = remoteConfig["useCleanPaywallVariant"].boolValue
         useCleanPaywallDarkTheme = remoteConfig["useCleanPaywallDarkTheme"].boolValue
 
-        // Storm Paywall Copy A/B Test (unset key resolves false — ships dormant)
-        useStormPaywallCopy = remoteConfig["useStormPaywallCopy"].boolValue
+        // Storm Paywall Copy: ships ON. The key is a kill switch, honored only
+        // when explicitly set in the console — an absent key resolves to a
+        // static false and must not stomp the on-by-default value.
+        if remoteConfig["useStormPaywallCopy"].source == .remote {
+            useStormPaywallCopy = remoteConfig["useStormPaywallCopy"].boolValue
+        }
 
         // Trial Timeline A/B Test (unset key resolves false — ships dormant)
         useTrialTimelinePaywall = remoteConfig["useTrialTimelinePaywall"].boolValue

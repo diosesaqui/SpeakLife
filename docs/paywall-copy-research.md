@@ -119,14 +119,20 @@ last-day pushes. Independent flag so its effect is separable from the copy test.
 
 ## 5. How to run it
 
-1. Firebase Remote Config: add `useStormPaywallCopy` and `useTrialTimelinePaywall`
-   (both Boolean, default `false` — everything ships dormant).
-2. Test one at a time (the storm copy first), 50/50, on the winning layout.
+1. **Storm copy ships ON by default** (headline, subhead, value props, CTA). The
+   `useStormPaywallCopy` Remote Config key is a kill switch: it is only honored
+   when explicitly set in the console, so an absent key can't stomp the default.
+   Set it to `false` remotely to revert to the legacy copy stack.
+2. **Trial timeline stays dormant** behind `useTrialTimelinePaywall` (Boolean,
+   default `false`) — flip it to start that test separately.
 3. Read out in PostHog: funnel `paywall_shown → paywall_cta_tapped → trial_started`
-   broken down by `variant` (storm variants carry a `storm` segment) and by the
-   `trial_timeline` property for the timeline test.
+   broken down by `variant`. The storm rollout reads as a **before/after** at the
+   release date (storm variants carry a `storm` segment in the name); the timeline
+   test reads concurrently via the `trial_timeline` property.
 4. Guardrails: watch `paywall_dismissed` seconds-on-paywall and the trial→paid rate
-   (a timeline that boosts trials but tanks paid conversion is a loss).
+   (a change that boosts trials but tanks paid conversion is a loss). If the storm
+   copy underperforms the 30-day baseline (11.6% dark / 19.6% clean shown→trial),
+   kill it from the console — no release needed.
 
 ## 6. Recommendations not implemented here (next levers, in order)
 

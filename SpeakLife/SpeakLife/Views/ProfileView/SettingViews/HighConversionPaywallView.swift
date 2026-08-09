@@ -16,9 +16,10 @@
 //      useCleanPaywallVariant)
 //    - "high_conversion_storm_v1" / "high_conversion_storm_clean_v1" /
 //      "high_conversion_storm_clean_dark_v1" ("Pray like Jesus — speak to
-//      every storm" repositioned copy via useStormPaywallCopy; composes with
-//      the layout flags, so the storm segment slots into whichever layout
-//      variant is live)
+//      every storm" repositioned copy — the shipped DEFAULT; the
+//      useStormPaywallCopy Remote Config key is a kill switch back to the
+//      legacy copy stack. Composes with the layout flags, so the storm
+//      segment slots into whichever layout variant is live)
 //  Separate from the variant string, every paywall event carries a
 //  `trial_timeline` param ("true"/"false") for the Blinkist-style trial
 //  timeline A/B (useTrialTimelinePaywall) so its effect reads independently
@@ -107,11 +108,12 @@ struct HighConversionPaywallView: View {
         return subscriptionStore.useSuccinctPaywallValueProps ? "high_conversion_succinct_v1" : "high_conversion_v1"
     }
 
-    /// Storm copy A/B (Remote Config: useStormPaywallCopy) — the "Pray like
-    /// Jesus / speak to every storm" repositioning. Overrides the headline,
-    /// subhead, value props, and CTA wording in whichever layout is live.
-    /// Latched on first appear for the same impression-vs-conversion
-    /// attribution reason as the clean-layout latch below.
+    /// Storm copy — the "Pray like Jesus / speak to every storm"
+    /// repositioning, ON by default (useStormPaywallCopy in Remote Config is
+    /// the kill switch). Overrides the headline, subhead, value props, and
+    /// CTA wording in whichever layout is live. Latched on first appear for
+    /// the same impression-vs-conversion attribution reason as the
+    /// clean-layout latch below.
     @State private var lockedStormCopy: Bool?
     private var isStormCopy: Bool {
         lockedStormCopy ?? subscriptionStore.useStormPaywallCopy
