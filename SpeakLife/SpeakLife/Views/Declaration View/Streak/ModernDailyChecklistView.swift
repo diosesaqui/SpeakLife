@@ -52,12 +52,8 @@ struct ModernDailyChecklistView: View {
     private var personalDeclaration: PersonalDeclaration? {
         activeDeclarations.first(where: { !$0.spokenToday }) ?? activeDeclarations.first
     }
-    /// Computed once per body pass instead of once per tile subview.
-    private var declarationsLeftToday: Int {
-        activeDeclarations.filter { !$0.spokenToday }.count
-    }
-    /// The link under the declaration tile: a way into the full list, and for
-    /// single-declaration users the nudge that they can carry more than one.
+    /// The link under the task: a way into the full list when they carry more
+    /// than one. The count itself now lives on the checklist row's subtitle.
     private var seeAllDeclarationsLabel: String {
         activeDeclarations.count > 1
             ? "See all \(activeDeclarations.count)"
@@ -101,6 +97,11 @@ struct ModernDailyChecklistView: View {
             showBibleChat = true
         case .journal:
             showJournal = true
+        case .personalDeclaration:
+            // One row for all of them: the card when they carry one, the list
+            // when they carry several, since every one has to be spoken before
+            // the row is done.
+            openPersonalDeclaration()
         case .burst:
             // Re-pointed, not dropped. This event used to fire from the campaign
             // card's gold CTA; that button is gone, but the tap it measured just
@@ -146,35 +147,27 @@ struct ModernDailyChecklistView: View {
         UserSelectedCategories.top()
     }
 
-    /// The one thing the user is believing God for, handed to `StructuredDayView`
-    /// so it renders above COMPLETED rather than below the whole list.
+    /// The way into the full list, and the nudge that they can be believing for
+    /// more than one thing at a time.
     ///
-    /// nil when they have none, which is what keeps the slot empty instead of
-    /// leaving a gap in the stack.
+    /// All that is left of the old feed tile. The declaration itself is a task
+    /// now, so repeating its text here would be the same duplication the badge
+    /// and the audio pointer were removed for. This is a doorway, not a copy.
+    ///
+    /// nil when they carry none, so the slot collapses instead of leaving a gap.
     private var personalDeclarationTile: AnyView? {
-        guard appState.hasPersonalDeclaration, let declaration = personalDeclaration else { return nil }
+        guard appState.hasPersonalDeclaration, activeDeclarations.count > 1 else { return nil }
         return AnyView(
-            VStack(spacing: 8) {
-                PersonalDeclarationFeedTile(
-                    declaration: declaration,
-                    totalCount: activeDeclarations.count,
-                    remainingToday: declarationsLeftToday
-                ) {
-                    openPersonalDeclaration()
-                }
-
-                // Doubles as the way in to the full list and the nudge that they
-                // can be believing for more than one thing at a time.
-                Button {
-                    Juice.play(.tapLight)
-                    showMyDeclarations = true
-                } label: {
-                    Text(seeAllDeclarationsLabel)
-                        .font(.system(size: 13, weight: .semibold, design: .rounded))
-                        .foregroundColor(.white.opacity(0.5))
-                }
-                .buttonStyle(.dsPressable(feel: .tapLight, haptics: false))
+            Button {
+                Juice.play(.tapLight)
+                showMyDeclarations = true
+            } label: {
+                Text(seeAllDeclarationsLabel)
+                    .font(.system(size: 13, weight: .semibold, design: .rounded))
+                    .foregroundColor(.white.opacity(0.5))
+                    .frame(maxWidth: .infinity)
             }
+            .buttonStyle(.dsPressable(feel: .tapLight, haptics: false))
             .padding(.top, 4)
         )
     }
@@ -542,16 +535,11 @@ struct ModernDailyChecklistView: View {
                                     dismiss()
                                 }
                             },
-                            // Sits between the active tasks and COMPLETED.
-                            //
-                            // It used to render below this whole view, which put
-                            // it under the completed list, so it sank a row
-                            // every time a task was ticked. By evening the one
-                            // thing the user is believing God for was the last
-                            // thing on the screen, beneath a list of finished
-                            // work. Above the tasks would have demoted NEXT UP,
-                            // which is the day's action; here it keeps that and
-                            // still outranks a receipt.
+                            // The declaration is a task now, so the tile that used
+                            // to sit here is gone. The list orders it correctly
+                            // on its own: unfinished rises, finished sinks. This
+                            // slot stays for the "see all" link, which belongs
+                            // with the declarations rather than in the row.
                             interlude: personalDeclarationTile
                         )
                         .padding(.horizontal, 20)
@@ -1258,97 +1246,6 @@ struct QuickActionTile: View {
     }
 }
 
-// MARK: - Personal Declaration Feed Tile
-//
-// A full-width tile in the Today feed that keeps the actual declaration text
-// and day count visible so the user is reminded — every day — of the one thing
-// they're believing God for. Tapping it opens the full speak-it card.
-
-struct PersonalDeclarationFeedTile: View {
-    let declaration: PersonalDeclaration
-    /// How many things the user is believing for in total.
-    var totalCount: Int = 1
-    /// How many of those they still haven't spoken today.
-    var remainingToday: Int = 1
-    let onTap: () -> Void
-
-    private let gold = Color(red: 1, green: 0.82, blue: 0.28)
-
-    private var headerLabel: String {
-        totalCount > 1 ? "WHAT I'M BELIEVING FOR" : "YOUR DECLARATION"
-    }
-
-    /// With several burdens on the altar, "3 left today" is the number that
-    /// actually moves them; with one, the day count carries more weight.
-    private var trailingLabel: String {
-        guard totalCount > 1 else { return "Day \(declaration.dayCount) of believing" }
-        return remainingToday == 0
-            ? "All \(totalCount) spoken today"
-            : "\(remainingToday) of \(totalCount) left today"
-    }
-
-    var body: some View {
-        Button(action: {
-            Juice.play(.tapLight)
-            onTap()
-        }) {
-            VStack(alignment: .leading, spacing: 12) {
-                // Header — label + progress
-                HStack(spacing: 6) {
-                    Text("🙌").font(.system(size: 13))
-                    Text(headerLabel)
-                        .font(.system(size: 11, weight: .bold, design: .rounded))
-                        .tracking(1.2)
-                        .foregroundColor(gold)
-                    Spacer()
-                    Text(trailingLabel)
-                        .font(.system(size: 11, weight: .semibold, design: .rounded))
-                        .foregroundColor(.white.opacity(0.5))
-                }
-
-                // Declaration text
-                Text(declaration.declarationText)
-                    .font(.system(size: 15, weight: .medium, design: .rounded))
-                    .foregroundColor(.white)
-                    .multilineTextAlignment(.leading)
-                    .lineLimit(3)
-                    .lineSpacing(2)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-
-                // Footer — verse reference + speak affordance
-                HStack(spacing: 6) {
-                    Image(systemName: "book.closed.fill")
-                        .font(.system(size: 11))
-                        .foregroundColor(gold.opacity(0.8))
-                    Text(declaration.verseReference)
-                        .font(.system(size: 13, weight: .medium, design: .rounded))
-                        .foregroundColor(.white.opacity(0.55))
-                    Spacer()
-                    HStack(spacing: 5) {
-                        Image(systemName: "mic.fill")
-                            .font(.system(size: 11, weight: .semibold))
-                        Text("Speak it")
-                            .font(.system(size: 13, weight: .semibold, design: .rounded))
-                    }
-                    .foregroundColor(gold)
-                }
-            }
-            .padding(16)
-            .background(
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(Color.white.opacity(0.05))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 16)
-                            .strokeBorder(gold.opacity(0.25), lineWidth: 1)
-                    )
-            )
-        }
-        .buttonStyle(.dsPressable(feel: .tapLight, haptics: false))
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("Your personal declaration, day \(declaration.dayCount). \(trailingLabel). \(declaration.declarationText)")
-        .accessibilityHint("Opens your declaration to speak it")
-    }
-}
 
 // MARK: - Journal Entry Sheet
 //

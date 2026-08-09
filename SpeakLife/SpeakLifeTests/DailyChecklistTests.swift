@@ -359,6 +359,93 @@ final class DailyChecklistTests: XCTestCase {
         }
     }
 
+    // MARK: - Personal declaration as a task
+
+    private func progress(total: Int, spoken: Int, headline: String = "I am healed.") -> PersonalDeclaration.Progress {
+        PersonalDeclaration.Progress(total: total, spokenToday: spoken, headline: headline)
+    }
+
+    private func declarationTask(_ p: PersonalDeclaration.Progress?) -> DailyTask? {
+        TaskLibrary.getCoreTasksForStreak(10, personalDeclarations: p)
+            .first { $0.id == TaskLibrary.personalDeclarationTaskId }
+    }
+
+    /// A task nobody can finish is worse than no task.
+    func testDeclarationTask_AbsentWhenTheUserCarriesNone() {
+        withStandardTasks {
+            XCTAssertNil(declarationTask(nil))
+        }
+    }
+
+    /// The rule: one row for all of them, done only when every one is spoken.
+    func testDeclarationTask_NeedsEveryDeclarationSpoken() {
+        withStandardTasks {
+            XCTAssertEqual(declarationTask(progress(total: 3, spoken: 0))?.isCompleted, false)
+            XCTAssertEqual(declarationTask(progress(total: 3, spoken: 1))?.isCompleted, false)
+            XCTAssertEqual(declarationTask(progress(total: 3, spoken: 2))?.isCompleted, false)
+            XCTAssertEqual(declarationTask(progress(total: 3, spoken: 3))?.isCompleted, true)
+        }
+    }
+
+    /// Partial progress is shown, not hidden. "Not spoken yet" would be a lie
+    /// when two of three are done.
+    func testDeclarationTask_SubtitleReportsPartialProgress() {
+        XCTAssertEqual(TaskLibrary.personalDeclarationSubtitle(progress(total: 3, spoken: 2)),
+                       "2 of 3 spoken today")
+        XCTAssertEqual(TaskLibrary.personalDeclarationSubtitle(progress(total: 3, spoken: 3)),
+                       "All 3 spoken today")
+        XCTAssertEqual(TaskLibrary.personalDeclarationSubtitle(progress(total: 1, spoken: 1)),
+                       "Spoken today")
+    }
+
+    /// Carrying one, the row shows their own words. That daily reminder is why
+    /// the feed tile existed, and it must survive the tile being removed.
+    func testDeclarationTask_ShowsTheDeclarationTextWhenTheyCarryOne() {
+        let p = progress(total: 1, spoken: 0, headline: "God gives me power to produce wealth.")
+        XCTAssertEqual(TaskLibrary.personalDeclarationSubtitle(p),
+                       "God gives me power to produce wealth.")
+        // Never one declaration's text when several are in play — it would
+        // misrepresent the row.
+        let many = progress(total: 2, spoken: 0, headline: "God gives me power to produce wealth.")
+        XCTAssertEqual(TaskLibrary.personalDeclarationSubtitle(many), "0 of 2 spoken today")
+    }
+
+    /// Only the Burst earns the streak. Adding a fifth task changes the day's
+    /// "N of M" and must change nothing else.
+    func testDeclarationTask_DoesNotAffectTheStreak() {
+        withStandardTasks {
+            let tasks = TaskLibrary.getCoreTasksForStreak(10, personalDeclarations: progress(total: 1, spoken: 1))
+            var checklist = DailyChecklist(date: Date(), tasks: tasks, currentPhase: .foundation)
+            XCTAssertFalse(checklist.isStreakEarned, "a spoken declaration must not earn the day")
+
+            checklist.tasks = checklist.tasks.map { t in
+                var t = t
+                if t.id == "complete_daily_burst" { t.isCompleted = true }
+                return t
+            }
+            XCTAssertTrue(checklist.isStreakEarned, "the Burst alone still earns it")
+        }
+    }
+
+    /// The Burst stays first; the declaration sits directly behind it, ahead of
+    /// the devotional and the audio.
+    func testDeclarationTask_SitsRightAfterTheBurst() {
+        withStandardTasks {
+            let ids = TaskLibrary.getCoreTasksForStreak(10, personalDeclarations: progress(total: 1, spoken: 0))
+                .map(\.id)
+            XCTAssertEqual(ids.first, "complete_daily_burst")
+            XCTAssertEqual(ids.dropFirst().first, TaskLibrary.personalDeclarationTaskId)
+        }
+    }
+
+    /// Tapping the row opens the declaration rather than doing nothing.
+    func testDeclarationTask_NavigatesToTheDeclaration() {
+        withStandardTasks {
+            XCTAssertEqual(declarationTask(progress(total: 1, spoken: 0))?.navigationDestination,
+                           .personalDeclaration)
+        }
+    }
+
     // MARK: - Campaign-refreshed tasks
 
     /// The AI path builds a different task set. These tests are about the

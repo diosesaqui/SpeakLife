@@ -80,6 +80,7 @@ enum TaskNavigationDestination: String, Codable {
     case burst
     case bibleChat
     case journal
+    case personalDeclaration
 }
 
 // MARK: - Enhanced Daily Task Model
@@ -1179,15 +1180,21 @@ struct TaskLibrary {
     ///   day instead of waiting for the burst to bump the streak.
     /// - Parameter enforcementDay: the active Enforcement's day, when one is running. Takes
     ///   precedence over `foundationAudioDay` for the listen task.
+    /// - Parameter personalDeclarations: how many the user carries and how many
+    ///   are spoken today. nil leaves the row out entirely, which is right for
+    ///   anyone who has not started one — a task nobody can finish is worse than
+    ///   no task.
     static func getCoreTasksForStreak(_ streakDay: Int, userCategories: [String] = [],
                                       foundationAudioDay: Int? = nil,
-                                      enforcementDay: EnforcementDay? = nil) -> [DailyTask] {
+                                      enforcementDay: EnforcementDay? = nil,
+                                      personalDeclarations: PersonalDeclaration.Progress? = nil) -> [DailyTask] {
         let audioDay = foundationAudioDay ?? streakDay
         // Check if AI features are enabled for enhanced task generation
         if isAIEnabled() {
             let aiTasks = getAIEnhancedTasks(streakDay: streakDay, userCategories: userCategories)
             let planned = applyAudioPlan(to: aiTasks, day: audioDay, enforcementDay: enforcementDay)
-            return burstFirst(markCampaignOwned(planned, enforcementDay: enforcementDay))
+            let owned = markCampaignOwned(planned, enforcementDay: enforcementDay)
+            return burstFirst(withPersonalDeclaration(owned, progress: personalDeclarations))
         }
 
         // Standard task generation
@@ -1235,9 +1242,26 @@ struct TaskLibrary {
         // day all win over the generic category title.
         tasks = applyAudioPlan(to: tasks, day: audioDay, enforcementDay: enforcementDay)
         tasks = markCampaignOwned(tasks, enforcementDay: enforcementDay)
+        tasks = withPersonalDeclaration(tasks, progress: personalDeclarations)
 
         // Burst must always be first — it's the only streak-earning task
         return burstFirst(tasks)
+    }
+
+    /// Adds the declaration row, or replaces it if a caller already had one.
+    ///
+    /// Always rebuilt from `progress` rather than kept, because its completion
+    /// and subtitle are both derived: carrying an old copy forward would show
+    /// "2 of 3 spoken" after the third was spoken on another device.
+    private static func withPersonalDeclaration(_ tasks: [DailyTask],
+                                                progress: PersonalDeclaration.Progress?) -> [DailyTask] {
+        var result = tasks.filter { $0.id != personalDeclarationTaskId }
+        guard let progress else { return result }
+        // Right after the Burst. It is the user's own words, so it outranks the
+        // devotional and the audio, and only the Burst outranks it.
+        let insertAt = result.firstIndex { $0.id == "complete_daily_burst" }.map { $0 + 1 } ?? 0
+        result.insert(personalDeclarationTask(progress), at: min(insertAt, result.count))
+        return result
     }
 
     /// Ids of the tasks an active campaign rebuilds. Both are genuinely
@@ -1245,6 +1269,65 @@ struct TaskLibrary {
     /// campaign's day audio, and the Burst speaks the campaign's seven
     /// declarations instead of the general feed.
     static let campaignOwnedTaskIds: Set<String> = ["complete_daily_burst", "listen_audio"]
+
+    static let personalDeclarationTaskId = "speak_personal_declaration"
+
+    /// The one thing the user is believing God for, as a task.
+    ///
+    /// It was a card floating below the list, which meant its position was a
+    /// judgment call that got re-litigated every time the screen changed, and it
+    /// sank under COMPLETED as the day filled in. As a task it inherits the
+    /// ordering the list already does correctly: unfinished rises, finished
+    /// sinks. Nobody has to decide where it goes again.
+    ///
+    /// **Completion is derived, never toggled.** It is done when every active
+    /// declaration has been spoken today and not before, so the row cannot be
+    /// ticked without actually speaking. `EnhancedStreakViewModel.completeTask`
+    /// refuses this id for that reason, and the rebuild paths re-derive it
+    /// instead of carrying the old value forward.
+    ///
+    /// **It never earns the streak.** `DailyChecklist.isStreakEarned` reads the
+    /// Burst alone, so adding this changes the day's "N of M" and nothing else.
+    ///
+    /// **It syncs without syncing anything.** Completion comes from
+    /// `lastSpokenDate` on each record, and that list already merges across
+    /// devices as a union by id. Recording a separate task-completion event
+    /// would create a second source of truth that could disagree with the
+    /// declarations themselves.
+    private static func personalDeclarationTask(_ progress: PersonalDeclaration.Progress) -> DailyTask {
+        var task = DailyTask(
+            id: personalDeclarationTaskId,
+            title: "Speak What You're Believing For",
+            description: "",
+            icon: "hands.sparkles.fill",
+            category: .foundation,
+            type: .speak,
+            difficulty: .beginner,
+            minimumStreakDay: 1,
+            estimatedMinutes: 2,
+            navigationDestination: .personalDeclaration
+        )
+        task.isCompleted = progress.allSpoken
+        task.description = Self.personalDeclarationSubtitle(progress)
+        return task
+    }
+
+    /// Says where they actually are, and shows their own words when it can.
+    ///
+    /// Carrying several, the count wins: "not spoken yet" is a lie when two of
+    /// three are done, and one declaration's text would misrepresent the row.
+    /// Carrying one, the text wins — that daily reminder is the whole reason the
+    /// old feed tile existed, and it should not be lost to a generic subtitle.
+    static func personalDeclarationSubtitle(_ progress: PersonalDeclaration.Progress) -> String {
+        if progress.total > 1 {
+            return progress.allSpoken
+                ? "All \(progress.total) spoken today"
+                : "\(progress.spokenToday) of \(progress.total) spoken today"
+        }
+        if progress.allSpoken { return "Spoken today" }
+        let text = progress.headline.trimmingCharacters(in: .whitespacesAndNewlines)
+        return text.isEmpty ? "Speak it out loud over your life" : text
+    }
 
     /// Stamps those two so the checklist can say where they came from.
     ///

@@ -94,6 +94,34 @@ struct PersonalDeclaration: Codable, Equatable, Identifiable {
     /// read; only the sync merge and the stored blob ever see it.
     var isDeleted: Bool { deletedDate != nil }
 
+    /// How the daily checklist sees the whole set at once.
+    ///
+    /// The user can carry several declarations, and the checklist gives them one
+    /// row, so the row is only done when *every* active declaration has been
+    /// spoken today. Partial progress is surfaced rather than hidden: three
+    /// things to speak and one spoken is not a finished task, but it is not
+    /// nothing either.
+    ///
+    /// Derived, never stored. That is what makes it sync: `lastSpokenDate` lives
+    /// on each record, the record list merges across devices as a union by id,
+    /// so speaking on a phone and opening on an iPad recomputes to the same
+    /// answer with no second copy of the truth to drift.
+    struct Progress: Equatable {
+        let total: Int
+        let spokenToday: Int
+        /// The declaration to put in front of them: the first still unspoken
+        /// today, or the first if they are all spoken.
+        ///
+        /// Carried so the checklist row can show the actual words when they hold
+        /// one. The tile this replaced existed to keep that text in front of
+        /// them every day, and a row reading only "Speak What You're Believing
+        /// For" would have quietly dropped the reminder it was built for.
+        let headline: String
+
+        var allSpoken: Bool { total > 0 && spokenToday >= total }
+        var remaining: Int { max(0, total - spokenToday) }
+    }
+
     /// Shared because `todayKey` is read once per declaration per render (the
     /// feed counts how many are still unspoken today), and building an
     /// ISO8601DateFormatter costs far more than the formatting itself.

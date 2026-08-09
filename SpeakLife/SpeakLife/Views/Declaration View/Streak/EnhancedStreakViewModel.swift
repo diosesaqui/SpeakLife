@@ -153,6 +153,17 @@ final class EnhancedStreakViewModel: ObservableObject {
         if notification.name == SyncedSettingsStore.settingsDidChange,
            let keys = notification.userInfo?["keys"] as? Set<String> {
             announceFreeze = keys.contains(Self.freezeUsedFlagKey)
+
+            // A declaration spoken, added, or closed out on another device
+            // arrives as this key. The checklist row is derived from that list,
+            // so it has to be rebuilt or the row keeps yesterday's answer:
+            // "1 of 2 spoken" on a phone where the second was already spoken.
+            // Nothing else carries this state, which is exactly why it syncs
+            // correctly — there is only one copy of the truth.
+            if keys.contains(PersonalDeclarationRepository.storageKey) {
+                refreshTasksForCampaignChange()
+            }
+
             // Otherwise only react when the streak blob itself was applied.
             guard keys.contains(streakStatsKey) else {
                 if announceFreeze { showFreezeUsedBannerIfNeeded() }
@@ -354,7 +365,8 @@ final class EnhancedStreakViewModel: ObservableObject {
         let currentStreak = streakStats.currentStreak > 0 ? streakStats.currentStreak : 1
         let freshTasks = TaskLibrary.getCoreTasksForStreak(currentStreak, userCategories: userCategories,
                                                            foundationAudioDay: workingStreakDay,
-                                                           enforcementDay: EnforcementService.shared.enabledActiveDay)
+                                                           enforcementDay: EnforcementService.shared.enabledActiveDay,
+                                                           personalDeclarations: PersonalDeclarationRepository.todayProgress())
         
         // Preserve completion status from existing tasks
         let existingCompletions = Dictionary(uniqueKeysWithValues: todayChecklist.tasks.map { 
@@ -363,7 +375,12 @@ final class EnhancedStreakViewModel: ObservableObject {
         
         todayChecklist.tasks = freshTasks.map { task in
             var updatedTask = task
-            if let (wasCompleted, completedAt) = existingCompletions[task.id] {
+            // The declaration row is derived from how many are spoken today, so
+            // it must never inherit a stale value. Carrying one forward would
+            // show it done after a rebuild that saw a new declaration added, or
+            // undone after one was spoken on another device.
+            if task.id != TaskLibrary.personalDeclarationTaskId,
+               let (wasCompleted, completedAt) = existingCompletions[task.id] {
                 updatedTask.isCompleted = wasCompleted
                 updatedTask.completedAt = completedAt
             }
@@ -390,7 +407,8 @@ final class EnhancedStreakViewModel: ObservableObject {
         let freshTasks = TaskLibrary.getCoreTasksForStreak(currentStreak,
                                                            userCategories: getUserTopCategories(),
                                                            foundationAudioDay: workingStreakDay,
-                                                           enforcementDay: EnforcementService.shared.enabledActiveDay)
+                                                           enforcementDay: EnforcementService.shared.enabledActiveDay,
+                                                           personalDeclarations: PersonalDeclarationRepository.todayProgress())
 
         // Completions must survive: starting a campaign after speaking today's
         // Burst must not un-check it and hand back a streak day already banked.
@@ -400,7 +418,12 @@ final class EnhancedStreakViewModel: ObservableObject {
 
         todayChecklist.tasks = freshTasks.map { task in
             var updatedTask = task
-            if let (wasCompleted, completedAt) = existingCompletions[task.id] {
+            // The declaration row is derived from how many are spoken today, so
+            // it must never inherit a stale value. Carrying one forward would
+            // show it done after a rebuild that saw a new declaration added, or
+            // undone after one was spoken on another device.
+            if task.id != TaskLibrary.personalDeclarationTaskId,
+               let (wasCompleted, completedAt) = existingCompletions[task.id] {
                 updatedTask.isCompleted = wasCompleted
                 updatedTask.completedAt = completedAt
             }
@@ -456,6 +479,12 @@ final class EnhancedStreakViewModel: ObservableObject {
     }
     
     func completeTask(taskId: String) {
+        // The declaration row is earned by speaking, not by ticking. Its state
+        // comes from `lastSpokenDate` on each record, so a manual completion
+        // here would be overwritten by the next rebuild anyway — and worse, it
+        // would record a task-completion event, creating a second source of
+        // truth that could disagree with the declarations across devices.
+        guard taskId != TaskLibrary.personalDeclarationTaskId else { return }
         guard let taskIndex = todayChecklist.tasks.firstIndex(where: { $0.id == taskId }),
               !todayChecklist.tasks[taskIndex].isCompleted else { return }
         
@@ -536,6 +565,8 @@ final class EnhancedStreakViewModel: ObservableObject {
     }
     
     func uncompleteTask(taskId: String) {
+        // Same reason as `completeTask`: derived state, not user-settable.
+        guard taskId != TaskLibrary.personalDeclarationTaskId else { return }
         guard let taskIndex = todayChecklist.tasks.firstIndex(where: { $0.id == taskId }),
               todayChecklist.tasks[taskIndex].isCompleted else { return }
 
@@ -630,14 +661,17 @@ final class EnhancedStreakViewModel: ObservableObject {
         let userCategories = getUserTopCategories()
         let updatedTasks = TaskLibrary.getCoreTasksForStreak(currentStreak, userCategories: userCategories,
                                                              foundationAudioDay: workingStreakDay,
-                                                           enforcementDay: EnforcementService.shared.enabledActiveDay)
+                                                           enforcementDay: EnforcementService.shared.enabledActiveDay,
+                                                           personalDeclarations: PersonalDeclarationRepository.todayProgress())
         
         // Preserve completion status for existing tasks
         let existingCompletions = Dictionary(uniqueKeysWithValues: todayChecklist.tasks.map { ($0.id, $0.isCompleted) })
         
         todayChecklist.tasks = updatedTasks.map { task in
             var updatedTask = task
-            if let wasCompleted = existingCompletions[task.id] {
+            // Derived, so never inherited. See the note on the other rebuild.
+            if task.id != TaskLibrary.personalDeclarationTaskId,
+               let wasCompleted = existingCompletions[task.id] {
                 updatedTask.isCompleted = wasCompleted
                 if wasCompleted {
                     updatedTask.completedAt = Date()
@@ -655,7 +689,8 @@ final class EnhancedStreakViewModel: ObservableObject {
         let userCategories = getUserTopCategories()
         let tasks = TaskLibrary.getCoreTasksForStreak(streakDay, userCategories: userCategories,
                                                       foundationAudioDay: workingStreakDay,
-                                                           enforcementDay: EnforcementService.shared.enabledActiveDay)
+                                                           enforcementDay: EnforcementService.shared.enabledActiveDay,
+                                                           personalDeclarations: PersonalDeclarationRepository.todayProgress())
         
         return DailyChecklist(
             date: today,
