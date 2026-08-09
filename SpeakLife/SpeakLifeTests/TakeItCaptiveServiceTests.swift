@@ -309,6 +309,28 @@ final class TakeItCaptiveServiceTests: XCTestCase {
         XCTAssertEqual(ThoughtCategory.lack.terrainName, "provision")
     }
 
+    // MARK: - Terrain naming
+
+    /// The case names what comes IN; the terrain name is the higher reality the
+    /// speaker takes. They must never be the same word, or the "ground taken"
+    /// line degenerates into naming the low thing back at the user — "you've
+    /// been taking a lot of ground in fear" is the exact sentence Rule 12
+    /// forbids.
+    func testTerrainNameIsNeverTheNameOfTheThingItDisplaces() {
+        for category in ThoughtCategory.allCases {
+            XCTAssertNotEqual(category.terrainName.lowercased(), category.rawValue.lowercased(),
+                              "\(category.rawValue) names the incoming thought, not the ground.")
+            XCTAssertFalse(category.terrainName.isEmpty)
+        }
+    }
+
+    /// Fear lives in the mind, so the ground taken there is peace. Courage was
+    /// wrong: it is a response to fear and keeps fear in the frame, where peace
+    /// is what actually replaces it.
+    func testFearTerrainIsPeace() {
+        XCTAssertEqual(ThoughtCategory.fear.terrainName, "peace")
+    }
+
     // MARK: - Empty bank
 
     func testEmptyBankServesNothingAndHidesTheRow() {

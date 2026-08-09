@@ -45,9 +45,15 @@ enum ThoughtCategory: String, Codable, CaseIterable, Identifiable {
 
     /// How the terrain is named to the user. Only ever shown as ground taken
     /// ("You've been taking ground in provision"), never as a label on them.
+    ///
+    /// The case names what comes IN; this names what the user takes. They are
+    /// deliberately different words, and the second is always the higher reality
+    /// that displaces the first in its own domain — fear lives in the mind, so
+    /// the ground taken there is peace, not courage. Courage is a response to
+    /// fear and keeps fear in the frame; peace is what replaces it.
     var terrainName: String {
         switch self {
-        case .fear:         return "courage"
+        case .fear:         return "peace"
         case .condemnation: return "grace"
         case .lack:         return "provision"
         case .rejection:    return "belonging"
