@@ -275,7 +275,11 @@ struct EnforcementCard: View {
             // this way — DailyDeclarationBurstView hands the whole Burst to the
             // active campaign — it just never said so, so nothing connected what
             // someone typed here to the words that came out of their mouth.
-            Text("Say it in a sentence. For seven days your Daily Burst is built around it.")
+            //
+            // "A fight or a goal" is doing real work: plenty of people open this
+            // in a good week with a vision rather than a storm, and a question
+            // that only admits storms sends them away with nothing.
+            Text("Name a fight or a goal. Your Daily Burst is built around it for seven days.")
                 .font(.system(size: 13, weight: .regular, design: .rounded))
                 .foregroundColor(.white.opacity(0.6))
                 .fixedSize(horizontal: false, vertical: true)
@@ -292,7 +296,11 @@ struct EnforcementCard: View {
             }
 
             if matchFailed {
-                Text("Couldn't build a week from that. Try naming it more plainly, or pick a theme below.")
+                // No longer reachable by wording: EnforcementAssembler walks a
+                // fallback chain, so every category the matcher can return
+                // fills seven days. What's left is the declaration pool not
+                // being loaded yet, which is not the speaker's fault to fix.
+                Text("Couldn't reach your declarations just now. Try again, or pick a theme below.")
                     .font(.system(size: 12, weight: .medium))
                     .foregroundColor(DS.Palette.gold.opacity(0.9))
                     .fixedSize(horizontal: false, vertical: true)
@@ -349,6 +357,16 @@ struct EnforcementCard: View {
         .accessibilityLabel("Enforce the victory. Premium feature. Tap to learn more.")
     }
 
+    private static let placeholderExamples = [
+        "e.g. I'm under attack at work and I'm exhausted",
+        "e.g. I'm believing God to start my own business"
+    ]
+
+    private static var placeholderExample: String {
+        let day = Calendar.current.ordinality(of: .day, in: .era, for: Date()) ?? 0
+        return placeholderExamples[day % placeholderExamples.count]
+    }
+
     /// The input that makes the week theirs.
     ///
     /// The placeholder is a worked example rather than another instruction: it
@@ -356,10 +374,14 @@ struct EnforcementCard: View {
     /// question mark cannot communicate. Asked "what area of life do you need
     /// victory in?" with no example, people answer with an area — one or two
     /// words — and the curator has nothing to read.
+    ///
+    /// The example alternates between a fight and a vision so neither kind of
+    /// week looks like the wrong answer. It turns over daily rather than
+    /// randomly: a placeholder that changed mid-session would read as a glitch.
     private var situationField: some View {
         HStack(spacing: 8) {
             TextField(text: $situation, axis: .vertical) {
-                Text("e.g. I'm under attack at work and I'm exhausted")
+                Text(Self.placeholderExample)
                     .foregroundColor(.white.opacity(0.45))
             }
                 .font(.system(size: 15, weight: .medium))
@@ -419,7 +441,7 @@ struct EnforcementCard: View {
             AnalyticsService.shared.track("enforcement_input_rejected", parameters: [
                 "reason": "\(error)", "length": text.count
             ])
-            inputError = "A few more words. A sentence about what you're facing gives you seven days that actually fit."
+            inputError = "A few more words. A sentence about the fight or the goal gives you seven days that actually fit."
             return
         }
 

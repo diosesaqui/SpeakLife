@@ -115,9 +115,104 @@ final class EnforcementAssemblerTests: XCTestCase {
                      "better no campaign than seven blank references")
     }
 
+    /// Thin *and* nothing to fall back on — the fallback chain is walked first,
+    /// so this only fails because no category in the chain has content either.
     func testAssembly_ReturnsNilWhenPoolTooThin() {
-        let pool = declarations(.grief, 3)   // fewer than seven
+        let pool = declarations(.grief, 3)   // fewer than seven, no siblings present
         XCTAssertNil(EnforcementAssembler.assemble(primary: .grief, pool: pool, seed: "s"))
+    }
+
+    // MARK: - Never fail on a clean input
+    //
+    // Seventeen categories the matcher can return ship with no declarations of
+    // their own. Before the fallback chain, "I want to start a business" matched
+    // `business`, found nothing, and the user was told their own words couldn't
+    // build a week. These lock the guarantee that never happens again.
+
+    func testAssembly_EmptyCategoryStillBuildsAWeekFromItsSiblings() {
+        // Nothing in the pool is `business` — exactly the shipped situation.
+        let pool = declarations(.destiny, 20) + declarations(.work, 20) + declarations(.wealth, 20)
+        let result = EnforcementAssembler.assemble(primary: .business, pool: pool, seed: "s")
+
+        XCTAssertEqual(result?.days.count, Enforcement.length)
+        let texts = result?.days.map(\.anchorText) ?? []
+        XCTAssertEqual(Set(texts).count, texts.count, "no line may appear twice")
+    }
+
+    /// The week is named after what they said, not after where the lines came
+    /// from. Someone who typed a business goal should not see "Enforcing Destiny".
+    func testAssembly_FallbackWeekKeepsTheNameOfWhatTheyMatched() {
+        let pool = declarations(.destiny, 20) + declarations(.work, 20)
+        let result = EnforcementAssembler.assemble(primary: .business, pool: pool, seed: "s")
+
+        XCTAssertEqual(result?.theme, DeclarationCategory.business.rawValue)
+        XCTAssertEqual(result?.title, "Enforcing " + DeclarationCategory.business.name)
+    }
+
+    /// A substitute carries at most three days, so an empty match blends its
+    /// siblings instead of turning into seven days of one borrowed theme.
+    func testAssembly_NoSubstituteCarriesMoreThanThreeDays() {
+        let pool = declarations(.destiny, 20) + declarations(.work, 20) + declarations(.wealth, 20)
+        let result = EnforcementAssembler.assemble(primary: .business, pool: pool, seed: "s")
+
+        let texts = result?.days.map(\.anchorText) ?? []
+        for prefix in ["destiny", "work", "wealth"] {
+            XCTAssertLessThanOrEqual(texts.filter { $0.hasPrefix(prefix) }.count, 3,
+                                     "\(prefix) took over a week that was meant to blend")
+        }
+    }
+
+    /// A matched category is not a substitute: when a secondary runs thin the
+    /// lead still covers the whole remainder, which is the pre-existing behavior.
+    func testAssembly_MatchedLeadStillCarriesMoreThanThreeDays() {
+        let pool = declarations(.marriage, 20) + declarations(.rest, 1)
+        let result = EnforcementAssembler.assemble(primary: .marriage,
+                                                   secondaries: [.rest],
+                                                   pool: pool, seed: "s")
+
+        let texts = result?.days.map(\.anchorText) ?? []
+        XCTAssertEqual(texts.filter { $0.hasPrefix("marriage") }.count, 6)
+    }
+
+    /// A category with no content and no mapping still lands somewhere real.
+    func testAssembly_UnmappedEmptyCategoryFallsBackToTheUniversalBackstop() {
+        XCTAssertNil(EnforcementAssembler.contentFallbacks[.godsheart],
+                     "this test is only meaningful while godsheart is unmapped")
+        let pool = declarations(.faith, 20)
+        let result = EnforcementAssembler.assemble(primary: .godsheart, pool: pool, seed: "s")
+
+        XCTAssertEqual(result?.days.count, Enforcement.length)
+        XCTAssertEqual(result?.theme, DeclarationCategory.godsheart.rawValue)
+    }
+
+    func testFallbackChain_LeadsWithTheMatchedCategoriesAndEndsInTheBackstop() {
+        let chain = EnforcementAssembler.fallbackChain(for: [.business, .work])
+
+        XCTAssertEqual(Array(chain.prefix(2)), [.business, .work],
+                       "what they said is always drawn from first")
+        for backstop in EnforcementAssembler.universalFallback {
+            XCTAssertTrue(chain.contains(backstop), "\(backstop.rawValue) missing from the chain")
+        }
+        XCTAssertEqual(Set(chain).count, chain.count, "the chain must not repeat a category")
+    }
+
+    func testFallbackChain_DropsBookCategories() {
+        let chain = EnforcementAssembler.fallbackChain(for: [.psalms, .grief])
+        XCTAssertFalse(chain.contains(.psalms))
+        XCTAssertTrue(chain.contains(.grief))
+    }
+
+    /// Every fallback target must itself be campaignable and must exist in the
+    /// shipped pool, or the chain just relocates the dead end.
+    func testFallbackTargets_AreAllCampaignable() {
+        for (source, targets) in EnforcementAssembler.contentFallbacks {
+            XCTAssertTrue(EnforcementAssembler.isCampaignable(source),
+                          "\(source.rawValue) is mapped but can never be matched")
+            for target in targets {
+                XCTAssertTrue(EnforcementAssembler.isCampaignable(target),
+                              "\(source.rawValue) falls back to \(target.rawValue), a book category")
+            }
+        }
     }
 
     // MARK: - Blending
@@ -252,5 +347,64 @@ final class EnforcementAssemblerTests: XCTestCase {
         XCTAssertTrue(failed.isEmpty, "these categories have enough declarations but failed to assemble: \(failed)")
         XCTAssertGreaterThanOrEqual(built.count, 20,
                                     "expected broad coverage, only built \(built.count): \(built)")
+    }
+
+    /// The guarantee, end to end: **every** category Claude is allowed to return
+    /// builds a real seven-day week against the shipped pool.
+    ///
+    /// Seventeen of them — business, grief, debt, mentalHealth and the rest —
+    /// have no declarations of their own; they reach seven days only through the
+    /// fallback chain. Read straight out of `AnthropicConfig.systemPrompt` so a
+    /// category added to the prompt without content fails here rather than in
+    /// someone's hands.
+    func testShippedPool_BuildsAWeekForEveryCategoryClaudeCanReturn() {
+        let names = categoriesClaudeCanReturn()
+        XCTAssertGreaterThanOrEqual(names.count, 40,
+                                    "failed to parse the category list out of the system prompt")
+
+        guard let url = Bundle.main.url(forResource: "declarationsv10", withExtension: "json"),
+              let data = try? Data(contentsOf: url),
+              let pool = try? JSONDecoder().decode(WelcomeResponse.self, from: data).declarations,
+              !pool.isEmpty else {
+            return XCTFail("declarationsv10.json missing or undecodable")
+        }
+
+        var unknown: [String] = []
+        var unbuildable: [String] = []
+        var noCandidates: [String] = []
+
+        for name in names {
+            guard let category = DeclarationCategory(rawValue: name) else {
+                unknown.append(name)
+                continue
+            }
+            if EnforcementAssembler.assemble(primary: category, pool: pool, seed: "s") == nil {
+                unbuildable.append(name)
+            }
+            // The curated path needs a shortlist too, or curation silently drops
+            // and only the assembled week survives.
+            if EnforcementAssembler.candidates(for: [category], in: pool, seed: "s").count
+                < Enforcement.length {
+                noCandidates.append(name)
+            }
+        }
+
+        XCTAssertTrue(unknown.isEmpty, "system prompt offers categories the app has no case for: \(unknown)")
+        XCTAssertTrue(unbuildable.isEmpty, "no seven-day week can be built for: \(unbuildable)")
+        XCTAssertTrue(noCandidates.isEmpty, "curator would get an empty shortlist for: \(noCandidates)")
+    }
+
+    /// Pulls the comma-separated list that follows the `CATEGORIES` heading in
+    /// the Claude system prompt, so the test tracks the prompt instead of a copy.
+    private func categoriesClaudeCanReturn() -> [String] {
+        let lines = AnthropicConfig.systemPrompt.components(separatedBy: "\n")
+        guard let heading = lines.firstIndex(where: { $0.hasPrefix("CATEGORIES") }) else { return [] }
+        let list = lines
+            .dropFirst(heading + 1)   // past the heading, which has commas of its own
+            .first(where: { !$0.trimmingCharacters(in: .whitespaces).isEmpty })
+        return (list ?? "")
+            .components(separatedBy: ",")
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { !$0.isEmpty }
     }
 }

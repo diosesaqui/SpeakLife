@@ -36,6 +36,62 @@ enum EnforcementAssembler {
         !bookCategories.contains(category.rawValue.lowercased())
     }
 
+    /// Where to draw from when the matched category has no declarations of its
+    /// own. Seventeen of the categories the matcher can return — `business`,
+    /// `grief`, `debt`, `mentalHealth` and the rest — were added as routes
+    /// without content behind them, so a perfectly clear sentence like "I want
+    /// to start a business" used to dead-end on "couldn't build a week from
+    /// that". These are ordered nearest-truth-first: the week still gets built
+    /// out of lines that speak to the same thing, and the campaign keeps the
+    /// name of what the person actually said.
+    ///
+    /// Book categories are deliberately absent: `isCampaignable` already keeps
+    /// them out of matching, so an entry for them would never be read.
+    static let contentFallbacks: [DeclarationCategory: [DeclarationCategory]] = [
+        // Vision and calling — someone with no storm, only a goal.
+        .business:        [.destiny, .work, .wealth, .favor],
+        .newSeason:       [.destiny, .hope, .identity],
+        .education:       [.wisdom, .destiny, .favor],
+        .confidence:      [.identity, .faith, .fear],
+        .spiritualGrowth: [.obedience, .identity, .grace],
+
+        // Provision.
+        .debt:            [.wealth, .favor, .hardtimes],
+        .housing:         [.wealth, .godsprotection, .favor],
+
+        // Loss and repair.
+        .grief:           [.hope, .innerHealing, .hardtimes],
+        .divorce:         [.innerHealing, .hope, .identity],
+        .forgiveness:     [.grace, .innerHealing, .love],
+        .anger:           [.rest, .innerHealing, .obedience],
+
+        // Body and mind.
+        .wellness:        [.health, .rest, .identity],
+        .mentalHealth:    [.innerHealing, .rest, .anxiety],
+
+        // People.
+        .relationship:    [.love, .marriage, .purity],
+        .singleParent:    [.parenting, .godsprotection, .favor],
+        .salvation:       [.faith, .love, .miracles],
+        .fertility:       [.miracles, .hope, .faith]
+    ]
+
+    /// The last resort, drawn on only when everything above is somehow empty.
+    /// Each of these carries well over seven referenced declarations in the
+    /// shipped pool, so the chain cannot run dry.
+    static let universalFallback: [DeclarationCategory] = [.faith, .hardtimes, .godsprotection, .hope]
+
+    /// Every category worth drawing from for this match, in priority order:
+    /// what they matched, then the nearest siblings of each, then the backstop.
+    static func fallbackChain(for categories: [DeclarationCategory]) -> [DeclarationCategory] {
+        var chain = categories
+        for category in categories {
+            chain += contentFallbacks[category] ?? []
+        }
+        chain += universalFallback
+        return chain.filter(isCampaignable).reduced()
+    }
+
     /// Builds a campaign, blending the matched categories across the seven days.
     ///
     /// - Parameters:
@@ -46,7 +102,8 @@ enum EnforcementAssembler {
     ///   - pool: every reviewed declaration (`declarationsv10.json`).
     ///   - seed: makes the draw stable. Day 3 must be the same line every time
     ///     the user opens the app, or the campaign stops feeling like a campaign.
-    /// - Returns: nil when the matched categories can't fill seven days.
+    /// - Returns: nil only when the pool itself is empty. Any category the
+    ///   matcher can return reaches seven days via `fallbackChain`.
     static func assemble(primary: DeclarationCategory,
                          secondaries: [DeclarationCategory] = [],
                          pool: [Declaration],
@@ -56,7 +113,7 @@ enum EnforcementAssembler {
             .filter(isCampaignable)
             .reduced()
 
-        guard let lead = categories.first else { return nil }
+        guard let named = categories.first else { return nil }
 
         // How many days each category owns. The lead keeps the majority so the
         // week still reads as being about one thing.
@@ -74,18 +131,28 @@ enum EnforcementAssembler {
             }
         }
 
-        // Top up from the lead category if a secondary was thin.
-        if picked.count < Enforcement.length {
-            let filler = candidates(in: pool, category: lead,
+        // Top up: the matched categories first, then their nearest siblings,
+        // then the backstop. This is what makes the week unfailable — a matched
+        // category with no content of its own still fills seven days.
+        for source in fallbackChain(for: categories) where picked.count < Enforcement.length {
+            let needed = Enforcement.length - picked.count
+            // A matched category can carry the whole remainder: it is what they
+            // said. A substitute is capped so an empty match blends its siblings
+            // rather than becoming seven days of one borrowed theme.
+            let take = categories.contains(source) ? needed : min(needed, 3)
+            let filler = candidates(in: pool, category: source,
                                     excluding: usedTexts, seed: seed)
-            for declaration in filler.prefix(Enforcement.length - picked.count) {
-                picked.append((declaration, lead))
+            for declaration in filler.prefix(take) {
+                picked.append((declaration, source))
                 usedTexts.insert(declaration.text)
             }
         }
 
         guard picked.count == Enforcement.length else { return nil }
 
+        // Open and close on what they actually named, unless the named category
+        // contributed nothing — then the arc belongs to whatever carried it.
+        let lead = picked.contains { $0.1 == named } ? named : picked[0].1
         let ordered = interleave(picked, leadCategory: lead)
         let days = ordered.enumerated().map { index, entry -> EnforcementDay in
             let (declaration, category) = entry
@@ -102,11 +169,14 @@ enum EnforcementAssembler {
             )
         }
 
+        // Named after what they said, not after where the lines came from.
+        // Someone who typed "I want to start a business" gets a week called
+        // Business even when it is carried by destiny and work.
         return Enforcement(
             id: "assembled_" + categories.map(\.rawValue).joined(separator: "_"),
-            title: "Enforcing " + lead.name,
+            title: "Enforcing " + named.name,
             tagline: "Seven days standing on what Jesus already won.",
-            theme: lead.rawValue,
+            theme: named.rawValue,
             days: days
         )
     }
@@ -142,14 +212,21 @@ enum EnforcementAssembler {
 
     /// The reviewed declarations worth putting in front of the curator: right
     /// categories, affirmations only, and each carrying a scripture reference.
+    ///
+    /// Walks the same fallback chain the assembler does, so a matched category
+    /// with no content still gives Claude a real shortlist to choose from
+    /// instead of an empty one that silently drops the curation step.
     static func candidates(for categories: [DeclarationCategory],
                            in pool: [Declaration],
                            seed: String) -> [Declaration] {
         var result: [Declaration] = []
         var used = Set<String>()
-        for category in categories where isCampaignable(category) {
+        for category in fallbackChain(for: categories) {
             result += candidates(in: pool, category: category, excluding: used, seed: seed)
             used.formUnion(result.map(\.text))
+            // Enough to choose well. Walking the whole chain would bury the
+            // matched category's own lines under four buckets of filler.
+            if result.count >= EnforcementCurator.candidateLimit { break }
         }
         return result
     }
