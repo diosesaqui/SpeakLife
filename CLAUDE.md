@@ -105,13 +105,21 @@ Potency comes from compression. A declaration should hit like a hammer, not unfo
 
 **Scope: life-situation categories only.** The 33 Bible-book categories (`psalms`, `john`, `romans`, `genesis`…) are read-through-a-book content, not lines someone speaks over their marriage or their body. `EnforcementAssembler.bookCategories` already keeps them out of campaign matching, and the longer expository style suits them. They are deliberately left at the older two-sentence standard. **Do not "fix" them** — an audit will flag ~1,200 of them and every one of those flags is a false positive.
 
-- **One sentence. Not two.** This is the hard rule, not a preference. A second sentence is almost always the first one restated, explained, or softened. Fold what matters into the single line and delete the rest.
-- **Roughly 10 to 18 words.** Shorter is fine and often stronger. The `business` category is the current reference set (median 13 words, all single-sentence).
+**The enemy is the wasted word, not the period.** Read that before anything below it. New declarations are written as one sentence, and that is the right default. But an existing two-sentence line where each sentence lands its own blow is already doing the job, and joining it with a comma makes it worse, not better.
+
+- **Write new declarations as one sentence.** 10 to 18 words. The `business` and `newSeason` sets are the reference (median 13). Ground and outcome fit in one line joined by *and* or *so*.
+- **Collapse a second sentence when it restates, explains, or softens the first.** That is the actual target. If the second sentence says something the first already said, keep the stronger half and delete the rest.
+- **Do NOT collapse two sentences that each land a blow.** Rule 14 governs here: short sentences win, and Jesus healed in two to seven words. Two punches beat one run-on.
+  - ✅ Leave alone: "I am a new creation in Christ. The old is gone for good."
+  - ❌ Do not "fix" it to: "I am a new creation in Christ, and the old is gone for good." → one word longer, one blow weaker.
+- **A rewrite that adds words has failed**, whatever the sentence count says. If the new line is not shorter and not clearer, keep the original.
 - **Fully intentional.** Every word is aimed. If removing a word does not change the meaning, it was fluff and it dies.
-- **Land it and stop.** Do not explain the image after it hits. Trust the line to do its work in the speaker's chest.
+- **Land it and stop.** Do not explain the image after it hits.
 - ❌ "Grace keeps me firm to the very end. I will stand blameless on the day of my Lord Jesus Christ, held by His hand. My footing does not depend on my grip. It depends on His." → 36 words, four sentences, the last three restating the first.
 - ❌ "My plans are diligent, and diligent plans lead to profit. This business turns a profit." → the second sentence adds nothing the first did not already say.
 - ✅ "My plans are diligent, and diligent plans lead to profit." → same truth, one sentence, nothing wasted.
+
+**This rule was once written as a flat "one sentence, not two", and a bulk rewrite under it made 1,025 already-tight declarations longer by comma-splicing them.** The life-situation categories were never the problem: they sit at a median of 14 words. If an audit reports thousands of violations, check the word counts before rewriting anything — the count is the tell, not the period.
 
 This rule sharpens Rules 6 and 12: still bold, still calling higher, but in the fewest words that land the blow. When brevity and completeness conflict, brevity wins.
 
