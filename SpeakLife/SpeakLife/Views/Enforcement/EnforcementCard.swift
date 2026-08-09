@@ -18,6 +18,16 @@
 //  the Burst is the primary CTA, audio is secondary, and there is no second
 //  progress rail — the day count in the eyebrow carries it.
 //
+//  That same lens is why the active card has three CTA states, not one. Because
+//  the Burst — not this card — banks the day, there are two situations where
+//  nothing here can move the campaign forward: today's day is already banked, or
+//  today's Burst was spoken before the campaign existed (a campaign started after
+//  the Burst can't bank a day, since `completeTask` early-returns on a task that
+//  is already checked off). A gold "Speak today's Burst" in either case is a lie:
+//  it looks like the way forward and advances nothing. So both resolve to a
+//  resting, non-interactive row that says what is already true and when the next
+//  day opens.
+//
 
 import SwiftUI
 
@@ -26,6 +36,12 @@ struct EnforcementCard: View {
 
     let isPremium: Bool
     let totalDaysCompleted: Int
+    /// Whether today's Daily Burst is already checked off on the checklist.
+    ///
+    /// The card can't work this out on its own — the Burst lives on the
+    /// checklist, not in `EnforcementService` — and it changes what the CTA can
+    /// honestly offer, so the caller (which holds today's checklist) answers it.
+    var burstCompletedToday: Bool = false
 
     /// Premium user picked a theme.
     let onStart: (Enforcement) -> Void
@@ -89,24 +105,8 @@ struct EnforcementCard: View {
                     .foregroundColor(.white.opacity(0.55))
             }
 
-            // The action that actually advances the day, named as such. This is
-            // the whole answer to "how do I complete it?" — no explanation
-            // needed when the button on the campaign is the one that moves it.
-            Button(action: onOpenBurst) {
-                HStack(spacing: 8) {
-                    Image(systemName: "bolt.fill")
-                        .font(.system(size: 15, weight: .bold))
-                    Text("Speak today's Burst")
-                        .font(.system(size: 15, weight: .bold, design: .rounded))
-                }
-                .foregroundColor(DS.Palette.deepBlue)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 12)
-                .background(Capsule().fill(DS.Gradient.gold))
-            }
-            .buttonStyle(.dsPressable(feel: .tapSolid))
-            .accessibilityLabel("Speak today's Burst, day \(service.progress.currentDay) of \(Enforcement.length)")
-            .padding(.top, 2)
+            todayCTA
+                .padding(.top, 2)
 
             HStack(spacing: DS.Spacing.xs) {
                 // Demoted to a quiet row: it is worth having (it warms them up
@@ -152,6 +152,106 @@ struct EnforcementCard: View {
         } message: {
             Text("You're on day \(service.progressSnapshot.currentDay) of \(Enforcement.length). Switching starts a new one from day 1.")
         }
+    }
+
+    // MARK: - Today's CTA
+
+    /// What today's row on an active campaign can honestly offer.
+    private enum TodayCTAState {
+        /// There is a day to bank and speaking the Burst banks it.
+        case speak
+        /// Today's day is already banked.
+        case advanced
+        /// The Burst was spoken before this campaign existed, so day 1 waits for
+        /// tomorrow's Burst — today's is already checked off and re-speaking it
+        /// cannot bank anything.
+        case startsTomorrow
+    }
+
+    /// Order matters: a campaign that advanced today also has a completed Burst,
+    /// and "day banked" is the truer, more encouraging thing to say about it.
+    private var todayCTAState: TodayCTAState {
+        if service.progress.hasAdvancedToday() { return .advanced }
+        if burstCompletedToday { return .startsTomorrow }
+        return .speak
+    }
+
+    /// The day that opens next. Once a day is banked `currentDay` has already
+    /// rolled forward onto it, which is why the eyebrow reads one ahead too.
+    private var nextDay: Int {
+        service.progress.currentDay
+    }
+
+    /// The day they just spoke — the one behind `currentDay`. Never below 1: the
+    /// campaign finishes and clears itself on day 7, so this state only ever sees
+    /// a mid-campaign day.
+    private var spokenDay: Int {
+        max(nextDay - 1, 1)
+    }
+
+    @ViewBuilder
+    private var todayCTA: some View {
+        switch todayCTAState {
+        case .speak:
+            // The action that actually advances the day, named as such. This is
+            // the whole answer to "how do I complete it?" — no explanation
+            // needed when the button on the campaign is the one that moves it.
+            Button(action: onOpenBurst) {
+                HStack(spacing: 8) {
+                    Image(systemName: "bolt.fill")
+                        .font(.system(size: 15, weight: .bold))
+                    Text("Speak today's Burst")
+                        .font(.system(size: 15, weight: .bold, design: .rounded))
+                }
+                .foregroundColor(DS.Palette.deepBlue)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 12)
+                .background(Capsule().fill(DS.Gradient.gold))
+            }
+            .buttonStyle(.dsPressable(feel: .tapSolid))
+            .accessibilityLabel("Speak today's Burst, day \(service.progress.currentDay) of \(Enforcement.length)")
+
+        case .advanced:
+            restingCTA(
+                "Day \(spokenDay) spoken · Day \(nextDay) opens tomorrow",
+                accessibilityLabel: "Day \(spokenDay) spoken. Day \(nextDay) of \(Enforcement.length) opens tomorrow."
+            )
+
+        case .startsTomorrow:
+            VStack(spacing: 6) {
+                restingCTA(
+                    "Starts with tomorrow's Burst",
+                    accessibilityLabel: "You already spoke today's Burst. This campaign starts with tomorrow's Burst."
+                )
+                // Says the why out loud. Without it the row reads as a delay
+                // someone was handed for no reason.
+                Text("You already spoke today's Burst.")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(.white.opacity(0.5))
+                    .accessibilityHidden(true)
+            }
+        }
+    }
+
+    /// The done-for-today row. Deliberately not a Button: there is nothing here
+    /// to press, and a pressable gold capsule that banks nothing is the bug this
+    /// state exists to kill.
+    private func restingCTA(_ title: String, accessibilityLabel: String) -> some View {
+        HStack(spacing: 8) {
+            Image(systemName: "checkmark.circle.fill")
+                .font(.system(size: 15, weight: .bold))
+            Text(title)
+                .font(.system(size: 14, weight: .semibold, design: .rounded))
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+        }
+        .foregroundColor(DS.Palette.gold.opacity(0.85))
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 12)
+        .background(Capsule().fill(Color.white.opacity(0.08)))
+        .overlay(Capsule().stroke(DS.Palette.gold.opacity(0.30), lineWidth: 1))
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(accessibilityLabel)
     }
 
     // The seven-dot day rail used to live here. Removed deliberately: the Today

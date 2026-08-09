@@ -137,6 +137,18 @@ struct ModernDailyChecklistView: View {
         UserSelectedCategories.top()
     }
 
+    /// Whether today's Daily Burst is already checked off.
+    ///
+    /// The Enforcement card needs this and can't see it: a campaign begun after
+    /// the Burst was spoken has nothing to advance today, because `completeTask`
+    /// early-returns on an already-completed task. Read off the task itself
+    /// rather than `isStreakEarned`, which answers a different question and is
+    /// free to stop meaning "the Burst is done".
+    private var isBurstCompletedToday: Bool {
+        viewModel.todayChecklist.tasks
+            .first(where: { $0.id == "complete_daily_burst" })?.isCompleted ?? false
+    }
+
     /// Turns "my marriage is falling apart and I can't sleep" into a seven-day
     /// week built from the reviewed declaration pool.
     ///
@@ -365,6 +377,7 @@ struct ModernDailyChecklistView: View {
                                 service: enforcementService,
                                 isPremium: subscriptionStore.isPremium,
                                 totalDaysCompleted: viewModel.totalDaysCompleted,
+                                burstCompletedToday: isBurstCompletedToday,
                                 onStart: { enforcement in
                                     guard enforcementService.startEnforcement(id: enforcement.id,
                                                                   isPremium: subscriptionStore.isPremium) else { return }
