@@ -10,6 +10,17 @@
 //    daysDifference was still 2+ so currentStreak was reset to 1 — completely negating
 //    the freeze. Fix: bridge lastCompletedDate to yesterday when freeze fires.
 //
+//  Second root cause (multi-device), fixed later:
+//    the decision was made from THIS device's currentStreak and lastCompletedDate,
+//    which are only as fresh as the last time this particular phone synced. A phone
+//    left in a drawer saw a week-long gap the user never had, spent a freeze to
+//    "rescue" its own stale count, and pushed the resurrected number onto the phone
+//    the user actually uses — which had never applied a freeze and showed no reason
+//    for the jump. Fix: decide from the MERGED day-completion history (StreakHistory),
+//    name each freeze by the gap it covers so one lapse costs one freeze however many
+//    devices notice it, and never let a freeze's bridged date out-vote a real
+//    completion in merging(). The "Multi-device" section below covers all three.
+//
 
 import XCTest
 @testable import SpeakLife
@@ -38,6 +49,17 @@ final class StreakFreezeTests: XCTestCase {
             let date = cal.date(byAdding: .day, value: -i, to: today)!
             stats.updateStreak(for: date)
         }
+    }
+
+    /// The start of the day `daysAgo` days before today.
+    private func day(_ daysAgo: Int) -> Date {
+        cal.startOfDay(for: cal.date(byAdding: .day, value: -daysAgo, to: Date())!)
+    }
+
+    /// The merged day-completion log every device eventually shares:
+    /// `length` consecutive completed days ending `daysAgo` days before today.
+    private func mergedHistory(_ length: Int, endingDaysAgo daysAgo: Int) -> StreakHistory {
+        StreakHistory(dates: (0..<length).map { day(daysAgo + $0) })
     }
 
     // MARK: - Freeze fires when one day is missed

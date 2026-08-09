@@ -28,6 +28,19 @@ final class EnhancedStreakViewModel: ObservableObject {
     private let streakStatsKey = "streakStats"
     private let hasAutoCompletedFirstTaskKey = "hasAutoCompletedFirstTask"
 
+    /// "A freeze was spent — tell the user." SYNCED across devices (see the
+    /// SyncedSettingsStore whitelist), so the phone that did not apply the
+    /// freeze still explains why the number moved.
+    private static let freezeUsedFlagKey = "streakFreezeWasUsed"
+    /// Local-only on purpose, and never whitelisted for sync: which freeze
+    /// THIS device has already shown the banner for. The flag above syncs
+    /// one-way (a bool that is only ever raised), so clearing it locally is
+    /// not enough — the still-true remote row gets pushed straight back and
+    /// the banner would re-fire on every launch of the device that spent the
+    /// freeze. Keyed on the freeze's identity so each device announces each
+    /// freeze exactly once.
+    private static let freezeBannerShownKey = "streakFreezeBannerShownFor"
+
     /// Streak days that earn a full-screen celebration. Every other completed
     /// day gets only a haptic + the auto-collapsing completed banner.
     static let celebrationMilestones: Set<Int> = [1, 3, 7, 14, 30, 50, 100, 200, 365]
@@ -67,6 +80,12 @@ final class EnhancedStreakViewModel: ObservableObject {
         // another device, or a burst recorded without its checklist task) only
         // healed when an iCloud sync event happened to fire.
         reconcileWithSyncedProgress()
+
+        // A freeze may have been spent inside loadData() above (first launch
+        // of a new day), or on the user's other device before this one opened.
+        // Announce it now rather than waiting for a background/foreground
+        // round trip that may never come this session.
+        showFreezeUsedBannerIfNeeded()
 
         checkForNewBadges()
         
@@ -123,11 +142,16 @@ final class EnhancedStreakViewModel: ObservableObject {
             DispatchQueue.main.async { [weak self] in self?.handleSyncedProgressChanged(notification) }
             return
         }
-        // For settings changes, only react when the streak blob was applied.
         if notification.name == SyncedSettingsStore.settingsDidChange,
-           let keys = notification.userInfo?["keys"] as? Set<String>,
-           !keys.contains(streakStatsKey) {
-            return
+           let keys = notification.userInfo?["keys"] as? Set<String> {
+            // A freeze spent on the user's other device reaches this one as
+            // this flag. Raise the banner the moment it lands — the whole
+            // point is that the number never moves without an explanation.
+            if keys.contains(Self.freezeUsedFlagKey) {
+                showFreezeUsedBannerIfNeeded()
+            }
+            // Otherwise only react when the streak blob itself was applied.
+            guard keys.contains(streakStatsKey) else { return }
         }
         reconcileWithSyncedProgress()
     }
@@ -173,6 +197,13 @@ final class EnhancedStreakViewModel: ObservableObject {
             let day = Calendar.current.startOfDay(for: latestDay)
             if streakStats.lastCompletedDate.map({ day > $0 }) ?? true {
                 streakStats.lastCompletedDate = day
+                changed = true
+            }
+            // A real completed day past the one a freeze bridged over retires
+            // that bridge: lastCompletedDate is backed by an actual day again,
+            // so it must stop being treated as a placeholder in merging().
+            if let coveredDay = streakStats.streakFreezeCoveredDay, day > coveredDay {
+                streakStats.streakFreezeCoveredDay = nil
                 changed = true
             }
         }
@@ -701,11 +732,66 @@ final class EnhancedStreakViewModel: ObservableObject {
         }
     }
     
+    /// The merged, cross-device record of the days the user actually completed.
+    ///
+    /// BurstCompletionTracker's history is the local mirror of every device's
+    /// ProgressSyncStore `dayCompletion` rows (union-merged by CloudKit, never
+    /// pruned), so this is the same set on every device once sync has
+    /// delivered — which is exactly what makes the freeze decision below
+    /// independent of which phone happens to open first.
+    private static func mergedStreakHistory() -> StreakHistory {
+        StreakHistory(dates: BurstCompletionTracker.shared.completions.map(\.date))
+    }
+
     private func checkStreakValidity() {
-        streakStats.checkStreakValidity()
+        // The struct decides; the side effects live here, so the decision
+        // itself stays a pure, testable function of (merged history, today).
+        switch streakStats.checkStreakValidity(history: Self.mergedStreakHistory()) {
+        case .freezeSpent:
+            // Raised, not shown, here: the banner is drawn once per freeze per
+            // device by showFreezeUsedBannerIfNeeded(), which also reaches the
+            // user's OTHER device when this flag syncs.
+            userDefaults.set(true, forKey: Self.freezeUsedFlagKey)
+        case .streakBroken(let previousStreak):
+            // Notify user that their streak was broken (Fix 1)
+            LifecycleNotificationService.shared.scheduleStreakBreakNotification(previousStreak: previousStreak)
+        case .unchanged:
+            break
+        }
         saveData()
     }
-    
+
+    /// Shows the "streak freeze used" banner at most once per freeze, per
+    /// device — on the phone that applied it AND on the phone that only
+    /// received the result, and never twice on either.
+    ///
+    /// Clearing the synced flag is necessary but NOT sufficient: it syncs as a
+    /// one-way boolean, so a remote row still holding true is pushed back here
+    /// on the next reconcile and the banner would fire again every launch. The
+    /// freeze's identity — the day it covers, which is the same value on every
+    /// device for the same lapse — is what actually bounds it.
+    private func showFreezeUsedBannerIfNeeded() {
+        guard Thread.isMainThread else {
+            DispatchQueue.main.async { [weak self] in self?.showFreezeUsedBannerIfNeeded() }
+            return
+        }
+        guard userDefaults.bool(forKey: Self.freezeUsedFlagKey) else { return }
+
+        // Covered day first (identical across devices for one freeze), then
+        // the used-date (merged as the later of the two sides, so also
+        // stable), then today — a last-resort bound of one banner per day
+        // rather than one per launch.
+        let identity = BurstCompletionTracker.dayStamp(
+            for: streakStats.streakFreezeCoveredDay ?? streakStats.streakFreezeUsedDate ?? Date()
+        )
+        userDefaults.set(false, forKey: Self.freezeUsedFlagKey)
+        guard userDefaults.string(forKey: Self.freezeBannerShownKey) != identity else { return }
+        userDefaults.set(identity, forKey: Self.freezeBannerShownKey)
+        DispatchQueue.main.async {
+            self.showFreezeUsedMessage = true
+        }
+    }
+
     @objc private func appDidBecomeActive() {
         // May arrive off-main (e.g. NSCalendarDayChanged); this mutates
         // @Published state, so always run on the main thread.
@@ -717,14 +803,6 @@ final class EnhancedStreakViewModel: ObservableObject {
         let today = calendar.startOfDay(for: Date())
         let checklistDate = calendar.startOfDay(for: todayChecklist.date)
 
-        // Fix 4: Show banner if streak freeze was used while app was away
-        if UserDefaults.standard.bool(forKey: "streakFreezeWasUsed") {
-            UserDefaults.standard.set(false, forKey: "streakFreezeWasUsed")
-            DispatchQueue.main.async {
-                self.showFreezeUsedMessage = true
-            }
-        }
-
         if today != checklistDate {
             // New day, create fresh checklist with progressive tasks
             checkStreakValidity()
@@ -732,10 +810,16 @@ final class EnhancedStreakViewModel: ObservableObject {
             todayChecklist = createProgressiveChecklist(for: currentStreak)
             saveData()
             checkForNewBadges()
-            
+
             // Schedule evening notification for the new day with current progress
             scheduleEveningCheckIn()
         }
+
+        // Fix 4: Show banner if a streak freeze was used — either while the
+        // app was away, or by the rollover immediately above. Deliberately
+        // AFTER the rollover: the device that applies the freeze should
+        // explain itself in the same session, not next launch.
+        showFreezeUsedBannerIfNeeded()
     }
     
     private static func createTodayChecklist() -> DailyChecklist {

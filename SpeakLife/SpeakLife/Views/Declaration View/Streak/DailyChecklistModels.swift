@@ -226,6 +226,60 @@ enum ProgressionPhase: String, CaseIterable, Codable {
     }
 }
 
+// MARK: - Merged Completion History
+
+/// The MERGED, cross-device record of which local days the user actually
+/// completed their burst.
+///
+/// Why this exists: `StreakStats.currentStreak` is only ever as fresh as the
+/// last time THIS phone synced. A second device that has been in a drawer
+/// carries a counter and a `lastCompletedDate` from a week ago, and any
+/// decision made from those sees a gap the user never had. The day-completion
+/// log (`ProgressSyncStore.Kind.dayCompletion`, mirrored into
+/// `BurstCompletionTracker.completions`) is append-only and union-merged
+/// across devices, so it is the one record every device eventually agrees on.
+///
+/// Deliberately a plain value type over start-of-day dates: the freeze
+/// decision stays a pure function of (history, today) and can be unit-tested
+/// without CoreData, CloudKit, or a singleton.
+struct StreakHistory: Equatable {
+
+    /// One entry per completed local day, normalized to start-of-day.
+    let completedDays: Set<Date>
+
+    init(completedDays: Set<Date> = []) {
+        self.completedDays = completedDays
+    }
+
+    /// Normalizes raw completion timestamps to local start-of-day. Duplicate
+    /// completions on one day collapse to a single entry, which is exactly
+    /// what a "did the user complete that day" record should be.
+    init(dates: [Date], calendar: Calendar = .current) {
+        self.completedDays = Set(dates.map { calendar.startOfDay(for: $0) })
+    }
+
+    var isEmpty: Bool { completedDays.isEmpty }
+
+    /// The most recent day the user completed on ANY device.
+    var lastCompletedDay: Date? { completedDays.max() }
+
+    /// How many consecutive completed days end ON `day` (0 when `day` itself
+    /// was never completed). This is the real, cross-device length of the run
+    /// the user is standing on — the number a freeze would be protecting.
+    func consecutiveDays(endingOn day: Date, calendar: Calendar = .current) -> Int {
+        var cursor = calendar.startOfDay(for: day)
+        var count = 0
+        // Same one-year ceiling BurstCompletionTracker walks. A streak longer
+        // than that is not worth an unbounded loop over a synced data set.
+        while count < 365, completedDays.contains(cursor) {
+            count += 1
+            guard let previous = calendar.date(byAdding: .day, value: -1, to: cursor) else { break }
+            cursor = previous
+        }
+        return count
+    }
+}
+
 // MARK: - Streak Statistics
 struct StreakStats: Codable, Equatable {
     var currentStreak: Int = 0
@@ -235,6 +289,19 @@ struct StreakStats: Codable, Equatable {
     // Fix 4: Streak freeze — new users start with one; earn more at milestones
     var streakFreezeAvailable: Bool = true
     var streakFreezeUsedDate: Date?
+    /// The last REALLY completed day a currently-spent freeze is standing in
+    /// for — i.e. the day the gap opened after. Non-nil means `lastCompletedDate`
+    /// is a bridge (a placeholder written by the freeze), not a day the user
+    /// actually completed; a real completion clears it (see `updateStreak`).
+    ///
+    /// It carries two jobs that nothing else could do:
+    /// 1. Identity. A freeze is named by the gap it covers, so two devices
+    ///    that both notice the same lapse write identical state — one spend,
+    ///    however many devices see it — and neither pays twice for one gap.
+    /// 2. Provenance. `merging` needs to know that a `lastCompletedDate` is a
+    ///    bridge, so a stale phone's placeholder can never out-vote the phone
+    ///    that actually completed that day.
+    var streakFreezeCoveredDay: Date?
     // Milestones (streak day numbers) that have already triggered a full
     // celebration. Persisted so that breaking a streak and rebuilding past an
     // already-celebrated milestone does NOT re-fire its celebration. Defaults
@@ -244,7 +311,14 @@ struct StreakStats: Codable, Equatable {
     mutating func updateStreak(for date: Date) {
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: date)
-        
+
+        // A real completion after the lapse retires the freeze's placeholder:
+        // from here on lastCompletedDate is backed by a day the user actually
+        // completed, so it must stop reading as a bridge in merging().
+        if let coveredDay = streakFreezeCoveredDay, today > coveredDay {
+            streakFreezeCoveredDay = nil
+        }
+
         if let lastDate = lastCompletedDate {
             let lastDateStart = calendar.startOfDay(for: lastDate)
             let daysDifference = calendar.dateComponents([.day], from: lastDateStart, to: today).day ?? 0
@@ -273,9 +347,13 @@ struct StreakStats: Codable, Equatable {
     /// The streak count this side can actually still claim TODAY.
     ///
     /// A streak whose lastCompletedDate is before yesterday is dead — unless
-    /// it is still freeze-rescuable (freeze available and streak >= 3, the
-    /// exact rescue rule in checkStreakValidity, so a legitimate freeze save
-    /// is never pre-empted). Merging with the RAW currentStreak lets a stale
+    /// it is still freeze-rescuable (freeze available and streak >= 3, so a
+    /// legitimate freeze save is never pre-empted). This is deliberately a
+    /// SUPERSET of what checkStreakValidity will actually rescue: that rule
+    /// also reads the merged history, which a pure merge of two blobs cannot
+    /// see. Erring wide only ever delays a reset by one merge — erring narrow
+    /// would zero out a streak a freeze was about to save, which is the one
+    /// mistake this feature must never make. Merging with the RAW currentStreak lets a stale
     /// synced blob resurrect a broken streak after the local validity check
     /// reset it (the "zombie streak": badge shows an old count with no
     /// completions to back it, then drops on the next real completion).
@@ -310,6 +388,10 @@ struct StreakStats: Codable, Equatable {
 
         let mineLive = liveCurrentStreak
         let theirsLive = other.liveCurrentStreak
+        // A side whose lastCompletedDate was written by a freeze is holding a
+        // placeholder, not a day the user completed. See streakFreezeCoveredDay.
+        let mineBridged = streakFreezeCoveredDay != nil
+        let theirsBridged = other.streakFreezeCoveredDay != nil
 
         switch (lastCompletedDate, other.lastCompletedDate) {
         case (let mine?, let theirs?):
@@ -317,18 +399,36 @@ struct StreakStats: Codable, Equatable {
                 merged.currentStreak = theirsLive
                 merged.streakFreezeAvailable = other.streakFreezeAvailable
                 merged.streakFreezeUsedDate = other.streakFreezeUsedDate
+                merged.streakFreezeCoveredDay = other.streakFreezeCoveredDay
             } else if theirs == mine {
-                // Same last-completed day on both sides: the higher live
-                // count is the real one (a fresh install starts at 0/1), and
-                // a freeze spent anywhere is spent (symmetric, so devices
-                // converge).
-                merged.currentStreak = max(mineLive, theirsLive)
-                merged.streakFreezeAvailable = streakFreezeAvailable && other.streakFreezeAvailable
-                switch (streakFreezeUsedDate, other.streakFreezeUsedDate) {
-                case (let a?, let b?): merged.streakFreezeUsedDate = max(a, b)
-                case (nil, let b?): merged.streakFreezeUsedDate = b
-                default: break
+                if mineBridged != theirsBridged {
+                    // The two sides agree on the day but disagree on what it
+                    // MEANS: one completed it, the other only bridged to it
+                    // with a freeze. The real completion wins.
+                    //
+                    // This is the multi-device bug this rule exists for: a
+                    // phone that has been in a drawer can spend a freeze off
+                    // its own stale counter before iCloud catches it up, and
+                    // the bridge lands its lastCompletedDate on the same day
+                    // as the phone the user actually uses. Under a plain
+                    // max() the drawer phone's resurrected count won and the
+                    // active phone's streak jumped with no explanation.
+                    // Both devices pick the same side here, so it converges.
+                    merged.currentStreak = theirsBridged ? mineLive : theirsLive
+                    // The winner completed that day for real, so there is no
+                    // bridge left outstanding.
+                    merged.streakFreezeCoveredDay = nil
+                } else {
+                    // Neither (or both) bridged: the higher live count is the
+                    // real one (a fresh install starts at 0/1).
+                    merged.currentStreak = max(mineLive, theirsLive)
+                    merged.streakFreezeCoveredDay = Self.laterDay(streakFreezeCoveredDay,
+                                                                  other.streakFreezeCoveredDay)
                 }
+                // A freeze spent anywhere is spent (symmetric, so devices
+                // converge).
+                merged.streakFreezeAvailable = streakFreezeAvailable && other.streakFreezeAvailable
+                merged.streakFreezeUsedDate = Self.laterDay(streakFreezeUsedDate, other.streakFreezeUsedDate)
             } else {
                 merged.currentStreak = mineLive
             }
@@ -338,6 +438,7 @@ struct StreakStats: Codable, Equatable {
             merged.lastCompletedDate = theirs
             merged.streakFreezeAvailable = other.streakFreezeAvailable
             merged.streakFreezeUsedDate = other.streakFreezeUsedDate
+            merged.streakFreezeCoveredDay = other.streakFreezeCoveredDay
         case (_?, nil):
             merged.currentStreak = mineLive
         default:
@@ -346,38 +447,98 @@ struct StreakStats: Codable, Equatable {
         return merged
     }
 
-    mutating func checkStreakValidity() {
-        guard let lastDate = lastCompletedDate else {
-            currentStreak = 0
-            return
+    private static func laterDay(_ mine: Date?, _ theirs: Date?) -> Date? {
+        switch (mine, theirs) {
+        case (let mine?, let theirs?): return max(mine, theirs)
+        case (let mine?, nil): return mine
+        case (nil, let theirs?): return theirs
+        default: return nil
         }
-        
+    }
+
+    // MARK: - Validity / freeze decision
+
+    /// What a validity check decided. Returned rather than acted on so the
+    /// struct stays pure: writing the "tell them about the freeze" flag and
+    /// scheduling the streak-break push are the caller's job (see
+    /// EnhancedStreakViewModel.checkStreakValidity). A pure struct is what
+    /// lets the whole decision be unit-tested without UserDefaults or firing
+    /// real notifications at whoever runs the suite.
+    enum ValidityOutcome: Equatable {
+        case unchanged
+        /// A freeze was spent to bridge the lapse that opened after
+        /// `coveredDay` — the last day actually completed before it.
+        case freezeSpent(coveredDay: Date)
+        case streakBroken(previousStreak: Int)
+    }
+
+    /// Decides whether the streak survives the gap since the last completed
+    /// day, and if not, whether a freeze rescues it.
+    ///
+    /// - Parameter history: the MERGED, cross-device record of completed days.
+    ///   The decision is made from this rather than from this device's own
+    ///   `currentStreak` / `lastCompletedDate`, because those are only as
+    ///   fresh as the last time THIS phone synced. Deciding locally meant the
+    ///   answer depended on which device opened first: a stale phone saw a
+    ///   week-long gap the user never had and spent a freeze to "rescue" a
+    ///   count that had long since moved on, while a phone whose counter had
+    ///   dropped below 3 could never rescue a run the user genuinely had.
+    ///   Two things follow from the merged history and nothing else: how big
+    ///   the gap really is, and how long the run before it really was.
+    ///
+    ///   Pass nil only when no history is available; the check then falls back
+    ///   to this device's own record and behaves exactly as it did before.
+    @discardableResult
+    mutating func checkStreakValidity(history: StreakHistory? = nil) -> ValidityOutcome {
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: Date())
-        let daysDifference = calendar.dateComponents([.day], from: lastDate, to: today).day ?? 0
-        
-        if daysDifference > 1 {
-            // Fix 4: Check if streak freeze is available before resetting
-            if streakFreezeAvailable && currentStreak >= 3 {
-                // Use the freeze — protect the streak, mark it used
-                streakFreezeAvailable = false
-                streakFreezeUsedDate = Date()
-                // Bridge the gap so the next completion counts as consecutive.
-                // Without this, updateStreak's daysDifference > 1 branch would
-                // reset the very streak the freeze just spent itself
-                // protecting (and snap the foundation week back to day 1).
-                lastCompletedDate = calendar.date(byAdding: .day, value: -1, to: today)
-                // Notify the user next session that their freeze was used
-                UserDefaults.standard.set(true, forKey: "streakFreezeWasUsed")
-                return  // Don't reset streak
-            }
-            let previousStreak = currentStreak
+
+        // The last day the user completed ANYWHERE. Taking the later of this
+        // device's record and the merged history is what makes every device
+        // measure the same gap, whichever one opens first and however stale
+        // it is — a device can be behind the truth, never ahead of it.
+        let localDay = lastCompletedDate.map { calendar.startOfDay(for: $0) }
+        guard let anchorDay = [localDay, history?.lastCompletedDay].compactMap({ $0 }).max() else {
             currentStreak = 0
-            // Notify user that their streak was broken (Fix 1)
-            if previousStreak > 0 {
-                LifecycleNotificationService.shared.scheduleStreakBreakNotification(previousStreak: previousStreak)
-            }
+            return .unchanged
         }
+
+        let daysDifference = calendar.dateComponents([.day], from: anchorDay, to: today).day ?? 0
+        guard daysDifference > 1 else { return .unchanged }
+
+        // The run the freeze would be protecting. Read from the merged
+        // history, and never below this device's own counter: histories can be
+        // thinner than the counter for users whose completions predate the
+        // day-completion log, and a freeze must never become HARDER to earn
+        // than it is today.
+        let historyStreak = history?.consecutiveDays(endingOn: anchorDay) ?? 0
+        let protectedStreak = max(currentStreak, historyStreak)
+        // A freeze is named by the gap it covers, so a gap already paid for
+        // can never be charged twice — milestones hand out fresh freezes, and
+        // without this a re-award could be spent on the same lapse again.
+        let gapAlreadyCovered = streakFreezeCoveredDay == anchorDay
+
+        if streakFreezeAvailable, protectedStreak >= 3, !gapAlreadyCovered {
+            // Spend the freeze. Every field written here is a function of
+            // (merged history, today), so two devices deciding for the same
+            // lapse produce identical state — one spend, not two.
+            streakFreezeAvailable = false
+            streakFreezeUsedDate = Date()
+            streakFreezeCoveredDay = anchorDay
+            // Rescue the run the merged history can actually back, not
+            // whatever this device's counter happened to say.
+            currentStreak = protectedStreak
+            // Bridge the gap so the next completion counts as consecutive.
+            // Without this, updateStreak's daysDifference > 1 branch would
+            // reset the very streak the freeze just spent itself
+            // protecting (and snap the foundation week back to day 1).
+            lastCompletedDate = calendar.date(byAdding: .day, value: -1, to: today)
+            return .freezeSpent(coveredDay: anchorDay)
+        }
+
+        let previousStreak = currentStreak
+        currentStreak = 0
+        return previousStreak > 0 ? .streakBroken(previousStreak: previousStreak) : .unchanged
     }
 }
 
