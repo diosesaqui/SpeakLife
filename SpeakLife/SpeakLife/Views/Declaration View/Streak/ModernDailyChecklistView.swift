@@ -140,17 +140,6 @@ struct ModernDailyChecklistView: View {
     /// True when the Enforcement card is on screen with a running campaign, so
     /// it is already carrying today's Burst CTA.
     ///
-    /// Mirrors the card's own render condition exactly — same Remote Config
-    /// flag, same active-campaign check — because the two must never disagree.
-    /// If the checklist demoted the Burst while the card wasn't there, the
-    /// day's most important action would have no loud entry point at all.
-    ///
-    /// Whenever the Burst is still outstanding and a campaign is running, the
-    /// card is in its `.speak` state, so the gold CTA is present to take over.
-    private var campaignOwnsBurst: Bool {
-        subscriptionStore.enforcementEnabled && enforcementService.activeEnforcement != nil
-    }
-
     /// Whether today's Daily Burst is already checked off.
     ///
     /// The Enforcement card needs this and can't see it: a campaign begun after
@@ -445,18 +434,6 @@ struct ModernDailyChecklistView: View {
                                     AnalyticsService.shared.track("enforcement_started",
                                                                   parameters: ["theme": enforcement.theme])
                                 },
-                                onOpenAudio: { day in
-                                    audioDeclarationViewModel.pendingChecklistDeepLink =
-                                        .init(audioId: day.audioId, requestedAt: Date())
-                                    if let onClose = onClose { onClose() } else { dismiss() }
-                                    tabViewModel.goToAudio()
-                                },
-                                onOpenBurst: {
-                                    AnalyticsService.shared.track("enforcement_burst_opened", parameters: [
-                                        "day": enforcementService.progressSnapshot.currentDay
-                                    ])
-                                    openBurst()
-                                },
                                 onLockedTap: {
                                     AnalyticsService.shared.track("enforcement_locked_tapped")
                                     AnalyticsService.shared.trackPaywallImpression(paywallId: "enforcement_card")
@@ -483,7 +460,6 @@ struct ModernDailyChecklistView: View {
                         StructuredDayView(
                             tasks: viewModel.todayChecklist.tasks,
                             streakCount: viewModel.streakStats.currentStreak,
-                            burstOwnedByCampaign: campaignOwnsBurst,
                             onToggle: { taskId in
                                 guard let task = viewModel.todayChecklist.tasks.first(where: { $0.id == taskId }) else { return }
                                 if task.isCompleted {

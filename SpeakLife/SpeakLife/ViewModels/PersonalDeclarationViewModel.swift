@@ -126,7 +126,32 @@ final class PersonalDeclarationViewModel: ObservableObject {
         await runMatchForCategory(input: inputText, category: nil)
     }
 
+    /// The single chokepoint before anything is matched or generated, which is
+    /// why the screen lives here rather than at the two entry points: `runMatch`,
+    /// `selectFocus`, and `submitClarification` all pass through it.
+    ///
+    /// This path is the more exposed of the two that take free text. The
+    /// campaign only ever *selects* from reviewed declarations; here Claude
+    /// **writes** the declaration and picks the verse, so an unscreened request
+    /// comes back as original scripture-shaped text endorsing it.
     private func runMatchForCategory(input: String, category: DeclarationCategory?) async {
+        switch SituationScreen.screen(input) {
+        case .redirect(let redirect):
+            AnalyticsService.shared.track("personal_declaration_screened",
+                                          parameters: ["verdict": redirect.reason])
+            errorMessage = redirect.message
+            step = .input
+            return
+        case .reachOut:
+            AnalyticsService.shared.track("personal_declaration_screened",
+                                          parameters: ["verdict": "reach_out"])
+            errorMessage = "Please don't carry this alone. Reach out to someone you trust right now, before anything else. You are not a burden, and you are not too far gone."
+            step = .input
+            return
+        case .standable:
+            break
+        }
+
         step = .matching
         try? await Task.sleep(nanoseconds: 1_500_000_000)
         if let category {

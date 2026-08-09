@@ -45,11 +45,10 @@ struct EnforcementCard: View {
 
     /// Premium user picked a theme.
     let onStart: (Enforcement) -> Void
-    /// Active user tapped into today's audio.
-    let onOpenAudio: (EnforcementDay) -> Void
-    /// Active user tapped the primary CTA — speaking the Burst is the action
-    /// that actually advances the campaign, so it is the button on the card.
-    let onOpenBurst: () -> Void
+    // No onOpenAudio / onOpenBurst: this card no longer carries either action.
+    // Both live on the checklist rows below, which the campaign rebuilds and
+    // badges, so the card names the week and nothing on this screen offers the
+    // same tap twice.
     /// Non-premium user tapped anywhere on the locked card.
     let onLockedTap: () -> Void
     /// Active user chose to drop this campaign and pick a different one.
@@ -116,23 +115,17 @@ struct EnforcementCard: View {
                 .padding(.top, 2)
 
             HStack(spacing: DS.Spacing.xs) {
-                // Demoted to a quiet row: it is worth having (it warms them up
-                // before they speak) but it does not advance anything, so it
-                // must not look like the thing to press.
-                Button {
-                    onOpenAudio(day)
-                } label: {
-                    HStack(spacing: 6) {
-                        Image(systemName: "play.circle.fill")
-                            .font(.system(size: 14, weight: .semibold))
-                        Text("\(day.audioTitle) · \(day.audioMinutes) min")
-                            .font(.system(size: 13, weight: .medium))
-                            .lineLimit(1)
-                    }
-                    .foregroundColor(.white.opacity(0.7))
-                }
-                .buttonStyle(PlainButtonStyle())
-                .accessibilityLabel("Play today's audio, \(day.audioTitle)")
+                // The audio row that used to live here was a literal duplicate:
+                // `DailyChecklistModels.applyAudioPlan` already retitles the
+                // listen task with this day's audio and deep-links to the same
+                // id, so the same episode appeared twice on one screen. The
+                // checklist row keeps it, wearing a CampaignBadge that says
+                // where it came from.
+                Text("\(day.audioTitle) is on your daily tasks too")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(.white.opacity(0.5))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.85)
 
                 Spacer(minLength: 0)
 
@@ -200,23 +193,24 @@ struct EnforcementCard: View {
     private var todayCTA: some View {
         switch todayCTAState {
         case .speak:
-            // The action that actually advances the day, named as such. This is
-            // the whole answer to "how do I complete it?" — no explanation
-            // needed when the button on the campaign is the one that moves it.
-            Button(action: onOpenBurst) {
-                HStack(spacing: 8) {
-                    Image(systemName: "bolt.fill")
-                        .font(.system(size: 15, weight: .bold))
-                    Text("Speak today's Burst")
-                        .font(.system(size: 15, weight: .bold, design: .rounded))
-                }
-                .foregroundColor(DS.Palette.deepBlue)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 12)
-                .background(Capsule().fill(DS.Gradient.gold))
+            // Points down instead of duplicating. The gold "Speak today's
+            // Burst" that used to live here sat directly above the checklist's
+            // own Burst row — two loud buttons, stacked, for one action. The
+            // checklist keeps the action, wearing a CampaignBadge; this card
+            // names the week and gets out of the way.
+            HStack(spacing: 8) {
+                Image(systemName: "arrow.down.circle.fill")
+                    .font(.system(size: 14, weight: .semibold))
+                Text("Today's Burst is in your daily tasks")
+                    .font(.system(size: 14, weight: .semibold, design: .rounded))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
             }
-            .buttonStyle(.dsPressable(feel: .tapSolid))
-            .accessibilityLabel("Speak today's Burst, day \(service.progress.currentDay) of \(Enforcement.length)")
+            .foregroundColor(DS.Palette.gold)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 10)
+            .background(Capsule().fill(DS.Palette.gold.opacity(0.12)))
+            .accessibilityLabel("Today's Burst, day \(service.progress.currentDay) of \(Enforcement.length), is in your daily tasks below.")
 
         case .advanced:
             restingCTA(

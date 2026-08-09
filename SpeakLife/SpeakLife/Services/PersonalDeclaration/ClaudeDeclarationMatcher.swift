@@ -86,6 +86,16 @@ final class ClaudeDeclarationMatcher: DeclarationMatcherProtocol {
         let jsonData = try extractJSON(from: text)
         let parsed = try JSONDecoder().decode(DeclarationJSON.self, from: jsonData)
 
+        // Claude read the request and won't write for it. Throwing here is what
+        // stops an empty declarationText being shown as a declaration — the
+        // fallback matcher then returns a generic line rather than original text
+        // shaped around the request. `SituationScreen` in the view model is the
+        // real guard; this is the layer behind it.
+        guard parsed.category != "decline" else {
+            AnalyticsService.shared.track("claude_declined")
+            throw ClaudeError.declined
+        }
+
         let category = DeclarationCategory(rawValue: parsed.category) ?? .faith
         return DeclarationMatch(
             category: category,
@@ -115,6 +125,7 @@ private enum ClaudeError: Error {
     case httpError(statusCode: Int)
     case emptyResponse
     case invalidJSON
+    case declined
 }
 
 private struct ClaudeRequest: Encodable {
