@@ -314,9 +314,29 @@ struct CompletedTaskRow: View {
     }
 }
 
+/// Tappable, which it was not before.
+///
+/// The campaign's day audio lives on this row, and the campaign card used to
+/// carry a play button for it. When that duplicate was removed the row became
+/// the only way in — except nothing here was pressable, and `burstFirst` pins
+/// the Burst as the hero, so the audio was unreachable until the Burst (and in
+/// growth phase the devotional) was completed. A row that names an action and
+/// does nothing when pressed is its own bug regardless.
 struct UpcomingTaskRow: View {
     let task: DailyTask
+    var onNavigate: ((DailyTask) -> Void)? = nil
+
     var body: some View {
+        if let onNavigate {
+            Button { Juice.play(.tapSolid); onNavigate(task) } label: { row }
+                .buttonStyle(PlainButtonStyle())
+                .accessibilityHint("Opens \(task.title)")
+        } else {
+            row
+        }
+    }
+
+    private var row: some View {
         HStack(spacing: 12) {
             ZStack {
                 RoundedRectangle(cornerRadius: 8).fill(Color.white.opacity(0.06)).frame(width: 36, height: 36)
@@ -437,7 +457,7 @@ struct StructuredDayView: View {
                                 .foregroundColor(DS.Palette.gold.opacity(0.9))
                             Spacer()
                         }.padding(.horizontal, 4)
-                        ForEach(upcomingTasks) { UpcomingTaskRow(task: $0) }
+                        ForEach(upcomingTasks) { UpcomingTaskRow(task: $0, onNavigate: onNavigate) }
                     }
                 }
 

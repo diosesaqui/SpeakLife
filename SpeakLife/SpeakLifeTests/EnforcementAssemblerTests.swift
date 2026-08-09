@@ -406,7 +406,6 @@ final class EnforcementAssemblerTests: XCTestCase {
         let inputs = [
             "I'm believing for someone else's husband to notice me",
             "I want another man's wife",
-            "I'm believing he will leave his wife for me",
             "I'm tired of being his side chick"
         ]
         for input in inputs {
@@ -435,7 +434,8 @@ final class EnforcementAssemblerTests: XCTestCase {
             "I want to kill myself",
             "I have no reason to live anymore",
             "everyone would be better off without me",
-            "I have been suicidal for weeks"
+            "I have been suicidal for weeks",
+            "I'm having thoughts of suicide again"
         ]
         for input in inputs {
             XCTAssertEqual(SituationScreen.screen(input), .reachOut, "not caught: \(input)")
@@ -464,7 +464,19 @@ final class EnforcementAssemblerTests: XCTestCase {
             "I hate my job and every day feels pointless",
             "my wife left me and I started drinking again",
             // Ordinary vision input.
-            "I'm believing God to start my own business"
+            "I'm believing God to start my own business",
+            // Bereavement by suicide. Bare "suicide" used to route this to the
+            // personal-safety message: no campaign, no scripture, and a reply
+            // aimed at the wrong person entirely.
+            "I lost my son to suicide last year and I need God",
+            "my best friend died by suicide and I can't stop replaying it",
+            // Praying someone OUT of a marriage that is hurting them.
+            "I'm believing my daughter will leave her husband who hits her",
+            "praying my brother will leave his wife's abuse behind",
+            // A betrayed spouse naming the other woman.
+            "my husband and his mistress destroyed our family, I want healing",
+            // The idiom, not revenge.
+            "I fell off my routine and I'm ready to get back at it"
         ]
         for input in inputs {
             XCTAssertEqual(SituationScreen.screen(input), .standable,

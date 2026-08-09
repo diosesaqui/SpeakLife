@@ -58,7 +58,9 @@ struct EnforcementCard: View {
     /// actually started so the card can keep their text on a failure.
     let onDescribe: (String, @escaping (EnforcementStartResult) -> Void) -> Void
     /// User took the week we offered in place of the one we declined.
-    let onStandOn: (DeclarationCategory) -> Void
+    /// Returns false when it couldn't be started, so the card can say so rather
+    /// than leave them looking at a button that did nothing.
+    let onStandOn: (DeclarationCategory) -> Bool
 
     /// Confirms before dropping a campaign — the days already spoken are lost,
     /// and it sits next to the audio button, so a mis-tap must not wipe progress.
@@ -455,9 +457,14 @@ struct EnforcementCard: View {
                     AnalyticsService.shared.track("enforcement_redirect_accepted",
                                                   parameters: ["reason": redirect.reason,
                                                                "category": category.rawValue])
+                    guard onStandOn(category) else {
+                        // Keep the notice up: the card already cleared the field,
+                        // so a silent no-op would read as the button being dead.
+                        matchFailed = true
+                        return
+                    }
                     situation = ""
                     self.redirect = nil
-                    onStandOn(category)
                 } label: {
                     HStack(spacing: 6) {
                         Image(systemName: "arrow.turn.down.right")

@@ -111,6 +111,13 @@ final class PersonalDeclarationViewModel: ObservableObject {
     // MARK: - Private
 
     private func runMatch(input: String) async {
+        // Screen BEFORE the multi-topic branch, not only inside
+        // `runMatchForCategory`. Input naming two or more topics returns early
+        // to `.focusChoice`, so someone in crisis who also mentioned money or a
+        // marriage got a cheerful "which of these would you like to focus on?"
+        // picker and was only screened after tapping through it.
+        guard passesScreen(input) else { return }
+
         // Keyword scan to detect multiple distinct topics before calling AI
         let allMatches = matchUseCase.matchAll(input: input)
         if allMatches.count >= 2 {
@@ -121,36 +128,44 @@ final class PersonalDeclarationViewModel: ObservableObject {
         await runMatchForCategory(input: input, category: nil)
     }
 
-    /// Called when the user submits refined input from the clarify screen.
-    func submitClarification() async {
-        await runMatchForCategory(input: inputText, category: nil)
-    }
-
-    /// The single chokepoint before anything is matched or generated, which is
-    /// why the screen lives here rather than at the two entry points: `runMatch`,
-    /// `selectFocus`, and `submitClarification` all pass through it.
-    ///
-    /// This path is the more exposed of the two that take free text. The
-    /// campaign only ever *selects* from reviewed declarations; here Claude
-    /// **writes** the declaration and picks the verse, so an unscreened request
-    /// comes back as original scripture-shaped text endorsing it.
-    private func runMatchForCategory(input: String, category: DeclarationCategory?) async {
+    /// - Returns: false when the input was screened, having already set the
+    ///   message and sent the user back to `.input`.
+    private func passesScreen(_ input: String) -> Bool {
         switch SituationScreen.screen(input) {
         case .redirect(let redirect):
             AnalyticsService.shared.track("personal_declaration_screened",
                                           parameters: ["verdict": redirect.reason])
             errorMessage = redirect.message
             step = .input
-            return
+            return false
         case .reachOut:
             AnalyticsService.shared.track("personal_declaration_screened",
                                           parameters: ["verdict": "reach_out"])
             errorMessage = "Please don't carry this alone. Reach out to someone you trust right now, before anything else. You are not a burden, and you are not too far gone."
             step = .input
-            return
+            return false
         case .standable:
-            break
+            return true
         }
+    }
+
+    /// Called when the user submits refined input from the clarify screen.
+    func submitClarification() async {
+        await runMatchForCategory(input: inputText, category: nil)
+    }
+
+    /// Screens again, on purpose. `runMatch` catches the multi-topic branch it
+    /// would otherwise skip; this catches `selectFocus` and `submitClarification`,
+    /// which reach generation without passing through `runMatch` at all. Both
+    /// are cheap string scans, so covering the path twice costs nothing and
+    /// leaves no way in.
+    ///
+    /// This path is the more exposed of the two that take free text. The
+    /// campaign only ever *selects* from reviewed declarations; here Claude
+    /// **writes** the declaration and picks the verse, so an unscreened request
+    /// comes back as original scripture-shaped text endorsing it.
+    private func runMatchForCategory(input: String, category: DeclarationCategory?) async {
+        guard passesScreen(input) else { return }
 
         step = .matching
         try? await Task.sleep(nanoseconds: 1_500_000_000)
@@ -163,7 +178,18 @@ final class PersonalDeclarationViewModel: ObservableObject {
                 isConfident: true
             )
         } else {
-            match = await matchUseCase.execute(input: input)
+            let result = await matchUseCase.execute(input: input)
+            // Claude caught what the local phrases didn't. Showing `.result`
+            // here would render an empty declaration as a declaration.
+            guard !result.isDeclined else {
+                AnalyticsService.shared.track("personal_declaration_screened",
+                                              parameters: ["verdict": "claude_declined"])
+                errorMessage = SituationScreen.Redirect.unscriptural.message
+                match = nil
+                step = .input
+                return
+            }
+            match = result
         }
         step = .result
     }

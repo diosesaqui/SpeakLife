@@ -146,9 +146,6 @@ struct ModernDailyChecklistView: View {
         UserSelectedCategories.top()
     }
 
-    /// True when the Enforcement card is on screen with a running campaign, so
-    /// it is already carrying today's Burst CTA.
-    ///
     /// Whether today's Daily Burst is already checked off.
     ///
     /// The Enforcement card needs this and can't see it: a campaign begun after
@@ -238,6 +235,10 @@ struct ModernDailyChecklistView: View {
                         "source": curated ? "curated" : "matched",
                         "secondaries": topSecondaries.map(\.rawValue).joined(separator: ",")
                     ])
+                    // Today's tasks were built before this campaign existed.
+                    // Without the rebuild the card promises a badged Burst and
+                    // the campaign's audio that the checklist doesn't have.
+                    viewModel.refreshTasksForCampaignChange()
                 }
                 completion(started != nil ? .started : .failed)
             }
@@ -247,20 +248,26 @@ struct ModernDailyChecklistView: View {
     /// Starts the week we offered instead of the one we declined. Straight
     /// assembly: they picked a theme off a button, so there is no sentence left
     /// for Claude to read.
-    private func standOn(_ category: DeclarationCategory) {
-        let started = enforcementService.startMatched(
+    /// - Returns: false when the week couldn't be started, so the card can say
+    ///   so. It has already cleared the field and the redirect notice by the
+    ///   time this runs; swallowing a nil would leave the user looking at a
+    ///   button that did nothing.
+    @discardableResult
+    private func standOn(_ category: DeclarationCategory) -> Bool {
+        guard let started = enforcementService.startMatched(
             primary: category,
             secondaries: [],
             pool: declarationStore.allAvailableDeclarations,
             isPremium: subscriptionStore.isPremium
-        )
-        if let started {
-            AnalyticsService.shared.track("enforcement_started", parameters: [
-                "theme": started.theme,
-                "source": "redirect",
-                "secondaries": ""
-            ])
-        }
+        ) else { return false }
+
+        AnalyticsService.shared.track("enforcement_started", parameters: [
+            "theme": started.theme,
+            "source": "redirect",
+            "secondaries": ""
+        ])
+        viewModel.refreshTasksForCampaignChange()
+        return true
     }
 
     /// Matches the declaration feed's themed backdrop (including a user-chosen
@@ -442,6 +449,7 @@ struct ModernDailyChecklistView: View {
                                                                   isPremium: subscriptionStore.isPremium) else { return }
                                     AnalyticsService.shared.track("enforcement_started",
                                                                   parameters: ["theme": enforcement.theme])
+                                    viewModel.refreshTasksForCampaignChange()
                                 },
                                 onLockedTap: {
                                     AnalyticsService.shared.track("enforcement_locked_tapped")
@@ -455,6 +463,10 @@ struct ModernDailyChecklistView: View {
                                         "last_day": snapshot.currentDay
                                     ])
                                     enforcementService.abandon()
+                                    // Abandoning has to strip the badges and put
+                                    // the foundation audio back, same as starting
+                                    // has to add them.
+                                    viewModel.refreshTasksForCampaignChange()
                                 },
                                 onDescribe: { text, completion in
                                     startMatchedEnforcement(from: text, completion: completion)
@@ -678,6 +690,7 @@ struct ModernDailyChecklistView: View {
                                                   isPremium: subscriptionStore.isPremium) else { return }
                     AnalyticsService.shared.track("enforcement_started",
                                                   parameters: ["theme": enforcement.theme, "source": "completion"])
+                    viewModel.refreshTasksForCampaignChange()
                     enforcementService.justCompleted = nil
                 },
                 onDone: { enforcementService.justCompleted = nil }

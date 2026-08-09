@@ -105,6 +105,10 @@ enum SituationScreen {
     /// missing: "a married man", "an affair", "affair with" — each collides
     /// with the most common legitimate input of all, someone believing for
     /// their own marriage after their spouse's affair.
+    /// Also deliberately missing: "leave his wife" / "leave her husband" — a
+    /// parent praying their child gets out of an abusive marriage says exactly
+    /// that. And "his mistress", which is how a betrayed spouse names the other
+    /// woman. Both were here and both were wrong.
     static let partnerPhrases = [
         "someone else's husband", "someone elses husband",
         "someone else's wife", "someone elses wife",
@@ -112,20 +116,27 @@ enum SituationScreen {
         "somebody else's wife", "somebody elses wife",
         "another man's wife", "another mans wife",
         "another woman's husband", "another womans husband",
-        "leave his wife", "leave her husband",
-        "side chick", "my mistress", "his mistress"
+        "side chick", "my mistress"
     ]
 
     /// Deliberately missing: "make him/her/them pay" — "believing God will make
-    /// them pay me what they owe" is a debt campaign, not a curse.
+    /// them pay me what they owe" is a debt campaign, not a curse. "get back at"
+    /// is spelled out with an object for the same reason: bare, it swallows
+    /// "I'm ready to get back at it".
     static let harmPhrases = [
-        "get revenge", "take revenge", "get back at",
+        "get revenge", "take revenge",
+        "get back at him", "get back at her", "get back at them",
         "make him suffer", "make her suffer", "make them suffer",
         "ruin his life", "ruin her life", "ruin their life",
         "hope he dies", "hope she dies", "hope they die",
         "curse him", "curse her", "curse them"
     ]
 
+    /// First person only, and spelled out. Bare "suicide" and bare "suicidal"
+    /// were here and routed "I lost my son to suicide" — a bereaved parent — to
+    /// a personal-safety message with no campaign and no scripture. That is the
+    /// single worst thing this screen could do, so the word alone is not enough:
+    /// it has to be them, saying it about themselves.
     static let unambiguousSelfHarm = [
         "kill myself", "killing myself",
         "end my life", "ending my life",
@@ -133,7 +144,9 @@ enum SituationScreen {
         "no reason to live", "nothing to live for",
         "better off dead", "better off without me",
         "hurt myself", "harm myself",
-        "suicidal", "suicide"
+        "i am suicidal", "i'm suicidal", "im suicidal",
+        "been suicidal", "feel suicidal", "feeling suicidal",
+        "thoughts of suicide", "thinking about suicide", "commit suicide"
     ]
 
     /// These need the rest of the sentence before they mean anything.
