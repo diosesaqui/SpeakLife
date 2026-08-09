@@ -212,11 +212,6 @@ final class SubscriptionStore: ObservableObject {
     // link stays hidden everywhere until Remote Config sets showPayWhatYouCanCTA.
     @Published var showPayWhatYouCanCTA = false
 
-    // MARK: - Paywall Value Props A/B Test
-    // false = benefit-based personalized props (high_conversion_v1)
-    // true  = succinct feature-based props (high_conversion_succinct_v1)
-    @Published var useSuccinctPaywallValueProps = false
-
     // MARK: - Clean Paywall Layout A/B Test
     // false = current dark high-conversion layout (default)
     // true  = light minimal layout (high_conversion_clean_v1): wordmark,
@@ -479,9 +474,6 @@ final class SubscriptionStore: ObservableObject {
         useHighConversionPaywall = remoteConfig["useHighConversionPaywall"].boolValue
         showPayWhatYouCanLink = remoteConfig["showPayWhatYouCanLink"].boolValue
         showPayWhatYouCanCTA = remoteConfig["showPayWhatYouCanCTA"].boolValue
-
-        // Paywall Value Props A/B Test
-        useSuccinctPaywallValueProps = remoteConfig["useSuccinctPaywallValueProps"].boolValue
 
         // Clean Paywall Layout A/B Test (unset key resolves false — ships dormant)
         useCleanPaywallVariant = remoteConfig["useCleanPaywallVariant"].boolValue
