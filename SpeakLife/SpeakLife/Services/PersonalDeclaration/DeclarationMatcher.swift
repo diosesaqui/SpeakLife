@@ -12,6 +12,13 @@ struct DeclarationMatch {
     let verseReference: String
     /// True when at least one keyword rule matched. False = fell through to default.
     let isConfident: Bool
+    /// Claude read the request and refused to write for it.
+    ///
+    /// Needed because the refusal has to survive the fallback: without it, a
+    /// declined request threw, was caught by the same handler as a network
+    /// error, and came back from the keyword matcher as a written declaration —
+    /// which made the whole second safety layer inert.
+    var isDeclined: Bool = false
 }
 
 // MARK: - Input Validator

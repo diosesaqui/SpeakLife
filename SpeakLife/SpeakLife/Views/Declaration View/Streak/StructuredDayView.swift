@@ -201,6 +201,7 @@ struct NextUpTaskCard: View {
                 Text("NEXT UP")
                     .font(.system(size: 10, weight: .bold)).tracking(1.5)
                     .foregroundColor(DS.Palette.gold.opacity(0.9))
+                if task.isCampaignRefreshed { CampaignBadge() }
                 Spacer()
                 Text("\(task.estimatedMinutes) min")
                     .font(.system(size: 11, weight: .medium))
@@ -249,6 +250,41 @@ struct NextUpTaskCard: View {
     }
 }
 
+// MARK: - Campaign badge
+
+/// Marks the tasks an active campaign rebuilt from the user's own words.
+///
+/// This is the whole payoff of typing that sentence, and before this it was
+/// invisible: the listen task and the Burst quietly changed underneath the user
+/// with nothing saying why. The badge is also what lets the campaign card stop
+/// carrying its own copies of these two buttons — the card names the week, the
+/// checklist carries the actions, and the badge is the thread between them.
+///
+/// Gold, because gold is the premium accent everywhere else in the app and this
+/// only ever appears for someone who paid for it.
+struct CampaignBadge: View {
+    /// Compact drops the word and keeps the bolt, for rows too tight to spell it.
+    var compact: Bool = false
+
+    var body: some View {
+        HStack(spacing: 3) {
+            Image(systemName: "bolt.fill")
+                .font(.system(size: compact ? 8 : 9, weight: .bold))
+            if !compact {
+                Text("CAMPAIGN")
+                    .font(.system(size: 9, weight: .bold))
+                    .tracking(0.6)
+            }
+        }
+        .foregroundColor(DS.Palette.gold)
+        .padding(.horizontal, compact ? 5 : 7)
+        .padding(.vertical, 3)
+        .background(Capsule().fill(DS.Palette.gold.opacity(0.16)))
+        .overlay(Capsule().stroke(DS.Palette.gold.opacity(0.35), lineWidth: 0.5))
+        .accessibilityLabel("Rebuilt by your campaign")
+    }
+}
+
 // MARK: - Compact Rows
 
 struct CompletedTaskRow: View {
@@ -269,6 +305,7 @@ struct CompletedTaskRow: View {
                         .font(.system(size: 11)).foregroundColor(.white.opacity(0.3))
                 }
             }
+            if task.isCampaignRefreshed { CampaignBadge(compact: true) }
             Spacer()
             Text(task.category.emoji).font(.system(size: 16)).opacity(0.5)
         }
@@ -277,15 +314,36 @@ struct CompletedTaskRow: View {
     }
 }
 
+/// Tappable, which it was not before.
+///
+/// The campaign's day audio lives on this row, and the campaign card used to
+/// carry a play button for it. When that duplicate was removed the row became
+/// the only way in — except nothing here was pressable, and `burstFirst` pins
+/// the Burst as the hero, so the audio was unreachable until the Burst (and in
+/// growth phase the devotional) was completed. A row that names an action and
+/// does nothing when pressed is its own bug regardless.
 struct UpcomingTaskRow: View {
     let task: DailyTask
+    var onNavigate: ((DailyTask) -> Void)? = nil
+
     var body: some View {
+        if let onNavigate {
+            Button { Juice.play(.tapSolid); onNavigate(task) } label: { row }
+                .buttonStyle(PlainButtonStyle())
+                .accessibilityHint("Opens \(task.title)")
+        } else {
+            row
+        }
+    }
+
+    private var row: some View {
         HStack(spacing: 12) {
             ZStack {
                 RoundedRectangle(cornerRadius: 8).fill(Color.white.opacity(0.06)).frame(width: 36, height: 36)
                 Image(systemName: task.icon).font(.system(size: 14)).foregroundColor(.white.opacity(0.4))
             }
             Text(task.title).font(.system(size: 14, weight: .medium)).foregroundColor(.white.opacity(0.4))
+            if task.isCampaignRefreshed { CampaignBadge(compact: true) }
             Spacer()
             Text("\(task.estimatedMinutes)m").font(.system(size: 11)).foregroundColor(.white.opacity(0.3))
         }
@@ -350,36 +408,20 @@ struct DayCelebrationView: View {
 struct StructuredDayView: View {
     let tasks: [DailyTask]
     let streakCount: Int
-    /// True when an Enforcement campaign is on screen above this view carrying
-    /// its own "Speak today's Burst" CTA.
-    ///
-    /// The checklist deliberately sorts the Burst first so it headlines NEXT UP
-    /// — right until a campaign card sits directly above it doing the same job,
-    /// at which point the user gets two loud buttons, stacked, for one action.
-    /// The campaign owns the Burst then (it is what banks the day), so the
-    /// hero slot goes to the next thing the user hasn't done. The Burst still
-    /// counts toward the day and still gates the streak; it just stops being
-    /// announced twice.
-    var burstOwnedByCampaign: Bool = false
+    // The Burst always headlines NEXT UP, campaign or not. It used to be pushed
+    // out of the hero slot when a campaign was running, because the campaign
+    // card carried its own gold "Speak today's Burst" and two stacked buttons
+    // for one action is a bug. The card no longer carries one: actions live
+    // here, the card names the week, and a CampaignBadge on the row is the
+    // thread between them.
     let onToggle: (String) -> Void
     let onNavigate: (DailyTask) -> Void
     let onAllComplete: () -> Void
 
-    /// Matches the id the checklist generator and `EnhancedStreakViewModel`
-    /// both key the Burst off.
-    private static let burstTaskId = "complete_daily_burst"
-
     private var completedTasks: [DailyTask] { tasks.filter { $0.isCompleted } }
     private var incompleteTasks: [DailyTask] { tasks.filter { !$0.isCompleted } }
 
-    /// What may headline NEXT UP. Everything incomplete, minus the Burst when
-    /// the campaign card is already carrying it.
-    private var heroCandidates: [DailyTask] {
-        guard burstOwnedByCampaign else { return incompleteTasks }
-        return incompleteTasks.filter { $0.id != Self.burstTaskId }
-    }
-
-    private var nextTask: DailyTask? { heroCandidates.first }
+    private var nextTask: DailyTask? { incompleteTasks.first }
 
     /// Everything else still outstanding — including the Burst when it lost the
     /// hero slot, so it stays visible in the day rather than disappearing.
@@ -415,7 +457,7 @@ struct StructuredDayView: View {
                                 .foregroundColor(DS.Palette.gold.opacity(0.9))
                             Spacer()
                         }.padding(.horizontal, 4)
-                        ForEach(upcomingTasks) { UpcomingTaskRow(task: $0) }
+                        ForEach(upcomingTasks) { UpcomingTaskRow(task: $0, onNavigate: onNavigate) }
                     }
                 }
 

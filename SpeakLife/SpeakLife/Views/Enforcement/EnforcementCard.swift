@@ -45,11 +45,10 @@ struct EnforcementCard: View {
 
     /// Premium user picked a theme.
     let onStart: (Enforcement) -> Void
-    /// Active user tapped into today's audio.
-    let onOpenAudio: (EnforcementDay) -> Void
-    /// Active user tapped the primary CTA — speaking the Burst is the action
-    /// that actually advances the campaign, so it is the button on the card.
-    let onOpenBurst: () -> Void
+    // No onOpenAudio / onOpenBurst: this card no longer carries either action.
+    // Both live on the checklist rows below, which the campaign rebuilds and
+    // badges, so the card names the week and nothing on this screen offers the
+    // same tap twice.
     /// Non-premium user tapped anywhere on the locked card.
     let onLockedTap: () -> Void
     /// Active user chose to drop this campaign and pick a different one.
@@ -57,7 +56,11 @@ struct EnforcementCard: View {
     /// User described what they're walking through. The caller matches it to
     /// categories and assembles the week, calling back with whether a campaign
     /// actually started so the card can keep their text on a failure.
-    let onDescribe: (String, @escaping (Bool) -> Void) -> Void
+    let onDescribe: (String, @escaping (EnforcementStartResult) -> Void) -> Void
+    /// User took the week we offered in place of the one we declined.
+    /// Returns false when it couldn't be started, so the card can say so rather
+    /// than leave them looking at a button that did nothing.
+    let onStandOn: (DeclarationCategory) -> Bool
 
     /// Confirms before dropping a campaign — the days already spoken are lost,
     /// and it sits next to the audio button, so a mis-tap must not wipe progress.
@@ -69,6 +72,11 @@ struct EnforcementCard: View {
     /// Set when what they typed is too thin to build a week from. Cleared as
     /// soon as they start editing, so the message never outlives the input.
     @State private var inputError: String?
+    /// Set when we won't build a week on what they asked for. Holds the message
+    /// and the week we can offer instead.
+    @State private var redirect: SituationScreen.Redirect?
+    /// Someone said they want to end their life. Not a campaign state.
+    @State private var showReachOut = false
 
     var body: some View {
         if service.isEligible(totalDaysCompleted: totalDaysCompleted) {
@@ -109,23 +117,17 @@ struct EnforcementCard: View {
                 .padding(.top, 2)
 
             HStack(spacing: DS.Spacing.xs) {
-                // Demoted to a quiet row: it is worth having (it warms them up
-                // before they speak) but it does not advance anything, so it
-                // must not look like the thing to press.
-                Button {
-                    onOpenAudio(day)
-                } label: {
-                    HStack(spacing: 6) {
-                        Image(systemName: "play.circle.fill")
-                            .font(.system(size: 14, weight: .semibold))
-                        Text("\(day.audioTitle) · \(day.audioMinutes) min")
-                            .font(.system(size: 13, weight: .medium))
-                            .lineLimit(1)
-                    }
-                    .foregroundColor(.white.opacity(0.7))
-                }
-                .buttonStyle(PlainButtonStyle())
-                .accessibilityLabel("Play today's audio, \(day.audioTitle)")
+                // The audio row that used to live here was a literal duplicate:
+                // `DailyChecklistModels.applyAudioPlan` already retitles the
+                // listen task with this day's audio and deep-links to the same
+                // id, so the same episode appeared twice on one screen. The
+                // checklist row keeps it, wearing a CampaignBadge that says
+                // where it came from.
+                Text("\(day.audioTitle) is on your daily tasks too")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(.white.opacity(0.5))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.85)
 
                 Spacer(minLength: 0)
 
@@ -193,23 +195,24 @@ struct EnforcementCard: View {
     private var todayCTA: some View {
         switch todayCTAState {
         case .speak:
-            // The action that actually advances the day, named as such. This is
-            // the whole answer to "how do I complete it?" — no explanation
-            // needed when the button on the campaign is the one that moves it.
-            Button(action: onOpenBurst) {
-                HStack(spacing: 8) {
-                    Image(systemName: "bolt.fill")
-                        .font(.system(size: 15, weight: .bold))
-                    Text("Speak today's Burst")
-                        .font(.system(size: 15, weight: .bold, design: .rounded))
-                }
-                .foregroundColor(DS.Palette.deepBlue)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 12)
-                .background(Capsule().fill(DS.Gradient.gold))
+            // Points down instead of duplicating. The gold "Speak today's
+            // Burst" that used to live here sat directly above the checklist's
+            // own Burst row — two loud buttons, stacked, for one action. The
+            // checklist keeps the action, wearing a CampaignBadge; this card
+            // names the week and gets out of the way.
+            HStack(spacing: 8) {
+                Image(systemName: "arrow.down.circle.fill")
+                    .font(.system(size: 14, weight: .semibold))
+                Text("Today's Burst is in your daily tasks")
+                    .font(.system(size: 14, weight: .semibold, design: .rounded))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
             }
-            .buttonStyle(.dsPressable(feel: .tapSolid))
-            .accessibilityLabel("Speak today's Burst, day \(service.progress.currentDay) of \(Enforcement.length)")
+            .foregroundColor(DS.Palette.gold)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 10)
+            .background(Capsule().fill(DS.Palette.gold.opacity(0.12)))
+            .accessibilityLabel("Today's Burst, day \(service.progress.currentDay) of \(Enforcement.length), is in your daily tasks below.")
 
         case .advanced:
             restingCTA(
@@ -275,7 +278,13 @@ struct EnforcementCard: View {
             // this way — DailyDeclarationBurstView hands the whole Burst to the
             // active campaign — it just never said so, so nothing connected what
             // someone typed here to the words that came out of their mouth.
-            Text("Say it in a sentence. For seven days your Daily Burst is built around it.")
+            //
+            // "Something you're believing for" is doing real work: plenty of
+            // people open this in a good week with a vision rather than a storm,
+            // and a question that only admits storms sends them away with
+            // nothing. It's also the app's own language for this already —
+            // the personal declaration feature counts "days of believing".
+            Text("Name a fight, or something you're believing for. Your Daily Burst is built around it for seven days.")
                 .font(.system(size: 13, weight: .regular, design: .rounded))
                 .foregroundColor(.white.opacity(0.6))
                 .fixedSize(horizontal: false, vertical: true)
@@ -291,8 +300,20 @@ struct EnforcementCard: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
 
+            if showReachOut {
+                reachOutNotice
+            }
+
+            if let redirect {
+                redirectNotice(redirect)
+            }
+
             if matchFailed {
-                Text("Couldn't build a week from that. Try naming it more plainly, or pick a theme below.")
+                // No longer reachable by wording: EnforcementAssembler walks a
+                // fallback chain, so every category the matcher can return
+                // fills seven days. What's left is the declaration pool not
+                // being loaded yet, which is not the speaker's fault to fix.
+                Text("Couldn't reach your declarations just now. Try again, or pick a theme below.")
                     .font(.system(size: 12, weight: .medium))
                     .foregroundColor(DS.Palette.gold.opacity(0.9))
                     .fixedSize(horizontal: false, vertical: true)
@@ -349,6 +370,16 @@ struct EnforcementCard: View {
         .accessibilityLabel("Enforce the victory. Premium feature. Tap to learn more.")
     }
 
+    private static let placeholderExamples = [
+        "e.g. I'm under attack at work and I'm exhausted",
+        "e.g. I'm believing God to start my own business"
+    ]
+
+    private static var placeholderExample: String {
+        let day = Calendar.current.ordinality(of: .day, in: .era, for: Date()) ?? 0
+        return placeholderExamples[day % placeholderExamples.count]
+    }
+
     /// The input that makes the week theirs.
     ///
     /// The placeholder is a worked example rather than another instruction: it
@@ -356,10 +387,15 @@ struct EnforcementCard: View {
     /// question mark cannot communicate. Asked "what area of life do you need
     /// victory in?" with no example, people answer with an area — one or two
     /// words — and the curator has nothing to read.
+    ///
+    /// The example alternates between a fight and something they're believing
+    /// for, so neither kind of week looks like the wrong answer. It turns over
+    /// daily rather than randomly: a placeholder that changed mid-session would
+    /// read as a glitch.
     private var situationField: some View {
         HStack(spacing: 8) {
             TextField(text: $situation, axis: .vertical) {
-                Text("e.g. I'm under attack at work and I'm exhausted")
+                Text(Self.placeholderExample)
                     .foregroundColor(.white.opacity(0.45))
             }
                 .font(.system(size: 15, weight: .medium))
@@ -371,6 +407,8 @@ struct EnforcementCard: View {
                 .onChange(of: situation) { _ in
                     if inputError != nil { inputError = nil }
                     if matchFailed { matchFailed = false }
+                    if redirect != nil { redirect = nil }
+                    if showReachOut { showReachOut = false }
                 }
 
             Button(action: submitSituation) {
@@ -401,6 +439,76 @@ struct EnforcementCard: View {
         )
     }
 
+    // MARK: - When we won't build the week
+
+    /// Declines the object, names the need underneath it, and offers the week we
+    /// can honestly build. Never a lecture, and never a dead end: someone who
+    /// typed something they shouldn't stand on still opened this app wanting God,
+    /// and sending them away with only a "no" wastes that.
+    private func redirectNotice(_ redirect: SituationScreen.Redirect) -> some View {
+        VStack(alignment: .leading, spacing: DS.Spacing.xs) {
+            Text(redirect.message)
+                .font(.system(size: 13, weight: .medium))
+                .foregroundColor(.white.opacity(0.85))
+                .fixedSize(horizontal: false, vertical: true)
+
+            if let title = redirect.offerTitle, let category = redirect.offerCategory {
+                Button {
+                    AnalyticsService.shared.track("enforcement_redirect_accepted",
+                                                  parameters: ["reason": redirect.reason,
+                                                               "category": category.rawValue])
+                    guard onStandOn(category) else {
+                        // Keep the notice up: the card already cleared the field,
+                        // so a silent no-op would read as the button being dead.
+                        matchFailed = true
+                        return
+                    }
+                    situation = ""
+                    self.redirect = nil
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: "arrow.turn.down.right")
+                            .font(.system(size: 13, weight: .semibold))
+                        Text(title)
+                            .font(.system(size: 14, weight: .bold, design: .rounded))
+                    }
+                    .foregroundColor(DS.Palette.deepBlue)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 10)
+                    .background(Capsule().fill(DS.Gradient.gold))
+                }
+                .buttonStyle(.dsPressable(feel: .tapSolid))
+                .accessibilityLabel(title)
+            }
+        }
+        .padding(DS.Spacing.sm)
+        .background(
+            RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous)
+                .fill(Color.white.opacity(0.07))
+        )
+    }
+
+    /// Not a campaign state. Someone said they want to end their life, and the
+    /// honest answer is a person, not seven days of declarations. No correction,
+    /// no scripture argument, nothing to submit.
+    private var reachOutNotice: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("Please don't carry this alone.")
+                .font(.system(size: 15, weight: .bold, design: .rounded))
+                .foregroundColor(.white)
+            Text("Reach out to someone you trust right now, before anything else. You are not a burden, and you are not too far gone.")
+                .font(.system(size: 13, weight: .medium))
+                .foregroundColor(.white.opacity(0.85))
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(DS.Spacing.sm)
+        .background(
+            RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous)
+                .fill(Color.white.opacity(0.07))
+        )
+    }
+
     private var canSubmit: Bool {
         situation.trimmingCharacters(in: .whitespacesAndNewlines).count >= 3
     }
@@ -419,22 +527,31 @@ struct EnforcementCard: View {
             AnalyticsService.shared.track("enforcement_input_rejected", parameters: [
                 "reason": "\(error)", "length": text.count
             ])
-            inputError = "A few more words. A sentence about what you're facing gives you seven days that actually fit."
+            inputError = "A few more words. A sentence about the fight, or what you're believing for, gives you seven days that actually fit."
             return
         }
 
         inputError = nil
         isMatching = true
         matchFailed = false
-        onDescribe(text) { started in
+        redirect = nil
+        showReachOut = false
+        onDescribe(text) { result in
             isMatching = false
-            if started {
+            switch result {
+            case .started:
                 // The card flips to its active state; the field goes with it.
                 situation = ""
-            } else {
+            case .failed:
                 // Keep what they wrote. Losing someone's description of a hard
                 // week and showing nothing is the worst version of this failing.
                 matchFailed = true
+            case .declined(let redirect):
+                // Their words stay in the field. Wiping them would read as the
+                // app deleting what they said, on top of refusing it.
+                self.redirect = redirect
+            case .reachOut:
+                showReachOut = true
             }
         }
     }

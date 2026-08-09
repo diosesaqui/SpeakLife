@@ -188,6 +188,51 @@ User identity is attached at sign-in via `setUserId(firebaseUid)` (see
 
 ---
 
+## 4. Enforcement campaigns (premium)
+
+The seven-day campaign a user starts by describing what they're facing. The
+funnel worth building is **offered → input → started → day 1 spoken → completed**.
+
+| Event | Source | Notable properties |
+|-------|--------|--------------------|
+| `enforcement_offered` | `ModernDailyChecklistView` | weekly prompt reached an eligible user |
+| `enforcement_locked_tapped` | card, non-premium | pairs with `paywall_impression` (`enforcement_card`) |
+| `enforcement_input_rejected` | card | `reason`, `length` — too thin to build a week |
+| `enforcement_started` | checklist view | `theme`, `source` (`curated` \| `matched` \| `redirect` \| `completion`), `secondaries` |
+| `enforcement_curated` | `EnforcementCurator` | Claude chose the seven |
+| `enforcement_curation_failed` | `EnforcementCurator` | `reason` — fell through to keyword assembly |
+| `enforcement_burst_opened` | checklist Burst row | `day`. Fired from the card's CTA before that button moved to the checklist |
+| `enforcement_day_completed` | `EnhancedStreakViewModel` | the day banked |
+| `enforcement_completed` | `EnhancedStreakViewModel` | all seven |
+| `enforcement_abandoned` | card | `enforcement_id`, `last_day` |
+
+### 4a. Input screening
+
+Requests the app won't build a week for. Watch these two together: a rise in
+`enforcement_input_screened` with `layer: local` and no matching rise in
+`enforcement_redirect_accepted` means the local phrase list is declining people
+who came to stay.
+
+| Event | Notable properties |
+|-------|--------------------|
+| `enforcement_input_screened` | `verdict` (`another_persons_partner` \| `harm_to_another` \| `unscriptural` \| `reach_out`), `layer` (`local` \| `claude`) |
+| `enforcement_redirect_accepted` | `reason`, `category` — took the week we offered instead |
+| `personal_declaration_screened` | `verdict`, including `claude_declined` when only the model caught it |
+| `claude_declined` | Claude refused to write a personal declaration |
+
+`verdict: reach_out` is the self-harm branch. It should be **rare**; a
+sustained rise is a signal to look at, not a metric to optimise.
+
+### 4b. Campaign-refreshed tasks
+
+`checklist_task_completed` carries `is_burst` and `recommended_audio_id` but
+**not** whether the task was rebuilt by a campaign, so it cannot currently
+answer "do people complete campaign tasks more than generic ones?" — the ROI
+question for the whole feature. Adding `is_campaign: task.isCampaignRefreshed`
+to that event would close it.
+
+---
+
 ## Creating these in PostHog
 
 **Manually:** Product Analytics → New Funnel → add the events above in order.

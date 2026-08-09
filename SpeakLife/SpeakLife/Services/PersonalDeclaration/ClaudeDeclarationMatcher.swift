@@ -35,6 +35,14 @@ final class ClaudeDeclarationMatcher: DeclarationMatcherProtocol {
             print("✅ [Claude] Match succeeded, category: \(result.category.rawValue)")
             AnalyticsService.shared.track("claude_success", parameters: ["category": result.category.rawValue])
             return result
+        } catch ClaudeError.declined {
+            // Must NOT fall back. A network error means "try the keyword
+            // matcher"; a refusal means "do not write for this", and routing it
+            // to the fallback would answer a declined request with a written
+            // declaration — exactly what the refusal existed to prevent.
+            AnalyticsService.shared.track("claude_declined")
+            return DeclarationMatch(category: .faith, declarationText: "", verse: "",
+                                    verseReference: "", isConfident: false, isDeclined: true)
         } catch {
             print("❌ [Claude] Error: \(error) — falling back to keyword matcher")
             AnalyticsService.shared.track("claude_fallback", parameters: ["reason": "\(error)"])
@@ -86,6 +94,10 @@ final class ClaudeDeclarationMatcher: DeclarationMatcherProtocol {
         let jsonData = try extractJSON(from: text)
         let parsed = try JSONDecoder().decode(DeclarationJSON.self, from: jsonData)
 
+        // Claude read the request and won't write for it. Caught specifically by
+        // the caller so it never reaches the keyword fallback.
+        guard parsed.category != "decline" else { throw ClaudeError.declined }
+
         let category = DeclarationCategory(rawValue: parsed.category) ?? .faith
         return DeclarationMatch(
             category: category,
@@ -115,6 +127,7 @@ private enum ClaudeError: Error {
     case httpError(statusCode: Int)
     case emptyResponse
     case invalidJSON
+    case declined
 }
 
 private struct ClaudeRequest: Encodable {

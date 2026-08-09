@@ -358,4 +358,80 @@ final class DailyChecklistTests: XCTestCase {
             XCTAssertFalse(task.icon.isEmpty)
         }
     }
+
+    // MARK: - Campaign-refreshed tasks
+
+    /// The AI path builds a different task set. These tests are about the
+    /// standard one, so pin the flag rather than inherit whatever ran before.
+    private func withStandardTasks(_ body: () -> Void) {
+        let key = "enableAIFeatures"
+        let previous = UserDefaults.standard.bool(forKey: key)
+        UserDefaults.standard.set(false, forKey: key)
+        defer { UserDefaults.standard.set(previous, forKey: key) }
+        body()
+    }
+
+    private func campaignDay(_ number: Int = 3) -> EnforcementDay {
+        EnforcementDay(dayNumber: number,
+                       anchorText: "I am rooted and established in love.",
+                       anchorVerse: "verse",
+                       anchorBook: "Ephesians 3:17",
+                       anchorTranslation: "",
+                       audioId: "psalm91",
+                       audioTitle: "Psalm 91",
+                       audioMinutes: 12)
+    }
+
+    /// The badge is the only thing connecting a typed sentence to the two tasks
+    /// that quietly changed underneath the user because of it.
+    func testCampaignStampsTheBurstAndTheListenTask() {
+        withStandardTasks {
+            let tasks = TaskLibrary.getCoreTasksForStreak(10, enforcementDay: campaignDay())
+
+            let burst = tasks.first { $0.id == "complete_daily_burst" }
+            let listen = tasks.first { $0.id == "listen_audio" }
+            XCTAssertEqual(burst?.isCampaignRefreshed, true)
+            XCTAssertEqual(listen?.isCampaignRefreshed, true)
+            XCTAssertEqual(listen?.recommendedAudioId, "psalm91")
+            XCTAssertEqual(burst?.description,
+                           "Day 3 of \(Enforcement.length), built from what you're standing on.")
+        }
+    }
+
+    /// Only those two. A badge on the devotional would be a lie.
+    func testCampaignStampsNothingElse() {
+        withStandardTasks {
+            let tasks = TaskLibrary.getCoreTasksForStreak(10, enforcementDay: campaignDay())
+            for task in tasks where !TaskLibrary.campaignOwnedTaskIds.contains(task.id) {
+                XCTAssertFalse(task.isCampaignRefreshed,
+                               "\(task.id) claims a campaign it has nothing to do with")
+            }
+        }
+    }
+
+    func testNoCampaignMeansNoStamp() {
+        withStandardTasks {
+            for task in TaskLibrary.getCoreTasksForStreak(10) {
+                XCTAssertFalse(task.isCampaignRefreshed)
+            }
+        }
+    }
+
+    /// `DailyTask` uses synthesized Codable, which does NOT fall back to a
+    /// property's default when a key is absent. A non-optional `Bool` here would
+    /// throw `keyNotFound` on every checklist persisted before this shipped, and
+    /// the user would lose the day's progress on upgrade.
+    func testTaskDecodesWhenTheCampaignFlagIsAbsent() throws {
+        let legacy = """
+        {"id":"complete_daily_burst","title":"Speak Your Daily Burst",
+         "description":"Seven declarations out loud.","icon":"bolt.circle.fill",
+         "category":"foundation","type":"speak","difficulty":1,
+         "minimumStreakDay":1,"estimatedMinutes":3,"isCompleted":false,
+         "navigationDestination":"burst"}
+        """.data(using: .utf8)!
+
+        let task = try JSONDecoder().decode(DailyTask.self, from: legacy)
+        XCTAssertEqual(task.id, "complete_daily_burst")
+        XCTAssertFalse(task.isCampaignRefreshed)
+    }
 }

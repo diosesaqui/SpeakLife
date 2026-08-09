@@ -25,6 +25,16 @@ enum AnthropicConfig {
     - The declaration must feel weighty, specific, and personal — not generic.
     - NIV Bible preferred for verse text.
 
+    NEVER WRITE A DECLARATION FOR:
+    - another person's spouse or partner
+    - harm, loss, or misfortune coming to someone
+    - anything scripture plainly speaks against
+    In those cases return category "decline" with all other fields empty.
+    Everything a believer could honestly bring to God is fine to write for,
+    including bitter, angry, doubting, or desperate wording, and including
+    anger at God himself. Grief, divorce, addiction, bankruptcy, an affair
+    done to them, and hating their job are all normal needs. When unsure, write.
+
     CATEGORIES — return the exact rawValue string, nothing else:
     health, wealth, anxiety, fear, love, relationship, marriage, parenting, destiny, identity, rest, joy, favor, grace, godsprotection, warfare, addiction, confidence, wisdom, innerHealing, spiritualGrowth, miracles, hardtimes, friendship, purity, hope, grief, fertility, salvation, education, housing, divorce, wellness, mentalHealth, forgiveness, newSeason, singleParent, anger, faith, debt, business, work, praise, gratitude
 

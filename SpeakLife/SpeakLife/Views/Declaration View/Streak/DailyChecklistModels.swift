@@ -102,6 +102,18 @@ struct DailyTask: Identifiable, Codable {
     /// nil after the foundation week — the task opens the open audio tab.
     var recommendedAudioId: String? = nil
 
+    /// Set on the tasks an active campaign rebuilt from the user's own words.
+    ///
+    /// Optional, not `Bool = false`, on purpose: `DailyTask` uses synthesized
+    /// Codable, which does NOT fall back to a property's default value when a
+    /// key is absent. A new non-optional key would throw `keyNotFound` on every
+    /// checklist persisted before this shipped, and the user would lose today's
+    /// progress. An Optional decodes to nil. Read it through
+    /// `isCampaignRefreshed`, never directly.
+    var campaignRefreshed: Bool? = nil
+
+    var isCampaignRefreshed: Bool { campaignRefreshed == true }
+
     init(id: String, title: String, description: String, icon: String,
          category: TaskCategory, type: TaskType, difficulty: DifficultyLevel = .beginner,
          minimumStreakDay: Int = 1, estimatedMinutes: Int = 5,
@@ -1174,7 +1186,8 @@ struct TaskLibrary {
         // Check if AI features are enabled for enhanced task generation
         if isAIEnabled() {
             let aiTasks = getAIEnhancedTasks(streakDay: streakDay, userCategories: userCategories)
-            return burstFirst(applyAudioPlan(to: aiTasks, day: audioDay, enforcementDay: enforcementDay))
+            let planned = applyAudioPlan(to: aiTasks, day: audioDay, enforcementDay: enforcementDay)
+            return burstFirst(markCampaignOwned(planned, enforcementDay: enforcementDay))
         }
 
         // Standard task generation
@@ -1221,9 +1234,39 @@ struct TaskLibrary {
         // pick (days 1-7), the open-ended prompt (day 8+), and an active Enforcement's
         // day all win over the generic category title.
         tasks = applyAudioPlan(to: tasks, day: audioDay, enforcementDay: enforcementDay)
+        tasks = markCampaignOwned(tasks, enforcementDay: enforcementDay)
 
         // Burst must always be first — it's the only streak-earning task
         return burstFirst(tasks)
+    }
+
+    /// Ids of the tasks an active campaign rebuilds. Both are genuinely
+    /// different content while one is running: the listen task points at the
+    /// campaign's day audio, and the Burst speaks the campaign's seven
+    /// declarations instead of the general feed.
+    static let campaignOwnedTaskIds: Set<String> = ["complete_daily_burst", "listen_audio"]
+
+    /// Stamps those two so the checklist can say where they came from.
+    ///
+    /// Without this the campaign's work is invisible: someone types a sentence,
+    /// two tasks quietly change underneath them, and nothing connects the two.
+    /// The stamp is what lets the row carry a badge instead of the campaign card
+    /// carrying a second copy of the same button.
+    private static func markCampaignOwned(_ tasks: [DailyTask],
+                                          enforcementDay: EnforcementDay?) -> [DailyTask] {
+        guard let enforcementDay else { return tasks }
+        return tasks.map { task in
+            guard campaignOwnedTaskIds.contains(task.id) else { return task }
+            var owned = task
+            owned.campaignRefreshed = true
+            // The Burst's stock line ("Seven declarations out loud…") is true of
+            // every day forever. On a campaign it's seven specific declarations
+            // and the day number is the reason to open it.
+            if task.id == "complete_daily_burst" {
+                owned.description = "Day \(enforcementDay.dayNumber) of \(Enforcement.length), built from what you're standing on."
+            }
+            return owned
+        }
     }
 
     /// Days 1-7: points the listen task at that day's exact recommended audio

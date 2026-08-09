@@ -372,7 +372,44 @@ final class EnhancedStreakViewModel: ObservableObject {
         
         saveData()
     }
-    
+
+    /// Rebuilds today's tasks after a campaign starts, switches, or is abandoned.
+    ///
+    /// `todayChecklist` is only regenerated on day rollover, streak change, and
+    /// re-personalization — none of which a campaign start triggers. Without
+    /// this, someone who starts a campaign today keeps the tasks that were built
+    /// with `enforcementDay: nil`: no CampaignBadge, the Burst's generic
+    /// description, and a listen row still deep-linked to the foundation-week
+    /// episode instead of the campaign's audio — while the card above it says
+    /// all of that is in their daily tasks.
+    ///
+    /// Deliberately not `refreshTasksWithUserCategories`, which returns early
+    /// when the user has no chosen categories and so cannot be relied on here.
+    func refreshTasksForCampaignChange() {
+        let currentStreak = streakStats.currentStreak > 0 ? streakStats.currentStreak : 1
+        let freshTasks = TaskLibrary.getCoreTasksForStreak(currentStreak,
+                                                           userCategories: getUserTopCategories(),
+                                                           foundationAudioDay: workingStreakDay,
+                                                           enforcementDay: EnforcementService.shared.enabledActiveDay)
+
+        // Completions must survive: starting a campaign after speaking today's
+        // Burst must not un-check it and hand back a streak day already banked.
+        let existingCompletions = Dictionary(uniqueKeysWithValues: todayChecklist.tasks.map {
+            ($0.id, ($0.isCompleted, $0.completedAt))
+        })
+
+        todayChecklist.tasks = freshTasks.map { task in
+            var updatedTask = task
+            if let (wasCompleted, completedAt) = existingCompletions[task.id] {
+                updatedTask.isCompleted = wasCompleted
+                updatedTask.completedAt = completedAt
+            }
+            return updatedTask
+        }
+
+        saveData()
+    }
+
     deinit {
         NotificationCenter.default.removeObserver(self)
     }

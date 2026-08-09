@@ -102,6 +102,15 @@ struct ModernDailyChecklistView: View {
         case .journal:
             showJournal = true
         case .burst:
+            // Re-pointed, not dropped. This event used to fire from the campaign
+            // card's gold CTA; that button is gone, but the tap it measured just
+            // moved down here. Same name and same `day` parameter so any chart
+            // built on it keeps reading continuously across the change.
+            if task.isCampaignRefreshed {
+                AnalyticsService.shared.track("enforcement_burst_opened", parameters: [
+                    "day": enforcementService.progressSnapshot.currentDay
+                ])
+            }
             openBurst()
         case .none:
             viewModel.completeTask(taskId: task.id)
@@ -137,20 +146,6 @@ struct ModernDailyChecklistView: View {
         UserSelectedCategories.top()
     }
 
-    /// True when the Enforcement card is on screen with a running campaign, so
-    /// it is already carrying today's Burst CTA.
-    ///
-    /// Mirrors the card's own render condition exactly — same Remote Config
-    /// flag, same active-campaign check — because the two must never disagree.
-    /// If the checklist demoted the Burst while the card wasn't there, the
-    /// day's most important action would have no loud entry point at all.
-    ///
-    /// Whenever the Burst is still outstanding and a campaign is running, the
-    /// card is in its `.speak` state, so the gold CTA is present to take over.
-    private var campaignOwnsBurst: Bool {
-        subscriptionStore.enforcementEnabled && enforcementService.activeEnforcement != nil
-    }
-
     /// Whether today's Daily Burst is already checked off.
     ///
     /// The Enforcement card needs this and can't see it: a campaign begun after
@@ -170,7 +165,25 @@ struct ModernDailyChecklistView: View {
     /// dead network still produces a category). `matchAll` is a purely local
     /// keyword scan, so the secondary themes cost nothing extra.
     private func startMatchedEnforcement(from text: String,
-                                         completion: @escaping (Bool) -> Void) {
+                                         completion: @escaping (EnforcementStartResult) -> Void) {
+        // Runs before anything touches the network, so a dead connection can't
+        // skip it. That matters: offline, both Claude calls below fall back to
+        // keyword matching and this is the only screen left standing.
+        switch SituationScreen.screen(text) {
+        case .reachOut:
+            AnalyticsService.shared.track("enforcement_input_screened",
+                                          parameters: ["verdict": "reach_out", "layer": "local"])
+            completion(.reachOut)
+            return
+        case .redirect(let redirect):
+            AnalyticsService.shared.track("enforcement_input_screened",
+                                          parameters: ["verdict": redirect.reason, "layer": "local"])
+            completion(.declined(redirect))
+            return
+        case .standable:
+            break
+        }
+
         Task {
             let matcher = DIContainer.shared.declarationMatcher
             let primary = await matcher.match(input: text).category
@@ -190,13 +203,23 @@ struct ModernDailyChecklistView: View {
                                                       secondaries: topSecondaries,
                                                       pool: pool)
             }
-            let curated = await EnforcementCurator.curate(situation: text,
+            let outcome = await EnforcementCurator.curate(situation: text,
                                                           candidates: candidates)
 
             await MainActor.run {
+                // A decline is an answer. It must not fall through to keyword
+                // assembly, which would cheerfully build the week Claude just
+                // refused to build.
+                if case .declined(let redirect) = outcome {
+                    completion(.declined(redirect))
+                    return
+                }
+
                 let started: Enforcement?
-                if let curated {
-                    started = enforcementService.startCurated(curated, primary: primary,
+                var curated = false
+                if case .curated(let days) = outcome {
+                    curated = true
+                    started = enforcementService.startCurated(days, primary: primary,
                                                               isPremium: subscriptionStore.isPremium)
                 } else {
                     started = enforcementService.startMatched(
@@ -209,13 +232,42 @@ struct ModernDailyChecklistView: View {
                 if let started {
                     AnalyticsService.shared.track("enforcement_started", parameters: [
                         "theme": started.theme,
-                        "source": curated != nil ? "curated" : "matched",
+                        "source": curated ? "curated" : "matched",
                         "secondaries": topSecondaries.map(\.rawValue).joined(separator: ",")
                     ])
+                    // Today's tasks were built before this campaign existed.
+                    // Without the rebuild the card promises a badged Burst and
+                    // the campaign's audio that the checklist doesn't have.
+                    viewModel.refreshTasksForCampaignChange()
                 }
-                completion(started != nil)
+                completion(started != nil ? .started : .failed)
             }
         }
+    }
+
+    /// Starts the week we offered instead of the one we declined. Straight
+    /// assembly: they picked a theme off a button, so there is no sentence left
+    /// for Claude to read.
+    /// - Returns: false when the week couldn't be started, so the card can say
+    ///   so. It has already cleared the field and the redirect notice by the
+    ///   time this runs; swallowing a nil would leave the user looking at a
+    ///   button that did nothing.
+    @discardableResult
+    private func standOn(_ category: DeclarationCategory) -> Bool {
+        guard let started = enforcementService.startMatched(
+            primary: category,
+            secondaries: [],
+            pool: declarationStore.allAvailableDeclarations,
+            isPremium: subscriptionStore.isPremium
+        ) else { return false }
+
+        AnalyticsService.shared.track("enforcement_started", parameters: [
+            "theme": started.theme,
+            "source": "redirect",
+            "secondaries": ""
+        ])
+        viewModel.refreshTasksForCampaignChange()
+        return true
     }
 
     /// Matches the declaration feed's themed backdrop (including a user-chosen
@@ -397,18 +449,7 @@ struct ModernDailyChecklistView: View {
                                                                   isPremium: subscriptionStore.isPremium) else { return }
                                     AnalyticsService.shared.track("enforcement_started",
                                                                   parameters: ["theme": enforcement.theme])
-                                },
-                                onOpenAudio: { day in
-                                    audioDeclarationViewModel.pendingChecklistDeepLink =
-                                        .init(audioId: day.audioId, requestedAt: Date())
-                                    if let onClose = onClose { onClose() } else { dismiss() }
-                                    tabViewModel.goToAudio()
-                                },
-                                onOpenBurst: {
-                                    AnalyticsService.shared.track("enforcement_burst_opened", parameters: [
-                                        "day": enforcementService.progressSnapshot.currentDay
-                                    ])
-                                    openBurst()
+                                    viewModel.refreshTasksForCampaignChange()
                                 },
                                 onLockedTap: {
                                     AnalyticsService.shared.track("enforcement_locked_tapped")
@@ -422,10 +463,15 @@ struct ModernDailyChecklistView: View {
                                         "last_day": snapshot.currentDay
                                     ])
                                     enforcementService.abandon()
+                                    // Abandoning has to strip the badges and put
+                                    // the foundation audio back, same as starting
+                                    // has to add them.
+                                    viewModel.refreshTasksForCampaignChange()
                                 },
                                 onDescribe: { text, completion in
                                     startMatchedEnforcement(from: text, completion: completion)
-                                }
+                                },
+                                onStandOn: { category in standOn(category) }
                             )
                             .padding(.horizontal, 20)
                             .dsAppear(0.04)
@@ -435,7 +481,6 @@ struct ModernDailyChecklistView: View {
                         StructuredDayView(
                             tasks: viewModel.todayChecklist.tasks,
                             streakCount: viewModel.streakStats.currentStreak,
-                            burstOwnedByCampaign: campaignOwnsBurst,
                             onToggle: { taskId in
                                 guard let task = viewModel.todayChecklist.tasks.first(where: { $0.id == taskId }) else { return }
                                 if task.isCompleted {
@@ -645,6 +690,7 @@ struct ModernDailyChecklistView: View {
                                                   isPremium: subscriptionStore.isPremium) else { return }
                     AnalyticsService.shared.track("enforcement_started",
                                                   parameters: ["theme": enforcement.theme, "source": "completion"])
+                    viewModel.refreshTasksForCampaignChange()
                     enforcementService.justCompleted = nil
                 },
                 onDone: { enforcementService.justCompleted = nil }
