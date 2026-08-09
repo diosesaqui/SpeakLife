@@ -142,18 +142,32 @@ final class EnhancedStreakViewModel: ObservableObject {
             DispatchQueue.main.async { [weak self] in self?.handleSyncedProgressChanged(notification) }
             return
         }
+        // A freeze spent on the user's other device reaches this one as this
+        // flag — announce it, so the number never moves without explanation.
+        var announceFreeze = false
         if notification.name == SyncedSettingsStore.settingsDidChange,
            let keys = notification.userInfo?["keys"] as? Set<String> {
-            // A freeze spent on the user's other device reaches this one as
-            // this flag. Raise the banner the moment it lands — the whole
-            // point is that the number never moves without an explanation.
-            if keys.contains(Self.freezeUsedFlagKey) {
-                showFreezeUsedBannerIfNeeded()
-            }
+            announceFreeze = keys.contains(Self.freezeUsedFlagKey)
             // Otherwise only react when the streak blob itself was applied.
-            guard keys.contains(streakStatsKey) else { return }
+            guard keys.contains(streakStatsKey) else {
+                if announceFreeze { showFreezeUsedBannerIfNeeded() }
+                return
+            }
         }
         reconcileWithSyncedProgress()
+        // ORDER MATTERS: the banner is bounded by the freeze's IDENTITY, and
+        // that identity (streakFreezeCoveredDay) lives in the synced blob that
+        // reconcileWithSyncedProgress folds in just above. Announcing first
+        // would read this device's stale in-memory stats — on the receiving
+        // device, which never spent the freeze, both freeze dates are still
+        // nil there, so the identity would fall through to today's date and
+        // stamp the wrong one. The flag syncs one-way (boolOr), so a remote
+        // row still holding true comes back later, by which point the real
+        // covered day HAS landed, the stamp no longer matches, and the banner
+        // fires a second time — the exact double-fire the identity exists to
+        // prevent. (It cuts the other way too: a genuinely new freeze spent
+        // later the same day would be swallowed by that stale "today" stamp.)
+        if announceFreeze { showFreezeUsedBannerIfNeeded() }
     }
 
     /// Merges progress synced from the user's other devices into the live

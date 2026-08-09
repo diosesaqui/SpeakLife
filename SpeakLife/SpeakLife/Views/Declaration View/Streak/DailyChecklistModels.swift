@@ -348,15 +348,18 @@ struct StreakStats: Codable, Equatable {
     ///
     /// A streak whose lastCompletedDate is before yesterday is dead — unless
     /// it is still freeze-rescuable (freeze available and streak >= 3, so a
-    /// legitimate freeze save is never pre-empted). This is deliberately a
-    /// SUPERSET of what checkStreakValidity will actually rescue: that rule
-    /// also reads the merged history, which a pure merge of two blobs cannot
-    /// see. Erring wide only ever delays a reset by one merge — erring narrow
-    /// would zero out a streak a freeze was about to save, which is the one
-    /// mistake this feature must never make. Merging with the RAW currentStreak lets a stale
-    /// synced blob resurrect a broken streak after the local validity check
-    /// reset it (the "zombie streak": badge shows an old count with no
-    /// completions to back it, then drops on the next real completion).
+    /// legitimate freeze save is never pre-empted). Merging with the RAW
+    /// currentStreak instead would let a stale synced blob resurrect a broken
+    /// streak after the local validity check reset it (the "zombie streak":
+    /// badge shows an old count with no completions to back it, then drops on
+    /// the next real completion).
+    ///
+    /// The rescuable clause is deliberately a SUPERSET of what
+    /// checkStreakValidity will actually rescue — that rule also reads the
+    /// merged completion history, which a pure merge of two blobs cannot see.
+    /// Erring wide only ever delays a reset by one merge; erring narrow would
+    /// zero out a streak a freeze was about to save, which is the one mistake
+    /// this feature must never make.
     private var liveCurrentStreak: Int {
         guard let last = lastCompletedDate else { return 0 }
         let calendar = Calendar.current
@@ -379,7 +382,10 @@ struct StreakStats: Codable, Equatable {
     /// so they follow the side whose lastCompletedDate is most recent, and
     /// every count is first normalized to what it can still claim today
     /// (liveCurrentStreak), so a stale blob can never resurrect a broken
-    /// streak. Both devices compute the same result, so merges converge.
+    /// streak. On the same last-completed day, a date written by a freeze
+    /// (streakFreezeCoveredDay != nil) is a placeholder and loses to a side
+    /// that actually completed that day. Both devices compute the same
+    /// result, so merges converge.
     func merging(_ other: StreakStats) -> StreakStats {
         var merged = self
         merged.longestStreak = max(longestStreak, other.longestStreak)
