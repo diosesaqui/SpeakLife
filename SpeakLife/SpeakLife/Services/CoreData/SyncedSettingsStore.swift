@@ -134,11 +134,14 @@ final class SyncedSettingsStore {
         SyncedKey(key: "onboarded", strategy: .boolOr),
         SyncedKey(key: "hasCompletedEnhancedOnboarding", strategy: .boolOr),
         SyncedKey(key: "hasPersonalDeclaration", strategy: .boolOr),
-        // "Your streak freeze was used" — raised by the checklist when a freeze
-        // is spent and consumed-and-cleared by
-        // EnhancedStreakViewModel.appDidBecomeActive. Synced so the banner
-        // reaches whichever device the user next opens rather than only the one
-        // that happened to spend the freeze, which may be a phone in a drawer.
+        // "Your streak freeze was used" — raised where the freeze is spent and
+        // consumed-and-cleared by EnhancedStreakViewModel.appDidBecomeActive
+        // (via showFreezeUsedBannerIfNeeded). Synced so the banner reaches
+        // whichever device the user next opens rather than only the one that
+        // happened to spend the freeze, which may be a phone in a drawer.
+        // boolOr never carries the clear back, so the still-true remote row
+        // returns on the next reconcile; the view model bounds the banner by
+        // freeze identity rather than by this flag alone.
         SyncedKey(key: "streakFreezeWasUsed", strategy: .boolOr),
 
         // Identity & personalization.
