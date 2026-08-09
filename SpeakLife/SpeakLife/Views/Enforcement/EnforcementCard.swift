@@ -120,18 +120,21 @@ struct EnforcementCard: View {
                 .padding(.top, 2)
 
             HStack(spacing: DS.Spacing.xs) {
-                // The audio row that used to live here was a literal duplicate:
-                // `DailyChecklistModels.applyAudioPlan` already retitles the
-                // listen task with this day's audio and deep-links to the same
-                // id, so the same episode appeared twice on one screen. The
-                // checklist row keeps it, wearing a CampaignBadge that says
-                // where it came from.
-                Text("\(day.audioTitle) is on your daily tasks too")
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundColor(.white.opacity(0.5))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.85)
-
+                // Nothing sits here on purpose.
+                //
+                // This row briefly read "<audio title> is on your daily tasks
+                // too", added as a signpost when the card's duplicate audio
+                // button was removed. It failed three ways. Audio titles read
+                // like campaign themes, so "Victory in Spiritual Warfare is on
+                // your daily tasks too" sounds like the campaign is on the
+                // daily tasks rather than one audio track. It pointed at a row
+                // already visible on the same screen wearing a CampaignBadge,
+                // which is the same duplication the badge was built to end. And
+                // once the day was banked it told the user to go do something
+                // already handled.
+                //
+                // The badge is the signpost. It is attached to the actual row,
+                // so it cannot go stale or be misread.
                 Spacer(minLength: 0)
 
                 // The way out. Without this, picking the wrong theme locks the
