@@ -381,6 +381,217 @@ final class EnforcementServiceTests: XCTestCase {
         wait(for: [done], timeout: 10)
     }
 
+    // MARK: - iCloud merge
+    //
+    // A campaign is now whitelisted in SyncedSettingsStore, so both devices run
+    // the same merge over the same pair of blobs. Two properties carry the
+    // whole thing and are pinned below: the merge is commutative (or the two
+    // devices settle on different campaigns and push at each other forever),
+    // and `assembledEnforcement` travels with its own campaign (a curated id
+    // like "curated_warfare" is not in enforcements.json, so a campaign that
+    // arrives without its blob cannot be resolved at all).
+
+    private func merge(_ a: EnforcementProgress, _ b: EnforcementProgress) -> EnforcementProgress {
+        SyncedSettingsStore.mergedEnforcementProgress(a, b)
+    }
+
+    private func makeProgress(id: String?,
+                              startedOn: Date? = nil,
+                              days: Set<Int> = [],
+                              lastAdvancedOn: Date? = nil,
+                              assembled: Enforcement? = nil,
+                              history: [String] = []) -> EnforcementProgress {
+        var progress = EnforcementProgress()
+        progress.activeEnforcementId = id
+        progress.startedOn = startedOn
+        progress.completedDayNumbers = days
+        progress.lastAdvancedOn = lastAdvancedOn
+        progress.assembledEnforcement = assembled
+        progress.completedEnforcementIds = history
+        return progress
+    }
+
+    func testMerge_SameCampaign_UnionsDaysAndTakesLaterCursor() {
+        let start = daysAgo(6)
+        let phone = makeProgress(id: "peace", startedOn: start, days: [1, 2], lastAdvancedOn: daysAgo(5))
+        let pad = makeProgress(id: "peace", startedOn: start, days: [1, 3], lastAdvancedOn: daysAgo(2))
+
+        let merged = merge(phone, pad)
+        XCTAssertEqual(merged.activeEnforcementId, "peace")
+        XCTAssertEqual(merged.completedDayNumbers, [1, 2, 3], "a day banked anywhere is banked")
+        XCTAssertEqual(merged.lastAdvancedOn, pad.lastAdvancedOn)
+        XCTAssertEqual(merged, merge(pad, phone))
+    }
+
+    func testMerge_DifferentCampaigns_NewerStartTakesTheWholeWeek() {
+        let old = makeProgress(id: "peace", startedOn: daysAgo(20), days: [1, 2, 3], lastAdvancedOn: daysAgo(18))
+        let new = makeProgress(id: "warfare", startedOn: daysAgo(2), days: [1], lastAdvancedOn: daysAgo(1))
+
+        let merged = merge(old, new)
+        XCTAssertEqual(merged.activeEnforcementId, "warfare")
+        XCTAssertEqual(merged.startedOn, new.startedOn)
+        XCTAssertEqual(merged.completedDayNumbers, [1],
+                       "two different weeks must never have their day sets blended")
+        XCTAssertEqual(merged.lastAdvancedOn, new.lastAdvancedOn)
+        XCTAssertTrue(merged.completedEnforcementIds.isEmpty,
+                      "an abandoned week was never earned")
+        XCTAssertEqual(merged, merge(new, old))
+    }
+
+    func testMerge_DroppedCampaign_BankedOnlyWhenItWasFinished() {
+        let finished = makeProgress(id: "peace",
+                                    startedOn: daysAgo(20),
+                                    days: Set(1...Enforcement.length),
+                                    lastAdvancedOn: daysAgo(14))
+        let new = makeProgress(id: "warfare", startedOn: daysAgo(2), days: [1])
+
+        let merged = merge(finished, new)
+        XCTAssertEqual(merged.activeEnforcementId, "warfare")
+        XCTAssertEqual(merged.completedEnforcementIds, ["peace"],
+                       "a week that reached day seven is history, not a discard")
+        XCTAssertEqual(merged, merge(new, finished))
+    }
+
+    func testMerge_OneSideHasNoCampaign_TheOtherWins() {
+        let none = EnforcementProgress()
+        let running = makeProgress(id: "warfare", startedOn: daysAgo(3), days: [1, 2], lastAdvancedOn: daysAgo(1))
+
+        let merged = merge(none, running)
+        XCTAssertEqual(merged.activeEnforcementId, "warfare")
+        XCTAssertEqual(merged.completedDayNumbers, [1, 2])
+        XCTAssertEqual(merged.startedOn, running.startedOn)
+        XCTAssertEqual(merged, merge(running, none))
+    }
+
+    /// The blob is the campaign. A curated id is not in the catalog, so a
+    /// campaign that crosses devices without `assembledEnforcement` resolves to
+    /// nothing and the user's week vanishes on the second device.
+    func testMerge_AssembledCampaignTravelsWithItsWeek() {
+        let curated = makeEnforcement(id: "curated_warfare", theme: "warfare")
+        let holder = makeProgress(id: curated.id, startedOn: daysAgo(3), days: [1, 2], assembled: curated)
+        let fresh = EnforcementProgress()
+
+        XCTAssertEqual(merge(fresh, holder).assembledEnforcement, curated)
+        XCTAssertEqual(merge(holder, fresh).assembledEnforcement, curated)
+
+        // Same campaign, but the other side only ever received the id.
+        let blobless = makeProgress(id: curated.id, startedOn: daysAgo(3), days: [1, 3])
+        XCTAssertEqual(merge(holder, blobless).assembledEnforcement, curated)
+        XCTAssertEqual(merge(blobless, holder).assembledEnforcement, curated)
+        XCTAssertEqual(merge(holder, blobless), merge(blobless, holder))
+    }
+
+    func testMerge_HistoryIsUnionedAndOrderedTheSameOnBothDevices() {
+        let phone = makeProgress(id: nil, history: ["peace", "warfare"])
+        let pad = makeProgress(id: nil, history: ["peace", "healing"])
+
+        let merged = merge(phone, pad)
+        XCTAssertEqual(Set(merged.completedEnforcementIds), ["peace", "warfare", "healing"],
+                       "completion history is never lost")
+        XCTAssertEqual(merged, merge(pad, phone),
+                       "both devices must order the same history identically")
+    }
+
+    /// One device finished the week and banked it; the other was offline at the
+    /// finish line and still thinks day seven is pending. Handing the campaign
+    /// back would re-open a week the user already celebrated, every time the
+    /// two devices meet.
+    func testMerge_CampaignFinishedElsewhereIsNotResurrected() {
+        let finisher = makeProgress(id: nil, history: ["peace"])
+        let stale = makeProgress(id: "peace", startedOn: daysAgo(10), days: [1, 2, 3, 4, 5, 6])
+
+        let merged = merge(finisher, stale)
+        XCTAssertNil(merged.activeEnforcementId)
+        XCTAssertEqual(merged.completedEnforcementIds, ["peace"])
+        XCTAssertEqual(merged, merge(stale, finisher))
+    }
+
+    /// The other half of that rule: restarting a campaign you finished before is
+    /// legitimate, and is told apart by the restarting device carrying the id in
+    /// its own history.
+    func testMerge_RestartOfAPreviouslyCompletedCampaignSurvives() {
+        let restarted = makeProgress(id: "peace", startedOn: Date(), history: ["peace"])
+        let idle = makeProgress(id: nil, history: ["peace"])
+
+        XCTAssertEqual(merge(restarted, idle).activeEnforcementId, "peace")
+        XCTAssertEqual(merge(idle, restarted).activeEnforcementId, "peace")
+        XCTAssertEqual(merge(restarted, idle), merge(idle, restarted))
+    }
+
+    /// Every pair, both ways round, plus a second pass over the result: two
+    /// devices reconciling independently have to land on the same value and
+    /// then stay there.
+    func testMerge_IsCommutativeAndConverges() {
+        let curated = makeEnforcement(id: "curated_warfare", theme: "warfare")
+        let states: [EnforcementProgress] = [
+            EnforcementProgress(),
+            makeProgress(id: "peace", startedOn: daysAgo(9), days: [1, 2], lastAdvancedOn: daysAgo(8)),
+            makeProgress(id: "peace", startedOn: daysAgo(9), days: [1, 2, 3], lastAdvancedOn: daysAgo(4)),
+            makeProgress(id: "warfare", startedOn: daysAgo(2), days: [1], lastAdvancedOn: daysAgo(2),
+                         history: ["peace"]),
+            makeProgress(id: curated.id, startedOn: daysAgo(1), days: [1], assembled: curated,
+                         history: ["warfare", "peace"]),
+            makeProgress(id: nil, history: ["peace"]),
+            makeProgress(id: nil, history: ["healing", "peace"])
+        ]
+
+        for (i, a) in states.enumerated() {
+            for b in states[i...] {
+                let forward = merge(a, b)
+                XCTAssertEqual(forward, merge(b, a),
+                               "merge must be commutative — both devices run it independently")
+                XCTAssertEqual(merge(forward, a), forward, "merging again must be a no-op")
+                XCTAssertEqual(merge(forward, b), forward, "merging again must be a no-op")
+            }
+        }
+    }
+
+    /// The merged value is what gets written back to UserDefaults and pushed to
+    /// CloudKit, so it has to survive the encoder — including the `Set<Int>`.
+    func testMerge_ResultSurvivesAJSONRoundTrip() {
+        let curated = makeEnforcement(id: "curated_warfare", theme: "warfare")
+        let merged = merge(makeProgress(id: curated.id, startedOn: daysAgo(3), days: [1, 2],
+                                        assembled: curated, history: ["peace"]),
+                           makeProgress(id: curated.id, startedOn: daysAgo(3), days: [3]))
+
+        guard let data = try? JSONEncoder().encode(merged),
+              let decoded = try? JSONDecoder().decode(EnforcementProgress.self, from: data) else {
+            return XCTFail("EnforcementProgress must round-trip through JSON to sync at all")
+        }
+        XCTAssertEqual(decoded, merged)
+        XCTAssertEqual(decoded.assembledEnforcement, curated)
+    }
+
+    /// The bug this whole path exists for: the service reads progress once, in
+    /// `init`. A campaign that arrives from the user's other device lands in
+    /// UserDefaults with no further ceremony, so without the settings observer
+    /// this device keeps offering to start a week that is already running.
+    func testSyncedChange_ServiceAdoptsARemoteCampaignWithoutRelaunch() {
+        XCTAssertFalse(service.progressSnapshot.isActive, "precondition: nothing running here")
+
+        var remote = EnforcementProgress()
+        remote.activeEnforcementId = "warfare"
+        remote.startedOn = daysAgo(3)
+        remote.completedDayNumbers = [1, 2]
+        guard let data = try? JSONEncoder().encode(remote) else {
+            return XCTFail("could not encode the remote campaign")
+        }
+        defaults.set(data, forKey: "enforcementProgress")
+
+        NotificationCenter.default.post(name: SyncedSettingsStore.settingsDidChange,
+                                        object: nil,
+                                        userInfo: ["keys": Set(["enforcementProgress"])])
+
+        let deadline = Date().addingTimeInterval(2)
+        while service.progressSnapshot.activeEnforcementId == nil, Date() < deadline {
+            RunLoop.current.run(until: Date().addingTimeInterval(0.01))
+        }
+
+        XCTAssertEqual(service.progressSnapshot.activeEnforcementId, "warfare")
+        XCTAssertEqual(service.progressSnapshot.currentDay, 3)
+        XCTAssertEqual(service.activeDay?.dayNumber, 3, "the UI must see the synced campaign too")
+    }
+
     // MARK: - Shipped content
 
     /// The real `enforcements.json` must decode and be well-formed, since a content

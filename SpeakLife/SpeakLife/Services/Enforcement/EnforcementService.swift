@@ -112,6 +112,9 @@ final class EnforcementService: ObservableObject {
     private let pendingCelebrationBlobKey = "enforcementPendingCelebrationBlob"
     private let assemblySeedKey = "enforcementAssemblySeed"
 
+    /// Block-based observers deregister by token, not by `self`.
+    private var syncedSettingsObserver: NSObjectProtocol?
+
     init(defaults: UserDefaults = .standard,
          calendar: Calendar = .current,
          catalog: [Enforcement]? = nil) {
@@ -135,6 +138,77 @@ final class EnforcementService: ObservableObject {
             // Installs that banked a celebration before the blob existed.
             self.justCompleted = self.catalog.first { $0.id == pendingId }
         }
+
+        // Progress is read once, here — so a campaign arriving from the user's
+        // other device would otherwise sit in UserDefaults unnoticed until the
+        // next launch, and this device would go on offering to start a week
+        // that is already running. Delivered on main: the block writes
+        // @Published state and the recommendation cache.
+        syncedSettingsObserver = NotificationCenter.default.addObserver(
+            forName: SyncedSettingsStore.settingsDidChange,
+            object: nil,
+            queue: .main
+        ) { [weak self] notification in
+            self?.handleSyncedSettingsChange(notification)
+        }
+    }
+
+    deinit {
+        if let syncedSettingsObserver {
+            NotificationCenter.default.removeObserver(syncedSettingsObserver)
+        }
+    }
+
+    // MARK: - iCloud sync
+
+    private func handleSyncedSettingsChange(_ notification: Notification) {
+        guard let keys = notification.userInfo?["keys"] as? Set<String> else { return }
+
+        // The recommendation is picked from the onboarding category choices,
+        // which sync too. A restored device caches its answer before those
+        // arrive, so without this it recommends from an empty pick list until
+        // the next launch.
+        if keys.contains("userSelectedCategories") {
+            cachedRecommendedId = nil
+        }
+
+        guard keys.contains(progressKey) else { return }
+        adoptSyncedProgress()
+    }
+
+    /// Picks up the campaign `SyncedSettingsStore` merged into UserDefaults on
+    /// another device's behalf.
+    ///
+    /// Deliberately not routed through `mutateProgress`. That path persists
+    /// unconditionally, and writing the blob straight back would re-encode it —
+    /// a `Set<Int>` has no stable JSON order — which the store reads as a fresh
+    /// local edit and pushes out again, so the two devices would echo at each
+    /// other. The store already wrote the authoritative bytes; the common case
+    /// here is to catch up to them and write nothing.
+    private func adoptSyncedProgress() {
+        let synced = Self.loadProgress(defaults: defaults, key: progressKey)
+
+        lock.lock()
+        let current = guardedProgress
+        // The in-memory copy can legitimately be ahead: the burst may have
+        // banked a day in the window between the store's reconcile read and
+        // this notification. Merge by the same rules the store used rather than
+        // overwriting, so that day is not thrown away.
+        let merged = SyncedSettingsStore.mergedEnforcementProgress(current, synced)
+        let changed = merged != current
+        if changed { guardedProgress = merged }
+        lock.unlock()
+
+        // Persist only when the local side still holds something the store's
+        // write does not — that really is a local change and has to go out.
+        // Everything else is already on disk exactly as the store left it.
+        if merged != synced {
+            persist(merged)
+        }
+
+        // Outside the lock: @Published observers read back into the service.
+        guard changed else { return }
+        progress = merged
     }
 
     // MARK: - Catalog

@@ -277,8 +277,192 @@ final class StreakStatsTests: XCTestCase {
         // Build new streak
         streakStats.updateStreak(for: calendar.date(byAdding: .day, value: -1, to: today)!)
         streakStats.updateStreak(for: today)
-        
+
         XCTAssertEqual(streakStats.currentStreak, 3)
         XCTAssertEqual(streakStats.longestStreak, 5)
+    }
+
+    // MARK: - Helpers for the cross-device tests
+
+    private func day(_ daysAgo: Int) -> Date {
+        calendar.startOfDay(for: calendar.date(byAdding: .day, value: -daysAgo, to: Date())!)
+    }
+
+    // MARK: - Merged Completion History
+    //
+    // StreakHistory is the input the streak-freeze decision is made from: the
+    // union of every device's day-completion rows. Its two questions — how
+    // long is the run, and when did it end — have to be answered identically
+    // on every device, so they are pure functions of the day set.
+
+    func testStreakHistory_ConsecutiveDaysStopsAtTheFirstMissedDay() {
+        // Completed 1, 2, 3 and 5 days ago. Day 4 is missing.
+        let history = StreakHistory(dates: [day(1), day(2), day(3), day(5)])
+
+        XCTAssertEqual(history.consecutiveDays(endingOn: day(1)), 3)
+        XCTAssertEqual(history.consecutiveDays(endingOn: day(5)), 1)
+        XCTAssertEqual(history.consecutiveDays(endingOn: day(0)), 0,
+                       "Today was never completed, so no run ends on it")
+        XCTAssertEqual(history.lastCompletedDay, day(1))
+    }
+
+    func testStreakHistory_NormalizesTimestampsAndCollapsesRepeatsWithinADay() {
+        let today = calendar.startOfDay(for: Date())
+        let morning = calendar.date(byAdding: .hour, value: 7, to: today)!
+        let evening = calendar.date(byAdding: .hour, value: 21, to: today)!
+
+        let history = StreakHistory(dates: [morning, evening])
+
+        XCTAssertEqual(history.completedDays, [today],
+                       "Two bursts in one day are one completed day")
+        XCTAssertEqual(history.consecutiveDays(endingOn: evening), 1)
+    }
+
+    func testStreakHistory_EmptyHasNoLastDay() {
+        let history = StreakHistory()
+        XCTAssertTrue(history.isEmpty)
+        XCTAssertNil(history.lastCompletedDay)
+        XCTAssertEqual(history.consecutiveDays(endingOn: Date()), 0)
+    }
+
+    // MARK: - Cross-Device Merge (StreakStats.merging)
+    //
+    // These pin the invariants the iCloud settings merge depends on: history
+    // only ever moves up, the live count follows the most recent completion,
+    // a stale blob cannot resurrect a dead streak, and both devices compute
+    // the same answer so repeated merges converge instead of ping-ponging.
+
+    func testMerging_HistoricalFieldsOnlyEverMoveUp() {
+        let today = calendar.startOfDay(for: Date())
+
+        var mine = StreakStats()
+        mine.longestStreak = 12
+        mine.totalDaysCompleted = 40
+        mine.celebratedMilestones = [1, 3, 7]
+        mine.lastCompletedDate = today
+
+        var theirs = StreakStats()
+        theirs.longestStreak = 9
+        theirs.totalDaysCompleted = 55
+        theirs.celebratedMilestones = [1, 14]
+        theirs.lastCompletedDate = today
+
+        let merged = mine.merging(theirs)
+
+        XCTAssertEqual(merged.longestStreak, 12)
+        XCTAssertEqual(merged.totalDaysCompleted, 55)
+        XCTAssertEqual(merged.celebratedMilestones, [1, 3, 7, 14],
+                       "Celebrated milestones union so a celebration never re-fires")
+        XCTAssertEqual(merged, theirs.merging(mine))
+    }
+
+    func testMerging_MostRecentCompletionOwnsTheLiveCount() {
+        var mine = StreakStats()
+        mine.currentStreak = 9
+        mine.longestStreak = 9
+        mine.streakFreezeAvailable = false
+        mine.lastCompletedDate = day(4)
+
+        var theirs = StreakStats()
+        theirs.currentStreak = 2
+        theirs.longestStreak = 9
+        theirs.lastCompletedDate = day(0)
+
+        XCTAssertEqual(mine.merging(theirs).currentStreak, 2)
+        XCTAssertEqual(theirs.merging(mine).currentStreak, 2)
+        XCTAssertEqual(mine.merging(theirs).lastCompletedDate, day(0))
+    }
+
+    /// The "zombie streak": a blob from a phone that has not synced in days
+    /// must not hand back a count with no completions behind it.
+    func testMerging_StaleBlobCannotResurrectABrokenStreak() {
+        var mine = StreakStats()
+        mine.currentStreak = 0                  // this device already reset it
+        mine.longestStreak = 9
+        mine.streakFreezeAvailable = false
+        mine.lastCompletedDate = day(5)
+
+        var theirs = StreakStats()
+        theirs.currentStreak = 9                // stale, and no freeze left to rescue it
+        theirs.longestStreak = 9
+        theirs.streakFreezeAvailable = false
+        theirs.lastCompletedDate = day(5)
+
+        XCTAssertEqual(mine.merging(theirs).currentStreak, 0)
+        XCTAssertEqual(theirs.merging(mine).currentStreak, 0)
+        XCTAssertEqual(mine.merging(theirs).longestStreak, 9,
+                       "The record still stands even though the run is over")
+    }
+
+    func testMerging_SameDayTakesTheHigherLiveCount() {
+        let today = calendar.startOfDay(for: Date())
+
+        var freshInstall = StreakStats()
+        freshInstall.currentStreak = 0
+        freshInstall.lastCompletedDate = today
+
+        var established = StreakStats()
+        established.currentStreak = 11
+        established.longestStreak = 11
+        established.lastCompletedDate = today
+
+        XCTAssertEqual(freshInstall.merging(established).currentStreak, 11)
+        XCTAssertEqual(established.merging(freshInstall).currentStreak, 11)
+    }
+
+    /// The reported two-phone bug, at the merge layer.
+    ///
+    /// A freeze bridges lastCompletedDate forward to yesterday. That bridged
+    /// date is a placeholder, not a day the user completed — so when it lands
+    /// on the same day as another device's REAL completion, the real one owns
+    /// the count. Without this, the drawer phone's resurrected 8 beat the
+    /// active phone's honest 1 and the streak jumped with no explanation.
+    func testMerging_FreezeBridgeNeverOutranksARealCompletion() {
+        var active = StreakStats()
+        active.currentStreak = 1
+        active.longestStreak = 8
+        active.lastCompletedDate = day(1)       // really completed yesterday
+
+        var stale = StreakStats()
+        stale.currentStreak = 8
+        stale.longestStreak = 8
+        stale.lastCompletedDate = day(1)        // only bridged onto yesterday
+        stale.streakFreezeAvailable = false
+        stale.streakFreezeUsedDate = Date()
+        stale.streakFreezeCoveredDay = day(8)
+
+        XCTAssertEqual(active.merging(stale).currentStreak, 1,
+                       "A bridge is not evidence of a completed day")
+        XCTAssertEqual(stale.merging(active).currentStreak, 1,
+                       "Both devices pick the same side, so this converges")
+        XCTAssertNil(active.merging(stale).streakFreezeCoveredDay,
+                     "The winning side completed that day for real — no bridge outstanding")
+        XCTAssertFalse(active.merging(stale).streakFreezeAvailable,
+                       "A freeze spent anywhere stays spent")
+    }
+
+    func testMerging_IsOrderIndependentAndIdempotent() {
+        var active = StreakStats()
+        active.currentStreak = 1
+        active.longestStreak = 8
+        active.totalDaysCompleted = 20
+        active.celebratedMilestones = [1, 3, 7]
+        active.lastCompletedDate = day(1)
+
+        var stale = StreakStats()
+        stale.currentStreak = 8
+        stale.longestStreak = 8
+        stale.totalDaysCompleted = 18
+        stale.celebratedMilestones = [1, 3]
+        stale.lastCompletedDate = day(1)
+        stale.streakFreezeAvailable = false
+        stale.streakFreezeUsedDate = day(0)
+        stale.streakFreezeCoveredDay = day(8)
+
+        let oneWay = active.merging(stale)
+        let otherWay = stale.merging(active)
+
+        XCTAssertEqual(oneWay, otherWay, "Both devices must compute the same merged state")
+        XCTAssertEqual(oneWay.merging(otherWay), oneWay, "Re-merging a settled state changes nothing")
     }
 }

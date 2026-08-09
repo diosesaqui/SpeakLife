@@ -110,6 +110,16 @@ final class SyncedSettingsStore {
                   strategy: .custom(mergeStringArray),
                   equivalence: stringArraySetEquivalent),
 
+        // The seven-day Enforcement campaign. Without this the campaign was
+        // device-local: the user's second device had no idea a week was
+        // running and offered to start a fresh one on top of it. Note this is
+        // a campaign-aware merge, not a field-by-field union — blending two
+        // different weeks' day sets would hand the user a campaign they never
+        // started (see mergedEnforcementProgress).
+        SyncedKey(key: "enforcementProgress",
+                  strategy: .custom(mergeEnforcementProgress),
+                  equivalence: enforcementProgressEquivalent),
+
         // Monotonic progress scalars.
         SyncedKey(key: "abbasLoveLetterIndex", strategy: .maxInt),
         SyncedKey(key: "personalDeclaration_completedDayCount", strategy: .maxInt),
@@ -124,6 +134,15 @@ final class SyncedSettingsStore {
         SyncedKey(key: "onboarded", strategy: .boolOr),
         SyncedKey(key: "hasCompletedEnhancedOnboarding", strategy: .boolOr),
         SyncedKey(key: "hasPersonalDeclaration", strategy: .boolOr),
+        // "Your streak freeze was used" — raised where the freeze is spent and
+        // consumed-and-cleared by EnhancedStreakViewModel.appDidBecomeActive
+        // (via showFreezeUsedBannerIfNeeded). Synced so the banner reaches
+        // whichever device the user next opens rather than only the one that
+        // happened to spend the freeze, which may be a phone in a drawer.
+        // boolOr never carries the clear back, so the still-true remote row
+        // returns on the next reconcile; the view model bounds the banner by
+        // freeze identity rather than by this flag alone.
+        SyncedKey(key: "streakFreezeWasUsed", strategy: .boolOr),
 
         // Identity & personalization.
         SyncedKey(key: "userName", strategy: .lastWriterWins),
@@ -842,5 +861,191 @@ final class SyncedSettingsStore {
     private static func stringArraySetEquivalent(_ a: Any, _ b: Any) -> Bool {
         guard let arrayA = a as? [String], let arrayB = b as? [String] else { return valuesEqual(a, b) }
         return Set(arrayA) == Set(arrayB)
+    }
+
+    // MARK: - Enforcement campaign merge
+
+    /// Plist-value shim around `mergedEnforcementProgress`. Hands back one of
+    /// the original blobs whenever the merge is semantically a no-op, so an
+    /// unstable re-encoding never looks like a change worth pushing.
+    private static func mergeEnforcementProgress(_ local: Any, _ remote: Any) -> Any {
+        let decodedLocal = (local as? Data).flatMap { try? JSONDecoder().decode(EnforcementProgress.self, from: $0) }
+        let decodedRemote = (remote as? Data).flatMap { try? JSONDecoder().decode(EnforcementProgress.self, from: $0) }
+        guard let localProgress = decodedLocal else { return decodedRemote != nil ? remote : local }
+        guard let remoteProgress = decodedRemote else { return local }
+
+        let merged = mergedEnforcementProgress(localProgress, remoteProgress)
+        if merged == localProgress { return local }
+        if merged == remoteProgress { return remote }
+        return (try? JSONEncoder().encode(merged)) ?? local
+    }
+
+    /// Merges two devices' Enforcement campaigns.
+    ///
+    /// Both devices run this independently over the same pair of values, so it
+    /// MUST be commutative and deterministic: every choice below breaks ties on
+    /// the data itself (dates, then ids, then a content fingerprint) and never
+    /// on which side happens to be "local". A local-wins rule would leave the
+    /// two devices holding different campaigns forever, each pushing its own
+    /// answer back at the other.
+    ///
+    /// Internal rather than private so the rules can be pinned by tests; the
+    /// shipping call site is `mergeEnforcementProgress` above.
+    static func mergedEnforcementProgress(_ a: EnforcementProgress,
+                                          _ b: EnforcementProgress) -> EnforcementProgress {
+        var merged = EnforcementProgress()
+        merged.completedEnforcementIds = mergedEnforcementHistory(a.completedEnforcementIds,
+                                                                  b.completedEnforcementIds)
+
+        if let idA = a.activeEnforcementId, let idB = b.activeEnforcementId {
+            if idA == idB {
+                // The same week on both sides: a day banked anywhere is banked.
+                merged.activeEnforcementId = idA
+                merged.assembledEnforcement = preferredEnforcement(a.assembledEnforcement,
+                                                                   b.assembledEnforcement)
+                // Earliest start wins: `elapsedDays` is measured from it, and
+                // the campaign began when the user first began it.
+                merged.startedOn = earlierDate(a.startedOn, b.startedOn)
+                merged.completedDayNumbers = a.completedDayNumbers.union(b.completedDayNumbers)
+                merged.lastAdvancedOn = laterDate(a.lastAdvancedOn, b.lastAdvancedOn)
+            } else {
+                // Two different weeks. Unioning their day sets would produce a
+                // campaign the user never started — day five of one week paired
+                // with the anchors of another — so the newer start takes the
+                // whole campaign and the older one is dropped.
+                let (winner, loser) = newerCampaign(a, b)
+                copyCampaign(from: winner, into: &merged)
+                // A dropped week is banked only if it was genuinely finished;
+                // otherwise it was abandoned and was never earned.
+                if loser.isComplete, let loserId = loser.activeEnforcementId,
+                   !merged.completedEnforcementIds.contains(loserId) {
+                    merged.completedEnforcementIds.append(loserId)
+                }
+            }
+        } else if a.activeEnforcementId != nil {
+            adoptSoleCampaign(holder: a, other: b, into: &merged)
+        } else if b.activeEnforcementId != nil {
+            adoptSoleCampaign(holder: b, other: a, into: &merged)
+        }
+
+        // A campaign with all seven days banked is finished, not running.
+        // `finish()` does this the instant day seven lands, so this only catches
+        // a state that crossed devices mid-flight; leaving it would strand a
+        // campaign that `advanceIfNeeded` no longer touches.
+        if merged.activeEnforcementId != nil, merged.isComplete {
+            merged.finish()
+        }
+        return merged
+    }
+
+    /// Takes the campaign from the only side that has one.
+    private static func adoptSoleCampaign(holder: EnforcementProgress,
+                                          other: EnforcementProgress,
+                                          into merged: inout EnforcementProgress) {
+        guard let id = holder.activeEnforcementId else { return }
+        // The other side already banked this campaign as complete and this side
+        // never did — it finished the week while this device was away. Handing
+        // the campaign back would re-open a week the user already celebrated,
+        // every time the two devices meet. A deliberate restart of a
+        // previously-completed campaign is told apart by the holder carrying
+        // that id in its OWN history (`begin` preserves history), which this
+        // case does not.
+        if other.completedEnforcementIds.contains(id),
+           !holder.completedEnforcementIds.contains(id) {
+            return
+        }
+        copyCampaign(from: holder, into: &merged)
+    }
+
+    /// Moves a whole campaign across, `assembledEnforcement` included.
+    ///
+    /// The blob has to travel with its own campaign: a curated id like
+    /// "curated_warfare" is not in `enforcements.json`, so a campaign that
+    /// arrives without it cannot be resolved at all and the user's week
+    /// silently disappears on the receiving device.
+    private static func copyCampaign(from source: EnforcementProgress,
+                                     into merged: inout EnforcementProgress) {
+        merged.activeEnforcementId = source.activeEnforcementId
+        merged.assembledEnforcement = source.assembledEnforcement
+        merged.startedOn = source.startedOn
+        merged.completedDayNumbers = source.completedDayNumbers
+        merged.lastAdvancedOn = source.lastAdvancedOn
+    }
+
+    /// Which of two different campaigns is the live one. A missing `startedOn`
+    /// loses to any real date, and an exact tie breaks on the id so both
+    /// devices pick the same winner instead of each keeping its own.
+    private static func newerCampaign(_ a: EnforcementProgress,
+                                      _ b: EnforcementProgress)
+        -> (winner: EnforcementProgress, loser: EnforcementProgress) {
+        let startA = a.startedOn ?? .distantPast
+        let startB = b.startedOn ?? .distantPast
+        if startA != startB { return startA > startB ? (a, b) : (b, a) }
+        let idA = a.activeEnforcementId ?? ""
+        let idB = b.activeEnforcementId ?? ""
+        return idA >= idB ? (a, b) : (b, a)
+    }
+
+    /// Order-preserving union of the completed-campaign history: the side that
+    /// knows more campaigns leads and the other's unknown ids are appended.
+    /// Leading with "local" would leave the two devices holding the same
+    /// history in different orders forever, each pushing its own ordering back.
+    private static func mergedEnforcementHistory(_ a: [String], _ b: [String]) -> [String] {
+        let ordered: ([String], [String])
+        if a.count != b.count {
+            ordered = a.count > b.count ? (a, b) : (b, a)
+        } else if a.joined(separator: "\u{1}") <= b.joined(separator: "\u{1}") {
+            ordered = (a, b)
+        } else {
+            ordered = (b, a)
+        }
+        var result = ordered.0
+        var seen = Set(result)
+        for id in ordered.1 where !seen.contains(id) {
+            seen.insert(id)
+            result.append(id)
+        }
+        return result
+    }
+
+    /// One campaign id, two different campaigns — possible because a curated
+    /// campaign's id is only "curated_" + theme, so two devices that each
+    /// curated a week collide under one id. Picking by content fingerprint
+    /// keeps both devices on the same seven lines; picking "whichever is local"
+    /// would leave them speaking different day-three anchors all week.
+    private static func preferredEnforcement(_ a: Enforcement?, _ b: Enforcement?) -> Enforcement? {
+        guard let a = a else { return b }
+        guard let b = b else { return a }
+        if a == b { return a }
+        return enforcementFingerprint(a) <= enforcementFingerprint(b) ? a : b
+    }
+
+    private static func enforcementFingerprint(_ enforcement: Enforcement) -> String {
+        ([enforcement.id, enforcement.title, enforcement.theme]
+            + enforcement.days.map { "\($0.dayNumber)\u{1}\($0.anchorText)\u{1}\($0.audioId)" })
+            .joined(separator: "\u{1}")
+    }
+
+    private static func earlierDate(_ a: Date?, _ b: Date?) -> Date? {
+        guard let a = a else { return b }
+        guard let b = b else { return a }
+        return min(a, b)
+    }
+
+    private static func laterDate(_ a: Date?, _ b: Date?) -> Date? {
+        guard let a = a else { return b }
+        guard let b = b else { return a }
+        return max(a, b)
+    }
+
+    /// `completedDayNumbers` is a `Set<Int>`, and JSON gives a Set no stable
+    /// order, so two devices holding the identical campaign encode different
+    /// bytes. Comparing raw Data here would make every reconcile look like a
+    /// change and the two devices would push at each other forever.
+    private static func enforcementProgressEquivalent(_ a: Any, _ b: Any) -> Bool {
+        let decodedA = (a as? Data).flatMap { try? JSONDecoder().decode(EnforcementProgress.self, from: $0) }
+        let decodedB = (b as? Data).flatMap { try? JSONDecoder().decode(EnforcementProgress.self, from: $0) }
+        if let decodedA = decodedA, let decodedB = decodedB { return decodedA == decodedB }
+        return valuesEqual(a, b)
     }
 }
