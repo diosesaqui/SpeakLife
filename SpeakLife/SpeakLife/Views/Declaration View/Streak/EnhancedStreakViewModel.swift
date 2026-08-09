@@ -44,6 +44,12 @@ final class EnhancedStreakViewModel: ObservableObject {
     /// Streak days that earn a full-screen celebration. Every other completed
     /// day gets only a haptic + the auto-collapsing completed banner.
     static let celebrationMilestones: Set<Int> = [1, 3, 7, 14, 30, 50, 100, 200, 365]
+
+    /// Where streak decisions send their push side effects. Production always
+    /// uses the real service; tests swap in a double, because the ordering of
+    /// these calls against the iCloud heal is the thing worth pinning down and
+    /// UNUserNotificationCenter offers no way to observe it.
+    static var notifications: StreakNotifying = LifecycleNotificationService.shared
     
     // MARK: - User Preferences
     /// Retrieves user's top 2 selected categories from UserDefaults
@@ -247,7 +253,7 @@ final class EnhancedStreakViewModel: ObservableObject {
             // The day is done — clear the now-wrong "streak at risk" push and
             // refresh the evening check-in with the real progress (the local
             // completion path does both; the synced path must too).
-            LifecycleNotificationService.shared.cancelStreakAtRiskNotification()
+            Self.notifications.cancelStreakAtRiskNotification()
             scheduleEveningCheckIn()
             if !wasChecklistComplete && todayChecklist.isCompleted {
                 checklistCompletionSyncedRemotely = true
@@ -263,6 +269,14 @@ final class EnhancedStreakViewModel: ObservableObject {
                 refreshTasksWithUserCategories()
             }
         }
+
+        // Deliberately outside the `changed` guard and run on every reconcile:
+        // this is the exact moment a break decided moments ago in loadData() —
+        // off history iCloud had not delivered yet — gets overturned. If the
+        // break was real, the count is still 0 here (the tracker walks actual
+        // completion days back from today, so it cannot inflate one) and the
+        // push correctly stands.
+        revokeStreakBreakNotificationIfStreakAlive()
     }
 
     // MARK: - Synced Task Completions (bonus tasks, via event log)
@@ -770,13 +784,18 @@ final class EnhancedStreakViewModel: ObservableObject {
         saveData()
 
         // Fix 2: Cancel streak-at-risk notification since day is complete
-        LifecycleNotificationService.shared.cancelStreakAtRiskNotification()
+        Self.notifications.cancelStreakAtRiskNotification()
+
+        // The comeback the break push asks for has already happened — today is
+        // earned. Left standing, it fires tomorrow morning telling a user with
+        // a live streak to restart.
+        revokeStreakBreakNotificationIfStreakAlive()
 
         // Celebrate streak milestones (3/7/30/100) with a next-morning push —
         // only on a genuinely new milestone, so rebuilding past one after a break
         // never re-fires the push.
         if isNewMilestone {
-            LifecycleNotificationService.shared.scheduleStreakMilestoneIfNeeded(
+            Self.notifications.scheduleStreakMilestoneIfNeeded(
                 currentStreak: currentStreakNumber,
                 previousStreak: currentStreakNumber - 1
             )
@@ -808,13 +827,39 @@ final class EnhancedStreakViewModel: ObservableObject {
             // device by showFreezeUsedBannerIfNeeded(), which also reaches the
             // user's OTHER device when this flag syncs.
             userDefaults.set(true, forKey: Self.freezeUsedFlagKey)
+            // The freeze carried the run through the gap, so a break notice
+            // still pending from an earlier, thinner read of the history is
+            // now describing something that didn't happen.
+            revokeStreakBreakNotificationIfStreakAlive()
         case .streakBroken(let previousStreak):
             // Notify user that their streak was broken (Fix 1)
-            LifecycleNotificationService.shared.scheduleStreakBreakNotification(previousStreak: previousStreak)
+            Self.notifications.scheduleStreakBreakNotification(previousStreak: previousStreak)
         case .unchanged:
-            break
+            revokeStreakBreakNotificationIfStreakAlive()
         }
         saveData()
+    }
+
+    /// Revokes a pending or delivered "your streak broke" push once the streak
+    /// is back on its feet.
+    ///
+    /// The break decision is made from whatever completion history THIS device
+    /// has synced so far, and the push it schedules doesn't fire until the next
+    /// morning at 9am. The first launch of a new day is both when the decision
+    /// is most likely to be wrong — iCloud hasn't delivered the days earned on
+    /// the user's other device yet — and when the scheduling happens. Seconds
+    /// later `reconcileWithSyncedProgress()` folds the real history in and the
+    /// count comes back, but nothing used to withdraw the push: it fired the
+    /// next morning announcing a broken streak, with a stale count, to a user
+    /// whose badge had been alive the whole time and who had completed twice
+    /// since.
+    ///
+    /// A live streak is the one fact that makes the notice false, whichever way
+    /// it got that way — freeze, sync heal, or the user simply coming back — so
+    /// that is the single condition this checks.
+    private func revokeStreakBreakNotificationIfStreakAlive() {
+        guard streakStats.currentStreak > 0 else { return }
+        Self.notifications.cancelStreakBreakNotification()
     }
 
     /// Shows the "streak freeze used" banner at most once per freeze, per
@@ -863,6 +908,16 @@ final class EnhancedStreakViewModel: ObservableObject {
             let currentStreak = max(1, streakStats.currentStreak)
             todayChecklist = createProgressiveChecklist(for: currentStreak)
             saveData()
+            // The same order launch uses (loadData, then reconcile). The
+            // validity check above sees only what THIS device has synced, so a
+            // rollover landing while the app sits in the background can break a
+            // streak the user never missed — and until now nothing here
+            // overturned it before the next cold launch. Reconciling folds the
+            // authoritative burst history in: it withdraws the break push,
+            // regenerates the day's tasks from the real streak day (preserving
+            // completions), and credits a burst already done on the user's
+            // other device.
+            reconcileWithSyncedProgress()
             checkForNewBadges()
 
             // Schedule evening notification for the new day with current progress
@@ -1760,11 +1815,11 @@ final class EnhancedStreakViewModel: ObservableObject {
         let burstDone = todayChecklist.isStreakEarned
 
         if !burstDone && streakStats.currentStreak >= 1 {
-            LifecycleNotificationService.shared.scheduleStreakAtRiskNotification(
+            Self.notifications.scheduleStreakAtRiskNotification(
                 currentStreak: streakStats.currentStreak
             )
         } else {
-            LifecycleNotificationService.shared.cancelStreakAtRiskNotification()
+            Self.notifications.cancelStreakAtRiskNotification()
         }
     }
     
