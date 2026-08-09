@@ -102,6 +102,15 @@ struct ModernDailyChecklistView: View {
         case .journal:
             showJournal = true
         case .burst:
+            // Re-pointed, not dropped. This event used to fire from the campaign
+            // card's gold CTA; that button is gone, but the tap it measured just
+            // moved down here. Same name and same `day` parameter so any chart
+            // built on it keeps reading continuously across the change.
+            if task.isCampaignRefreshed {
+                AnalyticsService.shared.track("enforcement_burst_opened", parameters: [
+                    "day": enforcementService.progressSnapshot.currentDay
+                ])
+            }
             openBurst()
         case .none:
             viewModel.completeTask(taskId: task.id)
