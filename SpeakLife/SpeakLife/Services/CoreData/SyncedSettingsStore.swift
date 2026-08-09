@@ -1020,6 +1020,11 @@ final class SyncedSettingsStore {
         return enforcementFingerprint(a) <= enforcementFingerprint(b) ? a : b
     }
 
+    /// Deliberately `title` and not `displayTitle`. This is a deterministic
+    /// tiebreak over the bytes two devices actually stored, so it must reflect
+    /// what is on disk, not what the UI renders. Swapping in the re-derived
+    /// title would make the fingerprint depend on app version, and two devices
+    /// on different builds would stop agreeing on the same campaign.
     private static func enforcementFingerprint(_ enforcement: Enforcement) -> String {
         ([enforcement.id, enforcement.title, enforcement.theme]
             + enforcement.days.map { "\($0.dayNumber)\u{1}\($0.anchorText)\u{1}\($0.audioId)" })

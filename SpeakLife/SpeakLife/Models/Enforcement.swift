@@ -60,6 +60,29 @@ struct Enforcement: Codable, Identifiable, Equatable {
         category?.name ?? theme.capitalized
     }
 
+    /// True for a campaign built at runtime rather than hand-authored in
+    /// `enforcements.json`. Assembly and curation both stamp their id.
+    var isGenerated: Bool {
+        id.hasPrefix("assembled_") || id.hasPrefix("curated_")
+    }
+
+    /// The title as it should read today, not as it read the day the campaign
+    /// started.
+    ///
+    /// A generated campaign is persisted whole, title included, and synced to
+    /// iCloud that way. So a week begun before `enforcementTitle` shipped keeps
+    /// its old name for all seven days: the card still reads ENFORCING WARFARE
+    /// & VICTORY even on a build where the bug is fixed. Re-deriving on read
+    /// corrects those in flight instead of waiting them out.
+    ///
+    /// Hand-authored campaigns are returned untouched — their titles are
+    /// deliberate content, and `enforcements.json` already names them for the
+    /// victory (Enforcing Peace, Provision, Healing, Victory).
+    var displayTitle: String {
+        guard isGenerated, let category else { return title }
+        return "Enforcing " + category.enforcementTitle
+    }
+
     func day(_ number: Int) -> EnforcementDay? {
         days.first { $0.dayNumber == number }
     }

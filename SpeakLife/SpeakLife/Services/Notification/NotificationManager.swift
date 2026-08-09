@@ -189,7 +189,11 @@ final class NotificationManager: NSObject {
                         body = enforcementDay.anchorBook.isEmpty
                             ? enforcementDay.anchorText
                             : enforcementDay.anchorText + " ~ " + enforcementDay.anchorBook
-                        enforcementTitle = enforcement.title
+                        // displayTitle: this goes into the push. A campaign
+                        // begun before the naming fix has the old title in its
+                        // persisted blob, and a notification reading "Enforcing
+                        // Warfare & Victory" lands on the lock screen.
+                        enforcementTitle = enforcement.displayTitle
                         enforcementCategory = enforcement.theme
                     }
                 } else if idx == 0, let prompt = EnforcementPrompt.copy(forDayOffset: day) {
