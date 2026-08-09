@@ -488,17 +488,33 @@ struct EnforcementCard: View {
         )
     }
 
+    /// Falls back to the plain string if the link can't be attached, so the
+    /// address is always readable even when it isn't tappable.
+    private var reachOutAttributed: AttributedString {
+        var text = AttributedString(SituationScreen.reachOutMessage)
+        if let range = text.range(of: SituationScreen.supportEmail),
+           let url = URL(string: "mailto:\(SituationScreen.supportEmail)") {
+            text[range].link = url
+            text[range].underlineStyle = .single
+        }
+        return text
+    }
+
     /// Not a campaign state. Someone said they want to end their life, and the
     /// honest answer is a person, not seven days of declarations. No correction,
     /// no scripture argument, nothing to submit.
     private var reachOutNotice: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text("Please don't carry this alone.")
+            Text(SituationScreen.reachOutHeadline)
                 .font(.system(size: 15, weight: .bold, design: .rounded))
                 .foregroundColor(.white)
-            Text("Reach out to someone you trust right now, before anything else. You are not a burden, and you are not too far gone.")
+            // Rendered through AttributedString so the address is a live mailto
+            // rather than something to copy out by hand. Someone in this state
+            // should not have to work for it.
+            Text(reachOutAttributed)
                 .font(.system(size: 13, weight: .medium))
                 .foregroundColor(.white.opacity(0.85))
+                .tint(DS.Palette.gold)
                 .fixedSize(horizontal: false, vertical: true)
         }
         .frame(maxWidth: .infinity, alignment: .leading)

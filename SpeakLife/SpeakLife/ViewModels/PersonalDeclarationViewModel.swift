@@ -141,7 +141,7 @@ final class PersonalDeclarationViewModel: ObservableObject {
         case .reachOut:
             AnalyticsService.shared.track("personal_declaration_screened",
                                           parameters: ["verdict": "reach_out"])
-            errorMessage = "Please don't carry this alone. Reach out to someone you trust right now, before anything else. You are not a burden, and you are not too far gone."
+            errorMessage = SituationScreen.reachOutHeadline + " " + SituationScreen.reachOutMessage
             step = .input
             return false
         case .standable:

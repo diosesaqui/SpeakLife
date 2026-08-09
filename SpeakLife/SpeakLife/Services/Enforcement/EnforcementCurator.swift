@@ -88,6 +88,25 @@ enum SituationScreen {
         case reachOut
     }
 
+    /// Support address, the same one `ProfileView`, `MailView`, and
+    /// `BibleChatView` already use.
+    static let supportEmail = "speaklife@diosesaqui.com"
+
+    /// One copy, used by the campaign card and the personal-declaration flow, so
+    /// the two can never drift into saying different things at the worst moment
+    /// the app has.
+    ///
+    /// The order is deliberate. "Someone you trust, right now" is the real-time
+    /// action; the address is offered after it, as care rather than as the
+    /// emergency path, because email is not answered in the moment. Nothing here
+    /// argues, corrects, or quotes scripture at them.
+    static let reachOutHeadline = "Please don't carry this alone."
+    static let reachOutMessage = """
+        Reach out to someone you trust right now, before anything else. \
+        You can write us any time at \(supportEmail). You are not a burden, \
+        and you are not too far gone.
+        """
+
     static func screen(_ input: String) -> Verdict {
         let text = input.lowercased().replacingOccurrences(of: "\u{2019}", with: "'")
 

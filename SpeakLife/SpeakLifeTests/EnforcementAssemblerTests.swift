@@ -484,6 +484,25 @@ final class EnforcementAssemblerTests: XCTestCase {
         }
     }
 
+    /// The one message in the app that must not be wrong, and the one most
+    /// likely to drift now that two screens show it.
+    func testReachOutCopy_OffersTheSupportAddressAfterAPerson() {
+        let message = SituationScreen.reachOutMessage
+        XCTAssertTrue(message.contains(SituationScreen.supportEmail))
+        XCTAssertEqual(SituationScreen.supportEmail, "speaklife@diosesaqui.com")
+
+        // A person comes before the address: email is not answered in the
+        // moment, so it must never read as the emergency path.
+        let person = message.range(of: "right now")
+        let address = message.range(of: SituationScreen.supportEmail)
+        XCTAssertNotNil(person)
+        XCTAssertNotNil(address)
+        if let person, let address {
+            XCTAssertLessThan(person.lowerBound, address.lowerBound,
+                              "the address must not come before 'reach out to someone you trust right now'")
+        }
+    }
+
     func testScreen_MapsClaudeDeclineCodes() {
         XCTAssertEqual(EnforcementCurator.redirect(forCode: "another_persons_partner"),
                        .anotherPersonsPartner)
