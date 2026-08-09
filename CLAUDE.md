@@ -86,15 +86,16 @@ Also allowed everywhere: broad scriptural umbrella-promises that declare blanket
 
 This replaces the old "name the war and command it out" approach: we no longer drag the problem into the light to fight it. We out-shine it.
 
-### 13. Brevity Is Potency (Cut to the Bone)
+### 13. One Sentence. No Fluff.
 Potency comes from compression. A declaration should hit like a hammer, not unfold like a paragraph. The longer it runs, the more the power leaks out before it lands.
 
-- **One or two sentences. Most lines 12 to 18 words, hard ceiling around 21.** Three sentences is a warning sign, not a target. If a third sentence exists, it is almost always fat: cut it or fold it into the line. The `health` category is the reference set for this bar (avg ~18 words).
-- **Never say the same truth twice.** The most common leak is a closing sentence that just rephrases the one before it ("My footing does not depend on my grip. It depends on His."). Keep the stronger half and delete the rest.
-- **Land the image and stop.** Do not explain the metaphor after it hits. Trust the line to do its work in the speaker's chest.
-- **Every word earns its place or dies.** Strip filler, throat-clearing, and connective padding. If removing a word does not change the meaning, remove it.
-- ❌ "Grace keeps me firm to the very end. I will stand blameless on the day of my Lord Jesus Christ, held by His hand. My footing does not depend on my grip. It depends on His." → 36 words; the last two sentences merely restate the first.
-- ✅ "Grace holds me blameless to the end. My standing rests on His grip, not mine." → same truth, half the words, twice the force.
+- **One sentence. Not two.** This is the hard rule, not a preference. A second sentence is almost always the first one restated, explained, or softened. Fold what matters into the single line and delete the rest.
+- **Roughly 10 to 18 words.** Shorter is fine and often stronger. The `business` category is the current reference set (median 13 words, all single-sentence).
+- **Fully intentional.** Every word is aimed. If removing a word does not change the meaning, it was fluff and it dies.
+- **Land it and stop.** Do not explain the image after it hits. Trust the line to do its work in the speaker's chest.
+- ❌ "Grace keeps me firm to the very end. I will stand blameless on the day of my Lord Jesus Christ, held by His hand. My footing does not depend on my grip. It depends on His." → 36 words, four sentences, the last three restating the first.
+- ❌ "My plans are diligent, and diligent plans lead to profit. This business turns a profit." → the second sentence adds nothing the first did not already say.
+- ✅ "My plans are diligent, and diligent plans lead to profit." → same truth, one sentence, nothing wasted.
 
 This rule sharpens Rules 6 and 12: still bold, still calling higher, but in the fewest words that land the blow. When brevity and completeness conflict, brevity wins.
 
@@ -114,18 +115,6 @@ Every declaration must be understood instantly, the first time, by anyone. This 
 - **Plain beats pretty, every time.** A clear line the speaker grasps in one read does more than a beautiful one they have to decode.
 - ❌ "Grace saved me with empty hands." → what does that even mean?
 - ✅ "I could not earn my way to God. He saved me by grace, and I am His forever." → instantly clear.
-
-### 13. Brevity Is Potency (Cut to the Bone)
-Potency comes from compression. A declaration should hit like a hammer, not unfold like a paragraph. The longer it runs, the more the power leaks out before it lands.
-
-- **One or two sentences. Most lines 12 to 18 words, hard ceiling around 21.** Three sentences is a warning sign, not a target. If a third sentence exists, it is almost always fat: cut it or fold it into the line. The `health` category is the reference set for this bar (avg ~18 words).
-- **Never say the same truth twice.** The most common leak is a closing sentence that just rephrases the one before it ("My footing does not depend on my grip. It depends on His."). Keep the stronger half and delete the rest.
-- **Land the image and stop.** Do not explain the metaphor after it hits. Trust the line to do its work in the speaker's chest.
-- **Every word earns its place or dies.** Strip filler, throat-clearing, and connective padding. If removing a word does not change the meaning, remove it.
-- ❌ "Grace keeps me firm to the very end. I will stand blameless on the day of my Lord Jesus Christ, held by His hand. My footing does not depend on my grip. It depends on His." → 36 words; the last two sentences merely restate the first.
-- ✅ "Grace holds me blameless to the end. My standing rests on His grip, not mine." → same truth, half the words, twice the force.
-
-This rule sharpens Rules 6 and 12: still command, still triumph, but in the fewest words that land the blow. When brevity and completeness conflict, brevity wins.
 
 ---
 

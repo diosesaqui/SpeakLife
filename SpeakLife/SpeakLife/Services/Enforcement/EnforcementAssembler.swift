@@ -171,11 +171,11 @@ enum EnforcementAssembler {
         }
 
         // Named after what they said, not after where the lines came from.
-        // Someone who typed "I want to start a business" gets a week called
-        // Business even when it is carried by destiny and work.
+        // Someone who typed "I want to start a business" gets Enforcing
+        // Increase even when the week is carried by destiny and work.
         return Enforcement(
             id: "assembled_" + categories.map(\.rawValue).joined(separator: "_"),
-            title: "Enforcing " + named.name,
+            title: "Enforcing " + named.enforcementTitle,
             tagline: "Seven days standing on what Jesus already won.",
             theme: named.rawValue,
             days: days
@@ -204,7 +204,7 @@ enum EnforcementAssembler {
         }
         return Enforcement(
             id: "curated_" + primary.rawValue,
-            title: "Enforcing " + primary.name,
+            title: "Enforcing " + primary.enforcementTitle,
             tagline: "Seven days built around what you're walking through.",
             theme: primary.rawValue,
             days: days

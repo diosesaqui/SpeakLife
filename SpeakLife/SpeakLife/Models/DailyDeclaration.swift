@@ -502,6 +502,93 @@ extension DeclarationCategory {
         }
     }
 
+    /// What an Enforcement campaign is named after, as in "Enforcing Victory".
+    ///
+    /// Never `name` and never `focusTitle`. Both are browse labels, built to sit
+    /// in a category picker where naming the struggle is how someone finds their
+    /// row: "Anxiety & Worry", "Hard Times", "Peace Over Anxiety". Put "Enforcing"
+    /// in front of those and the card announces that the user is enforcing their
+    /// anxiety, which is the exact inversion of the feature and a rule 12
+    /// violation in the loudest type on the screen.
+    ///
+    /// So this returns the victory, never the topic. It matches what the four
+    /// hand-authored campaigns in `enforcements.json` already do (Enforcing
+    /// Peace, Provision, Healing, Victory), which the assembled path was
+    /// silently failing to follow.
+    ///
+    /// Titles are allowed to repeat across categories. Two people enforcing
+    /// Freedom from different things is fine; the campaign is named for where
+    /// they are going, not for where they came from.
+    var enforcementTitle: String {
+        switch self {
+        // The fight
+        case .warfare:         return "Victory"
+        case .fear:            return "Courage"
+        case .hardtimes:       return "Strength"
+        case .godsprotection:  return "Protection"
+
+        // The mind and the heart
+        case .anxiety:         return "Peace"
+        case .anger:           return "Peace"
+        case .mentalHealth:    return "A Sound Mind"
+        case .rest:            return "Rest"
+        case .joy:             return "Joy"
+        case .hope:            return "Hope"
+        case .innerHealing:    return "Inner Healing"
+        case .grief:           return "Comfort"
+
+        // The body
+        case .health:          return "Healing"
+        case .wellness:        return "Wholeness"
+
+        // Provision
+        case .wealth:          return "Provision"
+        case .debt:            return "Freedom"
+        case .housing:         return "My Home"
+        case .business:        return "Increase"
+        case .work:            return "My Work"
+        case .education:       return "My Studies"
+
+        // Who I am and where I am going
+        case .destiny:         return "My Purpose"
+        case .identity:        return "My Identity"
+        case .confidence:      return "Boldness"
+        case .wisdom:          return "Wisdom"
+        case .favor:           return "Favor"
+        case .newSeason:       return "My New Season"
+        case .miracles:        return "Breakthrough"
+
+        // Freedom
+        case .addiction:       return "Freedom"
+        case .forgiveness:     return "Freedom"
+        case .purity:          return "Purity"
+        case .grace:           return "Grace"
+
+        // People
+        case .marriage:        return "My Marriage"
+        case .relationship:    return "My Relationship"
+        case .love:            return "Love"
+        case .parenting:       return "My Children"
+        case .singleParent:    return "My Household"
+        case .friendship:      return "Friendship"
+        case .divorce:         return "Restoration"
+        case .fertility:       return "God's Promise"
+        case .salvation:       return "Salvation"
+
+        // Walking with God
+        case .faith:           return "Faith"
+        case .spiritualGrowth: return "My Walk With God"
+        case .obedience:       return "Surrender"
+        case .gratitude:       return "Gratitude"
+        case .praise:          return "Praise"
+
+        // The card's own eyebrow reads ENFORCE THE VICTORY, so an unmapped
+        // category lands on the feature's own word rather than falling back to
+        // `name` and reintroducing "Enforcing Anxiety & Worry".
+        default:               return "Victory"
+        }
+    }
+
     var focusTitle: String {
         switch self {
         case .health:         return "My Healing"
