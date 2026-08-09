@@ -20,6 +20,23 @@ import Foundation
 import UserNotifications
 import FirebaseAnalytics
 
+/// The streak-related notification side effects, behind a seam.
+///
+/// Every method here ends in UNUserNotificationCenter, which a unit test can
+/// neither authorize nor inspect — and the streak-break bug was never about a
+/// notification's contents, it was about WHICH calls happen and in what order
+/// relative to the iCloud heal. That is only assertable against a double.
+protocol StreakNotifying: AnyObject {
+    func scheduleStreakAtRiskNotification(currentStreak: Int)
+    func cancelStreakAtRiskNotification()
+    func scheduleStreakBreakNotification(previousStreak: Int)
+    func cancelStreakBreakNotification()
+    @discardableResult
+    func scheduleStreakMilestoneIfNeeded(currentStreak: Int, previousStreak: Int) -> Bool
+}
+
+extension LifecycleNotificationService: StreakNotifying {}
+
 final class LifecycleNotificationService {
     static let shared = LifecycleNotificationService()
     private init() {}
@@ -258,6 +275,18 @@ final class LifecycleNotificationService {
             self.center.add(request, withCompletionHandler: nil)
         }
         AnalyticsService.shared.track("streak_break_notification_scheduled", parameters: ["previous_streak": previousStreak])
+    }
+
+    /// Revokes the streak-break push. Because it fires the NEXT morning rather
+    /// than on the break itself, there is a long window in which its premise
+    /// can stop being true — a freeze bridges the gap, a day earned on another
+    /// device syncs in, or the user simply comes back and completes. Delivered
+    /// copies are pulled too: a break notice sitting in Notification Center is
+    /// just as wrong as one about to fire, and it carries a streak count that
+    /// by then contradicts the badge.
+    func cancelStreakBreakNotification() {
+        center.removePendingNotificationRequests(withIdentifiers: ["streak_break"])
+        center.removeDeliveredNotifications(withIdentifiers: ["streak_break"])
     }
 
     // MARK: - Lapsed Re-engagement
