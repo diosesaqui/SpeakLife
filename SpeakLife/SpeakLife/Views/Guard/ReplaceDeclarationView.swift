@@ -162,7 +162,7 @@ struct ReplaceDeclarationView: View {
             return
         }
         if VoicePresenceService.micAlreadyAuthorized {
-            let started = await voice.start()
+            let started = await voice.start(declaration: thought.counterDeclaration)
             if !started { usingHoldFallback = true }
         } else {
             // One line of reason BEFORE the system dialog. This is the whole
@@ -175,7 +175,7 @@ struct ReplaceDeclarationView: View {
     private func requestMic() async {
         let granted = await voice.requestMicPermission()
         if granted {
-            let started = await voice.start()
+            let started = await voice.start(declaration: thought.counterDeclaration)
             if !started { usingHoldFallback = true }
         } else {
             usingHoldFallback = true
@@ -189,11 +189,29 @@ struct ReplaceDeclarationView: View {
             GuardWaveform(levels: voice.levels, tint: gold, isSettled: settled)
                 .frame(height: 64)
 
+            // How much of the line has been heard. Not a score and not a
+            // grade — it never judges the words, it just shows that the screen
+            // is listening and that there is more of the line to go. Without
+            // it, someone who said two words and watched it complete had no way
+            // to know what had been asked of them.
+            ZStack(alignment: .leading) {
+                Capsule().fill(Color.white.opacity(0.12))
+                GeometryReader { geo in
+                    Capsule()
+                        .fill(DS.Gradient.gold)
+                        .frame(width: geo.size.width * CGFloat(voice.spokenProgress))
+                }
+            }
+            .frame(height: 4)
+            .padding(.horizontal, 40)
+            .opacity(settled ? 0 : 1)
+            .animation(.easeOut(duration: 0.15), value: voice.spokenProgress)
+
             // Names the action, and says plainly that the app is waiting on
             // them. "Say it out loud." next to a live waveform read as a
             // caption; people did not realise the screen would not advance
             // without them.
-            Text(settled ? "Heard." : (voice.isListening ? "Read it out loud — we're listening" : "Listening…"))
+            Text(promptText)
                 .font(.system(size: 14, weight: .semibold, design: .rounded))
                 .foregroundColor(.white.opacity(settled ? 0.95 : 0.65))
                 .multilineTextAlignment(.center)
@@ -211,6 +229,16 @@ struct ReplaceDeclarationView: View {
             }
             .buttonStyle(.plain)
         }
+    }
+
+    /// Never says "wrong" and never says "again". The only states are: we are
+    /// listening, keep going, and we heard you.
+    private var promptText: String {
+        if settled { return "Heard." }
+        guard voice.isListening else { return "Listening…" }
+        return voice.spokenProgress > 0.15
+            ? "Keep going — say the whole line"
+            : "Read it out loud"
     }
 
     // MARK: - Hold fallback
