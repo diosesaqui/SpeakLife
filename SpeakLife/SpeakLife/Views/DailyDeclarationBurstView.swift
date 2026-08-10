@@ -8,6 +8,21 @@
 import SwiftUI
 import FirebaseAnalytics
 
+/// One slat of the burst.
+///
+/// Carries the category as an enum and not only as its display name. The eighth
+/// slat resolves the session's theme from these, and a label like
+/// "Warfare & Victory" cannot be mapped back to `DeclarationCategory.warfare`
+/// — which is exactly what the old `(text, verse, String)` tuple threw away on
+/// the Enforcement path, where the string was the campaign's theme name.
+private struct BurstDeclaration {
+    let text: String
+    let verse: String
+    /// What the chip above the declaration reads.
+    let categoryLabel: String
+    let category: DeclarationCategory?
+}
+
 struct DailyDeclarationBurstView: View {
     @EnvironmentObject var viewModel: DeclarationViewModel
     @EnvironmentObject var themeViewModel: ThemeViewModel
@@ -24,9 +39,25 @@ struct DailyDeclarationBurstView: View {
     @State private var declarationOpacity = 0.0
     @State private var isTransitioning = false
     @State private var showSpiritualGraph = false
-    @State private var morningDeclarations: [(text: String, verse: String, category: String)] = []
+    @State private var morningDeclarations: [BurstDeclaration] = []
     @State private var isLoadingDeclarations = true
     @State private var showIntroScreen = true
+
+    // The eighth slat: one corresponding action, mapped to the theme the seven
+    // declarations were actually about. Resolved once the last one is spoken so
+    // it reflects what was said, not what was selected.
+    @State private var showActionSlide = false
+    @State private var burstTheme: DeclarationCategory = .faith
+    @State private var faithAction: FaithAction?
+    /// Set only when the campaign actually filled the burst. Re-asking
+    /// `EnforcementService` at the end would map the action to a campaign whose
+    /// words were never spoken, since `loadDynamicDeclarations` abandons the
+    /// enforcement path whenever it cannot fill all seven slots.
+    @State private var enforcementTheme: DeclarationCategory?
+    /// This session's yes, not today's. Multiple bursts a day are supported, so
+    /// reading the store here would checkmark an earlier burst's commitment on a
+    /// screen where the user just tapped "Not today".
+    @State private var committedAction: FaithAction?
     
     // Animation states for completion screen
     @State private var checkmarkScale: CGFloat = 0.0
@@ -58,6 +89,13 @@ struct DailyDeclarationBurstView: View {
                 
                 if showIntroScreen {
                     introScreenView(geometry: geometry)
+                } else if showActionSlide, let action = faithAction {
+                    BurstFaithActionView(
+                        theme: burstTheme,
+                        action: action,
+                        onCommit: { commitToAction(action) },
+                        onSkip: { skipAction(action) }
+                    )
                 } else if !showCompletionView {
                     // Power-release effect: active while declaration is fully visible
                     // and the user is actively speaking it (not mid-transition)
@@ -88,7 +126,7 @@ struct DailyDeclarationBurstView: View {
     // MARK: - Dynamic Declaration Selection
     
     private func loadDynamicDeclarations() {
-        var selectedDeclarations: [(text: String, verse: String, category: String)] = []
+        var selectedDeclarations: [BurstDeclaration] = []
 
         // 0. An active Enforcement owns the burst.
         //
@@ -109,18 +147,28 @@ struct DailyDeclarationBurstView: View {
                 return lhs.dayNumber < rhs.dayNumber
             }
             for day in ordered.prefix(burstDeclarationCount) {
-                selectedDeclarations.append((day.anchorText, day.anchorBook, enforcement.themeName))
+                selectedDeclarations.append(
+                    BurstDeclaration(
+                        text: day.anchorText,
+                        verse: day.anchorBook,
+                        categoryLabel: enforcement.themeName,
+                        category: enforcement.category
+                    )
+                )
             }
             if selectedDeclarations.count == burstDeclarationCount {
                 morningDeclarations = selectedDeclarations
+                enforcementTheme = enforcement.category
                 isLoadingDeclarations = false
                 print("📱 Daily Burst: speaking \(enforcement.title), day \(today)")
                 return
             }
             // A campaign is always seven days, so this shouldn't happen. If it
             // ever does, top up from the normal pool rather than show a
-            // half-empty burst.
+            // half-empty burst. The theme goes back with them: nothing from the
+            // campaign is being spoken, so the closing action must not claim it.
             selectedDeclarations.removeAll()
+            enforcementTheme = nil
         }
 
         // 1. Get favorites from viewModel
@@ -156,23 +204,27 @@ struct DailyDeclarationBurstView: View {
             if usedIds.contains(declaration.id) { continue }
             if selectedDeclarations.count >= burstDeclarationCount { break }
             
-            let text = declaration.text
-            let verse = declaration.book ?? ""
-            let categoryName = declaration.category.name
-            selectedDeclarations.append((text, verse, categoryName))
+            selectedDeclarations.append(
+                BurstDeclaration(
+                    text: declaration.text,
+                    verse: declaration.book ?? "",
+                    categoryLabel: declaration.category.name,
+                    category: declaration.category
+                )
+            )
             usedIds.insert(declaration.id)
         }
         
         // 6. Fallback if needed
         if selectedDeclarations.count < burstDeclarationCount {
-            let fallbackDeclarations = [
-                ("I am loved by God unconditionally", "Romans 8:38-39", "Love & Belonging"),
-                ("My God supplies all my needs according to His riches", "Philippians 4:19", "Wealth"),
-                ("I have the mind of Christ", "1 Corinthians 2:16", "Wisdom"),
-                ("Greater is He that is in me than he that is in the world", "1 John 4:4", "Warfare & Victory"),
-                ("I can do all things through Christ who strengthens me", "Philippians 4:13", "Faith"),
-                ("The joy of the Lord is my strength", "Nehemiah 8:10", "Joy"),
-                ("I am fearfully and wonderfully made", "Psalm 139:14", "Identity")
+            let fallbackDeclarations: [BurstDeclaration] = [
+                BurstDeclaration(text: "I am loved by God unconditionally", verse: "Romans 8:38-39", categoryLabel: DeclarationCategory.love.name, category: .love),
+                BurstDeclaration(text: "My God supplies all my needs according to His riches", verse: "Philippians 4:19", categoryLabel: DeclarationCategory.wealth.name, category: .wealth),
+                BurstDeclaration(text: "I have the mind of Christ", verse: "1 Corinthians 2:16", categoryLabel: DeclarationCategory.wisdom.name, category: .wisdom),
+                BurstDeclaration(text: "Greater is He that is in me than he that is in the world", verse: "1 John 4:4", categoryLabel: DeclarationCategory.warfare.name, category: .warfare),
+                BurstDeclaration(text: "I can do all things through Christ who strengthens me", verse: "Philippians 4:13", categoryLabel: DeclarationCategory.faith.name, category: .faith),
+                BurstDeclaration(text: "The joy of the Lord is my strength", verse: "Nehemiah 8:10", categoryLabel: DeclarationCategory.joy.name, category: .joy),
+                BurstDeclaration(text: "I am fearfully and wonderfully made", verse: "Psalm 139:14", categoryLabel: DeclarationCategory.identity.name, category: .identity)
             ]
             
             let needed = burstDeclarationCount - selectedDeclarations.count
@@ -353,7 +405,7 @@ struct DailyDeclarationBurstView: View {
             // Declaration Content
             VStack(spacing: DS.Spacing.lg) {
                 // Category label with orange gradient background
-                Text(morningDeclarations[currentDeclarationIndex].2.uppercased())
+                Text(morningDeclarations[currentDeclarationIndex].categoryLabel.uppercased())
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundColor(.white)
                     .padding(.horizontal, DS.Spacing.md)
@@ -372,14 +424,14 @@ struct DailyDeclarationBurstView: View {
                     .scaleEffect(declarationOpacity)
                 
                 VStack(spacing: 20) {
-                    Text(morningDeclarations[currentDeclarationIndex].0)
+                    Text(morningDeclarations[currentDeclarationIndex].text)
                         .font(.system(size: 28, weight: .bold, design: .serif))
                         .foregroundColor(.white)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 30)
                         .opacity(declarationOpacity)
-                    
-                    Text(morningDeclarations[currentDeclarationIndex].1)
+
+                    Text(morningDeclarations[currentDeclarationIndex].verse)
                         .font(.system(size: 14, weight: .medium, design: .rounded))
                         .foregroundColor(.white.opacity(0.6))
                         .opacity(declarationOpacity)
@@ -555,6 +607,29 @@ struct DailyDeclarationBurstView: View {
                         )
                         .padding(.top, 8)
                         
+                        // What they said yes to on the eighth slat. Shown so the
+                        // commitment survives the celebration instead of being
+                        // buried under it.
+                        if let committedAction {
+                            HStack(spacing: DS.Spacing.xs) {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .font(.system(size: 15, weight: .bold))
+                                    .foregroundColor(DS.Palette.gold)
+
+                                Text(committedAction.headline)
+                                    .font(.system(size: 15, weight: .semibold))
+                                    .foregroundColor(.white.opacity(0.9))
+                                    .multilineTextAlignment(.leading)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
+                            .padding(.horizontal, DS.Spacing.md)
+                            .padding(.vertical, DS.Spacing.sm)
+                            .background(
+                                Capsule().fill(Color.white.opacity(0.10))
+                            )
+                            .opacity(starOpacity)
+                        }
+
                         // Milestone callout
                         if burstTracker.currentStreak % 7 == 0 && burstTracker.currentStreak > 0 {
                             Text("🎉 \(burstTracker.currentStreak / 7) WEEK\(burstTracker.currentStreak == 7 ? "" : "S") STRONG!")
@@ -853,26 +928,84 @@ struct DailyDeclarationBurstView: View {
             // Automatically complete the daily burst task
             streakViewModel.completeTask(taskId: "complete_daily_burst")
 
-            // The badge popup is wired to ModernDailyChecklistView which isn't visible here.
-            // Directly trigger it after a short delay so it appears on the completion screen.
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                if streakViewModel.badgeManager.recentlyUnlocked != nil, !streakViewModel.showBadgeUnlock {
-                    streakViewModel.showBadgeUnlock = true
-                }
-            }
-
-            withAnimation(DS.Motion.smooth) {
-                showCompletionView = true
-            }
-            
             AnalyticsService.shared.track("daily_burst_completed", parameters: [
                 "declarations_count": morningDeclarations.count,
                 "time_spent": Int(timeSpent),
                 "streak": burstTracker.currentStreak
             ])
+
+            // The eighth slat. Everything that counts — the completion record, the
+            // streak, the checklist task — is already written above, so this screen
+            // can never cost the user their day.
+            presentActionSlide()
         }
     }
-    
+
+    // MARK: - The Eighth Slat
+
+    /// Resolves what this burst was about and asks for one action on it.
+    private func presentActionSlide() {
+        let theme = FaithActionCatalog.resolveTheme(
+            enforcement: enforcementTheme,
+            spoken: morningDeclarations.compactMap { $0.category },
+            selected: viewModel.selectedCategory
+        )
+        let action = FaithActionCatalog.action(for: theme)
+
+        burstTheme = theme
+        faithAction = action
+
+        AnalyticsService.shared.track("daily_burst_action_shown", parameters: [
+            "theme": theme.rawValue,
+            "action": action.headline
+        ])
+
+        withAnimation(DS.Motion.smooth) {
+            showActionSlide = true
+        }
+    }
+
+    private func commitToAction(_ action: FaithAction) {
+        // Deliberately not `.success` — the completion screen fires that one a beat
+        // later, and two success haptics back to back read as a glitch.
+        Juice.play(.tapSolid)
+        committedAction = action
+        FaithActionCommitmentStore.shared.commit(to: action, theme: burstTheme)
+
+        AnalyticsService.shared.track("daily_burst_action_committed", parameters: [
+            "theme": burstTheme.rawValue,
+            "action": action.headline
+        ])
+
+        advanceToCompletion()
+    }
+
+    private func skipAction(_ action: FaithAction) {
+        Juice.play(.tapLight)
+
+        AnalyticsService.shared.track("daily_burst_action_skipped", parameters: [
+            "theme": burstTheme.rawValue,
+            "action": action.headline
+        ])
+
+        advanceToCompletion()
+    }
+
+    private func advanceToCompletion() {
+        // The badge popup is wired to ModernDailyChecklistView which isn't visible here.
+        // Directly trigger it after a short delay so it appears on the completion screen.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+            if streakViewModel.badgeManager.recentlyUnlocked != nil, !streakViewModel.showBadgeUnlock {
+                streakViewModel.showBadgeUnlock = true
+            }
+        }
+
+        withAnimation(DS.Motion.smooth) {
+            showActionSlide = false
+            showCompletionView = true
+        }
+    }
+
     private func completeBurst() {
         // Haptic feedback on complete
         Juice.play(.tapLight)
