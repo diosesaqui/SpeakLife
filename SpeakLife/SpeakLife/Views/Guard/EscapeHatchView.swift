@@ -2,10 +2,16 @@
 //  EscapeHatchView.swift
 //  SpeakLife
 //
-//  "Something else is on my mind" — the bridge from drill to live use.
+//  The opening question: what thought have you been carrying that doesn't line
+//  up with God's word?
 //
-//  This is where someone types the thought that is actually on them, so three
-//  things are true of this screen and must stay true:
+//  This used to be the escape hatch — a quiet link under a thought the app had
+//  guessed at. It is now the front door. Being handed someone else's guess at
+//  your struggle is a weaker moment than naming your own, and a thought you did
+//  not recognise is one you cannot reject with any conviction. So the app asks
+//  first, and only serves from the bank when they have nothing specific.
+//
+//  Three things are true of this screen and must stay true:
 //
 //  1. **The text never leaves the phone.** Classification runs on device (see
 //     `ThoughtClassifier`), the raw sentence is never synced, never persisted,
@@ -20,16 +26,21 @@
 
 import SwiftUI
 
-struct EscapeHatchView: View {
+struct AskForThoughtView: View {
 
-    /// Serves the flow a thought to speak against.
-    let onMatched: (ThoughtCategory, IncomingThought, ThoughtClassification.Confidence) -> Void
-    let onBack: () -> Void
-    /// Out of free entries. The flow shows the paywall.
-    let onNeedsPremium: () -> Void
-    /// Remaining free entries this month, or nil for unlimited.
+    /// Remaining free entries, or nil when this one is unmetered — which is the
+    /// case for the day's rep. Naming your own thought IS the daily task now, so
+    /// metering it would put the whole feature behind the paywall.
     let remaining: Int?
     let classifier: ThoughtClassifier
+    /// Serves the flow the user's own words plus the matched counter.
+    let onNamed: (_ typed: String, _ matched: IncomingThought) -> Void
+    /// Nothing specific today — fall back to the bank. This is the answer to the
+    /// blank-field bounce, and it must never feel like a lesser choice.
+    let onNothingSpecific: () -> Void
+    /// Out of free extra reps. The flow shows the paywall.
+    let onNeedsPremium: () -> Void
+    let onClose: () -> Void
 
     @State private var text = ""
     @State private var showReachOut = false
@@ -39,10 +50,10 @@ struct EscapeHatchView: View {
         text.trimmingCharacters(in: .whitespacesAndNewlines).count >= 3
     }
 
-    /// Lifted out of the modifier chain. A ternary between two `AnyShapeStyle`
-    /// wrappers, inside a `.fill`, inside a `.background`, inside a `Button`
-    /// label is the kind of nesting that costs the type checker real time — and
-    /// this feature already failed an archive on that class of expression.
+    /// Lifted out of the modifier chain — a ternary between two `AnyShapeStyle`
+    /// wrappers inside a `.fill` inside a `.background` is the kind of nesting
+    /// that costs the type checker real time, and this feature already failed an
+    /// archive on that class of expression.
     private var submitFill: AnyShapeStyle {
         canSubmit
             ? AnyShapeStyle(DS.Gradient.gold)
@@ -57,26 +68,32 @@ struct EscapeHatchView: View {
 
             VStack(alignment: .leading, spacing: DS.Spacing.md) {
                 HStack {
-                    Button(action: onBack) {
-                        Image(systemName: "chevron.left")
+                    Text("TAKE IT CAPTIVE")
+                        .font(.system(size: 11, weight: .bold))
+                        .tracking(2.6)
+                        .foregroundColor(.white.opacity(0.38))
+                    Spacer()
+                    Button(action: onClose) {
+                        Image(systemName: "xmark")
                             .font(.system(size: 15, weight: .semibold))
-                            .foregroundColor(.white.opacity(0.4))
+                            .foregroundColor(.white.opacity(0.32))
                             .frame(width: 32, height: 32)
                     }
-                    .accessibilityLabel("Back")
-                    Spacer()
+                    .accessibilityLabel("Close")
                 }
 
                 Spacer(minLength: 0)
 
                 // "The thought", never "your thought". It came at them; it is
-                // not theirs and it does not indict them.
-                Text("What's the loudest thought right now?")
+                // not theirs and it does not indict them. The question names
+                // what makes a thought worth rejecting — that it disagrees with
+                // what God said — rather than asking them to diagnose it.
+                Text("What thought have you been carrying that doesn't line up with God's word?")
                     .font(.system(size: 24, weight: .bold, design: .rounded))
                     .foregroundColor(.white)
                     .fixedSize(horizontal: false, vertical: true)
 
-                Text("Type it as it sounds. It stays on this phone.")
+                Text("Write it the way it actually sounds. It stays on this phone.")
                     .font(.system(size: 13, weight: .medium))
                     .foregroundColor(.white.opacity(0.45))
 
@@ -102,8 +119,8 @@ struct EscapeHatchView: View {
 
                 if let remaining, !showReachOut {
                     Text(remaining > 0
-                         ? "\(remaining) left this month"
-                         : "You've used this month's entries.")
+                         ? "\(remaining) more this month"
+                         : "You've used this month's extra entries.")
                         .font(.system(size: 12, weight: .medium))
                         .foregroundColor(.white.opacity(0.4))
                 }
@@ -121,6 +138,23 @@ struct EscapeHatchView: View {
                     }
                     .buttonStyle(.dsPressable(feel: .tapSolid))
                     .disabled(!canSubmit)
+
+                    // The answer to the blank field. Deliberately a real option
+                    // rather than a hidden fallback: some mornings nothing is
+                    // loud, and the drill still works — that was the whole
+                    // premise of the bank. It just no longer goes first.
+                    Button {
+                        focused = false
+                        AnalyticsService.shared.track("guard_nothing_specific_tapped")
+                        onNothingSpecific()
+                    } label: {
+                        Text("Nothing specific — give me one")
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundColor(.white.opacity(0.5))
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 6)
+                    }
+                    .buttonStyle(.plain)
                 }
             }
             .padding(.horizontal, 24)
@@ -172,7 +206,7 @@ struct EscapeHatchView: View {
         focused = false
 
         // Safety runs first and unconditionally — ahead of the quota check, so
-        // a free user out of entries still reaches this rather than a paywall.
+        // someone out of entries still reaches this rather than a paywall.
         let classification = classifier.classify(entry)
         if case .reachOut = classification {
             AnalyticsService.shared.track("guard_escape_hatch_screened",
@@ -186,13 +220,13 @@ struct EscapeHatchView: View {
             return
         }
 
-        guard case .matched(let category, let thought, let confidence) = classification else { return }
+        guard case .matched(let category, let matched, let confidence) = classification else { return }
         // Category and confidence only. The sentence itself never appears in an
         // event payload — that is the whole promise of this screen.
         AnalyticsService.shared.track("guard_escape_hatch_used", parameters: [
             "category_matched": category.rawValue,
             "confidence": confidence.rawValue
         ])
-        onMatched(category, thought, confidence)
+        onNamed(entry, matched)
     }
 }

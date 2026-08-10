@@ -4,7 +4,22 @@
 //
 //  Guarding — the fifth pillar. The container that runs the four screens.
 //
-//  INCOMING → JUDGE → REPLACE → GROUND TAKEN, target under 60 seconds.
+//  ASK → INCOMING/JUDGE → REPLACE → GROUND TAKEN, target under 60 seconds.
+//
+//  It opens by ASKING what thought they have been carrying, rather than serving
+//  one from the bank.
+//
+//  The original spec argued the opposite — that at 7am nobody has an intrusive
+//  thought queued up, so "what are you thinking?" produces a blank field and a
+//  bounce, and the app should supply the thought as reps at the range. That
+//  reasoning was sound in the abstract and wrong in the hand: being handed
+//  someone else's guess at your struggle is a weaker moment than naming your
+//  own, and a thought you did not recognise is one you cannot reject with any
+//  conviction.
+//
+//  The blank-field risk is real, so it is answered with a fallback rather than
+//  by taking the question away: "Nothing specific right now" serves from the
+//  bank and the drill runs exactly as it did. The ask leads; the bank catches.
 //
 //  The loop always terminates in speaking. Every branch in this file — the
 //  escape hatch, the "I'm not sure" swipe, the no-mic fallback — converges on
@@ -39,14 +54,14 @@ struct TakeItCaptiveFlowView: View {
     var onNeedsPremium: (() -> Void)?
 
     private enum Stage: Equatable {
-        case incoming
+        case ask             // what thought have you been carrying?
+        case incoming        // it goes on the card, in their words
         case answer          // right-swipe: here's what God says
         case replace
         case ground(Int)
-        case escapeHatch
     }
 
-    @State private var stage: Stage = .incoming
+    @State private var stage: Stage = .ask
     @State private var thought: IncomingThought?
     /// Where the THOUGHT came from — the bank, the user's own words, or an
     /// interrupt. Recorded in the log. Distinct from `completesDailyRep`.
@@ -67,7 +82,9 @@ struct TakeItCaptiveFlowView: View {
 
     var body: some View {
         Group {
-            if let thought {
+            if case .ask = stage {
+                askScreen
+            } else if let thought {
                 content(for: thought)
             } else if loadFailed {
                 // The bank failed to load. Nothing to drill with, and a spinner
@@ -115,7 +132,10 @@ struct TakeItCaptiveFlowView: View {
                     ])
                     withAnimation(DS.Motion.smooth) { stage = .answer }
                 },
-                onEscapeHatch: { withAnimation(DS.Motion.smooth) { stage = .escapeHatch } },
+                // The card already holds their own words when they typed one.
+                // This is the way back to retype it, or to name a different
+                // thought than the one the bank offered.
+                onEscapeHatch: { withAnimation(DS.Motion.smooth) { stage = .ask } },
                 onClose: { dismiss() }
             )
             .transition(.opacity)
@@ -151,32 +171,63 @@ struct TakeItCaptiveFlowView: View {
             GroundTakenView(total: total) { dismiss() }
                 .transition(.opacity)
 
-        case .escapeHatch:
-            EscapeHatchView(
-                // The matched thought already carries the classified category,
-                // so the flow reads it off `matched` rather than threading it
-                // separately and risking the two disagreeing.
-                onMatched: { _, matched, _ in
-                    service.recordEscapeHatchUse(isPremium: subscriptionStore.isPremium)
-                    // Only the THOUGHT's origin changes. `completesDailyRep`
-                    // stays as `begin()` set it, so someone who opened the daily
-                    // drill and typed their own thought still banks the day and
-                    // still gets the checklist tick they came for.
-                    activeSource = .escapeHatch
-                    self.thought = matched
-                    withAnimation(DS.Motion.smooth) { stage = .replace }
-                },
-                onBack: { withAnimation(DS.Motion.smooth) { stage = .incoming } },
-                onNeedsPremium: {
-                    AnalyticsService.shared.trackPaywallImpression(paywallId: "guard_escape_hatch")
-                    onNeedsPremium?()
-                    dismiss()
-                },
-                remaining: service.escapeHatchesRemaining(isPremium: subscriptionStore.isPremium),
-                classifier: ThoughtClassifier(bank: service.bank)
-            )
-            .transition(.move(edge: .bottom).combined(with: .opacity))
+        case .ask:
+            // Handled ahead of `content(for:)` — there is no thought yet.
+            EmptyView()
         }
+    }
+
+    /// The opening question, and the whole point of the change: they name the
+    /// thought, the app doesn't guess it.
+    private var askScreen: some View {
+        AskForThoughtView(
+            remaining: quotaRemaining,
+            classifier: ThoughtClassifier(bank: service.bank),
+            onNamed: { typed, matched in
+                // Their words go on the card; the bank entry only supplies the
+                // counter-declaration and the terrain. Rejecting a sentence you
+                // wrote yourself is the entire reason for asking.
+                spendQuotaIfNeeded()
+                activeSource = .escapeHatch
+                thought = matched.wearing(typed)
+                withAnimation(DS.Motion.smooth) { stage = .incoming }
+            },
+            onNothingSpecific: {
+                // The blank-field case the original spec was worried about.
+                // Serve from the bank and run the drill exactly as before.
+                activeSource = launchedFromIntent && !completesDailyRep ? .interrupt : .daily
+                guard let served = service.thought(isPremium: subscriptionStore.isPremium) else {
+                    loadFailed = true
+                    return
+                }
+                thought = served
+                AnalyticsService.shared.track("guard_bank_fallback_used", parameters: [
+                    "category": served.category.rawValue,
+                    "intensity": served.intensity
+                ])
+                withAnimation(DS.Motion.smooth) { stage = .incoming }
+            },
+            onNeedsPremium: {
+                AnalyticsService.shared.trackPaywallImpression(paywallId: "guard_extra_rep")
+                onNeedsPremium?()
+                dismiss()
+            },
+            onClose: { dismiss() }
+        )
+        .transition(.opacity)
+    }
+
+    /// Naming your own thought is free once a day — it IS the daily task now, so
+    /// metering it would put the whole feature behind the paywall for free
+    /// users. The quota only bites on extra reps beyond the day's.
+    private var quotaRemaining: Int? {
+        guard !completesDailyRep else { return nil }
+        return service.escapeHatchesRemaining(isPremium: subscriptionStore.isPremium)
+    }
+
+    private func spendQuotaIfNeeded() {
+        guard !completesDailyRep else { return }
+        service.recordEscapeHatchUse(isPremium: subscriptionStore.isPremium)
     }
 
     private var emptyState: some View {
@@ -196,24 +247,16 @@ struct TakeItCaptiveFlowView: View {
     // MARK: - Lifecycle
 
     private func begin() {
-        guard thought == nil else { return }
+        guard stage == .ask, thought == nil else { return }
         // A Siri launch is today's rep unless today's rep is already banked;
         // only then is it a genuine interrupt. See `launchedFromIntent`.
         let dayAlreadyBanked = service.isCompletedToday
         completesDailyRep = !dayAlreadyBanked
         activeSource = (launchedFromIntent && dayAlreadyBanked) ? .interrupt : .daily
         startedAt = Date()
-        let served = service.thought(isPremium: subscriptionStore.isPremium)
-        thought = served
-        guard let served else {
-            loadFailed = true
-            return
-        }
         AnalyticsService.shared.track("guard_task_started", parameters: [
             "source": activeSource.rawValue,
-            "entry": launchedFromIntent ? "app_intent" : "checklist",
-            "category": served.category.rawValue,
-            "intensity": served.intensity
+            "entry": launchedFromIntent ? "app_intent" : "checklist"
         ])
     }
 
@@ -239,11 +282,11 @@ struct TakeItCaptiveFlowView: View {
 
     private var screenIndex: Int {
         switch stage {
-        case .incoming:     return 0
-        case .answer:       return 1
-        case .replace:      return 2
-        case .ground:       return 3
-        case .escapeHatch:  return 4
+        case .ask:      return 0
+        case .incoming: return 1
+        case .answer:   return 2
+        case .replace:  return 3
+        case .ground:   return 4
         }
     }
 }
