@@ -130,9 +130,27 @@ class BurstCompletionTracker: ObservableObject {
     
     // MARK: - Public Methods
     
+    /// Memoized. `calculateCurrentStreak` walks back day by day doing a linear
+    /// scan of `completions` for each one, so a long streak over a long history
+    /// is O(streak × history) — and this is now read from the Today tab's body,
+    /// which SwiftUI re-evaluates constantly. Recomputing it there would put
+    /// hundreds of thousands of date comparisons on the home screen's render
+    /// path.
+    ///
+    /// The cache is keyed on the calendar day and on `completions.count`, so it
+    /// invalidates on a rollover and on any append or sync merge — the only two
+    /// ways the answer can change.
     var currentStreak: Int {
-        calculateCurrentStreak()
+        let today = calendar.startOfDay(for: Date())
+        if let cached = cachedStreak, cached.day == today, cached.completionCount == completions.count {
+            return cached.value
+        }
+        let value = calculateCurrentStreak()
+        cachedStreak = (day: today, completionCount: completions.count, value: value)
+        return value
     }
+
+    private var cachedStreak: (day: Date, completionCount: Int, value: Int)?
     
     func recordBurstCompletion(declarationCount: Int, timeSpent: TimeInterval) {
         let today = calendar.startOfDay(for: Date())

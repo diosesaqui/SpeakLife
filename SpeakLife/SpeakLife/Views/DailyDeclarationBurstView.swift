@@ -599,11 +599,11 @@ struct DailyDeclarationBurstView: View {
                         
                         // Streak only — the one stat that actually matters
                         StatCard(
-                            value: "\(burstTracker.currentStreak)",
-                            label: burstTracker.currentStreak == 1 ? "Day Streak" : "Day Streak",
+                            value: "\(streakViewModel.displayStreak)",
+                            label: streakViewModel.displayStreak == 1 ? "Day Streak" : "Day Streak",
                             icon: "flame.fill",
                             scale: statsScale,
-                            highlight: burstTracker.currentStreak >= 7
+                            highlight: streakViewModel.displayStreak >= 7
                         )
                         .padding(.top, 8)
                         
@@ -631,8 +631,8 @@ struct DailyDeclarationBurstView: View {
                         }
 
                         // Milestone callout
-                        if burstTracker.currentStreak % 7 == 0 && burstTracker.currentStreak > 0 {
-                            Text("🎉 \(burstTracker.currentStreak / 7) WEEK\(burstTracker.currentStreak == 7 ? "" : "S") STRONG!")
+                        if streakViewModel.displayStreak % 7 == 0 && streakViewModel.displayStreak > 0 {
+                            Text("🎉 \(streakViewModel.displayStreak / 7) WEEK\(streakViewModel.displayStreak == 7 ? "" : "S") STRONG!")
                                 .font(.system(size: 13, weight: .bold))
                                 .foregroundColor(.yellow)
                                 .opacity(starOpacity)
@@ -773,11 +773,11 @@ struct DailyDeclarationBurstView: View {
             "Kingdom Strength! 👑"
         ]
         
-        if burstTracker.currentStreak >= 30 {
+        if streakViewModel.displayStreak >= 30 {
             return "UNSTOPPABLE! 🌟"
-        } else if burstTracker.currentStreak >= 21 {
+        } else if streakViewModel.displayStreak >= 21 {
             return "LEGENDARY! 🏆"
-        } else if burstTracker.currentStreak >= 7 {
+        } else if streakViewModel.displayStreak >= 7 {
             return messages.randomElement() ?? "Victory Declared! 🔥"
         } else {
             return ["Victory Claimed!", "Day Conquered!", "Truth Spoken!"].randomElement() ?? "Victory!"
@@ -795,8 +795,8 @@ struct DailyDeclarationBurstView: View {
             "You're walking in supernatural authority!"
         ]
         
-        if burstTracker.currentStreak >= 7 {
-            return "You're unstoppable! \(burstTracker.currentStreak) days of declaring victory!"
+        if streakViewModel.displayStreak >= 7 {
+            return "You're unstoppable! \(streakViewModel.displayStreak) days of declaring victory!"
         } else {
             return messages.randomElement() ?? "You've aligned your morning with God's truth!"
         }
@@ -848,7 +848,7 @@ struct DailyDeclarationBurstView: View {
         // Haptic feedback
         Juice.play(.tapLight)
 
-        let message = "I just completed my Daily Victory Burst on SpeakLife! 🔥\n\n✅ \(morningDeclarations.count) Declarations Spoken\n🔥 \(burstTracker.currentStreak) Day Streak\n💪 \(burstTracker.currentStrengthScore)% Spiritual Strength\n\nJoin me in speaking life daily!"
+        let message = "I just completed my Daily Victory Burst on SpeakLife! 🔥\n\n✅ \(morningDeclarations.count) Declarations Spoken\n🔥 \(streakViewModel.displayStreak) Day Streak\n💪 \(burstTracker.currentStrengthScore)% Spiritual Strength\n\nJoin me in speaking life daily!"
         
         // Get the active window scene
         guard let windowScene = UIApplication.shared.connectedScenes
@@ -879,7 +879,7 @@ struct DailyDeclarationBurstView: View {
         topController.present(activityVC, animated: true)
         
         AnalyticsService.shared.track("daily_burst_shared", parameters: [
-            "streak": burstTracker.currentStreak,
+            "streak": streakViewModel.displayStreak,
             "strength_score": burstTracker.currentStrengthScore
         ])
     }
@@ -888,7 +888,7 @@ struct DailyDeclarationBurstView: View {
     
     private func startBurst() {
         AnalyticsService.shared.track("daily_burst_started", parameters: [
-            "streak": burstTracker.currentStreak
+            "streak": streakViewModel.displayStreak
         ])
         withAnimation(.easeIn(duration: 0.5)) {
             declarationOpacity = 1
@@ -931,7 +931,7 @@ struct DailyDeclarationBurstView: View {
             AnalyticsService.shared.track("daily_burst_completed", parameters: [
                 "declarations_count": morningDeclarations.count,
                 "time_spent": Int(timeSpent),
-                "streak": burstTracker.currentStreak
+                "streak": streakViewModel.displayStreak
             ])
 
             // The eighth slat. Everything that counts — the completion record, the

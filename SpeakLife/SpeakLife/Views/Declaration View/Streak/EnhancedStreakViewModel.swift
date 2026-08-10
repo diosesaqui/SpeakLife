@@ -757,6 +757,28 @@ final class EnhancedStreakViewModel: ObservableObject {
     }
     
     // MARK: - Private Methods
+    /// The streak number ANY user-facing surface should show.
+    ///
+    /// There are two streak sources and they routinely disagree:
+    ///
+    /// - `streakStats.currentStreak` is a maintained counter, healed from sync
+    ///   and from `checkStreakValidity`.
+    /// - `BurstCompletionTracker.currentStreak` is derived by walking the
+    ///   merged day-completion log, which only contains days recorded through
+    ///   `recordBurstCompletion` — so it undercounts anyone whose history
+    ///   predates the tracker.
+    ///
+    /// `completeDay()` already reconciles them with a max before writing the
+    /// streak and before firing `streak_day_completed`, so the reconciled value
+    /// is the real one. Anything that reads a raw source instead ends up
+    /// disagreeing with the badge — which is exactly what shipped: the badge
+    /// said 10 while the burst celebration's "Day Streak" card said 3.
+    ///
+    /// Read this. Do not read either source directly for display.
+    var displayStreak: Int {
+        max(streakStats.currentStreak, BurstCompletionTracker.shared.currentStreak)
+    }
+
     private func completeDay() {
         let today = Date()
         todayChecklist.completedAt = today
