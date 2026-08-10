@@ -1030,7 +1030,12 @@ final class SyncedSettingsStore {
     /// is a `DeclarationCategory` in memory now, but its display name is not
     /// what was stored, and feeding one in here would change the fingerprint on
     /// upgrade and break agreement with a device still on the old build.
-    private static func enforcementFingerprint(_ enforcement: Enforcement) -> String {
+    ///
+    /// Internal rather than private so the exact bytes can be pinned by tests,
+    /// same as `mergedEnforcementProgress` above. There is no way to notice this
+    /// drifting from a running app — two devices simply, quietly, disagree — so
+    /// the only place it can be caught is a test that asserts the literal string.
+    static func enforcementFingerprint(_ enforcement: Enforcement) -> String {
         ([enforcement.id, enforcement.title, enforcement.theme.rawValue]
             + enforcement.days.map { "\($0.dayNumber)\u{1}\($0.anchorText)\u{1}\($0.audioId)" })
             .joined(separator: "\u{1}")

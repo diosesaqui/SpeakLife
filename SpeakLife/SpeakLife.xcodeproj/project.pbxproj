@@ -23,6 +23,7 @@
 		TIC00TST000000000000001B /* TakeItCaptiveServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TIC00TST000000000000001A /* TakeItCaptiveServiceTests.swift */; };
 		FAA00TST000000000000001B /* FaithActionCatalogTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAA00TST000000000000001A /* FaithActionCatalogTests.swift */; };
 		BRS00TST000000000000001B /* BurstSessionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BRS00TST000000000000001A /* BurstSessionTests.swift */; };
+		SYN00TST000000000000001B /* SyncedSettingsStoreEnforcementTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = SYN00TST000000000000001A /* SyncedSettingsStoreEnforcementTests.swift */; };
 		01ED29F757107A93D56507E0 /* WidgetIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59BFF68BFA515EAC0AC88C85 /* WidgetIntents.swift */; };
 		0E1A8C97F61B9FB156F0F50F /* HowToUseSpeakLifeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74DAA35385DD02F8B0DCADE5 /* HowToUseSpeakLifeView.swift */; };
 		1D987CB8235BF3A621A02EAA /* ProgressSyncStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2105F142D07765CD483ED529 /* ProgressSyncStore.swift */; };
@@ -479,6 +480,7 @@
 		TIC00TST000000000000001A /* TakeItCaptiveServiceTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TakeItCaptiveServiceTests.swift; sourceTree = "<group>"; };
 		FAA00TST000000000000001A /* FaithActionCatalogTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FaithActionCatalogTests.swift; sourceTree = "<group>"; };
 		BRS00TST000000000000001A /* BurstSessionTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BurstSessionTests.swift; sourceTree = "<group>"; };
+		SYN00TST000000000000001A /* SyncedSettingsStoreEnforcementTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SyncedSettingsStoreEnforcementTests.swift; sourceTree = "<group>"; };
 		TIC00RES000000000000001A /* thoughts.json */ = {isa = PBXFileReference; includeInIndex = 1; path = thoughts.json; sourceTree = "<group>"; };
 		067C652453504C60AD4342E8 /* AdaptiveSheetModifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdaptiveSheetModifier.swift; sourceTree = "<group>"; };
 		0CE4BBB786820DC2A78A8766 /* EnforcementCompletionView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = EnforcementCompletionView.swift; sourceTree = "<group>"; };
@@ -980,6 +982,7 @@
 				TIC00TST000000000000001A /* TakeItCaptiveServiceTests.swift */,
 				FAA00TST000000000000001A /* FaithActionCatalogTests.swift */,
 				BRS00TST000000000000001A /* BurstSessionTests.swift */,
+				SYN00TST000000000000001A /* SyncedSettingsStoreEnforcementTests.swift */,
 				4501F3A62F840A01008704F9 /* WarriorRoomTypesTests.swift */,
 				4501F3A82F840A01008704F9 /* PrayerWallPostTests.swift */,
 				4501F3AA2F840A01008704F9 /* PrayerWallViewModelTests.swift */,
@@ -2215,6 +2218,7 @@
 				TIC00TST000000000000001B /* TakeItCaptiveServiceTests.swift in Sources */,
 				FAA00TST000000000000001B /* FaithActionCatalogTests.swift in Sources */,
 				BRS00TST000000000000001B /* BurstSessionTests.swift in Sources */,
+				SYN00TST000000000000001B /* SyncedSettingsStoreEnforcementTests.swift in Sources */,
 				4501F3A52F840A01008704F9 /* WarriorRoomTypesTests.swift in Sources */,
 				4501F3A72F840A01008704F9 /* PrayerWallPostTests.swift in Sources */,
 				4501F3A92F840A01008704F9 /* PrayerWallViewModelTests.swift in Sources */,
