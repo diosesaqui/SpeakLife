@@ -606,6 +606,18 @@ struct PersonalDeclarationCard: View {
             if let saved = try? await DIContainer.shared.personalDeclarationRepository.recordSpeak(id: id) {
                 await MainActor.run { progress = saved }
             }
+            // Today's reminder is now redundant — they just spoke it. Rescheduling
+            // pushes this one's push to tomorrow instead of letting it fire in a
+            // couple of hours to nag them about work already done. Runs after the
+            // write so `spokenToday` is true when the scheduler reads it back.
+            await MainActor.run {
+                // Mirrors AppState's @AppStorage default. `integer(forKey:)`
+                // returns 0 for an absent key, which would move every reminder
+                // to midnight for anyone who has not set a time.
+                let defaults = UserDefaults.standard
+                let timeIndex = defaults.object(forKey: "personalDeclarationTimeIndex") as? Int ?? 16
+                DIContainer.shared.rescheduleActivePersonalDeclarationIfNeeded(startTimeIndex: timeIndex)
+            }
         }
 
         withAnimation(DS.Motion.smooth) { speakState = .success }
