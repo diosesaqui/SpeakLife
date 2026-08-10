@@ -11,13 +11,24 @@
 //
 //  The mic ARMS ITSELF. There is no record button, because a button turns
 //  speaking into an extra decision at exactly the moment the user should just
-//  open their mouth. Confirmation is the waveform filling and then settling.
+//  open their mouth. Stopping is inferred from a pause, not tapped.
 //
-//  Nothing here grades the speaker. No transcription, no accuracy, no "try
-//  again" — see `VoicePresenceService` for why that line is not negotiable.
+//  Verification is `DeclarationVerificationService` — the same validator the
+//  personal-declaration card uses. It transcribes and scores the spoken words
+//  against the line, so "did they say it" has a real answer. The amplitude
+//  heuristic this replaced could only answer "was there a noise", and got even
+//  that wrong in both directions: an empty room completed a rep, and then two
+//  words did.
+//
+//  What it still must never do is tell someone they said it wrong. A low score
+//  cannot tell "they didn't say it" apart from "the recognizer missed it" —
+//  accents, a noisy room, a cased mic. So a miss re-listens once, phrased as an
+//  invitation, and then hands over to press-and-hold. No failure state, no
+//  attempt counter, no correction.
 //
 
 import SwiftUI
+import AVFoundation
 
 struct ReplaceDeclarationView: View {
 
@@ -32,8 +43,16 @@ struct ReplaceDeclarationView: View {
     /// inside a screen that is asking them to speak is the worst place to do it.
     let onClose: () -> Void
 
-    @StateObject private var voice = VoicePresenceService()
+    /// The same validator the personal-declaration card uses. It transcribes
+    /// on device and scores the spoken words against the line, which is a real
+    /// answer to "did they say it" — the amplitude heuristic this replaced
+    /// could only ever answer "was there a noise", and got that wrong in both
+    /// directions: an empty room completed a rep, then two words did.
+    @StateObject private var verifier = DeclarationVerificationService()
     @State private var startedAt = Date()
+    /// Nudges the copy on a re-listen. Never a failure state — see `promptText`.
+    @State private var isSecondPass = false
+    @State private var isVerifying = false
     @State private var usingHoldFallback = false
     @State private var holdProgress: CGFloat = 0
     @State private var holdTimer: Timer?
@@ -66,7 +85,7 @@ struct ReplaceDeclarationView: View {
                 HStack {
                     Spacer()
                     Button(action: {
-                        voice.stop()
+                        verifier.cancel()
                         onClose()
                     }) {
                         Image(systemName: "xmark")
@@ -92,15 +111,18 @@ struct ReplaceDeclarationView: View {
                 // the display face this app actually ships (see
                 // `DS.Typography`), so the headline gets real weight. Swap this
                 // for Caveat the day the font is added to the target.
-                Text(thought.counterDeclaration)
-                    .font(.custom("AppleSDGothicNeo-Bold", size: 30))
-                    .foregroundColor(.white)
-                    .multilineTextAlignment(.center)
-                    .lineSpacing(4)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .shadow(color: gold.opacity(0.25), radius: 18)
-                    .opacity(revealed ? 1 : 0)
-                    .offset(y: revealed ? 0 : 14)
+                // Words light gold as the transcript matches them, so the
+                // screen shows the line being taken rather than a bar filling.
+                HighlightedDeclarationText(
+                    displayWords: displayWords,
+                    matchedIndices: verifier.matchedIndices,
+                    isRecording: verifier.isRecording
+                )
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+                .shadow(color: gold.opacity(0.25), radius: 18)
+                .opacity(revealed ? 1 : 0)
+                .offset(y: revealed ? 0 : 14)
 
                 VStack(spacing: 6) {
                     Text(thought.verseText)
@@ -130,23 +152,22 @@ struct ReplaceDeclarationView: View {
         // drives an animation.
         .onAppear { withAnimation(DS.Motion.smooth) { revealed = true } }
         .task { await arm() }
-        .onDisappear { voice.stop(); holdTimer?.invalidate() }
-        .onChange(of: voice.heardVoice) { _, heard in
-            guard heard, !settled else { return }
-            settle(method: "mic")
-        }
-        // The mic window closed with nothing heard. Hand them the hold button
-        // rather than leaving the screen sitting on "Listening…" forever. Not
-        // framed as a failure — see `holdControl`.
-        .onChange(of: voice.timedOutWithoutVoice) { _, timedOut in
-            guard timedOut, !settled else { return }
-            usingHoldFallback = true
+        .onDisappear { verifier.cancel(); holdTimer?.invalidate() }
+        // The speaker stopped. Close the recording and let the transcript
+        // decide, rather than guessing from how loud the room was.
+        .onChange(of: verifier.endpointedAt) { _, stamped in
+            guard stamped != nil, !settled, !isVerifying else { return }
+            Task { await verify() }
         }
         .alert("Turn on the mic?", isPresented: $showMicRationale) {
             Button("Not now", role: .cancel) { usingHoldFallback = true }
             Button("Continue") { Task { await requestMic() } }
         } message: {
-            Text("SpeakLife listens only to confirm you spoke it out loud. Nothing is recorded, transcribed, or saved.")
+            // Honest, because this now transcribes. It checks the words
+            // against the line, on device where the phone supports it, and
+            // deletes the audio the moment the check is done. Saying "nothing
+            // is transcribed" here would be a lie told inside a permission ask.
+            Text("SpeakLife listens to check you spoke the line out loud. The audio is deleted the moment it's checked, and never saved.")
         }
     }
 
@@ -155,15 +176,15 @@ struct ReplaceDeclarationView: View {
     @MainActor
     private func arm() async {
         startedAt = Date()
-        if VoicePresenceService.micPreviouslyDenied {
+        verifier.prepare(declarationText: thought.counterDeclaration)
+        if Self.micPreviouslyDenied {
             // Denied before: go straight to the fallback. Asking again is the
             // nag the spec rules out.
             usingHoldFallback = true
             return
         }
-        if VoicePresenceService.micAlreadyAuthorized {
-            let started = await voice.start(declaration: thought.counterDeclaration)
-            if !started { usingHoldFallback = true }
+        if Self.micAlreadyAuthorized {
+            await listen()
         } else {
             // One line of reason BEFORE the system dialog. This is the whole
             // difference between a permission people grant and one they don't.
@@ -173,44 +194,72 @@ struct ReplaceDeclarationView: View {
 
     @MainActor
     private func requestMic() async {
-        let granted = await voice.requestMicPermission()
-        if granted {
-            let started = await voice.start(declaration: thought.counterDeclaration)
-            if !started { usingHoldFallback = true }
-        } else {
+        // The validator asks for speech recognition as well as the mic, so the
+        // system dialogs are left to it rather than pre-empted here.
+        await listen()
+    }
+
+    /// Arms the validator. The trailing-silence window is what makes this feel
+    /// like the mic auto-arming rather than a record button: the user just
+    /// speaks, and stopping is inferred.
+    @MainActor
+    private func listen() async {
+        do {
+            try await verifier.startRecording(autoStopAfterSilence: 1.2, preferOnDevice: true)
+        } catch {
+            // Permission refused or the engine failed. Never a nag and never an
+            // error screen — the press-and-hold way through is always honoured.
             usingHoldFallback = true
         }
+    }
+
+    /// Closes the recording and scores it.
+    ///
+    /// A match completes the rep. A miss re-listens ONCE and then hands over to
+    /// press-and-hold. It never accuses: a low score cannot distinguish "they
+    /// didn't say it" from "the recognizer didn't catch it", and this feature
+    /// does not get to call someone a liar about the one act it exists to
+    /// encourage.
+    @MainActor
+    private func verify() async {
+        isVerifying = true
+        let matched = await verifier.stopAndTranscribe()
+        isVerifying = false
+
+        if matched >= Self.matchThreshold {
+            settle(method: "mic")
+            return
+        }
+        guard !isSecondPass else {
+            usingHoldFallback = true
+            return
+        }
+        isSecondPass = true
+        await listen()
+    }
+
+    /// Same bar the personal-declaration card uses, so "spoken" means one thing
+    /// across the app.
+    private static let matchThreshold: Double = 0.65
+
+    /// Read without prompting, so the screen can show its one-line reason
+    /// BEFORE the system dialog — the difference between a permission people
+    /// grant and one they don't.
+    private static var micAlreadyAuthorized: Bool {
+        AVAudioApplication.shared.recordPermission == .granted
+    }
+
+    private static var micPreviouslyDenied: Bool {
+        AVAudioApplication.shared.recordPermission == .denied
     }
 
     // MARK: - Mic
 
     private var micControl: some View {
         VStack(spacing: 14) {
-            GuardWaveform(levels: voice.levels, tint: gold, isSettled: settled)
+            GuardWaveform(levels: verifier.levels, tint: gold, isSettled: settled)
                 .frame(height: 64)
 
-            // How much of the line has been heard. Not a score and not a
-            // grade — it never judges the words, it just shows that the screen
-            // is listening and that there is more of the line to go. Without
-            // it, someone who said two words and watched it complete had no way
-            // to know what had been asked of them.
-            ZStack(alignment: .leading) {
-                Capsule().fill(Color.white.opacity(0.12))
-                GeometryReader { geo in
-                    Capsule()
-                        .fill(DS.Gradient.gold)
-                        .frame(width: geo.size.width * CGFloat(voice.spokenProgress))
-                }
-            }
-            .frame(height: 4)
-            .padding(.horizontal, 40)
-            .opacity(settled ? 0 : 1)
-            .animation(.easeOut(duration: 0.15), value: voice.spokenProgress)
-
-            // Names the action, and says plainly that the app is waiting on
-            // them. "Say it out loud." next to a live waveform read as a
-            // caption; people did not realise the screen would not advance
-            // without them.
             Text(promptText)
                 .font(.system(size: 14, weight: .semibold, design: .rounded))
                 .foregroundColor(.white.opacity(settled ? 0.95 : 0.65))
@@ -219,7 +268,7 @@ struct ReplaceDeclarationView: View {
             // Always reachable. Someone in a quiet room, on a bus, or beside a
             // sleeping child should never be stuck at this screen.
             Button {
-                voice.stop()
+                verifier.cancel()
                 usingHoldFallback = true
             } label: {
                 Text("Can't speak out loud right now")
@@ -231,14 +280,24 @@ struct ReplaceDeclarationView: View {
         }
     }
 
-    /// Never says "wrong" and never says "again". The only states are: we are
-    /// listening, keep going, and we heard you.
+    /// The words of the line, for the highlighter. Split on whitespace so the
+    /// indices line up with `DeclarationVerificationService.declarationWords`,
+    /// which tokenizes the same way.
+    private var displayWords: [String] {
+        thought.counterDeclaration.split(separator: " ").map(String.init)
+    }
+
+    /// Never says "wrong", never says "failed", never counts attempts.
+    ///
+    /// A poor match cannot tell "they didn't say it" apart from "the recognizer
+    /// missed it" — accents, a noisy room, a cased mic. So the second pass is
+    /// phrased as an invitation, not a correction, and the press-and-hold way
+    /// through is on screen the whole time.
     private var promptText: String {
         if settled { return "Heard." }
-        guard voice.isListening else { return "Listening…" }
-        return voice.spokenProgress > 0.15
-            ? "Keep going — say the whole line"
-            : "Read it out loud"
+        if isVerifying { return "…" }
+        if isSecondPass { return "Once more — the whole line" }
+        return verifier.isRecording ? "Read it out loud" : "Listening…"
     }
 
     // MARK: - Hold fallback
@@ -301,7 +360,6 @@ struct ReplaceDeclarationView: View {
         holdTimer?.invalidate(); holdTimer = nil
         guard !settled else { return }
         holdProgress = 1
-        voice.confirmSpokenByHold()
         settle(method: "hold")
     }
 
@@ -313,7 +371,7 @@ struct ReplaceDeclarationView: View {
         guard !settled else { return }
         settled = true
         PremiumHaptics.safeSuccess()
-        voice.stop()
+        verifier.cancel()
         // 1.4s, not 0.7. The settle IS the confirmation, so it has to be on
         // screen long enough to be read as one — otherwise the +1 arrives before
         // the user has registered that anything acknowledged them.
