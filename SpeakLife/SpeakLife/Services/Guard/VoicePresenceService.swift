@@ -76,21 +76,30 @@ final class VoicePresenceService: NSObject, ObservableObject {
     /// step above it adapts to both, which is the difference between hearing a
     /// whisper and hearing a refrigerator.
     private let voiceMarginOverAmbient: Float = 0.16
-    /// Words per second of deliberate, spoken-aloud declaration.
+    /// Words per second used to size the target — deliberately the FAST end of
+    /// the plausible range, not the average.
     ///
-    /// Conversational speech runs 2.5-3 wps; someone speaking a line over their
-    /// own life runs slower. Used only to size the target below.
-    private let wordsPerSecond: Double = 2.4
+    /// The cost of the two errors is not symmetric. Setting the bar too low
+    /// lets someone who said most of the line through, and they still spoke.
+    /// Setting it too high tells someone who said the whole thing that nothing
+    /// happened, which is the app calling a person a liar about the one act it
+    /// exists to encourage.
+    ///
+    /// At the earlier 2.4 the arithmetic failed anyone at 3.5 wps or above — an
+    /// ordinary brisk pace. They would say the entire declaration, watch the
+    /// bar stall short, and time out to the hold button.
+    private let wordsPerSecond: Double = 3.5
     /// How much of the line's speaking time has to actually be voiced.
     ///
-    /// Not 100%: natural pauses between clauses are silence, mic gain varies,
-    /// and the cost of asking too much is telling someone who DID speak that
-    /// they didn't. 60% clears comfortably for anyone reading the line, and is
-    /// far out of reach of the two words that used to satisfy this.
+    /// Not 100%: natural pauses between clauses are silence, and mic gain
+    /// varies. Together with the fast `wordsPerSecond` above this lands at
+    /// roughly 0.17s of voiced audio per word — cleared by a full reading at
+    /// anything from 2 to 4.5 words per second, and out of reach of the two or
+    /// three words that used to satisfy this.
     private let voicedFraction: Double = 0.6
     /// Floor and ceiling on the target, so a very short or very long
     /// declaration still asks for something sane.
-    private let minimumVoicedSeconds: TimeInterval = 1.8
+    private let minimumVoicedSeconds: TimeInterval = 1.5
     private let maximumVoicedSeconds: TimeInterval = 6.0
     /// Once the target is met, how long a pause means "they have finished".
     ///
