@@ -130,6 +130,32 @@ struct IncomingThought: Codable, Identifiable, Equatable {
     let declarationCategory: String
 }
 
+extension IncomingThought {
+    /// The same entry, wearing the user's own words on the card.
+    ///
+    /// When someone names their own thought, that sentence is what goes on the
+    /// INCOMING card — rejecting a line you wrote yourself is the whole reason
+    /// for asking. The matched bank entry still supplies the counter, the verse
+    /// and the terrain; only the text they throw away is theirs.
+    ///
+    /// The id deliberately becomes `escapeHatchDeclarationId`, not the bank
+    /// entry's. That id is what reaches the log and the rotation history, and
+    /// neither should record a bank thought as "served" when the user never saw
+    /// it — nor should it carry anything traceable to what they typed.
+    func wearing(_ userText: String) -> IncomingThought {
+        IncomingThought(
+            id: CapturedThought.escapeHatchDeclarationId,
+            text: userText,
+            category: category,
+            intensity: intensity,
+            counterDeclaration: counterDeclaration,
+            verseText: verseText,
+            book: book,
+            declarationCategory: declarationCategory
+        )
+    }
+}
+
 /// Root of `thoughts.json`. Mirrors `EnforcementCatalog` so content ships and
 /// versions the same way.
 struct ThoughtBank: Codable {
