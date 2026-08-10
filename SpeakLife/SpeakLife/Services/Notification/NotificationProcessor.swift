@@ -24,6 +24,45 @@ final class NotificationProcessor {
         let body: String
         let category: String
     }
+
+    // MARK: - Recently sent
+
+    /// Declarations pushed in the last few batches, so a rebuild doesn't hand
+    /// someone the same line they read yesterday.
+    ///
+    /// Every rebuild reshuffles the whole library independently, so nothing
+    /// stopped a fresh batch re-drawing a declaration the previous one had just
+    /// sent. Over 3,500 declarations that is not common, but it happens, and
+    /// when it does the app looks like it has about ten things to say.
+    ///
+    /// Deliberately best-effort. If filtering would leave too little to choose
+    /// from — a narrow category, a small remote pool — the filter yields and
+    /// returns everything, because a repeated declaration is a much smaller
+    /// failure than an empty batch.
+    private static let recentlySentKey = "notificationRecentlySentBodies"
+    private static let recentlySentLimit = 120
+    /// Never filter a pool down past this, or a small category starves.
+    private static let minimumPoolAfterFiltering = 12
+
+    static func excludingRecentlySent(_ declarations: [Declaration],
+                                      defaults: UserDefaults = .standard) -> [Declaration] {
+        let recent = Set(defaults.stringArray(forKey: recentlySentKey) ?? [])
+        guard !recent.isEmpty else { return declarations }
+        let filtered = declarations.filter { !recent.contains($0.text) }
+        return filtered.count >= minimumPoolAfterFiltering ? filtered : declarations
+    }
+
+    /// Records what just went out. Trimmed to the most recent entries so the
+    /// list can't grow without bound in UserDefaults.
+    static func rememberSent(_ bodies: [String], defaults: UserDefaults = .standard) {
+        guard !bodies.isEmpty else { return }
+        var recent = defaults.stringArray(forKey: recentlySentKey) ?? []
+        recent.append(contentsOf: bodies)
+        if recent.count > recentlySentLimit {
+            recent.removeFirst(recent.count - recentlySentLimit)
+        }
+        defaults.set(recent, forKey: recentlySentKey)
+    }
     
     func getNotificationData(count: Int,
                              categories: [DeclarationCategory]? = nil,
@@ -32,17 +71,21 @@ final class NotificationProcessor {
 //        DispatchQueue.global(qos: .userInitiated).sync {
 //            getDeclarations()
             
-            guard allDeclarations.count >= count else { 
-                // Warning:  
-                print("⚠️ NotificationProcessor: Insufficient declarations. Have: \(allDeclarations.count), Need: \(count)")
-                // Try to load declarations synchronously if empty
-                if allDeclarations.isEmpty {
-                    // Warning: 
-                    print("⚠️ NotificationProcessor: Declarations array is empty, attempting to reload")
-                    getDeclarations()
-                }
+            // Only a genuinely empty library is fatal. This used to bail when
+            // the library held fewer than `count`, handing back nothing at all
+            // — and the caller now asks for a whole batch's worth rather than a
+            // single day's, so "fewer than asked for" is a state worth serving
+            // rather than refusing. The sampling below already takes
+            // `min(count, available)`, and the scheduler is happy with a short
+            // pool.
+            guard !allDeclarations.isEmpty else {
+                print("⚠️ NotificationProcessor: Declarations array is empty, attempting to reload")
+                getDeclarations()
                 completion([])
                 return
+            }
+            if allDeclarations.count < count {
+                print("⚠️ NotificationProcessor: Have \(allDeclarations.count), asked for \(count) — serving what's available")
             }
             
             print("✅ NotificationProcessor: Using \(allDeclarations.count) declarations for \(count) notifications")
@@ -58,7 +101,7 @@ final class NotificationProcessor {
             let resolvedCategories = categories?.isEmpty == false ? categories : nil
 
             if resolvedCategories == nil {
-                let shuffled = allDeclarations.shuffled()
+                let shuffled = Self.excludingRecentlySent(allDeclarations).shuffled()
                 guard !shuffled.isEmpty else { return }
                 // Use 0-based indexing (was 1...count which caused an off-by-one crash)
                 for index in 0..<min(count, shuffled.count) {
@@ -85,7 +128,9 @@ final class NotificationProcessor {
                     let slots = baseSlots + (index < extraSlots ? 1 : 0)
                     guard slots > 0 else { continue }
 
-                    let categoryDeclarations = allDeclarations.filter { $0.category == category }
+                    let categoryDeclarations = Self.excludingRecentlySent(
+                        allDeclarations.filter { $0.category == category }
+                    )
                     guard !categoryDeclarations.isEmpty else { continue }
 
                     // Pick exactly `slots` items; repeat if the category has fewer.
