@@ -68,6 +68,20 @@ struct IncomingThoughtView: View {
         return 1 - (capped / 420)
     }
 
+    /// How far into a leftward throw the finger is, 0...1.
+    ///
+    /// Drives the NO stamp. The gesture had no feedback at all until the card
+    /// left the screen, so "swipe left" was a thing you either already knew or
+    /// discovered by accident — and the result arrived with nothing connecting
+    /// it to what you did. Watching NO fade in under your thumb is what makes
+    /// the direction mean something.
+    private var rejectProgress: Double {
+        guard dragX < 0 else { return 0 }
+        let travelled: Double = Double(-dragX)
+        let ratio: Double = travelled / Double(commitThreshold)
+        return ratio > 1 ? 1 : ratio
+    }
+
     var body: some View {
         ZStack {
             // No brand field. The screen the thought arrives on is cold and
@@ -106,7 +120,12 @@ struct IncomingThoughtView: View {
             // The thought gets a beat alone before the question arrives — that
             // pause is where the wrongness registers. An eager user can throw it
             // immediately; the gesture is live from the first frame.
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.4) {
+            //
+            // 2.6s, not the 1.4 this shipped with. At 1.4 the whole drill went
+            // past before anyone could tell what had happened: the question
+            // appeared and the card was already gone. The target is still under
+            // a minute end to end, and a minute is a lot of room.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.6) {
                 withAnimation(DS.Motion.smooth) { isJudging = true }
             }
         }
@@ -153,6 +172,13 @@ struct IncomingThoughtView: View {
                     RoundedRectangle(cornerRadius: DS.Radius.lg, style: .continuous)
                         .stroke(Color.white.opacity(0.07), lineWidth: 1)
                 )
+                // The card lights up as it is thrown, so the direction reads as
+                // a verdict rather than a scroll.
+                .overlay(
+                    RoundedRectangle(cornerRadius: DS.Radius.lg, style: .continuous)
+                        .stroke(Color(hex: "#E2574C").opacity(rejectProgress * 0.9), lineWidth: 2)
+                )
+                .overlay(rejectStamp)
                 // An inward shadow is not a SwiftUI primitive; a soft inner
                 // stroke reads the same way and costs nothing.
                 .overlay(
@@ -167,6 +193,28 @@ struct IncomingThoughtView: View {
         }
     }
 
+    /// The verdict, appearing under the thumb as the card is thrown.
+    ///
+    /// Answers "Does this line up with who you are?" in the one word the
+    /// gesture actually means. Without it the swipe was a mystery move that
+    /// produced a declaration from nowhere.
+    private var rejectStamp: some View {
+        Text("NO")
+            .font(.system(size: 44, weight: .black, design: .rounded))
+            .tracking(4)
+            .foregroundColor(Color(hex: "#E2574C"))
+            .padding(.horizontal, 18)
+            .padding(.vertical, 6)
+            .overlay(
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .stroke(Color(hex: "#E2574C"), lineWidth: 4)
+            )
+            .rotationEffect(.degrees(-12))
+            .opacity(rejectProgress)
+            .scaleEffect(0.85 + (rejectProgress * 0.15))
+            .allowsHitTesting(false)
+    }
+
     // MARK: - Footer
 
     private var footer: some View {
@@ -179,14 +227,18 @@ struct IncomingThoughtView: View {
                         .multilineTextAlignment(.center)
                         .fixedSize(horizontal: false, vertical: true)
 
+                    // Names the answer, not the mechanic. "Swipe it off" told
+                    // people what to do with their thumb but never what it
+                    // meant, so the verdict arrived unexplained.
                     HStack(spacing: 6) {
                         Image(systemName: "arrow.left")
-                            .font(.system(size: 12, weight: .bold))
-                        Text("Swipe it off")
-                            .font(.system(size: 13, weight: .semibold))
+                            .font(.system(size: 13, weight: .bold))
+                        Text("Swipe left for NO")
+                            .font(.system(size: 14, weight: .bold))
                     }
-                    .foregroundColor(.white.opacity(0.42))
-                    .opacity(dragX < -20 ? 1 : 0.7)
+                    .foregroundColor(rejectProgress > 0.1
+                                     ? Color(hex: "#E2574C")
+                                     : .white.opacity(0.5))
                 }
                 .transition(.opacity.combined(with: .move(edge: .bottom)))
             }
@@ -240,8 +292,13 @@ struct IncomingThoughtView: View {
             dragX = -520
             burnOff = true
         }
+        // 0.26s of burn-off, then a held beat on the empty grey field before
+        // the navy screen rises. Handing straight over at 0.26 meant the
+        // declaration appeared in the same blink as the swipe, with nothing to
+        // connect the two — "it all happened so fast I didn't know what was
+        // happening". The pause is what makes it read as cause and effect.
         let elapsed = Date().timeIntervalSince(appearedAt)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.26) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.62) {
             onReject(elapsed)
         }
     }

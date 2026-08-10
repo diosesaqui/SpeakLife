@@ -46,19 +46,47 @@ final class VoicePresenceService: NSObject, ObservableObject {
     /// when this flips.
     @Published private(set) var timedOutWithoutVoice = false
 
-    /// Above this normalized level counts as speech rather than room noise.
-    private let voiceThreshold: Float = 0.18
-    /// How long a voice has to be present before it counts. Long enough that a
-    /// door closing doesn't complete the rep, short enough that the shortest
-    /// declaration in the bank clears it comfortably.
-    private let sustainedVoiceSeconds: TimeInterval = 0.8
+    /// The hard floor. Nothing quieter than this counts as speech, whatever the
+    /// room sounds like.
+    ///
+    /// Levels map as `(dBFS + 50) / 50`, so this is roughly −39 dBFS. The
+    /// original 0.18 was −41 dBFS — ordinary room ambience — and the drill
+    /// completed itself on an empty room.
+    private let minimumVoiceThreshold: Float = 0.22
+    /// How far above the room's own noise floor a sound has to rise.
+    ///
+    /// A fixed threshold is wrong in both directions: too low in a kitchen, too
+    /// high for someone speaking under their breath beside a sleeping child.
+    /// Measuring the room during the reading grace and then asking for a clear
+    /// step above it adapts to both, which is the difference between hearing a
+    /// whisper and hearing a refrigerator.
+    private let voiceMarginOverAmbient: Float = 0.16
+    /// How long a voice has to be present before it counts.
+    ///
+    /// The shortest counter in the bank is nine words, which takes about three
+    /// seconds to say. 0.8s was short enough that a cough or a passing car
+    /// finished the rep for you.
+    private let sustainedVoiceSeconds: TimeInterval = 1.2
+    /// Voice heard before this much time has passed does not count.
+    ///
+    /// You cannot speak a line you have not read yet. Without this, the mic is
+    /// live while the declaration is still fading in, so the first sound in the
+    /// room completes a rep the user has not even seen the words for. This is
+    /// the difference between measuring speech and measuring noise.
+    private let readingGraceSeconds: TimeInterval = 1.5
     /// The mic never stays armed longer than this, whatever the user does.
-    private let maxListenSeconds: TimeInterval = 30
+    private let maxListenSeconds: TimeInterval = 22
 
     private var recorder: AVAudioRecorder?
     private var meterTimer: Timer?
     private var maxDurationTimer: Timer?
     private var voiceSince: Date?
+    /// Levels sampled during the reading grace, used to learn the room.
+    private var ambientSamples: [Float] = []
+    /// The bar a sound has to clear, resolved once the grace period ends.
+    private var resolvedThreshold: Float?
+    /// When the mic went live, so the reading grace can be measured from it.
+    private var listeningSince: Date?
     /// Whether THIS service activated the shared audio session.
     ///
     /// `stop()` is called unconditionally on dismissal, on the mic-denied path,
@@ -141,6 +169,9 @@ final class VoicePresenceService: NSObject, ObservableObject {
         heardVoice = false
         timedOutWithoutVoice = false
         voiceSince = nil
+        ambientSamples = []
+        resolvedThreshold = nil
+        listeningSince = Date()
         isListening = true
 
         meterTimer = Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { [weak self] _ in
@@ -169,6 +200,9 @@ final class VoicePresenceService: NSObject, ObservableObject {
         recorder = nil
         isListening = false
         voiceSince = nil
+        listeningSince = nil
+        ambientSamples = []
+        resolvedThreshold = nil
         // The audio is the one thing this feature could keep and must not. It
         // goes the moment listening ends.
         try? FileManager.default.removeItem(at: recordingURL)
@@ -184,6 +218,27 @@ final class VoicePresenceService: NSObject, ObservableObject {
         heardVoice = true
     }
 
+    /// The bar for this particular room, computed once when the grace ends.
+    ///
+    /// Ambient is taken as the MEDIAN of the grace samples rather than the mean,
+    /// so one slammed door during those 1.5 seconds cannot drag the bar up out
+    /// of reach for the rest of the screen.
+    private func resolveThreshold() -> Float {
+        if let resolvedThreshold { return resolvedThreshold }
+
+        var threshold: Float = minimumVoiceThreshold
+        if !ambientSamples.isEmpty {
+            let sorted: [Float] = ambientSamples.sorted()
+            let median: Float = sorted[sorted.count / 2]
+            let adaptive: Float = median + voiceMarginOverAmbient
+            if adaptive > threshold { threshold = adaptive }
+        }
+        // Never demand a shout, however loud the room was during the grace.
+        if threshold > 0.6 { threshold = 0.6 }
+        resolvedThreshold = threshold
+        return threshold
+    }
+
     private func sampleLevel() {
         guard let recorder, isListening else { return }
         recorder.updateMeters()
@@ -197,7 +252,18 @@ final class VoicePresenceService: NSObject, ObservableObject {
         if levels.count > 48 { levels.removeFirst() }
 
         guard !heardVoice else { return }
-        if normalized >= voiceThreshold {
+
+        // Reading grace. The mic is live from the moment the screen appears so
+        // the waveform can respond, but nothing counts as a spoken declaration
+        // until the user has had time to read the line. The grace doubles as the
+        // window in which the room is measured.
+        if let listeningSince, Date().timeIntervalSince(listeningSince) < readingGraceSeconds {
+            ambientSamples.append(normalized)
+            return
+        }
+
+        let threshold: Float = resolveThreshold()
+        if normalized >= threshold {
             let since = voiceSince ?? Date()
             voiceSince = since
             if Date().timeIntervalSince(since) >= sustainedVoiceSeconds {

@@ -40,6 +40,10 @@ struct ReplaceDeclarationView: View {
     @State private var settled = false
     /// Shown before the system dialog so the ask has a reason attached.
     @State private var showMicRationale = false
+    /// Drives the staged entrance. The screen used to appear fully formed in the
+    /// same frame the card burned off, which read as one continuous blur rather
+    /// than as arriving somewhere new.
+    @State private var revealed = false
 
     /// Navy field, per spec.
     private let field = Color(hex: "#1A264D")
@@ -79,6 +83,7 @@ struct ReplaceDeclarationView: View {
                     .font(.system(size: 11, weight: .bold))
                     .tracking(2.6)
                     .foregroundColor(gold.opacity(0.9))
+                    .opacity(revealed ? 1 : 0)
 
                 // The spec calls for Caveat Bold here. Caveat is a brand-deck
                 // font and is NOT bundled in the app target, so `.custom` would
@@ -94,6 +99,8 @@ struct ReplaceDeclarationView: View {
                     .lineSpacing(4)
                     .fixedSize(horizontal: false, vertical: true)
                     .shadow(color: gold.opacity(0.25), radius: 18)
+                    .opacity(revealed ? 1 : 0)
+                    .offset(y: revealed ? 0 : 14)
 
                 VStack(spacing: 6) {
                     Text(thought.verseText)
@@ -118,6 +125,10 @@ struct ReplaceDeclarationView: View {
             .padding(.horizontal, 28)
             .padding(.vertical, 32)
         }
+        // The reveal lives in onAppear, not in the task: `.task`'s closure is
+        // @Sendable and carries no actor guarantee, and this writes @State and
+        // drives an animation.
+        .onAppear { withAnimation(DS.Motion.smooth) { revealed = true } }
         .task { await arm() }
         .onDisappear { voice.stop(); holdTimer?.invalidate() }
         .onChange(of: voice.heardVoice) { _, heard in
@@ -178,9 +189,14 @@ struct ReplaceDeclarationView: View {
             GuardWaveform(levels: voice.levels, tint: gold, isSettled: settled)
                 .frame(height: 64)
 
-            Text(settled ? "Heard." : (voice.isListening ? "Say it out loud." : "Listening…"))
+            // Names the action, and says plainly that the app is waiting on
+            // them. "Say it out loud." next to a live waveform read as a
+            // caption; people did not realise the screen would not advance
+            // without them.
+            Text(settled ? "Heard." : (voice.isListening ? "Read it out loud — we're listening" : "Listening…"))
                 .font(.system(size: 14, weight: .semibold, design: .rounded))
-                .foregroundColor(.white.opacity(settled ? 0.95 : 0.6))
+                .foregroundColor(.white.opacity(settled ? 0.95 : 0.65))
+                .multilineTextAlignment(.center)
 
             // Always reachable. Someone in a quiet room, on a bus, or beside a
             // sleeping child should never be stuck at this screen.
@@ -270,8 +286,11 @@ struct ReplaceDeclarationView: View {
         settled = true
         PremiumHaptics.safeSuccess()
         voice.stop()
+        // 1.4s, not 0.7. The settle IS the confirmation, so it has to be on
+        // screen long enough to be read as one — otherwise the +1 arrives before
+        // the user has registered that anything acknowledged them.
         let duration = Date().timeIntervalSince(startedAt)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.7) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.4) {
             onSpoken(true, method, duration)
         }
     }
