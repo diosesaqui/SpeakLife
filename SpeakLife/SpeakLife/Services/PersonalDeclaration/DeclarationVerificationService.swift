@@ -209,6 +209,20 @@ final class DeclarationVerificationService: ObservableObject {
         return threshold
     }
 
+    /// "I've said it." Ends the recording on demand.
+    ///
+    /// Auto-endpointing is the happy path, but it cannot be the only one. It
+    /// fires from trailing silence AFTER speech was detected, or from the
+    /// 30-second backstop — so a user who re-armed the mic and then didn't
+    /// speak again (a failed first pass, a noisy room where the floor never
+    /// clears, a phone that missed them) sat there with no way to finish and
+    /// nothing telling them how long they'd wait. Someone who has just spoken
+    /// a declaration over their own life should never be stuck on the screen
+    /// that asked them to.
+    func finishSpeaking() {
+        endpoint()
+    }
+
     private func endpoint() {
         guard isRecording, endpointedAt == nil else { return }
         stopMetering()
