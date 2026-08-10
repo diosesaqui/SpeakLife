@@ -61,17 +61,22 @@ final class NotificationManager: NSObject {
 //        }
         
         // Use original notification system
-        if let categories = categories {
-            let notifications = getNotificationData(for: actualCount, categories: categories)
-            // callback if data is less than count RWRW
-            prepareNotifications(declarations: notifications,  startTime: startTime, endTime: endTime, count: actualCount) {
-                callback?()
-            }
-        } else {
-            let notifications = getNotificationData(for: actualCount, categories: notificationCategories())
-            prepareNotifications(declarations: notifications,  startTime: startTime, endTime: endTime, count: actualCount) {
-                callback?()
-            }
+        // Enough for every day in the batch, not just one day's worth. Asking
+        // for `actualCount` left the scheduling loop with nothing to cycle
+        // through, so all four days of a batch carried identical declarations.
+        let poolSize = actualCount * Self.daysAhead(forCount: actualCount)
+        let resolved = categories ?? notificationCategories()
+        let notifications = getNotificationData(for: poolSize, categories: resolved)
+
+        // Remember what this batch is about to send, so the NEXT rebuild does
+        // not re-draw it. Once for the whole pool rather than per request.
+        NotificationProcessor.rememberSent(notifications.map(\.body))
+
+        prepareNotifications(declarations: notifications,
+                             startTime: startTime,
+                             endTime: endTime,
+                             count: actualCount) {
+            callback?()
         }
         // Schedule checklist notifications (cleans up legacy IDs from prior versions)
         scheduleChecklistNotifications()
@@ -124,6 +129,25 @@ final class NotificationManager: NSObject {
     
     
     
+    /// How many days ahead one batch covers.
+    ///
+    /// iOS allows up to 64 pending notifications per app. We share that budget
+    /// with 7 lifecycle pushes (D1-D30) + 14 daily burst weekday triggers
+    /// (7 morning + 7 evening) + a few streak/lapsed slots. 40 leaves ~24 slots
+    /// of headroom, keeping us under the OS cap so iOS never silently drops
+    /// sends.
+    ///   count=5  → 8 days (40 notifications) + ~21 system = 61 total
+    ///   count=10 → 4 days (40 notifications) + ~21 system = 61 total
+    ///   count=20 → 2 days (40 notifications) + ~21 system = 61 total
+    ///
+    /// Shared by the fetch and the scheduling loop: if those two disagree about
+    /// the horizon, the loop runs off the end of the pool and starts repeating,
+    /// which is the bug this whole helper exists to prevent recurring.
+    static func daysAhead(forCount count: Int) -> Int {
+        let maxPendingPerBatch = 40
+        return max(1, min(10, maxPendingPerBatch / max(count, 1)))
+    }
+
     private func prepareNotifications(declarations: [NotificationProcessor.NotificationData],
                                       startTime: Int,
                                       endTime: Int,
@@ -135,15 +159,7 @@ final class NotificationManager: NSObject {
         guard hourMinute.count > 1 else { callback?(); return }
         guard declarations.count >= count else { callback?(); return }
 
-        // iOS allows up to 64 pending notifications per app. We share that budget with
-        // 7 lifecycle pushes (D1-D30) + 14 daily burst weekday triggers (7 morning +
-        // 7 evening) + a few streak/lapsed slots. 40 leaves ~24 slots of headroom for
-        // those, keeping us under the OS cap so iOS never silently drops sends.
-        //   count=5  → 8 days (40 notifications) + ~21 system = 61 total
-        //   count=10 → 4 days (40 notifications) + ~21 system = 61 total
-        //   count=20 → 2 days (40 notifications) + ~21 system = 61 total
-        let maxPendingPerBatch = 40
-        let daysAhead = max(1, min(10, maxPendingPerBatch / max(count, 1)))
+        let daysAhead = Self.daysAhead(forCount: count)
         let now = Date()
         let calendar = Calendar.autoupdatingCurrent
 
@@ -155,9 +171,21 @@ final class NotificationManager: NSObject {
         let enforcementStartDay = EnforcementService.shared.progress.currentDay
 
         for day in 0..<daysAhead {
-            for (idx, declaration) in declarations.enumerated() {
-                // For variety, cycle through all available declarations across days
-                let declarationIndex = (idx + day * count) % declarations.count
+            for idx in 0..<count {
+                // Walk forward through the pool so each day gets its own
+                // declarations.
+                //
+                // This read `(idx + day * count) % declarations.count`, and the
+                // caller hands over exactly `count` declarations — so the
+                // modulus WAS `count`, `day * count` cancelled to zero, and
+                // every day resolved to `idx`. The comment said it cycled for
+                // variety; it did the opposite, serving the same handful over
+                // and over. `registerNotifications` now fetches
+                // `count * daysAhead` so there is genuinely something to walk
+                // through, and the modulo is only a guard against the pool
+                // coming back short.
+                guard !declarations.isEmpty else { break }
+                let declarationIndex = (day * count + idx) % declarations.count
                 let decl = declarations[declarationIndex]
 
                 var body = decl.body
