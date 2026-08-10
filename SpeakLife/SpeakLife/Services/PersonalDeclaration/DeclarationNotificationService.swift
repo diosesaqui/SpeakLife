@@ -87,6 +87,48 @@ final class DeclarationNotificationService: DeclarationNotificationServiceProtoc
         return min(max(minute, 0), 24 * 60 - 1)
     }
 
+    /// The daily repeat, or a one-off for tomorrow when today is already done.
+    ///
+    /// A repeating `UNCalendarNotificationTrigger` cannot skip an occurrence, so
+    /// someone who spoke their declaration at 8am still got reminded to do it at
+    /// 10am — being nagged about work they had already finished, which is the
+    /// fastest way to teach someone to ignore the app's notifications.
+    ///
+    /// The swap is net-zero on the notification budget, and that matters: the
+    /// app deliberately runs at roughly 61 of iOS's 64 pending slots (see the
+    /// budget note in `NotificationManager`), so anything that ADDS requests
+    /// makes iOS silently drop sends elsewhere. Same identifier, one request
+    /// either way — the repeat is simply replaced for a day.
+    ///
+    /// The repeat comes back on the next app open: `scheduleAll` runs from
+    /// `rescheduleActivePersonalDeclarationIfNeeded` on every launch, and by
+    /// then `spokenToday` is false again.
+    static func trigger(atMinuteOfDay minute: Int,
+                        skippingToday: Bool,
+                        now: Date = Date(),
+                        calendar: Calendar = .current) -> UNCalendarNotificationTrigger {
+        var components = DateComponents()
+        components.hour = minute / 60
+        components.minute = minute % 60
+
+        // Only worth skipping while today's reminder is still ahead of us. Once
+        // it has passed, the repeating trigger's next fire is already tomorrow.
+        guard skippingToday else {
+            return UNCalendarNotificationTrigger(dateMatching: components, repeats: true)
+        }
+        let todayAtMinute = calendar.date(bySettingHour: minute / 60,
+                                          minute: minute % 60,
+                                          second: 0,
+                                          of: now)
+        guard let todayAtMinute, todayAtMinute > now,
+              let tomorrow = calendar.date(byAdding: .day, value: 1, to: todayAtMinute) else {
+            return UNCalendarNotificationTrigger(dateMatching: components, repeats: true)
+        }
+
+        let dated = calendar.dateComponents([.year, .month, .day, .hour, .minute], from: tomorrow)
+        return UNCalendarNotificationTrigger(dateMatching: dated, repeats: false)
+    }
+
     private func schedule(_ declaration: PersonalDeclaration,
                           slot: Int,
                           of total: Int,
@@ -106,11 +148,8 @@ final class DeclarationNotificationService: DeclarationNotificationServiceProtoc
         ]
 
         let totalMinutes = Self.minuteOfDay(slot: slot, total: total, startTimeIndex: startTimeIndex)
-        var components = DateComponents()
-        components.hour = totalMinutes / 60
-        components.minute = totalMinutes % 60
 
-        let trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: true)
+        let trigger = Self.trigger(atMinuteOfDay: totalMinutes, skippingToday: declaration.spokenToday)
         let request = UNNotificationRequest(
             identifier: Self.identifier(for: declaration.id),
             content: content,
@@ -124,7 +163,9 @@ final class DeclarationNotificationService: DeclarationNotificationServiceProtoc
             if let error = error {
                 print("❌ personal declaration reminder schedule failed: \(error.localizedDescription)")
             } else {
-                print("✅ personal declaration reminder scheduled for \(components.hour ?? -1):\(String(format: "%02d", components.minute ?? 0)) daily (id=\(declaration.id))")
+                let hour = totalMinutes / 60, minute = totalMinutes % 60
+                let when = declaration.spokenToday ? "tomorrow only" : "daily"
+                print("✅ personal declaration reminder scheduled for \(hour):\(String(format: "%02d", minute)) \(when) (id=\(declaration.id))")
             }
         }
     }
