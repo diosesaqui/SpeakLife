@@ -39,6 +39,16 @@ struct EscapeHatchView: View {
         text.trimmingCharacters(in: .whitespacesAndNewlines).count >= 3
     }
 
+    /// Lifted out of the modifier chain. A ternary between two `AnyShapeStyle`
+    /// wrappers, inside a `.fill`, inside a `.background`, inside a `Button`
+    /// label is the kind of nesting that costs the type checker real time — and
+    /// this feature already failed an archive on that class of expression.
+    private var submitFill: AnyShapeStyle {
+        canSubmit
+            ? AnyShapeStyle(DS.Gradient.gold)
+            : AnyShapeStyle(Color.white.opacity(0.10))
+    }
+
     var body: some View {
         ZStack {
             LinearGradient(colors: [Color(hex: "#1B1D22"), Color(hex: "#101216")],
@@ -107,11 +117,7 @@ struct EscapeHatchView: View {
                             .foregroundColor(canSubmit ? Color(hex: "#1A264D") : .white.opacity(0.4))
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 16)
-                            .background(
-                                Capsule().fill(canSubmit
-                                               ? AnyShapeStyle(DS.Gradient.gold)
-                                               : AnyShapeStyle(Color.white.opacity(0.10)))
-                            )
+                            .background(Capsule().fill(submitFill))
                     }
                     .buttonStyle(.dsPressable(feel: .tapSolid))
                     .disabled(!canSubmit)
