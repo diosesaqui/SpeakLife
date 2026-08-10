@@ -410,10 +410,10 @@ struct ModernDailyChecklistView: View {
 
                         Spacer()
 
-                        if viewModel.streakStats.currentStreak > 0 {
+                        if viewModel.displayStreak > 0 {
                             HStack(spacing: 5) {
                                 Text("🔥").font(.system(size: 15))
-                                Text("\(viewModel.streakStats.currentStreak)")
+                                Text("\(viewModel.displayStreak)")
                                     .font(.system(size: 16, weight: .bold, design: .rounded))
                                     .foregroundColor(.white)
                             }
@@ -422,7 +422,7 @@ struct ModernDailyChecklistView: View {
                             .background(Capsule().fill(DS.Gradient.ember))
                             .overlay(Capsule().stroke(Color.white.opacity(0.25), lineWidth: 1))
                             .shadow(color: Color.orange.opacity(0.45), radius: 8, x: 0, y: 3)
-                            .accessibilityLabel("\(viewModel.streakStats.currentStreak) day streak")
+                            .accessibilityLabel("\(viewModel.displayStreak) day streak")
                         }
 
                         // Crown upgrade chip — non-subscribers only. Mirrors the
@@ -464,7 +464,7 @@ struct ModernDailyChecklistView: View {
 
                     // Week-at-a-glance streak strip (the marquee return-driver)
                     WeekStreakStrip(
-                        currentStreak: viewModel.streakStats.currentStreak,
+                        currentStreak: viewModel.displayStreak,
                         lastCompletedDate: viewModel.streakStats.lastCompletedDate
                     )
 
@@ -543,7 +543,7 @@ struct ModernDailyChecklistView: View {
                         // Today's Tasks Section
                         StructuredDayView(
                             tasks: viewModel.todayChecklist.tasks,
-                            streakCount: viewModel.streakStats.currentStreak,
+                            streakCount: viewModel.displayStreak,
                             onToggle: { taskId in
                                 guard let task = viewModel.todayChecklist.tasks.first(where: { $0.id == taskId }) else { return }
                                 // The declaration row is earned by speaking, so
@@ -908,7 +908,7 @@ struct ModernDailyChecklistView: View {
         // These fullScreenCovers were built in EnhancedStreakView but never wired
         // into the live checklist flow. Connecting them here so users actually see them.
         .fullScreenCover(isPresented: $viewModel.showFireAnimation) {
-            FireStreakView(streakNumber: viewModel.streakStats.currentStreak)
+            FireStreakView(streakNumber: viewModel.displayStreak)
                 .onTapGesture {
                     viewModel.showFireAnimation = false
                 }
@@ -951,7 +951,7 @@ struct ModernDailyChecklistView: View {
             // Routed through AnalyticsService so the home/checklist surface shows
             // up in PostHog retention + funnels, not Firebase alone.
             AnalyticsService.shared.track("home_checklist_viewed", parameters: [
-                "current_streak": viewModel.streakStats.currentStreak,
+                "current_streak": viewModel.displayStreak,
                 "completed_tasks": viewModel.todayChecklist.completedTasksCount,
                 "total_tasks": viewModel.todayChecklist.tasks.count,
                 "is_streak_earned": viewModel.todayChecklist.isStreakEarned
