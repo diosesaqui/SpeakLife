@@ -33,7 +33,6 @@ struct DailyDeclarationBurstView: View {
     @Environment(\.colorScheme) var colorScheme
     
     @StateObject private var burstTracker = BurstCompletionTracker.shared
-    @StateObject private var commitmentStore = FaithActionCommitmentStore.shared
     @State private var currentDeclarationIndex = 0
     @State private var showCompletionView = false
     @State private var startTime = Date()
@@ -50,6 +49,15 @@ struct DailyDeclarationBurstView: View {
     @State private var showActionSlide = false
     @State private var burstTheme: DeclarationCategory = .faith
     @State private var faithAction: FaithAction?
+    /// Set only when the campaign actually filled the burst. Re-asking
+    /// `EnforcementService` at the end would map the action to a campaign whose
+    /// words were never spoken, since `loadDynamicDeclarations` abandons the
+    /// enforcement path whenever it cannot fill all seven slots.
+    @State private var enforcementTheme: DeclarationCategory?
+    /// This session's yes, not today's. Multiple bursts a day are supported, so
+    /// reading the store here would checkmark an earlier burst's commitment on a
+    /// screen where the user just tapped "Not today".
+    @State private var committedAction: FaithAction?
     
     // Animation states for completion screen
     @State private var checkmarkScale: CGFloat = 0.0
@@ -150,14 +158,17 @@ struct DailyDeclarationBurstView: View {
             }
             if selectedDeclarations.count == burstDeclarationCount {
                 morningDeclarations = selectedDeclarations
+                enforcementTheme = enforcement.category
                 isLoadingDeclarations = false
                 print("📱 Daily Burst: speaking \(enforcement.title), day \(today)")
                 return
             }
             // A campaign is always seven days, so this shouldn't happen. If it
             // ever does, top up from the normal pool rather than show a
-            // half-empty burst.
+            // half-empty burst. The theme goes back with them: nothing from the
+            // campaign is being spoken, so the closing action must not claim it.
             selectedDeclarations.removeAll()
+            enforcementTheme = nil
         }
 
         // 1. Get favorites from viewModel
@@ -599,14 +610,13 @@ struct DailyDeclarationBurstView: View {
                         // What they said yes to on the eighth slat. Shown so the
                         // commitment survives the celebration instead of being
                         // buried under it.
-                        if let commitment = commitmentStore.todaysCommitment,
-                           commitmentStore.hasCommittedToday() {
+                        if let committedAction {
                             HStack(spacing: DS.Spacing.xs) {
                                 Image(systemName: "checkmark.circle.fill")
                                     .font(.system(size: 15, weight: .bold))
                                     .foregroundColor(DS.Palette.gold)
 
-                                Text(commitment.headline)
+                                Text(committedAction.headline)
                                     .font(.system(size: 15, weight: .semibold))
                                     .foregroundColor(.white.opacity(0.9))
                                     .multilineTextAlignment(.leading)
@@ -935,12 +945,8 @@ struct DailyDeclarationBurstView: View {
 
     /// Resolves what this burst was about and asks for one action on it.
     private func presentActionSlide() {
-        let enforcementCategory = EnforcementService.shared.isEnabled
-            ? EnforcementService.shared.activeEnforcement?.category
-            : nil
-
         let theme = FaithActionCatalog.resolveTheme(
-            enforcement: enforcementCategory,
+            enforcement: enforcementTheme,
             spoken: morningDeclarations.compactMap { $0.category },
             selected: viewModel.selectedCategory
         )
@@ -963,7 +969,8 @@ struct DailyDeclarationBurstView: View {
         // Deliberately not `.success` — the completion screen fires that one a beat
         // later, and two success haptics back to back read as a glitch.
         Juice.play(.tapSolid)
-        commitmentStore.commit(to: action, theme: burstTheme)
+        committedAction = action
+        FaithActionCommitmentStore.shared.commit(to: action, theme: burstTheme)
 
         AnalyticsService.shared.track("daily_burst_action_committed", parameters: [
             "theme": burstTheme.rawValue,

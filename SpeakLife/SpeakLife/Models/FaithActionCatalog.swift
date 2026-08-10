@@ -139,10 +139,15 @@ enum FaithActionCatalog {
     /// ask must not shuffle underneath someone who is reading it — and different
     /// tomorrow, so a returning user is not handed the same errand every morning.
     static func action(for category: DeclarationCategory, on date: Date = Date()) -> FaithAction {
-        let set = actionSet(for: category)
+        let actions = actionSet(for: category).actions
+        // A set authored with no actions would trap on the modulo below, and it
+        // would do it one line after the streak was written — the worst possible
+        // moment to lose the app. Content should never ship an empty set, but a
+        // typo in the catalog must not be able to crash the burst.
+        guard !actions.isEmpty else { return emergencyAction }
+
         let day = Calendar.current.ordinality(of: .day, in: .era, for: date) ?? 0
-        let index = abs(day) % set.actions.count
-        return set.actions[index]
+        return actions[abs(day) % actions.count]
     }
 
     /// Every category resolves to a set. Unmapped and Bible-book categories fall
@@ -158,15 +163,17 @@ enum FaithActionCatalog {
         Array(sets.keys)
     }
 
+    /// The ask that always exists. Reached only if the catalog is ever authored
+    /// into a state that has nothing to offer, so it is written to fit anyone.
+    private static let emergencyAction = FaithAction(
+        icon: "figure.walk",
+        headline: "Take one step you have been praying about",
+        detail: "Do the small piece you can do today. God meets movement."
+    )
+
     private static let faithFallback = FaithActionSet(
         premise: "God is already at work. Move like you believe it.",
-        actions: [
-            FaithAction(
-                icon: "figure.walk",
-                headline: "Take one step you have been praying about",
-                detail: "Do the small piece you can do today. God meets movement."
-            )
-        ]
+        actions: [emergencyAction]
     )
 
     // MARK: - The sets
@@ -393,7 +400,7 @@ enum FaithActionCatalog {
                 FaithAction(
                     icon: "phone.fill",
                     headline: "Make the call you have been putting off",
-                    detail: "Today. Courage is just obedience with a phone in its hand."
+                    detail: "Today. Courage is obedience with a phone in its hand."
                 ),
                 FaithAction(
                     icon: "figure.wave",
@@ -756,7 +763,7 @@ enum FaithActionCatalog {
                 FaithAction(
                     icon: "flag.fill",
                     headline: "Take the first step on the thing you keep sensing",
-                    detail: "The smallest possible version of it, today. Just begin."
+                    detail: "The smallest possible version of it, today. Begin."
                 ),
                 FaithAction(
                     icon: "square.and.pencil",
@@ -837,7 +844,7 @@ enum FaithActionCatalog {
         // MARK: People
 
         .marriage: FaithActionSet(
-            premise: "God is in your marriage, and what He joined stands.",
+            premise: "God is in your marriage, and He gives you everything to love well.",
             actions: [
                 FaithAction(
                     icon: "heart.text.square.fill",
@@ -914,7 +921,7 @@ enum FaithActionCatalog {
                 ),
                 FaithAction(
                     icon: "ear.fill",
-                    headline: "Ask one real question and just listen",
+                    headline: "Ask one real question and listen",
                     detail: "No fixing today. Let them finish."
                 )
             ]
@@ -931,12 +938,12 @@ enum FaithActionCatalog {
                 FaithAction(
                     icon: "person.2.fill",
                     headline: "Accept or ask for one piece of help",
-                    detail: "Ask today. Receiving is not weakness, it is how God sends things."
+                    detail: "Ask today. Receiving is how God sends most of what He sends."
                 ),
                 FaithAction(
                     icon: "cup.and.saucer.fill",
                     headline: "Take thirty minutes that belong only to you",
-                    detail: "You are worth tending too. Take it without apologizing."
+                    detail: "You are worth tending to. Take it without apologizing."
                 )
             ]
         ),
@@ -1010,7 +1017,7 @@ enum FaithActionCatalog {
                 FaithAction(
                     icon: "message.fill",
                     headline: "Send them a text with no agenda in it",
-                    detail: "Just love today. Nothing to convince, nothing to fix."
+                    detail: "Love them today. Nothing to convince, nothing to fix."
                 ),
                 FaithAction(
                     icon: "hands.and.sparkles.fill",
@@ -1164,7 +1171,7 @@ enum FaithActionCatalog {
                 FaithAction(
                     icon: "hand.raised.fill",
                     headline: "Let go of one thing that will not last",
-                    detail: "Release the grudge, the worry, the item. It is not going with you."
+                    detail: "Hand it back today. Your hands are for what lasts forever."
                 ),
                 FaithAction(
                     icon: "person.2.fill",

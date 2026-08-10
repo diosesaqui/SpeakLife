@@ -117,6 +117,23 @@ final class FaithActionCatalogTests: XCTestCase {
         XCTAssertGreaterThan(seen.count, 1)
     }
 
+    func testEveryCategoryReturnsAnActionOnEveryDay() {
+        // The picker runs one line after the streak is written, so a trap here
+        // would lose the app at the worst possible moment. Sweep every category
+        // across a full rotation of days.
+        let calendar = Calendar.current
+        let start = Date()
+        for category in DeclarationCategory.allCases {
+            for offset in 0..<10 {
+                guard let day = calendar.date(byAdding: .day, value: offset, to: start) else { continue }
+                XCTAssertFalse(
+                    FaithActionCatalog.action(for: category, on: day).headline.isEmpty,
+                    "\(category.rawValue) returned an empty action"
+                )
+            }
+        }
+    }
+
     func testUnmappedCategoryBorrowsFaithActions() {
         let borrowed = FaithActionCatalog.actionSet(for: .romans)
         XCTAssertEqual(borrowed, FaithActionCatalog.actionSet(for: .faith))
