@@ -13,6 +13,11 @@
 //  true. Someone who declared healing goes for a walk. Someone who declared
 //  provision gives something away. The act is the amen.
 //
+//  Scope: content only. Deciding WHICH theme a burst was about belongs to
+//  `BurstThemeResolver`; this file answers "given that theme, what do we ask
+//  for". Keeping them apart means the rules can change without touching 151
+//  lines of copy, and the copy can change without touching the rules.
+//
 //  Copy rules, inherited from the declaration rules in CLAUDE.md and binding here
 //  because this text sits in the same breath as the declarations:
 //
@@ -64,72 +69,6 @@ enum FaithActionCatalog {
     /// for an action at all.
     static let anchorVerse = "Faith by itself, if it is not accompanied by action, is dead."
     static let anchorBook = "James 2:17"
-
-    // MARK: Theme resolution
-
-    /// The theme the burst was actually about.
-    ///
-    /// Precedence is deliberate:
-    ///
-    ///   1. An active Enforcement owns the burst — `loadDynamicDeclarations`
-    ///      already fills all seven slots from the campaign, so the campaign's
-    ///      theme is the only honest answer.
-    ///   2. Otherwise the dominant category among the spoken declarations, which
-    ///      is what the user just actually said regardless of what is selected in
-    ///      the picker.
-    ///   3. Otherwise whatever category is selected.
-    ///   4. Otherwise faith, which has actions that fit anyone.
-    ///
-    /// Bible-book categories fold to `.faith`: someone reading through Romans has
-    /// no single life situation to act on, and "read Romans" is not a corresponding
-    /// action, it is the thing they were already doing.
-    static func resolveTheme(
-        enforcement: DeclarationCategory?,
-        spoken: [DeclarationCategory],
-        selected: DeclarationCategory?
-    ) -> DeclarationCategory {
-        if let enforcement, isActionable(enforcement) {
-            return enforcement
-        }
-        if let dominant = dominantCategory(in: spoken) {
-            return dominant
-        }
-        if let selected, isActionable(selected) {
-            return selected
-        }
-        return .faith
-    }
-
-    /// True when a category names a life situation someone can take a step in
-    /// today. Bible books, the favorites bin, and the user's own bucket are all
-    /// containers rather than themes, so they never win theme resolution.
-    static func isActionable(_ category: DeclarationCategory) -> Bool {
-        if category.isBibleBook { return false }
-        switch category {
-        case .favorites, .myOwn, .general: return false
-        default: return true
-        }
-    }
-
-    /// Most frequent actionable category, ties broken by first appearance so the
-    /// result is stable for a given burst rather than dependent on dictionary
-    /// ordering.
-    private static func dominantCategory(in spoken: [DeclarationCategory]) -> DeclarationCategory? {
-        let actionable = spoken.filter(isActionable)
-        guard !actionable.isEmpty else { return nil }
-
-        var counts: [DeclarationCategory: Int] = [:]
-        for category in actionable {
-            counts[category, default: 0] += 1
-        }
-        var best: DeclarationCategory?
-        var bestCount = 0
-        for category in actionable where counts[category, default: 0] > bestCount {
-            best = category
-            bestCount = counts[category, default: 0]
-        }
-        return best
-    }
 
     // MARK: Action selection
 

@@ -1025,8 +1025,13 @@ final class SyncedSettingsStore {
     /// what is on disk, not what the UI renders. Swapping in the re-derived
     /// title would make the fingerprint depend on app version, and two devices
     /// on different builds would stop agreeing on the same campaign.
+    ///
+    /// `theme.rawValue` for the same reason: it is the value on disk. The theme
+    /// is a `DeclarationCategory` in memory now, but its display name is not
+    /// what was stored, and feeding one in here would change the fingerprint on
+    /// upgrade and break agreement with a device still on the old build.
     private static func enforcementFingerprint(_ enforcement: Enforcement) -> String {
-        ([enforcement.id, enforcement.title, enforcement.theme]
+        ([enforcement.id, enforcement.title, enforcement.theme.rawValue]
             + enforcement.days.map { "\($0.dayNumber)\u{1}\($0.anchorText)\u{1}\($0.audioId)" })
             .joined(separator: "\u{1}")
     }

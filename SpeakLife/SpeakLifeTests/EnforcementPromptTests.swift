@@ -85,7 +85,7 @@ final class EnforcementPromptTests: XCTestCase {
     func testPrompt_SilentWhileACampaignIsRunning() {
         seedTenure(30)
         let fight = Enforcement(id: "peace", title: "Enforcing Peace", tagline: "t",
-                                theme: "anxiety",
+                                theme: .anxiety,
                                 days: (1...Enforcement.length).map {
                                     EnforcementDay(dayNumber: $0, anchorText: "a\($0)",
                                                    anchorVerse: "v", anchorBook: "b",

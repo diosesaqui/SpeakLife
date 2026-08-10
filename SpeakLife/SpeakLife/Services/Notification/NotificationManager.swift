@@ -222,7 +222,7 @@ final class NotificationManager: NSObject {
                         // persisted blob, and a notification reading "Enforcing
                         // Warfare & Victory" lands on the lock screen.
                         enforcementTitle = enforcement.displayTitle
-                        enforcementCategory = enforcement.theme
+                        enforcementCategory = enforcement.theme.rawValue
                     }
                 } else if idx == 0, let prompt = EnforcementPrompt.copy(forDayOffset: day) {
                     // No campaign running: once a week, slot 0 invites them to

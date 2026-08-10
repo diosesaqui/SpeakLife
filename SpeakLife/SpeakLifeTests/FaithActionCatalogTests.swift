@@ -2,96 +2,17 @@
 //  FaithActionCatalogTests.swift
 //  SpeakLifeTests
 //
-//  The eighth slat of the Daily Burst asks for one action mapped to the theme the
-//  user just spoke over. Two things have to hold for that to work: the theme has
-//  to be resolved from what was actually said, and the ask has to sit still while
-//  someone is reading it.
+//  Content and selection for the eighth slat of the Daily Burst. Deciding WHICH
+//  theme a burst was about is `BurstThemeResolver`, covered in
+//  BurstSessionTests; this file covers the ask itself: that it sits still while
+//  someone is reading it, that every theme has one, and that the copy holds the
+//  declaration rules.
 //
 
 import XCTest
 @testable import SpeakLife
 
 final class FaithActionCatalogTests: XCTestCase {
-
-    // MARK: - Theme resolution
-
-    func testEnforcementThemeWinsOverEverythingElse() {
-        // An active campaign fills all seven slots, so it is the only honest
-        // answer even when the picker says otherwise.
-        let theme = FaithActionCatalog.resolveTheme(
-            enforcement: .health,
-            spoken: [.wealth, .wealth, .wealth],
-            selected: .warfare
-        )
-        XCTAssertEqual(theme, .health)
-    }
-
-    func testDominantSpokenCategoryWinsOverSelectedCategory() {
-        // What came out of their mouth outranks what is selected in the picker.
-        let theme = FaithActionCatalog.resolveTheme(
-            enforcement: nil,
-            spoken: [.marriage, .marriage, .joy],
-            selected: .wealth
-        )
-        XCTAssertEqual(theme, .marriage)
-    }
-
-    func testTiesBreakOnFirstAppearance() {
-        // Dictionary iteration order is not stable, so a tie must not be able to
-        // hand the same burst a different theme on a re-render.
-        let spoken: [DeclarationCategory] = [.fear, .joy, .fear, .joy]
-        for _ in 0..<25 {
-            XCTAssertEqual(
-                FaithActionCatalog.resolveTheme(enforcement: nil, spoken: spoken, selected: nil),
-                .fear
-            )
-        }
-    }
-
-    func testContainerCategoriesNeverWinTheme() {
-        // favorites / myOwn / general are bins, not themes. A burst drawn mostly
-        // from favorites should still land on the real subject underneath.
-        let theme = FaithActionCatalog.resolveTheme(
-            enforcement: nil,
-            spoken: [.favorites, .favorites, .myOwn, .general, .anxiety],
-            selected: nil
-        )
-        XCTAssertEqual(theme, .anxiety)
-    }
-
-    func testBibleBookCategoriesNeverWinTheme() {
-        // "Read Romans" is not a corresponding action — it is the thing they were
-        // already doing. A book-only burst falls through to the selected theme.
-        let theme = FaithActionCatalog.resolveTheme(
-            enforcement: nil,
-            spoken: [.romans, .psalms, .john],
-            selected: .work
-        )
-        XCTAssertEqual(theme, .work)
-    }
-
-    func testBookEnforcementDoesNotHijackTheme() {
-        let theme = FaithActionCatalog.resolveTheme(
-            enforcement: .psalms,
-            spoken: [.grief, .grief],
-            selected: nil
-        )
-        XCTAssertEqual(theme, .grief)
-    }
-
-    func testFallsBackToFaithWhenNothingIsActionable() {
-        let theme = FaithActionCatalog.resolveTheme(
-            enforcement: nil,
-            spoken: [.psalms, .favorites],
-            selected: .general
-        )
-        XCTAssertEqual(theme, .faith)
-    }
-
-    func testEmptyBurstStillResolves() {
-        let theme = FaithActionCatalog.resolveTheme(enforcement: nil, spoken: [], selected: nil)
-        XCTAssertEqual(theme, .faith)
-    }
 
     // MARK: - Action selection
 

@@ -45,19 +45,35 @@ struct Enforcement: Codable, Identifiable, Equatable {
     let title: String
     /// One line, shown under the title on the card. Not a declaration.
     let tagline: String
-    /// `DeclarationCategory` rawValue — ties the Enforcement to the user's onboarding
-    /// picks and to the declaration pool the burst draws from.
-    let theme: String
+    /// The category this campaign enforces. Ties the Enforcement to the user's
+    /// onboarding picks and to the declaration pool the burst draws from.
+    ///
+    /// Typed, not stringly. Assembly and curation both *start* from a
+    /// `DeclarationCategory` and used to flatten it to a rawValue here, which
+    /// forced every reader to parse it back out. That round trip is not
+    /// symmetric — `themeName` and `DeclarationCategory.name` are browse labels
+    /// ("Warfare & Victory"), not raw values — so any consumer that reached for
+    /// the display string instead of the enum could not get back to a category
+    /// at all. Holding the enum makes the illegal state unrepresentable rather
+    /// than asking each caller to remember.
+    ///
+    /// The wire format is unchanged: `DeclarationCategory` encodes as its raw
+    /// value, so this still reads and writes the same `"theme": "warfare"` that
+    /// shipped, and campaigns already persisted in `UserDefaults` and iCloud
+    /// keep decoding.
+    let theme: DeclarationCategory
     let days: [EnforcementDay]
 
-    var category: DeclarationCategory? {
-        DeclarationCategory(rawValue: theme)
+    /// Spelled out rather than synthesized because the lenient `init(from:)`
+    /// below reads these keys by hand, and the synthesized encoder must keep
+    /// writing exactly the same ones.
+    enum CodingKeys: String, CodingKey {
+        case id, title, tagline, theme, days
     }
 
-    /// Display name for the theme, falling back to the raw value so a content
-    /// typo degrades to something readable instead of an empty label.
+    /// Display name for the theme.
     var themeName: String {
-        category?.name ?? theme.capitalized
+        theme.name
     }
 
     /// True for a campaign built at runtime rather than hand-authored in
@@ -79,12 +95,51 @@ struct Enforcement: Codable, Identifiable, Equatable {
     /// deliberate content, and `enforcements.json` already names them for the
     /// victory (Enforcing Peace, Provision, Healing, Victory).
     var displayTitle: String {
-        guard isGenerated, let category else { return title }
-        return "Enforcing " + category.enforcementTitle
+        guard isGenerated else { return title }
+        return "Enforcing " + theme.enforcementTitle
     }
 
     func day(_ number: Int) -> EnforcementDay? {
         days.first { $0.dayNumber == number }
+    }
+}
+
+// MARK: - Lenient theme decoding
+
+/// Declared in an extension so the memberwise initializer survives — callers
+/// build Enforcements directly (`EnforcementAssembler`, tests), and moving this
+/// into the struct body would silently take that initializer away.
+extension Enforcement {
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(String.self, forKey: .id)
+        title = try container.decode(String.self, forKey: .title)
+        tagline = try container.decode(String.self, forKey: .tagline)
+        days = try container.decode([EnforcementDay].self, forKey: .days)
+
+        // A theme that no longer parses must not be fatal.
+        //
+        // Decoding `theme` as a plain `DeclarationCategory` would throw on an
+        // unknown string, and the two places this type is decoded make that
+        // expensive: `enforcements.json`, where one content typo would take the
+        // whole catalog down, and `EnforcementProgress.assembledEnforcement`,
+        // where it would drop someone's in-flight week on the floor. A category
+        // renamed in a later build would do the same to campaigns already
+        // persisted under the old name.
+        //
+        // So an unreadable theme degrades to `.faith` — which has declarations
+        // and burst actions that fit anyone — instead of taking content or
+        // progress with it.
+        let raw = try container.decode(String.self, forKey: .theme)
+        if let parsed = DeclarationCategory(rawValue: raw) {
+            theme = parsed
+        } else {
+            #if DEBUG
+            print("⚠️ Enforcement '\(id)' has unknown theme '\(raw)', falling back to faith")
+            #endif
+            theme = .faith
+        }
     }
 }
 

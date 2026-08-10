@@ -294,7 +294,7 @@ struct ModernDailyChecklistView: View {
                 }
                 if let started {
                     AnalyticsService.shared.track("enforcement_started", parameters: [
-                        "theme": started.theme,
+                        "theme": started.theme.rawValue,
                         "source": curated ? "curated" : "matched",
                         "secondaries": topSecondaries.map(\.rawValue).joined(separator: ",")
                     ])
@@ -325,7 +325,7 @@ struct ModernDailyChecklistView: View {
         ) else { return false }
 
         AnalyticsService.shared.track("enforcement_started", parameters: [
-            "theme": started.theme,
+            "theme": started.theme.rawValue,
             "source": "redirect",
             "secondaries": ""
         ])
@@ -511,7 +511,7 @@ struct ModernDailyChecklistView: View {
                                     guard enforcementService.startEnforcement(id: enforcement.id,
                                                                   isPremium: subscriptionStore.isPremium) else { return }
                                     AnalyticsService.shared.track("enforcement_started",
-                                                                  parameters: ["theme": enforcement.theme])
+                                                                  parameters: ["theme": enforcement.theme.rawValue])
                                     viewModel.refreshTasksForCampaignChange()
                                 },
                                 onLockedTap: {
@@ -763,7 +763,7 @@ struct ModernDailyChecklistView: View {
                     guard enforcementService.startEnforcement(id: enforcement.id,
                                                   isPremium: subscriptionStore.isPremium) else { return }
                     AnalyticsService.shared.track("enforcement_started",
-                                                  parameters: ["theme": enforcement.theme, "source": "completion"])
+                                                  parameters: ["theme": enforcement.theme.rawValue, "source": "completion"])
                     viewModel.refreshTasksForCampaignChange()
                     enforcementService.justCompleted = nil
                 },
