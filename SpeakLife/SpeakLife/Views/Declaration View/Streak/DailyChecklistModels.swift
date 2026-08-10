@@ -81,6 +81,8 @@ enum TaskNavigationDestination: String, Codable {
     case bibleChat
     case journal
     case personalDeclaration
+    /// Guarding — the fifth pillar. Opens the Take It Captive drill.
+    case takeItCaptive
 }
 
 // MARK: - Enhanced Daily Task Model
@@ -1184,17 +1186,28 @@ struct TaskLibrary {
     ///   are spoken today. nil leaves the row out entirely, which is right for
     ///   anyone who has not started one — a task nobody can finish is worse than
     ///   no task.
+    /// - Parameter guardCompletedToday: whether today's Take It Captive rep is
+    ///   done. nil leaves the row out entirely — that is the state when the
+    ///   pillar is switched off in Remote Config or when the thought bank failed
+    ///   to load. A task with nothing behind it is worse than no task.
+    /// - Parameter totalDaysCompleted: `StreakStats.totalDaysCompleted`, the
+    ///   monotonic tenure counter. Gates when Guarding is introduced. Never
+    ///   `currentStreak` — see `guardIntroducedAfterDaysCompleted`.
     static func getCoreTasksForStreak(_ streakDay: Int, userCategories: [String] = [],
                                       foundationAudioDay: Int? = nil,
                                       enforcementDay: EnforcementDay? = nil,
-                                      personalDeclarations: PersonalDeclaration.Progress? = nil) -> [DailyTask] {
+                                      personalDeclarations: PersonalDeclaration.Progress? = nil,
+                                      guardCompletedToday: Bool? = nil,
+                                      totalDaysCompleted: Int = 0) -> [DailyTask] {
         let audioDay = foundationAudioDay ?? streakDay
         // Check if AI features are enabled for enhanced task generation
         if isAIEnabled() {
             let aiTasks = getAIEnhancedTasks(streakDay: streakDay, userCategories: userCategories)
             let planned = applyAudioPlan(to: aiTasks, day: audioDay, enforcementDay: enforcementDay)
             let owned = markCampaignOwned(planned, enforcementDay: enforcementDay)
-            return withPersonalDeclaration(burstFirst(owned), progress: personalDeclarations)
+            let guarded = withGuard(burstFirst(owned), completedToday: guardCompletedToday,
+                                    totalDaysCompleted: totalDaysCompleted)
+            return withPersonalDeclaration(guarded, progress: personalDeclarations)
         }
 
         // Standard task generation
@@ -1246,7 +1259,9 @@ struct TaskLibrary {
         // burstFirst first, THEN the declaration, so the declaration ends up at
         // the front and the Burst directly behind it. Reversing these lets
         // burstFirst hoist the Burst back over the declaration.
-        return withPersonalDeclaration(burstFirst(tasks), progress: personalDeclarations)
+        let guarded = withGuard(burstFirst(tasks), completedToday: guardCompletedToday,
+                                totalDaysCompleted: totalDaysCompleted)
+        return withPersonalDeclaration(guarded, progress: personalDeclarations)
     }
 
     /// Adds the declaration row, or replaces it if a caller already had one.
@@ -1268,6 +1283,77 @@ struct TaskLibrary {
         // Runs AFTER `burstFirst`, not before, or that call would move the Burst
         // back over the top of it.
         result.insert(personalDeclarationTask(progress), at: 0)
+        return result
+    }
+
+    static let guardTaskId = "take_it_captive"
+
+    /// How many completed days the user needs behind them before Guarding
+    /// appears.
+    ///
+    /// Not day 1: the first day is deliberately light (Burst, devotional, audio)
+    /// so the streak is easy to earn, and day 2 already introduces gratitude.
+    /// Guarding arrives once the core loop has actually taken hold.
+    ///
+    /// **Measured in `totalDaysCompleted`, never `currentStreak`** — the same
+    /// call `EnforcementService` makes, for the same reason. The streak zeroes
+    /// on a break; tenure does not. Gating on the streak made a broken streak
+    /// delete the pillar for two days, which is precisely the
+    /// you-failed-at-guarding-your-mind punishment this feature's guardrails
+    /// forbid — and it fired on the exact morning someone needs it most.
+    static let guardIntroducedAfterDaysCompleted = 2
+
+    /// Adds the Guarding row — the fifth pillar.
+    ///
+    /// Injected here rather than added to `foundationTasks` on purpose. The
+    /// foundation phase takes `prefix(5)` of that array and the later phases
+    /// pick from it by id, so a sixth entry would silently drop out of the
+    /// checklist somewhere around day 8. Guarding is a lifelong daily habit like
+    /// speaking and hearing, not a first-week exercise, so it rides the same
+    /// injector path the personal declaration does and survives every phase.
+    ///
+    /// **Completion is derived, never toggled.** It is done when today's rep is
+    /// finished and not before, so the row cannot be ticked without actually
+    /// speaking the counter-declaration out loud — which is the entire feature.
+    /// `EnhancedStreakViewModel.completeTask` refuses this id for that reason.
+    ///
+    /// **It never earns the streak.** `DailyChecklist.isStreakEarned` reads the
+    /// Burst alone, so this changes the day's "N of M" and nothing else. A user
+    /// who guards their mind but skips the Burst has still not lost a streak to
+    /// this feature, and one who never opens it has lost nothing at all.
+    private static func withGuard(_ tasks: [DailyTask],
+                                  completedToday: Bool?,
+                                  totalDaysCompleted: Int) -> [DailyTask] {
+        var result = tasks.filter { $0.id != guardTaskId }
+        guard let completedToday,
+              totalDaysCompleted >= guardIntroducedAfterDaysCompleted else { return result }
+
+        var task = DailyTask(
+            id: guardTaskId,
+            title: "Take a Thought Captive",
+            // Never names the low thing. No "anxious thought", no "negative
+            // thinking" — the row describes the higher ground being taken, not
+            // the intruder being removed.
+            description: "One thought. Reject it, and speak the truth out loud.",
+            icon: "shield.lefthalf.filled",
+            category: .foundation,
+            type: .speak,
+            difficulty: .beginner,
+            // Metadata only — this row is injected, never filtered by
+            // `getAvailableTasks`, so the real gate is the tenure check above.
+            minimumStreakDay: 1,
+            estimatedMinutes: 1,
+            navigationDestination: .takeItCaptive
+        )
+        task.isCompleted = completedToday
+
+        // Directly behind the Burst. Speaking leads; guarding holds what
+        // speaking took.
+        if let burstIndex = result.firstIndex(where: { $0.id == "complete_daily_burst" }) {
+            result.insert(task, at: min(burstIndex + 1, result.count))
+        } else {
+            result.append(task)
+        }
         return result
     }
 

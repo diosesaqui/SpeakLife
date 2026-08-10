@@ -305,5 +305,21 @@ struct PromiseAppShortcutsProvider: AppShortcutsProvider {
             shortTitle: "Promise by Topic",
             systemImageName: "tag.fill"
         )
+
+        // Guarding — the interception entry point. Phrased around what the user
+        // is actually feeling ("I can't stop thinking about this"), not around
+        // the feature's name, because nobody in that moment remembers what we
+        // called it.
+        AppShortcut(
+            intent: TakeThoughtCaptiveIntent(),
+            phrases: [
+                "Take a thought captive in \(.applicationName)",
+                "Take this thought captive with \(.applicationName)",
+                "I can't stop thinking about this, \(.applicationName)",
+                "Guard my mind with \(.applicationName)"
+            ],
+            shortTitle: "Take It Captive",
+            systemImageName: "shield.lefthalf.filled"
+        )
     }
 }

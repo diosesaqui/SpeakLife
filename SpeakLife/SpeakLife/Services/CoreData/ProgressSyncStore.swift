@@ -90,7 +90,12 @@ final class ProgressSyncStore {
         "totalAffirmationsSpoken",
         "totalVersesRead",
         "totalSocialShares",
-        "totalFavoritesAdded"
+        "totalFavoritesAdded",
+        // Guarding: ground taken. Belongs here rather than in its own store
+        // precisely because this machinery is append-only and monotonic by
+        // construction — there is no code path that can lower it, which is the
+        // one guarantee that feature makes about its only number.
+        GroundTaken.counterKey
     ]
 
     // MARK: - Private state
