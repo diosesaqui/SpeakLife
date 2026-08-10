@@ -240,7 +240,8 @@ struct ReplaceDeclarationView: View {
         PremiumHaptics.safeLight()
         holdTimer = Timer.scheduledTimer(withTimeInterval: 0.02, repeats: true) { _ in
             Task { @MainActor in
-                holdProgress = min(1, holdProgress + 0.02 / 1.1)
+                let stepped: CGFloat = holdProgress + (0.02 / 1.1)
+                holdProgress = stepped > 1 ? 1 : stepped
                 if holdProgress >= 1 { confirmHold() }
             }
         }
@@ -308,6 +309,7 @@ struct GuardWaveform: View {
         let offset = barCount - index
         guard offset <= levels.count else { return 4 }
         let level = levels[levels.count - offset]
-        return max(4, CGFloat(level) * 56)
+        let scaled: CGFloat = CGFloat(level) * 56
+        return scaled < 4 ? 4 : scaled
     }
 }

@@ -208,10 +208,12 @@ final class TakeItCaptiveService: ObservableObject {
         // `min(by:)` with a "higher score sorts first" comparator, so this picks
         // the HIGHEST score. Ties break on id so the choice is deterministic —
         // two devices on the same day land on the same thought.
-        let weights = isPremium ? engagement() : [:]
+        // Annotated rather than inferred: a bare `[:]` on one arm of a ternary
+        // makes the compiler solve the literal's type through the branch.
+        let weights: [String: Int] = isPremium ? engagement() : [:]
         return candidates.min { lhs, rhs in
-            let lhsScore = score(lhs, weights: weights, served: served)
-            let rhsScore = score(rhs, weights: weights, served: served)
+            let lhsScore: Int = score(lhs, weights: weights, served: served)
+            let rhsScore: Int = score(rhs, weights: weights, served: served)
             if lhsScore == rhsScore { return lhs.id < rhs.id }
             return lhsScore > rhsScore
         }
@@ -228,18 +230,30 @@ final class TakeItCaptiveService: ObservableObject {
     /// thought was served every single day from then on — a free user's drill
     /// quietly froze. Scoring by how long ago turns the exhausted case into a
     /// proper least-recently-used rotation instead.
+    ///
+    /// Every step is explicitly `Int` and on its own line. Nested generic
+    /// `min`/`max` over integer literals mixed with arithmetic is one of the
+    /// shapes that costs the type checker real time, and this file already
+    /// failed an archive over exactly that class of expression.
     private func score(_ thought: IncomingThought,
                        weights: [String: Int],
                        served: [String: String]) -> Int {
-        let engagementBonus = (weights[thought.category.rawValue] ?? 0) * 10
+        let categoryWeight: Int = weights[thought.category.rawValue] ?? 0
+        let engagementBonus: Int = categoryWeight * 10
+
         guard let servedDay = served[thought.id],
               let servedDate = Self.date(from: servedDay, calendar: calendar) else {
             // Never served always wins, whatever the weighting says. A thought
             // they have not seen beats one they have.
             return engagementBonus + Self.neverServedBonus
         }
-        let daysAgo = calendar.dateComponents([.day], from: servedDate, to: Date()).day ?? 0
-        return engagementBonus + min(max(daysAgo, 0), Self.neverServedBonus - 1)
+
+        let daysAgo: Int = calendar.dateComponents([.day], from: servedDate, to: Date()).day ?? 0
+        let recencyCeiling: Int = Self.neverServedBonus - 1
+        var recencyBonus: Int = daysAgo
+        if recencyBonus < 0 { recencyBonus = 0 }
+        if recencyBonus > recencyCeiling { recencyBonus = recencyCeiling }
+        return engagementBonus + recencyBonus
     }
 
     /// Big enough that no engagement weighting can lift a recently-served
@@ -252,12 +266,14 @@ final class TakeItCaptiveService: ObservableObject {
     /// rather than a number on a table.
     func freeSlice() -> [IncomingThought] {
         var perCategory: [ThoughtCategory: Int] = [:]
-        return bank.filter { thought in
-            let count = perCategory[thought.category, default: 0]
-            guard count < Self.freeThoughtsPerCategory else { return false }
+        var slice: [IncomingThought] = []
+        for thought in bank {
+            let count: Int = perCategory[thought.category] ?? 0
+            guard count < Self.freeThoughtsPerCategory else { continue }
             perCategory[thought.category] = count + 1
-            return true
+            slice.append(thought)
         }
+        return slice
     }
 
     /// 1 for the first week, 2 until the user has 14 reps behind them, then 3.
@@ -368,7 +384,9 @@ final class TakeItCaptiveService: ObservableObject {
     /// unlimited (premium).
     func escapeHatchesRemaining(isPremium: Bool) -> Int? {
         guard !isPremium else { return nil }
-        return max(0, Self.freeEscapeHatchesPerMonth - escapeHatchesUsedThisMonth())
+        let used: Int = escapeHatchesUsedThisMonth()
+        let remaining: Int = Self.freeEscapeHatchesPerMonth - used
+        return remaining > 0 ? remaining : 0
     }
 
     func canUseEscapeHatch(isPremium: Bool) -> Bool {
@@ -399,23 +417,44 @@ final class TakeItCaptiveService: ObservableObject {
     /// The terrain the user has taken the most ground in. Never surfaced as a
     /// diagnosis — the only sentence it is allowed to produce is "You've been
     /// taking a lot of ground in <terrain>".
+    ///
+    /// Written as a plain loop rather than `compactMap` + `max(by:)`.
+    ///
+    /// The chained version inferred a tuple type through two generic
+    /// higher-order functions and compared across both members inside a ternary,
+    /// and the Swift type checker could not solve it in reasonable time — it
+    /// failed the Xcode Cloud archive outright. A loop is also easier to read
+    /// than the comparator was, so nothing is lost.
     func strongestTerrain() -> ThoughtCategory? {
-        engagement()
-            .compactMap { key, value in
-                ThoughtCategory(rawValue: key).map { ($0, value) }
+        var bestCategory: ThoughtCategory?
+        var bestCount: Int = 0
+
+        for (key, count) in engagement() {
+            guard let category = ThoughtCategory(rawValue: key) else { continue }
+            guard let currentBest = bestCategory else {
+                bestCategory = category
+                bestCount = count
+                continue
             }
-            // Dictionary order is not stable between runs, so ties break on the
-            // raw value — otherwise the same data could name a different
-            // terrain on each launch.
-            .max { lhs, rhs in
-                lhs.1 == rhs.1 ? lhs.0.rawValue > rhs.0.rawValue : lhs.1 < rhs.1
-            }?.0
+            if count > bestCount {
+                bestCategory = category
+                bestCount = count
+            } else if count == bestCount, category.rawValue < currentBest.rawValue {
+                // Dictionary order is not stable between runs, so ties break on
+                // the raw value — otherwise the same data could name a different
+                // terrain on each launch.
+                bestCategory = category
+            }
+        }
+        return bestCategory
     }
 
     /// The log, newest first. Local-only and capped — this is a record of ground
     /// taken, not a diary, and nothing downstream needs the full history.
     func recentCaptures(limit: Int = 100) -> [CapturedThought] {
-        Array(loadLog().suffix(limit).reversed())
+        let log: [CapturedThought] = loadLog()
+        let tail: [CapturedThought] = Array(log.suffix(limit))
+        return tail.reversed()
     }
 
     // MARK: - Persistence helpers
@@ -431,7 +470,12 @@ final class TakeItCaptiveService: ObservableObject {
     }
 
     private func recentCategories() -> [ThoughtCategory] {
-        (defaults.stringArray(forKey: recentCategoriesKey) ?? []).compactMap(ThoughtCategory.init)
+        // `compactMap(ThoughtCategory.init)` made the compiler resolve an
+        // unapplied initializer reference against every init the type has,
+        // including the synthesized Decodable one. Spelled out, there is
+        // nothing to resolve.
+        let raw: [String] = defaults.stringArray(forKey: recentCategoriesKey) ?? []
+        return raw.compactMap { ThoughtCategory(rawValue: $0) }
     }
 
     private func pushRecentCategory(_ category: ThoughtCategory) {

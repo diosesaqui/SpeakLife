@@ -100,7 +100,8 @@ struct ThoughtClassifier {
         guard !inCategory.isEmpty else { return nil }
         let gentle = inCategory.filter { $0.intensity == 1 }
         let pool = gentle.isEmpty ? inCategory : gentle
-        let index = abs(Self.stableHash(text)) % pool.count
+        let hashed: Int = Self.stableHash(text)
+        let index: Int = hashed % pool.count
         return pool[index]
     }
 
@@ -120,11 +121,16 @@ struct ThoughtClassifier {
 
     /// `String.hashValue` is seeded per process, so it would give a different
     /// answer for the same sentence on the next launch. This one doesn't.
+    ///
+    /// Always non-negative: the wrapping operators can land on a negative value,
+    /// and negating `Int.min` traps at runtime — a crash on an unlucky sentence,
+    /// typed by someone already carrying something. Masking off the sign bit
+    /// costs nothing and makes the modulo below safe by construction.
     private static func stableHash(_ text: String) -> Int {
         var hash = 5381
         for byte in text.lowercased().utf8 {
             hash = (hash &* 33) &+ Int(byte)
         }
-        return hash
+        return hash & Int.max
     }
 }

@@ -49,6 +49,25 @@ struct IncomingThoughtView: View {
     /// a rejection and should not bounce back as a failure.
     private let commitThreshold: CGFloat = 110
 
+    // Both of these were inline in the modifier chain, mixing CGFloat literals,
+    // a Double conversion and generic `min`/`abs` inside a ternary. That is the
+    // same shape that timed out the type checker in `TakeItCaptiveService` and
+    // failed the archive, so they are computed here with explicit types.
+
+    /// The card leans into the throw.
+    private var tiltDegrees: Double {
+        Double(dragX) / 22
+    }
+
+    /// Fades out as it travels, so the throw feels like it costs the thought
+    /// something before the burn-off finishes it.
+    private var cardOpacity: Double {
+        if burnOff { return 0 }
+        let travelled: Double = Double(abs(dragX))
+        let capped: Double = travelled > 260 ? 260 : travelled
+        return 1 - (capped / 420)
+    }
+
     var body: some View {
         ZStack {
             // No brand field. The screen the thought arrives on is cold and
@@ -65,12 +84,12 @@ struct IncomingThoughtView: View {
 
                 thoughtCard
                     .offset(x: dragX, y: 0)
-                    .rotationEffect(.degrees(Double(dragX / 22)))
+                    .rotationEffect(.degrees(tiltDegrees))
                     // Keyed to `burnOff`, not `isGone`. `isGone` is set outside
                     // the animation block (it has to be, it's the re-entry
                     // guard), so keying the fade to it would snap the card to
                     // invisible and swallow the burn-off entirely.
-                    .opacity(burnOff ? 0 : 1 - Double(min(abs(dragX), 260) / 420))
+                    .opacity(cardOpacity)
                     .blur(radius: burnOff ? 18 : 0)
                     .scaleEffect(burnOff ? 0.86 : 1)
                     .gesture(throwGesture)

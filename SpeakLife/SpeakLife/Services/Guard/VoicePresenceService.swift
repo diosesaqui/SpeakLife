@@ -188,7 +188,11 @@ final class VoicePresenceService: NSObject, ObservableObject {
         guard let recorder, isListening else { return }
         recorder.updateMeters()
         let power = recorder.averagePower(forChannel: 0)   // dBFS, roughly -160...0
-        let normalized = max(0, min(1, (power + 50) / 50)) // -50 dB floor reads as silence
+        // -50 dB floor reads as silence. Spelled out rather than nested
+        // min/max: this feature already failed an archive on that shape.
+        var normalized: Float = (power + 50) / 50
+        if normalized < 0 { normalized = 0 }
+        if normalized > 1 { normalized = 1 }
         levels.append(normalized)
         if levels.count > 48 { levels.removeFirst() }
 
