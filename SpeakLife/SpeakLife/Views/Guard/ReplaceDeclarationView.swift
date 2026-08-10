@@ -286,8 +286,14 @@ struct ReplaceDeclarationView: View {
                         )
                 }
                 .buttonStyle(.dsPressable(feel: .tapSolid))
-                .disabled(isVerifying)
-                .opacity(isVerifying ? 0.4 : 1)
+                // Also disabled when the mic isn't live. `finishSpeaking()`
+                // no-ops unless a recording is in flight, so between the two
+                // passes — after the transcript comes back and before the mic
+                // re-arms — the button would look active and do nothing. A
+                // silently dead control is the same failure this button exists
+                // to fix, so it greys for those few milliseconds instead.
+                .disabled(!canFinish)
+                .opacity(canFinish ? 1 : 0.4)
             }
 
             // Always reachable. Someone in a quiet room, on a bus, or beside a
@@ -303,6 +309,11 @@ struct ReplaceDeclarationView: View {
             }
             .buttonStyle(.plain)
         }
+    }
+
+    /// Whether "Done" has anything to act on right now.
+    private var canFinish: Bool {
+        verifier.isRecording && !isVerifying
     }
 
     /// The words of the line, for the highlighter. Split on whitespace so the
