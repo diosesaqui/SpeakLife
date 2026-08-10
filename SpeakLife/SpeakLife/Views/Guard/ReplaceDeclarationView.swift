@@ -9,9 +9,14 @@
 //  they walked out of one room and into another. Do not harmonize these two
 //  screens.
 //
-//  The mic ARMS ITSELF. There is no record button, because a button turns
-//  speaking into an extra decision at exactly the moment the user should just
-//  open their mouth. Stopping is inferred from a pause, not tapped.
+//  The mic ARMS ITSELF. There is no record button to START, because a button
+//  turns speaking into an extra decision at exactly the moment the user should
+//  just open their mouth.
+//
+//  There IS a way to say you have FINISHED. Stopping is inferred from a pause,
+//  but inference alone stranded people: it only fires from trailing silence
+//  after speech was heard, so a re-armed mic and a silent user waited on a
+//  30-second backstop with nothing on screen saying so.
 //
 //  Verification is `DeclarationVerificationService` — the same validator the
 //  personal-declaration card uses. It transcribes and scores the spoken words
@@ -104,13 +109,6 @@ struct ReplaceDeclarationView: View {
                     .foregroundColor(gold.opacity(0.9))
                     .opacity(revealed ? 1 : 0)
 
-                // The spec calls for Caveat Bold here. Caveat is a brand-deck
-                // font and is NOT bundled in the app target, so `.custom` would
-                // silently fall back to system and the headline would land
-                // flatter than the body copy around it. AppleSDGothicNeo-Bold is
-                // the display face this app actually ships (see
-                // `DS.Typography`), so the headline gets real weight. Swap this
-                // for Caveat the day the font is added to the target.
                 // Words light gold as the transcript matches them, so the
                 // screen shows the line being taken rather than a bar filling.
                 HighlightedDeclarationText(
@@ -264,6 +262,33 @@ struct ReplaceDeclarationView: View {
                 .font(.system(size: 14, weight: .semibold, design: .rounded))
                 .foregroundColor(.white.opacity(settled ? 0.95 : 0.65))
                 .multilineTextAlignment(.center)
+
+            // "I've said it." The way to finish on purpose.
+            //
+            // Auto-endpointing handles the common case, but it only fires from
+            // trailing silence after speech was heard, or from a 30-second
+            // backstop. Re-arm the mic after a missed pass and say nothing, and
+            // there was no way to finish and no sign of how long the wait was.
+            // A screen that asks someone to speak must always let them say when
+            // they're done.
+            if !settled {
+                Button {
+                    verifier.finishSpeaking()
+                } label: {
+                    Text("Done — I've said it")
+                        .font(.system(size: 15, weight: .bold, design: .rounded))
+                        .foregroundColor(.white.opacity(0.9))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 13)
+                        .background(
+                            Capsule()
+                                .stroke(Color.white.opacity(0.28), lineWidth: 1)
+                        )
+                }
+                .buttonStyle(.dsPressable(feel: .tapSolid))
+                .disabled(isVerifying)
+                .opacity(isVerifying ? 0.4 : 1)
+            }
 
             // Always reachable. Someone in a quiet room, on a bus, or beside a
             // sleeping child should never be stuck at this screen.

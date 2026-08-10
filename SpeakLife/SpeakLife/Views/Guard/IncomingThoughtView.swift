@@ -19,10 +19,12 @@
 //  button. The card does not politely slide back — past the threshold it burns
 //  off, with a heavy haptic at the moment of release.
 //
-//  Swipe direction is LEFT (open decision #1 in the spec, resolved): the
-//  declaration feed pages VERTICALLY and this flow is presented full-screen, so
-//  a horizontal throw collides with nothing. Right is handled too, but never as
-//  "keep the thought" — see `onUnsure`.
+//  Swipe direction is LEFT, and left only (open decision #1 in the spec,
+//  resolved): the declaration feed pages VERTICALLY and this flow is presented
+//  full-screen, so a horizontal throw collides with nothing. A right swipe
+//  springs back and does nothing — there is no gesture here that agrees with a
+//  lie, and no second destination worth having, since the user typed this
+//  thought themselves precisely in order to reject it.
 //
 
 import SwiftUI
@@ -33,8 +35,6 @@ struct IncomingThoughtView: View {
     /// The user threw it off screen. Carries how long they took, which is the
     /// reflex-training metric.
     let onReject: (TimeInterval) -> Void
-    /// Swiped right. Never an "I'll keep it" — the app does not affirm a lie.
-    let onUnsure: () -> Void
     let onEscapeHatch: () -> Void
     let onClose: () -> Void
 
@@ -269,14 +269,18 @@ struct IncomingThoughtView: View {
                 guard !isGone else { return }
                 if value.translation.width <= -commitThreshold {
                     commitThrow()
-                } else if value.translation.width >= commitThreshold {
-                    // Swiping right is NOT "keep the thought". There is no
-                    // gesture in this app that agrees with a lie. It reads as
-                    // "I'm not sure", and the flow answers with what God says.
-                    withAnimation(DS.Motion.quick) { dragX = 0 }
-                    PremiumHaptics.safeLight()
-                    onUnsure()
                 } else {
+                    // Right does nothing, on purpose.
+                    //
+                    // It used to route to an "I'm not sure" screen, which then
+                    // continued to the same declaration — so both directions
+                    // reached the same place and the gesture meant nothing. And
+                    // now that the user TYPES the thought rather than being
+                    // handed one, "not sure" is not a state they can be in:
+                    // they already named it as something to reject.
+                    //
+                    // Left is the only committing throw. Everything else springs
+                    // back, which is what makes the left one deliberate.
                     withAnimation(DS.Motion.bouncy) { dragX = 0 }
                 }
             }
@@ -300,71 +304,6 @@ struct IncomingThoughtView: View {
         let elapsed = Date().timeIntervalSince(appearedAt)
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.62) {
             onReject(elapsed)
-        }
-    }
-}
-
-// MARK: - Not sure
-
-/// Where a right swipe lands: what God says about the thought, then straight on
-/// to speaking it. Never a screen that agrees, and never a dead end.
-struct ThoughtAnswerView: View {
-    let thought: IncomingThought
-    let onContinue: () -> Void
-    /// Every screen in this full-screen flow carries a way out. A cover with no
-    /// close control is a trap.
-    let onClose: () -> Void
-
-    var body: some View {
-        ZStack {
-            LinearGradient(colors: [Color(hex: "#1B1D22"), Color(hex: "#101216")],
-                           startPoint: .top, endPoint: .bottom)
-                .ignoresSafeArea()
-
-            VStack(spacing: DS.Spacing.lg) {
-                HStack {
-                    Spacer()
-                    Button(action: onClose) {
-                        Image(systemName: "xmark")
-                            .font(.system(size: 15, weight: .semibold))
-                            .foregroundColor(.white.opacity(0.32))
-                            .frame(width: 32, height: 32)
-                    }
-                    .accessibilityLabel("Close")
-                }
-
-                Spacer()
-
-                Text("HERE'S WHAT GOD SAYS")
-                    .font(.system(size: 11, weight: .bold))
-                    .tracking(2.6)
-                    .foregroundColor(DS.Palette.gold.opacity(0.85))
-
-                Text(thought.verseText)
-                    .font(.system(size: 19, weight: .regular))
-                    .foregroundColor(.white.opacity(0.9))
-                    .multilineTextAlignment(.center)
-                    .lineSpacing(5)
-                    .fixedSize(horizontal: false, vertical: true)
-
-                Text(thought.book)
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundColor(DS.Palette.gold.opacity(0.8))
-
-                Spacer()
-
-                Button(action: onContinue) {
-                    Text("Say it out loud")
-                        .font(.system(size: 16, weight: .bold, design: .rounded))
-                        .foregroundColor(Color(hex: "#1A264D"))
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 16)
-                        .background(Capsule().fill(DS.Gradient.gold))
-                }
-                .buttonStyle(.dsPressable(feel: .tapSolid))
-            }
-            .padding(.horizontal, 28)
-            .padding(.vertical, 32)
         }
     }
 }

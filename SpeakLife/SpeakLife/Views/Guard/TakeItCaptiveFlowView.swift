@@ -56,7 +56,6 @@ struct TakeItCaptiveFlowView: View {
     private enum Stage: Equatable {
         case ask             // what thought have you been carrying?
         case incoming        // it goes on the card, in their words
-        case answer          // right-swipe: here's what God says
         case replace
         case ground(Int)
     }
@@ -124,26 +123,10 @@ struct TakeItCaptiveFlowView: View {
                     ])
                     withAnimation(DS.Motion.smooth) { stage = .replace }
                 },
-                onUnsure: {
-                    // Never an affirmation of the lie. It routes to what God
-                    // says and then straight on to speaking it.
-                    AnalyticsService.shared.track("guard_thought_unsure", parameters: [
-                        "category": thought.category.rawValue
-                    ])
-                    withAnimation(DS.Motion.smooth) { stage = .answer }
-                },
                 // The card already holds their own words when they typed one.
                 // This is the way back to retype it, or to name a different
                 // thought than the one the bank offered.
                 onEscapeHatch: { withAnimation(DS.Motion.smooth) { stage = .ask } },
-                onClose: { dismiss() }
-            )
-            .transition(.opacity)
-
-        case .answer:
-            ThoughtAnswerView(
-                thought: thought,
-                onContinue: { withAnimation(DS.Motion.smooth) { stage = .replace } },
                 onClose: { dismiss() }
             )
             .transition(.opacity)
@@ -284,9 +267,8 @@ struct TakeItCaptiveFlowView: View {
         switch stage {
         case .ask:      return 0
         case .incoming: return 1
-        case .answer:   return 2
-        case .replace:  return 3
-        case .ground:   return 4
+        case .replace:  return 2
+        case .ground:   return 3
         }
     }
 }
