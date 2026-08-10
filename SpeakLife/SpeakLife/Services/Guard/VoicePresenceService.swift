@@ -3,13 +3,22 @@
 //  SpeakLife
 //
 //  Listens while the user speaks the counter-declaration. It measures ONE
-//  thing: was there a voice.
+//  thing: was roughly a line's worth of speech spoken, and has the speaker
+//  finished.
 //
 //  **No transcription. Not now, not later.** The app must never tell someone
 //  they said the declaration wrong — that turns a moment of faith into a test
-//  they can fail, and a failed test mid-storm reads as condemnation. Presence of
-//  voice is sufficient, and the confirmation is visual: the waveform fills, then
-//  settles. Nothing is graded, nothing is scored, nothing is kept.
+//  they can fail, and a failed test mid-storm reads as condemnation. Nothing
+//  here ever looks at WHAT was said. The confirmation is visual: the waveform
+//  fills, then settles. Nothing is graded, nothing is scored, nothing is kept.
+//
+//  It did originally measure bare presence of voice, and that was too weak to
+//  be worth anything: two words finished the rep on a twelve-word line, so the
+//  screen was asking people to speak and then not caring whether they did. The
+//  target is now sized from the line's own word count. That is still not
+//  grading — "did they speak?" and "did they speak THIS?" are different
+//  questions, and only the second one is worth asking. Neither is "did they
+//  say it correctly", which stays permanently out of scope.
 //
 //  Recording uses `AVAudioRecorder` metering rather than `AVAudioEngine` +
 //  `installTap`. The spec called for AVAudioEngine, but this codebase removed
@@ -31,9 +40,15 @@ final class VoicePresenceService: NSObject, ObservableObject {
 
     /// Rolling amplitude, 0...1, newest last. Drives the waveform.
     @Published private(set) var levels: [Float] = []
-    /// True once a voice has been heard for `sustainedVoiceSeconds`. The only
-    /// verdict this service produces.
+    /// True once enough of the line has been spoken AND the speaker has
+    /// finished. The only verdict this service produces.
     @Published private(set) var heardVoice = false
+    /// 0...1 — how much of the expected speaking time has been voiced so far.
+    ///
+    /// Surfaced so the screen can show the user it is hearing them and that
+    /// there is more of the line to go. Without it, "why did it stop?" and
+    /// "what does it want from me?" have no answer anywhere on screen.
+    @Published private(set) var spokenProgress: Double = 0
     @Published private(set) var isListening = false
     /// Set when the mic was refused. The view swaps in the press-and-hold
     /// fallback and never asks again.
@@ -61,12 +76,28 @@ final class VoicePresenceService: NSObject, ObservableObject {
     /// step above it adapts to both, which is the difference between hearing a
     /// whisper and hearing a refrigerator.
     private let voiceMarginOverAmbient: Float = 0.16
-    /// How long a voice has to be present before it counts.
+    /// Words per second of deliberate, spoken-aloud declaration.
     ///
-    /// The shortest counter in the bank is nine words, which takes about three
-    /// seconds to say. 0.8s was short enough that a cough or a passing car
-    /// finished the rep for you.
-    private let sustainedVoiceSeconds: TimeInterval = 1.2
+    /// Conversational speech runs 2.5-3 wps; someone speaking a line over their
+    /// own life runs slower. Used only to size the target below.
+    private let wordsPerSecond: Double = 2.4
+    /// How much of the line's speaking time has to actually be voiced.
+    ///
+    /// Not 100%: natural pauses between clauses are silence, mic gain varies,
+    /// and the cost of asking too much is telling someone who DID speak that
+    /// they didn't. 60% clears comfortably for anyone reading the line, and is
+    /// far out of reach of the two words that used to satisfy this.
+    private let voicedFraction: Double = 0.6
+    /// Floor and ceiling on the target, so a very short or very long
+    /// declaration still asks for something sane.
+    private let minimumVoicedSeconds: TimeInterval = 1.8
+    private let maximumVoicedSeconds: TimeInterval = 6.0
+    /// Once the target is met, how long a pause means "they have finished".
+    ///
+    /// Completing the instant the target is hit cut people off mid-sentence.
+    /// Waiting for them to stop talking means the drill never interrupts the
+    /// declaration it just asked for.
+    private let trailingSilenceSeconds: TimeInterval = 0.6
     /// Voice heard before this much time has passed does not count.
     ///
     /// You cannot speak a line you have not read yet. Without this, the mic is
@@ -76,11 +107,22 @@ final class VoicePresenceService: NSObject, ObservableObject {
     private let readingGraceSeconds: TimeInterval = 1.5
     /// The mic never stays armed longer than this, whatever the user does.
     private let maxListenSeconds: TimeInterval = 22
+    /// How often the meter is sampled. Also the unit of voiced-time accounting,
+    /// so the two can never drift apart.
+    private let meterInterval: TimeInterval = 0.05
 
     private var recorder: AVAudioRecorder?
     private var meterTimer: Timer?
     private var maxDurationTimer: Timer?
-    private var voiceSince: Date?
+    /// Total voiced time accumulated, in seconds. Not a continuous run — the
+    /// pauses between clauses are silence and should not reset the count.
+    private var voicedSeconds: TimeInterval = 0
+    /// How much voiced time this particular declaration asks for.
+    private var targetVoicedSeconds: TimeInterval = 3.0
+    /// Set once the target is met; the verdict then waits for a pause.
+    private var metTargetAt: Date?
+    /// Start of the current silence, used to detect that they have finished.
+    private var silenceSince: Date?
     /// Levels sampled during the reading grace, used to learn the room.
     private var ambientSamples: [Float] = []
     /// The bar a sound has to clear, resolved once the grace period ends.
@@ -130,12 +172,32 @@ final class VoicePresenceService: NSObject, ObservableObject {
 
     // MARK: - Listening
 
+    /// How much voiced time a given line should ask for.
+    ///
+    /// Derived from its word count, because "did they speak?" and "did they
+    /// speak THIS?" are different questions and only the second one is worth
+    /// measuring. This is still not transcription and still not grading — it
+    /// never looks at WHAT was said, only that roughly a line's worth of speech
+    /// happened. Nothing here can tell someone they said it wrong.
+    func voicedTarget(forDeclaration text: String) -> TimeInterval {
+        let words: Int = text.split(whereSeparator: { $0 == " " || $0 == "\n" }).count
+        let spokenLength: Double = Double(words) / wordsPerSecond
+        var target: TimeInterval = spokenLength * voicedFraction
+        if target < minimumVoicedSeconds { target = minimumVoicedSeconds }
+        if target > maximumVoicedSeconds { target = maximumVoicedSeconds }
+        return target
+    }
+
     /// Arms the mic. Returns false when permission is unavailable, in which case
     /// the caller shows the press-and-hold fallback — never a nag.
+    ///
+    /// - Parameter declaration: the line the user is about to speak. Its length
+    ///   sets how much speech counts as having said it.
     @discardableResult
-    func start() async -> Bool {
+    func start(declaration: String) async -> Bool {
         guard !isListening else { return true }
         guard await requestMicPermission() else { return false }
+        targetVoicedSeconds = voicedTarget(forDeclaration: declaration)
 
         do {
             let session = AVAudioSession.sharedInstance()
@@ -168,13 +230,16 @@ final class VoicePresenceService: NSObject, ObservableObject {
         levels = []
         heardVoice = false
         timedOutWithoutVoice = false
-        voiceSince = nil
+        voicedSeconds = 0
+        spokenProgress = 0
+        metTargetAt = nil
+        silenceSince = nil
         ambientSamples = []
         resolvedThreshold = nil
         listeningSince = Date()
         isListening = true
 
-        meterTimer = Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { [weak self] _ in
+        meterTimer = Timer.scheduledTimer(withTimeInterval: meterInterval, repeats: true) { [weak self] _ in
             Task { @MainActor [weak self] in self?.sampleLevel() }
         }
         maxDurationTimer = Timer.scheduledTimer(withTimeInterval: maxListenSeconds, repeats: false) { [weak self] _ in
@@ -199,7 +264,8 @@ final class VoicePresenceService: NSObject, ObservableObject {
         recorder?.stop()
         recorder = nil
         isListening = false
-        voiceSince = nil
+        metTargetAt = nil
+        silenceSince = nil
         listeningSince = nil
         ambientSamples = []
         resolvedThreshold = nil
@@ -215,6 +281,7 @@ final class VoicePresenceService: NSObject, ObservableObject {
 
     /// The no-mic path. Same verdict, same log, no second-class treatment.
     func confirmSpokenByHold() {
+        spokenProgress = 1
         heardVoice = true
     }
 
@@ -263,19 +330,30 @@ final class VoicePresenceService: NSObject, ObservableObject {
         }
 
         let threshold: Float = resolveThreshold()
-        if normalized >= threshold {
-            let since = voiceSince ?? Date()
-            voiceSince = since
-            if Date().timeIntervalSince(since) >= sustainedVoiceSeconds {
-                heardVoice = true
+        let isVoiced: Bool = normalized >= threshold
+
+        if isVoiced {
+            // Accumulate, rather than requiring one unbroken run. The pauses
+            // between clauses are silence, and a speaker who breathes should
+            // not have to start the line over.
+            voicedSeconds += meterInterval
+            silenceSince = nil
+            if voicedSeconds >= targetVoicedSeconds, metTargetAt == nil {
+                metTargetAt = Date()
             }
-        } else {
-            // A breath between clauses shouldn't reset the whole measurement,
-            // but a long silence should — otherwise a cough at the start plus a
-            // cough at the end would add up to "spoken".
-            if let since = voiceSince, Date().timeIntervalSince(since) > 2 {
-                voiceSince = nil
-            }
+        } else if silenceSince == nil {
+            silenceSince = Date()
+        }
+
+        let progress: Double = voicedSeconds / targetVoicedSeconds
+        spokenProgress = progress > 1 ? 1 : progress
+
+        // Two conditions, both required. Enough of the line has been spoken to
+        // have plausibly said it — two words no longer clears this — AND the
+        // speaker has stopped, so the drill never cuts anyone off mid-sentence.
+        guard metTargetAt != nil, let silenceSince else { return }
+        if Date().timeIntervalSince(silenceSince) >= trailingSilenceSeconds {
+            heardVoice = true
         }
     }
 }
