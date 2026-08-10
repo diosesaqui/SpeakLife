@@ -17,8 +17,11 @@
 		TIC00VW0000000000000004B /* GroundTakenView.swift in Sources */ = {isa = PBXBuildFile; fileRef = TIC00VW0000000000000004A /* GroundTakenView.swift */; };
 		TIC00VW0000000000000005B /* EscapeHatchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = TIC00VW0000000000000005A /* EscapeHatchView.swift */; };
 		TIC00MDL000000000000001B /* TakeItCaptive.swift in Sources */ = {isa = PBXBuildFile; fileRef = TIC00MDL000000000000001A /* TakeItCaptive.swift */; };
+		FAA00MDL000000000000001B /* FaithActionCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAA00MDL000000000000001A /* FaithActionCatalog.swift */; };
+		FAA00VW0000000000000001B /* BurstFaithActionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAA00VW0000000000000001A /* BurstFaithActionView.swift */; };
 		TIC00RES000000000000001B /* thoughts.json in Resources */ = {isa = PBXBuildFile; fileRef = TIC00RES000000000000001A /* thoughts.json */; };
 		TIC00TST000000000000001B /* TakeItCaptiveServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TIC00TST000000000000001A /* TakeItCaptiveServiceTests.swift */; };
+		FAA00TST000000000000001B /* FaithActionCatalogTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAA00TST000000000000001A /* FaithActionCatalogTests.swift */; };
 		01ED29F757107A93D56507E0 /* WidgetIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59BFF68BFA515EAC0AC88C85 /* WidgetIntents.swift */; };
 		0E1A8C97F61B9FB156F0F50F /* HowToUseSpeakLifeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74DAA35385DD02F8B0DCADE5 /* HowToUseSpeakLifeView.swift */; };
 		1D987CB8235BF3A621A02EAA /* ProgressSyncStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2105F142D07765CD483ED529 /* ProgressSyncStore.swift */; };
@@ -470,7 +473,10 @@
 		TIC00VW0000000000000004A /* GroundTakenView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GroundTakenView.swift; sourceTree = "<group>"; };
 		TIC00VW0000000000000005A /* EscapeHatchView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EscapeHatchView.swift; sourceTree = "<group>"; };
 		TIC00MDL000000000000001A /* TakeItCaptive.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TakeItCaptive.swift; sourceTree = "<group>"; };
+		FAA00MDL000000000000001A /* FaithActionCatalog.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FaithActionCatalog.swift; sourceTree = "<group>"; };
+		FAA00VW0000000000000001A /* BurstFaithActionView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BurstFaithActionView.swift; sourceTree = "<group>"; };
 		TIC00TST000000000000001A /* TakeItCaptiveServiceTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TakeItCaptiveServiceTests.swift; sourceTree = "<group>"; };
+		FAA00TST000000000000001A /* FaithActionCatalogTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FaithActionCatalogTests.swift; sourceTree = "<group>"; };
 		TIC00RES000000000000001A /* thoughts.json */ = {isa = PBXFileReference; includeInIndex = 1; path = thoughts.json; sourceTree = "<group>"; };
 		067C652453504C60AD4342E8 /* AdaptiveSheetModifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdaptiveSheetModifier.swift; sourceTree = "<group>"; };
 		0CE4BBB786820DC2A78A8766 /* EnforcementCompletionView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = EnforcementCompletionView.swift; sourceTree = "<group>"; };
@@ -971,6 +977,7 @@
 			isa = PBXGroup;
 			children = (
 				TIC00TST000000000000001A /* TakeItCaptiveServiceTests.swift */,
+				FAA00TST000000000000001A /* FaithActionCatalogTests.swift */,
 				4501F3A62F840A01008704F9 /* WarriorRoomTypesTests.swift */,
 				4501F3A82F840A01008704F9 /* PrayerWallPostTests.swift */,
 				4501F3AA2F840A01008704F9 /* PrayerWallViewModelTests.swift */,
@@ -1537,6 +1544,7 @@
 				7A601440294E574500CD2103 /* HomeView.swift */,
 				45FACE0012345678ABCDEF02 /* RemoteMessageView.swift */,
 				4525D6842F37C0EB00571394 /* DailyDeclarationBurstView.swift */,
+				FAA00VW0000000000000001A /* BurstFaithActionView.swift */,
 				45F0AAAA2F40C0EB00571394 /* PremiumAnniversaryView.swift */,
 				45F0EAEA2F40C0EB00571394 /* YearInReview */,
 				45567D5D2F29CA5D00382072 /* Bible */,
@@ -1566,6 +1574,7 @@
 			isa = PBXGroup;
 			children = (
 				TIC00MDL000000000000001A /* TakeItCaptive.swift */,
+				FAA00MDL000000000000001A /* FaithActionCatalog.swift */,
 				45567D4C2F29C98500382072 /* Bible */,
 				4597E23F2E419D7D009D6C66 /* CoreData */,
 				7AA8706B28DACC4E00134ADB /* DailyDeclaration.swift */,
@@ -2201,6 +2210,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				TIC00TST000000000000001B /* TakeItCaptiveServiceTests.swift in Sources */,
+				FAA00TST000000000000001B /* FaithActionCatalogTests.swift in Sources */,
 				4501F3A52F840A01008704F9 /* WarriorRoomTypesTests.swift in Sources */,
 				4501F3A72F840A01008704F9 /* PrayerWallPostTests.swift in Sources */,
 				4501F3A92F840A01008704F9 /* PrayerWallViewModelTests.swift in Sources */,
@@ -2244,6 +2254,7 @@
 				TIC00VW0000000000000004B /* GroundTakenView.swift in Sources */,
 				TIC00VW0000000000000005B /* EscapeHatchView.swift in Sources */,
 				TIC00MDL000000000000001B /* TakeItCaptive.swift in Sources */,
+				FAA00MDL000000000000001B /* FaithActionCatalog.swift in Sources */,
 				45BC76442EFD2775003AC964 /* ModernCelebrationView.swift in Sources */,
 				45BCBA9A2C360245001F28C4 /* BibleStory.swift in Sources */,
 				458B6B1F2BA6D5CF0001BEFE /* TimerViewModel.swift in Sources */,
@@ -2418,6 +2429,7 @@
 				7A601441294E574500CD2103 /* HomeView.swift in Sources */,
 				45FACE0012345678ABCDEF01 /* RemoteMessageView.swift in Sources */,
 				4525D6852F37C0EB00571394 /* DailyDeclarationBurstView.swift in Sources */,
+				FAA00VW0000000000000001B /* BurstFaithActionView.swift in Sources */,
 				45F0BBBB2F40C0EB00571394 /* PremiumAnniversaryView.swift in Sources */,
 				45F0DDDD2F40C0EB00571394 /* YearInReviewStats.swift in Sources */,
 				45F0FFFF2F40C0EB00571394 /* YearInReviewView.swift in Sources */,
