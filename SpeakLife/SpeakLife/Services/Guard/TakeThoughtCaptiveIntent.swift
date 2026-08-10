@@ -35,6 +35,22 @@ struct TakeThoughtCaptiveIntent: AppIntent {
 
     @MainActor
     func perform() async throws -> some IntentResult {
+        // Honour the kill switch here, not only where the request is consumed.
+        //
+        // The Today tab already refuses to present the drill when `guardEnabled`
+        // is off, but this intent ran regardless: Siri would report success,
+        // open the app, and land the user on a screen where nothing happened.
+        // A dead end is a worse look than the feature simply being absent.
+        //
+        // It also stopped `guard_intent_invoked` from firing for a feature that
+        // is dark, which would otherwise report usage of something nobody can
+        // reach.
+        //
+        // The phrases stay registered with Siri either way — `appShortcuts` is
+        // a static the system reads, and Remote Config cannot reach it. Failing
+        // quietly here is the most the app can do.
+        guard TakeItCaptiveService.shared.isEnabled else { return .result() }
+
         TakeItCaptiveService.requestPendingLaunch()
         // Also poke the live service, for the warm case — see `launchRequestedAt`.
         TakeItCaptiveService.shared.launchRequestedAt = Date()
