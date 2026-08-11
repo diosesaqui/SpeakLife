@@ -27,10 +27,13 @@ concurrency:
 jobs:
   build-and-test:
     name: Build and test
-    # macos-15, pinned deliberately. The project is objectVersion 77, which
-    # Xcode 15 cannot open at all, so the macos-14 image would fail on the very
-    # first xcodebuild call with a confusing parse error.
-    runs-on: macos-15
+    # macos-26, for the iOS 26 SDK. VoiceInputManager.swift calls SpeechAnalyzer,
+    # SpeechTranscriber and AssetInventory. They are correctly runtime-gated with
+    # @available(iOS 26.0, *), but an @available guard still needs the SDK at
+    # compile time, so an older Xcode fails with four "cannot find ... in scope"
+    # errors that look like missing code rather than a missing SDK. macos-15
+    # (Xcode 16) hit exactly that.
+    runs-on: macos-26
     timeout-minutes: 60
 
     env:
@@ -41,9 +44,26 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Images can carry several Xcodes and default to an older one, so the
+      # newest is selected rather than assumed. The version floor is checked
+      # here on purpose: without it, too old an Xcode surfaces as unresolved
+      # Speech symbols hundreds of lines into a build log, which reads like
+      # broken code and sends you looking in the wrong place.
+      - name: Select Xcode
+        run: |
+          LATEST=$(ls -d /Applications/Xcode*.app 2>/dev/null | sort -V | tail -1)
+          if [ -n "$LATEST" ]; then sudo xcode-select -s "$LATEST"; fi
+          xcodebuild -version
+          MAJOR=$(xcodebuild -version | head -1 | sed -E 's/Xcode ([0-9]+).*/\1/')
+          if [ "$MAJOR" -lt 26 ]; then
+            echo "::error::Xcode $MAJOR is too old. The app compiles against the iOS 26 SDK \
+          (SpeechAnalyzer, SpeechTranscriber, AssetInventory in VoiceInputManager.swift). \
+          Installed: $(ls -d /Applications/Xcode*.app 2>/dev/null | tr '\n' ' ')"
+            exit 1
+          fi
+
       - name: Show toolchain
         run: |
-          xcodebuild -version
           swift --version
           xcrun simctl list runtimes | grep iOS || true
 
