@@ -22,11 +22,14 @@ final class DeclarationFavoriteRepository: DeclarationFavoriteRepositoryProtocol
     
     private let context: NSManagedObjectContext
     private let notificationCenter: NotificationCenter
-    
+    private let syncRequester: ImmediateSyncRequesting
+
     init(context: NSManagedObjectContext = PersistenceController.shared.container.viewContext,
-         notificationCenter: NotificationCenter = .default) {
+         notificationCenter: NotificationCenter = .default,
+         syncRequester: ImmediateSyncRequesting = PersistenceController.defaultSyncRequester) {
         self.context = context
         self.notificationCenter = notificationCenter
+        self.syncRequester = syncRequester
     }
     
     // MARK: - Create
@@ -51,7 +54,7 @@ final class DeclarationFavoriteRepository: DeclarationFavoriteRepositoryProtocol
         // Trigger immediate sync for faster perceived performance
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
             print("🔄 Requesting CloudKit sync for declaration favorite")
-            PersistenceController.shared.requestImmediateSync()
+            self.syncRequester.requestImmediateSync()
         }
     }
     
@@ -76,7 +79,11 @@ final class DeclarationFavoriteRepository: DeclarationFavoriteRepositoryProtocol
         try await context.perform {
             let request = DeclarationFavoriteEntry.fetchRequest()
             request.predicate = predicate
-            request.sortDescriptors = [NSSortDescriptor(keyPath: \DeclarationFavoriteEntry.createdAt, ascending: false)]
+            request.sortDescriptors = [
+                NSSortDescriptor(keyPath: \DeclarationFavoriteEntry.createdAt, ascending: false),
+                // Total order, same reason as AudioFavoriteRepository.
+                NSSortDescriptor(keyPath: \DeclarationFavoriteEntry.declarationId, ascending: true)
+            ]
             let results = try self.context.fetch(request)
             return results
         }
@@ -118,7 +125,11 @@ final class DeclarationFavoriteRepository: DeclarationFavoriteRepositoryProtocol
     // MARK: - Observe All
     func observeAll() -> AnyPublisher<[DeclarationFavoriteEntry], Never> {
         let request = DeclarationFavoriteEntry.fetchRequest()
-        request.sortDescriptors = [NSSortDescriptor(keyPath: \DeclarationFavoriteEntry.createdAt, ascending: false)]
+        request.sortDescriptors = [
+                NSSortDescriptor(keyPath: \DeclarationFavoriteEntry.createdAt, ascending: false),
+                // Total order, same reason as AudioFavoriteRepository.
+                NSSortDescriptor(keyPath: \DeclarationFavoriteEntry.declarationId, ascending: true)
+            ]
         
         let initialResults = (try? context.fetch(request)) ?? []
         
@@ -134,20 +145,29 @@ final class DeclarationFavoriteRepository: DeclarationFavoriteRepositoryProtocol
     // MARK: - Helper Methods
     
     /// Create DeclarationFavoriteEntry from Declaration (with duplicate check)
+    ///
+    /// Insert and attribute writes go inside `context.perform` for the same
+    /// reason as `AudioFavoriteRepository.createFromAudioDeclaration` — see the
+    /// account there. `context` is the main-queue `viewContext`, this method is
+    /// nonisolated `async`, so without the closure the insert lands on the
+    /// cooperative pool and Core Data is free to drop or corrupt it.
     func createFromDeclaration(_ declaration: Declaration) async throws -> DeclarationFavoriteEntry {
         // Check if already exists to prevent duplicates
         if let existing = try await findByDeclarationId(declaration.id) {
             return existing
         }
-        
-        let entity = DeclarationFavoriteEntry(context: context)
-        entity.declarationId = declaration.id
-        entity.text = declaration.text
-        entity.category = declaration.category.rawValue
-        entity.contentType = declaration.contentType.rawValue
-        entity.book = declaration.book
-        entity.bibleVerseText = declaration.bibleVerseText
-        
+
+        let entity = await context.perform {
+            let entity = DeclarationFavoriteEntry(context: self.context)
+            entity.declarationId = declaration.id
+            entity.text = declaration.text
+            entity.category = declaration.category.rawValue
+            entity.contentType = declaration.contentType.rawValue
+            entity.book = declaration.book
+            entity.bibleVerseText = declaration.bibleVerseText
+            return entity
+        }
+
         try await create(entity)
         return entity
     }

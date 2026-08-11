@@ -13,27 +13,42 @@ final class StreakDisplayTests: XCTestCase {
     
     var viewModel: EnhancedStreakViewModel!
     var cancellables: Set<AnyCancellable>!
+    var savedCompletions: [BurstCompletion] = []
     let calendar = Calendar.current
-    
+
     override func setUp() {
         super.setUp()
         cancellables = Set<AnyCancellable>()
-        
-        // Clear any existing UserDefaults data to ensure clean state
+
+        // Clearing UserDefaults is not enough on its own.
+        //
+        // `EnhancedStreakViewModel.init` calls `reconcileWithSyncedProgress`,
+        // which raises `currentStreak` to `BurstCompletionTracker.shared`'s if
+        // that one is higher. The tracker is a process-wide singleton holding
+        // its history in memory, so whatever an earlier suite left in it walks
+        // straight into these tests: a test expecting a streak of 1 sees 2, and
+        // the celebration asserts against a number this suite never set. Empty
+        // it here and hand it back in tearDown, the same way StreakFreezeTests
+        // and StreakBreakNotificationTests do.
+        savedCompletions = BurstCompletionTracker.shared.completions
+        BurstCompletionTracker.shared.completions = []
+
         UserDefaults.standard.removeObject(forKey: "dailyChecklist")
         UserDefaults.standard.removeObject(forKey: "streakStats")
-        
+
         viewModel = EnhancedStreakViewModel()
     }
-    
+
     override func tearDown() {
         cancellables = nil
         viewModel = nil
-        
+
+        BurstCompletionTracker.shared.completions = savedCompletions
+
         // Clean up UserDefaults
         UserDefaults.standard.removeObject(forKey: "dailyChecklist")
         UserDefaults.standard.removeObject(forKey: "streakStats")
-        
+
         super.tearDown()
     }
     
@@ -90,20 +105,22 @@ final class StreakDisplayTests: XCTestCase {
     }
     
     func testCelebrationDataConsistency() {
-        // Given: Complete day to trigger celebration
+        // Day 1 is a celebration milestone, and `completeDay()` builds
+        // `celebrationData` synchronously on the way through. The 2.5s wait
+        // this test used to open was only ever waiting on
+        // `showCompletionCelebration`, which flips after the fire animation —
+        // a different field. Waiting for it here bought nothing and cost
+        // everything: `wait(for:)` pumps the main queue for 2.5 seconds, which
+        // is long enough for work left over from a previous test to write to
+        // the shared UserDefaults and move `currentStreak` out from under the
+        // assertion. That is why this compared a celebration of 1 against a
+        // streak of 2.
         completeAllTasks()
-        
-        // Wait for celebration to be created
-        let expectation = XCTestExpectation(description: "Celebration should be created")
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
-            expectation.fulfill()
-        }
-        wait(for: [expectation], timeout: 3.0)
-        
-        // Then: Celebration data should match actual streak
+
         XCTAssertNotNil(viewModel.celebrationData, "Celebration data should exist")
-        XCTAssertEqual(viewModel.celebrationData?.streakNumber, viewModel.streakStats.currentStreak, 
+        XCTAssertEqual(viewModel.celebrationData?.streakNumber, viewModel.streakStats.currentStreak,
                       "Celebration should show same streak as stats")
+        XCTAssertEqual(viewModel.streakStats.currentStreak, 1)
     }
     
     func testShareButtonDisplayConsistency() {
@@ -267,23 +284,34 @@ final class StreakDisplayTests: XCTestCase {
         XCTAssertNotEqual(viewModel.streakStats.currentStreak, 1, "Should NOT show 1 when actual streak is 2")
     }
     
-    func testCelebrationScreenCorrectNumber() {
-        // Given: Build 2-day streak
+    /// Day 2 earns the streak and shows no full-screen celebration.
+    ///
+    /// This test used to demand a celebration on day 2, which it can never get:
+    /// `EnhancedStreakViewModel.celebrationMilestones` is [1, 3, 7, 14, 30, 50,
+    /// 100, 200, 365], and `completeDay()` only builds `celebrationData` on a
+    /// not-yet-celebrated milestone. That gating is deliberate and documented
+    /// where it lives — celebrating every ordinary day is how a celebration
+    /// stops meaning anything. The test simply predates it.
+    func testOrdinaryDayEarnsTheStreakWithoutACelebration() {
         let yesterday = calendar.date(byAdding: .day, value: -1, to: Date())!
         viewModel.streakStats.updateStreak(for: yesterday)
-        completeAllTasks() // This should make streak = 2
-        
-        // Wait for celebration
-        let expectation = XCTestExpectation(description: "Celebration screen data")
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
-            expectation.fulfill()
-        }
-        wait(for: [expectation], timeout: 3.0)
-        
-        // Then: Celebration screen should show 2, not 1
-        XCTAssertNotNil(viewModel.celebrationData, "Celebration should exist")
-        XCTAssertEqual(viewModel.celebrationData?.streakNumber, 2, "Celebration should show 2 day streak")
-        XCTAssertNotEqual(viewModel.celebrationData?.streakNumber, 1, "Celebration should NOT show 1 day streak")
+        completeAllTasks()
+
+        XCTAssertEqual(viewModel.streakStats.currentStreak, 2, "Day 2 should still be banked")
+        XCTAssertNil(viewModel.celebrationData, "Day 2 is not a milestone and must not celebrate")
+    }
+
+    /// ...and the next milestone does, carrying the right number.
+    func testMilestoneDayCelebratesWithTheRealStreakNumber() {
+        let twoDaysAgo = calendar.date(byAdding: .day, value: -2, to: Date())!
+        let yesterday = calendar.date(byAdding: .day, value: -1, to: Date())!
+        viewModel.streakStats.updateStreak(for: twoDaysAgo)
+        viewModel.streakStats.updateStreak(for: yesterday)
+        completeAllTasks()
+
+        XCTAssertEqual(viewModel.streakStats.currentStreak, 3)
+        XCTAssertEqual(viewModel.celebrationData?.streakNumber, 3,
+                       "Day 3 is a milestone and must celebrate the real number")
     }
     
     // MARK: - Helper Methods

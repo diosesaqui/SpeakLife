@@ -482,9 +482,9 @@ final class EnhancedStreakViewModel: ObservableObject {
         userDefaults.set(true, forKey: hasAutoCompletedFirstTaskKey)
         
         // Auto-complete the first task with animation delay for UX
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
             withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
-                self.completeTaskWithCelebration(taskId: firstTask.id)
+                self?.completeTaskWithCelebration(taskId: firstTask.id)
             }
         }
     }
@@ -499,9 +499,9 @@ final class EnhancedStreakViewModel: ObservableObject {
         }
         
         // Hide confetti after 2.5 seconds with smooth fade
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) { [weak self] in
             withAnimation(.easeOut(duration: 0.8)) {
-                self.showFirstTaskConfetti = false
+                self?.showFirstTaskConfetti = false
             }
         }
     }
@@ -862,9 +862,14 @@ final class EnhancedStreakViewModel: ObservableObject {
             // Show fire animation first, then celebration, then badges
             showFireAnimation = true
 
-            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                self.showFireAnimation = false
-                self.showCompletionCelebration = true
+            // [weak self]: this timer must not be what keeps the view model
+            // alive. A strong capture here outlives the screen that owns it by
+            // two seconds and then publishes into it, which in the suite means
+            // a torn-down view model waking up mid-way through the NEXT test
+            // and writing its streak into the shared UserDefaults.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2) { [weak self] in
+                self?.showFireAnimation = false
+                self?.showCompletionCelebration = true
             }
         }
 
@@ -889,8 +894,8 @@ final class EnhancedStreakViewModel: ObservableObject {
         }
 
         // Check for badges AFTER completing the day to ensure proper timing
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            self.checkForNewBadges()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+            self?.checkForNewBadges()
         }
     }
     
@@ -1866,16 +1871,20 @@ final class EnhancedStreakViewModel: ObservableObject {
             // Show badge unlock after main celebrations if they're showing, otherwise immediately
             let delay: Double = (showFireAnimation || showCompletionCelebration) ? 6.0 : 1.0
             
-            DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
-                guard self.badgeManager.recentlyUnlocked != nil else { return }
+            // [weak self] for the same reason as the celebration timers: these
+            // nest to eight seconds, and a strong capture makes the view model
+            // — and every NotificationCenter observer it registered in init —
+            // outlive the screen that owns it by that long.
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
+                guard let self, self.badgeManager.recentlyUnlocked != nil else { return }
                 if !self.showFireAnimation && !self.showCompletionCelebration {
                     self.showBadgeUnlock = true
                 } else {
                     // Wait a bit more if celebrations are still showing.
                     // Guard against re-firing after the popup was already shown and dismissed
                     // (e.g. via the burst view's own 1.5 s trigger).
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                        guard self.badgeManager.recentlyUnlocked != nil else { return }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 2) { [weak self] in
+                        guard let self, self.badgeManager.recentlyUnlocked != nil else { return }
                         self.showBadgeUnlock = true
                     }
                 }
