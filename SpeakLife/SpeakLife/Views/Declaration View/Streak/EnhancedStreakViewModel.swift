@@ -455,6 +455,17 @@ final class EnhancedStreakViewModel: ObservableObject {
         }
 
         saveData()
+
+        // This is the hook the Guarding flow calls the moment a rep is banked,
+        // and the only one — so without this, ground taken could cross a badge
+        // threshold and the badge would sit unearned until the next launch or
+        // the next unrelated check. Finishing the drill that earns a badge and
+        // being shown nothing is worse than having no badge at all.
+        //
+        // Safe to call here for the campaign path too: unlocking is idempotent
+        // (`unlockBadge` guards on `unlockedBadges`) and the check is a handful
+        // of integer comparisons.
+        checkForNewBadges()
     }
 
     deinit {
@@ -1851,12 +1862,16 @@ final class EnhancedStreakViewModel: ObservableObject {
         let versesRead = userDefaults.integer(forKey: "totalVersesRead")
         let socialShares = userDefaults.integer(forKey: "totalSocialShares")
         let favoritesAdded = userDefaults.integer(forKey: "totalFavoritesAdded")
+        // Guarding's counter. Read through `GroundTaken` rather than by raw key
+        // so the one definition of what "ground taken" means stays in one file.
+        let thoughtsTakenCaptive = GroundTaken.total(defaults: userDefaults)
         let userStats = UserStats(
             affirmationsSpoken: affirmationsSpoken,
             versesRead: versesRead,
             socialShares: socialShares,
             favoritesAdded: favoritesAdded,
-            categoriesCompleted: Set<String>()
+            categoriesCompleted: Set<String>(),
+            thoughtsTakenCaptive: thoughtsTakenCaptive
         )
         
         let previousBadgeCount = badgeManager.unlockedBadgeCount
