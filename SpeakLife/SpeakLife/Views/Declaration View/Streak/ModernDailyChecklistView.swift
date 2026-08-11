@@ -722,10 +722,10 @@ struct ModernDailyChecklistView: View {
         .sheet(isPresented: $showDevotional) {
             DevotionalView(viewModel: devotionalViewModel)
         }
-        // Guarding. Full-screen, not a sheet: the INCOMING screen only works if
-        // the thought is the only thing on the display, and a sheet leaves the
-        // warm Today tab visible behind it — which is exactly the contrast the
-        // flow spends its first two screens building.
+        // Guarding. Full-screen, not a sheet: the thought being taken only works
+        // if it is the only thing on the display, and a sheet leaves the warm
+        // Today tab visible behind it — which is exactly the contrast the flow
+        // spends its first two screens building.
         .fullScreenCover(isPresented: $showTakeItCaptive) {
             TakeItCaptiveFlowView(
                 service: takeItCaptiveService,

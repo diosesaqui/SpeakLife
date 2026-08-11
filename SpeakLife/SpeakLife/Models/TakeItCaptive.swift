@@ -134,9 +134,9 @@ extension IncomingThought {
     /// The same entry, wearing the user's own words on the card.
     ///
     /// When someone names their own thought, that sentence is what goes on the
-    /// INCOMING card — rejecting a line you wrote yourself is the whole reason
-    /// for asking. The matched bank entry still supplies the counter, the verse
-    /// and the terrain; only the text they throw away is theirs.
+    /// card they watch get taken — seeing a line you wrote yourself seized is
+    /// the whole reason for asking. The matched bank entry still supplies the
+    /// counter, the verse and the terrain; only the text that goes is theirs.
     ///
     /// The id deliberately becomes `escapeHatchDeclarationId`, not the bank
     /// entry's. That id is what reaches the log and the rotation history, and
