@@ -35,6 +35,7 @@ final class StreakDisplayTests: XCTestCase {
 
         UserDefaults.standard.removeObject(forKey: "dailyChecklist")
         UserDefaults.standard.removeObject(forKey: "streakStats")
+        purgeSyncedTaskCompletions()
 
         viewModel = EnhancedStreakViewModel()
     }
@@ -48,6 +49,7 @@ final class StreakDisplayTests: XCTestCase {
         // Clean up UserDefaults
         UserDefaults.standard.removeObject(forKey: "dailyChecklist")
         UserDefaults.standard.removeObject(forKey: "streakStats")
+        purgeSyncedTaskCompletions()
 
         super.tearDown()
     }
@@ -336,6 +338,42 @@ final class StreakDisplayTests: XCTestCase {
     /// Production already learned this: `autoCompleteFirstTaskIfDemoCompleted`
     /// carries the note "The Burst by id, not whatever happens to be first."
     /// These tests had not.
+
+    /// Clears today's synced task-completion rows.
+    ///
+    /// `completeTask` mirrors every bonus task to `ProgressSyncStore.shared` as
+    /// a `taskCompletion` event keyed `<dayStamp>|<taskId>`, and that store is
+    /// backed by the app's real on-disk SQLite store on the simulator — not by
+    /// anything this suite owns. The rows outlive the test, the suite, and the
+    /// run, so a day's worth of test runs piles up completions stamped with
+    /// today's date. A fresh view model then replays them onto today's
+    /// checklist through `applySyncedTaskCompletions`, and a test that
+    /// completed exactly one task counts three.
+    ///
+    /// Run before the view model is built, so it cannot read what earlier runs
+    /// left, and again on the way out so the next suite starts clean.
+    private func purgeSyncedTaskCompletions() {
+        let store = ProgressSyncStore.shared
+
+        let fetched = expectation(description: "read taskCompletion events")
+        var keys: [String] = []
+        store.events(ofKind: ProgressSyncStore.Kind.taskCompletion) { events in
+            keys = events.map(\.key)
+            fetched.fulfill()
+        }
+        wait(for: [fetched], timeout: 5)
+
+        guard !keys.isEmpty else { return }
+        let deleted = expectation(description: "delete taskCompletion events")
+        deleted.expectedFulfillmentCount = keys.count
+        for key in keys {
+            store.deleteEvent(kind: ProgressSyncStore.Kind.taskCompletion, key: key) { _ in
+                deleted.fulfill()
+            }
+        }
+        wait(for: [deleted], timeout: 10)
+    }
+
     private var firstCompletableTask: DailyTask {
         // The Burst is on every checklist, so this always finds something.
         viewModel.todayChecklist.tasks.first {
