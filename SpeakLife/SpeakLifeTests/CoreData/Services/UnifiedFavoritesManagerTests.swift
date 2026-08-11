@@ -14,7 +14,6 @@ import Combine
 class MockAffirmationRepository: AffirmationRepositoryProtocol {
     var entries: [AffirmationEntry] = []
     var favoriteToggled = false
-    private let context = PersistenceController(inMemory: true).container.viewContext
     
     func create(_ entity: AffirmationEntry) async throws {
         entries.append(entity)
@@ -62,7 +61,6 @@ class MockAffirmationRepository: AffirmationRepositoryProtocol {
 class MockJournalRepository: JournalRepositoryProtocol {
     var entries: [JournalEntry] = []
     var favoriteToggled = false
-    private let context = PersistenceController(inMemory: true).container.viewContext
     
     func create(_ entity: JournalEntry) async throws {
         entries.append(entity)
@@ -108,19 +106,39 @@ class MockDeclarationFavoriteRepository: DeclarationFavoriteRepositoryProtocol {
         return []
     }
     
-    var entries: [DeclarationFavoriteEntry] = []
-    private let context = PersistenceController(inMemory: true).container.viewContext
-    
+    // Same shape, same reasons, as MockAudioFavoriteRepository: the manager
+    // awaits these from a @MainActor task, they are nonisolated so they run off
+    // it, and several land at once. See that mock for the full account.
+    private let lock = NSLock()
+    private var _entries: [DeclarationFavoriteEntry] = []
+
+    var entries: [DeclarationFavoriteEntry] {
+        get { lock.withLock { _entries } }
+        set { lock.withLock { _entries = newValue } }
+    }
+
+    private func mutating(_ body: (inout [DeclarationFavoriteEntry]) -> Void) {
+        lock.withLock { body(&_entries) }
+    }
+
+    private static let entity: NSEntityDescription = {
+        guard let entity = PersistenceController.managedObjectModel
+                .entitiesByName["DeclarationFavoriteEntry"] else {
+            fatalError("DeclarationFavoriteEntry is missing from the Core Data model")
+        }
+        return entity
+    }()
+
     func create(_ entity: DeclarationFavoriteEntry) async throws {
-        entries.append(entity)
+        mutating { list in list.append(entity) }
     }
-    
+
     func update(_ entity: DeclarationFavoriteEntry) async throws {}
-    
+
     func delete(_ entity: DeclarationFavoriteEntry) async throws {
-        entries.removeAll { $0.id == entity.id }
+        mutating { list in list.removeAll { $0.id == entity.id } }
     }
-    
+
     func fetch(predicate: NSPredicate?) async throws -> [DeclarationFavoriteEntry] {
         return entries
     }
@@ -138,11 +156,11 @@ class MockDeclarationFavoriteRepository: DeclarationFavoriteRepositoryProtocol {
     }
     
     func deleteByDeclarationId(_ declarationId: String) async throws {
-        entries.removeAll { $0.declarationId == declarationId }
+        mutating { list in list.removeAll { $0.declarationId == declarationId } }
     }
-    
+
     func createFromDeclaration(_ declaration: Declaration) async throws -> DeclarationFavoriteEntry {
-        let entry = DeclarationFavoriteEntry(context: context)
+        let entry = DeclarationFavoriteEntry(entity: Self.entity, insertInto: nil)
         entry.declarationId = declaration.id
         entry.text = declaration.text
         entry.category = declaration.category.rawValue
@@ -151,7 +169,8 @@ class MockDeclarationFavoriteRepository: DeclarationFavoriteRepositoryProtocol {
         entry.bibleVerseText = declaration.bibleVerseText
         entry.id = UUID()
         entry.createdAt = Date()
-        entries.append(entry)
+        entry.lastModified = Date()
+        mutating { list in list.append(entry) }
         return entry
     }
     

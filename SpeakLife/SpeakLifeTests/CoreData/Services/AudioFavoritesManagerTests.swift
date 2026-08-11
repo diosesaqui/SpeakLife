@@ -10,27 +10,77 @@ import CoreData
 import Combine
 @testable import SpeakLife
 
-// Mock Repository for Testing
+/// Mock Repository for Testing.
+///
+/// Two things here are load-bearing, and both exist because this mock is
+/// hammered concurrently.
+///
+/// `AudioFavoritesManager.toggleFavorite` runs its body in `Task { @MainActor }`,
+/// but every repository method it awaits is a nonisolated `async` function — so
+/// each `await` hops straight back OFF the main actor onto the concurrent
+/// executor. A test that toggles three favorites in a loop really does run
+/// three of these at once.
+///
+/// Unsynchronized, that produced both of this suite's failures. The array lost
+/// an append, so three favorites arrived as two. And three
+/// `AudioFavoriteEntry(context:)` inserts landed on one main-queue
+/// `viewContext` simultaneously, which Core Data reports as:
+///
+///   Serious application error. Exception was caught during Core Data change
+///   processing. -[__NSCFSet addObject:]: attempt to insert nil
+///
+/// So: entries are guarded by a lock, and the entities are built with no
+/// context behind them at all. A context-less managed object is a plain
+/// attribute bag — no change processing to corrupt, nothing queue-confined —
+/// which is all a mock ever needed. Nothing is lost by it: this mock never
+/// saved, fetched, or faulted, and every non-optional attribute is assigned
+/// below rather than left to an insert default.
 class MockAudioFavoriteRepository: AudioFavoriteRepositoryProtocol {
-    
-    var entries: [AudioFavoriteEntry] = []
+
     var createCalled = false
     var deleteCalled = false
     var fetchCalled = false
     var shouldThrowError = false
     var observePublisher = PassthroughSubject<[AudioFavoriteEntry], Never>()
-    
-    private let context = PersistenceController(inMemory: true).container.viewContext
-    
+
+    private let lock = NSLock()
+    private var _entries: [AudioFavoriteEntry] = []
+
+    var entries: [AudioFavoriteEntry] {
+        get { lock.withLock { _entries } }
+        set { lock.withLock { _entries = newValue } }
+    }
+
+    /// Runs a mutation and hands back the resulting list, both under the lock,
+    /// so a snapshot published to observers can never straddle another write.
+    private func mutating(_ body: (inout [AudioFavoriteEntry]) -> Void) -> [AudioFavoriteEntry] {
+        lock.withLock {
+            body(&_entries)
+            return _entries
+        }
+    }
+
+    private static let entity: NSEntityDescription = {
+        guard let entity = PersistenceController.managedObjectModel
+                .entitiesByName["AudioFavoriteEntry"] else {
+            fatalError("AudioFavoriteEntry is missing from the Core Data model")
+        }
+        return entity
+    }()
+
+    private func makeEntry() -> AudioFavoriteEntry {
+        AudioFavoriteEntry(entity: Self.entity, insertInto: nil)
+    }
+
     func create(_ entity: AudioFavoriteEntry) async throws {
         createCalled = true
         if shouldThrowError {
             throw NSError(domain: "MockError", code: 1, userInfo: nil)
         }
-        entries.append(entity)
-        observePublisher.send(entries)
+        let snapshot = mutating { list in list.append(entity) }
+        observePublisher.send(snapshot)
     }
-    
+
     func update(_ entity: AudioFavoriteEntry) async throws {
         if shouldThrowError {
             throw NSError(domain: "MockError", code: 1, userInfo: nil)
@@ -42,10 +92,10 @@ class MockAudioFavoriteRepository: AudioFavoriteRepositoryProtocol {
         if shouldThrowError {
             throw NSError(domain: "MockError", code: 1, userInfo: nil)
         }
-        entries.removeAll { $0.audioId == entity.audioId }
-        observePublisher.send(entries)
+        let snapshot = mutating { list in list.removeAll { $0.audioId == entity.audioId } }
+        observePublisher.send(snapshot)
     }
-    
+
     func fetch(predicate: NSPredicate?) async throws -> [AudioFavoriteEntry] {
         fetchCalled = true
         if shouldThrowError {
@@ -74,12 +124,12 @@ class MockAudioFavoriteRepository: AudioFavoriteRepositoryProtocol {
         if shouldThrowError {
             throw NSError(domain: "MockError", code: 1, userInfo: nil)
         }
-        entries.removeAll { $0.audioId == audioId }
-        observePublisher.send(entries)
+        let snapshot = mutating { list in list.removeAll { $0.audioId == audioId } }
+        observePublisher.send(snapshot)
     }
-    
+
     func createFromAudioDeclaration(_ audio: AudioDeclaration) async throws -> AudioFavoriteEntry {
-        let entry = AudioFavoriteEntry(context: context)
+        let entry = makeEntry()
         entry.audioId = audio.id
         entry.title = audio.title
         entry.subtitle = audio.subtitle
@@ -87,8 +137,11 @@ class MockAudioFavoriteRepository: AudioFavoriteRepositoryProtocol {
         entry.imageUrl = audio.imageUrl
         entry.isPremium = audio.isPremium
         entry.tag = audio.tag
+        entry.season = Int32(audio.season ?? 0)
+        entry.episode = Int32(audio.episode ?? 0)
         entry.id = UUID()
         entry.createdAt = Date()
+        entry.lastModified = Date()
         try await create(entry)
         return entry
     }
