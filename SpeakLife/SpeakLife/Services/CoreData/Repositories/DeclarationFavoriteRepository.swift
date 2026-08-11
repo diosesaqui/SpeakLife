@@ -145,20 +145,29 @@ final class DeclarationFavoriteRepository: DeclarationFavoriteRepositoryProtocol
     // MARK: - Helper Methods
     
     /// Create DeclarationFavoriteEntry from Declaration (with duplicate check)
+    ///
+    /// Insert and attribute writes go inside `context.perform` for the same
+    /// reason as `AudioFavoriteRepository.createFromAudioDeclaration` — see the
+    /// account there. `context` is the main-queue `viewContext`, this method is
+    /// nonisolated `async`, so without the closure the insert lands on the
+    /// cooperative pool and Core Data is free to drop or corrupt it.
     func createFromDeclaration(_ declaration: Declaration) async throws -> DeclarationFavoriteEntry {
         // Check if already exists to prevent duplicates
         if let existing = try await findByDeclarationId(declaration.id) {
             return existing
         }
-        
-        let entity = DeclarationFavoriteEntry(context: context)
-        entity.declarationId = declaration.id
-        entity.text = declaration.text
-        entity.category = declaration.category.rawValue
-        entity.contentType = declaration.contentType.rawValue
-        entity.book = declaration.book
-        entity.bibleVerseText = declaration.bibleVerseText
-        
+
+        let entity = await context.perform {
+            let entity = DeclarationFavoriteEntry(context: self.context)
+            entity.declarationId = declaration.id
+            entity.text = declaration.text
+            entity.category = declaration.category.rawValue
+            entity.contentType = declaration.contentType.rawValue
+            entity.book = declaration.book
+            entity.bibleVerseText = declaration.bibleVerseText
+            return entity
+        }
+
         try await create(entity)
         return entity
     }

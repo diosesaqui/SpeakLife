@@ -363,13 +363,17 @@ final class DeclarationFavoriteRepositoryTests: XCTestCase {
     /// `await` resumes. The ten detached tasks `measure` left behind then woke
     /// after `tearDown` had nil'd the properties they captured. Awaiting the
     /// work is what the tests were actually for.
+    /// Both of these write through `createFromDeclaration` rather than building
+    /// entities in the test body. `DeclarationFavoriteEntry(context:)` from an
+    /// `async` test inserts into the main-queue `viewContext` off that queue,
+    /// which at these row counts loses writes — the audio equivalent fetched
+    /// back 99 of 100 on roughly three runs in five.
     func testBatchWritesAllLand() async throws {
         for i in 1...50 {
-            let entry = DeclarationFavoriteEntry(context: context)
-            entry.declarationId = "batch-\(i)"
-            entry.text = "Batch \(i)"
-            entry.category = i % 3 == 0 ? "faith" : i % 3 == 1 ? "prayer" : "worship"
-            try await repository.create(entry)
+            let category: DeclarationCategory = i % 3 == 0 ? .faith : i % 3 == 1 ? .praise : .warfare
+            _ = try await repository.createFromDeclaration(
+                Declaration(text: "Batch \(i)", book: "Book 1:1", category: category)
+            )
         }
 
         let results = try await repository.fetch(predicate: nil)
@@ -378,11 +382,10 @@ final class DeclarationFavoriteRepositoryTests: XCTestCase {
 
     func testFetchByCategoryNarrowsToThatCategory() async throws {
         for i in 1...100 {
-            let entry = DeclarationFavoriteEntry(context: context)
-            entry.declarationId = "cat-\(i)"
-            entry.text = "Text \(i)"
-            entry.category = i % 5 == 0 ? "faith" : "other"
-            try await repository.create(entry)
+            _ = try await repository.createFromDeclaration(
+                Declaration(text: "Text \(i)", book: "Book 1:1",
+                            category: i % 5 == 0 ? .faith : .praise)
+            )
         }
 
         let results = try await repository.fetchByCategory("faith")

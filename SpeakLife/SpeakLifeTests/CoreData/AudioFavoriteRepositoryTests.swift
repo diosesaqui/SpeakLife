@@ -369,12 +369,21 @@ final class AudioFavoriteRepositoryTests: XCTestCase {
     /// Was `measure { Task { … } }`, which measured nothing: the block returned
     /// before the first `await` resumed, and the detached tasks it left behind
     /// woke after `tearDown` had already nil'd `repository`.
+    /// Goes through `createFromAudioDeclaration` rather than building entities
+    /// here, and at a hundred rows that is not cosmetic.
+    ///
+    /// `AudioFavoriteEntry(context:)` from an `async` test body inserts into the
+    /// main-queue `viewContext` from the cooperative pool. At one or two rows it
+    /// gets away with it; at a hundred this fetched back 99 on roughly three
+    /// runs in five. The repository now does its inserts on the context's queue,
+    /// so using its own API is both the correct way to write the rows and the
+    /// thing worth covering.
     func testBatchFetchReturnsEveryEntry() async throws {
         for i in 1...100 {
-            let entry = AudioFavoriteEntry(context: context)
-            entry.audioId = "batch-\(i).mp3"
-            entry.title = "Batch \(i)"
-            try await repository.create(entry)
+            _ = try await repository.createFromAudioDeclaration(
+                AudioDeclaration(id: "batch-\(i).mp3", title: "Batch \(i)", subtitle: "Sub",
+                                 duration: "1:00", imageUrl: "", isPremium: false, tag: "faith")
+            )
         }
 
         let results = try await repository.fetch(predicate: nil)
