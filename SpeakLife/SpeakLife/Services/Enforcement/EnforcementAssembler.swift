@@ -149,6 +149,28 @@ enum EnforcementAssembler {
             }
         }
 
+        // Last resort, and the thing that actually keeps the promise above.
+        //
+        // The cap of three on substitutes is a preference: it stops an empty
+        // match turning into seven days of one borrowed theme. But a preference
+        // must not be allowed to fail the week. When the pool is thin in every
+        // matched and sibling category, capped blending cannot reach seven and
+        // the campaign silently does not start at all — `assemble` returns nil
+        // and the user gets nothing.
+        //
+        // So if blending came up short, take whatever the chain still holds,
+        // uncapped. A week carried by one borrowed category beats no week.
+        if picked.count < Enforcement.length {
+            for source in fallbackChain(for: categories) where picked.count < Enforcement.length {
+                let filler = candidates(in: pool, category: source,
+                                        excluding: usedTexts, seed: seed)
+                for declaration in filler.prefix(Enforcement.length - picked.count) {
+                    picked.append((declaration, source))
+                    usedTexts.insert(declaration.text)
+                }
+            }
+        }
+
         guard picked.count == Enforcement.length else { return nil }
 
         // Open and close on what they actually named, unless the named category
