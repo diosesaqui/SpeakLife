@@ -77,8 +77,8 @@ final class EnhancedStreakViewModelTests: XCTestCase {
     // MARK: - Task Completion Tests
     
     func testCompleteTask_ShouldUpdateChecklist() {
-        // Given: A task in the checklist
-        let task = viewModel.todayChecklist.tasks.first!
+        // Given: A task in the checklist that a user can actually tick
+        let task = firstCompletableTask
         XCTAssertFalse(task.isCompleted)
         
         // When: Complete the task
@@ -96,8 +96,16 @@ final class EnhancedStreakViewModelTests: XCTestCase {
         // When: Complete all tasks
         completeAllTasks()
         
-        // Then: Day should be completed and streak should update
-        XCTAssertTrue(viewModel.todayChecklist.isCompleted)
+        // Then: the day is earned and the streak moves.
+        //
+        // Asserted through `isStreakEarned`, not `isCompleted`. `isCompleted`
+        // is allSatisfy over every row, and the declaration and Guarding rows
+        // are earned by speaking rather than by ticking — `completeTask`
+        // refuses both — so once either is present no loop over `completeTask`
+        // can ever make it true. The Burst alone gates the streak, which is
+        // what "day completion" means here and what this test is named for.
+        XCTAssertTrue(viewModel.todayChecklist.isStreakEarned)
+        XCTAssertNotNil(viewModel.todayChecklist.completedAt)
         XCTAssertEqual(viewModel.streakStats.currentStreak, 1)
     }
     
@@ -235,7 +243,7 @@ final class EnhancedStreakViewModelTests: XCTestCase {
     
     func testChecklistPersistence_ShouldRestoreCompletedTasks() {
         // Given: Complete some tasks
-        let taskToComplete = viewModel.todayChecklist.tasks.first!
+        let taskToComplete = firstCompletableTask
         viewModel.completeTask(taskId: taskToComplete.id)
         
         // When: Create new view model (simulates app restart)
@@ -309,10 +317,12 @@ final class EnhancedStreakViewModelTests: XCTestCase {
         }
         wait(for: [expectation1], timeout: 1.0)
         
-        // Then: First task should be completed
+        // Then: the Burst should be completed. `autoCompleteFirstTaskIfDemoCompleted`
+        // targets "complete_daily_burst" by id — the demo IS the Burst — and
+        // not whichever row happens to sit first.
         XCTAssertEqual(viewModel.todayChecklist.completedTasksCount, 1)
-        let firstTask = viewModel.todayChecklist.tasks.first!
-        XCTAssertTrue(firstTask.isCompleted)
+        let burst = viewModel.todayChecklist.tasks.first { $0.id == "complete_daily_burst" }
+        XCTAssertTrue(burst?.isCompleted ?? false)
         
         // When: Call auto-complete again (simulating view re-appearing)
         viewModel.autoCompleteFirstTaskIfDemoCompleted(hasCompletedDemo: true)
@@ -418,8 +428,7 @@ final class EnhancedStreakViewModelTests: XCTestCase {
     
     func testAutoCompleteFirstTask_DoesNotHappenIfTasksAlreadyCompleted() {
         // Given: Manually complete a task first
-        let firstTask = viewModel.todayChecklist.tasks.first!
-        viewModel.completeTask(taskId: firstTask.id)
+        viewModel.completeTask(taskId: firstCompletableTask.id)
         XCTAssertEqual(viewModel.todayChecklist.completedTasksCount, 1)
         
         // When: Try to auto-complete
@@ -496,6 +505,26 @@ final class EnhancedStreakViewModelTests: XCTestCase {
             viewModel.completeTask(taskId: task.id)
         }
     }
+
+    /// The first row a user can actually tick.
+    ///
+    /// Not `tasks.first`. `completeTask` refuses the personal-declaration and
+    /// Guarding rows by design — both are derived from elsewhere, so ticking
+    /// them by hand would record ground the user never took — and the
+    /// declaration row is inserted at index 0 when the user carries one. So
+    /// targeting position silently no-ops, and the test reads as "completing a
+    /// task does nothing".
+    ///
+    /// Production already learned this: `autoCompleteFirstTaskIfDemoCompleted`
+    /// carries the note "The Burst by id, not whatever happens to be first."
+    /// These tests had not.
+    private var firstCompletableTask: DailyTask {
+        // The Burst is on every checklist, so this always finds something.
+        viewModel.todayChecklist.tasks.first {
+            $0.id != TaskLibrary.personalDeclarationTaskId && $0.id != TaskLibrary.guardTaskId
+        }!
+    }
+
     
     // MARK: - Mock/Test Helper Extensions
     
