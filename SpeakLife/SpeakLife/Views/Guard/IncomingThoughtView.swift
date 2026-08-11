@@ -13,11 +13,26 @@
 //  withheld. The user should feel a low-grade wrongness looking at this. That
 //  reaction is the training.
 //
-//  **The rejection is a swipe, not a tap.** A tap is too passive to encode a
-//  reflex; the physical throw is what does the work. This is the single most
-//  important interaction in the feature and must not be "simplified" into a
-//  button. The card does not politely slide back — past the threshold it burns
-//  off, with a heavy haptic at the moment of release.
+//  **This screen is for a thought the app served.** It asks "does this line up
+//  with who you are?" and has the user throw it off — the right question for a
+//  line they are meeting for the first time, and the whole point of the bank.
+//  A thought the user TYPED never comes here: they answered that question by
+//  writing the sentence down, and re-asking it puts a gate in front of the word
+//  they came for. That route runs through `TakenCaptiveView` instead.
+//
+//  **The rejection is a swipe.** A tap is too passive to encode a reflex; the
+//  physical throw is what does the work, and it stays the primary interaction.
+//  The card does not politely slide back — past the threshold it burns off, with
+//  a heavy haptic at the moment of release.
+//
+//  There is ALSO a button, and it is not a "simplification" of the swipe — it is
+//  the floor under it. Shipped swipe-only, this screen was a dead end: the drag
+//  only lived on the card itself, so a swipe across the empty field beside it
+//  did nothing, and the sole instruction was one line of 14pt grey text. People
+//  landed here and could not get out — they never reached the declaration this
+//  whole flow exists to put in their mouth. The gesture keeps top billing; the
+//  button guarantees nobody is trapped holding the lie because they didn't
+//  guess the mechanic.
 //
 //  Swipe direction is LEFT, and left only (open decision #1 in the spec,
 //  resolved): the declaration feed pages VERTICALLY and this flow is presented
@@ -94,21 +109,33 @@ struct IncomingThoughtView: View {
             VStack(spacing: 0) {
                 header
 
-                Spacer(minLength: 0)
+                // The gesture lives on this whole band, not on the card alone.
+                // Attached to the card, the drag was only live inside a shape
+                // that occupies about a third of the screen and moves out from
+                // under the finger as soon as it starts travelling — so a swipe
+                // that began on the empty field beside it did nothing at all,
+                // with no way to tell that from the gesture being broken.
+                //
+                // The clear layer stays put while the card flies, so the hit
+                // area does not travel with the throw.
+                ZStack {
+                    Color.clear.contentShape(Rectangle())
 
-                thoughtCard
-                    .offset(x: dragX, y: 0)
-                    .rotationEffect(.degrees(tiltDegrees))
-                    // Keyed to `burnOff`, not `isGone`. `isGone` is set outside
-                    // the animation block (it has to be, it's the re-entry
-                    // guard), so keying the fade to it would snap the card to
-                    // invisible and swallow the burn-off entirely.
-                    .opacity(cardOpacity)
-                    .blur(radius: burnOff ? 18 : 0)
-                    .scaleEffect(burnOff ? 0.86 : 1)
-                    .gesture(throwGesture)
-
-                Spacer(minLength: 0)
+                    thoughtCard
+                        .offset(x: dragX, y: 0)
+                        .rotationEffect(.degrees(tiltDegrees))
+                        // Keyed to `burnOff`, not `isGone`. `isGone` is set
+                        // outside the animation block (it has to be, it's the
+                        // re-entry guard), so keying the fade to it would snap
+                        // the card to invisible and swallow the burn-off
+                        // entirely.
+                        .opacity(cardOpacity)
+                        .blur(radius: burnOff ? 18 : 0)
+                        .scaleEffect(burnOff ? 0.86 : 1)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .contentShape(Rectangle())
+                .gesture(throwGesture)
 
                 footer
             }
@@ -125,6 +152,12 @@ struct IncomingThoughtView: View {
             // past before anyone could tell what had happened: the question
             // appeared and the card was already gone. The target is still under
             // a minute end to end, and a minute is a lot of room.
+            //
+            // 2.6 is safe here BECAUSE this screen is now bank-only. A thought
+            // the user typed themselves never reaches it — that route goes
+            // through `TakenCaptiveView`, which asks nothing and plays out on
+            // its own. Holding someone for 2.6s in front of their own sentence,
+            // with no visible way forward, is most of why this read as frozen.
             DispatchQueue.main.asyncAfter(deadline: .now() + 2.6) {
                 withAnimation(DS.Motion.smooth) { isJudging = true }
             }
@@ -219,7 +252,10 @@ struct IncomingThoughtView: View {
 
     private var footer: some View {
         VStack(spacing: 18) {
-            if isJudging {
+            // Clears the moment the throw commits, so the held beat before the
+            // navy screen rises is an empty field rather than a grey button
+            // still sitting under a card that has already burned off.
+            if isJudging, !isGone {
                 VStack(spacing: 10) {
                     Text("Does this line up with who you are?")
                         .font(.system(size: 19, weight: .semibold, design: .rounded))
@@ -239,6 +275,8 @@ struct IncomingThoughtView: View {
                     .foregroundColor(rejectProgress > 0.1
                                      ? Color(hex: "#E2574C")
                                      : .white.opacity(0.5))
+
+                    rejectButton
                 }
                 .transition(.opacity.combined(with: .move(edge: .bottom)))
             }
@@ -255,6 +293,33 @@ struct IncomingThoughtView: View {
         }
         .frame(maxWidth: .infinity)
         .animation(DS.Motion.smooth, value: isJudging)
+        // `isGone` is set outside the animation block — it is the re-entry
+        // guard and has to be — so the footer keys its own animation to it.
+        .animation(DS.Motion.smooth, value: isGone)
+    }
+
+    /// The way through for everyone the gesture loses.
+    ///
+    /// It says the same word the throw says, so tapping it is not a lesser
+    /// answer — it is the same verdict, spoken instead of thrown. It runs
+    /// `commitThrow()`, so the card still burns off and the haptic still fires:
+    /// the tap buys the same moment, not a shortcut past it.
+    private var rejectButton: some View {
+        Button(action: commitThrow) {
+            Text("No. That's not me.")
+                .font(.system(size: 16, weight: .bold, design: .rounded))
+                .foregroundColor(Color(hex: "#E2574C"))
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 14)
+                .background(
+                    Capsule().fill(Color(hex: "#E2574C").opacity(0.12))
+                )
+                .overlay(
+                    Capsule().stroke(Color(hex: "#E2574C").opacity(0.55), lineWidth: 1.5)
+                )
+        }
+        .buttonStyle(.dsPressable(feel: .tapSolid))
+        .padding(.top, 4)
     }
 
     // MARK: - Gesture

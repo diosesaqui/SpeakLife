@@ -15,6 +15,7 @@
 		TIC00VW0000000000000003B /* ReplaceDeclarationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = TIC00VW0000000000000003A /* ReplaceDeclarationView.swift */; };
 		TIC00VW0000000000000004B /* GroundTakenView.swift in Sources */ = {isa = PBXBuildFile; fileRef = TIC00VW0000000000000004A /* GroundTakenView.swift */; };
 		TIC00VW0000000000000005B /* EscapeHatchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = TIC00VW0000000000000005A /* EscapeHatchView.swift */; };
+		TIC00VW0000000000000006B /* TakenCaptiveView.swift in Sources */ = {isa = PBXBuildFile; fileRef = TIC00VW0000000000000006A /* TakenCaptiveView.swift */; };
 		TIC00MDL000000000000001B /* TakeItCaptive.swift in Sources */ = {isa = PBXBuildFile; fileRef = TIC00MDL000000000000001A /* TakeItCaptive.swift */; };
 		FAA00MDL000000000000001B /* FaithActionCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAA00MDL000000000000001A /* FaithActionCatalog.swift */; };
 		BRS00MDL000000000000001B /* BurstSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = BRS00MDL000000000000001A /* BurstSession.swift */; };
@@ -473,6 +474,7 @@
 		TIC00VW0000000000000003A /* ReplaceDeclarationView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ReplaceDeclarationView.swift; sourceTree = "<group>"; };
 		TIC00VW0000000000000004A /* GroundTakenView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GroundTakenView.swift; sourceTree = "<group>"; };
 		TIC00VW0000000000000005A /* EscapeHatchView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EscapeHatchView.swift; sourceTree = "<group>"; };
+		TIC00VW0000000000000006A /* TakenCaptiveView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TakenCaptiveView.swift; sourceTree = "<group>"; };
 		TIC00MDL000000000000001A /* TakeItCaptive.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TakeItCaptive.swift; sourceTree = "<group>"; };
 		FAA00MDL000000000000001A /* FaithActionCatalog.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FaithActionCatalog.swift; sourceTree = "<group>"; };
 		BRS00MDL000000000000001A /* BurstSession.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BurstSession.swift; sourceTree = "<group>"; };
@@ -953,6 +955,7 @@
 				TIC00VW0000000000000003A /* ReplaceDeclarationView.swift */,
 				TIC00VW0000000000000004A /* GroundTakenView.swift */,
 				TIC00VW0000000000000005A /* EscapeHatchView.swift */,
+				TIC00VW0000000000000006A /* TakenCaptiveView.swift */,
 			);
 			name = Guard;
 			path = Guard;
@@ -2260,6 +2263,7 @@
 				TIC00VW0000000000000003B /* ReplaceDeclarationView.swift in Sources */,
 				TIC00VW0000000000000004B /* GroundTakenView.swift in Sources */,
 				TIC00VW0000000000000005B /* EscapeHatchView.swift in Sources */,
+				TIC00VW0000000000000006B /* TakenCaptiveView.swift in Sources */,
 				TIC00MDL000000000000001B /* TakeItCaptive.swift in Sources */,
 				FAA00MDL000000000000001B /* FaithActionCatalog.swift in Sources */,
 				BRS00MDL000000000000001B /* BurstSession.swift in Sources */,

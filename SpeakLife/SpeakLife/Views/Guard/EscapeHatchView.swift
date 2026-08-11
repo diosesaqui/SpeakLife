@@ -46,9 +46,65 @@ struct AskForThoughtView: View {
     @State private var showReachOut = false
     @FocusState private var focused: Bool
 
-    private var canSubmit: Bool {
-        text.trimmingCharacters(in: .whitespacesAndNewlines).count >= 3
+    private var entry: String {
+        text.trimmingCharacters(in: .whitespacesAndNewlines)
     }
+
+    /// Whether what is in the field is a thought, or the first two words of one.
+    ///
+    /// The bar used to be three characters, which lit the button on "I am". Four
+    /// characters that name nothing, match no keyword, and route straight to the
+    /// low-confidence fallback — so someone who half-typed a sentence got handed
+    /// a generic identity declaration and no sign that the app had missed what
+    /// they were actually carrying. The button now waits for a real sentence.
+    private var canSubmit: Bool {
+        Self.namesAThought(entry)
+    }
+
+    /// A named thought is two words, seven letters, and one word of real length
+    /// that carries meaning on its own.
+    ///
+    /// The carrying-word test is the one doing the work: "i feel like i want to"
+    /// clears both counts and still names nothing, and no length rule catches
+    /// that. The counts only exist to stop a two-letter fragment.
+    ///
+    /// Seven, not nine. Nine locked out the shortest real thoughts there are —
+    /// "I'm ugly", "I'm sick", "I'm broke", "I'm alone" — and every one of those
+    /// hits a keyword rule and would have come back with a high-confidence
+    /// match. A bar that rejects the bluntest way someone says the truest thing
+    /// is worse than the stub it was raised to catch.
+    ///
+    /// Nothing here is diagnostic and nothing is stored. It only decides when
+    /// the button lights.
+    static func namesAThought(_ entry: String) -> Bool {
+        // iOS substitutes a curly apostrophe as you type, so both forms have to
+        // survive tokenising or "I'm worthless" splits into "i" and "m
+        // worthless" and the stub list stops recognising anything.
+        let normalized: String = entry.lowercased().replacingOccurrences(of: "\u{2019}", with: "'")
+        var words: [String] = []
+        var letters: Int = 0
+        for piece in normalized.split(whereSeparator: { !$0.isLetter && $0 != "'" }) {
+            let word = String(piece)
+            words.append(word)
+            letters += word.count
+        }
+        guard words.count >= 2, letters >= 7 else { return false }
+        return words.contains { !stubWords.contains($0) && $0.count >= 3 }
+    }
+
+    /// Function words. An entry made only of these is a half-typed sentence.
+    private static let stubWords: Set<String> = [
+        "i", "im", "i'm", "ive", "i've", "me", "my", "mine", "myself",
+        "a", "an", "the", "it", "its", "it's", "this", "that", "there",
+        "is", "am", "are", "was", "were", "be", "been", "being",
+        "do", "does", "did", "have", "has", "had", "get", "got", "getting",
+        "can", "can't", "cant", "will", "would", "should", "could", "might",
+        "feel", "feeling", "feels", "think", "thinking", "want", "wanted",
+        "like", "just", "really", "very", "so", "and", "but", "or", "not",
+        "no", "of", "to", "in", "on", "for", "with", "about", "at", "as",
+        "keep", "keeps", "always", "never", "all", "too", "much", "some",
+        "what", "why", "how", "when", "know", "kind", "sort"
+    ]
 
     /// Lifted out of the modifier chain — a ternary between two `AnyShapeStyle`
     /// wrappers inside a `.fill` inside a `.background` is the kind of nesting
@@ -113,6 +169,21 @@ struct AskForThoughtView: View {
                             .stroke(Color.white.opacity(0.12), lineWidth: 1)
                     )
 
+                // Only once they have started, and never before. A hint on an
+                // empty field reads as a rule to clear; a hint under two typed
+                // words reads as the app waiting for the rest, which is what it
+                // is doing — and it is phrased that way rather than as them
+                // getting it wrong. The bar is low enough that almost everything
+                // under it really is a fragment, but "write the whole sentence"
+                // would be a false accusation the one time it isn't.
+                if !entry.isEmpty, !canSubmit, !showReachOut {
+                    Text("A few more words, and we'll hand you the one that answers it.")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(.white.opacity(0.42))
+                        .fixedSize(horizontal: false, vertical: true)
+                        .transition(.opacity)
+                }
+
                 if showReachOut {
                     reachOutNotice
                 }
@@ -143,22 +214,39 @@ struct AskForThoughtView: View {
                     // rather than a hidden fallback: some mornings nothing is
                     // loud, and the drill still works — that was the whole
                     // premise of the bank. It just no longer goes first.
-                    Button {
-                        focused = false
-                        AnalyticsService.shared.track("guard_nothing_specific_tapped")
-                        onNothingSpecific()
-                    } label: {
-                        Text("Nothing specific — give me one")
-                            .font(.system(size: 13, weight: .semibold))
-                            .foregroundColor(.white.opacity(0.5))
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 6)
+                    //
+                    // Gated on `!canSubmit`, which is exactly when the button
+                    // above it is dead — so this screen always has at least one
+                    // live way forward. Gating it on an empty field instead left
+                    // a half-typed entry with a disabled CTA and no other door,
+                    // which is the same dead end this whole change is fixing.
+                    //
+                    // It still goes away the moment the entry is real. Sitting
+                    // under a finished sentence with the CTA lit, "Nothing
+                    // specific" reads as the app's verdict on what was just
+                    // written rather than as the other door, and that is
+                    // precisely how it was read.
+                    if !canSubmit {
+                        Button {
+                            focused = false
+                            AnalyticsService.shared.track("guard_nothing_specific_tapped")
+                            onNothingSpecific()
+                        } label: {
+                            Text("Can't name one? Give me one to work with.")
+                                .font(.system(size: 13, weight: .semibold))
+                                .foregroundColor(.white.opacity(0.5))
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 6)
+                        }
+                        .buttonStyle(.plain)
+                        .transition(.opacity)
                     }
-                    .buttonStyle(.plain)
                 }
             }
             .padding(.horizontal, 24)
             .padding(.vertical, 20)
+            .animation(DS.Motion.quick, value: canSubmit)
+            .animation(DS.Motion.quick, value: entry.isEmpty)
         }
         .onAppear { focused = true }
     }
@@ -201,8 +289,8 @@ struct AskForThoughtView: View {
     // MARK: - Submit
 
     private func submit() {
-        let entry = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard entry.count >= 3 else { return }
+        let entry = self.entry
+        guard canSubmit else { return }
         focused = false
 
         // Safety runs first and unconditionally — ahead of the quota check, so
@@ -220,7 +308,21 @@ struct AskForThoughtView: View {
             return
         }
 
-        guard case .matched(let category, let matched, let confidence) = classification else { return }
+        // Never a silent return. `classify` can only answer `.reachOut` (handled
+        // above) or `.matched`, but a `guard … else { return }` here would mean
+        // the button doing nothing at all if that ever stops being true — and a
+        // dead button is the one outcome this screen cannot afford, because the
+        // person on the other side of it has just typed the thing they are
+        // carrying. The last resort is a reviewed identity line, so even the
+        // impossible branch hands them a word.
+        let resolved: (ThoughtCategory, IncomingThought, ThoughtClassification.Confidence)
+        if case .matched(let matchedCategory, let matchedThought, let matchedConfidence) = classification {
+            resolved = (matchedCategory, matchedThought, matchedConfidence)
+        } else {
+            resolved = (.inadequacy, ThoughtClassifier.lastResort, .low)
+        }
+        let (category, matched, confidence) = resolved
+
         // Category and confidence only. The sentence itself never appears in an
         // event payload — that is the whole promise of this screen.
         AnalyticsService.shared.track("guard_escape_hatch_used", parameters: [
