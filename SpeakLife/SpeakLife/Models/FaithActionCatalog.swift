@@ -1152,3 +1152,61 @@ enum FaithActionCatalog {
         )
     ]
 }
+
+// MARK: - Commitment Store
+
+/// What the user said yes to today.
+///
+/// Deliberately not a checklist. There is no "did you do it?" and no way to fail
+/// this — a commitment that can be marked incomplete turns a grace-first invitation
+/// into one more thing someone is behind on, which is the exact inversion of the
+/// feature. Only today's yes is kept, so the slate is genuinely clean each morning.
+final class FaithActionCommitmentStore: ObservableObject {
+
+    static let shared = FaithActionCommitmentStore()
+
+    struct Commitment: Codable, Equatable {
+        /// `DeclarationCategory` rawValue.
+        let theme: String
+        let headline: String
+        let committedAt: Date
+    }
+
+    /// Nil unless the user committed to an action today.
+    @Published private(set) var todaysCommitment: Commitment?
+
+    private let defaults: UserDefaults
+    private let calendar = Calendar.current
+    private static let storageKey = "sl_faithActionCommitment_v1"
+
+    init(defaults: UserDefaults = .standard) {
+        self.defaults = defaults
+        todaysCommitment = Self.loadIfToday(from: defaults, calendar: calendar)
+    }
+
+    func commit(to action: FaithAction, theme: DeclarationCategory, on date: Date = Date()) {
+        let commitment = Commitment(
+            theme: theme.rawValue,
+            headline: action.headline,
+            committedAt: date
+        )
+        todaysCommitment = commitment
+        if let encoded = try? JSONEncoder().encode(commitment) {
+            defaults.set(encoded, forKey: Self.storageKey)
+        }
+    }
+
+    /// Yesterday's yes is not today's. Reading through this keeps a stale
+    /// commitment from surfacing on a later day.
+    func hasCommittedToday(on date: Date = Date()) -> Bool {
+        guard let commitment = todaysCommitment else { return false }
+        return calendar.isDate(commitment.committedAt, inSameDayAs: date)
+    }
+
+    private static func loadIfToday(from defaults: UserDefaults, calendar: Calendar) -> Commitment? {
+        guard let data = defaults.data(forKey: storageKey),
+              let commitment = try? JSONDecoder().decode(Commitment.self, from: data),
+              calendar.isDateInToday(commitment.committedAt) else { return nil }
+        return commitment
+    }
+}

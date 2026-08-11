@@ -57,7 +57,27 @@ final class PersistenceController {
     }()
     
     let container: NSPersistentCloudKitContainer
-    
+
+    /// True when this process is hosting an XCTest bundle.
+    ///
+    /// Tests must not attach CloudKit, for two reasons and the second is the
+    /// serious one.
+    ///
+    /// It is slow. `SpeakLifeApp` holds `PersistenceController.shared`, so every
+    /// test run launches the app and stands up CloudKit mirroring, which then
+    /// retries against an account CI does not have for the life of the process.
+    ///
+    /// And it is not hermetic. Run locally by a developer who is signed in, the
+    /// suite mirrors its rows into `iCloud.com.franchiz.speaklife` — the same
+    /// private database the shipping app uses. Test fixtures do not belong in a
+    /// real user's iCloud, and a test whose result depends on what is already
+    /// up there is not a test.
+    ///
+    /// Local persistence is untouched: the SQLite store, history tracking and
+    /// migration all behave exactly as they do in the app. Only the mirroring is
+    /// left off.
+    static let isRunningTests: Bool = NSClassFromString("XCTestCase") != nil
+
     init(inMemory: Bool = false) {
         container = NSPersistentCloudKitContainer(name: "SpeakLife")
         
@@ -94,10 +114,14 @@ final class PersistenceController {
             description.setOption(["journal_mode": "WAL"] as NSDictionary, forKey: NSSQLitePragmasOption)
             
             // Set CloudKit container options with optimizations
-            let options = NSPersistentCloudKitContainerOptions(containerIdentifier: "iCloud.com.franchiz.speaklife")
-            options.databaseScope = .private
-            
-            description.cloudKitContainerOptions = options
+            if Self.isRunningTests {
+                print("🧪 Running under XCTest — CloudKit mirroring disabled")
+            } else {
+                let options = NSPersistentCloudKitContainerOptions(containerIdentifier: "iCloud.com.franchiz.speaklife")
+                options.databaseScope = .private
+
+                description.cloudKitContainerOptions = options
+            }
         }
         
         container.loadPersistentStores { storeDescription, error in

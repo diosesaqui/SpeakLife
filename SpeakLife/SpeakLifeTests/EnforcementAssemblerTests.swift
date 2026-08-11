@@ -145,7 +145,7 @@ final class EnforcementAssemblerTests: XCTestCase {
         let pool = declarations(.destiny, 20) + declarations(.work, 20)
         let result = EnforcementAssembler.assemble(primary: .business, pool: pool, seed: "s")
 
-        XCTAssertEqual(result?.theme, DeclarationCategory.business.rawValue)
+        XCTAssertEqual(result?.theme, .business)
         XCTAssertEqual(result?.title, "Enforcing " + DeclarationCategory.business.name)
     }
 
@@ -182,7 +182,7 @@ final class EnforcementAssemblerTests: XCTestCase {
         let result = EnforcementAssembler.assemble(primary: .godsheart, pool: pool, seed: "s")
 
         XCTAssertEqual(result?.days.count, Enforcement.length)
-        XCTAssertEqual(result?.theme, DeclarationCategory.godsheart.rawValue)
+        XCTAssertEqual(result?.theme, .godsheart)
     }
 
     func testFallbackChain_LeadsWithTheMatchedCategoriesAndEndsInTheBackstop() {
@@ -246,7 +246,7 @@ final class EnforcementAssemblerTests: XCTestCase {
 
         XCTAssertTrue(result?.days.first?.anchorText.hasPrefix("marriage") ?? false,
                       "the week opens on the thing they actually named")
-        XCTAssertEqual(result?.theme, DeclarationCategory.marriage.rawValue)
+        XCTAssertEqual(result?.theme, .marriage)
     }
 
     func testBlend_ThinSecondaryTopsUpFromLead() {
@@ -288,7 +288,7 @@ final class EnforcementAssemblerTests: XCTestCase {
 
         XCTAssertEqual(result?.days.map(\.anchorText), picked.map(\.text))
         XCTAssertEqual(result?.days.map(\.dayNumber), Array(1...Enforcement.length))
-        XCTAssertEqual(result?.theme, DeclarationCategory.addiction.rawValue)
+        XCTAssertEqual(result?.theme, .addiction)
     }
 
     func testCurated_RejectsWrongDayCount() {
