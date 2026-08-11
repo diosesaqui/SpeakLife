@@ -60,36 +60,33 @@ final class PersistenceController {
 
     /// True when this process is hosting an XCTest bundle.
     ///
-    /// Tests must not attach CloudKit, for two reasons and the second is the
+    /// Tests must not reach CloudKit, for two reasons and the second is the
     /// serious one.
     ///
     /// It is slow. `SpeakLifeApp` holds `PersistenceController.shared`, so every
-    /// test run launches the app and stands up CloudKit mirroring, which then
-    /// retries against an account CI does not have for the life of the process.
+    /// test run launches the app, stands up mirroring and pushes a schema, then
+    /// retries against an account no simulator has for the life of the process.
     ///
     /// And it is not hermetic. Run locally by a developer who is signed in, the
     /// suite mirrors its rows into `iCloud.com.franchiz.speaklife` — the same
     /// private database the shipping app uses. Test fixtures do not belong in a
-    /// real user's iCloud, and a test whose result depends on what is already
-    /// up there is not a test.
+    /// real user's iCloud, and a test whose result depends on what is already up
+    /// there is not a test.
     ///
     /// Local persistence is untouched: the SQLite store, history tracking and
-    /// migration all behave exactly as they do in the app. Only the mirroring is
-    /// left off.
-    /// Checked via the environment first, and that ordering is the whole point.
+    /// migration all behave exactly as they do in the app. Only the CloudKit
+    /// traffic is left off.
     ///
-    /// `NSClassFromString("XCTestCase")` looks like the obvious probe and it is
-    /// wrong here. `SpeakLifeApp` holds `PersistenceController.shared`, so the
-    /// container is built while the host app launches — and XCTest injects the
-    /// test bundle only *after* launch completes. At the moment this runs there
-    /// is no XCTestCase class yet, the probe returns false, and CloudKit comes
-    /// up exactly as it would in production. Which is what happened: the suite
-    /// still logged "will initialize cloudkit schema" on every run.
-    ///
-    /// `XCTestConfigurationFilePath` is set by the test runner before the
-    /// process starts, so it is already true by the time anything of ours
-    /// executes. The class probe stays as a second chance for any caller
-    /// constructed later.
+    /// The environment is checked before the class, and that ordering is the
+    /// whole point. `NSClassFromString("XCTestCase")` is the obvious probe and
+    /// it is wrong here: the container is built while the host app launches, and
+    /// XCTest injects the test bundle only *after* launch completes, so at this
+    /// moment there is no XCTestCase to find. That is exactly what happened —
+    /// the guard read false and the suite went on logging "will initialize
+    /// cloudkit schema" every run. `XCTestConfigurationFilePath` is set by the
+    /// runner before the process starts, so it is already true by the time any
+    /// of our code executes. The class probe stays as a second chance for
+    /// anything constructed later.
     static var isRunningTests: Bool {
         ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
             || NSClassFromString("XCTestCase") != nil
@@ -154,10 +151,10 @@ final class PersistenceController {
                 print("Persistent store loaded successfully")
                 print("Store URL: \(storeDescription.url?.path ?? "No URL")")
                 print("CloudKit enabled: \(storeDescription.cloudKitContainerOptions != nil)")
-                
+
                 // Initialize CloudKit schema for all builds to ensure proper sync
                 self.initializeCloudKitSchema()
-                
+
                 // Check CloudKit account status
                 self.checkCloudKitAccountStatus()
             }
@@ -244,6 +241,7 @@ final class PersistenceController {
     }
     
     private func checkCloudKitAccountStatus() {
+        guard !Self.isRunningTests else { return }
         let container = CKContainer(identifier: "iCloud.com.franchiz.speaklife")
         
         container.accountStatus { status, error in
@@ -311,6 +309,7 @@ final class PersistenceController {
     
     // MARK: - Initial CloudKit Import Check
     private func checkForInitialCloudKitImport() {
+        guard !Self.isRunningTests else { return }
         print("Checking for initial CloudKit import (attempt \(importAttempts + 1)/\(maxImportAttempts))...")
         
         // First check CloudKit account status
@@ -442,6 +441,7 @@ final class PersistenceController {
     }
     
     private func performDummyCloudKitQuery() {
+        guard !Self.isRunningTests else { return }
         // This forces CloudKit to sync by performing a direct query
         let container = CKContainer(identifier: "iCloud.com.franchiz.speaklife")
         let privateDatabase = container.privateCloudDatabase
@@ -537,6 +537,7 @@ final class PersistenceController {
     
     // MARK: - CloudKit Schema Initialization
     private func initializeCloudKitSchema() {
+        guard !Self.isRunningTests else { return }
         #if DEBUG
         // Push the full model schema (incl. ProgressEventEntry/SyncedSetting)
         // to the CloudKit DEVELOPMENT environment so the record types exist
