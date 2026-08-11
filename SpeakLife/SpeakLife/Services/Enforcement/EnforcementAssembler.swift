@@ -177,7 +177,7 @@ enum EnforcementAssembler {
             id: "assembled_" + categories.map(\.rawValue).joined(separator: "_"),
             title: "Enforcing " + named.enforcementTitle,
             tagline: "Seven days standing on what Jesus already won.",
-            theme: named.rawValue,
+            theme: named,
             days: days
         )
     }
@@ -206,7 +206,7 @@ enum EnforcementAssembler {
             id: "curated_" + primary.rawValue,
             title: "Enforcing " + primary.enforcementTitle,
             tagline: "Seven days built around what you're walking through.",
-            theme: primary.rawValue,
+            theme: primary,
             days: days
         )
     }

@@ -2,96 +2,17 @@
 //  FaithActionCatalogTests.swift
 //  SpeakLifeTests
 //
-//  The eighth slat of the Daily Burst asks for one action mapped to the theme the
-//  user just spoke over. Two things have to hold for that to work: the theme has
-//  to be resolved from what was actually said, and the ask has to sit still while
-//  someone is reading it.
+//  Content and selection for the eighth slat of the Daily Burst. Deciding WHICH
+//  theme a burst was about is `BurstThemeResolver`, covered in
+//  BurstSessionTests; this file covers the ask itself: that it sits still while
+//  someone is reading it, that every theme has one, and that the copy holds the
+//  declaration rules.
 //
 
 import XCTest
 @testable import SpeakLife
 
 final class FaithActionCatalogTests: XCTestCase {
-
-    // MARK: - Theme resolution
-
-    func testEnforcementThemeWinsOverEverythingElse() {
-        // An active campaign fills all seven slots, so it is the only honest
-        // answer even when the picker says otherwise.
-        let theme = FaithActionCatalog.resolveTheme(
-            enforcement: .health,
-            spoken: [.wealth, .wealth, .wealth],
-            selected: .warfare
-        )
-        XCTAssertEqual(theme, .health)
-    }
-
-    func testDominantSpokenCategoryWinsOverSelectedCategory() {
-        // What came out of their mouth outranks what is selected in the picker.
-        let theme = FaithActionCatalog.resolveTheme(
-            enforcement: nil,
-            spoken: [.marriage, .marriage, .joy],
-            selected: .wealth
-        )
-        XCTAssertEqual(theme, .marriage)
-    }
-
-    func testTiesBreakOnFirstAppearance() {
-        // Dictionary iteration order is not stable, so a tie must not be able to
-        // hand the same burst a different theme on a re-render.
-        let spoken: [DeclarationCategory] = [.fear, .joy, .fear, .joy]
-        for _ in 0..<25 {
-            XCTAssertEqual(
-                FaithActionCatalog.resolveTheme(enforcement: nil, spoken: spoken, selected: nil),
-                .fear
-            )
-        }
-    }
-
-    func testContainerCategoriesNeverWinTheme() {
-        // favorites / myOwn / general are bins, not themes. A burst drawn mostly
-        // from favorites should still land on the real subject underneath.
-        let theme = FaithActionCatalog.resolveTheme(
-            enforcement: nil,
-            spoken: [.favorites, .favorites, .myOwn, .general, .anxiety],
-            selected: nil
-        )
-        XCTAssertEqual(theme, .anxiety)
-    }
-
-    func testBibleBookCategoriesNeverWinTheme() {
-        // "Read Romans" is not a corresponding action — it is the thing they were
-        // already doing. A book-only burst falls through to the selected theme.
-        let theme = FaithActionCatalog.resolveTheme(
-            enforcement: nil,
-            spoken: [.romans, .psalms, .john],
-            selected: .work
-        )
-        XCTAssertEqual(theme, .work)
-    }
-
-    func testBookEnforcementDoesNotHijackTheme() {
-        let theme = FaithActionCatalog.resolveTheme(
-            enforcement: .psalms,
-            spoken: [.grief, .grief],
-            selected: nil
-        )
-        XCTAssertEqual(theme, .grief)
-    }
-
-    func testFallsBackToFaithWhenNothingIsActionable() {
-        let theme = FaithActionCatalog.resolveTheme(
-            enforcement: nil,
-            spoken: [.psalms, .favorites],
-            selected: .general
-        )
-        XCTAssertEqual(theme, .faith)
-    }
-
-    func testEmptyBurstStillResolves() {
-        let theme = FaithActionCatalog.resolveTheme(enforcement: nil, spoken: [], selected: nil)
-        XCTAssertEqual(theme, .faith)
-    }
 
     // MARK: - Action selection
 
@@ -189,6 +110,44 @@ final class FaithActionCatalogTests: XCTestCase {
             for string in strings {
                 XCTAssertFalse(string.contains("\u{2014}"), "em dash in \(category.rawValue): \(string)")
                 XCTAssertFalse(string.contains("\u{2013}"), "en dash in \(category.rawValue): \(string)")
+            }
+        }
+    }
+
+    func testNoAskPrescribesADose() {
+        // The ask names the KIND of action the declaration implies and lets the
+        // speaker pick the act. A measured one ("walk for fifteen minutes") fits
+        // whoever wrote it and nobody else, and hands a failure to anyone whose
+        // day or body does not match the number.
+        let dose = try! NSRegularExpression(
+            pattern: #"\b(minutes?|hours?|miles?)\b|[0-9]"#, options: .caseInsensitive
+        )
+        for category in FaithActionCatalog.mappedThemes {
+            let set = FaithActionCatalog.actionSet(for: category)
+            for string in [set.premise] + set.actions.flatMap({ [$0.headline, $0.detail] }) {
+                let range = NSRange(string.startIndex..., in: string)
+                XCTAssertNil(
+                    dose.firstMatch(in: string, range: range),
+                    "\(category.rawValue) prescribes a dose: \(string)"
+                )
+            }
+        }
+    }
+
+    func testNoAskNamesTheActForTheSpeaker() {
+        // Rule 12's sibling. These verbs turn an invitation into an errand, and
+        // every one of them was in the shipped copy before this rule existed.
+        let prescriptions = ["walk for", "train for", "drink water", "go to bed",
+                             "study for", "breathe slowly", "pack one box"]
+        for category in FaithActionCatalog.mappedThemes {
+            for action in FaithActionCatalog.actionSet(for: category).actions {
+                let headline = action.headline.lowercased()
+                for prescription in prescriptions {
+                    XCTAssertFalse(
+                        headline.contains(prescription),
+                        "\(category.rawValue) names the act for them: \(action.headline)"
+                    )
+                }
             }
         }
     }

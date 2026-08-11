@@ -537,26 +537,26 @@ final class EnforcementAssemblerTests: XCTestCase {
             id: "assembled_warfare",
             title: "Enforcing Warfare & Victory",   // what the old code wrote
             tagline: "t",
-            theme: DeclarationCategory.warfare.rawValue,
+            theme: .warfare,
             days: []
         )
         XCTAssertEqual(stale.displayTitle, "Enforcing Victory")
 
         let staleAnxiety = Enforcement(id: "curated_anxiety", title: "Enforcing Anxiety & Worry",
-                                       tagline: "t", theme: DeclarationCategory.anxiety.rawValue, days: [])
+                                       tagline: "t", theme: .anxiety, days: [])
         XCTAssertEqual(staleAnxiety.displayTitle, "Enforcing Peace")
     }
 
     /// Hand-authored titles are deliberate content and must survive untouched.
     func testDisplayTitle_LeavesHandAuthoredCampaignsAlone() {
         let authored = Enforcement(id: "warfare_week", title: "Enforcing Victory",
-                                   tagline: "t", theme: DeclarationCategory.warfare.rawValue, days: [])
+                                   tagline: "t", theme: .warfare, days: [])
         XCTAssertFalse(authored.isGenerated)
         XCTAssertEqual(authored.displayTitle, "Enforcing Victory")
 
         // Even a catalog title that differs from what we'd generate is kept.
         let custom = Enforcement(id: "anxiety_week", title: "Enforcing Peace",
-                                 tagline: "t", theme: DeclarationCategory.anxiety.rawValue, days: [])
+                                 tagline: "t", theme: .anxiety, days: [])
         XCTAssertEqual(custom.displayTitle, "Enforcing Peace")
     }
 

@@ -298,7 +298,7 @@ final class EnforcementService: ObservableObject {
         }
         var resolved: Enforcement?
         for pick in UserSelectedCategories.all() {
-            if let match = catalog.first(where: { $0.theme.caseInsensitiveCompare(pick) == .orderedSame }) {
+            if let match = catalog.first(where: { $0.theme.rawValue.caseInsensitiveCompare(pick) == .orderedSame }) {
                 resolved = match
                 break
             }
@@ -342,7 +342,7 @@ final class EnforcementService: ObservableObject {
         guard isPremium else { return nil }
 
         // Authored campaigns take precedence for their own category.
-        if let authored = catalog.first(where: { $0.theme.caseInsensitiveCompare(primary.rawValue) == .orderedSame }) {
+        if let authored = catalog.first(where: { $0.theme == primary }) {
             begin(id: authored.id, assembled: nil)
             return authored
         }

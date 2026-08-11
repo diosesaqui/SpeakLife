@@ -24,11 +24,11 @@ final class EnforcementServiceTests: XCTestCase {
 
     /// A two-Enforcement catalog so tests never depend on shipped content.
     private var catalog: [Enforcement] {
-        [makeEnforcement(id: "peace", theme: "anxiety"),
-         makeEnforcement(id: "warfare", theme: "warfare")]
+        [makeEnforcement(id: "peace", theme: .anxiety),
+         makeEnforcement(id: "warfare", theme: .warfare)]
     }
 
-    private func makeEnforcement(id: String, theme: String) -> Enforcement {
+    private func makeEnforcement(id: String, theme: DeclarationCategory) -> Enforcement {
         let days = (1...Enforcement.length).map { n in
             EnforcementDay(dayNumber: n,
                      anchorText: "Anchor \(n)",
@@ -467,7 +467,7 @@ final class EnforcementServiceTests: XCTestCase {
     /// campaign that crosses devices without `assembledEnforcement` resolves to
     /// nothing and the user's week vanishes on the second device.
     func testMerge_AssembledCampaignTravelsWithItsWeek() {
-        let curated = makeEnforcement(id: "curated_warfare", theme: "warfare")
+        let curated = makeEnforcement(id: "curated_warfare", theme: .warfare)
         let holder = makeProgress(id: curated.id, startedOn: daysAgo(3), days: [1, 2], assembled: curated)
         let fresh = EnforcementProgress()
 
@@ -522,7 +522,7 @@ final class EnforcementServiceTests: XCTestCase {
     /// devices reconciling independently have to land on the same value and
     /// then stay there.
     func testMerge_IsCommutativeAndConverges() {
-        let curated = makeEnforcement(id: "curated_warfare", theme: "warfare")
+        let curated = makeEnforcement(id: "curated_warfare", theme: .warfare)
         let states: [EnforcementProgress] = [
             EnforcementProgress(),
             makeProgress(id: "peace", startedOn: daysAgo(9), days: [1, 2], lastAdvancedOn: daysAgo(8)),
@@ -549,7 +549,7 @@ final class EnforcementServiceTests: XCTestCase {
     /// The merged value is what gets written back to UserDefaults and pushed to
     /// CloudKit, so it has to survive the encoder — including the `Set<Int>`.
     func testMerge_ResultSurvivesAJSONRoundTrip() {
-        let curated = makeEnforcement(id: "curated_warfare", theme: "warfare")
+        let curated = makeEnforcement(id: "curated_warfare", theme: .warfare)
         let merged = merge(makeProgress(id: curated.id, startedOn: daysAgo(3), days: [1, 2],
                                         assembled: curated, history: ["peace"]),
                            makeProgress(id: curated.id, startedOn: daysAgo(3), days: [3]))
@@ -604,8 +604,11 @@ final class EnforcementServiceTests: XCTestCase {
             XCTAssertEqual(enforcement.days.count, Enforcement.length, "\(enforcement.id) must have 7 days")
             XCTAssertEqual(enforcement.days.map(\.dayNumber), Array(1...Enforcement.length),
                            "\(enforcement.id) days must be numbered 1-7 in order")
-            XCTAssertNotNil(enforcement.category,
-                            "\(enforcement.id) theme '\(enforcement.theme)' is not a DeclarationCategory")
+            // `theme` is typed now, so an unparseable one cannot reach here as
+            // nil — it decodes to .faith instead. Assert the shipped campaigns
+            // actually name their own subject, which is what this was checking.
+            XCTAssertNotEqual(enforcement.theme, .faith,
+                              "\(enforcement.id) theme did not decode to a real category")
             for day in enforcement.days {
                 XCTAssertFalse(day.anchorText.isEmpty)
                 XCTAssertFalse(day.audioId.isEmpty)

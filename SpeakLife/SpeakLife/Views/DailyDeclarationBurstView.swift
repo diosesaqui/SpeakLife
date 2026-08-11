@@ -8,21 +8,6 @@
 import SwiftUI
 import FirebaseAnalytics
 
-/// One slat of the burst.
-///
-/// Carries the category as an enum and not only as its display name. The eighth
-/// slat resolves the session's theme from these, and a label like
-/// "Warfare & Victory" cannot be mapped back to `DeclarationCategory.warfare`
-/// — which is exactly what the old `(text, verse, String)` tuple threw away on
-/// the Enforcement path, where the string was the campaign's theme name.
-private struct BurstDeclaration {
-    let text: String
-    let verse: String
-    /// What the chip above the declaration reads.
-    let categoryLabel: String
-    let category: DeclarationCategory?
-}
-
 struct DailyDeclarationBurstView: View {
     @EnvironmentObject var viewModel: DeclarationViewModel
     @EnvironmentObject var themeViewModel: ThemeViewModel
@@ -39,25 +24,27 @@ struct DailyDeclarationBurstView: View {
     @State private var declarationOpacity = 0.0
     @State private var isTransitioning = false
     @State private var showSpiritualGraph = false
-    @State private var morningDeclarations: [BurstDeclaration] = []
-    @State private var isLoadingDeclarations = true
+    /// The composed burst: the lines, where they came from, and the theme.
+    /// Nil until `BurstSessionBuilder` has run, which is also the loading state.
+    ///
+    /// One value rather than several parallel `@State`s, so the declarations and
+    /// the theme cannot drift apart. The theme in particular was previously
+    /// re-derived at the end of the burst by asking `EnforcementService` a second
+    /// time, which could answer differently than the composition did.
+    @State private var session: BurstSession?
     @State private var showIntroScreen = true
 
     // The eighth slat: one corresponding action, mapped to the theme the seven
-    // declarations were actually about. Resolved once the last one is spoken so
-    // it reflects what was said, not what was selected.
+    // declarations were actually about.
     @State private var showActionSlide = false
-    @State private var burstTheme: DeclarationCategory = .faith
     @State private var faithAction: FaithAction?
-    /// Set only when the campaign actually filled the burst. Re-asking
-    /// `EnforcementService` at the end would map the action to a campaign whose
-    /// words were never spoken, since `loadDynamicDeclarations` abandons the
-    /// enforcement path whenever it cannot fill all seven slots.
-    @State private var enforcementTheme: DeclarationCategory?
     /// This session's yes, not today's. Multiple bursts a day are supported, so
     /// reading the store here would checkmark an earlier burst's commitment on a
     /// screen where the user just tapped "Not today".
     @State private var committedAction: FaithAction?
+
+    private var morningDeclarations: [BurstDeclaration] { session?.declarations ?? [] }
+    private var burstTheme: DeclarationCategory { session?.theme ?? .faith }
     
     // Animation states for completion screen
     @State private var checkmarkScale: CGFloat = 0.0
@@ -123,126 +110,39 @@ struct DailyDeclarationBurstView: View {
         }
     }
     
-    // MARK: - Dynamic Declaration Selection
-    
+    // MARK: - Composition
+
+    /// Hands the builder everything it needs and keeps the result.
+    ///
+    /// The policy — campaign ownership, weighting, dedup, fallback, and the
+    /// theme — lives in `BurstSessionBuilder`, where it is testable without a
+    /// view. This reads the singletons the builder deliberately does not.
     private func loadDynamicDeclarations() {
-        var selectedDeclarations: [BurstDeclaration] = []
+        let service = EnforcementService.shared
+        let activeEnforcement = service.isEnabled ? service.activeEnforcement : nil
 
-        // 0. An active Enforcement owns the burst.
-        //
-        // The burst is BOTH the streak-earning action and the thing that advances
-        // a campaign. Without this, someone completes "day 4 of Enforcing Peace"
-        // by speaking seven random declarations from whatever category happens to
-        // be selected — the campaign's words would live only on the card and in
-        // the push, and what actually comes out of their mouth would have nothing
-        // to do with the week they chose. That makes the campaign decoration.
-        //
-        // Today's anchor leads; the rest of the week fills in behind it.
-        if EnforcementService.shared.isEnabled,
-           let enforcement = EnforcementService.shared.activeEnforcement {
-            let today = EnforcementService.shared.progressSnapshot.currentDay
-            let ordered = enforcement.days.sorted { lhs, rhs in
-                if lhs.dayNumber == today { return true }
-                if rhs.dayNumber == today { return false }
-                return lhs.dayNumber < rhs.dayNumber
-            }
-            for day in ordered.prefix(burstDeclarationCount) {
-                selectedDeclarations.append(
-                    BurstDeclaration(
-                        text: day.anchorText,
-                        verse: day.anchorBook,
-                        categoryLabel: enforcement.themeName,
-                        category: enforcement.category
-                    )
-                )
-            }
-            if selectedDeclarations.count == burstDeclarationCount {
-                morningDeclarations = selectedDeclarations
-                enforcementTheme = enforcement.category
-                isLoadingDeclarations = false
-                print("📱 Daily Burst: speaking \(enforcement.title), day \(today)")
-                return
-            }
-            // A campaign is always seven days, so this shouldn't happen. If it
-            // ever does, top up from the normal pool rather than show a
-            // half-empty burst. The theme goes back with them: nothing from the
-            // campaign is being spoken, so the closing action must not claim it.
-            selectedDeclarations.removeAll()
-            enforcementTheme = nil
-        }
+        let composed = BurstSessionBuilder(
+            declarationCount: burstDeclarationCount,
+            favoriteWeight: favoriteWeight,
+            customWeight: customWeight
+        ).build(
+            enforcement: activeEnforcement,
+            currentDay: service.progressSnapshot.currentDay,
+            favorites: viewModel.favorites,
+            custom: viewModel.createOwn.filter { $0.contentType == .affirmation },
+            categoryPool: viewModel.declarations,
+            selected: viewModel.selectedCategory
+        )
+        session = composed
 
-        // 1. Get favorites from viewModel
-        let favorites = viewModel.favorites
-        
-        // 2. Get custom declarations
-        let customDeclarations = viewModel.createOwn.filter({ $0.contentType == .affirmation })
-        
-        // 3. Get current category declarations
-        let categoryDeclarations = viewModel.declarations
-        
-        // 4. Build weighted pool
-        var pool: [Declaration] = []
-        
-        // Add favorites with higher weight
-        for _ in 0..<favoriteWeight {
-            pool.append(contentsOf: favorites)
+        switch composed.origin {
+        case .enforcement:
+            print("📱 Daily Burst: speaking \(activeEnforcement?.title ?? ""), day \(service.progressSnapshot.currentDay)")
+        case .pool, .fallback:
+            print("📱 Daily Burst: \(composed.declarations.count) declarations, theme \(composed.theme.rawValue)")
         }
-        
-        // Add custom declarations with weight
-        for _ in 0..<customWeight {
-            pool.append(contentsOf: customDeclarations)
-        }
-        
-        // Add current category declarations
-        pool.append(contentsOf: categoryDeclarations)
-        
-        // 5. Shuffle and select unique declarations
-        pool.shuffle()
-        var usedIds = Set<String>()
-        
-        for declaration in pool {
-            if usedIds.contains(declaration.id) { continue }
-            if selectedDeclarations.count >= burstDeclarationCount { break }
-            
-            selectedDeclarations.append(
-                BurstDeclaration(
-                    text: declaration.text,
-                    verse: declaration.book ?? "",
-                    categoryLabel: declaration.category.name,
-                    category: declaration.category
-                )
-            )
-            usedIds.insert(declaration.id)
-        }
-        
-        // 6. Fallback if needed
-        if selectedDeclarations.count < burstDeclarationCount {
-            let fallbackDeclarations: [BurstDeclaration] = [
-                BurstDeclaration(text: "I am loved by God unconditionally", verse: "Romans 8:38-39", categoryLabel: DeclarationCategory.love.name, category: .love),
-                BurstDeclaration(text: "My God supplies all my needs according to His riches", verse: "Philippians 4:19", categoryLabel: DeclarationCategory.wealth.name, category: .wealth),
-                BurstDeclaration(text: "I have the mind of Christ", verse: "1 Corinthians 2:16", categoryLabel: DeclarationCategory.wisdom.name, category: .wisdom),
-                BurstDeclaration(text: "Greater is He that is in me than he that is in the world", verse: "1 John 4:4", categoryLabel: DeclarationCategory.warfare.name, category: .warfare),
-                BurstDeclaration(text: "I can do all things through Christ who strengthens me", verse: "Philippians 4:13", categoryLabel: DeclarationCategory.faith.name, category: .faith),
-                BurstDeclaration(text: "The joy of the Lord is my strength", verse: "Nehemiah 8:10", categoryLabel: DeclarationCategory.joy.name, category: .joy),
-                BurstDeclaration(text: "I am fearfully and wonderfully made", verse: "Psalm 139:14", categoryLabel: DeclarationCategory.identity.name, category: .identity)
-            ]
-            
-            let needed = burstDeclarationCount - selectedDeclarations.count
-            let toAdd = Array(fallbackDeclarations.prefix(needed))
-            selectedDeclarations.append(contentsOf: toAdd)
-        }
-        
-        morningDeclarations = selectedDeclarations
-        isLoadingDeclarations = false
-        
-        // Log selection for debugging
-        print("📱 Daily Burst: Selected \(morningDeclarations.count) declarations")
-        print("  - Favorites: \(favorites.count)")
-        print("  - Custom: \(customDeclarations.count)")
-        print("  - Category: \(viewModel.selectedCategory)")
-        print("  - Final pool size: \(pool.count)")
     }
-    
+
     // MARK: - Intro Screen View
     
     private func introScreenView(geometry: GeometryProxy) -> some View {
@@ -342,7 +242,7 @@ struct DailyDeclarationBurstView: View {
     
     private func burstContentView(geometry: GeometryProxy) -> some View {
         VStack(spacing: 0) {
-            if isLoadingDeclarations {
+            if session == nil {
                 // Loading state
                 VStack(spacing: 20) {
                     ProgressView()
@@ -945,14 +845,8 @@ struct DailyDeclarationBurstView: View {
 
     /// Resolves what this burst was about and asks for one action on it.
     private func presentActionSlide() {
-        let theme = FaithActionCatalog.resolveTheme(
-            enforcement: enforcementTheme,
-            spoken: morningDeclarations.compactMap { $0.category },
-            selected: viewModel.selectedCategory
-        )
+        let theme = burstTheme
         let action = FaithActionCatalog.action(for: theme)
-
-        burstTheme = theme
         faithAction = action
 
         AnalyticsService.shared.track("daily_burst_action_shown", parameters: [
