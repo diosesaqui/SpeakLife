@@ -58,14 +58,14 @@ final class PersistenceController {
     
     let container: NSPersistentCloudKitContainer
 
-    /// True when this process is hosting an XCTest bundle.
+    /// Whether CloudKit should be left alone entirely.
     ///
     /// Tests must not reach CloudKit, for two reasons and the second is the
     /// serious one.
     ///
     /// It is slow. `SpeakLifeApp` holds `PersistenceController.shared`, so every
-    /// test run launches the app, stands up mirroring and pushes a schema, then
-    /// retries against an account no simulator has for the life of the process.
+    /// test run stands up mirroring and pushes a schema, then retries against an
+    /// account no simulator has for the life of the process.
     ///
     /// And it is not hermetic. Run locally by a developer who is signed in, the
     /// suite mirrors its rows into `iCloud.com.franchiz.speaklife` — the same
@@ -74,23 +74,9 @@ final class PersistenceController {
     /// there is not a test.
     ///
     /// Local persistence is untouched: the SQLite store, history tracking and
-    /// migration all behave exactly as they do in the app. Only the CloudKit
-    /// traffic is left off.
-    ///
-    /// The environment is checked before the class, and that ordering is the
-    /// whole point. `NSClassFromString("XCTestCase")` is the obvious probe and
-    /// it is wrong here: the container is built while the host app launches, and
-    /// XCTest injects the test bundle only *after* launch completes, so at this
-    /// moment there is no XCTestCase to find. That is exactly what happened —
-    /// the guard read false and the suite went on logging "will initialize
-    /// cloudkit schema" every run. `XCTestConfigurationFilePath` is set by the
-    /// runner before the process starts, so it is already true by the time any
-    /// of our code executes. The class probe stays as a second chance for
-    /// anything constructed later.
-    static var isRunningTests: Bool {
-        ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
-            || NSClassFromString("XCTestCase") != nil
-    }
+    /// migration behave exactly as they do in the app. Only the CloudKit traffic
+    /// is left off.
+    static var isRunningTests: Bool { AppEnvironment.isRunningTests }
 
     init(inMemory: Bool = false) {
         container = NSPersistentCloudKitContainer(name: "SpeakLife")
