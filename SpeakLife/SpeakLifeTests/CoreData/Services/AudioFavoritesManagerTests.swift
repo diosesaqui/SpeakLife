@@ -51,12 +51,22 @@ class MockAudioFavoriteRepository: AudioFavoriteRepositoryProtocol {
         set { lock.withLock { _entries = newValue } }
     }
 
-    /// Runs a mutation and hands back the resulting list, both under the lock,
-    /// so a snapshot published to observers can never straddle another write.
-    private func mutating(_ body: (inout [AudioFavoriteEntry]) -> Void) -> [AudioFavoriteEntry] {
+    /// Mutates and publishes under the SAME lock, deliberately.
+    ///
+    /// Locking only the mutation is not enough, and the difference is the
+    /// remaining "3 favorites arrived as 2". Three concurrent creates each
+    /// build a correct snapshot, release the lock, and only then reach the
+    /// subject — in whatever order the scheduler picks. If the create that
+    /// appended second publishes last, the manager's final `favorites` is the
+    /// shorter list, and the count is wrong with no race left to see.
+    ///
+    /// Holding the lock across the send makes mutation and publication one
+    /// step, so the last write is always the last thing published. The only
+    /// subscriber hops to the main queue, so nothing re-enters this lock.
+    private func mutateAndPublish(_ body: (inout [AudioFavoriteEntry]) -> Void) {
         lock.withLock {
             body(&_entries)
-            return _entries
+            observePublisher.send(_entries)
         }
     }
 
@@ -77,8 +87,7 @@ class MockAudioFavoriteRepository: AudioFavoriteRepositoryProtocol {
         if shouldThrowError {
             throw NSError(domain: "MockError", code: 1, userInfo: nil)
         }
-        let snapshot = mutating { list in list.append(entity) }
-        observePublisher.send(snapshot)
+        mutateAndPublish { list in list.append(entity) }
     }
 
     func update(_ entity: AudioFavoriteEntry) async throws {
@@ -92,8 +101,7 @@ class MockAudioFavoriteRepository: AudioFavoriteRepositoryProtocol {
         if shouldThrowError {
             throw NSError(domain: "MockError", code: 1, userInfo: nil)
         }
-        let snapshot = mutating { list in list.removeAll { $0.audioId == entity.audioId } }
-        observePublisher.send(snapshot)
+        mutateAndPublish { list in list.removeAll { $0.audioId == entity.audioId } }
     }
 
     func fetch(predicate: NSPredicate?) async throws -> [AudioFavoriteEntry] {
@@ -124,8 +132,7 @@ class MockAudioFavoriteRepository: AudioFavoriteRepositoryProtocol {
         if shouldThrowError {
             throw NSError(domain: "MockError", code: 1, userInfo: nil)
         }
-        let snapshot = mutating { list in list.removeAll { $0.audioId == audioId } }
-        observePublisher.send(snapshot)
+        mutateAndPublish { list in list.removeAll { $0.audioId == audioId } }
     }
 
     func createFromAudioDeclaration(_ audio: AudioDeclaration) async throws -> AudioFavoriteEntry {

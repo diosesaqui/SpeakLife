@@ -179,7 +179,7 @@ class MockDeclarationFavoriteRepository: DeclarationFavoriteRepositoryProtocol {
             text: entry.text,
             book: entry.book,
             bibleVerseText: entry.bibleVerseText,
-            category: DeclarationCategory(rawValue: entry.category) ?? .myOwn,
+            category: DeclarationCategory(rawValue: entry.category) ?? .faith,
             categories: [],
             isFavorite: true,
             contentType: ContentType(rawValue: entry.contentType ?? "affirmation") ?? .affirmation,

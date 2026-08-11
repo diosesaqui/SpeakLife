@@ -257,9 +257,14 @@ final class DeclarationFavoriteRepositoryTests: XCTestCase {
         
         // When
         let declaration = repository.toDeclaration(entry)
-        
+
         // Then
-        XCTAssertEqual(declaration.id, "convert-test")
+        // `Declaration.id` is derived — text + category + contentType — not a
+        // stored field, so `toDeclaration` cannot hand back an arbitrary
+        // `declarationId` and never could. What matters is that the derived id
+        // is exactly what `createFromDeclaration` would store as the key, so a
+        // favorite still finds its own row after a round trip.
+        XCTAssertEqual(declaration.id, "I am loved by God" + "identity" + "affirmation")
         XCTAssertEqual(declaration.text, "I am loved by God")
         XCTAssertEqual(declaration.category, .identity)
         XCTAssertEqual(declaration.contentType, .affirmation)
@@ -278,9 +283,14 @@ final class DeclarationFavoriteRepositoryTests: XCTestCase {
         
         // When
         let declaration = repository.toDeclaration(entry)
-        
+
         // Then
-        XCTAssertEqual(declaration.category, .myOwn) // Should default to myOwn
+        // `.faith`, not `.myOwn`. `myOwn` is a container category meaning the
+        // user wrote this themselves, and dropping an unrecognised synced
+        // favorite into it would put words in their personal collection that
+        // they never wrote. `.faith` is the generic bucket every other lenient
+        // decode in the app falls back to (Declaration, Enforcement.theme).
+        XCTAssertEqual(declaration.category, .faith)
         XCTAssertEqual(declaration.contentType, .journal)
     }
     
