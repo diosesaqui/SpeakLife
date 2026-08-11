@@ -35,6 +35,7 @@ final class StreakDisplayTests: XCTestCase {
 
         UserDefaults.standard.removeObject(forKey: "dailyChecklist")
         UserDefaults.standard.removeObject(forKey: "streakStats")
+        purgeSyncedTaskCompletions()
 
         viewModel = EnhancedStreakViewModel()
     }
@@ -48,6 +49,7 @@ final class StreakDisplayTests: XCTestCase {
         // Clean up UserDefaults
         UserDefaults.standard.removeObject(forKey: "dailyChecklist")
         UserDefaults.standard.removeObject(forKey: "streakStats")
+        purgeSyncedTaskCompletions()
 
         super.tearDown()
     }
@@ -145,8 +147,7 @@ final class StreakDisplayTests: XCTestCase {
     
     func testProgressRingConsistency() {
         // Given: Partially completed checklist
-        let firstTask = viewModel.todayChecklist.tasks.first!
-        viewModel.completeTask(taskId: firstTask.id)
+        viewModel.completeTask(taskId: firstCompletableTask.id)
         
         // Then: Progress should match completion ratio
         let expectedProgress = 1.0 / Double(viewModel.todayChecklist.tasks.count)
@@ -157,10 +158,13 @@ final class StreakDisplayTests: XCTestCase {
     }
     
     func testTaskCountDisplayConsistency() {
-        // Given: Complete some tasks
-        let tasksToComplete = min(2, viewModel.todayChecklist.tasks.count)
+        // Given: Complete some tasks that can actually be ticked
+        let completable = viewModel.todayChecklist.tasks.filter {
+            $0.id != TaskLibrary.personalDeclarationTaskId && $0.id != TaskLibrary.guardTaskId
+        }
+        let tasksToComplete = min(2, completable.count)
         for i in 0..<tasksToComplete {
-            viewModel.completeTask(taskId: viewModel.todayChecklist.tasks[i].id)
+            viewModel.completeTask(taskId: completable[i].id)
         }
         
         // Then: Count displays should be consistent
@@ -321,6 +325,62 @@ final class StreakDisplayTests: XCTestCase {
             viewModel.completeTask(taskId: task.id)
         }
     }
+
+    /// The first row a user can actually tick.
+    ///
+    /// Not `tasks.first`. `completeTask` refuses the personal-declaration and
+    /// Guarding rows by design — both are derived from elsewhere, so ticking
+    /// them by hand would record ground the user never took — and the
+    /// declaration row is inserted at index 0 when the user carries one. So
+    /// targeting position silently no-ops, and the test reads as "completing a
+    /// task does nothing".
+    ///
+    /// Production already learned this: `autoCompleteFirstTaskIfDemoCompleted`
+    /// carries the note "The Burst by id, not whatever happens to be first."
+    /// These tests had not.
+
+    /// Clears today's synced task-completion rows.
+    ///
+    /// `completeTask` mirrors every bonus task to `ProgressSyncStore.shared` as
+    /// a `taskCompletion` event keyed `<dayStamp>|<taskId>`, and that store is
+    /// backed by the app's real on-disk SQLite store on the simulator — not by
+    /// anything this suite owns. The rows outlive the test, the suite, and the
+    /// run, so a day's worth of test runs piles up completions stamped with
+    /// today's date. A fresh view model then replays them onto today's
+    /// checklist through `applySyncedTaskCompletions`, and a test that
+    /// completed exactly one task counts three.
+    ///
+    /// Run before the view model is built, so it cannot read what earlier runs
+    /// left, and again on the way out so the next suite starts clean.
+    private func purgeSyncedTaskCompletions() {
+        let store = ProgressSyncStore.shared
+
+        let fetched = expectation(description: "read taskCompletion events")
+        var keys: [String] = []
+        store.events(ofKind: ProgressSyncStore.Kind.taskCompletion) { events in
+            keys = events.map(\.key)
+            fetched.fulfill()
+        }
+        wait(for: [fetched], timeout: 5)
+
+        guard !keys.isEmpty else { return }
+        let deleted = expectation(description: "delete taskCompletion events")
+        deleted.expectedFulfillmentCount = keys.count
+        for key in keys {
+            store.deleteEvent(kind: ProgressSyncStore.Kind.taskCompletion, key: key) { _ in
+                deleted.fulfill()
+            }
+        }
+        wait(for: [deleted], timeout: 10)
+    }
+
+    private var firstCompletableTask: DailyTask {
+        // The Burst is on every checklist, so this always finds something.
+        viewModel.todayChecklist.tasks.first {
+            $0.id != TaskLibrary.personalDeclarationTaskId && $0.id != TaskLibrary.guardTaskId
+        }!
+    }
+
     
     private func getNextMilestone(_ current: Int) -> Int {
         let milestones = [7, 14, 30, 50, 100, 200, 365]
