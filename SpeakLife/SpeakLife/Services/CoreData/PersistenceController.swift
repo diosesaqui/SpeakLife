@@ -78,8 +78,39 @@ final class PersistenceController {
     /// is left off.
     static var isRunningTests: Bool { AppEnvironment.isRunningTests }
 
+    /// Loaded from the bundle exactly once, and shared by every container.
+    ///
+    /// `NSPersistentCloudKitContainer(name:)` reads the model off disk on every
+    /// construction and hands back a *different* `NSManagedObjectModel` each
+    /// time. The app builds one container, so in production this is invisible.
+    /// The test suite builds a fresh `PersistenceController` in almost every
+    /// `setUp`, and from the second one on, the same `NSManagedObject`
+    /// subclasses are registered against several identical-but-distinct models.
+    /// Core Data then cannot tell which entity a subclass refers to:
+    ///
+    ///   +[JournalEntry entity] Failed to find a unique match for an
+    ///   NSEntityDescription to a managed object subclass
+    ///
+    /// It logs that and carries on with an arbitrary choice, which is how a
+    /// suite ends up failing in scattered, unrelated-looking ways and
+    /// occasionally taking the process down.
+    ///
+    /// One model instance for the whole process removes the ambiguity at its
+    /// source, and costs nothing in the app.
+    static let managedObjectModel: NSManagedObjectModel = {
+        // Bundle(for:) rather than .main so this resolves to the app bundle
+        // whether the code is running the app or hosting a test bundle.
+        guard let url = Bundle(for: PersistenceController.self)
+                .url(forResource: "SpeakLife", withExtension: "momd"),
+              let model = NSManagedObjectModel(contentsOf: url) else {
+            fatalError("SpeakLife.momd is missing from the bundle")
+        }
+        return model
+    }()
+
     init(inMemory: Bool = false) {
-        container = NSPersistentCloudKitContainer(name: "SpeakLife")
+        container = NSPersistentCloudKitContainer(name: "SpeakLife",
+                                                  managedObjectModel: Self.managedObjectModel)
         
         // Detect which CloudKit environment we're in
         #if DEBUG
