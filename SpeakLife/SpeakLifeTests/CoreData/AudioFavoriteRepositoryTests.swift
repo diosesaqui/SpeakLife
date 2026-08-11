@@ -62,7 +62,7 @@ final class AudioFavoriteRepositoryTests: XCTestCase {
     func testCreateFromAudioDeclaration() async throws {
         // Given
         let audio = AudioDeclaration(
-            id: "audio-123",
+            id: "audio-123.mp3",
             title: "Declaration Title",
             subtitle: "Subtitle",
             duration: "5:45",
@@ -77,7 +77,7 @@ final class AudioFavoriteRepositoryTests: XCTestCase {
         let entry = try await repository.createFromAudioDeclaration(audio)
         
         // Then
-        XCTAssertEqual(entry.audioId, "audio-123")
+        XCTAssertEqual(entry.audioId, "audio-123.mp3")
         XCTAssertEqual(entry.title, "Declaration Title")
         XCTAssertEqual(entry.subtitle, "Subtitle")
         XCTAssertEqual(entry.isPremium, true)

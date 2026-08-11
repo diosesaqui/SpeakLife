@@ -62,7 +62,7 @@ final class FavoritesSyncIntegrationTests: XCTestCase {
     func testCompleteAudioFavoriteSyncFlow() async throws {
         // Given
         let audio = AudioDeclaration(
-            id: "sync-test-1",
+            id: "sync-test-1.mp3",
             title: "Sync Test Audio",
             subtitle: "Testing sync",
             duration: "5:30",
@@ -82,7 +82,7 @@ final class FavoritesSyncIntegrationTests: XCTestCase {
         // Then - Verify it's persisted in Core Data
         let fetchedEntries = try await audioRepository.fetch(predicate: nil)
         XCTAssertEqual(fetchedEntries.count, 1)
-        XCTAssertEqual(fetchedEntries.first?.audioId, "sync-test-1")
+        XCTAssertEqual(fetchedEntries.first?.audioId, "sync-test-1.mp3")
         
         // Verify manager recognizes it as favorite
         XCTAssertTrue(audioManager.isFavorite(audio))
@@ -129,7 +129,7 @@ final class FavoritesSyncIntegrationTests: XCTestCase {
         // Given - Multiple favorites to add concurrently
         let audioItems = (1...10).map { i in
             AudioDeclaration(
-                id: "concurrent-\(i)",
+                id: "concurrent-\(i).mp3",
                 title: "Audio \(i)",
                 subtitle: "Sub \(i)",
                 duration: "\(i):00",
@@ -171,7 +171,7 @@ final class FavoritesSyncIntegrationTests: XCTestCase {
         
         let legacyFavorites = [
             AudioDeclaration(
-                id: "migrate-1",
+                id: "migrate-1.mp3",
                 title: "Legacy 1",
                 subtitle: "Legacy Sub 1",
                 duration: "3:00",
@@ -180,7 +180,7 @@ final class FavoritesSyncIntegrationTests: XCTestCase {
                 tag: "faith"
             ),
             AudioDeclaration(
-                id: "migrate-2",
+                id: "migrate-2.mp3",
                 title: "Legacy 2",
                 subtitle: "Legacy Sub 2",
                 duration: "4:00",
@@ -235,7 +235,7 @@ final class FavoritesSyncIntegrationTests: XCTestCase {
         
         // When - Add favorite through repository directly
         let audio = AudioDeclaration(
-            id: "reactive-1",
+            id: "reactive-1.mp3",
             title: "Reactive Test",
             subtitle: "Sub",
             duration: "2:00",
@@ -257,7 +257,7 @@ final class FavoritesSyncIntegrationTests: XCTestCase {
     func testDuplicateFavoriteHandling() async throws {
         // Given
         let audio = AudioDeclaration(
-            id: "duplicate-test",
+            id: "duplicate-test.mp3",
             title: "Duplicate Test",
             subtitle: "Sub",
             duration: "1:00",
@@ -279,7 +279,7 @@ final class FavoritesSyncIntegrationTests: XCTestCase {
         
         // Then - Should only have one entry
         let entries = try await audioRepository.fetch(
-            predicate: NSPredicate(format: "audioId == %@", "duplicate-test")
+            predicate: NSPredicate(format: "audioId == %@", "duplicate-test.mp3")
         )
         XCTAssertLessThanOrEqual(entries.count, 1)
     }
@@ -292,7 +292,7 @@ final class FavoritesSyncIntegrationTests: XCTestCase {
                 // Create many favorites
                 for i in 1...50 {
                     let audio = AudioDeclaration(
-                        id: "perf-\(i)",
+                        id: "perf-\(i).mp3",
                         title: "Performance \(i)",
                         subtitle: "Sub",
                         duration: "\(i):00",
@@ -316,7 +316,7 @@ final class FavoritesSyncIntegrationTests: XCTestCase {
     func testErrorRecoveryWithRetry() async throws {
         // Given - Audio that will be toggled with retry
         let audio = AudioDeclaration(
-            id: "retry-test",
+            id: "retry-test.mp3",
             title: "Retry Test",
             subtitle: "Sub",
             duration: "1:00",
@@ -342,7 +342,7 @@ final class FavoritesSyncIntegrationTests: XCTestCase {
         // Given - Initial set of favorites
         let initialAudio = [
             AudioDeclaration(
-                id: "integrity-1",
+                id: "integrity-1.mp3",
                 title: "Integrity 1",
                 subtitle: "Sub 1",
                 duration: "1:00",
@@ -351,7 +351,7 @@ final class FavoritesSyncIntegrationTests: XCTestCase {
                 tag: "faith"
             ),
             AudioDeclaration(
-                id: "integrity-2",
+                id: "integrity-2.mp3",
                 title: "Integrity 2",
                 subtitle: "Sub 2",
                 duration: "2:00",
@@ -374,7 +374,7 @@ final class FavoritesSyncIntegrationTests: XCTestCase {
         
         // Add new one
         let newAudio = AudioDeclaration(
-            id: "integrity-3",
+            id: "integrity-3.mp3",
             title: "Integrity 3",
             subtitle: "Sub 3",
             duration: "3:00",

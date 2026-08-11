@@ -142,7 +142,7 @@ final class AudioFavoritesManagerTests: XCTestCase {
     func testToggleFavoriteAdd() async throws {
         // Given
         let audio = AudioDeclaration(
-            id: "audio-1",
+            id: "audio-1.mp3",
             title: "Test Audio",
             subtitle: "Subtitle",
             duration: "5:00",
@@ -165,7 +165,7 @@ final class AudioFavoritesManagerTests: XCTestCase {
     func testToggleFavoriteRemove() async throws {
         // Given
         let audio = AudioDeclaration(
-            id: "audio-2",
+            id: "audio-2.mp3",
             title: "Test Audio 2",
             subtitle: "Subtitle 2",
             duration: "3:00",
@@ -191,7 +191,7 @@ final class AudioFavoritesManagerTests: XCTestCase {
     func testToggleFavoriteWithRetry() async throws {
         // Given
         let audio = AudioDeclaration(
-            id: "retry-test",
+            id: "retry-test.mp3",
             title: "Retry Test",
             subtitle: "Retry",
             duration: "1:00",
@@ -219,7 +219,7 @@ final class AudioFavoritesManagerTests: XCTestCase {
     func testIsFavorite() async throws {
         // Given
         let audio1 = AudioDeclaration(
-            id: "fav-1",
+            id: "fav-1.mp3",
             title: "Favorite 1",
             subtitle: "Sub 1",
             duration: "2:00",
@@ -229,7 +229,7 @@ final class AudioFavoritesManagerTests: XCTestCase {
         )
         
         let audio2 = AudioDeclaration(
-            id: "fav-2",
+            id: "fav-2.mp3",
             title: "Favorite 2",
             subtitle: "Sub 2",
             duration: "3:00",
@@ -250,7 +250,7 @@ final class AudioFavoritesManagerTests: XCTestCase {
     func testIsFavoriteAsync() async throws {
         // Given
         let audio = AudioDeclaration(
-            id: "async-fav",
+            id: "async-fav.mp3",
             title: "Async Favorite",
             subtitle: "Async",
             duration: "4:00",
@@ -276,7 +276,7 @@ final class AudioFavoritesManagerTests: XCTestCase {
         let now = Date()
         for i in 0..<3 {
             let audio = AudioDeclaration(
-                id: "date-\(i)",
+                id: "date-\(i).mp3",
                 title: "Audio \(i)",
                 subtitle: "Sub \(i)",
                 duration: "\(i):00",
@@ -306,7 +306,7 @@ final class AudioFavoritesManagerTests: XCTestCase {
         let titles = ["Zebra", "Apple", "Mango"]
         for title in titles {
             let audio = AudioDeclaration(
-                id: "alpha-\(title)",
+                id: "alpha-\(title).mp3",
                 title: title,
                 subtitle: "Sub",
                 duration: "1:00",
@@ -336,7 +336,7 @@ final class AudioFavoritesManagerTests: XCTestCase {
         let tags = ["faith", "prayer", "faith", "worship"]
         for (i, tag) in tags.enumerated() {
             let audio = AudioDeclaration(
-                id: "tag-\(i)",
+                id: "tag-\(i).mp3",
                 title: "Audio \(i)",
                 subtitle: "Sub",
                 duration: "1:00",
@@ -362,7 +362,7 @@ final class AudioFavoritesManagerTests: XCTestCase {
     func testRemoveFavoriteById() async throws {
         // Given
         let audio = AudioDeclaration(
-            id: "remove-1",
+            id: "remove-1.mp3",
             title: "To Remove",
             subtitle: "Sub",
             duration: "1:00",
@@ -376,7 +376,7 @@ final class AudioFavoritesManagerTests: XCTestCase {
         XCTAssertTrue(manager.isFavorite(audio))
         
         // When
-        manager.removeFavorite(withId: "remove-1")
+        manager.removeFavorite(withId: "remove-1.mp3")
         try await Task.sleep(nanoseconds: 100_000_000)
         
         // Then
@@ -388,7 +388,7 @@ final class AudioFavoritesManagerTests: XCTestCase {
         // Given
         for i in 0..<5 {
             let audio = AudioDeclaration(
-                id: "batch-\(i)",
+                id: "batch-\(i).mp3",
                 title: "Audio \(i)",
                 subtitle: "Sub",
                 duration: "1:00",
@@ -415,7 +415,7 @@ final class AudioFavoritesManagerTests: XCTestCase {
         // Given
         for i in 0..<3 {
             let audio = AudioDeclaration(
-                id: "clear-\(i)",
+                id: "clear-\(i).mp3",
                 title: "Audio \(i)",
                 subtitle: "Sub",
                 duration: "1:00",
@@ -442,7 +442,7 @@ final class AudioFavoritesManagerTests: XCTestCase {
     func testExportFavorites() async throws {
         // Given
         let audio = AudioDeclaration(
-            id: "export-1",
+            id: "export-1.mp3",
             title: "Export Test",
             subtitle: "Export",
             duration: "2:30",
@@ -465,14 +465,14 @@ final class AudioFavoritesManagerTests: XCTestCase {
             decoder.dateDecodingStrategy = .iso8601
             let decoded = try decoder.decode([AudioDeclaration].self, from: data)
             XCTAssertEqual(decoded.count, 1)
-            XCTAssertEqual(decoded.first?.id, "export-1")
+            XCTAssertEqual(decoded.first?.id, "export-1.mp3")
         }
     }
     
     func testImportFavoritesMerge() async throws {
         // Given - Add one existing favorite
         let existing = AudioDeclaration(
-            id: "existing-1",
+            id: "existing-1.mp3",
             title: "Existing",
             subtitle: "Sub",
             duration: "1:00",
@@ -487,7 +487,7 @@ final class AudioFavoritesManagerTests: XCTestCase {
         // Create import data with new favorites
         let toImport = [
             AudioDeclaration(
-                id: "import-1",
+                id: "import-1.mp3",
                 title: "Import 1",
                 subtitle: "Sub",
                 duration: "2:00",
@@ -496,7 +496,7 @@ final class AudioFavoritesManagerTests: XCTestCase {
                 tag: "prayer"
             ),
             AudioDeclaration(
-                id: "import-2",
+                id: "import-2.mp3",
                 title: "Import 2",
                 subtitle: "Sub",
                 duration: "3:00",
@@ -523,7 +523,7 @@ final class AudioFavoritesManagerTests: XCTestCase {
         // Given - Add existing favorites
         for i in 0..<2 {
             let audio = AudioDeclaration(
-                id: "old-\(i)",
+                id: "old-\(i).mp3",
                 title: "Old \(i)",
                 subtitle: "Sub",
                 duration: "1:00",
@@ -540,7 +540,7 @@ final class AudioFavoritesManagerTests: XCTestCase {
         // Create import data
         let toImport = [
             AudioDeclaration(
-                id: "new-1",
+                id: "new-1.mp3",
                 title: "New 1",
                 subtitle: "Sub",
                 duration: "2:00",
@@ -560,7 +560,7 @@ final class AudioFavoritesManagerTests: XCTestCase {
         // Then
         XCTAssertTrue(success)
         XCTAssertEqual(manager.favorites.count, 1)
-        XCTAssertEqual(manager.favorites.first?.id, "new-1")
+        XCTAssertEqual(manager.favorites.first?.id, "new-1.mp3")
     }
     
     // MARK: - Error Handling Tests
@@ -569,7 +569,7 @@ final class AudioFavoritesManagerTests: XCTestCase {
         // Given
         mockRepository.shouldThrowError = true
         let audio = AudioDeclaration(
-            id: "error-test",
+            id: "error-test.mp3",
             title: "Error Test",
             subtitle: "Error",
             duration: "1:00",
@@ -600,7 +600,7 @@ final class AudioFavoritesManagerTests: XCTestCase {
         for (tag, count) in audioItems {
             for i in 0..<count {
                 let audio = AudioDeclaration(
-                    id: "\(tag)-\(i)",
+                    id: "\(tag)-\(i).mp3",
                     title: "\(tag) \(i)",
                     subtitle: "Sub",
                     duration: "1:00",
