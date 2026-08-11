@@ -326,48 +326,53 @@ final class AudioFavoriteRepositoryTests: XCTestCase {
         XCTAssertNil(audioDeclaration.episode)
     }
     
-    func testUniqueConstraintOnAudioId() async throws {
-        // Given
-        let entry1 = AudioFavoriteEntry(context: context)
-        entry1.audioId = "duplicate-id"
-        entry1.title = "First"
-        try await repository.create(entry1)
-        
-        // When - Create another with same audioId
-        let entry2 = AudioFavoriteEntry(context: context)
-        entry2.audioId = "duplicate-id"
-        entry2.title = "Second"
-        
-        // Then - Should handle constraint violation
-        // Note: Core Data unique constraints may merge or reject depending on configuration
-        do {
-            try await repository.create(entry2)
-            // If it succeeds, verify only one exists
-            let results = try await repository.fetch(predicate: NSPredicate(format: "audioId == %@", "duplicate-id"))
-            XCTAssertLessThanOrEqual(results.count, 1)
-        } catch {
-            // Constraint violation is acceptable
-            XCTAssertNotNil(error)
-        }
+    /// Where the one-row-per-audio guarantee actually lives.
+    ///
+    /// This used to call `create` twice and expect Core Data to collapse the
+    /// rows, and it failed with 2, because `AudioFavoriteEntry` has no
+    /// uniqueness constraint and cannot have one: a store with a constraint on
+    /// it will not load under CloudKit mirroring, which this model uses
+    /// throughout. `create` is the raw write and duplicates by design.
+    ///
+    /// `createFromAudioDeclaration` is the path every caller in the app takes,
+    /// and it is where the dedup is. Assert it there, so the check covers the
+    /// code that would actually regress.
+    func testCreatingTheSameAudioTwiceReturnsTheSameRow() async throws {
+        let audio = AudioDeclaration(
+            id: "duplicate-id.mp3",
+            title: "First",
+            subtitle: "Sub",
+            duration: "1:00",
+            imageUrl: "",
+            isPremium: false,
+            tag: "faith"
+        )
+
+        let first = try await repository.createFromAudioDeclaration(audio)
+        let second = try await repository.createFromAudioDeclaration(audio)
+
+        XCTAssertEqual(first.objectID, second.objectID, "a second row was created")
+
+        let results = try await repository.fetch(
+            predicate: NSPredicate(format: "audioId == %@", "duplicate-id.mp3")
+        )
+        XCTAssertEqual(results.count, 1)
     }
     
-    // MARK: - Performance Tests
-    
-    func testBatchFetchPerformance() async throws {
-        // Given - Create many entries
+    // MARK: - Batch Fetch
+
+    /// Was `measure { Task { … } }`, which measured nothing: the block returned
+    /// before the first `await` resumed, and the detached tasks it left behind
+    /// woke after `tearDown` had already nil'd `repository`.
+    func testBatchFetchReturnsEveryEntry() async throws {
         for i in 1...100 {
             let entry = AudioFavoriteEntry(context: context)
-            entry.audioId = "perf-\(i)"
-            entry.title = "Performance Test \(i)"
+            entry.audioId = "batch-\(i).mp3"
+            entry.title = "Batch \(i)"
             try await repository.create(entry)
         }
-        
-        // When & Then
-        measure {
-            Task {
-                let results = try? await repository.fetch(predicate: nil)
-                XCTAssertEqual(results?.count, 100)
-            }
-        }
+
+        let results = try await repository.fetch(predicate: nil)
+        XCTAssertEqual(results.count, 100)
     }
 }

@@ -122,6 +122,19 @@ final class PersistenceController {
         if inMemory {
             container.persistentStoreDescriptions.forEach { storeDescription in
                 storeDescription.url = URL(fileURLWithPath: "/dev/null")
+
+                // Not redundant. `NSPersistentCloudKitContainer` fills the
+                // default description's `cloudKitContainerOptions` in from the
+                // app's iCloud entitlement before this code runs, so an
+                // in-memory store that never asked for CloudKit gets mirroring
+                // anyway. The suite's own log said so:
+                //
+                //   Observing store: <NSSQLCore> (URL: file:///dev/null)
+                //   CloudKit enabled: true
+                //
+                // A store pointed at /dev/null has nothing to mirror, and the
+                // setup request it enqueues is pure latency in every test.
+                storeDescription.cloudKitContainerOptions = nil
             }
         } else {
             // Create a store description if none exists
@@ -146,6 +159,10 @@ final class PersistenceController {
             
             // Set CloudKit container options with optimizations
             if Self.isRunningTests {
+                // Clearing, not just declining to set: the container seeds this
+                // from the iCloud entitlement on its own, so leaving it alone
+                // leaves mirroring on.
+                description.cloudKitContainerOptions = nil
                 print("🧪 Running under XCTest — CloudKit mirroring disabled")
             } else {
                 let options = NSPersistentCloudKitContainerOptions(containerIdentifier: "iCloud.com.franchiz.speaklife")
@@ -537,6 +554,23 @@ final class PersistenceController {
     }
     
     // MARK: - Manual Sync Request
+
+    /// The requester a repository uses when nobody injected one.
+    ///
+    /// Repositories are handed the context they should write to, and then used
+    /// to reach past it to `PersistenceController.shared` to nudge sync. That
+    /// one line undid the injection: a test writing to its own in-memory store
+    /// still *built the app's real SQLite stack* on the first save, started
+    /// CloudKit mirroring on it, and left it running for the rest of the
+    /// process. Reading `shared` is what constructs it, so a guard inside
+    /// `requestImmediateSync()` would already be too late.
+    ///
+    /// Under XCTest this hands back a requester that does nothing and never
+    /// touches `shared`.
+    static var defaultSyncRequester: ImmediateSyncRequesting {
+        isRunningTests ? NoOpSyncRequester() : shared
+    }
+
     func requestImmediateSync() {
         print("Manual sync requested")
         
@@ -601,4 +635,22 @@ final class PersistenceController {
         let changes: [AnyHashable: Any] = [NSDeletedObjectsKey: result?.result as? [NSManagedObjectID] ?? []]
         NSManagedObjectContext.mergeChanges(fromRemoteContextSave: changes, into: [container.viewContext])
     }
+}
+
+// MARK: - Immediate Sync
+
+/// Asks the persistent stack to push whatever is pending up to CloudKit now.
+///
+/// Exists so a repository can nudge sync without naming
+/// `PersistenceController.shared`. A repository is given the context it writes
+/// to; the thing it pushes through should arrive the same way.
+protocol ImmediateSyncRequesting {
+    func requestImmediateSync()
+}
+
+extension PersistenceController: ImmediateSyncRequesting {}
+
+/// Does nothing, which is exactly right for a store with no CloudKit behind it.
+struct NoOpSyncRequester: ImmediateSyncRequesting {
+    func requestImmediateSync() {}
 }

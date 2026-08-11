@@ -318,69 +318,65 @@ final class DeclarationFavoriteRepositoryTests: XCTestCase {
         XCTAssertNil(declaration.bibleVerseText)
     }
     
-    func testUniqueConstraintOnDeclarationId() async throws {
-        // Given
-        let entry1 = DeclarationFavoriteEntry(context: context)
-        entry1.declarationId = "duplicate-decl-id"
-        entry1.text = "First"
-        try await repository.create(entry1)
-        
-        // When - Create another with same declarationId
-        let entry2 = DeclarationFavoriteEntry(context: context)
-        entry2.declarationId = "duplicate-decl-id"
-        entry2.text = "Second"
-        
-        // Then - Should handle constraint violation
-        do {
-            try await repository.create(entry2)
-            // If it succeeds, verify only one exists
-            let results = try await repository.fetch(
-                predicate: NSPredicate(format: "declarationId == %@", "duplicate-decl-id")
-            )
-            XCTAssertLessThanOrEqual(results.count, 1)
-        } catch {
-            // Constraint violation is acceptable
-            XCTAssertNotNil(error)
-        }
+    /// Where the one-row-per-declaration guarantee actually lives.
+    ///
+    /// This used to call `create` twice and expect Core Data to collapse the
+    /// rows. `DeclarationFavoriteEntry` has no uniqueness constraint and cannot
+    /// have one: a store carrying a constraint will not load under CloudKit
+    /// mirroring, which this model uses throughout. `create` is the raw write
+    /// and duplicates by design.
+    ///
+    /// `createFromDeclaration` is the path the app takes, and it is where the
+    /// dedup is.
+    func testFavoritingTheSameDeclarationTwiceReturnsTheSameRow() async throws {
+        let declaration = Declaration(
+            text: "I am rooted and unshakeable in Christ.",
+            book: "Colossians 2:7",
+            category: .faith
+        )
+
+        let first = try await repository.createFromDeclaration(declaration)
+        let second = try await repository.createFromDeclaration(declaration)
+
+        XCTAssertEqual(first.objectID, second.objectID, "a second row was created")
+
+        let results = try await repository.fetch(
+            predicate: NSPredicate(format: "declarationId == %@", declaration.id)
+        )
+        XCTAssertEqual(results.count, 1)
     }
     
-    // MARK: - Performance Tests
-    
-    func testBatchOperationsPerformance() async throws {
-        // Given - Create many entries
-        measure {
-            Task {
-                for i in 1...50 {
-                    let entry = DeclarationFavoriteEntry(context: context)
-                    entry.declarationId = "perf-\(i)"
-                    entry.text = "Performance test \(i)"
-                    entry.category = i % 3 == 0 ? "faith" : i % 3 == 1 ? "prayer" : "worship"
-                    try? await repository.create(entry)
-                }
-                
-                // Fetch and verify
-                let results = try? await repository.fetch(predicate: nil)
-                XCTAssertEqual(results?.count, 50)
-            }
+    // MARK: - Batch Operations
+
+    /// Both of these were `measure { Task { … } }`, which measures the cost of
+    /// spawning a task and nothing else: the block returns before the first
+    /// `await` resumes. The ten detached tasks `measure` left behind then woke
+    /// after `tearDown` had nil'd the properties they captured. Awaiting the
+    /// work is what the tests were actually for.
+    func testBatchWritesAllLand() async throws {
+        for i in 1...50 {
+            let entry = DeclarationFavoriteEntry(context: context)
+            entry.declarationId = "batch-\(i)"
+            entry.text = "Batch \(i)"
+            entry.category = i % 3 == 0 ? "faith" : i % 3 == 1 ? "prayer" : "worship"
+            try await repository.create(entry)
         }
+
+        let results = try await repository.fetch(predicate: nil)
+        XCTAssertEqual(results.count, 50)
     }
-    
-    func testFetchByCategoryPerformance() async throws {
-        // Given - Setup data
+
+    func testFetchByCategoryNarrowsToThatCategory() async throws {
         for i in 1...100 {
             let entry = DeclarationFavoriteEntry(context: context)
-            entry.declarationId = "perf-cat-\(i)"
+            entry.declarationId = "cat-\(i)"
             entry.text = "Text \(i)"
             entry.category = i % 5 == 0 ? "faith" : "other"
             try await repository.create(entry)
         }
-        
-        // When & Then
-        measure {
-            Task {
-                let results = try? await repository.fetchByCategory("faith")
-                XCTAssertEqual(results?.count, 20) // 100/5 = 20 faith entries
-            }
-        }
+
+        let results = try await repository.fetchByCategory("faith")
+        XCTAssertEqual(results.count, 20) // every fifth of 100
+        XCTAssertTrue(results.allSatisfy { $0.category == "faith" })
     }
 }

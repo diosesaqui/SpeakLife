@@ -284,31 +284,40 @@ final class FavoritesSyncIntegrationTests: XCTestCase {
         XCTAssertLessThanOrEqual(entries.count, 1)
     }
     
-    // MARK: - Performance Tests
-    
-    func testLargeScaleSyncPerformance() async throws {
-        measure {
-            Task {
-                // Create many favorites
-                for i in 1...50 {
-                    let audio = AudioDeclaration(
-                        id: "perf-\(i).mp3",
-                        title: "Performance \(i)",
-                        subtitle: "Sub",
-                        duration: "\(i):00",
-                        imageUrl: "",
-                        isPremium: false,
-                        tag: "faith"
-                    )
-                    
-                    _ = try? await audioRepository.createFromAudioDeclaration(audio)
-                }
-                
-                // Fetch all
-                let entries = try? await audioRepository.fetch(predicate: nil)
-                XCTAssertEqual(entries?.count, 50)
-            }
+    // MARK: - Bulk Writes
+
+    /// `measure { Task { … } }` is a trap, and this test used to be one.
+    ///
+    /// `measure` takes a synchronous block. Spawning an unstructured `Task`
+    /// inside it means the block returns before the first `await` resumes, so
+    /// the timing measured nothing and the assertion inside never ran under the
+    /// test's watch. Worse, `measure` runs the block ten times, so ten detached
+    /// tasks outlived the test, and the first one to wake after `tearDown` read
+    /// `audioRepository` — an implicitly unwrapped optional that had just been
+    /// set to nil — and took the whole test process down:
+    ///
+    ///   FavoritesSyncIntegrationTests.swift:304: Fatal error: Unexpectedly
+    ///   found nil while implicitly unwrapping an Optional value
+    ///
+    /// Awaiting the work is what the test was for. Fifty writes through the
+    /// repository, then one fetch that has to see all fifty.
+    func testBulkWritesAllLand() async throws {
+        for i in 1...50 {
+            let audio = AudioDeclaration(
+                id: "bulk-\(i).mp3",
+                title: "Bulk \(i)",
+                subtitle: "Sub",
+                duration: "\(i):00",
+                imageUrl: "",
+                isPremium: false,
+                tag: "faith"
+            )
+
+            _ = try await audioRepository.createFromAudioDeclaration(audio)
         }
+
+        let entries = try await audioRepository.fetch(predicate: nil)
+        XCTAssertEqual(entries.count, 50)
     }
     
     // MARK: - Error Recovery Tests

@@ -13,27 +13,42 @@ final class StreakDisplayTests: XCTestCase {
     
     var viewModel: EnhancedStreakViewModel!
     var cancellables: Set<AnyCancellable>!
+    var savedCompletions: [BurstCompletion] = []
     let calendar = Calendar.current
-    
+
     override func setUp() {
         super.setUp()
         cancellables = Set<AnyCancellable>()
-        
-        // Clear any existing UserDefaults data to ensure clean state
+
+        // Clearing UserDefaults is not enough on its own.
+        //
+        // `EnhancedStreakViewModel.init` calls `reconcileWithSyncedProgress`,
+        // which raises `currentStreak` to `BurstCompletionTracker.shared`'s if
+        // that one is higher. The tracker is a process-wide singleton holding
+        // its history in memory, so whatever an earlier suite left in it walks
+        // straight into these tests: a test expecting a streak of 1 sees 2, and
+        // the celebration asserts against a number this suite never set. Empty
+        // it here and hand it back in tearDown, the same way StreakFreezeTests
+        // and StreakBreakNotificationTests do.
+        savedCompletions = BurstCompletionTracker.shared.completions
+        BurstCompletionTracker.shared.completions = []
+
         UserDefaults.standard.removeObject(forKey: "dailyChecklist")
         UserDefaults.standard.removeObject(forKey: "streakStats")
-        
+
         viewModel = EnhancedStreakViewModel()
     }
-    
+
     override func tearDown() {
         cancellables = nil
         viewModel = nil
-        
+
+        BurstCompletionTracker.shared.completions = savedCompletions
+
         // Clean up UserDefaults
         UserDefaults.standard.removeObject(forKey: "dailyChecklist")
         UserDefaults.standard.removeObject(forKey: "streakStats")
-        
+
         super.tearDown()
     }
     
