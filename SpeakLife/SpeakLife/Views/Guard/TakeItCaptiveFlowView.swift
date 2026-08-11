@@ -127,7 +127,10 @@ struct TakeItCaptiveFlowView: View {
                 // This is the way back to retype it, or to name a different
                 // thought than the one the bank offered.
                 onEscapeHatch: { withAnimation(DS.Motion.smooth) { stage = .ask } },
-                onClose: { dismiss() }
+                onClose: { dismiss() },
+                // They wrote this sentence themselves, so the screen does not
+                // hold them on it while they read it back.
+                isOwnWords: activeSource == .escapeHatch
             )
             .transition(.opacity)
 
