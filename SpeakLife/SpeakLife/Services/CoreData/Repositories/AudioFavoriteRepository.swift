@@ -83,7 +83,18 @@ final class AudioFavoriteRepository: AudioFavoriteRepositoryProtocol {
         try await context.perform {
             let request = AudioFavoriteEntry.fetchRequest()
             request.predicate = predicate
-            request.sortDescriptors = [NSSortDescriptor(keyPath: \AudioFavoriteEntry.createdAt, ascending: false)]
+            request.sortDescriptors = [
+                NSSortDescriptor(keyPath: \AudioFavoriteEntry.createdAt, ascending: false),
+                // Tiebreak, so the order is total rather than merely mostly
+                // decided. `createdAt` is not unique — a migration importing a
+                // legacy file writes its rows in one tight loop — and this
+                // request is batched, so SQLite pages through the sort order
+                // twenty rows at a time. Ties make the page boundary ambiguous,
+                // and a row sitting on one can be paged over: the suite saw a
+                // fetch of 100 saved favorites come back with 99, and only
+                // sometimes.
+                NSSortDescriptor(keyPath: \AudioFavoriteEntry.audioId, ascending: true)
+            ]
             
             // Add batch fetching for better performance
             request.fetchBatchSize = 20
@@ -131,7 +142,18 @@ final class AudioFavoriteRepository: AudioFavoriteRepositoryProtocol {
     // MARK: - Observe All
     func observeAll() -> AnyPublisher<[AudioFavoriteEntry], Never> {
         let request = AudioFavoriteEntry.fetchRequest()
-        request.sortDescriptors = [NSSortDescriptor(keyPath: \AudioFavoriteEntry.createdAt, ascending: false)]
+        request.sortDescriptors = [
+                NSSortDescriptor(keyPath: \AudioFavoriteEntry.createdAt, ascending: false),
+                // Tiebreak, so the order is total rather than merely mostly
+                // decided. `createdAt` is not unique — a migration importing a
+                // legacy file writes its rows in one tight loop — and this
+                // request is batched, so SQLite pages through the sort order
+                // twenty rows at a time. Ties make the page boundary ambiguous,
+                // and a row sitting on one can be paged over: the suite saw a
+                // fetch of 100 saved favorites come back with 99, and only
+                // sometimes.
+                NSSortDescriptor(keyPath: \AudioFavoriteEntry.audioId, ascending: true)
+            ]
         
         let initialResults = (try? context.fetch(request)) ?? []
         

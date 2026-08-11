@@ -79,7 +79,11 @@ final class DeclarationFavoriteRepository: DeclarationFavoriteRepositoryProtocol
         try await context.perform {
             let request = DeclarationFavoriteEntry.fetchRequest()
             request.predicate = predicate
-            request.sortDescriptors = [NSSortDescriptor(keyPath: \DeclarationFavoriteEntry.createdAt, ascending: false)]
+            request.sortDescriptors = [
+                NSSortDescriptor(keyPath: \DeclarationFavoriteEntry.createdAt, ascending: false),
+                // Total order, same reason as AudioFavoriteRepository.
+                NSSortDescriptor(keyPath: \DeclarationFavoriteEntry.declarationId, ascending: true)
+            ]
             let results = try self.context.fetch(request)
             return results
         }
@@ -121,7 +125,11 @@ final class DeclarationFavoriteRepository: DeclarationFavoriteRepositoryProtocol
     // MARK: - Observe All
     func observeAll() -> AnyPublisher<[DeclarationFavoriteEntry], Never> {
         let request = DeclarationFavoriteEntry.fetchRequest()
-        request.sortDescriptors = [NSSortDescriptor(keyPath: \DeclarationFavoriteEntry.createdAt, ascending: false)]
+        request.sortDescriptors = [
+                NSSortDescriptor(keyPath: \DeclarationFavoriteEntry.createdAt, ascending: false),
+                // Total order, same reason as AudioFavoriteRepository.
+                NSSortDescriptor(keyPath: \DeclarationFavoriteEntry.declarationId, ascending: true)
+            ]
         
         let initialResults = (try? context.fetch(request)) ?? []
         
