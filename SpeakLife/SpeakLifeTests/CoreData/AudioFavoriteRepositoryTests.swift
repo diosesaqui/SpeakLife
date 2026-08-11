@@ -338,25 +338,30 @@ final class AudioFavoriteRepositoryTests: XCTestCase {
     /// and it is where the dedup is. Assert it there, so the check covers the
     /// code that would actually regress.
     func testCreatingTheSameAudioTwiceReturnsTheSameRow() async throws {
-        let audio = AudioDeclaration(
-            id: "duplicate-id.mp3",
-            title: "First",
-            subtitle: "Sub",
-            duration: "1:00",
-            imageUrl: "",
-            isPremium: false,
-            tag: "faith"
-        )
+        func audio(titled title: String) -> AudioDeclaration {
+            AudioDeclaration(id: "duplicate-id.mp3", title: title, subtitle: "Sub",
+                             duration: "1:00", imageUrl: "", isPremium: false, tag: "faith")
+        }
 
-        let first = try await repository.createFromAudioDeclaration(audio)
-        let second = try await repository.createFromAudioDeclaration(audio)
+        _ = try await repository.createFromAudioDeclaration(audio(titled: "First"))
+        let second = try await repository.createFromAudioDeclaration(audio(titled: "Second"))
 
-        XCTAssertEqual(first.objectID, second.objectID, "a second row was created")
+        // Asserted through a distinguishing field rather than by comparing
+        // objectIDs. An objectID is temporary until its context saves and
+        // permanent after, and the two are never equal — so comparing the entry
+        // handed back by the first call against the one fetched by the second
+        // compares a `t…` against a `p1` and fails even when both name the same
+        // row, which is exactly what it did.
+        //
+        // The title is the better probe anyway: it proves the second call
+        // handed back the row already there instead of writing a fresh one over
+        // it, which a row count alone cannot tell you.
+        XCTAssertEqual(second.title, "First", "the second call overwrote or re-created the row")
 
         let results = try await repository.fetch(
             predicate: NSPredicate(format: "audioId == %@", "duplicate-id.mp3")
         )
-        XCTAssertEqual(results.count, 1)
+        XCTAssertEqual(results.count, 1, "a second row was created")
     }
     
     // MARK: - Batch Fetch

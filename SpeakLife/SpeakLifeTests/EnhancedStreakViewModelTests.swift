@@ -184,30 +184,37 @@ final class EnhancedStreakViewModelTests: XCTestCase {
                       (viewModel.celebrationData?.motivationalMessage.contains("WEEK") ?? false))
     }
     
+    /// A new personal record set ON a milestone day is marked in the celebration.
+    ///
+    /// This used to build to day 4 and expect a celebration, which it can never
+    /// get: `celebrationMilestones` is [1, 3, 7, 14, 30, 50, 100, 200, 365] and
+    /// `completeDay()` only builds `celebrationData` on a milestone, on purpose.
+    /// It also pre-walked the streak all the way to 4 with `updateStreak`, which
+    /// pins `longestStreak` to `currentStreak` as it goes — so by the time
+    /// `completeDay()` captured the previous record it was already 4, and
+    /// `isNewRecord` would have been false even had a celebration existed.
+    ///
+    /// Day 3 is the first milestone that can carry a record: walk to 2, leave
+    /// the old record at 2, and let today's completion be the one that beats it.
     func testNewRecord_ShouldBeMarkedInCelebration() {
-        // Given: Previous record of 3, current streak broken
-        viewModel.streakStats.longestStreak = 3
-        viewModel.streakStats.currentStreak = 0
-        
-        // When: Complete 4 consecutive days (new record)
-        for i in (0...3).reversed() {
-            let date = calendar.date(byAdding: .day, value: -i, to: Date())!
-            viewModel.streakStats.updateStreak(for: date)
-        }
-        
+        let twoDaysAgo = calendar.date(byAdding: .day, value: -2, to: Date())!
+        let yesterday = calendar.date(byAdding: .day, value: -1, to: Date())!
+        viewModel.streakStats.updateStreak(for: twoDaysAgo)
+        viewModel.streakStats.updateStreak(for: yesterday)
+        XCTAssertEqual(viewModel.streakStats.currentStreak, 2, "precondition")
+        XCTAssertEqual(viewModel.streakStats.longestStreak, 2, "precondition")
+
+        // `completeDay()` builds celebrationData synchronously, so there is
+        // nothing to wait for. The 2.5s wait this test used to open was for
+        // `showCompletionCelebration`, which flips after the fire animation and
+        // is not what is asserted below.
         completeAllTasks()
-        
-        // Wait for celebration
-        let expectation = XCTestExpectation(description: "New record celebration")
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
-            expectation.fulfill()
-        }
-        wait(for: [expectation], timeout: 3.0)
-        
-        // Then: Should be marked as new record
+
+        XCTAssertEqual(viewModel.streakStats.currentStreak, 3)
         XCTAssertNotNil(viewModel.celebrationData)
-        XCTAssertEqual(viewModel.celebrationData?.streakNumber, 4)
-        XCTAssertTrue(viewModel.celebrationData?.isNewRecord ?? false)
+        XCTAssertEqual(viewModel.celebrationData?.streakNumber, 3)
+        XCTAssertTrue(viewModel.celebrationData?.isNewRecord ?? false,
+                      "day 3 beat the previous record of 2")
     }
     
     // MARK: - Data Persistence Tests
