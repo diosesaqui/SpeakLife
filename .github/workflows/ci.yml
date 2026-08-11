@@ -110,11 +110,21 @@ jobs:
           echo "Using $(echo "$DEVICE" | jq -r .name)"
           echo "SIMULATOR_ID=$(echo "$DEVICE" | jq -r .udid)" >> "$GITHUB_ENV"
 
-      # CODE_SIGNING_* off: this is a simulator build, and signing would
-      # otherwise need certificates the repository does not have and should not
-      # have. It does mean CI proves the code compiles and passes tests, not
-      # that it is shippable — archiving and signing stay a local/Xcode Cloud
-      # concern.
+      # Signing is deliberately NOT disabled.
+      #
+      # CODE_SIGNING_ALLOWED=NO looks like the safe choice for a machine with no
+      # certificates, but it strips the entitlements along with the signature.
+      # This app declares an iCloud container, and PersistenceController builds
+      # an NSPersistentCloudKitContainer against it and calls fatalError if the
+      # store will not load. Without the entitlement the container cannot
+      # resolve, so the host app traps on launch and the whole run dies as
+      # "Early unexpected exit ... signal trap before establishing connection" —
+      # a message that says nothing about entitlements and reads like the app is
+      # simply broken.
+      #
+      # A simulator build needs no certificate and no provisioning profile:
+      # Xcode signs it ad hoc and, crucially, applies the entitlements. So the
+      # correct move is to leave signing alone.
       - name: Build and test
         run: |
           set -o pipefail
@@ -123,10 +133,7 @@ jobs:
             -scheme "$SCHEME" \
             -destination "id=$SIMULATOR_ID" \
             -derivedDataPath "$DERIVED_DATA" \
-            -resultBundlePath TestResults.xcresult \
-            CODE_SIGNING_ALLOWED=NO \
-            CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGN_IDENTITY=
+            -resultBundlePath TestResults.xcresult
 
       # The .xcresult holds the per-test failure messages and any crash logs,
       # which is the difference between "a test failed" and knowing which
