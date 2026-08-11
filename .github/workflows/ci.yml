@@ -135,6 +135,23 @@ jobs:
             -derivedDataPath "$DERIVED_DATA" \
             -resultBundlePath TestResults.xcresult
 
+      # Print WHY, not just that.
+      #
+      # Under parallel testing xcodebuild streams only "Test case 'X' failed",
+      # with the assertion messages left behind in the .xcresult. That bundle is
+      # over 100 MB here, so reading it means downloading an artifact — which is
+      # a slow loop when the whole point is to find out what broke. Summarising
+      # it into the log turns each red build into something diagnosable on
+      # sight.
+      - name: Summarise test failures
+        if: failure()
+        run: |
+          xcrun xcresulttool get test-results summary \
+            --path TestResults.xcresult --format json 2>/dev/null \
+            | jq -r '"\(.failedTests) failed, \(.passedTests) passed, \(.skippedTests) skipped\n",
+                     (.testFailures[]? | "✗ \(.testName)\n    \(.failureText // "no message")")' \
+            || echo "xcresulttool summary unavailable on this Xcode; see the uploaded artifact"
+
       # The .xcresult holds the per-test failure messages and any crash logs,
       # which is the difference between "a test failed" and knowing which
       # assertion on which line.

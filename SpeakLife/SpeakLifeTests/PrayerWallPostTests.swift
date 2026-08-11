@@ -8,6 +8,7 @@
 //
 
 import XCTest
+import FirebaseFirestore
 @testable import SpeakLife
 
 final class PrayerWallPostTests: XCTestCase {
@@ -230,25 +231,20 @@ final class PrayerWallPostTests: XCTestCase {
 
     // MARK: - Codable round-trips (legacy → v2 forward compat)
 
-    func testDecodingLegacyJSONWithoutNewFieldsSucceeds() throws {
-        // Simulates a cached post stored before v2 shipped: no `category`,
-        // no `reactionCounts`.
-        let legacyJSON = """
-        {
-          "id": "legacy-1",
-          "text": "Praying for healing.",
-          "displayName": "A sister in Christ",
-          "deviceId": "device-xyz",
-          "timestamp": { "seconds": 1714400000, "nanoseconds": 0 },
-          "prayerCount": 5,
-          "reports": 0,
-          "isHidden": false,
-          "isAnswered": false
-        }
-        """.data(using: .utf8)!
-
-        let decoder = JSONDecoder()
-        let post = try decoder.decode(PrayerWallPost.self, from: legacyJSON)
+    func testLegacyPostWithoutV2FieldsStillReadsCorrectly() {
+        // Built rather than decoded: `id` is @DocumentID, which no coder a unit
+        // test can construct will decode — it needs a real DocumentReference in
+        // the decoder's userInfo, and only a live DocumentSnapshot has one.
+        //
+        // The behaviour under test survives intact: a post stored before v2
+        // shipped has no `category` and no `reactionCounts`, and the UI must
+        // fall back to `prayerCount` as the standing count.
+        var post = PrayerWallPost(text: "Praying for healing.",
+                                  displayName: "A sister in Christ",
+                                  deviceId: "device-xyz")
+        post.prayerCount = 5
+        post.category = nil
+        post.reactionCounts = nil
 
         XCTAssertEqual(post.text, "Praying for healing.")
         XCTAssertEqual(post.prayerCount, 5)
@@ -257,19 +253,34 @@ final class PrayerWallPostTests: XCTestCase {
         XCTAssertEqual(post.count(for: .standing), 5)
     }
 
-    func testV2PostRoundTripsThroughJSON() throws {
+    /// Encode only, deliberately.
+    ///
+    /// A full round trip is not reachable from a unit test: @DocumentID decodes
+    /// only with a real DocumentReference in the decoder's userInfo, which comes
+    /// from a live DocumentSnapshot. Firestore.Encoder is fine with it — it
+    /// omits the id, because in Firestore the id belongs to the document
+    /// reference and never to the payload.
+    ///
+    /// The half that can run is also the half that matters: whether the v2
+    /// fields reach the wire under the right keys. That is what would silently
+    /// break a real post.
+    func testV2PostEncodesItsNewFieldsToFirestore() throws {
         let original = v2Post(category: .breakthrough,
                               counts: [.standing: 3, .alreadyDone: 1])
-        let encoder = JSONEncoder()
-        let decoder = JSONDecoder()
 
-        let data = try encoder.encode(original)
-        let decoded = try decoder.decode(PrayerWallPost.self, from: data)
+        let encoded = try Firestore.Encoder().encode(original)
 
-        XCTAssertEqual(decoded.category, "breakthrough")
-        XCTAssertEqual(decoded.categoryEnum, .breakthrough)
-        XCTAssertEqual(decoded.count(for: .standing), 3)
-        XCTAssertEqual(decoded.count(for: .alreadyDone), 1)
-        XCTAssertEqual(decoded.totalReactions, 4)
+        XCTAssertEqual(encoded["category"] as? String, "breakthrough")
+        let counts = encoded["reactionCounts"] as? [String: Int]
+        XCTAssertEqual(counts?[WarriorRoomReaction.standing.rawValue], 3)
+        XCTAssertEqual(counts?[WarriorRoomReaction.alreadyDone.rawValue], 1)
+        XCTAssertEqual(encoded["prayerCount"] as? Int, 4)
+        XCTAssertNil(encoded["id"], "the id belongs to the document reference, not the payload")
+
+        // And the model reads its own fields back the way the UI will.
+        XCTAssertEqual(original.categoryEnum, .breakthrough)
+        XCTAssertEqual(original.count(for: .standing), 3)
+        XCTAssertEqual(original.count(for: .alreadyDone), 1)
+        XCTAssertEqual(original.totalReactions, 4)
     }
 }

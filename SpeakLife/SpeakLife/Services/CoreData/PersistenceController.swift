@@ -76,7 +76,24 @@ final class PersistenceController {
     /// Local persistence is untouched: the SQLite store, history tracking and
     /// migration all behave exactly as they do in the app. Only the mirroring is
     /// left off.
-    static let isRunningTests: Bool = NSClassFromString("XCTestCase") != nil
+    /// Checked via the environment first, and that ordering is the whole point.
+    ///
+    /// `NSClassFromString("XCTestCase")` looks like the obvious probe and it is
+    /// wrong here. `SpeakLifeApp` holds `PersistenceController.shared`, so the
+    /// container is built while the host app launches — and XCTest injects the
+    /// test bundle only *after* launch completes. At the moment this runs there
+    /// is no XCTestCase class yet, the probe returns false, and CloudKit comes
+    /// up exactly as it would in production. Which is what happened: the suite
+    /// still logged "will initialize cloudkit schema" on every run.
+    ///
+    /// `XCTestConfigurationFilePath` is set by the test runner before the
+    /// process starts, so it is already true by the time anything of ours
+    /// executes. The class probe stays as a second chance for any caller
+    /// constructed later.
+    static var isRunningTests: Bool {
+        ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
+            || NSClassFromString("XCTestCase") != nil
+    }
 
     init(inMemory: Bool = false) {
         container = NSPersistentCloudKitContainer(name: "SpeakLife")
