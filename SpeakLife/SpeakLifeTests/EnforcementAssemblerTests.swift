@@ -146,7 +146,12 @@ final class EnforcementAssemblerTests: XCTestCase {
         let result = EnforcementAssembler.assemble(primary: .business, pool: pool, seed: "s")
 
         XCTAssertEqual(result?.theme, .business)
-        XCTAssertEqual(result?.title, "Enforcing " + DeclarationCategory.business.name)
+        // enforcementTitle, not name. `name` is a browse label, so this asserted
+        // "Enforcing Business" while testTitle_NamesTheVictoryNeverTheStruggle
+        // asserted "Enforcing Increase" for the same category — the two tests
+        // contradicted each other, and the documented rule is the victory, never
+        // the topic.
+        XCTAssertEqual(result?.title, "Enforcing " + DeclarationCategory.business.enforcementTitle)
     }
 
     /// A substitute carries at most three days, so an empty match blends its

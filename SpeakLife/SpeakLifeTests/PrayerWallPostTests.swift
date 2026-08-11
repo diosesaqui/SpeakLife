@@ -8,6 +8,7 @@
 //
 
 import XCTest
+import FirebaseFirestore
 @testable import SpeakLife
 
 final class PrayerWallPostTests: XCTestCase {
@@ -233,22 +234,23 @@ final class PrayerWallPostTests: XCTestCase {
     func testDecodingLegacyJSONWithoutNewFieldsSucceeds() throws {
         // Simulates a cached post stored before v2 shipped: no `category`,
         // no `reactionCounts`.
-        let legacyJSON = """
-        {
-          "id": "legacy-1",
-          "text": "Praying for healing.",
-          "displayName": "A sister in Christ",
-          "deviceId": "device-xyz",
-          "timestamp": { "seconds": 1714400000, "nanoseconds": 0 },
-          "prayerCount": 5,
-          "reports": 0,
-          "isHidden": false,
-          "isAnswered": false
-        }
-        """.data(using: .utf8)!
+        // A Firestore document, not a JSON blob: `id` is @DocumentID, which a
+        // plain JSONDecoder refuses, and Firestore hands documents over as
+        // dictionaries anyway. `id` is deliberately absent — Firestore supplies
+        // it from the document reference rather than the payload, so including
+        // it here would test a shape the app never receives.
+        let legacyDocument: [String: Any] = [
+            "text": "Praying for healing.",
+            "displayName": "A sister in Christ",
+            "deviceId": "device-xyz",
+            "timestamp": Timestamp(seconds: 1714400000, nanoseconds: 0),
+            "prayerCount": 5,
+            "reports": 0,
+            "isHidden": false,
+            "isAnswered": false
+        ]
 
-        let decoder = JSONDecoder()
-        let post = try decoder.decode(PrayerWallPost.self, from: legacyJSON)
+        let post = try Firestore.Decoder().decode(PrayerWallPost.self, from: legacyDocument)
 
         XCTAssertEqual(post.text, "Praying for healing.")
         XCTAssertEqual(post.prayerCount, 5)
@@ -260,11 +262,11 @@ final class PrayerWallPostTests: XCTestCase {
     func testV2PostRoundTripsThroughJSON() throws {
         let original = v2Post(category: .breakthrough,
                               counts: [.standing: 3, .alreadyDone: 1])
-        let encoder = JSONEncoder()
-        let decoder = JSONDecoder()
-
-        let data = try encoder.encode(original)
-        let decoded = try decoder.decode(PrayerWallPost.self, from: data)
+        // Firestore's coder, not JSON's: `id` is @DocumentID and refuses both
+        // a plain encoder and a plain decoder. This is also the coder the app
+        // actually uses, so the round trip now proves something real.
+        let encoded = try Firestore.Encoder().encode(original)
+        let decoded = try Firestore.Decoder().decode(PrayerWallPost.self, from: encoded)
 
         XCTAssertEqual(decoded.category, "breakthrough")
         XCTAssertEqual(decoded.categoryEnum, .breakthrough)

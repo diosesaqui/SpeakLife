@@ -87,9 +87,13 @@ final class StreakStatsTests: XCTestCase {
         // When: Try to complete same day again
         streakStats.updateStreak(for: today)
         
-        // Then: Streak should not change but total should increment
+        // Then: nothing moves. `updateStreak` returns early on a same-day
+        // repeat, and it is right to — the field counts DAYS completed, not
+        // completions, so speaking twice in one day is still one day. The old
+        // expectation of initialTotal + 1 would have made the counter drift
+        // upward every time someone opened the app twice.
         XCTAssertEqual(streakStats.currentStreak, initialStreak)
-        XCTAssertEqual(streakStats.totalDaysCompleted, initialTotal + 1)
+        XCTAssertEqual(streakStats.totalDaysCompleted, initialTotal)
     }
     
     // MARK: - Streak Break Tests

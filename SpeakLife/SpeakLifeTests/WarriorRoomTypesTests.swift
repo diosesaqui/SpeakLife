@@ -8,6 +8,7 @@
 //
 
 import XCTest
+import FirebaseFirestore
 @testable import SpeakLife
 
 final class WarriorRoomTypesTests: XCTestCase {
@@ -128,8 +129,6 @@ final class WarriorRoomTypesTests: XCTestCase {
     }
 
     func testAgreementReactionMapsToKnownEnumCase() throws {
-        // Built via JSON to avoid touching the Firestore.Timestamp type
-        // directly from the test target (it's not linked here).
         let agreement = try decodeAgreement(reactionType: "taking_ground")
         XCTAssertEqual(agreement.reaction, .takingGround)
     }
@@ -153,15 +152,19 @@ final class WarriorRoomTypesTests: XCTestCase {
                                  text: String = "We declare it.",
                                  displayName: String = "Sister",
                                  userId: String = "user1") throws -> Agreement {
-        let json = """
-        {
-          "userId": "\(userId)",
-          "displayName": "\(displayName)",
-          "reactionType": "\(reactionType)",
-          "text": "\(text)",
-          "timestamp": { "seconds": 1714400000, "nanoseconds": 0 }
-        }
-        """.data(using: .utf8)!
-        return try JSONDecoder().decode(Agreement.self, from: json)
+        // Firestore.Decoder, not JSONDecoder. `Agreement.id` is @DocumentID,
+        // which refuses a plain decoder outright ("DocumentID values can only
+        // be decoded with Firestore.Decoder") — and even before that, its key
+        // is required, so JSON without an "id" fails with keyNotFound. Reading
+        // through Firestore's decoder also means the test exercises the same
+        // path production does, instead of one the app never takes.
+        let document: [String: Any] = [
+            "userId": userId,
+            "displayName": displayName,
+            "reactionType": reactionType,
+            "text": text,
+            "timestamp": Timestamp(seconds: 1714400000, nanoseconds: 0)
+        ]
+        return try Firestore.Decoder().decode(Agreement.self, from: document)
     }
 }
