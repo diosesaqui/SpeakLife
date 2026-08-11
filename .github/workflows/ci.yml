@@ -1,0 +1,121 @@
+name: CI
+
+# Builds the app and runs the test suite on every pull request into main, and
+# on main itself after a merge.
+#
+# Before this existed the repository had no build CI at all: the only workflow
+# was GitHub's generated Pages deploy, every pull request reported zero checks,
+# and the branch protection rule sat waiting on a status that nothing ever
+# posted. Merges went through on override, and nothing had compiled the app or
+# executed a single test.
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  # So a run can be kicked off by hand from the Actions tab.
+  workflow_dispatch:
+
+# A second push to the same branch makes the first run irrelevant. Cancelling it
+# keeps the queue short — macOS runners are the slowest and scarcest kind.
+# main is exempt: those runs are the record of what actually landed.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+jobs:
+  build-and-test:
+    name: Build and test
+    # macos-15, pinned deliberately. The project is objectVersion 77, which
+    # Xcode 15 cannot open at all, so the macos-14 image would fail on the very
+    # first xcodebuild call with a confusing parse error.
+    runs-on: macos-15
+    timeout-minutes: 60
+
+    env:
+      PROJECT: SpeakLife/SpeakLife.xcodeproj
+      SCHEME: SpeakLife
+      DERIVED_DATA: DerivedData
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Show toolchain
+        run: |
+          xcodebuild -version
+          swift --version
+          xcrun simctl list runtimes | grep iOS || true
+
+      # The dependency graph is six remote packages including firebase-ios-sdk,
+      # which is enormous. Checking the resolved sources out from scratch on
+      # every run is most of the wall clock. Package.resolved is committed, so
+      # it is an exact key: a cache hit means the same revisions, never a stale
+      # or drifting set.
+      - name: Cache Swift packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/Library/Caches/org.swift.swiftpm
+            ${{ env.DERIVED_DATA }}/SourcePackages
+          key: spm-${{ runner.os }}-${{ hashFiles('**/Package.resolved') }}
+          restore-keys: spm-${{ runner.os }}-
+
+      # Resolved as its own step so a dependency or network failure reads as
+      # exactly that, instead of surfacing as a compile error hundreds of lines
+      # into a build log.
+      - name: Resolve dependencies
+        run: |
+          xcodebuild -resolvePackageDependencies \
+            -project "$PROJECT" \
+            -scheme "$SCHEME" \
+            -derivedDataPath "$DERIVED_DATA"
+
+      # Chosen at runtime rather than hardcoded. Device names come and go
+      # between runner images, and a hardcoded "iPhone 16" turns into a red
+      # build the week the image drops it — a CI failure that says nothing
+      # about the code is worse than no CI, because people learn to ignore it.
+      - name: Select a simulator
+        run: |
+          DEVICE=$(xcrun simctl list devices available --json \
+            | jq -r '[.devices | to_entries[]
+                      | select(.key | test("iOS"))
+                      | .value[]
+                      | select(.name | startswith("iPhone"))] | last')
+          if [ -z "$DEVICE" ] || [ "$DEVICE" = "null" ]; then
+            echo "No iOS iPhone simulator available on this runner image:"
+            xcrun simctl list devices available
+            exit 1
+          fi
+          echo "Using $(echo "$DEVICE" | jq -r .name)"
+          echo "SIMULATOR_ID=$(echo "$DEVICE" | jq -r .udid)" >> "$GITHUB_ENV"
+
+      # CODE_SIGNING_* off: this is a simulator build, and signing would
+      # otherwise need certificates the repository does not have and should not
+      # have. It does mean CI proves the code compiles and passes tests, not
+      # that it is shippable — archiving and signing stay a local/Xcode Cloud
+      # concern.
+      - name: Build and test
+        run: |
+          set -o pipefail
+          xcodebuild test \
+            -project "$PROJECT" \
+            -scheme "$SCHEME" \
+            -destination "id=$SIMULATOR_ID" \
+            -derivedDataPath "$DERIVED_DATA" \
+            -resultBundlePath TestResults.xcresult \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY=
+
+      # The .xcresult holds the per-test failure messages and any crash logs,
+      # which is the difference between "a test failed" and knowing which
+      # assertion on which line.
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: TestResults.xcresult
+          retention-days: 14
+          if-no-files-found: ignore
