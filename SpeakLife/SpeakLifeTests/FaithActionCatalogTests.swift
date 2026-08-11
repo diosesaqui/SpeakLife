@@ -114,6 +114,44 @@ final class FaithActionCatalogTests: XCTestCase {
         }
     }
 
+    func testNoAskPrescribesADose() {
+        // The ask names the KIND of action the declaration implies and lets the
+        // speaker pick the act. A measured one ("walk for fifteen minutes") fits
+        // whoever wrote it and nobody else, and hands a failure to anyone whose
+        // day or body does not match the number.
+        let dose = try! NSRegularExpression(
+            pattern: #"\b(minutes?|hours?|miles?)\b|[0-9]"#, options: .caseInsensitive
+        )
+        for category in FaithActionCatalog.mappedThemes {
+            let set = FaithActionCatalog.actionSet(for: category)
+            for string in [set.premise] + set.actions.flatMap({ [$0.headline, $0.detail] }) {
+                let range = NSRange(string.startIndex..., in: string)
+                XCTAssertNil(
+                    dose.firstMatch(in: string, range: range),
+                    "\(category.rawValue) prescribes a dose: \(string)"
+                )
+            }
+        }
+    }
+
+    func testNoAskNamesTheActForTheSpeaker() {
+        // Rule 12's sibling. These verbs turn an invitation into an errand, and
+        // every one of them was in the shipped copy before this rule existed.
+        let prescriptions = ["walk for", "train for", "drink water", "go to bed",
+                             "study for", "breathe slowly", "pack one box"]
+        for category in FaithActionCatalog.mappedThemes {
+            for action in FaithActionCatalog.actionSet(for: category).actions {
+                let headline = action.headline.lowercased()
+                for prescription in prescriptions {
+                    XCTAssertFalse(
+                        headline.contains(prescription),
+                        "\(category.rawValue) names the act for them: \(action.headline)"
+                    )
+                }
+            }
+        }
+    }
+
     func testHeadlinesStayShortEnoughToReadAtAGlance() {
         for category in FaithActionCatalog.mappedThemes {
             for action in FaithActionCatalog.actionSet(for: category).actions {
