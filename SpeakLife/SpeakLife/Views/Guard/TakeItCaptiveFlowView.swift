@@ -133,6 +133,10 @@ struct TakeItCaptiveFlowView: View {
                 thought: thought,
                 onReject: { elapsed in
                     AnalyticsService.shared.track("guard_thought_rejected", parameters: [
+                        // `method` is on BOTH routes or it is useless: present
+                        // on one only, a split by it files every rejection
+                        // under the route that happens to send it.
+                        "method": "swipe",
                         "time_to_swipe_ms": Int(elapsed * 1000),
                         "category": thought.category.rawValue
                     ])

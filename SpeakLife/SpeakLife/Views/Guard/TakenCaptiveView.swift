@@ -50,6 +50,15 @@ struct TakenCaptiveView: View {
     @State private var warmed = false
     /// The line that names what just happened, after the card has gone.
     @State private var showVerdict = false
+    /// Set the instant the screen stops being live — by finishing, or by the
+    /// user closing it.
+    ///
+    /// The schedule below is four `asyncAfter` calls and none of them can be
+    /// cancelled. Without this, closing the screen at 0.4s still fires the
+    /// heavy haptic on a dismissed view and still reports a thought taken at
+    /// 1.85s, right after `guard_task_abandoned` said the opposite. Every step
+    /// checks it.
+    @State private var ended = false
 
     private let cold = Color(hex: "#1B1D22")
     private let colder = Color(hex: "#101216")
@@ -94,6 +103,10 @@ struct TakenCaptiveView: View {
             .padding(.vertical, 20)
         }
         .onAppear(perform: play)
+        // The catch-all. `close()` covers the button, but the host can take the
+        // screen away for its own reasons, and a pending step that outlives the
+        // view would report a thought taken that nobody was there for.
+        .onDisappear { ended = true }
     }
 
     // MARK: - Header
@@ -107,7 +120,7 @@ struct TakenCaptiveView: View {
             Spacer()
             // The only control on the screen. A full-screen cover with no way
             // out is a trap even when it lasts a second and a half.
-            Button(action: onClose) {
+            Button(action: close) {
                 Image(systemName: "xmark")
                     .font(.system(size: 15, weight: .semibold))
                     .foregroundColor(.white.opacity(0.32))
@@ -183,19 +196,36 @@ struct TakenCaptiveView: View {
     private func play() {
         // Seize. The heaviest haptic the app has, on the frame the card goes —
         // the same one the throw fires, because it is the same event.
-        DispatchQueue.main.asyncAfter(deadline: .now() + Self.seizeAt) {
+        step(at: Self.seizeAt) {
             PremiumHaptics.safeHeavy()
             withAnimation(.easeIn(duration: 0.34)) { seized = true }
         }
         // Warm. Grey to navy, so REPLACE rises into its own field.
-        DispatchQueue.main.asyncAfter(deadline: .now() + Self.warmAt) {
+        step(at: Self.warmAt) {
             withAnimation(.easeInOut(duration: 0.6)) { warmed = true }
         }
-        DispatchQueue.main.asyncAfter(deadline: .now() + Self.verdictAt) {
+        step(at: Self.verdictAt) {
             withAnimation(DS.Motion.smooth) { showVerdict = true }
         }
-        DispatchQueue.main.asyncAfter(deadline: .now() + Self.handOffAt) {
+        step(at: Self.handOffAt) {
+            ended = true
             onFinished()
         }
+    }
+
+    /// One beat of the schedule, skipped if the screen is no longer live.
+    private func step(at delay: Double, _ body: @escaping () -> Void) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+            guard !ended else { return }
+            body()
+        }
+    }
+
+    /// Closing ends the schedule before it can report a thought taken that the
+    /// user walked away from.
+    private func close() {
+        guard !ended else { return }
+        ended = true
+        onClose()
     }
 }

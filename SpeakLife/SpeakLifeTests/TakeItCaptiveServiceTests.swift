@@ -609,6 +609,30 @@ final class AskForThoughtEntryTests: XCTestCase {
         }
     }
 
+    /// The shortest real thoughts there are. Every one of these hits a keyword
+    /// rule and comes back with a high-confidence match, so locking them out to
+    /// catch "I am" would reject the bluntest way someone says the truest thing.
+    /// A nine-letter bar did exactly that — this is what holds it at seven.
+    func testTheBluntestThoughtsAreAccepted() {
+        for entry in ["I'm ugly", "I'm sick", "I'm broke", "I'm alone", "God is mad"] {
+            XCTAssertTrue(AskForThoughtView.namesAThought(entry),
+                          "\"\(entry)\" must not be locked out by the length bar.")
+        }
+    }
+
+    /// The bar exists to catch fragments, and the fragments it catches are the
+    /// ones a person is still typing — so the screen must keep a live way
+    /// forward underneath them. That is the `!canSubmit` gate on the fallback,
+    /// asserted here as the invariant it enforces: nothing the gate rejects may
+    /// leave the screen with no action, and the fallback is shown for exactly
+    /// the set this returns false for.
+    func testRejectedEntriesAreExactlyWhenTheFallbackShows() {
+        for entry in ["", "I am", "I want", "I'm"] {
+            XCTAssertFalse(AskForThoughtView.namesAThought(entry),
+                           "\"\(entry)\" must leave the fallback on screen.")
+        }
+    }
+
     /// Whatever the gate accepts, the classifier must have something to say
     /// about — the whole point of asking is that a word comes back.
     func testEveryAcceptedThoughtGetsADeclarationAndAVerse() {

@@ -61,12 +61,21 @@ struct AskForThoughtView: View {
         Self.namesAThought(entry)
     }
 
-    /// A named thought is at least two words, nine letters, and one word that
-    /// carries meaning on its own.
+    /// A named thought is two words, seven letters, and one word of real length
+    /// that carries meaning on its own.
     ///
-    /// The word list is the reason the third test exists: "i feel like i want
-    /// to" clears both counts and still names nothing. Nothing in it is
-    /// diagnostic and nothing is stored — it only decides when the button lights.
+    /// The carrying-word test is the one doing the work: "i feel like i want to"
+    /// clears both counts and still names nothing, and no length rule catches
+    /// that. The counts only exist to stop a two-letter fragment.
+    ///
+    /// Seven, not nine. Nine locked out the shortest real thoughts there are —
+    /// "I'm ugly", "I'm sick", "I'm broke", "I'm alone" — and every one of those
+    /// hits a keyword rule and would have come back with a high-confidence
+    /// match. A bar that rejects the bluntest way someone says the truest thing
+    /// is worse than the stub it was raised to catch.
+    ///
+    /// Nothing here is diagnostic and nothing is stored. It only decides when
+    /// the button lights.
     static func namesAThought(_ entry: String) -> Bool {
         // iOS substitutes a curly apostrophe as you type, so both forms have to
         // survive tokenising or "I'm worthless" splits into "i" and "m
@@ -79,8 +88,8 @@ struct AskForThoughtView: View {
             words.append(word)
             letters += word.count
         }
-        guard words.count >= 2, letters >= 9 else { return false }
-        return words.contains { !stubWords.contains($0) }
+        guard words.count >= 2, letters >= 7 else { return false }
+        return words.contains { !stubWords.contains($0) && $0.count >= 3 }
     }
 
     /// Function words. An entry made only of these is a half-typed sentence.
@@ -162,10 +171,13 @@ struct AskForThoughtView: View {
 
                 // Only once they have started, and never before. A hint on an
                 // empty field reads as a rule to clear; a hint under two typed
-                // words reads as the app waiting for the rest of the sentence,
-                // which is exactly what it is doing.
+                // words reads as the app waiting for the rest, which is what it
+                // is doing — and it is phrased that way rather than as them
+                // getting it wrong. The bar is low enough that almost everything
+                // under it really is a fragment, but "write the whole sentence"
+                // would be a false accusation the one time it isn't.
                 if !entry.isEmpty, !canSubmit, !showReachOut {
-                    Text("Write the whole sentence so we can hand you the right word for it.")
+                    Text("A few more words, and we'll hand you the one that answers it.")
                         .font(.system(size: 12, weight: .medium))
                         .foregroundColor(.white.opacity(0.42))
                         .fixedSize(horizontal: false, vertical: true)
@@ -203,11 +215,18 @@ struct AskForThoughtView: View {
                     // loud, and the drill still works — that was the whole
                     // premise of the bank. It just no longer goes first.
                     //
-                    // It disappears the moment they start typing. Left on screen
-                    // under a field with words in it, "Nothing specific" reads as
-                    // the app's verdict on what they just wrote rather than as
-                    // the other door, and that is precisely how it was read.
-                    if entry.isEmpty {
+                    // Gated on `!canSubmit`, which is exactly when the button
+                    // above it is dead — so this screen always has at least one
+                    // live way forward. Gating it on an empty field instead left
+                    // a half-typed entry with a disabled CTA and no other door,
+                    // which is the same dead end this whole change is fixing.
+                    //
+                    // It still goes away the moment the entry is real. Sitting
+                    // under a finished sentence with the CTA lit, "Nothing
+                    // specific" reads as the app's verdict on what was just
+                    // written rather than as the other door, and that is
+                    // precisely how it was read.
+                    if !canSubmit {
                         Button {
                             focused = false
                             AnalyticsService.shared.track("guard_nothing_specific_tapped")
