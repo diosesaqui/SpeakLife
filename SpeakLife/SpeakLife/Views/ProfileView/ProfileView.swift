@@ -1020,6 +1020,9 @@ struct TermsConditionsView: View {
 
 struct StreakStatsProfileSheet: View {
     @ObservedObject var viewModel: EnhancedStreakViewModel
+    /// Guarding's lifetime counter. Observed rather than read once, so ground
+    /// arriving from another device while this sheet is open shows up.
+    @ObservedObject private var guardService = TakeItCaptiveService.shared
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -1054,6 +1057,8 @@ struct StreakStatsProfileSheet: View {
                     }
                     .padding(.horizontal, 20)
 
+                    groundTakenSection
+
                     Divider().padding(.horizontal, 20)
 
                     // ── Badges ────────────────────────────────────────────
@@ -1087,6 +1092,57 @@ struct StreakStatsProfileSheet: View {
                     Button("Done") { dismiss() }
                 }
             }
+        }
+    }
+
+    // ── Ground taken ──────────────────────────────────────────────────────
+    //
+    // The one place the Guarding counter is visible outside the screen that
+    // awards it. Before this, a user could take two hundred thoughts captive
+    // and have no way to ever see the number again: it was written, synced
+    // across devices and guaranteed monotonic, then shown once for four seconds
+    // and never again.
+    //
+    // Hidden at zero, on purpose. Someone who has never opened Guarding does
+    // not need a nought with their name on it, and "0 thoughts taken captive"
+    // is the one thing this counter must never say — the whole design of
+    // `GroundTakenView` is that the number only goes up and never accuses.
+    @ViewBuilder
+    private var groundTakenSection: some View {
+        if guardService.groundTaken > 0 {
+            VStack(spacing: DS.Spacing.md) {
+                Divider()
+
+                HStack(spacing: DS.Spacing.md) {
+                    Image(systemName: "brain.head.profile")
+                        .font(.title2)
+                        .foregroundColor(.teal)
+
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("\(guardService.groundTaken)")
+                            .font(.title.bold())
+                            .contentTransition(.numericText())
+                        Text(guardService.groundTaken == 1
+                             ? "thought taken captive"
+                             : "thoughts taken captive")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+
+                    Spacer()
+                }
+
+                // Same sentence the completion screen ends on, so the number
+                // means the same thing in both places.
+                Text("That's ground you don't give back.")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .padding(.horizontal, 20)
+            // Another device's ground arrives via CloudKit while this view is
+            // off screen, so the mirror is refreshed on the way in.
+            .onAppear { guardService.refreshGround() }
         }
     }
 
