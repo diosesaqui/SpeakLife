@@ -19,11 +19,14 @@ final class JournalRepository: JournalRepositoryProtocol {
     
     private let context: NSManagedObjectContext
     private let notificationCenter: NotificationCenter
-    
+    private let syncRequester: ImmediateSyncRequesting
+
     init(context: NSManagedObjectContext = PersistenceController.shared.container.viewContext,
-         notificationCenter: NotificationCenter = .default) {
+         notificationCenter: NotificationCenter = .default,
+         syncRequester: ImmediateSyncRequesting = PersistenceController.defaultSyncRequester) {
         self.context = context
         self.notificationCenter = notificationCenter
+        self.syncRequester = syncRequester
     }
     
     // MARK: - Create
@@ -47,7 +50,7 @@ final class JournalRepository: JournalRepositoryProtocol {
         
         // Trigger immediate sync for faster perceived performance
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            PersistenceController.shared.requestImmediateSync()
+            self.syncRequester.requestImmediateSync()
         }
     }
     

@@ -290,14 +290,17 @@ final class FavoritesMigrationServiceTests: XCTestCase {
         try? fileManager.removeItem(at: backupURL)
     }
     
-    // MARK: - Performance Tests
-    
-    func testMigrationPerformanceWithLargeDataSet() async throws {
+    // MARK: - Large Migrations
+
+    /// Was `measure { Task { … } }`. The block returned before the migration's
+    /// first `await` resumed, so it timed task creation and asserted nothing,
+    /// and the ten detached tasks it left running outlived `tearDown`.
+    func testLargeLegacyFileMigratesInFull() async throws {
         // Given - Create large legacy dataset
         let legacyFavorites = (1...100).map { i in
             AudioDeclaration(
-                id: "perf-\(i)",
-                title: "Performance Item \(i)",
+                id: "legacy-\(i).mp3",
+                title: "Legacy Item \(i)",
                 subtitle: "Sub \(i)",
                 duration: "\(i % 60):00",
                 imageUrl: "https://example.com/\(i).jpg",
@@ -315,13 +318,13 @@ final class FavoritesMigrationServiceTests: XCTestCase {
         
         try data.write(to: legacyURL)
         
-        // When & Then
-        measure {
-            Task {
-                try? await migrationService.migrateLegacyFavorites()
-            }
-        }
-        
+        // When
+        try await migrationService.migrateLegacyFavorites()
+
+        // Then - every row crossed, and the legacy file is gone
+        XCTAssertEqual(mockAudioRepo.entries.count, 100)
+        XCTAssertFalse(fileManager.fileExists(atPath: legacyURL.path))
+
         // Clean up
         try? fileManager.removeItem(at: legacyURL)
     }

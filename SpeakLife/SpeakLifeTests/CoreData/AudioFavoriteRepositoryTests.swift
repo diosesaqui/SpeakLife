@@ -62,7 +62,7 @@ final class AudioFavoriteRepositoryTests: XCTestCase {
     func testCreateFromAudioDeclaration() async throws {
         // Given
         let audio = AudioDeclaration(
-            id: "audio-123",
+            id: "audio-123.mp3",
             title: "Declaration Title",
             subtitle: "Subtitle",
             duration: "5:45",
@@ -77,7 +77,7 @@ final class AudioFavoriteRepositoryTests: XCTestCase {
         let entry = try await repository.createFromAudioDeclaration(audio)
         
         // Then
-        XCTAssertEqual(entry.audioId, "audio-123")
+        XCTAssertEqual(entry.audioId, "audio-123.mp3")
         XCTAssertEqual(entry.title, "Declaration Title")
         XCTAssertEqual(entry.subtitle, "Subtitle")
         XCTAssertEqual(entry.isPremium, true)
@@ -326,48 +326,67 @@ final class AudioFavoriteRepositoryTests: XCTestCase {
         XCTAssertNil(audioDeclaration.episode)
     }
     
-    func testUniqueConstraintOnAudioId() async throws {
-        // Given
-        let entry1 = AudioFavoriteEntry(context: context)
-        entry1.audioId = "duplicate-id"
-        entry1.title = "First"
-        try await repository.create(entry1)
-        
-        // When - Create another with same audioId
-        let entry2 = AudioFavoriteEntry(context: context)
-        entry2.audioId = "duplicate-id"
-        entry2.title = "Second"
-        
-        // Then - Should handle constraint violation
-        // Note: Core Data unique constraints may merge or reject depending on configuration
-        do {
-            try await repository.create(entry2)
-            // If it succeeds, verify only one exists
-            let results = try await repository.fetch(predicate: NSPredicate(format: "audioId == %@", "duplicate-id"))
-            XCTAssertLessThanOrEqual(results.count, 1)
-        } catch {
-            // Constraint violation is acceptable
-            XCTAssertNotNil(error)
+    /// Where the one-row-per-audio guarantee actually lives.
+    ///
+    /// This used to call `create` twice and expect Core Data to collapse the
+    /// rows, and it failed with 2, because `AudioFavoriteEntry` has no
+    /// uniqueness constraint and cannot have one: a store with a constraint on
+    /// it will not load under CloudKit mirroring, which this model uses
+    /// throughout. `create` is the raw write and duplicates by design.
+    ///
+    /// `createFromAudioDeclaration` is the path every caller in the app takes,
+    /// and it is where the dedup is. Assert it there, so the check covers the
+    /// code that would actually regress.
+    func testCreatingTheSameAudioTwiceReturnsTheSameRow() async throws {
+        func audio(titled title: String) -> AudioDeclaration {
+            AudioDeclaration(id: "duplicate-id.mp3", title: title, subtitle: "Sub",
+                             duration: "1:00", imageUrl: "", isPremium: false, tag: "faith")
         }
+
+        _ = try await repository.createFromAudioDeclaration(audio(titled: "First"))
+        let second = try await repository.createFromAudioDeclaration(audio(titled: "Second"))
+
+        // Asserted through a distinguishing field rather than by comparing
+        // objectIDs. An objectID is temporary until its context saves and
+        // permanent after, and the two are never equal — so comparing the entry
+        // handed back by the first call against the one fetched by the second
+        // compares a `t…` against a `p1` and fails even when both name the same
+        // row, which is exactly what it did.
+        //
+        // The title is the better probe anyway: it proves the second call
+        // handed back the row already there instead of writing a fresh one over
+        // it, which a row count alone cannot tell you.
+        XCTAssertEqual(second.title, "First", "the second call overwrote or re-created the row")
+
+        let results = try await repository.fetch(
+            predicate: NSPredicate(format: "audioId == %@", "duplicate-id.mp3")
+        )
+        XCTAssertEqual(results.count, 1, "a second row was created")
     }
     
-    // MARK: - Performance Tests
-    
-    func testBatchFetchPerformance() async throws {
-        // Given - Create many entries
+    // MARK: - Batch Fetch
+
+    /// Was `measure { Task { … } }`, which measured nothing: the block returned
+    /// before the first `await` resumed, and the detached tasks it left behind
+    /// woke after `tearDown` had already nil'd `repository`.
+    /// Goes through `createFromAudioDeclaration` rather than building entities
+    /// here, and at a hundred rows that is not cosmetic.
+    ///
+    /// `AudioFavoriteEntry(context:)` from an `async` test body inserts into the
+    /// main-queue `viewContext` from the cooperative pool. At one or two rows it
+    /// gets away with it; at a hundred this fetched back 99 on roughly three
+    /// runs in five. The repository now does its inserts on the context's queue,
+    /// so using its own API is both the correct way to write the rows and the
+    /// thing worth covering.
+    func testBatchFetchReturnsEveryEntry() async throws {
         for i in 1...100 {
-            let entry = AudioFavoriteEntry(context: context)
-            entry.audioId = "perf-\(i)"
-            entry.title = "Performance Test \(i)"
-            try await repository.create(entry)
+            _ = try await repository.createFromAudioDeclaration(
+                AudioDeclaration(id: "batch-\(i).mp3", title: "Batch \(i)", subtitle: "Sub",
+                                 duration: "1:00", imageUrl: "", isPremium: false, tag: "faith")
+            )
         }
-        
-        // When & Then
-        measure {
-            Task {
-                let results = try? await repository.fetch(predicate: nil)
-                XCTAssertEqual(results?.count, 100)
-            }
-        }
+
+        let results = try await repository.fetch(predicate: nil)
+        XCTAssertEqual(results.count, 100)
     }
 }

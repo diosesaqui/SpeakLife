@@ -10,6 +10,23 @@ import Combine
 import TipKit
 import AVFoundation
 
+/// Whether this process is running the test suite rather than serving a user.
+///
+/// The environment is checked before the class, and the order matters.
+/// `NSClassFromString("XCTestCase")` is the obvious probe and it is wrong on its
+/// own: XCTest injects the test bundle only after the host app finishes
+/// launching, so anything that runs during launch — the App's scene body, the
+/// Core Data stack — asks the question before there is an XCTestCase to find and
+/// gets back false. `XCTestConfigurationFilePath` is set by the runner before
+/// the process starts, so it is already true by then. The class probe stays as a
+/// second chance for anything constructed later.
+enum AppEnvironment {
+    static var isRunningTests: Bool {
+        ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
+            || NSClassFromString("XCTestCase") != nil
+    }
+}
+
 // MARK: - Notification Handling Documentation
 /*
  NOTIFICATION FLOW OVERVIEW:
@@ -81,127 +98,146 @@ struct SpeakLifeApp: App {
     
     var body: some Scene {
         WindowGroup {
-            HomeView(isShowingLanding: $isShowingLanding, showDailyBurstOnLaunch: $showDailyBurstOnLaunch, showDailyStructuredDayOnLaunch: $showDailyStructuredDayOnLaunch)
-                .environment(\.managedObjectContext, persistenceController.container.viewContext)
-                .environmentObject(appState)
-                .environmentObject(declarationStore)
-                .environmentObject(themeStore)
-                .environmentObject(subscriptionStore)
-                .environmentObject(devotionalViewModel)
-                .environmentObject(streakViewModel)
-                .environmentObject(enhancedStreakViewModel)
-                .environmentObject(timerViewModel)
-                .environmentObject(viewModel)
-                .environmentObject(audioDeclarationViewModel)
-                .environmentObject(tabViewModel)
-                .onOpenURL { url in
-                    // Ad-matched onboarding: owned channels (email, push, IG bio,
-                    // QR, landing page) carrying `ob=<variant>` route here when the
-                    // app opens directly (vs. a deferred install link).
-                    SubscriptionStore.handleIncomingURL(url, source: "deeplink")
-                    // Let Branch process already-installed link opens too.
-                    BranchAttribution.handleDeepLink(url)
-                    if url.absoluteString == "speaklife://event/daily-declarations" {
+            // Unit tests are hosted in this app, so launching it renders the
+            // whole product: HomeView appears, its onAppear starts background
+            // music, schedules an ATT prompt, kicks off CreateML training, sets
+            // up reminders and runs a 2.8s landing animation — all underneath
+            // every test.
+            //
+            // It is not only waste. XCTWaiter.waitForExpectations spins the main
+            // run loop, which hands time back to SwiftUI, so a live view tree
+            // keeps rendering through the wait. That is where the crash came
+            // from: DisplayLink → ViewRendererHost.render → an over-release in
+            // DisplayList, with XCTWaiter sitting at the bottom of the stack.
+            //
+            // Under test the app therefore shows nothing. @testable import still
+            // works, the host process still exists, and the tests get a quiet
+            // machine to run on.
+            if AppEnvironment.isRunningTests {
+                Color.clear
+            } else {
+                HomeView(isShowingLanding: $isShowingLanding, showDailyBurstOnLaunch: $showDailyBurstOnLaunch, showDailyStructuredDayOnLaunch: $showDailyStructuredDayOnLaunch)
+                    .environment(\.managedObjectContext, persistenceController.container.viewContext)
+                    .environmentObject(appState)
+                    .environmentObject(declarationStore)
+                    .environmentObject(themeStore)
+                    .environmentObject(subscriptionStore)
+                    .environmentObject(devotionalViewModel)
+                    .environmentObject(streakViewModel)
+                    .environmentObject(enhancedStreakViewModel)
+                    .environmentObject(timerViewModel)
+                    .environmentObject(viewModel)
+                    .environmentObject(audioDeclarationViewModel)
+                    .environmentObject(tabViewModel)
+                    .onOpenURL { url in
+                        // Ad-matched onboarding: owned channels (email, push, IG bio,
+                        // QR, landing page) carrying `ob=<variant>` route here when the
+                        // app opens directly (vs. a deferred install link).
+                        SubscriptionStore.handleIncomingURL(url, source: "deeplink")
+                        // Let Branch process already-installed link opens too.
+                        BranchAttribution.handleDeepLink(url)
+                        if url.absoluteString == "speaklife://event/daily-declarations" {
 
-                    }
-                }
-                .onAppear {
-                    // Set up notification callback only once on first appear
-                    if isFirstAppear {
-                        setupNotificationHandling()
-                        isFirstAppear = false
-                    }
-                    
-                    // Sync widget data on app launch
-                    WidgetDataBridge.shared.syncAllData()
-                    
-                    // ATT must be requested while the app is in the active state or
-                    // iOS silently drops the prompt. Calling it at launch (before
-                    // active) was consuming the one-shot request, so the prompt never
-                    // appeared during onboarding. Delay briefly so it reliably shows.
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                        viewModel.requestPermission { accepted in
-                            if accepted {
-                                appDelegate.initializeTikTokSDK()
-                            }
-                            // ATT is now resolved, so Meta can return the deferred
-                            // app link → ad-matched onboarding. Runs once.
-                            appDelegate.checkDeferredAppLinkOnce()
                         }
                     }
-                    
-                    // Check if this is the first launch or if user has music enabled
-                    if !hasLaunchedBefore {
-                        // First launch - automatically start background music
-                        declarationStore.backgroundMusicEnabled = true
-                        AudioPlayerService.shared.playSound(files: resources)
-                        hasLaunchedBefore = true
-                        // First launch - background music started automatically
-                    } else if declarationStore.backgroundMusicEnabled {
-                        // Subsequent launches - respect user's saved preference
-                        AudioPlayerService.shared.playSound(files: resources)
-                        // Background music enabled - starting playback
-                    }
-                    
-                    // 🚀 Initialize AI services and train initial models (deferred to avoid blocking)
-                    Task(priority: .background) {
-                        // Wait for app to fully initialize before training
-                        try? await Task.sleep(nanoseconds: 10_000_000_000) // 10 seconds
-                        await CreateMLTrainingPipeline.shared.trainInitialModels()
-                    }
-                    
-                    // Set up daily burst reminders
-                    DailyDeclarationReminderService.shared.setupDailyReminders()
-                    DailyDeclarationReminderService.setupNotificationActions()
-                    
-                    // 🧪 Test HelloAO Bible API integration
-                    // runHelloAOTest() // Disabled: Test should not run in production
-                    // Handle landing page and initial category selection.
-                    // Budget aligned with LandingView's sequenced entrance:
-                    // glow+icon spring ~0.7s, wordmark letter cascade,
-                    // shimmer sweep, tagline, breath, then outgoing fade.
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 2.8) {
-                        // A cold-launch notification tap is buffered until now so it
-                        // lands as the feed appears. Processing it earlier (under the
-                        // landing screen) let HomeView's onAppear re-select the
-                        // onboarding category and clobber the tapped declaration.
-                        // Assert the processing guard BEFORE revealing the feed so
-                        // that onAppear skips its re-select, then replay the tap.
-                        let hasPendingTap = NotificationHandler.shared.hasPendingNotification
-                        if hasPendingTap {
-                            declarationStore.beginNotificationProcessing()
-                            notificationJustReceived = true
+                    .onAppear {
+                        // Set up notification callback only once on first appear
+                        if isFirstAppear {
+                            setupNotificationHandling()
+                            isFirstAppear = false
                         }
-
-                        withAnimation {
-                            isShowingLanding = false
-                        }
-
-                        if hasPendingTap {
-                            NotificationHandler.shared.replayPendingNotificationIfNeeded()
-                        }
-
-                        // Daily checklist no longer auto-presents on launch — it was
-                        // racing notification-tap routing (the popup landed on top of
-                        // the deep-linked declaration). Users get a pulsing icon on
-                        // the home screen instead, so they can open it on their terms.
-
-                        // Auto-select category for non-onboarded users
-                        // Skip if notification was just received
-                        if !appState.isOnboarded && !notificationJustReceived {
-                            // Auto-selecting category for non-onboarded user
-                            let categoryString = appState.selectedNotificationCategories.components(separatedBy: ",").first ?? "destiny"
-                            if let category = DeclarationCategory(categoryString) {
-                                declarationStore.choose(category) { _ in }
+                    
+                        // Sync widget data on app launch
+                        WidgetDataBridge.shared.syncAllData()
+                    
+                        // ATT must be requested while the app is in the active state or
+                        // iOS silently drops the prompt. Calling it at launch (before
+                        // active) was consuming the one-shot request, so the prompt never
+                        // appeared during onboarding. Delay briefly so it reliably shows.
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                            viewModel.requestPermission { accepted in
+                                if accepted {
+                                    appDelegate.initializeTikTokSDK()
+                                }
+                                // ATT is now resolved, so Meta can return the deferred
+                                // app link → ad-matched onboarding. Runs once.
+                                appDelegate.checkDeferredAppLinkOnce()
                             }
                         }
+                    
+                        // Check if this is the first launch or if user has music enabled
+                        if !hasLaunchedBefore {
+                            // First launch - automatically start background music
+                            declarationStore.backgroundMusicEnabled = true
+                            AudioPlayerService.shared.playSound(files: resources)
+                            hasLaunchedBefore = true
+                            // First launch - background music started automatically
+                        } else if declarationStore.backgroundMusicEnabled {
+                            // Subsequent launches - respect user's saved preference
+                            AudioPlayerService.shared.playSound(files: resources)
+                            // Background music enabled - starting playback
+                        }
+                    
+                        // 🚀 Initialize AI services and train initial models (deferred to avoid blocking)
+                        Task(priority: .background) {
+                            // Wait for app to fully initialize before training
+                            try? await Task.sleep(nanoseconds: 10_000_000_000) // 10 seconds
+                            await CreateMLTrainingPipeline.shared.trainInitialModels()
+                        }
+                    
+                        // Set up daily burst reminders
+                        DailyDeclarationReminderService.shared.setupDailyReminders()
+                        DailyDeclarationReminderService.setupNotificationActions()
+                    
+                        // 🧪 Test HelloAO Bible API integration
+                        // runHelloAOTest() // Disabled: Test should not run in production
+                        // Handle landing page and initial category selection.
+                        // Budget aligned with LandingView's sequenced entrance:
+                        // glow+icon spring ~0.7s, wordmark letter cascade,
+                        // shimmer sweep, tagline, breath, then outgoing fade.
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 2.8) {
+                            // A cold-launch notification tap is buffered until now so it
+                            // lands as the feed appears. Processing it earlier (under the
+                            // landing screen) let HomeView's onAppear re-select the
+                            // onboarding category and clobber the tapped declaration.
+                            // Assert the processing guard BEFORE revealing the feed so
+                            // that onAppear skips its re-select, then replay the tap.
+                            let hasPendingTap = NotificationHandler.shared.hasPendingNotification
+                            if hasPendingTap {
+                                declarationStore.beginNotificationProcessing()
+                                notificationJustReceived = true
+                            }
+
+                            withAnimation {
+                                isShowingLanding = false
+                            }
+
+                            if hasPendingTap {
+                                NotificationHandler.shared.replayPendingNotificationIfNeeded()
+                            }
+
+                            // Daily checklist no longer auto-presents on launch — it was
+                            // racing notification-tap routing (the popup landed on top of
+                            // the deep-linked declaration). Users get a pulsing icon on
+                            // the home screen instead, so they can open it on their terms.
+
+                            // Auto-select category for non-onboarded users
+                            // Skip if notification was just received
+                            if !appState.isOnboarded && !notificationJustReceived {
+                                // Auto-selecting category for non-onboarded user
+                                let categoryString = appState.selectedNotificationCategories.components(separatedBy: ",").first ?? "destiny"
+                                if let category = DeclarationCategory(categoryString) {
+                                    declarationStore.choose(category) { _ in }
+                                }
+                            }
                         
-                        // Clear notification flag after initial setup
-                        notificationJustReceived = false
-                    }
+                            // Clear notification flag after initial setup
+                            notificationJustReceived = false
+                        }
     
-                        } 
-            //    .environmentObject(timeTracker)
+                            } 
+                //    .environmentObject(timeTracker)
+            }
         }
         .onChange(of: scenePhase) { (newScenePhase) in
             switch newScenePhase {

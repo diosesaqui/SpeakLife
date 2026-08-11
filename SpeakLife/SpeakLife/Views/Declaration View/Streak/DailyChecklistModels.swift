@@ -106,16 +106,45 @@ struct DailyTask: Identifiable, Codable {
     var recommendedAudioId: String? = nil
 
     /// Set on the tasks an active campaign rebuilt from the user's own words.
-    ///
-    /// Optional, not `Bool = false`, on purpose: `DailyTask` uses synthesized
-    /// Codable, which does NOT fall back to a property's default value when a
-    /// key is absent. A new non-optional key would throw `keyNotFound` on every
-    /// checklist persisted before this shipped, and the user would lose today's
-    /// progress. An Optional decodes to nil. Read it through
-    /// `isCampaignRefreshed`, never directly.
+    /// Read it through `isCampaignRefreshed`, never directly.
     var campaignRefreshed: Bool? = nil
 
     var isCampaignRefreshed: Bool { campaignRefreshed == true }
+
+    /// Decoded key by key, so a missing one falls back to the property's
+    /// default instead of throwing.
+    ///
+    /// Synthesized `Codable` does NOT apply a property's default value when its
+    /// key is absent: it throws `keyNotFound`. `DailyChecklist` is persisted
+    /// whole into UserDefaults, so one such throw loses the user the whole
+    /// day's progress on upgrade — every task, including the burst they already
+    /// spoke. `isNewlyUnlocked` was exactly that trap, and the suite caught it:
+    ///
+    ///   keyNotFound(CodingKeys(stringValue: "isNewlyUnlocked"))
+    ///
+    /// Making one property Optional fixes one property. Decoding leniently
+    /// fixes the shape, so the next field added to this struct cannot repeat it.
+    /// Only `id` is required — a task without one is not a task.
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+
+        id = try container.decode(String.self, forKey: .id)
+        title = try container.decodeIfPresent(String.self, forKey: .title) ?? ""
+        description = try container.decodeIfPresent(String.self, forKey: .description) ?? ""
+        icon = try container.decodeIfPresent(String.self, forKey: .icon) ?? "circle"
+        category = try container.decodeIfPresent(TaskCategory.self, forKey: .category) ?? .foundation
+        type = try container.decodeIfPresent(TaskType.self, forKey: .type) ?? .speak
+        difficulty = try container.decodeIfPresent(DifficultyLevel.self, forKey: .difficulty) ?? .beginner
+        minimumStreakDay = try container.decodeIfPresent(Int.self, forKey: .minimumStreakDay) ?? 1
+        estimatedMinutes = try container.decodeIfPresent(Int.self, forKey: .estimatedMinutes) ?? 5
+        isCompleted = try container.decodeIfPresent(Bool.self, forKey: .isCompleted) ?? false
+        completedAt = try container.decodeIfPresent(Date.self, forKey: .completedAt)
+        isNewlyUnlocked = try container.decodeIfPresent(Bool.self, forKey: .isNewlyUnlocked) ?? false
+        navigationDestination = try container.decodeIfPresent(
+            TaskNavigationDestination.self, forKey: .navigationDestination) ?? .none
+        recommendedAudioId = try container.decodeIfPresent(String.self, forKey: .recommendedAudioId)
+        campaignRefreshed = try container.decodeIfPresent(Bool.self, forKey: .campaignRefreshed)
+    }
 
     init(id: String, title: String, description: String, icon: String,
          category: TaskCategory, type: TaskType, difficulty: DifficultyLevel = .beginner,

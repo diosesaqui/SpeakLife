@@ -58,45 +58,59 @@ final class PersistenceController {
     
     let container: NSPersistentCloudKitContainer
 
-    /// True when this process is hosting an XCTest bundle.
+    /// Whether CloudKit should be left alone entirely.
     ///
-    /// Tests must not attach CloudKit, for two reasons and the second is the
+    /// Tests must not reach CloudKit, for two reasons and the second is the
     /// serious one.
     ///
     /// It is slow. `SpeakLifeApp` holds `PersistenceController.shared`, so every
-    /// test run launches the app and stands up CloudKit mirroring, which then
-    /// retries against an account CI does not have for the life of the process.
+    /// test run stands up mirroring and pushes a schema, then retries against an
+    /// account no simulator has for the life of the process.
     ///
     /// And it is not hermetic. Run locally by a developer who is signed in, the
     /// suite mirrors its rows into `iCloud.com.franchiz.speaklife` — the same
     /// private database the shipping app uses. Test fixtures do not belong in a
-    /// real user's iCloud, and a test whose result depends on what is already
-    /// up there is not a test.
+    /// real user's iCloud, and a test whose result depends on what is already up
+    /// there is not a test.
     ///
     /// Local persistence is untouched: the SQLite store, history tracking and
-    /// migration all behave exactly as they do in the app. Only the mirroring is
-    /// left off.
-    /// Checked via the environment first, and that ordering is the whole point.
+    /// migration behave exactly as they do in the app. Only the CloudKit traffic
+    /// is left off.
+    static var isRunningTests: Bool { AppEnvironment.isRunningTests }
+
+    /// Loaded from the bundle exactly once, and shared by every container.
     ///
-    /// `NSClassFromString("XCTestCase")` looks like the obvious probe and it is
-    /// wrong here. `SpeakLifeApp` holds `PersistenceController.shared`, so the
-    /// container is built while the host app launches — and XCTest injects the
-    /// test bundle only *after* launch completes. At the moment this runs there
-    /// is no XCTestCase class yet, the probe returns false, and CloudKit comes
-    /// up exactly as it would in production. Which is what happened: the suite
-    /// still logged "will initialize cloudkit schema" on every run.
+    /// `NSPersistentCloudKitContainer(name:)` reads the model off disk on every
+    /// construction and hands back a *different* `NSManagedObjectModel` each
+    /// time. The app builds one container, so in production this is invisible.
+    /// The test suite builds a fresh `PersistenceController` in almost every
+    /// `setUp`, and from the second one on, the same `NSManagedObject`
+    /// subclasses are registered against several identical-but-distinct models.
+    /// Core Data then cannot tell which entity a subclass refers to:
     ///
-    /// `XCTestConfigurationFilePath` is set by the test runner before the
-    /// process starts, so it is already true by the time anything of ours
-    /// executes. The class probe stays as a second chance for any caller
-    /// constructed later.
-    static var isRunningTests: Bool {
-        ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
-            || NSClassFromString("XCTestCase") != nil
-    }
+    ///   +[JournalEntry entity] Failed to find a unique match for an
+    ///   NSEntityDescription to a managed object subclass
+    ///
+    /// It logs that and carries on with an arbitrary choice, which is how a
+    /// suite ends up failing in scattered, unrelated-looking ways and
+    /// occasionally taking the process down.
+    ///
+    /// One model instance for the whole process removes the ambiguity at its
+    /// source, and costs nothing in the app.
+    static let managedObjectModel: NSManagedObjectModel = {
+        // Bundle(for:) rather than .main so this resolves to the app bundle
+        // whether the code is running the app or hosting a test bundle.
+        guard let url = Bundle(for: PersistenceController.self)
+                .url(forResource: "SpeakLife", withExtension: "momd"),
+              let model = NSManagedObjectModel(contentsOf: url) else {
+            fatalError("SpeakLife.momd is missing from the bundle")
+        }
+        return model
+    }()
 
     init(inMemory: Bool = false) {
-        container = NSPersistentCloudKitContainer(name: "SpeakLife")
+        container = NSPersistentCloudKitContainer(name: "SpeakLife",
+                                                  managedObjectModel: Self.managedObjectModel)
         
         // Detect which CloudKit environment we're in
         #if DEBUG
@@ -108,6 +122,19 @@ final class PersistenceController {
         if inMemory {
             container.persistentStoreDescriptions.forEach { storeDescription in
                 storeDescription.url = URL(fileURLWithPath: "/dev/null")
+
+                // Not redundant. `NSPersistentCloudKitContainer` fills the
+                // default description's `cloudKitContainerOptions` in from the
+                // app's iCloud entitlement before this code runs, so an
+                // in-memory store that never asked for CloudKit gets mirroring
+                // anyway. The suite's own log said so:
+                //
+                //   Observing store: <NSSQLCore> (URL: file:///dev/null)
+                //   CloudKit enabled: true
+                //
+                // A store pointed at /dev/null has nothing to mirror, and the
+                // setup request it enqueues is pure latency in every test.
+                storeDescription.cloudKitContainerOptions = nil
             }
         } else {
             // Create a store description if none exists
@@ -132,6 +159,10 @@ final class PersistenceController {
             
             // Set CloudKit container options with optimizations
             if Self.isRunningTests {
+                // Clearing, not just declining to set: the container seeds this
+                // from the iCloud entitlement on its own, so leaving it alone
+                // leaves mirroring on.
+                description.cloudKitContainerOptions = nil
                 print("🧪 Running under XCTest — CloudKit mirroring disabled")
             } else {
                 let options = NSPersistentCloudKitContainerOptions(containerIdentifier: "iCloud.com.franchiz.speaklife")
@@ -154,10 +185,10 @@ final class PersistenceController {
                 print("Persistent store loaded successfully")
                 print("Store URL: \(storeDescription.url?.path ?? "No URL")")
                 print("CloudKit enabled: \(storeDescription.cloudKitContainerOptions != nil)")
-                
+
                 // Initialize CloudKit schema for all builds to ensure proper sync
                 self.initializeCloudKitSchema()
-                
+
                 // Check CloudKit account status
                 self.checkCloudKitAccountStatus()
             }
@@ -244,6 +275,7 @@ final class PersistenceController {
     }
     
     private func checkCloudKitAccountStatus() {
+        guard !Self.isRunningTests else { return }
         let container = CKContainer(identifier: "iCloud.com.franchiz.speaklife")
         
         container.accountStatus { status, error in
@@ -311,6 +343,7 @@ final class PersistenceController {
     
     // MARK: - Initial CloudKit Import Check
     private func checkForInitialCloudKitImport() {
+        guard !Self.isRunningTests else { return }
         print("Checking for initial CloudKit import (attempt \(importAttempts + 1)/\(maxImportAttempts))...")
         
         // First check CloudKit account status
@@ -442,6 +475,7 @@ final class PersistenceController {
     }
     
     private func performDummyCloudKitQuery() {
+        guard !Self.isRunningTests else { return }
         // This forces CloudKit to sync by performing a direct query
         let container = CKContainer(identifier: "iCloud.com.franchiz.speaklife")
         let privateDatabase = container.privateCloudDatabase
@@ -520,6 +554,23 @@ final class PersistenceController {
     }
     
     // MARK: - Manual Sync Request
+
+    /// The requester a repository uses when nobody injected one.
+    ///
+    /// Repositories are handed the context they should write to, and then used
+    /// to reach past it to `PersistenceController.shared` to nudge sync. That
+    /// one line undid the injection: a test writing to its own in-memory store
+    /// still *built the app's real SQLite stack* on the first save, started
+    /// CloudKit mirroring on it, and left it running for the rest of the
+    /// process. Reading `shared` is what constructs it, so a guard inside
+    /// `requestImmediateSync()` would already be too late.
+    ///
+    /// Under XCTest this hands back a requester that does nothing and never
+    /// touches `shared`.
+    static var defaultSyncRequester: ImmediateSyncRequesting {
+        isRunningTests ? NoOpSyncRequester() : shared
+    }
+
     func requestImmediateSync() {
         print("Manual sync requested")
         
@@ -537,6 +588,7 @@ final class PersistenceController {
     
     // MARK: - CloudKit Schema Initialization
     private func initializeCloudKitSchema() {
+        guard !Self.isRunningTests else { return }
         #if DEBUG
         // Push the full model schema (incl. ProgressEventEntry/SyncedSetting)
         // to the CloudKit DEVELOPMENT environment so the record types exist
@@ -583,4 +635,22 @@ final class PersistenceController {
         let changes: [AnyHashable: Any] = [NSDeletedObjectsKey: result?.result as? [NSManagedObjectID] ?? []]
         NSManagedObjectContext.mergeChanges(fromRemoteContextSave: changes, into: [container.viewContext])
     }
+}
+
+// MARK: - Immediate Sync
+
+/// Asks the persistent stack to push whatever is pending up to CloudKit now.
+///
+/// Exists so a repository can nudge sync without naming
+/// `PersistenceController.shared`. A repository is given the context it writes
+/// to; the thing it pushes through should arrive the same way.
+protocol ImmediateSyncRequesting {
+    func requestImmediateSync()
+}
+
+extension PersistenceController: ImmediateSyncRequesting {}
+
+/// Does nothing, which is exactly right for a store with no CloudKit behind it.
+struct NoOpSyncRequester: ImmediateSyncRequesting {
+    func requestImmediateSync() {}
 }
