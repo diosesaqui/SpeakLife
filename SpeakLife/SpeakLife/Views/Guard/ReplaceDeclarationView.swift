@@ -4,10 +4,15 @@
 //
 //  Screen 3 of Take It Captive. Everything inverts.
 //
-//  The INCOMING screen was cold, grey, recessed, wrong. This one is navy, gold,
-//  lit and warm. That contrast is doing real work: the user should feel like
-//  they walked out of one room and into another. Do not harmonize these two
-//  screens.
+//  The screen the thought arrives on is cold, grey, recessed, wrong. This one is
+//  navy, gold, lit and warm. That contrast is doing real work: the user should
+//  feel like they walked out of one room and into another. Do not harmonize
+//  these two screens.
+//
+//  `TakenCaptiveView` finishes on navy for the same reason, so this screen fades
+//  into a field that is already its own colour and the handover reads as one
+//  motion. The contrast is spent between the thought and the word, not between
+//  two loads.
 //
 //  The mic ARMS ITSELF. There is no record button to START, because a button
 //  turns speaking into an extra decision at exactly the moment the user should

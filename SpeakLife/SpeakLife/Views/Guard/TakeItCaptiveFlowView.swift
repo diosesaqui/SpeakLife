@@ -4,21 +4,23 @@
 //
 //  Guarding — the fifth pillar. The container that runs the drill.
 //
-//  There are two routes through it, and which one runs depends on where the
-//  thought came from. Both target under 60 seconds.
+//  ASK → TAKEN CAPTIVE → REPLACE → GROUND TAKEN, target under 60 seconds.
 //
-//    they typed it   ASK → TAKEN CAPTIVE → REPLACE → GROUND TAKEN
-//    the bank served it   ASK → INCOMING/JUDGE → REPLACE → GROUND TAKEN
+//  One route, whether the user typed the thought or the bank served it. The
+//  only thing the source changes is how long the thought sits before it is
+//  taken — read time for a line they have never seen, none for one they wrote.
 //
-//  The difference is one screen and it is not cosmetic. INCOMING asks "does
-//  this line up with who you are?" and makes the user throw the thought off the
-//  display. That question earns its place against a thought the app supplied —
-//  they are meeting it for the first time and rejecting it is the training.
-//  Asked about a sentence they typed ten seconds ago in order to be rid of, it
-//  is a gate: they already answered by writing it down, and the answer costs
-//  them a swipe they have to discover before they can reach the word they came
-//  for. So the typed route does not ask. It takes the thought, shows that
-//  happening, and hands over the declaration.
+//  This used to fork. A served thought went to an INCOMING screen that asked
+//  "does this line up with who you are?" and made the user throw it off the
+//  display to answer. The question did not survive contact: every control on
+//  that screen was a way of saying no — swipe left for NO, "No. That's not me.",
+//  "Something else is on my mind" — and there was no way to say yes. A question
+//  with one permitted answer is not a question, it is a gate, and this one stood
+//  between the user and the declaration the whole drill exists to deliver. Users
+//  hit it and could not get past it.
+//
+//  So the app answers it and shows the answer. `TakenCaptiveView` takes the
+//  thought in front of them and hands over the word.
 //
 //  It opens by ASKING what thought they have been carrying, rather than serving
 //  one from the bank.
@@ -69,8 +71,7 @@ struct TakeItCaptiveFlowView: View {
 
     private enum Stage: Equatable {
         case ask             // what thought have you been carrying?
-        case incoming        // served from the bank: judge it, then throw it
-        case taken           // they typed it: the app takes it, no input asked
+        case taken           // the app takes it, no input asked for
         case replace
         case ground(Int)
     }
@@ -128,43 +129,29 @@ struct TakeItCaptiveFlowView: View {
     @ViewBuilder
     private func content(for thought: IncomingThought) -> some View {
         switch stage {
-        case .incoming:
-            IncomingThoughtView(
-                thought: thought,
-                onReject: { elapsed in
-                    AnalyticsService.shared.track("guard_thought_rejected", parameters: [
-                        // `method` is on BOTH routes or it is useless: present
-                        // on one only, a split by it files every rejection
-                        // under the route that happens to send it.
-                        "method": "swipe",
-                        "time_to_swipe_ms": Int(elapsed * 1000),
-                        "category": thought.category.rawValue
-                    ])
-                    withAnimation(DS.Motion.smooth) { stage = .replace }
-                },
-                // The way back to the ask, for someone who took the bank's
-                // thought and then realised a different one is the live one.
-                onEscapeHatch: { withAnimation(DS.Motion.smooth) { stage = .ask } },
-                onClose: { dismiss() }
-            )
-            .transition(.opacity)
-
         case .taken:
-            // No question, no gesture. They named the thought on the screen
-            // before; this one takes it and hands them the word.
+            // No question, no gesture, nothing to answer. The thought is taken
+            // in front of them and the word follows.
             TakenCaptiveView(
                 thought: thought,
+                isOwnWords: activeSource == .escapeHatch,
                 onFinished: {
                     AnalyticsService.shared.track("guard_thought_rejected", parameters: [
-                        // Not a swipe, so there is no reaction time to record.
-                        // The event still fires: it is what "a thought was taken"
-                        // means downstream, and dropping it here would make every
-                        // typed thought look abandoned in the funnel.
-                        "method": "typed",
+                        // There is no swipe left to time, so `time_to_swipe_ms`
+                        // is gone rather than reported as zero. The event itself
+                        // stays: it is what "a thought was taken" means
+                        // downstream, and dropping it would make every completed
+                        // drill look abandoned in the funnel.
+                        "source": activeSource.rawValue,
                         "category": thought.category.rawValue
                     ])
                     withAnimation(DS.Motion.smooth) { stage = .replace }
                 },
+                // Offered only on a served thought: the bank can simply have
+                // guessed wrong, and the answer to that is the ask.
+                onEscapeHatch: activeSource == .escapeHatch
+                    ? nil
+                    : { withAnimation(DS.Motion.smooth) { stage = .ask } },
                 onClose: { dismiss() }
             )
             .transition(.opacity)
@@ -206,15 +193,9 @@ struct TakeItCaptiveFlowView: View {
             classifier: ThoughtClassifier(bank: service.bank),
             onNamed: { typed, matched in
                 // Their words go on the card; the bank entry only supplies the
-                // counter-declaration and the terrain.
-                //
-                // Straight to `.taken`, NOT to `.incoming`. The INCOMING screen
-                // exists to ask "does this line up with who you are?" and have
-                // them throw it off — which is the right question for a thought
-                // the app served and they are meeting for the first time. Asked
-                // about a sentence they typed ten seconds ago to be rid of, it
-                // is a gate in front of the thing they came for: they already
-                // answered it by writing it down.
+                // counter-declaration and the terrain. `.escapeHatch` is what
+                // gives the next screen `isOwnWords`, so it seizes without a
+                // read beat — they wrote the sentence, they are waiting on us.
                 spendQuotaIfNeeded()
                 activeSource = .escapeHatch
                 thought = matched.wearing(typed)
@@ -233,7 +214,7 @@ struct TakeItCaptiveFlowView: View {
                     "category": served.category.rawValue,
                     "intensity": served.intensity
                 ])
-                withAnimation(DS.Motion.smooth) { stage = .incoming }
+                withAnimation(DS.Motion.smooth) { stage = .taken }
             },
             onNeedsPremium: {
                 AnalyticsService.shared.trackPaywallImpression(paywallId: "guard_extra_rep")
@@ -311,10 +292,7 @@ struct TakeItCaptiveFlowView: View {
     private var screenIndex: Int {
         switch stage {
         case .ask:      return 0
-        // `.taken` and `.incoming` are the same step of the drill by two routes,
-        // so they share an index. Splitting them would put a step-2 abandon on
-        // one route next to a step-3 abandon on the other for the same moment.
-        case .incoming, .taken: return 1
+        case .taken:    return 1
         case .replace:  return 2
         case .ground:   return 3
         }
