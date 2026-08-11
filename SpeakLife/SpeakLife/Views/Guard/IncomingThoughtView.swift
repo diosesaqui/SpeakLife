@@ -13,6 +13,13 @@
 //  withheld. The user should feel a low-grade wrongness looking at this. That
 //  reaction is the training.
 //
+//  **This screen is for a thought the app served.** It asks "does this line up
+//  with who you are?" and has the user throw it off — the right question for a
+//  line they are meeting for the first time, and the whole point of the bank.
+//  A thought the user TYPED never comes here: they answered that question by
+//  writing the sentence down, and re-asking it puts a gate in front of the word
+//  they came for. That route runs through `TakenCaptiveView` instead.
+//
 //  **The rejection is a swipe.** A tap is too passive to encode a reflex; the
 //  physical throw is what does the work, and it stays the primary interaction.
 //  The card does not politely slide back — past the threshold it burns off, with
@@ -20,12 +27,12 @@
 //
 //  There is ALSO a button, and it is not a "simplification" of the swipe — it is
 //  the floor under it. Shipped swipe-only, this screen was a dead end: the drag
-//  only lived on the card itself, so a swipe across the empty field below it did
-//  nothing, and the sole instruction was one line of 14pt grey text. People typed
-//  the thought they were carrying, landed here, and could not get out — they
-//  never reached the declaration this whole flow exists to put in their mouth.
-//  The gesture keeps top billing; the button guarantees nobody is trapped
-//  holding the lie because they didn't guess the mechanic.
+//  only lived on the card itself, so a swipe across the empty field beside it
+//  did nothing, and the sole instruction was one line of 14pt grey text. People
+//  landed here and could not get out — they never reached the declaration this
+//  whole flow exists to put in their mouth. The gesture keeps top billing; the
+//  button guarantees nobody is trapped holding the lie because they didn't
+//  guess the mechanic.
 //
 //  Swipe direction is LEFT, and left only (open decision #1 in the spec,
 //  resolved): the declaration feed pages VERTICALLY and this flow is presented
@@ -45,13 +52,6 @@ struct IncomingThoughtView: View {
     let onReject: (TimeInterval) -> Void
     let onEscapeHatch: () -> Void
     let onClose: () -> Void
-    /// True when the sentence on the card is one the user just typed.
-    ///
-    /// They do not need a beat to read their own words — they wrote them ten
-    /// seconds ago — so the question arrives almost immediately. The long pause
-    /// is for a thought served from the bank, which they are meeting for the
-    /// first time.
-    var isOwnWords: Bool = false
 
     /// False on screen 1 (the thought alone), true on screen 2 (the question).
     @State private var isJudging = false
@@ -153,12 +153,12 @@ struct IncomingThoughtView: View {
             // appeared and the card was already gone. The target is still under
             // a minute end to end, and a minute is a lot of room.
             //
-            // Their own words are the exception: they typed the sentence
-            // seconds ago and do not need to read it again. Holding a screen
-            // with no visible way forward for 2.6s on top of that is how this
-            // read as frozen.
-            let beat: Double = isOwnWords ? 0.9 : 2.6
-            DispatchQueue.main.asyncAfter(deadline: .now() + beat) {
+            // 2.6 is safe here BECAUSE this screen is now bank-only. A thought
+            // the user typed themselves never reaches it — that route goes
+            // through `TakenCaptiveView`, which asks nothing and plays out on
+            // its own. Holding someone for 2.6s in front of their own sentence,
+            // with no visible way forward, is most of why this read as frozen.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.6) {
                 withAnimation(DS.Motion.smooth) { isJudging = true }
             }
         }

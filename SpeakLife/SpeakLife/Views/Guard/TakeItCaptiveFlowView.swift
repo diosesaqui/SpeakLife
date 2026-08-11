@@ -2,9 +2,23 @@
 //  TakeItCaptiveFlowView.swift
 //  SpeakLife
 //
-//  Guarding — the fifth pillar. The container that runs the four screens.
+//  Guarding — the fifth pillar. The container that runs the drill.
 //
-//  ASK → INCOMING/JUDGE → REPLACE → GROUND TAKEN, target under 60 seconds.
+//  There are two routes through it, and which one runs depends on where the
+//  thought came from. Both target under 60 seconds.
+//
+//    they typed it   ASK → TAKEN CAPTIVE → REPLACE → GROUND TAKEN
+//    the bank served it   ASK → INCOMING/JUDGE → REPLACE → GROUND TAKEN
+//
+//  The difference is one screen and it is not cosmetic. INCOMING asks "does
+//  this line up with who you are?" and makes the user throw the thought off the
+//  display. That question earns its place against a thought the app supplied —
+//  they are meeting it for the first time and rejecting it is the training.
+//  Asked about a sentence they typed ten seconds ago in order to be rid of, it
+//  is a gate: they already answered by writing it down, and the answer costs
+//  them a swipe they have to discover before they can reach the word they came
+//  for. So the typed route does not ask. It takes the thought, shows that
+//  happening, and hands over the declaration.
 //
 //  It opens by ASKING what thought they have been carrying, rather than serving
 //  one from the bank.
@@ -55,7 +69,8 @@ struct TakeItCaptiveFlowView: View {
 
     private enum Stage: Equatable {
         case ask             // what thought have you been carrying?
-        case incoming        // it goes on the card, in their words
+        case incoming        // served from the bank: judge it, then throw it
+        case taken           // they typed it: the app takes it, no input asked
         case replace
         case ground(Int)
     }
@@ -123,14 +138,30 @@ struct TakeItCaptiveFlowView: View {
                     ])
                     withAnimation(DS.Motion.smooth) { stage = .replace }
                 },
-                // The card already holds their own words when they typed one.
-                // This is the way back to retype it, or to name a different
-                // thought than the one the bank offered.
+                // The way back to the ask, for someone who took the bank's
+                // thought and then realised a different one is the live one.
                 onEscapeHatch: { withAnimation(DS.Motion.smooth) { stage = .ask } },
-                onClose: { dismiss() },
-                // They wrote this sentence themselves, so the screen does not
-                // hold them on it while they read it back.
-                isOwnWords: activeSource == .escapeHatch
+                onClose: { dismiss() }
+            )
+            .transition(.opacity)
+
+        case .taken:
+            // No question, no gesture. They named the thought on the screen
+            // before; this one takes it and hands them the word.
+            TakenCaptiveView(
+                thought: thought,
+                onFinished: {
+                    AnalyticsService.shared.track("guard_thought_rejected", parameters: [
+                        // Not a swipe, so there is no reaction time to record.
+                        // The event still fires: it is what "a thought was taken"
+                        // means downstream, and dropping it here would make every
+                        // typed thought look abandoned in the funnel.
+                        "method": "typed",
+                        "category": thought.category.rawValue
+                    ])
+                    withAnimation(DS.Motion.smooth) { stage = .replace }
+                },
+                onClose: { dismiss() }
             )
             .transition(.opacity)
 
@@ -171,12 +202,19 @@ struct TakeItCaptiveFlowView: View {
             classifier: ThoughtClassifier(bank: service.bank),
             onNamed: { typed, matched in
                 // Their words go on the card; the bank entry only supplies the
-                // counter-declaration and the terrain. Rejecting a sentence you
-                // wrote yourself is the entire reason for asking.
+                // counter-declaration and the terrain.
+                //
+                // Straight to `.taken`, NOT to `.incoming`. The INCOMING screen
+                // exists to ask "does this line up with who you are?" and have
+                // them throw it off — which is the right question for a thought
+                // the app served and they are meeting for the first time. Asked
+                // about a sentence they typed ten seconds ago to be rid of, it
+                // is a gate in front of the thing they came for: they already
+                // answered it by writing it down.
                 spendQuotaIfNeeded()
                 activeSource = .escapeHatch
                 thought = matched.wearing(typed)
-                withAnimation(DS.Motion.smooth) { stage = .incoming }
+                withAnimation(DS.Motion.smooth) { stage = .taken }
             },
             onNothingSpecific: {
                 // The blank-field case the original spec was worried about.
@@ -269,7 +307,10 @@ struct TakeItCaptiveFlowView: View {
     private var screenIndex: Int {
         switch stage {
         case .ask:      return 0
-        case .incoming: return 1
+        // `.taken` and `.incoming` are the same step of the drill by two routes,
+        // so they share an index. Splitting them would put a step-2 abandon on
+        // one route next to a step-3 abandon on the other for the same moment.
+        case .incoming, .taken: return 1
         case .replace:  return 2
         case .ground:   return 3
         }
