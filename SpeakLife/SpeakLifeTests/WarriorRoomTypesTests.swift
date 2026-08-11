@@ -129,18 +129,18 @@ final class WarriorRoomTypesTests: XCTestCase {
     }
 
     func testAgreementReactionMapsToKnownEnumCase() throws {
-        let agreement = try decodeAgreement(reactionType: "taking_ground")
+        let agreement = makeAgreement(reactionType: "taking_ground")
         XCTAssertEqual(agreement.reaction, .takingGround)
     }
 
     func testAgreementReactionWithUnknownTypeIsNil() throws {
-        let agreement = try decodeAgreement(reactionType: "celebrating")
+        let agreement = makeAgreement(reactionType: "celebrating")
         XCTAssertNil(agreement.reaction)
     }
 
     func testAgreementForEveryReactionRoundTrips() throws {
         for reaction in WarriorRoomReaction.allCases {
-            let agreement = try decodeAgreement(reactionType: reaction.rawValue)
+            let agreement = makeAgreement(reactionType: reaction.rawValue)
             XCTAssertEqual(agreement.reaction, reaction,
                            "Agreement.reaction failed to map raw value \(reaction.rawValue)")
         }
@@ -148,23 +148,26 @@ final class WarriorRoomTypesTests: XCTestCase {
 
     // MARK: - Helpers
 
-    private func decodeAgreement(reactionType: String,
-                                 text: String = "We declare it.",
-                                 displayName: String = "Sister",
-                                 userId: String = "user1") throws -> Agreement {
-        // Firestore.Decoder, not JSONDecoder. `Agreement.id` is @DocumentID,
-        // which refuses a plain decoder outright ("DocumentID values can only
-        // be decoded with Firestore.Decoder") — and even before that, its key
-        // is required, so JSON without an "id" fails with keyNotFound. Reading
-        // through Firestore's decoder also means the test exercises the same
-        // path production does, instead of one the app never takes.
-        let document: [String: Any] = [
-            "userId": userId,
-            "displayName": displayName,
-            "reactionType": reactionType,
-            "text": text,
-            "timestamp": Timestamp(seconds: 1714400000, nanoseconds: 0)
-        ]
-        return try Firestore.Decoder().decode(Agreement.self, from: document)
+    private func makeAgreement(reactionType: String,
+                               text: String = "We declare it.",
+                               displayName: String = "Sister",
+                               userId: String = "user1") -> Agreement {
+        // Built directly, not decoded. `Agreement.id` is @DocumentID, and that
+        // wrapper cannot be decoded by any coder a unit test can construct: it
+        // demands a real DocumentReference in the decoder's userInfo, which
+        // only a live DocumentSnapshot supplies. Firestore.Decoder fails the
+        // same way JSONDecoder does — "Could not find DocumentReference for
+        // user info key".
+        //
+        // Nothing is lost. What these tests are about is whether
+        // `Agreement.reaction` maps its raw string onto the enum, and that is a
+        // computed property over `reactionType`. Decoding was only ever
+        // scaffolding to reach it.
+        Agreement(id: "agreement-1",
+                  userId: userId,
+                  displayName: displayName,
+                  reactionType: reactionType,
+                  text: text,
+                  timestamp: Timestamp(seconds: 1714400000, nanoseconds: 0))
     }
 }
