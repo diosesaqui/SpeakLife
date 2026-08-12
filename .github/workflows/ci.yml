@@ -1,13 +1,21 @@
 name: CI
 
-# Builds the app and runs the test suite on every pull request into main, and
-# on main itself after a merge.
+# Two jobs, deliberately split.
 #
-# Before this existed the repository had no build CI at all: the only workflow
-# was GitHub's generated Pages deploy, every pull request reported zero checks,
-# and the branch protection rule sat waiting on a status that nothing ever
-# posted. Merges went through on override, and nothing had compiled the app or
-# executed a single test.
+# `unit-tests` runs the 433 tests that now live in Packages/SpeakLifeKit. It
+# opens no Xcode project, builds no .app, boots no simulator, and resolves no
+# remote packages — SpeakLifeKit declares none. That is the whole point of the
+# extraction: a red result means the code, not the SDK stack, the simulator, the
+# network or the runner image.
+#
+# `app-tests` still builds the application and runs what is left in
+# SpeakLifeTests — the Firestore-bound files that cannot leave an app host. It is
+# the slow one, and it exists so a PR cannot break the app while the fast job
+# stays green.
+#
+# Before any of this the repository had no build CI at all: every pull request
+# reported zero checks and the branch protection rule sat waiting on a status
+# that nothing ever posted. Merges went through on override.
 
 on:
   pull_request:
@@ -25,16 +33,50 @@ concurrency:
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
-  build-and-test:
-    name: Build and test
+  # ───────────────────────────────────────────────────────────────────────────
+  # The fast one. This is the check that should gate pull requests.
+  # ───────────────────────────────────────────────────────────────────────────
+  unit-tests:
+    name: Unit tests
+    # Xcode is still required even though no Xcode project is opened: the
+    # SpeakLifePersistence target compiles SpeakLife.xcdatamodeld through a
+    # SwiftPM prebuild plugin that shells out to `xcrun momc`, and momc ships
+    # inside Xcode rather than the Command Line Tools.
+    runs-on: macos-26
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: |
+          LATEST=$(ls -d /Applications/Xcode*.app 2>/dev/null | sort -V | tail -1)
+          if [ -n "$LATEST" ]; then sudo xcode-select -s "$LATEST"; fi
+          xcodebuild -version
+          xcrun --find momc
+
+      - name: swift test
+        run: |
+          set -o pipefail
+          # If the momc prebuild plugin is ever refused by the SwiftPM sandbox,
+          # the fix is --disable-sandbox here, not moving the model back to a
+          # `.process` resource — that route silently copies the .xcdatamodeld
+          # uncompiled and every Core Data test dies in setUp.
+          swift test --package-path Packages/SpeakLifeKit --parallel
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # The slow one. Proves the app still compiles and runs the residual
+  # app-hosted tests.
+  # ───────────────────────────────────────────────────────────────────────────
+  app-tests:
+    name: App build and hosted tests
     # macos-26, for the iOS 26 SDK. VoiceInputManager.swift calls SpeechAnalyzer,
     # SpeechTranscriber and AssetInventory. They are correctly runtime-gated with
     # @available(iOS 26.0, *), but an @available guard still needs the SDK at
     # compile time, so an older Xcode fails with four "cannot find ... in scope"
-    # errors that look like missing code rather than a missing SDK. macos-15
-    # (Xcode 16) hit exactly that.
+    # errors that look like missing code rather than a missing SDK.
     runs-on: macos-26
-    timeout-minutes: 60
+    timeout-minutes: 45
 
     env:
       PROJECT: SpeakLife/SpeakLife.xcodeproj
@@ -44,11 +86,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Images can carry several Xcodes and default to an older one, so the
-      # newest is selected rather than assumed. The version floor is checked
-      # here on purpose: without it, too old an Xcode surfaces as unresolved
-      # Speech symbols hundreds of lines into a build log, which reads like
-      # broken code and sends you looking in the wrong place.
       - name: Select Xcode
         run: |
           LATEST=$(ls -d /Applications/Xcode*.app 2>/dev/null | sort -V | tail -1)
@@ -62,16 +99,9 @@ jobs:
             exit 1
           fi
 
-      - name: Show toolchain
-        run: |
-          swift --version
-          xcrun simctl list runtimes | grep iOS || true
-
       # The dependency graph is six remote packages including firebase-ios-sdk,
-      # which is enormous. Checking the resolved sources out from scratch on
-      # every run is most of the wall clock. Package.resolved is committed, so
-      # it is an exact key: a cache hit means the same revisions, never a stale
-      # or drifting set.
+      # which is enormous. Package.resolved is committed, so it is an exact key:
+      # a cache hit means the same revisions, never a stale or drifting set.
       - name: Cache Swift packages
         uses: actions/cache@v4
         with:
@@ -91,10 +121,10 @@ jobs:
             -scheme "$SCHEME" \
             -derivedDataPath "$DERIVED_DATA"
 
-      # Chosen at runtime rather than hardcoded. Device names come and go
-      # between runner images, and a hardcoded "iPhone 16" turns into a red
-      # build the week the image drops it — a CI failure that says nothing
-      # about the code is worse than no CI, because people learn to ignore it.
+      # Chosen at runtime rather than hardcoded. Device names come and go between
+      # runner images, and a hardcoded "iPhone 16" turns into a red build the week
+      # the image drops it — a CI failure that says nothing about the code is
+      # worse than no CI, because people learn to ignore it.
       - name: Select a simulator
         run: |
           DEVICE=$(xcrun simctl list devices available --json \
@@ -114,17 +144,15 @@ jobs:
       #
       # CODE_SIGNING_ALLOWED=NO looks like the safe choice for a machine with no
       # certificates, but it strips the entitlements along with the signature.
-      # This app declares an iCloud container, and PersistenceController builds
-      # an NSPersistentCloudKitContainer against it and calls fatalError if the
-      # store will not load. Without the entitlement the container cannot
-      # resolve, so the host app traps on launch and the whole run dies as
-      # "Early unexpected exit ... signal trap before establishing connection" —
-      # a message that says nothing about entitlements and reads like the app is
-      # simply broken.
+      # This app declares an iCloud container, and PersistenceController builds an
+      # NSPersistentCloudKitContainer against it and calls fatalError if the store
+      # will not load. Without the entitlement the container cannot resolve, so
+      # the host app traps on launch and the whole run dies as "Early unexpected
+      # exit ... signal trap before establishing connection" — a message that says
+      # nothing about entitlements and reads like the app is simply broken.
       #
-      # A simulator build needs no certificate and no provisioning profile:
-      # Xcode signs it ad hoc and, crucially, applies the entitlements. So the
-      # correct move is to leave signing alone.
+      # A simulator build needs no certificate and no provisioning profile: Xcode
+      # signs it ad hoc and, crucially, applies the entitlements.
       - name: Build and test
         run: |
           set -o pipefail
@@ -135,14 +163,11 @@ jobs:
             -derivedDataPath "$DERIVED_DATA" \
             -resultBundlePath TestResults.xcresult
 
-      # Print WHY, not just that.
-      #
-      # Under parallel testing xcodebuild streams only "Test case 'X' failed",
-      # with the assertion messages left behind in the .xcresult. That bundle is
-      # over 100 MB here, so reading it means downloading an artifact — which is
-      # a slow loop when the whole point is to find out what broke. Summarising
-      # it into the log turns each red build into something diagnosable on
-      # sight.
+      # Print WHY, not just that. Under parallel testing xcodebuild streams only
+      # "Test case 'X' failed", with the assertion messages left behind in the
+      # .xcresult — a bundle large enough that reading it means downloading an
+      # artifact, which is a slow loop when the whole point is finding out what
+      # broke.
       - name: Summarise test failures
         if: failure()
         run: |
@@ -152,11 +177,9 @@ jobs:
                      (.testFailures[]? | "✗ \(.testName)\n    \(.failureText // "no message")")' \
             || echo "xcresulttool summary unavailable on this Xcode; see the uploaded artifact"
 
-      # The .xcresult holds the per-test failure messages and any crash logs,
-      # which is the difference between "a test failed" and knowing which
-      # assertion on which line.
+      # Only on failure. Uploading ~114 MB on every green run was pure cost.
       - name: Upload test results
-        if: always()
+        if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: test-results
