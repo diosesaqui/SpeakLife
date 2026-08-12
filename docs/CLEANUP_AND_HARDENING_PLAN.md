@@ -685,17 +685,130 @@ money tests, the highest-risk gap in the codebase — writable at all.
 **Acceptance:** the six C1 test cases in §4 can be written against injected doubles with
 no network and no `Purchases.configure()`.
 
+### S1.5 — Get the Anthropic key off devices · ~1 day + a drain period · **do first**
+
+The only item in any of these plans with a live security consequence. It outranks the
+SOLID seams.
+
+**The situation.** `SubscriptionStore.swift:500` reads `anthropic_api_key` from Firebase
+Remote Config into `AnthropicConfig.apiKey`, and two services then call
+`api.anthropic.com` **directly from the device** with it in an `x-api-key` header:
+
+- `Services/PersonalDeclaration/ClaudeDeclarationMatcher.swift:59–70`
+- `Services/Enforcement/EnforcementCurator.swift:227–262`
+
+Remote Config is not a secret store — it is fetched by the client and cached in plaintext
+on device, and Firebase's own documentation says not to put secrets in it. So the key is
+effectively published. An Anthropic key is billed and unscoped: whoever extracts it
+spends your money and generates content under your account.
+
+**You already solved this once.** `functions/bibleChat.js:35` uses
+`defineSecret('ANTHROPIC_API_KEY')` and `:175` constructs the client server-side, and it
+verifies entitlement against RevenueCat rather than trusting the client. This is that
+pattern applied to the two endpoints that skipped it — not new architecture.
+
+#### The key strategy: two keys, not a rotation
+
+This is what lets the current key keep working while the exposure stops growing.
+
+| Key | Lives in | Serves | Fate |
+|---|---|---|---|
+| **Old** (exposed) | Remote Config, on devices | shipped app versions | revoked at Phase 3 |
+| **New** | Firebase Secret Manager, server only | the Cloud Functions | never leaves your infra |
+
+A straight rotation would not work: pushing a new key through Remote Config just exposes
+the new one too. Minting a separate server key means **the new key is never on a device**,
+and the old one can be revoked on your schedule rather than the App Store's.
+
+#### Phase 0 — today, before any code · 30 minutes
+
+Cap the blast radius of the key that is already out.
+
+1. Set a **monthly spend limit** on the Anthropic account.
+2. Set a **usage alert** at a threshold reflecting normal traffic — an extracted key shows
+   up as a volume anomaly long before it shows up as a bill.
+3. Note the current baseline spend so an anomaly is recognisable.
+
+This is the real answer to "use that one for now": it keeps working, and if it is being
+abused you find out in hours rather than at invoice time.
+
+#### Phase 1 — two Cloud Functions · half a day · no app change
+
+Mint a **new** Anthropic key. `firebase functions:secrets:set ANTHROPIC_API_KEY_V2`.
+Add two handlers beside `bibleChat`, mirroring its structure:
+
+```
+POST matchDeclaration   { appUserId, input }
+    → 200 { category, declarationText, verseText, verseReference }
+    → 200 { declined: true }                    ← distinct shape, see below
+    → 429 rate limited     → 5xx upstream failure
+
+POST curateEnforcement  { appUserId, situation, candidates: [String] }
+    → 200 { days: [Int] }                       (exactly Enforcement.length, distinct)
+    → 200 { declined: "another_persons_partner" | "harm_to_another" | "unscriptural" }
+    → 429 / 5xx as above
+```
+
+**Move the system prompts server-side with them.** `AnthropicConfig.systemPrompt` is ~40
+lines of carefully tuned instruction currently compiled into the binary, and
+`EnforcementCurator:257–275` has its own. Server-side, you can revise the declaration
+rules without an App Store release — a genuine product win, not just a security one.
+
+**Add per-user rate limiting.** Today the key is the only thing gating abuse; after this,
+your endpoint is. `bibleChat` already establishes the `appUserId` pattern to follow.
+
+> ### The one correctness trap in this migration
+>
+> `ClaudeDeclarationMatcher.swift:44–50` treats **decline** and **error** differently on
+> purpose: a network error falls back to the keyword matcher, a refusal must not. The
+> comment is explicit — *"routing it to the fallback would answer a declined request with
+> a written declaration, exactly what the refusal existed to prevent."*
+>
+> A proxy that returns 500 for both collapses that distinction and re-opens the hole the
+> refusal was built to close. **Decline must come back as a 200 with a distinct body**,
+> never as an error status. Test this case first, not last.
+
+#### Phase 2 — point the client at the proxy · half a day
+
+1. Replace the direct `URLRequest` in both services with a call to the new endpoints.
+2. Keep the old path behind a Remote Config kill switch (`useAnthropicProxy`, default
+   true). If a function misbehaves you flip one flag and clients fall back to the direct
+   call, which still works because the old key is still in Remote Config. That safety net
+   is what makes this shippable in one release.
+3. Preserve `.declined` handling against the new response shape — see the trap above.
+4. Delete `print("🔑 [Claude] API key found, prefix: …")` at
+   `ClaudeDeclarationMatcher.swift:31`. It writes a credential fragment to the console.
+
+#### Phase 3 — close it out · once adoption drains
+
+Trigger: the old app versions fall below whatever share you are willing to break, or the
+kill switch has gone unused for a full release cycle.
+
+1. Delete `AnthropicConfig.apiKey` and both direct-call paths.
+2. Delete the `anthropic_api_key` Remote Config parameter.
+3. **Revoke the old key.**
+4. Remove the `useAnthropicProxy` flag.
+
+Until step 3 the exposure is unchanged — Phases 1 and 2 stop it *growing*, they do not
+end it. Do not treat this as done at Phase 2.
+
+**Acceptance:** no Anthropic key reachable from a device build; both features work
+end-to-end; a declined request still returns a decline and never a keyword-matched
+declaration; the old key shows zero usage before revocation.
+
 ### Slice One at a glance
 
 | | File | Effort | Unblocks |
 |---|---|---|---|
+| **S1.5** | **Anthropic key → Cloud Function** | **1 day** | **live security exposure — do first** |
 | S1.1 | `AnalyticsService.swift` | M | 436 sites; prerequisite for S1.4 |
 | S1.2 | `SyncedSettingsStore.swift` | **S** | §4 C2 — nine untested mergers |
 | S1.3 | `AppState.swift` | M | migration tests; stops a data-destroying constructor |
 | S1.4 | `SubscriptionStore.swift` | M | §4 C1 — the money tests |
 
-**Order:** S1.2 (an hour) → S1.1 (S1.4 depends on it) → S1.3 → S1.4.
-**Total: roughly 1.5–2 weeks**, one PR each.
+**Order:** S1.5 Phase 0 (30 min, today) → S1.2 (an hour) → S1.5 Phases 1–2 →
+S1.1 (S1.4 depends on it) → S1.3 → S1.4. S1.5 Phase 3 waits for adoption to drain.
+**Total: roughly 2 weeks**, one PR each.
 
 **What Slice One deliberately leaves alone:** the `SyncedSettingsStore` merge inversion,
 the full `SubscriptionStore` split, `BibleInteractor`, and every SRP finding in §3.3.
