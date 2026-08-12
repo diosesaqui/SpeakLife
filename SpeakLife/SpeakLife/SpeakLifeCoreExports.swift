@@ -10,9 +10,9 @@
 //  means the boundary shows up in exactly one place, and the file tree stays
 //  quiet.
 //
-//  When PR7/PR8 pull the persistence and service tiers out into their own
-//  Core-dependent targets, add `@_exported import SpeakLifePersistence` and
-//  `@_exported import SpeakLifeServices` alongside this line.
+//  When PR8 pulls the service tier out into its own Core-dependent target,
+//  add `@_exported import SpeakLifeServices` alongside these lines.
 //
 
 @_exported import SpeakLifeCore
+@_exported import SpeakLifePersistence

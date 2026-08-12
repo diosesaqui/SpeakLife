@@ -135,6 +135,30 @@ final class AppDelegate: NSObject, MessagingDelegate {
         // before the first CloudKit import completes.
         ProgressSyncStore.shared.start(lifecycle: lifecycle)
         SyncedSettingsStore.shared.start(lifecycle: lifecycle)
+
+        // SpeakLifePersistence seams (PR7). Persistence is Firebase-free, so
+        // anything that needs to reach up into the app for analytics, the
+        // legacy JSON favorites source, or the app's `LocalAPIClient` is an
+        // injected closure installed here.
+        DataMigrationManager.defaultLegacyAPIServiceFactory = { LocalAPIClient() }
+        UnifiedFavoritesManager.legacyJSONFavoritesProvider = { completion in
+            CoreDataAPIService().declarations { declarations, _, _ in
+                completion(declarations)
+            }
+        }
+        AudioFavoritesTelemetry.trackFavoriteToggle = { audio, isFavorited in
+            AudioAnalytics.shared.trackFavoriteToggle(audio: audio, isFavorited: isFavorited)
+        }
+        AudioFavoritesTelemetry.trackFavoriteRemoved = { audio in
+            AudioAnalytics.shared.trackFavoriteRemoved(audio: audio)
+        }
+        AudioFavoritesTelemetry.trackFavoritesCleared = { count in
+            AudioAnalytics.shared.trackFavoritesCleared(count: count)
+        }
+        AudioFavoritesTelemetry.trackFavoriteSavedForPaywall = {
+            PaywallTriggerManager.shared.trackFavoriteSaved()
+        }
+
         ApplicationDelegate.shared.application(
             application,
             didFinishLaunchingWithOptions: launchOptions
