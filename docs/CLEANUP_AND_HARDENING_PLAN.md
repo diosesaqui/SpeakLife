@@ -23,10 +23,11 @@ Regeneration commands are in §6 so this survives contact with a moving codebase
 | Measure | Value |
 |---|---|
 | App Swift files / lines | 368 / 123,415 |
-| **Never compiled** (on disk, absent from `project.pbxproj`) | **4,757 lines** |
-| Unreachable onboarding — raw scan / **after verification** | 22 files, 8,459 lines / **17 files, 4,990 lines** |
-| Types declared in more than one file | 57 names |
-| Commented-out code lines | 1,091 |
+| **Never compiled** (on disk, absent from `project.pbxproj`) | **~5,115 lines** |
+| **Compiled but entirely commented out** (the dead Bootcamp feature) | **~2,865 lines** |
+| Unreachable onboarding — raw scan / **after verification** | 22 files, 8,459 lines / **16 files, 4,551 lines** |
+| Types declared in more than one file (raw) / **that actually collide** | 57 names / **0** |
+| Commented-out code lines | 455 |
 | `print()` in shipping code | 439 (only 28 files use `#if DEBUG` at all) |
 | Singletons (`static let shared`) | 56 declarations |
 | `AnalyticsService.shared` call sites | 436 |
@@ -34,7 +35,7 @@ Regeneration commands are in §6 so this survives contact with a moving codebase
 | Unused asset sets | 9 |
 | Tests touching subscription or entitlement logic | **0** |
 
-Two of those deserve to be read twice: **4,757 lines that the compiler has never seen**,
+Two of those deserve to be read twice: **~5,115 lines that the compiler has never seen**,
 and **zero tests on the code that decides whether someone has paid.**
 
 ---
@@ -44,7 +45,7 @@ and **zero tests on the code that decides whether someone has paid.**
 Ordered by risk, lowest first. Wave 1 is genuinely risk-free; by Wave 4 you are making
 judgement calls. Do not reorder.
 
-### Wave A1 — Files the compiler has never seen · ~4,757 lines · risk: none
+### Wave A1 — Files the compiler has never seen · ~5,115 lines · risk: none
 
 These exist on disk but are absent from `project.pbxproj`, so they are **already not part
 of the app**. Deleting them cannot change behaviour — it only stops them appearing in
@@ -53,8 +54,9 @@ search results and misleading whoever greps next.
 **A1.1 — The shadow `Utils/` directory · 2,816 lines.**
 `SpeakLife/Utils/` duplicates the live `SpeakLife/Core/Utils/`. Only `Core/Utils` is in
 the project (verified by walking the `PBXGroup` tree, not by guessing from the path).
-The copies have **diverged**, which means someone has been editing a file that never
-compiles:
+The copies have **diverged**. Direction is not provable from divergence alone — and the
+live copies are consistently the larger ones, which reads as the live file being extended
+rather than the dead one being edited. Diff before deleting either way:
 
 | File | Divergence |
 |---|---|
@@ -65,10 +67,8 @@ compiles:
 | `Utils/CelebrationAnimations.swift` | 8 |
 | `Utils/MicroInteractions.swift` | identical |
 
-> **Check before deleting.** Divergence runs both ways. Diff each pair and confirm the
-> live `Core/Utils/` copy is the newer one — if a real fix landed only in the dead copy,
-> port it across first. Budget an hour for this; it is the one part of Wave A1 that is
-> not mindless.
+> Budget an hour to diff the six pairs and port anything that landed only in the dead
+> copy. It is the one part of Wave A1 that is not mindless.
 
 **A1.2 — Orphaned single files · 1,615 lines.** Delete outright:
 
@@ -82,10 +82,14 @@ compiles:
 | 78 | `Views/Declaration View/Streak/CompactStreakButton.swift` (the live `CompactStreakButton` lives in `EnhancedStreakView.swift`) |
 | 74 | `Views/Bible/BibleVersionSelectorView.swift` |
 
-**A1.3 — Duplicate service copies · 326 lines.** Live copy named first:
+**A1.3 — Duplicate service copies · 683 lines.** Live copy named first:
 
 - `Views/Community/AppleSignInService.swift` is live → delete `Services/Auth/AppleSignInService.swift` (222 lines, **diverged** — diff first)
 - `Services/IAP/Security/KeychainHelper.swift` is live → delete `Services/Security/KeychainHelper.swift` (104 lines, identical, safe)
+- `Views/Bootcamp/BootcampMainView.swift` is live → delete
+  `Views/ProfileView/Bootcamp/BootcampMainView.swift` (357 lines, **diverged by 696 lines**).
+  Note the live copy is itself entirely commented out and dies in Wave A5 — but delete the
+  shadow here so the §5 "no uncompiled file on disk" guardrail can pass.
 
 > **Do NOT delete `Views/SpeakLifeQuiz/`.** Eight files there look orphaned by the same
 > test and are not: `SpeakLifeQuiz` is the project's one
@@ -98,14 +102,15 @@ must produce a byte-identical result. Nothing here was ever compiled.
 
 ---
 
-### Wave A2 — The onboarding graveyard · **4,990 lines verified** · risk: low
+### Wave A2 — The onboarding graveyard · **4,551 lines verified** · risk: low
 
-A raw reference scan flagged 22 files. **Verification cut that to 17.** The raw number
-was 8,459 lines; the number that is actually safe is **4,990**. Do not use the raw list —
-five of those files are load-bearing in ways a filename scan cannot see.
+A raw reference scan flagged 22 files. **Two rounds of verification cut that to 16.** The
+raw number was 8,459 lines; the number that is actually safe is **4,551**. Do not use the
+raw list — six of those files are load-bearing in ways a filename scan cannot see, and one
+of the six survived the *first* verification pass too (see the box below A2.3).
 
-**The live router:** `Views/HomeView.swift:417–441` switches on
-`subscriptionStore.resolvedOnboardingVariant` (`SubscriptionStore.swift:112–114`, fed by
+**The live router:** `Views/HomeView.swift:416–441` switches on
+`subscriptionStore.resolvedOnboardingVariant` (`SubscriptionStore.swift:122–124`, enum at `:112–115`, fed by
 Remote Config `onboardingVariant` + an `ob=` deep-link override, defaulting to `"warfare"`
 at `AppDelegate.swift:127`). The live destinations are exactly seven:
 `QuizOnboardingView`, `ProductOnboardingView`, `IdentityOnboardingView`,
@@ -113,41 +118,47 @@ at `AppDelegate.swift:127`). The live destinations are exactly seven:
 `CloserOnboardingView`. **None of the 22 is a router destination** — but that alone was
 not enough to clear them.
 
-**A2.1 — Delete outright · 3,203 lines**
+**A2.1 — Delete outright · 3,001 lines**
 
 `PolishedCrossOnboardingFlow` (1307) · `AudioDevotionalsTutorial` (302) ·
 `DemoExperienceView` (232) · `PersonalizationSummaryScene` (208) · `DevotionalsTutorial` (206) ·
-`ImprovementScene` (202) · `AffirmationsTutorial` (192) · `HookScene` (139) ·
-`WidgetScene` (125) · `LoadingView` (112) · `BenefitScene` (89) · `HelpUsGrowView` (89)
+`AffirmationsTutorial` (192) · `HookScene` (139) · `WidgetScene` (125) ·
+`LoadingView` (112) · `BenefitScene` (89) · `HelpUsGrowView` (89)
 
-**A2.2 — Delete as clusters · 1,787 lines** (each is dead only *together*; deleting half breaks the build)
+**A2.2 — Delete as clusters · 1,550 lines** (each is dead only *together*; deleting half breaks the build)
 
 - `SpiritualWarfareOnboardingView` (394) **+** `SpiritualWarfareContentScreens` (524)
-- `FixedSpiritualWarfareScreens` (237) **+** its extension target `StreamlinedSpiritualWarfareFlow` (922) — the extension's `useFixedBattleIntro`/`useFixedVictorySolution` are never called
 - `EnhancedOnboardingModels` (63) **+** `EnhancedOnboardingScreensRefactored` (569) **+** `EnhancedOnboardingViewRefactored` (528)
 
-Taking the two non-listed partners (`StreamlinedSpiritualWarfareFlow`,
-`EnhancedOnboardingViewRefactored`) brings the total to **6,440 lines**. Add
+`StreamlinedSpiritualWarfareFlow` (922) is also unreachable — its only inbound reference
+is the extension in the never-compiled `FixedSpiritualWarfareScreens`, whose
+`useFixedBattleIntro`/`useFixedVictorySolution` are never called. Taking it plus
+`EnhancedOnboardingViewRefactored` brings the total to **6,001 lines**. Add
 `Views/Onboarding/OnboardingView.swift` (343, also unreachable) to the same sweep.
 
-**A2.3 — KEEP these five.** Each looked dead and is not. This is the part a naive cleanup
-gets wrong:
+**A2.3 — KEEP these six.** Each looked dead and is not. This is the part a naive cleanup
+gets wrong — and note that the *first verified pass still missed one of them*:
 
 | File | Why it must stay |
 |---|---|
 | `NewOnboardingScreens` (2414) | Declares `ScaleButtonStyle`, used by `Views/Bible/BibleView.swift:465`; four of its screens are used by the live `HowToUseSpeakLifeView` |
-| `CombinedPersonalizationScene` (334) | Sole declaration of `ProgressDots` (used by the live `OptimizedSubscriptionViewV1.swift:593`) **and** of `DeclarationCategory.iconName` |
+| **`ImprovementScene` (202)** | **Sole declaration of `class ImprovementViewModel` (`:81`), used by `NewOnboardingScreens.swift:301` and `CombinedPersonalizationScene.swift:15,172` — both KEEP files. Deleting it is a hard compile failure.** |
+| `CombinedPersonalizationScene` (334) | Sole declaration of `ProgressDots` (used by the live `OptimizedSubscriptionViewV1.swift:593`) **and** of `DeclarationCategory.iconName:269` |
 | `TimeNotificationStepper` (114) | `ReminderCell.swift:45,50,66` — live via `ReminderView` |
 | `WhatsNewView` (80) | `HomeView.swift:579` presents `WhatsNewBottomSheet` in a live sheet |
-| `IntroScene` (527) | Named by `SubscriptionView.swift:675`. That call sits in dead code, so `IntroScene` is dead *in effect* — but deleting it alone breaks the build. Only removable once `SubscriptionView`'s unused `patronView` goes with it. |
+| `IntroScene` (527) | `SubscriptionView.swift:675` instantiates **`IntroTipScene`** (`IntroScene.swift:26`) — not the `IntroScene` type itself, which has zero references. That call sits inside the unused `patronView`, so the file is dead *in effect* but deleting it breaks the build. Removable once `patronView` goes. |
 
-**Build-hygiene note:** `FeatureCard` is declared twice at module scope —
-`IntroScene.swift:487` and `Bootcamp/BootcampMainView.swift:327` — with both files in the
-same Sources phase. Deleting `IntroScene` resolves the collision.
+> **Why `ImprovementScene` slipped through twice.** Both the raw scan and the first
+> verification pass matched on *filenames*. `ImprovementScene.swift` declares
+> `ImprovementViewModel` — a name that shares nothing with its file. Same trap:
+> `LoadingView.swift` declares `PersonalizationLoadingView`, `IntroScene.swift` declares
+> `IntroTipScene`. **Enumerate declared types, not filenames** — or just run `periphery`
+> (§5), which uses the compiler's index and would have caught this without argument.
 
-**Remove the `project.pbxproj` entries too.** All 22 files have `PBXFileReference` +
-`PBXBuildFile` + group + Sources-phase entries. No storyboard, xib, Info.plist,
-entitlements or Intents references exist for any of them.
+**Remove the `project.pbxproj` entries for the 16 deleted files only** — *not* for the six
+KEEP files above. No storyboard, xib, Info.plist, entitlements or Intents references exist
+for any of them. Note `FixedSpiritualWarfareScreens` has **no** pbxproj entries at all; it
+is handled in Wave A1.2, not here.
 
 **Ship one PR per cluster, not one 5,000-line PR.** A reviewer can sanity-check "the dead
 spiritual-warfare flow" and cannot meaningfully review five thousand deleted lines at once.
@@ -158,7 +169,7 @@ spiritual-warfare flow" and cannot meaningfully review five thousand deleted lin
 
 ### Wave A3 — Dead code inside living files · risk: low
 
-- **1,091 lines of commented-out code.** Delete on sight. Git remembers; commented code
+- **455 lines of commented-out code.** Delete on sight. Git remembers; commented code
   does not. Exempt genuine explanatory comments — the filter matches lines beginning
   `// let`, `// func`, `// if`, `// return`, `// self.`, so it is already narrow.
 - **`APIClientTests.swift`** — all 91 lines commented out, 6 phantom tests. Delete the file.
@@ -182,21 +193,50 @@ spiritual-warfare flow" and cannot meaningfully review five thousand deleted lin
 
 ---
 
-### Wave A4 — Duplicate type names · 57 names · risk: medium
+### Wave A5 — The dead Bootcamp feature · ~2,865 lines · risk: low
 
-Not all are bugs. `CodingKeys` and `Coordinator` repeating across files is idiomatic
-Swift and should be left alone. The ones that matter are the accidental collisions:
+**Missed by the first pass, and larger than the entire shadow `Utils/` directory.** These
+files *are* in the build — but they contain essentially no executable code. They are
+whole-file comment blocks, which is why the commented-code scan in A3 cannot see them
+(the style is `//    @ObservedObject var …`, indented past the regex).
 
-- `Event` — `Core/Analytics/Events.swift` **and** `Services/CoreData/ProgressSyncStore.swift`.
-  Two unrelated concepts sharing a name in one module. Rename the sync one to
-  `SyncEvent`; this becomes mandatory when the package boundary lands.
-- `UserPreferences` — `Services/ML/RecommendationEngine.swift` and
-  `Services/Widget/SmartContentProvider.swift`.
-- `ParticleType`, `HeartData`, `StatCard`, `FeatureCard`, `Step`, `Feature`, `Origin` —
-  collisions between unrelated features. Namespace or rename.
+| Lines | Executable | File |
+|---:|---:|---|
+| 947 | 0 | `Views/Bootcamp/BootcampDetailViews.swift` |
+| 607 | 1 | `Views/Bootcamp/BootcampTabViews.swift` |
+| 425 | 0 | `ViewModels/BootcampViewModel.swift` |
+| 353 | 1 | `Views/Bootcamp/BootcampMainView.swift` |
+| 155 | 1 | `Views/Declaration View/DeclarationContent/DeclarationAnimationSettings.swift` |
 
-Most of the remaining collisions live in the `Utils/` duplicate directory and disappear
-for free with Wave A1.
+Plus `Models/BootcampModels.swift` (378 lines, 308 live) whose 29 declared types
+(`BootcampProgram`, `BootcampModule`, `Lesson`, `WeeklyChallenge`, `Certificate`…) have
+**zero references outside the dead Bootcamp files** — verified. The whole feature is dead.
+
+Delete all six files and their pbxproj entries. Confirm first that Bootcamp is not a
+product commitment someone intends to revive; if it is, the code is worth nothing in this
+state anyway and git has it.
+
+### Wave A4 — Duplicate type names · **verify before doing anything** · risk: low
+
+**The raw count of 57 is real; the number that actually collide in the compiled module is
+zero.** Verified by restricting the scan to column-0 declarations in files that are in the
+app's Sources phase.
+
+Every example worth naming turns out to be either a **nested** type — which does not
+collide, in this module or across a package boundary — or a declaration in a
+never-compiled file:
+
+- `Event`: `Core/Analytics/Events.swift:11` is module scope; `ProgressSyncStore.swift:270`
+  is `struct Event` **nested** inside `ProgressSyncStore`. The tests already write
+  `ProgressSyncStore.Kind`. No rename needed, and it does **not** become mandatory at the
+  package boundary.
+- `UserPreferences`, `ParticleType`, `HeartData`, `StatCard`, `Step`, `Origin` — all nested.
+- `Feature` / `FeatureCard` — second declaration is in the never-compiled
+  `Views/ProfileView/Bootcamp/BootcampMainView.swift`.
+
+**Recommendation: skip this wave.** Re-run the check after Waves A1 and A5 land, and only
+act if a genuine module-scope collision survives. A day of renaming aimed at a
+non-problem is churn a reviewer cannot justify.
 
 ---
 
@@ -230,15 +270,21 @@ untested list in §4 looks the way it does.
 
 Do **not** attempt to de-singleton 436 call sites. The cheap, high-yield version:
 
-- **Analytics** — leave the 436 call sites. Make `AnalyticsService.shared` swappable
-  behind the `AnalyticsProviding` protocol that already exists (`FirebaseAnalyticsProvider`
-  is already in `Core/Analytics/AnalyticsService.swift`). You have the seam; it just is
-  not injectable. One change, all 436 sites become test-neutral.
-- **The seven singletons that block tests** — `PersistenceController`, `ProgressSyncStore`,
-  `SyncedSettingsStore`, `EnforcementService`, `BurstCompletionTracker`,
-  `NotificationManager`, `SubscriptionStore`. Give each an injectable initializer while
-  keeping `.shared` as the app's default. This is additive: no call site changes, and
-  every consumer becomes testable.
+- **Analytics** — leave the 436 call sites. Note the existing `AnalyticsProvider` protocol
+  (`AnalyticsService.swift:51`) is the *destination* interface implemented by
+  `FirebaseAnalyticsProvider:490`; `AnalyticsService` itself does not conform to it, so
+  there is no consumer-facing seam yet. Declare a **new** `AnalyticsTracking` and conform
+  `AnalyticsService` — see §3.3 target 2 for the detail. One change, all 436 sites become
+  test-neutral.
+- **The six singletons that block tests** — `PersistenceController:14`,
+  `ProgressSyncStore:35`, `SyncedSettingsStore:47`, `EnforcementService:38`,
+  `BurstCompletionTracker` (`BurstCompletionModel.swift:38`), `NotificationManager:18`.
+  Give each an injectable initializer while keeping `.shared` as the app's default.
+  Additive: no call site changes, and every consumer becomes testable.
+- **`SubscriptionStore` is *not* a singleton** — it has no `static shared`; it is an
+  `ObservableObject` injected via `@EnvironmentObject`. Its testability blocker is
+  different: `init():286` calls `setupRemoteConfigListener()` and `fetchRemoteConfig()`
+  directly, so constructing it touches Firebase. Fixed by §8 S1.4, not by this bullet.
 - **Everything else** — leave it.
 
 ### 3.2 The rule for new and touched code
@@ -264,7 +310,7 @@ blocks-testing (P1) → readability (P2)*. Effort: S = under an hour, M = half d
 **1. `SyncedSettingsStore.swift:694–1066` — invert the merge rules · L · P0**
 370 lines of **domain-specific** merge algorithms live inside the CloudKit sync engine:
 `mergeStreakStats:694`, `mergePersonalDeclarations:750`, `mergeEnforcementProgress:871`,
-`mergedEnforcementHistory:993`, and eight more. An infrastructure type knows `StreakStats`,
+`mergedEnforcementHistory:993`, and seven more (eleven in total). An infrastructure type knows `StreakStats`,
 `PersonalDeclaration`, `EnforcementProgress`, `InboxUnreadTracker`. **This is the
 extraction blocker in both directions** — the domain package can never own its own merge
 rules while they live here. Give each domain type `static func merge(_:_:) -> Self`
@@ -321,15 +367,15 @@ called from inside a model the container itself constructs.
 and (c) the actual IAP store. Only (c) belongs in a type with this name — `updateConfigValues`
 writes `AnthropicConfig.apiKey:500` and the declarations filename `:506–516`. Split into
 `RemoteFeatureFlags`, `OnboardingVariantAssigner`, and a slimmed store.
-Also **six file-scope mutable globals** at `:26–41` (`var yearlyID`, `var monthlyID`…),
+Also **four file-scope mutable globals** at `:26,27,28,41` (`var yearlyID`, `var monthlyID`…),
 mutated at `:522–525` and read from a `Product` extension `:939–1046`. Global mutable
 state cannot move into a package and makes test ordering matter.
-And `:938–1046` is seven if-else ladders over product ids that **already disagree with
+And `:938–1046` is eight if-else ladders over product ids that **already disagree with
 each other** — `ctaDurationTitle:950` falls through for `weeklyID` while `subTitle:986`
 handles it explicitly; `percentageOff:1045` hardcodes `40` as the anchor price.
 
 **7. `BibleInteractor.swift` — half the file is data, and two methods lie · M · P0/P1**
-`:205–740` and `:955–1001` are **591 lines (51%)** of hardcoded fallback data — all 66
+`:205–740` and `:955–1001` are **583 lines (50%)** of hardcoded fallback data — all 66
 books as inline literals. Move to a bundled JSON; the file drops to ~575 lines.
 Three `switch currentProvider` blocks (`:181`, `:764`, `:915`) mean a fourth Bible API
 means editing all three — introduce `protocol BibleSource`.
@@ -374,7 +420,6 @@ missing test, because it stops anyone from looking.
 - **`SyncedSettingsStore`** — 10 tests, *all* on the enforcement fingerprint/merge pair. The other **nine** merge strategies, `mergeValues`, `equivalent`, the three-way merge base and duplicate-row reconciliation have zero coverage.
 - **`NotificationManager`** — 4 tests, all on `getHourMinute`. The scheduling engine, batching and the 64-request iOS budget are untouched.
 - **`ProgressSyncStore`** — appears in two test files, but only as a *cleanup helper*. The merge engine is untested.
-- **`EnforcementCurator`** — only `redirect(forCode:)` is tested. The safety-critical `screen(_:)` is not.
 
 ### C1 — Money and entitlements · **zero tests exist**
 
@@ -430,17 +475,25 @@ count)".
 - empty remote log with non-empty local → local untouched
 - `markUnplayed` whose delete fails → `syncedIDs` unmutated
 
-### C3 — Safety-critical, and completely untested
+### C3 — Safety-critical · **already well covered — add one case** · 1 hour
 
-**`EnforcementCurator.screen(_:)`** — self-harm crisis routing. Not money, but the
-highest-consequence single branch in the app: a false negative routes a crisis user to a
-campaign; a false positive routes a bereaved parent to a safety message. **The source
-comments record both regressions as having already happened once**, and only
-`redirect(forCode:)` is tested.
-- "I lost my son to suicide" → `.standable` (bare "suicide" must not trigger)
-- "I want to die to self" / "dying daily" → `.standable`; "I want to die" → `.reachOut`
-- curly-apostrophe "I'm suicidal" (U+2019) → `.reachOut` (normalization path)
-- "believing for my marriage after his affair" → `.standable`, not `.anotherPersonsPartner`
+An earlier draft of this plan claimed the crisis-routing screen was untested and budgeted
+a day for it. **That was wrong**, and the correction is worth recording because it is the
+good kind of surprise.
+
+`screen(_:)` is declared on `enum SituationScreen` (`EnforcementCurator.swift:48`, func at
+`:110`) — **not** on `EnforcementCurator`, which owns only `redirect(forCode:):333`. That
+naming is why a type-name search missed it. `EnforcementAssemblerTests.swift` has **seven**
+`testScreen_*` functions, four of them on `SituationScreen.screen` (`:410`, `:423`, `:437`,
+`:454`), and `testScreen_LetsThroughHardButLegitimateInput:454` already asserts three of
+the four cases this plan was going to propose, near enough word for word:
+
+- `:472` "I lost my son to suicide last year and I need God" → `.standable` ✓
+- `:456–458` "I want to die to self…", "…die daily like Paul said" → `.standable` ✓
+- `:461` "I'm believing for my marriage after my husband's affair" → `.standable` ✓
+
+**The only genuine gap:** the curly-apostrophe path. Add one case — `"I'm suicidal"` with
+U+2019 → `.reachOut`, exercising the normalization at `EnforcementCurator.swift:111`.
 
 ### C4 — Silent state corruption
 
@@ -498,6 +551,9 @@ Cheap CI checks; without them everything above returns. Add with the other plan'
 ! grep -rl "^import \(SwiftUI\|UIKit\)" Packages/SpeakLifeKit/Sources/SpeakLifeCore/Models
 
 # No unconditional print() in shipping code
+#   SEQUENCE THIS WITH THE LOG-HELPER PASS (§2 A3), NOT WITH PR9 — it fails today by
+#   design, since A3 says to KEEP those prints and route them. Exempt the Log helper's
+#   own implementation or it will fire on that too.
 ! grep -rn "^\s*print(" --include=*.swift SpeakLife/SpeakLife/Services
 ```
 
@@ -509,26 +565,51 @@ have found all of Wave A1 automatically.
 
 ## 6. Regeneration commands
 
-```bash
-# Files on disk the project never compiles (excluding the SpeakLifeQuiz sync group)
-# — see the python in this plan's companion analysis; the short version:
-comm -13 <(grep -oE 'path = "?[^";]+\.swift"?;' SpeakLife/SpeakLife.xcodeproj/project.pbxproj \
-           | sed -E 's/path = "?([^";]+)"?;/\1/' | xargs -n1 basename | sort -u) \
-         <(find SpeakLife/SpeakLife -name '*.swift' | xargs -n1 basename | sort -u)
+> **Use `periphery`, not these greps, for anything that decides a deletion.** It uses the
+> compiler's own index instead of regex, and it would have caught — without argument — the
+> `ImprovementScene` build-breaker, the phantom `FeatureCard` collision, the fact that all
+> 57 "duplicate" names are nested, and the entire dead Bootcamp feature. The commands
+> below are for the measurement table, not for the delete list.
+>
+> ```bash
+> brew install peripheryapp/periphery/periphery
+> periphery scan --project SpeakLife/SpeakLife.xcodeproj --schemes SpeakLife --targets SpeakLife
+> ```
 
-# Onboarding files nothing references
-cd SpeakLife/SpeakLife && for f in Views/Onboarding/*.swift; do
-  b=$(basename "$f" .swift)
-  n=$(grep -rl "\b$b\b" --include=*.swift . | grep -v "$f" | wc -l)
-  [ "$n" -eq 0 ] && echo "$b"
+```bash
+cd SpeakLife/SpeakLife
+
+# --- Files on disk the project never compiles ---
+# NOTE: comparing basenames is WRONG and will under-report by ~3,500 lines — it hides
+# every shadow copy whose basename also exists live (all of Utils/, AppleSignInService,
+# KeychainHelper, BootcampMainView). Compare resolved paths by walking the PBXGroup tree.
+# The SpeakLifeQuiz PBXFileSystemSynchronizedRootGroup must be excluded — its files are
+# included automatically and never appear as paths.
+
+# --- Unreferenced onboarding: enumerate DECLARED TYPES, not filenames ---
+# Filename matching is what let ImprovementScene.swift (declares ImprovementViewModel)
+# reach a delete list twice. Same trap: LoadingView.swift declares
+# PersonalizationLoadingView; IntroScene.swift declares IntroTipScene.
+for f in Views/Onboarding/*.swift; do
+  types=$(grep -oE '^\s*(final )?(public |private )?(class|struct|enum) [A-Z][A-Za-z0-9_]*' "$f" \
+          | awk '{print $NF}' | sort -u)
+  hits=0
+  for t in $types; do
+    hits=$((hits + $(grep -rl "\b$t\b" --include=*.swift . | grep -vFx "./$f" | wc -l)))
+  done
+  [ "$hits" -eq 0 ] && echo "UNREFERENCED  $f"
 done
 
-# Commented-out code
-grep -rhoE '^\s*//\s*(let |var |func |if |guard |return |self\.|await |try )' --include=*.swift . | wc -l
+# --- Compiled files with no executable code (finds the Bootcamp feature) ---
+for f in $(find . -name '*.swift'); do
+  code=$(grep -vcE '^\s*(//|/\*|\*|$)' "$f")
+  [ "$code" -le 2 ] && echo "$(wc -l < "$f") lines, $code code: $f"
+done
 
-# Duplicate type names / singletons / prints
-grep -rhoE 'static (let|var) shared' --include=*.swift . | wc -l
-grep -rn "^\s*print(" --include=*.swift . | wc -l
+# --- Scalars from the §1 table ---
+grep -rhoE '^\s*//\s*(let |var |func |if |guard |return |self\.|await |try )' --include=*.swift . | wc -l   # 455
+grep -rhoE 'static (let|var) shared' --include=*.swift . | wc -l                                            # 56
+grep -rn "^\s*print(" --include=*.swift . | wc -l                                                           # 439
 ```
 
 ---
@@ -544,7 +625,8 @@ Week 1 — free wins, parallel with the package work
 
 Week 1-2 — before the other plan's PR6
   A2   onboarding graveyard (one PR per cluster) .. 2-3 days  verified list, §2 A2
-  A4   duplicate type names ...................... 1 day
+  A5   dead Bootcamp feature ..................... 1 day     ~2,865 lines, in-project
+  A4   duplicate type names ...................... SKIP      0 real collisions, §2 A4
   B3   strip SwiftUI from DailyChecklistModels .... S         3 members, biggest S win
 
 Week 2 — seams that unblock every test below
@@ -554,7 +636,7 @@ Week 2 — seams that unblock every test below
 
 Week 2-3 — highest value in this document
   C1   subscription / trial / RevenueCat tests .... 3-4 days  ← only money gap
-  C3   EnforcementCurator.screen() ............... 1 day     ← safety-critical
+  C3   one U+2019 case (already well covered) ..... 1 hour
   C2   ProgressSyncStore + 9 untested mergers ..... 3-4 days
 
 Later, sequenced with the package extraction
@@ -676,8 +758,8 @@ money tests, the highest-risk gap in the codebase — writable at all.
 2. Inject `purchases: PurchaseGateway`, `analytics: AnalyticsTracking` (from S1.1),
    `trials: TrialSequencing`. Keeps the `RevenueCatManager.shared` reaches (15 of them)
    out of the type.
-3. **Kill the four file-scope mutable globals** — `var yearlyID`, `var monthlyID`,
-   `var discountID`, `var weeklyProductID` (`:26–41`), mutated at `:522–525` and read
+3. **Kill the four file-scope mutable globals** — `var yearlyID:26`, `var monthlyID:27`,
+   `var discountID:28`, `var weeklyProductID:41` (the other seven at `:29–36` are `let`), mutated at `:522–525` and read
    from a `Product` extension at `:939–1046`. Global mutable state makes test *ordering*
    matter, which is how a suite becomes flaky for reasons nobody can find. The resolved
    properties already exist at `:264–266`; pass them in.
