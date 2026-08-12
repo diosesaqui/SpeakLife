@@ -24,7 +24,7 @@ Regeneration commands are in §6 so this survives contact with a moving codebase
 |---|---|
 | App Swift files / lines | 368 / 123,415 |
 | **Never compiled** (on disk, absent from `project.pbxproj`) | **4,757 lines** |
-| Onboarding files with zero inbound references | 22 files / 8,459 lines |
+| Unreachable onboarding — raw scan / **after verification** | 22 files, 8,459 lines / **17 files, 4,990 lines** |
 | Types declared in more than one file | 57 names |
 | Commented-out code lines | 1,091 |
 | `print()` in shipping code | 439 (only 28 files use `#if DEBUG` at all) |
@@ -98,39 +98,61 @@ must produce a byte-identical result. Nothing here was ever compiled.
 
 ---
 
-### Wave A2 — The onboarding graveyard · ~8,459 lines · risk: low, verify first
+### Wave A2 — The onboarding graveyard · **4,990 lines verified** · risk: low
 
-22 files in `Views/Onboarding/` that no other file references. They read as accumulated
-A/B-test variants that were never removed when a winner was picked.
+A raw reference scan flagged 22 files. **Verification cut that to 17.** The raw number
+was 8,459 lines; the number that is actually safe is **4,990**. Do not use the raw list —
+five of those files are load-bearing in ways a filename scan cannot see.
 
-```
-NewOnboardingScreens 2414   PolishedCrossOnboardingFlow 1307   EnhancedOnboardingScreensRefactored 569
-IntroScene 527   SpiritualWarfareContentScreens 524   SpiritualWarfareOnboardingView 394
-CombinedPersonalizationScene 334   AudioDevotionalsTutorial 302   FixedSpiritualWarfareScreens 237*
-DemoExperienceView 232   PersonalizationSummaryScene 208   DevotionalsTutorial 206
-ImprovementScene 202   AffirmationsTutorial 192   HookScene 139   WidgetScene 125
-TimeNotificationStepper 114   LoadingView 112   BenefitScene 89   HelpUsGrowView 89
-WhatsNewView 80   EnhancedOnboardingModels 63
-```
-\* already covered by Wave A1.2.
+**The live router:** `Views/HomeView.swift:417–441` switches on
+`subscriptionStore.resolvedOnboardingVariant` (`SubscriptionStore.swift:112–114`, fed by
+Remote Config `onboardingVariant` + an `ob=` deep-link override, defaulting to `"warfare"`
+at `AppDelegate.swift:127`). The live destinations are exactly seven:
+`QuizOnboardingView`, `ProductOnboardingView`, `IdentityOnboardingView`,
+`OutcomesOnboardingView`, `WarfareOnboardingView`, `PromisesOnboardingView`,
+`CloserOnboardingView`. **None of the 22 is a router destination** — but that alone was
+not enough to clear them.
 
-**Before deleting any of these, find the variant router.** The app runs a live onboarding
-A/B test across `product / identity / quiz / outcomes / warfare / promises / closer`. A
-view reached only by a variant string will not show up in a reference scan. Confirm the
-live destination set first, then delete what is not in it.
+**A2.1 — Delete outright · 3,203 lines**
 
-Also review, separately, the files with exactly **one** inbound reference — a single
-reference is often a dead file referenced by another dead file:
-`EnhancedOnboardingViewRefactored` (528), `FirstDeclarationGuideView` (325),
-`CloserOnboardingView` (1544), `IdentityOnboardingView` (730), `OnboardingDailyBurstScreen` (516).
-`CloserOnboardingView` and `IdentityOnboardingView` are almost certainly live variants —
-check, don't assume.
+`PolishedCrossOnboardingFlow` (1307) · `AudioDevotionalsTutorial` (302) ·
+`DemoExperienceView` (232) · `PersonalizationSummaryScene` (208) · `DevotionalsTutorial` (206) ·
+`ImprovementScene` (202) · `AffirmationsTutorial` (192) · `HookScene` (139) ·
+`WidgetScene` (125) · `LoadingView` (112) · `BenefitScene` (89) · `HelpUsGrowView` (89)
 
-**Ship as one PR per cluster, not one 8,000-line PR.** Onboarding is the highest-stakes
-surface in the app; a reviewer can sanity-check "the warfare variant's dead screens" and
-cannot meaningfully review eight thousand deleted lines at once.
+**A2.2 — Delete as clusters · 1,787 lines** (each is dead only *together*; deleting half breaks the build)
 
-**Verify:** build, then walk every live onboarding variant on a device before merging.
+- `SpiritualWarfareOnboardingView` (394) **+** `SpiritualWarfareContentScreens` (524)
+- `FixedSpiritualWarfareScreens` (237) **+** its extension target `StreamlinedSpiritualWarfareFlow` (922) — the extension's `useFixedBattleIntro`/`useFixedVictorySolution` are never called
+- `EnhancedOnboardingModels` (63) **+** `EnhancedOnboardingScreensRefactored` (569) **+** `EnhancedOnboardingViewRefactored` (528)
+
+Taking the two non-listed partners (`StreamlinedSpiritualWarfareFlow`,
+`EnhancedOnboardingViewRefactored`) brings the total to **6,440 lines**. Add
+`Views/Onboarding/OnboardingView.swift` (343, also unreachable) to the same sweep.
+
+**A2.3 — KEEP these five.** Each looked dead and is not. This is the part a naive cleanup
+gets wrong:
+
+| File | Why it must stay |
+|---|---|
+| `NewOnboardingScreens` (2414) | Declares `ScaleButtonStyle`, used by `Views/Bible/BibleView.swift:465`; four of its screens are used by the live `HowToUseSpeakLifeView` |
+| `CombinedPersonalizationScene` (334) | Sole declaration of `ProgressDots` (used by the live `OptimizedSubscriptionViewV1.swift:593`) **and** of `DeclarationCategory.iconName` |
+| `TimeNotificationStepper` (114) | `ReminderCell.swift:45,50,66` — live via `ReminderView` |
+| `WhatsNewView` (80) | `HomeView.swift:579` presents `WhatsNewBottomSheet` in a live sheet |
+| `IntroScene` (527) | Named by `SubscriptionView.swift:675`. That call sits in dead code, so `IntroScene` is dead *in effect* — but deleting it alone breaks the build. Only removable once `SubscriptionView`'s unused `patronView` goes with it. |
+
+**Build-hygiene note:** `FeatureCard` is declared twice at module scope —
+`IntroScene.swift:487` and `Bootcamp/BootcampMainView.swift:327` — with both files in the
+same Sources phase. Deleting `IntroScene` resolves the collision.
+
+**Remove the `project.pbxproj` entries too.** All 22 files have `PBXFileReference` +
+`PBXBuildFile` + group + Sources-phase entries. No storyboard, xib, Info.plist,
+entitlements or Intents references exist for any of them.
+
+**Ship one PR per cluster, not one 5,000-line PR.** A reviewer can sanity-check "the dead
+spiritual-warfare flow" and cannot meaningfully review five thousand deleted lines at once.
+
+**Verify:** build, then walk all seven live onboarding variants on a device before merging.
 
 ---
 
@@ -146,6 +168,17 @@ cannot meaningfully review eight thousand deleted lines at once.
   (`PersistenceController` has 46 and they are how Core Data failures get diagnosed).
   Route them through one `Log` helper that compiles to nothing in release. That is a
   single mechanical pass and turns 439 unconditional writes into zero shipped.
+- **The fake-AI task branch · `DailyChecklistModels.swift:1233–1240` and `:1531–1639`
+  · ~110 lines.** Surfaced by the SOLID audit. The four `select*TasksWithAI` functions
+  (`:1582–1631`) contain no AI — they are `filter`/`prefix` over the same data the
+  standard path uses, and `selectFoundationTasksWithAI:1587–1590` sorts by
+  `minimumStreakDay`, which is **already the array order**. Deleting the branch has no
+  behavioural delta worth keeping, and it is what makes the core task-generation
+  algorithm untestable (`getUserBehaviorData:1567` reaches `EnhancedAnalyticsService.shared`).
+  Verify the no-op claim by diffing outputs for streak days 1–90 before deleting.
+- **`BibleInteractor.searchVerses:818–829`** returns an empty result unconditionally but
+  is declared on `BibleInteractorProtocol:14`, so callers get silence. Either implement
+  it or remove it from the protocol and delete the callers' dead branches.
 
 ---
 
@@ -223,18 +256,91 @@ compounding:
 
 Add these four lines to `CLAUDE.md` so they apply automatically to future work.
 
-### 3.3 Named targets
+### 3.3 Named targets — audited, in leverage order
 
-A detailed per-file audit of the seven largest files is being produced separately; when it
-lands, its findings slot in here, ranked *blocks-extraction → blocks-testing → readability*.
-The known ones already:
+Full per-file audit of the seven largest files, ranked *blocks-extraction (P0) →
+blocks-testing (P1) → readability (P2)*. Effort: S = under an hour, M = half day, L = multi-day.
 
-| File | Lines | Issue | Fix |
-|---|---:|---|---|
-| `EnhancedStreakViewModel.swift` | 1,945 | Streak logic + share-image rendering in one type | Extract `StreakShareCardRenderer` (`:1132`, `:1484–1517`) to the view layer. Rest becomes Foundation + Combine. Required by the extraction anyway. |
-| `SubscriptionStore.swift` | 1,050 | Money logic, zero tests, singleton | §4 item 1 |
-| `SyncedSettingsStore.swift` | 1,066 | Merge logic + UIKit lifecycle + storage | Seam the lifecycle (already scheduled as PR5a in the other plan) |
-| `AnalyticsService.swift` | 699 | Provider seam exists but is not injectable | §3.1 |
+**1. `SyncedSettingsStore.swift:694–1066` — invert the merge rules · L · P0**
+370 lines of **domain-specific** merge algorithms live inside the CloudKit sync engine:
+`mergeStreakStats:694`, `mergePersonalDeclarations:750`, `mergeEnforcementProgress:871`,
+`mergedEnforcementHistory:993`, and eight more. An infrastructure type knows `StreakStats`,
+`PersonalDeclaration`, `EnforcementProgress`, `InboxUnreadTracker`. **This is the
+extraction blocker in both directions** — the domain package can never own its own merge
+rules while they live here. Give each domain type `static func merge(_:_:) -> Self`
+(the pattern `StreakStats.merging` at `DailyChecklistModels.swift:433` already
+establishes), and let the store hold a registry of type-erased closures registered at app
+start. The store drops to ~450 lines of pure reconciliation.
+Also: the 131-line `whitelist:78–209` is app policy compiled into infrastructure — move it
+out with the same `register(...)` call site.
+
+**2. `AnalyticsService.swift:86` — one line, 436 call sites · M · P0**
+`static let shared` + `private init:95`. Declare `protocol AnalyticsTracking { func track(...) }`
+— the surface actually used at nearly all 436 sites is just `track` — conform
+`AnalyticsService`, and keep `shared` as the composition-root default so sites migrate
+incrementally rather than in one commit. The provider design here is already *good*
+(`AnalyticsProvider:51–76` is correct ISP); only the singleton and two leaks are wrong.
+Also `registerDefaultProviders:105–117` hardcodes four SDKs and the PostHog project key
+`:113`, so constructing this for a test boots Firebase, TikTok, Meta and PostHog. Moving
+those four lines to app startup is an **S**.
+And `trackAudioPlayback:236` calls `ListenerMetricsService.shared` — an analytics
+dispatcher mutating product state. Move to the call site (**S**).
+
+**3. `DailyChecklistModels.swift` — three members block the whole file · S · P0**
+Best value-per-hour in the audit. `TaskCategory.color:27`, `ProgressionPhase.color:247`,
+and `CompletionCelebration.shareImage: UIImage?:600` are the *only* reason this
+1,640-line file imports SwiftUI. Move all three to app-side extensions and
+`DailyTask` / `DailyChecklist` / `StreakStats` / `ProgressionPhase` become package-ready.
+The file is otherwise **fine** — `:848–1180` is ~330 lines of static data tables, which is
+not an SRP violation.
+
+**4. `EnhancedStreakViewModel.swift` — four responsibilities, 31 singleton reaches · L · P0**
+Bigger than the other plan assumed. **686 lines** (`:1131–1816`) are Core Graphics poster
+rendering, not the ~100 estimated — `generateShareImage`, `drawFlameShapes`,
+`addStellarParticles`, `addLightRays` and nine more. Extract `StreakShareImageRenderer`
+taking `(streak:longestStreak:milestone:message:)`; take `getMilestone:1818` and
+`getMotivationalMessage:1831` with it.
+Then two more responsibilities: iCloud reconciliation (`:150–370` → `StreakSyncReconciler`,
+removes 8 of the 31 `.shared` reaches at once) and task-list construction (`:373–457,
+646–775, 1025–1034`, which **duplicates the same rebuild-and-reapply algorithm four
+times** at `:387–421`, `:435–457`, `:708–726`, `:731–743` → one `DailyChecklistBuilder`).
+`init():76` takes zero parameters, which is what forces all 31 reaches. The file already
+shows the right pattern at `:51`.
+
+**5. `AppState.swift:142–328` — a 186-line migration runner inside a constructor · M · P0**
+Seven versioned data migrations plus a lifecycle repair, all in `init()` of an
+`ObservableObject` the whole app injects. **Constructing `AppState` in a test deletes a
+file from the documents directory (`:240–243`), reschedules notifications
+(`:218, :263, :307`) and clears a cache (`:244`).** That is why nothing tests it. Extract
+`AppMigrationRunner.runPendingMigrations(defaults:services:)`, call it once from app
+startup. Also note `AppState.init` reaches `DIContainer.shared:219` — a service locator
+called from inside a model the container itself constructs.
+
+**6. `SubscriptionStore.swift` — three services fused · L · P0**
+`:49–536` is (a) a 30-flag remote-config registry, (b) onboarding A/B variant assignment,
+and (c) the actual IAP store. Only (c) belongs in a type with this name — `updateConfigValues`
+writes `AnthropicConfig.apiKey:500` and the declarations filename `:506–516`. Split into
+`RemoteFeatureFlags`, `OnboardingVariantAssigner`, and a slimmed store.
+Also **six file-scope mutable globals** at `:26–41` (`var yearlyID`, `var monthlyID`…),
+mutated at `:522–525` and read from a `Product` extension `:939–1046`. Global mutable
+state cannot move into a package and makes test ordering matter.
+And `:938–1046` is seven if-else ladders over product ids that **already disagree with
+each other** — `ctaDurationTitle:950` falls through for `weeklyID` while `subTitle:986`
+handles it explicitly; `percentageOff:1045` hardcodes `40` as the anchor price.
+
+**7. `BibleInteractor.swift` — half the file is data, and two methods lie · M · P0/P1**
+`:205–740` and `:955–1001` are **591 lines (51%)** of hardcoded fallback data — all 66
+books as inline literals. Move to a bundled JSON; the file drops to ~575 lines.
+Three `switch currentProvider` blocks (`:181`, `:764`, `:915`) mean a fourth Bible API
+means editing all three — introduce `protocol BibleSource`.
+Two correctness findings worth treating as bugs, not style:
+- **`searchVerses:818–829` always returns empty**, unconditionally, regardless of query
+  — but it is declared on `BibleInteractorProtocol:14`, so callers written against the
+  protocol silently get nothing.
+- **`getRandomVerse:831–882` ignores `currentProvider`** and hardcodes HelloAO `:843`, so
+  a user on `.wldeh` silently gets another provider's content; on failure it swallows the
+  error `:866` and returns a hardcoded John 3:16. It also only ever picks chapters 1–3,
+  verses 1–16 (`:837–838`).
 
 ---
 
@@ -248,53 +354,128 @@ test getters and miss the paywall.
 
 Rank by what a bug costs. In this codebase that ordering is not close:
 
-### C1 — Money and entitlements · **no tests exist at all**
+### C0 — First, seven tests that are lying to you
 
-`Services/IAP/SubscriptionStore.swift`, 1,050 lines, decides who has paid. Nothing in the
-484-test suite touches it, nor `Purchases`, nor entitlements, nor `Product`.
+Fix these before writing anything new. A green suite that asserts nothing is worse than a
+missing test, because it stops anyone from looking.
 
-A bug here either locks out a paying subscriber or gives the product away. Start here.
-Concrete cases:
+| Test | Problem |
+|---|---|
+| `DevotionalTests.testDeclarationsFormat` | **Validates `declarationsv9.json`.** The shipped file is `declarationsv10.json` (per `CLAUDE.md`). v9 still exists in the bundle, so it passes green while asserting nothing about shipped content. Repoint to v10, and add the declaration rules (first person, present tense, no em dashes, no duplicate verse per category) as real assertions. |
+| `EnhancedStreakViewModelTests.testBadgeUnlock_ShouldTriggerWhenStreakReachesMilestone` | Subscribes, sleeps 1s, ends with the comment *"Badge unlock might be triggered"*. `badgeUnlockTriggered` is never read. **Badge unlocking is untested.** |
+| `SyncConflictResolverTests.testHandlePersistentStoreRemoteChangeNotification` | Builds an entry, fires a notification, asserts nothing about the resolved state. |
+| `UnifiedFavoritesManagerTests.testTogglePerformanceWithRetry` | A `measure` block with a `Thread.sleep` and no correctness assertion — passes even if the toggle silently fails. |
+| `EnforcementServiceTests.testConcurrentReadsAndAdvancesDoNotCrash` | Crash-only smoke test; asserts nothing about day/progress state after 200 interleaved `advanceIfNeeded` calls. |
+| `AudioFavoriteRepositoryTests.testDeleteByAudioIdNonExistent` | Only asserts "does not throw". Weakest useful coverage — acceptable, but know that's all it is. |
+| `APIClientTests.swift` | All 91 lines commented out; contributes 6 phantom `func test` matches. Delete (Wave A3). |
 
-- entitlement stays active through a renewal boundary
-- expired subscription loses access, and does so exactly once
-- a restore on a fresh device re-grants the right tier
-- lifetime purchase is never treated as expired
-- a failed/cancelled purchase leaves prior state untouched
-- promo code and Family Sharing entitlements resolve to the same access as a direct purchase
+**Three areas look covered and are not** — this is the most misleading signal in the suite:
 
-This needs the seam from §3.1 before it can be written. That is the dependency — do it
-first, then the tests are ordinary.
+- **`SyncedSettingsStore`** — 10 tests, *all* on the enforcement fingerprint/merge pair. The other **nine** merge strategies, `mergeValues`, `equivalent`, the three-way merge base and duplicate-row reconciliation have zero coverage.
+- **`NotificationManager`** — 4 tests, all on `getHourMinute`. The scheduling engine, batching and the 64-request iOS budget are untouched.
+- **`ProgressSyncStore`** — appears in two test files, but only as a *cleanup helper*. The merge engine is untested.
+- **`EnforcementCurator`** — only `redirect(forCode:)` is tested. The safety-critical `screen(_:)` is not.
+
+### C1 — Money and entitlements · **zero tests exist**
+
+Verified: no test names `SubscriptionStore`, `RevenueCatManager`, `TrialExperienceService`,
+`PaywallTriggerManager`, `Purchases`, or `Product`.
+
+**`SubscriptionStore.swift` (1,050 lines)** decides `isPremium`, `isInTrial`, the
+devotional entitlement window, and product-ID resolution from Remote Config. A wrong
+branch gives premium away or locks out a payer; `resolvedYearlyID` falls back to
+compiled-in SKUs when a Firebase string is empty, so a bad config **silently sells the
+wrong price**.
+- `applyCustomerInfo` premium-active-but-not-trial → `isInTrial == false`, `clearPendingTrialPushes()` called exactly once
+- active → inactive → subscriptions emptied, cancellation tracked **once**, not on every subsequent update
+- `checkIsDevotionalActive` at exactly 30 days → true; at 30 days + 1 second → false
+- `resolvedYearlyID` with empty Remote Config → `currentPremiumID`; with an unknown Firebase SKU → still included in `requestProducts`
+
+**`TrialExperienceService.swift` (285 lines)** — trial length and day-N push dates. Heavy
+date arithmetic; an off-by-one sends "your trial ends tomorrow" after conversion.
+- pay-up-front discounted intro offer → `introTrialDays` returns `nil` (must not schedule)
+- 3-day trial started 23:00 local → D2 at 09:00 next day, D3 at 08:30, both strictly before `start + 3 days`
+- 2-day trial started 10:00 → D2 slot already past, skipped; D3 still scheduled
+- `onTrialStarted(lengthInDays: nil)` → active, `trialLengthDays == 3`, zero pushes
+
+**`RevenueCatManager.swift` (135 lines)** — entitlement predicates and product→package
+resolution. The fallback when no package matches a StoreKit id is what charges the wrong SKU.
+- `isPremiumInTrial` in grace period / billing retry → assert explicitly (currently ambiguous)
+- `purchase(storeProduct:)` with no matching package → falls back to fetching the RC product, does not silently succeed
+
+All three need the §3.1 seams first. That is the dependency — do the seams, then these are ordinary tests.
 
 ### C2 — Data that cannot be regenerated
 
-Core Data writes, CloudKit sync merges, and migrations. Partially covered today (11 test
-files) and the coverage is real. Gaps to close: conflict resolution when two devices
-write the same row, and migration from each shipped schema version rather than only the
-current one.
+**`ProgressSyncStore` (552 lines)** — `syncCounters`, `dedupDuplicateEvents`,
+`pruneStaleTaskCompletions` all untested. The source itself documents the failure mode: a
+shrinking `othersSum` "would reclassify other devices' work as our own (permanent double
+count)".
+- rows temporarily invisible mid-import (othersSum 40 → 0) → baseline **not** lowered, total does not inflate
+- two devices contributing 10 each → display 20, own row written as 10
+- `syncCounters` twice with no new rows → idempotent
 
-### C3 — Silent state corruption
+**`SyncedSettingsStore` nine untested mergers** — silent user-data loss on any multi-device account.
+- `mergePersonalDeclarations` where both sides advanced on different days → later `lastSpokenDate` wins its count; same-day takes `max`
+- `mergeJSONArrayData(idField:)` overlapping ids → union, no duplicates, and returns the *identical* local object when nothing is new (no spurious write)
+- duplicate rows where the **older** holds data the newer lacks → survivor absorbs the merge before losers are deleted
+- identical `lastModified` → deterministic id tie-break, so both devices pick the same winner
 
-Streaks, progress, notification scheduling. Well covered already — this is where most of
-the 484 tests live. Maintain, don't expand.
+**`CoreDataAPIService` (283 lines)** — `removeDuplicates()` deletes by exact text equality;
+`deleteDeclaration(withId:)` parses a composite id string. Irreversible deletion driven by string surgery.
+- two entries differing only by trailing whitespace → decide and assert the intent (today they are distinct, which is probably wrong)
+- declaration text containing the id separator → deletes exactly one row, not a prefix-matching set
 
-### C4 — Large untested services
+**`AudioProgressStore`** — has an explicit "never mass-delete on empty log" safety valve. Test it.
+- empty remote log with non-empty local → local untouched
+- `markUnplayed` whose delete fails → `syncedIDs` unmutated
 
-Ranked by lines with no test naming them:
+### C3 — Safety-critical, and completely untested
 
-| Lines | File | Worth testing? |
-|---:|---|---|
-| 1,166 | `Services/Bible/BibleInteractor.swift` | yes — parsing and reference resolution |
-| 1,050 | `Services/IAP/SubscriptionStore.swift` | **C1** |
-| 865 | `Services/ML/RecommendationEngine.swift` | yes if it ships; verify it is reachable first |
-| 730 | `Services/ML/AIIntelligenceService.swift` | verify reachable first |
-| 719 | `ViewModels/BibleViewModel.swift` | yes |
-| 699 | `Core/Analytics/AnalyticsService.swift` | low value — thin dispatch |
+**`EnforcementCurator.screen(_:)`** — self-harm crisis routing. Not money, but the
+highest-consequence single branch in the app: a false negative routes a crisis user to a
+campaign; a false positive routes a bereaved parent to a safety message. **The source
+comments record both regressions as having already happened once**, and only
+`redirect(forCode:)` is tested.
+- "I lost my son to suicide" → `.standable` (bare "suicide" must not trigger)
+- "I want to die to self" / "dying daily" → `.standable`; "I want to die" → `.reachOut`
+- curly-apostrophe "I'm suicidal" (U+2019) → `.reachOut` (normalization path)
+- "believing for my marriage after his affair" → `.standable`, not `.anotherPersonsPartner`
 
-The `Core/Utils/*` entries in that scan (particles, gestures, haptics) are animation code.
-Leave them untested; the cost of testing them exceeds the cost of them being wrong.
+### C4 — Silent state corruption
 
-### C5 — The rule that keeps it honest
+**`NotificationManager`** (see C0) — `prepareNotifications` against the iOS 64-pending cap;
+`daysAhead(forCount:)` for 1/12/20; `distributeTimes` producing no duplicate `(hour, minute)`
+when count exceeds slots; `scheduleBatchRefresh` when `batchEndsAt` is already past.
+
+**`LifecycleNotificationService` (481 lines)** — D1–D30 schedule, milestone re-fire guard.
+- `scheduleStreakMilestoneIfNeeded(current: 7, previous: 7)` → false, nothing scheduled
+- `(current: 8, previous: 2)` backfill past 3 and 7 → exactly one milestone, the 7 copy
+- `repairLifecycleIfNeeded` twice → identical pending set, no duplicates
+
+**`DailyDeclarationReminderService`** — the weekday-indexing trap: `morningCopyByWeekday`
+is 0-indexed while `DateComponents.weekday` is 1-indexed (Sunday = 1). Assert the pairing
+for all seven days.
+
+**`DeclarationVerificationService` / `DeclarationMatcher`** — gates whether a spoken
+declaration counts toward progress, via *order-dependent* `MatchRule.defaults` that the
+source itself flags as fragile.
+- `normalize("God's")` == `normalize("gods")`
+- `matchAll("drowning in credit card debt")` → `.debt`, not `.wealth`
+- `matchAll("starting my own business")` → `.business`, not `.work`
+
+### C5 — Worth testing, lower urgency
+
+`PaywallTriggerManager` (note `trackCategoryChange` fires on `== 2` while
+`trackFavoriteSaved` fires on `> 2` — an inconsistency nothing pins down) ·
+`WidgetDataBridge.processPendingWidgetActions` (idempotency) · `NotificationProcessor`
+ring buffer · `BibleInteractor` · `BibleViewModel` · `DevotionalService.findTodayDevotional`
+(leap day, year rollover).
+
+**Skip:** `AnalyticsService` (thin dispatch), and all of `Core/Utils/*` — particles,
+gestures, haptics. The cost of testing animation exceeds the cost of it being wrong.
+
+### C6 — The rule that keeps it honest
 
 Do not adopt a coverage percentage target. It rewards testing getters. Adopt instead:
 **any bug fixed in `Services/` ships with a test that fails without the fix.** That aims
@@ -355,30 +536,44 @@ grep -rn "^\s*print(" --include=*.swift . | wc -l
 ## 7. Sequencing
 
 ```
-Now, in parallel with the package work
-  A1  never-compiled files ....................... 1 day    zero risk
-  A3  commented code, APIClientTests, log helper .. 1 day    zero risk
+Week 1 — free wins, parallel with the package work
+  A1   never-compiled files ....................... 1 day     zero risk
+  A3   commented code, APIClientTests, log helper .. 1 day     zero risk
+  C0   fix the 7 lying tests ..................... 1 day     ← do early; green is
+  §3.2 four rules into CLAUDE.md .................. 10 min      currently misleading
 
-Before the other plan's PR6
-  A2  onboarding graveyard ....................... 2-3 days  needs router check
-  A4  duplicate type names ....................... 1 day
+Week 1-2 — before the other plan's PR6
+  A2   onboarding graveyard (one PR per cluster) .. 2-3 days  verified list, §2 A2
+  A4   duplicate type names ...................... 1 day
+  B3   strip SwiftUI from DailyChecklistModels .... S         3 members, biggest S win
 
-Unblocks Track C
-  B   analytics + 7 singleton seams .............. 2-3 days
+Week 2 — seams that unblock every test below
+  B2   AnalyticsTracking protocol + move providers  M
+  B-singletons  the 7 that block tests ........... 2-3 days
+  B5   AppMigrationRunner out of AppState.init .... M         makes AppState testable
 
-Then, highest value in this document
-  C1  subscription & entitlement tests ........... 3-4 days
-  C2  sync conflict + migration gaps ............. 2-3 days
-  C4  BibleInteractor, BibleViewModel ............ 3-4 days
+Week 2-3 — highest value in this document
+  C1   subscription / trial / RevenueCat tests .... 3-4 days  ← only money gap
+  C3   EnforcementCurator.screen() ............... 1 day     ← safety-critical
+  C2   ProgressSyncStore + 9 untested mergers ..... 3-4 days
 
-Ongoing
-  §3.2 four rules into CLAUDE.md ................. 10 minutes
+Later, sequenced with the package extraction
+  B1   SyncedSettingsStore merge inversion ........ L         top extraction blocker
+  B4   StreakShareImageRenderer (686 lines) ....... M
+  B6   SubscriptionStore split .................... L
+  B7   BibleSource protocol + fallback JSON ....... M
   §5   guardrails into CI ........................ half day
 ```
 
-**Roughly three weeks**, and the order matters more than the total: A1 and A3 are free
-and immediately shrink what PR6 has to convert, while C1 closes the only gap in this
-document where a bug costs real money.
+**Roughly four weeks**, and the order matters more than the total. Two notes on
+sequencing:
+
+- **C0 belongs in week 1**, ahead of everything else in Track C. Seven tests currently
+  pass while asserting nothing, so today's green tells you less than it appears to. Fix
+  the signal before adding to it.
+- **B before C is not optional.** `SubscriptionStore`, `AppState` and the streak view
+  model cannot be tested until their seams exist — `AppState.init` alone deletes a file
+  and reschedules notifications. Attempting C1 first will stall.
 
 ## 8. What I recommend against
 
