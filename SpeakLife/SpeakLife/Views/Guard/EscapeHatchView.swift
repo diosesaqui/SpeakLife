@@ -13,14 +13,20 @@
 //
 //  Three things are true of this screen and must stay true:
 //
-//  1. **The text never leaves the phone.** Classification runs on device (see
-//     `ThoughtClassifier`), the raw sentence is never synced, never persisted,
-//     and never attached to an analytics event. Only the matched category ships.
+//  1. **The privacy line tells the truth about where the words go.** Free: the
+//     match runs on device and nothing is sent. Premium: the words go to Claude,
+//     which writes a counter for the actual thought, and the line says so. It is
+//     keyed off the same call the classifier branches on — see `privacyLine`
+//     and `ThoughtClassifier.sendsThoughtOffDevice(isPremium:)`. These two must
+//     never disagree. Either way the sentence is never stored, never synced,
+//     and never attached to an analytics event; only the matched terrain ships.
 //  2. **Crisis routing runs before anything else.** Before matching, before the
-//     quota check, before the paywall. Someone who types that they want to end
-//     their life gets a person, not a drill and not an upsell.
+//     network call, before the quota check, before the paywall. Someone who
+//     types that they want to end their life gets a person, not a drill, not a
+//     round trip and not an upsell.
 //  3. **There is no error state.** A low-confidence match serves a general
-//     identity declaration. Someone who just typed a real thought must never be
+//     identity declaration, and every failure of the premium path falls back to
+//     the on-device one. Someone who just typed a real thought must never be
 //     handed "we couldn't understand that" and left holding it.
 //
 
@@ -33,6 +39,9 @@ struct AskForThoughtView: View {
     /// metering it would put the whole feature behind the paywall.
     let remaining: Int?
     let classifier: ThoughtClassifier
+    /// Drives both the premium path and the privacy line. One flag, so the
+    /// promise on screen cannot drift from what actually happens.
+    let isPremium: Bool
     /// Serves the flow the user's own words plus the matched counter.
     let onNamed: (_ typed: String, _ matched: IncomingThought) -> Void
     /// Nothing specific today — fall back to the bank. This is the answer to the
@@ -44,7 +53,28 @@ struct AskForThoughtView: View {
 
     @State private var text = ""
     @State private var showReachOut = false
+    /// The premium path is a network call, so the button has to say it is
+    /// working. A gold button that does nothing for two seconds is the exact
+    /// dead-feeling this screen has already been fixed for once.
+    @State private var isWriting = false
     @FocusState private var focused: Bool
+
+    /// Whether the words are about to leave the device.
+    ///
+    /// Asked of the classifier rather than derived from `isPremium` here: the
+    /// API key arrives from Remote Config and can be empty, in which case a
+    /// premium user silently runs the on-device path — and must not be told
+    /// their words were sent.
+    private var sendsOffDevice: Bool {
+        classifier.sendsThoughtOffDevice(isPremium: isPremium)
+    }
+
+    /// Says where the words go, in the moment before someone commits them.
+    private var privacyLine: String {
+        sendsOffDevice
+            ? "Write it the way it actually sounds. It's used once to write your word back, and never saved."
+            : "Write it the way it actually sounds. It stays on this phone."
+    }
 
     private var entry: String {
         text.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -149,9 +179,10 @@ struct AskForThoughtView: View {
                     .foregroundColor(.white)
                     .fixedSize(horizontal: false, vertical: true)
 
-                Text("Write it the way it actually sounds. It stays on this phone.")
+                Text(privacyLine)
                     .font(.system(size: 13, weight: .medium))
                     .foregroundColor(.white.opacity(0.45))
+                    .fixedSize(horizontal: false, vertical: true)
 
                 TextEditor(text: $text)
                     .focused($focused)
@@ -199,16 +230,25 @@ struct AskForThoughtView: View {
                 Spacer(minLength: 0)
 
                 if !showReachOut {
-                    Button(action: submit) {
-                        Text("Take it captive")
-                            .font(.system(size: 16, weight: .bold, design: .rounded))
-                            .foregroundColor(canSubmit ? Color(hex: "#1A264D") : .white.opacity(0.4))
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 16)
-                            .background(Capsule().fill(submitFill))
+                    Button {
+                        Task { await submit() }
+                    } label: {
+                        HStack(spacing: 8) {
+                            if isWriting {
+                                ProgressView()
+                                    .progressViewStyle(.circular)
+                                    .tint(Color(hex: "#1A264D"))
+                            }
+                            Text(isWriting ? "Writing your word" : "Take it captive")
+                                .font(.system(size: 16, weight: .bold, design: .rounded))
+                                .foregroundColor(canSubmit ? Color(hex: "#1A264D") : .white.opacity(0.4))
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 16)
+                        .background(Capsule().fill(submitFill))
                     }
                     .buttonStyle(.dsPressable(feel: .tapSolid))
-                    .disabled(!canSubmit)
+                    .disabled(!canSubmit || isWriting)
 
                     // The answer to the blank field. Deliberately a real option
                     // rather than a hidden fallback: some mornings nothing is
@@ -288,15 +328,21 @@ struct AskForThoughtView: View {
 
     // MARK: - Submit
 
-    private func submit() {
+    @MainActor
+    private func submit() async {
         let entry = self.entry
-        guard canSubmit else { return }
+        guard canSubmit, !isWriting else { return }
         focused = false
 
-        // Safety runs first and unconditionally — ahead of the quota check, so
-        // someone out of entries still reaches this rather than a paywall.
-        let classification = classifier.classify(entry)
-        if case .reachOut = classification {
+        // Safety runs first and unconditionally — ahead of the quota check and
+        // ahead of any network call, so someone out of entries still reaches
+        // this rather than a paywall, and someone in crisis is screened on
+        // device before their words could be sent anywhere.
+        //
+        // Screened here rather than relying on the async classifier's own check
+        // so the reach-out card appears immediately, with no spinner and no
+        // round trip in front of it.
+        if case .reachOut = classifier.classify(entry) {
             AnalyticsService.shared.track("guard_escape_hatch_screened",
                                           parameters: ["verdict": "reach_out"])
             withAnimation(DS.Motion.smooth) { showReachOut = true }
@@ -307,6 +353,10 @@ struct AskForThoughtView: View {
             onNeedsPremium()
             return
         }
+
+        isWriting = sendsOffDevice
+        let classification = await classifier.classify(entry, isPremium: isPremium)
+        isWriting = false
 
         // Never a silent return. `classify` can only answer `.reachOut` (handled
         // above) or `.matched`, but a `guard … else { return }` here would mean

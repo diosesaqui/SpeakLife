@@ -5,12 +5,32 @@
 //  The escape hatch's brain: turns "something else is on my mind" into a
 //  category and a declaration to speak.
 //
-//  **Everything here runs on device. Nothing is sent anywhere.** That is not a
-//  performance choice, it is the feature's promise — what someone types when a
-//  real thought is on them is the most private thing this app ever sees. There
-//  is no network call in this file and none may be added: the moment one is,
-//  "your thoughts never leave your phone" becomes false, and the raw text is
-//  already excluded from sync and analytics on the strength of it.
+//  **There are two paths, and they differ in whether the words leave the
+//  phone.**
+//
+//  Free: everything here runs on device, exactly as it always has. Keyword
+//  match, terrain map, a counter drawn from the bundled bank. Nothing is sent
+//  anywhere.
+//
+//  Premium: the words are sent to Claude, which writes a counter-declaration
+//  for the actual thought instead of picking the nearest one from a fixed
+//  bank. See `GuardThoughtWriter`.
+//
+//  This file used to say a network call may never be added to it, and that was
+//  the right rule while the promise on screen was "it stays on this phone".
+//  The promise moved, so the rule moved with it — and the copy moved FIRST.
+//  `AskForThoughtView.privacyLine` now says which of the two is happening, and
+//  it is keyed off the same flag this class is. If a future change makes the
+//  network path run without that line changing, the app is lying to someone in
+//  the worst moment it has.
+//
+//  What did not move: the raw sentence is still never stored, never synced,
+//  never written to the log, and never attached to an analytics event. It
+//  exists for the length of one call. `CapturedThought` still has no text
+//  field. Only the matched terrain is ever recorded.
+//
+//  And crisis screening still runs locally, first, before any network call can
+//  be made. That ordering is not an optimisation.
 //
 //  The classifier reuses `MatchRule.defaults` — the same keyword table the
 //  personal-declaration matcher runs on — rather than growing a second, rival
@@ -35,6 +55,8 @@ enum ThoughtClassification: Equatable {
     case reachOut
 
     enum Confidence: String, Equatable {
+        /// Claude read the thought and wrote a counter for it.
+        case written
         /// A keyword rule fired and it mapped cleanly onto a terrain.
         case high
         /// Nothing matched, or the match didn't map. A general identity
@@ -49,10 +71,76 @@ struct ThoughtClassifier {
 
     private let matcher: KeywordDeclarationMatcher
     private let bank: [IncomingThought]
+    private let writer: GuardThoughtWriter
 
-    init(bank: [IncomingThought], matcher: KeywordDeclarationMatcher = KeywordDeclarationMatcher()) {
+    init(bank: [IncomingThought],
+         matcher: KeywordDeclarationMatcher = KeywordDeclarationMatcher(),
+         writer: GuardThoughtWriter = GuardThoughtWriter()) {
         self.bank = bank
         self.matcher = matcher
+        self.writer = writer
+    }
+
+    /// Whether the premium path can actually run right now.
+    ///
+    /// Premium alone is not enough — the key arrives from Remote Config at
+    /// launch and can be empty. The ASK screen reads this to decide which
+    /// privacy line to show, so it must answer "will the words be sent", not
+    /// "is this user entitled to have them sent".
+    func sendsThoughtOffDevice(isPremium: Bool) -> Bool {
+        isPremium && writer.isConfigured
+    }
+
+    /// The premium path: Claude reads the thought and writes the counter.
+    ///
+    /// - Parameter isPremium: false runs the on-device path unchanged.
+    ///
+    /// Crisis screening happens here, locally, BEFORE the request. It is the
+    /// first thing in the function for the same reason it always was: no
+    /// matching, no quota, no paywall, and now no network call either, may run
+    /// ahead of it.
+    func classify(_ text: String, isPremium: Bool) async -> ThoughtClassification {
+        if case .reachOut = SituationScreen.screen(text) {
+            return .reachOut
+        }
+
+        guard sendsThoughtOffDevice(isPremium: isPremium) else {
+            return classify(text)
+        }
+
+        do {
+            let written = try await writer.write(thought: text)
+            return .matched(written.category,
+                            IncomingThought(
+                                id: CapturedThought.escapeHatchDeclarationId,
+                                text: text,
+                                category: written.category,
+                                intensity: 1,
+                                counterDeclaration: written.declaration,
+                                verseText: written.verseText,
+                                book: written.book,
+                                declarationCategory: written.category.rawValue
+                            ),
+                            confidence: .written)
+        } catch GuardWriterError.declined {
+            // A refusal is a verdict, not a failure, so it must not fall
+            // through to the keyword matcher — that would answer "I won't write
+            // this" with a written declaration. The local path is what a free
+            // user gets and it is grounded in the reviewed bank, so it is the
+            // honest floor here: their own standing, not the thing declined.
+            return classifyDeclined(text)
+        } catch {
+            // Offline, no key, a timeout, a malformed answer. Never a dead end.
+            return classify(text)
+        }
+    }
+
+    /// A declined request still ends in something true about the speaker, drawn
+    /// from the reviewed bank rather than generated.
+    private func classifyDeclined(_ text: String) -> ThoughtClassification {
+        let category = ThoughtCategory.inadequacy
+        let thought = counter(for: category, matching: text) ?? Self.lastResort
+        return .matched(category, thought, confidence: .low)
     }
 
     /// - Parameter text: the user's own words. Never stored, never synced,

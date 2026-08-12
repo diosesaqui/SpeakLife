@@ -191,6 +191,11 @@ struct TakeItCaptiveFlowView: View {
         AskForThoughtView(
             remaining: quotaRemaining,
             classifier: ThoughtClassifier(bank: service.bank),
+            // Premium buys a counter written for the thought they actually
+            // typed, instead of the nearest one in the bundled bank. It is also
+            // what decides whether the words leave the phone, so the ASK
+            // screen's privacy line is keyed off the same flag.
+            isPremium: subscriptionStore.isPremium,
             onNamed: { typed, matched in
                 // Their words go on the card; the bank entry only supplies the
                 // counter-declaration and the terrain. `.escapeHatch` is what

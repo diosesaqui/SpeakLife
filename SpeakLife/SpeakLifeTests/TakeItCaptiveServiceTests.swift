@@ -833,3 +833,85 @@ final class GroundTakenBadgeTests: XCTestCase {
         XCTAssertEqual(service.groundTaken, GroundTaken.total(defaults: defaults))
     }
 }
+
+// MARK: - The premium path
+
+/// Guarding's premium path sends the typed thought to Claude. These pin the
+/// three things that must hold regardless of what the network does.
+final class GuardPremiumPathTests: XCTestCase {
+
+    private var savedKey: String!
+
+    override func setUp() {
+        super.setUp()
+        savedKey = AnthropicConfig.apiKey
+    }
+
+    override func tearDown() {
+        AnthropicConfig.apiKey = savedKey
+        savedKey = nil
+        super.tearDown()
+    }
+
+    private func makeBank() -> [IncomingThought] {
+        [IncomingThought(id: "fear_1", text: "incoming", category: .fear, intensity: 1,
+                         counterDeclaration: "I stand on solid ground.",
+                         verseText: "The Lord is my rock.", book: "Psalm 18:2",
+                         declarationCategory: "godsprotection")]
+    }
+
+    /// The one that matters most. Crisis screening is local and runs BEFORE the
+    /// request, so someone in crisis is never held behind a network round trip
+    /// and their words are never sent.
+    func testCrisisTextNeverReachesTheNetwork() async {
+        AnthropicConfig.apiKey = "sk-ant-test-key-that-would-be-used"
+        let classifier = ThoughtClassifier(bank: makeBank())
+        // A URLSession call would hang or fail here; reachOut must come back
+        // immediately from the local screen instead.
+        let result = await classifier.classify("I want to kill myself", isPremium: true)
+        XCTAssertEqual(result, .reachOut)
+    }
+
+    /// Premium alone must not flip the privacy copy. The key arrives from
+    /// Remote Config and can be empty, and a premium user on an unconfigured
+    /// build silently runs on device — they must not be told otherwise.
+    func testPrivacyLineFollowsWhatActuallyHappens() {
+        let classifier = ThoughtClassifier(bank: makeBank())
+
+        AnthropicConfig.apiKey = ""
+        XCTAssertFalse(classifier.sendsThoughtOffDevice(isPremium: true),
+                       "No key means the words stay on device, whatever the tier.")
+        XCTAssertFalse(classifier.sendsThoughtOffDevice(isPremium: false))
+
+        AnthropicConfig.apiKey = "sk-ant-test"
+        XCTAssertTrue(classifier.sendsThoughtOffDevice(isPremium: true))
+        XCTAssertFalse(classifier.sendsThoughtOffDevice(isPremium: false),
+                       "A free user's words never leave the phone.")
+    }
+
+    /// Free users get exactly the behaviour they had before, and no request is
+    /// made on their behalf.
+    func testFreeTierIsUnchangedAndStaysLocal() async {
+        AnthropicConfig.apiKey = "sk-ant-test"
+        let classifier = ThoughtClassifier(bank: makeBank())
+        let input = "I am afraid all the time"
+
+        let async = await classifier.classify(input, isPremium: false)
+        let sync = classifier.classify(input)
+        XCTAssertEqual(async, sync,
+                       "The free path must be the on-device path, byte for byte.")
+    }
+
+    /// No key configured is a fallback, not a failure. Someone who typed a real
+    /// thought still gets something to speak.
+    func testUnconfiguredPremiumFallsBackRatherThanDeadEnding() async {
+        AnthropicConfig.apiKey = ""
+        let classifier = ThoughtClassifier(bank: makeBank())
+        guard case .matched(_, let thought, _) =
+                await classifier.classify("I am afraid all the time", isPremium: true) else {
+            return XCTFail("The premium path must never dead-end.")
+        }
+        XCTAssertFalse(thought.counterDeclaration.isEmpty)
+        XCTAssertFalse(thought.verseText.isEmpty)
+    }
+}
