@@ -1093,6 +1093,14 @@ struct StreakStatsProfileSheet: View {
                 }
             }
         }
+        // On the SHEET, not on the ground section inside it.
+        //
+        // Attached to the section it was unreachable in the one case it exists
+        // for: the section only renders when `groundTaken > 0`, so a device
+        // that has taken no ground locally never rendered it, never ran the
+        // refresh, and so never learned about ground another device had already
+        // synced. The refresh has to run before the count is read, not after.
+        .onAppear { guardService.refreshGround() }
     }
 
     // ── Ground taken ──────────────────────────────────────────────────────
@@ -1140,9 +1148,6 @@ struct StreakStatsProfileSheet: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
             .padding(.horizontal, 20)
-            // Another device's ground arrives via CloudKit while this view is
-            // off screen, so the mirror is refreshed on the way in.
-            .onAppear { guardService.refreshGround() }
         }
     }
 

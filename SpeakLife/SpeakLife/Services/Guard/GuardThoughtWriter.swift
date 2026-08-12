@@ -99,21 +99,31 @@ final class GuardThoughtWriter {
         }
 
         let parsed = try JSONDecoder().decode(WrittenJSON.self, from: Self.extractJSON(from: text))
+
+        // Checked before anything else is read, and the other fields are
+        // optional so this can be reached at all.
+        //
+        // They were non-optional, which meant a decline — which the prompt asks
+        // for as `{"terrain": "decline"}` with the rest empty or absent — threw
+        // `keyNotFound` during decoding instead. That surfaced as a generic
+        // failure, the caller's `catch` answered it with the keyword matcher,
+        // and a refusal got a written declaration anyway. Exactly the
+        // fallthrough `declined` exists to stop.
         guard parsed.terrain != "decline" else { throw GuardWriterError.declined }
 
         guard let category = ThoughtCategory(rawValue: parsed.terrain),
-              !parsed.declaration.isEmpty,
-              !parsed.verseText.isEmpty,
-              !parsed.book.isEmpty else {
+              let declaration = parsed.declaration, !declaration.isEmpty,
+              let verseText = parsed.verseText, !verseText.isEmpty,
+              let book = parsed.book, !book.isEmpty else {
             // A well-formed response naming a terrain we do not have is still a
             // miss. Better to fall back than to serve an empty card.
             throw GuardWriterError.invalidJSON
         }
 
         return WrittenCounter(category: category,
-                              declaration: parsed.declaration,
-                              verseText: parsed.verseText,
-                              book: parsed.book)
+                              declaration: declaration,
+                              verseText: verseText,
+                              book: book)
     }
 
     // MARK: - Prompt
@@ -197,10 +207,13 @@ final class GuardThoughtWriter {
         }
     }
 
+    /// Only `terrain` is required. The rest are optional so a decline — which
+    /// carries no declaration by definition — decodes cleanly and can be
+    /// recognised, instead of failing as a malformed response.
     private struct WrittenJSON: Decodable {
         let terrain: String
-        let declaration: String
-        let verseText: String
-        let book: String
+        let declaration: String?
+        let verseText: String?
+        let book: String?
     }
 }
