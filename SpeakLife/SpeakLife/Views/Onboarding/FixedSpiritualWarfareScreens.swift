@@ -6,7 +6,6 @@
 //
 
 import SwiftUI
-import FirebaseAnalytics
 
 // MARK: - Simple, Working Battle Intro Screen
 struct FixedBattleIntroScreen: View {

@@ -1,5 +1,4 @@
 import SwiftUI
-import FirebaseAnalytics
 
 struct QuizQuestionView: View {
     @State private var selectedIndex: Int? = nil

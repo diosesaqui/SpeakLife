@@ -7,7 +7,6 @@
 
 import SwiftUI
 import StoreKit
-import FirebaseAnalytics
 
 //let subscriptionImage = "moonlight2"
 

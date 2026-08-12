@@ -1,5 +1,4 @@
 import SwiftUI
-import Firebase
 import Foundation
 
 class QuizProgressManager: ObservableObject {

@@ -6,7 +6,6 @@
 //
 
 import SwiftUI
-import FirebaseAnalytics
 
 // MARK: - Audio Content Row
 struct AudioContentRow: View {

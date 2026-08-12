@@ -10,7 +10,6 @@
 
 import SwiftUI
 import StoreKit
-import FirebaseAnalytics
 
 struct PayWhatYouCanView: View {
 

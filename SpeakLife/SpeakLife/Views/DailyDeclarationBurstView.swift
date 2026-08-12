@@ -6,7 +6,6 @@
 //
 
 import SwiftUI
-import FirebaseAnalytics
 
 struct DailyDeclarationBurstView: View {
     @EnvironmentObject var viewModel: DeclarationViewModel

@@ -18,7 +18,6 @@
 
 import Foundation
 import UserNotifications
-import FirebaseAnalytics
 
 /// The streak-related notification side effects, behind a seam.
 ///

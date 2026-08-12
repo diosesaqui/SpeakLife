@@ -7,7 +7,6 @@
 
 import Foundation
 import CoreData
-import FirebaseAnalytics
 
 final class DataMigrationManager {
     

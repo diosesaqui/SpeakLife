@@ -6,7 +6,6 @@
 //
 
 import SwiftUI
-import FirebaseAnalytics
 
 struct DemoExperienceView: View {
     @EnvironmentObject var subscriptionStore: SubscriptionStore
