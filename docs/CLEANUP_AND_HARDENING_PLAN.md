@@ -575,7 +575,134 @@ sequencing:
   model cannot be tested until their seams exist — `AppState.init` alone deletes a file
   and reschedules notifications. Attempting C1 first will stall.
 
-## 8. What I recommend against
+## 8. Slice One — the four files to fix first
+
+**Theme: cut the seams that make the dangerous code testable.** Every item here is a
+dependency-inversion fix, because DIP is the principle that actually pays in this
+codebase — 56 singletons is why the untested list in §4 looks the way it does. SRP splits
+are satisfying but they reorganise code that already works; seams unlock the tests that
+protect money.
+
+**Selection criteria**, applied in this order:
+1. Unblocks a test that guards money or user data
+2. High fan-out — one change makes many things testable
+3. Does **not** collide with the in-flight `TEST_DECOUPLING_WORKPLAN.md` PRs
+4. Bounded — a reviewable PR, not a rewrite
+
+### Already covered elsewhere — do NOT duplicate
+
+Three of the audit's top findings are already scheduled in the decoupling plan. Leave
+them there; doing them twice creates conflicts on files the engineer is actively editing.
+
+| Audit item | Already is |
+|---|---|
+| Strip `Color`/`UIImage` from `DailyChecklistModels` (`:27, :247, :600`) | **PR4** |
+| Extract `StreakShareImageRenderer` (`EnhancedStreakViewModel:1131–1816`) | **PR8** |
+| `RemoteConfig` seam for `EnforcementService` / `TakeItCaptiveService` | **PR3** |
+| `UIApplication` lifecycle + `identifierForVendor` seams | **PR5** |
+
+### S1.1 — `Core/Analytics/AnalyticsService.swift` · highest fan-out · M
+
+The design here is already good — `AnalyticsProvider:51–76` with default implementations
+is correct ISP. Two things are wrong, and they block everything downstream.
+
+- `static let shared:86` + `private init():95`. **436 call sites** depend on the concrete
+  type, so nothing that tracks an event can be tested.
+- `private init` calls `registerDefaultProviders():105`, which hardcodes four SDKs.
+  **Constructing this for a test boots Firebase, TikTok, Meta and PostHog.**
+
+**Do:**
+1. Declare `protocol AnalyticsTracking { func track(_ name: String, parameters: [String: Any]) }`
+   in this file. That is the surface used at nearly all 436 sites — resist putting the
+   other 20 convenience methods in the protocol; leave them as an extension.
+2. Conform `AnalyticsService`. Keep `shared` as the app's composition-root default so
+   sites migrate incrementally instead of in one commit.
+3. Move the four `register(...)` lines out of `init` and into app startup:
+   `AnalyticsService(providers: [...])`. `register(_:)` is already public and correct.
+4. `trackAudioPlayback:236` calls `ListenerMetricsService.shared` — an analytics
+   dispatcher mutating product state, so any test recording an audio event also writes
+   listener metrics. Move that call to the audio player.
+5. While you are here: the PostHog API key is a string literal at `:113`. Move it to
+   config alongside the RevenueCat key (`AppDelegate.swift:39`) and TikTok token (`:65`).
+
+**Acceptance:** a test can construct `AnalyticsService` with a spy provider and assert an
+event was tracked, with no SDK initialised. Zero call sites changed.
+
+### S1.2 — `Services/CoreData/SyncedSettingsStore.swift` · one keyword · S
+
+The cheapest testability win in the whole audit. `init` at `:240` **already takes an
+injectable container** (`container: NSPersistentCloudKitContainer = PersistenceController.shared.container`).
+It is marked `private`, so no test can build a second store against an in-memory container.
+
+**Do:** make `init` internal. Keep `shared:47` as the composition root.
+
+That is the entire change. It unblocks the nine untested mergers in §4 C2 — the single
+most misleading coverage signal in the suite (10 tests, all on one of ten mergers).
+
+**Explicitly deferred:** the merge-rule inversion (`:694–1066`, effort L) is the biggest
+package-extraction blocker, but it rewrites live sync logic. Do it *with* the decoupling
+plan's PR7, when the package boundary forces the question — not in a slice that is
+supposed to land in days.
+
+### S1.3 — `App/AppState.swift` · a constructor with side effects · M
+
+`init():142–328` is a 186-line migration runner. **Constructing `AppState` in a test
+deletes `declarations.txt` from the documents directory** (`FileManager.default.removeItem`,
+verified at `:240–243`), clears a cache (`:244`), and reschedules notifications
+(`:218, :263, :307`). That is why nothing tests it, and it is a latent hazard in its own
+right — anything that constructs a second `AppState` for any reason destroys user data.
+
+**Do:** extract `AppMigrationRunner.runPendingMigrations(defaults:services:)` with one
+`Migration` value per version (V2–V8). Call it once from `SpeakLifeApp` startup.
+`AppState.init` drops to `validateAndFixNotificationSettings()`.
+
+This also removes the `DIContainer.shared:219` reach — a service locator called from
+inside a model the container itself constructs.
+
+**Acceptance:** `AppState()` in a test touches no file and schedules no notification.
+Each migration becomes independently testable, which matters because they run once and
+silently.
+
+### S1.4 — `Services/IAP/SubscriptionStore.swift` · the seam only · M
+
+The full three-way split (remote-config registry / A/B assigner / IAP store) is an **L**
+and is *not* in this slice. What is in the slice is the minimum that makes §4 C1 — the
+money tests, the highest-risk gap in the codebase — writable at all.
+
+**Do:**
+1. `protocol RemoteConfigProviding { func bool(_: String) -> Bool; func string(_: String) -> String; func int(_: String) -> Int }`.
+   Inject it. The ~60 `remoteConfig["key"]` reads at `:437–506` become testable and
+   `import FirebaseRemoteConfig` leaves the type. Replaces `private var remoteConfig = RemoteConfig.remoteConfig():282`.
+2. Inject `purchases: PurchaseGateway`, `analytics: AnalyticsTracking` (from S1.1),
+   `trials: TrialSequencing`. Keeps the `RevenueCatManager.shared` reaches (15 of them)
+   out of the type.
+3. **Kill the four file-scope mutable globals** — `var yearlyID`, `var monthlyID`,
+   `var discountID`, `var weeklyProductID` (`:26–41`), mutated at `:522–525` and read
+   from a `Product` extension at `:939–1046`. Global mutable state makes test *ordering*
+   matter, which is how a suite becomes flaky for reasons nobody can find. The resolved
+   properties already exist at `:264–266`; pass them in.
+
+**Acceptance:** the six C1 test cases in §4 can be written against injected doubles with
+no network and no `Purchases.configure()`.
+
+### Slice One at a glance
+
+| | File | Effort | Unblocks |
+|---|---|---|---|
+| S1.1 | `AnalyticsService.swift` | M | 436 sites; prerequisite for S1.4 |
+| S1.2 | `SyncedSettingsStore.swift` | **S** | §4 C2 — nine untested mergers |
+| S1.3 | `AppState.swift` | M | migration tests; stops a data-destroying constructor |
+| S1.4 | `SubscriptionStore.swift` | M | §4 C1 — the money tests |
+
+**Order:** S1.2 (an hour) → S1.1 (S1.4 depends on it) → S1.3 → S1.4.
+**Total: roughly 1.5–2 weeks**, one PR each.
+
+**What Slice One deliberately leaves alone:** the `SyncedSettingsStore` merge inversion,
+the full `SubscriptionStore` split, `BibleInteractor`, and every SRP finding in §3.3.
+Those are Slice Two. None of them blocks a test that guards money or data, which is the
+only bar for this slice.
+
+## 9. What I recommend against
 
 - **Auditing all 368 files for SOLID.** §3.0. Do §3.2's four rules at the point of change instead.
 - **A coverage-percentage target.** It rewards testing getters and would leave `SubscriptionStore` exactly as uncovered as it is now.
