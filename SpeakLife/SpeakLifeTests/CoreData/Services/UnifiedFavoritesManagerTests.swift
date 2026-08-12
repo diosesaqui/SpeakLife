@@ -270,8 +270,10 @@ final class UnifiedFavoritesManagerTests: XCTestCase {
         
         // When - Add favorite
         manager.toggleDeclarationFavorite(declaration)
-        try await Task.sleep(nanoseconds: 300_000_000)
-        
+        await waitUntil("the declaration to reach the repository") {
+            self.mockDeclarationRepo.entries.count == 1
+        }
+
         // Then
         XCTAssertEqual(mockDeclarationRepo.entries.count, 1)
         XCTAssertEqual(mockDeclarationRepo.entries.first?.text, "God is good")
@@ -303,8 +305,10 @@ final class UnifiedFavoritesManagerTests: XCTestCase {
         
         // When
         manager.toggleDeclarationFavorite(declaration)
-        try await Task.sleep(nanoseconds: 300_000_000)
-        
+        await waitUntil("the affirmation favorite to toggle") {
+            self.mockAffirmationRepo.favoriteToggled
+        }
+
         // Then
         XCTAssertTrue(mockAffirmationRepo.favoriteToggled)
     }
@@ -345,8 +349,10 @@ final class UnifiedFavoritesManagerTests: XCTestCase {
         _ = try await mockAudioRepo.createFromAudioDeclaration(audio)
         
         // Wait for update
-        try await Task.sleep(nanoseconds: 200_000_000)
-        
+        await waitUntil("the audio favorite to reach the repository") {
+            self.mockAudioRepo.entries.count == 1
+        }
+
         // When/Then
         // Check the repository directly
         XCTAssertEqual(mockAudioRepo.entries.count, 1)
@@ -366,15 +372,15 @@ final class UnifiedFavoritesManagerTests: XCTestCase {
         
         // When - Add favorite
         manager.toggleAudioFavorite(audio)
-        try await Task.sleep(nanoseconds: 300_000_000)
-        
+        await waitUntil("the audio favorite to be created") { self.mockAudioRepo.createCalled }
+
         // Then
         XCTAssertTrue(mockAudioRepo.createCalled)
-        
+
         // When - Toggle again to remove
         manager.toggleAudioFavorite(audio)
-        try await Task.sleep(nanoseconds: 300_000_000)
-        
+        await waitUntil("the audio favorite to be deleted") { self.mockAudioRepo.deleteCalled }
+
         // Then
         XCTAssertTrue(mockAudioRepo.deleteCalled)
     }
@@ -405,8 +411,10 @@ final class UnifiedFavoritesManagerTests: XCTestCase {
         _ = try await mockAudioRepo.createFromAudioDeclaration(audio)
         
         // Wait for updates
-        try await Task.sleep(nanoseconds: 200_000_000)
-        
+        await waitUntil("both favorites to reach their repositories") {
+            self.mockDeclarationRepo.entries.count == 1
+        }
+
         // When/Then
         // Check repositories directly
         XCTAssertEqual(mockDeclarationRepo.entries.count, 1)

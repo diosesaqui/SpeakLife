@@ -66,6 +66,32 @@ extension XCTestCase {
             RunLoop.current.run(mode: .default, before: deadline)
         }
     }
+
+    /// `waitUntil` for `async` tests.
+    ///
+    /// The same bet as the sleep-expectations, spelled differently and just as
+    /// lossy: `try await Task.sleep(nanoseconds: 300_000_000)` followed by an
+    /// assertion is a 0.3s wager that the work finished. When it doesn't, the
+    /// failure is not a timeout — it is the assertion itself going off early,
+    /// which is why `testToggleAudioFavorite` reported a bare "XCTAssertTrue
+    /// failed" and read like a logic bug rather than a slow machine.
+    ///
+    /// Polls in short naps so a fast machine pays almost nothing.
+    func waitUntil(_ description: String,
+                   timeout: TimeInterval = 10,
+                   file: StaticString = #filePath,
+                   line: UInt = #line,
+                   _ condition: () -> Bool) async {
+        let deadline = Date().addingTimeInterval(timeout)
+        while !condition() {
+            guard Date() < deadline else {
+                XCTFail("Timed out after \(timeout)s waiting for: \(description)",
+                        file: file, line: line)
+                return
+            }
+            try? await Task.sleep(nanoseconds: 10_000_000)
+        }
+    }
 }
 
 final class EnhancedStreakViewModelTests: XCTestCase {
@@ -540,13 +566,24 @@ final class EnhancedStreakViewModelTests: XCTestCase {
     private func purgeSyncedTaskCompletions() {
         let store = ProgressSyncStore.shared
 
+        // These two are NOT the sleep-with-a-stopwatch pattern — each waits on a
+        // real completion handler from `ProgressSyncStore`, which is the right
+        // shape. Their timeouts are simply too tight for a struggling runner:
+        // `testCompleteTask_ShouldUpdateChecklist` went red on main with
+        // "Exceeded timeout of 5 seconds, unfulfilled: read taskCompletion
+        // events" on a run where the simulator also failed to launch outright
+        // and the test phase took 616 seconds.
+        //
+        // A correct expectation costs nothing extra by being patient: it is
+        // signalled the instant the callback fires, so the only thing a larger
+        // number changes is how long a genuine hang takes to report.
         let fetched = expectation(description: "read taskCompletion events")
         var keys: [String] = []
         store.events(ofKind: ProgressSyncStore.Kind.taskCompletion) { events in
             keys = events.map(\.key)
             fetched.fulfill()
         }
-        wait(for: [fetched], timeout: 5)
+        wait(for: [fetched], timeout: 30)
 
         guard !keys.isEmpty else { return }
         let deleted = expectation(description: "delete taskCompletion events")
@@ -556,7 +593,7 @@ final class EnhancedStreakViewModelTests: XCTestCase {
                 deleted.fulfill()
             }
         }
-        wait(for: [deleted], timeout: 10)
+        wait(for: [deleted], timeout: 60)
     }
 
     private var firstCompletableTask: DailyTask {
