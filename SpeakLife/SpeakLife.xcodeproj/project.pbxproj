@@ -10,6 +10,7 @@
 		TIC00SVC000000000000001B /* TakeItCaptiveService.swift in Sources */ = {isa = PBXBuildFile; fileRef = TIC00SVC000000000000001A /* TakeItCaptiveService.swift */; };
 		TIC00SVC000000000000002B /* ThoughtClassifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = TIC00SVC000000000000002A /* ThoughtClassifier.swift */; };
 		TIC00SVC000000000000005B /* GuardThoughtWriter.swift in Sources */ = {isa = PBXBuildFile; fileRef = TIC00SVC000000000000005A /* GuardThoughtWriter.swift */; };
+		TIC00SVC000000000000006B /* TerrainLexicon.swift in Sources */ = {isa = PBXBuildFile; fileRef = TIC00SVC000000000000006A /* TerrainLexicon.swift */; };
 		TIC00SVC000000000000004B /* TakeThoughtCaptiveIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = TIC00SVC000000000000004A /* TakeThoughtCaptiveIntent.swift */; };
 		TIC00VW0000000000000001B /* TakeItCaptiveFlowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = TIC00VW0000000000000001A /* TakeItCaptiveFlowView.swift */; };
 		TIC00VW0000000000000003B /* ReplaceDeclarationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = TIC00VW0000000000000003A /* ReplaceDeclarationView.swift */; };
@@ -469,6 +470,7 @@
 		TIC00SVC000000000000001A /* TakeItCaptiveService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TakeItCaptiveService.swift; sourceTree = "<group>"; };
 		TIC00SVC000000000000002A /* ThoughtClassifier.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ThoughtClassifier.swift; sourceTree = "<group>"; };
 		TIC00SVC000000000000005A /* GuardThoughtWriter.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GuardThoughtWriter.swift; sourceTree = "<group>"; };
+		TIC00SVC000000000000006A /* TerrainLexicon.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TerrainLexicon.swift; sourceTree = "<group>"; };
 		TIC00SVC000000000000004A /* TakeThoughtCaptiveIntent.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TakeThoughtCaptiveIntent.swift; sourceTree = "<group>"; };
 		TIC00VW0000000000000001A /* TakeItCaptiveFlowView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TakeItCaptiveFlowView.swift; sourceTree = "<group>"; };
 		TIC00VW0000000000000003A /* ReplaceDeclarationView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ReplaceDeclarationView.swift; sourceTree = "<group>"; };
@@ -942,6 +944,7 @@
 				TIC00SVC000000000000001A /* TakeItCaptiveService.swift */,
 				TIC00SVC000000000000002A /* ThoughtClassifier.swift */,
 				TIC00SVC000000000000005A /* GuardThoughtWriter.swift */,
+				TIC00SVC000000000000006A /* TerrainLexicon.swift */,
 				TIC00SVC000000000000004A /* TakeThoughtCaptiveIntent.swift */,
 			);
 			name = Guard;
@@ -2258,6 +2261,7 @@
 				TIC00SVC000000000000001B /* TakeItCaptiveService.swift in Sources */,
 				TIC00SVC000000000000002B /* ThoughtClassifier.swift in Sources */,
 				TIC00SVC000000000000005B /* GuardThoughtWriter.swift in Sources */,
+				TIC00SVC000000000000006B /* TerrainLexicon.swift in Sources */,
 				TIC00SVC000000000000004B /* TakeThoughtCaptiveIntent.swift in Sources */,
 				TIC00VW0000000000000001B /* TakeItCaptiveFlowView.swift in Sources */,
 				TIC00VW0000000000000003B /* ReplaceDeclarationView.swift in Sources */,

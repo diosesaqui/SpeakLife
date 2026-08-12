@@ -915,3 +915,128 @@ final class GuardPremiumPathTests: XCTestCase {
         XCTAssertFalse(thought.verseText.isEmpty)
     }
 }
+
+// MARK: - Local routing and selection
+
+/// The on-device path, which is what free users get and what every premium
+/// failure falls back to. It has to be good on its own.
+///
+/// Both halves of the "Covid" bug are pinned here. Terrain: "Covid is coming
+/// back" matched no rule in the borrowed 42-category table and fell to a
+/// general identity line. Selection: even in the right terrain the counter was
+/// `pool[hash % count]`, so nothing the user typed influenced which line they
+/// got.
+final class TerrainRoutingTests: XCTestCase {
+
+    func testCovidRoutesToSicknessNotFearOrNothing() {
+        XCTAssertEqual(TerrainLexicon.terrain(for: "Covid is coming back")?.category, .sickness)
+        // Even with an emotion word in the sentence, the body wins: the thought
+        // is about illness, and fear is how it is being carried.
+        XCTAssertEqual(TerrainLexicon.terrain(for: "afraid of Covid coming back")?.category,
+                       .sickness)
+    }
+
+    func testEachTerrainIsReachable() {
+        let cases: [(String, ThoughtCategory)] = [
+            ("my test results came back bad", .sickness),
+            ("I'm never getting out of this debt", .lack),
+            ("nobody wants me around", .rejection),
+            ("I'm not good enough for this", .inadequacy),
+            ("God stopped listening to me", .abandonment),
+            ("I keep looking at porn", .lust),
+            ("I don't know what I'm supposed to do", .confusion),
+            ("I can't forgive what I did", .condemnation),
+            ("I'm scared something bad will happen", .fear)
+        ]
+        for (text, expected) in cases {
+            XCTAssertEqual(TerrainLexicon.terrain(for: text)?.category, expected,
+                           "\"\(text)\" should land in \(expected.rawValue)")
+        }
+    }
+
+    /// Nothing recognised must stay nil rather than inventing a terrain, so the
+    /// caller can pick an honest fallback instead of a confident wrong answer.
+    func testUnrecognisedTextHasNoTerrain() {
+        XCTAssertNil(TerrainLexicon.terrain(for: "qqq zzz mmm"))
+    }
+
+    /// Short single words must not match inside longer ones. A bare `contains`
+    /// makes "ill" match "still" and "will", which is how a keyword table rots.
+    func testPrefixMatchingDoesNotFireOnSubstrings() {
+        XCTAssertNil(TerrainLexicon.terrain(for: "I will be still"),
+                     "\"will\"/\"still\" must not trip the \"ill\" keyword.")
+    }
+}
+
+/// Selection within a terrain, against the shipped bank.
+final class CounterSelectionTests: XCTestCase {
+
+    private func bank() throws -> [IncomingThought] {
+        let url = try XCTUnwrap(Bundle(for: type(of: self)).url(forResource: "thoughts", withExtension: "json")
+                                ?? Bundle.main.url(forResource: "thoughts", withExtension: "json"))
+        return try JSONDecoder().decode(ThoughtBank.self, from: Data(contentsOf: url)).thoughts
+    }
+
+    /// The line a thought about illness gets must be about a body being whole,
+    /// not about strength for a task.
+    ///
+    /// Plain word overlap picked "God gives me strength and fills me with fresh
+    /// power", because the lie THAT entry answers is "Your strength is not
+    /// coming back" and it shares the incidental words "coming" and "back".
+    /// Rarity weighting sinks common words so they cannot outvote the terrain's
+    /// curated line.
+    func testIllnessThoughtGetsAHealingLine() throws {
+        let classifier = ThoughtClassifier(bank: try bank())
+        guard case .matched(let category, let thought, let confidence) =
+                classifier.classify("Covid is coming back") else {
+            return XCTFail("Expected a match.")
+        }
+        XCTAssertEqual(category, .sickness)
+        XCTAssertEqual(confidence, .high)
+        XCTAssertFalse(thought.counterDeclaration.localizedCaseInsensitiveContains("strength"),
+                       "A thought about illness must not draw a strength-for-a-task line.")
+    }
+
+    /// Same sentence, same line, every time — on this launch and the next.
+    func testSelectionIsStable() throws {
+        let loaded = try bank()
+        let input = "Covid is coming back"
+        guard case .matched(_, let first, _) = ThoughtClassifier(bank: loaded).classify(input),
+              case .matched(_, let second, _) = ThoughtClassifier(bank: loaded).classify(input) else {
+            return XCTFail("Expected matches.")
+        }
+        XCTAssertEqual(first.id, second.id)
+    }
+}
+
+/// The validator that stands between a generated line and someone's mouth.
+final class HouseRulesTests: XCTestCase {
+
+    func testAcceptsAWellFormedDeclaration() {
+        XCTAssertTrue(ThoughtClassifier.followsHouseRules(
+            "By His wounds I am healed, and this body carries His life."))
+    }
+
+    /// Rule 12 is the one a fluent model breaks most easily: naming the thing
+    /// it is supposed to be displacing.
+    func testRejectsALineThatNamesTheLowThing() {
+        XCTAssertFalse(ThoughtClassifier.followsHouseRules(
+            "I am not afraid of this sickness, because God is with me."))
+        XCTAssertFalse(ThoughtClassifier.followsHouseRules(
+            "My anxiety has no hold on me anymore."))
+    }
+
+    func testRejectsDashesHedgingAndThirdPerson() {
+        XCTAssertFalse(ThoughtClassifier.followsHouseRules(
+            "I am healed — whole from head to foot."))
+        XCTAssertFalse(ThoughtClassifier.followsHouseRules(
+            "I hope God will make this body well again someday."))
+        XCTAssertFalse(ThoughtClassifier.followsHouseRules(
+            "God makes the body whole and restores what was taken."))
+    }
+
+    func testRejectsARamblingLine() {
+        XCTAssertFalse(ThoughtClassifier.followsHouseRules(
+            "I am healed. I am whole. I am strong. I am restored. I am well."))
+    }
+}
