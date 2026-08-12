@@ -6,20 +6,24 @@
 //  
 
 import Foundation
-// `CompletionCelebration.shareImage: UIImage?` still lives in this file — the
-// full platform-seam extraction is PR5's job. This import replaces the previous
-// `import SwiftUI` (which re-exported UIKit as a side effect), so the two color
-// properties can move to the view layer without breaking the celebration type.
-import UIKit
+// `CompletionCelebration.shareImage` used to be typed `UIImage?`, which forced
+// this whole model file to `import UIKit` for one field on one type. PR6 moved
+// this file into `SpeakLifeCore`, which is Foundation-only and cannot import
+// UIKit, so the field is typed `Any?` here and cast back to `UIImage` on the
+// app side (`EnhancedStreakView.shareToInstagram`, `StreakCompletionViews`).
+// The full platform-seam extraction — a dedicated share renderer that returns
+// the image separately rather than stapled to the celebration blob — is PR5's
+// job. Do not restore `import UIKit` in this file; that reintroduces the exact
+// coupling PR6 exists to remove.
 
 // MARK: - Task Categories & Types
-enum TaskCategory: String, CaseIterable, Codable {
+public enum TaskCategory: String, CaseIterable, Codable {
     case foundation = "foundation"     // Core spiritual practices
     case growth = "growth"            // Personal development
     case impact = "impact"            // Community engagement
     case mastery = "mastery"          // Advanced practices
-    
-    var displayName: String {
+
+    public var displayName: String {
         switch self {
         case .foundation: return "Foundation"
         case .growth: return "Growth"
@@ -27,8 +31,8 @@ enum TaskCategory: String, CaseIterable, Codable {
         case .mastery: return "Mastery"
         }
     }
-    
-    var emoji: String {
+
+    public var emoji: String {
         switch self {
         case .foundation: return "🌱"
         case .growth: return "🌿"
@@ -38,7 +42,7 @@ enum TaskCategory: String, CaseIterable, Codable {
     }
 }
 
-enum TaskType: String, CaseIterable, Codable {
+public enum TaskType: String, CaseIterable, Codable {
     case speak = "speak"
     case listen = "listen"
     case read = "read"
@@ -51,13 +55,13 @@ enum TaskType: String, CaseIterable, Codable {
     case teach = "teach"
 }
 
-enum DifficultyLevel: Int, CaseIterable, Codable {
+public enum DifficultyLevel: Int, CaseIterable, Codable {
     case beginner = 1
     case intermediate = 2
     case advanced = 3
     case expert = 4
-    
-    var displayName: String {
+
+    public var displayName: String {
         switch self {
         case .beginner: return "Beginner"
         case .intermediate: return "Intermediate"
@@ -68,7 +72,7 @@ enum DifficultyLevel: Int, CaseIterable, Codable {
 }
 
 // MARK: - Task Navigation Destination
-enum TaskNavigationDestination: String, Codable {
+public enum TaskNavigationDestination: String, Codable {
     case none
     case audioTab
     case devotional
@@ -81,30 +85,30 @@ enum TaskNavigationDestination: String, Codable {
 }
 
 // MARK: - Enhanced Daily Task Model
-struct DailyTask: Identifiable, Codable {
-    let id: String
-    var title: String
-    var description: String
-    let icon: String
-    let category: TaskCategory
-    let type: TaskType
-    let difficulty: DifficultyLevel
-    let minimumStreakDay: Int
-    var estimatedMinutes: Int
-    var isCompleted: Bool = false
-    var completedAt: Date?
-    var isNewlyUnlocked: Bool = false
-    var navigationDestination: TaskNavigationDestination = .none
+public struct DailyTask: Identifiable, Codable {
+    public let id: String
+    public var title: String
+    public var description: String
+    public let icon: String
+    public let category: TaskCategory
+    public let type: TaskType
+    public let difficulty: DifficultyLevel
+    public let minimumStreakDay: Int
+    public var estimatedMinutes: Int
+    public var isCompleted: Bool = false
+    public var completedAt: Date?
+    public var isNewlyUnlocked: Bool = false
+    public var navigationDestination: TaskNavigationDestination = .none
     /// Foundation week (days 1-7): the exact catalog episode this task points
     /// at (`AudioDeclaration.id`). The checklist deep-links straight to it.
     /// nil after the foundation week — the task opens the open audio tab.
-    var recommendedAudioId: String? = nil
+    public var recommendedAudioId: String? = nil
 
     /// Set on the tasks an active campaign rebuilt from the user's own words.
     /// Read it through `isCampaignRefreshed`, never directly.
-    var campaignRefreshed: Bool? = nil
+    public var campaignRefreshed: Bool? = nil
 
-    var isCampaignRefreshed: Bool { campaignRefreshed == true }
+    public var isCampaignRefreshed: Bool { campaignRefreshed == true }
 
     /// Decoded key by key, so a missing one falls back to the property's
     /// default instead of throwing.
@@ -120,7 +124,7 @@ struct DailyTask: Identifiable, Codable {
     /// Making one property Optional fixes one property. Decoding leniently
     /// fixes the shape, so the next field added to this struct cannot repeat it.
     /// Only `id` is required — a task without one is not a task.
-    init(from decoder: Decoder) throws {
+    public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
 
         id = try container.decode(String.self, forKey: .id)
@@ -141,12 +145,12 @@ struct DailyTask: Identifiable, Codable {
         campaignRefreshed = try container.decodeIfPresent(Bool.self, forKey: .campaignRefreshed)
     }
 
-    init(id: String, title: String, description: String, icon: String,
-         category: TaskCategory, type: TaskType, difficulty: DifficultyLevel = .beginner,
-         minimumStreakDay: Int = 1, estimatedMinutes: Int = 5,
-         isCompleted: Bool = false, completedAt: Date? = nil,
-         navigationDestination: TaskNavigationDestination = .none,
-         recommendedAudioId: String? = nil) {
+    public init(id: String, title: String, description: String, icon: String,
+                category: TaskCategory, type: TaskType, difficulty: DifficultyLevel = .beginner,
+                minimumStreakDay: Int = 1, estimatedMinutes: Int = 5,
+                isCompleted: Bool = false, completedAt: Date? = nil,
+                navigationDestination: TaskNavigationDestination = .none,
+                recommendedAudioId: String? = nil) {
         self.id = id
         self.title = title
         self.description = description
@@ -164,46 +168,55 @@ struct DailyTask: Identifiable, Codable {
 }
 
 // MARK: - Daily Checklist Model
-struct DailyChecklist: Codable {
-    let date: Date
-    var tasks: [DailyTask]
-    var completedAt: Date?
-    var currentPhase: ProgressionPhase
-    var newTasksUnlocked: [String] = []
-    
+public struct DailyChecklist: Codable {
+    public let date: Date
+    public var tasks: [DailyTask]
+    public var completedAt: Date?
+    public var currentPhase: ProgressionPhase
+    public var newTasksUnlocked: [String] = []
+
+    public init(date: Date, tasks: [DailyTask], completedAt: Date? = nil,
+                currentPhase: ProgressionPhase, newTasksUnlocked: [String] = []) {
+        self.date = date
+        self.tasks = tasks
+        self.completedAt = completedAt
+        self.currentPhase = currentPhase
+        self.newTasksUnlocked = newTasksUnlocked
+    }
+
     /// True when ALL tasks are done (used for full-checklist celebration UI only).
-    var isCompleted: Bool {
+    public var isCompleted: Bool {
         tasks.allSatisfy { $0.isCompleted }
     }
 
     /// True when the Daily Burst is done — this is the only requirement to earn a streak day.
     /// Devotional, audio, gratitude etc. are bonus tasks and don't gate the streak.
-    var isStreakEarned: Bool {
+    public var isStreakEarned: Bool {
         tasks.first(where: { $0.id == "complete_daily_burst" })?.isCompleted ?? false
     }
-    
-    var completionProgress: Double {
+
+    public var completionProgress: Double {
         let completedCount = tasks.filter { $0.isCompleted }.count
         return Double(completedCount) / Double(tasks.count)
     }
-    
-    var completedTasksCount: Int {
+
+    public var completedTasksCount: Int {
         tasks.filter { $0.isCompleted }.count
     }
-    
-    var estimatedTotalMinutes: Int {
+
+    public var estimatedTotalMinutes: Int {
         tasks.reduce(0) { $0 + $1.estimatedMinutes }
     }
 }
 
 // MARK: - Progression System
-enum ProgressionPhase: String, CaseIterable, Codable {
+public enum ProgressionPhase: String, CaseIterable, Codable {
     case foundation = "foundation"     // Days 1-7
     case growth = "growth"            // Days 8-30
     case impact = "impact"            // Days 31-100
     case mastery = "mastery"          // Days 100+
-    
-    var displayName: String {
+
+    public var displayName: String {
         switch self {
         case .foundation: return "Building Foundation"
         case .growth: return "Growing Deeper"
@@ -211,8 +224,8 @@ enum ProgressionPhase: String, CaseIterable, Codable {
         case .mastery: return "Spiritual Mastery"
         }
     }
-    
-    var description: String {
+
+    public var description: String {
         switch self {
         case .foundation: return "Establishing core spiritual habits"
         case .growth: return "Expanding your spiritual practices"
@@ -220,8 +233,8 @@ enum ProgressionPhase: String, CaseIterable, Codable {
         case .mastery: return "Advanced spiritual disciplines"
         }
     }
-    
-    var minStreakDay: Int {
+
+    public var minStreakDay: Int {
         switch self {
         case .foundation: return 1
         case .growth: return 8
@@ -229,8 +242,8 @@ enum ProgressionPhase: String, CaseIterable, Codable {
         case .mastery: return 100
         }
     }
-    
-    var maxStreakDay: Int {
+
+    public var maxStreakDay: Int {
         switch self {
         case .foundation: return 7
         case .growth: return 30
@@ -238,8 +251,8 @@ enum ProgressionPhase: String, CaseIterable, Codable {
         case .mastery: return Int.max
         }
     }
-    
-    var emoji: String {
+
+    public var emoji: String {
         switch self {
         case .foundation: return "🌱"
         case .growth: return "🌿"
@@ -248,7 +261,7 @@ enum ProgressionPhase: String, CaseIterable, Codable {
         }
     }
 
-    static func getPhase(for streakDay: Int) -> ProgressionPhase {
+    public static func getPhase(for streakDay: Int) -> ProgressionPhase {
         if streakDay >= 100 { return .mastery }
         if streakDay >= 31 { return .impact }
         if streakDay >= 8 { return .growth }
@@ -272,31 +285,31 @@ enum ProgressionPhase: String, CaseIterable, Codable {
 /// Deliberately a plain value type over start-of-day dates: the freeze
 /// decision stays a pure function of (history, today) and can be unit-tested
 /// without CoreData, CloudKit, or a singleton.
-struct StreakHistory: Equatable {
+public struct StreakHistory: Equatable {
 
     /// One entry per completed local day, normalized to start-of-day.
-    let completedDays: Set<Date>
+    public let completedDays: Set<Date>
 
-    init(completedDays: Set<Date> = []) {
+    public init(completedDays: Set<Date> = []) {
         self.completedDays = completedDays
     }
 
     /// Normalizes raw completion timestamps to local start-of-day. Duplicate
     /// completions on one day collapse to a single entry, which is exactly
     /// what a "did the user complete that day" record should be.
-    init(dates: [Date], calendar: Calendar = .current) {
+    public init(dates: [Date], calendar: Calendar = .current) {
         self.completedDays = Set(dates.map { calendar.startOfDay(for: $0) })
     }
 
-    var isEmpty: Bool { completedDays.isEmpty }
+    public var isEmpty: Bool { completedDays.isEmpty }
 
     /// The most recent day the user completed on ANY device.
-    var lastCompletedDay: Date? { completedDays.max() }
+    public var lastCompletedDay: Date? { completedDays.max() }
 
     /// How many consecutive completed days end ON `day` (0 when `day` itself
     /// was never completed). This is the real, cross-device length of the run
     /// the user is standing on — the number a freeze would be protecting.
-    func consecutiveDays(endingOn day: Date, calendar: Calendar = .current) -> Int {
+    public func consecutiveDays(endingOn day: Date, calendar: Calendar = .current) -> Int {
         var cursor = calendar.startOfDay(for: day)
         var count = 0
         // Same one-year ceiling BurstCompletionTracker walks. A streak longer
@@ -311,14 +324,14 @@ struct StreakHistory: Equatable {
 }
 
 // MARK: - Streak Statistics
-struct StreakStats: Codable, Equatable {
-    var currentStreak: Int = 0
-    var longestStreak: Int = 0
-    var totalDaysCompleted: Int = 0
-    var lastCompletedDate: Date?
+public struct StreakStats: Codable, Equatable {
+    public var currentStreak: Int = 0
+    public var longestStreak: Int = 0
+    public var totalDaysCompleted: Int = 0
+    public var lastCompletedDate: Date?
     // Fix 4: Streak freeze — new users start with one; earn more at milestones
-    var streakFreezeAvailable: Bool = true
-    var streakFreezeUsedDate: Date?
+    public var streakFreezeAvailable: Bool = true
+    public var streakFreezeUsedDate: Date?
     /// The last REALLY completed day a currently-spent freeze is standing in
     /// for — i.e. the day the gap opened after. Non-nil means `lastCompletedDate`
     /// is a bridge (a placeholder written by the freeze), not a day the user
@@ -331,14 +344,16 @@ struct StreakStats: Codable, Equatable {
     /// 2. Provenance. `merging` needs to know that a `lastCompletedDate` is a
     ///    bridge, so a stale phone's placeholder can never out-vote the phone
     ///    that actually completed that day.
-    var streakFreezeCoveredDay: Date?
+    public var streakFreezeCoveredDay: Date?
     // Milestones (streak day numbers) that have already triggered a full
     // celebration. Persisted so that breaking a streak and rebuilding past an
     // already-celebrated milestone does NOT re-fire its celebration. Defaults
     // empty; absent in older saved data and decodes cleanly.
-    var celebratedMilestones: Set<Int> = []
+    public var celebratedMilestones: Set<Int> = []
 
-    mutating func updateStreak(for date: Date) {
+    public init() {}
+
+    public mutating func updateStreak(for date: Date) {
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: date)
 
@@ -416,7 +431,7 @@ struct StreakStats: Codable, Equatable {
     /// (streakFreezeCoveredDay != nil) is a placeholder and loses to a side
     /// that actually completed that day. Both devices compute the same
     /// result, so merges converge.
-    func merging(_ other: StreakStats) -> StreakStats {
+    public func merging(_ other: StreakStats) -> StreakStats {
         var merged = self
         merged.longestStreak = max(longestStreak, other.longestStreak)
         merged.totalDaysCompleted = max(totalDaysCompleted, other.totalDaysCompleted)
@@ -500,7 +515,7 @@ struct StreakStats: Codable, Equatable {
     /// EnhancedStreakViewModel.checkStreakValidity). A pure struct is what
     /// lets the whole decision be unit-tested without UserDefaults or firing
     /// real notifications at whoever runs the suite.
-    enum ValidityOutcome: Equatable {
+    public enum ValidityOutcome: Equatable {
         case unchanged
         /// A freeze was spent to bridge the lapse that opened after
         /// `coveredDay` — the last day actually completed before it.
@@ -525,7 +540,7 @@ struct StreakStats: Codable, Equatable {
     ///   Pass nil only when no history is available; the check then falls back
     ///   to this device's own record and behaves exactly as it did before.
     @discardableResult
-    mutating func checkStreakValidity(history: StreakHistory? = nil) -> ValidityOutcome {
+    public mutating func checkStreakValidity(history: StreakHistory? = nil) -> ValidityOutcome {
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: Date())
 
@@ -579,13 +594,23 @@ struct StreakStats: Codable, Equatable {
 }
 
 // MARK: - Completion Celebration Data
-struct CompletionCelebration {
-    let streakNumber: Int
-    let isNewRecord: Bool
-    let motivationalMessage: String
-    let shareImage: UIImage?
-    
-    static func generateMessage(for streak: Int, isRecord: Bool) -> String {
+public struct CompletionCelebration {
+    public let streakNumber: Int
+    public let isNewRecord: Bool
+    public let motivationalMessage: String
+    /// Typed `Any?` so this struct can live in Foundation-only Core. The app
+    /// stores a `UIImage?` here and casts it back where the share sheet needs
+    /// it. See the file header for the design note.
+    public let shareImage: Any?
+
+    public init(streakNumber: Int, isNewRecord: Bool, motivationalMessage: String, shareImage: Any?) {
+        self.streakNumber = streakNumber
+        self.isNewRecord = isNewRecord
+        self.motivationalMessage = motivationalMessage
+        self.shareImage = shareImage
+    }
+
+    public static func generateMessage(for streak: Int, isRecord: Bool) -> String {
         if isRecord {
             return "🏆 NEW RECORD! \(streak) days of speaking LIFE! You're unstoppable!"
         }
@@ -608,13 +633,19 @@ struct CompletionCelebration {
 // MARK: - Foundation Week Audio Plan (Days 1-7)
 
 /// One recommendable audio in the foundation week (day-independent).
-struct FoundationAudio: Equatable {
+public struct FoundationAudio: Equatable {
     /// `AudioDeclaration.id` — the Firebase Storage filename the audio catalog
     /// keys on (e.g. "psalm9_11.mp3"). Must match the remote catalog exactly.
-    let audioId: String
+    public let audioId: String
     /// Exact catalog title, shown verbatim on the task card.
-    let title: String
-    let durationMinutes: Int
+    public let title: String
+    public let durationMinutes: Int
+
+    public init(audioId: String, title: String, durationMinutes: Int) {
+        self.audioId = audioId
+        self.title = title
+        self.durationMinutes = durationMinutes
+    }
 }
 
 /// The curated listening sequence for the foundation week. Instead of sending
@@ -626,49 +657,56 @@ struct FoundationAudio: Equatable {
 /// selected category, each mapped to the episode that hits its exact domain.
 /// Remaining days top up from the curated default week. After day 7 the
 /// listen task returns to the generic personalized-category behavior.
-enum FoundationAudioPlan {
+public enum FoundationAudioPlan {
+
+    /// Read the active personal declaration's category rawValue, if the user
+    /// carries one. Installed by the app (`PersonalDeclarationRepository`) at
+    /// launch; left nil in the package's own tests so the recommendation
+    /// falls back to onboarding selections and the default week — which is
+    /// exactly the pre-package behavior for a user without a declaration.
+    public static var personalDeclarationCategoryProvider: (() -> String?)?
 
     // MARK: Recommendable episodes
     // All verified against the audio catalog ("declarations" filter unless
     // noted) so the deep-link always resolves.
 
-    static let psalm91 = FoundationAudio(audioId: "psalm9_11.mp3",
+    public static let psalm91 = FoundationAudio(audioId: "psalm9_11.mp3",
         title: "Psalm 91: A Shield of Protection", durationMinutes: 2)
-    static let longLife = FoundationAudio(audioId: "longlife_v2.mp3",
+    public static let longLife = FoundationAudio(audioId: "longlife_v2.mp3",
         title: "Renewed Youth and Long Life Declaration", durationMinutes: 3)
-    static let healing = FoundationAudio(audioId: "healed_v2.mp3",
+    public static let healing = FoundationAudio(audioId: "healed_v2.mp3",
         title: "Healing Declarations", durationMinutes: 5)
-    static let peace = FoundationAudio(audioId: "peace_v2.mp3",
+    public static let peace = FoundationAudio(audioId: "peace_v2.mp3",
         title: "Peace Beyond Understanding", durationMinutes: 3)
-    static let identityInChrist = FoundationAudio(audioId: "identity_v2.mp3",
+    public static let identityInChrist = FoundationAudio(audioId: "identity_v2.mp3",
         title: "Identity in Christ", durationMinutes: 4)
-    static let victory = FoundationAudio(audioId: "victorious_v2.mp3",
+    public static let victory = FoundationAudio(audioId: "victorious_v2.mp3",
         title: "Living Victoriously in Christ", durationMinutes: 3)
-    static let gratitude = FoundationAudio(audioId: "gratitude_v2.mp3",
+    public static let gratitude = FoundationAudio(audioId: "gratitude_v2.mp3",
         title: "A Heart of Gratitude", durationMinutes: 3)
-    static let warfare = FoundationAudio(audioId: "warfare_v2.mp3",
+    public static let warfare = FoundationAudio(audioId: "warfare_v2.mp3",
         title: "Victory in Spiritual Warfare", durationMinutes: 3)
-    static let abundance = FoundationAudio(audioId: "prosperity_v2.mp3",
+    public static let abundance = FoundationAudio(audioId: "prosperity_v2.mp3",
         title: "Abundance Declarations", durationMinutes: 4)
-    static let protection = FoundationAudio(audioId: "godsprotection_v2.mp3",
+    public static let protection = FoundationAudio(audioId: "godsprotection_v2.mp3",
         title: "Protection Promises", durationMinutes: 4)
-    static let brokenhearted = FoundationAudio(audioId: "heartbreak_v2.mp3",
+    public static let brokenhearted = FoundationAudio(audioId: "heartbreak_v2.mp3",
         title: "Healing for the Brokenhearted", durationMinutes: 3)
-    static let children = FoundationAudio(audioId: "children_v2.mp3",
+    public static let children = FoundationAudio(audioId: "children_v2.mp3",
         title: "Blessing Our Children", durationMinutes: 3)
-    static let miracles = FoundationAudio(audioId: "miracles_v2.mp3",
+    public static let miracles = FoundationAudio(audioId: "miracles_v2.mp3",
         title: "Breakthrough and Miracles", durationMinutes: 3)
-    static let relationships = FoundationAudio(audioId: "restoration_v2.mp3",
+    public static let relationships = FoundationAudio(audioId: "restoration_v2.mp3",
         title: "Restoring Relationships", durationMinutes: 3)
-    static let spiritualGrowth = FoundationAudio(audioId: "spiritualGrowth_v2.mp3",
+    public static let spiritualGrowth = FoundationAudio(audioId: "spiritualGrowth_v2.mp3",
         title: "A Declaration for Spiritual Growth", durationMinutes: 4)
     // "meditation" filter
-    static let godsLove = FoundationAudio(audioId: "loveMeditations.mp3",
+    public static let godsLove = FoundationAudio(audioId: "loveMeditations.mp3",
         title: "The Heart of God's Love", durationMinutes: 8)
 
     /// Fallback sequence when onboarding gave no (or few) signals — the arc:
     /// protection, long life, healing, peace, identity, victory, gratitude.
-    static let defaultWeek: [FoundationAudio] = [
+    public static let defaultWeek: [FoundationAudio] = [
         psalm91, longLife, healing, peace, identityInChrist, victory, gratitude,
     ]
 
@@ -676,7 +714,7 @@ enum FoundationAudioPlan {
     /// that category's exact domain. Covers every category offered in the
     /// onboarding pickers plus the common personal-declaration matches;
     /// unmapped categories simply fall through to the default week.
-    static let categoryAudio: [String: FoundationAudio] = [
+    public static let categoryAudio: [String: FoundationAudio] = [
         // Peace over the mind
         "anxiety": peace, "fear": peace, "rest": peace,
         "mentalhealth": peace, "anger": peace,
@@ -717,8 +755,8 @@ enum FoundationAudioPlan {
     /// day 2 (it's the one thing they said they're believing God for), then
     /// the selected categories, then the default week fills the rest. Never
     /// recommends the same episode twice in the week.
-    static func personalizedWeek(personalDeclarationCategory: String?,
-                                 selectedCategories: [String]) -> [FoundationAudio] {
+    public static func personalizedWeek(personalDeclarationCategory: String?,
+                                        selectedCategories: [String]) -> [FoundationAudio] {
         var week: [FoundationAudio] = [psalm91]
         func append(_ audio: FoundationAudio) {
             guard week.count < 7, !week.contains(audio) else { return }
@@ -752,7 +790,7 @@ enum FoundationAudioPlan {
     /// first given, and an unpinned day takes the highest-priority episode
     /// not yet served — so a new signal's episode plays on the NEXT day
     /// rather than landing in an already-past slot.
-    static func recommendation(forDay day: Int) -> FoundationAudio? {
+    public static func recommendation(forDay day: Int) -> FoundationAudio? {
         guard (1...7).contains(day) else { return nil }
 
         var assignments = loadDayAssignments()
@@ -761,7 +799,7 @@ enum FoundationAudioPlan {
         }
 
         let week = personalizedWeek(
-            personalDeclarationCategory: PersonalDeclarationRepository.activeCategoryRaw(),
+            personalDeclarationCategory: personalDeclarationCategoryProvider?(),
             selectedCategories: UserSelectedCategories.all()
         )
         // First unpinned day past day 1 with no history (fresh pinning store,
@@ -810,8 +848,8 @@ enum FoundationAudioPlan {
 /// persists ("userSelectedCategories", with the legacy "selectedCategory"
 /// fallback). The checklist personalization and the foundation audio plan all
 /// read through here so the key and encoding live in one place.
-enum UserSelectedCategories {
-    static func all(defaults: UserDefaults = .standard) -> [String] {
+public enum UserSelectedCategories {
+    public static func all(defaults: UserDefaults = .standard) -> [String] {
         if let data = defaults.data(forKey: "userSelectedCategories"),
            let categories = try? JSONDecoder().decode([String].self, from: data) {
             return categories
@@ -822,16 +860,16 @@ enum UserSelectedCategories {
 
     /// The user's top picks, in stored order (the checklist personalizes
     /// titles from the first two).
-    static func top(_ count: Int = 2, defaults: UserDefaults = .standard) -> [String] {
+    public static func top(_ count: Int = 2, defaults: UserDefaults = .standard) -> [String] {
         Array(all(defaults: defaults).prefix(count))
     }
 }
 
 // MARK: - Progressive Task Library
-struct TaskLibrary {
-    
+public struct TaskLibrary {
+
     // MARK: - Foundation Phase Tasks (Days 1-7)
-    static let foundationTasks: [DailyTask] = [
+    public static let foundationTasks: [DailyTask] = [
         DailyTask(
             id: "complete_daily_burst",
             title: "Speak Your Daily Burst",
@@ -888,7 +926,7 @@ struct TaskLibrary {
     ///   - task: The base task to personalize
     ///   - userCategories: Array of user's selected category strings
     /// - Returns: Personalized task with category-specific titles and descriptions
-    static func personalizeTask(_ task: DailyTask, for userCategories: [String]) -> DailyTask {
+    public static func personalizeTask(_ task: DailyTask, for userCategories: [String]) -> DailyTask {
         let topCategories = Array(userCategories.prefix(2))
         
         guard !topCategories.isEmpty else {
@@ -997,7 +1035,7 @@ struct TaskLibrary {
     }
     
     // MARK: - Growth Phase Tasks (Days 8-30)
-    static let growthTasks: [DailyTask] = [
+    public static let growthTasks: [DailyTask] = [
         DailyTask(
             id: "journal_insight",
             title: "Journal One Insight",
@@ -1057,7 +1095,7 @@ struct TaskLibrary {
     ]
     
     // MARK: - Impact Phase Tasks (Days 31-100)
-    static let impactTasks: [DailyTask] = [
+    public static let impactTasks: [DailyTask] = [
         DailyTask(
             id: "share_affirmation",
             title: "Share an Affirmation",
@@ -1116,7 +1154,7 @@ struct TaskLibrary {
     ]
     
     // MARK: - Mastery Phase Tasks (Days 100+)
-    static let masteryTasks: [DailyTask] = [
+    public static let masteryTasks: [DailyTask] = [
         DailyTask(
             id: "mentor_someone",
             title: "Mentor Someone",
@@ -1164,10 +1202,10 @@ struct TaskLibrary {
     ]
     
     // MARK: - All Tasks Combined
-    static let allTasks: [DailyTask] = foundationTasks + growthTasks + impactTasks + masteryTasks
-    
+    public static let allTasks: [DailyTask] = foundationTasks + growthTasks + impactTasks + masteryTasks
+
     // MARK: - Task Selection Logic
-    static func getAvailableTasks(for streakDay: Int) -> [DailyTask] {
+    public static func getAvailableTasks(for streakDay: Int) -> [DailyTask] {
         return allTasks.filter { $0.minimumStreakDay <= streakDay }
     }
     
@@ -1208,12 +1246,12 @@ struct TaskLibrary {
     /// - Parameter totalDaysCompleted: `StreakStats.totalDaysCompleted`, the
     ///   monotonic tenure counter. Gates when Guarding is introduced. Never
     ///   `currentStreak` — see `guardIntroducedAfterDaysCompleted`.
-    static func getCoreTasksForStreak(_ streakDay: Int, userCategories: [String] = [],
-                                      foundationAudioDay: Int? = nil,
-                                      enforcementDay: EnforcementDay? = nil,
-                                      personalDeclarations: PersonalDeclaration.Progress? = nil,
-                                      guardCompletedToday: Bool? = nil,
-                                      totalDaysCompleted: Int = 0) -> [DailyTask] {
+    public static func getCoreTasksForStreak(_ streakDay: Int, userCategories: [String] = [],
+                                             foundationAudioDay: Int? = nil,
+                                             enforcementDay: EnforcementDay? = nil,
+                                             personalDeclarations: PersonalDeclaration.Progress? = nil,
+                                             guardCompletedToday: Bool? = nil,
+                                             totalDaysCompleted: Int = 0) -> [DailyTask] {
         let audioDay = foundationAudioDay ?? streakDay
         // Check if AI features are enabled for enhanced task generation
         if isAIEnabled() {
@@ -1301,7 +1339,7 @@ struct TaskLibrary {
         return result
     }
 
-    static let guardTaskId = "take_it_captive"
+    public static let guardTaskId = "take_it_captive"
 
     /// How many completed days the user needs behind them before Guarding
     /// appears.
@@ -1316,7 +1354,7 @@ struct TaskLibrary {
     /// delete the pillar for two days, which is precisely the
     /// you-failed-at-guarding-your-mind punishment this feature's guardrails
     /// forbid — and it fired on the exact morning someone needs it most.
-    static let guardIntroducedAfterDaysCompleted = 2
+    public static let guardIntroducedAfterDaysCompleted = 2
 
     /// Adds the Guarding row — the fifth pillar.
     ///
@@ -1376,9 +1414,9 @@ struct TaskLibrary {
     /// different content while one is running: the listen task points at the
     /// campaign's day audio, and the Burst speaks the campaign's seven
     /// declarations instead of the general feed.
-    static let campaignOwnedTaskIds: Set<String> = ["complete_daily_burst", "listen_audio"]
+    public static let campaignOwnedTaskIds: Set<String> = ["complete_daily_burst", "listen_audio"]
 
-    static let personalDeclarationTaskId = "speak_personal_declaration"
+    public static let personalDeclarationTaskId = "speak_personal_declaration"
 
     /// The one thing the user is believing God for, as a task.
     ///
@@ -1426,7 +1464,7 @@ struct TaskLibrary {
     /// three are done, and one declaration's text would misrepresent the row.
     /// Carrying one, the text wins — that daily reminder is the whole reason the
     /// old feed tile existed, and it should not be lost to a generic subtitle.
-    static func personalDeclarationSubtitle(_ progress: PersonalDeclaration.Progress) -> String {
+    public static func personalDeclarationSubtitle(_ progress: PersonalDeclaration.Progress) -> String {
         if progress.total > 1 {
             return progress.allSpoken
                 ? "All \(progress.total) spoken today"
@@ -1505,7 +1543,7 @@ struct TaskLibrary {
         }
     }
     
-    static func getNewlyUnlockedTasks(currentStreak: Int, previousStreak: Int) -> [DailyTask] {
+    public static func getNewlyUnlockedTasks(currentStreak: Int, previousStreak: Int) -> [DailyTask] {
         let currentAvailable = getAvailableTasks(for: currentStreak)
         let previousAvailable = getAvailableTasks(for: previousStreak)
         
@@ -1550,19 +1588,16 @@ struct TaskLibrary {
         return tasks
     }
     
+    /// Installed by the app so the AI task path can still reach the analytics
+    /// service. Left nil in the package's own tests (which set
+    /// `enableAIFeatures = false`, so this branch never runs) and defaults to
+    /// an empty dictionary in that case. Do NOT reach for `EnhancedAnalyticsService`
+    /// here — that is the coupling PR6 exists to remove, and it drags Firebase,
+    /// PostHog, TikTok, and Facebook back into the package's dependency graph.
+    public static var userBehaviorProvider: (() -> [String: Any])?
+
     private static func getUserBehaviorData() -> [String: Any] {
-        // Get user behavior data from EnhancedAnalyticsService
-        let userProfile = EnhancedAnalyticsService.shared.userBehaviorProfile
-        
-        return [
-            "topCategories": Array(userProfile.topCategories.keys),
-            "strugglingAreas": userProfile.strugglingAreas,
-            "spiritualMaturity": userProfile.spiritualMaturityLevel.rawValue,
-            "preferredTaskTypes": [], // Could be derived from user behavior patterns
-            "completionPatterns": userProfile.completionRates,
-            "weeklyPattern": userProfile.weeklyPattern,
-            "currentLifeSeason": userProfile.currentLifeSeason
-        ]
+        userBehaviorProvider?() ?? [:]
     }
     
     private static func selectFoundationTasksWithAI(availableTasks: [DailyTask], userBehavior: [String: Any], streakDay: Int) -> [DailyTask] {

@@ -9,7 +9,7 @@
 //
 
 import XCTest
-@testable import SpeakLife
+@testable import SpeakLifeCore
 
 final class BurstSessionTests: XCTestCase {
 

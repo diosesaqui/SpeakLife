@@ -5,21 +5,21 @@
 
 import Foundation
 
-struct PersonalDeclaration: Codable, Equatable, Identifiable {
-    let id: UUID
-    let beliefText: String          // raw text from user (transcribed or typed)
-    let declarationText: String     // matched declaration
-    let verse: String               // matched Bible verse text
-    let verseReference: String      // e.g. "Jeremiah 29:11"
-    let categoryRaw: String         // DeclarationCategory rawValue
-    let startDate: Date
-    var receivedDate: Date?
-    var testimony: String?
+public struct PersonalDeclaration: Codable, Equatable, Identifiable {
+    public let id: UUID
+    public let beliefText: String          // raw text from user (transcribed or typed)
+    public let declarationText: String     // matched declaration
+    public let verse: String               // matched Bible verse text
+    public let verseReference: String      // e.g. "Jeremiah 29:11"
+    public let categoryRaw: String         // DeclarationCategory rawValue
+    public let startDate: Date
+    public var receivedDate: Date?
+    public var testimony: String?
     /// Set when the user stops carrying this declaration. A tombstone rather
     /// than a real delete: the list is merged across devices as a union by id,
     /// so a removed record has to stay visible-as-removed or the next iCloud
     /// reconcile would hand it straight back.
-    var deletedDate: Date?
+    public var deletedDate: Date?
 
     // MARK: - Speak Tracking
     //
@@ -30,11 +30,11 @@ struct PersonalDeclaration: Codable, Equatable, Identifiable {
     // never have covered a per-declaration key.
 
     /// Unique calendar days this declaration has actually been spoken.
-    var completedDayCount: Int = 0
+    public var completedDayCount: Int = 0
     /// Times it has been spoken today. Drives the tiered badge on the card.
-    var dailySpeakCount: Int = 0
+    public var dailySpeakCount: Int = 0
     /// ISO day string of the last successful speak.
-    var lastSpokenDate: String = ""
+    public var lastSpokenDate: String = ""
 
     enum CodingKeys: String, CodingKey {
         case id, beliefText, declarationText, verse, verseReference
@@ -42,7 +42,7 @@ struct PersonalDeclaration: Codable, Equatable, Identifiable {
         case completedDayCount, dailySpeakCount, lastSpokenDate
     }
 
-    init(id: UUID,
+    public init(id: UUID,
          beliefText: String,
          declarationText: String,
          verse: String,
@@ -72,7 +72,7 @@ struct PersonalDeclaration: Codable, Equatable, Identifiable {
 
     /// Decoded leniently: records written before the speak counters existed
     /// simply start at zero.
-    init(from decoder: Decoder) throws {
+    public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         id = try container.decode(UUID.self, forKey: .id)
         beliefText = try container.decode(String.self, forKey: .beliefText)
@@ -89,10 +89,10 @@ struct PersonalDeclaration: Codable, Equatable, Identifiable {
         lastSpokenDate = try container.decodeIfPresent(String.self, forKey: .lastSpokenDate) ?? ""
     }
 
-    var isReceived: Bool { receivedDate != nil }
+    public var isReceived: Bool { receivedDate != nil }
     /// True once the user has stopped carrying this one. Filtered out of every
     /// read; only the sync merge and the stored blob ever see it.
-    var isDeleted: Bool { deletedDate != nil }
+    public var isDeleted: Bool { deletedDate != nil }
 
     /// How the daily checklist sees the whole set at once.
     ///
@@ -106,9 +106,9 @@ struct PersonalDeclaration: Codable, Equatable, Identifiable {
     /// on each record, the record list merges across devices as a union by id,
     /// so speaking on a phone and opening on an iPad recomputes to the same
     /// answer with no second copy of the truth to drift.
-    struct Progress: Equatable {
-        let total: Int
-        let spokenToday: Int
+    public struct Progress: Equatable {
+        public let total: Int
+        public let spokenToday: Int
         /// The declaration to put in front of them: the first still unspoken
         /// today, or the first if they are all spoken.
         ///
@@ -116,10 +116,16 @@ struct PersonalDeclaration: Codable, Equatable, Identifiable {
         /// one. The tile this replaced existed to keep that text in front of
         /// them every day, and a row reading only "Speak What You're Believing
         /// For" would have quietly dropped the reminder it was built for.
-        let headline: String
+        public let headline: String
 
-        var allSpoken: Bool { total > 0 && spokenToday >= total }
-        var remaining: Int { max(0, total - spokenToday) }
+        public var allSpoken: Bool { total > 0 && spokenToday >= total }
+        public var remaining: Int { max(0, total - spokenToday) }
+
+        public init(total: Int, spokenToday: Int, headline: String) {
+            self.total = total
+            self.spokenToday = spokenToday
+            self.headline = headline
+        }
     }
 
     /// Shared because `todayKey` is read once per declaration per render (the
@@ -129,28 +135,28 @@ struct PersonalDeclaration: Codable, Equatable, Identifiable {
     private static let dayFormatter = ISO8601DateFormatter()
 
     /// Today, in the format `lastSpokenDate` is written in.
-    static var todayKey: String {
+    public static var todayKey: String {
         dayFormatter.string(from: Calendar.current.startOfDay(for: Date()))
     }
 
     /// True once the user has successfully spoken this declaration today.
     /// Lets a user carrying several burdens see at a glance which are covered.
-    var spokenToday: Bool { lastSpokenDate == Self.todayKey }
+    public var spokenToday: Bool { lastSpokenDate == Self.todayKey }
 
     /// Speaks recorded *today* — zero when the stored count is from a past day.
-    var todaySpeakCount: Int { spokenToday ? dailySpeakCount : 0 }
+    public var todaySpeakCount: Int { spokenToday ? dailySpeakCount : 0 }
 
     /// "Day N" reflects the number of unique days the user has actually spoken
     /// this declaration — not calendar drift since `startDate`. This keeps the
     /// feed tile ("Day N of believing"), the breakthrough flow, and the full
     /// card in sync; previously the tile counted calendar days while the card
     /// counted spoken days, so they diverged whenever a day was skipped.
-    var dayCount: Int { max(1, completedDayCount) }
+    public var dayCount: Int { max(1, completedDayCount) }
 
     /// Records a successful speak. The first speak of a day starts the daily
     /// counter over and advances "Day N"; every speak after that in the same
     /// day only raises the daily counter.
-    mutating func recordSpeak(on day: String = PersonalDeclaration.todayKey) {
+    public mutating func recordSpeak(on day: String = PersonalDeclaration.todayKey) {
         if lastSpokenDate == day {
             dailySpeakCount += 1
         } else {
@@ -160,7 +166,7 @@ struct PersonalDeclaration: Codable, Equatable, Identifiable {
         lastSpokenDate = day
     }
 
-    var category: DeclarationCategory? {
+    public var category: DeclarationCategory? {
         DeclarationCategory(rawValue: categoryRaw)
     }
 
@@ -170,13 +176,13 @@ struct PersonalDeclaration: Codable, Equatable, Identifiable {
     // declarations. Read once, moved onto the first declaration's record by
     // the repository's migration, then cleared.
 
-    static let legacyCompletedDayCountKey = "personalDeclaration_completedDayCount"
-    static let legacyDailySpeakCountKey = "personalDeclaration_dailySpeakCount"
-    static let legacyLastSpokenDateKey = "personalDeclaration_lastSpokenDate"
+    public static let legacyCompletedDayCountKey = "personalDeclaration_completedDayCount"
+    public static let legacyDailySpeakCountKey = "personalDeclaration_dailySpeakCount"
+    public static let legacyLastSpokenDateKey = "personalDeclaration_lastSpokenDate"
 
     /// Folds the pre-multi-declaration counters into this record so an existing
     /// user's "Day N" survives the upgrade, then clears them.
-    mutating func absorbLegacySpeakTracking(from defaults: UserDefaults = .standard) {
+    public mutating func absorbLegacySpeakTracking(from defaults: UserDefaults = .standard) {
         completedDayCount = max(completedDayCount, defaults.integer(forKey: Self.legacyCompletedDayCountKey))
         dailySpeakCount = max(dailySpeakCount, defaults.integer(forKey: Self.legacyDailySpeakCountKey))
         if let lastSpoken = defaults.string(forKey: Self.legacyLastSpokenDateKey), !lastSpoken.isEmpty {
@@ -192,11 +198,11 @@ struct PersonalDeclaration: Codable, Equatable, Identifiable {
 
 /// How many things a user can believe for at once. Free users anchor on one;
 /// premium users can carry a declaration for each burden they're praying over.
-enum PersonalDeclarationLimits {
-    static let free = 1
-    static let premium = 5
+public enum PersonalDeclarationLimits {
+    public static let free = 1
+    public static let premium = 5
 
-    static func maxDeclarations(isPremium: Bool) -> Int {
+    public static func maxDeclarations(isPremium: Bool) -> Int {
         isPremium ? premium : free
     }
 }

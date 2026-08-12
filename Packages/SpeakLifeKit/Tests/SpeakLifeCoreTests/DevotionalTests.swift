@@ -7,12 +7,17 @@
 
 
 import XCTest
-@testable import SpeakLife // replace with your module name
+@testable import SpeakLifeCore
 
 final class DevotionalTests: XCTestCase {
 
     func testWelcomeDevotionalFormat() throws {
-        guard let url = Bundle.main.url(forResource: "devotionals", withExtension: "json") else {
+        // `Bundle.main` used to point at the app under test, back when this
+        // test rode in the hosted `SpeakLifeTests` bundle. Under `swift test`
+        // it points at the xctest binary, so the resource has to be resolved
+        // through `Bundle.module` — the accessor SwiftPM generates for the
+        // test target's own `Resources/` folder.
+        guard let url = Bundle.module.url(forResource: "devotionals", withExtension: "json") else {
             XCTFail("Missing devotional.json file in test bundle")
             return
         }
@@ -69,7 +74,7 @@ final class DevotionalTests: XCTestCase {
     }
 
     func testDeclarationsFormat() throws {
-        guard let url = Bundle.main.url(forResource: "declarationsv9", withExtension: "json") else {
+        guard let url = Bundle.module.url(forResource: "declarationsv9", withExtension: "json") else {
             XCTFail("Missing declarationsv9.json file in test bundle")
             return
         }

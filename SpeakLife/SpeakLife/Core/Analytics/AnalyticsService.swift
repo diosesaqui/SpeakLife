@@ -81,7 +81,7 @@ extension AnalyticsProvider {
 // it now builds an `AnalyticsEvent` and fans it out to every registered
 // provider instead of calling Firebase directly.
 
-final class AnalyticsService {
+final class AnalyticsService: AnalyticsTracking {
 
     static let shared = AnalyticsService()
 

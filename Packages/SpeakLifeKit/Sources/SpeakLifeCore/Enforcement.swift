@@ -14,37 +14,50 @@ import Foundation
 // MARK: - Enforcement Day
 
 /// One day of an Enforcement: the line the user speaks, and the audio they hear.
-struct EnforcementDay: Codable, Equatable {
-    let dayNumber: Int
-    let anchorText: String
-    let anchorVerse: String
+public struct EnforcementDay: Codable, Equatable {
+    public let dayNumber: Int
+    public let anchorText: String
+    public let anchorVerse: String
     /// Reference only, e.g. "Isaiah 26:3".
-    let anchorBook: String
+    public let anchorBook: String
     /// Kept so every quoted verse stays auditable to its source translation.
-    let anchorTranslation: String
-    let audioId: String
-    let audioTitle: String
-    let audioMinutes: Int
+    public let anchorTranslation: String
+    public let audioId: String
+    public let audioTitle: String
+    public let audioMinutes: Int
+
+    public init(dayNumber: Int, anchorText: String, anchorVerse: String,
+                anchorBook: String, anchorTranslation: String,
+                audioId: String, audioTitle: String, audioMinutes: Int) {
+        self.dayNumber = dayNumber
+        self.anchorText = anchorText
+        self.anchorVerse = anchorVerse
+        self.anchorBook = anchorBook
+        self.anchorTranslation = anchorTranslation
+        self.audioId = audioId
+        self.audioTitle = audioTitle
+        self.audioMinutes = audioMinutes
+    }
 
     /// Bridges to the shape the checklist's audio plan already speaks
     /// (`DailyChecklistModels.swift`), so the deep-link path is shared rather
     /// than duplicated.
-    var audio: FoundationAudio {
+    public var audio: FoundationAudio {
         FoundationAudio(audioId: audioId, title: audioTitle, durationMinutes: audioMinutes)
     }
 }
 
 // MARK: - Enforcement
 
-struct Enforcement: Codable, Identifiable, Equatable {
+public struct Enforcement: Codable, Identifiable, Equatable {
     /// Every Enforcement is seven days. Encoded once here so the UI, the progress
     /// model, and the completion check can never disagree about the finish line.
-    static let length = 7
+    public static let length = 7
 
-    let id: String
-    let title: String
+    public let id: String
+    public let title: String
     /// One line, shown under the title on the card. Not a declaration.
-    let tagline: String
+    public let tagline: String
     /// The category this campaign enforces. Ties the Enforcement to the user's
     /// onboarding picks and to the declaration pool the burst draws from.
     ///
@@ -61,8 +74,8 @@ struct Enforcement: Codable, Identifiable, Equatable {
     /// value, so this still reads and writes the same `"theme": "warfare"` that
     /// shipped, and campaigns already persisted in `UserDefaults` and iCloud
     /// keep decoding.
-    let theme: DeclarationCategory
-    let days: [EnforcementDay]
+    public let theme: DeclarationCategory
+    public let days: [EnforcementDay]
 
     /// Spelled out rather than synthesized because the lenient `init(from:)`
     /// below reads these keys by hand, and the synthesized encoder must keep
@@ -71,14 +84,23 @@ struct Enforcement: Codable, Identifiable, Equatable {
         case id, title, tagline, theme, days
     }
 
+    public init(id: String, title: String, tagline: String,
+                theme: DeclarationCategory, days: [EnforcementDay]) {
+        self.id = id
+        self.title = title
+        self.tagline = tagline
+        self.theme = theme
+        self.days = days
+    }
+
     /// Display name for the theme.
-    var themeName: String {
+    public var themeName: String {
         theme.name
     }
 
     /// True for a campaign built at runtime rather than hand-authored in
     /// `enforcements.json`. Assembly and curation both stamp their id.
-    var isGenerated: Bool {
+    public var isGenerated: Bool {
         id.hasPrefix("assembled_") || id.hasPrefix("curated_")
     }
 
@@ -94,12 +116,12 @@ struct Enforcement: Codable, Identifiable, Equatable {
     /// Hand-authored campaigns are returned untouched — their titles are
     /// deliberate content, and `enforcements.json` already names them for the
     /// victory (Enforcing Peace, Provision, Healing, Victory).
-    var displayTitle: String {
+    public var displayTitle: String {
         guard isGenerated else { return title }
         return "Enforcing " + theme.enforcementTitle
     }
 
-    func day(_ number: Int) -> EnforcementDay? {
+    public func day(_ number: Int) -> EnforcementDay? {
         days.first { $0.dayNumber == number }
     }
 }
@@ -111,7 +133,7 @@ struct Enforcement: Codable, Identifiable, Equatable {
 /// into the struct body would silently take that initializer away.
 extension Enforcement {
 
-    init(from decoder: Decoder) throws {
+    public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         id = try container.decode(String.self, forKey: .id)
         title = try container.decode(String.self, forKey: .title)
@@ -145,9 +167,14 @@ extension Enforcement {
 
 /// Root of `enforcements.json`. Mirrors `WelcomeResponse` (LazyJSONLoader.swift) so
 /// content ships and versions the same way declarations do.
-struct EnforcementCatalog: Codable {
-    let version: Int
-    let enforcements: [Enforcement]
+public struct EnforcementCatalog: Codable {
+    public let version: Int
+    public let enforcements: [Enforcement]
+
+    public init(version: Int, enforcements: [Enforcement]) {
+        self.version = version
+        self.enforcements = enforcements
+    }
 }
 
 // MARK: - Progress
@@ -160,8 +187,8 @@ struct EnforcementCatalog: Codable {
 /// streak is the thing you can lose; the Enforcement is the thing that waits for you.
 /// That asymmetry is the entire re-entry mechanic, so any change that makes a
 /// Enforcement expire on the calendar defeats the feature.
-struct EnforcementProgress: Codable, Equatable {
-    var activeEnforcementId: String?
+public struct EnforcementProgress: Codable, Equatable {
+    public var activeEnforcementId: String?
     /// The campaign itself, when it was assembled from the declaration pool
     /// rather than read from `enforcements.json`.
     ///
@@ -171,35 +198,49 @@ struct EnforcementProgress: Codable, Equatable {
     /// campaign is built exactly once — at start, on the main thread, where the
     /// pool is in hand — and every later reader just decodes it. It also
     /// guarantees day 3 is the same line next week as it is today.
-    var assembledEnforcement: Enforcement?
-    var startedOn: Date?
-    var completedDayNumbers: Set<Int> = []
+    public var assembledEnforcement: Enforcement?
+    public var startedOn: Date?
+    public var completedDayNumbers: Set<Int> = []
     /// Only ever used to make advancement idempotent within a calendar day.
     /// Never used to compute which day the user is on.
-    var lastAdvancedOn: Date?
-    var completedEnforcementIds: [String] = []
+    public var lastAdvancedOn: Date?
+    public var completedEnforcementIds: [String] = []
+
+    public init(activeEnforcementId: String? = nil,
+                assembledEnforcement: Enforcement? = nil,
+                startedOn: Date? = nil,
+                completedDayNumbers: Set<Int> = [],
+                lastAdvancedOn: Date? = nil,
+                completedEnforcementIds: [String] = []) {
+        self.activeEnforcementId = activeEnforcementId
+        self.assembledEnforcement = assembledEnforcement
+        self.startedOn = startedOn
+        self.completedDayNumbers = completedDayNumbers
+        self.lastAdvancedOn = lastAdvancedOn
+        self.completedEnforcementIds = completedEnforcementIds
+    }
 
     /// The day the user is working on now, 1...7.
-    var currentDay: Int {
+    public var currentDay: Int {
         min(completedDayNumbers.count + 1, Enforcement.length)
     }
 
-    var isComplete: Bool {
+    public var isComplete: Bool {
         completedDayNumbers.count >= Enforcement.length
     }
 
-    var isActive: Bool {
+    public var isActive: Bool {
         activeEnforcementId != nil && !isComplete
     }
 
-    func hasAdvancedToday(calendar: Calendar = .current, now: Date = Date()) -> Bool {
+    public func hasAdvancedToday(calendar: Calendar = .current, now: Date = Date()) -> Bool {
         guard let lastAdvancedOn else { return false }
         return calendar.isDate(lastAdvancedOn, inSameDayAs: now)
     }
 
     /// Clears the active campaign, banking it as completed. Kept here so the
     /// service can't forget to record the completion.
-    mutating func finish() {
+    public mutating func finish() {
         if let activeEnforcementId, !completedEnforcementIds.contains(activeEnforcementId) {
             completedEnforcementIds.append(activeEnforcementId)
         }

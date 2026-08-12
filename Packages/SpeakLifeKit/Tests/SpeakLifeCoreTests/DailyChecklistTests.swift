@@ -6,7 +6,7 @@
 //
 
 import XCTest
-@testable import SpeakLife
+@testable import SpeakLifeCore
 
 final class DailyChecklistTests: XCTestCase {
     

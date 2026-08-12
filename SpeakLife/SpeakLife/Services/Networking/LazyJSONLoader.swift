@@ -7,12 +7,10 @@
 
 import Foundation
 
-// MARK: - JSON Structure Models
-struct WelcomeResponse: Codable {
-    let count: Int
-    let version: Int
-    let declarations: [Declaration]
-}
+// `WelcomeResponse` lives in `SpeakLifeCore` as of PR6, so the assembler tests
+// can decode the shipped pool under `swift test` without hosting the app.
+// The type is re-exported via `SpeakLifeCoreExports.swift`, so existing call
+// sites still see it as `WelcomeResponse` with no import change.
 
 final class LazyJSONLoader {
     static let shared = LazyJSONLoader()

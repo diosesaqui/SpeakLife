@@ -103,6 +103,30 @@ final class AppDelegate: NSObject, MessagingDelegate {
             didBecomeActive: UIApplication.didBecomeActiveNotification,
             didEnterBackground: UIApplication.didEnterBackgroundNotification
         )
+
+        // Install the SpeakLifeCore seams (PR6). Core is Foundation-only, so
+        // anything that needs to reach up into the app (analytics, the active
+        // personal declaration, the AI task path's user-behavior profile) is
+        // an injected closure that stays nil in `swift test`. See
+        // `AnalyticsTracking.swift`, `FoundationAudioPlan.personalDeclarationCategoryProvider`,
+        // and `TaskLibrary.userBehaviorProvider`.
+        CoreAnalytics.provider = AnalyticsService.shared
+        FoundationAudioPlan.personalDeclarationCategoryProvider = {
+            PersonalDeclarationRepository.activeCategoryRaw()
+        }
+        TaskLibrary.userBehaviorProvider = {
+            let profile = EnhancedAnalyticsService.shared.userBehaviorProfile
+            return [
+                "topCategories": Array(profile.topCategories.keys),
+                "strugglingAreas": profile.strugglingAreas,
+                "spiritualMaturity": profile.spiritualMaturityLevel.rawValue,
+                "preferredTaskTypes": [],
+                "completionPatterns": profile.completionRates,
+                "weeklyPattern": profile.weeklyPattern,
+                "currentLifeSeason": profile.currentLifeSeason,
+            ]
+        }
+
         PersistenceController.shared.start(lifecycle: lifecycle)
 
         // iCloud progress sync: mirror streaks, listened audio, counters, and

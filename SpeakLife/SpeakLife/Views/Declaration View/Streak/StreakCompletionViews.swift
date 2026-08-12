@@ -835,11 +835,14 @@ struct CompletionCelebrationView: View {
     }
     
     private func shareToInstagram() {
-        guard let shareImage = celebration.shareImage else { 
+        // `celebration.shareImage` is typed `Any?` in `SpeakLifeCore` so the
+        // package can stay Foundation-only. Cast back to `UIImage` here (see
+        // `EnhancedStreakView.shareToInstagram` for the twin site).
+        guard let shareImage = celebration.shareImage as? UIImage else {
             print("❌ No share image available for sharing")
-            return 
+            return
         }
-        
+
         print("✅ Share image available: \(shareImage.size), scale: \(shareImage.scale)")
         
         // Create properly sized image for Instagram

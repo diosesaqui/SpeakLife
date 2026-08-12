@@ -45,26 +45,33 @@ import Foundation
 /// The answer is never a scolding. We decline the object, name the real need
 /// underneath it, and offer to build the week on that instead. Someone who
 /// typed something they shouldn't stand on still opened this app wanting God.
-enum SituationScreen {
+public enum SituationScreen {
 
-    struct Redirect: Equatable {
+    public struct Redirect: Equatable {
         /// Short code for analytics. Never shown to anyone.
-        let reason: String
+        public let reason: String
         /// What the person reads.
-        let message: String
+        public let message: String
         /// The week we can honestly build instead. Nil when there's nothing
         /// specific to offer and the right move is letting them retype.
-        let offerTitle: String?
-        let offerCategory: DeclarationCategory?
+        public let offerTitle: String?
+        public let offerCategory: DeclarationCategory?
 
-        static let anotherPersonsPartner = Redirect(
+        public init(reason: String, message: String, offerTitle: String?, offerCategory: DeclarationCategory?) {
+            self.reason = reason
+            self.message = message
+            self.offerTitle = offerTitle
+            self.offerCategory = offerCategory
+        }
+
+        public static let anotherPersonsPartner = Redirect(
             reason: "another_persons_partner",
             message: "We won't build a week on someone else's marriage. But God has a covenant love with your name on it, and that will hold for seven days.",
             offerTitle: "Stand on God's love for me",
             offerCategory: .love
         )
 
-        static let harmToAnother = Redirect(
+        public static let harmToAnother = Redirect(
             reason: "harm_to_another",
             message: "Scripture won't put another person's harm in your mouth. What was done to you is real, though. Let's build the week on what heals you.",
             offerTitle: "Stand on my healing",
@@ -72,7 +79,7 @@ enum SituationScreen {
         )
 
         /// Claude saw something it can't back but that doesn't fit either box.
-        static let unscriptural = Redirect(
+        public static let unscriptural = Redirect(
             reason: "unscriptural",
             message: "We couldn't find scripture to stand on for that one. Tell us what's underneath it and we'll build the week on ground that holds.",
             offerTitle: nil,
@@ -80,7 +87,7 @@ enum SituationScreen {
         )
     }
 
-    enum Verdict: Equatable {
+    public enum Verdict: Equatable {
         case standable
         case redirect(Redirect)
         /// Someone said they want to end their life. No campaign and no
@@ -90,7 +97,7 @@ enum SituationScreen {
 
     /// Support address, the same one `ProfileView`, `MailView`, and
     /// `BibleChatView` already use.
-    static let supportEmail = "speaklife@diosesaqui.com"
+    public static let supportEmail = "speaklife@diosesaqui.com"
 
     /// One copy, used by the campaign card and the personal-declaration flow, so
     /// the two can never drift into saying different things at the worst moment
@@ -100,14 +107,14 @@ enum SituationScreen {
     /// action; the address is offered after it, as care rather than as the
     /// emergency path, because email is not answered in the moment. Nothing here
     /// argues, corrects, or quotes scripture at them.
-    static let reachOutHeadline = "Please don't carry this alone."
-    static let reachOutMessage = """
+    public static let reachOutHeadline = "Please don't carry this alone."
+    public static let reachOutMessage = """
         Reach out to someone you trust right now, before anything else. \
         You can write us any time at \(supportEmail). You are not a burden, \
         and you are not too far gone.
         """
 
-    static func screen(_ input: String) -> Verdict {
+    public static func screen(_ input: String) -> Verdict {
         let text = input.lowercased().replacingOccurrences(of: "\u{2019}", with: "'")
 
         if unambiguousSelfHarm.contains(where: text.contains) { return .reachOut }
@@ -128,7 +135,7 @@ enum SituationScreen {
     /// parent praying their child gets out of an abusive marriage says exactly
     /// that. And "his mistress", which is how a betrayed spouse names the other
     /// woman. Both were here and both were wrong.
-    static let partnerPhrases = [
+    public static let partnerPhrases = [
         "someone else's husband", "someone elses husband",
         "someone else's wife", "someone elses wife",
         "somebody else's husband", "somebody elses husband",
@@ -142,7 +149,7 @@ enum SituationScreen {
     /// them pay me what they owe" is a debt campaign, not a curse. "get back at"
     /// is spelled out with an object for the same reason: bare, it swallows
     /// "I'm ready to get back at it".
-    static let harmPhrases = [
+    public static let harmPhrases = [
         "get revenge", "take revenge",
         "get back at him", "get back at her", "get back at them",
         "make him suffer", "make her suffer", "make them suffer",
@@ -156,7 +163,7 @@ enum SituationScreen {
     /// a personal-safety message with no campaign and no scripture. That is the
     /// single worst thing this screen could do, so the word alone is not enough:
     /// it has to be them, saying it about themselves.
-    static let unambiguousSelfHarm = [
+    public static let unambiguousSelfHarm = [
         "kill myself", "killing myself",
         "end my life", "ending my life",
         "take my own life", "taking my own life",
@@ -169,12 +176,12 @@ enum SituationScreen {
     ]
 
     /// These need the rest of the sentence before they mean anything.
-    static let ambiguousSelfHarm = ["want to die", "wanna die", "don't want to live", "dont want to live"]
+    public static let ambiguousSelfHarm = ["want to die", "wanna die", "don't want to live", "dont want to live"]
 
     /// "I want to die to self" is Romans 6, not a crisis. So is dying to sin,
     /// to the flesh, and dying daily. Checked only against the ambiguous list,
     /// so it can never suppress "kill myself".
-    static let selfHarmExemptions = [
+    public static let selfHarmExemptions = [
         "die to self", "die to sin", "die to my flesh", "die to the flesh",
         "dying to self", "dying to sin", "dying to my flesh", "die daily"
     ]
@@ -183,29 +190,34 @@ enum SituationScreen {
 /// What came back from describing a situation. The card needs more than a Bool:
 /// a decline keeps their text and offers a different week, a failure keeps their
 /// text and says try again, and they must not look the same.
-enum EnforcementStartResult: Equatable {
+public enum EnforcementStartResult: Equatable {
     case started
     case failed
     case declined(SituationScreen.Redirect)
     case reachOut
 }
 
-enum EnforcementCurator {
+public enum EnforcementCurator {
 
     /// How many candidates to put in front of the model. Enough to choose well,
     /// small enough to keep the request cheap and fast at campaign start.
-    static let candidateLimit = 40
+    public static let candidateLimit = 40
 
-    struct Curation {
-        let days: [Declaration]
+    public struct Curation {
+        public let days: [Declaration]
         /// True when Claude did the choosing; false when we fell back.
-        let wasCurated: Bool
+        public let wasCurated: Bool
+
+        public init(days: [Declaration], wasCurated: Bool) {
+            self.days = days
+            self.wasCurated = wasCurated
+        }
     }
 
     /// The second screening layer, and the reason it lives here rather than in
     /// its own call: Claude is already reading the sentence to choose the week,
     /// so refusing to choose costs nothing extra.
-    enum Outcome: Equatable {
+    public enum Outcome: Equatable {
         case curated([Declaration])
         /// Claude read it and won't back it.
         case declined(SituationScreen.Redirect)
@@ -220,9 +232,9 @@ enum EnforcementCurator {
     ///   - candidates: reviewed declarations from the matched categories.
     /// - Returns: seven declarations in the order they should be spoken, a
     ///   decline, or `.unavailable`.
-    static func curate(situation: String,
-                       candidates: [Declaration],
-                       session: URLSession = .shared) async -> Outcome {
+    public static func curate(situation: String,
+                              candidates: [Declaration],
+                              session: URLSession = .shared) async -> Outcome {
         guard candidates.count >= Enforcement.length else { return .unavailable }
         let apiKey = AnthropicConfig.apiKey
         guard !apiKey.isEmpty else { return .unavailable }
@@ -284,7 +296,7 @@ enum EnforcementCurator {
             let (data, response) = try await session.data(for: request)
             guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
                 let status = (response as? HTTPURLResponse)?.statusCode ?? 0
-                AnalyticsService.shared.track("enforcement_curation_failed",
+                CoreAnalytics.track("enforcement_curation_failed",
                                               parameters: ["reason": "http_\(status)"])
                 return .unavailable
             }
@@ -292,7 +304,7 @@ enum EnforcementCurator {
             guard let text = decoded.content.first(where: { $0.type == "text" })?.text,
                   let json = extractJSON(from: text),
                   let picks = try? JSONDecoder().decode(CuratedResponse.self, from: json) else {
-                AnalyticsService.shared.track("enforcement_curation_failed",
+                CoreAnalytics.track("enforcement_curation_failed",
                                               parameters: ["reason": "unparseable"])
                 return .unavailable
             }
@@ -301,7 +313,7 @@ enum EnforcementCurator {
             // to keyword assembly, which would build the week Claude just
             // refused to build.
             if let code = picks.decline, !code.isEmpty {
-                AnalyticsService.shared.track("enforcement_input_screened",
+                CoreAnalytics.track("enforcement_input_screened",
                                               parameters: ["verdict": code, "layer": "claude"])
                 return .declined(redirect(forCode: code))
             }
@@ -314,14 +326,14 @@ enum EnforcementCurator {
                 .map { shortlist[$0] }
 
             guard chosen.count == Enforcement.length else {
-                AnalyticsService.shared.track("enforcement_curation_failed",
+                CoreAnalytics.track("enforcement_curation_failed",
                                               parameters: ["reason": "wrong_count_\(chosen.count)"])
                 return .unavailable
             }
-            AnalyticsService.shared.track("enforcement_curated")
+            CoreAnalytics.track("enforcement_curated")
             return .curated(chosen)
         } catch {
-            AnalyticsService.shared.track("enforcement_curation_failed",
+            CoreAnalytics.track("enforcement_curation_failed",
                                           parameters: ["reason": "\(error)"])
             return .unavailable
         }
@@ -330,7 +342,7 @@ enum EnforcementCurator {
     /// An unrecognized code still declines. A model that invents a reason has
     /// still told us it won't back this, and guessing a week from that is the
     /// one thing worse than a vague message.
-    static func redirect(forCode code: String) -> SituationScreen.Redirect {
+    public static func redirect(forCode code: String) -> SituationScreen.Redirect {
         switch code {
         case SituationScreen.Redirect.anotherPersonsPartner.reason: return .anotherPersonsPartner
         case SituationScreen.Redirect.harmToAnother.reason:         return .harmToAnother

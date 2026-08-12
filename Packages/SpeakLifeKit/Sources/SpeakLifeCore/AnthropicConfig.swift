@@ -5,14 +5,14 @@
 
 import Foundation
 
-enum AnthropicConfig {
+public enum AnthropicConfig {
     // Set by SubscriptionStore on app launch from Firebase Remote Config.
-    static var apiKey: String = ""
+    public static var apiKey: String = ""
 
-    static let apiURL = URL(string: "https://api.anthropic.com/v1/messages")!
-    static let model = "claude-haiku-4-5-20251001"
+    public static let apiURL = URL(string: "https://api.anthropic.com/v1/messages")!
+    public static let model = "claude-haiku-4-5-20251001"
 
-    static let systemPrompt = """
+    public static let systemPrompt = """
     You are a biblical declaration generator for SpeakLife, a Christian faith app used by over 1 million believers daily. Given a user's prayer need or spiritual struggle, generate a personalized declaration they will speak aloud every day.
 
     STRICT RULES:

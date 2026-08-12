@@ -8,8 +8,8 @@
 import Foundation
 
 
-enum DeclarationCategory: String, CaseIterable, Identifiable, Codable,  Comparable {
-    static func < (lhs: DeclarationCategory, rhs: DeclarationCategory) -> Bool {
+public enum DeclarationCategory: String, CaseIterable, Identifiable, Codable,  Comparable {
+    public static func < (lhs: DeclarationCategory, rhs: DeclarationCategory) -> Bool {
         return  lhs.name <= rhs.name
     }
     case godsheart
@@ -90,7 +90,7 @@ enum DeclarationCategory: String, CaseIterable, Identifiable, Codable,  Comparab
     case peter1, peter2
     case john1, john2, john3, jude, revelation
     
-    static var allCategories: [DeclarationCategory] = [
+    public static var allCategories: [DeclarationCategory] = [
         // Special categories
         .favorites,
         .myOwn,
@@ -180,7 +180,7 @@ enum DeclarationCategory: String, CaseIterable, Identifiable, Codable,  Comparab
         
         ]
     
-    static var bibleCategories: [DeclarationCategory] = [
+    public static var bibleCategories: [DeclarationCategory] = [
         .genesis,
         .exodus,
         .leviticus,
@@ -218,7 +218,7 @@ enum DeclarationCategory: String, CaseIterable, Identifiable, Codable,  Comparab
         .revelation
         ]
     
-    static var generalCategories: [DeclarationCategory] = [
+    public static var generalCategories: [DeclarationCategory] = [
         .general,
         .speaklife,
         .favorites,
@@ -226,7 +226,7 @@ enum DeclarationCategory: String, CaseIterable, Identifiable, Codable,  Comparab
         ]
     
     
-    static var categoryOrder: [DeclarationCategory] = [
+    public static var categoryOrder: [DeclarationCategory] = [
         // Tier 1 - Foundation (God & Identity)
        // .speaklife,
         .love,
@@ -276,14 +276,14 @@ enum DeclarationCategory: String, CaseIterable, Identifiable, Codable,  Comparab
        // .confidence
     ]
     
-    var isBibleBook: Bool {
+    public var isBibleBook: Bool {
         return DeclarationCategory.bibleCategories.contains(where: { $0 == self } )
     }
-    var id: String {
+    public var id: String {
          self.rawValue
     }
-    
-    var name: String {
+
+    public var name: String {
         switch self {
        // case .selfcontrol: return "Self Control"
         case .godsheart: return "God's Heart"
@@ -328,7 +328,7 @@ enum DeclarationCategory: String, CaseIterable, Identifiable, Codable,  Comparab
     }
     
     
-    var imageString: String {
+    public var imageString: String {
         if DeclarationCategory.bibleCategories.contains(self) {
             return "wisdom"
         }
@@ -337,8 +337,8 @@ enum DeclarationCategory: String, CaseIterable, Identifiable, Codable,  Comparab
             return self.rawValue.lowercased()
         }
     }
-    
-    var categoryTitle: String {
+
+    public var categoryTitle: String {
         switch self {
         case .myOwn:
             return "My Own"
@@ -346,12 +346,12 @@ enum DeclarationCategory: String, CaseIterable, Identifiable, Codable,  Comparab
             return name
         }
     }
-    
-    init?(_ name: String) {
+
+    public init?(_ name: String) {
         self.init(rawValue: name.lowercased())
     }
-    
-    var isPremium: Bool {
+
+    public var isPremium: Bool {
         switch self {
         case .general, .favorites, .myOwn, .faith, .health, .anxiety, .gratitude: return false
         default: return true
@@ -359,37 +359,47 @@ enum DeclarationCategory: String, CaseIterable, Identifiable, Codable,  Comparab
     }
 }
 
-struct Updates: Codable {
-    let currentDeclarationVersion: Int?
+public struct Updates: Codable {
+    public let currentDeclarationVersion: Int?
+
+    public init(currentDeclarationVersion: Int?) {
+        self.currentDeclarationVersion = currentDeclarationVersion
+    }
 }
 
 // MARK: - Welcome
-struct Welcome: Codable {
-    let count: Int
-    let version: Int
-    let declarations: [Declaration]
+public struct Welcome: Codable {
+    public let count: Int
+    public let version: Int
+    public let declarations: [Declaration]
+
+    public init(count: Int, version: Int, declarations: [Declaration]) {
+        self.count = count
+        self.version = version
+        self.declarations = declarations
+    }
 }
 
 // MARK: - Content Type
-enum ContentType: String, Codable, CaseIterable {
+public enum ContentType: String, Codable, CaseIterable {
     case affirmation = "affirmation"
     case journal = "journal"
-    
-    var displayName: String {
+
+    public var displayName: String {
         switch self {
         case .affirmation: return "Affirmation"
         case .journal: return "Journal"
         }
     }
-    
-    var pluralDisplayName: String {
+
+    public var pluralDisplayName: String {
         switch self {
         case .affirmation: return "Affirmations"
         case .journal: return "Journals"
         }
     }
-    
-    var icon: String {
+
+    public var icon: String {
         switch self {
         case .affirmation: return "quote.bubble"
         case .journal: return "book.pages"
@@ -398,19 +408,19 @@ enum ContentType: String, Codable, CaseIterable {
 }
 
 // MARK: - Declaration
-struct Declaration: Codable, Identifiable, Hashable {
-    let text: String
-    var book: String? = nil
-    var bibleVerseText: String? = nil
-    var category: DeclarationCategory = .faith
-    var categories: [DeclarationCategory] = []
-    var isFavorite: Bool? = false
-    var contentType: ContentType = .affirmation
-    var id: String {
+public struct Declaration: Codable, Identifiable, Hashable {
+    public let text: String
+    public var book: String? = nil
+    public var bibleVerseText: String? = nil
+    public var category: DeclarationCategory = .faith
+    public var categories: [DeclarationCategory] = []
+    public var isFavorite: Bool? = false
+    public var contentType: ContentType = .affirmation
+    public var id: String {
        //UUID().uuidString
         text + category.rawValue + contentType.rawValue
     }
-    
+
     enum CodingKeys: String, CodingKey {
             case text
             case book
@@ -420,11 +430,11 @@ struct Declaration: Codable, Identifiable, Hashable {
             case lastEdit
             case contentType
         }
-    
-    var lastEdit: Date?
-    
+
+    public var lastEdit: Date?
+
     // Custom decoder to handle missing contentType in existing data
-    init(from decoder: Decoder) throws {
+    public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         
         text = try container.decode(String.self, forKey: .text)
@@ -440,7 +450,7 @@ struct Declaration: Codable, Identifiable, Hashable {
     }
     
     // Standard initializer
-    init(text: String, book: String? = nil, bibleVerseText: String? = nil, category: DeclarationCategory = .faith, categories: [DeclarationCategory] = [], isFavorite: Bool? = false, contentType: ContentType = .affirmation, lastEdit: Date? = nil) {
+    public init(text: String, book: String? = nil, bibleVerseText: String? = nil, category: DeclarationCategory = .faith, categories: [DeclarationCategory] = [], isFavorite: Bool? = false, contentType: ContentType = .affirmation, lastEdit: Date? = nil) {
         self.text = text
         self.book = book
         self.bibleVerseText = bibleVerseText
@@ -455,7 +465,7 @@ struct Declaration: Codable, Identifiable, Hashable {
 // MARK: - Personal Declaration Focus Choice Labels
 
 extension DeclarationCategory {
-    var focusEmoji: String {
+    public var focusEmoji: String {
         switch self {
         case .health:         return "🙏"
         case .wealth:         return "💰"
@@ -519,7 +529,7 @@ extension DeclarationCategory {
     /// Titles are allowed to repeat across categories. Two people enforcing
     /// Freedom from different things is fine; the campaign is named for where
     /// they are going, not for where they came from.
-    var enforcementTitle: String {
+    public var enforcementTitle: String {
         switch self {
         // The fight
         case .warfare:         return "Victory"
@@ -589,7 +599,7 @@ extension DeclarationCategory {
         }
     }
 
-    var focusTitle: String {
+    public var focusTitle: String {
         switch self {
         case .health:         return "My Healing"
         case .wealth:         return "Financial Breakthrough"
@@ -636,7 +646,7 @@ extension DeclarationCategory {
         }
     }
 
-    var focusSubtitle: String {
+    public var focusSubtitle: String {
         switch self {
         case .work:         return "Career, promotion, employment"
         case .business:     return "Starting or growing your own business"

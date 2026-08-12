@@ -17,13 +17,13 @@
 
 import Foundation
 
-enum EnforcementAssembler {
+public enum EnforcementAssembler {
 
     /// Categories that describe a life situation rather than a book of the Bible.
     /// `declarationsv10.json` also buckets content by book (genesis, luke, romans…)
     /// and nobody is walking through "a hard week of Leviticus", so those are
     /// excluded from campaign matching.
-    static let bookCategories: Set<String> = [
+    public static let bookCategories: Set<String> = [
         "genesis", "exodus", "leviticus", "joshua", "judges", "ruth",
         "samuel1", "samuel2", "kings1", "kings2", "chronicles1", "chronicles2",
         "ezra", "psalms", "proverbs", "matthew", "mark", "luke", "john",
@@ -32,7 +32,7 @@ enum EnforcementAssembler {
         "hebrews", "james", "peter1", "peter2", "revelation"
     ]
 
-    static func isCampaignable(_ category: DeclarationCategory) -> Bool {
+    public static func isCampaignable(_ category: DeclarationCategory) -> Bool {
         !bookCategories.contains(category.rawValue.lowercased())
     }
 
@@ -47,7 +47,7 @@ enum EnforcementAssembler {
     ///
     /// Book categories are deliberately absent: `isCampaignable` already keeps
     /// them out of matching, so an entry for them would never be read.
-    static let contentFallbacks: [DeclarationCategory: [DeclarationCategory]] = [
+    public static let contentFallbacks: [DeclarationCategory: [DeclarationCategory]] = [
         // Vision and calling — someone with no storm, only something they're
         // believing God for.
         .business:        [.destiny, .work, .wealth, .favor],
@@ -80,11 +80,11 @@ enum EnforcementAssembler {
     /// The last resort, drawn on only when everything above is somehow empty.
     /// Each of these carries well over seven referenced declarations in the
     /// shipped pool, so the chain cannot run dry.
-    static let universalFallback: [DeclarationCategory] = [.faith, .hardtimes, .godsprotection, .hope]
+    public static let universalFallback: [DeclarationCategory] = [.faith, .hardtimes, .godsprotection, .hope]
 
     /// Every category worth drawing from for this match, in priority order:
     /// what they matched, then the nearest siblings of each, then the backstop.
-    static func fallbackChain(for categories: [DeclarationCategory]) -> [DeclarationCategory] {
+    public static func fallbackChain(for categories: [DeclarationCategory]) -> [DeclarationCategory] {
         var chain = categories
         for category in categories {
             chain += contentFallbacks[category] ?? []
@@ -105,10 +105,10 @@ enum EnforcementAssembler {
     ///     the user opens the app, or the campaign stops feeling like a campaign.
     /// - Returns: nil only when the pool itself is empty. Any category the
     ///   matcher can return reaches seven days via `fallbackChain`.
-    static func assemble(primary: DeclarationCategory,
-                         secondaries: [DeclarationCategory] = [],
-                         pool: [Declaration],
-                         seed: String) -> Enforcement? {
+    public static func assemble(primary: DeclarationCategory,
+                                secondaries: [DeclarationCategory] = [],
+                                pool: [Declaration],
+                                seed: String) -> Enforcement? {
 
         let categories = ([primary] + secondaries)
             .filter(isCampaignable)
@@ -208,8 +208,8 @@ enum EnforcementAssembler {
     /// the path used when Claude has curated the week from the user's own words.
     /// The declarations still come from the reviewed pool; only the choosing and
     /// the ordering came from the model.
-    static func assemble(curated: [Declaration],
-                         primary: DeclarationCategory) -> Enforcement? {
+    public static func assemble(curated: [Declaration],
+                                primary: DeclarationCategory) -> Enforcement? {
         guard curated.count == Enforcement.length else { return nil }
         let days = curated.enumerated().map { index, declaration -> EnforcementDay in
             let audio = audioFor(declaration.category)
@@ -239,9 +239,9 @@ enum EnforcementAssembler {
     /// Walks the same fallback chain the assembler does, so a matched category
     /// with no content still gives Claude a real shortlist to choose from
     /// instead of an empty one that silently drops the curation step.
-    static func candidates(for categories: [DeclarationCategory],
-                           in pool: [Declaration],
-                           seed: String) -> [Declaration] {
+    public static func candidates(for categories: [DeclarationCategory],
+                                  in pool: [Declaration],
+                                  seed: String) -> [Declaration] {
         var result: [Declaration] = []
         var used = Set<String>()
         for category in fallbackChain(for: categories) {
@@ -281,7 +281,7 @@ enum EnforcementAssembler {
     }
 
     /// Day allocation per category count. The lead always holds the majority.
-    static func dayShares(for categoryCount: Int) -> [Int] {
+    public static func dayShares(for categoryCount: Int) -> [Int] {
         switch max(categoryCount, 1) {
         case 1:  return [7]
         case 2:  return [4, 3]
@@ -325,7 +325,7 @@ enum EnforcementAssembler {
     /// two seeds differing only in their last character produced byte-identical
     /// campaigns, which silently defeated per-user variation. Seeding the front
     /// changes the running state before any content byte is mixed in.
-    static func stableHash(_ string: String) -> UInt64 {
+    public static func stableHash(_ string: String) -> UInt64 {
         var hash: UInt64 = 0xcbf29ce484222325
         for byte in string.utf8 {
             hash ^= UInt64(byte)

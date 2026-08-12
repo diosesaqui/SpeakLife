@@ -48,35 +48,46 @@ import Combine
 
 /// One corresponding action: the thing someone does today because the thing they
 /// declared is already true.
-struct FaithAction: Equatable {
+public struct FaithAction: Equatable {
     /// SF Symbol shown on the action card.
-    let icon: String
+    public let icon: String
     /// The invitation itself. Imperative, short enough to read in one glance.
-    let headline: String
+    public let headline: String
     /// One line naming the belief the act is enacting. Never explains the joke.
-    let detail: String
+    public let detail: String
+
+    public init(icon: String, headline: String, detail: String) {
+        self.icon = icon
+        self.headline = headline
+        self.detail = detail
+    }
 }
 
 /// The full ask for one theme: the truth being stood on, plus the actions that
 /// stand on it.
-struct FaithActionSet: Equatable {
+public struct FaithActionSet: Equatable {
     /// Two beats: what is already true, and the move that follows from it.
     /// Shown above the action card as the frame for the whole slide.
-    let premise: String
+    public let premise: String
     /// Always non-empty. Multiple entries so the ask rotates day to day rather
     /// than becoming wallpaper.
-    let actions: [FaithAction]
+    public let actions: [FaithAction]
+
+    public init(premise: String, actions: [FaithAction]) {
+        self.premise = premise
+        self.actions = actions
+    }
 }
 
 // MARK: - Catalog
 
-enum FaithActionCatalog {
+public enum FaithActionCatalog {
 
     /// The anchor verse for the entire screen. Fixed, not rotated: it is the
     /// thesis of the slide, and the one place we say out loud why we are asking
     /// for an action at all.
-    static let anchorVerse = "Faith by itself, if it is not accompanied by action, is dead."
-    static let anchorBook = "James 2:17"
+    public static let anchorVerse = "Faith by itself, if it is not accompanied by action, is dead."
+    public static let anchorBook = "James 2:17"
 
     // MARK: Action selection
 
@@ -85,7 +96,7 @@ enum FaithActionCatalog {
     /// Seeded by the day so it is stable across re-renders within a session — the
     /// ask must not shuffle underneath someone who is reading it — and different
     /// tomorrow, so a returning user is not handed the same errand every morning.
-    static func action(for category: DeclarationCategory, on date: Date = Date()) -> FaithAction {
+    public static func action(for category: DeclarationCategory, on date: Date = Date()) -> FaithAction {
         let actions = actionSet(for: category).actions
         // A set authored with no actions would trap on the modulo below, and it
         // would do it one line after the streak was written — the worst possible
@@ -100,13 +111,13 @@ enum FaithActionCatalog {
     /// Every category resolves to a set. Unmapped and Bible-book categories fall
     /// through to faith rather than returning nil, so the slide can never render
     /// empty.
-    static func actionSet(for category: DeclarationCategory) -> FaithActionSet {
+    public static func actionSet(for category: DeclarationCategory) -> FaithActionSet {
         sets[category] ?? sets[.faith] ?? Self.faithFallback
     }
 
     /// Every theme with its own hand-written actions. Everything else borrows
     /// faith's. Exposed so tests can sweep the whole catalog for copy hygiene.
-    static var mappedThemes: [DeclarationCategory] {
+    public static var mappedThemes: [DeclarationCategory] {
         Array(sets.keys)
     }
 
@@ -1161,30 +1172,36 @@ enum FaithActionCatalog {
 /// this — a commitment that can be marked incomplete turns a grace-first invitation
 /// into one more thing someone is behind on, which is the exact inversion of the
 /// feature. Only today's yes is kept, so the slate is genuinely clean each morning.
-final class FaithActionCommitmentStore: ObservableObject {
+public final class FaithActionCommitmentStore: ObservableObject {
 
-    static let shared = FaithActionCommitmentStore()
+    public static let shared = FaithActionCommitmentStore()
 
-    struct Commitment: Codable, Equatable {
+    public struct Commitment: Codable, Equatable {
         /// `DeclarationCategory` rawValue.
-        let theme: String
-        let headline: String
-        let committedAt: Date
+        public let theme: String
+        public let headline: String
+        public let committedAt: Date
+
+        public init(theme: String, headline: String, committedAt: Date) {
+            self.theme = theme
+            self.headline = headline
+            self.committedAt = committedAt
+        }
     }
 
     /// Nil unless the user committed to an action today.
-    @Published private(set) var todaysCommitment: Commitment?
+    @Published public private(set) var todaysCommitment: Commitment?
 
     private let defaults: UserDefaults
     private let calendar = Calendar.current
     private static let storageKey = "sl_faithActionCommitment_v1"
 
-    init(defaults: UserDefaults = .standard) {
+    public init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
         todaysCommitment = Self.loadIfToday(from: defaults, calendar: calendar)
     }
 
-    func commit(to action: FaithAction, theme: DeclarationCategory, on date: Date = Date()) {
+    public func commit(to action: FaithAction, theme: DeclarationCategory, on date: Date = Date()) {
         let commitment = Commitment(
             theme: theme.rawValue,
             headline: action.headline,
@@ -1198,7 +1215,7 @@ final class FaithActionCommitmentStore: ObservableObject {
 
     /// Yesterday's yes is not today's. Reading through this keeps a stale
     /// commitment from surfacing on a later day.
-    func hasCommittedToday(on date: Date = Date()) -> Bool {
+    public func hasCommittedToday(on date: Date = Date()) -> Bool {
         guard let commitment = todaysCommitment else { return false }
         return calendar.isDate(commitment.committedAt, inSameDayAs: date)
     }

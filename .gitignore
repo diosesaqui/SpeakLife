@@ -18,3 +18,7 @@ xcuserdata/
 
 # Local sender config (contains the broadcast secret)
 scripts/send-message.env
+
+# Swift Package Manager build artifacts for local packages (Packages/SpeakLifeKit)
+Packages/*/.build/
+Packages/*/.swiftpm/

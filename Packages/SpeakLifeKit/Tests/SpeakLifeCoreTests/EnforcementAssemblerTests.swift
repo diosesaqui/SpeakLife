@@ -16,7 +16,7 @@
 //
 
 import XCTest
-@testable import SpeakLife
+@testable import SpeakLifeCore
 
 final class EnforcementAssemblerTests: XCTestCase {
 
@@ -329,7 +329,7 @@ final class EnforcementAssemblerTests: XCTestCase {
     /// gets their own week. That's only true if the shipped declarations can
     /// actually fill seven days for each category we're willing to match.
     func testShippedPool_CanBuildACampaignForEveryOfferedCategory() {
-        guard let url = Bundle.main.url(forResource: "declarationsv10", withExtension: "json"),
+        guard let url = Bundle.module.url(forResource: "declarationsv10", withExtension: "json"),
               let data = try? Data(contentsOf: url) else {
             return XCTFail("declarationsv10.json missing from the bundle")
         }
@@ -367,7 +367,7 @@ final class EnforcementAssemblerTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(names.count, 40,
                                     "failed to parse the category list out of the system prompt")
 
-        guard let url = Bundle.main.url(forResource: "declarationsv10", withExtension: "json"),
+        guard let url = Bundle.module.url(forResource: "declarationsv10", withExtension: "json"),
               let data = try? Data(contentsOf: url),
               let pool = try? JSONDecoder().decode(WelcomeResponse.self, from: data).declarations,
               !pool.isEmpty else {
@@ -610,7 +610,7 @@ final class EnforcementAssemblerTests: XCTestCase {
     /// A redirect that offers a week we can't actually build is a second dead
     /// end stacked on the first.
     func testScreen_EveryOfferedRedirectBuildsARealWeek() {
-        guard let url = Bundle.main.url(forResource: "declarationsv10", withExtension: "json"),
+        guard let url = Bundle.module.url(forResource: "declarationsv10", withExtension: "json"),
               let data = try? Data(contentsOf: url),
               let pool = try? JSONDecoder().decode(WelcomeResponse.self, from: data).declarations,
               !pool.isEmpty else {

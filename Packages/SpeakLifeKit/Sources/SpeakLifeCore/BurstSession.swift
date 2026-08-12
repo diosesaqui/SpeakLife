@@ -30,14 +30,14 @@ import Foundation
 /// interchangeable: `DeclarationCategory.name` is a browse label
 /// ("Warfare & Victory", "Peace & Rest") that does not parse back into a
 /// category, so a view that keeps only the label has lost the theme.
-struct BurstDeclaration: Equatable {
-    let text: String
-    let verse: String
+public struct BurstDeclaration: Equatable {
+    public let text: String
+    public let verse: String
     /// What the chip above the declaration reads.
-    let categoryLabel: String
-    let category: DeclarationCategory?
+    public let categoryLabel: String
+    public let category: DeclarationCategory?
 
-    init(text: String, verse: String, category: DeclarationCategory?, categoryLabel: String? = nil) {
+    public init(text: String, verse: String, category: DeclarationCategory?, categoryLabel: String? = nil) {
         self.text = text
         self.verse = verse
         self.category = category
@@ -51,13 +51,13 @@ struct BurstDeclaration: Equatable {
 
 /// A composed burst: the lines to speak, where they came from, and what the
 /// session is about.
-struct BurstSession: Equatable {
+public struct BurstSession: Equatable {
 
     /// How the burst was filled. Recorded rather than re-derived, because the
     /// difference matters to the closing action: a campaign that owns the burst
     /// is an authoritative theme, while a draw from the pool is a guess made
     /// from what happened to be selected.
-    enum Origin: Equatable {
+    public enum Origin: Equatable {
         /// An active campaign filled every slot.
         case enforcement(DeclarationCategory)
         /// Drawn from favorites, the user's own, and the selected category.
@@ -66,7 +66,7 @@ struct BurstSession: Equatable {
         case fallback
 
         /// The campaign's theme, or nil when no campaign owns this burst.
-        var enforcementTheme: DeclarationCategory? {
+        public var enforcementTheme: DeclarationCategory? {
             switch self {
             case .enforcement(let category): return category
             case .pool, .fallback: return nil
@@ -74,11 +74,17 @@ struct BurstSession: Equatable {
         }
     }
 
-    let declarations: [BurstDeclaration]
-    let origin: Origin
+    public let declarations: [BurstDeclaration]
+    public let origin: Origin
     /// What this burst was about. Resolved at composition time, when the origin
     /// is known for certain, and never recomputed.
-    let theme: DeclarationCategory
+    public let theme: DeclarationCategory
+
+    public init(declarations: [BurstDeclaration], origin: Origin, theme: DeclarationCategory) {
+        self.declarations = declarations
+        self.origin = origin
+        self.theme = theme
+    }
 }
 
 // MARK: - Theme Resolution
@@ -89,7 +95,7 @@ struct BurstSession: Equatable {
 /// user spoke, and the catalog is content keyed by the answer. Keeping them
 /// apart means the rules can change without touching 151 lines of copy, and the
 /// copy can change without touching the rules.
-enum BurstThemeResolver {
+public enum BurstThemeResolver {
 
     /// Precedence is deliberate:
     ///
@@ -99,7 +105,7 @@ enum BurstThemeResolver {
     ///      is what the user actually said regardless of what is selected.
     ///   3. Otherwise whatever category is selected.
     ///   4. Otherwise faith, which fits anyone.
-    static func resolve(
+    public static func resolve(
         enforcement: DeclarationCategory?,
         spoken: [DeclarationCategory],
         selected: DeclarationCategory?
@@ -119,7 +125,7 @@ enum BurstThemeResolver {
     /// True when a category names a life situation someone can take a step in
     /// today. Bible books, the favorites bin, and the user's own bucket are all
     /// containers rather than themes, so they never win theme resolution.
-    static func isActionable(_ category: DeclarationCategory) -> Bool {
+    public static func isActionable(_ category: DeclarationCategory) -> Bool {
         if category.isBibleBook { return false }
         switch category {
         case .favorites, .myOwn, .general: return false
@@ -155,17 +161,17 @@ enum BurstThemeResolver {
 /// Pure: it reads no singletons and touches no storage. The campaign, the
 /// favorites, and the pool are all handed in, which is what lets the whole
 /// policy be tested without a view, a view model, or a running service.
-struct BurstSessionBuilder {
+public struct BurstSessionBuilder {
 
-    let declarationCount: Int
+    public let declarationCount: Int
     /// Favorites are added to the pool this many times.
-    let favoriteWeight: Int
+    public let favoriteWeight: Int
     /// The user's own declarations are added this many times.
-    let customWeight: Int
+    public let customWeight: Int
     /// Injected so tests can pin the draw. Production shuffles.
     private let shuffle: ([Declaration]) -> [Declaration]
 
-    init(
+    public init(
         declarationCount: Int = 7,
         favoriteWeight: Int = 2,
         customWeight: Int = 3,
@@ -183,7 +189,7 @@ struct BurstSessionBuilder {
     ///   - currentDay: the campaign day to lead with.
     ///   - selected: the category selected in the app, used only as a fallback
     ///     theme when the spoken lines cannot name one.
-    func build(
+    public func build(
         enforcement: Enforcement?,
         currentDay: Int,
         favorites: [Declaration],
@@ -295,7 +301,7 @@ struct BurstSessionBuilder {
 
     /// Used when the pool cannot fill the burst — a brand new install, or a
     /// category whose declarations have not loaded yet.
-    static let fallback: [BurstDeclaration] = [
+    public static let fallback: [BurstDeclaration] = [
         BurstDeclaration(text: "I am loved by God unconditionally", verse: "Romans 8:38-39", category: .love),
         BurstDeclaration(text: "My God supplies all my needs according to His riches", verse: "Philippians 4:19", category: .wealth),
         BurstDeclaration(text: "I have the mind of Christ", verse: "1 Corinthians 2:16", category: .wisdom),
