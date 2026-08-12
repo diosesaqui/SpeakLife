@@ -12,7 +12,8 @@
 //
 
 import XCTest
-@testable import SpeakLife
+import SpeakLifeCore
+@testable import SpeakLifeServices
 
 final class EnforcementPromptTests: XCTestCase {
 
@@ -36,7 +37,14 @@ final class EnforcementPromptTests: XCTestCase {
     // MARK: - Helpers
 
     private func makeService(catalog: [Enforcement] = []) -> EnforcementService {
-        EnforcementService(defaults: defaults, calendar: calendar, catalog: catalog)
+        // Matches production: `RemoteConfig.setDefaults([enforcementEnabled: true])`
+        // runs in AppDelegate at app-hosted test bundle load, so the old
+        // suite implicitly saw the flag on. Under `swift test` there is no
+        // AppDelegate and no Remote Config, so this must be pinned here or
+        // `EnforcementPrompt.copy` returns nil straight past the eligibility
+        // check.
+        EnforcementService(defaults: defaults, calendar: calendar, catalog: catalog,
+                           featureFlags: StaticFeatureFlags(["enforcementEnabled": true]))
     }
 
     private func seedTenure(_ days: Int) {

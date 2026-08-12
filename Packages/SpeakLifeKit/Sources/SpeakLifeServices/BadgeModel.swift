@@ -1,39 +1,63 @@
 //
-//  Badge.swift
-//  SpeakLife
+//  BadgeModel.swift
+//  SpeakLifeServices
 //
-//  Apple award-winning badge system for milestone achievements
+//  Foundation-only badge core: the Badge value type, the type/rarity/
+//  requirement enums (with iconName strings but no Color), the manager
+//  that owns unlocked badges, and the streak-stats extensions the
+//  manager consults.
+//
+//  The SwiftUI Color extensions on `BadgeType` / `BadgeRarity` live in
+//  `SpeakLife/Models/BadgeAppearance.swift`. Same pattern as
+//  `ChecklistModelsAppearance.swift` and `ProgressionPhase+Appearance.swift`.
 //
 
-import SwiftUI
 import Foundation
+import Combine
+import SpeakLifeCore
 
 // MARK: - Badge System Models
 
-struct Badge: Identifiable, Codable, Equatable {
-    let id = UUID()
-    let type: BadgeType
-    let rarity: BadgeRarity
-    let title: String
-    let description: String
-    let requirement: AchievementRequirement
-    let unlockedAt: Date?
-    let isUnlocked: Bool
-    
-    var sortOrder: Int {
+public struct Badge: Identifiable, Codable, Equatable {
+    public let id = UUID()
+    public let type: BadgeType
+    public let rarity: BadgeRarity
+    public let title: String
+    public let description: String
+    public let requirement: AchievementRequirement
+    public let unlockedAt: Date?
+    public let isUnlocked: Bool
+
+    public init(type: BadgeType,
+                rarity: BadgeRarity,
+                title: String,
+                description: String,
+                requirement: AchievementRequirement,
+                unlockedAt: Date?,
+                isUnlocked: Bool) {
+        self.type = type
+        self.rarity = rarity
+        self.title = title
+        self.description = description
+        self.requirement = requirement
+        self.unlockedAt = unlockedAt
+        self.isUnlocked = isUnlocked
+    }
+
+    public var sortOrder: Int {
         requirement.sortOrder
     }
-    
-    var displayTitle: String {
+
+    public var displayTitle: String {
         isUnlocked ? title : "???"
     }
-    
-    var displayDescription: String {
+
+    public var displayDescription: String {
         isUnlocked ? description : "Keep going to unlock this badge!"
     }
 }
 
-enum BadgeType: String, CaseIterable, Codable {
+public enum BadgeType: String, CaseIterable, Codable {
     case streak = "streak"
     case consistency = "consistency"
     case spiritual = "spiritual"
@@ -41,7 +65,7 @@ enum BadgeType: String, CaseIterable, Codable {
     case milestone = "milestone"
     case enforcement = "enforcement"
 
-    var iconName: String {
+    public var iconName: String {
         switch self {
         case .streak: return "flame.fill"
         case .consistency: return "calendar.badge.checkmark"
@@ -51,80 +75,19 @@ enum BadgeType: String, CaseIterable, Codable {
         case .enforcement: return "shield.fill"
         }
     }
-    
-    var primaryColor: Color {
-        switch self {
-        case .streak: return .orange
-        case .consistency: return .blue
-        case .spiritual: return .purple
-        case .social: return .green
-        case .milestone: return .yellow
-        case .enforcement: return .indigo
-        }
-    }
-    
-    var secondaryColor: Color {
-        switch self {
-        case .streak: return .red
-        case .consistency: return .cyan
-        case .spiritual: return .pink
-        case .social: return .mint
-        case .milestone: return .orange
-        case .enforcement: return .purple
-        }
-    }
 }
 
-enum BadgeRarity: String, CaseIterable, Codable {
+public enum BadgeRarity: String, CaseIterable, Codable {
     case common = "common"
     case rare = "rare"
     case epic = "epic"
     case legendary = "legendary"
-    
-    var displayName: String {
+
+    public var displayName: String {
         rawValue.capitalized
     }
 
-    /// Refined metallic palette per tier: [highlight, base, shadow].
-    /// One restrained metal per rarity — no per-type rainbow — so badges read
-    /// as minted medals rather than candy. Drives the rim and emblem gradients.
-    var metalGradient: [Color] {
-        switch self {
-        case .common: // Bronze
-            return [
-                Color(red: 0.85, green: 0.62, blue: 0.40),
-                Color(red: 0.60, green: 0.40, blue: 0.24),
-                Color(red: 0.36, green: 0.23, blue: 0.13)
-            ]
-        case .rare: // Silver
-            return [
-                Color(red: 0.96, green: 0.97, blue: 0.99),
-                Color(red: 0.72, green: 0.75, blue: 0.80),
-                Color(red: 0.42, green: 0.45, blue: 0.50)
-            ]
-        case .epic: // Gold
-            return [
-                Color(red: 1.00, green: 0.90, blue: 0.56),
-                Color(red: 0.92, green: 0.72, blue: 0.27),
-                Color(red: 0.56, green: 0.40, blue: 0.09)
-            ]
-        case .legendary: // Platinum / iridescent
-            return [
-                Color(red: 0.93, green: 0.91, blue: 1.00),
-                Color(red: 0.66, green: 0.62, blue: 0.88),
-                Color(red: 0.38, green: 0.34, blue: 0.60)
-            ]
-        }
-    }
-
-    var metalHighlight: Color { metalGradient[0] }
-    var metalBase: Color { metalGradient[1] }
-    var metalShadow: Color { metalGradient[2] }
-
-    /// Single representative tone for text labels and small indicators.
-    var ringColor: Color { metalBase }
-
-    var glowIntensity: Double {
+    public var glowIntensity: Double {
         switch self {
         case .common: return 0.3
         case .rare: return 0.5
@@ -132,8 +95,8 @@ enum BadgeRarity: String, CaseIterable, Codable {
         case .legendary: return 1.0
         }
     }
-    
-    var particleCount: Int {
+
+    public var particleCount: Int {
         switch self {
         case .common: return 8
         case .rare: return 12
@@ -143,7 +106,7 @@ enum BadgeRarity: String, CaseIterable, Codable {
     }
 }
 
-enum AchievementRequirement: Codable, Equatable {
+public enum AchievementRequirement: Codable, Equatable {
     case streakDays(Int)
     case totalDaysCompleted(Int)
     case consecutiveWeeks(Int)
@@ -151,14 +114,8 @@ enum AchievementRequirement: Codable, Equatable {
     case firstDay
     /// A finished seven-day Enforcement, keyed by `Enforcement.id`.
     case enforcementCompleted(String)
-    // Removed untracked requirements:
-    // case affirmationsSpoken(Int)
-    // case versesRead(Int)
-    // case socialShares(Int)
-    // case favoritesAdded(Int)
-    // case categoryMaster(String)
-    
-    var sortOrder: Int {
+
+    public var sortOrder: Int {
         switch self {
         case .firstDay: return 1
         case .streakDays(let days): return 100 + days
@@ -168,8 +125,8 @@ enum AchievementRequirement: Codable, Equatable {
         case .enforcementCompleted: return 3000
         }
     }
-    
-    var description: String {
+
+    public var description: String {
         switch self {
         case .streakDays(let days):
             return "Complete \(days) consecutive days"
@@ -189,21 +146,21 @@ enum AchievementRequirement: Codable, Equatable {
 
 // MARK: - Badge Achievement Manager
 
-class BadgeManager: ObservableObject {
-    @Published var unlockedBadges: [Badge] = []
-    @Published var allBadges: [Badge] = []
-    @Published var recentlyUnlocked: Badge?
-    
+public final class BadgeManager: ObservableObject {
+    @Published public var unlockedBadges: [Badge] = []
+    @Published public var allBadges: [Badge] = []
+    @Published public var recentlyUnlocked: Badge?
+
     private let userDefaults = UserDefaults.standard
     private let badgeKey = "UnlockedBadges"
-    
-    init() {
+
+    public init() {
         loadBadges()
         initializeAllBadges()
     }
-    
+
     // MARK: - Badge Definitions
-    
+
     private func initializeAllBadges() {
         // Only include badges for metrics we can actually track
         allBadges = [
@@ -217,7 +174,7 @@ class BadgeManager: ObservableObject {
                 unlockedAt: getBadgeUnlockDate(.firstDay),
                 isUnlocked: isBadgeUnlocked(.firstDay)
             ),
-            
+
             // Streak Badges - PRIMARY TRACKABLE METRIC
             Badge(
                 type: .streak,
@@ -228,7 +185,7 @@ class BadgeManager: ObservableObject {
                 unlockedAt: getBadgeUnlockDate(.streakDays(7)),
                 isUnlocked: isBadgeUnlocked(.streakDays(7))
             ),
-            
+
             Badge(
                 type: .streak,
                 rarity: .rare,
@@ -238,7 +195,7 @@ class BadgeManager: ObservableObject {
                 unlockedAt: getBadgeUnlockDate(.streakDays(14)),
                 isUnlocked: isBadgeUnlocked(.streakDays(14))
             ),
-            
+
             Badge(
                 type: .streak,
                 rarity: .epic,
@@ -248,7 +205,7 @@ class BadgeManager: ObservableObject {
                 unlockedAt: getBadgeUnlockDate(.streakDays(30)),
                 isUnlocked: isBadgeUnlocked(.streakDays(30))
             ),
-            
+
             Badge(
                 type: .streak,
                 rarity: .epic,
@@ -258,7 +215,7 @@ class BadgeManager: ObservableObject {
                 unlockedAt: getBadgeUnlockDate(.streakDays(50)),
                 isUnlocked: isBadgeUnlocked(.streakDays(50))
             ),
-            
+
             Badge(
                 type: .streak,
                 rarity: .legendary,
@@ -268,7 +225,7 @@ class BadgeManager: ObservableObject {
                 unlockedAt: getBadgeUnlockDate(.streakDays(100)),
                 isUnlocked: isBadgeUnlocked(.streakDays(100))
             ),
-            
+
             Badge(
                 type: .streak,
                 rarity: .legendary,
@@ -278,7 +235,7 @@ class BadgeManager: ObservableObject {
                 unlockedAt: getBadgeUnlockDate(.streakDays(200)),
                 isUnlocked: isBadgeUnlocked(.streakDays(200))
             ),
-            
+
             Badge(
                 type: .milestone,
                 rarity: .legendary,
@@ -288,7 +245,7 @@ class BadgeManager: ObservableObject {
                 unlockedAt: getBadgeUnlockDate(.streakDays(365)),
                 isUnlocked: isBadgeUnlocked(.streakDays(365))
             ),
-            
+
             // Total Days Completed - TRACKABLE METRIC
             Badge(
                 type: .consistency,
@@ -299,7 +256,7 @@ class BadgeManager: ObservableObject {
                 unlockedAt: getBadgeUnlockDate(.totalDaysCompleted(25)),
                 isUnlocked: isBadgeUnlocked(.totalDaysCompleted(25))
             ),
-            
+
             Badge(
                 type: .consistency,
                 rarity: .epic,
@@ -309,7 +266,7 @@ class BadgeManager: ObservableObject {
                 unlockedAt: getBadgeUnlockDate(.totalDaysCompleted(75)),
                 isUnlocked: isBadgeUnlocked(.totalDaysCompleted(75))
             ),
-            
+
             Badge(
                 type: .consistency,
                 rarity: .legendary,
@@ -319,7 +276,7 @@ class BadgeManager: ObservableObject {
                 unlockedAt: getBadgeUnlockDate(.totalDaysCompleted(150)),
                 isUnlocked: isBadgeUnlocked(.totalDaysCompleted(150))
             ),
-            
+
             // Week Consistency - TRACKABLE METRIC
             Badge(
                 type: .consistency,
@@ -330,7 +287,7 @@ class BadgeManager: ObservableObject {
                 unlockedAt: getBadgeUnlockDate(.perfectWeek),
                 isUnlocked: isBadgeUnlocked(.perfectWeek)
             ),
-            
+
             Badge(
                 type: .consistency,
                 rarity: .epic,
@@ -384,27 +341,27 @@ class BadgeManager: ObservableObject {
 
             // Removed social shares, favorites, categories, etc. until we can properly track them
         ]
-        
+
         // Sort badges by their requirements
         allBadges.sort { $0.sortOrder < $1.sortOrder }
     }
-    
+
     // MARK: - Badge State Management
-    
+
     private func isBadgeUnlocked(_ requirement: AchievementRequirement) -> Bool {
         unlockedBadges.contains { $0.requirement == requirement }
     }
-    
+
     private func getBadgeUnlockDate(_ requirement: AchievementRequirement) -> Date? {
         unlockedBadges.first { $0.requirement == requirement }?.unlockedAt
     }
-    
+
     // MARK: - Badge Unlocking Logic
-    
+
     /// - Parameter completedEnforcementIds: `EnforcementProgress.completedEnforcementIds`. Defaults
     ///   empty so existing callers are unaffected.
-    func checkForNewBadges(streakStats: StreakStats, userStats: UserStats,
-                           completedEnforcementIds: [String] = []) {
+    public func checkForNewBadges(streakStats: StreakStats, userStats: UserStats,
+                                  completedEnforcementIds: [String] = []) {
         let potentialBadges = allBadges.filter { !$0.isUnlocked }
         let badgeStats = streakStats.toBadgeStreakStats()
 
@@ -433,12 +390,12 @@ class BadgeManager: ObservableObject {
             return streakStats.hasPerfectWeek
         }
     }
-    
+
     private func unlockBadge(_ badge: Badge) {
         // Guard against double-unlock: check unlockedBadges directly (source of truth in UserDefaults)
         // allBadges.isUnlocked can be stale if data failed to decode on launch
         guard !unlockedBadges.contains(where: { $0.requirement == badge.requirement }) else { return }
-        
+
         let unlockedBadge = Badge(
             type: badge.type,
             rarity: badge.rarity,
@@ -448,90 +405,102 @@ class BadgeManager: ObservableObject {
             unlockedAt: Date(),
             isUnlocked: true
         )
-        
+
         unlockedBadges.append(unlockedBadge)
         recentlyUnlocked = unlockedBadge
         saveBadges()
-        
+
         // Update the all badges array
         if let index = allBadges.firstIndex(where: { $0.requirement == badge.requirement }) {
             allBadges[index] = unlockedBadge
         }
-        
+
     }
-    
+
     // MARK: - Persistence
-    
+
     private func saveBadges() {
         if let encoded = try? JSONEncoder().encode(unlockedBadges) {
             userDefaults.set(encoded, forKey: badgeKey)
         }
     }
-    
+
     private func loadBadges() {
         if let data = userDefaults.data(forKey: badgeKey),
            let decoded = try? JSONDecoder().decode([Badge].self, from: data) {
             unlockedBadges = decoded
         }
     }
-    
+
     // MARK: - Public Interface
-    
-    var unlockedBadgeCount: Int {
+
+    public var unlockedBadgeCount: Int {
         unlockedBadges.count
     }
-    
-    var totalBadgeCount: Int {
+
+    public var totalBadgeCount: Int {
         allBadges.count
     }
-    
-    var completionPercentage: Double {
+
+    public var completionPercentage: Double {
         guard totalBadgeCount > 0 else { return 0 }
         return Double(unlockedBadgeCount) / Double(totalBadgeCount)
     }
-    
-    func getNextBadgeToUnlock() -> Badge? {
+
+    public func getNextBadgeToUnlock() -> Badge? {
         allBadges.first { !$0.isUnlocked }
     }
-    
-    func getBadgesByType(_ type: BadgeType) -> [Badge] {
+
+    public func getBadgesByType(_ type: BadgeType) -> [Badge] {
         allBadges.filter { $0.type == type }
     }
-    
-    func getBadgesByRarity(_ rarity: BadgeRarity) -> [Badge] {
+
+    public func getBadgesByRarity(_ rarity: BadgeRarity) -> [Badge] {
         allBadges.filter { $0.rarity == rarity }
     }
-    
-    func clearRecentlyUnlocked() {
+
+    public func clearRecentlyUnlocked() {
         recentlyUnlocked = nil
     }
 }
 
 // MARK: - Supporting Models
 
-struct UserStats {
-    let affirmationsSpoken: Int
-    let versesRead: Int
-    let socialShares: Int
-    let favoritesAdded: Int
-    let categoriesCompleted: Set<String>
+public struct UserStats {
+    public let affirmationsSpoken: Int
+    public let versesRead: Int
+    public let socialShares: Int
+    public let favoritesAdded: Int
+    public let categoriesCompleted: Set<String>
+
+    public init(affirmationsSpoken: Int,
+                versesRead: Int,
+                socialShares: Int,
+                favoritesAdded: Int,
+                categoriesCompleted: Set<String>) {
+        self.affirmationsSpoken = affirmationsSpoken
+        self.versesRead = versesRead
+        self.socialShares = socialShares
+        self.favoritesAdded = favoritesAdded
+        self.categoriesCompleted = categoriesCompleted
+    }
 }
 
 // MARK: - StreakStats Extensions for Badge System
 
 extension StreakStats {
-    var consecutiveWeeks: Int {
+    public var consecutiveWeeks: Int {
         // Calculate consecutive weeks based on current streak
         return currentStreak / 7
     }
-    
-    var hasPerfectWeek: Bool {
+
+    public var hasPerfectWeek: Bool {
         // Check if user has completed at least one full week
         return currentStreak >= 7
     }
-    
+
     // Convert to badge-compatible format
-    func toBadgeStreakStats() -> Badge.StreakStatsForBadges {
+    public func toBadgeStreakStats() -> Badge.StreakStatsForBadges {
         return Badge.StreakStatsForBadges(
             currentStreak: currentStreak,
             longestStreak: longestStreak,
@@ -543,11 +512,19 @@ extension StreakStats {
 }
 
 extension Badge {
-    struct StreakStatsForBadges {
-        let currentStreak: Int
-        let longestStreak: Int
-        let totalDaysCompleted: Int
-        let consecutiveWeeks: Int
-        let hasPerfectWeek: Bool
+    public struct StreakStatsForBadges {
+        public let currentStreak: Int
+        public let longestStreak: Int
+        public let totalDaysCompleted: Int
+        public let consecutiveWeeks: Int
+        public let hasPerfectWeek: Bool
+
+        public init(currentStreak: Int, longestStreak: Int, totalDaysCompleted: Int, consecutiveWeeks: Int, hasPerfectWeek: Bool) {
+            self.currentStreak = currentStreak
+            self.longestStreak = longestStreak
+            self.totalDaysCompleted = totalDaysCompleted
+            self.consecutiveWeeks = consecutiveWeeks
+            self.hasPerfectWeek = hasPerfectWeek
+        }
     }
 }

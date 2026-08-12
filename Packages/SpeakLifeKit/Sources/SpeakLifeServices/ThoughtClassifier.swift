@@ -1,6 +1,6 @@
 //
 //  ThoughtClassifier.swift
-//  SpeakLife
+//  SpeakLifeServices
 //
 //  The escape hatch's brain: turns "something else is on my mind" into a
 //  category and a declaration to speak.
@@ -24,9 +24,28 @@
 //
 
 import Foundation
+import SpeakLifeCore
+
+/// The keyword matcher the classifier consults, exposed as a closure so
+/// `ThoughtClassifier` does not have to move `KeywordDeclarationMatcher` and
+/// its `DeclarationContent` / `MatchRule.defaults` neighbourhood into the
+/// package. The app installs the real matcher at startup; tests inject their
+/// own or pass one straight into the initializer.
+public typealias ThoughtCategoryMatcher = (String) -> [DeclarationCategory]
+
+public enum ThoughtMatcherProvider {
+    /// Defaults to `KeywordCategoryMatcher.matchAll` — the same keyword
+    /// table the app's `KeywordDeclarationMatcher` uses, sitting in
+    /// SpeakLifeCore so the package builds and tests it directly. The
+    /// app can still swap this out at startup if a future matcher
+    /// implementation lives elsewhere.
+    public static var matchAll: ThoughtCategoryMatcher = { input in
+        KeywordCategoryMatcher.matchAll(input)
+    }
+}
 
 /// What the escape hatch decided to do with what someone typed.
-enum ThoughtClassification: Equatable {
+public enum ThoughtClassification: Equatable {
     /// A category was found, with a declaration to speak against it.
     case matched(ThoughtCategory, IncomingThought, confidence: Confidence)
     /// Someone said they want to end their life. The drill does not continue.
@@ -34,7 +53,7 @@ enum ThoughtClassification: Equatable {
     /// is a person.
     case reachOut
 
-    enum Confidence: String, Equatable {
+    public enum Confidence: String, Equatable {
         /// A keyword rule fired and it mapped cleanly onto a terrain.
         case high
         /// Nothing matched, or the match didn't map. A general identity
@@ -45,19 +64,19 @@ enum ThoughtClassification: Equatable {
 }
 
 /// Classifies free text into one of the nine terrains, entirely on device.
-struct ThoughtClassifier {
+public struct ThoughtClassifier {
 
-    private let matcher: KeywordDeclarationMatcher
+    private let matchAll: ThoughtCategoryMatcher
     private let bank: [IncomingThought]
 
-    init(bank: [IncomingThought], matcher: KeywordDeclarationMatcher = KeywordDeclarationMatcher()) {
+    public init(bank: [IncomingThought], matchAll: @escaping ThoughtCategoryMatcher = ThoughtMatcherProvider.matchAll) {
         self.bank = bank
-        self.matcher = matcher
+        self.matchAll = matchAll
     }
 
     /// - Parameter text: the user's own words. Never stored, never synced,
     ///   never logged — it exists for the length of this call.
-    func classify(_ text: String) -> ThoughtClassification {
+    public func classify(_ text: String) -> ThoughtClassification {
         // Safety first, and unconditionally. Placing this above every other
         // branch is the whole point: no matching, no quota check, and no
         // premium check can run ahead of it and route someone in crisis into a
@@ -72,7 +91,7 @@ struct ThoughtClassifier {
         // build a week on — so it falls through to matching and they get a
         // declaration about their own standing, which is the right answer.
 
-        let matched = matcher.matchAll(input: text)
+        let matched = matchAll(text)
             .compactMap(ThoughtCategory.from)
             .first
 
@@ -108,7 +127,7 @@ struct ThoughtClassifier {
     /// Used only when the bank failed to load at all. Sourced verbatim from
     /// `declarationsv10.json` (identity / 2 Corinthians 5:17) so even the
     /// degenerate path speaks a reviewed line.
-    static let lastResort = IncomingThought(
+    public static let lastResort = IncomingThought(
         id: CapturedThought.escapeHatchDeclarationId,
         text: "",
         category: .inadequacy,

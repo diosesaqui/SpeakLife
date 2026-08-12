@@ -1,6 +1,6 @@
 //
 //  FeatureFlags.swift
-//  SpeakLife
+//  SpeakLifeCore
 //
 //  A single, injectable seam for boolean feature flags. Mirrors the
 //  `AnalyticsProvider` shape in `Analytics/AnalyticsService.swift`: a small
@@ -20,7 +20,7 @@ import Foundation
 /// The domain-facing feature-flag API. Everything a service needs to consult a
 /// flag goes through this — Firebase, static defaults, or an in-memory fake in
 /// tests, all interchangeable.
-protocol FeatureFlagProviding {
+public protocol FeatureFlagProviding {
     func bool(_ key: String, default defaultValue: Bool) -> Bool
 }
 
@@ -30,14 +30,14 @@ protocol FeatureFlagProviding {
 /// `RemoteConfig.setDefaults` semantics, so a service reading a flag before the
 /// app has wired up Firebase falls back to the same value Firebase would
 /// return.
-struct StaticFeatureFlags: FeatureFlagProviding {
+public struct StaticFeatureFlags: FeatureFlagProviding {
     private let values: [String: Bool]
 
-    init(_ values: [String: Bool] = [:]) {
+    public init(_ values: [String: Bool] = [:]) {
         self.values = values
     }
 
-    func bool(_ key: String, default defaultValue: Bool) -> Bool {
+    public func bool(_ key: String, default defaultValue: Bool) -> Bool {
         values[key] ?? defaultValue
     }
 }
@@ -50,17 +50,17 @@ struct StaticFeatureFlags: FeatureFlagProviding {
 /// at first access. Forwarding through `provider` lets the app install the
 /// Firebase-backed implementation any time before Firebase is first read,
 /// even after the service instance is built.
-final class DefaultFeatureFlags: FeatureFlagProviding {
-    static let shared = DefaultFeatureFlags()
+public final class DefaultFeatureFlags: FeatureFlagProviding {
+    public static let shared = DefaultFeatureFlags()
 
     /// Replaced at app startup with `RemoteConfigFlags()`. Falls back to
     /// `StaticFeatureFlags()` so a test host that never runs `AppDelegate` sees
     /// the same "flag absent, use the caller's default" behavior as production.
-    var provider: FeatureFlagProviding = StaticFeatureFlags()
+    public var provider: FeatureFlagProviding = StaticFeatureFlags()
 
     private init() {}
 
-    func bool(_ key: String, default defaultValue: Bool) -> Bool {
+    public func bool(_ key: String, default defaultValue: Bool) -> Bool {
         provider.bool(key, default: defaultValue)
     }
 }

@@ -1,6 +1,6 @@
 //
 //  EnforcementPrompt.swift
-//  SpeakLife
+//  SpeakLifeServices
 //
 //  The weekly invitation to start a campaign.
 //
@@ -11,12 +11,18 @@
 //
 
 import Foundation
+import SpeakLifeCore
 
-enum EnforcementPrompt {
+public enum EnforcementPrompt {
 
-    struct Copy {
-        let title: String
-        let body: String
+    public struct Copy {
+        public let title: String
+        public let body: String
+
+        public init(title: String, body: String) {
+            self.title = title
+            self.body = body
+        }
     }
 
     /// Six variants, so a weekly send doesn't repeat inside a quarter.
@@ -41,7 +47,7 @@ enum EnforcementPrompt {
     /// in full for someone who has never run a campaign and does not yet know
     /// what "seven days" refers to. The shorter, punchier ones come later, once
     /// the phrase means something.
-    static let rotation: [Copy] = [
+    public static let rotation: [Copy] = [
         // Weeks 1-3: fully self-explanatory. Says what to name and what arrives.
         Copy(title: "🚨 Set your week",
              body: "Tell us what you're facing or believing for. We'll build the seven days."),
@@ -63,11 +69,11 @@ enum EnforcementPrompt {
     /// - Parameter dayOffset: 0-based day within the pending batch.
     /// - Returns: nil on every day except the one that lands on `promptWeekday`,
     ///   and nil entirely when the user isn't eligible or is mid-campaign.
-    static func copy(forDayOffset dayOffset: Int,
-                     now: Date = Date(),
-                     calendar: Calendar = .autoupdatingCurrent,
-                     service: EnforcementService = .shared,
-                     defaults: UserDefaults = .standard) -> Copy? {
+    public static func copy(forDayOffset dayOffset: Int,
+                            now: Date = Date(),
+                            calendar: Calendar = .autoupdatingCurrent,
+                            service: EnforcementService = .shared,
+                            defaults: UserDefaults = .standard) -> Copy? {
         guard service.isEnabled else { return nil }
         guard !service.progressSnapshot.isActive else { return nil }
 
@@ -105,10 +111,10 @@ enum EnforcementPrompt {
         return date
     }
 
-    static let firstPromptDateKey = "enforcementPromptFirstShown"
+    public static let firstPromptDateKey = "enforcementPromptFirstShown"
 
     /// Sunday. The week is about to turn, and it's when people take stock.
-    static let promptWeekday = 1
+    public static let promptWeekday = 1
 
     /// Reads the persisted streak blob rather than taking an `EnhancedStreakViewModel`
     /// dependency — this runs on the notification scheduler's queue, which has no

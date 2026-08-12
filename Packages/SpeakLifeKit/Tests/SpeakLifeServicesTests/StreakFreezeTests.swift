@@ -23,7 +23,9 @@
 //
 
 import XCTest
-@testable import SpeakLife
+import SpeakLifeCore
+import SpeakLifePersistence
+@testable import SpeakLifeServices
 
 final class StreakFreezeTests: XCTestCase {
 

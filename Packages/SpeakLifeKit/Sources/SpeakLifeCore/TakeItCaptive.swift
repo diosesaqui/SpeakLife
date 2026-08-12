@@ -1,6 +1,6 @@
 //
 //  TakeItCaptive.swift
-//  SpeakLife
+//  SpeakLifeCore
 //
 //  Guarding — the fifth pillar. "We take captive every thought to make it
 //  obedient to Christ." (2 Corinthians 10:5)
@@ -30,7 +30,7 @@ import Foundation
 /// Terrain, not pathology, deliberately: this is where ground gets taken, not a
 /// diagnosis of the speaker. Nothing in the UI ever says "you struggle with
 /// anxiety" — at most it says where they have been taking ground.
-enum ThoughtCategory: String, Codable, CaseIterable, Identifiable {
+public enum ThoughtCategory: String, Codable, CaseIterable, Identifiable {
     case fear
     case condemnation
     case lack
@@ -41,7 +41,7 @@ enum ThoughtCategory: String, Codable, CaseIterable, Identifiable {
     case confusion
     case lust
 
-    var id: String { rawValue }
+    public var id: String { rawValue }
 
     /// How the terrain is named to the user. Only ever shown as ground taken
     /// ("You've been taking ground in provision"), never as a label on them.
@@ -51,7 +51,7 @@ enum ThoughtCategory: String, Codable, CaseIterable, Identifiable {
     /// that displaces the first in its own domain — fear lives in the mind, so
     /// the ground taken there is peace, not courage. Courage is a response to
     /// fear and keeps fear in the frame; peace is what replaces it.
-    var terrainName: String {
+    public var terrainName: String {
         switch self {
         case .fear:         return "peace"
         case .condemnation: return "grace"
@@ -68,7 +68,7 @@ enum ThoughtCategory: String, Codable, CaseIterable, Identifiable {
     /// The declaration categories this terrain draws its counters from. Used by
     /// the escape hatch to turn a `DeclarationCategory` from the shared matcher
     /// into one of these nine.
-    static func from(_ declarationCategory: DeclarationCategory) -> ThoughtCategory? {
+    public static func from(_ declarationCategory: DeclarationCategory) -> ThoughtCategory? {
         switch declarationCategory {
         case .fear, .godsprotection, .warfare, .anxiety:
             return .fear
@@ -111,23 +111,41 @@ enum ThoughtCategory: String, Codable, CaseIterable, Identifiable {
 /// so a reference could resolve to nothing at the exact moment the user needs a
 /// line to speak. Every counter in `thoughts.json` is copied verbatim out of
 /// `declarationsv10.json` by the build script, so the two cannot drift.
-struct IncomingThought: Codable, Identifiable, Equatable {
-    let id: String
+public struct IncomingThought: Codable, Identifiable, Equatable {
+    public let id: String
     /// The lie, as it actually sounds in someone's head. Second person, because
     /// that is how it arrives — and because a first-person thought would read as
     /// the user's own, which this feature never does.
-    let text: String
-    let category: ThoughtCategory
+    public let text: String
+    public let category: ThoughtCategory
     /// 1...3. A new user never opens on the heaviest thought in the bank.
-    let intensity: Int
+    public let intensity: Int
     /// The line they speak out loud. Verbatim from the declaration library.
-    let counterDeclaration: String
-    let verseText: String
+    public let counterDeclaration: String
+    public let verseText: String
     /// Reference only, e.g. "Isaiah 49:15".
-    let book: String
+    public let book: String
     /// `DeclarationCategory` rawValue the counter was drawn from. Kept so the
     /// bank stays auditable against the library it was built from.
-    let declarationCategory: String
+    public let declarationCategory: String
+
+    public init(id: String,
+                text: String,
+                category: ThoughtCategory,
+                intensity: Int,
+                counterDeclaration: String,
+                verseText: String,
+                book: String,
+                declarationCategory: String) {
+        self.id = id
+        self.text = text
+        self.category = category
+        self.intensity = intensity
+        self.counterDeclaration = counterDeclaration
+        self.verseText = verseText
+        self.book = book
+        self.declarationCategory = declarationCategory
+    }
 }
 
 extension IncomingThought {
@@ -142,7 +160,7 @@ extension IncomingThought {
     /// entry's. That id is what reaches the log and the rotation history, and
     /// neither should record a bank thought as "served" when the user never saw
     /// it — nor should it carry anything traceable to what they typed.
-    func wearing(_ userText: String) -> IncomingThought {
+    public func wearing(_ userText: String) -> IncomingThought {
         IncomingThought(
             id: CapturedThought.escapeHatchDeclarationId,
             text: userText,
@@ -158,9 +176,14 @@ extension IncomingThought {
 
 /// Root of `thoughts.json`. Mirrors `EnforcementCatalog` so content ships and
 /// versions the same way.
-struct ThoughtBank: Codable {
-    let version: Int
-    let thoughts: [IncomingThought]
+public struct ThoughtBank: Codable {
+    public let version: Int
+    public let thoughts: [IncomingThought]
+
+    public init(version: Int, thoughts: [IncomingThought]) {
+        self.version = version
+        self.thoughts = thoughts
+    }
 }
 
 // MARK: - Log
@@ -172,25 +195,34 @@ struct ThoughtBank: Codable {
 /// app ever sees. The category syncs; the sentence never leaves the phone and
 /// never reaches analytics. Adding a `text` field here would quietly break that
 /// promise on every device the user owns, so it must not be added.
-struct CapturedThought: Codable, Identifiable, Equatable {
-    enum Source: String, Codable {
+public struct CapturedThought: Codable, Identifiable, Equatable {
+    public enum Source: String, Codable {
         case daily
         case escapeHatch
         case interrupt
     }
 
-    let id: UUID
-    let date: Date
-    let source: Source
-    let category: ThoughtCategory
+    public let id: UUID
+    public let date: Date
+    public let source: Source
+    public let category: ThoughtCategory
     /// The bank entry's id, or `Self.escapeHatchDeclarationId` when the
     /// declaration came from a live match rather than the bank.
-    let thoughtId: String
+    public let thoughtId: String
     /// True when the user actually voiced it (mic or press-and-hold). The health
     /// metric for the whole feature.
-    let spoken: Bool
+    public let spoken: Bool
 
-    static let escapeHatchDeclarationId = "escape_hatch"
+    public init(id: UUID, date: Date, source: Source, category: ThoughtCategory, thoughtId: String, spoken: Bool) {
+        self.id = id
+        self.date = date
+        self.source = source
+        self.category = category
+        self.thoughtId = thoughtId
+        self.spoken = spoken
+    }
+
+    public static let escapeHatchDeclarationId = "escape_hatch"
 }
 
 // MARK: - Ground taken
@@ -201,19 +233,19 @@ struct CapturedThought: Codable, Identifiable, Equatable {
 /// machinery as `totalAffirmationsSpoken` (see `ProgressSyncStore`), which is
 /// append-only by construction — so there is no code path that can take ground
 /// back, and no calendar that can expire it.
-enum GroundTaken {
+public enum GroundTaken {
     /// Whitelisted in `ProgressSyncStore.syncedCounterKeys`, which is what makes
     /// it merge across devices instead of resetting on a restore.
-    static let counterKey = "totalThoughtsTakenCaptive"
+    public static let counterKey = "totalThoughtsTakenCaptive"
 
-    static func total(defaults: UserDefaults = .standard) -> Int {
+    public static func total(defaults: UserDefaults = .standard) -> Int {
         defaults.integer(forKey: counterKey)
     }
 
     /// Adds one. Returns the new total so the completion screen can show the
     /// number it just earned rather than re-reading and racing the write.
     @discardableResult
-    static func take(defaults: UserDefaults = .standard) -> Int {
+    public static func take(defaults: UserDefaults = .standard) -> Int {
         let next = defaults.integer(forKey: counterKey) + 1
         defaults.set(next, forKey: counterKey)
         return next

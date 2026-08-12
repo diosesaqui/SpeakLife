@@ -1,26 +1,35 @@
 //
 //  EnhancedStreakViewModel.swift
-//  SpeakLife
+//  SpeakLifeServices
 //
-//  Enhanced streak view model with daily checklist functionality
+//  Enhanced streak view model with daily checklist functionality.
+//
+//  Foundation + Combine only (`ObservableObject` and `@Published` come
+//  from Combine, not SwiftUI). The 1800-line UIKit share-image renderer
+//  that used to live at the bottom of this file moved to the app-side
+//  `StreakShareCardRenderer`; the view model calls through
+//  `shareImageRenderer` — a closure the app installs at startup with
+//  `EnhancedStreakViewModel.shareImageRenderer = { StreakShareCardRenderer.render($0) }`.
 //
 
-import SwiftUI
+import Foundation
 import Combine
+import SpeakLifeCore
+import SpeakLifePersistence
 
-final class EnhancedStreakViewModel: ObservableObject {
+public final class EnhancedStreakViewModel: ObservableObject {
     // MARK: - Published Properties
-    @Published var todayChecklist: DailyChecklist
-    @Published var streakStats: StreakStats
-    @Published var showCompletionCelebration = false
-    @Published var celebrationData: CompletionCelebration?
-    @Published var showFireAnimation = false
-    @Published var badgeManager: BadgeManager
-    @Published var showBadgeUnlock = false
-    @Published var showFirstTaskConfetti = false
+    @Published public var todayChecklist: DailyChecklist
+    @Published public var streakStats: StreakStats
+    @Published public var showCompletionCelebration = false
+    @Published public var celebrationData: CompletionCelebration?
+    @Published public var showFireAnimation = false
+    @Published public var badgeManager: BadgeManager
+    @Published public var showBadgeUnlock = false
+    @Published public var showFirstTaskConfetti = false
     // Fix 4: Show banner when streak freeze was auto-applied
-    @Published var showFreezeUsedMessage = false
-    
+    @Published public var showFreezeUsedMessage = false
+
     // MARK: - Private Properties
     private let userDefaults = UserDefaults.standard
     private let checklistKey = "dailyChecklist"
@@ -42,14 +51,36 @@ final class EnhancedStreakViewModel: ObservableObject {
 
     /// Streak days that earn a full-screen celebration. Every other completed
     /// day gets only a haptic + the auto-collapsing completed banner.
-    static let celebrationMilestones: Set<Int> = [1, 3, 7, 14, 30, 50, 100, 200, 365]
+    public static let celebrationMilestones: Set<Int> = [1, 3, 7, 14, 30, 50, 100, 200, 365]
 
     /// Where streak decisions send their push side effects. Production always
     /// uses the real service; tests swap in a double, because the ordering of
     /// these calls against the iCloud heal is the thing worth pinning down and
     /// UNUserNotificationCenter offers no way to observe it.
-    static var notifications: StreakNotifying = LifecycleNotificationService.shared
-    
+    public static var notifications: StreakNotifying = NoOpStreakNotifier.shared
+
+    /// Foundation-typed hook the app installs at startup with the UIKit
+    /// share-card renderer. Nil in the package (and in tests), which means
+    /// `celebrationData.shareImage` comes back nil — the share sheet already
+    /// handles that path. Public so `EnhancedStreakView` can install a
+    /// per-instance renderer if the app ever needs one.
+    public typealias ShareImageRenderer = (StreakShareRenderArgs) -> Any?
+    public static var shareImageRenderer: ShareImageRenderer?
+
+    /// Notification names that used to reference `UIApplication` directly.
+    /// Injected as `Notification.Name` values so this file does not import
+    /// UIKit. The app installs the real names at startup via
+    /// `EnhancedStreakViewModel.LifecycleNames.install(...)`; the defaults
+    /// use empty names (which never fire), safe for `swift test`.
+    public struct LifecycleNames {
+        public static var didBecomeActive: Notification.Name = Notification.Name("__speaklife_never_fires_didBecomeActive__")
+        public static var calendarDayChanged: Notification.Name = .NSCalendarDayChanged
+
+        public static func install(didBecomeActive: Notification.Name) {
+            Self.didBecomeActive = didBecomeActive
+        }
+    }
+
     // MARK: - User Preferences
     /// Retrieves user's top 2 selected categories from UserDefaults
     /// - Returns: Array of category strings (max 2) for task personalization
@@ -64,7 +95,7 @@ final class EnhancedStreakViewModel: ObservableObject {
     /// day 1's foundation audio. This gives the audio plan a day that rolls
     /// over with the calendar. A broken streak resets it to 1, restarting the
     /// foundation week from the top.
-    var workingStreakDay: Int {
+    public var workingStreakDay: Int {
         if let last = streakStats.lastCompletedDate,
            Calendar.current.isDateInToday(last) {
             return max(1, streakStats.currentStreak)
@@ -73,11 +104,11 @@ final class EnhancedStreakViewModel: ObservableObject {
     }
 
     // MARK: - Initialization
-    init() {
+    public init() {
         self.todayChecklist = Self.createTodayChecklist()
         self.streakStats = StreakStats()
         self.badgeManager = BadgeManager()
-        
+
         loadData()  // This now handles checkStreakValidity internally when needed
 
         // Heal the badge against the authoritative per-day burst history right
@@ -98,18 +129,18 @@ final class EnhancedStreakViewModel: ObservableObject {
         DispatchQueue.main.async { [weak self] in self?.showFreezeUsedBannerIfNeeded() }
 
         checkForNewBadges()
-        
+
         // Refresh tasks with user categories after loading
         refreshTasksWithUserCategories()
-        
+
         // Schedule evening notification for today with current progress
         scheduleEveningCheckIn()
-        
+
         // Listen for app becoming active to check for new day
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(appDidBecomeActive),
-            name: UIApplication.didBecomeActiveNotification,
+            name: LifecycleNames.didBecomeActive,
             object: nil
         )
 
@@ -118,7 +149,7 @@ final class EnhancedStreakViewModel: ObservableObject {
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(appDidBecomeActive),
-            name: .NSCalendarDayChanged,
+            name: LifecycleNames.calendarDayChanged,
             object: nil
         )
 
@@ -165,7 +196,7 @@ final class EnhancedStreakViewModel: ObservableObject {
             // "1 of 2 spoken" on a phone where the second was already spoken.
             // Nothing else carries this state, which is exactly why it syncs
             // correctly — there is only one copy of the truth.
-            if keys.contains(PersonalDeclarationRepository.storageKey) {
+            if keys.contains(PersonalDeclarationStorageKey.value) {
                 refreshTasksForCampaignChange()
             }
 
@@ -296,7 +327,7 @@ final class EnhancedStreakViewModel: ObservableObject {
     /// celebration — the device that earned it already celebrated.
     private var checklistCompletionSyncedRemotely = false
 
-    func consumeRemoteCompletionFlag() -> Bool {
+    public func consumeRemoteCompletionFlag() -> Bool {
         let wasRemote = checklistCompletionSyncedRemotely
         checklistCompletionSyncedRemotely = false
         return wasRemote
@@ -367,27 +398,27 @@ final class EnhancedStreakViewModel: ObservableObject {
               let epoch = object["completedAt"] as? Double else { return nil }
         return Date(timeIntervalSince1970: epoch)
     }
-    
+
     // MARK: - Task Personalization
     /// Refreshes daily tasks with user category personalization while preserving completion status
-    func refreshTasksWithUserCategories() {
+    public func refreshTasksWithUserCategories() {
         let userCategories = getUserTopCategories()
         guard !userCategories.isEmpty else { return }
-        
+
         // Re-personalize all current tasks based on streak level
         let currentStreak = streakStats.currentStreak > 0 ? streakStats.currentStreak : 1
         let freshTasks = TaskLibrary.getCoreTasksForStreak(currentStreak, userCategories: userCategories,
                                                            foundationAudioDay: workingStreakDay,
                                                            enforcementDay: EnforcementService.shared.enabledActiveDay,
-                                                           personalDeclarations: PersonalDeclarationRepository.todayProgress(),
+                                                           personalDeclarations: PersonalDeclarationProgressBridge.todayProgress(),
                                                            guardCompletedToday: TakeItCaptiveService.shared.enabledCompletedToday,
                                                            totalDaysCompleted: totalDaysCompleted)
-        
+
         // Preserve completion status from existing tasks
-        let existingCompletions = Dictionary(uniqueKeysWithValues: todayChecklist.tasks.map { 
-            ($0.id, ($0.isCompleted, $0.completedAt)) 
+        let existingCompletions = Dictionary(uniqueKeysWithValues: todayChecklist.tasks.map {
+            ($0.id, ($0.isCompleted, $0.completedAt))
         })
-        
+
         todayChecklist.tasks = freshTasks.map { task in
             var updatedTask = task
             // The declaration and Guarding rows are derived — from how many
@@ -404,7 +435,7 @@ final class EnhancedStreakViewModel: ObservableObject {
             }
             return updatedTask
         }
-        
+
         saveData()
     }
 
@@ -420,13 +451,13 @@ final class EnhancedStreakViewModel: ObservableObject {
     ///
     /// Deliberately not `refreshTasksWithUserCategories`, which returns early
     /// when the user has no chosen categories and so cannot be relied on here.
-    func refreshTasksForCampaignChange() {
+    public func refreshTasksForCampaignChange() {
         let currentStreak = streakStats.currentStreak > 0 ? streakStats.currentStreak : 1
         let freshTasks = TaskLibrary.getCoreTasksForStreak(currentStreak,
                                                            userCategories: getUserTopCategories(),
                                                            foundationAudioDay: workingStreakDay,
                                                            enforcementDay: EnforcementService.shared.enabledActiveDay,
-                                                           personalDeclarations: PersonalDeclarationRepository.todayProgress(),
+                                                           personalDeclarations: PersonalDeclarationProgressBridge.todayProgress(),
                                                            guardCompletedToday: TakeItCaptiveService.shared.enabledCompletedToday,
                                                            totalDaysCompleted: totalDaysCompleted)
 
@@ -459,13 +490,13 @@ final class EnhancedStreakViewModel: ObservableObject {
     deinit {
         NotificationCenter.default.removeObserver(self)
     }
-    
+
     // MARK: - Public Methods
-    func autoCompleteFirstTaskIfDemoCompleted(hasCompletedDemo: Bool) {
+    public func autoCompleteFirstTaskIfDemoCompleted(hasCompletedDemo: Bool) {
         // Check if we've already auto-completed once globally
         let hasAlreadyAutoCompleted = userDefaults.bool(forKey: hasAutoCompletedFirstTaskKey)
         guard !hasAlreadyAutoCompleted else { return }
-        
+
         // Only auto-complete if demo was completed and no tasks have been completed yet
         // The Burst by id, not whatever happens to be first. The demo IS the
         // Burst, and the first row is no longer it — the declaration sits ahead
@@ -476,36 +507,30 @@ final class EnhancedStreakViewModel: ObservableObject {
               todayChecklist.completedTasksCount == 0,
               let firstTask = todayChecklist.tasks.first(where: { $0.id == "complete_daily_burst" }),
               !firstTask.isCompleted else { return }
-        
+
         // Mark that we've auto-completed so it won't happen again
         userDefaults.set(true, forKey: hasAutoCompletedFirstTaskKey)
-        
+
         // Auto-complete the first task with animation delay for UX
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
-            withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
-                self?.completeTaskWithCelebration(taskId: firstTask.id)
-            }
+            self?.completeTaskWithCelebration(taskId: firstTask.id)
         }
     }
-    
+
     private func completeTaskWithCelebration(taskId: String) {
         // Complete the task with immediate celebration
         completeTask(taskId: taskId)
-        
+
         // Show confetti animation immediately for first task completion
-        withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
-            self.showFirstTaskConfetti = true
-        }
-        
+        self.showFirstTaskConfetti = true
+
         // Hide confetti after 2.5 seconds with smooth fade
         DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) { [weak self] in
-            withAnimation(.easeOut(duration: 0.8)) {
-                self?.showFirstTaskConfetti = false
-            }
+            self?.showFirstTaskConfetti = false
         }
     }
-    
-    func completeTask(taskId: String) {
+
+    public func completeTask(taskId: String) {
         // The declaration row is earned by speaking, not by ticking. Its state
         // comes from `lastSpokenDate` on each record, so a manual completion
         // here would be overwritten by the next rebuild anyway — and worse, it
@@ -521,13 +546,13 @@ final class EnhancedStreakViewModel: ObservableObject {
         guard taskId != TaskLibrary.guardTaskId else { return }
         guard let taskIndex = todayChecklist.tasks.firstIndex(where: { $0.id == taskId }),
               !todayChecklist.tasks[taskIndex].isCompleted else { return }
-        
+
         let task = todayChecklist.tasks[taskIndex]
-        
-        // Routed through AnalyticsService so the daily-habit loop is visible in
+
+        // Routed through CoreAnalytics so the daily-habit loop is visible in
         // PostHog (retention/funnels), not Firebase alone. The Firebase sink
         // still receives it via FirebaseAnalyticsProvider.
-        AnalyticsService.shared.track("checklist_task_completed", parameters: [
+        CoreAnalytics.track("checklist_task_completed", parameters: [
             "task_id": taskId,
             "task_category": task.category.rawValue,
             "task_type": task.type.rawValue,
@@ -540,7 +565,7 @@ final class EnhancedStreakViewModel: ObservableObject {
             // Foundation week: which curated audio this listen task pointed at
             "recommended_audio_id": task.recommendedAudioId ?? "none"
         ])
-        
+
         todayChecklist.tasks[taskIndex].isCompleted = true
         todayChecklist.tasks[taskIndex].completedAt = Date()
 
@@ -556,9 +581,9 @@ final class EnhancedStreakViewModel: ObservableObject {
         }
 
         // Premium celebration feedback
-        PremiumHaptics.affirmationCompleted()
-        AudioDelightManager.shared.playGentleSuccess()
-        
+        StreakFeedback.onTaskCompleted()
+        StreakFeedback.playGentleSuccess()
+
         // Streak is earned as soon as the Daily Burst is completed.
         // All other tasks (devotional, audio, gratitude, etc.) are bonus — they
         // show progress in the checklist UI but don't gate the streak.
@@ -573,17 +598,17 @@ final class EnhancedStreakViewModel: ObservableObject {
             let enforcementId = EnforcementService.shared.progress.activeEnforcementId
             switch EnforcementService.shared.advanceIfNeeded() {
             case .advanced(let day):
-                AnalyticsService.shared.track("enforcement_day_completed", parameters: [
+                CoreAnalytics.track("enforcement_day_completed", parameters: [
                     "enforcement_id": enforcementId ?? "unknown",
                     "day": day - 1
                 ])
             case .completed(let id, let elapsedDays):
-                AnalyticsService.shared.track("enforcement_day_completed", parameters: [
+                CoreAnalytics.track("enforcement_day_completed", parameters: [
                     "enforcement_id": id, "day": Enforcement.length
                 ])
                 // elapsed_days > 7 means they dropped off and came back, which is
                 // the behavior worth measuring — not just clean 7-day runs.
-                AnalyticsService.shared.track("enforcement_completed", parameters: [
+                CoreAnalytics.track("enforcement_completed", parameters: [
                     "enforcement_id": id, "elapsed_days": elapsedDays
                 ])
             case .notActive, .alreadyAdvancedToday:
@@ -593,12 +618,12 @@ final class EnhancedStreakViewModel: ObservableObject {
 
         saveData()
         checkForNewBadges()
-        
+
         // Update evening notification based on current progress
         scheduleEveningCheckIn()
     }
-    
-    func uncompleteTask(taskId: String) {
+
+    public func uncompleteTask(taskId: String) {
         // Same reason as `completeTask`: derived state, not user-settable.
         guard taskId != TaskLibrary.personalDeclarationTaskId else { return }
         // And ground taken is never given back — there is no code path in this
@@ -628,7 +653,7 @@ final class EnhancedStreakViewModel: ObservableObject {
         saveData()
     }
 
-    func resetDay() {
+    public func resetDay() {
         // Clear today's synced completion events so the reset sticks instead
         // of being re-overlaid from iCloud.
         for task in todayChecklist.tasks where task.isCompleted && task.id != "complete_daily_burst" {
@@ -641,34 +666,34 @@ final class EnhancedStreakViewModel: ObservableObject {
         todayChecklist = createProgressiveChecklist(for: currentStreak)
         saveData()
     }
-    
+
     // MARK: - Progressive Task System
-    func updateTasksForNewStreak() {
+    public func updateTasksForNewStreak() {
         let currentStreak = streakStats.currentStreak
         let previousStreak = currentStreak - 1
-        
+
         // Check if we've entered a new phase
         let currentPhase = ProgressionPhase.getPhase(for: currentStreak)
         let previousPhase = ProgressionPhase.getPhase(for: previousStreak)
-        
+
         // Analytics for phase progression
         if currentPhase != previousPhase {
-            AnalyticsService.shared.track("phase_progression", parameters: [
+            CoreAnalytics.track("phase_progression", parameters: [
                 "previous_phase": previousPhase.rawValue,
                 "new_phase": currentPhase.rawValue,
                 "streak_day": currentStreak
             ])
         }
-        
+
         // Get newly unlocked tasks
         let newTasks = TaskLibrary.getNewlyUnlockedTasks(currentStreak: currentStreak, previousStreak: previousStreak)
-        
+
         if !newTasks.isEmpty {
             todayChecklist.newTasksUnlocked = newTasks.map { $0.id }
-            
+
             // Analytics for new task unlocks
             for newTask in newTasks {
-                AnalyticsService.shared.track("task_unlocked", parameters: [
+                CoreAnalytics.track("task_unlocked", parameters: [
                     "task_id": newTask.id,
                     "task_category": newTask.category.rawValue,
                     "task_type": newTask.type.rawValue,
@@ -677,7 +702,7 @@ final class EnhancedStreakViewModel: ObservableObject {
                     "current_phase": currentPhase.rawValue
                 ])
             }
-            
+
             // Mark new tasks as newly unlocked for UI celebration
             for newTask in newTasks {
                 if let index = todayChecklist.tasks.firstIndex(where: { $0.id == newTask.id }) {
@@ -685,7 +710,7 @@ final class EnhancedStreakViewModel: ObservableObject {
                 }
             }
         }
-        
+
         // Fix 4: Award a new streak freeze at milestone days
         let freezeMilestones = [7, 14, 30, 60, 100]
         if freezeMilestones.contains(streakStats.currentStreak) {
@@ -694,19 +719,19 @@ final class EnhancedStreakViewModel: ObservableObject {
 
         // Update current phase
         todayChecklist.currentPhase = currentPhase
-        
+
         // Generate new task list for today based on current streak and user preferences
         let userCategories = getUserTopCategories()
         let updatedTasks = TaskLibrary.getCoreTasksForStreak(currentStreak, userCategories: userCategories,
                                                              foundationAudioDay: workingStreakDay,
                                                            enforcementDay: EnforcementService.shared.enabledActiveDay,
-                                                           personalDeclarations: PersonalDeclarationRepository.todayProgress(),
+                                                           personalDeclarations: PersonalDeclarationProgressBridge.todayProgress(),
                                                            guardCompletedToday: TakeItCaptiveService.shared.enabledCompletedToday,
                                                            totalDaysCompleted: totalDaysCompleted)
-        
+
         // Preserve completion status for existing tasks
         let existingCompletions = Dictionary(uniqueKeysWithValues: todayChecklist.tasks.map { ($0.id, $0.isCompleted) })
-        
+
         todayChecklist.tasks = updatedTasks.map { task in
             var updatedTask = task
             // Derived, so never inherited. See the note on the other rebuild.
@@ -720,10 +745,10 @@ final class EnhancedStreakViewModel: ObservableObject {
             }
             return updatedTask
         }
-        
+
         saveData()
     }
-    
+
     private func createProgressiveChecklist(for streakDay: Int) -> DailyChecklist {
         let today = Calendar.current.startOfDay(for: Date())
         let phase = ProgressionPhase.getPhase(for: streakDay)
@@ -731,30 +756,30 @@ final class EnhancedStreakViewModel: ObservableObject {
         let tasks = TaskLibrary.getCoreTasksForStreak(streakDay, userCategories: userCategories,
                                                       foundationAudioDay: workingStreakDay,
                                                            enforcementDay: EnforcementService.shared.enabledActiveDay,
-                                                           personalDeclarations: PersonalDeclarationRepository.todayProgress(),
+                                                           personalDeclarations: PersonalDeclarationProgressBridge.todayProgress(),
                                                            guardCompletedToday: TakeItCaptiveService.shared.enabledCompletedToday,
                                                            totalDaysCompleted: totalDaysCompleted)
-        
+
         return DailyChecklist(
             date: today,
             tasks: tasks,
             currentPhase: phase
         )
     }
-    
-    func getUpcomingUnlocks(for streakDay: Int) -> [DailyTask] {
+
+    public func getUpcomingUnlocks(for streakDay: Int) -> [DailyTask] {
         let nextFewDays = (streakDay + 1)...(streakDay + 10)
         var upcomingTasks: [DailyTask] = []
-        
+
         for day in nextFewDays {
             let newTasks = TaskLibrary.getNewlyUnlockedTasks(currentStreak: day, previousStreak: day - 1)
             upcomingTasks.append(contentsOf: newTasks)
             if upcomingTasks.count >= 3 { break } // Limit to next 3 unlocks
         }
-        
+
         return upcomingTasks
     }
-    
+
     // MARK: - Private Methods
     /// The streak number ANY user-facing surface should show.
     ///
@@ -774,14 +799,14 @@ final class EnhancedStreakViewModel: ObservableObject {
     /// said 10 while the burst celebration's "Day Streak" card said 3.
     ///
     /// Read this. Do not read either source directly for display.
-    var displayStreak: Int {
+    public var displayStreak: Int {
         max(streakStats.currentStreak, BurstCompletionTracker.shared.currentStreak)
     }
 
     private func completeDay() {
         let today = Date()
         todayChecklist.completedAt = today
-        
+
         // Capture longestStreak BEFORE updateStreak modifies it (fixes isNewRecord always being false)
         let longestStreakBefore = streakStats.longestStreak
         streakStats.updateStreak(for: today)
@@ -810,7 +835,7 @@ final class EnhancedStreakViewModel: ObservableObject {
         // THE core retention event — fires the moment a streak day is earned.
         // Previously untracked, which is why D1/D7 streak retention was invisible
         // in PostHog. Everything in the retention funnel hangs off this.
-        AnalyticsService.shared.track("streak_day_completed", parameters: [
+        CoreAnalytics.track("streak_day_completed", parameters: [
             "streak_day": currentStreakNumber,
             "is_new_record": isNewRecord,
             "longest_streak": streakStats.longestStreak,
@@ -821,13 +846,13 @@ final class EnhancedStreakViewModel: ObservableObject {
         ])
 
         // Premium celebration for daily goal completion
-        PremiumHaptics.dailyGoalCompleted()
-        AudioDelightManager.shared.playForStreakMilestone(currentStreakNumber)
-        
+        StreakFeedback.onDayCompleted()
+        StreakFeedback.playForStreakMilestone(currentStreakNumber)
+
         if isNewRecord {
-            PremiumHaptics.newRecordSet()
+            StreakFeedback.onNewRecord()
         }
-        
+
         // Decide whether this day earns a full-screen celebration.
         // Meaningful = a not-yet-celebrated milestone day. Ordinary days get only
         // the haptic above (including the distinct new-record haptic) plus the
@@ -848,6 +873,7 @@ final class EnhancedStreakViewModel: ObservableObject {
         if isNewMilestone {
             // Create celebration data (share image is expensive — only build it
             // when we're actually going to show the celebration)
+            let motivational = getMotivationalMessage()
             celebrationData = CompletionCelebration(
                 streakNumber: currentStreakNumber,
                 isNewRecord: isNewRecord,
@@ -855,7 +881,13 @@ final class EnhancedStreakViewModel: ObservableObject {
                     for: currentStreakNumber,
                     isRecord: isNewRecord
                 ),
-                shareImage: generateShareImage()
+                shareImage: Self.shareImageRenderer?(
+                    StreakShareRenderArgs(
+                        currentStreak: currentStreakNumber,
+                        milestone: getMilestone(for: currentStreakNumber),
+                        motivationalMessage: motivational
+                    )
+                )
             )
 
             // Show fire animation first, then celebration, then badges
@@ -897,7 +929,21 @@ final class EnhancedStreakViewModel: ObservableObject {
             self?.checkForNewBadges()
         }
     }
-    
+
+    /// UIKit-free public entry so the app can render a share image for a
+    /// button tap even outside of the milestone celebration path. Wraps
+    /// `Self.shareImageRenderer` with the same StreakShareRenderArgs the
+    /// milestone path builds.
+    public func generateShareImage() -> Any? {
+        Self.shareImageRenderer?(
+            StreakShareRenderArgs(
+                currentStreak: streakStats.currentStreak,
+                milestone: getMilestone(for: streakStats.currentStreak),
+                motivationalMessage: getMotivationalMessage()
+            )
+        )
+    }
+
     /// The merged, cross-device record of the days the user actually completed.
     ///
     /// BurstCompletionTracker's history is the local mirror of every device's
@@ -1021,7 +1067,7 @@ final class EnhancedStreakViewModel: ObservableObject {
         // explain itself in the same session, not next launch.
         showFreezeUsedBannerIfNeeded()
     }
-    
+
     private static func createTodayChecklist() -> DailyChecklist {
         let today = Calendar.current.startOfDay(for: Date())
         // Start with day 1 for new users
@@ -1032,19 +1078,19 @@ final class EnhancedStreakViewModel: ObservableObject {
             currentPhase: .foundation
         )
     }
-    
+
     // MARK: - Data Persistence
     private func saveData() {
         // Save checklist
         if let checklistData = try? JSONEncoder().encode(todayChecklist) {
             userDefaults.set(checklistData, forKey: checklistKey)
         }
-        
+
         // Save streak stats
         if let statsData = try? JSONEncoder().encode(streakStats) {
             userDefaults.set(statsData, forKey: streakStatsKey)
         }
-        
+
         // Also save current streak as simple integer for notifications to use
         userDefaults.set(streakStats.currentStreak, forKey: "currentStreak")
     }
@@ -1055,7 +1101,7 @@ final class EnhancedStreakViewModel: ObservableObject {
     /// Simulates completing today AS the given streak day, running the real
     /// `completeDay()` path so celebration gating behaves exactly as in production.
     /// Use to land on day 7, 30, etc. without grinding real days.
-    func debugCompleteAs(streakDay day: Int) {
+    public func debugCompleteAs(streakDay day: Int) {
         let calendar = Calendar.current
         if day <= 1 {
             streakStats.currentStreak = 0
@@ -1070,7 +1116,7 @@ final class EnhancedStreakViewModel: ObservableObject {
     }
 
     /// Simulates breaking the streak (as if several days were missed).
-    func debugBreakStreak() {
+    public func debugBreakStreak() {
         streakStats.currentStreak = 0
         streakStats.lastCompletedDate = Calendar.current.date(byAdding: .day, value: -5, to: Date())
         todayChecklist.completedAt = nil
@@ -1078,12 +1124,12 @@ final class EnhancedStreakViewModel: ObservableObject {
     }
 
     /// Forgets all celebrated milestones — re-arms every celebration for testing.
-    func debugClearCelebratedMilestones() {
+    public func debugClearCelebratedMilestones() {
         streakStats.celebratedMilestones = []
         saveData()
     }
     #endif
-    
+
     private func loadData() {
         // Load streak stats first (needed for creating new checklist)
         if let statsData = userDefaults.data(forKey: streakStatsKey),
@@ -1100,15 +1146,15 @@ final class EnhancedStreakViewModel: ObservableObject {
                 }
             }
         }
-        
+
         // Load checklist
         if let checklistData = userDefaults.data(forKey: checklistKey),
            let checklist = try? JSONDecoder().decode(DailyChecklist.self, from: checklistData) {
-            
+
             let calendar = Calendar.current
             let today = calendar.startOfDay(for: Date())
             let checklistDate = calendar.startOfDay(for: checklist.date)
-            
+
             if today == checklistDate {
                 // Same day - use saved checklist with completion status
                 todayChecklist = checklist
@@ -1126,695 +1172,7 @@ final class EnhancedStreakViewModel: ObservableObject {
             saveData()
         }
     }
-    
-    // MARK: - Premium Share Image Generation
-    func generateShareImage() -> UIImage? {
-        // Instagram Stories optimal dimensions (exactly 9:16 ratio)
-        let size = CGSize(width: 1080, height: 1920)
-        
-        
-        UIGraphicsBeginImageContextWithOptions(size, false, 0)
-        defer { 
-            UIGraphicsEndImageContext()
-        }
-        
-        guard let context = UIGraphicsGetCurrentContext() else { 
-            return nil 
-        }
-        
-        // Create breathtaking cinematic gradient background
-        let colors = [
-            UIColor(red: 0.02, green: 0.0, blue: 0.15, alpha: 1),   // Ultra deep midnight
-            UIColor(red: 0.15, green: 0.02, blue: 0.35, alpha: 1),  // Rich royal purple
-            UIColor(red: 0.35, green: 0.05, blue: 0.55, alpha: 1),  // Electric purple
-            UIColor(red: 0.55, green: 0.15, blue: 0.75, alpha: 1),  // Brilliant violet
-            UIColor(red: 0.45, green: 0.25, blue: 0.85, alpha: 1),  // Luminous purple
-            UIColor(red: 0.25, green: 0.08, blue: 0.65, alpha: 1),  // Deep amethyst
-            UIColor(red: 0.08, green: 0.02, blue: 0.35, alpha: 1),  // Rich darkness
-            UIColor(red: 0.02, green: 0.0, blue: 0.15, alpha: 1)    // Return to midnight
-        ]
-        
-        // Ultra-premium multi-stop gradient with perfect cinematic transitions
-        let gradient = CGGradient(colorsSpace: CGColorSpaceCreateDeviceRGB(),
-                                colors: colors.map { $0.cgColor } as CFArray,
-                                locations: [0.0, 0.15, 0.3, 0.45, 0.6, 0.75, 0.9, 1.0])!
-        
-        // Draw main gradient
-        context.drawLinearGradient(gradient,
-                                 start: CGPoint(x: 0, y: 0),
-                                 end: CGPoint(x: size.width, y: size.height),
-                                 options: [])
-        
-        // Add radial overlay for depth and drama
-        let radialGradient = CGGradient(colorsSpace: CGColorSpaceCreateDeviceRGB(),
-                                       colors: [
-                                           UIColor.clear.cgColor,
-                                           UIColor(red: 0.1, green: 0.02, blue: 0.3, alpha: 0.4).cgColor,
-                                           UIColor(red: 0.0, green: 0.0, blue: 0.1, alpha: 0.7).cgColor
-                                       ] as CFArray,
-                                       locations: [0.0, 0.6, 1.0])!
-        
-        context.drawRadialGradient(radialGradient,
-                                 startCenter: CGPoint(x: size.width * 0.5, y: size.height * 0.3),
-                                 startRadius: 0,
-                                 endCenter: CGPoint(x: size.width * 0.5, y: size.height * 0.3),
-                                 endRadius: size.width * 0.8,
-                                 options: [])
-        
-        // Add subtle texture overlay for premium feel
-        addPremiumTextureOverlay(to: context, in: size)
-        
-        // Add floating orbs/particles in background
-        addFloatingOrbs(to: context, in: size)
-        
-        // Add cinematic light rays
-        addLightRays(to: context, in: size)
-        
-        // Add stellar particle field
-        addStellarParticles(to: context, in: size)
-        
-        // Typography setup
-        let textColor = UIColor.white
-        
-        // Create stunning visual hierarchy
-        
-        // 1. Top section - App branding
-        drawTopBranding(in: context, size: size, textColor: textColor)
-        
-        // 2. Center hero - Fire animation style
-        drawCenterHero(in: context, size: size, textColor: textColor)
-        
-        // 3. Achievement section
-        drawAchievementSection(in: context, size: size, textColor: textColor)
-        
-        // 4. Bottom section - App logo and branding
-        drawBottomBranding(in: context, size: size, textColor: textColor)
-        
-        let finalImage = UIGraphicsGetImageFromCurrentImageContext()
-        
-        if let image = finalImage {
-        } else {
-        }
-        
-        return finalImage
-    }
-    
-    // MARK: - Share Image Drawing Methods
-    
-    private func addFloatingOrbs(to context: CGContext, in size: CGSize) {
-        // Add subtle floating orbs in background
-        let orbPositions = [
-            CGPoint(x: size.width * 0.15, y: size.height * 0.2),
-            CGPoint(x: size.width * 0.85, y: size.height * 0.3),
-            CGPoint(x: size.width * 0.25, y: size.height * 0.7),
-            CGPoint(x: size.width * 0.75, y: size.height * 0.8),
-            CGPoint(x: size.width * 0.1, y: size.height * 0.5),
-            CGPoint(x: size.width * 0.9, y: size.height * 0.6)
-        ]
-        
-        for (index, position) in orbPositions.enumerated() {
-            let radius = CGFloat(20 + index * 5)
-            let alpha = 0.1 - Double(index) * 0.015
-            
-            context.setFillColor(UIColor.white.withAlphaComponent(alpha).cgColor)
-            context.fillEllipse(in: CGRect(
-                x: position.x - radius,
-                y: position.y - radius,
-                width: radius * 2,
-                height: radius * 2
-            ))
-        }
-    }
-    
-    private func drawTopBranding(in context: CGContext, size: CGSize, textColor: UIColor) {
-        // Premium app name with enhanced styling
-        let appName = "SPEAKLIFE"
-        let appNameAttributes: [NSAttributedString.Key: Any] = [
-            .font: UIFont.systemFont(ofSize: 48, weight: .black),
-            .foregroundColor: textColor,
-            .kern: 3.0  // Enhanced letter spacing for luxury feel
-        ]
-        
-        let appNameSize = appName.size(withAttributes: appNameAttributes)
-        let appNameRect = CGRect(
-            x: (size.width - appNameSize.width) / 2,
-            y: size.height * 0.06,
-            width: appNameSize.width,
-            height: appNameSize.height
-        )
-        
-        // Add golden glow for premium feel
-        context.setShadow(offset: CGSize.zero, blur: 12, color: UIColor.systemYellow.withAlphaComponent(0.4).cgColor)
-        appName.draw(in: appNameRect, withAttributes: appNameAttributes)
-        context.setShadow(offset: CGSize.zero, blur: 0, color: nil)
-        
-        // Elegant tagline with premium styling
-        let tagline = "SPEAK IT • BELIEVE IT • RECEIVE IT"
-        let taglineAttributes: [NSAttributedString.Key: Any] = [
-            .font: UIFont.systemFont(ofSize: 18, weight: .semibold),
-            .foregroundColor: UIColor.systemYellow.withAlphaComponent(0.95),
-            .kern: 1.5  // Letter spacing for elegance
-        ]
-        
-        let taglineSize = tagline.size(withAttributes: taglineAttributes)
-        let taglineRect = CGRect(
-            x: (size.width - taglineSize.width) / 2,
-            y: appNameRect.maxY + 20,  // More space from app name
-            width: taglineSize.width,
-            height: taglineSize.height
-        )
-        
-        // Add subtle glow to tagline
-        context.setShadow(offset: CGSize.zero, blur: 6, color: UIColor.systemYellow.withAlphaComponent(0.5).cgColor)
-        tagline.draw(in: taglineRect, withAttributes: taglineAttributes)
-        context.setShadow(offset: CGSize.zero, blur: 0, color: nil)
-    }
-    
-    private func drawCenterHero(in context: CGContext, size: CGSize, textColor: UIColor) {
-        let centerY = size.height * 0.42
-        
-        // Draw enhanced flame shapes as background
-        drawPremiumFlameShapes(in: context, centerX: size.width / 2, centerY: centerY)
-        
-        // COLOSSAL streak number with cinematic glow effects
-        let streakText = "\(streakStats.currentStreak)"
-        let streakAttributes: [NSAttributedString.Key: Any] = [
-            .font: UIFont.systemFont(ofSize: 200, weight: .black),  // MASSIVE!
-            .foregroundColor: textColor,
-            .kern: 5.0  // Dramatic letter spacing
-        ]
-        
-        let streakSize = streakText.size(withAttributes: streakAttributes)
-        let streakRect = CGRect(
-            x: (size.width - streakSize.width) / 2,
-            y: centerY - streakSize.height / 2,
-            width: streakSize.width,
-            height: streakSize.height
-        )
-        
-        // EPIC six-layer glow effect for absolutely mind-blowing impact
-        context.setShadow(offset: CGSize.zero, blur: 40, color: UIColor.systemYellow.withAlphaComponent(0.9).cgColor)
-        streakText.draw(in: streakRect, withAttributes: streakAttributes)
-        
-        context.setShadow(offset: CGSize.zero, blur: 30, color: UIColor.systemOrange.withAlphaComponent(0.8).cgColor)
-        streakText.draw(in: streakRect, withAttributes: streakAttributes)
-        
-        context.setShadow(offset: CGSize.zero, blur: 20, color: UIColor.systemRed.withAlphaComponent(0.7).cgColor)
-        streakText.draw(in: streakRect, withAttributes: streakAttributes)
-        
-        context.setShadow(offset: CGSize.zero, blur: 12, color: UIColor.white.withAlphaComponent(0.9).cgColor)
-        streakText.draw(in: streakRect, withAttributes: streakAttributes)
-        
-        context.setShadow(offset: CGSize.zero, blur: 6, color: UIColor.systemPink.withAlphaComponent(0.5).cgColor)
-        streakText.draw(in: streakRect, withAttributes: streakAttributes)
-        
-        context.setShadow(offset: CGSize.zero, blur: 2, color: UIColor.systemPurple.withAlphaComponent(0.4).cgColor)
-        streakText.draw(in: streakRect, withAttributes: streakAttributes)
-        
-        context.setShadow(offset: CGSize.zero, blur: 0, color: nil)
-        
-        // Dramatic "DAYS" text with premium styling
-        let daysText = "DAYS OF SPEAKING LIFE!"
-        let daysAttributes: [NSAttributedString.Key: Any] = [
-            .font: UIFont.systemFont(ofSize: 40, weight: .black),  // Even bigger for impact
-            .foregroundColor: UIColor.white,
-            .kern: 2.5  // Enhanced letter spacing
-        ]
-        
-        let daysSize = daysText.size(withAttributes: daysAttributes)
-        let daysRect = CGRect(
-            x: (size.width - daysSize.width) / 2,
-            y: streakRect.maxY + 32,  // More spacing
-            width: daysSize.width,
-            height: daysSize.height
-        )
-        
-        // Add premium multi-layer glow to days text
-        context.setShadow(offset: CGSize.zero, blur: 15, color: UIColor.systemYellow.withAlphaComponent(0.8).cgColor)
-        daysText.draw(in: daysRect, withAttributes: daysAttributes)
-        
-        context.setShadow(offset: CGSize.zero, blur: 8, color: UIColor.systemOrange.withAlphaComponent(0.6).cgColor)
-        daysText.draw(in: daysRect, withAttributes: daysAttributes)
-        
-        context.setShadow(offset: CGSize.zero, blur: 0, color: nil)
-    }
-    
-    private func drawFlameShapes(in context: CGContext, centerX: CGFloat, centerY: CGFloat) {
-        // Draw multiple flame layers for depth
-        let flameColors = [
-            UIColor.red.withAlphaComponent(0.3),
-            UIColor.orange.withAlphaComponent(0.25),
-            UIColor.yellow.withAlphaComponent(0.2)
-        ]
-        
-        for (index, color) in flameColors.enumerated() {
-            let width = CGFloat(150 + index * 30)
-            let height = CGFloat(200 + index * 40)
-            
-            context.setFillColor(color.cgColor)
-            
-            // Create flame path
-            let flamePath = UIBezierPath()
-            flamePath.move(to: CGPoint(x: centerX, y: centerY + height/2))
-            
-            // Left side
-            flamePath.addCurve(
-                to: CGPoint(x: centerX - width/2, y: centerY),
-                controlPoint1: CGPoint(x: centerX - width/3, y: centerY + height/3),
-                controlPoint2: CGPoint(x: centerX - width/2, y: centerY + height/6)
-            )
-            
-            // Top
-            flamePath.addCurve(
-                to: CGPoint(x: centerX, y: centerY - height/2),
-                controlPoint1: CGPoint(x: centerX - width/3, y: centerY - height/3),
-                controlPoint2: CGPoint(x: centerX - width/6, y: centerY - height/2)
-            )
-            
-            // Right side
-            flamePath.addCurve(
-                to: CGPoint(x: centerX + width/2, y: centerY),
-                controlPoint1: CGPoint(x: centerX + width/6, y: centerY - height/2),
-                controlPoint2: CGPoint(x: centerX + width/3, y: centerY - height/3)
-            )
-            
-            // Close path
-            flamePath.addCurve(
-                to: CGPoint(x: centerX, y: centerY + height/2),
-                controlPoint1: CGPoint(x: centerX + width/2, y: centerY + height/6),
-                controlPoint2: CGPoint(x: centerX + width/3, y: centerY + height/3)
-            )
-            
-            context.addPath(flamePath.cgPath)
-            context.fillPath()
-        }
-    }
-    
-    private func drawAchievementSection(in context: CGContext, size: CGSize, textColor: UIColor) {
-        let achievementY = size.height * 0.68
-        
-        // Premium achievement badge with enhanced styling
-        let milestone = getMilestone(for: streakStats.currentStreak)
-        if !milestone.isEmpty {
-            let badgeText = "🏆 \(milestone.uppercased()) UNLOCKED!"
-            let badgeAttributes: [NSAttributedString.Key: Any] = [
-                .font: UIFont.systemFont(ofSize: 32, weight: .black),
-                .foregroundColor: UIColor.white,
-                .kern: 2.0  // Letter spacing for premium feel
-            ]
-            
-            let badgeSize = badgeText.size(withAttributes: badgeAttributes)
-            let badgeRect = CGRect(
-                x: (size.width - badgeSize.width) / 2,
-                y: achievementY,
-                width: badgeSize.width,
-                height: badgeSize.height
-            )
-            
-            // Add dramatic multi-layer glow to badge
-            context.setShadow(offset: CGSize.zero, blur: 18, color: UIColor.systemYellow.withAlphaComponent(0.9).cgColor)
-            badgeText.draw(in: badgeRect, withAttributes: badgeAttributes)
-            
-            context.setShadow(offset: CGSize.zero, blur: 10, color: UIColor.systemOrange.withAlphaComponent(0.7).cgColor)
-            badgeText.draw(in: badgeRect, withAttributes: badgeAttributes)
-            
-            context.setShadow(offset: CGSize.zero, blur: 4, color: UIColor.white.withAlphaComponent(0.8).cgColor)
-            badgeText.draw(in: badgeRect, withAttributes: badgeAttributes)
-            
-            context.setShadow(offset: CGSize.zero, blur: 0, color: nil)
-        }
-        
-        // Powerful motivational message with premium styling
-        let message = getMotivationalMessage()
-        
-        // Enhanced multi-line text handling with premium spacing
-        let maxWidth = size.width * 0.88  // Slightly wider for better use of space
-        let paragraphStyle = NSMutableParagraphStyle()
-        paragraphStyle.alignment = .center
-        paragraphStyle.lineSpacing = 12  // Enhanced line spacing for elegance
-        
-        let messageAttributesWithStyle: [NSAttributedString.Key: Any] = [
-            .font: UIFont.systemFont(ofSize: 26, weight: .semibold),
-            .foregroundColor: textColor,
-            .paragraphStyle: paragraphStyle,
-            .kern: 0.8  // Consistent letter spacing
-        ]
-        
-        let messageRect = CGRect(
-            x: (size.width - maxWidth) / 2,
-            y: achievementY + 60,  // Better spacing
-            width: maxWidth,
-            height: 120  // More height for text
-        )
-        
-        // Add elegant glow to message
-        context.setShadow(offset: CGSize.zero, blur: 8, color: UIColor.white.withAlphaComponent(0.4).cgColor)
-        message.draw(in: messageRect, withAttributes: messageAttributesWithStyle)
-        
-        context.setShadow(offset: CGSize.zero, blur: 3, color: UIColor.systemYellow.withAlphaComponent(0.2).cgColor)
-        message.draw(in: messageRect, withAttributes: messageAttributesWithStyle)
-        
-        context.setShadow(offset: CGSize.zero, blur: 0, color: nil)
-    }
-    
-    private func drawBottomBranding(in context: CGContext, size: CGSize, textColor: UIColor) {
-        // Try to load and draw app icon
-        let logoImageNames = ["appIconDisplay", "speaklifeicon", "AppIcon"]
-        var foundImage: UIImage?
-        
-        for imageName in logoImageNames {
-            if let image = UIImage(named: imageName) {
-                foundImage = image
-                break
-            } else {
-            }
-        }
-        
-        let logoY = size.height * 0.78  // Moved higher to prevent overlap with bottom text
-        
-        if let appIcon = foundImage {
-            let logoSize: CGFloat = 250  // Made even bigger
-            let logoRect = CGRect(
-                x: (size.width - logoSize) / 2,
-                y: logoY,
-                width: logoSize,
-                height: logoSize
-            )
-            
-            // Draw premium circular background
-            drawPremiumLogoBackground(in: context, rect: logoRect)
-            
-            // Create proper circular mask and draw icon correctly
-            context.saveGState()
-            
-            // Create circular clipping path with smaller inset for better fit
-            let iconRect = logoRect.insetBy(dx: 8, dy: 8)
-            context.addEllipse(in: iconRect)
-            context.clip()
-            
-            
-            // Use UIImage.draw() only - it handles orientation correctly
-            // CGImage can cause upside-down issues, so avoid it
-            appIcon.draw(in: iconRect)
-            
-            context.restoreGState()
-            
-        } else {
-            // Enhanced fallback text logo with matching size
-            let logoSize: CGFloat = 140  // Match the icon size
-            let logoRect = CGRect(
-                x: (size.width - logoSize) / 2,
-                y: logoY,
-                width: logoSize,
-                height: logoSize
-            )
-            
-            // Draw premium background
-            drawPremiumLogoBackground(in: context, rect: logoRect)
-            
-            // Draw "SL" text centered in circle
-            let logoText = "SL"
-            let logoAttributes: [NSAttributedString.Key: Any] = [
-                .font: UIFont.systemFont(ofSize: 56, weight: .black),  // Bigger font
-                .foregroundColor: textColor
-            ]
-            
-            let textSize = logoText.size(withAttributes: logoAttributes)
-            let textRect = CGRect(
-                x: logoRect.midX - textSize.width / 2,
-                y: logoRect.midY - textSize.height / 2,
-                width: textSize.width,
-                height: textSize.height
-            )
-            logoText.draw(in: textRect, withAttributes: logoAttributes)
-        }
-        
-        // Premium call-to-action with dramatic styling
-        let bottomText = "SHARE YOUR VICTORY!"
-        let bottomAttributes: [NSAttributedString.Key: Any] = [
-            .font: UIFont.systemFont(ofSize: 26, weight: .black),
-            .foregroundColor: UIColor.white,
-            .kern: 2.0  // Letter spacing for premium feel
-        ]
-        
-        let bottomSize = bottomText.size(withAttributes: bottomAttributes)
-        let bottomRect = CGRect(
-            x: (size.width - bottomSize.width) / 2,
-            y: logoY + 160,  // Better spacing from logo
-            width: bottomSize.width,
-            height: bottomSize.height
-        )
-        
-        // Add dramatic multi-layer glow to call-to-action
-        context.setShadow(offset: CGSize.zero, blur: 20, color: UIColor.systemYellow.withAlphaComponent(0.8).cgColor)
-        bottomText.draw(in: bottomRect, withAttributes: bottomAttributes)
-        
-        context.setShadow(offset: CGSize.zero, blur: 12, color: UIColor.systemOrange.withAlphaComponent(0.6).cgColor)
-        bottomText.draw(in: bottomRect, withAttributes: bottomAttributes)
-        
-        context.setShadow(offset: CGSize.zero, blur: 6, color: UIColor.white.withAlphaComponent(0.9).cgColor)
-        bottomText.draw(in: bottomRect, withAttributes: bottomAttributes)
-        
-        context.setShadow(offset: CGSize.zero, blur: 0, color: nil)
-    }
-    
-    private func drawPremiumLogoBackground(in context: CGContext, rect: CGRect) {
-        
-        // Draw MASSIVE outer glow for cinematic effect
-        context.setShadow(offset: CGSize.zero, blur: 50, color: UIColor.white.withAlphaComponent(0.6).cgColor)
-        
-        // Draw radial gradient background for depth
-        let logoGradient = CGGradient(colorsSpace: CGColorSpaceCreateDeviceRGB(),
-                                    colors: [
-                                        UIColor.white.withAlphaComponent(0.98).cgColor,
-                                        UIColor.white.withAlphaComponent(0.85).cgColor,
-                                        UIColor.white.withAlphaComponent(0.95).cgColor
-                                    ] as CFArray,
-                                    locations: [0.0, 0.7, 1.0])!
-        
-        context.saveGState()
-        context.addEllipse(in: rect)
-        context.clip()
-        context.drawRadialGradient(logoGradient,
-                                 startCenter: CGPoint(x: rect.midX, y: rect.midY),
-                                 startRadius: 0,
-                                 endCenter: CGPoint(x: rect.midX, y: rect.midY),
-                                 endRadius: rect.width / 2,
-                                 options: [])
-        context.restoreGState()
-        
-        // Clear shadow for next operations
-        context.setShadow(offset: CGSize.zero, blur: 0, color: nil)
-        
-        // Draw multiple elegant borders with varying opacity
-        context.setStrokeColor(UIColor.white.withAlphaComponent(0.8).cgColor)
-        context.setLineWidth(3)
-        context.strokeEllipse(in: rect.insetBy(dx: 2, dy: 2))
-        
-        context.setStrokeColor(UIColor.systemYellow.withAlphaComponent(0.4).cgColor)
-        context.setLineWidth(1)
-        context.strokeEllipse(in: rect.insetBy(dx: 5, dy: 5))
-        
-    }
-    
-    // MARK: - Premium Helper Methods
-    
-    private func addPremiumTextureOverlay(to context: CGContext, in size: CGSize) {
-        // Add cinematic noise texture and light particles
-        for _ in 0..<200 {  // Double the particles
-            let x = CGFloat.random(in: 0...size.width)
-            let y = CGFloat.random(in: 0...size.height)
-            let alpha = Double.random(in: 0.02...0.08)
-            let particleSize = CGFloat.random(in: 1...4)
-            
-            context.setFillColor(UIColor.white.withAlphaComponent(alpha).cgColor)
-            context.fillEllipse(in: CGRect(x: x, y: y, width: particleSize, height: particleSize))
-        }
-        
-        // Add brilliant light streaks
-        for _ in 0..<15 {
-            let startX = CGFloat.random(in: 0...size.width)
-            let startY = CGFloat.random(in: 0...size.height)
-            let endX = startX + CGFloat.random(in: -100...100)
-            let endY = startY + CGFloat.random(in: -100...100)
-            
-            context.setStrokeColor(UIColor.white.withAlphaComponent(0.03).cgColor)
-            context.setLineWidth(1)
-            context.move(to: CGPoint(x: startX, y: startY))
-            context.addLine(to: CGPoint(x: endX, y: endY))
-            context.strokePath()
-        }
-    }
-    
-    private func addStellarParticles(to context: CGContext, in size: CGSize) {
-        // Add brilliant star-like particles throughout the image
-        for _ in 0..<50 {
-            let x = CGFloat.random(in: 0...size.width)
-            let y = CGFloat.random(in: 0...size.height)
-            let starSize = CGFloat.random(in: 2...6)
-            let alpha = Double.random(in: 0.3...0.9)
-            
-            // Draw cross-shaped star
-            context.setStrokeColor(UIColor.white.withAlphaComponent(alpha).cgColor)
-            context.setLineWidth(1)
-            
-            // Horizontal line
-            context.move(to: CGPoint(x: x - starSize, y: y))
-            context.addLine(to: CGPoint(x: x + starSize, y: y))
-            context.strokePath()
-            
-            // Vertical line
-            context.move(to: CGPoint(x: x, y: y - starSize))
-            context.addLine(to: CGPoint(x: x, y: y + starSize))
-            context.strokePath()
-            
-            // Center dot
-            context.setFillColor(UIColor.white.withAlphaComponent(alpha).cgColor)
-            context.fillEllipse(in: CGRect(x: x - 1, y: y - 1, width: 2, height: 2))
-        }
-        
-        // Add brilliant golden stars
-        for _ in 0..<25 {
-            let x = CGFloat.random(in: 0...size.width)
-            let y = CGFloat.random(in: 0...size.height)
-            let starSize = CGFloat.random(in: 3...8)
-            let alpha = Double.random(in: 0.4...0.8)
-            
-            context.setStrokeColor(UIColor.systemYellow.withAlphaComponent(alpha).cgColor)
-            context.setLineWidth(1.5)
-            
-            // Four-pointed star
-            context.move(to: CGPoint(x: x - starSize, y: y))
-            context.addLine(to: CGPoint(x: x + starSize, y: y))
-            context.strokePath()
-            
-            context.move(to: CGPoint(x: x, y: y - starSize))
-            context.addLine(to: CGPoint(x: x, y: y + starSize))
-            context.strokePath()
-            
-            // Diagonal lines for 8-pointed star
-            context.move(to: CGPoint(x: x - starSize * 0.7, y: y - starSize * 0.7))
-            context.addLine(to: CGPoint(x: x + starSize * 0.7, y: y + starSize * 0.7))
-            context.strokePath()
-            
-            context.move(to: CGPoint(x: x - starSize * 0.7, y: y + starSize * 0.7))
-            context.addLine(to: CGPoint(x: x + starSize * 0.7, y: y - starSize * 0.7))
-            context.strokePath()
-        }
-    }
-    
-    private func addLightRays(to context: CGContext, in size: CGSize) {
-        // Add dramatic cinematic light rays emanating from center
-        let centerX = size.width / 2
-        let centerY = size.height * 0.42  // Same as streak number position
-        
-        for i in 0..<12 {
-            let angle = Double(i) * .pi / 6  // 12 rays, 30 degrees apart
-            let rayLength = size.width * 0.8
-            
-            let endX = centerX + cos(angle) * rayLength
-            let endY = centerY + sin(angle) * rayLength
-            
-            // Create gradient for each ray
-            let rayGradient = CGGradient(colorsSpace: CGColorSpaceCreateDeviceRGB(),
-                                       colors: [
-                                           UIColor.white.withAlphaComponent(0.15).cgColor,
-                                           UIColor.systemYellow.withAlphaComponent(0.08).cgColor,
-                                           UIColor.clear.cgColor
-                                       ] as CFArray,
-                                       locations: [0.0, 0.3, 1.0])!
-            
-            context.saveGState()
-            
-            // Create ray path
-            let rayPath = UIBezierPath()
-            rayPath.move(to: CGPoint(x: centerX, y: centerY))
-            rayPath.addLine(to: CGPoint(x: centerX + cos(angle + 0.05) * rayLength, y: centerY + sin(angle + 0.05) * rayLength))
-            rayPath.addLine(to: CGPoint(x: endX, y: endY))
-            rayPath.addLine(to: CGPoint(x: centerX + cos(angle - 0.05) * rayLength, y: centerY + sin(angle - 0.05) * rayLength))
-            rayPath.close()
-            
-            context.addPath(rayPath.cgPath)
-            context.clip()
-            
-            context.drawLinearGradient(rayGradient,
-                                     start: CGPoint(x: centerX, y: centerY),
-                                     end: CGPoint(x: endX, y: endY),
-                                     options: [])
-            
-            context.restoreGState()
-        }
-    }
-    
-    private func drawPremiumFlameShapes(in context: CGContext, centerX: CGFloat, centerY: CGFloat) {
-        // EPIC flame shapes with cinematic gradients
-        let flameConfigs = [
-            (width: 180, height: 240, colors: [UIColor.systemRed, UIColor.systemOrange, UIColor.systemYellow], alpha: 0.5),
-            (width: 220, height: 280, colors: [UIColor.systemOrange, UIColor.systemYellow, UIColor.white], alpha: 0.4),
-            (width: 260, height: 320, colors: [UIColor.systemYellow, UIColor.white, UIColor.systemYellow], alpha: 0.35),
-            (width: 300, height: 360, colors: [UIColor.white, UIColor.systemYellow, UIColor.systemOrange], alpha: 0.3),
-            (width: 340, height: 400, colors: [UIColor.systemYellow, UIColor.white, UIColor.systemPink], alpha: 0.25),
-            (width: 380, height: 440, colors: [UIColor.white, UIColor.systemPink, UIColor.systemPurple], alpha: 0.2)
-        ]
-        
-        for (_, config) in flameConfigs.enumerated() {
-            let gradient = CGGradient(colorsSpace: CGColorSpaceCreateDeviceRGB(),
-                                    colors: config.colors.map { $0.withAlphaComponent(config.alpha).cgColor } as CFArray,
-                                    locations: [0.0, 0.5, 1.0])!
-            
-            let flamePath = createFlameShape(centerX: centerX, centerY: centerY, width: config.width, height: config.height)
-            
-            context.saveGState()
-            context.addPath(flamePath)
-            context.clip()
-            context.drawLinearGradient(gradient,
-                                     start: CGPoint(x: centerX, y: centerY + CGFloat(config.height)/2),
-                                     end: CGPoint(x: centerX, y: centerY - CGFloat(config.height)/2),
-                                     options: [])
-            context.restoreGState()
-        }
-    }
-    
-    private func createFlameShape(centerX: CGFloat, centerY: CGFloat, width: Int, height: Int) -> CGPath {
-        let path = UIBezierPath()
-        let w = CGFloat(width)
-        let h = CGFloat(height)
-        
-        // Start at bottom center
-        path.move(to: CGPoint(x: centerX, y: centerY + h/2))
-        
-        // Left side curves
-        path.addCurve(
-            to: CGPoint(x: centerX - w/2, y: centerY),
-            controlPoint1: CGPoint(x: centerX - w/3, y: centerY + h/3),
-            controlPoint2: CGPoint(x: centerX - w/2, y: centerY + h/6)
-        )
-        
-        // Top curve
-        path.addCurve(
-            to: CGPoint(x: centerX, y: centerY - h/2),
-            controlPoint1: CGPoint(x: centerX - w/3, y: centerY - h/3),
-            controlPoint2: CGPoint(x: centerX - w/6, y: centerY - h/2)
-        )
-        
-        // Right side curves
-        path.addCurve(
-            to: CGPoint(x: centerX + w/2, y: centerY),
-            controlPoint1: CGPoint(x: centerX + w/6, y: centerY - h/2),
-            controlPoint2: CGPoint(x: centerX + w/3, y: centerY - h/3)
-        )
-        
-        // Bottom right curve
-        path.addCurve(
-            to: CGPoint(x: centerX, y: centerY + h/2),
-            controlPoint1: CGPoint(x: centerX + w/2, y: centerY + h/6),
-            controlPoint2: CGPoint(x: centerX + w/3, y: centerY + h/3)
-        )
-        
-        path.close()
-        return path.cgPath
-    }
-    
+
     private func getMilestone(for streak: Int) -> String {
         switch streak {
         case 7...13: return "Faith Builder"
@@ -1827,7 +1185,7 @@ final class EnhancedStreakViewModel: ObservableObject {
         default: return ""
         }
     }
-    
+
     private func getMotivationalMessage() -> String {
         let messages = [
             "Every word you speak has the power to transform your reality!",
@@ -1836,14 +1194,14 @@ final class EnhancedStreakViewModel: ObservableObject {
             "Speaking life daily - this is how legends are made!",
             "Your words are creating the life you were meant to live!"
         ]
-        
+
         // Use streak number to pick consistent message
         let index = streakStats.currentStreak % messages.count
         return messages[index]
     }
-    
+
     // MARK: - Badge System Integration
-    
+
     private func checkForNewBadges() {
         // Fix 3: Use real tracked values from UserDefaults instead of hardcoded zeros
         let affirmationsSpoken = userDefaults.integer(forKey: "totalAffirmationsSpoken")
@@ -1857,19 +1215,19 @@ final class EnhancedStreakViewModel: ObservableObject {
             favoritesAdded: favoritesAdded,
             categoriesCompleted: Set<String>()
         )
-        
+
         let previousBadgeCount = badgeManager.unlockedBadgeCount
         badgeManager.checkForNewBadges(streakStats: streakStats, userStats: userStats,
                                        completedEnforcementIds: EnforcementService.shared.progress.completedEnforcementIds)
-        
+
         // Only show badge unlock if a NEW badge was unlocked this check
-        if let newBadge = badgeManager.recentlyUnlocked,
+        if let _ = badgeManager.recentlyUnlocked,
            badgeManager.unlockedBadgeCount > previousBadgeCount {
-            
-            
+
+
             // Show badge unlock after main celebrations if they're showing, otherwise immediately
             let delay: Double = (showFireAnimation || showCompletionCelebration) ? 6.0 : 1.0
-            
+
             // [weak self] for the same reason as the celebration timers: these
             // nest to eight seconds, and a strong capture makes the view model
             // — and every NotificationCenter observer it registered in init —
@@ -1890,20 +1248,28 @@ final class EnhancedStreakViewModel: ObservableObject {
             }
         }
     }
-    
-    func dismissBadgeUnlock() {
+
+    public func dismissBadgeUnlock() {
         showBadgeUnlock = false
         badgeManager.clearRecentlyUnlocked()
     }
-    
+
     // MARK: - Notification Scheduling
 
-    func scheduleEveningCheckIn() {
+    /// Foundation-typed sweep of the three legacy notification identifiers
+    /// `scheduleEveningCheckIn()` used to inline. Installed by the app at
+    /// startup (`AppDelegate.installStreakLegacyNotificationCleanup(...)`)
+    /// with `UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers:)`.
+    /// Nil in tests, so `EnhancedStreakViewModel.init` can build without
+    /// touching `UNUserNotificationCenter.current()` — which traps under
+    /// `swift test` because the executable has no bundle identifier.
+    public static var cancelLegacyDailyNotifications: (_ identifiers: [String]) -> Void = { _ in }
+
+    public func scheduleEveningCheckIn() {
         // Cancel all old daily system notifications (no longer sent daily)
-        NotificationManager.shared.notificationCenter.removePendingNotificationRequests(
-            withIdentifiers: ["FallbackEveningNotification", "streak_crushed_it",
-                              "PersonalizedEveningNotification"]
-        )
+        Self.cancelLegacyDailyNotifications(["FallbackEveningNotification",
+                                             "streak_crushed_it",
+                                             "PersonalizedEveningNotification"])
 
         // Streak is safe once the burst is done — cancel at-risk immediately.
         // Only send at-risk when user has an active streak AND hasn't done their burst yet.
@@ -1917,28 +1283,28 @@ final class EnhancedStreakViewModel: ObservableObject {
             Self.notifications.cancelStreakAtRiskNotification()
         }
     }
-    
+
 }
 
 // MARK: - Legacy Compatibility
 extension EnhancedStreakViewModel {
     // Bridge to existing StreakViewModel interface
-    var currentStreak: Int { streakStats.currentStreak }
-    var longestStreak: Int { streakStats.longestStreak }
-    var totalDaysCompleted: Int { streakStats.totalDaysCompleted }
-    var hasCurrentStreak: Bool { streakStats.currentStreak > 0 }
-    
-    var titleText: String {
+    public var currentStreak: Int { streakStats.currentStreak }
+    public var longestStreak: Int { streakStats.longestStreak }
+    public var totalDaysCompleted: Int { streakStats.totalDaysCompleted }
+    public var hasCurrentStreak: Bool { streakStats.currentStreak > 0 }
+
+    public var titleText: String {
         let streak = streakStats.currentStreak
         return streak == 1 ? "\(streak) day" : "\(streak) days"
     }
-    
-    var subTitleText: String {
+
+    public var subTitleText: String {
         let longest = streakStats.longestStreak
         return longest == 1 ? "\(longest) day" : "\(longest) days"
     }
-    
-    var subTitleDetailText: String {
+
+    public var subTitleDetailText: String {
         let total = streakStats.totalDaysCompleted
         return total == 1 ? "\(total) day" : "\(total) days"
     }

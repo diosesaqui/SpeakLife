@@ -159,6 +159,34 @@ final class AppDelegate: NSObject, MessagingDelegate {
             PaywallTriggerManager.shared.trackFavoriteSaved()
         }
 
+        // SpeakLifeServices seams (PR8). Services is Foundation + Combine
+        // only; every UIKit / SwiftUI / Firebase-adjacent hook it needs
+        // is a closure installed here at composition time.
+        EnhancedStreakViewModel.notifications = LifecycleNotificationService.shared
+        EnhancedStreakViewModel.shareImageRenderer = { args in
+            StreakShareCardRenderer.render(args)
+        }
+        EnhancedStreakViewModel.LifecycleNames.install(
+            didBecomeActive: UIApplication.didBecomeActiveNotification
+        )
+        EnhancedStreakViewModel.cancelLegacyDailyNotifications = { identifiers in
+            UNUserNotificationCenter.current()
+                .removePendingNotificationRequests(withIdentifiers: identifiers)
+        }
+        PersonalDeclarationProgressBridge.todayProgress = {
+            PersonalDeclarationRepository.todayProgress()
+        }
+        NotificationDeclarationSource.apiServiceFactory = { LocalAPIClient() }
+        StreakFeedback.onTaskCompleted = { PremiumHaptics.affirmationCompleted() }
+        StreakFeedback.onDayCompleted = { PremiumHaptics.dailyGoalCompleted() }
+        StreakFeedback.onNewRecord = { PremiumHaptics.newRecordSet() }
+        StreakFeedback.playGentleSuccess = {
+            AudioDelightManager.shared.playGentleSuccess()
+        }
+        StreakFeedback.playForStreakMilestone = { streak in
+            AudioDelightManager.shared.playForStreakMilestone(streak)
+        }
+
         ApplicationDelegate.shared.application(
             application,
             didFinishLaunchingWithOptions: launchOptions

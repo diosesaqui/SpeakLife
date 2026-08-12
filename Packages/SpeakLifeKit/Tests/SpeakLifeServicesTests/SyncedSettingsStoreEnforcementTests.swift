@@ -18,7 +18,8 @@
 //
 
 import XCTest
-@testable import SpeakLife
+import SpeakLifeCore
+@testable import SpeakLifePersistence
 
 final class SyncedSettingsStoreEnforcementTests: XCTestCase {
 

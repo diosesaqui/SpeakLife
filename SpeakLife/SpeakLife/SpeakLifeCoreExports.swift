@@ -16,3 +16,4 @@
 
 @_exported import SpeakLifeCore
 @_exported import SpeakLifePersistence
+@_exported import SpeakLifeServices

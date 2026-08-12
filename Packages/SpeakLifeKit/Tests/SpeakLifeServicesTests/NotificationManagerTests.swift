@@ -6,7 +6,8 @@
 //
 
 import XCTest
-@testable import SpeakLife
+import SpeakLifeCore
+@testable import SpeakLifeServices
 
 final class NotificationManagerTests: XCTestCase {
 

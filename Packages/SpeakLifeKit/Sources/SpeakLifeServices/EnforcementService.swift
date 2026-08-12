@@ -1,6 +1,6 @@
 //
 //  EnforcementService.swift
-//  SpeakLife
+//  SpeakLifeServices
 //
 //  Owns the Enforcement catalog and the user's position in a campaign.
 //
@@ -15,10 +15,12 @@
 //
 
 import Foundation
+import SpeakLifeCore
+import SpeakLifePersistence
 
 // MARK: - Advancement result
 
-enum EnforcementAdvanceResult: Equatable {
+public enum EnforcementAdvanceResult: Equatable {
     case notActive
     case alreadyAdvancedToday
     case advanced(toDay: Int)
@@ -30,20 +32,20 @@ enum EnforcementAdvanceResult: Equatable {
 
 // MARK: - Service
 
-final class EnforcementService: ObservableObject {
+public final class EnforcementService: ObservableObject {
 
     /// Shared instance so `NotificationManager` (itself a singleton) can read the
     /// active day without threading a dependency through every call site.
-    static let shared = EnforcementService()
+    public static let shared = EnforcementService()
 
     /// Total days completed required before an Enforcement is offered. Seven, so the
     /// curated foundation week lands first.
-    static let eligibilityThreshold = 7
+    public static let eligibilityThreshold = 7
 
     /// SwiftUI mirror of `progressSnapshot`, written on the main thread only.
     /// Views bind to this; anything off the main thread must read
     /// `progressSnapshot` instead.
-    @Published private(set) var progress = EnforcementProgress()
+    @Published public private(set) var progress = EnforcementProgress()
 
     /// Authoritative state, guarded by `lock`.
     ///
@@ -56,7 +58,7 @@ final class EnforcementService: ObservableObject {
     private let lock = NSLock()
 
     /// Thread-safe read of the authoritative state. Safe from any thread.
-    var progressSnapshot: EnforcementProgress {
+    public var progressSnapshot: EnforcementProgress {
         lock.lock(); defer { lock.unlock() }
         return guardedProgress
     }
@@ -87,7 +89,7 @@ final class EnforcementService: ObservableObject {
     /// so a completed curated campaign cannot be looked up again afterwards —
     /// its id was never in the catalog and its content is now gone. Persisting
     /// the campaign itself is the only way the celebration survives a kill.
-    @Published var justCompleted: Enforcement? {
+    @Published public var justCompleted: Enforcement? {
         didSet {
             guard justCompleted?.id != oldValue?.id else { return }
             if let enforcement = justCompleted {
@@ -102,7 +104,7 @@ final class EnforcementService: ObservableObject {
         }
     }
 
-    private(set) var catalog: [Enforcement] = []
+    public private(set) var catalog: [Enforcement] = []
 
     private let defaults: UserDefaults
     private let calendar: Calendar
@@ -115,10 +117,10 @@ final class EnforcementService: ObservableObject {
     /// Block-based observers deregister by token, not by `self`.
     private var syncedSettingsObserver: NSObjectProtocol?
 
-    init(defaults: UserDefaults = .standard,
-         calendar: Calendar = .current,
-         catalog: [Enforcement]? = nil,
-         featureFlags: FeatureFlagProviding = DefaultFeatureFlags.shared) {
+    public init(defaults: UserDefaults = .standard,
+                calendar: Calendar = .current,
+                catalog: [Enforcement]? = nil,
+                featureFlags: FeatureFlagProviding = DefaultFeatureFlags.shared) {
         self.defaults = defaults
         self.calendar = calendar
         self.featureFlags = featureFlags
@@ -234,7 +236,7 @@ final class EnforcementService: ObservableObject {
         }
     }
 
-    func enforcement(id: String) -> Enforcement? {
+    public func enforcement(id: String) -> Enforcement? {
         catalog.first { $0.id == id }
     }
 
@@ -243,12 +245,12 @@ final class EnforcementService: ObservableObject {
     ///
     /// An assembled campaign travels inside progress, so it resolves without the
     /// declaration pool — which the scheduler does not have on its queue.
-    var activeEnforcement: Enforcement? {
+    public var activeEnforcement: Enforcement? {
         resolve(progressSnapshot)
     }
 
     /// The day the user is working on right now, or nil when nothing is running.
-    var activeDay: EnforcementDay? {
+    public var activeDay: EnforcementDay? {
         // One snapshot for both reads — taking two could straddle a mutation and
         // pair a campaign with a day number from the next one.
         let snapshot = progressSnapshot
@@ -266,13 +268,13 @@ final class EnforcementService: ObservableObject {
     /// Mirrors `SubscriptionStore.enforcementEnabled` for callers that have no
     /// SubscriptionStore to read — the checklist generator and
     /// `NotificationManager`. Same Remote Config key, one source of truth.
-    var isEnabled: Bool {
+    public var isEnabled: Bool {
         featureFlags.bool("enforcementEnabled", default: false)
     }
 
     /// `activeDay`, or nil when the kill switch is off. Non-UI surfaces use this
     /// so flipping `enforcementEnabled` takes them dark without a second check.
-    var enabledActiveDay: EnforcementDay? {
+    public var enabledActiveDay: EnforcementDay? {
         isEnabled ? activeDay : nil
     }
 
@@ -280,7 +282,7 @@ final class EnforcementService: ObservableObject {
 
     /// - Parameter totalDaysCompleted: `StreakStats.totalDaysCompleted` — the
     ///   monotonic tenure counter, not `currentStreak`.
-    func isEligible(totalDaysCompleted: Int) -> Bool {
+    public func isEligible(totalDaysCompleted: Int) -> Bool {
         totalDaysCompleted >= Self.eligibilityThreshold
     }
 
@@ -293,7 +295,7 @@ final class EnforcementService: ObservableObject {
     /// call would decode JSON during scrolling. The categories it reads are set
     /// at onboarding and change at most a handful of times per install; the cost
     /// of that staleness is a highlight ring on the wrong chip until relaunch.
-    func recommendedEnforcement() -> Enforcement? {
+    public func recommendedEnforcement() -> Enforcement? {
         if let cachedRecommendedId {
             return cachedRecommendedId.flatMap { enforcement(id: $0) }
         }
@@ -318,7 +320,7 @@ final class EnforcementService: ObservableObject {
 
     /// Starts one of the hand-authored campaigns. Premium-gated — the only gate.
     @discardableResult
-    func startEnforcement(id: String, isPremium: Bool) -> Bool {
+    public func startEnforcement(id: String, isPremium: Bool) -> Bool {
         guard isPremium, enforcement(id: id) != nil else { return false }
         begin(id: id, assembled: nil)
         return true
@@ -336,10 +338,10 @@ final class EnforcementService: ObservableObject {
     ///   notification scheduler, which has no access to it.
     /// - Returns: the campaign that started, or nil if nothing could be built.
     @discardableResult
-    func startMatched(primary: DeclarationCategory,
-                      secondaries: [DeclarationCategory] = [],
-                      pool: [Declaration],
-                      isPremium: Bool) -> Enforcement? {
+    public func startMatched(primary: DeclarationCategory,
+                             secondaries: [DeclarationCategory] = [],
+                             pool: [Declaration],
+                             isPremium: Bool) -> Enforcement? {
         guard isPremium else { return nil }
 
         // Authored campaigns take precedence for their own category.
@@ -363,9 +365,9 @@ final class EnforcementService: ObservableObject {
     /// indexes, not text — so this is the same content with a better ordering
     /// and a better fit to what they described.
     @discardableResult
-    func startCurated(_ curated: [Declaration],
-                      primary: DeclarationCategory,
-                      isPremium: Bool) -> Enforcement? {
+    public func startCurated(_ curated: [Declaration],
+                             primary: DeclarationCategory,
+                             isPremium: Bool) -> Enforcement? {
         guard isPremium,
               let enforcement = EnforcementAssembler.assemble(curated: curated, primary: primary)
         else { return nil }
@@ -374,9 +376,9 @@ final class EnforcementService: ObservableObject {
     }
 
     /// The reviewed declarations to put in front of the curator.
-    func curationCandidates(primary: DeclarationCategory,
-                            secondaries: [DeclarationCategory],
-                            pool: [Declaration]) -> [Declaration] {
+    public func curationCandidates(primary: DeclarationCategory,
+                                   secondaries: [DeclarationCategory],
+                                   pool: [Declaration]) -> [Declaration] {
         EnforcementAssembler.candidates(for: [primary] + secondaries,
                                         in: pool, seed: assemblySeed)
     }
@@ -406,7 +408,7 @@ final class EnforcementService: ObservableObject {
     /// Idempotent within a calendar day, and deliberately **not** premium-gated
     /// so a lapsed subscriber still finishes the campaign they started.
     @discardableResult
-    func advanceIfNeeded(now: Date = Date()) -> EnforcementAdvanceResult {
+    public func advanceIfNeeded(now: Date = Date()) -> EnforcementAdvanceResult {
         var result: EnforcementAdvanceResult = .notActive
         var finished: Enforcement?
 
@@ -459,7 +461,7 @@ final class EnforcementService: ObservableObject {
     }
 
     /// Drops the active campaign without banking it as completed.
-    func abandon() {
+    public func abandon() {
         mutateProgress { p in
             p.activeEnforcementId = nil
             p.startedOn = nil

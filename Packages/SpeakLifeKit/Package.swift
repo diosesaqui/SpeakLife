@@ -7,6 +7,7 @@ let package = Package(
     products: [
         .library(name: "SpeakLifeCore", targets: ["SpeakLifeCore"]),
         .library(name: "SpeakLifePersistence", targets: ["SpeakLifePersistence"]),
+        .library(name: "SpeakLifeServices", targets: ["SpeakLifeServices"]),
     ],
     dependencies: [
         // ZERO remote dependencies. This empty array is enforced by CI.
@@ -26,6 +27,11 @@ let package = Package(
             exclude: ["Resources/SpeakLife.xcdatamodeld"],
             plugins: [.plugin(name: "CompileModel")]
         ),
+        .target(
+            name: "SpeakLifeServices",
+            dependencies: ["SpeakLifeCore", "SpeakLifePersistence"],
+            path: "Sources/SpeakLifeServices"
+        ),
         .plugin(name: "CompileModel", capability: .buildTool()),
         .testTarget(
             name: "SpeakLifeCoreTests",
@@ -42,6 +48,11 @@ let package = Package(
             name: "SpeakLifePersistenceTests",
             dependencies: ["SpeakLifePersistence"],
             path: "Tests/SpeakLifePersistenceTests"
+        ),
+        .testTarget(
+            name: "SpeakLifeServicesTests",
+            dependencies: ["SpeakLifeServices"],
+            path: "Tests/SpeakLifeServicesTests"
         ),
     ]
 )

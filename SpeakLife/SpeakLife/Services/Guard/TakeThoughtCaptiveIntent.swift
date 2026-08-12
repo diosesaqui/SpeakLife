@@ -59,43 +59,6 @@ struct TakeThoughtCaptiveIntent: AppIntent {
     }
 }
 
-// MARK: - Pending launch
-
-extension TakeItCaptiveService {
-
-    /// Set by the App Intent, read by the Today tab.
-    ///
-    /// TWO mechanisms, because the intent has two very different arrival cases
-    /// and neither one covers the other:
-    ///
-    /// - **Cold launch.** `perform()` runs before any view exists, so an
-    ///   in-memory flag would be set and never observed — the user would watch
-    ///   the app open to the home screen having just asked Siri for the drill.
-    ///   The persisted stamp survives that gap and is consumed on first appear.
-    /// - **Warm app, wrong tab.** `onAppear` does not fire for a tab that is
-    ///   already on screen or already built, so the persisted stamp alone left
-    ///   the intent doing nothing at all. The published `launchRequestedAt`
-    ///   drives a tab switch and the presentation.
-    ///
-    /// The persisted stamp is consumed exactly once, so the two cannot both fire
-    /// and double-present.
-    private static let pendingLaunchKey = "guardPendingIntentLaunch"
-
-    static func requestPendingLaunch(defaults: UserDefaults = .standard) {
-        defaults.set(Date().timeIntervalSince1970, forKey: pendingLaunchKey)
-    }
-
-    /// Returns true once per request, then clears it.
-    ///
-    /// Stale requests are dropped: a flag written more than a couple of minutes
-    /// ago belongs to a launch that already happened (or one the user abandoned
-    /// at the lock screen), and firing the drill off it would ambush someone who
-    /// opened the app for something else entirely.
-    static func consumePendingLaunch(defaults: UserDefaults = .standard,
-                                     now: Date = Date()) -> Bool {
-        let stamp = defaults.double(forKey: pendingLaunchKey)
-        guard stamp > 0 else { return false }
-        defaults.removeObject(forKey: pendingLaunchKey)
-        return now.timeIntervalSince1970 - stamp < 120
-    }
-}
+// The `requestPendingLaunch` / `consumePendingLaunch` extension moved into
+// SpeakLifeServices alongside `TakeItCaptiveService` itself, so the moved
+// tests can call them without the app target being in the graph.

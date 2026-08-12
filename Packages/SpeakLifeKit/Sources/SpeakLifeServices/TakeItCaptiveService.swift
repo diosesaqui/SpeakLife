@@ -1,6 +1,6 @@
 //
 //  TakeItCaptiveService.swift
-//  SpeakLife
+//  SpeakLifeServices
 //
 //  Owns the thought bank, today's rep, and the ground the user has taken.
 //
@@ -19,39 +19,41 @@
 //
 
 import Foundation
+import SpeakLifeCore
+import SpeakLifePersistence
 
 // MARK: - Service
 
-final class TakeItCaptiveService: ObservableObject {
+public final class TakeItCaptiveService: ObservableObject {
 
     /// Shared instance so the App Intent (which has no view hierarchy to inherit
     /// from) and the Today tab read the same state.
-    static let shared = TakeItCaptiveService()
+    public static let shared = TakeItCaptiveService()
 
     /// A thought is not served again until this many days have passed. At one
     /// rep a day against a 135-entry bank, this is comfortably satisfiable.
-    static let repeatCooldownDays = 60
+    public static let repeatCooldownDays = 60
 
     /// Reps completed before intensity 3 is unlocked. Never open a new user with
     /// the heaviest thought in the bank.
-    static let intensityThreeUnlocksAfter = 14
+    public static let intensityThreeUnlocksAfter = 14
 
     /// Days of intensity-1-only at the start.
-    static let gentleOpeningDays = 7
+    public static let gentleOpeningDays = 7
 
     /// Free tier sees a fixed slice of the bank, in bank order, so the same
     /// three-per-category set is the same on every install.
-    static let freeThoughtsPerCategory = 3
+    public static let freeThoughtsPerCategory = 3
 
     /// Escape-hatch entries a free user gets per calendar month.
-    static let freeEscapeHatchesPerMonth = 3
+    public static let freeEscapeHatchesPerMonth = 3
 
     // MARK: Published
 
     /// Today's rep. Nil until `thought(isPremium:)` serves one.
-    @Published private(set) var todaysThought: IncomingThought?
+    @Published public private(set) var todaysThought: IncomingThought?
     /// Cumulative ground. Mirrored from the synced counter so views can bind.
-    @Published private(set) var groundTaken: Int = 0
+    @Published public private(set) var groundTaken: Int = 0
     /// SwiftUI mirror of `isCompletedToday`, for views that want to observe it.
     ///
     /// **Never read this to decide anything.** It is a cached boolean, and the
@@ -59,16 +61,16 @@ final class TakeItCaptiveService: ObservableObject {
     /// says `true` for yesterday. Every decision reads `isCompletedToday`, which
     /// re-derives from the stored day stamp. The bug this note exists for: the
     /// checklist rebuild at rollover pre-ticked the new day's Guard row.
-    @Published private(set) var completedToday: Bool = false
+    @Published public private(set) var completedToday: Bool = false
 
     /// Stamped by `TakeThoughtCaptiveIntent` when the app is already running.
     /// `HomeView` switches to the Today tab on it and `ModernDailyChecklistView`
     /// presents the drill; both clear it. See the note in
     /// `TakeThoughtCaptiveIntent.swift` for why the persisted stamp is not
     /// enough on its own.
-    @Published var launchRequestedAt: Date?
+    @Published public var launchRequestedAt: Date?
 
-    private(set) var bank: [IncomingThought] = []
+    public private(set) var bank: [IncomingThought] = []
 
     private let defaults: UserDefaults
     private let calendar: Calendar
@@ -90,11 +92,11 @@ final class TakeItCaptiveService: ObservableObject {
     private let escapeHatchCountKey = "guardEscapeHatchCount"
     private let logKey = "guardCapturedLog"
 
-    init(defaults: UserDefaults = .standard,
-         calendar: Calendar = .current,
-         bank: [IncomingThought]? = nil,
-         syncCounters: @escaping () -> Void = { ProgressSyncStore.shared.syncCounters() },
-         featureFlags: FeatureFlagProviding = DefaultFeatureFlags.shared) {
+    public init(defaults: UserDefaults = .standard,
+                calendar: Calendar = .current,
+                bank: [IncomingThought]? = nil,
+                syncCounters: @escaping () -> Void = { ProgressSyncStore.shared.syncCounters() },
+                featureFlags: FeatureFlagProviding = DefaultFeatureFlags.shared) {
         self.defaults = defaults
         self.calendar = calendar
         self.syncCounters = syncCounters
@@ -131,7 +133,7 @@ final class TakeItCaptiveService: ObservableObject {
     ///
     /// - Parameter isPremium: free users draw from a fixed slice of the bank.
     ///   Checked here and nowhere downstream, so a lapse mid-drill costs nothing.
-    func thought(isPremium: Bool) -> IncomingThought? {
+    public func thought(isPremium: Bool) -> IncomingThought? {
         guard !bank.isEmpty else { return nil }
         let today = Self.dayStamp(Date(), calendar: calendar)
 
@@ -266,7 +268,7 @@ final class TakeItCaptiveService: ObservableObject {
     /// Deterministic on purpose — every free install sees the same 27, which is
     /// what makes the paid bank ("the full 135, rotating") a real difference
     /// rather than a number on a table.
-    func freeSlice() -> [IncomingThought] {
+    public func freeSlice() -> [IncomingThought] {
         var perCategory: [ThoughtCategory: Int] = [:]
         var slice: [IncomingThought] = []
         for thought in bank {
@@ -279,7 +281,7 @@ final class TakeItCaptiveService: ObservableObject {
     }
 
     /// 1 for the first week, 2 until the user has 14 reps behind them, then 3.
-    func intensityCeiling() -> Int {
+    public func intensityCeiling() -> Int {
         let completions = defaults.integer(forKey: completionCountKey)
         if completions >= Self.intensityThreeUnlocksAfter { return 3 }
         guard let firstDay = defaults.string(forKey: firstOpenedDayKey),
@@ -308,11 +310,11 @@ final class TakeItCaptiveService: ObservableObject {
     ///
     /// - Returns: the new cumulative total.
     @discardableResult
-    func takeGround(category: ThoughtCategory,
-                    thoughtId: String,
-                    source: CapturedThought.Source,
-                    spoken: Bool,
-                    completesDailyRep: Bool) -> Int {
+    public func takeGround(category: ThoughtCategory,
+                           thoughtId: String,
+                           source: CapturedThought.Source,
+                           spoken: Bool,
+                           completesDailyRep: Bool) -> Int {
         let today = Self.dayStamp(Date(), calendar: calendar)
         if completesDailyRep, defaults.string(forKey: lastCompletedDayKey) == today {
             return groundTaken
@@ -346,7 +348,7 @@ final class TakeItCaptiveService: ObservableObject {
     /// Refreshes the published mirror from the synced counter. Called when the
     /// Today tab appears, since another device's ground arrives via CloudKit
     /// while this view is off screen.
-    func refreshGround() {
+    public func refreshGround() {
         let total = GroundTaken.total(defaults: defaults)
         if total != groundTaken { groundTaken = total }
         let done = isCompletedToday
@@ -358,14 +360,14 @@ final class TakeItCaptiveService: ObservableObject {
     /// Mirrors `SubscriptionStore.guardEnabled` for callers that have no
     /// SubscriptionStore to read — the checklist generator and the App Intent.
     /// Same Remote Config key, one source of truth.
-    var isEnabled: Bool {
+    public var isEnabled: Bool {
         featureFlags.bool("guardEnabled", default: false)
     }
 
     /// Whether today's rep is done, re-derived from the stored day stamp on
     /// every read rather than cached. The authoritative answer — see the note
     /// on `completedToday`.
-    var isCompletedToday: Bool {
+    public var isCompletedToday: Bool {
         Self.isToday(defaults.string(forKey: lastCompletedDayKey), calendar: calendar)
     }
 
@@ -373,7 +375,7 @@ final class TakeItCaptiveService: ObservableObject {
     /// off, or the bank failed to load and there is nothing to drill with.
     /// `TaskLibrary` reads this: nil leaves the checklist row out entirely
     /// rather than offering a task that cannot be finished.
-    var enabledCompletedToday: Bool? {
+    public var enabledCompletedToday: Bool? {
         guard isEnabled, !bank.isEmpty else { return nil }
         return isCompletedToday
     }
@@ -382,21 +384,21 @@ final class TakeItCaptiveService: ObservableObject {
 
     /// How many escape-hatch entries the user has left this month. `nil` means
     /// unlimited (premium).
-    func escapeHatchesRemaining(isPremium: Bool) -> Int? {
+    public func escapeHatchesRemaining(isPremium: Bool) -> Int? {
         guard !isPremium else { return nil }
         let used: Int = escapeHatchesUsedThisMonth()
         let remaining: Int = Self.freeEscapeHatchesPerMonth - used
         return remaining > 0 ? remaining : 0
     }
 
-    func canUseEscapeHatch(isPremium: Bool) -> Bool {
+    public func canUseEscapeHatch(isPremium: Bool) -> Bool {
         guard let remaining = escapeHatchesRemaining(isPremium: isPremium) else { return true }
         return remaining > 0
     }
 
     /// Spends one. Premium spends nothing, so the counter never has to be
     /// unwound if a subscription lapses.
-    func recordEscapeHatchUse(isPremium: Bool) {
+    public func recordEscapeHatchUse(isPremium: Bool) {
         guard !isPremium else { return }
         let month = Self.monthStamp(Date(), calendar: calendar)
         if defaults.string(forKey: escapeHatchMonthKey) != month {
@@ -425,7 +427,7 @@ final class TakeItCaptiveService: ObservableObject {
     /// and the Swift type checker could not solve it in reasonable time — it
     /// failed the Xcode Cloud archive outright. A loop is also easier to read
     /// than the comparator was, so nothing is lost.
-    func strongestTerrain() -> ThoughtCategory? {
+    public func strongestTerrain() -> ThoughtCategory? {
         var bestCategory: ThoughtCategory?
         var bestCount: Int = 0
 
@@ -451,7 +453,7 @@ final class TakeItCaptiveService: ObservableObject {
 
     /// The log, newest first. Local-only and capped — this is a record of ground
     /// taken, not a diary, and nothing downstream needs the full history.
-    func recentCaptures(limit: Int = 100) -> [CapturedThought] {
+    public func recentCaptures(limit: Int = 100) -> [CapturedThought] {
         let log: [CapturedThought] = loadLog()
         let tail: [CapturedThought] = Array(log.suffix(limit))
         return tail.reversed()
@@ -527,20 +529,61 @@ final class TakeItCaptiveService: ObservableObject {
         return formatter
     }
 
-    static func dayStamp(_ date: Date, calendar: Calendar) -> String {
+    public static func dayStamp(_ date: Date, calendar: Calendar) -> String {
         formatter("yyyy-MM-dd", calendar: calendar).string(from: date)
     }
 
-    static func monthStamp(_ date: Date, calendar: Calendar) -> String {
+    public static func monthStamp(_ date: Date, calendar: Calendar) -> String {
         formatter("yyyy-MM", calendar: calendar).string(from: date)
     }
 
-    static func date(from stamp: String, calendar: Calendar) -> Date? {
+    public static func date(from stamp: String, calendar: Calendar) -> Date? {
         formatter("yyyy-MM-dd", calendar: calendar).date(from: stamp)
     }
 
     private static func isToday(_ stamp: String?, calendar: Calendar) -> Bool {
         guard let stamp else { return false }
         return stamp == dayStamp(Date(), calendar: calendar)
+    }
+}
+
+// MARK: - Pending launch
+
+extension TakeItCaptiveService {
+
+    /// Set by the App Intent, read by the Today tab.
+    ///
+    /// TWO mechanisms, because the intent has two very different arrival cases
+    /// and neither one covers the other:
+    ///
+    /// - **Cold launch.** `perform()` runs before any view exists, so an
+    ///   in-memory flag would be set and never observed — the user would watch
+    ///   the app open to the home screen having just asked Siri for the drill.
+    ///   The persisted stamp survives that gap and is consumed on first appear.
+    /// - **Warm app, wrong tab.** `onAppear` does not fire for a tab that is
+    ///   already on screen or already built, so the persisted stamp alone left
+    ///   the intent doing nothing at all. The published `launchRequestedAt`
+    ///   drives a tab switch and the presentation.
+    ///
+    /// The persisted stamp is consumed exactly once, so the two cannot both fire
+    /// and double-present.
+    private static let pendingLaunchKey = "guardPendingIntentLaunch"
+
+    public static func requestPendingLaunch(defaults: UserDefaults = .standard) {
+        defaults.set(Date().timeIntervalSince1970, forKey: pendingLaunchKey)
+    }
+
+    /// Returns true once per request, then clears it.
+    ///
+    /// Stale requests are dropped: a flag written more than a couple of minutes
+    /// ago belongs to a launch that already happened (or one the user abandoned
+    /// at the lock screen), and firing the drill off it would ambush someone who
+    /// opened the app for something else entirely.
+    public static func consumePendingLaunch(defaults: UserDefaults = .standard,
+                                            now: Date = Date()) -> Bool {
+        let stamp = defaults.double(forKey: pendingLaunchKey)
+        guard stamp > 0 else { return false }
+        defaults.removeObject(forKey: pendingLaunchKey)
+        return now.timeIntervalSince1970 - stamp < 120
     }
 }

@@ -22,7 +22,9 @@
 //
 
 import XCTest
-@testable import SpeakLife
+import SpeakLifeCore
+import SpeakLifePersistence
+@testable import SpeakLifeServices
 
 /// Records the streak push side effects in order. The real service ends in
 /// UNUserNotificationCenter, which a unit test can neither authorize nor read

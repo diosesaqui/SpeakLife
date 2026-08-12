@@ -1,28 +1,39 @@
 //
 //  NotificationProcessor.swift
-//  Dios Es Aqui
+//  SpeakLifeServices
 //
-//  Created by Riccardo Washington on 2/23/22.
+//  Picks the declarations that a batch of notifications is built from,
+//  and remembers what just went out so the next batch does not repeat
+//  it. Foundation-only; the `APIService` it consults comes from the
+//  app via `NotificationDeclarationSource.apiServiceFactory` (see
+//  ServiceSeams.swift).
 //
 
 import Foundation
+import SpeakLifeCore
 
-final class NotificationProcessor {
-    
+public final class NotificationProcessor {
+
     private let service: APIService
     private var allDeclarations: [Declaration] = []
     private var allDeclarationsDict: [DeclarationCategory: [Declaration]] = [:]
-    
-    init(service: APIService)  {
+
+    public init(service: APIService)  {
         self.service = service
         getDeclarations()
-        
+
     }
-    
-    struct NotificationData {
-        let book: String
-        let body: String
-        let category: String
+
+    public struct NotificationData {
+        public let book: String
+        public let body: String
+        public let category: String
+
+        public init(book: String, body: String, category: String) {
+            self.book = book
+            self.body = body
+            self.category = category
+        }
     }
 
     // MARK: - Recently sent
@@ -44,8 +55,8 @@ final class NotificationProcessor {
     /// Never filter a pool down past this, or a small category starves.
     private static let minimumPoolAfterFiltering = 12
 
-    static func excludingRecentlySent(_ declarations: [Declaration],
-                                      defaults: UserDefaults = .standard) -> [Declaration] {
+    public static func excludingRecentlySent(_ declarations: [Declaration],
+                                             defaults: UserDefaults = .standard) -> [Declaration] {
         let recent = Set(defaults.stringArray(forKey: recentlySentKey) ?? [])
         guard !recent.isEmpty else { return declarations }
         let filtered = declarations.filter { !recent.contains($0.text) }
@@ -54,7 +65,7 @@ final class NotificationProcessor {
 
     /// Records what just went out. Trimmed to the most recent entries so the
     /// list can't grow without bound in UserDefaults.
-    static func rememberSent(_ bodies: [String], defaults: UserDefaults = .standard) {
+    public static func rememberSent(_ bodies: [String], defaults: UserDefaults = .standard) {
         guard !bodies.isEmpty else { return }
         var recent = defaults.stringArray(forKey: recentlySentKey) ?? []
         recent.append(contentsOf: bodies)
@@ -63,14 +74,14 @@ final class NotificationProcessor {
         }
         defaults.set(recent, forKey: recentlySentKey)
     }
-    
-    func getNotificationData(count: Int,
-                             categories: [DeclarationCategory]? = nil,
-                             completion: @escaping([NotificationData]) -> Void) {
-        
+
+    public func getNotificationData(count: Int,
+                                    categories: [DeclarationCategory]? = nil,
+                                    completion: @escaping([NotificationData]) -> Void) {
+
 //        DispatchQueue.global(qos: .userInitiated).sync {
 //            getDeclarations()
-            
+
             // Only a genuinely empty library is fatal. This used to bail when
             // the library held fewer than `count`, handing back nothing at all
             // — and the caller now asks for a whole batch's worth rather than a
@@ -87,16 +98,16 @@ final class NotificationProcessor {
             if allDeclarations.count < count {
                 print("⚠️ NotificationProcessor: Have \(allDeclarations.count), asked for \(count) — serving what's available")
             }
-            
+
             print("✅ NotificationProcessor: Using \(allDeclarations.count) declarations for \(count) notifications")
-            
-            
+
+
             // get enough for the week
             //let newCount = count * 7
-            
+
             var data = [NotificationData]()
             var categoryReminders: [Declaration] = []
-            
+
             // Treat nil or empty category list the same — fall back to all declarations.
             let resolvedCategories = categories?.isEmpty == false ? categories : nil
 
@@ -160,19 +171,19 @@ final class NotificationProcessor {
             completion(data)
             return
        // }
-        
+
     }
-    
+
     private func getDeclarations() {
         service.declarations { declarations, error, _ in
             self.allDeclarations = declarations
         }
     }
-    
+
     private func parse(_ categoryReminders: [Declaration], count: Int) -> [NotificationData] {
         var data = [NotificationData]()
         var localCount = 0
-        
+
         while localCount < count  {
             let declaration = categoryReminders[localCount]
             // Send the declaration text (not the Bible verse) as the notification body.
@@ -183,15 +194,15 @@ final class NotificationProcessor {
             data.append(notificationData)
             localCount += 1
         }
-        
+
         return data
-        
+
     }
-    
+
     private func fetchDeclarations(for category: DeclarationCategory, completion: @escaping(([Declaration]) -> Void)) {
         if let declarations = allDeclarationsDict[category] {
             completion(declarations)
-            
+
         } else if category == .favorites {
             let faves = allDeclarations.filter { $0.isFavorite == true }
                completion(faves)
