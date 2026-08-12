@@ -159,6 +159,13 @@ final class AppDelegate: NSObject, MessagingDelegate {
             "currentPremiumWeekly": weeklyID as NSString
         ])
 
+        // Wire the domain-facing feature-flag seam to Firebase Remote Config now
+        // that its defaults are set. `EnforcementService` and
+        // `TakeItCaptiveService` read through `DefaultFeatureFlags.shared`, so
+        // installing here — before either singleton is first touched — lets them
+        // stay Firebase-free while still honoring the live flag values.
+        DefaultFeatureFlags.shared.provider = RemoteConfigFlags()
+
         registerBGTask()
         
         // Initialize TikTok SDK after a brief delay to not interfere with landing animation
@@ -251,6 +258,19 @@ final class AppDelegate: NSObject, MessagingDelegate {
     }
     
     // Removed duplicate didReceive - now handled in extension
+}
+
+/// Firebase-backed `FeatureFlagProviding`. Lives in the app target so the
+/// domain services that read flags do not import `FirebaseRemoteConfig`.
+/// Installed into `DefaultFeatureFlags.shared` in `didFinishLaunchingWithOptions`
+/// immediately after `RemoteConfig.setDefaults(...)`.
+struct RemoteConfigFlags: FeatureFlagProviding {
+    func bool(_ key: String, default defaultValue: Bool) -> Bool {
+        RemoteConfig.remoteConfig()[key].boolValue
+    }
+}
+
+extension AppDelegate {
     
     func application(
             _ app: UIApplication,

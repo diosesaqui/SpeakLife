@@ -47,7 +47,11 @@ final class EnforcementServiceTests: XCTestCase {
         super.setUp()
         suiteName = "EnforcementServiceTests-\(UUID().uuidString)"
         defaults = UserDefaults(suiteName: suiteName)
-        service = EnforcementService(defaults: defaults, calendar: .current, catalog: catalog)
+        // Static provider defaults to "flag absent, use caller's default"; each
+        // isEnabled test overrides it locally to pin the desired state.
+        service = EnforcementService(defaults: defaults, calendar: .current,
+                                     catalog: catalog,
+                                     featureFlags: StaticFeatureFlags())
     }
 
     override func tearDown() {
@@ -70,6 +74,47 @@ final class EnforcementServiceTests: XCTestCase {
         for i in stride(from: count, through: 1, by: -1) {
             service.advanceIfNeeded(now: daysAgo(i))
         }
+    }
+
+    // MARK: - Kill switch
+    //
+    // Before this PR, `isEnabled` read Firebase Remote Config directly, so
+    // every test hosted the whole SDK just to read a bool that flipped a
+    // feature dark. The flag is now injected, and both states are cheap to
+    // pin.
+
+    func testIsEnabled_DefaultsToFalseWhenFlagUnset() {
+        let unset = EnforcementService(defaults: defaults, calendar: .current,
+                                       catalog: catalog,
+                                       featureFlags: StaticFeatureFlags())
+        XCTAssertFalse(unset.isEnabled,
+                       "An unset flag must read false — otherwise a cold start could serve Enforcements before Firebase has fetched.")
+    }
+
+    func testIsEnabled_TrueWhenFlagOn() {
+        let on = EnforcementService(defaults: defaults, calendar: .current,
+                                    catalog: catalog,
+                                    featureFlags: StaticFeatureFlags(["enforcementEnabled": true]))
+        XCTAssertTrue(on.isEnabled)
+    }
+
+    func testIsEnabled_FalseWhenFlagOff() {
+        let off = EnforcementService(defaults: defaults, calendar: .current,
+                                     catalog: catalog,
+                                     featureFlags: StaticFeatureFlags(["enforcementEnabled": false]))
+        XCTAssertFalse(off.isEnabled)
+    }
+
+    /// `enabledActiveDay` is the surface non-UI callers read, so the kill
+    /// switch has to take it dark independently of whether a campaign is running.
+    func testEnabledActiveDay_NilWhenSwitchOff_EvenWithActiveCampaign() {
+        let off = EnforcementService(defaults: defaults, calendar: .current,
+                                     catalog: catalog,
+                                     featureFlags: StaticFeatureFlags(["enforcementEnabled": false]))
+        off.startEnforcement(id: "peace", isPremium: true)
+        XCTAssertNotNil(off.activeDay, "precondition: a campaign is running")
+        XCTAssertNil(off.enabledActiveDay,
+                     "Kill switch off must take the enforcement surface dark, campaign or not.")
     }
 
     // MARK: - Eligibility

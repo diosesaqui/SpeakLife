@@ -15,7 +15,6 @@
 //
 
 import Foundation
-import FirebaseRemoteConfig
 
 // MARK: - Advancement result
 
@@ -107,6 +106,7 @@ final class EnforcementService: ObservableObject {
 
     private let defaults: UserDefaults
     private let calendar: Calendar
+    private let featureFlags: FeatureFlagProviding
     private let progressKey = "enforcementProgress"
     private let pendingCelebrationKey = "enforcementPendingCelebration"
     private let pendingCelebrationBlobKey = "enforcementPendingCelebrationBlob"
@@ -117,9 +117,11 @@ final class EnforcementService: ObservableObject {
 
     init(defaults: UserDefaults = .standard,
          calendar: Calendar = .current,
-         catalog: [Enforcement]? = nil) {
+         catalog: [Enforcement]? = nil,
+         featureFlags: FeatureFlagProviding = DefaultFeatureFlags.shared) {
         self.defaults = defaults
         self.calendar = calendar
+        self.featureFlags = featureFlags
         if let catalog {
             self.catalog = catalog
         } else {
@@ -265,12 +267,11 @@ final class EnforcementService: ObservableObject {
     /// SubscriptionStore to read — the checklist generator and
     /// `NotificationManager`. Same Remote Config key, one source of truth.
     var isEnabled: Bool {
-        RemoteConfig.remoteConfig()["enforcementEnabled"].boolValue
+        featureFlags.bool("enforcementEnabled", default: false)
     }
 
     /// `activeDay`, or nil when the kill switch is off. Non-UI surfaces use this
-    /// so flipping `enforcementEnabled` takes them dark without a second check. Tests
-    /// exercise `activeDay` directly to stay clear of Remote Config.
+    /// so flipping `enforcementEnabled` takes them dark without a second check.
     var enabledActiveDay: EnforcementDay? {
         isEnabled ? activeDay : nil
     }

@@ -62,9 +62,51 @@ final class TakeItCaptiveServiceTests: XCTestCase {
     /// `syncCounters` is stubbed out: banking ground would otherwise stand up
     /// CloudKit through `ProgressSyncStore`, which has nothing to do with what
     /// these tests are pinning and is tested in its own right.
-    private func makeService(bank: [IncomingThought]? = nil) -> TakeItCaptiveService {
+    ///
+    /// `featureFlags` defaults to an empty `StaticFeatureFlags` so nothing
+    /// here brings Firebase Remote Config in through the back door; the
+    /// isEnabled tests below override it.
+    private func makeService(bank: [IncomingThought]? = nil,
+                             featureFlags: FeatureFlagProviding = StaticFeatureFlags()) -> TakeItCaptiveService {
         TakeItCaptiveService(defaults: defaults, calendar: .current,
-                             bank: bank ?? makeBank(), syncCounters: {})
+                             bank: bank ?? makeBank(), syncCounters: {},
+                             featureFlags: featureFlags)
+    }
+
+    // MARK: - Kill switch
+    //
+    // The flag used to route through Firebase Remote Config, so nothing in
+    // this file could exercise it — now it's injected and each state pins
+    // straight through.
+
+    func testIsEnabled_DefaultsToFalseWhenFlagUnset() {
+        XCTAssertFalse(makeService().isEnabled,
+                       "An unset flag must read false — a cold start before Firebase fetches must not surface the pillar.")
+    }
+
+    func testIsEnabled_TrueWhenFlagOn() {
+        let service = makeService(featureFlags: StaticFeatureFlags(["guardEnabled": true]))
+        XCTAssertTrue(service.isEnabled)
+    }
+
+    func testIsEnabled_FalseWhenFlagOff() {
+        let service = makeService(featureFlags: StaticFeatureFlags(["guardEnabled": false]))
+        XCTAssertFalse(service.isEnabled)
+    }
+
+    /// `TaskLibrary` reads `enabledCompletedToday`: nil leaves the row out
+    /// entirely rather than offering a task the user cannot finish.
+    func testEnabledCompletedToday_NilWhenSwitchOff_EvenWithLoadedBank() {
+        let service = makeService(featureFlags: StaticFeatureFlags(["guardEnabled": false]))
+        XCTAssertFalse(service.bank.isEmpty, "precondition: a bank is loaded")
+        XCTAssertNil(service.enabledCompletedToday,
+                     "Kill switch off must drop the checklist row rather than expose a dead task.")
+    }
+
+    func testEnabledCompletedToday_NonNilWhenSwitchOn() {
+        let service = makeService(featureFlags: StaticFeatureFlags(["guardEnabled": true]))
+        XCTAssertEqual(service.enabledCompletedToday, false,
+                       "Switch on and bank loaded: the row exists and today's rep is not yet done.")
     }
 
     // MARK: - Ground taken

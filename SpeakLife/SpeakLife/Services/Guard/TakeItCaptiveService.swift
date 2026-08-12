@@ -19,7 +19,6 @@
 //
 
 import Foundation
-import FirebaseRemoteConfig
 
 // MARK: - Service
 
@@ -73,6 +72,7 @@ final class TakeItCaptiveService: ObservableObject {
 
     private let defaults: UserDefaults
     private let calendar: Calendar
+    private let featureFlags: FeatureFlagProviding
     /// Pushes the ground counter out to the user's other devices. Injected so a
     /// unit test can bank ground without standing up CloudKit — the counter
     /// math itself lives in `ProgressSyncStore` and is tested there.
@@ -93,10 +93,12 @@ final class TakeItCaptiveService: ObservableObject {
     init(defaults: UserDefaults = .standard,
          calendar: Calendar = .current,
          bank: [IncomingThought]? = nil,
-         syncCounters: @escaping () -> Void = { ProgressSyncStore.shared.syncCounters() }) {
+         syncCounters: @escaping () -> Void = { ProgressSyncStore.shared.syncCounters() },
+         featureFlags: FeatureFlagProviding = DefaultFeatureFlags.shared) {
         self.defaults = defaults
         self.calendar = calendar
         self.syncCounters = syncCounters
+        self.featureFlags = featureFlags
         self.bank = bank ?? Self.loadBankFromBundle(defaults: defaults)
         self.groundTaken = GroundTaken.total(defaults: defaults)
         self.completedToday = Self.isToday(defaults.object(forKey: lastCompletedDayKey) as? String,
@@ -357,7 +359,7 @@ final class TakeItCaptiveService: ObservableObject {
     /// SubscriptionStore to read — the checklist generator and the App Intent.
     /// Same Remote Config key, one source of truth.
     var isEnabled: Bool {
-        RemoteConfig.remoteConfig()["guardEnabled"].boolValue
+        featureFlags.bool("guardEnabled", default: false)
     }
 
     /// Whether today's rep is done, re-derived from the stored day stamp on
@@ -371,8 +373,6 @@ final class TakeItCaptiveService: ObservableObject {
     /// off, or the bank failed to load and there is nothing to drill with.
     /// `TaskLibrary` reads this: nil leaves the checklist row out entirely
     /// rather than offering a task that cannot be finished.
-    ///
-    /// Tests exercise `isCompletedToday` directly to stay clear of Remote Config.
     var enabledCompletedToday: Bool? {
         guard isEnabled, !bank.isEmpty else { return nil }
         return isCompletedToday
