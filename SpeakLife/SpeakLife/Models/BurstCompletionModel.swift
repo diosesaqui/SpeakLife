@@ -6,7 +6,7 @@
 //
 
 import Foundation
-import SwiftUI
+import Combine
 
 // MARK: - Burst Completion Data Model
 
@@ -52,16 +52,6 @@ class BurstCompletionTracker: ObservableObject {
         case conqueror = "Conqueror"
         case victorious = "Victorious"
         case unstoppable = "Unstoppable"
-        
-        var color: Color {
-            switch self {
-            case .warrior: return .blue
-            case .champion: return .green
-            case .conqueror: return .orange
-            case .victorious: return .purple
-            case .unstoppable: return .yellow
-            }
-        }
         
         var minimumScore: Int {
             switch self {

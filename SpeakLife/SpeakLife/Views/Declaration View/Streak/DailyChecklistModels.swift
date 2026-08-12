@@ -6,7 +6,11 @@
 //  
 
 import Foundation
-import SwiftUI
+// `CompletionCelebration.shareImage: UIImage?` still lives in this file — the
+// full platform-seam extraction is PR5's job. This import replaces the previous
+// `import SwiftUI` (which re-exported UIKit as a side effect), so the two color
+// properties can move to the view layer without breaking the celebration type.
+import UIKit
 
 // MARK: - Task Categories & Types
 enum TaskCategory: String, CaseIterable, Codable {
@@ -21,15 +25,6 @@ enum TaskCategory: String, CaseIterable, Codable {
         case .growth: return "Growth"
         case .impact: return "Impact"
         case .mastery: return "Mastery"
-        }
-    }
-    
-    var color: Color {
-        switch self {
-        case .foundation: return .blue
-        case .growth: return .green
-        case .impact: return .orange
-        case .mastery: return .purple
         }
     }
     
@@ -244,15 +239,6 @@ enum ProgressionPhase: String, CaseIterable, Codable {
         }
     }
     
-    var color: Color {
-        switch self {
-        case .foundation: return .blue
-        case .growth: return .green
-        case .impact: return .orange
-        case .mastery: return .purple
-        }
-    }
-    
     var emoji: String {
         switch self {
         case .foundation: return "🌱"
@@ -261,7 +247,7 @@ enum ProgressionPhase: String, CaseIterable, Codable {
         case .mastery: return "👑"
         }
     }
-    
+
     static func getPhase(for streakDay: Int) -> ProgressionPhase {
         if streakDay >= 100 { return .mastery }
         if streakDay >= 31 { return .impact }

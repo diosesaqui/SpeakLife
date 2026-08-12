@@ -348,6 +348,8 @@
 		7ABA50CF29E63275002699F1 /* prayers.json in Resources */ = {isa = PBXBuildFile; fileRef = 7ABA50CE29E63275002699F1 /* prayers.json */; };
 		7AF18C7B29FD1A43005A6E31 /* GoogleAdMob.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AF18C7A29FD1A43005A6E31 /* GoogleAdMob.swift */; };
 		45FF1F1B00000002A0000002 /* FeatureFlags.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45FF1F1A00000001A0000001 /* FeatureFlags.swift */; };
+		45FF1F2B00000002A0000002 /* ChecklistModelsAppearance.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45FF1F2A00000001A0000001 /* ChecklistModelsAppearance.swift */; };
+		45FF1F2D00000004A0000004 /* StrengthLevelAppearance.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45FF1F2C00000003A0000003 /* StrengthLevelAppearance.swift */; };
 		7AF18C7D29FD1A67005A6E31 /* AdBanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AF18C7C29FD1A67005A6E31 /* AdBanner.swift */; };
 		7AF18C8029FD1E20005A6E31 /* BuildFile in Frameworks */ = {isa = PBXBuildFile; };
 		7AF18C8229FD2494005A6E31 /* Badge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AF18C8129FD2494005A6E31 /* Badge.swift */; };
@@ -810,6 +812,8 @@
 		7ABA50CE29E63275002699F1 /* prayers.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = prayers.json; sourceTree = "<group>"; };
 		7AF18C7A29FD1A43005A6E31 /* GoogleAdMob.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoogleAdMob.swift; sourceTree = "<group>"; };
 		45FF1F1A00000001A0000001 /* FeatureFlags.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeatureFlags.swift; sourceTree = "<group>"; };
+		45FF1F2A00000001A0000001 /* ChecklistModelsAppearance.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChecklistModelsAppearance.swift; sourceTree = "<group>"; };
+		45FF1F2C00000003A0000003 /* StrengthLevelAppearance.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StrengthLevelAppearance.swift; sourceTree = "<group>"; };
 		7AF18C7C29FD1A67005A6E31 /* AdBanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdBanner.swift; sourceTree = "<group>"; };
 		7AF18C8129FD2494005A6E31 /* Badge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Badge.swift; sourceTree = "<group>"; };
 		7AF18C8329FDCE0A005A6E31 /* ShimmerButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShimmerButton.swift; sourceTree = "<group>"; };
@@ -1228,6 +1232,7 @@
 				454807532E3F049400B8C71B /* DailyChecklistView.swift */,
 				4548075F2E3F11DC00B8C71B /* DailyChecklistFullScreenView.swift */,
 				454807512E3F048800B8C71B /* DailyChecklistModels.swift */,
+				45FF1F2A00000001A0000001 /* ChecklistModelsAppearance.swift */,
 				458B6B1C2BA6D58D0001BEFE /* StreakView.swift */,
 				458B6B1E2BA6D5CF0001BEFE /* TimerViewModel.swift */,
 				458B6B202BA6E3EC0001BEFE /* StreakDetails.swift */,
@@ -1807,6 +1812,7 @@
 				7AA870A828DACCB700134ADB /* ProfileView.swift */,
 				45A1B2C32F80000100D1C0DE /* AppIconPickerView.swift */,
 				918D0ED751C243E98A66C8E3 /* SpiritualGrowthView.swift */,
+				45FF1F2C00000003A0000003 /* StrengthLevelAppearance.swift */,
 				7AF46FC42A41326100A45C01 /* AbbasLoveView.swift */,
 				7AF18C8729FF8CEE005A6E31 /* TipsView.swift */,
 				7ABA50C129E4D4FD002699F1 /* Prayer */,
@@ -2467,6 +2473,8 @@
 				63BFAA7702BD4A74B7B60D25 /* StructuredDayView.swift in Sources */,
 				7AF18C7B29FD1A43005A6E31 /* GoogleAdMob.swift in Sources */,
 				45FF1F1B00000002A0000002 /* FeatureFlags.swift in Sources */,
+				45FF1F2B00000002A0000002 /* ChecklistModelsAppearance.swift in Sources */,
+				45FF1F2D00000004A0000004 /* StrengthLevelAppearance.swift in Sources */,
 				457CD3402E7E735A00F435EC /* OptimizedSubscriptionViewV1.swift in Sources */,
 				45F6D8922F2AF45900C0B98D /* ClearBibleCache.swift in Sources */,
 				7AF18C9A2A0D9884005A6E31 /* BlurView.swift in Sources */,
