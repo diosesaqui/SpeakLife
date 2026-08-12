@@ -7,7 +7,6 @@
 
 import UserNotifications
 import Foundation
-import BackgroundTasks
 
 let resyncNotification = NSNotification.Name("NotificationsDone")
 let notificationNavigate = NSNotification.Name("NavigateToContent")
@@ -35,7 +34,15 @@ final class NotificationManager: NSObject {
     }
 
     private override init() {}
-    
+
+    /// Submits a background-refresh request to the OS. Injected as a
+    /// Foundation-typed closure so this file does not import `BackgroundTasks`;
+    /// the app target installs the real `BGTaskScheduler.shared.submit(...)`
+    /// implementation on startup (see `AppDelegate.installBackgroundTaskSubmitter`).
+    /// Defaults to a no-op so unit tests exercising `scheduleBatchRefresh` do
+    /// not touch the scheduler.
+    var submitBackgroundTask: (_ identifier: String, _ earliestBeginDate: Date?) -> Void = { _, _ in }
+
     private let notificationProcessor = NotificationProcessor(service: LocalAPIClient())
     
     let notificationCenter = UNUserNotificationCenter.current()
@@ -319,6 +326,11 @@ final class NotificationManager: NSObject {
     /// `updateNotificationContent`, which runs `UpdateNotificationsOperation`
     /// → `registerNotifications` → schedules a fresh 10-day batch.
     /// This means users get continuous notifications even without opening the app.
+    ///
+    /// The actual `BGTaskScheduler.shared.submit(...)` call is routed through
+    /// `submitBackgroundTask`, installed by `AppDelegate` on startup. Keeps this
+    /// file free of `import BackgroundTasks` so it builds in a Foundation-only
+    /// test package.
     private func scheduleBatchRefresh(batchEndsAt endDate: Date) {
         // Aim to refresh when 4 days of notifications remain (buffer for iOS delays)
         let refreshBuffer: TimeInterval = 4 * 24 * 60 * 60
@@ -327,18 +339,7 @@ final class NotificationManager: NSObject {
         // If refresh date is already past (e.g. small batch), fire as soon as possible
         let fireDate = max(refreshDate, Date(timeIntervalSinceNow: 60))
 
-        let request = BGAppRefreshTaskRequest(identifier: "com.speaklife.updateNotificationContent")
-        request.earliestBeginDate = fireDate
-
-        do {
-            try BGTaskScheduler.shared.submit(request)
-            let formatter = DateFormatter()
-            formatter.dateStyle = .short
-            formatter.timeStyle = .short
-            print("✅ BGAppRefreshTask scheduled for \(formatter.string(from: fireDate))")
-        } catch {
-            print("⚠️ Could not schedule notification batch refresh: \(error.localizedDescription)")
-        }
+        submitBackgroundTask("com.speaklife.updateNotificationContent", fireDate)
     }
     private func getArrayDates(from dates: [Date], startTimeIndex: Int, endTimeIndex: Int) -> [Date] {
         

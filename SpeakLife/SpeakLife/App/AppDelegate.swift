@@ -89,12 +89,28 @@ final class AppDelegate: NSObject, MessagingDelegate {
 
         registerNotificationHandler()
 
+        // Install the UIKit-backed platform seams before anything touches the
+        // Core Data / sync stores. `DefaultVendorIdentifier` feeds
+        // `ProgressSyncStore.deviceId` its vendor pin (see the block comment
+        // there for why that pin is load-bearing on iCloud-restored installs);
+        // `LifecycleNames` gives the stores their foreground/background
+        // notification names. Both live in the app target so the stores can
+        // stay UIKit-free.
+        DefaultVendorIdentifier.shared.read = {
+            UIDevice.current.identifierForVendor?.uuidString
+        }
+        let lifecycle = LifecycleNames(
+            didBecomeActive: UIApplication.didBecomeActiveNotification,
+            didEnterBackground: UIApplication.didEnterBackgroundNotification
+        )
+        PersistenceController.shared.start(lifecycle: lifecycle)
+
         // iCloud progress sync: mirror streaks, listened audio, counters, and
         // whitelisted preferences across the user's devices via CloudKit.
         // Both stores are additive/merge-only, so starting them is safe even
         // before the first CloudKit import completes.
-        ProgressSyncStore.shared.start()
-        SyncedSettingsStore.shared.start()
+        ProgressSyncStore.shared.start(lifecycle: lifecycle)
+        SyncedSettingsStore.shared.start(lifecycle: lifecycle)
         ApplicationDelegate.shared.application(
             application,
             didFinishLaunchingWithOptions: launchOptions
@@ -304,9 +320,27 @@ extension AppDelegate {
     
     
     private func registerBGTask() {
-        
+
         BGTaskScheduler.shared.register(forTaskWithIdentifier: "com.speaklife.updateNotificationContent", using: nil) { task in
             self.updateNotificationContent(task: task as! BGAppRefreshTask)
+        }
+
+        // Wire the Foundation-typed submit seam on `NotificationManager` to the
+        // real `BGTaskScheduler`. Kept here so the manager itself does not
+        // import `BackgroundTasks` — the framework only touches the app target.
+        NotificationManager.shared.submitBackgroundTask = { identifier, earliestBeginDate in
+            let request = BGAppRefreshTaskRequest(identifier: identifier)
+            request.earliestBeginDate = earliestBeginDate
+            do {
+                try BGTaskScheduler.shared.submit(request)
+                let formatter = DateFormatter()
+                formatter.dateStyle = .short
+                formatter.timeStyle = .short
+                let when = earliestBeginDate.map { formatter.string(from: $0) } ?? "asap"
+                print("✅ BGAppRefreshTask scheduled for \(when)")
+            } catch {
+                print("⚠️ Could not schedule notification batch refresh: \(error.localizedDescription)")
+            }
         }
     }
     

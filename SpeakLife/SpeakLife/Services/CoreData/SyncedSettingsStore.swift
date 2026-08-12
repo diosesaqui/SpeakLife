@@ -40,7 +40,6 @@
 
 import Foundation
 import CoreData
-import UIKit
 
 final class SyncedSettingsStore {
 
@@ -267,7 +266,13 @@ final class SyncedSettingsStore {
     // MARK: - Lifecycle
 
     /// Call once at app launch. Safe to call multiple times.
-    func start() {
+    ///
+    /// - Parameter lifecycle: the app's foreground/background notification
+    ///   names (`UIApplication.did{BecomeActive,EnterBackground}Notification`
+    ///   on iOS). Injected by the app target so this file stays UIKit-free.
+    ///   Only `didBecomeActive` is observed here; the parameter takes the
+    ///   pair for symmetry with the other CoreData stores.
+    func start(lifecycle: LifecycleNames) {
         guard !started else { return }
         started = true
 
@@ -288,7 +293,7 @@ final class SyncedSettingsStore {
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(handleDidBecomeActive),
-            name: UIApplication.didBecomeActiveNotification,
+            name: lifecycle.didBecomeActive,
             object: nil
         )
 
@@ -398,7 +403,7 @@ final class SyncedSettingsStore {
     private func performReconcile() {
         let freshInstall = isFreshInstall
         let mayPushLocalOnly = importSettled
-        let device = ProgressSyncStore.deviceId
+        let device = ProgressSyncStore.shared.deviceId
 
         context.perform { [weak self] in
             guard let self = self else { return }

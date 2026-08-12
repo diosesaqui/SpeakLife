@@ -28,7 +28,6 @@
 
 import Foundation
 import CoreData
-import UIKit
 
 final class ProgressSyncStore {
 
@@ -64,21 +63,30 @@ final class ProgressSyncStore {
     /// restore, so we pin the stored id to it and mint a fresh id when the
     /// vendor id changes (the old row simply becomes another device's
     /// contribution — nothing is lost).
-    static var deviceId: String {
+    ///
+    /// The vendor identifier itself is read through an injected closure
+    /// (`vendorIdentifier`, default `DefaultVendorIdentifier.shared.read`)
+    /// so this file does not import UIKit. AppDelegate installs the
+    /// `UIDevice.current.identifierForVendor?.uuidString` reader at
+    /// startup; behavior is unchanged. A nil return from the reader takes
+    /// the same "no current vendor available" branch that a real
+    /// `identifierForVendor` returning nil always has — the stored id is
+    /// trusted as-is, no fresh id is minted.
+    var deviceId: String {
         let defaults = UserDefaults.standard
-        let currentVendor = UIDevice.current.identifierForVendor?.uuidString
+        let currentVendor = vendorIdentifier()
 
-        if let existing = defaults.string(forKey: deviceIdKey) {
-            let storedVendor = defaults.string(forKey: deviceIdVendorKey)
+        if let existing = defaults.string(forKey: Self.deviceIdKey) {
+            let storedVendor = defaults.string(forKey: Self.deviceIdVendorKey)
             if storedVendor == currentVendor || currentVendor == nil {
                 return existing
             }
         }
 
         let fresh = UUID().uuidString
-        defaults.set(fresh, forKey: deviceIdKey)
+        defaults.set(fresh, forKey: Self.deviceIdKey)
         if let currentVendor = currentVendor {
-            defaults.set(currentVendor, forKey: deviceIdVendorKey)
+            defaults.set(currentVendor, forKey: Self.deviceIdVendorKey)
         }
         return fresh
     }
@@ -102,14 +110,17 @@ final class ProgressSyncStore {
 
     private let container: NSPersistentCloudKitContainer
     private let context: NSManagedObjectContext
+    private let vendorIdentifier: () -> String?
 
     // Main-queue-confined coordination state.
     private var remoteChangeWorkItem: DispatchWorkItem?
     private var counterSyncInFlight = false
     private var started = false
 
-    private init(container: NSPersistentCloudKitContainer = PersistenceController.shared.container) {
+    private init(container: NSPersistentCloudKitContainer = PersistenceController.shared.container,
+                 vendorIdentifier: @escaping () -> String? = { DefaultVendorIdentifier.shared.read() }) {
         self.container = container
+        self.vendorIdentifier = vendorIdentifier
         let ctx = container.newBackgroundContext()
         ctx.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy
         ctx.automaticallyMergesChangesFromParent = true
@@ -123,7 +134,14 @@ final class ProgressSyncStore {
     // MARK: - Lifecycle
 
     /// Call once at app launch. Safe to call multiple times.
-    func start() {
+    ///
+    /// - Parameter lifecycle: the app's foreground/background notification
+    ///   names (`UIApplication.did{BecomeActive,EnterBackground}Notification`
+    ///   on iOS). Injected by the app target so this file stays UIKit-free.
+    ///   Only `didBecomeActive` is observed here; the parameter takes the
+    ///   pair for symmetry with `PersistenceController.start` and
+    ///   `SyncedSettingsStore.start`.
+    func start(lifecycle: LifecycleNames) {
         guard !started else { return }
         started = true
 
@@ -137,7 +155,7 @@ final class ProgressSyncStore {
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(handleDidBecomeActive),
-            name: UIApplication.didBecomeActiveNotification,
+            name: lifecycle.didBecomeActive,
             object: nil
         )
 
@@ -191,7 +209,7 @@ final class ProgressSyncStore {
             DispatchQueue.main.async { completion?(true) }
             return
         }
-        let device = Self.deviceId
+        let device = deviceId
         context.perform { [weak self] in
             guard let self = self else {
                 DispatchQueue.main.async { completion?(false) }
@@ -323,7 +341,7 @@ final class ProgressSyncStore {
             guard let self = self, !self.counterSyncInFlight else { return }
             self.counterSyncInFlight = true
 
-            let device = Self.deviceId
+            let device = deviceId
             // Phase 1 (background): snapshot rows as plain values.
             self.context.perform { [weak self] in
                 guard let self = self else { return }

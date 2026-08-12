@@ -7,7 +7,6 @@
 
 import CoreData
 import CloudKit
-import UIKit
 
 final class PersistenceController {
     
@@ -204,10 +203,12 @@ final class PersistenceController {
         
         // Setup CloudKit sync event notifications
         setupCloudKitSyncLogging()
-        
-        // Setup background sync optimization
-        setupBackgroundSyncOptimization()
-        
+
+        // Background sync optimization observers used to be registered here.
+        // They were moved to `start(lifecycle:)` because the notification
+        // names come from UIKit and must be injected by the app target so
+        // this file stays UIKit-free.
+
         // Check CloudKit import in background to avoid blocking UI
         Task(priority: .background) {
             try? await Task.sleep(nanoseconds: 5_000_000_000) // 5 seconds
@@ -303,20 +304,29 @@ final class PersistenceController {
     }
     
     // MARK: - Background Sync Optimization
-    private func setupBackgroundSyncOptimization() {
+
+    /// Called once by the app after `PersistenceController.shared` has been
+    /// touched. Registering here (rather than in `init`) lets the app inject
+    /// the UIKit lifecycle names so this file does not need to import UIKit.
+    ///
+    /// Safe to call multiple times — subsequent calls simply add duplicate
+    /// observers, which is harmless (both call the same idempotent
+    /// `requestSyncIfNeeded`) but still worth avoiding, so the app should
+    /// call it exactly once from `didFinishLaunchingWithOptions`.
+    func start(lifecycle: LifecycleNames) {
         // Trigger sync when app becomes active
         NotificationCenter.default.addObserver(
-            forName: UIApplication.didBecomeActiveNotification,
+            forName: lifecycle.didBecomeActive,
             object: nil,
             queue: .main
         ) { [weak self] _ in
             print("App became active - requesting CloudKit sync")
             self?.requestSyncIfNeeded()
         }
-        
+
         // Trigger sync when app enters background
         NotificationCenter.default.addObserver(
-            forName: UIApplication.didEnterBackgroundNotification,
+            forName: lifecycle.didEnterBackground,
             object: nil,
             queue: .main
         ) { [weak self] _ in

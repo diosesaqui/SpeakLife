@@ -350,6 +350,7 @@
 		45FF1F1B00000002A0000002 /* FeatureFlags.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45FF1F1A00000001A0000001 /* FeatureFlags.swift */; };
 		45FF1F2B00000002A0000002 /* ChecklistModelsAppearance.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45FF1F2A00000001A0000001 /* ChecklistModelsAppearance.swift */; };
 		45FF1F2D00000004A0000004 /* StrengthLevelAppearance.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45FF1F2C00000003A0000003 /* StrengthLevelAppearance.swift */; };
+		45FF1F3B00000002A0000002 /* PlatformSeams.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45FF1F3A00000001A0000001 /* PlatformSeams.swift */; };
 		7AF18C7D29FD1A67005A6E31 /* AdBanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AF18C7C29FD1A67005A6E31 /* AdBanner.swift */; };
 		7AF18C8029FD1E20005A6E31 /* BuildFile in Frameworks */ = {isa = PBXBuildFile; };
 		7AF18C8229FD2494005A6E31 /* Badge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AF18C8129FD2494005A6E31 /* Badge.swift */; };
@@ -814,6 +815,7 @@
 		45FF1F1A00000001A0000001 /* FeatureFlags.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeatureFlags.swift; sourceTree = "<group>"; };
 		45FF1F2A00000001A0000001 /* ChecklistModelsAppearance.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChecklistModelsAppearance.swift; sourceTree = "<group>"; };
 		45FF1F2C00000003A0000003 /* StrengthLevelAppearance.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StrengthLevelAppearance.swift; sourceTree = "<group>"; };
+		45FF1F3A00000001A0000001 /* PlatformSeams.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlatformSeams.swift; sourceTree = "<group>"; };
 		7AF18C7C29FD1A67005A6E31 /* AdBanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdBanner.swift; sourceTree = "<group>"; };
 		7AF18C8129FD2494005A6E31 /* Badge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Badge.swift; sourceTree = "<group>"; };
 		7AF18C8329FDCE0A005A6E31 /* ShimmerButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShimmerButton.swift; sourceTree = "<group>"; };
@@ -1648,6 +1650,7 @@
 				7AA8708C28DACCA700134ADB /* Utils */,
 				7AF18C7A29FD1A43005A6E31 /* GoogleAdMob.swift */,
 				45FF1F1A00000001A0000001 /* FeatureFlags.swift */,
+				45FF1F3A00000001A0000001 /* PlatformSeams.swift */,
 			);
 			path = Core;
 			sourceTree = "<group>";
@@ -2475,6 +2478,7 @@
 				45FF1F1B00000002A0000002 /* FeatureFlags.swift in Sources */,
 				45FF1F2B00000002A0000002 /* ChecklistModelsAppearance.swift in Sources */,
 				45FF1F2D00000004A0000004 /* StrengthLevelAppearance.swift in Sources */,
+				45FF1F3B00000002A0000002 /* PlatformSeams.swift in Sources */,
 				457CD3402E7E735A00F435EC /* OptimizedSubscriptionViewV1.swift in Sources */,
 				45F6D8922F2AF45900C0B98D /* ClearBibleCache.swift in Sources */,
 				7AF18C9A2A0D9884005A6E31 /* BlurView.swift in Sources */,
