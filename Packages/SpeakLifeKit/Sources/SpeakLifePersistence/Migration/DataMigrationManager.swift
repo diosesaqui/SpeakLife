@@ -21,11 +21,19 @@ public final class DataMigrationManager {
     private let persistenceController: PersistenceController
     private let legacyAPIService: APIService
     private let favoritesMigrationService: FavoritesMigrationService
+    private let documentsDirectory: () -> URL
 
+    /// - Parameter favoritesMigrationService: defaults to `nil`, not to
+    ///   `FavoritesMigrationService()`. Defaulting it to a constructed instance
+    ///   would build that instance *before* `documentsDirectory` is known, so a
+    ///   caller redirecting this type at a temp directory would get an inner
+    ///   service still pointed at the real one — half-redirected, and silently.
     public init(persistenceController: PersistenceController = .shared,
                 legacyAPIService: APIService? = nil,
-                favoritesMigrationService: FavoritesMigrationService = FavoritesMigrationService()) {
+                favoritesMigrationService: FavoritesMigrationService? = nil,
+                documentsDirectory: @escaping () -> URL = DocumentsDirectory.system) {
         self.persistenceController = persistenceController
+        self.documentsDirectory = documentsDirectory
         // Prefer the explicit arg (used by tests). Fall back to the app-installed
         // factory. If neither is set (e.g. running under `swift test` without the
         // factory), use `NoOpLegacyAPIService` — `migrateLegacyData` will short-
@@ -34,6 +42,7 @@ public final class DataMigrationManager {
             ?? Self.defaultLegacyAPIServiceFactory?()
             ?? NoOpLegacyAPIService()
         self.favoritesMigrationService = favoritesMigrationService
+            ?? FavoritesMigrationService(documentsDirectory: documentsDirectory)
     }
 
     // MARK: - Migration
@@ -160,14 +169,7 @@ public final class DataMigrationManager {
     
     // MARK: - Clean Up Legacy Data
     public func cleanUpLegacyData() {
-        guard let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else {
-            CoreAnalytics.track("legacy_cleanup_failed", parameters: [
-                "error": "documents_directory_not_found"
-            ])
-            return
-        }
-        
-        let declarationsURL = documentsDirectory.appendingPathComponent("declarations.json")
+        let declarationsURL = documentsDirectory().appendingPathComponent("declarations.json")
         
         do {
             if FileManager.default.fileExists(atPath: declarationsURL.path) {

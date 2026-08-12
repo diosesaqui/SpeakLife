@@ -64,14 +64,17 @@ public final class AudioFavoritesManager: ObservableObject {
     private let fileManager = FileManager.default
     private let legacyFavoritesFileName = "audioFavorites.txt"
 
+    private let documentsDirectory: () -> URL
+
     private var legacyFavoritesURL: URL {
-        let documentsPath = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
-        return documentsPath.appendingPathComponent(legacyFavoritesFileName)
+        documentsDirectory().appendingPathComponent(legacyFavoritesFileName)
     }
 
     // MARK: - Initialization
-    public init(repository: any AudioFavoriteRepositoryProtocol = AudioFavoriteRepository()) {
+    public init(repository: any AudioFavoriteRepositoryProtocol = AudioFavoriteRepository(),
+                documentsDirectory: @escaping () -> URL = DocumentsDirectory.system) {
         self.repository = repository
+        self.documentsDirectory = documentsDirectory
         setupObservers()
         loadFavorites()
         migrateLegacyFavorites()

@@ -43,9 +43,15 @@ final class FavoritesMigrationServiceTests: XCTestCase {
         mockAudioRepo = MockAudioFavoriteRepositoryWithFailure()
         mockDeclarationRepo = MockDeclarationFavoriteRepository()
         
+        // `testDirectory` existed before this line did — it was created here and
+        // then bypassed, because the service resolved the documents directory
+        // itself. Wiring it in is what stops these tests writing
+        // `audioFavorites.txt` into the real documents directory.
+        let docs: URL = testDirectory
         migrationService = FavoritesMigrationService(
             audioFavoriteRepository: mockAudioRepo,
-            declarationFavoriteRepository: mockDeclarationRepo
+            declarationFavoriteRepository: mockDeclarationRepo,
+            documentsDirectory: { docs }
         )
     }
     
@@ -91,8 +97,7 @@ final class FavoritesMigrationServiceTests: XCTestCase {
         encoder.dateEncodingStrategy = .iso8601
         let data = try encoder.encode(legacyFavorites)
         
-        let documentsPath = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
-        let legacyURL = documentsPath.appendingPathComponent("audioFavorites.txt")
+        let legacyURL = testDirectory.appendingPathComponent("audioFavorites.txt")
         
         try data.write(to: legacyURL)
         
@@ -138,8 +143,7 @@ final class FavoritesMigrationServiceTests: XCTestCase {
         encoder.dateEncodingStrategy = .iso8601
         let data = try encoder.encode(legacyFavorites)
         
-        let documentsPath = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
-        let legacyURL = documentsPath.appendingPathComponent("audioFavorites.txt")
+        let legacyURL = testDirectory.appendingPathComponent("audioFavorites.txt")
         
         try data.write(to: legacyURL)
         
@@ -212,8 +216,7 @@ final class FavoritesMigrationServiceTests: XCTestCase {
         encoder.dateEncodingStrategy = .iso8601
         let data = try encoder.encode(legacyFavorites)
         
-        let documentsPath = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
-        let legacyURL = documentsPath.appendingPathComponent("audioFavorites.txt")
+        let legacyURL = testDirectory.appendingPathComponent("audioFavorites.txt")
         
         try data.write(to: legacyURL)
         
@@ -232,8 +235,7 @@ final class FavoritesMigrationServiceTests: XCTestCase {
         // Given - Create corrupted legacy file
         let corruptedData = "This is not valid JSON".data(using: .utf8)!
         
-        let documentsPath = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
-        let legacyURL = documentsPath.appendingPathComponent("audioFavorites.txt")
+        let legacyURL = testDirectory.appendingPathComponent("audioFavorites.txt")
         
         try corruptedData.write(to: legacyURL)
         
@@ -276,8 +278,7 @@ final class FavoritesMigrationServiceTests: XCTestCase {
         encoder.dateEncodingStrategy = .iso8601
         let data = try encoder.encode(legacyFavorites)
         
-        let documentsPath = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
-        let legacyURL = documentsPath.appendingPathComponent("audioFavorites.txt")
+        let legacyURL = testDirectory.appendingPathComponent("audioFavorites.txt")
         
         try data.write(to: legacyURL)
         
@@ -321,8 +322,7 @@ final class FavoritesMigrationServiceTests: XCTestCase {
         encoder.dateEncodingStrategy = .iso8601
         let data = try encoder.encode(legacyFavorites)
         
-        let documentsPath = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
-        let legacyURL = documentsPath.appendingPathComponent("audioFavorites.txt")
+        let legacyURL = testDirectory.appendingPathComponent("audioFavorites.txt")
         
         try data.write(to: legacyURL)
         

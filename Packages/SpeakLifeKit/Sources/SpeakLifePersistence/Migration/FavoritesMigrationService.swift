@@ -12,11 +12,14 @@ public final class FavoritesMigrationService {
 
     private let audioFavoriteRepository: any AudioFavoriteRepositoryProtocol
     private let declarationFavoriteRepository: any DeclarationFavoriteRepositoryProtocol
+    private let documentsDirectory: () -> URL
 
     public init(audioFavoriteRepository: any AudioFavoriteRepositoryProtocol = AudioFavoriteRepository(),
-                declarationFavoriteRepository: any DeclarationFavoriteRepositoryProtocol = DeclarationFavoriteRepository()) {
+                declarationFavoriteRepository: any DeclarationFavoriteRepositoryProtocol = DeclarationFavoriteRepository(),
+                documentsDirectory: @escaping () -> URL = DocumentsDirectory.system) {
         self.audioFavoriteRepository = audioFavoriteRepository
         self.declarationFavoriteRepository = declarationFavoriteRepository
+        self.documentsDirectory = documentsDirectory
     }
 
     /// Migrate all legacy favorites to Core Data + CloudKit
@@ -41,8 +44,7 @@ public final class FavoritesMigrationService {
     
     private func migrateAudioFavorites(_ results: inout MigrationResults) async throws {
         let fileManager = FileManager.default
-        let documentsPath = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
-        let legacyURL = documentsPath.appendingPathComponent("audioFavorites.txt")
+        let legacyURL = documentsDirectory().appendingPathComponent("audioFavorites.txt")
         
         guard fileManager.fileExists(atPath: legacyURL.path) else {
             print("ℹ️ No legacy audio favorites file found")

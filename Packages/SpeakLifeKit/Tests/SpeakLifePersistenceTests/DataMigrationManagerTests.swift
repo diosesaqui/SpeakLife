@@ -15,14 +15,25 @@ final class DataMigrationManagerTests: XCTestCase {
     var migrationManager: DataMigrationManager!
     var persistenceController: PersistenceController!
     var mockAPIService: MockAPIService!
-    
+    /// Stands in for the documents directory. Before this existed the cleanup
+    /// tests wrote and deleted `declarations.json` in the real documents
+    /// directory of whatever machine ran them.
+    var testDocumentsDirectory: URL!
+
     override func setUp() {
         super.setUp()
         persistenceController = PersistenceController(inMemory: true)
         mockAPIService = MockAPIService()
+
+        testDocumentsDirectory = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try? FileManager.default.createDirectory(at: testDocumentsDirectory,
+                                                 withIntermediateDirectories: true)
+        let docs: URL = testDocumentsDirectory
         migrationManager = DataMigrationManager(
             persistenceController: persistenceController,
-            legacyAPIService: mockAPIService
+            legacyAPIService: mockAPIService,
+            documentsDirectory: { docs }
         )
         
         // Reset migration flag for each test
@@ -31,6 +42,10 @@ final class DataMigrationManagerTests: XCTestCase {
     
     override func tearDown() {
         UserDefaults.standard.removeObject(forKey: "HasMigratedToCoreData")
+        if let testDocumentsDirectory {
+            try? FileManager.default.removeItem(at: testDocumentsDirectory)
+        }
+        testDocumentsDirectory = nil
         migrationManager = nil
         mockAPIService = nil
         persistenceController = nil
@@ -160,8 +175,7 @@ final class DataMigrationManagerTests: XCTestCase {
     // MARK: - Cleanup Tests
     func testCleanUpLegacyData() {
         // Given
-        let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
-        let declarationsURL = documentsDirectory.appendingPathComponent("declarations.json")
+        let declarationsURL = testDocumentsDirectory.appendingPathComponent("declarations.json")
         
         // Create a test file
         let testData = "test data".data(using: .utf8)!
@@ -177,8 +191,7 @@ final class DataMigrationManagerTests: XCTestCase {
     
     func testCleanUpLegacyDataWithNonExistentFile() {
         // Given
-        let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
-        let declarationsURL = documentsDirectory.appendingPathComponent("declarations.json")
+        let declarationsURL = testDocumentsDirectory.appendingPathComponent("declarations.json")
         
         // Ensure file doesn't exist
         try? FileManager.default.removeItem(at: declarationsURL)

@@ -20,10 +20,18 @@ final class FavoritesSyncIntegrationTests: XCTestCase {
     var unifiedManager: UnifiedFavoritesManager!
     var migrationService: FavoritesMigrationService!
     var cancellables: Set<AnyCancellable>!
-    
+    /// Stands in for the documents directory so the migration flow does not
+    /// write `audioFavorites.txt` into the real one.
+    var testDocumentsDirectory: URL!
+
     override func setUp() {
         super.setUp()
-        
+
+        testDocumentsDirectory = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try? FileManager.default.createDirectory(at: testDocumentsDirectory,
+                                                 withIntermediateDirectories: true)
+
         // Use in-memory store for tests
         persistenceController = PersistenceController(inMemory: true)
         let context = persistenceController.container.viewContext
@@ -31,7 +39,11 @@ final class FavoritesSyncIntegrationTests: XCTestCase {
         audioRepository = AudioFavoriteRepository(context: context)
         declarationRepository = DeclarationFavoriteRepository(context: context)
         
-        audioManager = AudioFavoritesManager(repository: audioRepository)
+        let docs: URL = testDocumentsDirectory
+        audioManager = AudioFavoritesManager(
+            repository: audioRepository,
+            documentsDirectory: { docs }
+        )
         
         unifiedManager = UnifiedFavoritesManager(
             declarationFavoriteRepository: declarationRepository,
@@ -40,13 +52,18 @@ final class FavoritesSyncIntegrationTests: XCTestCase {
         
         migrationService = FavoritesMigrationService(
             audioFavoriteRepository: audioRepository,
-            declarationFavoriteRepository: declarationRepository
+            declarationFavoriteRepository: declarationRepository,
+            documentsDirectory: { docs }
         )
         
         cancellables = Set<AnyCancellable>()
     }
     
     override func tearDown() {
+        if let testDocumentsDirectory {
+            try? FileManager.default.removeItem(at: testDocumentsDirectory)
+        }
+        testDocumentsDirectory = nil
         cancellables = nil
         migrationService = nil
         unifiedManager = nil
@@ -167,8 +184,7 @@ final class FavoritesSyncIntegrationTests: XCTestCase {
     func testFullMigrationFlow() async throws {
         // Given - Create legacy file
         let fileManager = FileManager.default
-        let documentsPath = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
-        let legacyURL = documentsPath.appendingPathComponent("audioFavorites.txt")
+        let legacyURL = testDocumentsDirectory.appendingPathComponent("audioFavorites.txt")
         
         let legacyFavorites = [
             AudioDeclaration(
