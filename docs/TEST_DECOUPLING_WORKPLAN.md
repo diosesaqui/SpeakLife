@@ -136,34 +136,83 @@ two comments.
 
 ---
 
-### PR2 — Spike: `.xcdatamodeld` as a SwiftPM resource
+### PR2 — ~~Spike~~ **RESOLVED. No work required; read this before PR7.**
 
-**Type:** throwaway spike. **This is the one assumption that could force a redesign — do
-it early.** Nothing is committed from this PR except the answer.
+Run on Xcode 26.2 via `scripts/spike-coredata-spm-v2.sh`. **Answer: it works, but not
+the obvious way.**
 
-`SpeakLife.xcdatamodeld` currently lives at `SpeakLife/SpeakLife/Models/`, and
-`PersistenceController.swift:103` loads it via `Bundle(for: PersistenceController.self)`.
-In a package that becomes `Bundle.module`. SwiftPM does compile `.xcdatamodeld` with
-`momc`, but confirm it on your Xcode before betting PR7 on it.
+**What does NOT work.** Declaring the model as a resource —
+`.process("Resources/SpeakLife.xcdatamodeld")` — fails. SwiftPM's native build system
+does not run `momc`; it treats `.xcdatamodeld` as an opaque directory and copies it. The
+build log says the quiet part out loud:
 
-**Steps**
+```
+[4/8] Copying SpeakLife.xcdatamodeld     ← "Copying", not "Compiling"
+```
 
-1. Create a scratch package outside the repo.
-2. Copy in `SpeakLife.xcdatamodeld` as `.process("Resources/SpeakLife.xcdatamodeld")`.
-3. Copy in the generated `NSManagedObject` subclasses from `Models/CoreData/`.
-4. Write one test: load an `NSPersistentContainer` from `Bundle.module`, insert an
-   `AffirmationEntry`, fetch it back.
-5. `swift test`.
+`Bundle.module` then contains the uncompiled source directory and no `.momd`, so
+`NSManagedObjectModel(contentsOf:)` has nothing to load and every Core Data test fails at
+`setUp`.
 
-**Deliverable:** a comment on this PR saying it works or does not, with the momc output
-if it does not.
+**What DOES work.** A SwiftPM **prebuild plugin** that shells out to `xcrun momc` and
+emits the compiled model into the plugin work directory, which SwiftPM then bundles as a
+resource. Verified: model loads, insert/fetch round-trips, **2 tests in 0.008 seconds
+with no simulator**.
 
-**If it fails:** PR7 changes shape — persistence tests stay on a simulator job that
-builds only the persistence target (still no app bundle, still no Firebase, still a big
-win). PR6 and the ~10 Core test files are unaffected either way. Do not let this block
-PR3–PR6.
+`Package.swift` — note `exclude`, not `resources`. Leaving it as a resource reproduces
+the copy behaviour above.
 
-**Estimate:** one day.
+```swift
+.target(
+    name: "SpeakLifePersistence",
+    dependencies: ["SpeakLifeCore"],
+    exclude: ["Resources/SpeakLife.xcdatamodeld"],
+    plugins: [.plugin(name: "CompileCoreDataModel")]
+),
+.plugin(name: "CompileCoreDataModel", capability: .buildTool()),
+```
+
+`Plugins/CompileCoreDataModel/plugin.swift` — verbatim, this is the version that passed:
+
+```swift
+import PackagePlugin
+import Foundation
+
+@main
+struct CompileCoreDataModel: BuildToolPlugin {
+    func createBuildCommands(context: PluginContext, target: Target) async throws -> [Command] {
+        guard let target = target as? SourceModuleTarget else { return [] }
+
+        let input = target.directory.appending(subpath: "Resources/SpeakLife.xcdatamodeld")
+        let outDir = context.pluginWorkDirectory.appending(subpath: "CoreDataModels")
+        try? FileManager.default.createDirectory(
+            atPath: outDir.string, withIntermediateDirectories: true)
+
+        // xcrun, not context.tool(named:) — momc lives inside Xcode and is not on
+        // the plugin's default tool search path.
+        return [
+            .prebuildCommand(
+                displayName: "momc SpeakLife.xcdatamodeld",
+                executable: Path("/usr/bin/xcrun"),
+                arguments: [
+                    "momc", "--sdkroot", "/",
+                    input.string,
+                    outDir.appending(subpath: "SpeakLife.momd").string,
+                ],
+                outputFilesDirectory: outDir
+            )
+        ]
+    }
+}
+```
+
+**Consequences for PR7:** it proceeds as designed. `swift test` stays the runner, the
+`.xcdatamodeld` stays the single source of truth, and no simulator is involved. The
+fallback (a reduced simulator job for the persistence tier) is **no longer needed** —
+delete it from your mental model.
+
+**Caveat to keep in mind:** prebuild commands have no dependency tracking, so `momc` runs
+on every build. On one model that is milliseconds; do not extend the plugin to heavy work.
 
 ---
 
@@ -343,9 +392,14 @@ if review gets unwieldy.
 
 ### PR7 — Move `SpeakLifePersistence`
 
-**Gated on PR2.** Same shape as PR6 for the Core Data tier: repositories, persistence
-controller, sync stores, migrations, and `SpeakLife.xcdatamodeld` as a package resource.
-`PersistenceController.swift:103` switches `Bundle(for:)` → `Bundle.module`.
+**PR2 is resolved — this is unblocked and proceeds as designed.** Same shape as PR6 for
+the Core Data tier: repositories, persistence controller, sync stores, migrations.
+
+Two specifics settled by the spike:
+- The model is **excluded** from the target and compiled by the `CompileCoreDataModel`
+  prebuild plugin (code in PR2 above). Do **not** declare it via `.process(...)` — that
+  silently copies it uncompiled and every test fails at `setUp`.
+- `PersistenceController.swift:103` switches `Bundle(for:)` → `Bundle.module`.
 
 Move the 11 `SpeakLifeTests/CoreData/**` files to `Tests/SpeakLifePersistenceTests/`.
 
@@ -431,7 +485,7 @@ A correct test never waits the full timeout, so a generous timeout costs nothing
 
 | Risk | Likelihood | Mitigation |
 |---|---|---|
-| `.xcdatamodeld` does not work as a SwiftPM resource | medium | PR2 spike before committing to PR7. Fallback keeps persistence on a reduced simulator job. |
+| ~~`.xcdatamodeld` does not work as a SwiftPM resource~~ | **retired** | Resolved by PR2 on Xcode 26.2. It does not work as a *resource*; it works via a prebuild plugin. Code is in PR2. |
 | Access-control conversion in PR6 is larger than estimated | **high** | Only `public` what the compiler demands; do not blanket-public. Split PR6 by subsystem if review stalls. |
 | `ProgressSyncStore.deviceId` seam breaks multi-device sync | medium | Read the comment at `:60–67` — the vendor-ID pinning is deliberate. Test with two devices before merging PR5. |
 | Merge conflicts against active feature branches | medium | PR1 and PR4 touch many files. Land them fast, early in a week, and tell the team. |
@@ -507,7 +561,8 @@ plain domain type would free it — worth doing only if the Prayer Wall grows.
 ---
 
 *Counts and line numbers measured against `claude/pipeline-unit-test-plan-hl5kgg`.
-Two things are stated but unverified, because the analysis environment has no macOS or
-Xcode: `.xcdatamodeld` behaviour under SwiftPM (that is what PR2 is for) and the
-projected CI timings, which are extrapolated from the current build's shape rather than
-benchmarked. Effort estimates are estimates.*
+`.xcdatamodeld` behaviour under SwiftPM was originally listed here as unverified; it has
+since been settled on Xcode 26.2 — see PR2. The projected CI timings in §2 remain
+extrapolated from the current build's shape rather than benchmarked, though the spike's
+2 Core Data tests in 0.008 s with no simulator is a real data point in their favour.
+Effort estimates are estimates.*
