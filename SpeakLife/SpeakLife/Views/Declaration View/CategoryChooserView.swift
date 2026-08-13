@@ -218,6 +218,9 @@ struct CategoryChooserView: View {
                                 
                                 viewModel.choose(category) { success in
                                     if success {
+                                        // Reminders follow the pick — see
+                                        // NotificationManager.shouldAdoptFeedCategory.
+                                        NotificationManager.shared.adoptFeedCategoryAsTopicIfNeeded(category)
                                         AnalyticsService.shared.track(Event.categoryChooserTapped, parameters: ["category": category.rawValue])
                                         self.presentationMode.wrappedValue.dismiss()
                                     }
@@ -246,6 +249,9 @@ struct CategoryChooserView: View {
                                 
                                 viewModel.choose(category) { success in
                                     if success {
+                                        // Reminders follow the pick — see
+                                        // NotificationManager.shouldAdoptFeedCategory.
+                                        NotificationManager.shared.adoptFeedCategoryAsTopicIfNeeded(category)
                                         AnalyticsService.shared.track(Event.categoryChooserTapped, parameters: ["category": category.rawValue])
                                         self.presentationMode.wrappedValue.dismiss()
                                     }
@@ -275,6 +281,9 @@ struct CategoryChooserView: View {
                                 
                                 viewModel.choose(category) { success in
                                     if success {
+                                        // Reminders follow the pick — see
+                                        // NotificationManager.shouldAdoptFeedCategory.
+                                        NotificationManager.shared.adoptFeedCategoryAsTopicIfNeeded(category)
                                         AnalyticsService.shared.track(Event.categoryChooserTapped, parameters: ["declaration_category": category.rawValue as NSString])
                                         AnalyticsService.shared.track(category.rawValue)
                                         self.presentationMode.wrappedValue.dismiss()

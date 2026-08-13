@@ -205,6 +205,9 @@ public final class SyncedSettingsStore {
         SyncedKey(key: "startTimeIndex", strategy: .lastWriterWins),
         SyncedKey(key: "endTimeIndex", strategy: .lastWriterWins),
         SyncedKey(key: "selectedNotificationCategories", strategy: .lastWriterWins),
+        // Travels with the topics above: once curated on one device, the feed's
+        // category chooser must stop mirroring its pick into them everywhere.
+        SyncedKey(key: "notificationTopicsCustomized", strategy: .lastWriterWins),
         SyncedKey(key: "personalDeclarationTimeIndex", strategy: .lastWriterWins),
         SyncedKey(key: "morningReminderEnabled", strategy: .lastWriterWins),
         SyncedKey(key: "morningReminderHour", strategy: .lastWriterWins),

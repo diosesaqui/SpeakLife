@@ -122,5 +122,46 @@ final class NotificationManagerTests: XCTestCase {
         XCTAssertEqual(times.count, 10, "asking for ten must not hand back an eleventh")
     }
 
+    // MARK: - Feed pick → reminder topic
 
+    func testFeedPickBecomesTheReminderTopic() {
+        // The reported bug: onboarding wrote faith, the user then picked Health
+        // in the app, and every push stayed faith.
+        XCTAssertTrue(NotificationManager.shouldAdoptFeedCategory(.health,
+                                                                 currentTopics: [.faith],
+                                                                 topicsCustomized: false))
+    }
+
+    func testFeedPickAdoptedWhenNoTopicSaved() {
+        XCTAssertTrue(NotificationManager.shouldAdoptFeedCategory(.health,
+                                                                 currentTopics: [],
+                                                                 topicsCustomized: false))
+    }
+
+    func testFeedPickLeavesMatchingTopicAlone() {
+        XCTAssertFalse(NotificationManager.shouldAdoptFeedCategory(.health,
+                                                                  currentTopics: [.health],
+                                                                  topicsCustomized: false))
+    }
+
+    func testFeedPickNeverOverwritesTopicsCuratedInSettings() {
+        XCTAssertFalse(NotificationManager.shouldAdoptFeedCategory(.health,
+                                                                  currentTopics: [.faith],
+                                                                  topicsCustomized: true))
+    }
+
+    func testFeedPickNeverCollapsesAMultiTopicSelection() {
+        XCTAssertFalse(NotificationManager.shouldAdoptFeedCategory(.health,
+                                                                  currentTopics: [.faith, .grace, .rest],
+                                                                  topicsCustomized: false))
+    }
+
+    func testBibleBooksAndSpecialRowsAreNotReminderTopics() {
+        for category: DeclarationCategory in [.psalms, .john, .favorites, .myOwn, .general] {
+            XCTAssertFalse(NotificationManager.shouldAdoptFeedCategory(category,
+                                                                       currentTopics: [.faith],
+                                                                       topicsCustomized: false),
+                           "\(category.rawValue) holds no reminder content and must not become a topic")
+        }
+    }
 }
