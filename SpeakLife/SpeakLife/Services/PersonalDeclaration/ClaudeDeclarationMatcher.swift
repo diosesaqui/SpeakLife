@@ -8,7 +8,6 @@
 //
 
 import Foundation
-import FirebaseAnalytics
 
 final class ClaudeDeclarationMatcher: DeclarationMatcherProtocol {
     private let fallback: KeywordDeclarationMatcher

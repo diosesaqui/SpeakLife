@@ -693,11 +693,15 @@ struct StreakShareButton: View {
     }
     
     private func shareToInstagram(celebration: CompletionCelebration) {
-        guard let shareImage = celebration.shareImage else { 
+        // `celebration.shareImage` is typed `Any?` in `SpeakLifeCore` so the
+        // package can stay Foundation-only. The app knows it stored a
+        // `UIImage`, so the cast is safe; a nil (or the wrong type from a
+        // future test) bails the same way `guard let` used to.
+        guard let shareImage = celebration.shareImage as? UIImage else {
             print("❌ No share image available for sharing")
-            return 
+            return
         }
-        
+
         print("✅ Share image available: \(shareImage.size), scale: \(shareImage.scale)")
         
         // Create properly sized image for Instagram

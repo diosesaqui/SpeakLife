@@ -6,7 +6,6 @@
 //
 
 import SwiftUI
-import FirebaseAnalytics
 
 struct FirstDeclarationGuideView: View {
     let size: CGSize

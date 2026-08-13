@@ -6,7 +6,6 @@
 //
 
 import SwiftUI
-import FirebaseAnalytics
 
 struct OnboardingDailyBurstScreen: View {
     let size: CGSize
