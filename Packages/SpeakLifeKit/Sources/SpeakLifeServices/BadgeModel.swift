@@ -64,6 +64,11 @@ public enum BadgeType: String, CaseIterable, Codable {
     case social = "social"
     case milestone = "milestone"
     case enforcement = "enforcement"
+    /// Guarding — thoughts taken captive. Its own type rather than folded into
+    /// `.enforcement`: a seven-day stand and a thought caught at the gate are
+    /// different work, and a shared icon would make the collection read as one
+    /// feature earning twice.
+    case guarding = "guarding"
 
     public var iconName: String {
         switch self {
@@ -73,6 +78,8 @@ public enum BadgeType: String, CaseIterable, Codable {
         case .social: return "person.3.fill"
         case .milestone: return "crown.fill"
         case .enforcement: return "shield.fill"
+        // The mind is the domain this one is won in.
+        case .guarding: return "brain.head.profile"
         }
     }
 }
@@ -114,6 +121,21 @@ public enum AchievementRequirement: Codable, Equatable {
     case firstDay
     /// A finished seven-day Enforcement, keyed by `Enforcement.id`.
     case enforcementCompleted(String)
+    /// Cumulative thoughts taken captive, from `GroundTaken.total`.
+    ///
+    /// This one meets the "metrics we can actually track" bar below more
+    /// squarely than anything else here. The counter is whitelisted in
+    /// `ProgressSyncStore.syncedCounterKeys`, which makes it append-only and
+    /// cross-device by construction: there is no code path that lowers it and
+    /// no calendar that expires it. So a badge earned on it can never be taken
+    /// back by a restore, a timezone, or a missed day.
+    case thoughtsTakenCaptive(Int)
+    // Removed untracked requirements:
+    // case affirmationsSpoken(Int)
+    // case versesRead(Int)
+    // case socialShares(Int)
+    // case favoritesAdded(Int)
+    // case categoryMaster(String)
 
     public var sortOrder: Int {
         switch self {
@@ -123,6 +145,7 @@ public enum AchievementRequirement: Codable, Equatable {
         case .consecutiveWeeks(let weeks): return 2000 + weeks
         case .perfectWeek: return 2100
         case .enforcementCompleted: return 3000
+        case .thoughtsTakenCaptive(let count): return 4000 + count
         }
     }
 
@@ -140,6 +163,10 @@ public enum AchievementRequirement: Codable, Equatable {
             return "Complete your first day"
         case .enforcementCompleted:
             return "Finish a seven-day stand"
+        case .thoughtsTakenCaptive(let count):
+            return count == 1
+                ? "Take a thought captive"
+                : "Take \(count) thoughts captive"
         }
     }
 }
@@ -151,10 +178,15 @@ public final class BadgeManager: ObservableObject {
     @Published public var allBadges: [Badge] = []
     @Published public var recentlyUnlocked: Badge?
 
-    private let userDefaults = UserDefaults.standard
+    private let userDefaults: UserDefaults
     private let badgeKey = "UnlockedBadges"
 
-    public init() {
+    /// - Parameter userDefaults: injected so a test can award badges into a
+    ///   throwaway suite. Awarding writes through `saveBadges`, so a hardcoded
+    ///   `.standard` would leave real unlocked badges behind after a test run
+    ///   and make the results depend on the order the tests happened to run in.
+    public init(userDefaults: UserDefaults = .standard) {
+        self.userDefaults = userDefaults
         loadBadges()
         initializeAllBadges()
     }
@@ -337,6 +369,63 @@ public final class BadgeManager: ObservableObject {
                 requirement: .enforcementCompleted("warfare"),
                 unlockedAt: getBadgeUnlockDate(.enforcementCompleted("warfare")),
                 isUnlocked: isBadgeUnlocked(.enforcementCompleted("warfare"))
+            ),
+
+            // Guarding — thoughts taken captive. The counter behind these is
+            // monotonic and synced, so none of them can un-earn.
+            //
+            // The copy stays inside Guarding's own rule: it names ground taken,
+            // never a lapse. There is nothing here that can be broken, missed,
+            // or fallen behind on, because the number these read only ever goes
+            // up. See `GroundTakenView` for why that is load-bearing.
+            Badge(
+                type: .guarding,
+                rarity: .common,
+                title: "First Ground",
+                description: "One thought taken captive. That's ground you don't give back.",
+                requirement: .thoughtsTakenCaptive(1),
+                unlockedAt: getBadgeUnlockDate(.thoughtsTakenCaptive(1)),
+                isUnlocked: isBadgeUnlocked(.thoughtsTakenCaptive(1))
+            ),
+
+            Badge(
+                type: .guarding,
+                rarity: .common,
+                title: "Watchman",
+                description: "Ten thoughts caught at the gate instead of let through.",
+                requirement: .thoughtsTakenCaptive(10),
+                unlockedAt: getBadgeUnlockDate(.thoughtsTakenCaptive(10)),
+                isUnlocked: isBadgeUnlocked(.thoughtsTakenCaptive(10))
+            ),
+
+            Badge(
+                type: .guarding,
+                rarity: .rare,
+                title: "Guarded Mind",
+                description: "Fifty thoughts taken captive. The reflex is yours now.",
+                requirement: .thoughtsTakenCaptive(50),
+                unlockedAt: getBadgeUnlockDate(.thoughtsTakenCaptive(50)),
+                isUnlocked: isBadgeUnlocked(.thoughtsTakenCaptive(50))
+            ),
+
+            Badge(
+                type: .guarding,
+                rarity: .epic,
+                title: "Stronghold",
+                description: "A hundred and fifty thoughts taken captive, every one of them answered with the Word.",
+                requirement: .thoughtsTakenCaptive(150),
+                unlockedAt: getBadgeUnlockDate(.thoughtsTakenCaptive(150)),
+                isUnlocked: isBadgeUnlocked(.thoughtsTakenCaptive(150))
+            ),
+
+            Badge(
+                type: .guarding,
+                rarity: .legendary,
+                title: "Every Thought",
+                description: "Three hundred and sixty-five thoughts taken captive and made obedient to Christ.",
+                requirement: .thoughtsTakenCaptive(365),
+                unlockedAt: getBadgeUnlockDate(.thoughtsTakenCaptive(365)),
+                isUnlocked: isBadgeUnlocked(.thoughtsTakenCaptive(365))
             )
 
             // Removed social shares, favorites, categories, etc. until we can properly track them
@@ -388,6 +477,8 @@ public final class BadgeManager: ObservableObject {
             return streakStats.consecutiveWeeks >= weeks
         case .perfectWeek:
             return streakStats.hasPerfectWeek
+        case .thoughtsTakenCaptive(let count):
+            return userStats.thoughtsTakenCaptive >= count
         }
     }
 
@@ -472,17 +563,26 @@ public struct UserStats {
     public let socialShares: Int
     public let favoritesAdded: Int
     public let categoriesCompleted: Set<String>
+    /// Cumulative ground taken, from `GroundTaken.total`.
+    ///
+    /// Defaulted so a caller with no reason to care about Guarding is not
+    /// forced to reach into `UserDefaults` for it. `checkForNewBadges` passes
+    /// the real number; anything that leaves it out simply earns no Guarding
+    /// badge, which is the safe direction.
+    public var thoughtsTakenCaptive: Int = 0
 
     public init(affirmationsSpoken: Int,
                 versesRead: Int,
                 socialShares: Int,
                 favoritesAdded: Int,
-                categoriesCompleted: Set<String>) {
+                categoriesCompleted: Set<String>,
+                thoughtsTakenCaptive: Int = 0) {
         self.affirmationsSpoken = affirmationsSpoken
         self.versesRead = versesRead
         self.socialShares = socialShares
         self.favoritesAdded = favoritesAdded
         self.categoriesCompleted = categoriesCompleted
+        self.thoughtsTakenCaptive = thoughtsTakenCaptive
     }
 }
 

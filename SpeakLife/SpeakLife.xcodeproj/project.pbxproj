@@ -9,7 +9,6 @@
 /* Begin PBXBuildFile section */
 		TIC00SVC000000000000004B /* TakeThoughtCaptiveIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = TIC00SVC000000000000004A /* TakeThoughtCaptiveIntent.swift */; };
 		TIC00VW0000000000000001B /* TakeItCaptiveFlowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = TIC00VW0000000000000001A /* TakeItCaptiveFlowView.swift */; };
-		TIC00VW0000000000000002B /* IncomingThoughtView.swift in Sources */ = {isa = PBXBuildFile; fileRef = TIC00VW0000000000000002A /* IncomingThoughtView.swift */; };
 		TIC00VW0000000000000003B /* ReplaceDeclarationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = TIC00VW0000000000000003A /* ReplaceDeclarationView.swift */; };
 		TIC00VW0000000000000004B /* GroundTakenView.swift in Sources */ = {isa = PBXBuildFile; fileRef = TIC00VW0000000000000004A /* GroundTakenView.swift */; };
 		TIC00VW0000000000000005B /* EscapeHatchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = TIC00VW0000000000000005A /* EscapeHatchView.swift */; };
@@ -402,7 +401,6 @@
 /* Begin PBXFileReference section */
 		TIC00SVC000000000000004A /* TakeThoughtCaptiveIntent.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TakeThoughtCaptiveIntent.swift; sourceTree = "<group>"; };
 		TIC00VW0000000000000001A /* TakeItCaptiveFlowView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TakeItCaptiveFlowView.swift; sourceTree = "<group>"; };
-		TIC00VW0000000000000002A /* IncomingThoughtView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IncomingThoughtView.swift; sourceTree = "<group>"; };
 		TIC00VW0000000000000003A /* ReplaceDeclarationView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ReplaceDeclarationView.swift; sourceTree = "<group>"; };
 		TIC00VW0000000000000004A /* GroundTakenView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GroundTakenView.swift; sourceTree = "<group>"; };
 		TIC00VW0000000000000005A /* EscapeHatchView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EscapeHatchView.swift; sourceTree = "<group>"; };
@@ -817,7 +815,6 @@
 			isa = PBXGroup;
 			children = (
 				TIC00VW0000000000000001A /* TakeItCaptiveFlowView.swift */,
-				TIC00VW0000000000000002A /* IncomingThoughtView.swift */,
 				TIC00VW0000000000000003A /* ReplaceDeclarationView.swift */,
 				TIC00VW0000000000000004A /* GroundTakenView.swift */,
 				TIC00VW0000000000000005A /* EscapeHatchView.swift */,
@@ -1947,7 +1944,6 @@
 			files = (
 				TIC00SVC000000000000004B /* TakeThoughtCaptiveIntent.swift in Sources */,
 				TIC00VW0000000000000001B /* TakeItCaptiveFlowView.swift in Sources */,
-				TIC00VW0000000000000002B /* IncomingThoughtView.swift in Sources */,
 				TIC00VW0000000000000003B /* ReplaceDeclarationView.swift in Sources */,
 				TIC00VW0000000000000004B /* GroundTakenView.swift in Sources */,
 				TIC00VW0000000000000005B /* EscapeHatchView.swift in Sources */,

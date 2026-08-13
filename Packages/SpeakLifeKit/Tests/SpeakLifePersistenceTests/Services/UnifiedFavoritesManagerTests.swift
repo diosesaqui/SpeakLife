@@ -494,22 +494,20 @@ final class UnifiedFavoritesManagerTests: XCTestCase {
     }
     
     func testRefreshAllFavorites() {
-        // Given
-        let expectation = XCTestExpectation(description: "Refresh favorites")
-        
         // When
         manager.refreshAllFavorites()
-        
+
         // Then - Should set isLoading
         XCTAssertTrue(manager.isLoading)
-        
-        // Wait for async operations
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            XCTAssertFalse(self.manager.isLoading)
-            expectation.fulfill()
-        }
-        
-        wait(for: [expectation], timeout: 2.0)
+
+        // ...and clear it once the refresh finishes.
+        //
+        // This waited on a 0.5s sleep with a 2.0s timeout. A wider margin than
+        // the streak suite's, so it had not gone red yet, but it is the same
+        // bet: that the work finishes inside a fixed nap. Waiting on the flag
+        // itself removes the bet and returns as soon as it flips.
+        waitUntil("the refresh to finish loading") { !self.manager.isLoading }
+        XCTAssertFalse(manager.isLoading)
     }
     
     // MARK: - Error Handling Tests

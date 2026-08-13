@@ -51,38 +51,42 @@ final class SyncConflictResolverTests: XCTestCase {
     }
     
     // MARK: - Remote Change Notification Tests
+    /// The remote-change handler must survive a notification without crashing.
+    ///
+    /// This used to post the notification from inside `asyncAfter(0.1)`, fulfil
+    /// an expectation from a second `asyncAfter(0.1)` nested in the first, and
+    /// wait 1.0s for the pair. None of that delay was needed — nothing here is
+    /// waiting for the notification to be *scheduled* — and on a loaded runner
+    /// the two nested main-queue hops drifted past the budget and failed the
+    /// test. It went red on main for that reason and nothing else.
+    ///
+    /// Posting is synchronous, so the handler has already run by the time
+    /// `post` returns. The drain afterwards is only for any follow-up work the
+    /// handler hands back to the main queue.
     func testHandlePersistentStoreRemoteChangeNotification() {
-        // Given
-        let expectation = XCTestExpectation(description: "Remote change handled")
-        
-        // Create a journal entry to test context refresh
+        // Given: a saved entry, so the context has something to refresh
         let journalEntry = JournalEntry(context: testContext)
         journalEntry.id = UUID()
         journalEntry.text = "Test entry"
         journalEntry.category = "faith"
         journalEntry.createdAt = Date()
         journalEntry.lastModified = Date()
-        
+
         try? testContext.save()
-        
-        // Setup conflict resolver
+
         syncResolver.setupConflictResolution()
-        
+
         // When
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            NotificationCenter.default.post(
-                name: .NSPersistentStoreRemoteChange,
-                object: self.testContext.persistentStoreCoordinator?.persistentStores.first
-            )
-            
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                expectation.fulfill()
-            }
-        }
-        
-        // Then
-        wait(for: [expectation], timeout: 1.0)
-        // Test passes if no crash occurs during notification handling
+        NotificationCenter.default.post(
+            name: .NSPersistentStoreRemoteChange,
+            object: testContext.persistentStoreCoordinator?.persistentStores.first
+        )
+        drainMainQueue(for: 0.2)
+
+        // Then: no crash, and the context is still usable afterwards.
+        // The original test asserted nothing at all; this at least proves the
+        // store survived the handler.
+        XCTAssertNoThrow(try testContext.fetch(JournalEntry.fetchRequest()))
     }
     
     // MARK: - Error Handling Tests

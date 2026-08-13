@@ -2,24 +2,24 @@
 //  TakenCaptiveView.swift
 //  SpeakLife
 //
-//  What happens between naming the thought and speaking against it, when the
-//  user typed the thought themselves.
+//  What happens between naming the thought and speaking against it. Every
+//  thought comes through here now, typed or served.
 //
-//  There is no question on this screen and nothing to answer. They wrote the
-//  sentence ten seconds ago precisely in order to be rid of it — asking "does
-//  this line up with who you are?" and making them throw it off the screen is
-//  asking them to re-answer a question they already answered by typing. The
-//  swipe still owns `IncomingThoughtView`, where it belongs: a thought served
-//  from the bank is one they are meeting for the first time, and rejecting it
-//  is the training.
+//  There is no question on this screen and nothing to answer. The screen this
+//  replaced asked "does this line up with who you are?" and made the user throw
+//  the thought off the display to answer it — and every control it offered was a
+//  way of saying no. Swipe left for NO. "No. That's not me." "Something else is
+//  on my mind." There was no way to say yes, which is the tell: it was never a
+//  question. It was a gate with one key, standing between the user and the word
+//  they came for.
 //
-//  So this screen is not an interaction. It is the app taking the action, in
-//  front of them, in about a second and a half:
+//  So the app answers it. This screen is not an interaction, it is the action
+//  taken in front of them:
 //
-//    their words, cold and grey  →  seized and pulled down to nothing
+//    the thought, cold and grey  →  seized and pulled down to nothing
 //    →  the grey field warms to navy  →  the declaration rises
 //
-//  Three things it must keep doing:
+//  Four things it must keep doing:
 //
 //  1. **It has to be seen to happen.** A cut straight to the declaration is
 //     indistinguishable from a screen that lost their input. The card visibly
@@ -29,18 +29,32 @@
 //     rises into a field that is already its own colour, and the two screens
 //     read as one motion rather than two loads.
 //  3. **It never waits on the user.** No tap, no gesture, no way to get stuck.
-//     The only control on screen is the close button.
+//  4. **A served thought gets read time first.** Someone who typed the sentence
+//     wrote it seconds ago; someone handed one from the bank has never seen it,
+//     and seizing a line they have not finished reading is a flicker rather than
+//     an event. `isOwnWords` is the whole difference, and it only moves when the
+//     seize starts — see `seizeAt`.
 //
 
 import SwiftUI
 
 struct TakenCaptiveView: View {
 
-    /// The thought in the user's own words, plus the counter it is being traded
-    /// for. Only `text` is shown here — the declaration is the next screen's.
+    /// The thought, plus the counter it is being traded for. Only `text` is
+    /// shown here — the declaration is the next screen's.
     let thought: IncomingThought
+    /// True when the user typed this sentence, false when the bank served it.
+    ///
+    /// Controls one thing: how long the card sits before it is seized. Their own
+    /// words need no reading time; a served line has never been seen before and
+    /// gets a beat to land, or the seize is a flicker instead of an event.
+    var isOwnWords: Bool = true
     /// Fired once the transition has played out.
     let onFinished: () -> Void
+    /// Offered only on a served thought, and only while it is still on screen:
+    /// the way back to the ask for someone the bank guessed wrong for. Nil on
+    /// the typed route, where it would mean nothing.
+    var onEscapeHatch: (() -> Void)?
     let onClose: () -> Void
 
     /// The card is seized: it desaturates, tightens, and is pulled down to
@@ -50,14 +64,14 @@ struct TakenCaptiveView: View {
     @State private var warmed = false
     /// The line that names what just happened, after the card has gone.
     @State private var showVerdict = false
-    /// Set the instant the screen stops being live — by finishing, or by the
-    /// user closing it.
+    /// Set the instant the screen stops being live — by finishing, by the user
+    /// closing it, or by the escape hatch.
     ///
     /// The schedule below is four `asyncAfter` calls and none of them can be
-    /// cancelled. Without this, closing the screen at 0.4s still fires the
-    /// heavy haptic on a dismissed view and still reports a thought taken at
-    /// 1.85s, right after `guard_task_abandoned` said the opposite. Every step
-    /// checks it.
+    /// cancelled. Without this, leaving the screen early still fires the heavy
+    /// haptic on a dismissed view and still reports a thought taken at hand-off,
+    /// right after `guard_task_abandoned` said the opposite. Every step checks
+    /// it.
     @State private var ended = false
 
     private let cold = Color(hex: "#1B1D22")
@@ -68,10 +82,21 @@ struct TakenCaptiveView: View {
 
     // The whole schedule, in one place so the timings can be read against each
     // other rather than hunted through the file.
-    private static let seizeAt: Double = 0.30
-    private static let warmAt: Double = 0.72
-    private static let verdictAt: Double = 0.95
-    private static let handOffAt: Double = 1.85
+    //
+    // Everything after the seize is measured FROM the seize, so the read beat is
+    // the only variable and the taking itself is identical on both routes.
+
+    /// How long the thought sits before it is taken.
+    ///
+    /// 0.30s for their own words — they wrote it, they are waiting on the app,
+    /// and a pause here is dead air. 1.70s for a served one, which is read time
+    /// for a line they have never seen. The screen this replaced held that same
+    /// line for 2.6s and then asked a question about it; this holds it long
+    /// enough to land and then acts.
+    private var seizeAt: Double { isOwnWords ? 0.30 : 1.70 }
+    private var warmAt: Double { seizeAt + 0.42 }
+    private var verdictAt: Double { seizeAt + 0.65 }
+    private var handOffAt: Double { seizeAt + 1.55 }
 
     var body: some View {
         ZStack {
@@ -98,6 +123,8 @@ struct TakenCaptiveView: View {
                 .frame(maxWidth: .infinity)
 
                 Spacer(minLength: 0)
+
+                escapeHatch
             }
             .padding(.horizontal, 24)
             .padding(.vertical, 20)
@@ -113,10 +140,15 @@ struct TakenCaptiveView: View {
 
     private var header: some View {
         HStack {
-            Text("TAKEN CAPTIVE")
+            // It is not taken until it is taken. On a served thought the card
+            // sits for 1.7s of read time first, and a header claiming victory
+            // over a line the user is still reading is the app narrating
+            // something that has not happened. It flips on the seize.
+            Text(seized ? "TAKEN CAPTIVE" : "INCOMING")
                 .font(.system(size: 11, weight: .bold))
                 .tracking(2.6)
                 .foregroundColor(warmed ? gold.opacity(0.9) : .white.opacity(0.38))
+                .animation(DS.Motion.smooth, value: seized)
             Spacer()
             // The only control on the screen. A full-screen cover with no way
             // out is a trap even when it lasts a second and a half.
@@ -132,9 +164,11 @@ struct TakenCaptiveView: View {
 
     // MARK: - The card
 
-    /// Their sentence, in the same cold treatment `IncomingThoughtView` gives a
-    /// thought — thin grey type behind glass, no gold, no warmth. It has to look
-    /// foreign right up to the moment it goes, or its leaving means nothing.
+    /// The thought, in cold treatment — thin grey type behind glass, no gold, no
+    /// warmth, none of what the rest of the app uses to say "this is yours,
+    /// receive it". It has to look foreign right up to the moment it goes, or
+    /// its leaving means nothing, and the warm navy that follows lands on
+    /// nothing.
     private var thoughtCard: some View {
         Text(thought.text)
             .font(.system(size: 26, weight: .light))
@@ -174,6 +208,40 @@ struct TakenCaptiveView: View {
             .accessibilityLabel("Taking captive: \(thought.text)")
     }
 
+    /// The door out of a thought the bank guessed wrong, open for exactly as
+    /// long as that thought is on screen.
+    ///
+    /// It is NOT a confirm step and it is not a question — the drill runs
+    /// whether or not it is touched. It is there because a served thought can
+    /// simply be the wrong one, and the honest answer to that is the ask, not a
+    /// declaration against a lie the person was not fighting.
+    ///
+    /// Gone the instant the seize starts, because a declaration against a lie
+    /// you already decided to keep fighting is not what that tap meant.
+    ///
+    /// It FADES rather than being removed, and the row holds its height on both
+    /// routes even when there is no hatch to show. Removing it from the layout
+    /// would let the spacers redistribute and shift the card at the exact frame
+    /// the seize begins and the verdict lands in its place — a reflow disguised
+    /// as an animation.
+    private var escapeHatch: some View {
+        let live = onEscapeHatch != nil && !seized
+        return Button {
+            guard !ended, let onEscapeHatch else { return }
+            ended = true
+            onEscapeHatch()
+        } label: {
+            Text("Something else is on my mind")
+                .font(.system(size: 13, weight: .medium))
+                .foregroundColor(.white.opacity(0.36))
+                .underline()
+        }
+        .buttonStyle(.plain)
+        .opacity(live ? 1 : 0)
+        .allowsHitTesting(live)
+        .animation(DS.Motion.quick, value: seized)
+    }
+
     /// What just happened, in the words the feature is built on. It lands on the
     /// empty field after the card has gone, so the screen is never blank and the
     /// second and a half never reads as a stall.
@@ -195,19 +263,19 @@ struct TakenCaptiveView: View {
 
     private func play() {
         // Seize. The heaviest haptic the app has, on the frame the card goes —
-        // the same one the throw fires, because it is the same event.
-        step(at: Self.seizeAt) {
+        // the same one the old throw fired, because it is the same event.
+        step(at: seizeAt) {
             PremiumHaptics.safeHeavy()
             withAnimation(.easeIn(duration: 0.34)) { seized = true }
         }
         // Warm. Grey to navy, so REPLACE rises into its own field.
-        step(at: Self.warmAt) {
+        step(at: warmAt) {
             withAnimation(.easeInOut(duration: 0.6)) { warmed = true }
         }
-        step(at: Self.verdictAt) {
+        step(at: verdictAt) {
             withAnimation(DS.Motion.smooth) { showVerdict = true }
         }
-        step(at: Self.handOffAt) {
+        step(at: handOffAt) {
             ended = true
             onFinished()
         }

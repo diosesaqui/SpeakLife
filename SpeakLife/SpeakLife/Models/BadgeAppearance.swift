@@ -23,6 +23,7 @@ extension BadgeType {
         case .social: return .green
         case .milestone: return .yellow
         case .enforcement: return .indigo
+        case .guarding: return .teal
         }
     }
 
@@ -34,6 +35,7 @@ extension BadgeType {
         case .social: return .mint
         case .milestone: return .orange
         case .enforcement: return .purple
+        case .guarding: return .cyan
         }
     }
 }
