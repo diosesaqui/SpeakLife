@@ -7,7 +7,6 @@
 //
 
 import SwiftUI
-import FirebaseAnalytics
 
 struct OnboardingView: View {
     @EnvironmentObject var subscriptionStore: SubscriptionStore

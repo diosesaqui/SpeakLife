@@ -1,5 +1,4 @@
 import SwiftUI
-import FirebaseAnalytics
 
 struct QuizStartView: View {
     let quizTitle: String

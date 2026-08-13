@@ -9,7 +9,6 @@ import SwiftUI
 import MessageUI
 import StoreKit
 import UIKit
-import FirebaseAnalytics
 import Combine
 
 /// Identifiable wrapper for the prefill text passed to the Warrior Room

@@ -6,7 +6,6 @@
 //
 
 import SwiftUI
-import FirebaseAnalytics
 
 // MARK: - Enhanced Tab Enum
 enum EnhancedTab: Int {

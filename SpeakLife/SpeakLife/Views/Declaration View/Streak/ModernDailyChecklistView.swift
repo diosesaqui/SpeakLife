@@ -6,7 +6,6 @@
 //
 
 import SwiftUI
-import FirebaseAnalytics
 import CoreData
 
 struct ModernDailyChecklistView: View {

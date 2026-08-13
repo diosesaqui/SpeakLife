@@ -7,7 +7,6 @@
 
 import SwiftUI
 import BackgroundTasks
-import FirebaseAnalytics
 
 final class ReminderViewModel: ObservableObject {
     private let reminders: [Reminder] = [

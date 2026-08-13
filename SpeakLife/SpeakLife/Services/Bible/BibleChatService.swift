@@ -6,7 +6,6 @@
 //
 
 import Foundation
-import FirebaseAnalytics
 
 protocol BibleChatServiceProtocol {
     func loadTopics() throws -> [BibleChatTopic]

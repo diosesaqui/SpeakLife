@@ -18,23 +18,11 @@
 
 import Foundation
 import UserNotifications
-import FirebaseAnalytics
 
-/// The streak-related notification side effects, behind a seam.
-///
-/// Every method here ends in UNUserNotificationCenter, which a unit test can
-/// neither authorize nor inspect — and the streak-break bug was never about a
-/// notification's contents, it was about WHICH calls happen and in what order
-/// relative to the iCloud heal. That is only assertable against a double.
-protocol StreakNotifying: AnyObject {
-    func scheduleStreakAtRiskNotification(currentStreak: Int)
-    func cancelStreakAtRiskNotification()
-    func scheduleStreakBreakNotification(previousStreak: Int)
-    func cancelStreakBreakNotification()
-    @discardableResult
-    func scheduleStreakMilestoneIfNeeded(currentStreak: Int, previousStreak: Int) -> Bool
-}
-
+// `StreakNotifying` moved into SpeakLifeServices (Sources/SpeakLifeServices/StreakNotifying.swift)
+// so `EnhancedStreakViewModel` — which lives in the package — can reference it
+// without pulling the app target into the package graph. The conformance below
+// is unchanged; the protocol just lives in Services now.
 extension LifecycleNotificationService: StreakNotifying {}
 
 final class LifecycleNotificationService {

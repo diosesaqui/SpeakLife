@@ -7,7 +7,6 @@
 
 import SwiftUI
 import StoreKit
-import FirebaseAnalytics
 
 extension Array {
     subscript(safe index: Int) -> Element? {
