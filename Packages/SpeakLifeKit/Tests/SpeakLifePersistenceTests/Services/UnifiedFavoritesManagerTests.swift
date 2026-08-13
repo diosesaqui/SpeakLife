@@ -6,6 +6,7 @@
 //
 
 import XCTest
+import SpeakLifeTestSupport
 import CoreData
 import Combine
 import SpeakLifeCore

@@ -33,9 +33,14 @@ let package = Package(
             path: "Sources/SpeakLifeServices"
         ),
         .plugin(name: "CompileModel", capability: .buildTool()),
+        // Waiting helpers shared by all three test targets. A plain target
+        // rather than a test target, because a test target cannot be a
+        // dependency of another test target. Only test targets depend on it,
+        // so its `import XCTest` never reaches the app.
+        .target(name: "SpeakLifeTestSupport", path: "Sources/SpeakLifeTestSupport"),
         .testTarget(
             name: "SpeakLifeCoreTests",
-            dependencies: ["SpeakLifeCore"],
+            dependencies: ["SpeakLifeCore", "SpeakLifeTestSupport"],
             path: "Tests/SpeakLifeCoreTests",
             resources: [
                 // Mirrored from the app's Preview Content bundle so the assembler
@@ -46,12 +51,12 @@ let package = Package(
         ),
         .testTarget(
             name: "SpeakLifePersistenceTests",
-            dependencies: ["SpeakLifePersistence"],
+            dependencies: ["SpeakLifePersistence", "SpeakLifeTestSupport"],
             path: "Tests/SpeakLifePersistenceTests"
         ),
         .testTarget(
             name: "SpeakLifeServicesTests",
-            dependencies: ["SpeakLifeServices"],
+            dependencies: ["SpeakLifeServices", "SpeakLifeTestSupport"],
             path: "Tests/SpeakLifeServicesTests"
         ),
     ]
