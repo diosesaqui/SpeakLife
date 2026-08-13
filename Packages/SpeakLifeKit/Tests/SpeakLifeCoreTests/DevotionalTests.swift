@@ -74,8 +74,14 @@ final class DevotionalTests: XCTestCase {
     }
 
     func testDeclarationsFormat() throws {
-        guard let url = Bundle.module.url(forResource: "declarationsv9", withExtension: "json") else {
-            XCTFail("Missing declarationsv9.json file in test bundle")
+        // v10, not v9. This asserted against v9 while v10 is the file the
+        // Xcode target bundles and the one CLAUDE.md says to edit, so the
+        // guard on declaration format was guarding content that does not
+        // ship. v9's own metadata shows how stale it is: it declares
+        // `count: 1388` and holds 2750 declarations. v10 declares 3581 and
+        // holds 3581.
+        guard let url = Bundle.module.url(forResource: "declarationsv10", withExtension: "json") else {
+            XCTFail("Missing declarationsv10.json file in test bundle")
             return
         }
         

@@ -55,6 +55,29 @@ jobs:
           xcodebuild -version
           xcrun --find momc
 
+      # The package tests decode the real shipped content, which means a copy
+      # of it lives under Tests/.../Resources. A copy is a liability: CLAUDE.md
+      # sends declaration edits to the app's file, and nothing would stop the
+      # test copy going stale and quietly guarding last month's content. This
+      # step makes that drift a red build instead of a silent one.
+      #
+      # SwiftPM cannot reference resources outside a target's own directory, so
+      # the duplicate is structural for now. Owning the content in the package
+      # and having the app read it from there is the real fix.
+      - name: Content copies match the app
+        run: |
+          set -e
+          for name in declarationsv10 devotionals; do
+            app="SpeakLife/SpeakLife/Preview Content/AffirmationData/$name.json"
+            pkg="Packages/SpeakLifeKit/Tests/SpeakLifeCoreTests/Resources/$name.json"
+            if ! cmp -s "$app" "$pkg"; then
+              echo "::error::$name.json has drifted. The app's copy is canonical:"
+              echo "::error::  cp \"$app\" \"$pkg\""
+              exit 1
+            fi
+          done
+          echo "content copies match"
+
       - name: swift test
         run: |
           set -o pipefail
