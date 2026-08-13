@@ -6,7 +6,6 @@
 //
 
 import SwiftUI
-import FirebaseAnalytics
 import UserNotifications
 
 // MARK: - Spiritual Warfare Tab Enum

@@ -6,7 +6,6 @@
 //
 
 import SwiftUI
-import FirebaseAnalytics
 
 
 // Wraps the entry editor's presentation state so new-entry (nil) and

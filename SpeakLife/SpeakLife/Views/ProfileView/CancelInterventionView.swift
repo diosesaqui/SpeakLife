@@ -8,7 +8,6 @@
 //
 
 import SwiftUI
-import FirebaseAnalytics
 import StoreKit
 
 struct CancelInterventionView: View {

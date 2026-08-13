@@ -6,7 +6,6 @@
 //
 
 import SwiftUI
-import FirebaseAnalytics
 
 // MARK: - NEW SCREEN 1: Emotional Hook
 struct EmotionalHookScreen: View {

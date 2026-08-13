@@ -7,7 +7,6 @@
 
 import SwiftUI
 
-import FirebaseAnalytics
 
 struct WarriorView: View {
     @Environment(\.presentationMode) var presentationMode

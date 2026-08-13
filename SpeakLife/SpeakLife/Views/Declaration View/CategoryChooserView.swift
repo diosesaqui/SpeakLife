@@ -6,7 +6,6 @@
 //
 
 import SwiftUI
-import FirebaseAnalytics
 
 struct VisualEffectBlur: UIViewRepresentable {
     var blurStyle: UIBlurEffect.Style

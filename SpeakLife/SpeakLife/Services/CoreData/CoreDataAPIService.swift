@@ -8,7 +8,6 @@
 import Foundation
 import CoreData
 import Combine
-import FirebaseAnalytics
 
 final class CoreDataAPIService: APIService {
 
