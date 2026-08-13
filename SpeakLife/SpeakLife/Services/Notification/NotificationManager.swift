@@ -34,6 +34,63 @@ final class NotificationManager: NSObject {
         [DeclarationCategory.destiny, .gratitude, .faith, .identity, .grace, .joy, .rest]
     }
 
+    // MARK: - Topic storage
+
+    /// The reminder topics the daily batch is drawn from.
+    static let selectedTopicsKey = "selectedNotificationCategories"
+
+    /// Set the first time the user curates topics themselves in
+    /// Settings → Notification Topics. From then on the feed's category chooser
+    /// never touches their selection.
+    static let topicsCustomizedKey = "notificationTopicsCustomized"
+
+    /// Feed rows that are not reminder topics: they hold no declarations of
+    /// their own, so adopting one would starve the batch.
+    private static let nonTopicCategories: Set<DeclarationCategory> = [.favorites, .myOwn, .general]
+
+    /// Whether the category the user just picked in the feed's chooser should
+    /// also become their reminder topic.
+    ///
+    /// The feed pick lives in `selectedCategory` and the reminder topics in
+    /// `selectedNotificationCategories` — two separate stores. Onboarding writes
+    /// both, so they start in step, but the chooser only ever wrote the feed one.
+    /// Someone who switched their category to Health in the app kept getting
+    /// pushes from whatever onboarding had chosen for them, which reads as an app
+    /// that ignores what you told it.
+    ///
+    /// Deliberately narrow. A curated multi-topic selection made in Settings is
+    /// the user's own work and is never overwritten; neither are Bible books or
+    /// the special feed rows, which aren't reminder topics at all.
+    static func shouldAdoptFeedCategory(_ category: DeclarationCategory,
+                                        currentTopics: Set<DeclarationCategory>,
+                                        topicsCustomized: Bool) -> Bool {
+        guard !topicsCustomized else { return false }
+        guard !category.isBibleBook, !nonTopicCategories.contains(category) else { return false }
+        // More than one topic stored means a deliberate multi-select — either
+        // from Settings before the customized flag existed, or a legacy widened
+        // set. Leave it alone.
+        guard currentTopics.count <= 1 else { return false }
+        return currentTopics != [category]
+    }
+
+    /// Points the reminder topics at `category` when the rules above allow it,
+    /// then rebuilds the batch so the next push already reflects the change.
+    /// Reads and writes `UserDefaults.standard` because that is the store
+    /// `rescheduleFromUserDefaults()` builds the next batch from.
+    func adoptFeedCategoryAsTopicIfNeeded(_ category: DeclarationCategory) {
+        let defaults = UserDefaults.standard
+        let stored = defaults.string(forKey: Self.selectedTopicsKey) ?? ""
+        let current = Set(stored.split(separator: ",").compactMap { DeclarationCategory(rawValue: String($0)) })
+        guard Self.shouldAdoptFeedCategory(category,
+                                           currentTopics: current,
+                                           topicsCustomized: defaults.bool(forKey: Self.topicsCustomizedKey))
+        else { return }
+
+        defaults.set(category.rawValue, forKey: Self.selectedTopicsKey)
+        print("🔔 Reminder topic now follows the feed pick: \(category.rawValue)")
+        rescheduleFromUserDefaults()
+    }
+
     private override init() {}
     
     private let notificationProcessor = NotificationProcessor(service: LocalAPIClient())
@@ -94,13 +151,24 @@ final class NotificationManager: NSObject {
         let count     = defaults.integer(forKey: "notificationCount")
         let startTime = defaults.integer(forKey: "startTimeIndex")
         let endTime   = defaults.integer(forKey: "endTimeIndex")
-        let catString = defaults.string(forKey: "selectedNotificationCategories") ?? ""
+        let catString = defaults.string(forKey: Self.selectedTopicsKey) ?? ""
         let parsed    = Set(catString.components(separatedBy: ",").compactMap { DeclarationCategory($0) })
-        // Respect the user's saved selection exactly. Only fall back to a
-        // generic mix when nothing is saved at all.
-        let categories: Set<DeclarationCategory> = parsed.isEmpty
-            ? [.destiny, .gratitude, .faith, .identity, .grace, .joy, .rest]
-            : parsed
+        // Respect the user's saved selection exactly. With nothing saved, the
+        // category they picked in the feed is a far better guess than a generic
+        // mix — fall back to that first.
+        var feedCategory: DeclarationCategory? = nil
+        if let picked = DeclarationCategory(rawValue: defaults.string(forKey: "selectedCategory") ?? ""),
+           Self.shouldAdoptFeedCategory(picked, currentTopics: [], topicsCustomized: false) {
+            feedCategory = picked
+        }
+        let categories: Set<DeclarationCategory>
+        if !parsed.isEmpty {
+            categories = parsed
+        } else if let feedCategory = feedCategory {
+            categories = [feedCategory]
+        } else {
+            categories = [.destiny, .gratitude, .faith, .identity, .grace, .joy, .rest]
+        }
 
         registerNotifications(
             count: max(count, 5),

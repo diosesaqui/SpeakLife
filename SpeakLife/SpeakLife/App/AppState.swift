@@ -312,6 +312,25 @@ final class AppState: ObservableObject {
         }
         defaults.set(true, forKey: "notificationCategoriesCollapsedV1")
 
+        // V9 heal: point reminders at the category the user actually picked in
+        // the feed. The chooser wrote only `selectedCategory`, never
+        // `selectedNotificationCategories`, so anyone who switched their category
+        // in the app kept getting pushes from whatever onboarding chose for them
+        // — the app looked like it wasn't listening. The chooser now syncs on
+        // every pick; this catches everyone who already diverged.
+        //
+        // Guarded by the same rules as a live pick (see
+        // NotificationManager.shouldAdoptFeedCategory): a multi-topic selection,
+        // a Bible book, or a topic curated in Settings is left untouched.
+        if defaults.object(forKey: "notificationTopicFeedSyncV1") == nil {
+            if let feedCategory = DeclarationCategory(rawValue: defaults.string(forKey: "selectedCategory") ?? "") {
+                DispatchQueue.main.async {
+                    NotificationManager.shared.adoptFeedCategoryAsTopicIfNeeded(feedCategory)
+                }
+            }
+        }
+        defaults.set(true, forKey: "notificationTopicFeedSyncV1")
+
         // Heal lifecycle pushes (D1-D30) that were wiped by the legacy
         // removeAllPendingNotificationRequests() bug in NotificationManager.
         // Service-side flag (lifecycle_repaired_v1) keeps it one-shot.

@@ -53,6 +53,10 @@ final class CategoryListViewModel: ObservableObject {
         appState.selectedNotificationCategories = categoryString
         declarationStore.save(selectedCategories)
 
+        // Curating topics here is the user's own word on the subject. Mark it so
+        // the feed's category chooser stops mirroring its pick into this list.
+        UserDefaults.standard.set(true, forKey: NotificationManager.topicsCustomizedKey)
+
         // Reschedule notifications immediately so content reflects the new category
         // selection without waiting for the next natural resync cycle.
         guard appState.notificationEnabled else { return }
