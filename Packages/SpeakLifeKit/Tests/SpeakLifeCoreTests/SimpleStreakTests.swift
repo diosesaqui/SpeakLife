@@ -81,9 +81,19 @@ final class SimpleStreakTests: XCTestCase {
         // When: Complete same day again
         streakStats.updateStreak(for: today)
         
-        // Then: Streak should remain 1, but total should increment
+        // Then: neither moves. `updateStreak` returns early on a same-day
+        // repeat (DailyChecklistModels.swift:377), before it touches
+        // `totalDaysCompleted` — and that is correct: the field counts DAYS
+        // completed, so finishing twice in one day is still one day.
+        //
+        // This assertion used to expect 2 and had never passed. It went
+        // unnoticed because the suite has never once been green, and it is a
+        // pure value type with no shared state, so it fails identically on
+        // main. Fixing the test, not the code: `totalDaysCompleted` feeds the
+        // `.totalDaysCompleted` badge requirement, so making it count
+        // completions instead of days would hand out badges nobody earned.
         XCTAssertEqual(streakStats.currentStreak, 1)
-        XCTAssertEqual(streakStats.totalDaysCompleted, 2)
+        XCTAssertEqual(streakStats.totalDaysCompleted, 1)
     }
     
     func testStreakBreak_ShouldResetToOne() {

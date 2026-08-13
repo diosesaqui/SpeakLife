@@ -62,7 +62,23 @@ jobs:
           # the fix is --disable-sandbox here, not moving the model back to a
           # `.process` resource — that route silently copies the .xcdatamodeld
           # uncompiled and every Core Data test dies in setUp.
-          swift test --package-path Packages/SpeakLifeKit --parallel
+          #
+          # Deliberately NOT --parallel. SwiftPM runs cases in separate
+          # processes, and this suite still shares process-external state: one
+          # `UserDefaults.standard` and one SQLite store under the runner's
+          # home. Suites like StreakDisplayTests already save and restore the
+          # BurstCompletionTracker singleton around each test, but that is
+          # in-process bookkeeping and cannot survive a second process writing
+          # the same defaults. Run 30 showed it plainly — several processes
+          # logging the same store UUID with escalating history tokens, and
+          # streaks off by one in both directions.
+          #
+          # The app-hosted suite never hit this because every run got a fresh
+          # simulator container. On macOS the home directory is real and
+          # persists. Serial is correct until the state is injected per test
+          # (see docs/CLEANUP_AND_HARDENING_PLAN.md §8); the whole suite is
+          # seconds either way, so this costs nothing today.
+          swift test --package-path Packages/SpeakLifeKit
 
   # ───────────────────────────────────────────────────────────────────────────
   # The slow one. Proves the app still compiles and runs the residual
