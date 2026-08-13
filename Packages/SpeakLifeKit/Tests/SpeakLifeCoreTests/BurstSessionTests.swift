@@ -136,7 +136,7 @@ final class BurstSessionTests: XCTestCase {
                 enforcement: enforcement(theme: .anxiety), currentDay: day,
                 favorites: [], custom: [], categoryPool: [], selected: nil, fullPool: pool
             )
-            let spokenAnchors = session.declarations.map(\.text).filter(anchorTexts.contains)
+            let spokenAnchors = session.declarations.map(\.text).filter { anchorTexts.contains($0) }
             XCTAssertEqual(spokenAnchors, ["Anchor \(day)"],
                            "day \(day) spoke anchors \(spokenAnchors)")
         }
@@ -144,10 +144,11 @@ final class BurstSessionTests: XCTestCase {
 
     func testAThinCategoryExtendsIntoItsSiblingsThenFaithAndIdentity() {
         // `grief` ships twenty-five referenced lines and a week wants forty-two,
-        // so the back half has to come from somewhere. It must be the mapped
-        // siblings first, and faith or identity only after those.
+        // so the back half has to come from somewhere. The order is the whole
+        // point: the theme's own lines are spent before a sibling is touched,
+        // and faith only after the siblings.
         var pool = deepPool(.grief, count: 25)
-        pool += deepPool(.hope, count: 25)          // grief's first sibling
+        pool += deepPool(.hope, count: 10)          // grief's first mapped sibling
         pool += deepPool(.faith, count: 40)
 
         var spoken: [String] = []
@@ -160,12 +161,41 @@ final class BurstSessionTests: XCTestCase {
             spoken += session.declarations.dropFirst().map(\.text)
         }
 
-        XCTAssertEqual(Set(spoken).count, spoken.count, "a filler line repeated across the week")
-        // Every grief line is used before a sibling is touched.
-        XCTAssertEqual(spoken.filter { $0.hasPrefix("grief") }.count, 25)
-        XCTAssertTrue(spoken.contains { $0.hasPrefix("hope") })
-        // The theme still owns the opening days.
+        XCTAssertEqual(spoken.count, 42)
+        XCTAssertEqual(Set(spoken).count, 42, "a filler line repeated across the week")
+
+        // All three tiers are reached, in chain order and not before their turn.
+        let griefIndices = spoken.indices.filter { spoken[$0].hasPrefix("grief") }
+        let hopeIndices = spoken.indices.filter { spoken[$0].hasPrefix("hope") }
+        let faithIndices = spoken.indices.filter { spoken[$0].hasPrefix("faith") }
+        XCTAssertEqual(griefIndices.count, 25, "every grief line should be used")
+        XCTAssertEqual(hopeIndices.count, 10, "every hope line should be used")
+        XCTAssertEqual(faithIndices.count, 7, "faith covers only the remainder")
+        XCTAssertLessThan(griefIndices.last!, hopeIndices.first!,
+                          "a sibling was drawn before the theme was spent")
+        XCTAssertLessThan(hopeIndices.last!, faithIndices.first!,
+                          "faith was drawn before the mapped siblings were spent")
+
+        // The theme still owns the opening days outright.
         XCTAssertTrue(spoken.prefix(12).allSatisfy { $0.hasPrefix("grief") })
+    }
+
+    func testFillerCarriesItsOwnCategoryNotTheCampaignTheme() {
+        // A line borrowed from `hope` during Enforcing Comfort is labelled hope.
+        // The chip names where the line actually came from; the campaign's claim
+        // on the burst lives in `origin` and `theme`, which stay grief.
+        var pool = deepPool(.grief, count: 2)
+        pool += deepPool(.hope, count: 20)
+
+        let session = builder().build(
+            enforcement: enforcement(theme: .grief), currentDay: 1,
+            favorites: [], custom: [], categoryPool: [], selected: nil, fullPool: pool
+        )
+        XCTAssertEqual(session.theme, .grief)
+        XCTAssertEqual(session.origin, .enforcement(.grief))
+        let borrowed = session.declarations.filter { $0.text.hasPrefix("hope") }
+        XCTAssertFalse(borrowed.isEmpty, "this pool forces a borrow")
+        XCTAssertTrue(borrowed.allSatisfy { $0.category == .hope })
     }
 
     func testChainReachesFaithAndIdentityWhenNothingNearerExists() {
@@ -208,8 +238,53 @@ final class BurstSessionTests: XCTestCase {
             enforcement: enforcement(theme: .anxiety), currentDay: 1,
             favorites: [], custom: [], categoryPool: [], selected: nil, fullPool: pool
         )
+        XCTAssertEqual(session.declarations.count, 7)
         XCTAssertFalse(session.declarations.contains { $0.text == "no reference" })
         XCTAssertFalse(session.declarations.contains { $0.text == "a journal prompt" })
+    }
+
+    func testTwoCampaignsOnTheSameThemeDrawDifferently() {
+        // The ordering is seeded on the campaign id, so a user who runs Enforcing
+        // Peace twice does not get the identical week the second time.
+        let pool = deepPool(.anxiety)
+        func fresh(_ id: String) -> [String] {
+            builder().build(
+                enforcement: enforcement(theme: .anxiety, id: id), currentDay: 1,
+                favorites: [], custom: [], categoryPool: [], selected: nil, fullPool: pool
+            ).declarations.dropFirst().map(\.text)
+        }
+        XCTAssertNotEqual(fresh("assembled_anxiety_first"), fresh("assembled_anxiety_second"))
+    }
+
+    func testAPoolTooThinForTheWeekWrapsRatherThanRepeatingWithinADay() {
+        // Ten candidates cannot feed forty-two slots, so later days necessarily
+        // reuse earlier days' lines. What must never happen is the same line
+        // twice inside one burst.
+        let pool = deepPool(.anxiety, count: 10)
+        for day in 1...7 {
+            let session = builder().build(
+                enforcement: enforcement(theme: .anxiety), currentDay: day,
+                favorites: [], custom: [], categoryPool: [], selected: nil, fullPool: pool
+            )
+            let texts = session.declarations.map(\.text)
+            XCTAssertEqual(texts.count, 7, "day \(day) came up short")
+            XCTAssertEqual(Set(texts).count, 7, "day \(day) repeated a line: \(texts)")
+        }
+    }
+
+    func testADayOutsideTheCampaignStillComposesAFullBurst() {
+        // `currentDay` is clamped to 1...7 upstream, but a burst must not depend
+        // on that to avoid an index crash or a short session.
+        for day in [0, -1, 9] {
+            let session = builder().build(
+                enforcement: enforcement(theme: .anxiety), currentDay: day,
+                favorites: [], custom: [], categoryPool: [], selected: nil,
+                fullPool: deepPool(.anxiety)
+            )
+            XCTAssertEqual(session.declarations.count, 7, "day \(day)")
+            XCTAssertEqual(session.declarations.first?.text, "Anchor 1", "day \(day)")
+            XCTAssertEqual(Set(session.declarations.map(\.text)).count, 7, "day \(day)")
+        }
     }
 
     func testCampaignDeclarationsCarryBothTheEnumAndTheLabel() {
