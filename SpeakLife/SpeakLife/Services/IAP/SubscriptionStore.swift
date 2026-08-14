@@ -454,8 +454,16 @@ final class SubscriptionStore: ObservableObject {
         discountSubscription = remoteConfig["discountID"].stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
         weeklySubscription = remoteConfig["currentPremiumWeekly"].stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
         showSubscription = remoteConfig["showSubscription"].boolValue
-        onboardingBGImage = remoteConfig["onboardingImage"].stringValue
-        backgroundImage = remoteConfig["backgroundImage"].stringValue
+        // Neither key is registered in AppDelegate's Remote Config defaults, so a
+        // missing/renamed/typo'd console key resolves to "" here. Assigning that
+        // through would wipe the in-app default and leave `Image("")` rendering
+        // nothing: every onboarding arm except `closer` (which paints its own
+        // canvas) would drop to white type on a bare system background. Keep the
+        // last good value whenever the remote string is empty.
+        let remoteOnboardingImage = remoteConfig["onboardingImage"].stringValue
+        if !remoteOnboardingImage.isEmpty { onboardingBGImage = remoteOnboardingImage }
+        let remoteBackgroundImage = remoteConfig["backgroundImage"].stringValue
+        if !remoteBackgroundImage.isEmpty { backgroundImage = remoteBackgroundImage }
         currentDevotionalVersion = remoteConfig["currentDevotionalVersion"].numberValue.intValue
         remoteVersion = remoteConfig["remoteVersion"].numberValue.intValue
         audioRemoteVersion = remoteConfig["audioRemoteVersion"].numberValue.intValue

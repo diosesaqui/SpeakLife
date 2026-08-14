@@ -79,6 +79,11 @@ struct ProductOnboardingView: View {
                     .padding(.top, size.height * 0.065)
                     Spacer()
                 }
+                // Purely decorative chrome laid over the whole screen; the bar
+                // itself is two hit-testable Rectangles, so opt the overlay out
+                // of hit testing (matching the closer arm) rather than leave a
+                // full-width strip that can swallow a tap.
+                .allowsHitTesting(false)
             }
         }
         .ignoresSafeArea()

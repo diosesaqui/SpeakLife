@@ -70,6 +70,11 @@ struct IdentityOnboardingView: View {
                     .padding(.top, size.height * 0.065)
                     Spacer()
                 }
+                // Purely decorative chrome laid over the whole screen; the bar
+                // itself is two hit-testable Rectangles, so opt the overlay out
+                // of hit testing (matching the closer arm) rather than leave a
+                // full-width strip that can swallow a tap.
+                .allowsHitTesting(false)
             }
         }
         .ignoresSafeArea()
@@ -197,6 +202,8 @@ struct IdentityOnboardingView: View {
                         categories: categories
                     )
                     appState.lastNotificationSetDate = Date()
+                    // Trial pushes may have been scheduled pre-authorization on the paywall; re-add now that delivery is guaranteed.
+                    TrialExperienceService.shared.reschedulePendingTrialPushesIfNeeded()
                 }
                 onComplete()
             }
