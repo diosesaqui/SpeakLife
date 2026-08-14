@@ -89,12 +89,104 @@ final class AppDelegate: NSObject, MessagingDelegate {
 
         registerNotificationHandler()
 
+        // Install the UIKit-backed platform seams before anything touches the
+        // Core Data / sync stores. `DefaultVendorIdentifier` feeds
+        // `ProgressSyncStore.deviceId` its vendor pin (see the block comment
+        // there for why that pin is load-bearing on iCloud-restored installs);
+        // `LifecycleNames` gives the stores their foreground/background
+        // notification names. Both live in the app target so the stores can
+        // stay UIKit-free.
+        DefaultVendorIdentifier.shared.read = {
+            UIDevice.current.identifierForVendor?.uuidString
+        }
+        let lifecycle = LifecycleNames(
+            didBecomeActive: UIApplication.didBecomeActiveNotification,
+            didEnterBackground: UIApplication.didEnterBackgroundNotification
+        )
+
+        // Install the SpeakLifeCore seams (PR6). Core is Foundation-only, so
+        // anything that needs to reach up into the app (analytics, the active
+        // personal declaration, the AI task path's user-behavior profile) is
+        // an injected closure that stays nil in `swift test`. See
+        // `AnalyticsTracking.swift`, `FoundationAudioPlan.personalDeclarationCategoryProvider`,
+        // and `TaskLibrary.userBehaviorProvider`.
+        CoreAnalytics.provider = AnalyticsService.shared
+        FoundationAudioPlan.personalDeclarationCategoryProvider = {
+            PersonalDeclarationRepository.activeCategoryRaw()
+        }
+        TaskLibrary.userBehaviorProvider = {
+            let profile = EnhancedAnalyticsService.shared.userBehaviorProfile
+            return [
+                "topCategories": Array(profile.topCategories.keys),
+                "strugglingAreas": profile.strugglingAreas,
+                "spiritualMaturity": profile.spiritualMaturityLevel.rawValue,
+                "preferredTaskTypes": [],
+                "completionPatterns": profile.completionRates,
+                "weeklyPattern": profile.weeklyPattern,
+                "currentLifeSeason": profile.currentLifeSeason,
+            ]
+        }
+
+        PersistenceController.shared.start(lifecycle: lifecycle)
+
         // iCloud progress sync: mirror streaks, listened audio, counters, and
         // whitelisted preferences across the user's devices via CloudKit.
         // Both stores are additive/merge-only, so starting them is safe even
         // before the first CloudKit import completes.
-        ProgressSyncStore.shared.start()
-        SyncedSettingsStore.shared.start()
+        ProgressSyncStore.shared.start(lifecycle: lifecycle)
+        SyncedSettingsStore.shared.start(lifecycle: lifecycle)
+
+        // SpeakLifePersistence seams (PR7). Persistence is Firebase-free, so
+        // anything that needs to reach up into the app for analytics, the
+        // legacy JSON favorites source, or the app's `LocalAPIClient` is an
+        // injected closure installed here.
+        DataMigrationManager.defaultLegacyAPIServiceFactory = { LocalAPIClient() }
+        UnifiedFavoritesManager.legacyJSONFavoritesProvider = { completion in
+            CoreDataAPIService().declarations { declarations, _, _ in
+                completion(declarations)
+            }
+        }
+        AudioFavoritesTelemetry.trackFavoriteToggle = { audio, isFavorited in
+            AudioAnalytics.shared.trackFavoriteToggle(audio: audio, isFavorited: isFavorited)
+        }
+        AudioFavoritesTelemetry.trackFavoriteRemoved = { audio in
+            AudioAnalytics.shared.trackFavoriteRemoved(audio: audio)
+        }
+        AudioFavoritesTelemetry.trackFavoritesCleared = { count in
+            AudioAnalytics.shared.trackFavoritesCleared(count: count)
+        }
+        AudioFavoritesTelemetry.trackFavoriteSavedForPaywall = {
+            PaywallTriggerManager.shared.trackFavoriteSaved()
+        }
+
+        // SpeakLifeServices seams (PR8). Services is Foundation + Combine
+        // only; every UIKit / SwiftUI / Firebase-adjacent hook it needs
+        // is a closure installed here at composition time.
+        EnhancedStreakViewModel.notifications = LifecycleNotificationService.shared
+        EnhancedStreakViewModel.shareImageRenderer = { args in
+            StreakShareCardRenderer.render(args)
+        }
+        EnhancedStreakViewModel.LifecycleNames.install(
+            didBecomeActive: UIApplication.didBecomeActiveNotification
+        )
+        EnhancedStreakViewModel.cancelLegacyDailyNotifications = { identifiers in
+            UNUserNotificationCenter.current()
+                .removePendingNotificationRequests(withIdentifiers: identifiers)
+        }
+        PersonalDeclarationProgressBridge.todayProgress = {
+            PersonalDeclarationRepository.todayProgress()
+        }
+        NotificationDeclarationSource.apiServiceFactory = { LocalAPIClient() }
+        StreakFeedback.onTaskCompleted = { PremiumHaptics.affirmationCompleted() }
+        StreakFeedback.onDayCompleted = { PremiumHaptics.dailyGoalCompleted() }
+        StreakFeedback.onNewRecord = { PremiumHaptics.newRecordSet() }
+        StreakFeedback.playGentleSuccess = {
+            AudioDelightManager.shared.playGentleSuccess()
+        }
+        StreakFeedback.playForStreakMilestone = { streak in
+            AudioDelightManager.shared.playForStreakMilestone(streak)
+        }
+
         ApplicationDelegate.shared.application(
             application,
             didFinishLaunchingWithOptions: launchOptions
@@ -158,6 +250,13 @@ final class AppDelegate: NSObject, MessagingDelegate {
             "currentPremiumMonthly": currentMonthlyPremiumID as NSString,
             "currentPremiumWeekly": weeklyID as NSString
         ])
+
+        // Wire the domain-facing feature-flag seam to Firebase Remote Config now
+        // that its defaults are set. `EnforcementService` and
+        // `TakeItCaptiveService` read through `DefaultFeatureFlags.shared`, so
+        // installing here — before either singleton is first touched — lets them
+        // stay Firebase-free while still honoring the live flag values.
+        DefaultFeatureFlags.shared.provider = RemoteConfigFlags()
 
         registerBGTask()
         
@@ -251,6 +350,19 @@ final class AppDelegate: NSObject, MessagingDelegate {
     }
     
     // Removed duplicate didReceive - now handled in extension
+}
+
+/// Firebase-backed `FeatureFlagProviding`. Lives in the app target so the
+/// domain services that read flags do not import `FirebaseRemoteConfig`.
+/// Installed into `DefaultFeatureFlags.shared` in `didFinishLaunchingWithOptions`
+/// immediately after `RemoteConfig.setDefaults(...)`.
+struct RemoteConfigFlags: FeatureFlagProviding {
+    func bool(_ key: String, default defaultValue: Bool) -> Bool {
+        RemoteConfig.remoteConfig()[key].boolValue
+    }
+}
+
+extension AppDelegate {
     
     func application(
             _ app: UIApplication,
@@ -284,9 +396,27 @@ final class AppDelegate: NSObject, MessagingDelegate {
     
     
     private func registerBGTask() {
-        
+
         BGTaskScheduler.shared.register(forTaskWithIdentifier: "com.speaklife.updateNotificationContent", using: nil) { task in
             self.updateNotificationContent(task: task as! BGAppRefreshTask)
+        }
+
+        // Wire the Foundation-typed submit seam on `NotificationManager` to the
+        // real `BGTaskScheduler`. Kept here so the manager itself does not
+        // import `BackgroundTasks` — the framework only touches the app target.
+        NotificationManager.shared.submitBackgroundTask = { identifier, earliestBeginDate in
+            let request = BGAppRefreshTaskRequest(identifier: identifier)
+            request.earliestBeginDate = earliestBeginDate
+            do {
+                try BGTaskScheduler.shared.submit(request)
+                let formatter = DateFormatter()
+                formatter.dateStyle = .short
+                formatter.timeStyle = .short
+                let when = earliestBeginDate.map { formatter.string(from: $0) } ?? "asap"
+                print("✅ BGAppRefreshTask scheduled for \(when)")
+            } catch {
+                print("⚠️ Could not schedule notification batch refresh: \(error.localizedDescription)")
+            }
         }
     }
     

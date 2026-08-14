@@ -67,6 +67,18 @@ struct RemoteMessageView: View {
 
     @Environment(\.dismiss) private var dismiss
 
+    /// Paragraphs, recovered from a body that often arrives as one flat run
+    /// (see MessageBodyFormatter). Computed once per message rather than per
+    /// layout pass, since the sentence scan is not free and the text never
+    /// changes while the sheet is open.
+    private let blocks: [MessageBodyFormatter.Block]
+
+    init(message: RemoteMessage, onSeeAllMessages: (() -> Void)? = nil) {
+        self.message = message
+        self.onSeeAllMessages = onSeeAllMessages
+        self.blocks = MessageBodyFormatter.blocks(from: message.body)
+    }
+
     var body: some View {
         ZStack {
             Gradients().speakLifeFrostyCell
@@ -98,15 +110,23 @@ struct RemoteMessageView: View {
                                 .multilineTextAlignment(.leading)
                         }
 
-                        // No .fixedSize here: combined with .lineSpacing it makes
-                        // SwiftUI under-measure the text height and clip long
-                        // messages. Inside a ScrollView the text is already given
-                        // unbounded height, so it renders in full and scrolls.
-                        Text(message.body)
-                            .font(.system(size: 19, weight: .regular, design: .rounded))
-                            .foregroundColor(.white.opacity(0.92))
-                            .lineSpacing(7)
-                            .multilineTextAlignment(.leading)
+                        // One Text per paragraph, so the spacing between them is
+                        // real layout rather than a blank line the sender had to
+                        // remember to type. No .fixedSize on any of them:
+                        // combined with .lineSpacing it makes SwiftUI
+                        // under-measure the text height and clip long messages.
+                        // Inside a ScrollView the text already has unbounded
+                        // height, so it renders in full and scrolls.
+                        VStack(alignment: .leading, spacing: 18) {
+                            ForEach(blocks) { block in
+                                switch block.kind {
+                                case .prose:
+                                    paragraph(block.text)
+                                case .scripture:
+                                    scripture(block.text)
+                                }
+                            }
+                        }
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal, 28)
@@ -158,14 +178,49 @@ struct RemoteMessageView: View {
             }
         }
     }
+
+    // MARK: - Paragraph styles
+
+    private func paragraph(_ text: String) -> some View {
+        Text(text)
+            .font(.system(size: 19, weight: .regular, design: .rounded))
+            .foregroundColor(.white.opacity(0.92))
+            .lineSpacing(7)
+            .multilineTextAlignment(.leading)
+            .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    /// A quoted verse, set apart from the copy around it by a gold rule so the
+    /// eye can find the scripture in a long message at a glance.
+    private func scripture(_ text: String) -> some View {
+        HStack(alignment: .top, spacing: 14) {
+            Capsule()
+                .fill(DS.Palette.gold.opacity(0.75))
+                .frame(width: 3)
+
+            Text(text)
+                .font(.system(size: 18, weight: .regular, design: .rounded))
+                .italic()
+                .foregroundColor(.white.opacity(0.88))
+                .lineSpacing(6)
+                .multilineTextAlignment(.leading)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        // No .fixedSize: the rule is a flexible shape, so the row already
+        // takes its height from the text beside it, and forcing an ideal
+        // height back onto text with .lineSpacing is what clipped long
+        // messages before.
+    }
 }
 
+// A body sent as one flat run — the shape most broadcasts actually arrive in.
+// It should read as paragraphs here, with the two verses set apart.
 #Preview {
     RemoteMessageView(
         message: RemoteMessage(
             userInfo: [
-                "messageTitle": "A Word For You Today",
-                "messageBody": "I see you, and I am proud of how far you've come. The road has not been easy, but every step has been ordered. Keep going. Your breakthrough is closer than it appears, and the One who started a good work in you is faithful to complete it."
+                "messageTitle": "THIS IS THE DAY ☀️",
+                "messageBody": "\"This is the day that the Lord has made; let us rejoice and be glad in it.\" (Ps 118:24) Not tomorrow. Not the one you're still replaying. This one. Yesterday is finished business. Whether it was a win or a wound, it's out of your reach now. And tomorrow isn't yours yet. Today is the only ground you actually stand on, and God already made it. That's why His mercies are \"new every morning.\" (Lam 3:23) Fresh mercy for fresh ground. You don't have to drag yesterday's failure into a day God just built for you. So take this one. Move from hope, not from dread. Move from peace, not from pressure. One day is all any of us gets at a time. This is yours. Make it count. ☀️"
             ],
             fallbackTitle: "",
             fallbackBody: ""

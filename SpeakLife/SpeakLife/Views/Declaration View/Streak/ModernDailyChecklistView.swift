@@ -6,7 +6,6 @@
 //
 
 import SwiftUI
-import FirebaseAnalytics
 import CoreData
 
 struct ModernDailyChecklistView: View {
@@ -495,8 +494,9 @@ struct ModernDailyChecklistView: View {
                 .padding(.bottom, 16)
                 .dsAppear(0)
 
-                // Scrollable content with cleaner layout
-                ScrollView(showsIndicators: false) {
+                // Scrollable content with cleaner layout. Vertical only — see
+                // the width pin on the content below.
+                ScrollView(.vertical, showsIndicators: false) {
                     VStack(spacing: 12) {
                         // The active campaign sits above today's tasks: it's the
                         // reason the user came back, so it leads. Renders nothing
@@ -695,7 +695,24 @@ struct ModernDailyChecklistView: View {
                         Color.clear.frame(height: 80)
                     }
                     .padding(.top, 8)
+                    // The feed is vertical, but it could still be dragged and
+                    // rubber-banded sideways: a `.vertical` ScrollView scrolls
+                    // horizontally too whenever the content it measures comes
+                    // out wider than the viewport, and a single child measuring
+                    // a few points over is enough to unlock the whole axis —
+                    // which drags every card off-center while the header above
+                    // stays put. Pinning the content to the container makes it
+                    // exactly as wide as the screen, so there is no horizontal
+                    // travel to bounce into.
+                    //
+                    // Leading, not centered: if a child ever does measure wider,
+                    // it gets cut on the right like ordinary truncation instead
+                    // of bleeding off both edges at once.
+                    .containerRelativeFrame(.horizontal, alignment: .leading)
                 }
+                // Belt and braces: even if a future child forces the content
+                // wider, there is no rubber-band on an axis that fits.
+                .scrollBounceBehavior(.basedOnSize, axes: .horizontal)
             }
             .clipped() // Prevent overflow issues
             

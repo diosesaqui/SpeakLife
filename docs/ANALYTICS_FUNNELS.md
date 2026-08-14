@@ -13,6 +13,33 @@ TikTok, Meta). To add a destination, implement `AnalyticsProvider` and call
 
 ---
 
+## 0. Global Event Metadata
+
+`AnalyticsContext` (`Core/Analytics/AnalyticsContext.swift`) stamps these
+properties onto **every** event automatically. `AnalyticsService.dispatch` is
+the single choke point that merges them in, so no call site has to pass them
+and nothing can forget to. A call site that passes the same key wins — the
+global value is only a default.
+
+| Property | Example | Why it's here |
+|----------|---------|---------------|
+| `app_version` | `4.54` | Pin a conversion drop or error spike to the release that shipped it, and keep stale-build traffic out of funnels. Filter every funnel by this. |
+| `app_build` | `1001` | Separates TestFlight/internal builds sharing one marketing version — where regressions show up first. |
+| `subscription_status` | `free` / `trial` / `premium` | Segments every event by monetization state without a single call site passing it. Fed by `SubscriptionStore` via `didSet`. |
+| `days_since_install` | `0`, `7`, `30` | Lifecycle stage. Separates day-0 behavior from week-2 retention on any event. Backfilled from `lifecycle_install_date` / `firstLaunchDate` so existing users don't read as day 0. |
+| `session_id` | UUID | One id per launch, shared across Firebase and PostHog, so a session can be reconstructed across destinations. |
+| `timestamp` | ISO 8601 | Client-side event time, so offline-batched events aren't misordered by ingest time. |
+
+`app_version`, `app_build`, and `subscription_status` are also set as **user
+properties**, so people-level cohorts ("everyone currently on trial", "everyone
+still on 4.53") work, not just event filters.
+
+**To add another global property:** add a key to `AnalyticsContext.Key`, return
+it from `properties()`, and it lands on every event in every destination. Do not
+add it to individual call sites.
+
+---
+
 ## 1. Onboarding Funnel (quiz flow)
 
 The live Treatment cohort (`useQuizOnboarding = true`) rendered by

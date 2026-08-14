@@ -6,7 +6,6 @@
 //
 
 import SwiftUI
-import FirebaseAnalytics
 import UIKit
 import AVFoundation
 import Photos

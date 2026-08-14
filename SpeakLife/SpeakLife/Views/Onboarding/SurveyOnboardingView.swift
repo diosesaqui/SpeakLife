@@ -4,7 +4,6 @@
 //
 
 import SwiftUI
-import FirebaseAnalytics
 import UserNotifications
 import UIKit
 

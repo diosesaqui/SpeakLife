@@ -4,7 +4,6 @@
 //
 
 import SwiftUI
-import FirebaseAnalytics
 
 struct BreakthroughFlowView: View {
     @EnvironmentObject var appState: AppState

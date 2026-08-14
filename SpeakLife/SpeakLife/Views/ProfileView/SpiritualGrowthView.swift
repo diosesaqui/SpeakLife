@@ -6,7 +6,6 @@
 //
 
 import SwiftUI
-import FirebaseAnalytics
 
 struct SpiritualGrowthView: View {
     @Environment(\.dismiss) var dismiss

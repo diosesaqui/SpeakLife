@@ -6,7 +6,6 @@
 //
 
 import SwiftUI
-import FirebaseAnalytics
 
 struct DevotionalSubscriptionView: View {
     @EnvironmentObject var subscriptionStore: SubscriptionStore

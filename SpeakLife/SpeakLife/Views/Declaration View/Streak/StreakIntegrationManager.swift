@@ -7,7 +7,6 @@
 
 import Foundation
 import Combine
-import Firebase
 
 final class StreakIntegrationManager: ObservableObject {
     static let shared = StreakIntegrationManager()

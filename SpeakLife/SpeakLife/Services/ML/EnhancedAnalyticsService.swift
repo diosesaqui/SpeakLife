@@ -6,7 +6,7 @@
 //
 
 import Foundation
-import FirebaseAnalytics
+import UIKit
 import Combine
 
 final class EnhancedAnalyticsService: ObservableObject {

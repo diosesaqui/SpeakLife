@@ -7,7 +7,6 @@
 
 import SwiftUI
 import FacebookCore
-import FirebaseAnalytics
 import UserNotifications
 let resources: [MusicResources] = [.sethpiano, .washed, .rainstorm, .everpresent]
 
