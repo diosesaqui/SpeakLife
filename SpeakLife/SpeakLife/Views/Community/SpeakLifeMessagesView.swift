@@ -484,7 +484,11 @@ struct SpeakLifeMessageCard: View {
                         .multilineTextAlignment(.leading)
                 }
 
-                Text(message.body)
+                // Flattened to one run: the card only has four lines, and a
+                // paragraph break would spend one of them on whitespace. It
+                // still goes through the formatter so an escaped "\n" never
+                // shows up literally in the preview.
+                Text(MessageBodyFormatter.preview(message.body))
                     .font(Font.custom("AppleSDGothicNeo-Regular", size: 15, relativeTo: .body))
                     .foregroundColor(.white.opacity(0.85))
                     .lineSpacing(4)
