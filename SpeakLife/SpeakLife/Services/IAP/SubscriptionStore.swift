@@ -48,11 +48,22 @@ extension Notification.Name {
 
 final class SubscriptionStore: ObservableObject {
 
-    @Published var isPremium: Bool = false
+    @Published var isPremium: Bool = false {
+        didSet { syncAnalyticsSubscriptionContext() }
+    }
     /// True iff the active premium entitlement is currently in its free-trial
     /// introductory period (vs a paid period). Powers the onboarding conversion
     /// analytics. Source of truth: RevenueCat, refreshed in applyCustomerInfo.
-    @Published var isInTrial: Bool = false
+    @Published var isInTrial: Bool = false {
+        didSet { syncAnalyticsSubscriptionContext() }
+    }
+
+    /// Feeds the monetization dimension that `AnalyticsContext` stamps onto
+    /// every event. Kept on `didSet` rather than at each mutation site so a new
+    /// place that flips premium/trial can't forget to update analytics.
+    private func syncAnalyticsSubscriptionContext() {
+        AnalyticsContext.shared.updateSubscription(isPremium: isPremium, isInTrial: isInTrial)
+    }
     /// First date the user ever activated the premium entitlement (survives
     /// cancel-and-resubscribe). Powers the subscription anniversary overlay.
     @Published var premiumOriginalPurchaseDate: Date?

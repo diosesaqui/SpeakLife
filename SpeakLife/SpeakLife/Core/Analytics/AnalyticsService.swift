@@ -94,7 +94,19 @@ final class AnalyticsService: AnalyticsTracking {
 
     private init() {
         registerDefaultProviders()
+        applyGlobalUserProperties()
         startSession()
+    }
+
+    /// Mirror the durable slice of `AnalyticsContext` onto the person record so
+    /// cohorts work at the user level too, not just as event filters.
+    /// Uses `self` rather than `.shared` because this runs inside `init`.
+    private func applyGlobalUserProperties() {
+        let context = AnalyticsContext.shared
+        setUserProperty(AnalyticsContext.Key.appVersion, value: context.appVersion)
+        setUserProperty(AnalyticsContext.Key.appBuild, value: context.appBuild)
+        setUserProperty(AnalyticsContext.Key.subscriptionStatus,
+                        value: context.currentSubscriptionStatus.rawValue)
     }
 
     // MARK: Provider Registration
@@ -137,9 +149,16 @@ final class AnalyticsService: AnalyticsTracking {
         return providers
     }
 
-    /// Core fan-out. Builds the event once and hands it to every enabled provider.
+    /// Core fan-out, and the single choke point every analytics call in the app
+    /// flows through. Global metadata from `AnalyticsContext` (app version,
+    /// build, session id, subscription status, days since install, timestamp) is
+    /// merged in here so no call site has to remember it. The call site wins on
+    /// key collisions, so any event can still override a global value.
     private func dispatch(_ name: String, parameters: [String: Any], semantic: AnalyticsSemantic? = nil) {
-        let event = AnalyticsEvent(name: name, parameters: parameters, semantic: semantic)
+        var enriched = AnalyticsContext.shared.properties()
+        enriched.merge(parameters) { _, callSiteValue in callSiteValue }
+
+        let event = AnalyticsEvent(name: name, parameters: enriched, semantic: semantic)
         for provider in snapshotProviders() where provider.isEnabled {
             provider.log(event)
         }
