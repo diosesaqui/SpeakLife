@@ -130,7 +130,11 @@ struct DailyDeclarationBurstView: View {
             favorites: viewModel.favorites,
             custom: viewModel.createOwn.filter { $0.contentType == .affirmation },
             categoryPool: viewModel.declarations,
-            selected: viewModel.selectedCategory
+            selected: viewModel.selectedCategory,
+            // The whole pool, not `viewModel.declarations` — that is the category
+            // the user is browsing, which has nothing to do with the campaign they
+            // are on. A campaign fills its six non-anchor slots from its own theme.
+            fullPool: viewModel.allAvailableDeclarations
         )
         session = composed
 

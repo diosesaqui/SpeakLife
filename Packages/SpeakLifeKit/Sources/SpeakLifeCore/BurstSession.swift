@@ -189,15 +189,22 @@ public struct BurstSessionBuilder {
     ///   - currentDay: the campaign day to lead with.
     ///   - selected: the category selected in the app, used only as a fallback
     ///     theme when the spoken lines cannot name one.
+    ///   - fullPool: every reviewed declaration, used to fill the six slots
+    ///     behind a campaign's daily anchor. Defaults to empty, which is not a
+    ///     convenience but a real state: the pool loads asynchronously, and a
+    ///     burst opened before it arrives still has to produce seven lines.
+    ///     `enforcementSession` degrades to the week's other anchors when it is
+    ///     empty, so a missing pool costs variety and never the burst.
     public func build(
         enforcement: Enforcement?,
         currentDay: Int,
         favorites: [Declaration],
         custom: [Declaration],
         categoryPool: [Declaration],
-        selected: DeclarationCategory?
+        selected: DeclarationCategory?,
+        fullPool: [Declaration] = []
     ) -> BurstSession {
-        if let session = enforcementSession(enforcement, currentDay: currentDay) {
+        if let session = enforcementSession(enforcement, currentDay: currentDay, fullPool: fullPool) {
             return session
         }
         return poolSession(
@@ -219,35 +226,155 @@ public struct BurstSessionBuilder {
     /// push, and what actually comes out of their mouth would have nothing to do
     /// with the week they chose. That makes the campaign decoration.
     ///
-    /// Today's anchor leads; the rest of the week fills in behind it.
+    /// Today's anchor leads, and six fresh lines from the campaign's theme fill
+    /// in behind it.
     ///
-    /// Returns nil when the campaign cannot fill every slot. A campaign is always
-    /// seven days so that should not happen, but a half-empty burst is worse than
-    /// a pooled one, and claiming the campaign's theme over lines the campaign
-    /// did not supply is worse than both.
-    private func enforcementSession(_ enforcement: Enforcement?, currentDay: Int) -> BurstSession? {
+    /// This used to seat all seven of the week's anchors in the seven slots and
+    /// merely rotate today's to the front. Every slot was campaign-owned, which
+    /// was the point — but it meant the burst was byte-identical from day 1 to
+    /// day 7. Someone on day 4 of Enforcing Peace spoke the exact seven lines
+    /// they spoke on day 1, so the only thing a new day changed was the order,
+    /// and the campaign gave them no reason to come back for the content.
+    ///
+    /// So the anchor stays the spine — it is what the card shows, what the push
+    /// says, and what "day 4" actually means — and the other six rotate. The
+    /// draw is windowed rather than re-shuffled per day: one ordering per
+    /// campaign, day N taking the Nth slice of six. That is what makes the whole
+    /// week non-repeating instead of merely random, which independent daily
+    /// draws would not be — six of forty-five twice over collides about once a
+    /// day.
+    ///
+    /// Returns nil when the campaign cannot fill every slot. A half-empty burst
+    /// is worse than a pooled one, and claiming the campaign's theme over lines
+    /// the campaign did not supply is worse than both.
+    private func enforcementSession(
+        _ enforcement: Enforcement?,
+        currentDay: Int,
+        fullPool: [Declaration]
+    ) -> BurstSession? {
         guard let enforcement else { return nil }
+        guard let today = enforcement.day(currentDay) ?? enforcement.days.first else { return nil }
 
-        let ordered = enforcement.days.sorted { lhs, rhs in
-            if lhs.dayNumber == currentDay { return true }
-            if rhs.dayNumber == currentDay { return false }
-            return lhs.dayNumber < rhs.dayNumber
+        var declarations: [BurstDeclaration] = [anchorLine(today, of: enforcement)]
+        var spoken: Set<String> = [today.anchorText]
+
+        // Every anchor of the week is off limits to the fresh draw, not just
+        // today's. Day 6's line surfacing as filler on day 2 would spend the
+        // campaign's own material early and land twice.
+        let anchorTexts = Set(enforcement.days.map(\.anchorText))
+
+        let candidates = Self.freshCandidates(
+            chain: Self.freshChain(for: enforcement.theme),
+            in: fullPool,
+            excluding: anchorTexts,
+            seed: enforcement.id
+        )
+        if !candidates.isEmpty {
+            let window = max(currentDay - 1, 0) * (declarationCount - 1)
+            // Wraps rather than running off the end. A thin category cannot feed
+            // six new lines a day for a week even after the chain extends it, and
+            // repeating this campaign's earlier fill beats dropping to the static
+            // fallback list, which is not about their theme at all.
+            for step in 0..<candidates.count where declarations.count < declarationCount {
+                let candidate = candidates[(window + step) % candidates.count]
+                guard !spoken.contains(candidate.text) else { continue }
+                declarations.append(
+                    BurstDeclaration(
+                        text: candidate.text,
+                        verse: candidate.book ?? "",
+                        category: candidate.category
+                    )
+                )
+                spoken.insert(candidate.text)
+            }
         }
-        let declarations = ordered.prefix(declarationCount).map { day in
-            BurstDeclaration(
-                text: day.anchorText,
-                verse: day.anchorBook,
-                category: enforcement.theme,
-                categoryLabel: enforcement.themeName
-            )
+
+        // The pool loads asynchronously and a burst can open before it lands.
+        // Falling back to the week's other anchors reproduces exactly the old
+        // behaviour for that one burst — repetitive, but campaign-owned and
+        // seven lines long, which is the promise that matters.
+        for day in enforcement.days.sorted(by: { $0.dayNumber < $1.dayNumber })
+        where declarations.count < declarationCount {
+            guard !spoken.contains(day.anchorText) else { continue }
+            declarations.append(anchorLine(day, of: enforcement))
+            spoken.insert(day.anchorText)
         }
+
         guard declarations.count == declarationCount else { return nil }
 
         return BurstSession(
-            declarations: Array(declarations),
+            declarations: declarations,
             origin: .enforcement(enforcement.theme),
             theme: enforcement.theme
         )
+    }
+
+    private func anchorLine(_ day: EnforcementDay, of enforcement: Enforcement) -> BurstDeclaration {
+        BurstDeclaration(
+            text: day.anchorText,
+            verse: day.anchorBook,
+            category: enforcement.theme,
+            categoryLabel: enforcement.themeName
+        )
+    }
+
+    /// Where the six fresh lines come from, nearest-truth first.
+    ///
+    /// The theme's own declarations, then the siblings `EnforcementAssembler`
+    /// already maps for it, then faith and identity — which fit anyone and are
+    /// two of the deepest categories in the pool, so the chain cannot run dry.
+    ///
+    /// The extension past the theme is not hypothetical. Seventeen categories a
+    /// campaign can be named for — `grief`, `business`, `debt`, `fertility` and
+    /// the rest — carry exactly twenty-five referenced declarations, and a week
+    /// of six-a-day wants forty-two. Those campaigns lean on the chain from
+    /// about day four. The twenty-eight deeper categories never reach it.
+    static func freshChain(for theme: DeclarationCategory) -> [DeclarationCategory] {
+        var chain = [theme]
+        chain += EnforcementAssembler.contentFallbacks[theme] ?? []
+        chain += [.faith, .identity]
+        var seen = Set<DeclarationCategory>()
+        return chain.filter { EnforcementAssembler.isCampaignable($0) && seen.insert($0).inserted }
+    }
+
+    /// The chain's declarations, flattened in chain order and shuffled stably
+    /// within each category.
+    ///
+    /// Ordering per category rather than across the whole chain is what keeps
+    /// the early week on-theme: the window walks the theme's own lines first and
+    /// only reaches a sibling once they are spent.
+    ///
+    /// Seeded on the campaign id, so the week's ordering is fixed the moment the
+    /// campaign starts. `Array.shuffled()` would re-draw on every launch and day
+    /// 3 would be six different lines each time the user opened the app.
+    static func freshCandidates(
+        chain: [DeclarationCategory],
+        in pool: [Declaration],
+        excluding blocked: Set<String>,
+        seed: String
+    ) -> [Declaration] {
+        var result: [Declaration] = []
+        var used = blocked
+        for category in chain {
+            var matching: [Declaration] = []
+            for declaration in pool {
+                guard declaration.category == category else { continue }
+                guard declaration.contentType == .affirmation else { continue }
+                guard !used.contains(declaration.text) else { continue }
+                // The slat renders the reference under the line, so an unreferenced
+                // declaration leaves a blank row. Same rule the assembler applies
+                // when it picks the anchors.
+                guard let book = declaration.book, !book.isEmpty else { continue }
+                matching.append(declaration)
+            }
+            matching.sort {
+                EnforcementAssembler.stableHash(seed + $0.text)
+                    < EnforcementAssembler.stableHash(seed + $1.text)
+            }
+            used.formUnion(matching.map(\.text))
+            result += matching
+        }
+        return result
     }
 
     // MARK: Pool
