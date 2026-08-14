@@ -137,8 +137,13 @@ public struct ThoughtClassifier {
             // someone's mouth, and a line that breaks the rules loses to the
             // reviewed bank.
             guard Self.followsHouseRules(written.declaration) else {
-                AnalyticsService.shared.track("guard_written_rejected",
-                                              parameters: ["terrain": written.category.rawValue])
+                // `CoreAnalytics`, not `AnalyticsService`: this file lives in
+                // the package now, and the app's analytics stack is not
+                // reachable from here. The app installs the real provider at
+                // startup; the package's own build and its tests leave it nil
+                // and the call no-ops.
+                CoreAnalytics.track("guard_written_rejected",
+                                    parameters: ["terrain": written.category.rawValue])
                 return classify(text)
             }
             return .matched(written.category,
