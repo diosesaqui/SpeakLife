@@ -2,8 +2,8 @@
 //  EscapeHatchView.swift
 //  SpeakLife
 //
-//  The opening question: what thought have you been carrying that doesn't line
-//  up with God's word?
+//  The opening question: what thought about yourself or your future doesn't
+//  line up with your new identity in Christ?
 //
 //  This used to be the escape hatch — a quiet link under a thought the app had
 //  guessed at. It is now the front door. Being handed someone else's guess at
@@ -170,13 +170,32 @@ struct AskForThoughtView: View {
 
                 Spacer(minLength: 0)
 
-                // "The thought", never "your thought". It came at them; it is
-                // not theirs and it does not indict them. The question names
-                // what makes a thought worth rejecting — that it disagrees with
-                // what God said — rather than asking them to diagnose it.
-                Text("What thought have you been carrying that doesn't line up with God's word?")
+                // Two things this question has to do at once.
+                //
+                // Point at the right target: thoughts about YOURSELF and YOUR
+                // FUTURE. "That doesn't line up with God's word" was true but
+                // unbounded — it invited anything, including thoughts about
+                // other people and circumstances the drill has no answer for.
+                // Identity and future are where the lies that need displacing
+                // actually live, and naming them is what makes the question
+                // answerable in three seconds at 2am.
+                //
+                // And measure it against the right standard. Not "God's word"
+                // in general, but who they already are in Christ — the thought
+                // is wrong because it contradicts a finished fact about them,
+                // not because it breaks a rule.
+                //
+                // "What thought", never "a thought you've been having". It came
+                // at them; it is not theirs and it does not indict them. See
+                // rule 2 in `TakeItCaptive.swift` — the possessive is the one
+                // phrasing this screen may not use, however natural it sounds.
+                Text("What thought about yourself or your future doesn't line up with your new identity in Christ?")
                     .font(.system(size: 24, weight: .bold, design: .rounded))
                     .foregroundColor(.white)
+                    // Longer than the line it replaced, and the keyboard is up
+                    // the whole time this screen is on screen. Shrinks rather
+                    // than pushing the field off a small phone.
+                    .minimumScaleFactor(0.75)
                     .fixedSize(horizontal: false, vertical: true)
 
                 Text(privacyLine)

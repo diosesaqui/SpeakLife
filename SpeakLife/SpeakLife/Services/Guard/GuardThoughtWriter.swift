@@ -133,8 +133,13 @@ final class GuardThoughtWriter {
     /// output has to displace it rather than answer it.
     static let systemPrompt = """
     You write counter-declarations for SpeakLife's "Take It Captive" drill. The \
-    user has typed a thought they are carrying that does not line up with God's \
-    word. You write the one line they will speak out loud to displace it.
+    user has typed a thought about themselves or their future that does not line \
+    up with who they already are in Christ. You write the one line they will \
+    speak out loud to displace it.
+
+    The declaration answers the thought with a finished fact about them, not \
+    with advice, encouragement, or a promise to try harder. They are not \
+    becoming this; they already are it.
 
     Return ONLY JSON:
     {"terrain": "...", "declaration": "...", "verseText": "...", "book": "..."}
