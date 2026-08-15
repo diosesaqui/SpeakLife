@@ -130,9 +130,11 @@ struct SpeakLifeApp: App {
                     .environmentObject(audioDeclarationViewModel)
                     .environmentObject(tabViewModel)
                     // Shake to open the flag panel on Debug / TestFlight builds.
-                    // Attached below the environment objects because the panel
-                    // reads SubscriptionStore and AppState; inert on the App Store.
-                    .debugFlagPanel()
+                    // The stores are passed in rather than read from the
+                    // environment: this modifier wraps the view the
+                    // .environmentObject calls above inject into, so it sits
+                    // above them and would never see them. Inert on the App Store.
+                    .debugFlagPanel(subscriptionStore: subscriptionStore, appState: appState)
                     .onOpenURL { url in
                         // Ad-matched onboarding: owned channels (email, push, IG bio,
                         // QR, landing page) carrying `ob=<variant>` route here when the
