@@ -238,6 +238,20 @@ final class SubscriptionStore: ObservableObject {
     // testimonial wall. Only the `closer` arm reads this.
     @Published var closerPledgeEnabled = true
 
+    // MARK: - Forced Update Gate
+    // Non-nil means this build is below the minimum version Remote Config
+    // publishes, and `ForceUpdateGate` puts the blocking update screen up. nil —
+    // the shipped state and the case for every user on a current build — means
+    // nothing happens.
+    //
+    // It rides `applyExperimentFlags` rather than its own fetch so it re-decides
+    // on exactly the beats the rest of the config does: the launch fetch, the
+    // foreground fetch, and the real-time config-update listener. The decision
+    // itself is `MinimumVersionPolicy` (SpeakLifeCore), which fails open on
+    // every ambiguity — an unset key, a console typo, an unreadable bundle
+    // version — because the cost of a false positive here is the whole app.
+    @Published private(set) var forcedUpdatePrompt: ForcedUpdatePrompt?
+
     // MARK: - High Conversion Paywall Flag
     @Published var useHighConversionPaywall = false
     // Soft-onboarding-paywall switch. RC key kept as "showPayWhatYouCanLink" for
@@ -475,6 +489,8 @@ final class SubscriptionStore: ObservableObject {
         onboardingRatingEnabled = flagValue("onboardingRatingEnabled")
         closerPledgeEnabled = flagValue("closerPledgeEnabled")
 
+        evaluateForcedUpdate()
+
         // Quiz Onboarding A/B from Remote Config (key: useQuizOnboarding) — legacy fallback.
         useQuizOnboarding = flagValue("useQuizOnboarding")
 
@@ -494,6 +510,34 @@ final class SubscriptionStore: ObservableObject {
     /// String counterpart of `flagValue`.
     private func stringValue(_ key: String) -> String {
         DebugOverrides.string(key) ?? remoteConfig[key].stringValue
+    }
+
+    /// Re-decides whether this build is still allowed to run, publishing
+    /// `forcedUpdatePrompt`.
+    ///
+    /// Called from `applyExperimentFlags` on every config apply, and directly by
+    /// `ForceUpdateGate` on foreground and after a debug override changes — both
+    /// of which need an answer from the already-activated config without waiting
+    /// on a network fetch. Idempotent, and publishing the same value twice is a
+    /// no-op for the gate.
+    func evaluateForcedUpdate() {
+        let minimumVersion = stringValue(MinimumVersionPolicy.minimumVersionKey)
+        let requirement = MinimumVersionPolicy.requirement(
+            currentVersion: APP.Version.stringNumber,
+            minimumVersion: minimumVersion,
+            isEnabled: flagValue(MinimumVersionPolicy.enabledKey)
+        )
+
+        switch requirement {
+        case .allowed:
+            forcedUpdatePrompt = nil
+        case .forced:
+            forcedUpdatePrompt = ForcedUpdatePrompt(
+                title: stringValue(MinimumVersionPolicy.titleKey),
+                message: stringValue(MinimumVersionPolicy.messageKey),
+                minimumVersion: minimumVersion
+            )
+        }
     }
 
     private func updateConfigValues(completion: @escaping() -> Void) {

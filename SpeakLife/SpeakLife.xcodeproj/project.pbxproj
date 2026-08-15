@@ -363,6 +363,7 @@
 		F3F466B4CB267BFBE4FD8CC8 /* WldehBibleAPIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D920701A13775F49180D845 /* WldehBibleAPIService.swift */; };
 		FCB7A8468DAA92844336D893 /* CancelInterventionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA6F23A3327C444669DC03A5 /* CancelInterventionView.swift */; };
 		DBG00PANEL000000001BUILDFL /* DebugFlagPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBG00PANEL000000001FILEREF /* DebugFlagPanel.swift */; };
+		FUG0GATE00000000001BUILDF /* ForceUpdateGate.swift in Sources */ = {isa = PBXBuildFile; fileRef = FUG0GATE00000000001FILERF /* ForceUpdateGate.swift */; };
 		HIGH0001DECL000001BUILDF /* HighlightedDeclarationText.swift in Sources */ = {isa = PBXBuildFile; fileRef = HIGH0001DECL000001FILEREF /* HighlightedDeclarationText.swift */; };
 		MD00DECL0000000001BUILDFL /* MyDeclarationsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = MD00DECL0000000001FILEREF /* MyDeclarationsView.swift */; };
 		MD00DECL0000000002BUILDFL /* DeletePersonalDeclarationUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = MD00DECL0000000002FILEREF /* DeletePersonalDeclarationUseCase.swift */; };
@@ -745,6 +746,7 @@
 		F9A3081A52984B6AB0EECD7B /* StructuredDayLaunchTracker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StructuredDayLaunchTracker.swift; sourceTree = "<group>"; };
 		FA6F23A3327C444669DC03A5 /* CancelInterventionView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CancelInterventionView.swift; sourceTree = "<group>"; };
 		DBG00PANEL000000001FILEREF /* DebugFlagPanel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DebugFlagPanel.swift; sourceTree = "<group>"; };
+		FUG0GATE00000000001FILERF /* ForceUpdateGate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ForceUpdateGate.swift; sourceTree = "<group>"; };
 		HIGH0001DECL000001FILEREF /* HighlightedDeclarationText.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HighlightedDeclarationText.swift; sourceTree = "<group>"; };
 		MD00DECL0000000001FILEREF /* MyDeclarationsView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MyDeclarationsView.swift; sourceTree = "<group>"; };
 		MD00DECL0000000002FILEREF /* DeletePersonalDeclarationUseCase.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DeletePersonalDeclarationUseCase.swift; sourceTree = "<group>"; };
@@ -1366,6 +1368,14 @@
 			path = Services;
 			sourceTree = "<group>";
 		};
+		FUG0GATE00000000001GROUPD /* AppUpdate */ = {
+			isa = PBXGroup;
+			children = (
+				FUG0GATE00000000001FILERF /* ForceUpdateGate.swift */,
+			);
+			path = AppUpdate;
+			sourceTree = "<group>";
+		};
 		DBG00PANEL000000001GROUPID /* Debug */ = {
 			isa = PBXGroup;
 			children = (
@@ -1378,6 +1388,7 @@
 			isa = PBXGroup;
 			children = (
 				7A92E3192993881D00FBF2AE /* Analytics */,
+				FUG0GATE00000000001GROUPD /* AppUpdate */,
 				DBG00PANEL000000001GROUPID /* Debug */,
 				7AA870E528DACFB800134ADB /* Localizable.strings */,
 				7AA8708528DACCA700134ADB /* Components */,
@@ -2232,6 +2243,7 @@
 				CL00DE00000000003333BBBB /* ClaudeDeclarationMatcher.swift in Sources */,
 				DECL0001VERIF00001BUILDF /* DeclarationVerificationService.swift in Sources */,
 				DBG00PANEL000000001BUILDFL /* DebugFlagPanel.swift in Sources */,
+				FUG0GATE00000000001BUILDF /* ForceUpdateGate.swift in Sources */,
 				HIGH0001DECL000001BUILDF /* HighlightedDeclarationText.swift in Sources */,
 				B0004444444444444444BBBB /* PersonalDeclarationRepository.swift in Sources */,
 				B0005555555555555555BBBB /* DeclarationNotificationService.swift in Sources */,

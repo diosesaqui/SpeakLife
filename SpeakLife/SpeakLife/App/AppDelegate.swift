@@ -242,6 +242,19 @@ final class AppDelegate: NSObject, MessagingDelegate {
             // Remote Config (or via the A/B test) to promote each user's
             // best-matching categories to the front of the audio filter row.
             "personalizedAudioOrderEnabled": false as NSNumber,
+            // Forced update gate. Ships inert and doubly so: the switch is off
+            // AND the floor is empty, either of which alone is enough to keep
+            // every user running. To retire a build, publish
+            // `minimumAppVersion` (e.g. "2.4.0") and flip `forceUpdateEnabled`
+            // to true; flipping the switch back off releases everyone
+            // immediately, which is why the floor alone can't lock anyone out.
+            // The copy keys are optional overrides — empty falls back to the
+            // wording compiled into ForcedUpdatePrompt. See
+            // MinimumVersionPolicy (SpeakLifeCore) for the decision rules.
+            MinimumVersionPolicy.enabledKey: false as NSNumber,
+            MinimumVersionPolicy.minimumVersionKey: "" as NSString,
+            MinimumVersionPolicy.titleKey: "" as NSString,
+            MinimumVersionPolicy.messageKey: "" as NSString,
             // Paywall product IDs — defaults mirror the compiled-in SKUs so a
             // fresh install (offline / pre-fetch) still offers real products;
             // Remote Config overrides once fetched. Read in

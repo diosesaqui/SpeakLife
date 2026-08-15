@@ -153,6 +153,9 @@ enum DebugFlagCatalog {
         Flag(key: "useQuizOnboarding",
              title: "Quiz onboarding (legacy)",
              blurb: "Fallback only; consulted when no variant is set."),
+        Flag(key: MinimumVersionPolicy.enabledKey,
+             title: "Forced update gate",
+             blurb: "On blocks this build when it is below the minimum version below."),
     ]
 
     static let onboardingVariantKey = "onboardingVariant"
@@ -180,6 +183,10 @@ struct DebugFlagPanelView: View {
     @State private var revision = 0
     @State private var replayConfirmed = false
 
+    /// Draft for the forced-update floor. See `commitMinimumVersion`.
+    @State private var minimumVersionDraft =
+        DebugOverrides.string(MinimumVersionPolicy.minimumVersionKey) ?? ""
+
     private let remoteConfig = RemoteConfig.remoteConfig()
 
     var body: some View {
@@ -188,6 +195,7 @@ struct DebugFlagPanelView: View {
                 overridesSection
                 onboardingSection
                 flagsSection
+                updateGateSection
                 buildSection
             }
             .navigationTitle("Debug Panel")
@@ -300,6 +308,33 @@ struct DebugFlagPanelView: View {
     }
 
     @ViewBuilder
+    private var updateGateSection: some View {
+        Section {
+            LabeledContent("This build", value: APP.Version.stringNumber)
+
+            // Held in local state and committed on Apply, not written per
+            // keystroke: writing as you type would raise the gate the moment
+            // the digits so far exceed this build, covering the panel you are
+            // typing into. Also not .decimalPad — that keyboard permits a
+            // single separator, and a version needs two dots.
+            TextField("Minimum version (e.g. 99.0.0)", text: $minimumVersionDraft)
+                .keyboardType(.numbersAndPunctuation)
+                .autocorrectionDisabled()
+                .onSubmit { commitMinimumVersion() }
+
+            Button("Apply minimum version") { commitMinimumVersion() }
+
+            LabeledContent("Remote minimum", value: remoteMinimumVersionLabel)
+
+            LabeledContent("Gate", value: subscriptionStore.forcedUpdatePrompt == nil ? "open" : "blocking")
+        } header: {
+            Text("Forced update")
+        } footer: {
+            Text("Set a minimum above this build and turn \"Forced update gate\" on to see the screen. The gate window sits at the same level as this panel — shake twice to bring the panel back over it, then clear the override.")
+        }
+    }
+
+    @ViewBuilder
     private var buildSection: some View {
         Section("Build") {
             LabeledContent("Channel", value: DebugOverrides.buildChannel)
@@ -354,7 +389,24 @@ struct DebugFlagPanelView: View {
         )
     }
 
+    /// Writes the typed floor as an override. Empty clears it, falling back to
+    /// whatever Remote Config publishes.
+    private func commitMinimumVersion() {
+        let trimmed = minimumVersionDraft.trimmingCharacters(in: .whitespacesAndNewlines)
+        DebugOverrides.setString(
+            MinimumVersionPolicy.minimumVersionKey,
+            trimmed.isEmpty ? nil : trimmed
+        )
+        subscriptionStore.applyExperimentFlags()
+        revision += 1
+    }
+
     // MARK: Display helpers
+
+    private var remoteMinimumVersionLabel: String {
+        let remote = remoteConfig[MinimumVersionPolicy.minimumVersionKey].stringValue
+        return remote.isEmpty ? "unset" : remote
+    }
 
     private var remoteVariantLabel: String {
         let value = remoteConfig[DebugFlagCatalog.onboardingVariantKey].stringValue
