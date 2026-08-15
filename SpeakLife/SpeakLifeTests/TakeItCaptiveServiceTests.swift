@@ -158,6 +158,24 @@ final class ThoughtBankContentTests: XCTestCase {
             .map(String.init))
     }
 
+    /// Every shipped declaration must pass the validator that guards generated
+    /// ones. This is the corpus check the unit tests cannot do — the bank lives
+    /// in the app bundle.
+    ///
+    /// It found four false positives the first time it ran: "God alone makes me
+    /// dwell in safety" and "Alone or in a crowd, I am the same person" tripped
+    /// an "alone" keyword meant for loneliness, and "He is my only hope" plus
+    /// Hebrews 11:1's "what I hope for" tripped a hedging check meant for "I
+    /// hope that". A validator stricter than the reviewed library does not
+    /// raise quality; it quietly discards good generated lines and serves the
+    /// fallback instead, with nothing on screen to say so.
+    func testEveryShippedDeclarationPassesTheHouseRules() throws {
+        for thought in try loadBank() {
+            XCTAssertTrue(ThoughtClassifier.followsHouseRules(thought.counterDeclaration),
+                          "Reviewed line rejected by the validator: \(thought.id) — \(thought.counterDeclaration)")
+        }
+    }
+
     /// Counter-declarations are copied verbatim out of the reviewed library, so
     /// they inherit its rules — first person, present tense, no dashes.
     func testCounterDeclarationsFollowTheDeclarationRules() throws {

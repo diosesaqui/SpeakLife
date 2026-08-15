@@ -124,12 +124,28 @@ enum TerrainLexicon {
             "gave up on me", "unanswered", "where is god", "does god care"
         ],
 
+        // Doubt and guidance, NOT vocation. The bank's confusion pool answers
+        // "You made the whole thing up", "You do not know what you are doing",
+        // "God is not going to tell you what to do" — faith and hearing God.
+        // It has nothing at intensity 1 about a life's direction, and the one
+        // entry that does ("I move when God says move") sits at intensity 3,
+        // which a new user cannot reach.
+        //
+        // So the vocational words are deliberately absent: purpose, calling,
+        // direction, wandering, aimless, stuck. They fall through to the
+        // 42-rule matcher, which maps `.destiny` onto `.inadequacy` — the
+        // identity terrain — and that is both the designed behaviour and a
+        // better answer than a declaration about faith being real.
+        //
+        // "lost" is absent for a different reason: it is the same word in "I
+        // feel lost" and "I lost my mom", and sending a grieving person a
+        // declaration about direction is the worst miss in this file.
         .confusion: [
-            "don't know what", "no idea what", "lost", "confused", "confusing",
-            "no direction", "stuck", "which way", "what am i supposed",
-            "my purpose", "my calling", "no plan", "wandering", "aimless",
-            "can't decide", "second guess", "doubt", "makes no sense",
-            "why is this happening", "don't understand"
+            "don't know what", "no idea what", "confused", "confusing",
+            "which way", "what am i supposed", "can't decide", "second guess",
+            "doubt", "makes no sense", "why is this happening",
+            "don't understand", "can't hear god", "god isn't speaking",
+            "no answer", "silent about"
         ],
 
         .lust: [

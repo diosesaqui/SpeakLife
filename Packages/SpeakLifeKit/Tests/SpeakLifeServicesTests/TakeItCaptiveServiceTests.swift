@@ -832,6 +832,25 @@ final class TerrainRoutingTests: XCTestCase {
         }
     }
 
+    /// The confusion terrain answers doubt, not vocation, and must not claim
+    /// words its content cannot serve.
+    ///
+    /// Its intensity-1 pool answers "You made the whole thing up" and "God is
+    /// not going to tell you what to do" — faith and hearing God. It has
+    /// nothing at that intensity about a life's direction, so "purpose",
+    /// "calling" and "no direction" are deliberately not keywords: they fall
+    /// through to the 42-rule matcher, which routes `.destiny` to the identity
+    /// terrain. "lost" is out for a harder reason — it is the same word in "I
+    /// feel lost" and "I lost my mom".
+    func testConfusionDoesNotClaimGriefOrVocation() {
+        XCTAssertNil(TerrainLexicon.terrain(for: "I lost my mom last year"),
+                     "A grieving person must never be routed by the word \"lost\".")
+        XCTAssertNil(TerrainLexicon.terrain(for: "I feel lost about my calling"))
+        // What it does answer, it still answers.
+        XCTAssertEqual(TerrainLexicon.terrain(for: "I don't know what I'm supposed to do")?.category,
+                       .confusion)
+    }
+
     /// Addiction is grace's, not sickness's, and the lexicon must not take it.
     ///
     /// A bare "relapse" keyword in the sickness terrain stole "I relapsed with
@@ -882,6 +901,29 @@ final class HouseRulesTests: XCTestCase {
             "I am not afraid of this sickness, because God is with me."))
         XCTAssertFalse(ThoughtClassifier.followsHouseRules(
             "My anxiety has no hold on me anymore."))
+    }
+
+    /// Two words that look like violations and are not.
+    ///
+    /// Both of these are lifted from lines that ship in `declarationsv10.json`
+    /// and were reviewed by a person. A validator that rejects reviewed content
+    /// does not protect quality, it silently downgrades the premium path to the
+    /// fallback and nobody ever sees why.
+    func testAcceptsTheWordsThatOnlyLookLikeViolations() {
+        // "alone" meaning "only God", not loneliness.
+        XCTAssertTrue(ThoughtClassifier.followsHouseRules(
+            "God alone makes me dwell in safety, and I sleep in peace."))
+        XCTAssertTrue(ThoughtClassifier.followsHouseRules(
+            "My integrity guides me, and I am the same person in every room."))
+        // Biblical hope is confident expectation, not a wobble. Hebrews 11:1.
+        XCTAssertTrue(ThoughtClassifier.followsHouseRules(
+            "Faith is certainty about what I hope for and proof of what I cannot see."))
+        // The loneliness sense is still caught, including by negation.
+        XCTAssertFalse(ThoughtClassifier.followsHouseRules(
+            "I will never feel alone again in this house."))
+        // And the hedging sense of hope is still caught.
+        XCTAssertFalse(ThoughtClassifier.followsHouseRules(
+            "I hope God will make this body well again someday."))
     }
 
     func testRejectsDashesHedgingAndThirdPerson() {

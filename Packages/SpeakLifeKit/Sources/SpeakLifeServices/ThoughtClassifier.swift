@@ -201,9 +201,22 @@ public struct ThoughtClassifier {
         let firstPerson: Set<String> = ["i", "i'm", "i've", "i'll", "my", "me", "mine", "myself"]
         guard !Set(words).isDisjoint(with: firstPerson) else { return false }
 
+        let lowered = trimmed.lowercased()
+
         // Rule 6: no hedging.
-        let hedges: Set<String> = ["maybe", "hope", "hoping", "try", "trying", "might", "someday", "wish"]
+        //
+        // "hope" is NOT in this list, and that is the point. Biblical hope is
+        // confident expectation, not a wobble — "He is my only hope" and
+        // "certainty about what I hope for" are both shipped, reviewed lines.
+        // Only the hedging FORM is caught, as a phrase.
+        let hedges: Set<String> = ["maybe", "hoping", "try", "trying", "might", "someday", "wish"]
         guard Set(words).isDisjoint(with: hedges) else { return false }
+        // "I hope" hedges; "I hope FOR" does not. Hebrews 11:1 ships as
+        // "certainty about what I hope for", where the hope is the object of
+        // confidence rather than a wobble about the future. Catching the bare
+        // phrase rejected that reviewed line.
+        if lowered.contains("i hope"), !lowered.contains("i hope for") { return false }
+        guard !lowered.contains("i just") else { return false }
 
         // Rule 12: never name the low thing. A declaration does not mention the
         // fear, the sickness, the lack or the shame, even to overrule it.
@@ -213,10 +226,19 @@ public struct ThoughtClassifier {
             "disease", "cancer", "covid", "virus", "infection", "pain", "dying",
             "shame", "ashamed", "guilt", "guilty", "condemned", "unworthy",
             "worthless", "failure", "broke", "poverty", "debt", "lack",
-            "lonely", "alone", "abandoned", "rejected", "lust", "porn",
+            "lonely", "abandoned", "rejected", "lust", "porn",
             "addiction", "depressed", "depression", "hopeless"
         ]
         guard Set(words).isDisjoint(with: lowThings) else { return false }
+
+        // "alone" is a word with two opposite senses and cannot be judged on
+        // its own. "God alone makes me dwell in safety" and "Alone or in a
+        // crowd, I am the same person" are both shipped, reviewed lines; the
+        // loneliness sense only shows up attached to a person. So the sense is
+        // decided by the phrase, not the token.
+        let lowPhrases = ["feel alone", "feeling alone", "so alone", "all alone",
+                          "left alone", "am alone", "never alone", "not alone"]
+        guard !lowPhrases.contains(where: { lowered.contains($0) }) else { return false }
 
         return true
     }
