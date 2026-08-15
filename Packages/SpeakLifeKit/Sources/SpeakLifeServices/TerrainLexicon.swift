@@ -59,7 +59,15 @@ enum TerrainLexicon {
             "sick", "ill", "illness", "disease", "cancer", "tumor", "covid",
             "flu", "virus", "infection", "diagnos", "symptom", "chronic",
             "pain", "hurting", "hospital", "doctor", "surgery", "medicat",
-            "medicine", "chemo", "test results", "scan", "biopsy", "relapse",
+            "medicine", "chemo", "test results", "scan", "biopsy",
+            // "relapse" deliberately does NOT live here. It reads as medical,
+            // but the word people actually type it in is addiction, and the
+            // sickness terrain answers with declarations about a body being
+            // whole. `ThoughtCategory.from` already carries the warning for the
+            // purity version of this mistake: routing addiction there "would
+            // send someone fighting a bottle to declarations about their eyes".
+            // Sending them to declarations about their lungs is the same error.
+            // Medical recurrence is covered by the phrases below.
             "remission", "not getting better", "my body", "my health",
             "won't heal", "never heal", "dying", "terminal", "condition",
             "coming back", "flare up", "immune", "blood pressure", "diabet"
@@ -87,7 +95,15 @@ enum TerrainLexicon {
             "too far gone", "messed up", "screwed up", "ruined", "disappoint",
             "punish", "unworthy", "not worthy", "deserve", "my past",
             "what i did", "can't forgive", "condemn", "judged", "bad person",
-            "hypocrite", "keep sinning", "keep falling"
+            "hypocrite", "keep sinning", "keep falling",
+            // Addiction belongs here, not with sickness and not with purity.
+            // `ThoughtCategory.from` maps `.addiction` onto grace on purpose:
+            // it carries alcohol, drugs and every other compulsion, and what is
+            // underneath all of them is shame. Grace and freedom are the right
+            // medicine; a declaration about a healthy body is not.
+            "relapse", "addict", "alcohol", "drinking", "drunk", "drugs",
+            "sober", "sobriety", "using again", "clean time", "compulsion",
+            "can't stop drinking", "withdrawal", "one more drink"
         ],
 
         .inadequacy: [

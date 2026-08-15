@@ -832,6 +832,27 @@ final class TerrainRoutingTests: XCTestCase {
         }
     }
 
+    /// Addiction is grace's, not sickness's, and the lexicon must not take it.
+    ///
+    /// A bare "relapse" keyword in the sickness terrain stole "I relapsed with
+    /// alcohol again" and turned it into a declaration about a body being
+    /// whole. `ThoughtCategory.from` already carries the warning for the purity
+    /// version of the same mistake: routing addiction there "would send someone
+    /// fighting a bottle to declarations about their eyes". Their lungs are no
+    /// better an answer. What is underneath a compulsion is shame, and shame is
+    /// answered on the grace terrain.
+    func testAddictionGoesToGraceNotToTheBody() {
+        for entry in ["I relapsed with alcohol again", "I can't stop drinking",
+                      "I went back to the drugs"] {
+            XCTAssertEqual(TerrainLexicon.terrain(for: entry)?.category, .condemnation,
+                           "\"\(entry)\" must land on grace, not sickness.")
+        }
+        // A relapse that IS about purity still goes to purity.
+        XCTAssertEqual(TerrainLexicon.terrain(for: "I relapsed again with porn")?.category, .lust)
+        // And a genuine medical recurrence still reads as sickness.
+        XCTAssertEqual(TerrainLexicon.terrain(for: "the cancer came back")?.category, .sickness)
+    }
+
     /// Nothing recognised must stay nil rather than inventing a terrain, so the
     /// caller can pick an honest fallback instead of a confident wrong answer.
     func testUnrecognisedTextHasNoTerrain() {
