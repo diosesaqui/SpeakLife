@@ -60,9 +60,11 @@ final class DebugPanelPresenter {
 
         previousKeyWindow = scene.keyWindow
 
-        let root = DebugFlagPanelView(onClose: { [weak self] in self?.dismiss() })
-            .environmentObject(subscriptionStore)
-            .environmentObject(appState)
+        let root = DebugFlagPanelView(
+            subscriptionStore: subscriptionStore,
+            appState: appState,
+            onClose: { [weak self] in self?.dismiss() }
+        )
 
         let window = UIWindow(windowScene: scene)
         window.windowLevel = UIWindow.Level(rawValue: UIWindow.Level.alert.rawValue + 1)
@@ -83,9 +85,15 @@ final class DebugPanelPresenter {
     }
 }
 
+/// Stores its two objects rather than reading them from the environment, and
+/// that is not a style choice. A modifier is applied *around* the view it
+/// modifies, so `.environmentObject(store).debugFlagPanel()` puts this modifier
+/// ABOVE the injection — environment flows down, never up, so both lookups
+/// would resolve to nothing and SwiftUI would trap on the first shake.
+/// Explicit parameters make the attachment point irrelevant.
 struct DebugFlagPanelModifier: ViewModifier {
-    @EnvironmentObject private var subscriptionStore: SubscriptionStore
-    @EnvironmentObject private var appState: AppState
+    let subscriptionStore: SubscriptionStore
+    let appState: AppState
 
     func body(content: Content) -> some View {
         // `onShake` (GestureDelights) already owns the single UIWindow
@@ -101,9 +109,13 @@ struct DebugFlagPanelModifier: ViewModifier {
 }
 
 extension View {
-    /// Enables shake-to-open on the tester debug panel. Attach once, at the
-    /// root, below the environment objects the panel reads.
-    func debugFlagPanel() -> some View { modifier(DebugFlagPanelModifier()) }
+    /// Enables shake-to-open on the tester debug panel. Attach once, at the root.
+    func debugFlagPanel(
+        subscriptionStore: SubscriptionStore,
+        appState: AppState
+    ) -> some View {
+        modifier(DebugFlagPanelModifier(subscriptionStore: subscriptionStore, appState: appState))
+    }
 }
 
 // MARK: - Catalog
@@ -154,8 +166,11 @@ enum DebugFlagCatalog {
 
 struct DebugFlagPanelView: View {
 
-    @EnvironmentObject private var subscriptionStore: SubscriptionStore
-    @EnvironmentObject private var appState: AppState
+    // Observed, not environment: this view is the root of its own hosting
+    // controller, outside the app's view tree, so there is no ancestor to
+    // inherit an environment from.
+    @ObservedObject var subscriptionStore: SubscriptionStore
+    @ObservedObject var appState: AppState
 
     let onClose: () -> Void
 
