@@ -135,7 +135,15 @@ final class SubscriptionStore: ObservableObject {
     }
 
     private var computedOnboardingVariant: OnboardingVariant {
-        // 1) ad-matched override → 2) Remote Config experiment → 3) legacy fallback
+        // 0) debug panel → 1) ad-matched override → 2) Remote Config experiment
+        // → 3) legacy fallback.
+        //
+        // The debug override sits ABOVE the ad match on purpose: a tester whose
+        // device installed from an ad has a persisted `adOnboardingVariant` that
+        // would otherwise pin them to one arm forever, which is exactly the case
+        // the panel exists to break. Returns nil outside Debug/TestFlight.
+        if let forced = DebugOverrides.string("onboardingVariant"),
+           let v = OnboardingVariant(code: forced) { return v }
         if let ad = adOnboardingVariant, let v = OnboardingVariant(code: ad) { return v }
         if let v = OnboardingVariant(code: onboardingVariant) { return v }
         return useQuizOnboarding ? .quiz : .product
@@ -146,6 +154,21 @@ final class SubscriptionStore: ObservableObject {
     /// (and can't desync the started/finished analytics variant). Idempotent.
     func lockOnboardingVariant() {
         if lockedOnboardingVariant == nil { lockedOnboardingVariant = computedOnboardingVariant }
+    }
+
+    /// Drops the freeze so the next onboarding run re-resolves the arm. Only the
+    /// debug panel calls this: picking a variant there is useless if the process
+    /// already locked a different one when onboarding first rendered.
+    func clearOnboardingVariantLock() {
+        lockedOnboardingVariant = nil
+    }
+
+    /// Forgets the ad-matched arm on this device. Debug-panel only — the
+    /// first-assignment-wins rule in `assignOnboardingVariantFromAd` is what
+    /// keeps a real user's flow stable, and clearing it re-opens assignment.
+    func clearAdOnboardingVariant() {
+        UserDefaults.standard.removeObject(forKey: Self.adOnboardingKey)
+        adOnboardingVariant = nil
     }
 
     /// String label for the user's resolved onboarding arm. Stamped onto the
@@ -439,6 +462,40 @@ final class SubscriptionStore: ObservableObject {
     /// init's fetch completion already requests products once.
     private var hasAppliedRemoteConfigOnce = false
 
+    /// Publishes every experiment flag the debug panel can override.
+    ///
+    /// Split out of `updateConfigValues` for two reasons: it is the one place
+    /// that has to consult `DebugOverrides` before Remote Config, and the debug
+    /// panel calls it directly so a flipped toggle repaints the app immediately
+    /// instead of making the tester relaunch.
+    func applyExperimentFlags() {
+        checklistHomeEnabled = flagValue("checklistHomeEnabled")
+        enforcementEnabled = flagValue("enforcementEnabled")
+        guardEnabled = flagValue("guardEnabled")
+        onboardingRatingEnabled = flagValue("onboardingRatingEnabled")
+        closerPledgeEnabled = flagValue("closerPledgeEnabled")
+
+        // Quiz Onboarding A/B from Remote Config (key: useQuizOnboarding) — legacy fallback.
+        useQuizOnboarding = flagValue("useQuizOnboarding")
+
+        // Onboarding A/B variant (key: onboardingVariant) — "quiz" | "product" | "identity" | "outcomes".
+        // Empty until set in Remote Config; resolvedOnboardingVariant then falls
+        // back to useQuizOnboarding so nothing changes for live users.
+        onboardingVariant = stringValue("onboardingVariant")
+    }
+
+    /// Remote Config value for a boolean flag, unless a debug override is set.
+    /// `DebugOverrides` returns nil on the App Store, so this is a plain Remote
+    /// Config read for every real user.
+    private func flagValue(_ key: String) -> Bool {
+        DebugOverrides.bool(key) ?? remoteConfig[key].boolValue
+    }
+
+    /// String counterpart of `flagValue`.
+    private func stringValue(_ key: String) -> String {
+        DebugOverrides.string(key) ?? remoteConfig[key].stringValue
+    }
+
     private func updateConfigValues(completion: @escaping() -> Void) {
         // Snapshot the effective SKUs before applying, so any config-apply
         // path (init fetch, error fallback, foreground refresh, real-time
@@ -465,25 +522,13 @@ final class SubscriptionStore: ObservableObject {
         showMostPopularBadge = remoteConfig["showMostPopularBadge"].boolValue
         showTestimonyTab = remoteConfig["showTestimonyTab"].boolValue
         offerFreeTrial = remoteConfig["offerFreeTrial"].boolValue
-        checklistHomeEnabled = remoteConfig["checklistHomeEnabled"].boolValue
-        enforcementEnabled = remoteConfig["enforcementEnabled"].boolValue
-        guardEnabled = remoteConfig["guardEnabled"].boolValue
-        onboardingRatingEnabled = remoteConfig["onboardingRatingEnabled"].boolValue
-        closerPledgeEnabled = remoteConfig["closerPledgeEnabled"].boolValue
+        applyExperimentFlags()
 
         // Enhanced Onboarding Toggle from Remote Config
         useEnhancedOnboarding = remoteConfig["useEnhancedOnboarding"].boolValue
-        
+
         // Spiritual Warfare Onboarding Toggle from Remote Config
         useSpiritualWarfareOnboarding = remoteConfig["useSpiritualWarfareOnboarding"].boolValue
-
-        // Quiz Onboarding A/B from Remote Config (key: useQuizOnboarding) — legacy fallback.
-        useQuizOnboarding = remoteConfig["useQuizOnboarding"].boolValue
-
-        // Onboarding A/B variant (key: onboardingVariant) — "quiz" | "product" | "identity" | "outcomes".
-        // Empty until set in Remote Config; resolvedOnboardingVariant then falls
-        // back to useQuizOnboarding so nothing changes for live users.
-        onboardingVariant = remoteConfig["onboardingVariant"].stringValue
 
         // Assigned A/B arm is now live from activated Remote Config; release the
         // onboarding gate so the locked variant is the assigned one, not the default.

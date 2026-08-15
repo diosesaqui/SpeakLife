@@ -9,7 +9,6 @@ import FirebaseStorage
 import SwiftUI
 import Combine
 import FirebaseAnalytics
-import FirebaseRemoteConfig
 
 final class AudioDeclarationViewModel: ObservableObject {
     // New dynamic system
@@ -435,8 +434,9 @@ final class AudioDeclarationViewModel: ObservableObject {
 
     /// True when the personalized audio order experiment is enabled via Remote Config.
     var isPersonalizedOrderEnabled: Bool {
-        RemoteConfig.remoteConfig()
-            .configValue(forKey: "personalizedAudioOrderEnabled").boolValue
+        // Through the flag seam, not Remote Config directly, so the debug panel
+        // can flip the experiment on a TestFlight device.
+        DefaultFeatureFlags.shared.bool("personalizedAudioOrderEnabled", default: false)
     }
 
     /// Re-applies personalization on demand. Inputs (the Remote Config flag and

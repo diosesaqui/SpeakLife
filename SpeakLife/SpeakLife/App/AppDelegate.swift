@@ -356,9 +356,14 @@ final class AppDelegate: NSObject, MessagingDelegate {
 /// domain services that read flags do not import `FirebaseRemoteConfig`.
 /// Installed into `DefaultFeatureFlags.shared` in `didFinishLaunchingWithOptions`
 /// immediately after `RemoteConfig.setDefaults(...)`.
+///
+/// Consults `DebugOverrides` first so the shake panel can take Enforcement or
+/// Guarding dark on a TestFlight device without a Remote Config change. That
+/// lookup returns nil on the App Store, leaving the Remote Config read below as
+/// the only path for real users.
 struct RemoteConfigFlags: FeatureFlagProviding {
     func bool(_ key: String, default defaultValue: Bool) -> Bool {
-        RemoteConfig.remoteConfig()[key].boolValue
+        DebugOverrides.bool(key) ?? RemoteConfig.remoteConfig()[key].boolValue
     }
 }
 
