@@ -124,7 +124,9 @@ struct HomeView: View {
         Group {
             if isShowingLanding {
                 LandingView()
-            } else if appState.isOnboarded {
+            // `debugReplayOnboarding` forces the onboarding branch for a tester
+            // who is already onboarded. It is never true on an App Store build.
+            } else if appState.isOnboarded && !appState.debugReplayOnboarding {
                 homeView
                     .onAppear() {
                                 showSubscription = subscriptionStore.showSubscription && !subscriptionStore.isPremium && !appState.firstOpen
@@ -446,6 +448,11 @@ struct HomeView: View {
         // Freeze the variant before logging so a late ad deep link can't swap the
         // flow mid-run or desync started vs finished.
         subscriptionStore.lockOnboardingVariant()
+        // A debug replay is a tester walking an arm, not a real exposure. Lock
+        // the variant above so the flow is stable, then emit nothing: an
+        // experiment_exposure from a replay would enroll this install in an arm
+        // it was never assigned and skew the funnel the panel exists to read.
+        guard !appState.debugReplayOnboarding else { return }
         let variant = subscriptionStore.onboardingVariantName
         // Persist the arm as a user/person property in BOTH PostHog and Firebase so
         // EVERY downstream event (retention, trial_started, subscription_started)
@@ -466,6 +473,16 @@ struct HomeView: View {
     }
 
     private func finishOnboarding() {
+        // A debug replay is a tester walking an arm, not a real activation.
+        // Clear the flag to fall back to the app and emit NOTHING: firing
+        // onboarding_finished here would book a fake conversion against the
+        // very A/B funnel this panel exists to help read. The matching
+        // suppression for onboarding_started is in logOnboardingStarted.
+        if appState.debugReplayOnboarding {
+            withAnimation { appState.debugReplayOnboarding = false }
+            return
+        }
+
         // Conversion outcome for the onboarding A/B funnel. The paywall step has
         // already run by now, so isPremium/isInTrial reflect any purchase made
         // during onboarding. conversion_type: "trial" | "purchase" | "none".
