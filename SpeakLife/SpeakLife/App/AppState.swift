@@ -8,7 +8,6 @@
 import SwiftUI
 import StoreKit
 import FirebaseAnalytics
-import FirebaseRemoteConfig
 
 final class AppState: ObservableObject {
     @Published var rootViewId = UUID()
@@ -393,8 +392,10 @@ final class AppState: ObservableObject {
         // onboarding surface — present or future — can bypass it even if its
         // flow forgets the navigation-level skip. Non-onboarding triggers
         // (streaks, shares, anniversaries) are unaffected.
+        // Read through the flag seam rather than Remote Config directly, so a
+        // debug-panel override of this kill switch reaches the choke point too.
         if case .onboardingRatingScreen = trigger,
-           !RemoteConfig.remoteConfig()["onboardingRatingEnabled"].boolValue {
+           !DefaultFeatureFlags.shared.bool("onboardingRatingEnabled", default: true) {
             return
         }
         // Serialize the throttle check and write on main so two near-simultaneous
