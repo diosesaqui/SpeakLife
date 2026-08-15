@@ -247,13 +247,28 @@ struct DebugFlagPanelView: View {
                 }
             }
 
+            // Mid-replay the only other ways out are finishing the arm or
+            // force-quitting, so offer the door.
+            if appState.debugReplayOnboarding {
+                Button("Exit onboarding replay") {
+                    appState.debugReplayOnboarding = false
+                    onClose()
+                }
+            }
+
             Button(replayConfirmed ? "Tap again to confirm" : "Replay onboarding") {
                 guard replayConfirmed else {
                     replayConfirmed = true
                     return
                 }
+                // Deliberately does NOT clear `isOnboarded`. That key syncs with
+                // the `.boolOr` strategy (one-way: true everywhere once true
+                // anywhere), so CloudKit reconciles a local false back to true
+                // within seconds and drops the tester into the app mid-flow.
+                // `debugReplayOnboarding` is in-memory and unsynced, so nothing
+                // can undo it, and HomeView clears it when the arm completes.
                 subscriptionStore.clearOnboardingVariantLock()
-                appState.isOnboarded = false
+                appState.debugReplayOnboarding = true
                 onClose()
             }
             .foregroundStyle(.red)

@@ -32,6 +32,19 @@ final class AppState: ObservableObject {
         }
     }
     @AppStorage("onboarded") var isOnboarded = false
+
+    /// Debug panel only: renders the onboarding branch even though the user is
+    /// already onboarded.
+    ///
+    /// Replaying onboarding cannot work by clearing `isOnboarded`. That key is
+    /// whitelisted in SyncedSettingsStore with the `.boolOr` strategy — a
+    /// one-way flag, true everywhere once true anywhere — so CloudKit
+    /// reconciles the local false straight back to true, writes it into
+    /// UserDefaults, and @AppStorage drops the tester back into the app
+    /// mid-flow. This flag sidesteps that entirely: it is in-memory, so it is
+    /// never synced, never persisted, and gone on the next launch. Only the
+    /// debug panel sets it, and the panel cannot open on an App Store build.
+    @Published var debugReplayOnboarding = false
     @AppStorage("newPrayersAdded") var newPrayersAdded = true
     @AppStorage("newCategoriesAddedv4") var newCategoriesAddedv4 = true
     @AppStorage("newThemesAdded") var newThemesAdded = true
