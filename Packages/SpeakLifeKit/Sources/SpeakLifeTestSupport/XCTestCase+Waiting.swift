@@ -68,4 +68,30 @@ extension XCTestCase {
             RunLoop.current.run(mode: .default, before: deadline)
         }
     }
+
+    /// `waitUntil` for `async` tests.
+    ///
+    /// The same bet as the sleep-expectations, spelled differently and just as
+    /// lossy: `try await Task.sleep(nanoseconds: 300_000_000)` followed by an
+    /// assertion is a 0.3s wager that the work finished. When it doesn't, the
+    /// failure is not a timeout — it is the assertion itself going off early,
+    /// which is why `testToggleAudioFavorite` reported a bare "XCTAssertTrue
+    /// failed" and read like a logic bug rather than a slow machine.
+    ///
+    /// Polls in short naps so a fast machine pays almost nothing.
+    public func waitUntil(_ description: String,
+                          timeout: TimeInterval = 10,
+                          file: StaticString = #filePath,
+                          line: UInt = #line,
+                          _ condition: () -> Bool) async {
+        let deadline = Date().addingTimeInterval(timeout)
+        while !condition() {
+            guard Date() < deadline else {
+                XCTFail("Timed out after \(timeout)s waiting for: \(description)",
+                        file: file, line: line)
+                return
+            }
+            try? await Task.sleep(nanoseconds: 10_000_000)
+        }
+    }
 }

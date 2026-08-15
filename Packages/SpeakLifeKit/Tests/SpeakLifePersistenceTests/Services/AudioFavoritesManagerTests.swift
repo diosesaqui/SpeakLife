@@ -38,9 +38,31 @@ import SpeakLifeCore
 /// below rather than left to an insert default.
 class MockAudioFavoriteRepository: AudioFavoriteRepositoryProtocol {
 
-    var createCalled = false
-    var deleteCalled = false
-    var fetchCalled = false
+    // These flags are written from the repository's nonisolated async methods
+    // and read from the test, so they go through the same lock `entries` does.
+    //
+    // They were plain `var Bool` while the only reader was a single check after
+    // a fixed sleep, which is a race you would rarely lose. Tests now POLL them
+    // in a loop until the work lands, which turns a once-per-test read into
+    // hundreds — exactly the shape a thread sanitiser flags, and exactly the
+    // shape that occasionally reads a stale `false` forever and times out.
+    var createCalled: Bool {
+        get { lock.withLock { _createCalled } }
+        set { lock.withLock { _createCalled = newValue } }
+    }
+    var deleteCalled: Bool {
+        get { lock.withLock { _deleteCalled } }
+        set { lock.withLock { _deleteCalled = newValue } }
+    }
+    var fetchCalled: Bool {
+        get { lock.withLock { _fetchCalled } }
+        set { lock.withLock { _fetchCalled = newValue } }
+    }
+
+    private var _createCalled = false
+    private var _deleteCalled = false
+    private var _fetchCalled = false
+
     var shouldThrowError = false
     var observePublisher = PassthroughSubject<[AudioFavoriteEntry], Never>()
 

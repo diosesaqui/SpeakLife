@@ -610,3 +610,333 @@ final class ThoughtClassifierTests: XCTestCase {
         XCTAssertEqual(thought.book, "2 Corinthians 5:17")
     }
 }
+
+
+// MARK: - Ground taken earns badges
+
+/// Guarding's counter feeds the badge system, and these pin the wiring.
+///
+/// Before this, `totalThoughtsTakenCaptive` was written, synced across devices
+/// and guaranteed monotonic — and then read by nothing. Every sibling counter
+/// in `ProgressSyncStore.syncedCounterKeys` cashes out into badge progress;
+/// this one earned nothing, which made Guarding the only pillar whose work paid
+/// out in a number the user saw once and never again.
+final class GroundTakenBadgeTests: XCTestCase {
+
+    private var defaults: UserDefaults!
+    private var suiteName: String!
+
+    override func setUp() {
+        super.setUp()
+        suiteName = "GroundTakenBadgeTests-\(UUID().uuidString)"
+        defaults = UserDefaults(suiteName: suiteName)
+    }
+
+    override func tearDown() {
+        defaults.removePersistentDomain(forName: suiteName)
+        defaults = nil
+        suiteName = nil
+        super.tearDown()
+    }
+
+    private func stats(_ takenCaptive: Int) -> UserStats {
+        UserStats(affirmationsSpoken: 0, versesRead: 0, socialShares: 0,
+                  favoritesAdded: 0, categoriesCompleted: [],
+                  thoughtsTakenCaptive: takenCaptive)
+    }
+
+    /// The ladder exists and is reachable at every tier.
+    func testEveryGuardingTierHasABadge() {
+        let manager = BadgeManager(userDefaults: defaults)
+        let tiers = manager.allBadges.compactMap { badge -> Int? in
+            guard case .thoughtsTakenCaptive(let count) = badge.requirement else { return nil }
+            return count
+        }
+        XCTAssertEqual(tiers.sorted(), [1, 10, 50, 150, 365])
+    }
+
+    /// One rep earns the first badge. The reason the ladder starts at 1 rather
+    /// than 10: the drill is once a day, so a first threshold of ten is ten days
+    /// before anything acknowledges the feature exists.
+    func testFirstThoughtEarnsTheFirstBadge() {
+        let manager = BadgeManager(userDefaults: defaults)
+        manager.checkForNewBadges(streakStats: StreakStats(), userStats: stats(1))
+        XCTAssertTrue(manager.unlockedBadges.contains { $0.requirement == .thoughtsTakenCaptive(1) })
+        XCTAssertFalse(manager.unlockedBadges.contains { $0.requirement == .thoughtsTakenCaptive(10) })
+    }
+
+    /// Crossing several thresholds at once awards all of them, not just the top.
+    /// Ground is cumulative and can arrive in a batch from another device.
+    func testCrossingSeveralTiersAwardsEachOfThem() {
+        let manager = BadgeManager(userDefaults: defaults)
+        manager.checkForNewBadges(streakStats: StreakStats(), userStats: stats(60))
+        for tier in [1, 10, 50] {
+            XCTAssertTrue(manager.unlockedBadges.contains { $0.requirement == .thoughtsTakenCaptive(tier) },
+                          "Tier \(tier) should be earned at 60.")
+        }
+        XCTAssertFalse(manager.unlockedBadges.contains { $0.requirement == .thoughtsTakenCaptive(150) })
+    }
+
+    /// Re-checking must not award the same badge twice — `checkForNewBadges`
+    /// runs on launch, on campaign changes and after every Guarding rep.
+    func testRecheckingDoesNotDoubleAward() {
+        let manager = BadgeManager(userDefaults: defaults)
+        manager.checkForNewBadges(streakStats: StreakStats(), userStats: stats(10))
+        let afterFirst = manager.unlockedBadges.count
+        manager.checkForNewBadges(streakStats: StreakStats(), userStats: stats(10))
+        XCTAssertEqual(manager.unlockedBadges.count, afterFirst)
+    }
+
+    /// A stats object that never heard of Guarding earns no Guarding badge.
+    /// The defaulted field must fail closed, never open.
+    func testOmittedCounterEarnsNothing() {
+        let manager = BadgeManager(userDefaults: defaults)
+        let noGuarding = UserStats(affirmationsSpoken: 999, versesRead: 999,
+                                   socialShares: 999, favoritesAdded: 999,
+                                   categoriesCompleted: [])
+        manager.checkForNewBadges(streakStats: StreakStats(), userStats: noGuarding)
+        XCTAssertFalse(manager.unlockedBadges.contains {
+            if case .thoughtsTakenCaptive = $0.requirement { return true }
+            return false
+        })
+    }
+
+    /// The number the badges read is the one the service writes. If these ever
+    /// diverge, a user banks ground and the ladder does not move.
+    func testServiceCounterIsWhatTheBadgesRead() {
+        let service = TakeItCaptiveService(defaults: defaults, bank: [], syncCounters: {})
+        service.takeGround(category: .fear, thoughtId: "t1", source: .daily,
+                           spoken: true, completesDailyRep: true)
+        XCTAssertEqual(GroundTaken.total(defaults: defaults), 1)
+        XCTAssertEqual(service.groundTaken, GroundTaken.total(defaults: defaults))
+    }
+}
+
+// MARK: - The premium path
+
+/// Guarding's premium path sends the typed thought to Claude. These pin the
+/// three things that must hold regardless of what the network does.
+final class GuardPremiumPathTests: XCTestCase {
+
+    private var savedKey: String!
+
+    override func setUp() {
+        super.setUp()
+        savedKey = AnthropicConfig.apiKey
+    }
+
+    override func tearDown() {
+        AnthropicConfig.apiKey = savedKey
+        savedKey = nil
+        super.tearDown()
+    }
+
+    private func makeBank() -> [IncomingThought] {
+        [IncomingThought(id: "fear_1", text: "incoming", category: .fear, intensity: 1,
+                         counterDeclaration: "I stand on solid ground.",
+                         verseText: "The Lord is my rock.", book: "Psalm 18:2",
+                         declarationCategory: "godsprotection")]
+    }
+
+    /// The one that matters most. Crisis screening is local and runs BEFORE the
+    /// request, so someone in crisis is never held behind a network round trip
+    /// and their words are never sent.
+    func testCrisisTextNeverReachesTheNetwork() async {
+        AnthropicConfig.apiKey = "sk-ant-test-key-that-would-be-used"
+        let classifier = ThoughtClassifier(bank: makeBank())
+        // A URLSession call would hang or fail here; reachOut must come back
+        // immediately from the local screen instead.
+        let result = await classifier.classify("I want to kill myself", isPremium: true)
+        XCTAssertEqual(result, .reachOut)
+    }
+
+    /// Premium alone must not flip the privacy copy. The key arrives from
+    /// Remote Config and can be empty, and a premium user on an unconfigured
+    /// build silently runs on device — they must not be told otherwise.
+    func testPrivacyLineFollowsWhatActuallyHappens() {
+        let classifier = ThoughtClassifier(bank: makeBank())
+
+        AnthropicConfig.apiKey = ""
+        XCTAssertFalse(classifier.sendsThoughtOffDevice(isPremium: true),
+                       "No key means the words stay on device, whatever the tier.")
+        XCTAssertFalse(classifier.sendsThoughtOffDevice(isPremium: false))
+
+        AnthropicConfig.apiKey = "sk-ant-test"
+        XCTAssertTrue(classifier.sendsThoughtOffDevice(isPremium: true))
+        XCTAssertFalse(classifier.sendsThoughtOffDevice(isPremium: false),
+                       "A free user's words never leave the phone.")
+    }
+
+    /// Free users get exactly the behaviour they had before, and no request is
+    /// made on their behalf.
+    func testFreeTierIsUnchangedAndStaysLocal() async {
+        AnthropicConfig.apiKey = "sk-ant-test"
+        let classifier = ThoughtClassifier(bank: makeBank())
+        let input = "I am afraid all the time"
+
+        let async = await classifier.classify(input, isPremium: false)
+        let sync = classifier.classify(input)
+        XCTAssertEqual(async, sync,
+                       "The free path must be the on-device path, byte for byte.")
+    }
+
+    /// No key configured is a fallback, not a failure. Someone who typed a real
+    /// thought still gets something to speak.
+    func testUnconfiguredPremiumFallsBackRatherThanDeadEnding() async {
+        AnthropicConfig.apiKey = ""
+        let classifier = ThoughtClassifier(bank: makeBank())
+        guard case .matched(_, let thought, _) =
+                await classifier.classify("I am afraid all the time", isPremium: true) else {
+            return XCTFail("The premium path must never dead-end.")
+        }
+        XCTAssertFalse(thought.counterDeclaration.isEmpty)
+        XCTAssertFalse(thought.verseText.isEmpty)
+    }
+}
+
+// MARK: - Local routing and selection
+
+/// The on-device path, which is what free users get and what every premium
+/// failure falls back to. It has to be good on its own.
+///
+/// Both halves of the "Covid" bug are pinned here. Terrain: "Covid is coming
+/// back" matched no rule in the borrowed 42-category table and fell to a
+/// general identity line. Selection: even in the right terrain the counter was
+/// `pool[hash % count]`, so nothing the user typed influenced which line they
+/// got.
+final class TerrainRoutingTests: XCTestCase {
+
+    func testCovidRoutesToSicknessNotFearOrNothing() {
+        XCTAssertEqual(TerrainLexicon.terrain(for: "Covid is coming back")?.category, .sickness)
+        // Even with an emotion word in the sentence, the body wins: the thought
+        // is about illness, and fear is how it is being carried.
+        XCTAssertEqual(TerrainLexicon.terrain(for: "afraid of Covid coming back")?.category,
+                       .sickness)
+    }
+
+    func testEachTerrainIsReachable() {
+        let cases: [(String, ThoughtCategory)] = [
+            ("my test results came back bad", .sickness),
+            ("I'm never getting out of this debt", .lack),
+            ("nobody wants me around", .rejection),
+            ("I'm not good enough for this", .inadequacy),
+            ("God stopped listening to me", .abandonment),
+            ("I keep looking at porn", .lust),
+            ("I don't know what I'm supposed to do", .confusion),
+            ("I can't forgive what I did", .condemnation),
+            ("I'm scared something bad will happen", .fear)
+        ]
+        for (text, expected) in cases {
+            XCTAssertEqual(TerrainLexicon.terrain(for: text)?.category, expected,
+                           "\"\(text)\" should land in \(expected.rawValue)")
+        }
+    }
+
+    /// The confusion terrain answers doubt, not vocation, and must not claim
+    /// words its content cannot serve.
+    ///
+    /// Its intensity-1 pool answers "You made the whole thing up" and "God is
+    /// not going to tell you what to do" — faith and hearing God. It has
+    /// nothing at that intensity about a life's direction, so "purpose",
+    /// "calling" and "no direction" are deliberately not keywords: they fall
+    /// through to the 42-rule matcher, which routes `.destiny` to the identity
+    /// terrain. "lost" is out for a harder reason — it is the same word in "I
+    /// feel lost" and "I lost my mom".
+    func testConfusionDoesNotClaimGriefOrVocation() {
+        XCTAssertNil(TerrainLexicon.terrain(for: "I lost my mom last year"),
+                     "A grieving person must never be routed by the word \"lost\".")
+        XCTAssertNil(TerrainLexicon.terrain(for: "I feel lost about my calling"))
+        // What it does answer, it still answers.
+        XCTAssertEqual(TerrainLexicon.terrain(for: "I don't know what I'm supposed to do")?.category,
+                       .confusion)
+    }
+
+    /// Addiction is grace's, not sickness's, and the lexicon must not take it.
+    ///
+    /// A bare "relapse" keyword in the sickness terrain stole "I relapsed with
+    /// alcohol again" and turned it into a declaration about a body being
+    /// whole. `ThoughtCategory.from` already carries the warning for the purity
+    /// version of the same mistake: routing addiction there "would send someone
+    /// fighting a bottle to declarations about their eyes". Their lungs are no
+    /// better an answer. What is underneath a compulsion is shame, and shame is
+    /// answered on the grace terrain.
+    func testAddictionGoesToGraceNotToTheBody() {
+        for entry in ["I relapsed with alcohol again", "I can't stop drinking",
+                      "I went back to the drugs"] {
+            XCTAssertEqual(TerrainLexicon.terrain(for: entry)?.category, .condemnation,
+                           "\"\(entry)\" must land on grace, not sickness.")
+        }
+        // A relapse that IS about purity still goes to purity.
+        XCTAssertEqual(TerrainLexicon.terrain(for: "I relapsed again with porn")?.category, .lust)
+        // And a genuine medical recurrence still reads as sickness.
+        XCTAssertEqual(TerrainLexicon.terrain(for: "the cancer came back")?.category, .sickness)
+    }
+
+    /// Nothing recognised must stay nil rather than inventing a terrain, so the
+    /// caller can pick an honest fallback instead of a confident wrong answer.
+    func testUnrecognisedTextHasNoTerrain() {
+        XCTAssertNil(TerrainLexicon.terrain(for: "qqq zzz mmm"))
+    }
+
+    /// Short single words must not match inside longer ones. A bare `contains`
+    /// makes "ill" match "still" and "will", which is how a keyword table rots.
+    func testPrefixMatchingDoesNotFireOnSubstrings() {
+        XCTAssertNil(TerrainLexicon.terrain(for: "I will be still"),
+                     "\"will\"/\"still\" must not trip the \"ill\" keyword.")
+    }
+}
+
+/// Selection within a terrain, against the shipped bank.
+final class HouseRulesTests: XCTestCase {
+
+    func testAcceptsAWellFormedDeclaration() {
+        XCTAssertTrue(ThoughtClassifier.followsHouseRules(
+            "By His wounds I am healed, and this body carries His life."))
+    }
+
+    /// Rule 12 is the one a fluent model breaks most easily: naming the thing
+    /// it is supposed to be displacing.
+    func testRejectsALineThatNamesTheLowThing() {
+        XCTAssertFalse(ThoughtClassifier.followsHouseRules(
+            "I am not afraid of this sickness, because God is with me."))
+        XCTAssertFalse(ThoughtClassifier.followsHouseRules(
+            "My anxiety has no hold on me anymore."))
+    }
+
+    /// Two words that look like violations and are not.
+    ///
+    /// Both of these are lifted from lines that ship in `declarationsv10.json`
+    /// and were reviewed by a person. A validator that rejects reviewed content
+    /// does not protect quality, it silently downgrades the premium path to the
+    /// fallback and nobody ever sees why.
+    func testAcceptsTheWordsThatOnlyLookLikeViolations() {
+        // "alone" meaning "only God", not loneliness.
+        XCTAssertTrue(ThoughtClassifier.followsHouseRules(
+            "God alone makes me dwell in safety, and I sleep in peace."))
+        XCTAssertTrue(ThoughtClassifier.followsHouseRules(
+            "My integrity guides me, and I am the same person in every room."))
+        // Biblical hope is confident expectation, not a wobble. Hebrews 11:1.
+        XCTAssertTrue(ThoughtClassifier.followsHouseRules(
+            "Faith is certainty about what I hope for and proof of what I cannot see."))
+        // The loneliness sense is still caught, including by negation.
+        XCTAssertFalse(ThoughtClassifier.followsHouseRules(
+            "I will never feel alone again in this house."))
+        // And the hedging sense of hope is still caught.
+        XCTAssertFalse(ThoughtClassifier.followsHouseRules(
+            "I hope God will make this body well again someday."))
+    }
+
+    func testRejectsDashesHedgingAndThirdPerson() {
+        XCTAssertFalse(ThoughtClassifier.followsHouseRules(
+            "I am healed — whole from head to foot."))
+        XCTAssertFalse(ThoughtClassifier.followsHouseRules(
+            "I hope God will make this body well again someday."))
+        XCTAssertFalse(ThoughtClassifier.followsHouseRules(
+            "God makes the body whole and restores what was taken."))
+    }
+
+    func testRejectsARamblingLine() {
+        XCTAssertFalse(ThoughtClassifier.followsHouseRules(
+            "I am healed. I am whole. I am strong. I am restored. I am well."))
+    }
+}

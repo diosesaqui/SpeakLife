@@ -158,6 +158,24 @@ final class ThoughtBankContentTests: XCTestCase {
             .map(String.init))
     }
 
+    /// Every shipped declaration must pass the validator that guards generated
+    /// ones. This is the corpus check the unit tests cannot do — the bank lives
+    /// in the app bundle.
+    ///
+    /// It found four false positives the first time it ran: "God alone makes me
+    /// dwell in safety" and "Alone or in a crowd, I am the same person" tripped
+    /// an "alone" keyword meant for loneliness, and "He is my only hope" plus
+    /// Hebrews 11:1's "what I hope for" tripped a hedging check meant for "I
+    /// hope that". A validator stricter than the reviewed library does not
+    /// raise quality; it quietly discards good generated lines and serves the
+    /// fallback instead, with nothing on screen to say so.
+    func testEveryShippedDeclarationPassesTheHouseRules() throws {
+        for thought in try loadBank() {
+            XCTAssertTrue(ThoughtClassifier.followsHouseRules(thought.counterDeclaration),
+                          "Reviewed line rejected by the validator: \(thought.id) — \(thought.counterDeclaration)")
+        }
+    }
+
     /// Counter-declarations are copied verbatim out of the reviewed library, so
     /// they inherit its rules — first person, present tense, no dashes.
     func testCounterDeclarationsFollowTheDeclarationRules() throws {
@@ -184,102 +202,44 @@ final class ThoughtBankContentTests: XCTestCase {
     }
 }
 
-// MARK: - Ground taken earns badges
+final class CounterSelectionTests: XCTestCase {
 
-/// Guarding's counter feeds the badge system, and these pin the wiring.
-///
-/// Before this, `totalThoughtsTakenCaptive` was written, synced across devices
-/// and guaranteed monotonic — and then read by nothing. Every sibling counter
-/// in `ProgressSyncStore.syncedCounterKeys` cashes out into badge progress;
-/// this one earned nothing, which made Guarding the only pillar whose work paid
-/// out in a number the user saw once and never again.
-final class GroundTakenBadgeTests: XCTestCase {
-
-    private var defaults: UserDefaults!
-    private var suiteName: String!
-
-    override func setUp() {
-        super.setUp()
-        suiteName = "GroundTakenBadgeTests-\(UUID().uuidString)"
-        defaults = UserDefaults(suiteName: suiteName)
+    private func bank() throws -> [IncomingThought] {
+        let url = try XCTUnwrap(Bundle(for: type(of: self)).url(forResource: "thoughts", withExtension: "json")
+                                ?? Bundle.main.url(forResource: "thoughts", withExtension: "json"))
+        return try JSONDecoder().decode(ThoughtBank.self, from: Data(contentsOf: url)).thoughts
     }
 
-    override func tearDown() {
-        defaults.removePersistentDomain(forName: suiteName)
-        defaults = nil
-        suiteName = nil
-        super.tearDown()
-    }
-
-    private func stats(_ takenCaptive: Int) -> UserStats {
-        UserStats(affirmationsSpoken: 0, versesRead: 0, socialShares: 0,
-                  favoritesAdded: 0, categoriesCompleted: [],
-                  thoughtsTakenCaptive: takenCaptive)
-    }
-
-    /// The ladder exists and is reachable at every tier.
-    func testEveryGuardingTierHasABadge() {
-        let manager = BadgeManager(userDefaults: defaults)
-        let tiers = manager.allBadges.compactMap { badge -> Int? in
-            guard case .thoughtsTakenCaptive(let count) = badge.requirement else { return nil }
-            return count
+    /// The line a thought about illness gets must be about a body being whole,
+    /// not about strength for a task.
+    ///
+    /// Plain word overlap picked "God gives me strength and fills me with fresh
+    /// power", because the lie THAT entry answers is "Your strength is not
+    /// coming back" and it shares the incidental words "coming" and "back".
+    /// Rarity weighting sinks common words so they cannot outvote the terrain's
+    /// curated line.
+    func testIllnessThoughtGetsAHealingLine() throws {
+        let classifier = ThoughtClassifier(bank: try bank())
+        guard case .matched(let category, let thought, let confidence) =
+                classifier.classify("Covid is coming back") else {
+            return XCTFail("Expected a match.")
         }
-        XCTAssertEqual(tiers.sorted(), [1, 10, 50, 150, 365])
+        XCTAssertEqual(category, .sickness)
+        XCTAssertEqual(confidence, .high)
+        XCTAssertFalse(thought.counterDeclaration.localizedCaseInsensitiveContains("strength"),
+                       "A thought about illness must not draw a strength-for-a-task line.")
     }
 
-    /// One rep earns the first badge. The reason the ladder starts at 1 rather
-    /// than 10: the drill is once a day, so a first threshold of ten is ten days
-    /// before anything acknowledges the feature exists.
-    func testFirstThoughtEarnsTheFirstBadge() {
-        let manager = BadgeManager(userDefaults: defaults)
-        manager.checkForNewBadges(streakStats: StreakStats(), userStats: stats(1))
-        XCTAssertTrue(manager.unlockedBadges.contains { $0.requirement == .thoughtsTakenCaptive(1) })
-        XCTAssertFalse(manager.unlockedBadges.contains { $0.requirement == .thoughtsTakenCaptive(10) })
-    }
-
-    /// Crossing several thresholds at once awards all of them, not just the top.
-    /// Ground is cumulative and can arrive in a batch from another device.
-    func testCrossingSeveralTiersAwardsEachOfThem() {
-        let manager = BadgeManager(userDefaults: defaults)
-        manager.checkForNewBadges(streakStats: StreakStats(), userStats: stats(60))
-        for tier in [1, 10, 50] {
-            XCTAssertTrue(manager.unlockedBadges.contains { $0.requirement == .thoughtsTakenCaptive(tier) },
-                          "Tier \(tier) should be earned at 60.")
+    /// Same sentence, same line, every time — on this launch and the next.
+    func testSelectionIsStable() throws {
+        let loaded = try bank()
+        let input = "Covid is coming back"
+        guard case .matched(_, let first, _) = ThoughtClassifier(bank: loaded).classify(input),
+              case .matched(_, let second, _) = ThoughtClassifier(bank: loaded).classify(input) else {
+            return XCTFail("Expected matches.")
         }
-        XCTAssertFalse(manager.unlockedBadges.contains { $0.requirement == .thoughtsTakenCaptive(150) })
-    }
-
-    /// Re-checking must not award the same badge twice — `checkForNewBadges`
-    /// runs on launch, on campaign changes and after every Guarding rep.
-    func testRecheckingDoesNotDoubleAward() {
-        let manager = BadgeManager(userDefaults: defaults)
-        manager.checkForNewBadges(streakStats: StreakStats(), userStats: stats(10))
-        let afterFirst = manager.unlockedBadges.count
-        manager.checkForNewBadges(streakStats: StreakStats(), userStats: stats(10))
-        XCTAssertEqual(manager.unlockedBadges.count, afterFirst)
-    }
-
-    /// A stats object that never heard of Guarding earns no Guarding badge.
-    /// The defaulted field must fail closed, never open.
-    func testOmittedCounterEarnsNothing() {
-        let manager = BadgeManager(userDefaults: defaults)
-        let noGuarding = UserStats(affirmationsSpoken: 999, versesRead: 999,
-                                   socialShares: 999, favoritesAdded: 999,
-                                   categoriesCompleted: [])
-        manager.checkForNewBadges(streakStats: StreakStats(), userStats: noGuarding)
-        XCTAssertFalse(manager.unlockedBadges.contains {
-            if case .thoughtsTakenCaptive = $0.requirement { return true }
-            return false
-        })
-    }
-
-    /// The number the badges read is the one the service writes. If these ever
-    /// diverge, a user banks ground and the ladder does not move.
-    func testServiceCounterIsWhatTheBadgesRead() {
-        let service = TakeItCaptiveService(defaults: defaults, bank: [], syncCounters: {})
-        service.takeGround(category: .fear, thoughtId: "t1", source: .daily,
-                           spoken: true, completesDailyRep: true)
-        XCTAssertEqual(GroundTaken.total(defaults: defaults), 1)
-        XCTAssertEqual(service.groundTaken, GroundTaken.total(defaults: defaults))
+        XCTAssertEqual(first.id, second.id)
     }
 }
+
+/// The validator that stands between a generated line and someone's mouth.

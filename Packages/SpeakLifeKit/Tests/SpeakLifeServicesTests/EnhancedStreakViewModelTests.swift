@@ -517,13 +517,24 @@ final class EnhancedStreakViewModelTests: XCTestCase {
     private func purgeSyncedTaskCompletions() {
         let store = ProgressSyncStore.shared
 
+        // These two are NOT the sleep-with-a-stopwatch pattern — each waits on a
+        // real completion handler from `ProgressSyncStore`, which is the right
+        // shape. Their timeouts are simply too tight for a struggling runner:
+        // `testCompleteTask_ShouldUpdateChecklist` went red on main with
+        // "Exceeded timeout of 5 seconds, unfulfilled: read taskCompletion
+        // events" on a run where the simulator also failed to launch outright
+        // and the test phase took 616 seconds.
+        //
+        // A correct expectation costs nothing extra by being patient: it is
+        // signalled the instant the callback fires, so the only thing a larger
+        // number changes is how long a genuine hang takes to report.
         let fetched = expectation(description: "read taskCompletion events")
         var keys: [String] = []
         store.events(ofKind: ProgressSyncStore.Kind.taskCompletion) { events in
             keys = events.map(\.key)
             fetched.fulfill()
         }
-        wait(for: [fetched], timeout: 5)
+        wait(for: [fetched], timeout: 30)
 
         guard !keys.isEmpty else { return }
         let deleted = expectation(description: "delete taskCompletion events")
@@ -533,7 +544,7 @@ final class EnhancedStreakViewModelTests: XCTestCase {
                 deleted.fulfill()
             }
         }
-        wait(for: [deleted], timeout: 10)
+        wait(for: [deleted], timeout: 60)
     }
 
     private var firstCompletableTask: DailyTask {
