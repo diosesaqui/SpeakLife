@@ -311,7 +311,15 @@ struct EnforcementCard: View {
                 .opacity(completionRevealed ? 1 : 0)
                 .offset(y: completionRevealed ? 0 : 8)
 
-            Text("You stood seven days on ground Jesus already took. That does not go back.")
+            // Says what the week MEANT, rather than restating the count a third
+            // time — the eyebrow and the theme name have already said seven days
+            // and which ground it was.
+            //
+            // It also uses the feature's own verb. "Enforce the victory" is the
+            // card's eyebrow and the whole premise: the win is already Jesus',
+            // and the week is them holding what He took. That is the sentence
+            // worth handing back to someone who just did it.
+            Text("Jesus won it. You enforced it all week.")
                 .font(.system(size: 13, weight: .regular, design: .rounded))
                 .foregroundColor(.white.opacity(0.65))
                 .fixedSize(horizontal: false, vertical: true)
@@ -343,7 +351,13 @@ struct EnforcementCard: View {
         VStack(alignment: .leading, spacing: DS.Spacing.sm) {
             eyebrow("ENFORCE THE VICTORY")
 
-            Text("What area of life do you need victory in?")
+            // "This week" is doing real work, not decoration. The commitment is
+            // a seven-day sprint, and a question with no horizon reads as an
+            // open-ended one — which makes it a bigger thing to say yes to than
+            // it actually is, and gives no sense that another answer comes
+            // around in a week. Naming the week shrinks the ask and sets the
+            // rhythm at the same time.
+            Text("What area do you need victory in this week?")
                 .font(.system(size: 16, weight: .semibold, design: .rounded))
                 .foregroundColor(.white.opacity(0.95))
                 .fixedSize(horizontal: false, vertical: true)
@@ -358,7 +372,9 @@ struct EnforcementCard: View {
             // and a question that only admits storms sends them away with
             // nothing. It's also the app's own language for this already —
             // the personal declaration feature counts "days of believing".
-            Text("Name a fight, or something you're believing for. Your Daily Burst is built around it for seven days.")
+            // The headline now carries the horizon, so this carries the
+            // mechanism instead of repeating "seven days" next to "this week".
+            Text("Name a fight, or something you're believing for. Every Daily Burst this week is built around it.")
                 .font(.system(size: 13, weight: .regular, design: .rounded))
                 .foregroundColor(.white.opacity(0.6))
                 .fixedSize(horizontal: false, vertical: true)
