@@ -258,6 +258,17 @@ final class AppDelegate: NSObject, MessagingDelegate {
         // stay Firebase-free while still honoring the live flag values.
         DefaultFeatureFlags.shared.provider = RemoteConfigFlags()
 
+        // Join RevenueCat's server-side lifecycle events to this install's
+        // PostHog person. Done here rather than in `init()` because it needs the
+        // PostHog SDK to have been set up, which happens when AnalyticsService
+        // first registers its providers. Re-linked before every purchase in
+        // SubscriptionStore, so a distinct id that changes mid-session (an
+        // `identify` call) still reaches RevenueCat before the subscriber is
+        // created.
+        RevenueCatManager.shared.linkAnalyticsIdentity(
+            distinctID: AnalyticsService.shared.postHogDistinctID
+        )
+
         registerBGTask()
         
         // Initialize TikTok SDK after a brief delay to not interfere with landing animation

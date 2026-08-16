@@ -66,6 +66,11 @@ protocol AnalyticsProvider: AnyObject {
 
     /// Associate subsequent events with a known user id (identify / alias).
     func setUserId(_ id: String?)
+
+    /// The id this provider currently files events under, when it has one that
+    /// other systems need to join against. `nil` for providers whose identity
+    /// is private to them.
+    var currentDistinctId: String? { get }
 }
 
 extension AnalyticsProvider {
@@ -73,6 +78,7 @@ extension AnalyticsProvider {
     func configure() {}
     func setUserProperty(_ value: Any, forName name: String) {}
     func setUserId(_ id: String?) {}
+    var currentDistinctId: String? { nil }
 }
 
 // MARK: - Analytics Service (Dispatcher)
@@ -141,6 +147,14 @@ final class AnalyticsService: AnalyticsTracking {
         for (key, value) in userProperties {
             provider.setUserProperty(value, forName: key)
         }
+    }
+
+    /// PostHog's distinct id for this install. RevenueCat stamps this onto the
+    /// subscriber (see `RevenueCatManager.linkAnalyticsIdentity`) so the
+    /// lifecycle events RC forwards server-side resolve to the same person as
+    /// the in-app events instead of a separate anonymous ghost.
+    var postHogDistinctID: String? {
+        snapshotProviders().first { $0.id == "posthog" }?.currentDistinctId
     }
 
     private func snapshotProviders() -> [AnalyticsProvider] {
@@ -672,6 +686,17 @@ final class PostHogAnalyticsProvider: AnalyticsProvider {
         } else {
             PostHogSDK.shared.reset()
         }
+        #endif
+    }
+
+    /// Whatever id PostHog is filing events under right now — the anonymous
+    /// install id until something calls `setUserId`, that id afterwards.
+    var currentDistinctId: String? {
+        #if canImport(PostHog)
+        let id = PostHogSDK.shared.getDistinctId()
+        return id.isEmpty ? nil : id
+        #else
+        return nil
         #endif
     }
 }

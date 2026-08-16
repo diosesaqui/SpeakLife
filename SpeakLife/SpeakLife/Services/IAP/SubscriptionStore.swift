@@ -67,6 +67,13 @@ final class SubscriptionStore: ObservableObject {
     /// First date the user ever activated the premium entitlement (survives
     /// cancel-and-resubscribe). Powers the subscription anniversary overlay.
     @Published var premiumOriginalPurchaseDate: Date?
+    /// When Apple last failed to charge this subscriber, `nil` while billing is
+    /// healthy. Apple keeps the entitlement alive through its retry window, so
+    /// nothing else in the app would ever tell the user their card failed —
+    /// they just silently lapse. `BillingIssueView` watches this.
+    @Published var billingIssueDetectedAt: Date?
+    /// True while Apple is retrying a failed charge on an otherwise-live sub.
+    var hasBillingIssue: Bool { billingIssueDetectedAt != nil }
     @Published private(set) var subscriptions: [Product] = []
     @Published private(set) var nonConsumables: [Product] = [] // New list for non-consumables
     @Published private(set) var purchasedSubscriptions: [Product] = []
@@ -669,6 +676,8 @@ final class SubscriptionStore: ObservableObject {
             ? RevenueCatManager.shared.premiumOriginalPurchaseDate(info)
             : nil
 
+        applyBillingIssue(RevenueCatManager.shared.billingIssueDetectedAt(info))
+
         // Defensive cleanup for users affected by the pre-fix isTrialProduct
         // bug, where a non-trial purchase scheduled D2/D3 "your trial ends
         // tomorrow" pushes. RC is the source of truth: if the user is premium
@@ -703,6 +712,36 @@ final class SubscriptionStore: ObservableObject {
                 )
             }
         }
+    }
+
+    /// Publishes the billing-issue state and reports each new failure exactly
+    /// once. RC hands us the same `billingIssueDetectedAt` on every customer-info
+    /// update for the life of the retry window, so the reported date is
+    /// remembered and compared — otherwise every foreground would re-fire the
+    /// event and the recovery funnel would read as noise.
+    @MainActor
+    private func applyBillingIssue(_ detectedAt: Date?) {
+        billingIssueDetectedAt = detectedAt
+
+        let defaults = UserDefaults.standard
+        let reportedKey = "billing_issue_reported_at"
+
+        guard let detectedAt else {
+            // Billing recovered (or never broke). Clear the marker so a future
+            // failure reports again.
+            defaults.removeObject(forKey: reportedKey)
+            return
+        }
+
+        let alreadyReported = defaults.object(forKey: reportedKey) as? Double
+        guard alreadyReported != detectedAt.timeIntervalSince1970 else { return }
+        defaults.set(detectedAt.timeIntervalSince1970, forKey: reportedKey)
+
+        AnalyticsService.shared.track("billing_issue_detected", parameters: [
+            "detected_at": detectedAt.iso8601String,
+            "product_id": purchasedSubscriptions.first?.id ?? "",
+            "is_trial": isInTrial
+        ])
     }
 
     @MainActor
@@ -806,6 +845,15 @@ final class SubscriptionStore: ObservableObject {
         // flag, and the D2/D3 trial-ending push scheduling.
         let willStartTrial = hasFreeTrialIntroOffer && isEligibleForIntroOffer
         let currency     = product.priceFormatStyle.currencyCode ?? "USD"
+
+        // Stamp the PostHog identity on the subscriber BEFORE the purchase, so
+        // the subscriber record RC creates here already knows which person it
+        // belongs to and every lifecycle event it later forwards (trial
+        // converted, cancelled, billing issue) resolves to this user.
+        RevenueCatManager.shared.linkAnalyticsIdentity(
+            distinctID: AnalyticsService.shared.postHogDistinctID,
+            force: true
+        )
 
         // NOTE: Do NOT fire analytics before RC confirms — RC validates the receipt.
         let customerInfo = try await RevenueCatManager.shared.purchase(storeProduct: product)

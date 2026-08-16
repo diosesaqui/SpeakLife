@@ -114,6 +114,12 @@ struct HomeView: View {
     // The Inbox, presented from the remote-message reader's
     // "See All SpeakLife Messages" CTA.
     @State private var showSpeakLifeMessages = false
+    // Failed-payment recovery. `billingIssuePromptedAt` stores the RC-reported
+    // failure date we last prompted for, so one billing issue produces one
+    // prompt — not one every launch for the length of Apple's retry window —
+    // while a NEW failure later still gets its own.
+    @State private var showBillingIssue = false
+    @AppStorage("billingIssuePromptedAt") private var billingIssuePromptedAt: Double = 0
 
     private let currentVersion = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0.0"
 
@@ -226,6 +232,17 @@ struct HomeView: View {
                             // value lands. Re-run once RC populates it.
                             .onChange(of: subscriptionStore.premiumOriginalPurchaseDate) { _ in
                                 checkForPremiumAnniversary()
+                            }
+                            // Billing state arrives with RC's customer info, which
+                            // lands async on cold start and again on every
+                            // foreground — so watch the value rather than checking
+                            // once in onAppear.
+                            .onChange(of: subscriptionStore.billingIssueDetectedAt) { _ in
+                                checkForBillingIssue()
+                            }
+                            .sheet(isPresented: $showBillingIssue) {
+                                BillingIssueView(isPresented: $showBillingIssue)
+                                    .environmentObject(subscriptionStore)
                             }
                             .onChange(of: paywallTrigger.shouldShowPaywall) { newValue in
                                 if newValue && !subscriptionStore.isPremium {
@@ -916,6 +933,22 @@ struct HomeView: View {
     /// check time (e.g. when this feature first ships), only the highest is
     /// shown and the lower ones are marked-as-shown silently so they don't
     /// queue up.
+    /// Shows the failed-payment recovery screen once per billing failure.
+    ///
+    /// Gated on the user still holding the entitlement: while Apple retries,
+    /// they do, and that is exactly the window where a card update saves the
+    /// subscription. Once it lapses this is no longer a recovery — it's a
+    /// resubscribe, which the paywall already handles.
+    private func checkForBillingIssue() {
+        guard appState.isOnboarded, subscriptionStore.isPremium else { return }
+        guard let detectedAt = subscriptionStore.billingIssueDetectedAt else { return }
+        guard !showSubscription, !showTriggeredPaywall, !showBillingIssue else { return }
+        guard detectedAt.timeIntervalSince1970 > billingIssuePromptedAt else { return }
+
+        billingIssuePromptedAt = detectedAt.timeIntervalSince1970
+        showBillingIssue = true
+    }
+
     private func checkForPremiumAnniversary() {
         guard appState.isOnboarded else { return }
         guard subscriptionStore.isPremium else { return }
