@@ -19,17 +19,24 @@ public final class PersistenceController {
     private let maxImportAttempts = 5
     private let importRetryDelays = [5.0, 10.0, 15.0, 30.0, 60.0] // Progressive delays
 
-    /// Where an `inMemory: true` stack keeps its scratch store, so `deinit` can
-    /// take the directory back out again. `nil` for the real app stack.
-    private var scratchStoreDirectory: URL?
-
     deinit {
-        // Clean up notification observers
+        // Clean up notification observers.
+        //
+        // Deliberately does NOT delete an `inMemory: true` stack's scratch
+        // store. That was tried, and CI answered immediately:
+        //
+        //   CoreData: error: (6922) I/O error for database at
+        //   .../SpeakLifeScratchStores/471DB.../SpeakLife.sqlite
+        //   CoreData: error: ... unable to open database file
+        //
+        // A controller routinely outlives its own reference while the context
+        // it vended is still in use — `FavoritesMigrationServiceTests` builds
+        // one in a local `let` and hands the view context on, and the app's own
+        // repositories are constructed the same way. Pulling the file out from
+        // under a live store is not cleanup, it is a mid-test I/O failure. The
+        // stores are a few KB each in the temp directory, which the OS reaps on
+        // its own; leaving them there is the correct trade.
         NotificationCenter.default.removeObserver(self)
-
-        if let directory = scratchStoreDirectory {
-            try? FileManager.default.removeItem(at: directory)
-        }
     }
 
     public static var preview: PersistenceController = {
@@ -161,9 +168,9 @@ public final class PersistenceController {
             // there is no race in the tests to fix. The store was losing them.
             //
             // A real file in a unique temp directory keeps SQLite honest: pages
-            // spill somewhere they can be read back. `deinit` removes it.
+            // spill somewhere they can be read back, and no two stacks share a
+            // path. Nothing deletes it — see the note in `deinit`.
             let directory = Self.makeScratchStoreDirectory()
-            scratchStoreDirectory = directory
 
             container.persistentStoreDescriptions.forEach { storeDescription in
                 storeDescription.url = directory.appendingPathComponent("SpeakLife.sqlite")
