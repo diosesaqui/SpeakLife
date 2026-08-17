@@ -22,6 +22,13 @@ final class BibleViewModel: ObservableObject {
     @Published var selectedVersion: String = "kjv" // Default to KJV (King James Version)
     
     @Published var isLoading = false
+    /// The chapter currently being fetched, so the chapter grid can show which
+    /// number the user tapped is working. Without it a slow load looked like a
+    /// dead button: the grid stayed on screen with no spinner anywhere.
+    @Published var loadingChapterNumber: Int?
+    /// The chapter whose last load failed, so the grid can offer a retry in
+    /// place instead of only flashing an alert.
+    @Published var failedChapterNumber: Int?
     @Published var errorMessage: String?
     @Published var showError = false
     @Published var showAuthView = false
@@ -120,11 +127,13 @@ final class BibleViewModel: ObservableObject {
         currentChapterLoadTask?.cancel()
         
         currentChapterLoadTask = Task {
-            await MainActor.run { 
+            await MainActor.run {
                 isLoading = true
-                errorMessage = nil 
+                loadingChapterNumber = chapterNumber
+                failedChapterNumber = nil
+                errorMessage = nil
             }
-            
+
             do {
                 let chapter = try await interactor.loadChapter(
                     bookAbbrev: bookAbbrev,
@@ -143,7 +152,9 @@ final class BibleViewModel: ObservableObject {
                     showBookSelection = false
                     showChapterGrid = false
                     isLoading = false
-                    
+                    loadingChapterNumber = nil
+                    failedChapterNumber = nil
+
                     // Update reading history after successfully loading a chapter
                     loadHistory()
                 }
@@ -164,12 +175,20 @@ final class BibleViewModel: ObservableObject {
                 // user tapped another chapter). Don't surface it as an error.
                 if Self.isCancellation(error) || Task.isCancelled { return }
                 await MainActor.run {
+                    loadingChapterNumber = nil
+                    failedChapterNumber = chapterNumber
                     handleError(error)
                 }
             }
         }
 
         await currentChapterLoadTask?.value
+    }
+
+    /// Retries the chapter whose load failed, from the grid's inline retry.
+    func retryFailedChapter() async {
+        guard let chapter = failedChapterNumber, let book = selectedBook else { return }
+        await loadChapter(bookAbbrev: book.abbreviation.lowercased(), chapterNumber: chapter)
     }
     
     func searchVerses(query: String) async {
@@ -350,6 +369,7 @@ final class BibleViewModel: ObservableObject {
         selectedChapterNumber = 1  // Reset chapter to 1 when selecting a new book
         showChapterGrid = true
         showBookSelection = false
+        failedChapterNumber = nil
         
         AnalyticsService.shared.trackUserAction(
             "bible_book_selected",
@@ -380,12 +400,14 @@ final class BibleViewModel: ObservableObject {
         showBookSelection = true
         showChapterGrid = false
         selectedBook = nil
+        failedChapterNumber = nil
         selectedChapterNumber = 1  // Reset chapter number when going back to books
     }
     
     func backToChapters() {
         showChapterGrid = true
         currentChapter = nil
+        failedChapterNumber = nil
     }
     
     // MARK: - Bookmarks

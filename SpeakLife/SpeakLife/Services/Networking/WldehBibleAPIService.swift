@@ -220,17 +220,37 @@ struct BibleBookMapping {
 final class WldehBibleAPIService: BibleAPIServiceProtocol {
     static let shared = WldehBibleAPIService()
     
-    private let baseURL = "https://cdn.jsdelivr.net/gh/wldeh/bible-api"
+    /// Hosts that serve the same wldeh/bible-api files, tried in order. jsDelivr
+    /// is fast when an edge has the file cached, but a cold cache on a repo this
+    /// large regularly stalls or 5xxs on a single chapter while its neighbours
+    /// load fine (this is what made e.g. Psalm 91 and 93 look "dead"). GitHub's
+    /// raw host serves the identical JSON, so falling back to it turns a dead
+    /// chapter into a slightly slower one instead of a failure.
+    private static let mirrors = [
+        "https://cdn.jsdelivr.net/gh/wldeh/bible-api",
+        "https://raw.githubusercontent.com/wldeh/bible-api/main"
+    ]
     private let session: URLSession
     private let defaultVersion = "en-kjv" // Default to KJV
-    
+
     // Cache for versions and books since they don't change
     private var cachedVersions: [BibleVersion]?
     private var cachedWldehVersions: [WldehBibleVersion]?
     private var cachedBooks: [BibleBook]?
-    
-    init(session: URLSession = .shared) {
-        self.session = session
+
+    init(session: URLSession? = nil) {
+        // URLSession.shared waits 60s before giving up on a stalled request, so
+        // a hung CDN edge left the reader showing nothing for a full minute.
+        // A short timeout lets the mirror fallback kick in while the user is
+        // still looking at the screen.
+        if let session {
+            self.session = session
+        } else {
+            let configuration = URLSessionConfiguration.default
+            configuration.timeoutIntervalForRequest = 12
+            configuration.timeoutIntervalForResource = 30
+            self.session = URLSession(configuration: configuration)
+        }
     }
     
     // MARK: - BibleAPIServiceProtocol Implementation
@@ -286,12 +306,21 @@ final class WldehBibleAPIService: BibleAPIServiceProtocol {
         // Map version to Wldeh format (e.g., "kjv" -> "en-kjv")
         let wldehVersion = mapToWldehVersion(version)
         
-        let url = "\(baseURL)/bibles/\(wldehVersion)/books/\(bookName)/chapters/\(chapter).json"
-        
-        let response: WldehChapterResponse = try await performRequest(url: url)
-        
+        let path = "/bibles/\(wldehVersion)/books/\(bookName)/chapters/\(chapter).json"
+
+        let response: WldehChapterResponse = try await performRequest(path: path)
+
         // Convert to app's BibleChapter model
-        return convertToBibleChapter(response, abbrev: abbrev, version: version, chapter: chapter)
+        let bibleChapter = convertToBibleChapter(response, abbrev: abbrev, version: version, chapter: chapter)
+
+        // A chapter with no verses renders as a blank page with no explanation,
+        // which reads to the user as the app being broken. Treat it as a failed
+        // load so the caller can surface an error and offer a retry.
+        guard !bibleChapter.verses.isEmpty else {
+            throw BibleAPIError.noData
+        }
+
+        return bibleChapter
     }
     
     func fetchVersions() async throws -> [BibleVersion] {
@@ -416,11 +445,49 @@ final class WldehBibleAPIService: BibleAPIServiceProtocol {
     
     // MARK: - Private Methods
     
+    /// Fetches `path` (e.g. `/bibles/en-kjv/books/psalms/chapters/91.json`) from
+    /// the first mirror that answers. A transient failure on one host retries
+    /// once there, then moves to the next host; only when every host has failed
+    /// does the error reach the caller. Cancellation short-circuits the whole
+    /// walk so a superseded load never keeps hitting the network.
+    private func performRequest<T: Decodable>(path: String) async throws -> T {
+        var firstError: Error?
+
+        for mirror in Self.mirrors {
+            for attempt in 0..<2 {
+                do {
+                    return try await performRequest(url: mirror + path)
+                } catch is CancellationError {
+                    throw CancellationError()
+                } catch {
+                    if firstError == nil { firstError = error }
+
+                    // A 404 means this host genuinely doesn't have the file;
+                    // retrying it is wasted time, so move to the next mirror.
+                    if let apiError = error as? BibleAPIError,
+                       case .serverError(404) = apiError {
+                        break
+                    }
+
+                    if attempt == 0 {
+                        try? await Task.sleep(nanoseconds: 300_000_000)
+                        if Task.isCancelled { throw CancellationError() }
+                    }
+                }
+            }
+        }
+
+        if let firstError {
+            throw firstError
+        }
+        throw BibleAPIError.noData
+    }
+
     private func performRequest<T: Decodable>(url urlString: String) async throws -> T {
         guard let url = URL(string: urlString) else {
             throw BibleAPIError.invalidURL
         }
-        
+
         do {
             let (data, response) = try await session.data(from: url)
             
@@ -606,9 +673,9 @@ final class WldehBibleAPIService: BibleAPIServiceProtocol {
         let wldehVersion = mapToWldehVersion(version)
         let bookName = BibleBookMapping.abbreviationToApiName[book.lowercased()] ?? book.lowercased()
         
-        let url = "\(baseURL)/bibles/\(wldehVersion)/books/\(bookName)/chapters/\(chapter)/verses/\(verse).json"
-        
-        let singleVerse: WldehSingleVerse = try await performRequest(url: url)
+        let path = "/bibles/\(wldehVersion)/books/\(bookName)/chapters/\(chapter)/verses/\(verse).json"
+
+        let singleVerse: WldehSingleVerse = try await performRequest(path: path)
         
         return BibleVerse(
             number: Int(singleVerse.verse) ?? verse,
