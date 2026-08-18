@@ -123,7 +123,7 @@ struct AudioContentRow: View {
             ShareSheet(activityItems: [
                 "🎵 \(audio.title) - \(audio.subtitle)",
                 "Listen on SpeakLife App",
-                "https://apps.apple.com/app/speaklife/id1234567890"
+                APP.Product.urlID
             ])
         }
     }

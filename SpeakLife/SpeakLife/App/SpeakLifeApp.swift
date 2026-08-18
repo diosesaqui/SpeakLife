@@ -135,6 +135,13 @@ struct SpeakLifeApp: App {
                     // .environmentObject calls above inject into, so it sits
                     // above them and would never see them. Inert on the App Store.
                     .debugFlagPanel(subscriptionStore: subscriptionStore, appState: appState)
+                    // Blocking "update required" screen when Remote Config
+                    // retires this build. Applied here rather than inside
+                    // HomeView so it survives every route through the app, and
+                    // it presents in its own window so a live paywall or
+                    // onboarding cover cannot sit on top of the gate. Inert
+                    // unless `forceUpdateEnabled` is on with a published floor.
+                    .forceUpdateGate(subscriptionStore: subscriptionStore)
                     .onOpenURL { url in
                         // Ad-matched onboarding: owned channels (email, push, IG bio,
                         // QR, landing page) carrying `ob=<variant>` route here when the
