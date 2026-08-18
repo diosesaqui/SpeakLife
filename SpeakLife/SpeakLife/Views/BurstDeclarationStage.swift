@@ -8,32 +8,40 @@
 //  and tapped seven times. Nothing about the interaction knew whether they had
 //  actually opened their mouth. This one is built around the act of speaking.
 //
-//  Three ways forward, all of them ending at the same place:
+//  Two ways forward, both costing the same:
 //
-//    · Tap the button.        The old path, unchanged in cost.
-//    · Swipe the card away.   The line is a card in a deck of seven, so the
-//                             burst has a shape the thumb can feel.
-//    · Hold the button.       The ring fills while the user speaks the line out
-//                             loud, haptics tick underneath, the card ignites,
-//                             and it advances itself on a surge.
+//    · Tap the button.   The old path, unchanged.
+//    · Hold the button.  The ring fills at the pace of this line while the user
+//                        speaks it out loud, haptics ticking underneath. A full
+//                        charge ignites the card. It then WAITS. The card leaves
+//                        when the finger lifts, never before.
 //
-//  The hold is a reward, never a gate. Releasing early still advances, so no one
+//  The hold is a reward, never a gate. Releasing early still advances, so nobody
 //  who taps their way through loses a streak, and the ritual is there for anyone
 //  who wants it.
+//
+//  Two rules were learned the hard way, from speaking a real burst out loud:
+//
+//    · The finger is the only thing that knows when the mouth is finished.
+//      A timer that advances on its own will always cut someone off mid-sentence,
+//      whatever number it is set to. So a completed charge never advances. It
+//      lights up and holds until the user lets go.
+//    · There is no swipe. It was here for tactility, but a flick is a skip lane:
+//      it clears a declaration in a tenth of a second, without a word said, and
+//      it fires by accident when a thumb rests on a line someone is still
+//      reading. A screen about speaking should not ship a way to not speak.
 //
 
 import SwiftUI
 
 // MARK: - Advance method
 
-/// How the user got off a declaration. Reported so the surge can be measured
+/// How the user got off a declaration. Reported so the hold can be measured
 /// against the tap rather than assumed to be used.
 enum BurstAdvanceMethod: String {
-    /// Pressed and released the button.
+    /// Pressed and released without charging all the way.
     case tap
-    /// Threw the card off the screen.
-    case swipe
-    /// Held the button through a full charge while speaking.
+    /// Held through a full charge while speaking, then released.
     case surge
 }
 
@@ -52,10 +60,11 @@ struct BurstDeclarationStage: View {
     let onFinish: (BurstAdvanceMethod) -> Void
     let onClose: () -> Void
 
-    @State private var drag: CGSize = .zero
     @State private var cardOpacity: Double = 1
-    @State private var pastThreshold = false
+    @State private var cardLift: CGFloat = 0
     @State private var isCharging = false
+    /// The charge reached full and the card is lit, waiting for the finger.
+    @State private var isSealed = false
     /// Bumped on every surge so the flare re-runs from the top, and cleared on
     /// advance so it does not replay itself over the card that follows.
     @State private var surgeFlareID = 0
@@ -68,15 +77,24 @@ struct BurstDeclarationStage: View {
 
     private var isLast: Bool { index >= declarations.count - 1 }
 
-    /// Wide enough that a read of the line never becomes a flick.
-    private var swipeThreshold: CGFloat { max(88, size.width * 0.24) }
-
     private var cardWidth: CGFloat { min(size.width * 0.88, 460) }
 
     /// Every card is the same size. A deck whose top card resizes with the
     /// length of the line does not read as a deck, and the ghosts behind it
     /// would have nothing stable to sit against.
     private var cardHeight: CGFloat { min(max(size.height * 0.40, 300), 430) }
+
+    /// How long this particular line takes to say out loud.
+    ///
+    /// A fixed duration is wrong for every line that is not the median one: the
+    /// first build used 1.4s for all seven and cut people off mid-sentence. This
+    /// paces the ring off the actual word count, at roughly the speed someone
+    /// declares rather than reads, so the charge lands about when the mouth does.
+    /// It only decides when the reward fires; the card still waits for the lift.
+    private var chargeDuration: Double {
+        let words = current?.text.split(separator: " ").count ?? 12
+        return min(max(Double(words) / 2.6 + 0.7, 2.0), 7.5)
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -96,7 +114,10 @@ struct BurstDeclarationStage: View {
         .onChange(of: isTransitioning) { _, transitioning in
             // A charge interrupted by the card leaving would otherwise leave the
             // aura lit with nothing charging it.
-            if transitioning { isCharging = false }
+            if transitioning {
+                isCharging = false
+                isSealed = false
+            }
         }
     }
 
@@ -138,7 +159,6 @@ struct BurstDeclarationStage: View {
             Text("\(index + 1)")
                 .font(.system(size: 14, weight: .bold))
                 .foregroundColor(.white)
-                .contentTransition(.numericText())
         }
         .frame(width: 40, height: 40)
     }
@@ -221,19 +241,16 @@ struct BurstDeclarationStage: View {
                 .modifier(SpeakReveal(delay: 0.45))
 
             Spacer(minLength: DS.Spacing.sm)
-
-            releaseHint
         }
         .padding(.vertical, DS.Spacing.lg)
         .padding(.horizontal, DS.Spacing.lg)
         .frame(width: cardWidth, height: cardHeight)
         .background(cardSurface)
         .overlay(surgeFlare)
-        .scaleEffect(cardScale)
-        .rotationEffect(.degrees(Double(drag.width) / 26))
-        .offset(x: drag.width, y: drag.height * 0.22)
-        .opacity(cardOpacity * dragFade)
-        .gesture(dragGesture)
+        .scaleEffect(isCharging ? 1.035 : 1.0)
+        .animation(.easeInOut(duration: 0.35), value: isCharging)
+        .offset(y: cardLift)
+        .opacity(cardOpacity)
         .dsAppear(0, rise: 22)
     }
 
@@ -286,16 +303,6 @@ struct BurstDeclarationStage: View {
             .modifier(SpeakReveal(delay: 0))
     }
 
-    /// Appears only once the card is far enough to leave, so the gesture teaches
-    /// itself the first time a thumb wanders.
-    private var releaseHint: some View {
-        Text(pastThreshold ? "Release" : "Swipe or hold to speak it")
-            .font(.system(size: 13, weight: .semibold, design: .rounded))
-            .kerning(0.6)
-            .foregroundColor(pastThreshold ? DS.Palette.gold : .white.opacity(0.45))
-            .animation(DS.Motion.quick, value: pastThreshold)
-    }
-
     private var surgeFlare: some View {
         Group {
             if surgeFlareID > 0 {
@@ -314,64 +321,41 @@ struct BurstDeclarationStage: View {
                 .frame(width: cardWidth)
 
             HoldToDeclareButton(
-                title: isLast ? "Seal It" : "Speak It",
+                title: buttonTitle,
                 width: min(size.width * 0.85, 460),
+                chargeDuration: chargeDuration,
                 isLocked: isTransitioning,
                 isCharging: $isCharging,
-                onRelease: { advance(.tap, exit: CGSize(width: 0, height: -70)) },
-                onSurge: { surge() }
+                isSealed: $isSealed,
+                onSealed: { seal() },
+                onRelease: { didSeal in
+                    advance(didSeal ? .surge : .tap)
+                }
             )
 
-            Text(isCharging ? "Keep speaking. Power is building." : "Hold the button while you speak it out loud")
+            Text(hint)
                 .font(.system(size: 14, weight: .medium))
                 .foregroundColor(isCharging ? DS.Palette.gold : .white.opacity(0.7))
                 .multilineTextAlignment(.center)
-                .animation(DS.Motion.quick, value: isCharging)
+                .animation(DS.Motion.quick, value: hint)
                 .padding(.horizontal, DS.Spacing.lg)
         }
     }
 
-    // MARK: - Gesture
+    private var buttonTitle: String {
+        if isSealed { return isLast ? "Sealed" : "Amen" }
+        return isLast ? "Seal It" : "Speak It"
+    }
 
-    private var dragGesture: some Gesture {
-        DragGesture(minimumDistance: 12)
-            .onChanged { value in
-                guard !isTransitioning else { return }
-                drag = value.translation
-
-                let crossed = abs(value.translation.width) > swipeThreshold
-                if crossed != pastThreshold {
-                    pastThreshold = crossed
-                    if crossed { Juice.play(.tapSolid) }
-                }
-            }
-            .onEnded { value in
-                guard !isTransitioning else { return }
-
-                if abs(value.translation.width) > swipeThreshold {
-                    let direction: CGFloat = value.translation.width > 0 ? 1 : -1
-                    advance(.swipe, exit: CGSize(width: direction * size.width * 1.25,
-                                                 height: value.translation.height))
-                } else {
-                    pastThreshold = false
-                    withAnimation(DS.Motion.bouncy) { drag = .zero }
-                }
-            }
+    /// The hint's whole job is teaching that the lift is what advances, since
+    /// that is the one part of this interaction nobody expects.
+    private var hint: String {
+        if isSealed { return "Let go when you're done." }
+        if isCharging { return "Keep speaking. Take as long as you need." }
+        return "Hold the button while you speak it out loud"
     }
 
     // MARK: - Derived visuals
-
-    /// The card shrinks and dims as it is pulled aside, so a half-committed
-    /// swipe reads as "not yet" without a word of copy.
-    private var dragFade: Double {
-        let distance = min(abs(Double(drag.width)), 400)
-        return 1 - (distance / 400) * 0.45
-    }
-
-    private var cardScale: CGFloat {
-        let pulled = min(abs(drag.width), 400) / 400
-        return (isCharging ? 1.035 : 1.0) - pulled * 0.04
-    }
 
     /// Long declarations step down a size rather than wrapping into a wall.
     private func declarationFontSize(for text: String) -> CGFloat {
@@ -384,35 +368,26 @@ struct BurstDeclarationStage: View {
 
     // MARK: - Advancing
 
-    private func surge() {
+    /// The charge completed. Light the card and stop there: the finger decides
+    /// when this line is over, not the clock.
+    private func seal() {
         guard !isTransitioning else { return }
 
         surgeFlareID += 1
         Juice.play(.celebrate)
-
-        // Lets the flare read before the card leaves under it.
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.32) {
-            advance(.surge, exit: CGSize(width: 0, height: -90))
-        }
     }
 
-    private func advance(_ method: BurstAdvanceMethod, exit: CGSize) {
+    private func advance(_ method: BurstAdvanceMethod) {
         guard !isTransitioning else { return }
         isTransitioning = true
         onAdvance(method, index)
 
-        // A tap already buzzed on press-down and a surge has its own celebration,
-        // so only the swipe still needs a confirmation under the thumb.
-        if method == .swipe { Juice.play(.tapLight) }
-
         withAnimation(.easeOut(duration: 0.24)) {
-            drag = exit
+            cardLift = -70
             cardOpacity = 0
         }
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.24) {
-            pastThreshold = false
-
             guard !isLast else {
                 isTransitioning = false
                 onFinish(method)
@@ -422,7 +397,7 @@ struct BurstDeclarationStage: View {
             // No animation on the reset: the card is invisible and about to be
             // rebuilt by `.id(index)`, which replays the entrance from scratch.
             index += 1
-            drag = .zero
+            cardLift = 0
             cardOpacity = 1
             surgeFlareID = 0
             isTransitioning = false
@@ -432,30 +407,32 @@ struct BurstDeclarationStage: View {
 
 // MARK: - Hold to declare
 
-/// The primary control. A press advances on release; a press held through a full
-/// charge fires a surge instead and advances itself.
+/// The primary control.
+///
+/// Driven by a zero-distance `DragGesture` rather than `onLongPressGesture`,
+/// because a long-press gesture *completes* at its minimum duration and stops
+/// reporting: there is no way to tell when the finger actually came up. That is
+/// precisely the signal this screen is built on, so the gesture that reports it
+/// is the one used.
 private struct HoldToDeclareButton: View {
 
     let title: String
     let width: CGFloat
-    /// True while the card is leaving. The button keeps taking touches so a
-    /// gesture already under way completes normally, but nothing it reports gets
-    /// acted on twice.
+    /// How long this line takes to speak. Set by the stage per declaration.
+    let chargeDuration: Double
+    /// True while the card is leaving.
     let isLocked: Bool
     @Binding var isCharging: Bool
-    let onRelease: () -> Void
-    let onSurge: () -> Void
+    @Binding var isSealed: Bool
+    /// The charge hit full. The card lights; nothing advances.
+    let onSealed: () -> Void
+    /// The finger came up. `true` when it had charged all the way first.
+    let onRelease: (Bool) -> Void
 
     @State private var charge: CGFloat = 0
-    @State private var didSurge = false
-    /// The charge *reached* full. `charge` itself is set to 1 the moment the
-    /// press starts and only rendered gradually, so it cannot answer this.
-    @State private var didReachFull = false
+    @State private var isPressing = false
     @State private var pressScale: CGFloat = 1
-    @State private var ticks: [DispatchWorkItem] = []
-
-    /// Long enough to say a declaration over, short enough that nobody waits.
-    private let chargeDuration: Double = 1.4
+    @State private var pending: [DispatchWorkItem] = []
 
     var body: some View {
         ZStack {
@@ -472,7 +449,7 @@ private struct HoldToDeclareButton: View {
             .allowsHitTesting(false)
 
             HStack(spacing: DS.Spacing.xs) {
-                Image(systemName: didReachFull ? "flame.fill" : "bolt.fill")
+                Image(systemName: isSealed ? "flame.fill" : "bolt.fill")
                     .font(.system(size: 19, weight: .bold))
                 Text(title)
                     .font(.system(size: 18, weight: .semibold))
@@ -485,88 +462,100 @@ private struct HoldToDeclareButton: View {
                 radius: isCharging ? 20 : 10, x: 0, y: 6)
         .scaleEffect(pressScale)
         .contentShape(Capsule())
-        .onLongPressGesture(minimumDuration: chargeDuration, maximumDistance: 60) {
-            fireSurge()
-        } onPressingChanged: { pressing in
-            pressing ? beginCharge() : endCharge()
-        }
+        .gesture(
+            // minimumDistance 0 so onChanged lands on touch-down; onEnded is the
+            // real lift, which is the whole point.
+            DragGesture(minimumDistance: 0)
+                .onChanged { _ in
+                    guard !isPressing else { return }
+                    beginCharge()
+                }
+                .onEnded { _ in
+                    guard isPressing else { return }
+                    endCharge()
+                }
+        )
         .onChange(of: isLocked) { _, locked in
             // The card left under a finger that is still down. Put the button
-            // back to rest now rather than waiting for a lift that may be
-            // delivered as a cancellation instead.
+            // back to rest now rather than waiting for a lift that may never be
+            // delivered.
             if locked { reset() }
         }
+        // A raw gesture carries none of a Button's semantics, so VoiceOver is
+        // told what this is and what holding it does.
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(.isButton)
+        .accessibilityLabel(title)
+        .accessibilityHint("Hold while you speak the declaration out loud, then let go.")
     }
 
     private func beginCharge() {
         guard !isLocked else { return }
-        didSurge = false
-        didReachFull = false
+
+        isPressing = true
         isCharging = true
+        isSealed = false
         Juice.play(.tapLight)
 
         withAnimation(.easeOut(duration: 0.12)) { pressScale = 0.97 }
         withAnimation(.linear(duration: chargeDuration)) { charge = 1 }
 
-        scheduleTicks()
+        schedule()
     }
 
     private func endCharge() {
-        cancelTicks()
-        withAnimation(.easeOut(duration: 0.18)) { pressScale = 1 }
+        let sealed = isSealed
 
-        // The surge already advanced the burst; the lift is just the finger
-        // leaving a button that has done its job.
-        guard !didSurge else {
-            didReachFull = false
-            charge = 0
-            return
-        }
-
+        cancelPending()
+        isPressing = false
         isCharging = false
+        isSealed = false
+
+        withAnimation(.easeOut(duration: 0.18)) { pressScale = 1 }
         withAnimation(.easeOut(duration: 0.22)) { charge = 0 }
-        onRelease()
+
+        onRelease(sealed)
     }
 
-    private func fireSurge() {
-        guard !isLocked else { return }
-        didSurge = true
-        didReachFull = true
-        cancelTicks()
-        // Stays charging on purpose: the card should still be lit while the
-        // flare plays over it. The stage clears this when the card leaves.
-        charge = 1
-        onSurge()
+    /// The rising pulse under the thumb while the line is spoken, and the
+    /// completion at the end of it. All of it cancellable, because the finger
+    /// can come up at any point.
+    private func schedule() {
+        cancelPending()
+
+        var items: [DispatchWorkItem] = []
+
+        for fraction in [0.35, 0.70] {
+            let item = DispatchWorkItem {
+                Juice.play(fraction < 0.5 ? .tapLight : .tapSolid)
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + chargeDuration * fraction,
+                                          execute: item)
+            items.append(item)
+        }
+
+        let full = DispatchWorkItem {
+            isSealed = true
+            onSealed()
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + chargeDuration, execute: full)
+        items.append(full)
+
+        pending = items
+    }
+
+    private func cancelPending() {
+        pending.forEach { $0.cancel() }
+        pending = []
     }
 
     private func reset() {
-        cancelTicks()
-        didSurge = false
-        didReachFull = false
+        cancelPending()
+        isPressing = false
         isCharging = false
+        isSealed = false
         charge = 0
         pressScale = 1
-    }
-
-    /// A rising pulse under the thumb while the line is being spoken.
-    private func scheduleTicks() {
-        cancelTicks()
-
-        let beats: [(Double, Juice.Feel)] = [
-            (chargeDuration * 0.35, .tapLight),
-            (chargeDuration * 0.70, .tapSolid)
-        ]
-
-        ticks = beats.map { beat in
-            let item = DispatchWorkItem { Juice.play(beat.1) }
-            DispatchQueue.main.asyncAfter(deadline: .now() + beat.0, execute: item)
-            return item
-        }
-    }
-
-    private func cancelTicks() {
-        ticks.forEach { $0.cancel() }
-        ticks = []
     }
 }
 
