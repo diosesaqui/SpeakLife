@@ -20,7 +20,13 @@ struct DailyDeclarationBurstView: View {
     @State private var currentDeclarationIndex = 0
     @State private var showCompletionView = false
     @State private var startTime = Date()
-    @State private var declarationOpacity = 0.0
+    /// True once the intro has been dismissed and there is a line on screen to
+    /// speak. Gates the ambient power effect, which should not run over the
+    /// intro, the action slat, or the completion screen.
+    @State private var burstActive = false
+    /// How many of the seven were held all the way to a surge. Reported with the
+    /// completion so the new interaction can be measured, not guessed at.
+    @State private var surgeCount = 0
     @State private var isTransitioning = false
     @State private var showSpiritualGraph = false
     /// The composed burst: the lines, where they came from, and the theme.
@@ -32,6 +38,7 @@ struct DailyDeclarationBurstView: View {
     /// time, which could answer differently than the composition did.
     @State private var session: BurstSession?
     @State private var showIntroScreen = true
+    @State private var introPulse: CGFloat = 1
 
     // The eighth slat: one corresponding action, mapped to the theme the seven
     // declarations were actually about.
@@ -86,7 +93,7 @@ struct DailyDeclarationBurstView: View {
                     // Power-release effect: active while declaration is fully visible
                     // and the user is actively speaking it (not mid-transition)
                     SpeakingPowerEffect(
-                        isActive: declarationOpacity > 0.5 && !isTransitioning,
+                        isActive: burstActive && !isTransitioning,
                         message: "God's power flows when you speak"
                     )
 
@@ -179,15 +186,24 @@ struct DailyDeclarationBurstView: View {
                         )
                         .frame(width: 120, height: 120)
                         .blur(radius: 20)
-                    
+                        .scaleEffect(introPulse)
+
                     Circle()
                         .fill(DS.Gradient.ember)
                         .frame(width: 100, height: 100)
                         .shadow(color: Color(red: 1.0, green: 0.34, blue: 0.13).opacity(0.5), radius: 8, x: 0, y: 4)
+                        .scaleEffect(2 - introPulse)
 
                     Image(systemName: "bolt.fill")
                         .font(.system(size: 50, weight: .bold))
                         .foregroundColor(.white)
+                }
+                .onAppear {
+                    // The icon breathes rather than sits. A still hero on a screen
+                    // whose whole promise is release reads as a screenshot.
+                    withAnimation(.easeInOut(duration: 1.8).repeatForever(autoreverses: true)) {
+                        introPulse = 1.12
+                    }
                 }
                 
                 VStack(spacing: DS.Spacing.md) {
@@ -200,6 +216,15 @@ struct DailyDeclarationBurstView: View {
                         .foregroundColor(.white.opacity(0.9))
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 40)
+
+                    // The stage has two gestures a thumb will not find on its
+                    // own. Naming them here costs one line and saves the first
+                    // declaration from being spent discovering them.
+                    HStack(spacing: DS.Spacing.md) {
+                        introHint(icon: "hand.tap.fill", text: "Hold to speak")
+                        introHint(icon: "hand.draw.fill", text: "Swipe to move")
+                    }
+                    .padding(.top, DS.Spacing.xs)
                 }
             }
             .dsAppear(0)
@@ -241,146 +266,52 @@ struct DailyDeclarationBurstView: View {
         }
     }
 
+    private func introHint(icon: String, text: String) -> some View {
+        HStack(spacing: DS.Spacing.xxs) {
+            Image(systemName: icon)
+                .font(.system(size: 13, weight: .semibold))
+            Text(text)
+                .font(.system(size: 14, weight: .medium))
+        }
+        .foregroundColor(.white.opacity(0.85))
+        .padding(.horizontal, DS.Spacing.sm)
+        .padding(.vertical, DS.Spacing.xs)
+        .background(Capsule().fill(Color.white.opacity(0.12)))
+    }
+
     // MARK: - Burst Content View
-    
+
+    /// The speaking screen is `BurstDeclarationStage`: a card deck the user can
+    /// swipe through and a button that charges while they hold it. This view
+    /// keeps only the loading state and the session-level bookkeeping, so the
+    /// interaction lives in one file that can be reasoned about on its own.
     private func burstContentView(geometry: GeometryProxy) -> some View {
-        VStack(spacing: 0) {
+        Group {
             if session == nil {
-                // Loading state
                 VStack(spacing: 20) {
                     ProgressView()
                         .progressViewStyle(CircularProgressViewStyle(tint: .white))
                         .scaleEffect(1.5)
-                    
+
                     Text("Preparing your personalized declarations...")
                         .font(.system(size: 16, weight: .medium))
                         .foregroundColor(.white.opacity(0.8))
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
-            // Header
-            HStack {
-                Button(action: { dismiss() }) {
-                    Image(systemName: "xmark.circle.fill")
-                        .font(.system(size: 28))
-                        .foregroundColor(.white.opacity(0.6))
-                }
-                .buttonStyle(.dsPressable(feel: .tapSolid))
-
-                Spacer()
-
-                Text("Daily Victory")
-                    .font(.system(size: 20, weight: .semibold))
-                    .foregroundColor(.white)
-                
-                Spacer()
-                
-                // Progress indicator
-                ZStack {
-                    Circle()
-                        .stroke(Color.white.opacity(0.2), lineWidth: 3)
-                        .frame(width: 40, height: 40)
-                    
-                    Circle()
-                        .trim(from: 0, to: CGFloat(currentDeclarationIndex + 1) / CGFloat(morningDeclarations.count))
-                        .stroke(
-                            LinearGradient(
-                                colors: [Color(red: 1.0, green: 0.58, blue: 0.0), Color(red: 1.0, green: 0.34, blue: 0.13)],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            ),
-                            style: StrokeStyle(lineWidth: 3, lineCap: .round)
-                        )
-                        .frame(width: 40, height: 40)
-                        .rotationEffect(.degrees(-90))
-                        .animation(.easeInOut, value: currentDeclarationIndex)
-                    
-                    Text("\(currentDeclarationIndex + 1)")
-                        .font(.system(size: 14, weight: .bold))
-                        .foregroundColor(.white)
-                }
+                BurstDeclarationStage(
+                    declarations: morningDeclarations,
+                    index: $currentDeclarationIndex,
+                    isTransitioning: $isTransitioning,
+                    size: geometry.size,
+                    onAdvance: recordAdvance,
+                    onFinish: finishBurst,
+                    onClose: { dismiss() }
+                )
             }
-            .padding(.horizontal, 20)
-            .padding(.top, 60)
-            
-            Spacer()
-            
-            // Declaration Content
-            VStack(spacing: DS.Spacing.lg) {
-                // Category label with orange gradient background
-                Text(morningDeclarations[currentDeclarationIndex].categoryLabel.uppercased())
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundColor(.white)
-                    .padding(.horizontal, DS.Spacing.md)
-                    .padding(.vertical, DS.Spacing.xs)
-                    .background(
-                        RoundedRectangle(cornerRadius: 20)
-                            .fill(
-                                LinearGradient(
-                                    colors: [Color(red: 1.0, green: 0.58, blue: 0.0), Color(red: 1.0, green: 0.34, blue: 0.13)],
-                                    startPoint: .leading,
-                                    endPoint: .trailing
-                                )
-                            )
-                    )
-                    .opacity(declarationOpacity)
-                    .scaleEffect(declarationOpacity)
-                
-                VStack(spacing: 20) {
-                    Text(morningDeclarations[currentDeclarationIndex].text)
-                        .font(.system(size: 28, weight: .bold, design: .serif))
-                        .foregroundColor(.white)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, 30)
-                        .opacity(declarationOpacity)
-
-                    Text(morningDeclarations[currentDeclarationIndex].verse)
-                        .font(.system(size: 14, weight: .medium, design: .rounded))
-                        .foregroundColor(.white.opacity(0.6))
-                        .opacity(declarationOpacity)
-                }
-            }
-            
-            Spacer()
-            
-            // Bottom Section
-            VStack(spacing: 20) {
-                Text("Speak this truth aloud")
-                    .font(.system(size: 16))
-                    .foregroundColor(.white.opacity(0.8))
-                
-                HStack(spacing: DS.Spacing.xs) {
-                    ForEach(0..<morningDeclarations.count, id: \.self) { index in
-                        Circle()
-                            .fill(index <= currentDeclarationIndex ? Color(red: 1.0, green: 0.58, blue: 0.0) : Color.white.opacity(0.3))
-                            .frame(width: 8, height: 8)
-                    }
-                }
-                
-                Button(action: nextDeclaration) {
-                    Text(currentDeclarationIndex < morningDeclarations.count - 1 ? "Next Declaration" : "Complete Burst")
-                        .font(.system(size: 17, weight: .semibold))
-                        .foregroundColor(.white)
-                        .frame(width: geometry.size.width * 0.85, height: 50)
-                        .background(
-                            RoundedRectangle(cornerRadius: 25)
-                                .fill(
-                                    LinearGradient(
-                                        colors: [Color(red: 1.0, green: 0.58, blue: 0.0), Color(red: 1.0, green: 0.34, blue: 0.13)],
-                                        startPoint: .leading,
-                                        endPoint: .trailing
-                                    )
-                                )
-                        )
-                }
-                .buttonStyle(.dsPressable(feel: .tapLight, haptics: false))
-                .disabled(isTransitioning)
-            }
-            .padding(.bottom, 50)
-            } // Close else for loading check
         }
     }
-    
+
     // MARK: - Completion View
     
     private func completionView(geometry: GeometryProxy) -> some View {
@@ -502,8 +433,8 @@ struct DailyDeclarationBurstView: View {
                         
                         // Streak only — the one stat that actually matters
                         StatCard(
-                            value: "\(streakViewModel.displayStreak)",
-                            label: streakViewModel.displayStreak == 1 ? "Day Streak" : "Day Streak",
+                            count: streakViewModel.displayStreak,
+                            label: "Day Streak",
                             icon: "flame.fill",
                             scale: statsScale,
                             highlight: streakViewModel.displayStreak >= 7
@@ -628,12 +559,16 @@ struct DailyDeclarationBurstView: View {
     // MARK: - Completion Helper Views
     
     private struct StatCard: View {
-        let value: String
+        let count: Int
         let label: String
         let icon: String
         let scale: CGFloat
         var highlight: Bool = false
-        
+
+        /// A slow swell on the badge so the streak keeps breathing while the
+        /// screen is read, instead of landing once and going inert.
+        @State private var pulse: CGFloat = 1
+
         var body: some View {
             VStack(spacing: 8) {
                 ZStack {
@@ -641,16 +576,22 @@ struct DailyDeclarationBurstView: View {
                         .fill(highlight ? DS.Gradient.ember : DS.Gradient.gold)
                         .frame(width: 60, height: 60)
                         .shadow(color: (highlight ? Color(red: 1.0, green: 0.34, blue: 0.13) : DS.Palette.gold).opacity(0.5), radius: 8, x: 0, y: 4)
+                        .scaleEffect(pulse)
 
                     Image(systemName: icon)
                         .font(.system(size: 24, weight: .bold))
                         .foregroundColor(.white)
                 }
-                
-                Text(value)
-                    .font(.system(size: 28, weight: .black))
-                    .foregroundColor(.white)
-                
+                .onAppear {
+                    withAnimation(.easeInOut(duration: 1.6).repeatForever(autoreverses: true)) {
+                        pulse = 1.07
+                    }
+                }
+
+                // Climbs to the streak rather than arriving at it. The size of
+                // the number is the reward, so it gets a moment to be watched.
+                CountUpText(value: count)
+
                 Text(label)
                     .font(.system(size: 13, weight: .medium))
                     .foregroundColor(.white.opacity(0.8))
@@ -793,55 +734,47 @@ struct DailyDeclarationBurstView: View {
         AnalyticsService.shared.track("daily_burst_started", parameters: [
             "streak": streakViewModel.displayStreak
         ])
-        withAnimation(.easeIn(duration: 0.5)) {
-            declarationOpacity = 1
+        withAnimation(.easeIn(duration: 0.4)) {
+            burstActive = true
         }
     }
-    
-    private func nextDeclaration() {
-        guard !isTransitioning else { return }
 
-        // Haptic feedback
-        Juice.play(.tapLight)
+    /// One line spoken. Recorded per declaration so the hold-to-speak surge can
+    /// be compared against a plain tap instead of assumed to be used.
+    private func recordAdvance(_ method: BurstAdvanceMethod, at index: Int) {
+        if method == .surge { surgeCount += 1 }
 
-        if currentDeclarationIndex < morningDeclarations.count - 1 {
-            isTransitioning = true
-            
-            withAnimation(.easeOut(duration: 0.3)) {
-                declarationOpacity = 0
-            }
-            
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                currentDeclarationIndex += 1
-                withAnimation(.easeIn(duration: 0.3)) {
-                    declarationOpacity = 1
-                }
-                isTransitioning = false
-            }
-        } else {
-            // Complete the burst with success haptic
-            Juice.play(.success)
+        AnalyticsService.shared.track("daily_burst_declaration_spoken", parameters: [
+            "method": method.rawValue,
+            "position": index + 1,
+            "of": morningDeclarations.count
+        ])
+    }
 
-            let timeSpent = Date().timeIntervalSince(startTime)
-            burstTracker.recordBurstCompletion(
-                declarationCount: morningDeclarations.count,
-                timeSpent: timeSpent
-            )
-            
-            // Automatically complete the daily burst task
-            streakViewModel.completeTask(taskId: "complete_daily_burst")
+    /// The seventh line is spoken. Everything that counts is written here, before
+    /// the eighth slat is shown, so nothing downstream can cost the user the day.
+    private func finishBurst(_ method: BurstAdvanceMethod) {
+        Juice.play(.success)
+        burstActive = false
 
-            AnalyticsService.shared.track("daily_burst_completed", parameters: [
-                "declarations_count": morningDeclarations.count,
-                "time_spent": Int(timeSpent),
-                "streak": streakViewModel.displayStreak
-            ])
+        let timeSpent = Date().timeIntervalSince(startTime)
+        burstTracker.recordBurstCompletion(
+            declarationCount: morningDeclarations.count,
+            timeSpent: timeSpent
+        )
 
-            // The eighth slat. Everything that counts — the completion record, the
-            // streak, the checklist task — is already written above, so this screen
-            // can never cost the user their day.
-            presentActionSlide()
-        }
+        // Automatically complete the daily burst task
+        streakViewModel.completeTask(taskId: "complete_daily_burst")
+
+        AnalyticsService.shared.track("daily_burst_completed", parameters: [
+            "declarations_count": morningDeclarations.count,
+            "time_spent": Int(timeSpent),
+            "streak": streakViewModel.displayStreak,
+            "surges": surgeCount,
+            "final_method": method.rawValue
+        ])
+
+        presentActionSlide()
     }
 
     // MARK: - The Eighth Slat

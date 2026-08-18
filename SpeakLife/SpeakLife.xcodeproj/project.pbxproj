@@ -14,6 +14,7 @@
 		TIC00VW0000000000000005B /* EscapeHatchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = TIC00VW0000000000000005A /* EscapeHatchView.swift */; };
 		TIC00VW0000000000000006B /* TakenCaptiveView.swift in Sources */ = {isa = PBXBuildFile; fileRef = TIC00VW0000000000000006A /* TakenCaptiveView.swift */; };
 		FAA00VW0000000000000001B /* BurstFaithActionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAA00VW0000000000000001A /* BurstFaithActionView.swift */; };
+		FAA00VW0000000000000002B /* BurstDeclarationStage.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAA00VW0000000000000002A /* BurstDeclarationStage.swift */; };
 		TIC00RES000000000000001B /* thoughts.json in Resources */ = {isa = PBXBuildFile; fileRef = TIC00RES000000000000001A /* thoughts.json */; };
 		TIC00TST000000000000001B /* TakeItCaptiveServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TIC00TST000000000000001A /* TakeItCaptiveServiceTests.swift */; };
 		01ED29F757107A93D56507E0 /* WidgetIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59BFF68BFA515EAC0AC88C85 /* WidgetIntents.swift */; };
@@ -409,6 +410,7 @@
 		TIC00VW0000000000000005A /* EscapeHatchView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EscapeHatchView.swift; sourceTree = "<group>"; };
 		TIC00VW0000000000000006A /* TakenCaptiveView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TakenCaptiveView.swift; sourceTree = "<group>"; };
 		FAA00VW0000000000000001A /* BurstFaithActionView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BurstFaithActionView.swift; sourceTree = "<group>"; };
+		FAA00VW0000000000000002A /* BurstDeclarationStage.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BurstDeclarationStage.swift; sourceTree = "<group>"; };
 		TIC00TST000000000000001A /* TakeItCaptiveServiceTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TakeItCaptiveServiceTests.swift; sourceTree = "<group>"; };
 		TIC00RES000000000000001A /* thoughts.json */ = {isa = PBXFileReference; includeInIndex = 1; path = thoughts.json; sourceTree = "<group>"; };
 		067C652453504C60AD4342E8 /* AdaptiveSheetModifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdaptiveSheetModifier.swift; sourceTree = "<group>"; };
@@ -1301,6 +1303,7 @@
 				45FACE0012345678ABCDEF02 /* RemoteMessageView.swift */,
 				4525D6842F37C0EB00571394 /* DailyDeclarationBurstView.swift */,
 				FAA00VW0000000000000001A /* BurstFaithActionView.swift */,
+				FAA00VW0000000000000002A /* BurstDeclarationStage.swift */,
 				45F0AAAA2F40C0EB00571394 /* PremiumAnniversaryView.swift */,
 				45F0EAEA2F40C0EB00571394 /* YearInReview */,
 				45567D5D2F29CA5D00382072 /* Bible */,
@@ -2134,6 +2137,7 @@
 				45FACE0012345678ABCDEF01 /* RemoteMessageView.swift in Sources */,
 				4525D6852F37C0EB00571394 /* DailyDeclarationBurstView.swift in Sources */,
 				FAA00VW0000000000000001B /* BurstFaithActionView.swift in Sources */,
+				FAA00VW0000000000000002B /* BurstDeclarationStage.swift in Sources */,
 				45F0BBBB2F40C0EB00571394 /* PremiumAnniversaryView.swift in Sources */,
 				45F0DDDD2F40C0EB00571394 /* YearInReviewStats.swift in Sources */,
 				45F0FFFF2F40C0EB00571394 /* YearInReviewView.swift in Sources */,
