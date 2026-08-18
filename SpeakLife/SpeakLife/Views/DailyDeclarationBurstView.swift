@@ -217,12 +217,11 @@ struct DailyDeclarationBurstView: View {
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 40)
 
-                    // The stage has two gestures a thumb will not find on its
-                    // own. Naming them here costs one line and saves the first
-                    // declaration from being spent discovering them.
+                    // Nobody expects the lift to be what advances, so it gets
+                    // named here rather than discovered on the first line.
                     HStack(spacing: DS.Spacing.md) {
                         introHint(icon: "hand.tap.fill", text: "Hold to speak")
-                        introHint(icon: "hand.draw.fill", text: "Swipe to move")
+                        introHint(icon: "hand.raised.fill", text: "Let go when done")
                     }
                     .padding(.top, DS.Spacing.xs)
                 }
@@ -281,8 +280,8 @@ struct DailyDeclarationBurstView: View {
 
     // MARK: - Burst Content View
 
-    /// The speaking screen is `BurstDeclarationStage`: a card deck the user can
-    /// swipe through and a button that charges while they hold it. This view
+    /// The speaking screen is `BurstDeclarationStage`: a card deck and a button
+    /// that charges while the user holds it and speaks. This view
     /// keeps only the loading state and the session-level bookkeeping, so the
     /// interaction lives in one file that can be reasoned about on its own.
     private func burstContentView(geometry: GeometryProxy) -> some View {
