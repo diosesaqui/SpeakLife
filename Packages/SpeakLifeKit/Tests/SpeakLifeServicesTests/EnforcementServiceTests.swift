@@ -673,4 +673,52 @@ final class EnforcementServiceTests: XCTestCase {
             }
         }
     }
+    // MARK: - The card's completed beat
+
+    /// The card needs its own memory of a finished week.
+    ///
+    /// `justCompleted` is consumed by the full-screen celebration the instant it
+    /// presents, so anything rendered afterwards had no idea a campaign had
+    /// ended — which is why finishing seven days and returning to the feed
+    /// showed the same blank "what area of life do you need victory in?" as day
+    /// zero. This one outlives the cover.
+    func testCompletionEchoOutlivesTheCelebration() {
+        let id = catalog[0].id
+        XCTAssertTrue(service.startEnforcement(id: id, isPremium: true))
+        advance(Enforcement.length)
+
+        XCTAssertNotNil(service.justCompleted)
+        XCTAssertEqual(service.completionToAcknowledge?.id, id)
+
+        // The cover presents and clears itself. The card's beat must remain.
+        service.justCompleted = nil
+        XCTAssertEqual(service.completionToAcknowledge?.id, id,
+                       "Dismissing the celebration must not erase the card's memory.")
+    }
+
+    /// It survives a kill, for the same reason the celebration does: the week
+    /// can be finished from a surface that is not the one showing this card.
+    func testCompletionEchoSurvivesRelaunch() {
+        let id = catalog[0].id
+        XCTAssertTrue(service.startEnforcement(id: id, isPremium: true))
+        advance(Enforcement.length)
+
+        let relaunched = EnforcementService(defaults: defaults, calendar: .current, catalog: catalog)
+        XCTAssertEqual(relaunched.completionToAcknowledge?.id, id)
+    }
+
+    /// And it plays once. Acknowledging clears it for good, so the card settles
+    /// into the invitation instead of replaying the win on every appearance.
+    func testAcknowledgingClearsTheEchoPermanently() {
+        let id = catalog[0].id
+        XCTAssertTrue(service.startEnforcement(id: id, isPremium: true))
+        advance(Enforcement.length)
+
+        service.acknowledgeCompletion()
+        XCTAssertNil(service.completionToAcknowledge)
+        let relaunched = EnforcementService(defaults: defaults, calendar: .current, catalog: catalog)
+        XCTAssertNil(relaunched.completionToAcknowledge,
+                     "An acknowledged week must not come back on the next launch.")
+    }
+
 }

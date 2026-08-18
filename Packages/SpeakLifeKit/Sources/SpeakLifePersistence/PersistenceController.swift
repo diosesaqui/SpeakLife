@@ -20,7 +20,22 @@ public final class PersistenceController {
     private let importRetryDelays = [5.0, 10.0, 15.0, 30.0, 60.0] // Progressive delays
 
     deinit {
-        // Clean up notification observers
+        // Clean up notification observers.
+        //
+        // Deliberately does NOT delete an `inMemory: true` stack's scratch
+        // store. That was tried, and CI answered immediately:
+        //
+        //   CoreData: error: (6922) I/O error for database at
+        //   .../SpeakLifeScratchStores/471DB.../SpeakLife.sqlite
+        //   CoreData: error: ... unable to open database file
+        //
+        // A controller routinely outlives its own reference while the context
+        // it vended is still in use — `FavoritesMigrationServiceTests` builds
+        // one in a local `let` and hands the view context on, and the app's own
+        // repositories are constructed the same way. Pulling the file out from
+        // under a live store is not cleanup, it is a mid-test I/O failure. The
+        // stores are a few KB each in the temp directory, which the OS reaps on
+        // its own; leaving them there is the correct trade.
         NotificationCenter.default.removeObserver(self)
     }
 
@@ -132,20 +147,46 @@ public final class PersistenceController {
         #endif
         
         if inMemory {
+            // A private scratch directory per controller, NOT `/dev/null`.
+            //
+            // The Xcode template points an in-memory store at `/dev/null`, and
+            // that store is only "in memory" by accident: SQLite still commits
+            // pages to the file, the writes are swallowed, and the rows survive
+            // solely in that connection's page cache. Nothing guarantees the
+            // cache holds. When it spills — and it does under a 500-test suite
+            // that leaves dozens of these stacks alive at once — the pages are
+            // read back off /dev/null as end-of-file, and committed rows are
+            // simply gone.
+            //
+            // That is exactly what CI kept showing, in a different persistence
+            // test every run and never the same one twice:
+            //
+            //   AffirmationRepositoryTests.testSearchAffirmationEntries — 0 of 1
+            //   DeclarationFavoriteRepositoryTests.testFetchByCategory  — 2 of 3
+            //
+            // Both write their rows and await every save before reading, so
+            // there is no race in the tests to fix. The store was losing them.
+            //
+            // A real file in a unique temp directory keeps SQLite honest: pages
+            // spill somewhere they can be read back, and no two stacks share a
+            // path. Nothing deletes it — see the note in `deinit`.
+            let directory = Self.makeScratchStoreDirectory()
+
             container.persistentStoreDescriptions.forEach { storeDescription in
-                storeDescription.url = URL(fileURLWithPath: "/dev/null")
+                storeDescription.url = directory.appendingPathComponent("SpeakLife.sqlite")
 
                 // Not redundant. `NSPersistentCloudKitContainer` fills the
                 // default description's `cloudKitContainerOptions` in from the
                 // app's iCloud entitlement before this code runs, so an
                 // in-memory store that never asked for CloudKit gets mirroring
-                // anyway. The suite's own log said so:
+                // anyway. The suite's own log said so, back when the throwaway
+                // store still pointed at /dev/null:
                 //
                 //   Observing store: <NSSQLCore> (URL: file:///dev/null)
                 //   CloudKit enabled: true
                 //
-                // A store pointed at /dev/null has nothing to mirror, and the
-                // setup request it enqueues is pure latency in every test.
+                // A throwaway store has nothing worth mirroring, and the setup
+                // request it enqueues is pure latency in every test.
                 storeDescription.cloudKitContainerOptions = nil
             }
         } else {
@@ -222,13 +263,32 @@ public final class PersistenceController {
         // names come from UIKit and must be injected by the app target so
         // this file stays UIKit-free.
 
-        // Check CloudKit import in background to avoid blocking UI
-        Task(priority: .background) {
-            try? await Task.sleep(nanoseconds: 5_000_000_000) // 5 seconds
-            await MainActor.run {
-                self.checkForInitialCloudKitImport()
+        // Check CloudKit import in background to avoid blocking UI.
+        //
+        // Skipped under XCTest, and weak either way. `checkForInitialCloudKitImport`
+        // already returns immediately in tests, so the work was never the
+        // problem — the strong capture was. It pinned every controller a test
+        // built, and the Core Data stack under it, alive for five seconds past
+        // the test that owned it. At ~500 tests in ~30 seconds that is dozens
+        // of live SQLite connections stacked on top of each other, which is the
+        // memory pressure the scratch-store note above is about.
+        if !Self.isRunningTests {
+            Task(priority: .background) { [weak self] in
+                try? await Task.sleep(nanoseconds: 5_000_000_000) // 5 seconds
+                await MainActor.run {
+                    self?.checkForInitialCloudKitImport()
+                }
             }
         }
+    }
+
+    /// A private directory for one throwaway store, under the temp directory.
+    private static func makeScratchStoreDirectory() -> URL {
+        let directory = URL(fileURLWithPath: NSTemporaryDirectory(), isDirectory: true)
+            .appendingPathComponent("SpeakLifeScratchStores", isDirectory: true)
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        return directory
     }
     
     // MARK: - Save Context

@@ -104,6 +104,34 @@ public final class EnforcementService: ObservableObject {
         }
     }
 
+    /// The campaign the CARD still owes an acknowledgement for.
+    ///
+    /// Deliberately separate from `justCompleted`, which the full-screen
+    /// celebration consumes and nils the moment it presents. After that the
+    /// card has no memory that anything happened, so someone who finishes a
+    /// seven-day stand and comes back to the feed is met by the same blank
+    /// "What area of life do you need victory in?" they saw on day zero. This
+    /// outlives the cover and gives the card its own beat.
+    ///
+    /// Stored whole for the same reason `justCompleted` is: `finish()` clears
+    /// `assembledEnforcement`, so a curated campaign cannot be looked up by id
+    /// afterwards — its id was never in the catalog and its content is gone.
+    @Published public private(set) var completionToAcknowledge: Enforcement?
+
+    /// Called by the card once it has played its completed state.
+    public func acknowledgeCompletion() {
+        guard completionToAcknowledge != nil else { return }
+        completionToAcknowledge = nil
+        defaults.removeObject(forKey: completionEchoKey)
+    }
+
+    private func recordCompletionForCard(_ enforcement: Enforcement) {
+        completionToAcknowledge = enforcement
+        if let data = try? JSONEncoder().encode(enforcement) {
+            defaults.set(data, forKey: completionEchoKey)
+        }
+    }
+
     public private(set) var catalog: [Enforcement] = []
 
     private let defaults: UserDefaults
@@ -112,6 +140,7 @@ public final class EnforcementService: ObservableObject {
     private let progressKey = "enforcementProgress"
     private let pendingCelebrationKey = "enforcementPendingCelebration"
     private let pendingCelebrationBlobKey = "enforcementPendingCelebrationBlob"
+    private let completionEchoKey = "enforcementCompletionEcho"
     private let assemblySeedKey = "enforcementAssemblySeed"
 
     /// Block-based observers deregister by token, not by `self`.
@@ -141,6 +170,14 @@ public final class EnforcementService: ObservableObject {
         } else if let pendingId = defaults.string(forKey: pendingCelebrationKey) {
             // Installs that banked a celebration before the blob existed.
             self.justCompleted = self.catalog.first { $0.id == pendingId }
+        }
+
+        // The card's echo is restored the same way and on the same terms. It is
+        // read separately because the cover clears `justCompleted` as soon as it
+        // shows, and the card's beat has to survive that.
+        if let data = defaults.data(forKey: completionEchoKey),
+           let stored = try? JSONDecoder().decode(Enforcement.self, from: data) {
+            self.completionToAcknowledge = stored
         }
 
         // Progress is read once, here — so a campaign arriving from the user's
@@ -453,8 +490,12 @@ public final class EnforcementService: ObservableObject {
         if let finished {
             if Thread.isMainThread {
                 justCompleted = finished
+                recordCompletionForCard(finished)
             } else {
-                DispatchQueue.main.async { [weak self] in self?.justCompleted = finished }
+                DispatchQueue.main.async { [weak self] in
+                    self?.justCompleted = finished
+                    self?.recordCompletionForCard(finished)
+                }
             }
         }
         return result

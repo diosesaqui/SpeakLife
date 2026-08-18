@@ -88,26 +88,36 @@ public final class AudioFavoriteRepository: AudioFavoriteRepositoryProtocol {
                 NSSortDescriptor(keyPath: \AudioFavoriteEntry.createdAt, ascending: false),
                 // Tiebreak, so the order is total rather than merely mostly
                 // decided. `createdAt` is not unique — a migration importing a
-                // legacy file writes its rows in one tight loop — and this
-                // request is batched, so SQLite pages through the sort order
-                // twenty rows at a time. Ties make the page boundary ambiguous,
-                // and a row sitting on one can be paged over: the suite saw a
-                // fetch of 100 saved favorites come back with 99, and only
-                // sometimes.
+                // legacy file writes its rows in one tight loop — and an
+                // ambiguous order makes the results of any one fetch a
+                // coin toss.
                 NSSortDescriptor(keyPath: \AudioFavoriteEntry.audioId, ascending: true)
             ]
-            
-            // Add batch fetching for better performance
-            request.fetchBatchSize = 20
-            
+
+            // No `fetchBatchSize`. It used to be 20, "for better performance",
+            // set alongside `returnsObjectsAsFaults = false` on the same
+            // request — and those two ask for opposite things. Batching says
+            // hand back faults and page them in twenty at a time; the other
+            // says materialize every row now. Together they were losing rows:
+            //
+            //   AudioFavoriteRepositoryTests.testFetchByTag — 1 of 2
+            //   AudioFavoriteRepositoryTests.testFindByAudioId — nil of 1
+            //
+            // Both save every row and await it before reading, so there is no
+            // race in the tests. A tiebreak sort was added first, on the theory
+            // that ties at a page boundary were what got paged over; it did not
+            // hold, and the fetches kept coming back short. Batching buys
+            // nothing here anyway — this is one person's favorites, hundreds of
+            // rows at the outside, and the caller wants them all materialized.
+
             // Add limit if specified
             if let limit = limit {
                 request.fetchLimit = limit
             }
-            
+
             // Return properties only for better memory usage
             request.returnsObjectsAsFaults = false
-            
+
             let results = try self.context.fetch(request)
             return results
         }
@@ -147,12 +157,9 @@ public final class AudioFavoriteRepository: AudioFavoriteRepositoryProtocol {
                 NSSortDescriptor(keyPath: \AudioFavoriteEntry.createdAt, ascending: false),
                 // Tiebreak, so the order is total rather than merely mostly
                 // decided. `createdAt` is not unique — a migration importing a
-                // legacy file writes its rows in one tight loop — and this
-                // request is batched, so SQLite pages through the sort order
-                // twenty rows at a time. Ties make the page boundary ambiguous,
-                // and a row sitting on one can be paged over: the suite saw a
-                // fetch of 100 saved favorites come back with 99, and only
-                // sometimes.
+                // legacy file writes its rows in one tight loop — and an
+                // ambiguous order makes each emission a different arrangement
+                // of the same rows, which the UI reads as movement.
                 NSSortDescriptor(keyPath: \AudioFavoriteEntry.audioId, ascending: true)
             ]
         

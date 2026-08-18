@@ -65,6 +65,9 @@ struct EnforcementCard: View {
     /// Confirms before dropping a campaign — the days already spoken are lost,
     /// and it sits next to the audio button, so a mis-tap must not wipe progress.
     @State private var confirmingSwitch = false
+    /// Drives the completed state's entrance, and guards its one-way exit.
+    @State private var completionRevealed = false
+    @State private var completionSettling = false
     /// What the user typed. Local so a slow match never blocks the field.
     @State private var situation = ""
     @State private var isMatching = false
@@ -83,6 +86,11 @@ struct EnforcementCard: View {
             Group {
                 if let enforcement = service.activeEnforcement, let day = service.activeDay {
                     activeCard(enforcement: enforcement, day: day)
+                } else if let finished = service.completionToAcknowledge {
+                    // Ahead of both the invitation and the paywall. A week that
+                    // was actually held outranks an offer, and it outranks an
+                    // upsell by more.
+                    completedCard(finished)
                 } else if isPremium {
                     invitationCard
                 } else {
@@ -269,13 +277,87 @@ struct EnforcementCard: View {
     // meanings — is what made a campaign read as a separate track to keep up
     // with. "DAY 3 OF 7" in the eyebrow says the same thing in less space.
 
+    // MARK: - Completed
+
+    /// The beat between finishing a week and being asked for the next one.
+    ///
+    /// Without this the card went straight back to "What area of life do you
+    /// need victory in?" with an empty field — the identical cold open someone
+    /// gets on day zero. Seven days of standing, and the app's response was a
+    /// blank text box. The full-screen celebration does exist, but it is
+    /// consumed the moment it presents and lives on the Today tab; whatever
+    /// surface they land on next had no idea anything had happened.
+    ///
+    /// It plays and then gets out of the way. The number lands, the theme they
+    /// held lands, and then it settles into the invitation on its own — no
+    /// button to dismiss a win, and nothing to get stuck behind. Tapping moves
+    /// it along early for someone who has already read it.
+    private func completedCard(_ finished: Enforcement) -> some View {
+        VStack(alignment: .leading, spacing: DS.Spacing.sm) {
+            HStack(spacing: 6) {
+                Image(systemName: "checkmark.seal.fill")
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundColor(DS.Palette.gold)
+                    .scaleEffect(completionRevealed ? 1 : 0.4)
+                eyebrow("SEVEN DAYS HELD")
+            }
+
+            // The theme by name. This is the whole point of the state: it says
+            // what they held, not that "a campaign" completed.
+            Text(finished.themeName)
+                .font(.system(size: 24, weight: .bold, design: .rounded))
+                .foregroundStyle(DS.Gradient.gold)
+                .fixedSize(horizontal: false, vertical: true)
+                .opacity(completionRevealed ? 1 : 0)
+                .offset(y: completionRevealed ? 0 : 8)
+
+            // Says what the week MEANT, rather than restating the count a third
+            // time — the eyebrow and the theme name have already said seven days
+            // and which ground it was.
+            //
+            // It also uses the feature's own verb. "Enforce the victory" is the
+            // card's eyebrow and the whole premise: the win is already Jesus',
+            // and the week is them holding what He took. That is the sentence
+            // worth handing back to someone who just did it.
+            Text("Jesus won it. You enforced it all week.")
+                .font(.system(size: 13, weight: .regular, design: .rounded))
+                .foregroundColor(.white.opacity(0.65))
+                .fixedSize(horizontal: false, vertical: true)
+                .opacity(completionSettling ? 0 : (completionRevealed ? 1 : 0))
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .contentShape(Rectangle())
+        .onTapGesture { settleCompletion() }
+        .onAppear {
+            withAnimation(DS.Motion.smooth) { completionRevealed = true }
+            // Long enough to read twenty words and mean them, short enough that
+            // nobody wonders whether the card is stuck.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 3.4) { settleCompletion() }
+        }
+    }
+
+    /// Hands the card over to the invitation, once.
+    private func settleCompletion() {
+        guard !completionSettling else { return }
+        completionSettling = true
+        withAnimation(DS.Motion.smooth) {
+            service.acknowledgeCompletion()
+        }
+    }
+
     // MARK: - Invitation
 
     private var invitationCard: some View {
         VStack(alignment: .leading, spacing: DS.Spacing.sm) {
             eyebrow("ENFORCE THE VICTORY")
 
-            Text("What area of life do you need victory in?")
+            // "This week" is doing real work, not decoration. The commitment is
+            // a seven-day sprint, and a question with no horizon reads as an
+            // open-ended one — which makes it a bigger thing to say yes to than
+            // it actually is, and gives no sense that another answer comes
+            // around in a week. Naming the week shrinks the ask and sets the
+            // rhythm at the same time.
+            Text("What area do you need victory in this week?")
                 .font(.system(size: 16, weight: .semibold, design: .rounded))
                 .foregroundColor(.white.opacity(0.95))
                 .fixedSize(horizontal: false, vertical: true)
@@ -290,7 +372,9 @@ struct EnforcementCard: View {
             // and a question that only admits storms sends them away with
             // nothing. It's also the app's own language for this already —
             // the personal declaration feature counts "days of believing".
-            Text("Name a fight, or something you're believing for. Your Daily Burst is built around it for seven days.")
+            // The headline now carries the horizon, so this carries the
+            // mechanism instead of repeating "seven days" next to "this week".
+            Text("Name a fight, or something you're believing for. Every Daily Burst this week is built around it.")
                 .font(.system(size: 13, weight: .regular, design: .rounded))
                 .foregroundColor(.white.opacity(0.6))
                 .fixedSize(horizontal: false, vertical: true)
