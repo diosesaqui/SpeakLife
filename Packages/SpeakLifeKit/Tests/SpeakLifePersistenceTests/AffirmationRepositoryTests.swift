@@ -34,6 +34,11 @@ final class AffirmationRepositoryTests: XCTestCase {
     }
 
     override func tearDown() {
+        // Close the throwaway store before dropping the controller. Setting the
+        // property to nil does not: the SQLite connection, its WAL and its file
+        // descriptors stay open until the process exits, so without this every
+        // stack the suite builds is still open during every later test.
+        persistenceController?.tearDownScratchStore()
         cancellables = nil
         repository = nil
         testContext = nil
