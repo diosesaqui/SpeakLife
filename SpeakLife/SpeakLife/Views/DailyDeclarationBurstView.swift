@@ -7,7 +7,25 @@
 
 import SwiftUI
 
+/// Which door the burst was opened through.
+///
+/// A campaign owns its own daily task and nothing else. The seven lines on that
+/// task are the campaign's material for that day, and swapping them for whatever
+/// category the user happens to be browsing would break the week it is building.
+/// A burst the user opens for themselves is not that task, so it follows the
+/// category they picked.
+enum BurstSource: String {
+    /// The Daily Burst row on the Today checklist — the campaign's own task.
+    case dailyTask = "daily_task"
+    /// The "Burst" tile in Jump Back In, or any other user-initiated opening.
+    case quickAction = "quick_action"
+}
+
 struct DailyDeclarationBurstView: View {
+
+    /// Defaults to the campaign's task, so any entry point that does not say
+    /// otherwise keeps the behaviour it had before this existed.
+    var source: BurstSource = .dailyTask
     @EnvironmentObject var viewModel: DeclarationViewModel
     @EnvironmentObject var themeViewModel: ThemeViewModel
     @EnvironmentObject var timerViewModel: TimerViewModel
@@ -163,7 +181,13 @@ struct DailyDeclarationBurstView: View {
     /// view. This reads the singletons the builder deliberately does not.
     private func loadDynamicDeclarations() {
         let service = EnforcementService.shared
-        let activeEnforcement = service.isEnabled ? service.activeEnforcement : nil
+
+        // The campaign only owns the burst it is actually responsible for. Opened
+        // from Jump Back In this is the user's own burst, so the campaign is left
+        // out of the composition entirely and `selected` — the category they
+        // chose — is what fills it.
+        let campaignOwnsThisBurst = source == .dailyTask && service.isEnabled
+        let activeEnforcement = campaignOwnsThisBurst ? service.activeEnforcement : nil
 
         let composed = BurstSessionBuilder(
             declarationCount: burstDeclarationCount,
@@ -769,7 +793,8 @@ struct DailyDeclarationBurstView: View {
     
     private func startBurst() {
         AnalyticsService.shared.track("daily_burst_started", parameters: [
-            "streak": streakViewModel.displayStreak
+            "streak": streakViewModel.displayStreak,
+            "source": source.rawValue
         ])
         withAnimation(.easeIn(duration: 0.4)) {
             burstActive = true
@@ -808,7 +833,8 @@ struct DailyDeclarationBurstView: View {
             "time_spent": Int(timeSpent),
             "streak": streakViewModel.displayStreak,
             "surges": surgeCount,
-            "final_method": method.rawValue
+            "final_method": method.rawValue,
+            "source": source.rawValue
         ])
 
         presentActionSlide()
