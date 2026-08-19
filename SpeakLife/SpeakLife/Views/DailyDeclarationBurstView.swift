@@ -13,7 +13,6 @@ struct DailyDeclarationBurstView: View {
     @EnvironmentObject var timerViewModel: TimerViewModel
     @EnvironmentObject var streakViewModel: EnhancedStreakViewModel
     @Environment(\.dismiss) var dismiss
-    @EnvironmentObject var subscriptionStore: SubscriptionStore
     @Environment(\.colorScheme) var colorScheme
     
     @StateObject private var burstTracker = BurstCompletionTracker.shared
@@ -72,13 +71,7 @@ struct DailyDeclarationBurstView: View {
                 // on iPad where fullScreenCover presentations can be transparent.
                 Color.black.ignoresSafeArea()
 
-                // Background
-                Image(subscriptionStore.onboardingBGImage)
-                    .resizable()
-                    .scaledToFill()
-                    .frame(width: geometry.size.width, height: geometry.size.height)
-                    .opacity(0.8)
-                    .ignoresSafeArea()
+                themeBackground(size: geometry.size)
                 
                 if showIntroScreen {
                     introScreenView(geometry: geometry)
@@ -116,6 +109,43 @@ struct DailyDeclarationBurstView: View {
         }
     }
     
+    /// The theme the user actually chose, matching the declaration feed and the
+    /// checklist this screen is opened from.
+    ///
+    /// This previously drew `subscriptionStore.onboardingBGImage`, which is the
+    /// onboarding backdrop: a fixed image that never changes when someone picks a
+    /// new theme, so the burst was the one screen that ignored the theme chooser.
+    /// `ThemeViewModel` is an `ObservableObject` injected at both presentation
+    /// sites, and `selectedTheme` is `@Published`, so reading it here means a
+    /// theme chosen while the burst is open repaints it live.
+    ///
+    /// The scrim is the checklist's, not the feed's. The burst lays white serif
+    /// text and gold accents straight over the image with no card behind them on
+    /// the intro, action and completion screens, so a light theme would wash them
+    /// out; and since the burst is launched from the checklist, sharing its
+    /// backdrop keeps the two screens continuous across the cover.
+    private func themeBackground(size: CGSize) -> some View {
+        ZStack {
+            if themeViewModel.showUserSelectedImage, let image = themeViewModel.selectedImage {
+                Image(uiImage: image)
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+            } else {
+                Image(themeViewModel.selectedTheme.backgroundImageString)
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+            }
+
+            LinearGradient(
+                colors: [Color.black.opacity(0.45), Color.black.opacity(0.65)],
+                startPoint: .top, endPoint: .bottom
+            )
+        }
+        .frame(width: size.width, height: size.height)
+        .clipped()
+        .ignoresSafeArea()
+    }
+
     // MARK: - Composition
 
     /// Hands the builder everything it needs and keeps the result.
