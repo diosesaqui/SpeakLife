@@ -142,34 +142,54 @@ struct DailyDeclarationBurstView: View {
     /// the intro, action and completion screens, so a light theme would wash them
     /// out; and since the burst is launched from the checklist, sharing its
     /// backdrop keeps the two screens continuous across the cover.
+    ///
+    /// The `GeometryReader` is the point of this, and it took two tries to get
+    /// right. A fill needs a frame to fill *into*, and that frame has to be the
+    /// whole screen:
+    ///
+    ///   · Framing to the enclosing `geometry.size` used the safe-area size, so
+    ///     the image was clipped short of the home indicator and the black base
+    ///     showed through along the bottom.
+    ///   · Removing the frame and the clip altogether fixed the gap and broke the
+    ///     scale. `.aspectRatio(contentMode: .fill)` with nothing to fill into
+    ///     reports a size larger than what it was offered, the ZStack grows to
+    ///     that, and the image renders blown far past its natural size.
+    ///
+    /// `.ignoresSafeArea()` sits on the `GeometryReader` itself, so `proxy.size`
+    /// is the real screen including both safe areas. Filling that and clipping to
+    /// it gives an image at the right scale that still reaches every edge.
     private var themeBackground: some View {
-        ZStack {
-            if themeViewModel.showUserSelectedImage, let image = themeViewModel.selectedImage {
-                Image(uiImage: image)
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-            } else {
-                Image(themeViewModel.selectedTheme.backgroundImageString)
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-            }
+        GeometryReader { proxy in
+            ZStack {
+                themeImage
+                    .frame(width: proxy.size.width, height: proxy.size.height)
+                    .clipped()
 
-            LinearGradient(
-                colors: [Color.black.opacity(0.45), Color.black.opacity(0.65)],
-                startPoint: .top, endPoint: .bottom
-            )
+                LinearGradient(
+                    colors: [Color.black.opacity(0.45), Color.black.opacity(0.65)],
+                    startPoint: .top, endPoint: .bottom
+                )
+            }
         }
-        // No explicit frame and no `.clipped()`, which is what broke this the
-        // first time. `geometry.size` is the *safe-area* size — the enclosing
-        // GeometryReader does not itself ignore the safe area — so framing to it
-        // and then clipping cut the image off above the home indicator, and the
-        // `.ignoresSafeArea()` that followed could not put back what the clip had
-        // already removed. The black base underneath, which does ignore the safe
-        // area, showed through as a band along the bottom.
-        //
-        // Letting the fill overspill and ignoring the safe area is how the
-        // checklist's backdrop does it, and it reaches every edge.
         .ignoresSafeArea()
+    }
+
+    /// The chosen theme's artwork, or the user's own photo when they have set one.
+    ///
+    /// Split out so `.resizable().scaledToFill()` is applied inside each branch —
+    /// those are `Image` methods, and the branches erase to `some View` — while
+    /// the frame and the clip that bound the fill are applied once, outside.
+    @ViewBuilder
+    private var themeImage: some View {
+        if themeViewModel.showUserSelectedImage, let image = themeViewModel.selectedImage {
+            Image(uiImage: image)
+                .resizable()
+                .scaledToFill()
+        } else {
+            Image(themeViewModel.selectedTheme.backgroundImageString)
+                .resizable()
+                .scaledToFill()
+        }
     }
 
     // MARK: - Composition
