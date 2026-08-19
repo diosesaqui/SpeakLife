@@ -71,7 +71,7 @@ struct DailyDeclarationBurstView: View {
                 // on iPad where fullScreenCover presentations can be transparent.
                 Color.black.ignoresSafeArea()
 
-                themeBackground(size: geometry.size)
+                themeBackground
                 
                 if showIntroScreen {
                     introScreenView(geometry: geometry)
@@ -124,7 +124,7 @@ struct DailyDeclarationBurstView: View {
     /// the intro, action and completion screens, so a light theme would wash them
     /// out; and since the burst is launched from the checklist, sharing its
     /// backdrop keeps the two screens continuous across the cover.
-    private func themeBackground(size: CGSize) -> some View {
+    private var themeBackground: some View {
         ZStack {
             if themeViewModel.showUserSelectedImage, let image = themeViewModel.selectedImage {
                 Image(uiImage: image)
@@ -141,8 +141,16 @@ struct DailyDeclarationBurstView: View {
                 startPoint: .top, endPoint: .bottom
             )
         }
-        .frame(width: size.width, height: size.height)
-        .clipped()
+        // No explicit frame and no `.clipped()`, which is what broke this the
+        // first time. `geometry.size` is the *safe-area* size — the enclosing
+        // GeometryReader does not itself ignore the safe area — so framing to it
+        // and then clipping cut the image off above the home indicator, and the
+        // `.ignoresSafeArea()` that followed could not put back what the clip had
+        // already removed. The black base underneath, which does ignore the safe
+        // area, showed through as a band along the bottom.
+        //
+        // Letting the fill overspill and ignoring the safe area is how the
+        // checklist's backdrop does it, and it reaches every edge.
         .ignoresSafeArea()
     }
 
