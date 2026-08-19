@@ -36,6 +36,9 @@ public final class PersistenceController {
         // under a live store is not cleanup, it is a mid-test I/O failure. The
         // stores are a few KB each in the temp directory, which the OS reaps on
         // its own; leaving them there is the correct trade.
+        if let observer = remoteChangeLogObserver {
+            NotificationCenter.default.removeObserver(observer)
+        }
         NotificationCenter.default.removeObserver(self)
     }
 
@@ -73,6 +76,19 @@ public final class PersistenceController {
     }()
     
     public let container: NSPersistentCloudKitContainer
+
+    /// The throwaway directory this controller's store lives in, set only for an
+    /// `inMemory: true` stack. Nil for the app's real store, which is what makes
+    /// `tearDownScratchStore()` unable to touch a user's data.
+    private var scratchDirectory: URL?
+
+    /// The token for the block-based remote-change logger.
+    ///
+    /// Block observers are not registered against `self`, so the
+    /// `removeObserver(self)` in `deinit` never removed this one and every
+    /// controller the suite built leaked its registration for the life of the
+    /// process. Keeping the token is the only way to take it back off.
+    private var remoteChangeLogObserver: NSObjectProtocol?
 
     /// Whether CloudKit should be left alone entirely.
     ///
@@ -171,6 +187,7 @@ public final class PersistenceController {
             // spill somewhere they can be read back, and no two stacks share a
             // path. Nothing deletes it — see the note in `deinit`.
             let directory = Self.makeScratchStoreDirectory()
+            scratchDirectory = directory
 
             container.persistentStoreDescriptions.forEach { storeDescription in
                 storeDescription.url = directory.appendingPathComponent("SpeakLife.sqlite")
@@ -282,6 +299,37 @@ public final class PersistenceController {
         }
     }
 
+    /// Closes a throwaway stack: takes its store off the coordinator and deletes
+    /// the scratch directory.
+    ///
+    /// Deliberately not called from `deinit` — see the note there. A controller
+    /// routinely outlives its own reference while the context it vended is still
+    /// in use, so `deinit` cannot know the store is finished with, and pulling
+    /// the file out from under a live store is a mid-test I/O failure rather
+    /// than cleanup. A test's `tearDown` *can* know: it owns the controller and
+    /// every context it handed out, and nothing will read from them again.
+    ///
+    /// Without this, nothing ever closed a test's store. `persistenceController
+    /// = nil` drops the container but leaves the SQLite connection, its WAL and
+    /// its file descriptors open until the process exits, so a 530-test suite
+    /// ran with every stack it had ever built still open at once. That is the
+    /// pressure the scratch-store note above describes, and the most likely
+    /// remaining cause of committed rows failing to read back.
+    ///
+    /// A no-op on the app's real store: `scratchDirectory` is nil there, so this
+    /// cannot delete a user's data even if it is called by mistake.
+    public func tearDownScratchStore() {
+        guard let directory = scratchDirectory else { return }
+
+        let coordinator = container.persistentStoreCoordinator
+        for store in coordinator.persistentStores {
+            try? coordinator.remove(store)
+        }
+
+        try? FileManager.default.removeItem(at: directory)
+        scratchDirectory = nil
+    }
+
     /// A private directory for one throwaway store, under the temp directory.
     private static func makeScratchStoreDirectory() -> URL {
         let directory = URL(fileURLWithPath: NSTemporaryDirectory(), isDirectory: true)
@@ -309,7 +357,7 @@ public final class PersistenceController {
     
     // MARK: - CloudKit Sync Logging
     private func setupCloudKitSyncLogging() {
-        NotificationCenter.default.addObserver(
+        remoteChangeLogObserver = NotificationCenter.default.addObserver(
             forName: .NSPersistentStoreRemoteChange,
             object: container.persistentStoreCoordinator,
             queue: .main

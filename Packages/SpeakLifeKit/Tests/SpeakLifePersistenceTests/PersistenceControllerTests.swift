@@ -19,6 +19,11 @@ final class PersistenceControllerTests: XCTestCase {
     }
     
     override func tearDown() {
+        // Close the throwaway store before dropping the controller. Setting the
+        // property to nil does not: the SQLite connection, its WAL and its file
+        // descriptors stay open until the process exits, so without this every
+        // stack the suite builds is still open during every later test.
+        persistenceController?.tearDownScratchStore()
         persistenceController = nil
         super.tearDown()
     }
@@ -193,6 +198,7 @@ final class PersistenceControllerTests: XCTestCase {
     /// pointed at `/dev/null`, so one test's rows could turn up in another's.
     func testTwoThrowawayStacksDoNotShareAStore() throws {
         let other = PersistenceController(inMemory: true)
+        addTeardownBlock { other.tearDownScratchStore() }
 
         let context = persistenceController.container.viewContext
         let journalEntry = JournalEntry(context: context)

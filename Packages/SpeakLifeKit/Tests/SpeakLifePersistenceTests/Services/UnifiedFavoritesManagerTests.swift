@@ -295,7 +295,7 @@ final class UnifiedFavoritesManagerTests: XCTestCase {
         // same fix in `FavoritesMigrationServiceTests.testMigrateAudioFavoritesSkipExisting`.
         let persistenceController = PersistenceController(inMemory: true)
         let context = persistenceController.container.viewContext
-        addTeardownBlock { _ = persistenceController }
+        addTeardownBlock { persistenceController.tearDownScratchStore() }
         let affirmation = AffirmationEntry(context: context)
         affirmation.text = "My affirmation"
         affirmation.category = "myOwn"

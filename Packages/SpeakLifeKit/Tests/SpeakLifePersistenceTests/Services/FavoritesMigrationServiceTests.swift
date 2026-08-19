@@ -184,7 +184,7 @@ final class FavoritesMigrationServiceTests: XCTestCase {
         // context had already gone away, taking the process with it.
         let persistenceController = PersistenceController(inMemory: true)
         let context = persistenceController.container.viewContext
-        addTeardownBlock { _ = persistenceController }
+        addTeardownBlock { persistenceController.tearDownScratchStore() }
         let existing = AudioFavoriteEntry(context: context)
         existing.audioId = "existing-1"
         existing.title = "Existing"
