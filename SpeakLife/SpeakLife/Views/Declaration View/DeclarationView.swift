@@ -407,7 +407,9 @@ struct DeclarationView: View {
             MailView(isShowing: $isShowingMailView, result: self.$result, origin: .review, isSubscribed: subscriptionStore.isPremium)
         }
         .fullScreenCover(isPresented: $showDailyBurst) {
-            DailyDeclarationBurstView()
+            // Reached from the daily reminder notification, which is nudging the
+            // user to do that day's burst — so it is the campaign's task.
+            DailyDeclarationBurstView(source: .dailyTask)
                 .environmentObject(viewModel)
                 .environmentObject(themeViewModel)
                 .environmentObject(timerViewModel)
