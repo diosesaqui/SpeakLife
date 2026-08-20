@@ -11,6 +11,10 @@ import Combine
 import SpeakLifeCore
 @testable import SpeakLifePersistence
 
+/// Main-actor isolated so the async test bodies stay on the queue the context
+/// belongs to. `viewContext` is main-queue confined, and building or mutating a
+/// managed object from an async body without a `perform` touches it off-queue.
+@MainActor
 final class DeclarationFavoriteRepositoryTests: XCTestCase {
     
     var repository: DeclarationFavoriteRepository!
