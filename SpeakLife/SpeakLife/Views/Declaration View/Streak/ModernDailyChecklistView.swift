@@ -69,6 +69,9 @@ struct ModernDailyChecklistView: View {
     // Modal presentations surfaced directly on the Today tab (instead of routing
     // the user over to the Speak feed and presenting there).
     @State private var showDailyBurst = false
+    /// Which door opened the burst. The checklist row is the campaign's task; the
+    /// Jump Back In tile is the user's own.
+    @State private var burstSource: BurstSource = .dailyTask
     @State private var showPersonalDeclarationCard = false
     @State private var showMyDeclarations = false
     @State private var showPremium = false
@@ -137,7 +140,12 @@ struct ModernDailyChecklistView: View {
 
     /// Present the daily burst right here on the Today tab instead of routing
     /// the user over to the Speak feed.
-    private func openBurst() {
+    ///
+    /// Defaults to the campaign's task, which is what the checklist row is. The
+    /// Jump Back In tile passes `.quickAction` so it draws on the user's chosen
+    /// category instead of the campaign's week.
+    private func openBurst(source: BurstSource = .dailyTask) {
+        burstSource = source
         showDailyBurst = true
     }
 
@@ -614,7 +622,9 @@ struct ModernDailyChecklistView: View {
                             // breathe (five-in-a-row crowded the labels).
                             HStack(spacing: 10) {
                                 QuickActionTile(icon: "bolt.fill", label: "Burst",
-                                                tint: Color(hex: "#7C3AED"), action: openBurst)
+                                                tint: Color(hex: "#7C3AED")) {
+                                    openBurst(source: .quickAction)
+                                }
                                 QuickActionTile(icon: "book.fill", label: "Devotional",
                                                 tint: Color(hex: "#0EA5E9")) { showDevotional = true }
                                 // Bible Chat owns its own tab, so this slot goes
@@ -841,7 +851,7 @@ struct ModernDailyChecklistView: View {
         // explicitly since SwiftUI doesn't reliably propagate them across the
         // cover hop. (viewModel is the EnhancedStreakViewModel the burst wants.)
         .fullScreenCover(isPresented: $showDailyBurst) {
-            DailyDeclarationBurstView()
+            DailyDeclarationBurstView(source: burstSource)
                 .environmentObject(declarationStore)
                 .environmentObject(themeViewModel)
                 .environmentObject(timerViewModel)

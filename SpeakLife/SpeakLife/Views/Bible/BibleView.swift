@@ -17,10 +17,17 @@ struct BibleView: View {
     @State private var selectedTab = 0
     @State private var showBibleChat = false
 
+    /// False when the reader is itself opened from a Bible Chat surface. Chat →
+    /// reader → "Ask the Bible" → answer → verse → reader is a closed loop, and
+    /// every hop is a new sheet, so the user ends up backing out of a stack of
+    /// the same two screens. Hiding the entry inside chat breaks the cycle.
+    private let showsChatEntry: Bool
+
     /// `initialReference` (e.g. "John 3:16", from a chat answer) is handed to the
     /// view model so the initial load opens that passage directly.
-    init(initialReference: String? = nil) {
+    init(initialReference: String? = nil, showsChatEntry: Bool = true) {
         _viewModel = StateObject(wrappedValue: BibleViewModel(initialReference: initialReference))
+        self.showsChatEntry = showsChatEntry
     }
 
     var body: some View {
@@ -37,13 +44,22 @@ struct BibleView: View {
                     } else {
                         BibleBookSelectionView(
                             viewModel: viewModel,
-                            showBibleChat: $showBibleChat
+                            showBibleChat: $showBibleChat,
+                            showsChatEntry: showsChatEntry
                         )
                     }
                 } else if viewModel.showChapterGrid {
                     BibleChapterGridView(viewModel: viewModel)
                 } else if let chapter = viewModel.currentChapter {
                     BibleReaderView(viewModel: viewModel, chapter: chapter)
+                        // Previous/Next keep the old chapter on screen while the
+                        // new one loads, which looked like the buttons did
+                        // nothing. Show that work is happening.
+                        .overlay {
+                            if viewModel.loadingChapterNumber != nil {
+                                chapterLoadingOverlay
+                            }
+                        }
                 } else if viewModel.showError && !viewModel.isLoading {
                     errorView
                 } else {
@@ -192,6 +208,24 @@ struct BibleView: View {
     }
     
     @ViewBuilder
+    private var chapterLoadingOverlay: some View {
+        ZStack {
+            Color.black.opacity(0.35)
+                .ignoresSafeArea()
+
+            ProgressView()
+                .progressViewStyle(CircularProgressViewStyle())
+                .scaleEffect(1.3)
+                .padding(24)
+                .background(
+                    RoundedRectangle(cornerRadius: DS.Radius.lg, style: .continuous)
+                        .fill(.regularMaterial)
+                )
+        }
+        .transition(.opacity)
+    }
+
+    @ViewBuilder
     private var loadingView: some View {
         VStack(spacing: 20) {
             ProgressView()
@@ -254,6 +288,9 @@ struct BibleView: View {
 struct BibleBookSelectionView: View {
     @ObservedObject var viewModel: BibleViewModel
     @Binding var showBibleChat: Bool
+    /// See `BibleView.showsChatEntry` — suppressed when the reader was opened
+    /// from Bible Chat so the two screens can't stack on each other.
+    var showsChatEntry: Bool = true
     @State private var selectedTestament = 0
 
     var body: some View {
@@ -276,12 +313,14 @@ struct BibleBookSelectionView: View {
                 Spacer()
             } else if !viewModel.testamentSections.isEmpty {
                 ScrollView {
-                    BibleChatEntryCard {
-                        Juice.play(.tapLight)
-                        showBibleChat = true
+                    if showsChatEntry {
+                        BibleChatEntryCard {
+                            Juice.play(.tapLight)
+                            showBibleChat = true
+                        }
+                        .padding(.horizontal)
+                        .padding(.top, 12)
                     }
-                    .padding(.horizontal)
-                    .padding(.top, 12)
 
                     LazyVGrid(columns: [
                         GridItem(.flexible()),
@@ -413,7 +452,20 @@ struct BibleChapterGridView: View {
                 .background(Color(UIColor.systemBackground))
                 
                 Divider()
-                
+
+                // A failed chapter keeps the grid on screen, so say so here and
+                // offer the retry in place. Previously the only signal was an
+                // alert, and a load that stalled gave no signal at all.
+                if let failedChapter = viewModel.failedChapterNumber,
+                   viewModel.loadingChapterNumber == nil {
+                    ChapterLoadFailureBanner(
+                        bookName: book.name,
+                        chapterNumber: failedChapter
+                    ) {
+                        Task { await viewModel.retryFailedChapter() }
+                    }
+                }
+
                 // Chapter Grid
                 ScrollView {
                     LazyVGrid(columns: [
@@ -426,7 +478,9 @@ struct BibleChapterGridView: View {
                         ForEach(1...book.chapters, id: \.self) { chapterNumber in
                             ChapterNumberButton(
                                 number: chapterNumber,
-                                isSelected: viewModel.selectedChapterNumber == chapterNumber
+                                isSelected: viewModel.selectedChapterNumber == chapterNumber,
+                                isLoading: viewModel.loadingChapterNumber == chapterNumber,
+                                failed: viewModel.failedChapterNumber == chapterNumber
                             ) {
                                 Task {
                                     await viewModel.selectChapter(chapterNumber)
@@ -441,28 +495,85 @@ struct BibleChapterGridView: View {
     }
 }
 
+// MARK: - Chapter Load Failure Banner
+struct ChapterLoadFailureBanner: View {
+    let bookName: String
+    let chapterNumber: Int
+    let onRetry: () -> Void
+
+    var body: some View {
+        HStack(spacing: DS.Spacing.sm) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .font(.system(size: 14))
+                .foregroundColor(.orange)
+
+            Text("Couldn't load \(bookName) \(chapterNumber).")
+                .font(.system(size: 13, weight: .medium))
+                .foregroundColor(.primary)
+
+            Spacer(minLength: 0)
+
+            Button(action: onRetry) {
+                Text("Retry")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 6)
+                    .background(Capsule().fill(Color.blue))
+            }
+        }
+        .padding(.horizontal)
+        .padding(.vertical, 10)
+        .background(Color.orange.opacity(0.12))
+    }
+}
+
 // MARK: - Chapter Number Button
 struct ChapterNumberButton: View {
     let number: Int
     let isSelected: Bool
+    /// Swaps the number for a spinner while this chapter is being fetched, so a
+    /// tap always produces visible feedback even on a slow network.
+    var isLoading: Bool = false
+    /// Marks the chapter whose last load failed, so it stays distinguishable
+    /// from the ones that simply haven't been opened.
+    var failed: Bool = false
     let action: () -> Void
-    
+
     var body: some View {
         Button(action: action) {
-            Text("\(number)")
-                .font(.system(size: 18, weight: .medium, design: .serif))
-                .foregroundColor(isSelected ? .white : .primary)
-                .frame(width: 50, height: 50)
-                .background(
-                    Circle()
-                        .fill(isSelected ? Color.blue : Color(UIColor.secondarySystemBackground))
-                        .overlay(
-                            Circle()
-                                .stroke(Color.blue.opacity(0.3), lineWidth: isSelected ? 0 : 1)
-                        )
-                )
+            ZStack {
+                if isLoading {
+                    ProgressView()
+                        .progressViewStyle(CircularProgressViewStyle())
+                } else {
+                    Text("\(number)")
+                        .font(.system(size: 18, weight: .medium, design: .serif))
+                        .foregroundColor(isSelected ? .white : .primary)
+                }
+            }
+            .frame(width: 50, height: 50)
+            .background(
+                Circle()
+                    .fill(isSelected ? Color.blue : Color(UIColor.secondarySystemBackground))
+                    .overlay(
+                        Circle()
+                            .stroke(strokeColor, lineWidth: isSelected ? 0 : 1)
+                    )
+            )
         }
         .buttonStyle(ScaleButtonStyle())
+        .accessibilityLabel(accessibilityLabel)
+    }
+
+    private var strokeColor: Color {
+        failed ? Color.orange.opacity(0.8) : Color.blue.opacity(0.3)
+    }
+
+    private var accessibilityLabel: String {
+        if isLoading { return "Chapter \(number), loading" }
+        if failed { return "Chapter \(number), failed to load, tap to retry" }
+        return "Chapter \(number)"
     }
 }
 

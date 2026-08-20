@@ -79,7 +79,10 @@ struct BibleChatAnswerView: View {
                 runRevealAnimation()
             }
             .sheet(item: $deepLink) { link in
-                BibleView(initialReference: link.reference)
+                // `showsChatEntry: false` closes the loop reader → "Ask the
+                // Bible" → answer → verse → reader → …, which stacked a sheet
+                // per lap and left the user backing out of a deck of them.
+                BibleView(initialReference: link.reference, showsChatEntry: false)
                     .environmentObject(subscriptionStore)
                     .preferredColorScheme(.dark)
             }
