@@ -2,8 +2,8 @@
 
 **Date:** 2026-08-20
 **Status:** Research complete, not implemented. Awaiting product decisions (see "Decisions needed").
-**Ask:** Let a user buy SpeakLife premium *for someone else*, surfaced as its own destination in
-Settings alongside "Redeem a Code".
+**Ask:** Let a user buy SpeakLife premium *for someone else* — picking yearly or lifetime and **how
+many** — surfaced as its own destination in Settings alongside "Redeem a Code".
 
 ---
 
@@ -21,9 +21,11 @@ Settings alongside "Redeem a Code".
 | Deep links | `SpeakLifeApp.swift:145` `.onOpenURL`, scheme `speaklife://` (`Info.plist:26`), **Branch SDK** wired for deferred deep links (`AppDelegate.swift:517`) | No `associated-domains` entitlement (`SpeakLife.entitlements`) — so Branch is how a gift link survives "recipient doesn't have the app yet". |
 | Client identity/durability | `Services/IAP/Security/KeychainHelper.swift`, CloudKit sync (`docs/ICLOUD_STATE_SYNC_PLAN.md`) | Reusable for pinning a stable gift identity. |
 
-**Bottom line:** roughly 70% of the plumbing (RC secret key on the server, entitlement pipeline in
-the client, Firestore server-only collection pattern, deep-link handling) already exists. The new
-work is a gift SKU, a code ledger, two endpoints, and a settings screen.
+**Bottom line:** most of the plumbing (RC secret key on the server, entitlement pipeline in the
+client, Firestore server-only collection pattern, deep-link handling) already exists. The new work
+is two gift SKUs, a code ledger, two endpoints, a settings screen, and one genuinely new capability:
+verifying an Apple-signed transaction server-side, which is what lets a gifter buy several at once
+(§4.1).
 
 ---
 
@@ -48,16 +50,19 @@ we build the gift layer ourselves on top of a normal IAP.
 
 ### Option A — Consumable IAP + RevenueCat promotional entitlement ✅ **Recommended**
 
-Gifter buys a **consumable** SKU (`SpeakLifeGift1YR`). Our Cloud Function verifies the purchase
-against RevenueCat, mints a gift code into Firestore, and hands it back. The recipient enters the
-code in the app; a second function marks it redeemed and calls RC's
+Gifter picks yearly or lifetime and a quantity, and buys a **consumable** SKU
+(`SpeakLifeGiftYear` / `SpeakLifeGiftLifetime`) in one transaction. Our Cloud Function verifies the
+Apple-signed transaction, mints that many gift codes into Firestore, and hands them back. Each
+recipient enters their code in the app; a second function marks it redeemed and calls RC's
 `POST /v1/subscribers/{app_user_id}/entitlements/premium/promotional` to grant premium for the
-gifted duration. `applyCustomerInfo` picks it up on the next customer-info refresh.
+gifted duration. `applyCustomerInfo` picks it up on the next customer-info refresh, so no view code
+changes.
 
 - ✅ Instant, fully in-app, works end-to-end without leaving SpeakLife.
 - ✅ Recipient needs **no payment method** and gets **no auto-renew** — clean gift semantics, no
   surprise charge, no "I got charged after my gift ended" support load.
-- ✅ We own the code format, expiry, resend, revocation, and the "My Gifts" ledger.
+- ✅ We own the code format, expiry, resend, revocation, and the "My Gifts" ledger — which is what
+  makes buying a batch of 5 and handing them out over weeks actually work.
 - ✅ Uses infrastructure that already exists (RC secret key, function pattern, Firestore rules).
 - ⚠️ Promotional entitlements attach to an **RC app user ID**, and ours are anonymous — a reinstall
   loses the gift unless we handle it (§6). This is the one real engineering risk.
@@ -75,7 +80,9 @@ offer code** from a pre-minted batch stored in Firestore. Recipient redeems it t
   That is a bad gift experience and a support/refund magnet.
 - ❌ Code minting via the App Store Connect API (`POST /v1/subscriptionOfferCodeOneTimeUseCodes`) is
   batch/CSV-oriented, not per-request — we'd pre-generate batches and manage inventory, plus store
-  an ASC API private key server-side.
+  an ASC API private key server-side. Handing out N codes at once means keeping N in stock.
+- ❌ No lifetime story: offer codes attach to an auto-renewable subscription, so "gift someone
+  lifetime" has no equivalent here at all.
 - ❌ Quota: 1,000,000 redemptions per app per quarter across all offers, 25,000 per batch. Fine at
   our volume, but it's another ceiling to watch.
 
@@ -96,18 +103,20 @@ fallback if the anonymous-ID durability work in §6 turns out worse than expecte
 
 ```
 Gifter                    App                     Cloud Functions            RevenueCat
-  │  taps "Give SpeakLife" │                            │                        │
-  │───────────────────────>│ purchase(SpeakLifeGift1YR) │                        │
-  │                        │────────────── StoreKit / RC purchase ──────────────>│
+  │  "Give SpeakLife"      │                            │                        │
+  │  picks Yearly/Lifetime │                            │                        │
+  │  + quantity (1–10)     │                            │                        │
+  │───────────────────────>│ product.purchase(          │                        │
+  │                        │   options: [.quantity(5)]) │                        │
+  │                        │──────── StoreKit 2 (one payment sheet) ─────────────│
   │                        │  POST /giftCreate          │                        │
-  │                        │  {appUserId, note, ...}    │                        │
-  │                        │───────────────────────────>│ GET /v1/subscribers/…  │
-  │                        │                            │───────────────────────>│
-  │                        │                            │ verify unconsumed      │
-  │                        │                            │ non-subscription txn   │
-  │                        │  {code, shareURL}          │ write gifts/{code}     │
+  │                        │  {appUserId, jws, note?}   │                        │
+  │                        │───────────────────────────>│ verify JWS offline     │
+  │                        │                            │ (Apple root certs)     │
+  │                        │                            │ → productId, quantity  │
+  │                        │  {gifts:[{code,shareURL}]} │ mint N codes, 1 batch  │
   │                        │<───────────────────────────│                        │
-  │  shares link/code      │                            │                        │
+  │  shares each code      │                            │                        │
   ▼                                                                              │
 Recipient                                                                        │
   │  opens speaklife://gift?code=XXXX or types the code                          │
@@ -115,69 +124,124 @@ Recipient                                                                       
   │                        │ {code, appUserId}          │ txn: mark redeemed     │
   │                        │───────────────────────────>│ POST …/entitlements/   │
   │                        │                            │   premium/promotional  │
+  │                        │                            │   (yearly | lifetime)  │
   │                        │                            │───────────────────────>│
-  │                        │  {ok, expiresAt}           │                        │
+  │                        │  {ok, durationLabel}       │                        │
   │                        │<───────────────────────────│                        │
   │                        │ syncPurchases() + updateEntitlementsFromRC()        │
   │                        │ → applyCustomerInfo → isPremium = true              │
 ```
 
-### 4.1 Products (App Store Connect + RevenueCat)
+### 4.1 Products and quantity
 
-New **consumable** IAPs — consumable, not non-consumable, so one person can buy many gifts:
+Two **consumable** IAPs — consumable, not non-consumable, so one person can buy many:
 
-| Product ID | Gift | Suggested price |
-|---|---|---|
-| `SpeakLifeGift1MO` | 1 month of premium | $4.99 |
-| `SpeakLifeGift3MO` | 3 months of premium | $12.99 |
-| `SpeakLifeGift1YR` | 1 year of premium | $29.99 |
+| Product ID | Gift | Suggested price | Maps to RC promo duration |
+|---|---|---|---|
+| `SpeakLifeGiftYear` | 1 year of premium | $29.99 (parity with `SpeakLife1YR29`) | `yearly` |
+| `SpeakLifeGiftLifetime` | Lifetime premium | $99.99 (parity with `SpeakLifeLifetime`) | `lifetime` |
 
-In RevenueCat: add all three as products in a dedicated `gifts` offering. **Do not attach them to
-the `premium` entitlement** — buying a gift must not make the *gifter* premium. Map product ID →
-granted duration server-side only, so a tampered client can't ask for a year after paying for a
-month.
+The gifter picks **which** and **how many** — a stepper on the same screen — and pays once for the
+whole batch. Buying 5 yearly gifts mints 5 independent codes from a single transaction.
+
+**How the quantity is bought:** StoreKit 2 supports it natively via
+[`Product.PurchaseOption.quantity(_:)`](https://developer.apple.com/documentation/storekit/product/purchaseoption/quantity(_:)),
+which applies to consumables only. One payment sheet, one transaction, quantity N.
+
+**Ceiling: 10 per transaction.** That is an App Store limit on the purchase sheet, not something we
+set. For a church or small group wanting 25 seats, the options are (a) let them run the flow more
+than once, or (b) add explicit bundle SKUs later (`SpeakLifeGiftYear25` etc.), which also lets us
+give a bulk discount. Ship the stepper capped at 10 first; add bundles if demand shows up.
+Also worth a sandbox check: quantity × price still has to land under Apple's per-transaction price
+ceiling, so 10 × lifetime at $99.99 sits right at the edge.
+
+**RevenueCat cannot be the source of truth for quantity.** RC tracks that a consumable was bought
+and surfaces it in `CustomerInfo`, but by its own documentation the quantity-to-value logic belongs
+to your backend — its subscriber payload does not tell us "this one transaction was worth 5 gifts."
+So the gift purchase leg does **not** go through `Purchases.shared.purchase(...)`. Instead:
+
+1. The client buys directly with StoreKit 2:
+   `try await product.purchase(options: [.quantity(n)])`.
+2. On success it sends the transaction's **`jwsRepresentation`** to `giftCreate`.
+3. The function verifies that JWS **offline** against Apple's root certificates using the
+   [App Store Server Library](https://developer.apple.com/documentation/appstoreserverapi/simplifying-your-implementation-by-using-the-app-store-server-library)
+   (`@apple/app-store-server-library` on npm) and reads the authoritative `quantity`, `productId`,
+   `transactionId`, and `purchaseDate` straight out of the signed payload.
+
+Offline JWS verification means **no App Store Connect API key is needed** for v1 — the signature
+itself is the proof. (An ASC key only becomes necessary if we later want to re-fetch transaction
+history server-side; refunds are better handled by App Store Server Notifications V2, which needs a
+notification URL but no key.)
+
+RevenueCat still does the half it is good at: **granting the recipient's entitlement**. And because
+the RC SDK picks up StoreKit transactions it did not initiate, gift revenue still shows up in the RC
+dashboard. Critical config detail: in RevenueCat, **do not attach the gift products to the `premium`
+entitlement** — buying a gift must never make the *gifter* premium.
 
 ### 4.2 Firestore
 
-`gifts/{code}` — server-only (`allow read, write: if false`, same as `bibleChatUsage`):
+Two server-only collections (`allow read, write: if false`, same as `bibleChatUsage`).
+
+`giftBatches/{transactionId}` — one doc per purchase, keyed by the Apple transaction id so a retry
+can never mint a second set of codes:
 
 ```js
 {
-  code: "GIFT-7K4M-92QX",       // doc id too
-  status: "unredeemed",          // unredeemed | redeemed | revoked
-  productId: "SpeakLifeGift1YR",
-  durationDays: 365,
+  transactionId: "2000000…",      // doc id — the idempotency key
   purchaserAppUserId: "$RCAnonymousID:abc…",
-  purchaseTransactionId: "2000000…",   // RC non_subscriptions id — idempotency key
+  productId: "SpeakLifeGiftYear",
+  quantity: 5,                     // straight from the signed JWS payload
+  codes: ["GIFT-7K4M-92QX", …],    // exactly `quantity` of them
   purchasedAt: Timestamp,
-  expiresUnredeemedAt: Timestamp,      // code itself dies after 12 months
+  refundedAt: Timestamp | null
+}
+```
+
+`gifts/{code}` — one doc per individual gift:
+
+```js
+{
+  code: "GIFT-7K4M-92QX",        // doc id too
+  batchId: "2000000…",
+  status: "unredeemed",           // unredeemed | redeemed | revoked
+  productId: "SpeakLifeGiftYear",
+  grantDuration: "yearly",        // yearly | lifetime — resolved server-side from productId
+  purchaserAppUserId: "$RCAnonymousID:abc…",
+  purchasedAt: Timestamp,
+  expiresUnredeemedAt: Timestamp,      // the code itself dies after 12 months
   recipientNote: "Praying for you, sis.",   // optional, ≤200 chars, moderated
   redeemedAt: Timestamp | null,
   redeemedByAppUserId: string | null,
-  grantedUntil: Timestamp | null,
-  reclaims: [{ appUserId, at }],       // device re-claims, ≤3 (see §6)
+  grantedUntil: Timestamp | null,      // null for lifetime
+  reclaims: [{ appUserId, at }],       // device re-claims (see §6)
   revokedReason: string | null
 }
 ```
 
-Index: `purchaserAppUserId + purchasedAt desc` (powers the "My Gifts" list).
+The duration is **never taken from the client** — the server maps `productId` → `yearly` /
+`lifetime`, so a tampered request cannot upgrade a yearly gift into a lifetime one.
+
+Indexes: `gifts` on `purchaserAppUserId + purchasedAt desc` (the "My Gifts" list), and
+`giftBatches` on `purchaserAppUserId + purchasedAt desc`.
 
 ### 4.3 Cloud Function: `giftCreate` (new `functions/gifting.js`)
 
-`POST { appUserId, productId, recipientNote? }`
+`POST { appUserId, jws, recipientNote? }`
 
-1. `GET https://api.revenuecat.com/v1/subscribers/{appUserId}` with `REVENUECAT_SECRET_KEY` (reuse
-   the existing helper shape in `bibleChat.js:74`).
-2. Read `subscriber.non_subscriptions[productId]` — the array of consumable purchases.
-3. For each purchase whose store transaction id is not already in `gifts`, mint a code in a
-   Firestore transaction. **The transaction id is the idempotency key** — a retried call returns
-   the same code, never a second one.
-4. Return `{ codes: [{ code, productId, shareURL }] }`.
+1. Verify `jws` offline with `@apple/app-store-server-library`'s `SignedDataVerifier` (Apple root
+   certs, bundle id `com.franchiz.speaklife`, production/sandbox environment). Reject anything that
+   fails signature, bundle id, or environment checks.
+2. Read `transactionId`, `productId`, `quantity`, `purchaseDate` from the **verified payload only**.
+   Reject a `productId` that is not one of the two gift SKUs.
+3. Firestore transaction on `giftBatches/{transactionId}`:
+   - If the doc already exists, return its existing codes. **Idempotent by construction** — a
+     retried call, a crash mid-flow, or a reinstall all return the same codes, never new ones.
+   - Otherwise mint exactly `quantity` codes, write the batch doc and the `gifts/{code}` docs
+     together in one atomic commit.
+4. Return `{ transactionId, quantity, gifts: [{ code, shareURL }] }`.
 
-This "reconcile from RC" shape (rather than "trust the client's word that it purchased") means a
-dropped network response, a crash mid-flow, or a reinstall all self-heal: the gifter reopens
-"My Gifts" and the code is there. No shared secret needed for this endpoint — RC is authoritative
-about what was actually paid for.
+Because the signed transaction is the proof, the client's word is never trusted for anything that
+costs money. No shared secret is needed on this endpoint.
 
 ### 4.4 Cloud Function: `giftRedeem`
 
@@ -188,10 +252,9 @@ about what was actually paid for.
    `expiresUnredeemedAt`, reject if `appUserId === purchaserAppUserId` (can't gift yourself), then
    flip to `redeemed`.
 3. Grant via RC: `POST /v1/subscribers/{appUserId}/entitlements/premium/promotional` with the
-   duration. RC's named durations are `daily`, `three_day`, `weekly`, `monthly`, `two_month`,
-   `three_month`, `six_month`, `yearly`, `lifetime`; for anything custom you pass explicit start/end
-   times so the window lands where you want. Our three SKUs map cleanly onto `monthly`,
-   `three_month`, `yearly`.
+   duration taken from `grantDuration` on the gift doc — `yearly` or `lifetime`, both of which are
+   named RC durations, so no custom start/end arithmetic is needed. (RC also supports custom windows
+   by passing explicit start/end times, which is how a partial-remaining re-claim in §6 is granted.)
 4. If the RC call fails, **roll the doc back to `unredeemed`** before returning the error — never
    burn a code on a failed grant.
 5. Return `{ ok: true, expiresAt, durationLabel }`.
@@ -204,11 +267,28 @@ with rate limiting.
 
 **New service** `Services/IAP/GiftService.swift`, modeled on `BibleChatAIService`
 (`Services/Bible/BibleChatService.swift:117-170`) — same raw-URL + `URLSession` + emulator-toggle
-pattern, endpoints `…cloudfunctions.net/giftCreate` and `/giftRedeem`.
+pattern, endpoints `…cloudfunctions.net/giftCreate` and `/giftRedeem`. It also owns the direct
+StoreKit purchase, which is the one place the app buys outside RevenueCat:
+
+```swift
+let result = try await product.purchase(options: [.quantity(count)])
+guard case .success(let verification) = result,
+      case .verified(let transaction) = verification else { … }
+let gifts = try await createGifts(jws: verification.jwsRepresentation,
+                                  appUserId: RevenueCatManager.shared.appUserID)
+await transaction.finish()   // only after the server has minted the codes
+```
+
+Finishing the transaction *after* `giftCreate` returns means a crash or dropped connection leaves it
+unfinished, so StoreKit re-delivers it on next launch and the codes still get minted. Belt and
+braces on top of the transaction-id idempotency.
 
 **New view** `Views/ProfileView/GiftSubscriptionView.swift` with three sections:
-- **Give a gift** — the three SKUs with prices from StoreKit, an optional short note, purchase → code.
-- **My gifts** — sent codes with status (unredeemed / redeemed / expired), share and re-share.
+- **Give a gift** — a Yearly / Lifetime picker, a quantity stepper (1–10) with the running total
+  price, and one purchase button. On success, the minted codes appear as a list, each with its own
+  Share button plus a "Copy all codes" action for someone buying a batch for a group.
+- **My gifts** — every code sent, with status (unredeemed / redeemed / expired), grouped by purchase,
+  re-shareable at any time. This is also the recovery path if the share never went out.
 - **Redeem** — a field for a SpeakLife gift code, plus a row that keeps the existing Apple offer-code
   sheet (`subscriptionStore.redeemOfferCode()`) for App Store codes.
 
@@ -228,7 +308,7 @@ private var giftSubscriptionRow: some View {
 
 **Deep link** — extend `.onOpenURL` (`SpeakLifeApp.swift:145`) to route
 `speaklife://gift?code=XXXX` into `GiftSubscriptionView` with the field prefilled. For recipients
-who don't have the app yet, generate the share URL as a **Branch** link carrying `code` in its
+who don't have the app yet, generate each share URL as a **Branch** link carrying `code` in its
 deep-link data; Branch's deferred deep linking already resolves post-install through
 `BranchAttribution.apply` (`AppDelegate.swift:551`), which today only reads `ob`. That avoids
 needing an `associated-domains` entitlement.
@@ -239,8 +319,10 @@ needing an `associated-domains` entitlement.
 
 - Row title: **"Give SpeakLife"** (not "Gift a Subscription" — matches the app's voice).
 - Screen header: *"Someone you love needs this. Put God's Word in their hands."*
-- After purchase: show the code big, with **Share** as the primary button (pre-filled iMessage text
-  + link), and **Copy code** secondary.
+- Quantity control: a stepper, with the total updating live ("5 gifts · $149.95"). One gift is the
+  default; the stepper is what makes buying for a small group feel intended rather than improvised.
+- After purchase: one code per row, each with its own **Share** button (pre-filled iMessage text +
+  link), **Copy code** secondary, and **Copy all codes** when the batch is larger than one.
 - Share text: *"I got you a gift — SpeakLife premium, on me. Tap to open it: {link}"*
 - Recipient success state: full-screen celebration, the gifter's note if present, then straight into
   the app (not into a paywall).
@@ -260,8 +342,9 @@ Three mitigations, in order of preference:
 
 1. **Re-claim the same code** (ship this in v1, cheap). `giftRedeem` accepts a code that is already
    redeemed *if* the request is within the original grant window and `reclaims.length < 3`. It then
-   grants the remaining time to the new app user ID and appends to `reclaims`. The user just enters
-   their gift code again on the new phone. Bounded, self-serve, no identity work.
+   grants the **remaining** time to the new app user ID (a custom RC start/end window) and appends
+   to `reclaims`. The user just enters their gift code again on the new phone. Bounded, self-serve,
+   no identity work.
 2. **Pin a stable RC identity at redemption** (ship in v1 too). At redeem time, call
    `Purchases.shared.logIn(stableId)` where `stableId` is a UUID stored in the Keychain
    (`Services/IAP/Security/KeychainHelper.swift`) and mirrored to `NSUbiquitousKeyValueStore`, or the
@@ -273,15 +356,24 @@ Three mitigations, in order of preference:
 Mitigation 2 is a change to app-wide RC identity and deserves its own careful test pass — do not
 bundle it blindly with the gifting release; gate it so it only fires on the redemption path first.
 
+**Lifetime gifts raise the stakes.** A yearly gift lost to a reinstall costs the recipient some
+months and one support email. A *lifetime* gift lost to a reinstall is a promise we broke, on the
+most expensive thing we sell, potentially years later when nobody remembers the purchase. So for
+lifetime gifts specifically: mitigation 2 (a stable RC identity pinned at redemption) is not optional,
+and re-claims should be **unlimited** rather than capped at 3 — the code lives forever in Firestore
+and can always be re-granted to whoever holds it. If we are not prepared to do the identity work,
+ship yearly gifts first and hold lifetime back.
+
 ---
 
 ## 7. Edge cases and policy
 
 | Case | Handling |
 |---|---|
-| Gifter refunded by Apple | RC webhook / periodic reconcile: if the gift is **unredeemed**, set `status: revoked`. If **already redeemed**, let it stand (revoking premium from an innocent recipient is worse than eating the loss) and flag the purchaser for repeat abuse. |
+| Gifter refunded by Apple | App Store Server Notifications V2 (`REFUND`) fires on the batch's transaction id. Revoke every **unredeemed** code in that batch (`status: revoked`); leave **already redeemed** ones standing — revoking premium from an innocent recipient is worse than eating the loss — and flag the purchaser for repeat abuse. Note a refund is all-or-nothing on the transaction, so a 5-gift batch where 2 were redeemed means 3 revoked and 2 honored. |
+| Only part of a batch gets shared | Nothing to do. Unshared codes sit in "My Gifts" until the 12-month expiry, re-shareable at any time. |
 | Recipient already premium | Still redeem it: the promo entitlement stacks behind their paid one and takes over if they cancel. Show "Your gift is saved and starts when your current subscription ends." Alternative (simpler) is to block redemption — decide in §9. |
-| Gifting yourself | Blocked at redeem time by `appUserId === purchaserAppUserId`. Weak (a second device defeats it) but it stops the accidental case; the real abuse ceiling is that a gift costs full price. |
+| Gifting yourself | Blocked at redeem time by `appUserId === purchaserAppUserId`. Weak (a second device defeats it) but it stops the accidental case; the real abuse ceiling is that a gift costs full price. Buying a 10-pack to resell codes is the theoretical worst case, and it is self-limiting: they paid full retail for every one. |
 | Code never redeemed | Expires 12 months after purchase. No refund (matches Apple's "refunded to the original purchaser only" — direct them to Apple's refund flow). |
 | Same code entered twice | Firestore transaction makes it atomic; second attempt hits the re-claim path (§6.1) or is rejected. |
 | Brute force | Rate limit per app user ID + per IP; 32-symbol 8-char codes. |
@@ -295,11 +387,15 @@ bundle it blindly with the gifting release; gate it so it only fires on the rede
 Reuse `AnalyticsService.trackUserAction` (`Core/Analytics/AnalyticsService.swift:201`), category
 `gifting`:
 
-`gift_screen_opened` (source) · `gift_product_selected` (productId) · `gift_purchase_started` ·
-`gift_purchase_completed` (productId, revenue) · `gift_purchase_failed` (reason) · `gift_shared`
-(channel) · `gift_link_opened` (recipient side) · `gift_redeem_attempted` · `gift_redeem_succeeded`
-(durationDays) · `gift_redeem_failed` (reason) · `gift_reclaimed` · `gift_recipient_converted_to_paid`
-(the number that decides whether this feature earns its keep).
+`gift_screen_opened` (source) · `gift_product_selected` (productId) · `gift_quantity_changed`
+(quantity) · `gift_purchase_started` (productId, quantity) · `gift_purchase_completed` (productId,
+quantity, revenue) · `gift_purchase_failed` (reason) · `gift_shared` (channel, batchSize) ·
+`gift_link_opened` (recipient side) · `gift_redeem_attempted` · `gift_redeem_succeeded`
+(grantDuration) · `gift_redeem_failed` (reason) · `gift_reclaimed` ·
+`gift_recipient_converted_to_paid` (the number that decides whether this feature earns its keep).
+
+Stamp `quantity` on the purchase events specifically — average batch size is what tells us whether
+bundle SKUs above 10 are worth building.
 
 The one funnel to watch: **purchase → shared → opened → redeemed → converted.** If sharing is where
 it dies, the share sheet copy is the fix, not the feature.
@@ -308,47 +404,53 @@ it dies, the share sheet copy is the fix, not the feature.
 
 ## 9. Decisions needed before build
 
-1. **Durations and prices** — is $4.99 / $12.99 / $29.99 for 1mo / 3mo / 1yr right, or should the
-   gift be priced at parity with the normal yearly ($29.99, `SpeakLife1YR29`)?
-2. **Stacking** — if the recipient is already premium, queue the gift behind their subscription
+1. **Prices** — yearly gift at $29.99 and lifetime at $99.99 (parity with what a person pays for
+   themselves), or does a gift carry a small premium or a small discount?
+2. **Bulk discount** — should 5+ or 10 of the same gift come with a break ("church pack")? Apple has
+   no volume-discount mechanism on a quantity purchase, so this requires separate bundle SKUs and
+   changes the picker from a stepper into a tier list. Worth it only if churches actually ask.
+3. **Above 10** — Apple caps a single purchase at 10. Leave larger orders to "run it again", or add
+   bundle SKUs (25 / 50) in a later pass?
+4. **Lifetime gating** — ship lifetime gifts in v1 (requires the RC identity work in §6), or start
+   yearly-only and add lifetime once identity pinning is proven?
+5. **Stacking** — if the recipient is already premium, queue the gift behind their subscription
    (recommended) or refuse the redemption with "they're already covered"?
-3. **Conversion push** — do we send the recipient a win-back offer at T-7 days and T-0 of gift
-   expiry? (Recommended; it's where the ROI is.)
-4. **Bulk gifting** — do churches/small groups need "buy 10 at once"? That changes the UI
-   materially (a quantity picker and a code list/CSV export) but not the backend.
-5. **Anonymous → identified RC IDs** (§6.2) — approve this as part of the gifting release, or defer
-   and ship with re-claim only?
-
----
+6. **Conversion push** — do we send a recipient of a *yearly* gift a win-back offer at T-7 days and
+   T-0 of expiry? (Recommended; it's where the ROI is. Lifetime recipients never expire.)
 
 ## 10. Phased plan
 
 **Phase 0 — today, no code.** Generate a batch of App Store offer codes and use the existing
 "Redeem a Code" row to hand out gifts manually. Validates demand before we build anything.
 
-**Phase 1 — backend (≈2 days).** `functions/gifting.js` with `giftCreate` + `giftRedeem`, the
-`gifts` collection, `firestore.rules` entry (`allow read, write: if false`), the Firestore index,
-and a `scripts/` curl harness against the emulator.
+**Phase 1 — backend (≈2–3 days).** `functions/gifting.js` with `giftCreate` + `giftRedeem`, the
+`gifts` and `giftBatches` collections, `firestore.rules` entries (`allow read, write: if false`),
+the indexes, and the `@apple/app-store-server-library` JWS verification (this is the new piece —
+budget time for getting Apple's root certs and the sandbox/production environment switch right).
+A `scripts/` curl harness against the emulator.
 
-**Phase 2 — products (≈0.5 day, mostly waiting).** Create the three consumables in App Store
-Connect, add them to RevenueCat in a `gifts` offering, confirm they are **not** attached to the
-`premium` entitlement.
+**Phase 2 — products (≈0.5 day, mostly waiting on review).** Create `SpeakLifeGiftYear` and
+`SpeakLifeGiftLifetime` as consumables in App Store Connect, add them to RevenueCat, and confirm
+they are **not** attached to the `premium` entitlement.
 
-**Phase 3 — client (≈2–3 days).** `GiftService.swift`, `GiftSubscriptionView.swift`, the
-`giftSubscriptionRow` in `ProfileView`, `speaklife://gift?code=` routing, Branch share links,
-analytics.
+**Phase 3 — client (≈3 days).** `GiftService.swift` (direct StoreKit purchase with
+`.quantity(n)` + both endpoints), `GiftSubscriptionView.swift` with the product picker, quantity
+stepper, running total, and per-code share list, the `giftSubscriptionRow` in `ProfileView`,
+`speaklife://gift?code=` routing, Branch share links, analytics.
 
-**Phase 4 — durability + polish (≈1–2 days).** Re-claim path, optional `Purchases.logIn` identity
-pinning, gift-redeemed push to the gifter, expiry win-back sequence.
+**Phase 4 — durability + polish (≈1–2 days).** Re-claim path, `Purchases.logIn` identity pinning
+(mandatory if lifetime ships), gift-redeemed push to the gifter, expiry win-back sequence for
+yearly, App Store Server Notifications V2 endpoint for refunds.
 
-**Phase 5 — tests.** Unit tests for code generation/normalization, redemption state machine, and
-duration mapping (`SpeakLifeTests/` — follow `APIClientTests.swift` for the URLSession stubbing
-pattern). Manual: sandbox purchase → code → redeem on a second device → verify `isPremium` flips and
-survives a cold launch.
+**Phase 5 — tests.** Unit tests for code generation/normalization, the redemption state machine,
+`productId` → duration mapping, and batch idempotency (a replayed `jws` must return the same N codes
+and never mint more). Follow `SpeakLifeTests/APIClientTests.swift` for the URLSession stubbing
+pattern. Manual, in sandbox: buy quantity 3 → confirm 3 codes → redeem one on a second device →
+verify `isPremium` flips and survives a cold launch → confirm the other two stay unredeemed →
+verify the quantity ceiling and the price ceiling on 10 × lifetime.
 
-**Total: roughly one focused week.**
-
----
+**Total: roughly one to one-and-a-half focused weeks**, the extra time over the original estimate
+being the JWS verification and the quantity UI.
 
 ## 11. Sources
 
@@ -358,3 +460,7 @@ survives a cold launch.
 - [App Store Connect — Set up offer codes](https://developer.apple.com/help/app-store-connect/manage-subscriptions/set-up-subscription-offer-codes/)
 - [App Store Connect API — Create one-time use offer codes](https://developer.apple.com/documentation/appstoreconnectapi/post-v1-subscriptionoffercodeonetimeusecodes)
 - [StoreKit — Supporting offer codes in your app](https://developer.apple.com/documentation/storekit/supporting-offer-codes-in-your-app)
+- [StoreKit — `Product.PurchaseOption.quantity(_:)`](https://developer.apple.com/documentation/storekit/product/purchaseoption/quantity(_:))
+- [App Store Server API — `JWSTransactionDecodedPayload`](https://developer.apple.com/documentation/appstoreserverapi/jwstransactiondecodedpayload)
+- [App Store Server Library](https://developer.apple.com/documentation/appstoreserverapi/simplifying-your-implementation-by-using-the-app-store-server-library)
+- [RevenueCat — Non-subscription purchases](https://www.revenuecat.com/docs/platform-resources/non-subscriptions)
