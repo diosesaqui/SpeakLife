@@ -17,17 +17,10 @@ struct BibleView: View {
     @State private var selectedTab = 0
     @State private var showBibleChat = false
 
-    /// False when the reader is itself opened from a Bible Chat surface. Chat →
-    /// reader → "Ask the Bible" → answer → verse → reader is a closed loop, and
-    /// every hop is a new sheet, so the user ends up backing out of a stack of
-    /// the same two screens. Hiding the entry inside chat breaks the cycle.
-    private let showsChatEntry: Bool
-
     /// `initialReference` (e.g. "John 3:16", from a chat answer) is handed to the
     /// view model so the initial load opens that passage directly.
-    init(initialReference: String? = nil, showsChatEntry: Bool = true) {
+    init(initialReference: String? = nil) {
         _viewModel = StateObject(wrappedValue: BibleViewModel(initialReference: initialReference))
-        self.showsChatEntry = showsChatEntry
     }
 
     var body: some View {
@@ -44,8 +37,7 @@ struct BibleView: View {
                     } else {
                         BibleBookSelectionView(
                             viewModel: viewModel,
-                            showBibleChat: $showBibleChat,
-                            showsChatEntry: showsChatEntry
+                            showBibleChat: $showBibleChat
                         )
                     }
                 } else if viewModel.showChapterGrid {
@@ -288,9 +280,6 @@ struct BibleView: View {
 struct BibleBookSelectionView: View {
     @ObservedObject var viewModel: BibleViewModel
     @Binding var showBibleChat: Bool
-    /// See `BibleView.showsChatEntry` — suppressed when the reader was opened
-    /// from Bible Chat so the two screens can't stack on each other.
-    var showsChatEntry: Bool = true
     @State private var selectedTestament = 0
 
     var body: some View {
@@ -313,14 +302,12 @@ struct BibleBookSelectionView: View {
                 Spacer()
             } else if !viewModel.testamentSections.isEmpty {
                 ScrollView {
-                    if showsChatEntry {
-                        BibleChatEntryCard {
-                            Juice.play(.tapLight)
-                            showBibleChat = true
-                        }
-                        .padding(.horizontal)
-                        .padding(.top, 12)
+                    BibleChatEntryCard {
+                        Juice.play(.tapLight)
+                        showBibleChat = true
                     }
+                    .padding(.horizontal)
+                    .padding(.top, 12)
 
                     LazyVGrid(columns: [
                         GridItem(.flexible()),
