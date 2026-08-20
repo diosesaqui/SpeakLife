@@ -104,6 +104,37 @@ jobs:
           swift test --package-path Packages/SpeakLifeKit
 
   # ───────────────────────────────────────────────────────────────────────────
+  # The Cloud Functions. Runs on Linux in seconds, and exists because the
+  # backend had no test gate at all before gift subscriptions: a function that
+  # mints things worth money should not be the first place a bug is found in
+  # production. Covers the pure logic in functions/giftingCore.js; the handlers
+  # themselves are exercised against the emulator by hand.
+  # ───────────────────────────────────────────────────────────────────────────
+  functions-tests:
+    name: Cloud Functions unit tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: functions/package-lock.json
+
+      # `npm ci` rather than `npm install`, so a drifted lockfile fails the
+      # build instead of being silently rewritten.
+      - name: npm ci
+        working-directory: functions
+        run: npm ci
+
+      - name: npm test
+        working-directory: functions
+        run: npm test
+
+  # ───────────────────────────────────────────────────────────────────────────
   # The slow one. Proves the app still compiles and runs the residual
   # app-hosted tests.
   # ───────────────────────────────────────────────────────────────────────────

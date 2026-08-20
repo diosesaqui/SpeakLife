@@ -1,7 +1,8 @@
 # Gift a Subscription — Research & Implementation Plan
 
 **Date:** 2026-08-20
-**Status:** Research complete, not implemented. Awaiting product decisions (see "Decisions needed").
+**Status:** Phase 1 (backend) implemented — `functions/gifting.js`, `functions/giftingCore.js`,
+47 unit tests, Firestore rules. Not deployed. Client and App Store product still to do.
 **Ask:** Let a user buy SpeakLife premium *for someone else* — picking the plan and **how many** —
 surfaced as its own destination in Settings alongside "Redeem a Code".
 
@@ -485,11 +486,20 @@ it dies, the share sheet copy is the fix, not the feature.
 **Phase 0 — today, no code.** Generate a batch of App Store offer codes and use the existing
 "Redeem a Code" row to hand out gifts manually. Validates demand before we build anything.
 
-**Phase 1 — backend (≈2–3 days).** `functions/gifting.js` with `giftCreate` + `giftRedeem`, the
-`gifts` and `giftBatches` collections, `firestore.rules` entries (`allow read, write: if false`),
-the indexes, and the `@apple/app-store-server-library` JWS verification (this is the new piece —
-budget time for getting Apple's root certs and the sandbox/production environment switch right).
-A `scripts/` curl harness against the emulator.
+**Phase 1 — backend. ✅ Done, not deployed.**
+- `functions/giftingCore.js` — the rules that decide who gets premium and for how long, kept pure
+  and fully unit tested (47 tests, `node --test`, no dependencies).
+- `functions/gifting.js` — `giftCreate` and `giftRedeem`, with offline Apple JWS verification via
+  `@apple/app-store-server-library`.
+- `functions/certs/README.md` — where Apple's root certificates go. **They are not in the repo**;
+  the function throws on startup until they are added.
+- `firestore.rules` — `gifts`, `giftBatches`, `giftRedeemAttempts`, all `if false`.
+- A `functions-tests` job in CI, which is the first backend test gate this repo has had.
+
+No composite indexes turned out to be needed: gift docs are fetched by code (the doc id) and
+batches by transaction id, so nothing queries a second field. "My Gifts" is served by replaying the
+device's own signed transactions through `giftCreate`, which is idempotent and returns live status
+— that avoids a list endpoint that would hand out codes to anyone who could guess an `appUserId`.
 
 **Phase 2 — products (≈0.5 day, mostly waiting on review).** Create `SpeakLifeGiftYear` as a
 consumable at $39.99 in App Store Connect, add it to RevenueCat, and confirm it is **not** attached

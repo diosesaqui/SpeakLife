@@ -194,6 +194,34 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // ─── Gift subscriptions ────────────────────────────────────────────
+    // Written exclusively by the giftCreate / giftRedeem Cloud Functions via
+    // the admin SDK (which bypasses these rules). Locked shut on both sides:
+    //
+    //   gifts/{code}         — a code is worth money, so a client that could
+    //                          read this collection could enumerate unredeemed
+    //                          gifts and claim them. Only the functions ever
+    //                          touch it, and the app learns a code either from
+    //                          giftCreate (proved by an Apple-signed
+    //                          transaction) or from whoever gifted it.
+    //   giftBatches/{txnId}  — one doc per purchase, keyed by Apple's
+    //                          transaction id, which is what makes minting
+    //                          idempotent.
+    //   giftRedeemAttempts   — the per-user redeem rate limit. Client-writable
+    //                          would mean self-served unlimited guesses.
+
+    match /gifts/{code} {
+      allow read, write: if false;
+    }
+
+    match /giftBatches/{transactionId} {
+      allow read, write: if false;
+    }
+
+    match /giftRedeemAttempts/{appUserId} {
+      allow read, write: if false;
+    }
+
     // ─── Inbox badge counter ───────────────────────────────────────────
     // A single doc (speakLifeMessagesMeta/summary) holding a monotonic
     // broadcast sequence number, incremented by the same Cloud Functions
