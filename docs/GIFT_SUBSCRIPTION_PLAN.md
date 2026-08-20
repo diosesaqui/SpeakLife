@@ -2,8 +2,12 @@
 
 **Date:** 2026-08-20
 **Status:** Research complete, not implemented. Awaiting product decisions (see "Decisions needed").
-**Ask:** Let a user buy SpeakLife premium *for someone else* — picking yearly or lifetime and **how
-many** — surfaced as its own destination in Settings alongside "Redeem a Code".
+**Ask:** Let a user buy SpeakLife premium *for someone else* — picking the plan and **how many** —
+surfaced as its own destination in Settings alongside "Redeem a Code".
+
+**Shape:** Phase 1 ships a **yearly gift at $39.99** (against $49.99 retail — a gift costs less than
+buying it for yourself), quantity 1–10 per purchase. Lifetime gifting is designed for but held back;
+§6 explains why.
 
 ---
 
@@ -136,13 +140,29 @@ Recipient                                                                       
 
 Two **consumable** IAPs — consumable, not non-consumable, so one person can buy many:
 
-| Product ID | Gift | Suggested price | Maps to RC promo duration |
-|---|---|---|---|
-| `SpeakLifeGiftYear` | 1 year of premium | $29.99 (parity with `SpeakLife1YR29`) | `yearly` |
-| `SpeakLifeGiftLifetime` | Lifetime premium | $99.99 (parity with `SpeakLifeLifetime`) | `lifetime` |
+| Product ID | Gift | Price | Retail equivalent | RC promo duration | Ship |
+|---|---|---|---|---|---|
+| `SpeakLifeGiftYear` | 1 year of premium | **$39.99** | $49.99 | `yearly` | Phase 1 |
+| `SpeakLifeGiftLifetime` | Lifetime premium | $99.99 | $99.99 | `lifetime` | Later — see §6 |
 
-The gifter picks **which** and **how many** — a stepper on the same screen — and pays once for the
-whole batch. Buying 5 yearly gifts mints 5 independent codes from a single transaction.
+**A gift costs less than buying it for yourself.** $39.99 against the $49.99 retail yearly, using a
+price point the app already runs during onboarding (`SpeakLife1YR39`, `InAppPurchases.swift:22`), so
+it is proven and needs no new pricing thinking. That inversion is the marketing hook — *"give a
+year for $10 less than it costs you"* — and it makes the batch maths friendlier too: five gifts is
+$199.95 instead of $249.95.
+
+Two implementation notes on that:
+
+- The gift SKU is a **new consumable at the $39.99 price point**, not a reuse of `SpeakLife1YR39`.
+  That existing product is an auto-renewable subscription; a gift has to be a consumable, so the
+  price point carries over but the product does not.
+- The retail yearly is whatever Remote Config's `yearlySubscription` currently points at
+  (`SubscriptionStore.swift:312`), not the compiled `currentYearlyID` constant — so if the retail
+  price moves, revisit the gift price rather than assuming the $10 gap holds.
+
+**Lifetime is deliberately not in Phase 1.** It is the same build with one different string, but it
+carries a durability liability that yearly does not (§6). Ship yearly, prove the flow, add lifetime
+once redemption is identity-bound.
 
 **How the quantity is bought:** StoreKit 2 supports it natively via
 [`Product.PurchaseOption.quantity(_:)`](https://developer.apple.com/documentation/storekit/product/purchaseoption/quantity(_:)),
@@ -284,8 +304,8 @@ unfinished, so StoreKit re-delivers it on next launch and the codes still get mi
 braces on top of the transaction-id idempotency.
 
 **New view** `Views/ProfileView/GiftSubscriptionView.swift` with three sections:
-- **Give a gift** — a Yearly / Lifetime picker, a quantity stepper (1–10) with the running total
-  price, and one purchase button. On success, the minted codes appear as a list, each with its own
+- **Give a gift** — a plan picker (yearly only until lifetime ships, so it renders as a single
+  selected card), a quantity stepper (1–10) with the running total price, and one purchase button. On success, the minted codes appear as a list, each with its own
   Share button plus a "Copy all codes" action for someone buying a batch for a group.
 - **My gifts** — every code sent, with status (unredeemed / redeemed / expired), grouped by purchase,
   re-shareable at any time. This is also the recovery path if the share never went out.
@@ -319,8 +339,10 @@ needing an `associated-domains` entitlement.
 
 - Row title: **"Give SpeakLife"** (not "Gift a Subscription" — matches the app's voice).
 - Screen header: *"Someone you love needs this. Put God's Word in their hands."*
-- Quantity control: a stepper, with the total updating live ("5 gifts · $149.95"). One gift is the
+- Quantity control: a stepper, with the total updating live ("5 gifts · $199.95"). One gift is the
   default; the stepper is what makes buying for a small group feel intended rather than improvised.
+- Say the saving out loud on the buy screen: *"$39.99 — that's $10 less than a year costs you."*
+  A gift that is cheaper than self-purchase is unusual enough to be worth a line of copy.
 - After purchase: one code per row, each with its own **Share** button (pre-filled iMessage text +
   link), **Copy code** secondary, and **Copy all codes** when the batch is larger than one.
 - Share text: *"I got you a gift — SpeakLife premium, on me. Tap to open it: {link}"*
@@ -356,13 +378,47 @@ Three mitigations, in order of preference:
 Mitigation 2 is a change to app-wide RC identity and deserves its own careful test pass — do not
 bundle it blindly with the gifting release; gate it so it only fires on the redemption path first.
 
-**Lifetime gifts raise the stakes.** A yearly gift lost to a reinstall costs the recipient some
-months and one support email. A *lifetime* gift lost to a reinstall is a promise we broke, on the
-most expensive thing we sell, potentially years later when nobody remembers the purchase. So for
-lifetime gifts specifically: mitigation 2 (a stable RC identity pinned at redemption) is not optional,
-and re-claims should be **unlimited** rather than capped at 3 — the code lives forever in Firestore
-and can always be re-granted to whoever holds it. If we are not prepared to do the identity work,
-ship yearly gifts first and hold lifetime back.
+### Why lifetime is the one to hold back
+
+A **bought** lifetime is safe, and it is worth being precise about why: `SpeakLifeLifetime` is an
+App Store non-consumable tied to the buyer's Apple ID. Apple is the system of record, and "Restore
+Purchases" brings it back on any device forever. We carry no risk.
+
+A **gifted** lifetime is a completely different object. The recipient never bought anything from
+Apple, so no transaction of theirs exists anywhere in Apple's system. The only evidence they have
+premium is a promotional entitlement row in RevenueCat attached to an anonymous app user ID that
+lives in local app storage. Delete and reinstall, or set up a new phone without restoring a backup,
+and that ID is gone — the entitlement is orphaned on an identifier nobody will ever use again. And
+**Restore Purchases cannot rescue them**, because restore asks Apple what this Apple ID bought, and
+the answer is nothing.
+
+Over an actual lifetime, the chance of a reinstall or a new device approaches 100%. This is not an
+edge case, it is the expected outcome on a delay. A yearly gift quietly self-heals because it was
+going to end anyway; a lifetime gift becomes "I paid for my mom two years ago and now she has
+nothing", at a point where she has no account, no receipt, and no memory of a gift code.
+
+Manual recovery is also weak: we can re-grant from the RevenueCat dashboard, but only if we can tell
+*which* anonymous ID is hers, and most users have no account and no email on file.
+
+Two further considerations, both about lifetime as a product rather than about gifting:
+
+- **Unmetered cost.** Premium unlocks unlimited Bible Chat, which is a real per-message Anthropic
+  bill (`functions/bibleChat.js:41` — free users get 3 messages ever, premium is uncapped). One
+  payment against a decade of uncapped AI is a margin question, and a 10-pack sells ten uncapped
+  accounts in a single transaction.
+- **Codes that never decay.** A leaked yearly code loses value in a year; a leaked lifetime code
+  never does. And 10 × lifetime is a ~$999 charge, which is the size where chargebacks show up.
+
+**So: ship yearly first.** If and when lifetime ships, make redemption identity-bound — when someone
+redeems a lifetime gift, prompt Sign in with Apple (already in the codebase at
+`Services/Auth/AppleSignInService.swift`) with the honest framing *"Sign in so your gift can never be
+lost"*, then `Purchases.logIn` with that uid. That is the best moment in the entire app to ask for an
+account: they have just been given something valuable and the reason is plainly in their interest.
+Re-claims for lifetime should be **unlimited** rather than capped at 3.
+
+**Worth considering instead of lifetime:** gift **5 years**. It feels like a huge gift, costs the
+giver the same, and bounds the liability on both the identity and the cost side. RevenueCat grants it
+as a custom start/end window, so it is no extra work.
 
 ---
 
@@ -402,21 +458,27 @@ it dies, the share sheet copy is the fix, not the feature.
 
 ---
 
-## 9. Decisions needed before build
+## 9. Decisions
 
-1. **Prices** — yearly gift at $29.99 and lifetime at $99.99 (parity with what a person pays for
-   themselves), or does a gift carry a small premium or a small discount?
-2. **Bulk discount** — should 5+ or 10 of the same gift come with a break ("church pack")? Apple has
-   no volume-discount mechanism on a quantity purchase, so this requires separate bundle SKUs and
-   changes the picker from a stepper into a tier list. Worth it only if churches actually ask.
-3. **Above 10** — Apple caps a single purchase at 10. Leave larger orders to "run it again", or add
+**Settled:**
+- Gift products are yearly and lifetime, not duration tiers.
+- Yearly gift is **$39.99** against the $49.99 retail yearly — a gift costs less than buying it for
+  yourself, using a price point the app already runs in onboarding.
+- Lifetime does not ship in Phase 1 (§6).
+
+**Still open:**
+
+1. **Bulk discount** — should 5+ or 10 of the same gift come with a further break ("church pack")?
+   Apple has no volume-discount mechanism on a quantity purchase, so this requires separate bundle
+   SKUs and turns the stepper into a tier list. Worth it only if churches actually ask.
+2. **Above 10** — Apple caps a single purchase at 10. Leave larger orders to "run it again", or add
    bundle SKUs (25 / 50) in a later pass?
-4. **Lifetime gating** — ship lifetime gifts in v1 (requires the RC identity work in §6), or start
-   yearly-only and add lifetime once identity pinning is proven?
-5. **Stacking** — if the recipient is already premium, queue the gift behind their subscription
+3. **Lifetime, later** — ship it once redemption is identity-bound, or replace it with a 5-year gift
+   that carries none of the liability (§6)?
+4. **Stacking** — if the recipient is already premium, queue the gift behind their subscription
    (recommended) or refuse the redemption with "they're already covered"?
-6. **Conversion push** — do we send a recipient of a *yearly* gift a win-back offer at T-7 days and
-   T-0 of expiry? (Recommended; it's where the ROI is. Lifetime recipients never expire.)
+5. **Conversion push** — send the recipient a win-back offer at T-7 days and T-0 of expiry?
+   (Recommended; it's where the ROI is, and at $39.99 the gift is already a discounted acquisition.)
 
 ## 10. Phased plan
 
@@ -429,28 +491,33 @@ the indexes, and the `@apple/app-store-server-library` JWS verification (this is
 budget time for getting Apple's root certs and the sandbox/production environment switch right).
 A `scripts/` curl harness against the emulator.
 
-**Phase 2 — products (≈0.5 day, mostly waiting on review).** Create `SpeakLifeGiftYear` and
-`SpeakLifeGiftLifetime` as consumables in App Store Connect, add them to RevenueCat, and confirm
-they are **not** attached to the `premium` entitlement.
+**Phase 2 — products (≈0.5 day, mostly waiting on review).** Create `SpeakLifeGiftYear` as a
+consumable at $39.99 in App Store Connect, add it to RevenueCat, and confirm it is **not** attached
+to the `premium` entitlement. (`SpeakLifeGiftLifetime` follows later, gated on §6.)
 
 **Phase 3 — client (≈3 days).** `GiftService.swift` (direct StoreKit purchase with
-`.quantity(n)` + both endpoints), `GiftSubscriptionView.swift` with the product picker, quantity
-stepper, running total, and per-code share list, the `giftSubscriptionRow` in `ProfileView`,
-`speaklife://gift?code=` routing, Branch share links, analytics.
+`.quantity(n)` + both endpoints), `GiftSubscriptionView.swift` with the quantity stepper, running
+total, the "$10 less than a year costs you" line, and the per-code share list, the
+`giftSubscriptionRow` in `ProfileView`, `speaklife://gift?code=` routing, Branch share links,
+analytics. The product picker is built but has one entry until lifetime ships.
 
-**Phase 4 — durability + polish (≈1–2 days).** Re-claim path, `Purchases.logIn` identity pinning
-(mandatory if lifetime ships), gift-redeemed push to the gifter, expiry win-back sequence for
-yearly, App Store Server Notifications V2 endpoint for refunds.
+**Phase 4 — durability + polish (≈1–2 days).** Re-claim path, gift-redeemed push to the gifter,
+expiry win-back sequence, App Store Server Notifications V2 endpoint for refunds.
 
-**Phase 5 — tests.** Unit tests for code generation/normalization, the redemption state machine,
+**Phase 5 (optional, later) — lifetime.** `Purchases.logIn` identity pinning plus the Sign in with
+Apple prompt at redemption (§6), then the `SpeakLifeGiftLifetime` product. Or swap lifetime for a
+5-year gift and skip most of this.
+
+**Tests (throughout).** Unit tests for code generation/normalization, the redemption state machine,
 `productId` → duration mapping, and batch idempotency (a replayed `jws` must return the same N codes
 and never mint more). Follow `SpeakLifeTests/APIClientTests.swift` for the URLSession stubbing
 pattern. Manual, in sandbox: buy quantity 3 → confirm 3 codes → redeem one on a second device →
 verify `isPremium` flips and survives a cold launch → confirm the other two stay unredeemed →
-verify the quantity ceiling and the price ceiling on 10 × lifetime.
+verify the 10-per-transaction ceiling.
 
-**Total: roughly one to one-and-a-half focused weeks**, the extra time over the original estimate
-being the JWS verification and the quantity UI.
+**Total: roughly one focused week for yearly gifting end to end**, the bulk of it the JWS
+verification and the quantity UI. Lifetime adds a few days on top, most of it identity work rather
+than gifting work.
 
 ## 11. Sources
 
