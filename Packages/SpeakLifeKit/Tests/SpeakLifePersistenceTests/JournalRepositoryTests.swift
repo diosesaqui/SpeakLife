@@ -11,9 +11,6 @@ import Combine
 import SpeakLifeCore
 @testable import SpeakLifePersistence
 
-/// Main-actor isolated for the same reason as `AffirmationRepositoryTests`:
-/// an async body must not touch the main-queue `viewContext` off-queue.
-@MainActor
 final class JournalRepositoryTests: XCTestCase {
 
     // Retain the controller for the whole test — see the note on the same

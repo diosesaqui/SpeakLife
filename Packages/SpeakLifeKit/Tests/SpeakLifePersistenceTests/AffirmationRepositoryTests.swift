@@ -11,23 +11,6 @@ import Combine
 import SpeakLifeCore
 @testable import SpeakLifePersistence
 
-/// Main-actor isolated on purpose.
-///
-/// These tests build managed objects straight in the test body —
-/// `Entry(context: context)`, then setting its attributes — and `context` is the
-/// container's `viewContext`, which is main-queue confined. An `async` XCTest
-/// body does not run on the main queue, so every one of those lines was touching
-/// a main-queue context from a background thread, outside any `perform`.
-///
-/// That is a Core Data concurrency violation, and it is the kind that does not
-/// fail honestly: it corrupts the context instead. It is why CI kept losing a
-/// row that had been written and awaited, throwing 134030 on a save that should
-/// have worked, and doing it in a different test every run. Moving the store off
-/// `/dev/null` did not touch it and neither did closing the store in `tearDown`,
-/// because the store was never the problem.
-///
-/// `@MainActor` puts the body back on the queue the context belongs to.
-@MainActor
 final class AffirmationRepositoryTests: XCTestCase {
 
     // Retain the controller for the whole test so the container it owns is

@@ -194,9 +194,6 @@ class MockDeclarationFavoriteRepository: DeclarationFavoriteRepositoryProtocol {
     }
 }
 
-/// Main-actor isolated for the same reason as `AffirmationRepositoryTests`:
-/// an async body must not touch the main-queue `viewContext` off-queue.
-@MainActor
 final class UnifiedFavoritesManagerTests: XCTestCase {
     
     var manager: UnifiedFavoritesManager!
