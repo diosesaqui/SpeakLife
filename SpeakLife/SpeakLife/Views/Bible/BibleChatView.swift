@@ -11,6 +11,8 @@ import MessageUI
 struct BibleChatView: View {
     @StateObject private var viewModel = BibleChatViewModel()
     @EnvironmentObject var subscriptionStore: SubscriptionStore
+    @EnvironmentObject var navigator: BibleNavigator
+    @Environment(\.bibleSurfaceIsRoot) private var isRootSurface
     @Environment(\.dismiss) private var dismiss
     @Namespace private var topicNamespace
     @State private var showMailSheet = false
@@ -24,24 +26,27 @@ struct BibleChatView: View {
     private let suggestPrefillBody = "Hi SpeakLife team,\n\nI'd love to see a Bible Chat topic about:\n\n"
 
     var body: some View {
-        NavigationView {
-            ZStack {
-                Gradients().speakLifeCYOCell
-                    .ignoresSafeArea()
+        ZStack {
+            Gradients().speakLifeCYOCell
+                .ignoresSafeArea()
 
-                VStack(spacing: 0) {
-                    header
-                    searchBar
-                    topicGrid
-                }
+            VStack(spacing: 0) {
+                header
+                searchBar
+                topicGrid
             }
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .principal) {
-                    Text("Ask the Bible")
-                        .font(.system(size: 18, weight: .bold, design: .serif))
-                        .foregroundColor(.white)
-                }
+        }
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .principal) {
+                Text("Ask the Bible")
+                    .font(.system(size: 18, weight: .bold, design: .serif))
+                    .foregroundColor(.white)
+            }
+            // Only the surface the flow opened on is presented rather than
+            // pushed, so only it needs a close button. Pushed surfaces get the
+            // stack's back button.
+            if isRootSurface {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button {
                         dismiss()
@@ -52,23 +57,16 @@ struct BibleChatView: View {
                     }
                 }
             }
-            .sheet(item: $viewModel.selectedTopic) { topic in
-                // Inject subscriptionStore so the answer's verse → reader deep
-                // link can present BibleView (env objects don't cross sheets).
-                BibleChatAnswerView(topic: topic)
-                    .environmentObject(subscriptionStore)
-            }
-            .sheet(isPresented: $showMailSheet) {
-                MailView(
-                    isShowing: $showMailSheet,
-                    result: $mailResult,
-                    origin: .bibleChatTopic,
-                    prefillBody: suggestPrefillBody,
-                    isSubscribed: subscriptionStore.isPremium
-                )
-            }
         }
-        .navigationViewStyle(.stack)
+        .sheet(isPresented: $showMailSheet) {
+            MailView(
+                isShowing: $showMailSheet,
+                result: $mailResult,
+                origin: .bibleChatTopic,
+                prefillBody: suggestPrefillBody,
+                isSubscribed: subscriptionStore.isPremium
+            )
+        }
         .onAppear {
             viewModel.load()
             AnalyticsService.shared.trackScreenView("bible_chat")
@@ -129,9 +127,8 @@ struct BibleChatView: View {
                 ForEach(Array(viewModel.filteredTopics.enumerated()), id: \.element.id) { index, topic in
                     TopicCardView(topic: topic, namespace: topicNamespace) {
                         Juice.play(.tapLight)
-                        withAnimation(DS.Motion.smooth) {
-                            viewModel.select(topic)
-                        }
+                        viewModel.select(topic)
+                        navigator.open(.answer(topic))
                     }
                     .transition(.asymmetric(
                         insertion: .opacity.combined(with: .scale(scale: 0.92)),
@@ -331,9 +328,10 @@ struct BibleChatConversationView: View {
     // since SwiftUI does not reliably propagate env objects across sheet hops.
     @EnvironmentObject var appState: AppState
     @EnvironmentObject var declarationStore: DeclarationViewModel
+    @EnvironmentObject var navigator: BibleNavigator
+    @Environment(\.bibleSurfaceIsRoot) private var isRootSurface
     @State private var showPaywall = false
     @State private var showHistory = false
-    @State private var showBible = false
     @State private var heroAppeared = false
     @FocusState private var inputFocused: Bool
 
@@ -353,55 +351,62 @@ struct BibleChatConversationView: View {
     }
 
     var body: some View {
-        NavigationView {
-            ZStack {
-                Gradients().speakLifeCYOCell.ignoresSafeArea()
-                // Soft gold aura from the top for depth.
-                RadialGradient(
-                    colors: [Constants.gold.opacity(0.16), .clear],
-                    center: .top, startRadius: 0, endRadius: 380
-                )
-                .ignoresSafeArea()
-                .blendMode(.plusLighter)
-                .allowsHitTesting(false)
-                VStack(spacing: 0) {
-                    transcript
-                    inputBar
-                }
+        ZStack {
+            Gradients().speakLifeCYOCell.ignoresSafeArea()
+            // Soft gold aura from the top for depth.
+            RadialGradient(
+                colors: [Constants.gold.opacity(0.16), .clear],
+                center: .top, startRadius: 0, endRadius: 380
+            )
+            .ignoresSafeArea()
+            .blendMode(.plusLighter)
+            .allowsHitTesting(false)
+            VStack(spacing: 0) {
+                transcript
+                inputBar
             }
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                // Persistent entry into the full Bible reader. Lives in the
-                // top-left so it stays visible once a conversation starts (the
-                // empty-state hero disappears after the first message), and it
-                // balances the history button on the right.
+        }
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            // Persistent entry into the full Bible reader. Lives in the
+            // top-left so it stays visible once a conversation starts (the
+            // empty-state hero disappears after the first message), and it
+            // balances the history button on the right.
+            //
+            // Only shown at the root: reached the other way round (reader →
+            // "Ask the Bible" → answer → chat) the stack's back button already
+            // leads to the reader, and a second control pointing there is what
+            // let the two screens stack on each other.
+            if isRootSurface {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button {
-                        showBible = true
+                        AnalyticsService.shared.trackUserAction(
+                            "bible_reader_opened_from_chat", category: "bible_chat"
+                        )
+                        navigator.openReader()
                     } label: {
                         Image(systemName: "book.closed.fill")
                             .foregroundColor(.white)
                     }
                     .accessibilityLabel("Read the Bible")
                 }
-                ToolbarItem(placement: .principal) {
-                    Text("Bible Chat")
-                        .font(.system(size: 18, weight: .bold, design: .serif))
+            }
+            ToolbarItem(placement: .principal) {
+                Text("Bible Chat")
+                    .font(.system(size: 18, weight: .bold, design: .serif))
+                    .foregroundColor(.white)
+            }
+            // History (and "New" inside it) lives here.
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button {
+                    showHistory = true
+                } label: {
+                    Image(systemName: "clock.arrow.circlepath")
                         .foregroundColor(.white)
                 }
-                // History (and "New" inside it) lives here.
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button {
-                        showHistory = true
-                    } label: {
-                        Image(systemName: "clock.arrow.circlepath")
-                            .foregroundColor(.white)
-                    }
-                    .accessibilityLabel("Chat history")
-                }
+                .accessibilityLabel("Chat history")
             }
         }
-        .navigationViewStyle(.stack)
         .onChange(of: viewModel.needsPaywall) { newValue in
             if newValue {
                 viewModel.needsPaywall = false
@@ -420,17 +425,6 @@ struct BibleChatConversationView: View {
                 onSelect: { conversation in viewModel.load(conversation) },
                 onNewChat: { viewModel.startNewConversation() }
             )
-        }
-        .sheet(isPresented: $showBible) {
-            // Inject subscriptionStore explicitly — env objects do not reliably
-            // propagate across sheet hops, and BibleView requires it.
-            BibleView()
-                .environmentObject(subscriptionStore)
-                .onAppear {
-                    AnalyticsService.shared.trackUserAction(
-                        "bible_reader_opened_from_chat", category: "bible_chat"
-                    )
-                }
         }
         .onAppear { AnalyticsService.shared.trackScreenView("bible_chat_conversation") }
     }

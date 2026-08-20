@@ -781,7 +781,7 @@ struct HomeView: View {
     }
 
     var bibleChatTabView: some View {
-        BibleChatConversationView()
+        BibleFlowView(root: .chat)
             .tag(4) // keep tag 4 so existing deep-links/selection still resolve
             .tabItem {
                 Image(systemName: "bubble.left.and.text.bubble.right.fill")

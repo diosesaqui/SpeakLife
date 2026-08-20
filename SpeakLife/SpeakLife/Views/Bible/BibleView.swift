@@ -10,12 +10,12 @@ import SwiftUI
 struct BibleView: View {
     @StateObject private var viewModel: BibleViewModel
     @EnvironmentObject var subscriptionStore: SubscriptionStore
+    @EnvironmentObject var navigator: BibleNavigator
     @State private var showSearch = false
     @State private var showBookmarks = false
     @State private var showSettings = false
     @State private var showAuthSheet = false
     @State private var selectedTab = 0
-    @State private var showBibleChat = false
 
     /// `initialReference` (e.g. "John 3:16", from a chat answer) is handed to the
     /// view model so the initial load opens that passage directly.
@@ -24,168 +24,158 @@ struct BibleView: View {
     }
 
     var body: some View {
-        NavigationView {
-            ZStack {
-                // Background gradient
-                Gradients().speakLifeCYOCell
-                    .ignoresSafeArea(.all)
-                
-                // Main content
-                if viewModel.showBookSelection {
-                    if viewModel.testamentSections.isEmpty && !viewModel.isLoading {
-                        errorView
-                    } else {
-                        BibleBookSelectionView(
-                            viewModel: viewModel,
-                            showBibleChat: $showBibleChat
-                        )
-                    }
-                } else if viewModel.showChapterGrid {
-                    BibleChapterGridView(viewModel: viewModel)
-                } else if let chapter = viewModel.currentChapter {
-                    BibleReaderView(viewModel: viewModel, chapter: chapter)
-                        // Previous/Next keep the old chapter on screen while the
-                        // new one loads, which looked like the buttons did
-                        // nothing. Show that work is happening.
-                        .overlay {
-                            if viewModel.loadingChapterNumber != nil {
-                                chapterLoadingOverlay
-                            }
-                        }
-                } else if viewModel.showError && !viewModel.isLoading {
+        ZStack {
+            // Background gradient
+            Gradients().speakLifeCYOCell
+                .ignoresSafeArea(.all)
+            
+            // Main content
+            if viewModel.showBookSelection {
+                if viewModel.testamentSections.isEmpty && !viewModel.isLoading {
                     errorView
                 } else {
-                    loadingView
+                    BibleBookSelectionView(
+                        viewModel: viewModel,
+                        onAskTheBible: { navigator.open(.topics) }
+                    )
                 }
-            }
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    if !viewModel.showBookSelection {
-                        Button(action: {
-                            withAnimation(DS.Motion.smooth) {
-                                if viewModel.currentChapter != nil {
-                                    viewModel.backToChapters()
-                                } else {
-                                    viewModel.backToBooks()
-                                }
-                            }
-                        }) {
-                            HStack(spacing: 4) {
-                                Image(systemName: "chevron.left")
-                                    .font(.system(size: 16, weight: .semibold))
-                                Text(viewModel.currentChapter != nil ? "Chapters" : "Books")
-                                    .font(.system(size: 16))
-                            }
-                            .foregroundColor(.primary)
+            } else if viewModel.showChapterGrid {
+                BibleChapterGridView(viewModel: viewModel)
+            } else if let chapter = viewModel.currentChapter {
+                BibleReaderView(viewModel: viewModel, chapter: chapter)
+                    // Previous/Next keep the old chapter on screen while the
+                    // new one loads, which looked like the buttons did
+                    // nothing. Show that work is happening.
+                    .overlay {
+                        if viewModel.loadingChapterNumber != nil {
+                            chapterLoadingOverlay
                         }
                     }
-                }
-                
-                ToolbarItem(placement: .principal) {
-                    Text("Bible")
-                        .font(.system(size: 18, weight: .bold, design: .serif))
-                }
-                
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    HStack(spacing: DS.Spacing.md) {
-                        // Auth status indicator
-                        if !viewModel.isAuthenticated {
-                            Button(action: { viewModel.showAuthView = true }) {
-                                Image(systemName: "person.crop.circle.badge.exclamationmark")
-                                    .font(.system(size: 16, weight: .medium))
-                                    .foregroundColor(.orange)
-                            }
-                        }
-                        
-                        Button(action: { showSearch.toggle() }) {
-                            Image(systemName: "magnifyingglass")
-                                .font(.system(size: 16, weight: .medium))
-                        }
-                        
-                        Menu {
-                            if !viewModel.isAuthenticated {
-                                Button(action: { viewModel.showAuthView = true }) {
-                                    Label("Sign In for Unlimited Access", systemImage: "person.crop.circle.badge.plus")
-                                }
-                                
-                                Divider()
-                            }
-                            
-                            Button(action: { showBookmarks.toggle() }) {
-                                Label("Bookmarks", systemImage: "bookmark.fill")
-                            }
-
-                            Divider()
-                            
-                            Button(action: { showSettings.toggle() }) {
-                                Label("Settings", systemImage: "gearshape")
-                            }
-                            
-                            if viewModel.isAuthenticated {
-                                Divider()
-                                
-                                Button(action: { viewModel.signOut() }) {
-                                    Label("Sign Out", systemImage: "person.crop.circle.badge.minus")
-                                }
-                            }
-                        } label: {
-                            Image(systemName: "ellipsis.circle")
-                                .font(.system(size: 16, weight: .medium))
-                        }
-                    }
-                }
-            }
-            .sheet(isPresented: $showBibleChat) {
-                // Sheets are a fresh environment context — forward
-                // subscriptionStore or BibleChatView crashes reading it, and pin
-                // the dark scheme so it doesn't render light.
-                BibleChatView()
-                    .environmentObject(subscriptionStore)
-                    .preferredColorScheme(.dark)
-            }
-            .sheet(isPresented: $showSearch) {
-                BibleSearchView(viewModel: viewModel)
-                    .preferredColorScheme(.dark)
-            }
-            .sheet(isPresented: $showBookmarks) {
-                BibleBookmarksView(viewModel: viewModel)
-                    .preferredColorScheme(.dark)
-            }
-            .sheet(isPresented: $showSettings) {
-                BibleSettingsView(viewModel: viewModel)
-                    .preferredColorScheme(.dark)
-            }
-            .alert("Error", isPresented: $viewModel.showError) {
-                Button("OK") { viewModel.showError = false }
-            } message: {
-                Text(viewModel.errorMessage ?? "An error occurred")
-            }
-            .sheet(isPresented: $viewModel.showAuthView) {
-                BibleAuthenticationView(
-                    onSuccess: {
-                        viewModel.handleAuthenticationSuccess()
-                    },
-                    onDismiss: {
-                        viewModel.showAuthView = false
-                    }
-                )
-                .preferredColorScheme(.dark)
-            }
-            .onChange(of: viewModel.isAuthenticated) { newValue in
-                if newValue {
-                    // Show a success banner or update UI
-                }
-                
+            } else if viewModel.showError && !viewModel.isLoading {
+                errorView
+            } else {
+                loadingView
             }
         }
-        .navigationViewStyle(.stack)
-        .navigationViewStyle(StackNavigationViewStyle())
-        // The Bible feature is built for the app's forced-dark theme (verse text
-        // uses .primary, backgrounds use systemBackground). When BibleView is
-        // shown in a sheet it no longer inherits HomeView's dark scheme, so pin
-        // it here or text renders black and headers render white.
-        .preferredColorScheme(.dark)
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            if !viewModel.showBookSelection {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button(action: {
+                        withAnimation(DS.Motion.smooth) {
+                            if viewModel.currentChapter != nil {
+                                viewModel.backToChapters()
+                            } else {
+                                viewModel.backToBooks()
+                            }
+                        }
+                    }) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "chevron.left")
+                                .font(.system(size: 16, weight: .semibold))
+                            Text(viewModel.currentChapter != nil ? "Chapters" : "Books")
+                                .font(.system(size: 16))
+                        }
+                        .foregroundColor(.primary)
+                    }
+                }
+            }
+            
+            ToolbarItem(placement: .principal) {
+                Text("Bible")
+                    .font(.system(size: 18, weight: .bold, design: .serif))
+            }
+            
+            ToolbarItem(placement: .navigationBarTrailing) {
+                HStack(spacing: DS.Spacing.md) {
+                    // Auth status indicator
+                    if !viewModel.isAuthenticated {
+                        Button(action: { viewModel.showAuthView = true }) {
+                            Image(systemName: "person.crop.circle.badge.exclamationmark")
+                                .font(.system(size: 16, weight: .medium))
+                                .foregroundColor(.orange)
+                        }
+                    }
+                    
+                    Button(action: { showSearch.toggle() }) {
+                        Image(systemName: "magnifyingglass")
+                            .font(.system(size: 16, weight: .medium))
+                    }
+                    
+                    Menu {
+                        if !viewModel.isAuthenticated {
+                            Button(action: { viewModel.showAuthView = true }) {
+                                Label("Sign In for Unlimited Access", systemImage: "person.crop.circle.badge.plus")
+                            }
+                            
+                            Divider()
+                        }
+                        
+                        Button(action: { showBookmarks.toggle() }) {
+                            Label("Bookmarks", systemImage: "bookmark.fill")
+                        }
+
+                        Divider()
+                        
+                        Button(action: { showSettings.toggle() }) {
+                            Label("Settings", systemImage: "gearshape")
+                        }
+                        
+                        if viewModel.isAuthenticated {
+                            Divider()
+                            
+                            Button(action: { viewModel.signOut() }) {
+                                Label("Sign Out", systemImage: "person.crop.circle.badge.minus")
+                            }
+                        }
+                    } label: {
+                        Image(systemName: "ellipsis.circle")
+                            .font(.system(size: 16, weight: .medium))
+                    }
+                }
+            }
+        }
+        .sheet(isPresented: $showSearch) {
+            BibleSearchView(viewModel: viewModel)
+                .preferredColorScheme(.dark)
+        }
+        .sheet(isPresented: $showBookmarks) {
+            BibleBookmarksView(viewModel: viewModel)
+                .preferredColorScheme(.dark)
+        }
+        .sheet(isPresented: $showSettings) {
+            BibleSettingsView(viewModel: viewModel)
+                .preferredColorScheme(.dark)
+        }
+        .alert("Error", isPresented: $viewModel.showError) {
+            Button("OK") { viewModel.showError = false }
+        } message: {
+            Text(viewModel.errorMessage ?? "An error occurred")
+        }
+        .sheet(isPresented: $viewModel.showAuthView) {
+            BibleAuthenticationView(
+                onSuccess: {
+                    viewModel.handleAuthenticationSuccess()
+                },
+                onDismiss: {
+                    viewModel.showAuthView = false
+                }
+            )
+            .preferredColorScheme(.dark)
+        }
+        .onChange(of: viewModel.isAuthenticated) { newValue in
+            if newValue {
+                // Show a success banner or update UI
+            }
+            
+        }
+        // A verse tapped in a chat answer unwinds to this reader rather than
+        // pushing a second one, so the passage arrives on the navigator and
+        // this already-live instance jumps to it.
+        .onChange(of: navigator.readerReference) { _, reference in
+            guard let reference else { return }
+            Task { await viewModel.openReference(reference) }
+        }
         .onAppear {
             // Make navigation bar transparent to show gradient
             let appearance = UINavigationBarAppearance()
@@ -279,7 +269,7 @@ struct BibleView: View {
 // MARK: - Book Selection View
 struct BibleBookSelectionView: View {
     @ObservedObject var viewModel: BibleViewModel
-    @Binding var showBibleChat: Bool
+    let onAskTheBible: () -> Void
     @State private var selectedTestament = 0
 
     var body: some View {
@@ -304,7 +294,7 @@ struct BibleBookSelectionView: View {
                 ScrollView {
                     BibleChatEntryCard {
                         Juice.play(.tapLight)
-                        showBibleChat = true
+                        onAskTheBible()
                     }
                     .padding(.horizontal)
                     .padding(.top, 12)
