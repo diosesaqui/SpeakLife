@@ -150,9 +150,18 @@ struct ForceUpdateView: View {
 
     var body: some View {
         ZStack {
+            // The frame is load-bearing, not decoration. An `aspectRatio(.fill)`
+            // image reports its scaled *content* width, which for a portrait
+            // photo filling a tall screen is far wider than the device. A ZStack
+            // sizes to its largest child, so without this the whole stack adopts
+            // that width and proposes it to the text and the button below —
+            // their padding then applies to a ~1200pt container and the screen
+            // crops the middle out. LandingView carries the same frame for the
+            // same reason.
             Image("moonlight2")
                 .resizable()
                 .aspectRatio(contentMode: .fill)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .ignoresSafeArea()
 
             LinearGradient(
@@ -219,6 +228,7 @@ struct ForceUpdateView: View {
                 .padding(.bottom, 40)
             }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     private func openAppStore() {
