@@ -65,6 +65,15 @@ struct BurstDeclarationStage: View {
     @State private var isCharging = false
     /// The charge reached full and the card is lit, waiting for the finger.
     @State private var isSealed = false
+    /// Mirrors the button's charge so the same progress can be drawn under the
+    /// words. Driven by the same duration rather than plumbed per frame.
+    @State private var spokenProgress: CGFloat = 0
+    /// The slow swell of the aura at rest.
+    @State private var breath: CGFloat = 1
+    /// Bumped when a surge lands, so the rail segment it earned can flare.
+    @State private var railLanding = 0
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     /// Bumped on every surge so the flare re-runs from the top, and cleared on
     /// advance so it does not replay itself over the card that follows.
     @State private var surgeFlareID = 0
@@ -110,6 +119,14 @@ struct BurstDeclarationStage: View {
 
             footer
                 .padding(.bottom, 44)
+        }
+        .onChange(of: isCharging) { _, charging in
+            if charging {
+                spokenProgress = 0
+                withAnimation(.linear(duration: chargeDuration)) { spokenProgress = 1 }
+            } else {
+                withAnimation(.easeOut(duration: 0.25)) { spokenProgress = 0 }
+            }
         }
         .onChange(of: isTransitioning) { _, transitioning in
             // A charge interrupted by the card leaving would otherwise leave the
@@ -196,9 +213,18 @@ struct BurstDeclarationStage: View {
         // Opacity and scale, never the gradient's own stops: SwiftUI does not
         // interpolate a gradient's colours, so animating those would pop.
         .opacity(isCharging ? 1.0 : 0.36)
-        .scaleEffect(isCharging ? 1.14 : 1.0)
+        // Breathing, not idling. At rest the glow swells on a four-second cycle,
+        // which is roughly a calm breath, so the screen paces the user before
+        // they speak instead of just sitting there.
+        .scaleEffect(isCharging ? 1.14 : breath)
         .animation(.easeInOut(duration: 0.9), value: isCharging)
         .allowsHitTesting(false)
+        .onAppear {
+            guard !reduceMotion else { return }
+            withAnimation(.easeInOut(duration: 4).repeatForever(autoreverses: true)) {
+                breath = 1.06
+            }
+        }
     }
 
     /// A stub of the next card peeking out beneath, so seven declarations look
@@ -234,6 +260,22 @@ struct BurstDeclarationStage: View {
                 .multilineTextAlignment(.center)
                 .minimumScaleFactor(0.65)
                 .modifier(SpeakReveal(delay: 0.10))
+
+            // The charge, under the line being spoken.
+            //
+            // The button's own fill is at the bottom of the screen, under the
+            // thumb and outside the reader's focus — the eyes are up here on the
+            // words. Same duration, same clock, drawn where someone is actually
+            // looking.
+            Capsule()
+                .fill(DS.Gradient.gold)
+                .frame(height: 3)
+                .frame(maxWidth: .infinity)
+                .scaleEffect(x: spokenProgress, anchor: .leading)
+                .opacity(isCharging ? 1 : 0)
+                .shadow(color: DS.Palette.gold.opacity(0.6), radius: 4)
+                .padding(.horizontal, DS.Spacing.sm)
+                .animation(.easeOut(duration: 0.2), value: isCharging)
 
             Text(declaration.verse)
                 .font(.system(size: 14, weight: .medium, design: .rounded))
@@ -317,7 +359,7 @@ struct BurstDeclarationStage: View {
 
     private var footer: some View {
         VStack(spacing: DS.Spacing.md) {
-            BurstProgressRail(total: declarations.count, current: index)
+            BurstProgressRail(total: declarations.count, current: index, landing: railLanding)
                 .frame(width: cardWidth)
 
             HoldToDeclareButton(
@@ -374,6 +416,10 @@ struct BurstDeclarationStage: View {
         guard !isTransitioning else { return }
 
         surgeFlareID += 1
+        // The flare goes outward — power released, which is the language of this
+        // whole screen — and the rail segment it earned flares a beat later. The
+        // line was spoken, and it landed somewhere.
+        railLanding += 1
         Juice.play(.celebrate)
     }
 
@@ -433,6 +479,9 @@ private struct HoldToDeclareButton: View {
     @State private var isPressing = false
     @State private var pressScale: CGFloat = 1
     @State private var pending: [DispatchWorkItem] = []
+
+    /// Roughly sixty beats a minute — a resting pulse.
+    private let heartbeatInterval: Double = 1.0
 
     var body: some View {
         ZStack {
@@ -525,13 +574,17 @@ private struct HoldToDeclareButton: View {
 
         var items: [DispatchWorkItem] = []
 
-        for fraction in [0.35, 0.70] {
-            let item = DispatchWorkItem {
-                Juice.play(fraction < 0.5 ? .tapLight : .tapSolid)
-            }
-            DispatchQueue.main.asyncAfter(deadline: .now() + chargeDuration * fraction,
-                                          execute: item)
+        // Two ticks at fixed fractions told the user how far along a progress bar
+        // they were. A steady beat says something is alive under the thumb for as
+        // long as they keep speaking — and since the charge is now paced off the
+        // line's length, a fixed fraction landed at a different moment on every
+        // declaration anyway.
+        var beat = heartbeatInterval
+        while beat < chargeDuration - 0.15 {
+            let item = DispatchWorkItem { PremiumHaptics.safeHeartbeat() }
+            DispatchQueue.main.asyncAfter(deadline: .now() + beat, execute: item)
             items.append(item)
+            beat += heartbeatInterval
         }
 
         let full = DispatchWorkItem {
@@ -567,19 +620,36 @@ private struct BurstProgressRail: View {
 
     let total: Int
     let current: Int
+    /// Bumped when a surge lands. The segment for the line just spoken flares, so
+    /// a full hold is visibly recorded rather than only celebrated.
+    var landing: Int = 0
+
+    @State private var flash: CGFloat = 0
 
     var body: some View {
         HStack(spacing: 6) {
             ForEach(0..<max(total, 1), id: \.self) { slot in
+                let isCurrent = slot == current
+
                 Capsule()
                     .fill(fill(for: slot))
-                    .frame(height: slot == current ? 7 : 4)
+                    .frame(height: isCurrent ? 7 + flash * 5 : 4)
                     .frame(maxWidth: .infinity)
-                    .shadow(color: slot <= current ? DS.Palette.gold.opacity(0.55) : .clear,
-                            radius: slot == current ? 7 : 3)
+                    .shadow(
+                        color: slot <= current
+                            ? DS.Palette.gold.opacity(0.55 + (isCurrent ? Double(flash) * 0.45 : 0))
+                            : .clear,
+                        radius: isCurrent ? 7 + flash * 10 : 3
+                    )
             }
         }
         .animation(DS.Motion.smooth, value: current)
+        .onChange(of: landing) { _, _ in
+            // Up fast, down slow, so it reads as something arriving rather than a
+            // blink.
+            withAnimation(.easeOut(duration: 0.12)) { flash = 1 }
+            withAnimation(.easeOut(duration: 0.65).delay(0.12)) { flash = 0 }
+        }
     }
 
     private func fill(for slot: Int) -> AnyShapeStyle {

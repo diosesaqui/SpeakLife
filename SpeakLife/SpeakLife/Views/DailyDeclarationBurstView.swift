@@ -32,6 +32,11 @@ struct DailyDeclarationBurstView: View {
     @EnvironmentObject var streakViewModel: EnhancedStreakViewModel
     @Environment(\.dismiss) var dismiss
     @Environment(\.colorScheme) var colorScheme
+    /// Honoured the way `LandingView` already honours it. The burst is the
+    /// heaviest screen in the app — `SpeakingPowerEffect` alone runs seven
+    /// `repeatForever` animations across roughly thirty layers — and someone who
+    /// has asked the system for less movement should not be handed all of it.
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     
     @StateObject private var burstTracker = BurstCompletionTracker.shared
     @State private var currentDeclarationIndex = 0
@@ -103,10 +108,14 @@ struct DailyDeclarationBurstView: View {
                 } else if !showCompletionView {
                     // Power-release effect: active while declaration is fully visible
                     // and the user is actively speaking it (not mid-transition)
-                    SpeakingPowerEffect(
-                        isActive: burstActive && !isTransitioning,
-                        message: "God's power flows when you speak"
-                    )
+                    // The message still shows; the ray/ring/particle field does
+                    // not. That keeps the meaning and drops the motion.
+                    if !reduceMotion {
+                        SpeakingPowerEffect(
+                            isActive: burstActive && !isTransitioning,
+                            message: "God's power flows when you speak"
+                        )
+                    }
 
                     burstContentView(geometry: geometry)
                 } else {
@@ -283,6 +292,7 @@ struct DailyDeclarationBurstView: View {
                 .onAppear {
                     // The icon breathes rather than sits. A still hero on a screen
                     // whose whole promise is release reads as a screenshot.
+                    guard !reduceMotion else { return }
                     withAnimation(.easeInOut(duration: 1.8).repeatForever(autoreverses: true)) {
                         introPulse = 1.12
                     }
@@ -398,7 +408,7 @@ struct DailyDeclarationBurstView: View {
     private func completionView(geometry: GeometryProxy) -> some View {
         ZStack {
             // Animated background particles
-            ForEach(0..<20, id: \.self) { index in
+            ForEach(0..<(reduceMotion ? 0 : 20), id: \.self) { index in
                 Circle()
                     .fill(
                         LinearGradient(
@@ -455,16 +465,29 @@ struct DailyDeclarationBurstView: View {
                             .scaleEffect(checkmarkScale * 1.1)
                             .blur(radius: 10)
                         
-                        // Stars around the checkmark
-                        ForEach(0..<8, id: \.self) { index in
-                            Image(systemName: "star.fill")
-                                .font(.system(size: 16, weight: .bold))
-                                .foregroundColor(.yellow)
+                        // The seven declarations, closed into a ring.
+                        //
+                        // This was eight generic stars, which could have been any
+                        // app's celebration. These are the same segments as the
+                        // progress rail, one per line actually spoken, brought up
+                        // from the bottom of the burst and set around the mark.
+                        // The reward is made of the work rather than dropped on
+                        // top of it.
+                        ForEach(0..<max(morningDeclarations.count, 1), id: \.self) { index in
+                            let count = max(morningDeclarations.count, 1)
+                            let angle = (Double(index) / Double(count)) * 2 * .pi - .pi / 2
+
+                            Capsule()
+                                .fill(DS.Gradient.gold)
+                                .frame(width: 5, height: 18)
+                                .shadow(color: DS.Palette.gold.opacity(0.7), radius: 5)
                                 .offset(
-                                    x: cos(CGFloat(index) * .pi / 4) * 70,
-                                    y: sin(CGFloat(index) * .pi / 4) * 70
+                                    x: cos(angle) * 78,
+                                    y: sin(angle) * 78
                                 )
-                                .rotationEffect(.degrees(Double(index) * 45 + checkmarkRotation))
+                                // Each segment stands on end, pointing out from the
+                                // mark like rays rather than lying flat.
+                                .rotationEffect(.degrees(angle * 180 / .pi + 90))
                                 .scaleEffect(starOpacity)
                                 .opacity(starOpacity)
                         }
@@ -649,6 +672,7 @@ struct DailyDeclarationBurstView: View {
         /// A slow swell on the badge so the streak keeps breathing while the
         /// screen is read, instead of landing once and going inert.
         @State private var pulse: CGFloat = 1
+        @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
         var body: some View {
             VStack(spacing: 8) {
@@ -664,6 +688,7 @@ struct DailyDeclarationBurstView: View {
                         .foregroundColor(.white)
                 }
                 .onAppear {
+                    guard !reduceMotion else { return }
                     withAnimation(.easeInOut(duration: 1.6).repeatForever(autoreverses: true)) {
                         pulse = 1.07
                     }
