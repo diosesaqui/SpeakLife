@@ -424,7 +424,9 @@ struct BibleChatConversationView: View {
         .sheet(isPresented: $showBible) {
             // Inject subscriptionStore explicitly — env objects do not reliably
             // propagate across sheet hops, and BibleView requires it.
-            BibleView()
+            // `showsChatEntry: false` — we came *from* chat, so the reader's
+            // "Ask the Bible" card would only lead back here on a new sheet.
+            BibleView(showsChatEntry: false)
                 .environmentObject(subscriptionStore)
                 .onAppear {
                     AnalyticsService.shared.trackUserAction(
