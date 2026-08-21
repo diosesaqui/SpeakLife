@@ -65,6 +65,34 @@ public enum ThoughtCategory: String, Codable, CaseIterable, Identifiable {
         }
     }
 
+    /// The line spoken TO the thing when nobody wrote one for the exact
+    /// sentence: offline, no key, or a written rebuke that failed review.
+    ///
+    /// Nine lines, one per terrain, aimed at the domain rather than the
+    /// sentence — the same trade the mapped declaration makes, for the same
+    /// reason. This is the one place in the app that names the low thing on
+    /// purpose, and it is allowed for the one reason rule 12 in CLAUDE.md
+    /// allows it: confronting the thing is the point of this drill. You cannot
+    /// command what you will not say out loud.
+    ///
+    /// Every one of them commands the THING. None of them commands a person,
+    /// and none ever may — scripture gives nobody authority over another free
+    /// will (rule 6), so the thing over someone can be put out and the person
+    /// never can.
+    public var rebuke: String {
+        switch self {
+        case .fear:         return "Fear, you have no place here. Go, in Jesus' name."
+        case .condemnation: return "Shame, you have no claim on me. Go."
+        case .lack:         return "Lack, you have no claim on my house. Leave now."
+        case .rejection:    return "Rejection, you have no hold on me. Go."
+        case .sickness:     return "Sickness, you have no claim on this body. Go."
+        case .inadequacy:   return "Every lie about who I am is broken. Go."
+        case .abandonment:  return "Despair, you have no claim on my heart. Leave now."
+        case .confusion:    return "Confusion, you have no place in my mind. Get out."
+        case .lust:         return "Lust, you have no claim on my eyes. Get out."
+        }
+    }
+
     /// The declaration categories this terrain draws its counters from. Used by
     /// the escape hatch to turn a `DeclarationCategory` from the shared matcher
     /// into one of these nine.
@@ -156,7 +184,13 @@ public struct IncomingThought: Codable, Identifiable, Equatable {
     public let category: ThoughtCategory
     /// 1...3. A new user never opens on the heaviest thought in the bank.
     public let intensity: Int
-    /// The line they speak out loud. Verbatim from the declaration library.
+    /// Spoken FIRST, to the thing itself, naming it exactly. Nil on every entry
+    /// in `thoughts.json` and on every line drawn from the library — neither
+    /// carries one — so read `spokenRebuke`, which falls back to the terrain's
+    /// mapped line. Only a written counter fills this in.
+    public let rebuke: String?
+    /// The line they speak out loud after it. Verbatim from the declaration
+    /// library, and it never names what the rebuke just named.
     public let counterDeclaration: String
     public let verseText: String
     /// Reference only, e.g. "Isaiah 49:15".
@@ -165,10 +199,14 @@ public struct IncomingThought: Codable, Identifiable, Equatable {
     /// bank stays auditable against the library it was built from.
     public let declarationCategory: String
 
+    /// - Parameter rebuke: defaults to nil, which is the shape of every bank
+    ///   entry and every library line. `spokenRebuke` covers those from the
+    ///   terrain, so no content had to be regenerated to add this.
     public init(id: String,
                 text: String,
                 category: ThoughtCategory,
                 intensity: Int,
+                rebuke: String? = nil,
                 counterDeclaration: String,
                 verseText: String,
                 book: String,
@@ -177,6 +215,7 @@ public struct IncomingThought: Codable, Identifiable, Equatable {
         self.text = text
         self.category = category
         self.intensity = intensity
+        self.rebuke = rebuke
         self.counterDeclaration = counterDeclaration
         self.verseText = verseText
         self.book = book
@@ -185,6 +224,13 @@ public struct IncomingThought: Codable, Identifiable, Equatable {
 }
 
 extension IncomingThought {
+    /// What they say to the thing, whoever wrote it. Written for their exact
+    /// sentence when the writer ran, mapped from the terrain when it did not.
+    public var spokenRebuke: String {
+        guard let rebuke, !rebuke.isEmpty else { return category.rebuke }
+        return rebuke
+    }
+
     /// The same entry, wearing the user's own words on the card.
     ///
     /// When someone names their own thought, that sentence is what goes on the
@@ -202,6 +248,7 @@ extension IncomingThought {
             text: userText,
             category: category,
             intensity: intensity,
+            rebuke: rebuke,
             counterDeclaration: counterDeclaration,
             verseText: verseText,
             book: book,

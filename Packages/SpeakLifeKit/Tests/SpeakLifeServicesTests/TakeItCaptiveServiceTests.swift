@@ -1105,3 +1105,80 @@ final class ClassifierLibraryRoutingTests: XCTestCase {
         XCTAssertEqual(thought.book, "Colossians 2:10")
     }
 }
+
+// MARK: - The rebuke
+
+/// The drill speaks twice: to the thing, then over their own life. These pin
+/// the half that names it.
+final class RebukeTests: XCTestCase {
+
+    /// Nothing in `thoughts.json` or the declaration library carries a rebuke,
+    /// so every counter that was not written for the exact sentence has to get
+    /// one from its terrain. A silent empty line would drop the first half of
+    /// the drill on the path most users are on when they are offline.
+    func testEveryCounterHasSomethingToSpeakAtTheThing() {
+        for terrain in ThoughtCategory.allCases {
+            let thought = IncomingThought(id: "t", text: "incoming", category: terrain,
+                                          intensity: 1,
+                                          counterDeclaration: "I am complete in Christ.",
+                                          verseText: "You have been given fullness in Christ.",
+                                          book: "Colossians 2:10",
+                                          declarationCategory: "identity")
+            XCTAssertFalse(thought.spokenRebuke.isEmpty)
+            XCTAssertEqual(thought.spokenRebuke, terrain.rebuke)
+        }
+    }
+
+    /// A written rebuke wins over the mapped one, and survives being dressed in
+    /// the user's own words on the card.
+    func testAWrittenRebukeIsWhatGetsSpoken() {
+        let written = IncomingThought(id: "t", text: "incoming", category: .sickness,
+                                      intensity: 1,
+                                      rebuke: "Cancer, you have no claim on this body. Go.",
+                                      counterDeclaration: "By His wounds I am healed.",
+                                      verseText: "By his wounds we are healed.",
+                                      book: "Isaiah 53:5",
+                                      declarationCategory: "health")
+        XCTAssertEqual(written.spokenRebuke, "Cancer, you have no claim on this body. Go.")
+        XCTAssertEqual(written.wearing("the scan is back").spokenRebuke,
+                       "Cancer, you have no claim on this body. Go.")
+    }
+
+    /// The rebuke names the low thing on purpose — that is the whole point of
+    /// it — so it must NOT be run through the declaration's validator, which
+    /// rejects exactly that.
+    func testTheTwoValidatorsDisagreeOnPurpose() {
+        let rebuke = "Fear, you have no place here. Go, in Jesus' name."
+        XCTAssertTrue(ThoughtClassifier.followsRebukeRules(rebuke))
+        XCTAssertFalse(ThoughtClassifier.followsHouseRules(rebuke),
+                       "The declaration validator must keep rejecting a named fear.")
+    }
+
+    /// A rebuke that asks is a prayer, and a good one — but the drill is built
+    /// on the believer using the authority they already have.
+    func testAPetitionIsNotARebuke() {
+        XCTAssertFalse(ThoughtClassifier.followsRebukeRules(
+            "God, please take this fear away from me tonight."))
+        XCTAssertFalse(ThoughtClassifier.followsRebukeRules(
+            "I pray that this sickness would leave my body."))
+    }
+
+    /// Scripture gives nobody authority over another free will. The thing over
+    /// someone can be put out; the person never can.
+    func testNoRebukeIsEverAimedAtAPerson() {
+        XCTAssertFalse(ThoughtClassifier.followsRebukeRules(
+            "Husband, you will come back to me now."))
+        // The thing over them is still fair game, and must stay so.
+        XCTAssertTrue(ThoughtClassifier.followsRebukeRules(
+            "Addiction, you have no claim on my son. Go."))
+    }
+
+    /// Built for the mouth: short enough to say in one breath, with the drop at
+    /// the end.
+    func testTheMappedRebukesAreAllWellFormed() {
+        for terrain in ThoughtCategory.allCases {
+            XCTAssertTrue(ThoughtClassifier.followsRebukeRules(terrain.rebuke),
+                          "\(terrain.rawValue): \(terrain.rebuke)")
+        }
+    }
+}

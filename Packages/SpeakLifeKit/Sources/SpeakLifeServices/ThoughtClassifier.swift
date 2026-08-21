@@ -173,12 +173,20 @@ public struct ThoughtClassifier {
                                     parameters: ["terrain": written.category.rawValue])
                 return classify(text)
             }
+            // A rebuke that fails review loses on its own. The declaration it
+            // came with is still good, and the terrain's mapped line still
+            // names the right thing, so this costs one line rather than the
+            // whole written answer.
+            let rebuke = Self.followsRebukeRules(written.rebuke)
+                ? written.rebuke
+                : written.category.rebuke
             return .matched(written.category,
                             IncomingThought(
                                 id: CapturedThought.escapeHatchDeclarationId,
                                 text: text,
                                 category: written.category,
                                 intensity: 1,
+                                rebuke: rebuke,
                                 counterDeclaration: written.declaration,
                                 verseText: written.verseText,
                                 book: written.book,
@@ -266,6 +274,41 @@ public struct ThoughtClassifier {
         let lowPhrases = ["feel alone", "feeling alone", "so alone", "all alone",
                           "left alone", "am alone", "never alone", "not alone"]
         guard !lowPhrases.contains(where: { lowered.contains($0) }) else { return false }
+
+        return true
+    }
+
+    /// The rebuke's own review, and deliberately not `followsHouseRules`.
+    ///
+    /// That one rejects a line for naming fear, sickness, shame or lack. This
+    /// line exists to name exactly those, so it is checked for the two things
+    /// that would make it the wrong kind of sentence instead: asking rather than
+    /// commanding, and being aimed at a person rather than at the thing.
+    static func followsRebukeRules(_ rebuke: String) -> Bool {
+        let trimmed = rebuke.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return false }
+        guard !trimmed.contains("—"), !trimmed.contains("–") else { return false }
+
+        let lowered = trimmed.lowercased()
+        let words = lowered.split(whereSeparator: { !$0.isLetter && $0 != "'" }).map(String.init)
+        // Jesus' own were two to seven words. The ceiling leaves room to name
+        // the thing and put it out in one breath, and nothing beyond that.
+        guard words.count >= 2, words.count <= 14 else { return false }
+
+        // A rebuke commands. Asking God to deal with it is a prayer — a good
+        // thing, and not this thing. The premise of the whole drill is that the
+        // believer has the authority and uses it.
+        let petitions = ["please", "i pray", "i ask", "help me", "would you"]
+        guard !petitions.contains(where: { lowered.contains($0) }) else { return false }
+
+        // Never a person. Scripture gives nobody authority over another free
+        // will (CLAUDE.md rule 6): the thing over someone can be put out, the
+        // person never can.
+        let people = ["husband", "wife", "son", "daughter", "mother", "father",
+                      "mom", "dad", "child", "kids", "children", "boss", "friend",
+                      "brother", "sister", "boyfriend", "girlfriend"]
+        let aimedAtAPerson = people.contains { lowered.contains("\($0), you") }
+        guard !aimedAtAPerson else { return false }
 
         return true
     }

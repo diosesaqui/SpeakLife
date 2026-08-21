@@ -15,10 +15,15 @@ struct HighlightedDeclarationText: View {
     let matchedIndices: Set<Int>
     /// Whether recording is active (dims unspoken words for contrast)
     let isRecording: Bool
+    /// Point size for the line. Defaulted, so every existing call site keeps the
+    /// size it had. Take It Captive shows two lines at once — the rebuke set
+    /// smaller above the declaration — and an outer `.font` cannot do it,
+    /// because the sizes below are set on the runs themselves.
+    var fontSize: CGFloat = 26
 
     var body: some View {
         Text(attributed)
-            .font(.system(size: 26, weight: .semibold, design: .rounded))
+            .font(.system(size: fontSize, weight: .semibold, design: .rounded))
             .lineSpacing(6)
             .multilineTextAlignment(.leading)
             .animation(.easeInOut(duration: 0.12), value: matchedIndices)
@@ -31,7 +36,7 @@ struct HighlightedDeclarationText: View {
             if matchedIndices.contains(i) {
                 // Spoken — gold highlight
                 attr.foregroundColor = Color(red: 1.0, green: 0.82, blue: 0.28)
-                attr.font = .system(size: 26, weight: .bold, design: .rounded)
+                attr.font = .system(size: fontSize, weight: .bold, design: .rounded)
             } else if isRecording {
                 // Not yet spoken — dimmed while mic is active
                 attr.foregroundColor = Color.white.opacity(0.3)

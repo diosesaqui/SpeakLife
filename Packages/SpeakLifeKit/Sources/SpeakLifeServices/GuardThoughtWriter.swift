@@ -30,11 +30,18 @@
 //     the reviewed library the app already ships. Nobody is left holding the
 //     thought because a request failed.
 //
-//  Separate from `ClaudeDeclarationMatcher` on purpose. That one answers "here
-//  is my prayer need, write me a declaration". This one answers a different
-//  question: "here is a lie I am carrying, write the truth that displaces it."
-//  The framing changes the output, and the nine Guard terrains are not the same
-//  set as `DeclarationCategory`.
+//  Separate from `ClaudeDeclarationMatcher` on purpose — same endpoint, same key,
+//  same model, different question. That one answers "here is my prayer need,
+//  write me a declaration". This one answers "here is what is coming at me:
+//  rebuke it by name, then tell me who I am." The framing changes the output,
+//  and the nine Guard terrains are not the same set as `DeclarationCategory`.
+//
+//  **It returns two lines, and they have opposite jobs.** The REBUKE names the
+//  thing exactly and puts it out — the one place in the app where naming it is
+//  the point, under the warfare exception in rule 12 of CLAUDE.md, because Jesus
+//  did not affirm around the storm, He spoke to it. The DECLARATION never names
+//  it and fills the room it left, which is not optional: Matthew 12:43-45 is a
+//  house swept clean and left empty.
 //
 
 import Foundation
@@ -43,6 +50,10 @@ import SpeakLifeCore
 /// What Claude wrote for a thought, in the shape Guarding needs.
 public struct WrittenCounter: Equatable {
     public let category: ThoughtCategory
+    /// The word spoken TO the thing, naming it exactly. Empty when the model
+    /// returned one that failed review — the caller substitutes the mapped line
+    /// for the terrain rather than dropping the rebuke.
+    public let rebuke: String
     public let declaration: String
     public let verseText: String
     public let book: String
@@ -127,7 +138,12 @@ public final class GuardThoughtWriter {
             throw GuardWriterError.invalidJSON
         }
 
+        // The rebuke is optional HERE and required by the time it is spoken.
+        // A model that returns everything else correctly and forgets this one
+        // field must not cost someone the whole written answer — the caller
+        // fills the gap from the terrain's mapped line.
         return WrittenCounter(category: category,
+                              rebuke: parsed.rebuke ?? "",
                               declaration: declaration,
                               verseText: verseText,
                               book: book)
@@ -139,17 +155,22 @@ public final class GuardThoughtWriter {
     /// this different from the prayer-need prompt: the input is a lie, and the
     /// output has to displace it rather than answer it.
     static let systemPrompt = """
-    You write counter-declarations for SpeakLife's "Take It Captive" drill. The \
-    user has typed a thought about themselves or their future that does not line \
-    up with who they already are in Christ. You write the one line they will \
-    speak out loud to displace it.
+    You write what someone speaks out loud in SpeakLife's "Take It Captive" \
+    drill. They have typed a thought about themselves or their future that does \
+    not line up with who they already are in Christ.
 
-    The declaration answers the thought with a finished fact about them, not \
-    with advice, encouragement, or a promise to try harder. They are not \
-    becoming this; they already are it.
+    They speak TWO lines, in this order, and both are yours to write:
+
+    1. THE REBUKE, spoken to the thing itself, naming it exactly.
+    2. THE DECLARATION, spoken over their own life, never naming it.
+
+    That order is the whole drill. Jesus did not think His way around the storm \
+    or affirm over the top of it. He spoke to it, and then it was done. And a \
+    house swept clean and left empty gets worse, not better, so the thing is \
+    never put out without the truth taking its place.
 
     Return ONLY JSON:
-    {"terrain": "...", "declaration": "...", "verseText": "...", "book": "..."}
+    {"terrain": "...", "rebuke": "...", "declaration": "...", "verseText": "...", "book": "..."}
 
     "terrain" is exactly one of: fear, condemnation, lack, rejection, sickness, \
     inadequacy, abandonment, confusion, lust.
@@ -157,7 +178,24 @@ public final class GuardThoughtWriter {
     the body is "sickness" even when it is phrased as worry. A thought about \
     money is "lack". A thought about being unwanted is "rejection".
 
+    THE REBUKE:
+    - Name it exactly, in their own word for it: the cancer, the debt, the \
+      divorce, the drinking, the panic, the diagnosis. This is the ONE line that \
+      says it out loud, because you cannot command what you will not name.
+    - Speak TO it, not about it. "Cancer, you have no claim on my mother's \
+      body." "Debt, you have no hold on my future."
+    - Command, never ask. No "God, please", no "I pray". Jesus said "Quiet! Be \
+      still" and "Come out of him", and that is the register.
+    - 4 to 12 words, one or two short sentences, with the drop at the end.
+    - NEVER command a person. Not their spouse, their child, their boss, not \
+      anyone. Command the thing over them instead: "Addiction, you have no claim \
+      on my son" is right; ordering the son is not, because no scripture gives \
+      anyone authority over another person's will.
+    - Never aimed at the speaker either. No "you" pointed back at them.
+
     THE DECLARATION:
+    - Answers with a finished fact about them, not advice, encouragement, or a \
+      promise to try harder. They are not becoming this; they already are it.
     - First person only: I / me / my / mine.
     - Present tense, spoken as already done. "I am." "I have." Never "I will" \
       or "I hope".
@@ -166,10 +204,10 @@ public final class GuardThoughtWriter {
       churchy vocabulary the speaker would have to decode.
     - Built for the mouth. Easy to say out loud in one breath.
     - No em dashes or en dashes.
-    - NEVER name the thing being displaced. Do not mention the fear, the \
-      sickness, the lack, the shame, not even to overrule it. Declare the \
-      higher reality that makes it irrelevant, in the exact domain it lives in. \
-      A thought about a body gets a declaration about that body being whole.
+    - NEVER name the thing the rebuke just named. Do not mention the fear, the \
+      sickness, the lack, the shame, not even to overrule it. Declare the higher \
+      reality that makes it irrelevant, in the exact domain it lives in. A \
+      thought about a body gets a declaration about that body being whole.
     - Never soften what scripture actually promises. If the verse says it, say \
       it finished and say it flat.
     - Never promise what scripture does not: that another free person will \
@@ -224,6 +262,7 @@ public final class GuardThoughtWriter {
     /// recognised, instead of failing as a malformed response.
     private struct WrittenJSON: Decodable {
         let terrain: String
+        let rebuke: String?
         let declaration: String?
         let verseText: String?
         let book: String?
