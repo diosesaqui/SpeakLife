@@ -2,8 +2,7 @@
 //  EscapeHatchView.swift
 //  SpeakLife
 //
-//  The opening question: what thought about yourself or your future doesn't
-//  line up with your new identity in Christ?
+//  The opening question: what are you up against right now?
 //
 //  This used to be the escape hatch — a quiet link under a thought the app had
 //  guessed at. It is now the front door. Being handed someone else's guess at
@@ -70,8 +69,8 @@ struct AskForThoughtView: View {
     /// Says where the words go, in the moment before someone commits them.
     private var privacyLine: String {
         sendsOffDevice
-            ? "Write it the way it actually sounds. It's used once to write your word back, and never saved."
-            : "Write it the way it actually sounds. It stays on this phone."
+            ? "Say it the way it actually sounds. It's used once to write your word back, and never saved."
+            : "Say it the way it actually sounds. It stays on this phone."
     }
 
     private var entry: String {
@@ -168,31 +167,40 @@ struct AskForThoughtView: View {
 
                 Spacer(minLength: 0)
 
-                // Two things this question has to do at once.
+                // Five words, and every one of them is load-bearing.
                 //
-                // Point at the right target: thoughts about YOURSELF and YOUR
-                // FUTURE. "That doesn't line up with God's word" was true but
-                // unbounded — it invited anything, including thoughts about
-                // other people and circumstances the drill has no answer for.
-                // Identity and future are where the lies that need displacing
-                // actually live, and naming them is what makes the question
-                // answerable in three seconds at 2am.
+                // This question was narrowed once, on purpose, to thoughts
+                // about YOURSELF and YOUR FUTURE, and the note here said why:
+                // anything broader "invited thoughts about other people and
+                // circumstances the drill has no answer for". That was true of
+                // the drill that existed then — forty-five bank lines across
+                // nine terrains. It is not true of this one, which answers a
+                // biopsy, a mortgage and a daughter who stopped calling out of
+                // the whole reviewed library, and rebukes the thing by name. So
+                // the fence came down, because it had started turning away the
+                // exact sentences the app is now best at.
                 //
-                // And measure it against the right standard. Not "God's word"
-                // in general, but who they already are in Christ — the thought
-                // is wrong because it contradicts a finished fact about them,
-                // not because it breaks a rule.
+                // "Up against" does three things at once. It costs nothing to
+                // answer — no self-diagnosis, no measuring your own thought
+                // against your standing in Christ before you are allowed to
+                // type, which is a two-step task at 2am and was the old
+                // question's real failure. It takes a thought or a circumstance
+                // equally, and the engine behind it no longer cares which. And
+                // it puts the thing OUTSIDE them: something is against them,
+                // which is the frame rule 2 in `TakeItCaptive.swift` insists on
+                // — never "your thought", never anything that indicts them —
+                // and it is the same thing the rebuke is about to speak to.
                 //
-                // "What thought", never "a thought you've been having". It came
-                // at them; it is not theirs and it does not indict them. See
-                // rule 2 in `TakeItCaptive.swift` — the possessive is the one
-                // phrasing this screen may not use, however natural it sounds.
-                Text("What thought about yourself or your future doesn't line up with your new identity in Christ?")
-                    .font(.system(size: 24, weight: .bold, design: .rounded))
+                // "Right now", not "today". The four-year thing is welcome here.
+                Text("What are you up against right now?")
+                    // Bigger than the sixteen-word question it replaced, which
+                    // could not afford the size. Six words can carry it, and a
+                    // question this short should land like one.
+                    .font(.system(size: 28, weight: .bold, design: .rounded))
                     .foregroundColor(.white)
-                    // Longer than the line it replaced, and the keyboard is up
-                    // the whole time this screen is on screen. Shrinks rather
-                    // than pushing the field off a small phone.
+                    // The keyboard is up the whole time this screen is on
+                    // screen. It shrinks rather than pushing the field off a
+                    // small phone at large type sizes.
                     .minimumScaleFactor(0.75)
                     .fixedSize(horizontal: false, vertical: true)
 

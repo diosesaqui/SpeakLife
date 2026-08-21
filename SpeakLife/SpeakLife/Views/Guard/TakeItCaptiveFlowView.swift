@@ -22,8 +22,8 @@
 //  So the app answers it and shows the answer. `TakenCaptiveView` takes the
 //  thought in front of them and hands over the word.
 //
-//  It opens by ASKING what thought they have been carrying, rather than serving
-//  one from the bank.
+//  It opens by ASKING what they are up against, rather than serving a thought
+//  from the bank.
 //
 //  The original spec argued the opposite — that at 7am nobody has an intrusive
 //  thought queued up, so "what are you thinking?" produces a blank field and a
@@ -80,7 +80,7 @@ struct TakeItCaptiveFlowView: View {
     var onNeedsPremium: (() -> Void)?
 
     private enum Stage: Equatable {
-        case ask             // what thought have you been carrying?
+        case ask             // what are you up against right now?
         case taken           // the app takes it, no input asked for
         case replace
         case ground(Int)
@@ -195,8 +195,8 @@ struct TakeItCaptiveFlowView: View {
         }
     }
 
-    /// The opening question, and the whole point of the change: they name the
-    /// thought, the app doesn't guess it.
+    /// The opening question, and the whole point of the change: they name what
+    /// they are up against, the app doesn't guess it.
     private var askScreen: some View {
         AskForThoughtView(
             remaining: quotaRemaining,
