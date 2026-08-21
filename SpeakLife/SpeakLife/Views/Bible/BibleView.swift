@@ -9,7 +9,6 @@ import SwiftUI
 
 struct BibleView: View {
     @StateObject private var viewModel: BibleViewModel
-    @EnvironmentObject var subscriptionStore: SubscriptionStore
     @EnvironmentObject var navigator: BibleNavigator
     @State private var showSearch = false
     @State private var showBookmarks = false
