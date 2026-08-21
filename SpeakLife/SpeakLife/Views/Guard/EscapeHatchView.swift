@@ -53,6 +53,10 @@ struct AskForThoughtView: View {
     /// The written path is a network call, so the button has to say it is
     /// working. A gold button that does nothing for two seconds is the exact
     /// dead-feeling this screen has already been fixed for once.
+    ///
+    /// "Answering it" — the it being what they just named. Not "writing your
+    /// word": nothing here is composing something of theirs, it is finding the
+    /// response to what is coming against them.
     @State private var isWriting = false
     @FocusState private var focused: Bool
 
@@ -67,9 +71,13 @@ struct AskForThoughtView: View {
     }
 
     /// Says where the words go, in the moment before someone commits them.
+    ///
+    /// "The right response to it", never "your word back". Nothing here is
+    /// writing something of theirs — it is reading what is coming against them
+    /// and handing back the answer to that. The distinction is the product.
     private var privacyLine: String {
         sendsOffDevice
-            ? "Say it the way it actually sounds. It's used once to write your word back, and never saved."
+            ? "Say it the way it actually sounds. It's used once to give you the right response to it, and never saved."
             : "Say it the way it actually sounds. It stays on this phone."
     }
 
@@ -264,7 +272,7 @@ struct AskForThoughtView: View {
                                     .progressViewStyle(.circular)
                                     .tint(Color(hex: "#1A264D"))
                             }
-                            Text(isWriting ? "Writing your word" : "Take it captive")
+                            Text(isWriting ? "Answering it" : "Take it captive")
                                 .font(.system(size: 16, weight: .bold, design: .rounded))
                                 .foregroundColor(canSubmit ? Color(hex: "#1A264D") : .white.opacity(0.4))
                         }
