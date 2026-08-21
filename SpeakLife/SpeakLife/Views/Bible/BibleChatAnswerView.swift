@@ -9,61 +9,62 @@ import SwiftUI
 
 struct BibleChatAnswerView: View {
     let topic: BibleChatTopic
-    @EnvironmentObject var subscriptionStore: SubscriptionStore
+    @EnvironmentObject var navigator: BibleNavigator
+    @Environment(\.bibleSurfaceIsRoot) private var isRootSurface
     @Environment(\.dismiss) private var dismiss
     @State private var revealedVerses = 0
     @State private var headerVisible = false
     @State private var answerVisible = false
     @State private var reflectionVisible = false
-    // Set when a verse is tapped, to open the reader at that passage.
-    @State private var deepLink: DeepLinkRef?
 
     var body: some View {
-        NavigationView {
-            ZStack {
-                Gradients().speakLifeCYOCell
-                    .ignoresSafeArea()
+        ZStack {
+            Gradients().speakLifeCYOCell
+                .ignoresSafeArea()
 
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 22) {
-                        topicHeader
-                            .opacity(headerVisible ? 1 : 0)
-                            .offset(y: headerVisible ? 0 : 12)
+            ScrollView {
+                VStack(alignment: .leading, spacing: 22) {
+                    topicHeader
+                        .opacity(headerVisible ? 1 : 0)
+                        .offset(y: headerVisible ? 0 : 12)
 
-                        questionBubble
-                            .opacity(headerVisible ? 1 : 0)
-                            .offset(y: headerVisible ? 0 : 12)
+                    questionBubble
+                        .opacity(headerVisible ? 1 : 0)
+                        .offset(y: headerVisible ? 0 : 12)
 
-                        answerBubble
-                            .opacity(answerVisible ? 1 : 0)
-                            .offset(y: answerVisible ? 0 : 12)
+                    answerBubble
+                        .opacity(answerVisible ? 1 : 0)
+                        .offset(y: answerVisible ? 0 : 12)
 
-                        if !topic.verses.isEmpty {
-                            versesSection
-                        }
-
-                        if let reflection = topic.reflection, !reflection.isEmpty {
-                            reflectionBubble(text: reflection)
-                                .opacity(reflectionVisible ? 1 : 0)
-                                .offset(y: reflectionVisible ? 0 : 12)
-                        }
-
-                        actionRow
-                            .opacity(reflectionVisible || topic.reflection == nil ? 1 : 0)
+                    if !topic.verses.isEmpty {
+                        versesSection
                     }
-                    .padding(.horizontal, 18)
-                    .padding(.top, 8)
-                    .padding(.bottom, 40)
+
+                    if let reflection = topic.reflection, !reflection.isEmpty {
+                        reflectionBubble(text: reflection)
+                            .opacity(reflectionVisible ? 1 : 0)
+                            .offset(y: reflectionVisible ? 0 : 12)
+                    }
+
+                    actionRow
+                        .opacity(reflectionVisible || topic.reflection == nil ? 1 : 0)
                 }
+                .padding(.horizontal, 18)
+                .padding(.top, 8)
+                .padding(.bottom, 40)
             }
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .principal) {
-                    Text(topic.title)
-                        .font(.system(size: 17, weight: .bold, design: .serif))
-                        .foregroundColor(.white)
-                        .lineLimit(1)
-                }
+        }
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .principal) {
+                Text(topic.title)
+                    .font(.system(size: 17, weight: .bold, design: .serif))
+                    .foregroundColor(.white)
+                    .lineLimit(1)
+            }
+            // Pushed surfaces get the stack's back button; only the surface the
+            // flow opened on is presented, so only it needs a close button.
+            if isRootSurface {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button {
                         dismiss()
@@ -74,20 +75,11 @@ struct BibleChatAnswerView: View {
                     }
                 }
             }
-            .onAppear {
-                AnalyticsService.shared.trackScreenView("bible_chat_answer", metadata: ["topic_id": topic.id])
-                runRevealAnimation()
-            }
-            .sheet(item: $deepLink) { link in
-                // `showsChatEntry: false` closes the loop reader → "Ask the
-                // Bible" → answer → verse → reader → …, which stacked a sheet
-                // per lap and left the user backing out of a deck of them.
-                BibleView(initialReference: link.reference, showsChatEntry: false)
-                    .environmentObject(subscriptionStore)
-                    .preferredColorScheme(.dark)
-            }
         }
-        .navigationViewStyle(.stack)
+        .onAppear {
+            AnalyticsService.shared.trackScreenView("bible_chat_answer", metadata: ["topic_id": topic.id])
+            runRevealAnimation()
+        }
     }
 
     private var topicHeader: some View {
@@ -169,7 +161,7 @@ struct BibleChatAnswerView: View {
             ForEach(Array(topic.verses.enumerated()), id: \.element.id) { index, verse in
                 if index < revealedVerses {
                     VerseCard(verse: verse, accent: topic.accentColor) {
-                        deepLink = DeepLinkRef(reference: verse.reference)
+                        navigator.openReader(reference: verse.reference)
                         AnalyticsService.shared.trackUserAction(
                             "bible_chat_verse_tapped",
                             category: "bible_chat",
@@ -287,12 +279,6 @@ struct BibleChatAnswerView: View {
             }
         }
     }
-}
-
-/// Identifiable wrapper so a tapped reference can drive a `.sheet(item:)`.
-private struct DeepLinkRef: Identifiable {
-    let id = UUID()
-    let reference: String
 }
 
 private struct VerseCard: View {

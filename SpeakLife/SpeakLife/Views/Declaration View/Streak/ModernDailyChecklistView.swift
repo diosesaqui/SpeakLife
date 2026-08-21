@@ -802,7 +802,9 @@ struct ModernDailyChecklistView: View {
             // from a daily task's .bibleChat destination even though the quick
             // action now points at the Inbox. Inject the env objects explicitly
             // since SwiftUI doesn't reliably propagate them across the sheet hop.
-            BibleChatConversationView()
+            // BibleFlowView opens on chat and carries the reader and "Ask the
+            // Bible" with it, so those stay one back button away.
+            BibleFlowView(root: .chat)
                 .environmentObject(subscriptionStore)
                 .environmentObject(appState)
                 .environmentObject(declarationStore)
@@ -837,9 +839,8 @@ struct ModernDailyChecklistView: View {
         // Presented as sheets so iPhone gets swipe-to-dismiss (these views
         // otherwise relied on a NavigationLink back button).
         .sheet(isPresented: $showBible) {
-            BibleView()
+            BibleFlowView(root: .reader)
                 .environmentObject(subscriptionStore)
-                .preferredColorScheme(.dark)
         }
         .sheet(isPresented: $showPrayers) {
             WarriorView()

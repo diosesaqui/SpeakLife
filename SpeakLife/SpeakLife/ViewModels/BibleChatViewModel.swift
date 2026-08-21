@@ -11,7 +11,6 @@ final class BibleChatViewModel: ObservableObject {
 
     @Published private(set) var topics: [BibleChatTopic] = []
     @Published var searchText: String = ""
-    @Published var selectedTopic: BibleChatTopic?
     @Published var errorMessage: String?
     @Published var isLoading: Bool = false
 
@@ -38,16 +37,11 @@ final class BibleChatViewModel: ObservableObject {
     }
 
     func select(_ topic: BibleChatTopic) {
-        selectedTopic = topic
         AnalyticsService.shared.trackContentInteraction(
             contentType: "bible_chat_topic",
             contentId: topic.id,
             action: "open"
         )
-    }
-
-    func dismiss() {
-        selectedTopic = nil
     }
 }
 

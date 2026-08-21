@@ -166,7 +166,7 @@ struct CategoryChooserView: View {
                         .padding(.top, 4)
                         .dsAppear(0.06)
                         .sheet(isPresented: $showBibleChat) {
-                            BibleChatView()
+                            BibleFlowView(root: .topics)
                                 .environmentObject(subscriptionStore)
                         }
 
