@@ -13,20 +13,21 @@
 //
 //  Three things are true of this screen and must stay true:
 //
-//  1. **The privacy line tells the truth about where the words go.** Free: the
-//     match runs on device and nothing is sent. Premium: the words go to Claude,
-//     which writes a counter for the actual thought, and the line says so. It is
-//     keyed off the same call the classifier branches on — see `privacyLine`
-//     and `ThoughtClassifier.sendsThoughtOffDevice(isPremium:)`. These two must
-//     never disagree. Either way the sentence is never stored, never synced,
-//     and never attached to an analytics event; only the matched terrain ships.
+//  1. **The privacy line tells the truth about where the words go.** When the
+//     key is configured the words go to Claude, which writes a counter for the
+//     actual thought, and the line says so — for every user, not only premium.
+//     Without a key the match runs on device and nothing is sent. It is keyed
+//     off the same call the classifier branches on — see `privacyLine` and
+//     `ThoughtClassifier.sendsThoughtOffDevice`. These two must never disagree.
+//     Either way the sentence is never stored, never synced, and never attached
+//     to an analytics event; only the matched terrain ships.
 //  2. **Crisis routing runs before anything else.** Before matching, before the
 //     network call, before the quota check, before the paywall. Someone who
 //     types that they want to end their life gets a person, not a drill, not a
 //     round trip and not an upsell.
-//  3. **There is no error state.** A low-confidence match serves a general
-//     identity declaration, and every failure of the premium path falls back to
-//     the on-device one. Someone who just typed a real thought must never be
+//  3. **There is no error state.** Every failure of the written path falls back
+//     to the reviewed library, and a sentence the library cannot place falls
+//     back to the bank. Someone who just typed a real thought must never be
 //     handed "we couldn't understand that" and left holding it.
 //
 
@@ -39,9 +40,6 @@ struct AskForThoughtView: View {
     /// metering it would put the whole feature behind the paywall.
     let remaining: Int?
     let classifier: ThoughtClassifier
-    /// Drives both the premium path and the privacy line. One flag, so the
-    /// promise on screen cannot drift from what actually happens.
-    let isPremium: Bool
     /// Serves the flow the user's own words plus the matched counter.
     let onNamed: (_ typed: String, _ matched: IncomingThought) -> Void
     /// Nothing specific today — fall back to the bank. This is the answer to the
@@ -53,7 +51,7 @@ struct AskForThoughtView: View {
 
     @State private var text = ""
     @State private var showReachOut = false
-    /// The premium path is a network call, so the button has to say it is
+    /// The written path is a network call, so the button has to say it is
     /// working. A gold button that does nothing for two seconds is the exact
     /// dead-feeling this screen has already been fixed for once.
     @State private var isWriting = false
@@ -61,12 +59,12 @@ struct AskForThoughtView: View {
 
     /// Whether the words are about to leave the device.
     ///
-    /// Asked of the classifier rather than derived from `isPremium` here: the
-    /// API key arrives from Remote Config and can be empty, in which case a
-    /// premium user silently runs the on-device path — and must not be told
-    /// their words were sent.
+    /// Asked of the classifier rather than decided here: the API key arrives
+    /// from Remote Config and can be empty, in which case everyone silently
+    /// runs the on-device path — and nobody may be told their words were sent
+    /// when they were not.
     private var sendsOffDevice: Bool {
-        classifier.sendsThoughtOffDevice(isPremium: isPremium)
+        classifier.sendsThoughtOffDevice
     }
 
     /// Says where the words go, in the moment before someone commits them.
@@ -360,8 +358,9 @@ struct AskForThoughtView: View {
         //
         // Screened here rather than relying on the async classifier's own check
         // so the reach-out card appears immediately, with no spinner and no
-        // round trip in front of it.
-        if case .reachOut = classifier.classify(entry) {
+        // round trip in front of it, and no scan of the declaration library
+        // either — `screensForCrisis` is the screen and nothing else.
+        if classifier.screensForCrisis(entry) {
             AnalyticsService.shared.track("guard_escape_hatch_screened",
                                           parameters: ["verdict": "reach_out"])
             withAnimation(DS.Motion.smooth) { showReachOut = true }
@@ -374,10 +373,10 @@ struct AskForThoughtView: View {
         }
 
         isWriting = sendsOffDevice
-        let classification = await classifier.classify(entry, isPremium: isPremium)
+        let classification = await classifier.answer(entry)
         isWriting = false
 
-        // Never a silent return. `classify` can only answer `.reachOut` (handled
+        // Never a silent return. `answer` can only return `.reachOut` (handled
         // above) or `.matched`, but a `guard … else { return }` here would mean
         // the button doing nothing at all if that ever stops being true — and a
         // dead button is the one outcome this screen cannot afford, because the

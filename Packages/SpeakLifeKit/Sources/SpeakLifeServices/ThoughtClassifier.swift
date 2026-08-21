@@ -5,24 +5,34 @@
 //  The escape hatch's brain: turns "something else is on my mind" into a
 //  category and a declaration to speak.
 //
-//  **There are two paths, and they differ in whether the words leave the
-//  phone.**
+//  **Whatever someone is up against, the line they speak has to be about that
+//  exact thing.** That is the whole job of this file, and everything below is
+//  arranged around it.
 //
-//  Free: everything here runs on device, exactly as it always has. Keyword
-//  match, terrain map, a counter drawn from the bundled bank. Nothing is sent
-//  anywhere.
+//  First path — written. The words go to Claude, which writes the counter for
+//  the thought they actually typed. This runs for EVERY user, not only premium:
+//  the moment someone names what they are carrying is the moment the app either
+//  answers it or hands them something adjacent, and "adjacent" is what this
+//  change exists to end. See `GuardThoughtWriter`. Premium still buys what it
+//  always bought — unlimited extra reps and the full bank — it just no longer
+//  buys being answered accurately.
 //
-//  Premium: the words are sent to Claude, which writes a counter-declaration
-//  for the actual thought instead of picking the nearest one from a fixed
-//  bank. See `GuardThoughtWriter`.
+//  Second path — the reviewed library. Offline, no key, a refusal, a generated
+//  line that broke the house rules: the counter is chosen out of every reviewed
+//  declaration the app ships, by what the sentence is about. See
+//  `ThoughtCounterLibrary`.
+//
+//  Third path — the bank. Only when the library is empty or cannot place the
+//  sentence at all. Forty-five gentle entries across nine terrains, which is
+//  where this feature started and is no longer where it stops.
 //
 //  This file used to say a network call may never be added to it, and that was
 //  the right rule while the promise on screen was "it stays on this phone".
 //  The promise moved, so the rule moved with it — and the copy moved FIRST.
-//  `AskForThoughtView.privacyLine` now says which of the two is happening, and
-//  it is keyed off the same flag this class is. If a future change makes the
-//  network path run without that line changing, the app is lying to someone in
-//  the worst moment it has.
+//  `AskForThoughtView.privacyLine` says which of the two is happening, and it
+//  is keyed off the same call this class branches on. If a future change makes
+//  the network path run without that line changing, the app is lying to someone
+//  in the worst moment it has.
 //
 //  What did not move: the raw sentence is still never stored, never synced,
 //  never written to the log, and never attached to an analytics event. It
@@ -34,8 +44,7 @@
 //
 //  The classifier reuses `MatchRule.defaults` — the same keyword table the
 //  personal-declaration matcher runs on — rather than growing a second, rival
-//  list of keywords that would drift out of agreement with it. It maps the
-//  resulting `DeclarationCategory` onto one of the nine Guard terrains.
+//  list of keywords that would drift out of agreement with it.
 //
 //  Crisis routing runs FIRST, before any matching, via the shared
 //  `SituationScreen`. Same screen, same words, same support address as the
@@ -85,45 +94,63 @@ public enum ThoughtClassification: Equatable {
     }
 }
 
-/// Classifies free text into one of the nine terrains, entirely on device.
+/// Turns what someone typed into the line they will speak against it: written
+/// for that exact thought when the writer can run, chosen out of the reviewed
+/// library when it cannot, and drawn from the bundled bank when there is no
+/// library in memory.
 public struct ThoughtClassifier {
 
     private let matchAll: ThoughtCategoryMatcher
     private let bank: [IncomingThought]
+    private let library: [Declaration]
     private let writer: GuardThoughtWriter
 
+    /// - Parameter library: the reviewed declaration pool, passed in by the
+    ///   view that presents the drill. It lives app-side (the app refreshes it
+    ///   from the network and merges it with what shipped in the bundle), so
+    ///   the package takes it rather than reaching for it. Empty is a supported
+    ///   state and simply falls through to the bank.
     public init(bank: [IncomingThought],
+                library: [Declaration] = [],
                 matchAll: @escaping ThoughtCategoryMatcher = ThoughtMatcherProvider.matchAll,
                 writer: GuardThoughtWriter = GuardThoughtWriter()) {
         self.bank = bank
+        self.library = library
         self.matchAll = matchAll
         self.writer = writer
     }
 
-    /// Whether the premium path can actually run right now.
+    /// Whether the written path can actually run right now.
     ///
-    /// Premium alone is not enough — the key arrives from Remote Config at
-    /// launch and can be empty. The ASK screen reads this to decide which
-    /// privacy line to show, so it must answer "will the words be sent", not
-    /// "is this user entitled to have them sent".
-    public func sendsThoughtOffDevice(isPremium: Bool) -> Bool {
-        isPremium && writer.isConfigured
+    /// Not a tier check any more. The only thing that decides is whether the
+    /// key arrived from Remote Config at launch — it can be empty, in which
+    /// case every user runs on device. The ASK screen reads this to decide
+    /// which privacy line to show, so it has to answer "will the words be
+    /// sent", never "is this user entitled to have them sent".
+    public var sendsThoughtOffDevice: Bool {
+        writer.isConfigured
     }
 
-    /// The premium path: Claude reads the thought and writes the counter.
+    /// The app's answer to what someone just named: Claude writes the counter
+    /// for the thought they actually typed, with the reviewed library behind it
+    /// whenever that cannot run.
     ///
-    /// - Parameter isPremium: false runs the on-device path unchanged.
+    /// Deliberately NOT an `async` overload of `classify(_:)`. Swift prefers the
+    /// async candidate inside an async function, so an overload would have made
+    /// every local call in this file — and `AskForThoughtView`'s crisis
+    /// pre-screen, which must resolve instantly with no round trip — either fail
+    /// to compile or quietly become a network call. A different name is worth
+    /// more than a matching one here.
     ///
     /// Crisis screening happens here, locally, BEFORE the request. It is the
     /// first thing in the function for the same reason it always was: no
-    /// matching, no quota, no paywall, and now no network call either, may run
-    /// ahead of it.
-    public func classify(_ text: String, isPremium: Bool) async -> ThoughtClassification {
+    /// matching, no quota, no paywall, and no network call, may run ahead of it.
+    public func answer(_ text: String) async -> ThoughtClassification {
         if case .reachOut = SituationScreen.screen(text) {
             return .reachOut
         }
 
-        guard sendsThoughtOffDevice(isPremium: isPremium) else {
+        guard sendsThoughtOffDevice else {
             return classify(text)
         }
 
@@ -146,12 +173,20 @@ public struct ThoughtClassifier {
                                     parameters: ["terrain": written.category.rawValue])
                 return classify(text)
             }
+            // A rebuke that fails review loses on its own. The declaration it
+            // came with is still good, and the terrain's mapped line still
+            // names the right thing, so this costs one line rather than the
+            // whole written answer.
+            let rebuke = Self.followsRebukeRules(written.rebuke)
+                ? written.rebuke
+                : written.category.rebuke
             return .matched(written.category,
                             IncomingThought(
                                 id: CapturedThought.escapeHatchDeclarationId,
                                 text: text,
                                 category: written.category,
                                 intensity: 1,
+                                rebuke: rebuke,
                                 counterDeclaration: written.declaration,
                                 verseText: written.verseText,
                                 book: written.book,
@@ -243,21 +278,81 @@ public struct ThoughtClassifier {
         return true
     }
 
+    /// The rebuke's own review, and deliberately not `followsHouseRules`.
+    ///
+    /// That one rejects a line for naming fear, sickness, shame or lack. This
+    /// line exists to name exactly those, so it is checked for the two things
+    /// that would make it the wrong kind of sentence instead: asking rather than
+    /// commanding, and being aimed at a person rather than at the thing.
+    static func followsRebukeRules(_ rebuke: String) -> Bool {
+        let trimmed = rebuke.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return false }
+        guard !trimmed.contains("—"), !trimmed.contains("–") else { return false }
+
+        let lowered = trimmed.lowercased()
+        let words = lowered.split(whereSeparator: { !$0.isLetter && $0 != "'" }).map(String.init)
+        // Jesus' own were two to seven words. The ceiling leaves room to name
+        // the thing and put it out in one breath, and nothing beyond that.
+        guard words.count >= 2, words.count <= 14 else { return false }
+
+        // A rebuke commands. Asking God to deal with it is a prayer — a good
+        // thing, and not this thing. The premise of the whole drill is that the
+        // believer has the authority and uses it.
+        let petitions = ["please", "i pray", "i ask", "help me", "would you"]
+        guard !petitions.contains(where: { lowered.contains($0) }) else { return false }
+
+        // Never a person. Scripture gives nobody authority over another free
+        // will (CLAUDE.md rule 6): the thing over someone can be put out, the
+        // person never can.
+        let people = ["husband", "wife", "son", "daughter", "mother", "father",
+                      "mom", "dad", "child", "kids", "children", "boss", "friend",
+                      "brother", "sister", "boyfriend", "girlfriend"]
+        let aimedAtAPerson = people.contains { lowered.contains("\($0), you") }
+        guard !aimedAtAPerson else { return false }
+
+        return true
+    }
+
     /// A declined request still ends in something true about the speaker, drawn
-    /// from the reviewed bank rather than generated.
+    /// from the reviewed library rather than generated.
+    ///
+    /// Deliberately identity rather than the sentence's own subject: Claude
+    /// declined because the thought asked for something scripture will not
+    /// declare — harm to someone, another person's spouse — and answering it
+    /// with a well-matched line about that same subject would hand back a
+    /// dressed-up version of the thing just refused. Their own standing is the
+    /// honest floor.
     private func classifyDeclined(_ text: String) -> ThoughtClassification {
         let category = ThoughtCategory.inadequacy
-        let thought = counter(for: category, matching: text) ?? Self.lastResort
+        let thought = libraryCounter(for: category)
+            ?? counter(for: category, matching: text)
+            ?? Self.lastResort
         return .matched(category, thought, confidence: .low)
+    }
+
+    /// A line from the reviewed library in this terrain, ignoring the sentence.
+    /// Used only by the declined path, which must not answer the subject.
+    private func libraryCounter(for category: ThoughtCategory) -> IncomingThought? {
+        ThoughtCounterLibrary.counter(inTerrain: category, in: library)
+    }
+
+    /// The crisis screen on its own, with no matching behind it.
+    ///
+    /// The ASK screen runs this before it commits to anything, so the reach-out
+    /// card appears the instant someone types that they want to end their life
+    /// — no spinner, no round trip, and no scan of the declaration library in
+    /// front of it.
+    public func screensForCrisis(_ text: String) -> Bool {
+        if case .reachOut = SituationScreen.screen(text) { return true }
+        return false
     }
 
     /// - Parameter text: the user's own words. Never stored, never synced,
     ///   never logged — it exists for the length of this call.
     public func classify(_ text: String) -> ThoughtClassification {
         // Safety first, and unconditionally. Placing this above every other
-        // branch is the whole point: no matching, no quota check, and no
-        // premium check can run ahead of it and route someone in crisis into a
-        // drill.
+        // branch is the whole point: no matching and no quota check can run
+        // ahead of it and route someone in crisis into a drill.
         if case .reachOut = SituationScreen.screen(text) {
             return .reachOut
         }
@@ -268,11 +363,20 @@ public struct ThoughtClassifier {
         // build a week on — so it falls through to matching and they get a
         // declaration about their own standing, which is the right answer.
 
-        // The nine-terrain lexicon leads, because it answers the question this
-        // feature actually asks. `MatchRule.defaults` sorts prayer needs into 42
-        // DeclarationCategory values and gets mapped down; it stays as a second
-        // opinion for sentences the lexicon does not recognise, since its
-        // vocabulary is large and there is no reason to throw it away.
+        // The reviewed library leads, because it is the only pool big enough to
+        // answer the thing they actually named. It reads both keyword tables —
+        // the 42-rule one and the nine-terrain lexicon — and returns a line
+        // from the category the sentence is really about, which is how someone
+        // four years into infertility reaches the twenty-five FERTILITY
+        // declarations that ship in the app instead of a general word about
+        // being complete in Christ.
+        if let thought = ThoughtCounterLibrary.counter(for: text, in: library) {
+            return .matched(thought.category, thought, confidence: .high)
+        }
+
+        // No library in memory (a cold launch, a failed fetch, a unit test), so
+        // fall back to the bundled bank. Same two tables, nine terrains, five
+        // gentle lines apiece.
         if let hit = TerrainLexicon.terrain(for: text),
            let thought = counter(for: hit.category, matching: text) {
             return .matched(hit.category, thought, confidence: .high)

@@ -712,11 +712,11 @@ final class GroundTakenBadgeTests: XCTestCase {
     }
 }
 
-// MARK: - The premium path
+// MARK: - The written path
 
-/// Guarding's premium path sends the typed thought to Claude. These pin the
-/// three things that must hold regardless of what the network does.
-final class GuardPremiumPathTests: XCTestCase {
+/// Guarding's written path sends the typed thought to Claude, for every user.
+/// These pin the things that must hold regardless of what the network does.
+final class GuardWrittenPathTests: XCTestCase {
 
     private var savedKey: String!
 
@@ -746,51 +746,51 @@ final class GuardPremiumPathTests: XCTestCase {
         let classifier = ThoughtClassifier(bank: makeBank())
         // A URLSession call would hang or fail here; reachOut must come back
         // immediately from the local screen instead.
-        let result = await classifier.classify("I want to kill myself", isPremium: true)
+        let result = await classifier.answer("I want to kill myself")
         XCTAssertEqual(result, .reachOut)
     }
 
-    /// Premium alone must not flip the privacy copy. The key arrives from
-    /// Remote Config and can be empty, and a premium user on an unconfigured
-    /// build silently runs on device — they must not be told otherwise.
+    /// The privacy copy follows what actually happens, and nothing else. The key
+    /// arrives from Remote Config and can be empty, in which case everyone
+    /// silently runs on device — and must not be told otherwise.
+    ///
+    /// Tier is deliberately not part of this answer any more. Whatever someone
+    /// is up against, the line they speak is written for it, so the question
+    /// "will the words be sent" has exactly one input: is there a key.
     func testPrivacyLineFollowsWhatActuallyHappens() {
         let classifier = ThoughtClassifier(bank: makeBank())
 
         AnthropicConfig.apiKey = ""
-        XCTAssertFalse(classifier.sendsThoughtOffDevice(isPremium: true),
-                       "No key means the words stay on device, whatever the tier.")
-        XCTAssertFalse(classifier.sendsThoughtOffDevice(isPremium: false))
+        XCTAssertFalse(classifier.sendsThoughtOffDevice,
+                       "No key means the words stay on device.")
 
         AnthropicConfig.apiKey = "sk-ant-test"
-        XCTAssertTrue(classifier.sendsThoughtOffDevice(isPremium: true))
-        XCTAssertFalse(classifier.sendsThoughtOffDevice(isPremium: false),
-                       "A free user's words never leave the phone.")
-    }
-
-    /// Free users get exactly the behaviour they had before, and no request is
-    /// made on their behalf.
-    func testFreeTierIsUnchangedAndStaysLocal() async {
-        AnthropicConfig.apiKey = "sk-ant-test"
-        let classifier = ThoughtClassifier(bank: makeBank())
-        let input = "I am afraid all the time"
-
-        let async = await classifier.classify(input, isPremium: false)
-        let sync = classifier.classify(input)
-        XCTAssertEqual(async, sync,
-                       "The free path must be the on-device path, byte for byte.")
+        XCTAssertTrue(classifier.sendsThoughtOffDevice)
     }
 
     /// No key configured is a fallback, not a failure. Someone who typed a real
     /// thought still gets something to speak.
-    func testUnconfiguredPremiumFallsBackRatherThanDeadEnding() async {
+    func testUnconfiguredFallsBackRatherThanDeadEnding() async {
         AnthropicConfig.apiKey = ""
         let classifier = ThoughtClassifier(bank: makeBank())
         guard case .matched(_, let thought, _) =
-                await classifier.classify("I am afraid all the time", isPremium: true) else {
-            return XCTFail("The premium path must never dead-end.")
+                await classifier.answer("I am afraid all the time") else {
+            return XCTFail("The written path must never dead-end.")
         }
         XCTAssertFalse(thought.counterDeclaration.isEmpty)
         XCTAssertFalse(thought.verseText.isEmpty)
+    }
+
+    /// With no key, the answer IS the on-device answer, byte for byte. The
+    /// fallback is not a degraded variant of the local path; it is the local
+    /// path.
+    func testUnconfiguredAnswerIsTheLocalAnswer() async {
+        AnthropicConfig.apiKey = ""
+        let classifier = ThoughtClassifier(bank: makeBank())
+        let input = "I am afraid all the time"
+        let written = await classifier.answer(input)
+        let local = classifier.classify(input)
+        XCTAssertEqual(written, local)
     }
 }
 
@@ -938,5 +938,247 @@ final class HouseRulesTests: XCTestCase {
     func testRejectsARamblingLine() {
         XCTAssertFalse(ThoughtClassifier.followsHouseRules(
             "I am healed. I am whole. I am strong. I am restored. I am well."))
+    }
+}
+
+// MARK: - The reviewed library
+
+/// The path that answers a typed thought out of `declarationsv10.json` instead
+/// of the bundled thought bank.
+///
+/// What these pin is the reason the path exists: whatever someone is up
+/// against, the line they are handed has to be about that exact thing. The bank
+/// could not do that — nine terrains, five gentle lines each — so someone four
+/// years into infertility was answered with a general word about being complete
+/// in Christ while twenty-five reviewed fertility declarations sat unreachable.
+final class ThoughtCounterLibraryTests: XCTestCase {
+
+    private func line(_ text: String,
+                      _ category: DeclarationCategory,
+                      book: String = "Psalm 1:1") -> Declaration {
+        Declaration(text: text, book: book, bibleVerseText: "Verse for \(category.rawValue).",
+                    category: category)
+    }
+
+    /// Small on purpose. Every assertion below is about routing, and routing is
+    /// easier to read against a library you can hold in your head.
+    private func makeLibrary() -> [Declaration] {
+        [
+            line("God fills my womb with life, and He calls me a happy mother.", .fertility),
+            line("I carry the promise, and what God spoke over me comes to pass.", .fertility),
+            line("I am complete in Christ. Nothing in me is missing.", .identity),
+            line("God made me fearfully and wonderfully.", .identity),
+            line("By His wounds I am healed, and this body carries His life.", .health),
+            line("Every part of me answers to the life of God.", .health),
+            line("The Most High covers me. His faithfulness is my shield.", .godsprotection),
+            line("I lie down and sleep deeply, because He keeps me.", .rest),
+            line("I lend to many and borrow from none.", .debt)
+        ]
+    }
+
+    /// The headline behaviour. Four years of trying for a baby is answered by
+    /// the fertility line, not by a general word about identity.
+    func testTheTypedThoughtIsAnsweredInItsOwnDomain() {
+        guard let counter = ThoughtCounterLibrary.counter(
+            for: "We've been trying for a baby for four years and nothing",
+            in: makeLibrary()) else {
+            return XCTFail("The library must answer a sentence it has content for.")
+        }
+        XCTAssertEqual(counter.declarationCategory, DeclarationCategory.fertility.rawValue)
+    }
+
+    /// The terrain is derived from the line that was chosen, rather than the
+    /// choice being confined to a terrain picked first. That inversion is what
+    /// unlocks the categories the nine terrains have no name for.
+    func testTerrainIsDerivedFromTheLineThatWasChosen() {
+        guard let counter = ThoughtCounterLibrary.counter(
+            for: "We've been trying for a baby for four years and nothing",
+            in: makeLibrary()) else {
+            return XCTFail("Expected a counter.")
+        }
+        XCTAssertEqual(counter.category, .sickness)
+        XCTAssertEqual(counter.id, CapturedThought.escapeHatchDeclarationId,
+                       "Nothing traceable to what they typed may reach the log.")
+    }
+
+    /// The two keyword tables score in the same unit so the more specific match
+    /// wins. "danger" fires God's protection in the rule table; "blood pressure"
+    /// and "doctor" fire the sickness terrain, and a body is what the sentence
+    /// is about.
+    func testTheMoreSpecificMatchWins() {
+        guard let counter = ThoughtCounterLibrary.counter(
+            for: "The doctor says my blood pressure is dangerous",
+            in: makeLibrary()) else {
+            return XCTFail("Expected a counter.")
+        }
+        XCTAssertEqual(counter.declarationCategory, DeclarationCategory.health.rawValue)
+    }
+
+    /// Re-typing the same thought must not shuffle the line they are about to
+    /// speak.
+    func testTheSameSentenceAlwaysGetsTheSameLine() {
+        let library = makeLibrary()
+        let input = "I can't sleep at night"
+        let first = ThoughtCounterLibrary.counter(for: input, in: library)
+        let second = ThoughtCounterLibrary.counter(for: input, in: library)
+        XCTAssertEqual(first?.counterDeclaration, second?.counterDeclaration)
+    }
+
+    /// Two kinds of content must never reach someone's mouth in this drill:
+    /// book content, which is expository and written to the older two-sentence
+    /// standard (CLAUDE.md rule 13 says so and says not to "fix" it), and
+    /// anything the user wrote themselves, which has never been reviewed.
+    func testUnreviewedAndExpositoryContentIsNeverServed() {
+        let library = [
+            line("Whatever a psalm says here, at length, in the third person voice.", .psalms),
+            line("My own private line about my own private thing.", .myOwn),
+            line("A favourite I saved once.", .favorites)
+        ]
+        XCTAssertTrue(ThoughtCounterLibrary.speakable(library).isEmpty)
+        XCTAssertNil(ThoughtCounterLibrary.counter(for: "I feel like a fraud", in: library))
+    }
+
+    /// A sentence the tables cannot place at all returns nil rather than
+    /// guessing, so the caller falls back to the bank instead of serving a
+    /// confident wrong answer.
+    func testAnUnplaceableSentenceReturnsNothing() {
+        XCTAssertNil(ThoughtCounterLibrary.counter(for: "qqq zzz mmm", in: makeLibrary()))
+    }
+
+    /// `matchAll` matches substrings, so "Nobody" contains "body" and routes a
+    /// lonely sentence to HEALTH. `ranked` matches word prefixes, and must not.
+    func testKeywordsDoNotFireInsideOtherWords() {
+        let ranked = KeywordCategoryMatcher.ranked("Nobody at church actually likes me")
+            .map { $0.category }
+        XCTAssertFalse(ranked.contains(.health),
+                       "\"body\" inside \"Nobody\" must not route a sentence to healing.")
+        // The stemming the table is written for still works.
+        XCTAssertTrue(KeywordCategoryMatcher.ranked("my anxiety is constant")
+            .map { $0.category }.contains(.anxiety))
+    }
+
+    /// The scored table answers "what is this most about", where `matchAll`
+    /// answers "which rules fired, in file order".
+    func testStrongestCategoryLeads() {
+        let ranked = KeywordCategoryMatcher.ranked("we are trying for a baby and it isn't happening")
+        XCTAssertEqual(ranked.first?.category, .fertility)
+    }
+}
+
+// MARK: - The classifier prefers the library
+
+final class ClassifierLibraryRoutingTests: XCTestCase {
+
+    private func makeBank() -> [IncomingThought] {
+        [IncomingThought(id: "inadequacy_1", text: "You are not enough.", category: .inadequacy,
+                         intensity: 1, counterDeclaration: "I am complete in Christ.",
+                         verseText: "You have been given fullness in Christ.",
+                         book: "Colossians 2:10", declarationCategory: "identity")]
+    }
+
+    private func makeLibrary() -> [Declaration] {
+        [Declaration(text: "God fills my womb with life, and He calls me a happy mother.",
+                     book: "Psalm 113:9", bibleVerseText: "He settles the childless woman in her home as a happy mother of children.",
+                     category: .fertility)]
+    }
+
+    /// The library leads and the bank catches. Before this, the bank was the
+    /// only pool and this sentence came back as a general identity line.
+    func testTheLibraryAnswersBeforeTheBankDoes() {
+        let classifier = ThoughtClassifier(bank: makeBank(), library: makeLibrary())
+        guard case .matched(_, let thought, let confidence) =
+                classifier.classify("We have been trying for a baby for four years") else {
+            return XCTFail("Expected a match.")
+        }
+        XCTAssertEqual(thought.book, "Psalm 113:9")
+        XCTAssertEqual(confidence, .high)
+    }
+
+    /// No library in memory — a cold launch, a failed fetch — and the bank path
+    /// is exactly what it was.
+    func testAnEmptyLibraryLeavesTheBankPathUntouched() {
+        let withLibrary = ThoughtClassifier(bank: makeBank(), library: [])
+        guard case .matched(_, let thought, _) =
+                withLibrary.classify("I am not enough for any of this") else {
+            return XCTFail("Expected a match.")
+        }
+        XCTAssertEqual(thought.book, "Colossians 2:10")
+    }
+}
+
+// MARK: - The rebuke
+
+/// The drill speaks twice: to the thing, then over their own life. These pin
+/// the half that names it.
+final class RebukeTests: XCTestCase {
+
+    /// Nothing in `thoughts.json` or the declaration library carries a rebuke,
+    /// so every counter that was not written for the exact sentence has to get
+    /// one from its terrain. A silent empty line would drop the first half of
+    /// the drill on the path most users are on when they are offline.
+    func testEveryCounterHasSomethingToSpeakAtTheThing() {
+        for terrain in ThoughtCategory.allCases {
+            let thought = IncomingThought(id: "t", text: "incoming", category: terrain,
+                                          intensity: 1,
+                                          counterDeclaration: "I am complete in Christ.",
+                                          verseText: "You have been given fullness in Christ.",
+                                          book: "Colossians 2:10",
+                                          declarationCategory: "identity")
+            XCTAssertFalse(thought.spokenRebuke.isEmpty)
+            XCTAssertEqual(thought.spokenRebuke, terrain.rebuke)
+        }
+    }
+
+    /// A written rebuke wins over the mapped one, and survives being dressed in
+    /// the user's own words on the card.
+    func testAWrittenRebukeIsWhatGetsSpoken() {
+        let written = IncomingThought(id: "t", text: "incoming", category: .sickness,
+                                      intensity: 1,
+                                      rebuke: "Cancer, you have no claim on this body. Go.",
+                                      counterDeclaration: "By His wounds I am healed.",
+                                      verseText: "By his wounds we are healed.",
+                                      book: "Isaiah 53:5",
+                                      declarationCategory: "health")
+        XCTAssertEqual(written.spokenRebuke, "Cancer, you have no claim on this body. Go.")
+        XCTAssertEqual(written.wearing("the scan is back").spokenRebuke,
+                       "Cancer, you have no claim on this body. Go.")
+    }
+
+    /// The rebuke names the low thing on purpose — that is the whole point of
+    /// it — so it must NOT be run through the declaration's validator, which
+    /// rejects exactly that.
+    func testTheTwoValidatorsDisagreeOnPurpose() {
+        let rebuke = "Fear, you have no place here. Go, in Jesus' name."
+        XCTAssertTrue(ThoughtClassifier.followsRebukeRules(rebuke))
+        XCTAssertFalse(ThoughtClassifier.followsHouseRules(rebuke),
+                       "The declaration validator must keep rejecting a named fear.")
+    }
+
+    /// A rebuke that asks is a prayer, and a good one — but the drill is built
+    /// on the believer using the authority they already have.
+    func testAPetitionIsNotARebuke() {
+        XCTAssertFalse(ThoughtClassifier.followsRebukeRules(
+            "God, please take this fear away from me tonight."))
+        XCTAssertFalse(ThoughtClassifier.followsRebukeRules(
+            "I pray that this sickness would leave my body."))
+    }
+
+    /// Scripture gives nobody authority over another free will. The thing over
+    /// someone can be put out; the person never can.
+    func testNoRebukeIsEverAimedAtAPerson() {
+        XCTAssertFalse(ThoughtClassifier.followsRebukeRules(
+            "Husband, you will come back to me now."))
+        // The thing over them is still fair game, and must stay so.
+        XCTAssertTrue(ThoughtClassifier.followsRebukeRules(
+            "Addiction, you have no claim on my son. Go."))
+    }
+
+    /// Built for the mouth: short enough to say in one breath, with the drop at
+    /// the end.
+    func testTheMappedRebukesAreAllWellFormed() {
+        for terrain in ThoughtCategory.allCases {
+            XCTAssertTrue(ThoughtClassifier.followsRebukeRules(terrain.rebuke),
+                          "\(terrain.rawValue): \(terrain.rebuke)")
+        }
     }
 }

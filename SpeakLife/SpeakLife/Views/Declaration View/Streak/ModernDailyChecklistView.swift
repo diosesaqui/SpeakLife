@@ -756,6 +756,9 @@ struct ModernDailyChecklistView: View {
         .fullScreenCover(isPresented: $showTakeItCaptive) {
             TakeItCaptiveFlowView(
                 service: takeItCaptiveService,
+                // The reviewed pool, so a typed thought can be answered out of
+                // the whole library instead of the bundled thought bank.
+                library: declarationStore.allAvailableDeclarations,
                 launchedFromIntent: takeItCaptiveFromIntent,
                 onCompleted: {
                     // The row is derived from the service, so the checklist has

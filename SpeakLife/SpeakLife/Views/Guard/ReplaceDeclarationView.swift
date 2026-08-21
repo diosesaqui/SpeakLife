@@ -4,6 +4,12 @@
 //
 //  Screen 3 of Take It Captive. Everything inverts.
 //
+//  They speak TWICE here, in one breath. First to the thing, naming it — the
+//  only place in the app that names it, because you cannot command what you
+//  will not say out loud. Then over their own life, where it is never named
+//  again. Rebuke and fill: a house swept clean and left empty is Matthew
+//  12:43-45, and it is why the second line is not optional.
+//
 //  The screen the thought arrives on is cold, grey, recessed, wrong. This one is
 //  navy, gold, lit and warm. That contrast is doing real work: the user should
 //  feel like they walked out of one room and into another. Do not harmonize
@@ -114,16 +120,39 @@ struct ReplaceDeclarationView: View {
                     .foregroundColor(gold.opacity(0.9))
                     .opacity(revealed ? 1 : 0)
 
-                // Words light gold as the transcript matches them, so the
-                // screen shows the line being taken rather than a bar filling.
-                HighlightedDeclarationText(
-                    displayWords: displayWords,
-                    matchedIndices: verifier.matchedIndices,
-                    isRecording: verifier.isRecording
-                )
-                .multilineTextAlignment(.center)
-                .fixedSize(horizontal: false, vertical: true)
-                .shadow(color: gold.opacity(0.25), radius: 18)
+                // Two lines, one breath, in the order Jesus used: speak to the
+                // thing, then say what is true. The rebuke is smaller and set
+                // apart above — it is the shorter, harder half, and it is over
+                // in four words. The declaration is what the screen is for.
+                //
+                // Both highlight off the SAME transcript. The verifier is
+                // primed with the two lines joined, so `matchedIndices` runs
+                // straight through and the second block only has to subtract
+                // the first block's length to find its own indices.
+                VStack(spacing: DS.Spacing.md) {
+                    HighlightedDeclarationText(
+                        displayWords: rebukeWords,
+                        matchedIndices: verifier.matchedIndices.filter { $0 < rebukeWords.count },
+                        isRecording: verifier.isRecording,
+                        fontSize: 19
+                    )
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                    // Words light gold as the transcript matches them, so the
+                    // screen shows the line being taken rather than a bar
+                    // filling.
+                    HighlightedDeclarationText(
+                        displayWords: declarationWords,
+                        matchedIndices: Set(verifier.matchedIndices
+                            .filter { $0 >= rebukeWords.count }
+                            .map { $0 - rebukeWords.count }),
+                        isRecording: verifier.isRecording
+                    )
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .shadow(color: gold.opacity(0.25), radius: 18)
+                }
                 .opacity(revealed ? 1 : 0)
                 .offset(y: revealed ? 0 : 14)
 
@@ -179,7 +208,7 @@ struct ReplaceDeclarationView: View {
     @MainActor
     private func arm() async {
         startedAt = Date()
-        verifier.prepare(declarationText: thought.counterDeclaration)
+        verifier.prepare(declarationText: spokenLine)
         if Self.micPreviouslyDenied {
             // Denied before: go straight to the fallback. Asking again is the
             // nag the spec rules out.
@@ -321,10 +350,22 @@ struct ReplaceDeclarationView: View {
         verifier.isRecording && !isVerifying
     }
 
-    /// The words of the line, for the highlighter. Split on whitespace so the
+    /// What they say out loud: the rebuke, then the declaration. One utterance,
+    /// one mic session, so the drill still fits in a breath and still ends where
+    /// it has always ended — in speaking.
+    private var spokenLine: String {
+        "\(thought.spokenRebuke) \(thought.counterDeclaration)"
+    }
+
+    /// The words of each line, for the highlighter. Split on whitespace so the
     /// indices line up with `DeclarationVerificationService.declarationWords`,
-    /// which tokenizes the same way.
-    private var displayWords: [String] {
+    /// which tokenizes the same way — and so the concatenation above splits at
+    /// exactly `rebukeWords.count`.
+    private var rebukeWords: [String] {
+        thought.spokenRebuke.split(separator: " ").map(String.init)
+    }
+
+    private var declarationWords: [String] {
         thought.counterDeclaration.split(separator: " ").map(String.init)
     }
 

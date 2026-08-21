@@ -56,6 +56,16 @@ struct TakeItCaptiveFlowView: View {
 
     @ObservedObject var service: TakeItCaptiveService
 
+    /// Every reviewed declaration the app has in memory, passed in from the
+    /// checklist that presents this flow.
+    ///
+    /// This is what lets a typed thought be answered out of the whole library
+    /// rather than the bundled thought bank — twenty-five fertility lines,
+    /// eighty-four rest lines, twenty-five debt lines, all reachable by someone
+    /// who names what they are actually up against. Empty is a supported state:
+    /// the classifier falls back to the bank.
+    var library: [Declaration] = []
+
     /// True when Siri / Shortcuts / the lock screen opened this.
     ///
     /// It does NOT hard-code the source to `.interrupt`. If the user hasn't done
@@ -190,12 +200,11 @@ struct TakeItCaptiveFlowView: View {
     private var askScreen: some View {
         AskForThoughtView(
             remaining: quotaRemaining,
-            classifier: ThoughtClassifier(bank: service.bank),
-            // Premium buys a counter written for the thought they actually
-            // typed, instead of the nearest one in the bundled bank. It is also
-            // what decides whether the words leave the phone, so the ASK
-            // screen's privacy line is keyed off the same flag.
-            isPremium: subscriptionStore.isPremium,
+            // Every user gets a counter written for the thought they actually
+            // typed, and the reviewed library behind it when that cannot run.
+            // Premium is not consulted: whatever someone is up against, the
+            // line they speak has to be about that exact thing.
+            classifier: ThoughtClassifier(bank: service.bank, library: library),
             onNamed: { typed, matched in
                 // Their words go on the card; the bank entry only supplies the
                 // counter-declaration and the terrain. `.escapeHatch` is what
