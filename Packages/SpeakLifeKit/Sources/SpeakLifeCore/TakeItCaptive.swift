@@ -94,8 +94,44 @@ public enum ThoughtCategory: String, Codable, CaseIterable, Identifiable {
             return .abandonment
         case .faith, .wisdom, .spiritualGrowth, .miracles, .obedience:
             return .confusion
+        // Parenting sits on identity rather than on the child. A thought that
+        // arrives as "I am ruining my kids" is a thought about the speaker's
+        // adequacy, and that is the only half of it scripture lets a
+        // declaration settle — the child is a free person (see rule 6 in
+        // CLAUDE.md), so the ground taken here is the parent's standing.
+        // `.singleParent` is deliberately absent: it is already claimed above
+        // by rejection, where the ache of doing it alone lives.
+        case .parenting, .newSeason:
+            return .inadequacy
+        // Praise, gratitude and heaven all answer the same lie: that God is
+        // distant or has stopped paying attention.
+        case .praise, .gratitude, .heaven, .godsheart:
+            return .abandonment
         default:
             return nil
+        }
+    }
+
+    /// The declaration categories to draw this terrain's counters from, best
+    /// first. The inverse of `from(_:)`, and deliberately narrower than a true
+    /// inverse: it names where the strongest line for this terrain lives, not
+    /// every category that maps back here.
+    ///
+    /// Used when the 42-rule keyword table finds nothing — the terrain lexicon
+    /// speaks 2am English ("biopsy", "test results", "can't stop thinking")
+    /// that the rule table never learned, so a terrain hit still has to be able
+    /// to reach the library.
+    public var declarationCategories: [DeclarationCategory] {
+        switch self {
+        case .fear:         return [.fear, .anxiety, .godsprotection]
+        case .condemnation: return [.grace, .forgiveness, .addiction]
+        case .lack:         return [.wealth, .debt, .housing]
+        case .rejection:    return [.love, .friendship, .innerHealing]
+        case .sickness:     return [.health, .wellness, .mentalHealth]
+        case .inadequacy:   return [.identity, .confidence, .destiny]
+        case .abandonment:  return [.hope, .innerHealing, .rest]
+        case .confusion:    return [.wisdom, .faith, .destiny]
+        case .lust:         return [.purity, .addiction]
         }
     }
 }

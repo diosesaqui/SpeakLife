@@ -6,10 +6,16 @@
 //  Anthropic Messages API.
 //
 //  **This file sends the user's words off the device.** It is the only place in
-//  Guarding that does, it runs for premium users only, and the ASK screen's copy
-//  changes to say so when it is going to happen. If that copy ever drifts back
-//  to "it stays on this phone" while this path is live, the app is lying at the
-//  worst possible moment — see `AskForThoughtView.privacyLine`.
+//  Guarding that does, it runs for every user, and the ASK screen's copy changes
+//  to say so when it is going to happen. If that copy ever drifts back to "it
+//  stays on this phone" while this path is live, the app is lying at the worst
+//  possible moment — see `AskForThoughtView.privacyLine`.
+//
+//  It is not gated on premium, and that is deliberate. Whatever someone is up
+//  against, the line they speak has to be about that exact thing, and a tier
+//  check here decided that most people got something adjacent instead. The only
+//  gate left is `isConfigured` — no key from Remote Config, no request — which
+//  doubles as the kill switch if this ever needs to be turned off in a hurry.
 //
 //  What is still true, and must stay true:
 //
@@ -20,9 +26,9 @@
 //     of one request. `CapturedThought` still has no text field, and no
 //     analytics event carries the sentence — only the matched terrain.
 //  3. **A failure is never a dead end.** Offline, no key, a timeout, a refusal
-//     to parse: every path falls back to the on-device keyword match, which is
-//     what free users get anyway. Nobody is left holding the thought because a
-//     request failed.
+//     to parse: every path falls back to the on-device match, which draws from
+//     the reviewed library the app already ships. Nobody is left holding the
+//     thought because a request failed.
 //
 //  Separate from `ClaudeDeclarationMatcher` on purpose. That one answers "here
 //  is my prayer need, write me a declaration". This one answers a different

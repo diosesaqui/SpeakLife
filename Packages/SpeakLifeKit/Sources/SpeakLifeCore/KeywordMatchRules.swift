@@ -177,3 +177,65 @@ public enum KeywordCategoryMatcher {
         return results
     }
 }
+
+/// The same table, scored rather than first-rule-wins.
+///
+/// `matchAll` answers "which rules fired, in file order". That is the right
+/// answer for the personal-declaration matcher, whose rule ORDER encodes its
+/// priorities (debt before wealth, business before work). It is the wrong
+/// answer when the question is "what is this sentence most about", because the
+/// first rule in the file wins over the rule that matched a far more specific
+/// word.
+///
+/// Two things differ, and both are deliberate:
+///
+/// 1. **Score is keyword length**, the same weighting `TerrainLexicon` uses, so
+///    a sentence matching "trying for a baby" outranks one that merely brushed
+///    "not". Longer key, more specific claim.
+/// 2. **Single-word keys must START a word**, rather than appearing anywhere in
+///    the sentence. `matchAll`'s plain `contains` routes "Nobody at church
+///    likes me" to HEALTH, because "body" is inside "Nobody" — and "past" is
+///    inside "pastor", and "mess" inside "message". Prefix matching keeps the
+///    stemming the table is written for ("anxiet", "financ", "diagnos") and
+///    drops the mid-word accidents. Multi-word keys stay substrings, because
+///    that is what they are.
+///
+/// `matchAll` is deliberately left alone: the campaign matcher has been tuned
+/// against its exact behaviour, and this is an addition, not a replacement.
+extension KeywordCategoryMatcher {
+
+    /// Every category the input touches, strongest first. Ties break on the
+    /// rawValue so two devices handed the same sentence agree.
+    public static func ranked(_ input: String,
+                              rules: [MatchRule] = MatchRule.defaults) -> [(category: DeclarationCategory, score: Int)] {
+        let lowered = input.lowercased()
+        let words = lowered.split(whereSeparator: { !$0.isLetter && $0 != "'" }).map(String.init)
+        guard !words.isEmpty else { return [] }
+
+        var scores: [DeclarationCategory: Int] = [:]
+        for rule in rules {
+            let score = rule.keywords
+                .filter { matches($0, lowered: lowered, words: words) }
+                .reduce(0) { $0 + $1.count }
+            guard score > 0 else { continue }
+            // A category can own more than one rule. The strongest wins rather
+            // than the sum, so a category is never inflated by owning more
+            // rules than its neighbours.
+            scores[rule.category] = max(scores[rule.category] ?? 0, score)
+        }
+
+        return scores
+            .map { (category: $0.key, score: $0.value) }
+            .sorted {
+                if $0.score != $1.score { return $0.score > $1.score }
+                return $0.category.rawValue < $1.category.rawValue
+            }
+    }
+
+    private static func matches(_ key: String, lowered: String, words: [String]) -> Bool {
+        if key.contains(" ") {
+            return lowered.contains(key)
+        }
+        return words.contains { $0.hasPrefix(key) }
+    }
+}
