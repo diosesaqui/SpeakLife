@@ -156,8 +156,9 @@ public final class GuardThoughtWriter {
     /// output has to displace it rather than answer it.
     static let systemPrompt = """
     You write what someone speaks out loud in SpeakLife's "Take It Captive" \
-    drill. They have typed a thought about themselves or their future that does \
-    not line up with who they already are in Christ.
+    drill. They have typed what they are up against right now, in their own \
+    words: a thought, a diagnosis, a bill, a marriage ending, a child who \
+    stopped calling. Answer the thing they actually named.
 
     They speak TWO lines, in this order, and both are yours to write:
 
