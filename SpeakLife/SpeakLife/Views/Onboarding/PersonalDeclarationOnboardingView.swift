@@ -86,6 +86,20 @@ struct PersonalDeclarationOnboardingView: View {
     @State private var keyboardHeight: CGFloat = 0
     private var keyboardUp: Bool { keyboardHeight > 0 }
 
+    /// Top safe-area inset of the active window.
+    ///
+    /// Read from the window rather than a `GeometryProxy` because this screen
+    /// is handed a bare `size` by its callers and never sees a reader of its
+    /// own — and because those callers all `.ignoresSafeArea()`, which is what
+    /// makes the inset invisible to the layout in the first place.
+    private var safeTopInset: CGFloat {
+        UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .first { $0.activationState == .foregroundActive }?
+            .keyWindow?
+            .safeAreaInsets.top ?? 0
+    }
+
     // The quiet escape hatch: visible after a short delay on the input state,
     // and immediately whenever a failure message is showing.
     private var skipVisible: Bool {
@@ -182,7 +196,14 @@ struct PersonalDeclarationOnboardingView: View {
             // Fixed while typing rather than a share of screen height: the tall
             // phones don't need the extra top margin, and the short one — the
             // only device where this gets tight — can't spare it.
-            Spacer().frame(height: keyboardUp ? 20 : size.height * 0.11)
+            //
+            // Measured from the safe area, not from zero. Every call site wraps
+            // this screen in `.ignoresSafeArea()`, so nothing else holds the
+            // prompt clear of the status bar; the flat 20 that used to sit here
+            // ran the first line of the title under the Dynamic Island on the
+            // tall phones. Still floored at 20 so the short, inset-free screens
+            // keep the margin they had.
+            Spacer().frame(height: keyboardUp ? max(20, safeTopInset + 8) : size.height * 0.11)
 
             // Title block
             VStack(spacing: 14) {
@@ -225,12 +246,18 @@ struct PersonalDeclarationOnboardingView: View {
                 .animation(.easeOut(duration: 0.6).delay(0.25), value: titleAppeared)
 
             // Keyboard down, the block floats centered — that is the mic state,
-            // and it should sit in the middle of the screen. Keyboard up, these
-            // flexible spacers would still split the slack evenly and leave the
-            // answer box hanging in the middle of a half-height screen, so they
-            // go fixed: the prompt keeps the top and the box rises to meet it.
+            // and it should sit in the middle of the screen.
+            //
+            // Keyboard up, this is the ONLY flexible spacer, and that is the
+            // whole layout: the prompt holds the top, and every bit of slack
+            // collects here so the answer box, the CTA and the skip link are
+            // pushed down against the keys. It used to be fixed at 22 with the
+            // flexible one below the skip link, which put the slack in exactly
+            // the wrong place — once the box hit its 220pt cap on a large phone
+            // the leftovers pooled *under* the CTA and left it stranded a
+            // couple of hundred points above the keyboard.
             if keyboardUp {
-                Spacer().frame(height: 22)
+                Spacer(minLength: 22)
             } else {
                 Spacer()
             }
@@ -259,12 +286,12 @@ struct PersonalDeclarationOnboardingView: View {
                 .allowsHitTesting(skipVisible)
                 .animation(.easeIn(duration: 0.4), value: skipVisible)
 
-            // With the spacers above pinned, this is the only flexible one left
-            // while typing: it soaks up whatever the answer box leaves once the
-            // box hits its cap, so the column stays top-anchored on a big phone
-            // instead of drifting back to center.
+            // Fixed while typing. This is the gap between the skip link and the
+            // top of the keyboard, and it is the one measurement on this screen
+            // that should not vary with device height — a hair of breathing
+            // room, nothing more. Any flex here re-opens the dead band.
             if keyboardUp {
-                Spacer(minLength: size.height * 0.02)
+                Spacer().frame(height: 12)
             } else {
                 Spacer().frame(height: size.height * 0.05)
             }
