@@ -414,9 +414,10 @@ private struct DirectPain: Identifiable {
     let line: String
 
     /// The same line handed back in second person on the next screen. Written
-    /// out rather than derived from `line`: turning "I've lost sight of who I
-    /// am" into "you've lost sight of who you are" is not something string
-    /// surgery does without producing something a person would never say.
+    /// out rather than derived from `line`: turning "I'm off track from my
+    /// calling" into "you're off track from your calling" is not something
+    /// string surgery does without producing something a person would never
+    /// say.
     let echo: String
 
     /// The receipt shown at the top of the personal-declaration screen. nil when
@@ -435,8 +436,8 @@ private struct DirectPain: Identifiable {
               echo: "You said your body needs healing."),
         .init(burden: .abundance, icon: "💰", line: "The money isn't there",
               echo: "You said the money isn't there."),
-        .init(burden: .identity,  icon: "👑", line: "I've lost sight of who I am",
-              echo: "You said you've lost sight of who you are."),
+        .init(burden: .identity,  icon: "👑", line: "I don't feel good enough",
+              echo: "You said you don't feel good enough."),
         .init(burden: .joy,       icon: "☀️", line: "I feel flat and empty",
               echo: "You said you're feeling flat and empty."),
         .init(burden: .purpose,   icon: "🧭", line: "I'm off track from my calling",
@@ -569,7 +570,7 @@ private struct DirectMechanismScreen: View {
         case .peace:     return "So you won't beg your mind to settle. You'll speak peace to it."
         case .health:    return "So you won't beg your body to hold on. You'll speak healing to it."
         case .abundance: return "So you won't beg for provision. You'll speak God's supply over it."
-        case .identity:  return "So you won't hope you matter. You'll speak who God says you are."
+        case .identity:  return "So you won't try to feel better about yourself. You'll speak what God already says you are."
         case .joy:       return "So you won't wait to feel better. You'll speak His joy over your day."
         case .purpose:   return "So you won't wonder about your calling. You'll speak it into motion."
         case .allOfIt:   return "So you won't ask for more. You'll speak the more God already gave you."

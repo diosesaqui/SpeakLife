@@ -99,7 +99,7 @@ it is empty exactly when this screen needs it.
 | peace | Your mind won't stop. |
 | health | Your body is still waiting on an answer. |
 | abundance | The money keeps running out before the month does. |
-| identity | You've lost sight of who you are. |
+| identity | You don't feel good enough. |
 | purpose | You're off the track you were built for. |
 | joy | Everything feels flat. |
 | more | You've prayed for years. It hasn't moved. |

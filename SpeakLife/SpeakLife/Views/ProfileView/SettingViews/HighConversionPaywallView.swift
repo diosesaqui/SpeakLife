@@ -85,7 +85,7 @@ enum PaywallPain: String, CaseIterable {
         case .peace:     return "Your mind won't stop."
         case .health:    return "Your body is still waiting on an answer."
         case .abundance: return "The money keeps running out before the month does."
-        case .identity:  return "You've lost sight of who you are."
+        case .identity:  return "You don't feel good enough."
         case .purpose:   return "You're off the track you were built for."
         case .joy:       return "Everything feels flat."
         case .more:      return "You've prayed for years. It hasn't moved."
@@ -103,7 +103,7 @@ enum PaywallPain: String, CaseIterable {
         case .abundance:
             return "Praying harder hasn't changed the number. Jesus spoke to what He had and it multiplied, and SpeakLife puts God's promise of provision in your mouth every morning until your finances follow."
         case .identity:
-            return "You can't feel your way into knowing who you are. God already said it, and SpeakLife puts His words about you in your own mouth every day until they're the loudest thing you hear."
+            return "Feeling better about yourself was never the fix, and it never holds. God already said what you are, and SpeakLife puts His words about you in your own mouth every day until they're the loudest thing you hear."
         case .purpose:
             return "Waiting for clarity keeps you where you are. God ordered your steps before you took one, and SpeakLife puts that over your day until you're moving in it again."
         case .joy:
@@ -156,7 +156,7 @@ enum PaywallPain: String, CaseIterable {
         case .identity:
             return [
                 ("megaphone.fill", "Say what God says about you", "Identity declarations spoken in first person, until they're what you believe."),
-                ("headphones", "His voice over the other ones", "Guided audio for the moments the old labels get loud again."),
+                ("headphones", "His voice over the other ones", "Guided audio for the moments the not-enough voice gets loud again."),
                 ("calendar", "Thirty days of the same truth", "Repetition is how identity settles. The plan makes it daily, not occasional."),
                 ("bubble.left.and.bubble.right.fill", "Who God says you are, in His words", "Ask the Bible anything and get the verse behind the promise.")
             ]
