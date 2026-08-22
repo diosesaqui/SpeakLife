@@ -10,10 +10,21 @@
 //                   a single word of pitch. The answer seeds everything.
 //    1. Mechanism — how Jesus handled the exact thing they just named: He
 //                   never begged it to leave, He spoke to it.
-//    2. Payoff    — their personalized declaration, on screen, said out loud.
+//    2. Payoff    — the personal-declaration feature itself. They describe
+//                   their actual situation in their own words and get a
+//                   declaration matched to it, with the verse it stands on and
+//                   "read it out loud right now."
 //    3. Proof     — the review wall, immediately before the ask.
 //    4. Paywall
 //    5. Time      — when their declaration arrives daily (terminal).
+//
+//  Step 2 is the arm. Everything before it exists to earn the thirty seconds
+//  it takes, and everything after it is asking for money on the strength of
+//  it. It is deliberately the real feature and not a demo of it: a canned
+//  declaration keyed off the tap on screen one proves nothing, because the
+//  user did nothing to get it. Describing your own situation and getting
+//  something specific back is the entire product in one screen, and this arm
+//  hands it over before the paywall rather than describing it afterward.
 //
 //  That is the whole flow. Four screens before the ask instead of sixteen.
 //  Nothing here exists that does not either (a) personalize the product to
@@ -51,10 +62,11 @@ struct DirectOnboardingView: View {
     @StateObject private var responses = SurveyResponses()
     @State private var currentStep: DirectStep = .pain
 
-    /// Whether the user tapped "I Said It Out Loud" on the declaration screen.
-    /// Lifted out of that screen so completion (and therefore conversion) can
-    /// be split by the one micro-commitment this arm is built around.
-    @State private var spokeDeclaration = false
+    /// The declaration the user got back after describing their situation, or
+    /// nil if they skipped or the match failed. Kept so completion (and
+    /// therefore conversion) can be split by whether they actually reached the
+    /// payoff this arm is built around.
+    @State private var savedDeclaration: PersonalDeclaration? = nil
 
     /// Funnel entry time, for `total_duration_seconds`. Set in onAppear rather
     /// than at init so it measures time on screen, not time since the struct
@@ -99,11 +111,21 @@ struct DirectOnboardingView: View {
         case .mechanism:
             DirectMechanismScreen(size: size, burden: responses.heaviestBurden ?? .peace) { advance() }
         case .declaration:
-            DirectDeclarationScreen(
+            // The real feature, not a preview of it. The user describes their
+            // actual situation in their own words and gets a declaration
+            // matched to it, with the verse it stands on and "read it out loud
+            // right now" — which is the product's core loop, experienced once
+            // before they are ever asked to pay for it. A canned
+            // one-of-seven declaration keyed off the tap on screen one cannot
+            // do that: it demonstrates nothing the user did.
+            PersonalDeclarationOnboardingView(
+                viewModel: DIContainer.shared.makePersonalDeclarationViewModel(),
                 size: size,
-                burden: responses.heaviestBurden ?? .peace,
-                onSpoken: { spokeDeclaration = true }
-            ) { advance() }
+                flow: "direct"
+            ) { declaration in
+                savedDeclaration = declaration
+                advance()
+            }
         case .testimonials:
             TestimonialWallView(size: size, flow: "direct") { advance() }
         case .paywall:
@@ -175,6 +197,10 @@ struct DirectOnboardingView: View {
         UserDefaults.standard.set(category.rawValue, forKey: "selectedCategory")
         UserPreferencesTracker.shared.trackCategorySelection(category.rawValue)
         declarationStore.choose(category) { _ in }
+        // Mirrors the other arms: the personal-declaration push is scheduled off
+        // this flag, so an arm that captures one and doesn't set it silently
+        // drops that notification for every user in the arm.
+        appState.hasPersonalDeclaration = savedDeclaration != nil
         if let notifTime = responses.notificationTime {
             appState.startTimeIndex = notifTime.startTimeIndex
             appState.endTimeIndex   = notifTime.endTimeIndex
@@ -193,9 +219,10 @@ struct DirectOnboardingView: View {
             "goal_word": goalWord.rawValue,
             "burden": responses.heaviestBurden?.rawValue ?? "unknown",
             "notification_time": responses.notificationTime?.rawValue ?? "unknown",
-            // The arm's signature micro-commitment. Carried onto completion so
-            // conversion can be cut by whether they actually spoke it.
-            "spoke_declaration": spokeDeclaration as NSNumber,
+            // The arm's payoff moment. Carried onto completion so conversion
+            // can be cut by whether they actually reached a declaration of
+            // their own rather than skipping past it.
+            "set_personal_declaration": (savedDeclaration != nil) as NSNumber,
             "total_duration_seconds": elapsedSeconds,
             "flow_schema": DirectStep.flowSchema  // joins with direct_step_completed
         ])
@@ -256,15 +283,22 @@ struct DirectOnboardingView: View {
 enum DirectStep: Int, CaseIterable {
     case pain            = 0  // "What brought you here?" — first frame, no preamble
     case mechanism       = 1  // how Jesus answered that exact thing
-    case declaration     = 2  // their declaration, spoken out loud
+    case declaration     = 2  // the personal-declaration feature: their words in, their declaration out
     case testimonials    = 3  // the review wall, right before the ask
     case paywall         = 4
     case notificationTime = 5 // terminal — completes onboarding
 
-    /// Bumped whenever the raw values are renumbered or a step is inserted, so
-    /// events from two different flow shapes never get pooled into one funnel.
-    /// Stamped on every event this arm fires.
-    static let flowSchema = 1
+    /// Bumped whenever the raw values are renumbered, a step is inserted, or a
+    /// step changes into a materially different screen — so events from two
+    /// different flow shapes never get pooled into one funnel. Stamped on every
+    /// event this arm fires.
+    ///
+    /// 1 → 2: step 2 became the real personal-declaration feature (describe
+    /// your situation, get a matched declaration) instead of a canned
+    /// one-of-seven preview. Same raw value, completely different screen and
+    /// completely different drop-off, so pre-bump step-2 data is not
+    /// comparable.
+    static let flowSchema = 2
 
     /// Stable analytics name. Funnels and breakdowns are built on this, not on
     /// the raw Int — a `step_name` of "declaration" is readable in PostHog
@@ -273,25 +307,30 @@ enum DirectStep: Int, CaseIterable {
         switch self {
         case .pain:             return "pain"
         case .mechanism:        return "mechanism"
-        case .declaration:      return "declaration"
+        case .declaration:      return "personal_declaration"
         case .testimonials:     return "testimonials"
         case .paywall:          return "paywall"
         case .notificationTime: return "notification_time"
         }
     }
 
-    /// Index in the pre-paywall progress bar; nil once the bar should disappear.
+    /// Index in the progress bar, or nil where the bar should not show.
+    ///
+    /// The bar covers the two lead-in screens and then gets out of the way —
+    /// the same convention the other arms use, where it ends before the back
+    /// half. It has to stop before the personal-declaration screen in any
+    /// case: that screen runs its own internal stages (describe → matching →
+    /// result) and lifts its content to the top edge when the keyboard is up,
+    /// straight through where the bar sits.
     var valueScreenIndex: Int? {
         switch self {
-        case .pain:         return 1
-        case .mechanism:    return 2
-        case .declaration:  return 3
-        case .testimonials: return 4
-        default:            return nil
+        case .pain:      return 1
+        case .mechanism: return 2
+        default:         return nil
         }
     }
 
-    static let totalValueScreens = 4
+    static let totalValueScreens = 2
 }
 
 // MARK: - Progress bar
@@ -570,115 +609,15 @@ private struct DirectMechanismScreen: View {
                 }
             }
 
-            DirectCTA(label: "Give Me Mine →") { onContinue() }
+            // Leads straight into "What's one thing you're trusting God for?",
+            // so the CTA has to read as a handover, not as a request for
+            // something prewritten.
+            DirectCTA(label: "Now Do Mine →") { onContinue() }
                 .padding(.bottom, 36)
                 .directStagger(v, delay: 0.54)
         }
         .onAppear {
             AnalyticsService.shared.track("direct_mechanism_shown", parameters: [
-                "burden": burden.rawValue
-            ])
-            withAnimation { v = true }
-        }
-    }
-}
-
-// MARK: - Screen 2: Their declaration
-
-/// The payoff, three screens in: the declaration built for the pain they named,
-/// with the verse it stands on, and one instruction — say it out loud. The CTA
-/// is the confirmation, so the act of speaking is the thing that advances the
-/// flow rather than a generic Continue.
-private struct DirectDeclarationScreen: View {
-    let size: CGSize
-    let burden: HeaviestBurden
-    /// Fired the moment they confirm they said it, so the parent can carry the
-    /// micro-commitment onto the completion event.
-    let onSpoken: () -> Void
-    let onContinue: () -> Void
-
-    @State private var v = false
-    @State private var spoken = false
-
-    private var preview: (text: String, verse: String, reference: String) {
-        burden.previewDeclaration
-    }
-
-    var body: some View {
-        VStack(spacing: 0) {
-            Spacer()
-
-            VStack(spacing: 22) {
-                VStack(spacing: 6) {
-                    Text("YOUR DECLARATION")
-                        .font(.system(size: 12, weight: .bold, design: .rounded))
-                        .foregroundColor(DS.Palette.gold.opacity(0.9))
-                        .kerning(1.4)
-                    Text("Say this out loud. Right now.")
-                        .font(.system(size: 22, weight: .bold, design: .rounded))
-                        .foregroundColor(.white)
-                        .multilineTextAlignment(.center)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                .directStagger(v)
-
-                VStack(spacing: 20) {
-                    Text(preview.text)
-                        .font(.system(size: 22, weight: .semibold, design: .rounded))
-                        .foregroundColor(.white)
-                        .multilineTextAlignment(.center)
-                        .lineSpacing(5)
-                        .fixedSize(horizontal: false, vertical: true)
-
-                    VStack(spacing: 4) {
-                        Text("\"\(preview.verse)\"")
-                            .font(.system(size: 14, weight: .regular, design: .serif))
-                            .italic()
-                            .foregroundColor(.white.opacity(0.6))
-                            .multilineTextAlignment(.center)
-                            .fixedSize(horizontal: false, vertical: true)
-                        Text(preview.reference)
-                            .font(.system(size: 12, weight: .medium, design: .rounded))
-                            .foregroundColor(.white.opacity(0.4))
-                    }
-                }
-                .padding(28)
-                .dsGlass(cornerRadius: DS.Radius.lg)
-                .padding(.horizontal, 24)
-                .directStagger(v, delay: 0.12)
-
-                Text(spoken
-                     ? "That's how you'll pray from here. Every day, over this exact thing."
-                     : "Out loud is the whole point. Faith comes by hearing your own voice say it.")
-                    .font(.system(size: 15, weight: .regular, design: .rounded))
-                    .foregroundColor(.white.opacity(0.6))
-                    .multilineTextAlignment(.center)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .padding(.horizontal, 34)
-                    .directStagger(v, delay: 0.28)
-                    .animation(.easeInOut(duration: 0.3), value: spoken)
-            }
-
-            Spacer()
-
-            DirectCTA(label: spoken ? "Build My Daily Plan →" : "I Said It Out Loud") {
-                if spoken {
-                    onContinue()
-                } else {
-                    // No explicit haptic: DirectCTA's .dsPressable already
-                    // fires one on press.
-                    AnalyticsService.shared.track("direct_declaration_spoken", parameters: [
-                        "burden": burden.rawValue
-                    ])
-                    onSpoken()
-                    withAnimation(.easeInOut(duration: 0.3)) { spoken = true }
-                }
-            }
-            .padding(.bottom, 36)
-            .directStagger(v, delay: 0.38)
-        }
-        .onAppear {
-            AnalyticsService.shared.track("direct_declaration_shown", parameters: [
                 "burden": burden.rawValue
             ])
             withAnimation { v = true }

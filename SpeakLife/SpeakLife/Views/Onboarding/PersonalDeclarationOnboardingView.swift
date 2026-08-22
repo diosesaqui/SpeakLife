@@ -58,7 +58,8 @@ struct PersonalDeclarationOnboardingView: View {
 
     let size: CGSize
     /// Which flow is showing this screen ("quiz" | "survey" | "identity" |
-    /// "outcomes" | "warfare" | "product" | "migration" | "app" | "legacy").
+    /// "outcomes" | "warfare" | "product" | "closer" | "direct" | "migration" |
+    /// "app" | "legacy").
     /// Stamped onto the personal-declaration events so funnels can split the
     /// shared screen by surface. Defaults to "quiz" for the quiz flow's
     /// existing call site.
