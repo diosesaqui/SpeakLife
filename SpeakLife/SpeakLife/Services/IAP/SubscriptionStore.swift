@@ -937,6 +937,26 @@ final class SubscriptionStore: ObservableObject {
             "variant": onboardingVariantName
         ])
 
+        // LTV. Nothing accumulated revenue per person before this, so a person
+        // who renewed four times was indistinguishable from one who paid once
+        // and every payback number was first-purchase price. A trial start is
+        // worth 0 until it converts — booking the price here would inflate LTV
+        // by the whole cancelled-trial population.
+        if willStartTrial {
+            GrowthMetrics.shared.recordTrialStarted(
+                productId: product.id,
+                plan: planLabel(for: product),
+                trialDays: TrialExperienceService.introTrialDays(for: product) ?? 0
+            )
+        } else {
+            GrowthMetrics.shared.recordPurchase(
+                productId: product.id,
+                plan: planLabel(for: product),
+                revenueUSD: priceValue,
+                isRenewal: false
+            )
+        }
+
         // Hook into the trial experience push sequence. Without this the D2/D3
         // trial-conversion pushes coded in TrialExperienceService never fire.
         // Critical: gate on willStartTrial (actual per-user eligibility), not

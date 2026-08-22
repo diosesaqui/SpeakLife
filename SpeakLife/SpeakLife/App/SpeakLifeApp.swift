@@ -256,7 +256,23 @@ struct SpeakLifeApp: App {
             switch newScenePhase {
             case .active:
                 // App became active
-                
+
+                // Growth metrics. `Application Opened` is SDK autocapture and
+                // fires on every foreground, so it counts app switching rather
+                // than days — these two give retention a real daily grain and
+                // every person record its cohort anchor.
+                AnalyticsService.shared.resumeSessionIfNeeded()
+                GrowthMetrics.shared.recordInstallCohort()
+                // Joins RevenueCat's revenue person to this app's behaviour
+                // person. Done on foreground rather than in AppDelegate.init so
+                // Purchases is guaranteed configured and PostHog has registered.
+                GrowthMetrics.shared.linkRevenueIdentity(
+                    appUserID: RevenueCatManager.shared.appUserID
+                )
+                GrowthMetrics.shared.trackDayStarted(
+                    currentStreak: enhancedStreakViewModel.streakStats.currentStreak
+                )
+
                 // Set up app state references
                 appDelegate.appState = appState
                 appDelegate.declarationStore = declarationStore
@@ -341,6 +357,12 @@ struct SpeakLifeApp: App {
                 // App inactive - waiting for background state
                 break
             case .background:
+                // Closes the session so `session_ended` finally has a call site
+                // and session length becomes measurable. Must run before the
+                // other teardown below — nothing here is guaranteed to finish
+                // if iOS suspends us promptly.
+                AnalyticsService.shared.endSession()
+
                 // Reset session tracking when app goes to background
                 PaywallTriggerManager.shared.resetSessionTracking()
                 

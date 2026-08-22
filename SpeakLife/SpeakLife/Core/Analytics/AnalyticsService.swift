@@ -158,6 +158,10 @@ protocol AnalyticsProvider: AnyObject {
 
     /// Associate subsequent events with a known user id (identify / alias).
     func setUserId(_ id: String?)
+
+    /// Merge another identity into the current person, without changing which
+    /// id subsequent events are attributed to.
+    func aliasUser(_ alias: String)
 }
 
 extension AnalyticsProvider {
@@ -165,6 +169,7 @@ extension AnalyticsProvider {
     func configure() {}
     func setUserProperty(_ value: Any, forName name: String) {}
     func setUserId(_ id: String?) {}
+    func aliasUser(_ alias: String) {}
 }
 
 // MARK: - Analytics Service (Dispatcher)
@@ -179,6 +184,7 @@ final class AnalyticsService: AnalyticsTracking {
 
     private var sessionStartTime: Date?
     private var currentScreen: String?
+    private var screensThisSession = 0
     private let screenLock = NSLock()
     private var userProperties: [String: Any] = [:]
 
@@ -200,6 +206,7 @@ final class AnalyticsService: AnalyticsTracking {
         defer { screenLock.unlock() }
         let previous = currentScreen
         currentScreen = screen
+        if previous != screen { screensThisSession += 1 }
         return previous
     }
 
@@ -301,14 +308,46 @@ final class AnalyticsService: AnalyticsTracking {
         ])
     }
 
+    /// Call when the app backgrounds.
+    ///
+    /// This existed but had no call site anywhere in the app: 32,444
+    /// `session_started` events over 90 days and not one `session_ended`, so
+    /// session length — the most basic engagement measure there is — was never
+    /// recorded. Wired to `scenePhase == .background` in SpeakLifeApp.
+    ///
+    /// `sessionStartTime` is cleared so a background/foreground/background cycle
+    /// reports two real sessions rather than one ever-growing duration.
     func endSession() {
-        guard let startTime = sessionStartTime else { return }
+        screenLock.lock()
+        let screens = screensThisSession
+        screensThisSession = 0
+        screenLock.unlock()
+
+        providersLock.lock()
+        let startTime = sessionStartTime
+        sessionStartTime = nil
+        providersLock.unlock()
+
+        guard let startTime = startTime else { return }
         let duration = Date().timeIntervalSince(startTime)
 
         dispatch("session_ended", parameters: [
             "session_duration": duration,
+            "session_duration_seconds": Int(duration),
+            "screens_viewed": screens,
+            "last_screen": activeScreen,
             "timestamp": Date().iso8601String
         ])
+    }
+
+    /// Starts a fresh session on foreground when the previous one was ended.
+    func resumeSessionIfNeeded() {
+        providersLock.lock()
+        let needsStart = sessionStartTime == nil
+        providersLock.unlock()
+
+        guard needsStart else { return }
+        startSession()
     }
 
     func trackScreenView(_ screenName: String, metadata: [String: Any] = [:]) {
@@ -490,6 +529,26 @@ final class AnalyticsService: AnalyticsTracking {
     func setUserId(_ id: String?) {
         for provider in snapshotProviders() {
             provider.setUserId(id)
+        }
+    }
+
+    /// Merge another identity into the current person.
+    ///
+    /// This exists for one specific, expensive problem: RevenueCat posts revenue
+    /// straight to PostHog keyed on its own `$RCAnonymousID:…`, while the app
+    /// reports behaviour under PostHog's device id. Over 90 days that produced
+    /// 78 person records holding revenue and 3,914 holding behaviour, with an
+    /// overlap of exactly zero — so no question that crosses the two ("LTV by
+    /// onboarding variant", "revenue by acquisition cohort") could be answered
+    /// at all. Aliasing the RevenueCat id onto this person joins them.
+    ///
+    /// Alias rather than identify: identifying as the RC id would re-point the
+    /// person on a later Apple sign-in, which PostHog treats as a new person
+    /// rather than a merge.
+    func aliasUser(_ alias: String) {
+        guard !alias.isEmpty else { return }
+        for provider in snapshotProviders() where provider.isEnabled {
+            provider.aliasUser(alias)
         }
     }
 
@@ -815,6 +874,12 @@ final class PostHogAnalyticsProvider: AnalyticsProvider {
         } else {
             PostHogSDK.shared.reset()
         }
+        #endif
+    }
+
+    func aliasUser(_ alias: String) {
+        #if canImport(PostHog)
+        PostHogSDK.shared.alias(alias)
         #endif
     }
 }

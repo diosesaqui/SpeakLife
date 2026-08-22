@@ -98,6 +98,24 @@ final class AnalyticsContext {
         return subscriptionStatus
     }
 
+    /// When this person first opened the app. The cohort anchor for retention,
+    /// activation and payback-window questions — every "how long did it take
+    /// them to X" is measured from here.
+    var userInstallDate: Date { installDate }
+
+    /// Whole days since install. Same cached value the event context uses, so a
+    /// milestone event and the events around it can never disagree by a day.
+    var daysSinceInstall: Int {
+        let now = Date()
+        lock.lock()
+        defer { lock.unlock() }
+        return daysSinceInstallLocked(now: now)
+    }
+
+    var hoursSinceInstall: Int {
+        max(0, Int(Date().timeIntervalSince(installDate) / 3600))
+    }
+
     // MARK: - Writing
 
     /// Keep the monetization dimension current. Wired to `SubscriptionStore`,

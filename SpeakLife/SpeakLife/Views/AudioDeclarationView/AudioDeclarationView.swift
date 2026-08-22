@@ -322,6 +322,8 @@ struct AudioDeclarationView: View {
                                 "is_premium": item.isPremium,
                                 "is_favorite": item.isFavorite
                             ])
+                            GrowthMetrics.shared.trackActivation(action: "audio_played")
+                            GrowthMetrics.shared.trackFeatureFirstUse("audio")
                         }
                 }
             }

@@ -206,3 +206,83 @@ inside the first 48 hours.
 Stated reasons (in-app flow, n=19): "Other reason" 7, "It's too expensive" 6,
 "I'm not using it enough" 4, "Technical issues" 1, "Missing a feature" 1. The
 in-app save-offer retained 1 of 14.
+
+---
+
+## The weekly-decision metric set (added 2026-08-22)
+
+Ten metrics were missing the instrumentation to compute them at all. What now
+exists, and the gap each closes.
+
+### 0. LTV was structurally impossible — identity was split
+
+`rc_*` revenue events arrive from RevenueCat keyed on `$RCAnonymousID:…`; the
+app reports behaviour under PostHog's device id. Over 90 days that produced
+**78 person records holding revenue, 3,914 holding behaviour, and an overlap of
+exactly zero.** No question crossing the two — "LTV by onboarding variant",
+"revenue by acquisition cohort", "do activated users pay more" — had a join to
+make.
+
+`GrowthMetrics.linkRevenueIdentity` now aliases the RevenueCat id onto the app's
+person on foreground. **This fixes new data only; historical revenue stays
+orphaned.** Do not trust any pre-fix cohort revenue number.
+
+| # | Metric | Event / person property | Gap it closed |
+|---|---|---|---|
+| 1 | **LTV / ARPU** | `revenue_recorded`; person `lifetime_revenue_usd`, `purchase_count`, `plan`, `billing_term`, `first_purchase_at` | Revenue was per-transaction only. A person who renewed four times was indistinguishable from one who paid once, so payback used first-purchase price. |
+| 2 | **Activation** | `user_activated` (once ever); person `activated_at`, `hours_to_activate` | No definition of "an install became a user" existed. Fires on first declaration spoken, audio played, chat message or checklist task. |
+| 3 | **Retention / resurrection** | `app_day_started` (once per calendar day) | `Application Opened` is autocapture and fires on every foreground, so it counted app switching, not days. Carries `days_since_last_open` and `is_resurrected`. |
+| 4 | **Session length** | `session_ended` | `endSession()` had **zero call sites**: 32,444 sessions started over 90 days, none ended. Session duration was never measured. Now wired to `scenePhase == .background`. |
+| 5 | **Push effectiveness** | `notification_opened` | Notification taps were never recorded. The whole push programme had no open rate and no way to tell which type earns its send. |
+| 6 | **Feature breadth** | `feature_first_used` (once per feature); person `features_used_count` | First-week breadth is the strongest retention predictor most apps have, and it can't be recovered later without scanning each person's full history. |
+| 7 | **Habit depth** | person `max_streak` | Streak was event-only, so "users who ever reached a 7-day streak" wasn't a cohort. |
+| 8 | **Checklist denominator** | `home_checklist_viewed.offered_task_ids` / `incomplete_task_ids` | `task_unlocked` fires once when a task first unlocks, so nothing distinguished "offered and refused" from "never offered". |
+| 9 | **Checklist un-completion** | `checklist_task_uncompleted` | Toggling a task off emitted nothing, so it still counted as done in every completion metric. |
+| 10 | **Churn reason as a cohort** | person `churned_at`, `last_cancel_reason` | Cancel reason was event-only. |
+
+### Still not instrumented
+
+- **Notification *delivery*** — only opens. Open rate has no true denominator;
+  `lifecycle_notifications_scheduled` counts scheduling, not delivery.
+- **Renewal revenue while the app is closed.** `recordPurchase` runs in-app, so
+  server-side renewals only reach PostHog as `rc_renewal_event`. Once the alias
+  above has been live a while, sum `rc_*` `revenue` per person instead of
+  trusting `lifetime_revenue_usd` alone.
+- **Paid acquisition source per person.** Branch/Meta attribution is wired for
+  onboarding routing but not mirrored to a person property, so CAC-vs-LTV still
+  can't be split by channel.
+
+---
+
+## Checklist feed: what actually gets done (30 days)
+
+Well instrumented — `checklist_task_completed` carries `task_id`, `task_type`,
+`task_category`, `task_difficulty`, `current_phase`, `streak_day`, `is_burst`,
+`is_newly_unlocked`, `recommended_audio_id`.
+
+**77.2% of user-days end with zero tasks completed.** Only 2.5–3% complete the
+whole list.
+
+| Task | Type | Unlocked (users) | Completed (users) |
+|---|---|---|---|
+| complete_daily_burst | speak | 558 | 592 |
+| read_devotional | read | 558 | 412 |
+| listen_audio | listen | 558 | 157 |
+| gratitude_moment | reflect | 238 | 58 |
+| journal_insight | reflect | 54 | 39 |
+| memorize_verse | memorize | 46 | 27 |
+| share_affirmation | share | 16 | 12 |
+| worship_song | worship | 42 | **0** |
+| study_deeper | study | 35 | **0** |
+| prayer_walk | worship | 28 | **0** |
+| encourage_someone | serve | 17 | **0** |
+| pray_for_others | worship | 15 | **0** |
+| serve_someone | serve | 9 | **0** |
+| testimony_share | share | 5 | **0** |
+
+Seven tasks were unlocked 146 times and completed **zero** times. All seven are
+the ones with no `navigationDestination` — off-app instructions ("pray while
+walking", "do something kind for someone"). They are completable (tapping the
+row calls `completeTask`), so this is refusal, not breakage.
+
+Three tasks carry the entire feed: burst, devotional, audio.
