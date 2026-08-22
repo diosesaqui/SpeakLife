@@ -664,6 +664,11 @@ private extension UserPain {
 /// How Jesus answered — the arm's one teaching screen, and the framing never
 /// changes: He did not beg the problem to leave, He spoke to it. Only the last
 /// line moves, to land that on this user's actual situation.
+///
+/// Three parts, in this order: He did it (the storm, the sickness, the grave),
+/// He said we do it (Mark 11:23-24, where saying is the part He names), and
+/// then what that means for this user. The verse is the hinge — without it the
+/// screen shows a pattern and hopes the user infers a command.
 private struct DirectMechanismScreen: View {
     let size: CGSize
     let pain: UserPain
@@ -742,6 +747,36 @@ private struct DirectMechanismScreen: View {
                     .dsGlass(cornerRadius: DS.Radius.lg)
                     .padding(.horizontal, 24)
 
+                    // The hinge of the whole screen. The three beats above are
+                    // Jesus doing it; this is Jesus saying to do it, and saying
+                    // out loud is the part He names — "says to this mountain",
+                    // "believes that what they say will happen". Without it the
+                    // screen shows a pattern and asks the user to infer a
+                    // command from it. With it, speaking is not our idea.
+                    VStack(spacing: 10) {
+                        Text("Then He said we do the same.")
+                            .font(.system(size: 15, weight: .semibold, design: .rounded))
+                            .foregroundColor(.white)
+                            .multilineTextAlignment(.center)
+                            .directStagger(v, delay: 0.42)
+
+                        VStack(spacing: 6) {
+                            Text("\"Truly I tell you, if anyone says to this mountain, 'Go, throw yourself into the sea,' and does not doubt in their heart but believes that what they say will happen, it will be done for them. Therefore I tell you, whatever you ask for in prayer, believe that you have received it, and it will be yours.\"")
+                                .font(.system(size: 14, weight: .regular, design: .serif))
+                                .italic()
+                                .foregroundColor(.white.opacity(0.8))
+                                .multilineTextAlignment(.center)
+                                .lineSpacing(3)
+                                .fixedSize(horizontal: false, vertical: true)
+
+                            Text("Mark 11:23-24")
+                                .font(.system(size: 12, weight: .medium, design: .rounded))
+                                .foregroundColor(DS.Palette.gold.opacity(0.85))
+                        }
+                        .directStagger(v, delay: 0.48)
+                    }
+                    .padding(.horizontal, 28)
+
                     Text(applied)
                         .font(.system(size: 17, weight: .semibold, design: .rounded))
                         .foregroundColor(.white)
@@ -749,7 +784,7 @@ private struct DirectMechanismScreen: View {
                         .lineSpacing(4)
                         .fixedSize(horizontal: false, vertical: true)
                         .padding(.horizontal, 30)
-                        .directStagger(v, delay: 0.46)
+                        .directStagger(v, delay: 0.56)
 
                     Spacer().frame(height: 8)
                 }
@@ -757,7 +792,7 @@ private struct DirectMechanismScreen: View {
 
             DirectCTA(label: spokeDeclaration ? "Make This My Daily Habit →" : "Show Me How →") { onContinue() }
                 .padding(.bottom, 36)
-                .directStagger(v, delay: 0.54)
+                .directStagger(v, delay: 0.64)
         }
         .onAppear {
             AnalyticsService.shared.track("direct_mechanism_shown", parameters: [
