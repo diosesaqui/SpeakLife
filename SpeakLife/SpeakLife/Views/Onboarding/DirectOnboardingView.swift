@@ -51,6 +51,16 @@ struct DirectOnboardingView: View {
     @StateObject private var responses = SurveyResponses()
     @State private var currentStep: DirectStep = .pain
 
+    /// Whether the user tapped "I Said It Out Loud" on the declaration screen.
+    /// Lifted out of that screen so completion (and therefore conversion) can
+    /// be split by the one micro-commitment this arm is built around.
+    @State private var spokeDeclaration = false
+
+    /// Funnel entry time, for `total_duration_seconds`. Set in onAppear rather
+    /// than at init so it measures time on screen, not time since the struct
+    /// was built.
+    @State private var startedAt: Date? = nil
+
     var body: some View {
         ZStack(alignment: .top) {
             backgroundView
@@ -74,7 +84,10 @@ struct DirectOnboardingView: View {
         }
         .ignoresSafeArea()
         .onAppear {
-            AnalyticsService.shared.track("direct_onboarding_started")
+            if startedAt == nil { startedAt = Date() }
+            AnalyticsService.shared.track("direct_onboarding_started", parameters: [
+                "flow_schema": DirectStep.flowSchema
+            ])
         }
     }
 
@@ -86,7 +99,11 @@ struct DirectOnboardingView: View {
         case .mechanism:
             DirectMechanismScreen(size: size, burden: responses.heaviestBurden ?? .peace) { advance() }
         case .declaration:
-            DirectDeclarationScreen(size: size, burden: responses.heaviestBurden ?? .peace) { advance() }
+            DirectDeclarationScreen(
+                size: size,
+                burden: responses.heaviestBurden ?? .peace,
+                onSpoken: { spokeDeclaration = true }
+            ) { advance() }
         case .testimonials:
             TestimonialWallView(size: size, flow: "direct") { advance() }
         case .paywall:
@@ -98,15 +115,37 @@ struct DirectOnboardingView: View {
 
     private func advance() {
         Juice.play(.tapLight)
+        // `step_name` is the one to build funnels on — the raw Int is only kept
+        // so a renumbering is detectable against `flow_schema`.
         AnalyticsService.shared.track("direct_step_completed", parameters: [
             "step": currentStep.rawValue,
-            "flow_schema": 1  // bump when step raw values are renumbered
+            "step_name": currentStep.name,
+            "flow_schema": DirectStep.flowSchema
         ])
 
         // Leaving the opening question: stamp the segment so every downstream
-        // paywall event carries a meaningful segment for this arm.
+        // paywall event carries a meaningful segment for this arm, and pin the
+        // pain as a person property so EVERY later event — trial_started,
+        // subscription_started, retention — can be split by what the user
+        // actually came in carrying. This arm is organized around that answer,
+        // so it is worth knowing at the person level, not just in-flow.
         if currentStep == .pain, let burden = responses.heaviestBurden {
             appState.onboardingSegment = "direct_\(burden.shortLabel)"
+            AnalyticsService.shared.setUserProperty("onboarding_burden", value: burden.shortLabel)
+        }
+
+        // Leaving the review wall is the last pre-paywall milestone, which is
+        // where the quiz arm fires `onboarding_completed` — step 1 of the
+        // Activation → Trial funnel. Firing it here in the same shape (segment
+        // + duration) is what puts this arm into that funnel at all; without it
+        // the arm is invisible there. Split that funnel by the
+        // `onboarding_variant` person property to read the arms apart.
+        if currentStep == .testimonials {
+            AnalyticsService.shared.track("onboarding_completed", parameters: [
+                "segment": appState.onboardingSegment,
+                "variant": "direct",
+                "total_duration_seconds": elapsedSeconds
+            ])
         }
 
         switch currentStep {
@@ -140,11 +179,25 @@ struct DirectOnboardingView: View {
             appState.startTimeIndex = notifTime.startTimeIndex
             appState.endTimeIndex   = notifTime.endTimeIndex
             appState.personalDeclarationTimeIndex = notifTime.startTimeIndex
+            // Cross-arm event name, same shape the quiz arm uses, so "did they
+            // set a daily time" is one query across every flow rather than
+            // per-arm. Safe for the quiz-flow funnel: that funnel is ordered
+            // and starts at `onboarding_quiz_shown`, which this arm never fires.
+            AnalyticsService.shared.track("onboarding_notification_time_picked", parameters: [
+                "segment": appState.onboardingSegment,
+                "variant": "direct",
+                "notification_time": notifTime.rawValue
+            ])
         }
         AnalyticsService.shared.track("direct_onboarding_completed", parameters: [
             "goal_word": goalWord.rawValue,
             "burden": responses.heaviestBurden?.rawValue ?? "unknown",
-            "flow_schema": 1  // joins with direct_step_completed
+            "notification_time": responses.notificationTime?.rawValue ?? "unknown",
+            // The arm's signature micro-commitment. Carried onto completion so
+            // conversion can be cut by whether they actually spoke it.
+            "spoke_declaration": spokeDeclaration as NSNumber,
+            "total_duration_seconds": elapsedSeconds,
+            "flow_schema": DirectStep.flowSchema  // joins with direct_step_completed
         ])
 
         requestNotificationPermissionThenComplete(categories: notificationCategoriesSet)
@@ -171,6 +224,12 @@ struct DirectOnboardingView: View {
                 onComplete()
             }
         }
+    }
+
+    /// Seconds since the flow first appeared. 0 if onAppear somehow never ran.
+    private var elapsedSeconds: Int {
+        guard let startedAt else { return 0 }
+        return Int(Date().timeIntervalSince(startedAt))
     }
 
     private var backgroundView: some View {
@@ -201,6 +260,25 @@ enum DirectStep: Int, CaseIterable {
     case testimonials    = 3  // the review wall, right before the ask
     case paywall         = 4
     case notificationTime = 5 // terminal — completes onboarding
+
+    /// Bumped whenever the raw values are renumbered or a step is inserted, so
+    /// events from two different flow shapes never get pooled into one funnel.
+    /// Stamped on every event this arm fires.
+    static let flowSchema = 1
+
+    /// Stable analytics name. Funnels and breakdowns are built on this, not on
+    /// the raw Int — a `step_name` of "declaration" is readable in PostHog
+    /// where a `step` of 2 needs a decoder ring.
+    var name: String {
+        switch self {
+        case .pain:             return "pain"
+        case .mechanism:        return "mechanism"
+        case .declaration:      return "declaration"
+        case .testimonials:     return "testimonials"
+        case .paywall:          return "paywall"
+        case .notificationTime: return "notification_time"
+        }
+    }
 
     /// Index in the pre-paywall progress bar; nil once the bar should disappear.
     var valueScreenIndex: Int? {
@@ -383,7 +461,9 @@ private struct DirectPainScreen: View {
             }
         }
         .onAppear {
-            AnalyticsService.shared.track("direct_pain_shown")
+            AnalyticsService.shared.track("direct_pain_shown", parameters: [
+                "flow_schema": DirectStep.flowSchema
+            ])
             withAnimation { v = true }
         }
     }
@@ -512,6 +592,9 @@ private struct DirectMechanismScreen: View {
 private struct DirectDeclarationScreen: View {
     let size: CGSize
     let burden: HeaviestBurden
+    /// Fired the moment they confirm they said it, so the parent can carry the
+    /// micro-commitment onto the completion event.
+    let onSpoken: () -> Void
     let onContinue: () -> Void
 
     @State private var v = false
@@ -587,6 +670,7 @@ private struct DirectDeclarationScreen: View {
                     AnalyticsService.shared.track("direct_declaration_spoken", parameters: [
                         "burden": burden.rawValue
                     ])
+                    onSpoken()
                     withAnimation(.easeInOut(duration: 0.3)) { spoken = true }
                 }
             }

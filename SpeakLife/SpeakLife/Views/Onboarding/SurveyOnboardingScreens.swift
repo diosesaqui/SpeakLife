@@ -667,8 +667,9 @@ struct SurveyQ8NotificationScreen: View {
     let size: CGSize
     @ObservedObject var responses: SurveyResponses
     /// Which onboarding flow is showing this screen ("quiz" | "survey" |
-    /// "identity" | "outcomes" | "warfare" | "product"). Stamped onto
-    /// `survey_q8_shown` so funnels can split the shared back-half by arm.
+    /// "identity" | "outcomes" | "warfare" | "product" | "closer" | "direct").
+    /// Stamped onto `survey_q8_shown` so funnels can split the shared back-half
+    /// by arm.
     /// Defaults to "quiz" for the quiz flow's existing call site.
     var flow: String = "quiz"
     var onContinue: () -> Void

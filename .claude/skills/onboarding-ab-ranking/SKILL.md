@@ -1,6 +1,6 @@
 ---
 name: onboarding-ab-ranking
-description: Query PostHog for the onboarding A/B funnel and rank the variants (product / identity / quiz / outcomes / warfare / promises / closer) to pick a winner. Use when asked which onboarding is winning, onboarding A/B results, onboarding funnel rankings, or "which onboarding should we ship".
+description: Query PostHog for the onboarding A/B funnel and rank the variants (product / identity / quiz / outcomes / warfare / promises / closer / direct) to pick a winner. Use when asked which onboarding is winning, onboarding A/B results, onboarding funnel rankings, or "which onboarding should we ship".
 ---
 
 # Onboarding A/B Ranking
@@ -12,11 +12,21 @@ variant is winning, with the numbers behind it.
 
 - The app shows one of several onboarding flows, chosen by Remote Config
   `onboardingVariant`: `product`, `identity`, `quiz`, `outcomes`, `warfare`,
-  `promises`, `closer`. `warfare` is the default arm from app **v4.28+**.
+  `promises`, `closer`, `direct`. `warfare` is the default arm from app **v4.28+**.
 - `closer` is the visual-system arm (black canvas + cinematic hero art +
   yes/no agreement ladder + "I'm In" pledge). Its natural control is
   `outcomes` — same quiz, same back-half — so when comparing, cut those two
   head-to-head before reading the whole field.
+- `direct` is the **funnel-depth** arm: pain question on frame one, four screens
+  to the paywall instead of sixteen (no extended quiz, no plan reveal, no
+  pledge, no rating ask). Read it against `warfare` (the default) for
+  arm-vs-default, or against `closer` to isolate depth from angle. Expect a
+  *higher* completion % almost by construction — the flow is shorter — so
+  **rank it on Conversion %, never on Completion %**, and check
+  `direct_pain_answered` / `direct_pain_shown` to see whether asking before
+  pitching actually holds. Its per-step events are documented in
+  `docs/ANALYTICS_FUNNELS.md` section 3d; build any per-step cut on `step_name`,
+  not the raw `step` integer.
 - Every flow fires a unified, variant-tagged funnel (added in app **v4.27+**):
   1. `onboarding_started`  — entered onboarding `{ variant }`
   2. `onboarding_finished` — completed onboarding `{ variant, converted, conversion_type }`
