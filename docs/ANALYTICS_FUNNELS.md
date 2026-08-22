@@ -219,14 +219,19 @@ the arm**. Build the internal funnel on `step_name`, not the raw `step` integer:
 `direct_mechanism_shown` → `testimonial_wall_shown` (`flow: direct`) →
 `paywall_impression` → `direct_onboarding_completed`
 
+The recovery ladder runs beside it, for the users the first ask lost:
+`direct_pain_shown` → `direct_pain_answered` → `personal_declaration_saved`
+(`flow: direct_retry`).
+
 | Event | Properties | Why it matters |
 |-------|-----------|----------------|
 | `direct_onboarding_started` | `flow_schema` | Arm entry; denominator for everything below |
 | `personal_declaration_screen_shown` | `flow` | Frame-one reach (shared screen, stamped `direct`) |
 | `personal_declaration_saved` / `_skipped` | `flow` | **The arm's whole bet: will a cold user describe their situation on frame one?** Shared with every other arm running this screen, so it is directly comparable — but note this arm asks it first and they ask it deep in the back half |
 | `direct_pain_shown` / `direct_pain_answered` | `flow_schema`, `burden` | The fallback picker. **Only fires for users the declaration produced nothing for** — its volume is the size of the refusal |
+| `personal_declaration_*` (`flow: direct_retry`) | `flow` | The narrow re-ask after the picker. Its take-rate is how much of the refusal the recovery ladder wins back |
 | `direct_mechanism_shown` | `burden`, `spoke_declaration` | Which of the two mechanism framings they saw |
-| `direct_step_completed` | `step`, `step_name`, `flow_schema` | Per-step drop-off (`personal_declaration` / `pain_fallback` / `mechanism` / `testimonials` / `paywall` / `notification_time`) |
+| `direct_step_completed` | `step`, `step_name`, `flow_schema` | Per-step drop-off (`personal_declaration` / `pain_fallback` / `personal_declaration_retry` / `mechanism` / `testimonials` / `paywall` / `notification_time`) |
 | `direct_onboarding_completed` | `goal_word`, `burden`, `pain_source`, `seeded_category`, `notification_time`, `set_personal_declaration`, `total_duration_seconds`, `flow_schema` | Completion, plus every cut worth making |
 
 Shared screens stamp `flow: "direct"` (`personal_declaration_*`,
@@ -243,10 +248,12 @@ Three numbers to watch beyond conversion:
   `closer`, where the identical screen runs deep in the back half with fifteen
   screens of setup in front of it. If it holds anywhere near those, framing was
   never load-bearing.
-- **`pain_source` on `direct_onboarding_completed`** (`declaration` / `picker` /
-  `none`). The share on `picker` is the refusal rate for the free-text open. A
-  large share is not a failure — those users are still seeded — but it says the
-  cold open costs more than it earns.
+- **`pain_source` on `direct_onboarding_completed`** (`open` / `retry` /
+  `picker` / `none`) — how far down the recovery ladder each user had to go.
+  `open` is the frame-one ask landing. `retry` is the narrow re-ask rescuing
+  someone who declined it, and a meaningful share there earns that extra screen
+  on its own. `picker` is a tap and nothing more; a large share says the
+  free-text open is too heavy an ask for frame one. `none` gave us nothing.
 - **`set_personal_declaration`, cut against conversion.** This arm puts the
   declaration first instead of in the back half; if the users who got one convert
   far better, position is what's earning and it should move forward elsewhere.
@@ -255,11 +262,12 @@ Three numbers to watch beyond conversion:
 the quiz arms to confirm the flow actually is faster in practice, not just
 shorter on paper.
 
-> **`flow_schema` is at 3.** Schema 1 opened with the picker and showed a canned
+> **`flow_schema` is at 4.** Schema 1 opened with the picker and showed a canned
 > one-of-seven declaration; schema 2 made that step the real feature but kept it
-> third; schema 3 moved it to frame one and demoted the picker to a fallback.
-> The step order and the drop-off shape differ across all three, so **filter
-> per-step funnels to `flow_schema = 3`** rather than pooling them. Retired:
+> third; schema 3 moved it to frame one and demoted the picker to a fallback;
+> schema 4 added the narrow re-ask after the picker. The step order and the
+> drop-off shape differ across all four, so **filter per-step funnels to
+> `flow_schema = 4`** rather than pooling them. Retired:
 > `direct_declaration_shown` / `direct_declaration_spoken` and the
 > `spoke_declaration` completion property (schema 1), and the guarantee that
 > every user passes through `direct_pain_shown` (schemas 1–2).
