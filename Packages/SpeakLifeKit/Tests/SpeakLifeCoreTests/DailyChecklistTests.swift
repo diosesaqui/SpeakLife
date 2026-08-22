@@ -434,33 +434,44 @@ final class DailyChecklistTests: XCTestCase {
 
     /// The declaration leads, the Burst sits directly behind it.
     ///
-    /// The Burst has other ways in and gets finished by them: an active campaign
-    /// completes it from its own CTA, and the quick-action grid links straight
-    /// to it. The declaration has no second entry point.
-    func testDeclarationTask_LeadsWithTheBurstBehindIt() {
+    /// The Burst leads because it is the only row that earns the streak, and it
+    /// is the most-completed task in the product. The declaration takes second:
+    /// it has no other entry point, so it must not fall below the fold, but it
+    /// does not outrank the day's one required action.
+    func testDeclarationTask_SitsDirectlyBehindTheBurst() {
         withStandardTasks {
             let ids = TaskLibrary.getCoreTasksForStreak(10, personalDeclarations: progress(total: 1, spoken: 0))
                 .map(\.id)
-            XCTAssertEqual(ids.first, TaskLibrary.personalDeclarationTaskId)
-            XCTAssertEqual(ids.dropFirst().first, "complete_daily_burst")
+            XCTAssertEqual(ids.first, "complete_daily_burst")
+            XCTAssertEqual(ids.dropFirst().first, TaskLibrary.personalDeclarationTaskId)
         }
     }
 
     /// It has to land behind the Burst on every path, not just the one where the
     /// Burst was already first. Anchoring the insert to the Burst's current
-    /// index put the row mid-list whenever `burstFirst` still had work to do.
-    func testDeclarationTask_LeadsOnEveryPathNotJustTheStandardOne() {
+    /// index is what keeps the pair adjacent through every phase mix.
+    func testDeclarationTask_SitsBehindTheBurstOnEveryPathNotJustTheStandardOne() {
         withStandardTasks {
             for streakDay in [1, 7, 10, 15, 30, 60] {
                 let ids = TaskLibrary.getCoreTasksForStreak(streakDay,
                                                             personalDeclarations: progress(total: 2, spoken: 1))
                     .map(\.id)
                 guard ids.contains("complete_daily_burst") else { continue }
-                XCTAssertEqual(ids.first, TaskLibrary.personalDeclarationTaskId, "day \(streakDay)")
-                XCTAssertEqual(ids.dropFirst().first, "complete_daily_burst",
+                XCTAssertEqual(ids.first, "complete_daily_burst", "day \(streakDay)")
+                XCTAssertEqual(ids.dropFirst().first, TaskLibrary.personalDeclarationTaskId,
                                "day \(streakDay) ordered as \(ids)")
             }
         }
+    }
+
+    /// The declaration must still lead when the phase mix has no Burst at all,
+    /// rather than silently falling to the bottom of the list.
+    func testDeclarationTask_LeadsWhenThereIsNoBurst() {
+        let noBurst = TaskLibrary.foundationTasks.filter { $0.id != "complete_daily_burst" }
+        let ids = TaskLibrary.withPersonalDeclaration(
+            noBurst, progress: progress(total: 1, spoken: 0)
+        ).map(\.id)
+        XCTAssertEqual(ids.first, TaskLibrary.personalDeclarationTaskId)
     }
 
     /// Tapping the row opens the declaration rather than doing nothing.
