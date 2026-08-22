@@ -361,10 +361,17 @@ struct BibleChatConversationView: View {
             .ignoresSafeArea()
             .blendMode(.plusLighter)
             .allowsHitTesting(false)
-            VStack(spacing: 0) {
-                transcript
-                inputBar
-            }
+            // The input bar is a safe-area inset rather than the second half of
+            // a VStack. As a plain sibling it is laid out against the tab's
+            // bottom inset, and the floating tab bar's inset does not clear
+            // when the keyboard comes up — so the bar was pushed down behind
+            // the keys by roughly the tab bar's height and the user could not
+            // see what they were typing. An inset participates in safe-area
+            // resolution instead of fighting it, so the keyboard moves the bar
+            // the whole way. It also insets the transcript's scroll content by
+            // the bar's height, which the VStack was doing by consuming layout.
+            transcript
+                .safeAreaInset(edge: .bottom, spacing: 0) { inputBar }
         }
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
