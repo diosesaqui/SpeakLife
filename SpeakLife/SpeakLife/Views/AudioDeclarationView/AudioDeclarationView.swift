@@ -515,7 +515,8 @@ struct AudioDeclarationView: View {
                 .padding(.horizontal, 40)
             
             Button("Browse Audio") {
-                viewModel.selectedFilterId = "speaklife"
+                // Lands on the same tab a fresh open lands on.
+                viewModel.selectedFilterId = "declarations"
             }
             .font(.headline)
             .foregroundColor(.white)
