@@ -18,7 +18,11 @@ final class AudioDeclarationViewModel: ObservableObject {
     // the original order without a server refetch.
     private var curatedFilters: [FilterConfig] = []
     @Published var contentByFilter: [String: [AudioDeclaration]] = [:]  // All content organized by filter ID
-    @Published var selectedFilterId: String = "speaklife" {  // Selected filter ID (set dynamically from server)
+    // "declarations" is the Mountain-Moving Prayers tab. This is only the
+    // pre-fetch and offline value: whenever the remote audio config carries a
+    // `selectedFilterId`, that wins (see setupDynamicFilters), so the server
+    // config has to name the same tab or this never shows.
+    @Published var selectedFilterId: String = "declarations" {  // Selected filter ID (set dynamically from server)
         // didSet fires even on same-value assignment (the chip buttons assign
         // unconditionally); without the guard a re-tap of the active chip
         // would collapse the pagination window under the user's scroll.

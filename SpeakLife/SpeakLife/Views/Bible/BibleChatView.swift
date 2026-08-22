@@ -361,10 +361,17 @@ struct BibleChatConversationView: View {
             .ignoresSafeArea()
             .blendMode(.plusLighter)
             .allowsHitTesting(false)
-            VStack(spacing: 0) {
-                transcript
-                inputBar
-            }
+            // The input bar is a safe-area inset rather than the second half of
+            // a VStack. As a plain sibling it is laid out against the tab's
+            // bottom inset, and the floating tab bar's inset does not clear
+            // when the keyboard comes up — so the bar was pushed down behind
+            // the keys by roughly the tab bar's height and the user could not
+            // see what they were typing. An inset participates in safe-area
+            // resolution instead of fighting it, so the keyboard moves the bar
+            // the whole way. It also insets the transcript's scroll content by
+            // the bar's height, which the VStack was doing by consuming layout.
+            transcript
+                .safeAreaInset(edge: .bottom, spacing: 0) { inputBar }
         }
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -444,9 +451,43 @@ struct BibleChatConversationView: View {
                         typingIndicator.id("typing")
                     }
                     if let err = viewModel.errorMessage {
-                        Text(err)
-                            .font(.system(size: 13))
-                            .foregroundColor(.red.opacity(0.9))
+                        // The question is still in the transcript above, so the
+                        // only thing missing was a way to send it again. Without
+                        // this the user has to retype what they can still see.
+                        VStack(spacing: 10) {
+                            Text(err)
+                                .font(.system(size: 13))
+                                .foregroundColor(.red.opacity(0.9))
+                                .multilineTextAlignment(.center)
+
+                            Button {
+                                viewModel.retryLastMessage(isPremium: subscriptionStore.isPremium)
+                            } label: {
+                                HStack(spacing: 6) {
+                                    Image(systemName: "arrow.clockwise")
+                                        .font(.system(size: 13, weight: .semibold))
+                                    Text("Retry")
+                                        .font(.system(size: 14, weight: .semibold))
+                                }
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 18)
+                                .padding(.vertical, 9)
+                                .background(
+                                    Capsule().fill(Color.white.opacity(0.14))
+                                )
+                                .overlay(
+                                    Capsule().stroke(Color.white.opacity(0.22), lineWidth: 1)
+                                )
+                            }
+                            .buttonStyle(.plain)
+                            // A retry while one is already in flight would be
+                            // dropped by the view model anyway; hide it so the
+                            // button never looks dead.
+                            .disabled(viewModel.isSending)
+                            .opacity(viewModel.isSending ? 0.4 : 1)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.top, 4)
                     }
                 }
                 .padding(.horizontal, 16)

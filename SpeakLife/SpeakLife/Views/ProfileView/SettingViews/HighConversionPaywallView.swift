@@ -4,21 +4,279 @@
 //
 //  Data-driven paywall - Remote Config flag: useHighConversionPaywall
 //  Fixes: 70% abandon rate, missing price anchor, weak social proof
-//  Copy is the "Pray like Jesus — speak to every storm" positioning
-//  (unconditional; supersedes the old personalized-headline stack, retired
-//  variants high_conversion_v1 / _succinct_v1 / _clean_v1 / _clean_dark_v1).
+//
+//  Copy is PAIN-LED (supersedes the unconditional "speak to every storm"
+//  positioning, which in turn superseded the old personalized-headline stack;
+//  retired variants high_conversion_v1 / _succinct_v1 / _clean_v1 /
+//  _clean_dark_v1 / _storm_v1 / _storm_clean_v1 / _storm_clean_dark_v1).
+//
+//  The screen now runs the same three beats in order, aimed at the problem the
+//  user actually named in onboarding (see `UserPain`):
+//
+//    1. Name the problem      — the headline says the thing that is wrong
+//    2. Turn it               — why what they've been doing hasn't moved it,
+//                               and the mechanism that does (spoken, not read)
+//    3. Solve it, concretely  — four product mechanics described in terms of
+//                               what they do about THAT problem, not as a
+//                               generic feature list
+//
+//  The storm positioning is not gone; it moved into beat 2, where it belongs —
+//  it is the mechanism, and a mechanism only sells once the problem is named.
+//
 //  Tracks paywallVariant on all events:
-//    - "high_conversion_storm_v1"            (classic dark layout)
-//    - "high_conversion_storm_clean_v1"      (light minimal layout via
+//    - "high_conversion_pain_v1"            (classic dark layout)
+//    - "high_conversion_pain_clean_v1"      (light minimal layout via
 //      Remote Config flag useCleanPaywallVariant: headline + illustration +
 //      two plan cards + Continue)
-//    - "high_conversion_storm_clean_dark_v1" (clean layout skinned with the
+//    - "high_conversion_pain_clean_dark_v1" (clean layout skinned with the
 //      classic dark gradient/colors, via useCleanPaywallDarkTheme on top of
 //      useCleanPaywallVariant)
+//  The "pain" segment marks this reposition's release point so the rollout
+//  reads as a clean before/after against the retired "storm" names.
 //
 
 import SwiftUI
 import StoreKit
+
+// MARK: - Pain Resolution
+//
+/// The problem the user is actually carrying, resolved from whatever the flow
+/// managed to learn about them. This is the paywall's personalization spine —
+/// the headline names it, the subhead turns it, and the solution rows say
+/// concretely how SpeakLife answers *that* — and the onboarding mechanism
+/// screen reads it too (see the extension in DirectOnboardingView).
+///
+/// **Sized to the matcher, not to the picker.** An earlier version had seven
+/// cases, mirroring the seven options on the old category screen. But a user
+/// describing their own situation can land in any of forty-odd declaration
+/// categories, and seven buckets sent fear, loneliness, grief, addiction,
+/// bitterness and every family situation to the same generic catch-all — which
+/// is the one outcome a pain-led paywall cannot afford. These fifteen cover the
+/// territory the matcher actually produces. `more` is still the catch-all, but
+/// it should now be rare rather than routine.
+enum UserPain: String, CaseIterable {
+    case peace       // a mind that will not stop
+    case fear        // afraid, under attack, dreading what is coming
+    case health      // the body
+    case abundance   // provision, work, debt, housing
+    case identity    // who they are, what they are worth
+    case shame       // condemnation, what they did or what was done
+    case bondage     // the thing they cannot stop going back to
+    case purpose     // calling, direction, a new chapter
+    case joy         // flat, heavy, joyless
+    case grief       // loss
+    case loneliness  // no one close
+    case marriage    // the marriage itself
+    case family      // a child, a prodigal, a womb
+    case nearness    // God feels far
+    case more        // catch-all
+
+    // MARK: Resolution
+
+    /// From an onboarding segment.
+    ///
+    /// `direct` stamps `direct_<UserPain.rawValue>`, which round-trips exactly.
+    /// The other six arms stamp `<arm>_<HeaviestBurden.shortLabel>`, whose seven
+    /// values are all still case names here, so they round-trip too. The quiz
+    /// arm stamps a `QuizSegment` name, which maps onto the nearest pain.
+    /// Returns nil for anything unrecognized (including the quiz's
+    /// `unsegmented`) so the caller falls back to unpersonalized copy rather
+    /// than guessing at someone's problem.
+    static func from(segment: String) -> UserPain? {
+        guard !segment.isEmpty else { return nil }
+        switch segment {
+        case "battlefield_mind":    return .peace
+        case "believer_authority":  return .more
+        case "already_yours":       return .abundance
+        case "his_heart":           return .nearness
+        case "unsegmented":         return nil
+        default: break
+        }
+        let label = segment.split(separator: "_").last.map(String.init) ?? segment
+        return UserPain(rawValue: label)
+    }
+
+    /// From the category the declaration matcher assigned to what the user
+    /// wrote. This is the path that has to be exhaustive: it is the only thing
+    /// standing between a user's own words and generic paywall copy.
+    ///
+    /// Bible-book categories and anything else unlisted fall to `more`, which
+    /// is the one bucket whose copy assumes nothing about the domain.
+    static func from(categoryRaw: String) -> UserPain {
+        switch DeclarationCategory(rawValue: categoryRaw) {
+        case .anxiety, .rest, .hardtimes, .mentalHealth:            return .peace
+        case .fear, .godsprotection, .warfare, .blood, .nameOfJesus: return .fear
+        case .health, .wellness:                                     return .health
+        case .wealth, .favor, .work, .business, .housing, .debt, .education:
+            return .abundance
+        case .identity, .confidence:                                 return .identity
+        case .grace, .purity, .innerHealing, .obedience, .forgiveness:
+            return .shame
+        case .addiction, .anger:                                     return .bondage
+        case .destiny, .wisdom, .newSeason, .miracles:               return .purpose
+        case .joy, .praise, .gratitude:                              return .joy
+        case .grief, .divorce:                                       return .grief
+        case .love, .relationship, .friendship:                      return .loneliness
+        case .marriage:                                              return .marriage
+        case .parenting, .singleParent, .salvation, .fertility:      return .family
+        case .godsheart, .faith, .hope, .heaven, .spiritualGrowth, .speaklife:
+            return .nearness
+        default:                                                     return .more
+        }
+    }
+
+    /// The coarse burden this pain belongs to, for the shared onboarding
+    /// screens (notification copy, goal word, feed seeding) that only speak the
+    /// seven-value vocabulary.
+    var burden: HeaviestBurden {
+        switch self {
+        case .peace, .fear:                       return .peace
+        case .health:                             return .health
+        case .abundance:                          return .abundance
+        case .identity, .shame, .bondage:         return .identity
+        case .purpose:                            return .purpose
+        case .joy, .grief, .loneliness:           return .joy
+        case .marriage, .family, .nearness, .more: return .allOfIt
+        }
+    }
+
+    // MARK: Copy
+
+    /// Headline. Names the problem in the user's own terms, present tense.
+    var problem: String {
+        switch self {
+        case .peace:      return "Your mind won't stop."
+        case .fear:       return "You keep waiting for bad news."
+        case .health:     return "Your body is still waiting on an answer."
+        case .abundance:  return "The numbers don't work right now."
+        case .identity:   return "You don't feel good enough."
+        case .shame:      return "You can't seem to put it down."
+        case .bondage:    return "You keep going back to it."
+        case .purpose:    return "You're off the track you were built for."
+        case .joy:        return "Everything feels flat."
+        case .grief:      return "You lost something you can't replace."
+        case .loneliness: return "You're carrying this on your own."
+        case .marriage:   return "Home doesn't feel like home right now."
+        case .family:     return "Someone you love is on your heart."
+        case .nearness:   return "God feels further away than He used to."
+        case .more:       return "You've prayed about it. It hasn't moved."
+        }
+    }
+
+    /// Subhead. **Declare it, then act on it.**
+    ///
+    /// The headline one line above already named the problem, so this line says
+    /// what to do about it — and it names the second half on purpose. Saying it
+    /// and then living unchanged is the thing James calls dead faith, and a
+    /// paywall that only promises a feeling ("expect instead of hope") is
+    /// selling one internal state in place of another. Both halves, every time:
+    /// the declaration, and the move that proves you believed it.
+    ///
+    /// Ten to thirteen words. No product name — the four rows underneath are
+    /// where SpeakLife shows up.
+    var solution: String {
+        switch self {
+        case .peace:      return "Declare God's peace over your mind, then move through the day settled."
+        case .fear:       return "Declare God's protection over tomorrow, then walk into it uncovered by dread."
+        case .health:     return "Declare the healing the cross paid for, then treat your body like it's yours."
+        case .abundance:  return "Declare God's supply over your finances, then decide like the provision is there."
+        case .identity:   return "Declare what God already said you are, then carry yourself like it's true."
+        case .shame:      return "Declare what the cross already settled, then stop picking it back up."
+        case .bondage:    return "Declare the freedom Jesus bought you, then walk away the next time."
+        case .purpose:    return "Declare the steps God already ordered, then take the next one."
+        case .joy:        return "Declare God's joy over your day, then go live it out loud."
+        case .grief:      return "Declare God's comfort over your heart, then let Him carry what you can't."
+        case .loneliness: return "Declare God's nearness over your life, then stop facing it on your own."
+        case .marriage:   return "Declare God's peace over your home, then love it like peace lives there."
+        case .family:     return "Declare God's promises over the people you love, then pray instead of worrying."
+        case .nearness:   return "Declare that God is near you, then go spend time with Him today."
+        case .more:       return "Declare God's Word with the authority Jesus used, then act on it."
+        }
+    }
+
+    /// The place this pain lives, used to aim the shared solution rows. Reads
+    /// naturally after "over" and after "about".
+    var domain: String {
+        switch self {
+        case .peace:      return "your mind"
+        case .fear:       return "your future"
+        case .health:     return "your body"
+        case .abundance:  return "your provision"
+        case .identity:   return "who you are"
+        case .shame:      return "what you're carrying"
+        case .bondage:    return "the thing that keeps winning"
+        case .purpose:    return "your steps"
+        case .joy:        return "your day"
+        case .grief:      return "your heart"
+        case .loneliness: return "your life"
+        case .marriage:   return "your home"
+        case .family:     return "the people you love"
+        case .nearness:   return "your walk with God"
+        case .more:       return "what you're facing"
+        }
+    }
+
+    /// The bespoke first row — the declarations themselves, which is the row
+    /// that has to prove the product understood the problem.
+    private var leadSolution: (icon: String, title: String, detail: String) {
+        switch self {
+        case .peace:      return ("megaphone.fill", "Speak peace, don't just read it", "Declarations written for a racing mind, short enough to say out loud and mean.")
+        case .fear:       return ("megaphone.fill", "Speak to it before it grows", "Declarations on God's protection and His hold on tomorrow, for the moment the dread starts.")
+        case .health:     return ("megaphone.fill", "Speak what the cross paid for", "Healing declarations straight from Scripture, built to say over your body daily.")
+        case .abundance:  return ("megaphone.fill", "Speak God's supply over it", "Declarations on provision, favor, and open doors, built to say over the bills and the decisions.")
+        case .identity:   return ("megaphone.fill", "Say what God says about you", "Identity declarations spoken in first person, until they're what you believe.")
+        case .shame:      return ("megaphone.fill", "Speak what the cross already settled", "Declarations on grace and a clean record, written for the days it comes back.")
+        case .bondage:    return ("megaphone.fill", "Speak to it with authority", "Declarations that tell it where it stands instead of asking it to ease off.")
+        case .purpose:    return ("megaphone.fill", "Speak your calling into motion", "Declarations over your steps, your work, and the door God is opening.")
+        case .joy:        return ("megaphone.fill", "Speak joy over your day", "Declarations on God's joy and strength, made to say first thing in the morning.")
+        case .grief:      return ("megaphone.fill", "Speak comfort you didn't have to manufacture", "Declarations on God's nearness to the brokenhearted, for the hard mornings.")
+        case .loneliness: return ("megaphone.fill", "Speak the truth that you're not alone", "Declarations on God's presence and His people, for the quiet hours.")
+        case .marriage:   return ("megaphone.fill", "Speak peace over your home", "Declarations over your marriage and your household, not over your spouse's choices.")
+        case .family:     return ("megaphone.fill", "Stand for them out loud", "Declarations over your children and the people you're believing God for.")
+        case .nearness:   return ("megaphone.fill", "Speak His own words back to Him", "Declarations drawn straight from what God says about being near you.")
+        case .more:       return ("megaphone.fill", "Speak it, don't just read it", "The exact Word for your exact situation, written to say out loud.")
+        }
+    }
+
+    /// The four mechanics. Row one is written for this pain; the other three
+    /// are the same three capabilities every time, aimed at this pain's domain
+    /// — which is what keeps fifteen sets of copy honest instead of fifteen
+    /// sets of invented differences.
+    var solutions: [(icon: String, title: String, detail: String)] {
+        [
+            leadSolution,
+            ("headphones", "His Word in your ears", "Guided declarations over \(domain) for the morning, the commute, and before bed."),
+            ("calendar", "Thirty days, not one good day", "A daily plan so you're speaking over \(domain) on the ordinary days too."),
+            ("bubble.left.and.bubble.right.fill", "Ask the Bible anything", "Every promise about \(domain), chapter and verse, in seconds.")
+        ]
+    }
+
+    var solutionHeader: String { "How SpeakLife works on this" }
+
+    /// The last line before the tap. Names what this is not, then what it is.
+    var assurance: String {
+        let notThis: String
+        switch self {
+        case .peace, .joy:            notThis = "tips or affirmations"
+        case .fear:                   notThis = "positive self-talk"
+        case .health:                 notThis = "wishful thinking"
+        case .abundance:              notThis = "budgeting tips"
+        case .identity, .shame:       notThis = "self-help"
+        case .bondage:                notThis = "willpower"
+        case .purpose:                notThis = "motivation"
+        case .grief, .loneliness:     notThis = "platitudes"
+        case .marriage, .family:      notThis = "advice about them"
+        case .nearness:               notThis = "trying harder"
+        case .more:                   notThis = "tips or affirmations"
+        }
+        return "Not \(notThis). God's own Word over \(domain), spoken the way Jesus did."
+    }
+
+    /// Rows and closing line for users we have no pain for at all (settings,
+    /// feature gates, the quiz's `unsegmented` bucket).
+    static let generalSolutions: [(icon: String, title: String, detail: String)] = UserPain.more.solutions
+    static let generalAssurance = "Not tips or affirmations. God's own Word, in your mouth, the way Jesus prayed."
+}
 
 struct HighConversionPaywallView: View {
     @Environment(\.dismiss) var dismiss
@@ -87,13 +345,13 @@ struct HighConversionPaywallView: View {
     }
 
     /// Variant string sent to Firebase Analytics on every paywall event. The
-    /// "storm" segment marks the repositioned copy's release point so the
-    /// rollout reads as a before/after against the retired variant names.
+    /// "pain" segment marks this reposition's release point so the rollout
+    /// reads as a before/after against the retired "storm" variant names.
     private var paywallVariant: String {
         if isCleanVariant {
-            return isCleanDarkTheme ? "high_conversion_storm_clean_dark_v1" : "high_conversion_storm_clean_v1"
+            return isCleanDarkTheme ? "high_conversion_pain_clean_dark_v1" : "high_conversion_pain_clean_v1"
         }
-        return "high_conversion_storm_v1"
+        return "high_conversion_pain_v1"
     }
 
     /// Clean minimal layout A/B (Remote Config: useCleanPaywallVariant). Swaps
@@ -116,17 +374,22 @@ struct HighConversionPaywallView: View {
         isCleanVariant && (lockedCleanDarkTheme ?? subscriptionStore.useCleanPaywallDarkTheme)
     }
 
-    /// Storm value props: scannable one-line format, written through the
-    /// "speak to the storm" positioning. Lead with the mechanism (the exact
-    /// Word, spoken), then speed, coverage, audio, chat, and social proof.
-    private static let stormValueProps: [(icon: String, title: String)] = [
-        ("wind", "The exact Word for your exact storm"),
-        ("timer", "Peace in under 60 seconds"),
-        ("megaphone.fill", "Declarations over your health, home, and mind"),
-        ("headphones", "God's Word in your ears morning and night"),
-        ("bubble.left.and.bubble.right.fill", "Ask the Bible anything"),
-        ("person.2.fill", "\(SocialProof.believersCount) believers speaking life daily")
-    ]
+    /// The problem this user named in onboarding, or nil when we don't know
+    /// (settings, feature gates, the quiz's `unsegmented` bucket). Everything
+    /// personalized on this screen hangs off this one value.
+    private var pain: UserPain? { UserPain.from(segment: segmentParam) }
+
+    /// The four mechanics, described against the user's actual problem when we
+    /// know it and generically when we don't.
+    private var solutionRows: [(icon: String, title: String, detail: String)] {
+        pain?.solutions ?? UserPain.generalSolutions
+    }
+
+    /// Header over those rows. Answers "how does this fix MY thing?" — the
+    /// question a paywall has to close before price matters.
+    private var solutionHeader: String {
+        pain?.solutionHeader ?? "How SpeakLife works"
+    }
 
     /// Segment-tagged analytics property. Empty string when the user came through
     /// the Control onboarding so paywall events stay backward-compatible.
@@ -153,24 +416,37 @@ struct HighConversionPaywallView: View {
         return goalWord.styleLabel.lowercased()
     }
 
-    /// Storm copy resolution: one uniform headline, with the subhead carrying
-    /// the personalization. The fresh-personal-declaration moment (they spoke
-    /// their own declaration aloud seconds ago) keeps its continuity framing;
-    /// the survey goal word (peace / healing / identity / …) names the promise
-    /// when we have it.
+    /// Pain-led copy resolution. The headline names the problem; the subhead
+    /// turns it and hands off to the mechanism.
+    ///
+    /// One exception keeps priority over the pain: a user who spoke their own
+    /// declaration aloud seconds ago is the warmest moment in the funnel, and
+    /// naming a problem right after they took authority over it would step on
+    /// it. That branch keeps its continuity framing and lets the pain colour
+    /// the subhead instead.
     private var resolvedHeadline: String {
-        hasFreshPersonalDeclaration
-            ? "You just spoke to your storm."
-            : "Pray like Jesus. Speak to your storm."
+        if hasFreshPersonalDeclaration { return "You just spoke to your storm." }
+        // Generic fallback is still pain-led — it just names the one problem
+        // every user on this screen shares rather than guessing at a specific.
+        return pain?.problem ?? "You've prayed about it. It hasn't moved."
     }
     private var resolvedSubheadline: String {
         if hasFreshPersonalDeclaration {
-            return "Jesus stilled a sea with three words. Keep speaking yours every morning until it obeys."
+            // Falls through to the pain below when we have one. `burdenStyleLabel`
+            // reads `surveyGoalWord`, which is written at the END of onboarding
+            // — so at the paywall it is either empty or left over from an
+            // EARLIER run. That is how a provision paywall shipped with "your
+            // joy declarations" over provision rows and a provision closing
+            // line: three sources of truth, one of them a run behind.
+            if pain == nil, let burden = burdenStyleLabel {
+                return "Declare your \(burden) every morning and live like it's done."
+            }
+            if pain == nil {
+                return "Declare it every morning and live like it's already done."
+            }
         }
-        if let burden = burdenStyleLabel {
-            return "Your \(burden) declarations, in your mouth every morning, until the storm obeys."
-        }
-        return "He stilled a sea with three words. SpeakLife puts the exact Word for your storm in your mouth every morning."
+        if let pain { return pain.solution }
+        return "The exact Word for what you're facing, in your mouth every morning."
     }
     enum PlanType: String {
         case annual = "annual"
@@ -311,7 +587,7 @@ struct HighConversionPaywallView: View {
                             VStack(spacing: 0) {
                                 headerSection
                                 starsOnlyBanner.padding(.top, 20)
-                                benefitsSection.padding(.top, 20)
+                                solutionSection.padding(.top, 24)
                                 comparisonSection.padding(.top, 28)
                                 featuredTestimonial.padding(.top, DS.Spacing.lg)
                                 remainingTestimonialsSection.padding(.top, DS.Spacing.lg)
@@ -382,7 +658,11 @@ struct HighConversionPaywallView: View {
         }
     }
 
-    // MARK: - Social Proof (stars only — headline already covers 100K stat)
+    // MARK: - Social Proof
+    // The rating is the only claim made here. It is verifiable on the App Store
+    // listing, which a subscriber count is not — and an unverifiable number
+    // sitting next to a price is the kind of thing that costs trust exactly
+    // where the screen can least afford it.
     private var starsOnlyBanner: some View {
         HStack(spacing: 4) {
             HStack(spacing: 2) {
@@ -393,13 +673,23 @@ struct HighConversionPaywallView: View {
         }
     }
 
-    // MARK: - Benefits (storm value props)
-    private var benefitsSection: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            ForEach(0..<Self.stormValueProps.count, id: \.self) { i in
-                HCSuccinctBenefitRow(icon: Self.stormValueProps[i].icon, title: Self.stormValueProps[i].title)
+    // MARK: - Solution (how SpeakLife fixes the named problem)
+    // Beat 3. The headline named the problem and the subhead turned it; this is
+    // where the screen has to be concrete about the mechanics, or the turn
+    // reads as a slogan. Same four capabilities every time — declarations,
+    // audio, the daily plan, Bible chat — described in terms of what they do
+    // about THIS problem.
+    private var solutionSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text(solutionHeader)
+                .font(.system(size: 17, weight: .bold))
+                .foregroundColor(.white)
+
+            ForEach(Array(solutionRows.enumerated()), id: \.offset) { _, row in
+                HCPainSolutionRow(icon: row.icon, title: row.title, detail: row.detail)
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, DS.Spacing.lg)
     }
 
@@ -583,7 +873,7 @@ struct HighConversionPaywallView: View {
                // closingLine
                 ctaButton
                 trialReassuranceLine
-                generosityLine
+                closingAssuranceLine
                 payWhatYouCanCTA
                 bottomLinks
             }
@@ -715,18 +1005,25 @@ struct HighConversionPaywallView: View {
         }
     }
 
-    // MARK: - Generosity Line (mission framing above the pay-what-you-can link)
-    // TRUTHFULNESS: defensible because the pay-what-you-can program exists —
-    // full-price subscribers effectively subsidize it. Never escalate this to
-    // a literal one-for-one donated subscription claim ("gives SpeakLife free
-    // to someone"); no such program exists.
-    private var generosityLine: some View {
+    // MARK: - Closing Assurance (last line before the tap)
+    // This slot used to carry the generosity/pay-what-you-can framing. That is
+    // a meaning frame, not a decision frame — it tells a hesitating user what
+    // their money does for someone else at the exact moment they are still
+    // asking whether it does anything for them. It has not been lost: the
+    // post-purchase mission screen carries it, which is where a "you did
+    // something good" message actually lands.
+    //
+    // What belongs here is the last doubt: is this the right answer for what I
+    // came in with? The honest close is that the guarantee was never the app —
+    // it is Scripture — so the line names what this is not, then what it is,
+    // aimed at the problem the headline already named.
+    private var closingAssuranceLine: some View {
         HStack(alignment: .top, spacing: 6) {
-            Image(systemName: "heart.fill")
+            Image(systemName: "book.closed.fill")
                 .font(.system(size: 11))
                 .foregroundColor(.white.opacity(0.6))
                 .padding(.top, 2)
-            Text("Your subscription helps keep SpeakLife within reach for believers who can't afford full price.")
+            Text(pain?.assurance ?? UserPain.generalAssurance)
                 .font(.system(size: 12))
                 .foregroundColor(.white.opacity(0.6))
                 .multilineTextAlignment(.center)
@@ -852,6 +1149,7 @@ struct HighConversionPaywallView: View {
                         .fixedSize(horizontal: false, vertical: true)
                         .padding(.horizontal, 32).padding(.top, 6)
                     cleanIllustrationCard.padding(.top, 18)
+                    cleanSolutionList.padding(.top, 20)
                     Spacer(minLength: 16)
                 }
             }
@@ -872,6 +1170,30 @@ struct HighConversionPaywallView: View {
             Circle().fill(cleanInk.opacity(0.22)).frame(width: 5, height: 5)
             Circle().fill(cleanInk.opacity(0.22)).frame(width: 5, height: 5)
         }
+    }
+
+    /// The clean layout's answer to the headline. Titles only, no detail lines
+    /// and no header — this variant exists to test minimalism, so it gets the
+    /// shortest form that still closes "how does this fix my thing?". Naming a
+    /// problem and then showing nothing but a price is a worse screen than the
+    /// one this replaced, which is why the minimal variant carries it too.
+    private var cleanSolutionList: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            ForEach(Array(solutionRows.prefix(3).enumerated()), id: \.offset) { _, row in
+                HStack(alignment: .top, spacing: 12) {
+                    Image(systemName: row.icon)
+                        .font(.system(size: 15, weight: .medium))
+                        .foregroundColor(Constants.DAMidBlue)
+                        .frame(width: 22)
+                    Text(row.title)
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(cleanInk)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Spacer(minLength: 0)
+                }
+            }
+        }
+        .padding(.horizontal, 28)
     }
 
     private var cleanIllustrationCard: some View {
@@ -1113,16 +1435,23 @@ struct HighConversionPaywallView: View {
         // Check actual trial eligibility from Apple (re-run via onChange when
         // products finish loading after the paywall is already on screen).
         Task { await refreshTrialEligibility() }
+        // `pain` is the copy this user was actually shown, already resolved —
+        // segment carries the same information but needs parsing, and the quiz
+        // arm's segment names don't map to it by string at all. Breaking
+        // conversion down by pain is the whole point of the reposition.
+        let painParam = pain?.rawValue ?? "none"
         AnalyticsService.shared.trackPaywallImpression(paywallId: paywallVariant, metadata: [
             "variant": paywallVariant,
             "user_category": preferencesTracker.primaryCategory.rawValue,
             "initial_plan": "annual",
-            "segment": segmentParam
+            "segment": segmentParam,
+            "pain": painParam
         ])
         AnalyticsService.shared.track("paywall_shown", parameters: [
             "segment": segmentParam,
             "source": source,
-            "variant": paywallVariant
+            "variant": paywallVariant,
+            "pain": painParam
         ])
         if !effectiveIsHardPaywall {
             DispatchQueue.main.asyncAfter(deadline: .now() + 4) {
@@ -1231,17 +1560,32 @@ struct HighConversionPaywallView: View {
 }
 
 // MARK: - Succinct Benefit Row
-private struct HCSuccinctBenefitRow: View {
-    let icon: String; let title: String
+/// A solution row: the mechanic on the first line, what it does about the
+/// user's problem on the second. The detail line is the part that turns a
+/// feature list into an answer, so it is not optional.
+private struct HCPainSolutionRow: View {
+    let icon: String
+    let title: String
+    let detail: String
+
     var body: some View {
-        HStack(alignment: .center, spacing: 14) {
-            Image(systemName: icon).font(.system(size: 18, weight: .medium))
-                .foregroundColor(Constants.DAMidBlue).frame(width: 26)
-            Text(title)
-                .font(.system(size: 15, weight: .semibold))
-                .foregroundColor(.white)
-                .fixedSize(horizontal: false, vertical: true)
-            Spacer()
+        HStack(alignment: .top, spacing: 14) {
+            Image(systemName: icon)
+                .font(.system(size: 18, weight: .medium))
+                .foregroundColor(Constants.DAMidBlue)
+                .frame(width: 26)
+                .padding(.top, 1)
+            VStack(alignment: .leading, spacing: 3) {
+                Text(title)
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundColor(.white)
+                    .fixedSize(horizontal: false, vertical: true)
+                Text(detail)
+                    .font(.system(size: 13))
+                    .foregroundColor(.white.opacity(0.62))
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Spacer(minLength: 0)
         }
     }
 }

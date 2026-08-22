@@ -82,6 +82,18 @@ From finishing onboarding through to a paid conversion.
 
 **Funnel settings:** conversion window `7 days`, order `sequential`.
 
+> **Which arms enter this funnel.** Step 1, `onboarding_completed`, is fired by
+> the **`quiz`** arm (at the commitment hold) and the **`direct`** arm (leaving
+> the review wall) — both at the last pre-paywall milestone. The other arms
+> (`product` / `identity` / `outcomes` / `warfare` / `promises` / `closer`) do
+> not fire it, so they are invisible here; read those in funnel 3 instead.
+> Both arms that do fire it stamp `variant`, and every event carries the
+> `onboarding_variant` person property, so **break this funnel down by variant**
+> rather than reading it as one population. Firing `onboarding_completed` from
+> `HomeView.finishOnboarding` would put every arm in — at the cost of moving the
+> quiz arm's step from pre-paywall to post-paywall, which is why it hasn't been
+> done.
+
 ---
 
 ## 3. Onboarding A/B — Winner by Variant
@@ -89,8 +101,8 @@ From finishing onboarding through to a paid conversion.
 The cross-variant experiment funnel. Every onboarding flow now fires a unified
 `onboarding_started` → `onboarding_finished` pair from `HomeView`, tagged with
 the chosen arm, so the variants (`product` / `identity` / `quiz` / `outcomes` /
-`warfare` / `promises` / `closer`, selected by Remote Config `onboardingVariant`)
-compare head-to-head. `warfare` is the default arm from app **v4.28+**.
+`warfare` / `promises` / `closer` / `direct`, selected by Remote Config
+`onboardingVariant`) compare head-to-head. `warfare` is the default arm from app **v4.28+**.
 These route through `AnalyticsService`, so PostHog and Firebase both receive them.
 
 **PostHog insight:** [Onboarding A/B — Winner by Variant](https://us.posthog.com/project/455580/insights/QfVRKZ3H)
@@ -101,7 +113,7 @@ These route through `AnalyticsService`, so PostHog and Firebase both receive the
 | 2 | `onboarding_finished` | Completed onboarding |
 | 3 | `subscription_started` | Started a trial or paid sub |
 
-**Breakdown:** event property `variant` (`product` / `identity` / `quiz` / `outcomes` / `warfare` / `promises` / `closer`). Dynamic, so new arms appear automatically.
+**Breakdown:** event property `variant` (`product` / `identity` / `quiz` / `outcomes` / `warfare` / `promises` / `closer` / `direct`). Dynamic, so new arms appear automatically.
 **Funnel settings:** conversion window `14 days`, order `ordered`.
 
 `onboarding_finished` also carries `converted` (bool) and `conversion_type`
@@ -187,6 +199,87 @@ arms shifted by one. **`flow_schema` was bumped on all three** — `outcomes` 3�
 before comparing step numbers across builds. Pre-bump data is not comparable
 step-for-step.
 
+### 3d. The `direct` arm (pain-led, funnel-depth test)
+
+`direct` is the depth test. Every other arm pitches first and asks what is wrong
+five or six screens in; this one asks on the **first frame** and reaches the
+paywall in three screens instead of sixteen — and the first of those three is the
+personal-declaration feature itself, so the product does its one job on the
+user's real situation before a word of pitch. The category picker still exists
+but only as a fallback for users the declaration produced nothing for. Cut: the
+extended quiz, the product capability recap, the plan-building loader, the plan
+reveal, the pledge and the rating ask. Its natural control is any arm running the
+full quiz — `warfare` (the default) for an arm-vs-default read, or `closer` if
+you want depth isolated from angle.
+
+The whole front half is the declaration screen, so **that screen's drop-off is
+the arm**. Build the internal funnel on `step_name`, not the raw `step` integer:
+
+`personal_declaration_screen_shown` (`flow: direct`) → `personal_declaration_saved` →
+`direct_mechanism_shown` → `testimonial_wall_shown` (`flow: direct`) →
+`paywall_impression` → `direct_onboarding_completed`
+
+The recovery ladder runs beside it, for the users the first ask lost:
+`direct_pain_shown` → `direct_pain_answered` → `personal_declaration_saved`
+(`flow: direct_retry`).
+
+| Event | Properties | Why it matters |
+|-------|-----------|----------------|
+| `direct_onboarding_started` | `flow_schema` | Arm entry; denominator for everything below |
+| `personal_declaration_screen_shown` | `flow` | Frame-one reach (shared screen, stamped `direct`) |
+| `personal_declaration_saved` / `_skipped` | `flow` | **The arm's whole bet: will a cold user describe their situation on frame one?** Shared with every other arm running this screen, so it is directly comparable — but note this arm asks it first and they ask it deep in the back half |
+| `direct_pain_shown` / `direct_pain_answered` | `flow_schema`, `burden` | The fallback picker. **Only fires for users the declaration produced nothing for** — its volume is the size of the refusal |
+| `personal_declaration_*` (`flow: direct_retry`) | `flow` | The narrow re-ask after the picker. Its take-rate is how much of the refusal the recovery ladder wins back |
+| `direct_mechanism_shown` | `pain`, `spoke_declaration` | Which of the two mechanism framings they saw. The screen itself is fixed: three things Jesus spoke to, Mark 11:23-24, then one line for this pain |
+| `direct_step_completed` | `step`, `step_name`, `flow_schema` | Per-step drop-off (`personal_declaration` / `pain_fallback` / `personal_declaration_retry` / `mechanism` / `testimonials` / `paywall` / `notification_time`) |
+| `direct_onboarding_completed` | `goal_word`, `pain`, `burden`, `pain_source`, `seeded_category`, `notification_time`, `set_personal_declaration`, `total_duration_seconds`, `flow_schema` | Completion, plus every cut worth making |
+
+Shared screens stamp `flow: "direct"` (`personal_declaration_*`,
+`testimonial_wall_shown`, `survey_q8_shown`), and the paywall reads
+`appState.onboardingSegment`, so every paywall event carries
+`segment: direct_<burden>` — including for users whose burden was read back out
+of the matcher's category rather than tapped.
+
+Three numbers to watch beyond conversion:
+
+- **`personal_declaration_saved` / `personal_declaration_screen_shown`.** Asking
+  a cold user to describe their situation on frame one, before any framing, is
+  the entire risk of this arm. Compare it against the same ratio in `warfare` or
+  `closer`, where the identical screen runs deep in the back half with fifteen
+  screens of setup in front of it. If it holds anywhere near those, framing was
+  never load-bearing.
+- **`pain_source` on `direct_onboarding_completed`** (`open` / `retry` /
+  `picker` / `none`) — how far down the recovery ladder each user had to go.
+  `open` is the frame-one ask landing. `retry` is the narrow re-ask rescuing
+  someone who declined it, and a meaningful share there earns that extra screen
+  on its own. `picker` is a tap and nothing more; a large share says the
+  free-text open is too heavy an ask for frame one. `none` gave us nothing.
+- **`set_personal_declaration`, cut against conversion.** This arm puts the
+  declaration first instead of in the back half; if the users who got one convert
+  far better, position is what's earning and it should move forward elsewhere.
+
+`total_duration_seconds` is the arm's headline claim — compare its median against
+the quiz arms to confirm the flow actually is faster in practice, not just
+shorter on paper.
+
+> **`flow_schema` is at 4.** Schema 1 opened with the picker and showed a canned
+> one-of-seven declaration; schema 2 made that step the real feature but kept it
+> third; schema 3 moved it to frame one and demoted the picker to a fallback;
+> schema 4 added the narrow re-ask after the picker. The step order and the
+> drop-off shape differ across all four, so **filter per-step funnels to
+> `flow_schema = 4`** rather than pooling them. Retired:
+> `direct_declaration_shown` / `direct_declaration_spoken` and the
+> `spoke_declaration` completion property (schema 1), and the guarantee that
+> every user passes through `direct_pain_shown` (schemas 1–2).
+
+**Person property:** this arm sets `onboarding_burden` to the resolved
+`UserPain` (`peace` / `fear` / `health` / `abundance` / `identity` / `shame` /
+`bondage` / `purpose` / `joy` / `grief` / `loneliness` / `marriage` / `family` /
+`nearness` / `more`) when the opening question
+is answered, so **every** later event — `trial_started`, `subscription_started`,
+retention — can be split by the pain the user walked in with. Only `direct` sets
+it today, so it reads null for other arms.
+
 ---
 
 ## Key event reference
@@ -199,7 +292,8 @@ These route through `AnalyticsService` and reach every provider:
 | `onboarding_finished` | `AnalyticsService.track` (HomeView) | `variant`, `converted`, `conversion_type` |
 | `subscription_started` | `track` (SubscriptionStore.purchase) | `product_id`, `value`, `is_trial`, `variant` |
 | `screen_viewed` | `trackScreenView` | `screen_name`, `previous_screen` |
-| `paywall_impression` | `trackPaywallImpression` | `paywall_id` |
+| `paywall_impression` | `trackPaywallImpression` | `paywall_id`, `variant`, `segment`, `pain` |
+| `paywall_shown` | `track` (HighConversionPaywallView) | `variant`, `segment`, `source`, `pain` |
 | `paywall_conversion` | `trackPaywallConversion` | `product_id`, `price` |
 | `trial_started` | `trackTrialStarted` / `track` (purchase) | `product_id`, `value`, `variant` |
 | `trial_activated` | `trackTrialActivated` | `product_id`, `price` |

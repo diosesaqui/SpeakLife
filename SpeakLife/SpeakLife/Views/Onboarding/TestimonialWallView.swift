@@ -16,7 +16,8 @@ import SwiftUI
 struct TestimonialWallView: View {
     @EnvironmentObject var subscriptionStore: SubscriptionStore
     let size: CGSize
-    /// Onboarding arm name for analytics ("product", "warfare", "quiz", ...).
+    /// Onboarding arm name for analytics ("product", "warfare", "quiz",
+    /// "closer", "direct", ...). Stamped onto `testimonial_wall_shown`.
     let flow: String
     let onContinue: () -> Void
 

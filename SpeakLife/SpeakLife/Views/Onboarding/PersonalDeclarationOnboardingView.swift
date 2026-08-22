@@ -50,6 +50,27 @@ private struct PulseRing: View {
     }
 }
 
+// MARK: - Safe-area inset
+
+/// Window safe-area insets, read from UIKit.
+///
+/// Every call site wraps this screen in `.ignoresSafeArea()` and the screen pins
+/// itself to `size`, so a SwiftUI GeometryReader in here reports zero insets.
+/// The typing states used a fixed 20pt top spacer, which is fine on a phone with
+/// a 20pt status bar and puts the first line of content underneath the clock and
+/// the carrier on every device shipped since the notch.
+private enum PDInsets {
+    private static var keyWindow: UIWindow? {
+        UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .flatMap { $0.windows }
+            .first { $0.isKeyWindow }
+    }
+
+    /// Falls back to the common notch height if no window is available yet.
+    static var top: CGFloat { keyWindow?.safeAreaInsets.top ?? 47 }
+}
+
 // MARK: - Main View
 
 struct PersonalDeclarationOnboardingView: View {
@@ -58,11 +79,23 @@ struct PersonalDeclarationOnboardingView: View {
 
     let size: CGSize
     /// Which flow is showing this screen ("quiz" | "survey" | "identity" |
-    /// "outcomes" | "warfare" | "product" | "migration" | "app" | "legacy").
+    /// "outcomes" | "warfare" | "product" | "closer" | "direct" | "migration" |
+    /// "app" | "legacy").
     /// Stamped onto the personal-declaration events so funnels can split the
     /// shared screen by surface. Defaults to "quiz" for the quiz flow's
     /// existing call site.
     var flow: String = "quiz"
+    /// An optional replacement for the opening question. The default asks what
+    /// they are trusting God for, which is aspirational and invites an answer
+    /// too broad to match well ("peace", "my family"). An arm that already
+    /// knows the domain can ask for the specific situation inside it instead,
+    /// which is what the matcher actually needs. nil keeps the default.
+    var prompt: String? = nil
+    /// An optional receipt of something the user already told this flow, shown
+    /// above the question so this screen reads as the same conversation
+    /// continuing rather than a second, unrelated ask. Passed only by arms that
+    /// asked something first; nil everywhere else leaves the screen unchanged.
+    var contextLine: String? = nil
     /// How many active declarations the user may carry. Onboarding and the
     /// after-breakthrough flows only ever add to an empty or near-empty set, so
     /// they take the system cap; the declarations list passes the user's real
@@ -85,20 +118,6 @@ struct PersonalDeclarationOnboardingView: View {
     // submit it. Lift the content manually instead.
     @State private var keyboardHeight: CGFloat = 0
     private var keyboardUp: Bool { keyboardHeight > 0 }
-
-    /// Top safe-area inset of the active window.
-    ///
-    /// Read from the window rather than a `GeometryProxy` because this screen
-    /// is handed a bare `size` by its callers and never sees a reader of its
-    /// own — and because those callers all `.ignoresSafeArea()`, which is what
-    /// makes the inset invisible to the layout in the first place.
-    private var safeTopInset: CGFloat {
-        UIApplication.shared.connectedScenes
-            .compactMap { $0 as? UIWindowScene }
-            .first { $0.activationState == .foregroundActive }?
-            .keyWindow?
-            .safeAreaInsets.top ?? 0
-    }
 
     // The quiet escape hatch: visible after a short delay on the input state,
     // and immediately whenever a failure message is showing.
@@ -155,9 +174,15 @@ struct PersonalDeclarationOnboardingView: View {
                 case .result:                       resultView
                 }
             }
-            // Squeeze the step into the space the keyboard leaves. The steps
-            // that type also tighten their own top padding (see `keyboardUp`)
-            // so nothing runs off the top of the shortened box.
+            // Squeeze the step into the space the keyboard leaves, anchored to
+            // the top of it. Anchoring is the load-bearing part: this is a
+            // ZStack, so a step taller than the shortened box would otherwise
+            // be centred in it and spill equally out of BOTH ends — and the end
+            // that leaves the screen is the top one, taking the question with
+            // it and leaving what the user typed sitting over the status bar.
+            // Overflow now goes downward, behind the keyboard, where it is
+            // recoverable by dismissing it.
+            .frame(maxHeight: .infinity, alignment: .top)
             .padding(.bottom, keyboardHeight)
         }
         .frame(width: size.width, height: size.height)
@@ -196,22 +221,34 @@ struct PersonalDeclarationOnboardingView: View {
             // Fixed while typing rather than a share of screen height: the tall
             // phones don't need the extra top margin, and the short one — the
             // only device where this gets tight — can't spare it.
-            //
-            // Measured from the safe area, not from zero. Every call site wraps
-            // this screen in `.ignoresSafeArea()`, so nothing else holds the
-            // prompt clear of the status bar; the flat 20 that used to sit here
-            // ran the first line of the title under the Dynamic Island on the
-            // tall phones. Still floored at 20 so the short, inset-free screens
-            // keep the margin they had.
-            Spacer().frame(height: keyboardUp ? max(20, safeTopInset + 8) : size.height * 0.11)
+            Spacer().frame(height: keyboardUp ? PDInsets.top + 12 : size.height * 0.11)
 
             // Title block
             VStack(spacing: 14) {
-                // Two lines, always. At 30pt the first line overflows a 4.7"
-                // screen and wraps to three, which is exactly the device with
-                // no height to spare once the keyboard is up; the scale factor
-                // makes the height predictable instead of device-dependent.
-                Text("What's one thing you're\ntrusting God for?")
+                // Dropped the moment the keyboard is up: it exists to connect
+                // this screen to the last one, and by the time they are typing
+                // it has done that job — while the 4.7" screen has no height to
+                // spare for it. Never rendered at all when no arm passed one.
+                if let contextLine, !keyboardUp {
+                    Text(contextLine)
+                        .font(.system(size: 13, weight: .semibold, design: .rounded))
+                        .foregroundColor(.white.opacity(0.55))
+                        .multilineTextAlignment(.center)
+                        .lineLimit(2)
+                        .minimumScaleFactor(0.85)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .padding(.horizontal, 32)
+                        .opacity(titleAppeared ? 1 : 0)
+                        .offset(y: titleAppeared ? 0 : 18)
+                        .animation(.easeOut(duration: 0.6), value: titleAppeared)
+                }
+
+                // Two lines, always. At 30pt the default's first line overflows
+                // a 4.7" screen and wraps to three, which is exactly the device
+                // with no height to spare once the keyboard is up; the line
+                // limit plus scale factor makes the height predictable instead
+                // of device-dependent, for an override as well as the default.
+                Text(prompt ?? "What's one thing you're\ntrusting God for?")
                     .font(.system(size: keyboardUp ? 26 : 30, weight: .bold, design: .rounded))
                     .foregroundColor(.white)
                     .multilineTextAlignment(.center)
@@ -457,7 +494,7 @@ struct PersonalDeclarationOnboardingView: View {
                     )
 
                 if viewModel.inputText.isEmpty {
-                    Text("Type what you're believing for...")
+                    Text("Type what's on your heart...")
                         .foregroundColor(.white.opacity(0.35))
                         .font(.system(size: 15))
                         .padding(14)
@@ -478,7 +515,7 @@ struct PersonalDeclarationOnboardingView: View {
             // The low bound is the safety valve: on the shortest screen the box
             // gives height back rather than pushing the CTA off the bottom, and
             // 76pt still shows three lines of what they are typing.
-            .frame(minHeight: keyboardUp ? 76 : 110, maxHeight: keyboardUp ? 220 : 110)
+            .frame(minHeight: keyboardUp ? 76 : 110, maxHeight: keyboardUp ? 180 : 110)
             .padding(.horizontal, 24)
 
             if let error = viewModel.errorMessage {
@@ -583,7 +620,7 @@ struct PersonalDeclarationOnboardingView: View {
 
     private var clarifyView: some View {
         VStack(spacing: 0) {
-            Spacer().frame(height: size.height * (keyboardUp ? 0.05 : 0.12))
+            Spacer().frame(height: keyboardUp ? PDInsets.top + 12 : size.height * 0.12)
 
             VStack(spacing: 12) {
                 Text("🤔")
