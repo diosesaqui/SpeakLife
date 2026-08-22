@@ -472,9 +472,9 @@ final class GuardChecklistRowTests: XCTestCase {
     func testRowSitsBehindTheDeclarationWhenTheUserCarriesOne() {
         let tasks = TaskLibrary.getCoreTasksForStreak(
             30,
+            personalDeclarations: .init(total: 1, spokenToday: 0, headline: "I am healed."),
             guardCompletedToday: false,
-            totalDaysCompleted: tenured,
-            personalDeclarations: .init(total: 1, spokenToday: 0, headline: "I am healed.")
+            totalDaysCompleted: tenured
         )
         let ids = tasks.map(\.id)
         guard let burst = ids.firstIndex(of: "complete_daily_burst"),
