@@ -258,7 +258,17 @@ struct OnboardingView: View {
         withAnimation {
             appState.isOnboarded = true
             LifecycleNotificationService.shared.scheduleLifecycleNotifications()
-            AnalyticsService.shared.track("onBoardingFinished")
+            // This legacy flow only ever emitted the camelCase `onBoardingFinished`,
+            // so it was invisible to every funnel built on `onboarding_finished`
+            // and carried no conversion outcome. Same name and shape as HomeView's
+            // path now, so both flows land in one series.
+            let converted = subscriptionStore.isPremium
+            AnalyticsService.shared.track("onboarding_finished", parameters: [
+                "variant": subscriptionStore.onboardingVariantName,
+                "converted": converted,
+                "conversion_type": converted ? (subscriptionStore.isInTrial ? "trial" : "purchase") : "none",
+                "flow": "legacy_onboarding_view"
+            ])
         }
     }
 }

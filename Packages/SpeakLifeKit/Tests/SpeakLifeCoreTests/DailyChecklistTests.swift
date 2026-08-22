@@ -434,33 +434,44 @@ final class DailyChecklistTests: XCTestCase {
 
     /// The declaration leads, the Burst sits directly behind it.
     ///
-    /// The Burst has other ways in and gets finished by them: an active campaign
-    /// completes it from its own CTA, and the quick-action grid links straight
-    /// to it. The declaration has no second entry point.
-    func testDeclarationTask_LeadsWithTheBurstBehindIt() {
+    /// The Burst leads because it is the only row that earns the streak, and it
+    /// is the most-completed task in the product. The declaration takes second:
+    /// it has no other entry point, so it must not fall below the fold, but it
+    /// does not outrank the day's one required action.
+    func testDeclarationTask_SitsDirectlyBehindTheBurst() {
         withStandardTasks {
             let ids = TaskLibrary.getCoreTasksForStreak(10, personalDeclarations: progress(total: 1, spoken: 0))
                 .map(\.id)
-            XCTAssertEqual(ids.first, TaskLibrary.personalDeclarationTaskId)
-            XCTAssertEqual(ids.dropFirst().first, "complete_daily_burst")
+            XCTAssertEqual(ids.first, "complete_daily_burst")
+            XCTAssertEqual(ids.dropFirst().first, TaskLibrary.personalDeclarationTaskId)
         }
     }
 
     /// It has to land behind the Burst on every path, not just the one where the
     /// Burst was already first. Anchoring the insert to the Burst's current
-    /// index put the row mid-list whenever `burstFirst` still had work to do.
-    func testDeclarationTask_LeadsOnEveryPathNotJustTheStandardOne() {
+    /// index is what keeps the pair adjacent through every phase mix.
+    func testDeclarationTask_SitsBehindTheBurstOnEveryPathNotJustTheStandardOne() {
         withStandardTasks {
             for streakDay in [1, 7, 10, 15, 30, 60] {
                 let ids = TaskLibrary.getCoreTasksForStreak(streakDay,
                                                             personalDeclarations: progress(total: 2, spoken: 1))
                     .map(\.id)
                 guard ids.contains("complete_daily_burst") else { continue }
-                XCTAssertEqual(ids.first, TaskLibrary.personalDeclarationTaskId, "day \(streakDay)")
-                XCTAssertEqual(ids.dropFirst().first, "complete_daily_burst",
+                XCTAssertEqual(ids.first, "complete_daily_burst", "day \(streakDay)")
+                XCTAssertEqual(ids.dropFirst().first, TaskLibrary.personalDeclarationTaskId,
                                "day \(streakDay) ordered as \(ids)")
             }
         }
+    }
+
+    /// The declaration must still lead when the phase mix has no Burst at all,
+    /// rather than silently falling to the bottom of the list.
+    func testDeclarationTask_LeadsWhenThereIsNoBurst() {
+        let noBurst = TaskLibrary.foundationTasks.filter { $0.id != "complete_daily_burst" }
+        let ids = TaskLibrary.withPersonalDeclaration(
+            noBurst, progress: progress(total: 1, spoken: 0)
+        ).map(\.id)
+        XCTAssertEqual(ids.first, TaskLibrary.personalDeclarationTaskId)
     }
 
     /// Tapping the row opens the declaration rather than doing nothing.
@@ -469,6 +480,47 @@ final class DailyChecklistTests: XCTestCase {
             XCTAssertEqual(declarationTask(progress(total: 1, spoken: 0))?.navigationDestination,
                            .personalDeclaration)
         }
+    }
+
+    // MARK: - Retired tasks
+
+    /// Seven tasks were unlocked 146 times across 30 days and completed zero
+    /// times: every one of them an off-app instruction ("pray while walking",
+    /// "do something kind for someone") with no `navigationDestination`. They
+    /// were completable — people simply would not — so they were occupying
+    /// finite slots on a board where 77% of user-days end with nothing done.
+    ///
+    /// Pinned as a test because the natural instinct on seeing a thin Impact
+    /// phase is to add them back.
+    func testRetiredTasks_AreGoneFromEveryPhase() {
+        let retired: Set<String> = [
+            "worship_song", "study_deeper", "prayer_walk",
+            "encourage_someone", "pray_for_others", "serve_someone", "testimony_share"
+        ]
+        XCTAssertTrue(TaskLibrary.allTasks.filter { retired.contains($0.id) }.isEmpty,
+                      "Retired tasks are back in the library.")
+
+        withStandardTasks {
+            for day in [1, 5, 8, 12, 15, 20, 31, 35, 40, 50, 60, 100, 150] {
+                let ids = Set(TaskLibrary.getCoreTasksForStreak(day).map(\.id))
+                XCTAssertTrue(ids.isDisjoint(with: retired),
+                              "day \(day) served a retired task: \(ids.intersection(retired))")
+            }
+        }
+    }
+
+    /// Removing four of the five Impact tasks must not empty the phase — the
+    /// mix takes `prefix(1)` from it, so an empty array would silently serve a
+    /// shorter board rather than fail.
+    func testPhasesStillServeTasksAfterTheRetirements() {
+        withStandardTasks {
+            for day in [1, 8, 31, 100] {
+                XCTAssertGreaterThanOrEqual(TaskLibrary.getCoreTasksForStreak(day).count, 3,
+                                            "day \(day) board collapsed")
+            }
+        }
+        XCTAssertFalse(TaskLibrary.impactTasks.isEmpty)
+        XCTAssertFalse(TaskLibrary.growthTasks.isEmpty)
     }
 
     // MARK: - Campaign-refreshed tasks

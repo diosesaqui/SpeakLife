@@ -1058,39 +1058,6 @@ public struct TaskLibrary {
             difficulty: .intermediate,
             minimumStreakDay: 10,
             estimatedMinutes: 8
-        ),
-        DailyTask(
-            id: "worship_song",
-            title: "Worship Through Music",
-            description: "Listen to or sing a worship song",
-            icon: "music.note",
-            category: .growth,
-            type: .worship,
-            difficulty: .beginner,
-            minimumStreakDay: 12,
-            estimatedMinutes: 6
-        ),
-        DailyTask(
-            id: "study_deeper",
-            title: "Deeper Bible Study",
-            description: "Study a passage using cross-references",
-            icon: "magnifyingglass",
-            category: .growth,
-            type: .study,
-            difficulty: .intermediate,
-            minimumStreakDay: 15,
-            estimatedMinutes: 12
-        ),
-        DailyTask(
-            id: "prayer_walk",
-            title: "Prayer Walk",
-            description: "Pray while walking, connecting body and spirit",
-            icon: "figure.walk",
-            category: .growth,
-            type: .worship,
-            difficulty: .intermediate,
-            minimumStreakDay: 20,
-            estimatedMinutes: 10
         )
     ]
     
@@ -1106,50 +1073,6 @@ public struct TaskLibrary {
             difficulty: .intermediate,
             minimumStreakDay: 31,
             estimatedMinutes: 5
-        ),
-        DailyTask(
-            id: "encourage_someone",
-            title: "Encourage Someone",
-            description: "Send an encouraging message to someone",
-            icon: "message.fill",
-            category: .impact,
-            type: .serve,
-            difficulty: .intermediate,
-            minimumStreakDay: 35,
-            estimatedMinutes: 7
-        ),
-        DailyTask(
-            id: "pray_for_others",
-            title: "Pray for Others",
-            description: "Intercede for family, friends, or community",
-            icon: "hands.and.sparkles.fill",
-            category: .impact,
-            type: .worship,
-            difficulty: .intermediate,
-            minimumStreakDay: 40,
-            estimatedMinutes: 8
-        ),
-        DailyTask(
-            id: "serve_someone",
-            title: "Act of Service",
-            description: "Do something kind for someone without expecting return",
-            icon: "hands.clap.fill",
-            category: .impact,
-            type: .serve,
-            difficulty: .advanced,
-            minimumStreakDay: 50,
-            estimatedMinutes: 15
-        ),
-        DailyTask(
-            id: "testimony_share",
-            title: "Share Your Testimony",
-            description: "Tell someone how God has worked in your life",
-            icon: "megaphone.fill",
-            category: .impact,
-            type: .share,
-            difficulty: .advanced,
-            minimumStreakDay: 60,
-            estimatedMinutes: 10
         )
     ]
     
@@ -1322,20 +1245,35 @@ public struct TaskLibrary {
     /// Always rebuilt from `progress` rather than kept, because its completion
     /// and subtitle are both derived: carrying an old copy forward would show
     /// "2 of 3 spoken" after the third was spoken on another device.
-    private static func withPersonalDeclaration(_ tasks: [DailyTask],
-                                                progress: PersonalDeclaration.Progress?) -> [DailyTask] {
+    /// Internal rather than private so the no-Burst fallback is testable: no
+    /// public phase mix drops the Burst, so that branch is otherwise unreachable
+    /// from a test and would rot silently.
+    static func withPersonalDeclaration(_ tasks: [DailyTask],
+                                        progress: PersonalDeclaration.Progress?) -> [DailyTask] {
         var result = tasks.filter { $0.id != personalDeclarationTaskId }
         guard let progress else { return result }
-        // Front of the list, ahead of the Burst.
+
+        // Second, directly behind the Burst.
         //
-        // The Burst has other ways in and gets finished by them: an active
-        // campaign completes it from its own CTA, and the quick-action grid
-        // links straight to it. The declaration has no second entry point, and
-        // it is the only row made of the user's own words.
+        // This row used to lead, on the argument that the Burst has other ways
+        // in (a campaign CTA, the quick-action grid) while the declaration has
+        // none. The measured behaviour does not support paying for that with
+        // the top slot: over 30 days the Burst was completed by 592 people, more
+        // than any other row in the product and more than twice the devotional's
+        // 412, and it is the only task that earns the streak. Leading with a row
+        // that cannot earn the streak puts the day's one required action in
+        // second place on a checklist where 77% of user-days end with nothing
+        // completed at all.
         //
-        // Runs AFTER `burstFirst`, not before, or that call would move the Burst
-        // back over the top of it.
-        result.insert(personalDeclarationTask(progress), at: 0)
+        // Anchored to the Burst's index rather than inserted at 0, so it lands
+        // behind the Burst on every path — including the phases where
+        // `burstFirst` had nothing to move.
+        if let burstIndex = result.firstIndex(where: { $0.id == "complete_daily_burst" }) {
+            result.insert(personalDeclarationTask(progress), at: min(burstIndex + 1, result.count))
+        } else {
+            // No Burst in this phase's mix: the declaration leads on its own.
+            result.insert(personalDeclarationTask(progress), at: 0)
+        }
         return result
     }
 
@@ -1400,8 +1338,13 @@ public struct TaskLibrary {
         )
         task.isCompleted = completedToday
 
-        // Directly behind the Burst. Speaking leads; guarding holds what
-        // speaking took.
+        // Directly behind the Burst at the time this runs. Speaking leads;
+        // guarding holds what speaking took.
+        //
+        // `withPersonalDeclaration` runs after this and inserts at the same
+        // anchor, so the shipped order is Burst → declaration → Guarding. That
+        // is deliberate: both rows are spoken out loud, and the one made of the
+        // user's own words comes first.
         if let burstIndex = result.firstIndex(where: { $0.id == "complete_daily_burst" }) {
             result.insert(task, at: min(burstIndex + 1, result.count))
         } else {

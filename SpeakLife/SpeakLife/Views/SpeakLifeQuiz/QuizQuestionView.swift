@@ -17,7 +17,12 @@ struct QuizQuestionView: View {
         if quizCompleted {
             QuizCompletionView().onAppear {
                 progressManager.markQuizComplete(quizTitle)
-                AnalyticsService.shared.track(quizTitle.replacingOccurrences(of: " ", with: ""))
+                // Was the bare quiz title — the same name QuizStartView emitted,
+                // so completions were silently merged into starts.
+                AnalyticsService.shared.track(Event.quizCompleted, parameters: [
+                    "quiz_title": quizTitle,
+                    "question_count": questions.count
+                ])
             }
         } else if showExplanation {
                 if !isAnswerCorrect {

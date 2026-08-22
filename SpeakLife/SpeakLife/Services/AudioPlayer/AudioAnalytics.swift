@@ -44,13 +44,31 @@ final class AudioAnalytics {
     }
     
     /// Track when favorites category is viewed
-    func trackFavoritesCategoryViewed(favoritesCount: Int, sortOrder: FavoritesSortOrder = .dateAdded) {
-        AnalyticsService.shared.track(Event.favoritesCategoryViewed, parameters: [
+    ///
+    /// The name promised a `category` dimension the event never carried, so
+    /// every breakdown of it returned null. `categories` is the set actually on
+    /// screen; `source` separates the audio tab's filter chip from the standalone
+    /// favorites screen, which previously produced identical, unattributable events.
+    func trackFavoritesCategoryViewed(
+        favoritesCount: Int,
+        sortOrder: FavoritesSortOrder = .dateAdded,
+        categories: [String] = [],
+        source: String = "unspecified"
+    ) {
+        var params: [String: Any] = [
             "favorites_count": favoritesCount,
             "sort_order": sortOrder.rawValue,
+            "source": source,
             "view_timestamp": Date().iso8601String
-        ])
-        
+        ]
+
+        if !categories.isEmpty {
+            let unique = Array(Set(categories)).sorted()
+            params["categories"] = unique.joined(separator: ",")
+            params["category_count"] = unique.count
+        }
+
+        AnalyticsService.shared.track(Event.favoritesCategoryViewed, parameters: params)
     }
     
     /// Track when favorited audio is shared

@@ -451,6 +451,12 @@ final class GuardChecklistRowTests: XCTestCase {
         }
     }
 
+    /// Guarding sits directly behind the Burst when the user carries no personal
+    /// declaration, and one slot further back when they do — the declaration is
+    /// inserted at the same anchor and takes second.
+    ///
+    /// Asserted as "above every ordinary task" rather than a fixed index, so
+    /// adding another spoken row does not fail this for the wrong reason.
     func testRowSitsDirectlyBehindTheBurst() {
         let tasks = TaskLibrary.getCoreTasksForStreak(30, guardCompletedToday: false,
                                                       totalDaysCompleted: tenured)
@@ -458,7 +464,27 @@ final class GuardChecklistRowTests: XCTestCase {
               let guardRow = tasks.firstIndex(where: { $0.id == TaskLibrary.guardTaskId }) else {
             return XCTFail("Both rows should be present.")
         }
+        XCTAssertEqual(burst, 0, "The Burst leads: it is the only row that earns the streak.")
         XCTAssertEqual(guardRow, burst + 1, "Speaking leads; guarding holds what speaking took.")
+    }
+
+    /// With a declaration in play the order is Burst → declaration → Guarding.
+    func testRowSitsBehindTheDeclarationWhenTheUserCarriesOne() {
+        let tasks = TaskLibrary.getCoreTasksForStreak(
+            30,
+            personalDeclarations: .init(total: 1, spokenToday: 0, headline: "I am healed."),
+            guardCompletedToday: false,
+            totalDaysCompleted: tenured
+        )
+        let ids = tasks.map(\.id)
+        guard let burst = ids.firstIndex(of: "complete_daily_burst"),
+              let declaration = ids.firstIndex(of: TaskLibrary.personalDeclarationTaskId),
+              let guardRow = ids.firstIndex(of: TaskLibrary.guardTaskId) else {
+            return XCTFail("All three rows should be present, got \(ids).")
+        }
+        XCTAssertEqual(burst, 0, "ordered as \(ids)")
+        XCTAssertEqual(declaration, 1, "ordered as \(ids)")
+        XCTAssertEqual(guardRow, 2, "ordered as \(ids)")
     }
 
     func testRowCompletionIsDerivedFromTheService() {

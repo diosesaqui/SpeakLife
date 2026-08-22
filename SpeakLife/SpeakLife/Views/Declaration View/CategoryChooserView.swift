@@ -284,8 +284,10 @@ struct CategoryChooserView: View {
                                         // Reminders follow the pick — see
                                         // NotificationManager.shouldAdoptFeedCategory.
                                         NotificationManager.shared.adoptFeedCategoryAsTopicIfNeeded(category)
-                                        AnalyticsService.shared.track(Event.categoryChooserTapped, parameters: ["declaration_category": category.rawValue as NSString])
-                                        AnalyticsService.shared.track(category.rawValue)
+                                        // Was `declaration_category`, splitting this
+                                        // dimension across two keys so 69% of the
+                                        // event read as having no category at all.
+                                        AnalyticsService.shared.track(Event.categoryChooserTapped, parameters: ["category": category.rawValue])
                                         self.presentationMode.wrappedValue.dismiss()
                                     }
                                 }

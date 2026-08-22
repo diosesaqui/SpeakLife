@@ -96,6 +96,8 @@ final class BibleChatConversationViewModel: ObservableObject {
         let window = Array(messages.suffix(windowSize))
         let gen = generation
         AnalyticsService.shared.trackUserAction("bible_chat_message_sent", category: "bible_chat")
+        GrowthMetrics.shared.trackActivation(action: "bible_chat_message_sent")
+        GrowthMetrics.shared.trackFeatureFirstUse("bible_chat")
 
         Task {
             defer { isSending = false }

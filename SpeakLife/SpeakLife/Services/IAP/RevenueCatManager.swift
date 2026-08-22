@@ -34,6 +34,36 @@ final class RevenueCatManager {
         try await Purchases.shared.customerInfo()
     }
 
+    // MARK: - Attribution
+
+    /// Forwards the acquisition channel to RevenueCat's reserved subscriber
+    /// attributes.
+    ///
+    /// Worth doing separately from the PostHog person property because RC's own
+    /// PostHog integration stamps these onto the revenue events it sends
+    /// server-side. Renewals that happen while the app is shut never touch this
+    /// process, so without this they arrive with no channel on them and drop out
+    /// of every channel LTV number.
+    ///
+    /// Safe to call repeatedly — RC only writes changed attributes.
+    func setAttribution(
+        mediaSource: String?,
+        campaign: String?,
+        adGroup: String?,
+        creative: String?,
+        keyword: String?
+    ) {
+        // Purchases.shared traps if accessed before configure().
+        guard Purchases.isConfigured else { return }
+
+        let attribution = Purchases.shared.attribution
+        if let mediaSource = mediaSource { attribution.setMediaSource(mediaSource) }
+        if let campaign = campaign { attribution.setCampaign(campaign) }
+        if let adGroup = adGroup { attribution.setAdGroup(adGroup) }
+        if let creative = creative { attribution.setCreative(creative) }
+        if let keyword = keyword { attribution.setKeyword(keyword) }
+    }
+
     /// Stable per-install identity RevenueCat uses for this user. The Bible Chat
     /// proxy keys server-side entitlement checks and usage metering off this.
     var appUserID: String {

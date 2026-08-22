@@ -333,19 +333,19 @@ final class EnhancedAnalyticsService: ObservableObject {
         dataSize: Int,
         startTime: Date
     ) {
-        let trainingData: [String: Any] = [
+        // Emitted as its own system event rather than through `trackUserAction`.
+        //
+        // Routing it there made app startup look like user behaviour: it fired
+        // twice per launch with `screen: "unknown"`, and at 14,525 of 30,077
+        // `user_action` rows in a 30-day window it was the top "action" in the
+        // product — burying `add`, `bible_chat_message_sent` and every real one
+        // beneath boot telemetry. Nobody taps this.
+        AnalyticsService.shared.track("ml_model_initialized", parameters: [
             "model_type": modelType,
             "data_size": dataSize,
-            "timestamp": startTime.timeIntervalSince1970,
+            "started_at": startTime.analyticsISO8601String,
             "platform": "iOS"
-        ]
-        
-        AnalyticsService.shared.trackUserAction(
-            "ml_training_\(modelType)",
-            category: "ai_system",
-            metadata: trainingData
-        )
-        
+        ])
     }
 }
 

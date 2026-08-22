@@ -36,7 +36,13 @@ struct QuizStartView: View {
         }
         .padding()
         .onAppear {
-            AnalyticsService.shared.track(quizTitle.replacingOccurrences(of: " ", with: ""))
+            // The title used to BE the event name, which created one series per
+            // quiz and — because the completion screen emitted the same name —
+            // made starts and completions indistinguishable. Stable name, title
+            // as a property, so completion rate is now measurable.
+            AnalyticsService.shared.track(Event.quizStarted, parameters: [
+                "quiz_title": quizTitle
+            ])
         }
     }
         

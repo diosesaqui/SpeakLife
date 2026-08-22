@@ -44,7 +44,23 @@ final class NotificationHandler: NSObject, ObservableObject, UNUserNotificationC
                                 withCompletionHandler completionHandler: @escaping () -> Void) {
         
         let content = response.notification.request.content
-        
+
+        // Every notification tap, before any routing branch below — this is the
+        // only place all of them pass through. Nothing recorded it previously,
+        // so the whole push programme (lifecycle, streak-break, daily burst,
+        // personal declaration) had no measurable open rate and no way to tell
+        // which type earns its send.
+        //
+        // `action` is the app's own routing key and is the most useful label
+        // when present; the request identifier is the fallback, since every
+        // scheduler sets a stable one.
+        GrowthMetrics.shared.trackNotificationOpened(
+            type: content.userInfo["action"] as? String
+                ?? response.notification.request.identifier,
+            identifier: response.notification.request.identifier,
+            category: content.categoryIdentifier
+        )
+
         // Check if this is a daily burst notification
         if content.userInfo["action"] as? String == "daily_declaration_burst" {
             // Handle daily burst notification

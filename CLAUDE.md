@@ -150,3 +150,17 @@ single-nested `SpeakLife/Preview Content/...` copy, which the build never used.)
 
 ## Development Branch
 Always develop on `claude/review-destiny-declarations-gVBrT` and push there.
+
+---
+
+## Analytics
+
+**Read `docs/ANALYTICS_DATA_QUALITY.md` before answering any question with
+PostHog numbers.** Several of the highest-volume events do not measure what
+their names say, and the failure mode is silent — the query returns a clean
+result that is simply wrong. Among them: a null test written as
+`empty(toString(...))` always reports zero nulls; global context properties are
+absent on app builds older than 4.54; simulator test traffic accounts for 88% of
+audio favourites historically; `content_listened` counted pauses and seeks as
+listens; and `paywall_shown` and `paywall_impression` double-count the same
+impression.

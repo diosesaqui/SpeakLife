@@ -311,12 +311,31 @@ struct AudioDeclarationView: View {
                         .presentationDetents([.large])
                         .onAppear {
                             audioViewModel.lastSelectedItem = item
-                            AnalyticsService.shared.track("audio_played", parameters: ["id": item.id])
+                            // Was `["id": item.id]` only, so every breakdown of
+                            // this event by title or category came back empty.
+                            // `audio_id` matches the key the rest of the audio
+                            // events use, so they can be compared side by side.
+                            AnalyticsService.shared.track("audio_played", parameters: [
+                                "audio_id": item.id,
+                                "audio_title": item.title,
+                                "audio_category": item.tag ?? "uncategorized",
+                                "is_premium": item.isPremium,
+                                "is_favorite": item.isFavorite
+                            ])
+                            GrowthMetrics.shared.trackActivation(action: "audio_played")
+                            GrowthMetrics.shared.trackFeatureFirstUse("audio")
                         }
                 }
             }
             .onAppear() {
-                AnalyticsService.shared.track("AudioScreenLoaded")
+                // Name kept as-is so the existing history stays one series;
+                // it previously carried no properties at all, so there was no
+                // way to tell which filter or how much content users landed on.
+                AnalyticsService.shared.track("AudioScreenLoaded", parameters: [
+                    "selected_filter_id": viewModel.selectedFilterId,
+                    "favorites_count": viewModel.favoritesManager.favoritesCount,
+                    "personalized": viewModel.isPersonalizedOrderEnabled
+                ])
                 // Re-apply ordering now that Remote Config and favorites have
                 // loaded — covers existing users who don't rebuild filters on update.
                 viewModel.refreshPersonalization()
@@ -383,7 +402,9 @@ struct AudioDeclarationView: View {
                     ])
                     if filterConfig.id == "favorites" {
                         AudioAnalytics.shared.trackFavoritesCategoryViewed(
-                            favoritesCount: viewModel.favoritesManager.favoritesCount
+                            favoritesCount: viewModel.favoritesManager.favoritesCount,
+                            categories: viewModel.favoritesManager.favorites.compactMap { $0.tag },
+                            source: "audio_tab_filter"
                         )
                     }
                 }) {

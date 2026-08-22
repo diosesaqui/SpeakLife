@@ -116,7 +116,11 @@ struct CancelInterventionView: View {
                         ForEach(CancelReason.allCases, id: \.self) { reason in
                             Button(action: {
                                 selectedReason = reason
-                                AnalyticsService.shared.track("cancel_reason_selected", parameters: ["reason": reason.rawValue as NSString])
+                                AnalyticsService.shared.track("cancel_reason_selected", parameters: ["reason": reason.rawValue])
+                                // Mirrored onto the person so churn reason is a
+                                // cohort ("everyone who left over price") rather
+                                // than an event you have to join back.
+                                GrowthMetrics.shared.recordChurn(reason: reason.rawValue)
                                 withAnimation { step = .retention }
                             }) {
                                 HStack {

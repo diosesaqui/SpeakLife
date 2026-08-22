@@ -573,9 +573,20 @@ struct ModernDailyChecklistView: View {
                                 if task.isCompleted {
                                     viewModel.uncompleteTask(taskId: taskId)
                                     completedTasks.remove(taskId)
+                                    // Un-completion had no event at all, so a
+                                    // task toggled off still counted as done
+                                    // for the day in every completion metric.
+                                    AnalyticsService.shared.track("checklist_task_uncompleted", parameters: [
+                                        "task_id": taskId,
+                                        "task_type": task.type.rawValue,
+                                        "task_category": task.category.rawValue
+                                    ])
                                 } else {
                                     viewModel.completeTask(taskId: taskId)
                                     completedTasks.insert(taskId)
+                                    GrowthMetrics.shared.trackActivation(action: "checklist_task_completed")
+                                    GrowthMetrics.shared.trackFeatureFirstUse("checklist_\(task.type.rawValue)")
+                                    GrowthMetrics.shared.recordStreak(viewModel.streakStats.currentStreak)
                                     withAnimation(.easeOut(duration: 0.1)) { celebrationScale = 1.15 }
                                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                                         withAnimation(.easeOut(duration: 0.1)) { celebrationScale = 1.0 }
@@ -981,11 +992,22 @@ struct ModernDailyChecklistView: View {
         .onAppear {
             // Routed through AnalyticsService so the home/checklist surface shows
             // up in PostHog retention + funnels, not Firebase alone.
+            let tasks = viewModel.todayChecklist.tasks
             AnalyticsService.shared.track("home_checklist_viewed", parameters: [
                 "current_streak": viewModel.displayStreak,
                 "completed_tasks": viewModel.todayChecklist.completedTasksCount,
-                "total_tasks": viewModel.todayChecklist.tasks.count,
-                "is_streak_earned": viewModel.todayChecklist.isStreakEarned
+                "total_tasks": tasks.count,
+                "is_streak_earned": viewModel.todayChecklist.isStreakEarned,
+                // Which tasks were on the board, not just how many. `task_unlocked`
+                // fires once when a task first becomes available, so there was no
+                // per-task denominator: seven task types were unlocked 146 times
+                // over 30 days and completed zero times, and nothing in the data
+                // distinguished "offered and refused" from "never offered".
+                "offered_task_ids": tasks.map { $0.id }.sorted().joined(separator: ","),
+                "offered_task_types": Array(Set(tasks.map { $0.type.rawValue })).sorted().joined(separator: ","),
+                "incomplete_task_ids": tasks.filter { !$0.isCompleted }
+                    .map { $0.id }.sorted().joined(separator: ","),
+                "current_phase": viewModel.todayChecklist.currentPhase.rawValue
             ])
             // Load what they're believing for, for the bottom-of-feed tile.
             if appState.hasPersonalDeclaration {

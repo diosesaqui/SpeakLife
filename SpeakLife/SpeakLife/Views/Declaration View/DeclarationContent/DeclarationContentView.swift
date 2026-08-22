@@ -212,8 +212,20 @@ struct DeclarationContentView: View {
                 AnalyticsService.shared.track("swipe_affirmation", parameters: [
                     "declaration_id": declaration.id,
                     "declaration_index": newIndex,
-                    "category": declaration.category
+                    // `.rawValue`, not the enum: the SDKs drop non-JSON values,
+                    // which left this event with no category at all.
+                    "category": declaration.category.rawValue,
+                    "content_type": declaration.contentType.rawValue,
+                    // Defaulted, not passed as `Bool?`: an unset optional would
+                    // drop the key and skew the ratio toward whatever remained.
+                    "is_favorite": declaration.isFavorite ?? false
                 ])
+                // Activation. Speaking a declaration is the app's core act, so
+                // the first one is the moment an install becomes a user — the
+                // number every acquisition and onboarding decision hangs off.
+                // Both calls are one-shot and dedupe internally.
+                GrowthMetrics.shared.trackActivation(action: "declaration_spoken")
+                GrowthMetrics.shared.trackFeatureFirstUse("declarations")
                 // Fix 3: Increment affirmations spoken counter for badge tracking
                 UserDefaults.standard.set(
                     UserDefaults.standard.integer(forKey: "totalAffirmationsSpoken") + 1,
