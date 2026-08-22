@@ -162,6 +162,7 @@ enum DebugFlagCatalog {
 
     static let onboardingVariants = [
         "quiz", "product", "identity", "outcomes", "warfare", "promises", "closer",
+        "direct",
     ]
 }
 
