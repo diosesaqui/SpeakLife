@@ -122,21 +122,30 @@ pain-led paywall cannot do. `UserPain.from(categoryRaw:)` is the exhaustive map;
 seven legacy segment values from the other arms all remain case names, so those
 arms round-trip unchanged.
 
-**Subhead: solution only.** The headline one line above already named the
-problem. Spending half this line re-stating that it hasn't worked tells the
-reader something they know better than we do, so by the time the eye is here the
-only useful sentence is what they get. Ten to fourteen words, describing the
-offer aimed at that pain — the thing God says about it, in their mouth, on a
-rhythm. For peace: *"God's own words for a racing mind, in your mouth every
-morning."* The product is deliberately not named; the four rows underneath are
-where SpeakLife shows up.
+**Subhead: solution only, and an instruction rather than a description.** The
+headline one line above already named the problem, so this line does exactly one
+thing — tell them what to do about it. Six to eleven words, median seven,
+starting on the verb:
 
-Two drafts died to get here, and both failures are worth keeping in mind for the
-next surface: the first ran 38 to 45 words, which is a paragraph in 14pt under a
-bold headline on a screen whose next job is a price — it got skimmed. The second
-halved that but still opened on the dead end ("Reading about peace hasn't
-quieted it"), which is the reader's own life narrated back at them at the moment
-they are deciding whether to pay.
+> **You don't feel good enough.**
+> Speak what God already said you are.
+
+Every line starts on "Speak", because that one word is the product, the
+mechanism and the brand at once, so nothing else has to be explained. The
+product name never appears; the four rows underneath are where SpeakLife shows
+up.
+
+Three drafts died getting here, and each failure is worth carrying to the next
+surface:
+
+1. **38–45 words.** A paragraph in 14pt under a bold headline, on a screen whose
+   next job is a price. It got skimmed.
+2. **Halved, but still opened on the dead end** — *"Reading about peace hasn't
+   quieted it."* That is the reader's own life narrated back at them at the
+   moment they are deciding whether to pay, and the headline had already said it.
+3. **Solution only, but written as description** — *"God's own words for a racing
+   mind, in your mouth every morning."* Accurate, and inert. A paywall subhead
+   is the last line before a button, so it should move rather than describe.
 
 **Headline (no segment — settings, feature gates, `unsegmented`):** still pain-led,
 naming the one problem every user on this screen shares —

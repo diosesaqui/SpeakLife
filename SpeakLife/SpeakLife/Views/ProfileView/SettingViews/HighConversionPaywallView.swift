@@ -163,32 +163,36 @@ enum UserPain: String, CaseIterable {
         }
     }
 
-    /// Subhead. **Solution only.** The headline one line above already named the
-    /// problem — spending half of this line re-stating that it hasn't worked
-    /// tells the reader something they know better than we do, and buys
-    /// nothing. By the time the eye is here the only useful sentence is what
-    /// they get.
+    /// Subhead. **Solution only, and an instruction rather than a description.**
+    /// The headline one line above already named the problem, so this line does
+    /// exactly one thing: tell them what to do about it.
     ///
-    /// So each one is a description of the offer, aimed at that pain: the thing
-    /// God says about it, in their mouth, on a rhythm. Ten to fourteen words,
-    /// no product name — the four rows underneath are where SpeakLife shows up.
+    /// Six to eleven words, starting on the verb. "Speak" is the product, the
+    /// mechanism and the brand in one word, so every line starts there and
+    /// nothing else has to be explained. No product name — the four rows
+    /// underneath are where SpeakLife shows up.
+    ///
+    /// Note the pronouns are all resolved: these were once the second half of a
+    /// two-sentence subhead, and "speak what He settled" or "speak God's
+    /// promises over them" only parsed because of a first sentence that no
+    /// longer exists.
     var solution: String {
         switch self {
-        case .peace:      return "God's own words for a racing mind, in your mouth every morning."
-        case .fear:       return "God's protection over tomorrow, spoken out loud before the dread starts."
-        case .health:     return "The healing the cross already paid for, spoken over your body daily."
-        case .abundance:  return "God's promise to supply every need, spoken over your finances every morning."
-        case .identity:   return "What God already said you are, spoken until it's what you believe."
-        case .shame:      return "What the cross already settled, spoken until you believe you're clean."
-        case .bondage:    return "His authority in your own mouth, spoken the way Jesus spoke to it."
-        case .purpose:    return "The steps God already ordered, spoken over your day every morning."
-        case .joy:        return "God's joy and strength, spoken over your day before the day starts."
-        case .grief:      return "God's own comfort, spoken over your heart on the mornings that come hard."
-        case .loneliness: return "God's nearness, spoken over your life on the quiet nights."
-        case .marriage:   return "God's peace, spoken over your home while He works on the rest."
-        case .family:     return "God's promises over the people you love, spoken out loud every morning."
-        case .nearness:   return "What God says about being near you, spoken back to Him daily."
-        case .more:       return "God's Word spoken with authority, out loud, the way Jesus prayed."
+        case .peace:      return "Speak peace over your mind, the way Jesus spoke to the storm."
+        case .fear:       return "Speak God's protection over tomorrow, out loud."
+        case .health:     return "Speak the healing the cross already paid for."
+        case .abundance:  return "Speak God's promise to supply every need."
+        case .identity:   return "Speak what God already said you are."
+        case .shame:      return "Speak what the cross already settled."
+        case .bondage:    return "Speak to it with the authority Jesus used."
+        case .purpose:    return "Speak the steps God already ordered."
+        case .joy:        return "Speak what God says over your day."
+        case .grief:      return "Speak God's comfort into the hard mornings."
+        case .loneliness: return "Speak God's nearness over your life."
+        case .marriage:   return "Speak God's peace over your home."
+        case .family:     return "Speak God's promises over the people you love."
+        case .nearness:   return "Speak what God says about being near you."
+        case .more:       return "Speak God's Word with authority, the way Jesus prayed."
         }
     }
 
@@ -431,12 +435,12 @@ struct HighConversionPaywallView: View {
     private var resolvedSubheadline: String {
         if hasFreshPersonalDeclaration {
             if let burden = burdenStyleLabel {
-                return "Your \(burden) declarations, in your mouth every morning until it obeys."
+                return "Speak your \(burden) every morning until it obeys."
             }
-            return "That declaration in your mouth every morning, until it obeys."
+            return "Speak it every morning until it obeys."
         }
         if let pain { return pain.solution }
-        return "The exact Word for what you're facing, in your mouth every morning."
+        return "Speak God's Word over it, the way Jesus prayed."
     }
     enum PlanType: String {
         case annual = "annual"
