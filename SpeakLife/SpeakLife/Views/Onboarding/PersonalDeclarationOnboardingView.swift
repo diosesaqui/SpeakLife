@@ -532,6 +532,14 @@ struct PersonalDeclarationOnboardingView: View {
                 buttonTitle: "Find My Declaration"
             ) {
                 viewModel.errorMessage = nil
+                // They have finished typing, so put the keyboard away before the
+                // matching state renders. Without this the spinner shares the
+                // screen with a keyboard nothing can type into, and it centres
+                // in the shortened box rather than on the screen — the teardown
+                // of the TextEditor dismisses it a beat later either way, so
+                // this only makes the transition deterministic instead of
+                // dependent on when SwiftUI happens to release first responder.
+                hideKeyboard()
                 Task { await viewModel.submitTextInput() }
             }
             .frame(width: size.width * 0.87, height: 54)
@@ -736,6 +744,19 @@ struct PersonalDeclarationOnboardingView: View {
                     .foregroundColor(.white.opacity(0.5))
             }
         }
+        // Centred in whatever box the step container hands it.
+        //
+        // The container top-anchors every step, which the other four want:
+        // they each open with their own `Spacer` and would otherwise spill off
+        // the top when the keyboard shortens the box. This one has no spacer at
+        // all — it is a spinner and two lines — so top-anchoring pinned it flush
+        // against y=0, and since every call site wraps this screen in
+        // `.ignoresSafeArea()`, that put the spinner under the status bar and
+        // the Dynamic Island.
+        //
+        // Filling the height puts the centring back under this view's control
+        // rather than the container's, without disturbing the other steps.
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     // MARK: - Result View
