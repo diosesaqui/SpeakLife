@@ -1,6 +1,6 @@
 {
     "version": 1,
-    "selectedFilterId": "speaklife",
+    "selectedFilterId": "declarations",
     "filterConfigs": [
         {
             "id": "favorites",
