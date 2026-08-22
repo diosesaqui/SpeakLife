@@ -122,30 +122,40 @@ pain-led paywall cannot do. `UserPain.from(categoryRaw:)` is the exhaustive map;
 seven legacy segment values from the other arms all remain case names, so those
 arms round-trip unchanged.
 
-**Subhead: the offer, named.** A paywall subhead answers *"what is this?"* —
-that is the question standing between the headline and the price. Ten to
+**Subhead: declare it, then act on it.** The headline already named the problem,
+so this line says what to do — and it names the second half on purpose. Ten to
 thirteen words:
 
 > **You don't feel good enough.**
-> What God already said you are, spoken until it's what you believe.
+> Declare what God already said you are, then carry yourself like it's true.
 
-An imperative was tried here and rejected on purpose (*"Speak what God already
-said you are"*). It is punchier and more on-brand, and it answers the wrong
-question: *what should I do?* — which the reader has not asked and cannot act on,
-because they do not have the app yet. It reads as advice where the line needs to
-read as the thing being bought. Keep imperatives for surfaces where the user can
-actually act; the paywall is not one.
+**Both halves, every time.** Saying it and then living unchanged is the thing
+James calls dead faith, and a paywall that only promises a feeling is selling one
+internal state in place of another. The first draft of the mechanism screen's
+closing line read *"provision becomes what you expect instead of what you hope
+for"* — expect and hope are the same thing wearing different clothes, and the
+user does nothing differently either way. Every line now names the declaration
+and then the move that proves they believed it. The onboarding mechanism screen
+cites James 2:17 under that line, so "then do something" is scripture's
+instruction and not ours.
 
-**The "spoken the way Jesus did" reinforcement is not in the subhead, and that is
-deliberate.** It closes every paywall in the assurance line, for all fifteen
-pains. Running it in both places says the same thing twice on one screen, and the
-close is the better home for it because that is where the last doubt sits. The
-mechanism screen earlier in the `direct` arm carries the full proof — three
-things Jesus spoke to, plus Mark 11:23-24 — so by the paywall it is being
-recalled, not argued.
+**The "spoken the way Jesus did" reinforcement is not in the subhead.** It closes
+every paywall in the assurance line, and the mechanism screen carries the full
+proof — three things Jesus spoke to, plus Mark 11:23-24 — so by the paywall it is
+being recalled, not argued.
 
-The product name never appears; the four rows underneath are where SpeakLife
-shows up.
+Drafts that failed on the way here, worth carrying to the next surface: 38–45
+words (a paragraph in 14pt on a screen whose next job is a price); halved but
+still opening on the dead end the headline had already named; and solution-only
+but purely descriptive, which is accurate and inert.
+
+**One consistency rule this screen learned the hard way.** The subhead, the four
+rows and the closing line must all resolve from `UserPain`. They briefly did not:
+the fresh-personal-declaration branch read `surveyGoalWord`, which is written at
+the *end* of onboarding, so at the paywall it is empty or a run stale — and a
+provision paywall shipped subheaded *"your joy declarations"* over provision rows
+and a provision closing line. Three sources of truth, one of them a run behind.
+`pain` now wins wherever it is known.
 
 **Solution rows (beat 3):** the same four capabilities every time — declarations,
 audio, the 30-day plan, Bible chat — each with a title and a detail line written

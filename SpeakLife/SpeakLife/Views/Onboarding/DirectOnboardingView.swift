@@ -626,37 +626,47 @@ private extension UserPain {
         case .abundance:  return "So you won't beg for provision. You'll speak God's supply over it."
         case .identity:   return "So you won't try to feel better about yourself. You'll speak what God already says you are."
         case .shame:      return "So you won't keep apologizing for it. You'll speak what the cross already settled."
-        case .bondage:    return "So you won't white-knuckle it. You'll speak to it with His authority."
+        case .bondage:    return "So you won't white-knuckle it. You'll speak the freedom Jesus bought you."
         case .purpose:    return "So you won't wonder about your calling. You'll speak it into motion."
         case .joy:        return "So you won't wait to feel better. You'll speak His joy over your day."
         case .grief:      return "So you won't carry it silently. You'll speak God's comfort over your heart."
         case .loneliness: return "So you won't sit in it alone. You'll speak God's nearness over your life."
         case .marriage:   return "So you won't argue it into shape. You'll speak God's peace over your home."
-        case .family:     return "So you won't lie awake over them. You'll speak God's promises over them."
+        case .family:     return "So you won't lie awake worrying. You'll speak God's promises over them."
         case .nearness:   return "So you won't chase a feeling. You'll speak what God says about being near you."
         case .more:       return "So you won't keep asking. You'll speak what God already said."
         }
     }
 
-    /// After they've done it — naming what just happened, and what repeating it
-    /// does. Never a guarantee of an outcome scripture doesn't promise.
+    /// After they've done it — say it again tomorrow, and then *do* something
+    /// about it today.
+    ///
+    /// The second half is the whole point and it used to be missing. The line
+    /// for provision read "provision becomes what you expect instead of what
+    /// you hope for", which swaps one internal state for another and calls it
+    /// progress — the user does nothing differently either way. James says
+    /// faith that is not accompanied by action is dead, so every line names the
+    /// declaration and then the move that proves they believed it.
+    ///
+    /// Never a guarantee of an outcome scripture doesn't promise: the action is
+    /// always the speaker's own, never another person's change.
     var mechanismAfter: String {
         switch self {
-        case .peace:      return "Keep speaking that over your mind every morning, and it is your mind that gives way."
-        case .fear:       return "Keep speaking that every morning, and fear stops deciding how your day goes."
-        case .health:     return "Keep speaking that over your body every morning, and it is your body that lines up."
-        case .abundance:  return "Keep speaking that every morning, and provision becomes what you expect instead of what you hope for."
-        case .identity:   return "Keep speaking that over yourself every morning, until it is the loudest voice you have."
-        case .shame:      return "Keep speaking that every morning, until you believe what the cross already settled."
-        case .bondage:    return "Keep speaking that every morning, and it stops getting a say in your day."
-        case .purpose:    return "Keep speaking that over your steps every morning, and the door starts to open."
-        case .joy:        return "Keep speaking that over your day every morning, and the heaviness has nowhere to sit."
-        case .grief:      return "Keep speaking that over your heart every morning, and God stays close in it with you."
-        case .loneliness: return "Keep speaking that every morning, and you stop facing this on your own."
-        case .marriage:   return "Keep speaking that over your home every morning, and let God work on what only He can."
-        case .family:     return "Keep speaking that over them every morning, and stand instead of worry."
-        case .nearness:   return "Keep speaking that every morning, and He gets nearer than the feeling that said otherwise."
-        case .more:       return "Keep speaking that every morning, and the ground you've been asking for starts moving."
+        case .peace:      return "Say it again tomorrow, then walk through the day like it's already settled."
+        case .fear:       return "Say it again tomorrow, then do the thing you've been putting off."
+        case .health:     return "Say it again tomorrow, then treat your body like the healing is yours."
+        case .abundance:  return "Say it again tomorrow, then make today's decision like the supply is there."
+        case .identity:   return "Say it again tomorrow, then carry yourself like it's already true."
+        case .shame:      return "Say it again tomorrow, then stop picking back up what He already took."
+        case .bondage:    return "Say it again tomorrow, then walk away the next time it calls."
+        case .purpose:    return "Say it again tomorrow, then take the next step without waiting to feel ready."
+        case .joy:        return "Say it again tomorrow, then go live today out loud."
+        case .grief:      return "Say it again tomorrow, then let God carry the part you can't."
+        case .loneliness: return "Say it again tomorrow, then reach out to one person today."
+        case .marriage:   return "Say it again tomorrow, then love your house like peace already lives there."
+        case .family:     return "Say it again tomorrow, then pray for them instead of worrying about them."
+        case .nearness:   return "Say it again tomorrow, then go spend time with Him today."
+        case .more:       return "Say it again tomorrow, then move on it. Faith that sits still isn't faith."
         }
     }
 }
@@ -665,10 +675,17 @@ private extension UserPain {
 /// changes: He did not beg the problem to leave, He spoke to it. Only the last
 /// line moves, to land that on this user's actual situation.
 ///
-/// Three parts, in this order: He did it (the storm, the sickness, the grave),
-/// He said we do it (Mark 11:23-24, where saying is the part He names), and
-/// then what that means for this user. The verse is the hinge — without it the
-/// screen shows a pattern and hopes the user infers a command.
+/// The four parts land one at a time rather than as one wall — the stagger runs
+/// to ~1.35s so each block gets its own beat and the screen reads as a sequence
+/// instead of a page of text. The CTA is last on purpose: this is the arm's one
+/// teaching screen, and there is nothing to decide until it has been read.
+///
+/// Four parts, in this order: He did it (the storm, the sickness, the grave),
+/// He said we do it (Mark 11:23-24, where saying is the part He names), what
+/// that means for this user, and James 2:17 under it — because the line tells
+/// them to say it again AND to move on it today, and the moving half needs a
+/// warrant rather than reading as our own advice. Mark is the hinge; James is
+/// why the screen doesn't end on a feeling.
 private struct DirectMechanismScreen: View {
     let size: CGSize
     let pain: UserPain
@@ -708,7 +725,7 @@ private struct DirectMechanismScreen: View {
         VStack(spacing: 0) {
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 26) {
-                    Spacer().frame(height: size.height * 0.14)
+                    Spacer().frame(height: size.height * 0.10)
 
                     VStack(spacing: 12) {
                         Text(eyebrow)
@@ -723,7 +740,7 @@ private struct DirectMechanismScreen: View {
                             .multilineTextAlignment(.center)
                             .minimumScaleFactor(0.8)
                             .fixedSize(horizontal: false, vertical: true)
-                            .directStagger(v, delay: 0.08)
+                            .directStagger(v, delay: 0.12)
                     }
                     .padding(.horizontal, 28)
 
@@ -740,7 +757,7 @@ private struct DirectMechanismScreen: View {
                                     .fixedSize(horizontal: false, vertical: true)
                                 Spacer(minLength: 0)
                             }
-                            .directStagger(v, delay: 0.18 + Double(idx) * 0.08)
+                            .directStagger(v, delay: 0.30 + Double(idx) * 0.15)
                         }
                     }
                     .padding(20)
@@ -758,7 +775,7 @@ private struct DirectMechanismScreen: View {
                             .font(.system(size: 15, weight: .semibold, design: .rounded))
                             .foregroundColor(.white)
                             .multilineTextAlignment(.center)
-                            .directStagger(v, delay: 0.42)
+                            .directStagger(v, delay: 0.78)
 
                         VStack(spacing: 6) {
                             Text("\"Truly I tell you, if anyone says to this mountain, 'Go, throw yourself into the sea,' and does not doubt in their heart but believes that what they say will happen, it will be done for them. Therefore I tell you, whatever you ask for in prayer, believe that you have received it, and it will be yours.\"")
@@ -773,18 +790,37 @@ private struct DirectMechanismScreen: View {
                                 .font(.system(size: 12, weight: .medium, design: .rounded))
                                 .foregroundColor(DS.Palette.gold.opacity(0.85))
                         }
-                        .directStagger(v, delay: 0.48)
+                        .directStagger(v, delay: 0.90)
                     }
                     .padding(.horizontal, 28)
 
-                    Text(applied)
-                        .font(.system(size: 17, weight: .semibold, design: .rounded))
-                        .foregroundColor(.white)
-                        .multilineTextAlignment(.center)
-                        .lineSpacing(4)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .padding(.horizontal, 30)
-                        .directStagger(v, delay: 0.56)
+                    VStack(spacing: 10) {
+                        Text(applied)
+                            .font(.system(size: 17, weight: .semibold, design: .rounded))
+                            .foregroundColor(.white)
+                            .multilineTextAlignment(.center)
+                            .lineSpacing(4)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .directStagger(v, delay: 1.10)
+
+                        // The warrant for the second half of that line. Speaking
+                        // and then living unchanged is the thing James names, so
+                        // the screen cites it rather than leaving "then do
+                        // something" as our own advice.
+                        VStack(spacing: 3) {
+                            Text("\"Faith by itself, if it is not accompanied by action, is dead.\"")
+                                .font(.system(size: 13, weight: .regular, design: .serif))
+                                .italic()
+                                .foregroundColor(.white.opacity(0.7))
+                                .multilineTextAlignment(.center)
+                                .fixedSize(horizontal: false, vertical: true)
+                            Text("James 2:17")
+                                .font(.system(size: 11, weight: .medium, design: .rounded))
+                                .foregroundColor(DS.Palette.gold.opacity(0.8))
+                        }
+                        .directStagger(v, delay: 1.22)
+                    }
+                    .padding(.horizontal, 30)
 
                     Spacer().frame(height: 8)
                 }
@@ -792,7 +828,7 @@ private struct DirectMechanismScreen: View {
 
             DirectCTA(label: spokeDeclaration ? "Make This My Daily Habit →" : "Show Me How →") { onContinue() }
                 .padding(.bottom, 36)
-                .directStagger(v, delay: 0.64)
+                .directStagger(v, delay: 1.35)
         }
         .onAppear {
             AnalyticsService.shared.track("direct_mechanism_shown", parameters: [
