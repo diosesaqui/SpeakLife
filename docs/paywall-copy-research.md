@@ -122,41 +122,30 @@ pain-led paywall cannot do. `UserPain.from(categoryRaw:)` is the exhaustive map;
 seven legacy segment values from the other arms all remain case names, so those
 arms round-trip unchanged.
 
-**Subhead: solution only, and an instruction rather than a description.** The
-headline one line above already named the problem, so this line does exactly one
-thing — tell them what to do about it. Six to eleven words, median seven,
-starting on the verb:
+**Subhead: the offer, named.** A paywall subhead answers *"what is this?"* —
+that is the question standing between the headline and the price. Ten to
+thirteen words:
 
 > **You don't feel good enough.**
-> Speak what God already said you are.
+> What God already said you are, spoken until it's what you believe.
 
-Every line starts on "Speak", because that one word is the product, the
-mechanism and the brand at once, so nothing else has to be explained. The
-product name never appears; the four rows underneath are where SpeakLife shows
-up.
+An imperative was tried here and rejected on purpose (*"Speak what God already
+said you are"*). It is punchier and more on-brand, and it answers the wrong
+question: *what should I do?* — which the reader has not asked and cannot act on,
+because they do not have the app yet. It reads as advice where the line needs to
+read as the thing being bought. Keep imperatives for surfaces where the user can
+actually act; the paywall is not one.
 
-Three drafts died getting here, and each failure is worth carrying to the next
-surface:
+**The "spoken the way Jesus did" reinforcement is not in the subhead, and that is
+deliberate.** It closes every paywall in the assurance line, for all fifteen
+pains. Running it in both places says the same thing twice on one screen, and the
+close is the better home for it because that is where the last doubt sits. The
+mechanism screen earlier in the `direct` arm carries the full proof — three
+things Jesus spoke to, plus Mark 11:23-24 — so by the paywall it is being
+recalled, not argued.
 
-1. **38–45 words.** A paragraph in 14pt under a bold headline, on a screen whose
-   next job is a price. It got skimmed.
-2. **Halved, but still opened on the dead end** — *"Reading about peace hasn't
-   quieted it."* That is the reader's own life narrated back at them at the
-   moment they are deciding whether to pay, and the headline had already said it.
-3. **Solution only, but written as description** — *"God's own words for a racing
-   mind, in your mouth every morning."* Accurate, and inert. A paywall subhead
-   is the last line before a button, so it should move rather than describe.
-
-**Headline (no segment — settings, feature gates, `unsegmented`):** still pain-led,
-naming the one problem every user on this screen shares —
-> **You've prayed about it. It hasn't moved.**
-> Jesus never begged the storm to leave. He spoke to it. SpeakLife puts the exact Word for what you're facing in your mouth every morning, until it obeys.
-
-**Headline (just spoke their personal declaration):** unchanged, and it keeps
-priority over the pain — naming a problem right after someone took authority over
-it steps on the warmest moment in the funnel.
-> **You just spoke to your storm.**
-> Jesus stilled a sea with three words. Keep speaking your *peace* every morning until it obeys.
+The product name never appears; the four rows underneath are where SpeakLife
+shows up.
 
 **Solution rows (beat 3):** the same four capabilities every time — declarations,
 audio, the 30-day plan, Bible chat — each with a title and a detail line written
