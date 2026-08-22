@@ -49,6 +49,7 @@
 		452F6ACA2E87BA8300A27856 /* AnalyticsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 452F6AC92E87BA8200A27856 /* AnalyticsService.swift */; };
 		45C0A1112F2A0B0100A27856 /* AnalyticsContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45C0A1102F2A0B0100A27856 /* AnalyticsContext.swift */; };
 		45C0A1212F2A0B0100A27856 /* GrowthMetrics.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45C0A1202F2A0B0100A27856 /* GrowthMetrics.swift */; };
+		45C0A1232F2A0B0100A27856 /* AcquisitionAttribution.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45C0A1222F2A0B0100A27856 /* AcquisitionAttribution.swift */; };
 		452F6AD32E87CD3F00A27856 /* EnhancedAnalyticsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 452F6ACE2E87CD3F00A27856 /* EnhancedAnalyticsService.swift */; };
 		452F6AD42E87CD3F00A27856 /* RecommendationEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 452F6AD12E87CD3F00A27856 /* RecommendationEngine.swift */; };
 		452F6AD52E87CD3F00A27856 /* MLTaskLibrary.swift in Sources */ = {isa = PBXBuildFile; fileRef = 452F6AD02E87CD3F00A27856 /* MLTaskLibrary.swift */; };
@@ -445,6 +446,7 @@
 		452F6AC92E87BA8200A27856 /* AnalyticsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalyticsService.swift; sourceTree = "<group>"; };
 		45C0A1102F2A0B0100A27856 /* AnalyticsContext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalyticsContext.swift; sourceTree = "<group>"; };
 		45C0A1202F2A0B0100A27856 /* GrowthMetrics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GrowthMetrics.swift; sourceTree = "<group>"; };
+		45C0A1222F2A0B0100A27856 /* AcquisitionAttribution.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AcquisitionAttribution.swift; sourceTree = "<group>"; };
 		452F6ACB2E87CD3F00A27856 /* AINotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AINotificationService.swift; sourceTree = "<group>"; };
 		452F6ACC2E87CD3F00A27856 /* ContentCategorizationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentCategorizationService.swift; sourceTree = "<group>"; };
 		452F6ACD2E87CD3F00A27856 /* CreateMLTrainingPipeline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateMLTrainingPipeline.swift; sourceTree = "<group>"; };
@@ -1282,6 +1284,7 @@
 			children = (
 				45C0A1102F2A0B0100A27856 /* AnalyticsContext.swift */,
 				45C0A1202F2A0B0100A27856 /* GrowthMetrics.swift */,
+				45C0A1222F2A0B0100A27856 /* AcquisitionAttribution.swift */,
 				452F6AC92E87BA8200A27856 /* AnalyticsService.swift */,
 				7A92E31A2993882F00FBF2AE /* Events.swift */,
 			);
@@ -2178,6 +2181,7 @@
 				452F6ACA2E87BA8300A27856 /* AnalyticsService.swift in Sources */,
 				45C0A1112F2A0B0100A27856 /* AnalyticsContext.swift in Sources */,
 				45C0A1212F2A0B0100A27856 /* GrowthMetrics.swift in Sources */,
+				45C0A1232F2A0B0100A27856 /* AcquisitionAttribution.swift in Sources */,
 				454807542E3F049400B8C71B /* DailyChecklistView.swift in Sources */,
 				7AF46FC52A41326100A45C01 /* AbbasLoveView.swift in Sources */,
 				453A831E2C9BF18500398ECE /* DeclarationMenuButton.swift in Sources */,

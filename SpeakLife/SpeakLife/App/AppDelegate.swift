@@ -197,6 +197,15 @@ final class AppDelegate: NSObject, MessagingDelegate {
         // BranchSDK Swift Package is added in Xcode.
         BranchAttribution.initSession(launchOptions: launchOptions)
 
+        // Per-person acquisition channel. Starts the Apple Search Ads token
+        // exchange and schedules the organic fallback, so every person ends up
+        // with a channel and CAC can be set against LTV per channel.
+        //
+        // Runs regardless of Branch: that SDK is not in Package.resolved, so the
+        // whole BranchAttribution enum above is currently compiled out and
+        // contributes no attribution at all.
+        AcquisitionAttribution.shared.start()
+
         Messaging.messaging().delegate = self
         let settings = RemoteConfigSettings()
         #if DEBUG
@@ -358,6 +367,25 @@ final class AppDelegate: NSObject, MessagingDelegate {
             UserDefaults.standard.set(true, forKey: "didCheckDeferredAppLink")
             if let url = url {
                 SubscriptionStore.handleIncomingURL(url, source: "ad")
+
+                // Same link, read for acquisition channel rather than for the
+                // onboarding arm.
+                //
+                // Scope worth being explicit about: this only fires for Meta
+                // campaigns configured with a deferred link. A Meta install
+                // carrying no link is invisible here — Meta reports it on its
+                // own side and no client API hands it back. So
+                // `acquisition_channel = meta` is a FLOOR on Meta-driven
+                // installs, never the total, and belongs reconciled against Ads
+                // Manager rather than trusted outright.
+                AcquisitionAttribution.shared.recordDeepLink(url, source: "meta_deferred")
+
+                // A Meta link with no utm_source would otherwise file as a
+                // generic owned deep link. It is paid traffic and has to price
+                // as such.
+                if AcquisitionAttribution.shared.storedRecord()?.channel == .ownedDeeplink {
+                    AcquisitionAttribution.shared.record(channel: .meta, source: "meta_deferred")
+                }
             }
         }
     }
@@ -388,6 +416,7 @@ extension AppDelegate {
             options: [UIApplication.OpenURLOptionsKey : Any] = [:]
         ) -> Bool {
             BranchAttribution.handleOpen(app, url, options)
+            AcquisitionAttribution.shared.recordDeepLink(url, source: "custom_scheme")
             return ApplicationDelegate.shared.application(
                 app,
                 open: url,
@@ -404,6 +433,12 @@ extension AppDelegate {
             // Branch universal links (already-installed taps) — deferred installs
             // are handled by initSession above.
             BranchAttribution.handleUserActivity(userActivity)
+            // Universal links are the web-side half of the same campaigns, so
+            // they carry the same UTM set as the custom-scheme links above.
+            if userActivity.activityType == NSUserActivityTypeBrowsingWeb,
+               let url = userActivity.webpageURL {
+                AcquisitionAttribution.shared.recordDeepLink(url, source: "universal_link")
+            }
             return true
         }
     
@@ -558,6 +593,23 @@ enum BranchAttribution {
                   let url = URL(string: link) {
             SubscriptionStore.handleIncomingURL(url, source: "ad")
         }
+
+        // Branch's own attribution keys beat anything parsed off the URL: they
+        // name the network that actually served the click, which a link's
+        // utm_source only claims. Left here so the channel arrives the moment
+        // the SDK is added, rather than needing a second pass.
+        let network = (params["~advertising_partner_name"] as? String)
+            ?? (params["~channel"] as? String)
+        let channel = AcquisitionChannel.from(sourceString: network)
+
+        AcquisitionAttribution.shared.record(
+            channel: channel == .unknown ? .ownedDeeplink : channel,
+            source: network ?? "branch",
+            campaign: params["~campaign"] as? String,
+            adGroup: params["~ad_set_name"] as? String,
+            creative: params["~creative_name"] as? String,
+            keyword: params["~keyword"] as? String
+        )
     }
     #endif
 }

@@ -286,3 +286,71 @@ walking", "do something kind for someone"). They are completable (tapping the
 row calls `completeTask`), so this is refusal, not breakage.
 
 Three tasks carry the entire feed: burst, devotional, audio.
+
+---
+
+## Per-person acquisition channel (added 2026-08-22)
+
+Completes CAC vs LTV. Revenue per person became answerable once the RevenueCat
+identity was aliased; this adds where the person came from, so LTV, activation
+and retention all break down by channel.
+
+Person properties, first-touch: `acquisition_channel`, `acquisition_source`,
+`acquisition_campaign`, `acquisition_ad_group`, `acquisition_creative`,
+`acquisition_keyword`, `acquisition_onboarding_variant`,
+`acquisition_is_deterministic`, `acquisition_attributed_at`.
+
+`acquisition_channel` is a closed set — `apple_search_ads`, `meta`, `tiktok`,
+`google`, `owned_deeplink`, `referral`, `organic`, `unknown` — so charts don't
+grow a new spelling per campaign. Raw network text stays in
+`acquisition_source`.
+
+### How a channel is decided
+
+Sources carry a priority and the best one wins until the record **seals at 24
+hours**: Apple Search Ads (100) > Meta / TikTok / Google (80) > owned deep link
+/ referral (60) > organic (10). After sealing, later touches are ignored — a
+marketing-email tap on day 30 must not rewrite who acquired the person.
+
+`organic` is a decision, not a default. It is written only after the async
+resolvers have had 8 seconds, so it means "we looked and found nothing".
+
+### Counting rule
+
+**Count channels from the person property, never from
+`acquisition_attributed`.** That event fires again on upgrade (organic stamped
+at 8s, then Apple Search Ads landing at ~15s), so summing it double-counts
+people. Upgrade events carry `is_upgrade = true`.
+
+### What each source actually covers
+
+| Source | Coverage |
+|---|---|
+| **Apple Search Ads** | Deterministic and complete. Apple's `AAAttribution` token is exchanged for campaign / ad group / keyword ids. Retries 3× because the endpoint 404s for a few seconds after install. `attribution: false` is a real answer — that install was not from a Search Ads click — and records nothing. |
+| **Meta** | **A floor, not a total.** Only fires for campaigns configured with a deferred deep link. A Meta install carrying no link is invisible: Meta reports it on its own side and no client API hands it back. Reconcile against Ads Manager. |
+| **Deep / universal links** | Full UTM set plus the app's `ob=` code. Covers owned channels (email, push, IG bio, QR) and any paid link carrying UTMs. |
+| **Branch** | Wired to read `~advertising_partner_name`, `~campaign`, `~ad_set_name`, `~creative_name`, but **BranchSDK is not in `Package.resolved`**, so the whole `BranchAttribution` enum is compiled out and contributes nothing today. Adding the package activates it. |
+| **TikTok** | Not wired. The SDK is installed but its deferred-deeplink callback is not read, so TikTok installs land as `organic` unless the link carries UTMs. |
+
+Channel is also mirrored to RevenueCat's reserved subscriber attributes
+(`setMediaSource` / `setCampaign` / `setAdGroup` / `setCreative` /
+`setKeyword`), so revenue RevenueCat sends server-side — renewals while the app
+is shut — arrives carrying the channel instead of dropping out of channel LTV.
+
+### Reading it
+
+Historical installs have no channel; the property only exists from this build
+forward. Cohort on `install_date` when comparing.
+
+```sql
+-- LTV by channel, current cohort only
+SELECT
+    person.properties.acquisition_channel AS channel,
+    uniq(person_id) AS people,
+    round(avg(toFloat(person.properties.lifetime_revenue_usd)), 2) AS avg_ltv
+FROM events
+WHERE timestamp >= now() - INTERVAL 30 DAY
+  AND isNotNull(person.properties.acquisition_channel)
+GROUP BY channel
+ORDER BY people DESC
+```

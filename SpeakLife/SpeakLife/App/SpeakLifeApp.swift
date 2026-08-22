@@ -147,6 +147,10 @@ struct SpeakLifeApp: App {
                         // QR, landing page) carrying `ob=<variant>` route here when the
                         // app opens directly (vs. a deferred install link).
                         SubscriptionStore.handleIncomingURL(url, source: "deeplink")
+                        // Same link, read for channel rather than for the arm:
+                        // utm_source/campaign/term land on the person so paid
+                        // and owned traffic are separable in every LTV cut.
+                        AcquisitionAttribution.shared.recordDeepLink(url, source: "deeplink")
                         // Let Branch process already-installed link opens too.
                         BranchAttribution.handleDeepLink(url)
                         if url.absoluteString == "speaklife://event/daily-declarations" {
