@@ -269,6 +269,7 @@ struct PersonalDeclarationOnboardingView: View {
 //                    .animation(.easeOut(duration: 0.6).delay(0.12), value: titleAppeared)
             }
 
+
             // Kept while typing — it is permission to be raw, which matters
             // most at the moment they are actually writing. Held to two lines
             // for the same reason as the title above.
@@ -281,6 +282,34 @@ struct PersonalDeclarationOnboardingView: View {
                 .padding(.horizontal, 40)
                 .opacity(titleAppeared ? 1 : 0)
                 .animation(.easeOut(duration: 0.6).delay(0.25), value: titleAppeared)
+
+            // The reassurance belongs at the moment they are deciding whether to
+            // be honest, which is before the first keystroke — so it is dropped
+            // once the keyboard is up, the same rule `contextLine` above follows
+            // and for the same reason: the short screen has no height to spare
+            // once the box and the CTA have to fit above the keys.
+            //
+            // Worded against what the code actually does. The declaration is
+            // stored in UserDefaults on this device, is never synced to iCloud,
+            // is never visible to another user, and analytics records only the
+            // resolved category — never these words. It is NOT true that the
+            // text never leaves the phone: `ClaudeDeclarationMatcher` posts it
+            // to the Anthropic API to find the match, so no claim here says or
+            // implies otherwise.
+            if !keyboardUp {
+                Label("Private and confidential. Only ever used to find your declaration.",
+                      systemImage: "lock.fill")
+                    .font(.system(size: 12, weight: .medium, design: .rounded))
+                    .foregroundColor(.white.opacity(0.4))
+                    .multilineTextAlignment(.center)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.85)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.horizontal, 36)
+                    .padding(.top, 12)
+                    .opacity(titleAppeared ? 1 : 0)
+                    .animation(.easeOut(duration: 0.6).delay(0.35), value: titleAppeared)
+            }
 
             // Keyboard down, the block floats centered — that is the mic state,
             // and it should sit in the middle of the screen.
