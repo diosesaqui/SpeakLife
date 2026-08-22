@@ -23,8 +23,8 @@
 //    1. Mechanism   — how Jesus answered every problem. Deliberately AFTER,
 //                     because for anyone who answered it is no longer a claim
 //                     about what speaking does: it is the explanation of
-//                     something they just did. "You just spoke to it instead of
-//                     begging it to leave" beats promising they will.
+//                     something they just did. "That's authority. You spoke to
+//                     your mountain just like Jesus" beats promising they will.
 //    2. Proof       — the review wall, immediately before the ask.
 //    3. Paywall
 //    4. Time        — when their declaration arrives daily (terminal).
@@ -153,6 +153,21 @@ struct DirectOnboardingView: View {
                 pain: pain ?? .more,
                 spokeDeclaration: savedDeclaration != nil
             ) { advance() }
+        case .connectStyle:
+            // The one question in this arm that is not about their pain, and
+            // the only one whose answer changes the product rather than the
+            // copy: it orders the rows on their daily checklist from tomorrow
+            // on. Placed after the mechanism because the mechanism is the
+            // payoff — interrupting declaration → explanation to ask a setup
+            // question would spend the arm's best moment — and before the
+            // review wall so it is asked while they are still reading rather
+            // than deciding.
+            SurveyExtendedQuizScreen(
+                size: size,
+                flow: "direct",
+                question: .connectStyle,
+                selection: $responses.connectStyle
+            ) { advance() }
         case .testimonials:
             TestimonialWallView(size: size, flow: "direct") { advance() }
         case .paywall:
@@ -255,6 +270,11 @@ struct DirectOnboardingView: View {
         appState.selectedNotificationCategories = category.rawValue
         UserDefaults.standard.set(category.rawValue, forKey: "selectedCategory")
         UserPreferencesTracker.shared.trackCategorySelection(category.rawValue)
+        // The answer has to outlive onboarding to be worth asking. It lived on
+        // `SurveyResponses` and died with the flow in every other arm, which is
+        // why the question was collected for months and read by nothing.
+        // `TaskLibrary` reads this key when it builds the day.
+        ConnectStyle.store(responses.connectStyle.flatMap(ConnectStyle.init(rawValue:)))
         declarationStore.choose(category) { _ in }
         // Mirrors the other arms: the personal-declaration push is scheduled off
         // this flag, so an arm that captures one and doesn't set it silently
@@ -290,6 +310,10 @@ struct DirectOnboardingView: View {
             // free-text open is too heavy an ask for frame one.
             "pain_source": declarationSource != "none" ? declarationSource : (responses.heaviestBurden != nil ? "picker" : "none"),
             "seeded_category": category.rawValue,
+            // Now a product input, not just a stat: it orders their checklist
+            // rows from tomorrow on, so its distribution is worth reading
+            // against completion rather than on its own.
+            "connect_style": responses.connectStyle ?? "unknown",
             "notification_time": responses.notificationTime?.rawValue ?? "unknown",
             // The arm's payoff moment. Carried onto completion so conversion
             // can be cut by whether they actually reached a declaration of
@@ -357,9 +381,10 @@ enum DirectStep: Int, CaseIterable {
     case painFallback     = 1  // the picker, ONLY when the declaration produced nothing
     case declarationRetry = 2  // the same feature re-asked narrow, scoped to what they picked
     case mechanism        = 3  // how Jesus answered — after, so it explains what just happened
-    case testimonials     = 4  // the review wall, right before the ask
-    case paywall          = 5
-    case notificationTime = 6  // terminal — completes onboarding
+    case connectStyle     = 4  // how they connect with scripture — orders their daily rows
+    case testimonials     = 5  // the review wall, right before the ask
+    case paywall          = 6
+    case notificationTime = 7  // terminal — completes onboarding
 
     /// Bumped whenever the raw values are renumbered, a step is inserted, or a
     /// step changes into a materially different screen — so events from two
@@ -374,7 +399,9 @@ enum DirectStep: Int, CaseIterable {
     /// 3 → 4: the picker now leads into a second, narrower declaration ask
     /// rather than straight to the mechanism. Schema-3 data is not comparable
     /// step-for-step.
-    static let flowSchema = 4
+    /// 4 → 5: the connect-style question was added between the mechanism and
+    /// the review wall, so every step after it is renumbered.
+    static let flowSchema = 5
 
     /// Stable analytics name. Funnels and breakdowns are built on this, not on
     /// the raw Int — a `step_name` of "mechanism" is readable in PostHog where
@@ -385,6 +412,7 @@ enum DirectStep: Int, CaseIterable {
         case .painFallback:     return "pain_fallback"
         case .declarationRetry: return "personal_declaration_retry"
         case .mechanism:        return "mechanism"
+        case .connectStyle:     return "connect_style"
         case .testimonials:     return "testimonials"
         case .paywall:          return "paywall"
         case .notificationTime: return "notification_time"
@@ -670,9 +698,13 @@ private extension UserPain {
     }
 }
 
-/// How Jesus answered — the arm's one teaching screen, and the framing never
-/// changes: He did not beg the problem to leave, He spoke to it. Only the last
-/// line moves, to land that on this user's actual situation.
+/// How Jesus answered — the arm's one teaching screen. The framing is
+/// authority: He spoke to the thing, and He handed the same authority over.
+/// Only the last line moves, to land that on this user's actual situation.
+///
+/// It used to be framed as expulsion — "He did not beg the problem to leave" —
+/// which silently broke on every pain the user wants to RECEIVE rather than be
+/// rid of. See the note on `headline`.
 ///
 /// The four parts land one at a time rather than as one wall — the stagger runs
 /// to ~1.35s so each block gets its own beat and the screen reads as a sequence
@@ -701,10 +733,28 @@ private struct DirectMechanismScreen: View {
         spokeDeclaration ? "WHAT YOU JUST DID" : "SPEAKLIFE · PRAY LIKE JESUS"
     }
 
+    /// Framed as authority, not as expulsion.
+    ///
+    /// This used to read "instead of begging it to leave", which only works when
+    /// the thing is present and unwanted. Roughly half of `UserPain` is the
+    /// opposite — abundance, identity, purpose, loneliness, nearness, family,
+    /// marriage are all things the user wants to RECEIVE, and nobody begs
+    /// provision to leave. On those the headline contradicted the line four
+    /// blocks below it: "you are enforcing supply God already put in your name"
+    /// is a claim on something arriving, not a request for something to go.
+    ///
+    /// `mechanismAfter` was already written on the enforcement frame throughout;
+    /// the headline was the last piece still on the older one. Authority holds
+    /// for all fifteen pains, because you can walk in it over lack, over a
+    /// prodigal, over a calling, and over sickness alike.
+    ///
+    /// "Just like Jesus" cashes the three beats directly beneath it — the storm,
+    /// the sickness, the grave are Jesus doing exactly this — so the headline
+    /// names what the user just did and the evidence for it sits right under it.
     private var headline: String {
         spokeDeclaration
-            ? "You just spoke to it\ninstead of begging\nit to leave."
-            : "Jesus never begged\nthe problem to leave.\nHe spoke to it."
+            ? "That's authority.\nYou spoke to your mountain\njust like Jesus."
+            : "This is authority.\nJesus spoke to the mountain.\nSo can you."
     }
 
     /// The line that lands Jesus' method on this user's exact situation. Past

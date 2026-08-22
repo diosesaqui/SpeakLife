@@ -55,6 +55,59 @@ public enum TaskType: String, CaseIterable, Codable {
     case teach = "teach"
 }
 
+// MARK: - Connect Style
+
+/// How the user says they connect best with God's Word, asked once in
+/// onboarding.
+///
+/// Measured over 90 days of onboarding completions, the answers split
+/// reading 35% / listening 30% / speaking 24% / journaling 11% — so for roughly
+/// three quarters of new users, the modality the checklist leads with is NOT
+/// the one they told us they connect through. The answer was collected for
+/// months and read by nothing; this type is what makes it do something.
+///
+/// It orders the day's content rows. It never decides which rows exist: someone
+/// who says "reading" still gets the Burst, because speaking is the change this
+/// product exists to produce and reading is the thing they were already
+/// comfortable doing. Their answer is the on-ramp, not the destination.
+public enum ConnectStyle: String, CaseIterable, Codable {
+    case speaking
+    case listening
+    case reading
+    case journaling
+
+    /// The task type this modality reads on the checklist.
+    public var taskType: TaskType {
+        switch self {
+        case .speaking:   return .speak
+        case .listening:  return .listen
+        case .reading:    return .read
+        // No `.journal` type exists; journaling and gratitude are both
+        // reflection, and `journal_insight` is the row that actually asks them
+        // to write.
+        case .journaling: return .reflect
+        }
+    }
+
+    /// Persisted by whichever onboarding arm asked the question. Read straight
+    /// from `UserDefaults` rather than through a closure seam because
+    /// `TaskLibrary` already reads its AI flag and day assignments the same way,
+    /// and a `defaults:` parameter keeps it testable.
+    public static let storageKey = "connect_style"
+
+    public static func stored(defaults: UserDefaults = .standard) -> ConnectStyle? {
+        defaults.string(forKey: storageKey).flatMap(ConnectStyle.init(rawValue:))
+    }
+
+    public static func store(_ style: ConnectStyle?, defaults: UserDefaults = .standard) {
+        guard let style else {
+            defaults.removeObject(forKey: storageKey)
+            return
+        }
+        defaults.set(style.rawValue, forKey: storageKey)
+    }
+}
+
 public enum DifficultyLevel: Int, CaseIterable, Codable {
     case beginner = 1
     case intermediate = 2
@@ -1132,6 +1185,47 @@ public struct TaskLibrary {
         return allTasks.filter { $0.minimumStreakDay <= streakDay }
     }
     
+    /// Leads the day's content rows with the modality the user said they
+    /// connect through, and gives journalers something to journal on day one.
+    ///
+    /// Runs BEFORE `burstFirst`, so a user who answered "speaking" is not fought
+    /// over: their row is the Burst, and `burstFirst` puts it back at the top a
+    /// moment later either way. For everyone else the effect is that their
+    /// modality sits immediately behind the pillars instead of wherever the
+    /// phase mix happened to place it — a user who said "listening" currently
+    /// gets the devotional above the audio.
+    ///
+    /// Ordering only. Nothing is removed: the rows a user gets are decided by
+    /// their phase and their streak, exactly as before.
+    ///
+    /// - Parameter streakDay: only used to keep the injected journaling row out
+    ///   of days where `journal_insight` would have been offered anyway.
+    static func leadWithPreferredModality(_ tasks: [DailyTask],
+                                          style: ConnectStyle?,
+                                          streakDay: Int) -> [DailyTask] {
+        guard let style else { return tasks }
+        var result = tasks
+
+        // Journaling is the one answer with no matching row in the foundation
+        // week: `journal_insight` is a growth task gated to day 8, and
+        // `gratitude_moment` (the only other reflection row) does not arrive
+        // until day 2. So the 11% who said journaling spend their first week
+        // with nothing that looks like what they asked for. Pull the row
+        // forward for them, and only for them.
+        if style == .journaling,
+           !result.contains(where: { $0.type == .reflect }),
+           let journal = growthTasks.first(where: { $0.id == "journal_insight" }) {
+            result.append(journal)
+        }
+
+        guard let index = result.firstIndex(where: { $0.type == style.taskType }) else {
+            return result
+        }
+        let preferred = result.remove(at: index)
+        result.insert(preferred, at: 0)
+        return result
+    }
+
     /// Ensures the Daily Burst task is always first so it's the hero "NEXT UP" card.
     /// Burst is the only task that earns the streak — it must never be buried.
     private static func burstFirst(_ tasks: [DailyTask]) -> [DailyTask] {
@@ -1169,19 +1263,24 @@ public struct TaskLibrary {
     /// - Parameter totalDaysCompleted: `StreakStats.totalDaysCompleted`, the
     ///   monotonic tenure counter. Gates when Guarding is introduced. Never
     ///   `currentStreak` — see `guardIntroducedAfterDaysCompleted`.
+    /// - Parameter connectStyle: how the user said they connect best with
+    ///   scripture. Defaults to whatever onboarding persisted; pass an explicit
+    ///   value in tests. nil leaves the ordering exactly as it was.
     public static func getCoreTasksForStreak(_ streakDay: Int, userCategories: [String] = [],
                                              foundationAudioDay: Int? = nil,
                                              enforcementDay: EnforcementDay? = nil,
                                              personalDeclarations: PersonalDeclaration.Progress? = nil,
                                              guardCompletedToday: Bool? = nil,
-                                             totalDaysCompleted: Int = 0) -> [DailyTask] {
+                                             totalDaysCompleted: Int = 0,
+                                             connectStyle: ConnectStyle? = ConnectStyle.stored()) -> [DailyTask] {
         let audioDay = foundationAudioDay ?? streakDay
         // Check if AI features are enabled for enhanced task generation
         if isAIEnabled() {
             let aiTasks = getAIEnhancedTasks(streakDay: streakDay, userCategories: userCategories)
             let planned = applyAudioPlan(to: aiTasks, day: audioDay, enforcementDay: enforcementDay)
             let owned = markCampaignOwned(planned, enforcementDay: enforcementDay)
-            let guarded = withGuard(burstFirst(owned), completedToday: guardCompletedToday,
+            let led = leadWithPreferredModality(owned, style: connectStyle, streakDay: streakDay)
+            let guarded = withGuard(burstFirst(led), completedToday: guardCompletedToday,
                                     totalDaysCompleted: totalDaysCompleted)
             return withPersonalDeclaration(guarded, progress: personalDeclarations)
         }
@@ -1235,7 +1334,8 @@ public struct TaskLibrary {
         // burstFirst first, THEN the declaration, so the declaration ends up at
         // the front and the Burst directly behind it. Reversing these lets
         // burstFirst hoist the Burst back over the declaration.
-        let guarded = withGuard(burstFirst(tasks), completedToday: guardCompletedToday,
+        let led = leadWithPreferredModality(tasks, style: connectStyle, streakDay: streakDay)
+        let guarded = withGuard(burstFirst(led), completedToday: guardCompletedToday,
                                 totalDaysCompleted: totalDaysCompleted)
         return withPersonalDeclaration(guarded, progress: personalDeclarations)
     }
