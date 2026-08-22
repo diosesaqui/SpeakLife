@@ -482,6 +482,47 @@ final class DailyChecklistTests: XCTestCase {
         }
     }
 
+    // MARK: - Retired tasks
+
+    /// Seven tasks were unlocked 146 times across 30 days and completed zero
+    /// times: every one of them an off-app instruction ("pray while walking",
+    /// "do something kind for someone") with no `navigationDestination`. They
+    /// were completable — people simply would not — so they were occupying
+    /// finite slots on a board where 77% of user-days end with nothing done.
+    ///
+    /// Pinned as a test because the natural instinct on seeing a thin Impact
+    /// phase is to add them back.
+    func testRetiredTasks_AreGoneFromEveryPhase() {
+        let retired: Set<String> = [
+            "worship_song", "study_deeper", "prayer_walk",
+            "encourage_someone", "pray_for_others", "serve_someone", "testimony_share"
+        ]
+        XCTAssertTrue(TaskLibrary.allTasks.filter { retired.contains($0.id) }.isEmpty,
+                      "Retired tasks are back in the library.")
+
+        withStandardTasks {
+            for day in [1, 5, 8, 12, 15, 20, 31, 35, 40, 50, 60, 100, 150] {
+                let ids = Set(TaskLibrary.getCoreTasksForStreak(day).map(\.id))
+                XCTAssertTrue(ids.isDisjoint(with: retired),
+                              "day \(day) served a retired task: \(ids.intersection(retired))")
+            }
+        }
+    }
+
+    /// Removing four of the five Impact tasks must not empty the phase — the
+    /// mix takes `prefix(1)` from it, so an empty array would silently serve a
+    /// shorter board rather than fail.
+    func testPhasesStillServeTasksAfterTheRetirements() {
+        withStandardTasks {
+            for day in [1, 8, 31, 100] {
+                XCTAssertGreaterThanOrEqual(TaskLibrary.getCoreTasksForStreak(day).count, 3,
+                                            "day \(day) board collapsed")
+            }
+        }
+        XCTAssertFalse(TaskLibrary.impactTasks.isEmpty)
+        XCTAssertFalse(TaskLibrary.growthTasks.isEmpty)
+    }
+
     // MARK: - Campaign-refreshed tasks
 
     /// The AI path builds a different task set. These tests are about the

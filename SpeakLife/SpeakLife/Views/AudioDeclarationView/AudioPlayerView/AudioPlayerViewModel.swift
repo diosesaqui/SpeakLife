@@ -617,6 +617,26 @@ final class AudioPlayerViewModel: NSObject, ObservableObject {
                     // Persist as "played" once the listener passes the 85% mark
                     if threshold >= 85 {
                         AudioProgressStore.shared.markPlayed(audio.id)
+
+                        // Credit the checklist's listen row.
+                        //
+                        // `StreakIntegrationManager` has always listened for
+                        // this, but nothing ever posted it: step 2 of the
+                        // integration instructions in that file ("In AudioPlayer
+                        // or audio playback completion") was the one of the four
+                        // that never got wired. The other three did, which is why
+                        // `read_devotional` completed for 412 people over 30 days
+                        // while `listen_audio` — unlocked for the same 558 —
+                        // completed for 157, and every one of those was someone
+                        // ticking the box by hand.
+                        //
+                        // Fires at 85% rather than at end-of-item because that is
+                        // already this app's bar for "played", right above. A
+                        // 20-minute track abandoned at 90% was still listened to.
+                        //
+                        // Idempotent: `completeTask` ignores an id that is
+                        // already done, so replays and repeats cost nothing.
+                        StreakIntegrationManager.notifyAudioCompleted()
                     }
 
                     print("📊 Audio Progress: \(threshold)% reached for \"\(audio.title)\"")

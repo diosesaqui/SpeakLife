@@ -1058,39 +1058,6 @@ public struct TaskLibrary {
             difficulty: .intermediate,
             minimumStreakDay: 10,
             estimatedMinutes: 8
-        ),
-        DailyTask(
-            id: "worship_song",
-            title: "Worship Through Music",
-            description: "Listen to or sing a worship song",
-            icon: "music.note",
-            category: .growth,
-            type: .worship,
-            difficulty: .beginner,
-            minimumStreakDay: 12,
-            estimatedMinutes: 6
-        ),
-        DailyTask(
-            id: "study_deeper",
-            title: "Deeper Bible Study",
-            description: "Study a passage using cross-references",
-            icon: "magnifyingglass",
-            category: .growth,
-            type: .study,
-            difficulty: .intermediate,
-            minimumStreakDay: 15,
-            estimatedMinutes: 12
-        ),
-        DailyTask(
-            id: "prayer_walk",
-            title: "Prayer Walk",
-            description: "Pray while walking, connecting body and spirit",
-            icon: "figure.walk",
-            category: .growth,
-            type: .worship,
-            difficulty: .intermediate,
-            minimumStreakDay: 20,
-            estimatedMinutes: 10
         )
     ]
     
@@ -1106,50 +1073,6 @@ public struct TaskLibrary {
             difficulty: .intermediate,
             minimumStreakDay: 31,
             estimatedMinutes: 5
-        ),
-        DailyTask(
-            id: "encourage_someone",
-            title: "Encourage Someone",
-            description: "Send an encouraging message to someone",
-            icon: "message.fill",
-            category: .impact,
-            type: .serve,
-            difficulty: .intermediate,
-            minimumStreakDay: 35,
-            estimatedMinutes: 7
-        ),
-        DailyTask(
-            id: "pray_for_others",
-            title: "Pray for Others",
-            description: "Intercede for family, friends, or community",
-            icon: "hands.and.sparkles.fill",
-            category: .impact,
-            type: .worship,
-            difficulty: .intermediate,
-            minimumStreakDay: 40,
-            estimatedMinutes: 8
-        ),
-        DailyTask(
-            id: "serve_someone",
-            title: "Act of Service",
-            description: "Do something kind for someone without expecting return",
-            icon: "hands.clap.fill",
-            category: .impact,
-            type: .serve,
-            difficulty: .advanced,
-            minimumStreakDay: 50,
-            estimatedMinutes: 15
-        ),
-        DailyTask(
-            id: "testimony_share",
-            title: "Share Your Testimony",
-            description: "Tell someone how God has worked in your life",
-            icon: "megaphone.fill",
-            category: .impact,
-            type: .share,
-            difficulty: .advanced,
-            minimumStreakDay: 60,
-            estimatedMinutes: 10
         )
     ]
     

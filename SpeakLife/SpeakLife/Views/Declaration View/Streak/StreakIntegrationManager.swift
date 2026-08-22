@@ -122,45 +122,24 @@ extension StreakIntegrationManager {
     }
 }
 
-// MARK: - Integration Instructions
-/*
- To integrate the enhanced streak system with existing app functionality:
- 
- 1. In DeclarationView.swift, replace the existing countdown timer with:
-    EnhancedStreakView()
- 
- 2. In AudioPlayer or audio playback completion:
-    StreakIntegrationManager.notifyAudioCompleted()
- 
- 3. In share functionality:
-    StreakIntegrationManager.notifyAffirmationShared()
- 
- 4. In devotional reading completion:
-    StreakIntegrationManager.notifyDevotionalCompleted()
- 
- 5. When user speaks/declares affirmations:
-    StreakIntegrationManager.notifyAffirmationSpoken()
- 
- 6. In your main app setup (likely SpeakLifeApp.swift), initialize:
-    StreakIntegrationManager.shared.setStreakViewModel(enhancedStreakViewModel)
- 
- Example usage in existing views:
- 
- // In a share button action:
- Button("Share") {
-     // existing share logic...
-     StreakIntegrationManager.notifyAffirmationShared()
- }
- 
- // In audio player completion:
- func audioDidFinishPlaying() {
-     // existing logic...
-     StreakIntegrationManager.notifyAudioCompleted()
- }
- 
- // In devotional view when user finishes reading:
- func markDevotionalComplete() {
-     // existing logic...
-     StreakIntegrationManager.notifyDevotionalCompleted()
- }
- */
+// MARK: - Where these are posted from
+//
+// This used to be a numbered "to integrate, do the following" checklist. Three
+// of its four steps were done and the fourth silently was not: nothing ever
+// posted `notifyAudioCompleted`, so the checklist's listen row could only be
+// ticked by hand. Over 30 days that showed up as `read_devotional` completing
+// for 412 people and `listen_audio` completing for 157, from the same 558 who
+// had both rows unlocked.
+//
+// Replaced with a map of the real call sites, so a missing one is visible here
+// rather than looking like an instruction someone might still get around to:
+//
+//   notifyAudioCompleted      → AudioPlayerViewModel.checkAndReportListeningProgress()
+//                               at the 85% threshold, alongside markPlayed
+//   notifyDevotionalCompleted → DevotionalView
+//   notifyAffirmationShared   → DeclarationContentView
+//   notifyAffirmationSpoken   → NOT POSTED. Its task id `speak_affirmation` is
+//                               not in TaskLibrary either, so the handler is
+//                               inert on both ends. Left in place rather than
+//                               deleted blind; wire it to a real task or remove
+//                               both halves together.
