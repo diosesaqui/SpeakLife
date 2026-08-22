@@ -23,8 +23,8 @@
 //    1. Mechanism   — how Jesus answered every problem. Deliberately AFTER,
 //                     because for anyone who answered it is no longer a claim
 //                     about what speaking does: it is the explanation of
-//                     something they just did. "You just spoke to it instead of
-//                     begging it to leave" beats promising they will.
+//                     something they just did. "That's authority. You spoke to
+//                     your mountain just like Jesus" beats promising they will.
 //    2. Proof       — the review wall, immediately before the ask.
 //    3. Paywall
 //    4. Time        — when their declaration arrives daily (terminal).
@@ -670,9 +670,13 @@ private extension UserPain {
     }
 }
 
-/// How Jesus answered — the arm's one teaching screen, and the framing never
-/// changes: He did not beg the problem to leave, He spoke to it. Only the last
-/// line moves, to land that on this user's actual situation.
+/// How Jesus answered — the arm's one teaching screen. The framing is
+/// authority: He spoke to the thing, and He handed the same authority over.
+/// Only the last line moves, to land that on this user's actual situation.
+///
+/// It used to be framed as expulsion — "He did not beg the problem to leave" —
+/// which silently broke on every pain the user wants to RECEIVE rather than be
+/// rid of. See the note on `headline`.
 ///
 /// The four parts land one at a time rather than as one wall — the stagger runs
 /// to ~1.35s so each block gets its own beat and the screen reads as a sequence
@@ -701,10 +705,28 @@ private struct DirectMechanismScreen: View {
         spokeDeclaration ? "WHAT YOU JUST DID" : "SPEAKLIFE · PRAY LIKE JESUS"
     }
 
+    /// Framed as authority, not as expulsion.
+    ///
+    /// This used to read "instead of begging it to leave", which only works when
+    /// the thing is present and unwanted. Roughly half of `UserPain` is the
+    /// opposite — abundance, identity, purpose, loneliness, nearness, family,
+    /// marriage are all things the user wants to RECEIVE, and nobody begs
+    /// provision to leave. On those the headline contradicted the line four
+    /// blocks below it: "you are enforcing supply God already put in your name"
+    /// is a claim on something arriving, not a request for something to go.
+    ///
+    /// `mechanismAfter` was already written on the enforcement frame throughout;
+    /// the headline was the last piece still on the older one. Authority holds
+    /// for all fifteen pains, because you can walk in it over lack, over a
+    /// prodigal, over a calling, and over sickness alike.
+    ///
+    /// "Just like Jesus" cashes the three beats directly beneath it — the storm,
+    /// the sickness, the grave are Jesus doing exactly this — so the headline
+    /// names what the user just did and the evidence for it sits right under it.
     private var headline: String {
         spokeDeclaration
-            ? "You just spoke to it\ninstead of begging\nit to leave."
-            : "Jesus never begged\nthe problem to leave.\nHe spoke to it."
+            ? "That's authority.\nYou spoke to your mountain\njust like Jesus."
+            : "This is authority.\nJesus spoke to the mountain.\nSo can you."
     }
 
     /// The line that lands Jesus' method on this user's exact situation. Past
