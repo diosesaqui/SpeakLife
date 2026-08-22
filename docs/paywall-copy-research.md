@@ -122,10 +122,14 @@ pain-led paywall cannot do. `UserPain.from(categoryRaw:)` is the exhaustive map;
 seven legacy segment values from the other arms all remain case names, so those
 arms round-trip unchanged.
 
-**Subhead:** the turn, aimed at that pain. E.g. for peace — *"Reading one more
-verse about peace hasn't quieted it. Jesus didn't ask the storm to settle. He
-spoke to it, and SpeakLife puts that same Word in your mouth every morning until
-your mind is what obeys."*
+**Subhead:** the turn, aimed at that pain — **two short sentences, 12 to 16
+words**: the dead end they're already in, then the move that isn't. For peace,
+*"Reading about peace hasn't quieted it. Speak it, the way Jesus spoke to the
+storm."* The product is deliberately not named; "Speak it" is the instruction
+and the whole pitch, and the rows underneath are where SpeakLife shows up. The
+first draft ran 38 to 45 words and got skimmed past at exactly the moment it
+needed to be read — 14pt body copy under a bold headline on a screen whose next
+job is a price cannot carry a paragraph.
 
 **Headline (no segment — settings, feature gates, `unsegmented`):** still pain-led,
 naming the one problem every user on this screen shares —

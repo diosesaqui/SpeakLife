@@ -163,40 +163,30 @@ enum UserPain: String, CaseIterable {
         }
     }
 
-    /// Subhead. Why what they have been doing hasn't worked, the mechanism that
-    /// does, and the outcome it produces for this exact pain.
+    /// Subhead. Two short sentences: the dead end they're already in, then the
+    /// move that isn't. Nothing else fits — this renders at 14pt under a bold
+    /// headline on a screen whose next job is a price, and a paragraph there
+    /// gets skimmed past at exactly the moment it needed to be read.
+    ///
+    /// The product is deliberately not named. "Speak it" is the instruction and
+    /// the whole pitch; the rows underneath are where SpeakLife shows up.
     var turn: String {
         switch self {
-        case .peace:
-            return "Reading one more verse about peace hasn't quieted it. Jesus didn't ask the storm to settle. He spoke to it, and SpeakLife puts that same Word in your mouth every morning until your mind is what obeys."
-        case .fear:
-            return "Talking yourself down buys you an hour, maybe a night. Jesus spoke to the thing His friends were terrified of and it went still, and SpeakLife puts God's promise of protection in your mouth every morning until fear stops deciding how your day goes."
-        case .health:
-            return "Hoping is not the same as standing on it. Jesus spoke to sickness and it left, and SpeakLife puts the healing God already paid for in your mouth every day until your body lines up with it."
-        case .abundance:
-            return "You've run the math a hundred times and it comes out the same. God is not working off your math. SpeakLife puts His promise to supply every need in your mouth every morning, until provision is what you expect instead of what you hope for."
-        case .identity:
-            return "Feeling better about yourself was never the fix, and it never holds. God already said what you are, and SpeakLife puts His words about you in your own mouth every day until they're the loudest thing you hear."
-        case .shame:
-            return "You cannot apologize your way out of something Jesus already paid for. He spoke over people the room had written off, and SpeakLife puts what He says about you in your mouth every day until you believe you're clean."
-        case .bondage:
-            return "Willpower has had its turn. Jesus spoke to things that had held people for years and they let go, and SpeakLife puts that same authority in your mouth every morning until it stops having a say."
-        case .purpose:
-            return "Waiting for clarity keeps you where you are. God ordered your steps before you took one, and SpeakLife puts that over your day until you're moving in it again."
-        case .joy:
-            return "You can't talk yourself into joy, but you can speak what God says over your life. SpeakLife puts His Word in your mouth every morning until the heaviness has nowhere to sit."
-        case .grief:
-            return "Nobody is asking you to be over it. Jesus wept, and then He spoke, and SpeakLife puts God's own comfort in your mouth every morning so you have something to hold on the days that come at you sideways."
-        case .loneliness:
-            return "You shouldn't have to carry this by yourself, and you don't. God says He is close to you right now, and SpeakLife puts that in your mouth every morning until being alone stops meaning being on your own."
-        case .marriage:
-            return "You can't speak for them, and God never asked you to. You can speak over your home, and SpeakLife puts God's promise over it in your mouth every morning while He works on what only He can."
-        case .family:
-            return "Worrying about them has never once helped them. God's promises cover the people you love, and SpeakLife puts those promises in your mouth every morning so you're standing for them instead of lying awake over them."
-        case .nearness:
-            return "Distance from God is not measured by how you feel. He says He is near, and SpeakLife puts His own words in your mouth every morning until He is nearer to you than the feeling that says otherwise."
-        case .more:
-            return "Years of asking, and the ground hasn't moved. Jesus never begged. He spoke with authority, and SpeakLife trains you to pray the same way, out loud, over the exact thing you've been asking about."
+        case .peace:      return "Reading about peace hasn't quieted it. Speak it, the way Jesus spoke to the storm."
+        case .fear:       return "Talking yourself down lasts a night. Speak God's protection over tomorrow instead."
+        case .health:     return "Hoping isn't the same as standing on it. Speak the healing the cross already paid for."
+        case .abundance:  return "God isn't working off your math. Speak His promise to supply every need."
+        case .identity:   return "Feeling better about yourself never holds. Speak what God already said you are."
+        case .shame:      return "You can't apologize for what Jesus already paid for. Speak what He settled."
+        case .bondage:    return "Willpower has had its turn. Speak to it with His authority instead."
+        case .purpose:    return "Waiting for clarity keeps you still. Speak the steps God already ordered."
+        case .joy:        return "You can't talk yourself into joy. Speak what God says over your day."
+        case .grief:      return "Nobody's asking you to be over it. Speak God's comfort into the hard mornings."
+        case .loneliness: return "You don't have to carry this alone. Speak God's nearness over your life."
+        case .marriage:   return "You can't speak for them. You can speak God's peace over your home."
+        case .family:     return "Worry has never once helped them. Speak God's promises over them instead."
+        case .nearness:   return "God feeling far isn't God being far. Speak what He says about being near."
+        case .more:       return "Jesus never begged. He spoke. Learn to pray the same way, out loud."
         }
     }
 
@@ -439,12 +429,12 @@ struct HighConversionPaywallView: View {
     private var resolvedSubheadline: String {
         if hasFreshPersonalDeclaration {
             if let burden = burdenStyleLabel {
-                return "Jesus stilled a sea with three words. Keep speaking your \(burden) every morning until it obeys."
+                return "Jesus stilled a sea with three words. Speak your \(burden) every morning until it obeys."
             }
-            return "Jesus stilled a sea with three words. Keep speaking yours every morning until it obeys."
+            return "Jesus stilled a sea with three words. Speak yours every morning until it obeys."
         }
         if let pain { return pain.turn }
-        return "Jesus never begged the storm to leave. He spoke to it. SpeakLife puts the exact Word for what you're facing in your mouth every morning, until it obeys."
+        return "Jesus never begged the storm to leave. He spoke to it. Speak yours the same way."
     }
     enum PlanType: String {
         case annual = "annual"
