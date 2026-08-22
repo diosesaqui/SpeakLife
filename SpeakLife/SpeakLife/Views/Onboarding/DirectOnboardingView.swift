@@ -626,13 +626,13 @@ private extension UserPain {
         case .abundance:  return "So you won't beg for provision. You'll speak God's supply over it."
         case .identity:   return "So you won't try to feel better about yourself. You'll speak what God already says you are."
         case .shame:      return "So you won't keep apologizing for it. You'll speak what the cross already settled."
-        case .bondage:    return "So you won't white-knuckle it. You'll speak to it with His authority."
+        case .bondage:    return "So you won't white-knuckle it. You'll speak the freedom Jesus bought you."
         case .purpose:    return "So you won't wonder about your calling. You'll speak it into motion."
         case .joy:        return "So you won't wait to feel better. You'll speak His joy over your day."
         case .grief:      return "So you won't carry it silently. You'll speak God's comfort over your heart."
         case .loneliness: return "So you won't sit in it alone. You'll speak God's nearness over your life."
         case .marriage:   return "So you won't argue it into shape. You'll speak God's peace over your home."
-        case .family:     return "So you won't lie awake over them. You'll speak God's promises over them."
+        case .family:     return "So you won't lie awake worrying. You'll speak God's promises over them."
         case .nearness:   return "So you won't chase a feeling. You'll speak what God says about being near you."
         case .more:       return "So you won't keep asking. You'll speak what God already said."
         }
@@ -658,14 +658,14 @@ private extension UserPain {
         case .abundance:  return "Say it again tomorrow, then make today's decision like the supply is there."
         case .identity:   return "Say it again tomorrow, then carry yourself like it's already true."
         case .shame:      return "Say it again tomorrow, then stop picking back up what He already took."
-        case .bondage:    return "Say it again tomorrow, then walk out of the room it used to own."
+        case .bondage:    return "Say it again tomorrow, then walk away the next time it calls."
         case .purpose:    return "Say it again tomorrow, then take the next step without waiting to feel ready."
         case .joy:        return "Say it again tomorrow, then go live today out loud."
         case .grief:      return "Say it again tomorrow, then let God carry the part you can't."
         case .loneliness: return "Say it again tomorrow, then reach out to one person today."
         case .marriage:   return "Say it again tomorrow, then love your house like peace already lives there."
-        case .family:     return "Say it again tomorrow, then stand for them instead of lying awake."
-        case .nearness:   return "Say it again tomorrow, then live today close, the way He already is."
+        case .family:     return "Say it again tomorrow, then pray for them instead of worrying about them."
+        case .nearness:   return "Say it again tomorrow, then go spend time with Him today."
         case .more:       return "Say it again tomorrow, then move on it. Faith that sits still isn't faith."
         }
     }
@@ -674,6 +674,11 @@ private extension UserPain {
 /// How Jesus answered — the arm's one teaching screen, and the framing never
 /// changes: He did not beg the problem to leave, He spoke to it. Only the last
 /// line moves, to land that on this user's actual situation.
+///
+/// The four parts land one at a time rather than as one wall — the stagger runs
+/// to ~1.35s so each block gets its own beat and the screen reads as a sequence
+/// instead of a page of text. The CTA is last on purpose: this is the arm's one
+/// teaching screen, and there is nothing to decide until it has been read.
 ///
 /// Four parts, in this order: He did it (the storm, the sickness, the grave),
 /// He said we do it (Mark 11:23-24, where saying is the part He names), what
@@ -720,7 +725,7 @@ private struct DirectMechanismScreen: View {
         VStack(spacing: 0) {
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 26) {
-                    Spacer().frame(height: size.height * 0.14)
+                    Spacer().frame(height: size.height * 0.10)
 
                     VStack(spacing: 12) {
                         Text(eyebrow)
@@ -735,7 +740,7 @@ private struct DirectMechanismScreen: View {
                             .multilineTextAlignment(.center)
                             .minimumScaleFactor(0.8)
                             .fixedSize(horizontal: false, vertical: true)
-                            .directStagger(v, delay: 0.08)
+                            .directStagger(v, delay: 0.12)
                     }
                     .padding(.horizontal, 28)
 
@@ -752,7 +757,7 @@ private struct DirectMechanismScreen: View {
                                     .fixedSize(horizontal: false, vertical: true)
                                 Spacer(minLength: 0)
                             }
-                            .directStagger(v, delay: 0.18 + Double(idx) * 0.08)
+                            .directStagger(v, delay: 0.30 + Double(idx) * 0.15)
                         }
                     }
                     .padding(20)
@@ -770,7 +775,7 @@ private struct DirectMechanismScreen: View {
                             .font(.system(size: 15, weight: .semibold, design: .rounded))
                             .foregroundColor(.white)
                             .multilineTextAlignment(.center)
-                            .directStagger(v, delay: 0.42)
+                            .directStagger(v, delay: 0.78)
 
                         VStack(spacing: 6) {
                             Text("\"Truly I tell you, if anyone says to this mountain, 'Go, throw yourself into the sea,' and does not doubt in their heart but believes that what they say will happen, it will be done for them. Therefore I tell you, whatever you ask for in prayer, believe that you have received it, and it will be yours.\"")
@@ -785,7 +790,7 @@ private struct DirectMechanismScreen: View {
                                 .font(.system(size: 12, weight: .medium, design: .rounded))
                                 .foregroundColor(DS.Palette.gold.opacity(0.85))
                         }
-                        .directStagger(v, delay: 0.48)
+                        .directStagger(v, delay: 0.90)
                     }
                     .padding(.horizontal, 28)
 
@@ -796,7 +801,7 @@ private struct DirectMechanismScreen: View {
                             .multilineTextAlignment(.center)
                             .lineSpacing(4)
                             .fixedSize(horizontal: false, vertical: true)
-                            .directStagger(v, delay: 0.56)
+                            .directStagger(v, delay: 1.10)
 
                         // The warrant for the second half of that line. Speaking
                         // and then living unchanged is the thing James names, so
@@ -813,7 +818,7 @@ private struct DirectMechanismScreen: View {
                                 .font(.system(size: 11, weight: .medium, design: .rounded))
                                 .foregroundColor(DS.Palette.gold.opacity(0.8))
                         }
-                        .directStagger(v, delay: 0.62)
+                        .directStagger(v, delay: 1.22)
                     }
                     .padding(.horizontal, 30)
 
@@ -823,7 +828,7 @@ private struct DirectMechanismScreen: View {
 
             DirectCTA(label: spokeDeclaration ? "Make This My Daily Habit →" : "Show Me How →") { onContinue() }
                 .padding(.bottom, 36)
-                .directStagger(v, delay: 0.70)
+                .directStagger(v, delay: 1.35)
         }
         .onAppear {
             AnalyticsService.shared.track("direct_mechanism_shown", parameters: [

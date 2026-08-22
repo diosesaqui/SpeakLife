@@ -182,14 +182,14 @@ enum UserPain: String, CaseIterable {
         case .abundance:  return "Declare God's supply over your finances, then decide like the provision is there."
         case .identity:   return "Declare what God already said you are, then carry yourself like it's true."
         case .shame:      return "Declare what the cross already settled, then stop picking it back up."
-        case .bondage:    return "Declare His authority over it, then walk out of the room it owned."
+        case .bondage:    return "Declare the freedom Jesus bought you, then walk away the next time."
         case .purpose:    return "Declare the steps God already ordered, then take the next one."
         case .joy:        return "Declare God's joy over your day, then go live it out loud."
         case .grief:      return "Declare God's comfort over your heart, then let Him carry what you can't."
         case .loneliness: return "Declare God's nearness over your life, then stop facing it on your own."
         case .marriage:   return "Declare God's peace over your home, then love it like peace lives there."
-        case .family:     return "Declare God's promises over them, then stand instead of lying awake."
-        case .nearness:   return "Declare what God says about being near you, then draw near back."
+        case .family:     return "Declare God's promises over the people you love, then pray instead of worrying."
+        case .nearness:   return "Declare that God is near you, then go spend time with Him today."
         case .more:       return "Declare God's Word with the authority Jesus used, then act on it."
         }
     }
