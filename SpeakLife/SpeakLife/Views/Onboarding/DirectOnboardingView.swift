@@ -153,6 +153,21 @@ struct DirectOnboardingView: View {
                 pain: pain ?? .more,
                 spokeDeclaration: savedDeclaration != nil
             ) { advance() }
+        case .connectStyle:
+            // The one question in this arm that is not about their pain, and
+            // the only one whose answer changes the product rather than the
+            // copy: it orders the rows on their daily checklist from tomorrow
+            // on. Placed after the mechanism because the mechanism is the
+            // payoff — interrupting declaration → explanation to ask a setup
+            // question would spend the arm's best moment — and before the
+            // review wall so it is asked while they are still reading rather
+            // than deciding.
+            SurveyExtendedQuizScreen(
+                size: size,
+                flow: "direct",
+                question: .connectStyle,
+                selection: $responses.connectStyle
+            ) { advance() }
         case .testimonials:
             TestimonialWallView(size: size, flow: "direct") { advance() }
         case .paywall:
@@ -255,6 +270,11 @@ struct DirectOnboardingView: View {
         appState.selectedNotificationCategories = category.rawValue
         UserDefaults.standard.set(category.rawValue, forKey: "selectedCategory")
         UserPreferencesTracker.shared.trackCategorySelection(category.rawValue)
+        // The answer has to outlive onboarding to be worth asking. It lived on
+        // `SurveyResponses` and died with the flow in every other arm, which is
+        // why the question was collected for months and read by nothing.
+        // `TaskLibrary` reads this key when it builds the day.
+        ConnectStyle.store(responses.connectStyle.flatMap(ConnectStyle.init(rawValue:)))
         declarationStore.choose(category) { _ in }
         // Mirrors the other arms: the personal-declaration push is scheduled off
         // this flag, so an arm that captures one and doesn't set it silently
@@ -290,6 +310,10 @@ struct DirectOnboardingView: View {
             // free-text open is too heavy an ask for frame one.
             "pain_source": declarationSource != "none" ? declarationSource : (responses.heaviestBurden != nil ? "picker" : "none"),
             "seeded_category": category.rawValue,
+            // Now a product input, not just a stat: it orders their checklist
+            // rows from tomorrow on, so its distribution is worth reading
+            // against completion rather than on its own.
+            "connect_style": responses.connectStyle ?? "unknown",
             "notification_time": responses.notificationTime?.rawValue ?? "unknown",
             // The arm's payoff moment. Carried onto completion so conversion
             // can be cut by whether they actually reached a declaration of
@@ -357,9 +381,10 @@ enum DirectStep: Int, CaseIterable {
     case painFallback     = 1  // the picker, ONLY when the declaration produced nothing
     case declarationRetry = 2  // the same feature re-asked narrow, scoped to what they picked
     case mechanism        = 3  // how Jesus answered — after, so it explains what just happened
-    case testimonials     = 4  // the review wall, right before the ask
-    case paywall          = 5
-    case notificationTime = 6  // terminal — completes onboarding
+    case connectStyle     = 4  // how they connect with scripture — orders their daily rows
+    case testimonials     = 5  // the review wall, right before the ask
+    case paywall          = 6
+    case notificationTime = 7  // terminal — completes onboarding
 
     /// Bumped whenever the raw values are renumbered, a step is inserted, or a
     /// step changes into a materially different screen — so events from two
@@ -374,7 +399,9 @@ enum DirectStep: Int, CaseIterable {
     /// 3 → 4: the picker now leads into a second, narrower declaration ask
     /// rather than straight to the mechanism. Schema-3 data is not comparable
     /// step-for-step.
-    static let flowSchema = 4
+    /// 4 → 5: the connect-style question was added between the mechanism and
+    /// the review wall, so every step after it is renumbered.
+    static let flowSchema = 5
 
     /// Stable analytics name. Funnels and breakdowns are built on this, not on
     /// the raw Int — a `step_name` of "mechanism" is readable in PostHog where
@@ -385,6 +412,7 @@ enum DirectStep: Int, CaseIterable {
         case .painFallback:     return "pain_fallback"
         case .declarationRetry: return "personal_declaration_retry"
         case .mechanism:        return "mechanism"
+        case .connectStyle:     return "connect_style"
         case .testimonials:     return "testimonials"
         case .paywall:          return "paywall"
         case .notificationTime: return "notification_time"
