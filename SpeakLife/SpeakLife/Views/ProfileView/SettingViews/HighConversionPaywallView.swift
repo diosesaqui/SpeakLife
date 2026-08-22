@@ -567,7 +567,11 @@ struct HighConversionPaywallView: View {
         }
     }
 
-    // MARK: - Social Proof (stars only — headline already covers 100K stat)
+    // MARK: - Social Proof
+    // The rating is the only claim made here. It is verifiable on the App Store
+    // listing, which a subscriber count is not — and an unverifiable number
+    // sitting next to a price is the kind of thing that costs trust exactly
+    // where the screen can least afford it.
     private var starsOnlyBanner: some View {
         HStack(spacing: 4) {
             HStack(spacing: 2) {
@@ -593,16 +597,6 @@ struct HighConversionPaywallView: View {
             ForEach(Array(solutionRows.enumerated()), id: \.offset) { _, row in
                 HCPainSolutionRow(icon: row.icon, title: row.title, detail: row.detail)
             }
-
-            HStack(spacing: 8) {
-                Image(systemName: "person.2.fill")
-                    .font(.system(size: 13))
-                    .foregroundColor(.white.opacity(0.55))
-                Text("\(SocialProof.believersCount) believers speaking life daily")
-                    .font(.system(size: 13, weight: .medium))
-                    .foregroundColor(.white.opacity(0.55))
-            }
-            .padding(.top, 2)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, DS.Spacing.lg)

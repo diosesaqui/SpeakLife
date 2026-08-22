@@ -123,11 +123,15 @@ it steps on the warmest moment in the funnel.
 **Solution rows (beat 3):** the same four capabilities every time — declarations,
 audio, the 30-day plan, Bible chat — each with a title and a detail line written
 against the named pain. For peace: *Speak peace, don't just read it* · *Audio for
-the loud hours* · *Caught before it spirals* · *An answer at 3am*. The social-proof
-line (100,000+ believers) drops to a quiet footer under the rows instead of
-competing as a fifth "benefit". The clean layout carries a titles-only three-row
-version — naming a problem and then showing nothing but a price is a worse screen
-than the one it replaced.
+the loud hours* · *Caught before it spirals* · *An answer at 3am*. The clean layout
+carries a titles-only three-row version — naming a problem and then showing nothing
+but a price is a worse screen than the one it replaced.
+
+**Social proof is the 4.9 App Store rating only.** The "100,000+ believers" line
+is gone from this screen: the rating is verifiable on the listing and a subscriber
+count is not, and an unverifiable number sitting next to a price costs trust
+exactly where the screen can least afford it. The stars banner under the headline
+carries it; there is no second social-proof line competing with the mechanics.
 
 **CTA:** trial-eligible → **"Try 7 Days Free"** (real StoreKit day count);
 otherwise **"Continue"**. (Control keeps "Start Free Trial" / "Start Taking Ground →".)
