@@ -14,6 +14,12 @@
 //    0a. Picker     — ONLY if that produced nothing (skipped, declined,
 //                     unmatchable). Seven taps, so a user who wouldn't type
 //                     still leaves with a seeded feed instead of a generic app.
+//    0b. Retry      — the same feature re-asked narrow, scoped to the tap:
+//                     "You said your mind won't stop racing. What's it racing
+//                     about?" A blank open question asks for a summary of your
+//                     life; this asks for one fact, which is a much smaller
+//                     thing to give and is aimed at exactly the users about to
+//                     leave with nothing. Skipping again is fine.
 //    1. Mechanism   — how Jesus answered every problem. Deliberately AFTER,
 //                     because for anyone who answered it is no longer a claim
 //                     about what speaking does: it is the explanation of
@@ -61,6 +67,11 @@ struct DirectOnboardingView: View {
     /// payoff this arm is built around.
     @State private var savedDeclaration: PersonalDeclaration? = nil
 
+    /// Which ask actually produced the declaration: the open question on frame
+    /// one, the narrow retry after the picker, or neither. This is the number
+    /// that says whether the recovery ladder is worth its screens.
+    @State private var declarationSource = "none"
+
     /// Funnel entry time, for `total_duration_seconds`. Set in onAppear rather
     /// than at init so it measures time on screen, not time since the struct
     /// was built.
@@ -102,6 +113,7 @@ struct DirectOnboardingView: View {
                 prompt: "What brought you\nhere today?"
             ) { declaration in
                 savedDeclaration = declaration
+                if declaration != nil { declarationSource = "open" }
                 advance()
             }
         case .painFallback:
@@ -110,6 +122,25 @@ struct DirectOnboardingView: View {
             // category at all: generic feed, generic notifications, generic
             // paywall. One tap is the cheapest possible way to recover them.
             DirectPainScreen(size: size, responses: responses) { advance() }
+        case .declarationRetry:
+            // The same feature, re-asked narrow. The open question was declined,
+            // so this one is scoped to what they just tapped and asks for a
+            // single fact rather than a summary of their life — a much smaller
+            // ask, aimed at the users most likely to leave with nothing.
+            // Skipping again is still fine; it just lands on the mechanism.
+            PersonalDeclarationOnboardingView(
+                viewModel: DIContainer.shared.makePersonalDeclarationViewModel(),
+                size: size,
+                // Distinct flow tag so the retry's take-rate is separable from
+                // the frame-one ask's — the whole point of running it.
+                flow: "direct_retry",
+                prompt: DirectPain.prompt(for: responses.heaviestBurden),
+                contextLine: DirectPain.echoLine(for: responses.heaviestBurden)
+            ) { declaration in
+                savedDeclaration = declaration
+                if declaration != nil { declarationSource = "retry" }
+                advance()
+            }
         case .mechanism:
             DirectMechanismScreen(
                 size: size,
@@ -171,11 +202,14 @@ struct DirectOnboardingView: View {
             applyResponsesAndComplete()
         default:
             var nextRaw = currentStep.rawValue + 1
-            // The picker is a recovery step, not part of the flow. A user whose
-            // declaration landed has already told us more than it could, so
-            // they never see it.
-            if DirectStep(rawValue: nextRaw) == .painFallback, savedDeclaration != nil {
-                nextRaw += 1
+            // The picker and the retry are both recovery, not part of the flow.
+            // A user whose declaration landed has already told us more than
+            // either could, so they skip straight past both.
+            if savedDeclaration != nil {
+                while let candidate = DirectStep(rawValue: nextRaw),
+                      candidate == .painFallback || candidate == .declarationRetry {
+                    nextRaw += 1
+                }
             }
             guard let next = DirectStep(rawValue: nextRaw) else {
                 assertionFailure("DirectOnboardingView.advance(): no successor for \(currentStep). .notificationTime should be terminal.")
@@ -227,9 +261,13 @@ struct DirectOnboardingView: View {
         AnalyticsService.shared.track("direct_onboarding_completed", parameters: [
             "goal_word": goalWord.rawValue,
             "burden": responses.heaviestBurden?.rawValue ?? "unknown",
-            // Which route the pain arrived by. If the fallback carries a large
-            // share, the free-text open is too heavy an ask for frame one.
-            "pain_source": savedDeclaration != nil ? "declaration" : (responses.heaviestBurden != nil ? "picker" : "none"),
+            // How far down the recovery ladder this user had to go. "open" is
+            // the frame-one ask landing; "retry" is the narrow re-ask rescuing
+            // someone who declined it; "picker" is a tap and nothing more;
+            // "none" is a user who gave us nothing at all. A large "retry"
+            // share earns the extra screen. A large "picker" share says the
+            // free-text open is too heavy an ask for frame one.
+            "pain_source": declarationSource != "none" ? declarationSource : (responses.heaviestBurden != nil ? "picker" : "none"),
             "seeded_category": category.rawValue,
             "notification_time": responses.notificationTime?.rawValue ?? "unknown",
             // The arm's payoff moment. Carried onto completion so conversion
@@ -294,12 +332,13 @@ struct DirectOnboardingView: View {
 // MARK: - Flow Steps
 
 enum DirectStep: Int, CaseIterable {
-    case declaration     = 0  // "What brought you here?" — free text, frame one
-    case painFallback    = 1  // the picker, ONLY when the declaration produced nothing
-    case mechanism       = 2  // how Jesus answered — after, so it explains what just happened
-    case testimonials    = 3  // the review wall, right before the ask
-    case paywall         = 4
-    case notificationTime = 5 // terminal — completes onboarding
+    case declaration      = 0  // "What brought you here?" — free text, frame one
+    case painFallback     = 1  // the picker, ONLY when the declaration produced nothing
+    case declarationRetry = 2  // the same feature re-asked narrow, scoped to what they picked
+    case mechanism        = 3  // how Jesus answered — after, so it explains what just happened
+    case testimonials     = 4  // the review wall, right before the ask
+    case paywall          = 5
+    case notificationTime = 6  // terminal — completes onboarding
 
     /// Bumped whenever the raw values are renumbered, a step is inserted, or a
     /// step changes into a materially different screen — so events from two
@@ -310,8 +349,11 @@ enum DirectStep: Int, CaseIterable {
     /// canned one-of-seven preview.
     /// 2 → 3: the declaration moved to frame one and the picker became a
     /// fallback behind it, so the step order and the drop-off shape are both
-    /// different. Schema-2 data is not comparable step-for-step.
-    static let flowSchema = 3
+    /// different.
+    /// 3 → 4: the picker now leads into a second, narrower declaration ask
+    /// rather than straight to the mechanism. Schema-3 data is not comparable
+    /// step-for-step.
+    static let flowSchema = 4
 
     /// Stable analytics name. Funnels and breakdowns are built on this, not on
     /// the raw Int — a `step_name` of "mechanism" is readable in PostHog where
@@ -320,6 +362,7 @@ enum DirectStep: Int, CaseIterable {
         switch self {
         case .declaration:      return "personal_declaration"
         case .painFallback:     return "pain_fallback"
+        case .declarationRetry: return "personal_declaration_retry"
         case .mechanism:        return "mechanism"
         case .testimonials:     return "testimonials"
         case .paywall:          return "paywall"
@@ -383,6 +426,33 @@ private struct DirectPain: Identifiable {
     let icon: String
     let line: String
 
+    /// The same line handed back in second person on the retry ask. Written out
+    /// rather than derived from `line`: turning "I'm off track from my calling"
+    /// into "you're off track from your calling" is not something string
+    /// surgery does without producing something a person would never say.
+    let echo: String
+
+    /// The retry's question, written to pick up from `echo` without repeating
+    /// it — "your mind won't stop racing" is answered by "what's it racing
+    /// about?", not by asking about their mind a second time.
+    ///
+    /// This is the narrow, concrete version of the open question they already
+    /// declined. Someone who stalls on a blank "what brought you here" will
+    /// often answer "what's it racing about?", because it asks for one fact
+    /// rather than a summary of their life.
+    let prompt: String
+
+    /// The receipt and the retry question for a picked burden.
+    static func echoLine(for burden: HeaviestBurden?) -> String? {
+        guard let burden else { return nil }
+        return all.first(where: { $0.burden == burden })?.echo
+    }
+
+    static func prompt(for burden: HeaviestBurden?) -> String? {
+        guard let burden else { return nil }
+        return all.first(where: { $0.burden == burden })?.prompt
+    }
+
     /// The pain a matched declaration belongs to, read back out of the
     /// category the matcher assigned. This is what lets the picker be a
     /// fallback instead of a required step: a user who described their
@@ -413,13 +483,27 @@ private struct DirectPain: Identifiable {
     }
 
     static let all: [DirectPain] = [
-        .init(burden: .peace,     icon: "🕊", line: "My mind won't stop racing"),
-        .init(burden: .health,    icon: "🌿", line: "My body needs healing"),
-        .init(burden: .abundance, icon: "💰", line: "The money isn't there"),
-        .init(burden: .identity,  icon: "👑", line: "I don't feel good enough"),
-        .init(burden: .joy,       icon: "☀️", line: "I feel flat and empty"),
-        .init(burden: .purpose,   icon: "🧭", line: "I'm off track from my calling"),
-        .init(burden: .allOfIt,   icon: "⚡", line: "I just want more of God"),
+        .init(burden: .peace,     icon: "🕊", line: "My mind won't stop racing",
+              echo: "You said your mind won't stop racing.",
+              prompt: "What's it racing about?"),
+        .init(burden: .health,    icon: "🌿", line: "My body needs healing",
+              echo: "You said your body needs healing.",
+              prompt: "What are you believing God to heal?"),
+        .init(burden: .abundance, icon: "💰", line: "The money isn't there",
+              echo: "You said the money isn't there.",
+              prompt: "What do you need God to cover?"),
+        .init(burden: .identity,  icon: "👑", line: "I don't feel good enough",
+              echo: "You said you don't feel good enough.",
+              prompt: "What's making you feel that way?"),
+        .init(burden: .joy,       icon: "☀️", line: "I feel flat and empty",
+              echo: "You said you're feeling flat and empty.",
+              prompt: "What's been draining you?"),
+        .init(burden: .purpose,   icon: "🧭", line: "I'm off track from my calling",
+              echo: "You said you're off track from your calling.",
+              prompt: "Where do you need God to open a door?"),
+        .init(burden: .allOfIt,   icon: "⚡", line: "I just want more of God",
+              echo: "You said you want more of God.",
+              prompt: "What are you believing Him for?"),
     ]
 }
 
