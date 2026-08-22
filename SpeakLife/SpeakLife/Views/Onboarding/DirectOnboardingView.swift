@@ -6,26 +6,36 @@
 //  thief, a promise, a nearness statement — and only asks the user what is
 //  actually wrong five or six screens in. This one inverts that completely:
 //
-//    0. Pain      — "What brought you here?" on the very first frame, before
-//                   a single word of pitch. The answer seeds everything.
-//    1. Mechanism — how Jesus handled the exact thing they just named: He
-//                   never begged it to leave, He spoke to it.
-//    2. Payoff    — their personalized declaration, on screen, said out loud.
-//    3. Proof     — the review wall, immediately before the ask.
-//    4. Paywall
-//    5. Time      — when their declaration arrives daily (terminal).
+//    0. Declaration — "What brought you here today?" on the very first frame,
+//                     asked open, answered in their own words, and answered by
+//                     the product: a declaration matched to their actual
+//                     situation, with the verse it stands on and "read it out
+//                     loud right now."
+//    0a. Picker     — ONLY if that produced nothing (skipped, declined,
+//                     unmatchable). Seven taps, so a user who wouldn't type
+//                     still leaves with a seeded feed instead of a generic app.
+//    0b. Retry      — the same feature re-asked narrow, scoped to the tap:
+//                     "You said your mind won't stop racing. What's it racing
+//                     about?" A blank open question asks for a summary of your
+//                     life; this asks for one fact, which is a much smaller
+//                     thing to give and is aimed at exactly the users about to
+//                     leave with nothing. Skipping again is fine.
+//    1. Mechanism   — how Jesus answered every problem. Deliberately AFTER,
+//                     because for anyone who answered it is no longer a claim
+//                     about what speaking does: it is the explanation of
+//                     something they just did. "You just spoke to it instead of
+//                     begging it to leave" beats promising they will.
+//    2. Proof       — the review wall, immediately before the ask.
+//    3. Paywall
+//    4. Time        — when their declaration arrives daily (terminal).
 //
-//  That is the whole flow. Four screens before the ask instead of sixteen.
-//  Nothing here exists that does not either (a) personalize the product to
-//  the user's pain, (b) explain the one mechanism the app runs on, or (c)
-//  close. There is no extended quiz, no plan-building loader, no product
-//  capability recap, no pledge, no rating interstitial — those are exactly
-//  the screens this arm is testing the absence of.
-//
-//  The bet: a user who names their pain, hears how Jesus answered it, and
-//  speaks a declaration over it inside 45 seconds arrives at the paywall with
-//  more intent than one walked through a sixteen-screen quiz, and far more of
-//  them arrive at all.
+//  Screen zero is the arm. There is nothing in front of it: no logo, no scene,
+//  no pitch, no category list. The first thing that happens is the product
+//  doing its one job on the user's real situation, and everything after it is
+//  interpreting or selling what already happened. The picker exists only so
+//  that a refusal to type is not also a refusal to be personalized, and the
+//  pain it captures is read back out of the matcher's own classification for
+//  everyone else, so nobody is asked the same question twice in two formats.
 //
 //  Mechanically it still writes the same `SurveyResponses.heaviestBurden` the
 //  other arms write, so the shared back-half screens, the category seeding,
@@ -49,12 +59,24 @@ struct DirectOnboardingView: View {
     // seeding logic work unchanged. Only `heaviestBurden` (the opening
     // question) and `notificationTime` (the terminal screen) are ever set.
     @StateObject private var responses = SurveyResponses()
-    @State private var currentStep: DirectStep = .pain
+    @State private var currentStep: DirectStep = .declaration
 
-    /// Whether the user tapped "I Said It Out Loud" on the declaration screen.
-    /// Lifted out of that screen so completion (and therefore conversion) can
-    /// be split by the one micro-commitment this arm is built around.
-    @State private var spokeDeclaration = false
+    /// The declaration the user got back after describing their situation, or
+    /// nil if they skipped or the match failed. Kept so completion (and
+    /// therefore conversion) can be split by whether they actually reached the
+    /// payoff this arm is built around.
+    @State private var savedDeclaration: PersonalDeclaration? = nil
+
+    /// Which ask actually produced the declaration: the open question on frame
+    /// one, the narrow retry after the picker, or neither. This is the number
+    /// that says whether the recovery ladder is worth its screens.
+    @State private var declarationSource = "none"
+
+    /// The resolved pain, at the matcher's granularity rather than the picker's
+    /// seven. Set from the declaration's own category when there is one, from
+    /// the picked burden when there isn't. Drives the mechanism screen's copy
+    /// and the segment the paywall reads.
+    @State private var pain: UserPain? = nil
 
     /// Funnel entry time, for `total_duration_seconds`. Set in onAppear rather
     /// than at init so it measures time on screen, not time since the struct
@@ -72,15 +94,6 @@ struct DirectOnboardingView: View {
                 ))
                 .id(currentStep.rawValue)
 
-            if let idx = currentStep.valueScreenIndex {
-                VStack {
-                    DirectProgressBar(current: idx, total: DirectStep.totalValueScreens)
-                        .padding(.horizontal, 28)
-                        .padding(.top, size.height * 0.065)
-                    Spacer()
-                }
-                .allowsHitTesting(false)
-            }
         }
         .ignoresSafeArea()
         .onAppear {
@@ -94,15 +107,51 @@ struct DirectOnboardingView: View {
     @ViewBuilder
     private var currentStepView: some View {
         switch currentStep {
-        case .pain:
-            DirectPainScreen(size: size, responses: responses) { advance() }
-        case .mechanism:
-            DirectMechanismScreen(size: size, burden: responses.heaviestBurden ?? .peace) { advance() }
         case .declaration:
-            DirectDeclarationScreen(
+            // Frame one, and the real feature rather than a demo of it. The
+            // question IS "what brought you here" — asked open, in their own
+            // words, so the answer is a situation the matcher can work with
+            // instead of a category they picked off a list.
+            PersonalDeclarationOnboardingView(
+                viewModel: DIContainer.shared.makePersonalDeclarationViewModel(),
                 size: size,
-                burden: responses.heaviestBurden ?? .peace,
-                onSpoken: { spokeDeclaration = true }
+                flow: "direct",
+                prompt: "What brought you\nhere today?"
+            ) { declaration in
+                savedDeclaration = declaration
+                if declaration != nil { declarationSource = "open" }
+                advance()
+            }
+        case .painFallback:
+            // Only reached when the declaration produced nothing — skipped,
+            // declined, or unmatchable. Without it those users would carry no
+            // category at all: generic feed, generic notifications, generic
+            // paywall. One tap is the cheapest possible way to recover them.
+            DirectPainScreen(size: size, responses: responses) { advance() }
+        case .declarationRetry:
+            // The same feature, re-asked narrow. The open question was declined,
+            // so this one is scoped to what they just tapped and asks for a
+            // single fact rather than a summary of their life — a much smaller
+            // ask, aimed at the users most likely to leave with nothing.
+            // Skipping again is still fine; it just lands on the mechanism.
+            PersonalDeclarationOnboardingView(
+                viewModel: DIContainer.shared.makePersonalDeclarationViewModel(),
+                size: size,
+                // Distinct flow tag so the retry's take-rate is separable from
+                // the frame-one ask's — the whole point of running it.
+                flow: "direct_retry",
+                prompt: DirectPain.prompt(for: responses.heaviestBurden),
+                contextLine: DirectPain.echoLine(for: responses.heaviestBurden)
+            ) { declaration in
+                savedDeclaration = declaration
+                if declaration != nil { declarationSource = "retry" }
+                advance()
+            }
+        case .mechanism:
+            DirectMechanismScreen(
+                size: size,
+                pain: pain ?? .more,
+                spokeDeclaration: savedDeclaration != nil
             ) { advance() }
         case .testimonials:
             TestimonialWallView(size: size, flow: "direct") { advance() }
@@ -123,15 +172,31 @@ struct DirectOnboardingView: View {
             "flow_schema": DirectStep.flowSchema
         ])
 
-        // Leaving the opening question: stamp the segment so every downstream
-        // paywall event carries a meaningful segment for this arm, and pin the
-        // pain as a person property so EVERY later event — trial_started,
-        // subscription_started, retention — can be split by what the user
-        // actually came in carrying. This arm is organized around that answer,
-        // so it is worth knowing at the person level, not just in-flow.
-        if currentStep == .pain, let burden = responses.heaviestBurden {
-            appState.onboardingSegment = "direct_\(burden.shortLabel)"
-            AnalyticsService.shared.setUserProperty("onboarding_burden", value: burden.shortLabel)
+        // Leaving either declaration ask: read the pain back out of the match.
+        // The matcher already classified what they wrote — at its own
+        // granularity, not the picker's seven — so a user who answered never
+        // has to be asked a second time in a different format, and never gets
+        // rounded off to a bucket that doesn't fit them.
+        if currentStep == .declaration || currentStep == .declarationRetry,
+           let declaration = savedDeclaration {
+            let resolved = UserPain.from(categoryRaw: declaration.categoryRaw)
+            pain = resolved
+            responses.heaviestBurden = resolved.burden
+        }
+
+        // The picker only speaks the coarse vocabulary, so widen it back out.
+        if currentStep == .painFallback, let burden = responses.heaviestBurden, pain == nil {
+            pain = UserPain.from(segment: burden.shortLabel)
+        }
+
+        // Whichever way the pain arrived, stamp the segment so every downstream
+        // paywall event carries a meaningful one, and pin it as a person
+        // property so EVERY later event — trial_started, subscription_started,
+        // retention — can be split by what the user actually came in carrying.
+        if let pain,
+           currentStep == .declaration || currentStep == .painFallback || currentStep == .declarationRetry {
+            appState.onboardingSegment = "direct_\(pain.rawValue)"
+            AnalyticsService.shared.setUserProperty("onboarding_burden", value: pain.rawValue)
         }
 
         // Leaving the review wall is the last pre-paywall milestone, which is
@@ -152,7 +217,17 @@ struct DirectOnboardingView: View {
         case .notificationTime:
             applyResponsesAndComplete()
         default:
-            guard let next = DirectStep(rawValue: currentStep.rawValue + 1) else {
+            var nextRaw = currentStep.rawValue + 1
+            // The picker and the retry are both recovery, not part of the flow.
+            // A user whose declaration landed has already told us more than
+            // either could, so they skip straight past both.
+            if savedDeclaration != nil {
+                while let candidate = DirectStep(rawValue: nextRaw),
+                      candidate == .painFallback || candidate == .declarationRetry {
+                    nextRaw += 1
+                }
+            }
+            guard let next = DirectStep(rawValue: nextRaw) else {
                 assertionFailure("DirectOnboardingView.advance(): no successor for \(currentStep). .notificationTime should be terminal.")
                 onComplete()
                 return
@@ -169,12 +244,22 @@ struct DirectOnboardingView: View {
         if let style = responses.primaryDeclarationStyle {
             appState.selectedDeclarationStyles = [style.rawValue]
         }
-        let category = goalWord.declarationCategory
+        // The matcher's own category beats the one derived from the burden: it
+        // classified what the user actually wrote, where the burden is that
+        // answer rounded to one of seven. Only falls back to the goal word for
+        // users who never got a declaration.
+        let category = savedDeclaration
+            .flatMap { DeclarationCategory(rawValue: $0.categoryRaw) }
+            ?? goalWord.declarationCategory
         let notificationCategoriesSet: Set<DeclarationCategory> = [category]
         appState.selectedNotificationCategories = category.rawValue
         UserDefaults.standard.set(category.rawValue, forKey: "selectedCategory")
         UserPreferencesTracker.shared.trackCategorySelection(category.rawValue)
         declarationStore.choose(category) { _ in }
+        // Mirrors the other arms: the personal-declaration push is scheduled off
+        // this flag, so an arm that captures one and doesn't set it silently
+        // drops that notification for every user in the arm.
+        appState.hasPersonalDeclaration = savedDeclaration != nil
         if let notifTime = responses.notificationTime {
             appState.startTimeIndex = notifTime.startTimeIndex
             appState.endTimeIndex   = notifTime.endTimeIndex
@@ -191,11 +276,25 @@ struct DirectOnboardingView: View {
         }
         AnalyticsService.shared.track("direct_onboarding_completed", parameters: [
             "goal_word": goalWord.rawValue,
+            // Both granularities: `pain` is what the matcher actually resolved
+            // (fifteen values), `burden` is that rounded to the seven the other
+            // arms speak, so this arm can be compared against them without
+            // losing the detail that makes it different.
+            "pain": pain?.rawValue ?? "unknown",
             "burden": responses.heaviestBurden?.rawValue ?? "unknown",
+            // How far down the recovery ladder this user had to go. "open" is
+            // the frame-one ask landing; "retry" is the narrow re-ask rescuing
+            // someone who declined it; "picker" is a tap and nothing more;
+            // "none" is a user who gave us nothing at all. A large "retry"
+            // share earns the extra screen. A large "picker" share says the
+            // free-text open is too heavy an ask for frame one.
+            "pain_source": declarationSource != "none" ? declarationSource : (responses.heaviestBurden != nil ? "picker" : "none"),
+            "seeded_category": category.rawValue,
             "notification_time": responses.notificationTime?.rawValue ?? "unknown",
-            // The arm's signature micro-commitment. Carried onto completion so
-            // conversion can be cut by whether they actually spoke it.
-            "spoke_declaration": spokeDeclaration as NSNumber,
+            // The arm's payoff moment. Carried onto completion so conversion
+            // can be cut by whether they actually reached a declaration of
+            // their own rather than skipping past it.
+            "set_personal_declaration": (savedDeclaration != nil) as NSNumber,
             "total_duration_seconds": elapsedSeconds,
             "flow_schema": DirectStep.flowSchema  // joins with direct_step_completed
         ])
@@ -254,61 +353,42 @@ struct DirectOnboardingView: View {
 // MARK: - Flow Steps
 
 enum DirectStep: Int, CaseIterable {
-    case pain            = 0  // "What brought you here?" — first frame, no preamble
-    case mechanism       = 1  // how Jesus answered that exact thing
-    case declaration     = 2  // their declaration, spoken out loud
-    case testimonials    = 3  // the review wall, right before the ask
-    case paywall         = 4
-    case notificationTime = 5 // terminal — completes onboarding
+    case declaration      = 0  // "What brought you here?" — free text, frame one
+    case painFallback     = 1  // the picker, ONLY when the declaration produced nothing
+    case declarationRetry = 2  // the same feature re-asked narrow, scoped to what they picked
+    case mechanism        = 3  // how Jesus answered — after, so it explains what just happened
+    case testimonials     = 4  // the review wall, right before the ask
+    case paywall          = 5
+    case notificationTime = 6  // terminal — completes onboarding
 
-    /// Bumped whenever the raw values are renumbered or a step is inserted, so
-    /// events from two different flow shapes never get pooled into one funnel.
-    /// Stamped on every event this arm fires.
-    static let flowSchema = 1
+    /// Bumped whenever the raw values are renumbered, a step is inserted, or a
+    /// step changes into a materially different screen — so events from two
+    /// different flow shapes never get pooled into one funnel. Stamped on every
+    /// event this arm fires.
+    ///
+    /// 1 → 2: step 2 became the real personal-declaration feature instead of a
+    /// canned one-of-seven preview.
+    /// 2 → 3: the declaration moved to frame one and the picker became a
+    /// fallback behind it, so the step order and the drop-off shape are both
+    /// different.
+    /// 3 → 4: the picker now leads into a second, narrower declaration ask
+    /// rather than straight to the mechanism. Schema-3 data is not comparable
+    /// step-for-step.
+    static let flowSchema = 4
 
     /// Stable analytics name. Funnels and breakdowns are built on this, not on
-    /// the raw Int — a `step_name` of "declaration" is readable in PostHog
-    /// where a `step` of 2 needs a decoder ring.
+    /// the raw Int — a `step_name` of "mechanism" is readable in PostHog where
+    /// a `step` of 2 needs a decoder ring.
     var name: String {
         switch self {
-        case .pain:             return "pain"
+        case .declaration:      return "personal_declaration"
+        case .painFallback:     return "pain_fallback"
+        case .declarationRetry: return "personal_declaration_retry"
         case .mechanism:        return "mechanism"
-        case .declaration:      return "declaration"
         case .testimonials:     return "testimonials"
         case .paywall:          return "paywall"
         case .notificationTime: return "notification_time"
         }
-    }
-
-    /// Index in the pre-paywall progress bar; nil once the bar should disappear.
-    var valueScreenIndex: Int? {
-        switch self {
-        case .pain:         return 1
-        case .mechanism:    return 2
-        case .declaration:  return 3
-        case .testimonials: return 4
-        default:            return nil
-        }
-    }
-
-    static let totalValueScreens = 4
-}
-
-// MARK: - Progress bar
-
-private struct DirectProgressBar: View {
-    let current: Int
-    let total: Int
-
-    var body: some View {
-        HStack(spacing: 6) {
-            ForEach(1...total, id: \.self) { i in
-                Capsule()
-                    .fill(i <= current ? Color.white : Color.white.opacity(0.18))
-                    .frame(height: 3)
-            }
-        }
-        .animation(.spring(response: 0.5, dampingFraction: 0.8), value: current)
     }
 }
 
@@ -367,14 +447,55 @@ private struct DirectPain: Identifiable {
     let icon: String
     let line: String
 
+    /// The same line handed back in second person on the retry ask. Written out
+    /// rather than derived from `line`: turning "I'm off track from my calling"
+    /// into "you're off track from your calling" is not something string
+    /// surgery does without producing something a person would never say.
+    let echo: String
+
+    /// The retry's question, written to pick up from `echo` without repeating
+    /// it — "your mind won't stop racing" is answered by "what's it racing
+    /// about?", not by asking about their mind a second time.
+    ///
+    /// This is the narrow, concrete version of the open question they already
+    /// declined. Someone who stalls on a blank "what brought you here" will
+    /// often answer "what's it racing about?", because it asks for one fact
+    /// rather than a summary of their life.
+    let prompt: String
+
+    /// The receipt and the retry question for a picked burden.
+    static func echoLine(for burden: HeaviestBurden?) -> String? {
+        guard let burden else { return nil }
+        return all.first(where: { $0.burden == burden })?.echo
+    }
+
+    static func prompt(for burden: HeaviestBurden?) -> String? {
+        guard let burden else { return nil }
+        return all.first(where: { $0.burden == burden })?.prompt
+    }
+
     static let all: [DirectPain] = [
-        .init(burden: .peace,     icon: "🕊", line: "My mind won't stop racing"),
-        .init(burden: .health,    icon: "🌿", line: "My body needs healing"),
-        .init(burden: .abundance, icon: "💰", line: "The money isn't there"),
-        .init(burden: .identity,  icon: "👑", line: "I've lost sight of who I am"),
-        .init(burden: .joy,       icon: "☀️", line: "I feel flat and empty"),
-        .init(burden: .purpose,   icon: "🧭", line: "I'm off track from my calling"),
-        .init(burden: .allOfIt,   icon: "⚡", line: "I just want more of God"),
+        .init(burden: .peace,     icon: "🕊", line: "My mind won't stop racing",
+              echo: "You said your mind won't stop racing.",
+              prompt: "What's it racing about?"),
+        .init(burden: .health,    icon: "🌿", line: "My body needs healing",
+              echo: "You said your body needs healing.",
+              prompt: "What are you believing God to heal?"),
+        .init(burden: .abundance, icon: "💰", line: "The money isn't there",
+              echo: "You said the money isn't there.",
+              prompt: "What do you need God to cover?"),
+        .init(burden: .identity,  icon: "👑", line: "I don't feel good enough",
+              echo: "You said you don't feel good enough.",
+              prompt: "What's making you feel that way?"),
+        .init(burden: .joy,       icon: "☀️", line: "I feel flat and empty",
+              echo: "You said you're feeling flat and empty.",
+              prompt: "What's been draining you?"),
+        .init(burden: .purpose,   icon: "🧭", line: "I'm off track from my calling",
+              echo: "You said you're off track from your calling.",
+              prompt: "Where do you need God to open a door?"),
+        .init(burden: .allOfIt,   icon: "⚡", line: "I just want more of God",
+              echo: "You said you want more of God.",
+              prompt: "What are you believing Him for?"),
     ]
 }
 
@@ -430,14 +551,19 @@ private struct DirectPainScreen: View {
                     Spacer().frame(height: size.height * 0.12)
 
                     VStack(spacing: 10) {
-                        Text("What brought you\nhere today?")
+                        // Deliberately not "what brought you here" any more —
+                        // they were just asked that and chose not to answer.
+                        // Re-asking the same question in a different format
+                        // reads as not listening; offering the shortcut reads
+                        // as letting them off the hook.
+                        Text("No problem.\nWhich is closest?")
                             .font(.system(size: 30, weight: .bold, design: .rounded))
                             .foregroundColor(.white)
                             .multilineTextAlignment(.center)
                             .fixedSize(horizontal: false, vertical: true)
                             .directStagger(v)
 
-                        Text("Say it plain. We'll build everything around it.")
+                        Text("One tap and we'll build your feed around it.")
                             .font(.system(size: 15, weight: .regular, design: .rounded))
                             .foregroundColor(.white.opacity(0.65))
                             .multilineTextAlignment(.center)
@@ -484,28 +610,92 @@ private struct DirectPainScreen: View {
 
 // MARK: - Screen 1: How Jesus handled it
 
-/// The mechanism, aimed at the pain they just named. Every burden gets the
-/// same three-beat proof — He spoke to the storm, He spoke to sickness, He
-/// spoke to the grave — and then one line that lands it on their specific
-/// answer, so the teaching never reads as generic.
+/// The mechanism screen's closing line, per pain, in both tenses. Kept here
+/// rather than on `UserPain` itself because this is onboarding copy — the
+/// paywall never says any of it.
+///
+/// Both halves say the same thing about the method, which is the point: Jesus
+/// spoke to it, and so do you. Only the tense and the domain move.
+private extension UserPain {
+    /// Before they've done it — the promise of what speaking will be.
+    var mechanismBefore: String {
+        switch self {
+        case .peace:      return "So you won't beg your mind to settle. You'll speak peace to it."
+        case .fear:       return "So you won't talk yourself down from it. You'll speak God's protection over it."
+        case .health:     return "So you won't beg your body to hold on. You'll speak healing to it."
+        case .abundance:  return "So you won't beg for provision. You'll speak God's supply over it."
+        case .identity:   return "So you won't try to feel better about yourself. You'll speak what God already says you are."
+        case .shame:      return "So you won't keep apologizing for it. You'll speak what the cross already settled."
+        case .bondage:    return "So you won't white-knuckle it. You'll speak to it with His authority."
+        case .purpose:    return "So you won't wonder about your calling. You'll speak it into motion."
+        case .joy:        return "So you won't wait to feel better. You'll speak His joy over your day."
+        case .grief:      return "So you won't carry it silently. You'll speak God's comfort over your heart."
+        case .loneliness: return "So you won't sit in it alone. You'll speak God's nearness over your life."
+        case .marriage:   return "So you won't argue it into shape. You'll speak God's peace over your home."
+        case .family:     return "So you won't lie awake over them. You'll speak God's promises over them."
+        case .nearness:   return "So you won't chase a feeling. You'll speak what God says about being near you."
+        case .more:       return "So you won't keep asking. You'll speak what God already said."
+        }
+    }
+
+    /// After they've done it — naming what just happened, and what repeating it
+    /// does. Never a guarantee of an outcome scripture doesn't promise.
+    var mechanismAfter: String {
+        switch self {
+        case .peace:      return "Keep speaking that over your mind every morning, and it is your mind that gives way."
+        case .fear:       return "Keep speaking that every morning, and fear stops deciding how your day goes."
+        case .health:     return "Keep speaking that over your body every morning, and it is your body that lines up."
+        case .abundance:  return "Keep speaking that every morning, and provision becomes what you expect instead of what you hope for."
+        case .identity:   return "Keep speaking that over yourself every morning, until it is the loudest voice you have."
+        case .shame:      return "Keep speaking that every morning, until you believe what the cross already settled."
+        case .bondage:    return "Keep speaking that every morning, and it stops getting a say in your day."
+        case .purpose:    return "Keep speaking that over your steps every morning, and the door starts to open."
+        case .joy:        return "Keep speaking that over your day every morning, and the heaviness has nowhere to sit."
+        case .grief:      return "Keep speaking that over your heart every morning, and God stays close in it with you."
+        case .loneliness: return "Keep speaking that every morning, and you stop facing this on your own."
+        case .marriage:   return "Keep speaking that over your home every morning, and let God work on what only He can."
+        case .family:     return "Keep speaking that over them every morning, and stand instead of worry."
+        case .nearness:   return "Keep speaking that every morning, and He gets nearer than the feeling that said otherwise."
+        case .more:       return "Keep speaking that every morning, and the ground you've been asking for starts moving."
+        }
+    }
+}
+
+/// How Jesus answered — the arm's one teaching screen, and the framing never
+/// changes: He did not beg the problem to leave, He spoke to it. Only the last
+/// line moves, to land that on this user's actual situation.
+///
+/// Three parts, in this order: He did it (the storm, the sickness, the grave),
+/// He said we do it (Mark 11:23-24, where saying is the part He names), and
+/// then what that means for this user. The verse is the hinge — without it the
+/// screen shows a pattern and hopes the user infers a command.
 private struct DirectMechanismScreen: View {
     let size: CGSize
-    let burden: HeaviestBurden
+    let pain: UserPain
+    /// True when the user actually got a declaration. It changes the screen's
+    /// whole job: for them this explains something that just happened, which is
+    /// a far stronger position than promising something that hasn't. For a user
+    /// who skipped, the same three beats have to carry it as a claim instead.
+    let spokeDeclaration: Bool
     let onContinue: () -> Void
 
     @State private var v = false
 
-    /// The line that ties Jesus' method to the exact thing they just tapped.
+    private var eyebrow: String {
+        spokeDeclaration ? "WHAT YOU JUST DID" : "SPEAKLIFE · PRAY LIKE JESUS"
+    }
+
+    private var headline: String {
+        spokeDeclaration
+            ? "You just spoke to it\ninstead of begging\nit to leave."
+            : "Jesus never begged\nthe problem to leave.\nHe spoke to it."
+    }
+
+    /// The line that lands Jesus' method on this user's exact situation. Past
+    /// tense once they have actually done it — the screen is naming what
+    /// happened, not forecasting it.
     private var applied: String {
-        switch burden {
-        case .peace:     return "So you won't beg your mind to settle. You'll speak peace to it."
-        case .health:    return "So you won't beg your body to hold on. You'll speak healing to it."
-        case .abundance: return "So you won't beg for provision. You'll speak God's supply over it."
-        case .identity:  return "So you won't hope you matter. You'll speak who God says you are."
-        case .joy:       return "So you won't wait to feel better. You'll speak His joy over your day."
-        case .purpose:   return "So you won't wonder about your calling. You'll speak it into motion."
-        case .allOfIt:   return "So you won't ask for more. You'll speak the more God already gave you."
-        }
+        spokeDeclaration ? pain.mechanismAfter : pain.mechanismBefore
     }
 
     private let beats: [(String, String)] = [
@@ -521,13 +711,13 @@ private struct DirectMechanismScreen: View {
                     Spacer().frame(height: size.height * 0.14)
 
                     VStack(spacing: 12) {
-                        Text("SPEAKLIFE · PRAY LIKE JESUS")
+                        Text(eyebrow)
                             .font(.system(size: 12, weight: .bold, design: .rounded))
                             .foregroundColor(DS.Palette.gold.opacity(0.9))
                             .kerning(1.4)
                             .directStagger(v)
 
-                        Text("Jesus never begged\nthe problem to leave.\nHe spoke to it.")
+                        Text(headline)
                             .font(.system(size: 28, weight: .bold, design: .rounded))
                             .foregroundColor(.white)
                             .multilineTextAlignment(.center)
@@ -557,6 +747,36 @@ private struct DirectMechanismScreen: View {
                     .dsGlass(cornerRadius: DS.Radius.lg)
                     .padding(.horizontal, 24)
 
+                    // The hinge of the whole screen. The three beats above are
+                    // Jesus doing it; this is Jesus saying to do it, and saying
+                    // out loud is the part He names — "says to this mountain",
+                    // "believes that what they say will happen". Without it the
+                    // screen shows a pattern and asks the user to infer a
+                    // command from it. With it, speaking is not our idea.
+                    VStack(spacing: 10) {
+                        Text("Then He said we do the same.")
+                            .font(.system(size: 15, weight: .semibold, design: .rounded))
+                            .foregroundColor(.white)
+                            .multilineTextAlignment(.center)
+                            .directStagger(v, delay: 0.42)
+
+                        VStack(spacing: 6) {
+                            Text("\"Truly I tell you, if anyone says to this mountain, 'Go, throw yourself into the sea,' and does not doubt in their heart but believes that what they say will happen, it will be done for them. Therefore I tell you, whatever you ask for in prayer, believe that you have received it, and it will be yours.\"")
+                                .font(.system(size: 14, weight: .regular, design: .serif))
+                                .italic()
+                                .foregroundColor(.white.opacity(0.8))
+                                .multilineTextAlignment(.center)
+                                .lineSpacing(3)
+                                .fixedSize(horizontal: false, vertical: true)
+
+                            Text("Mark 11:23-24")
+                                .font(.system(size: 12, weight: .medium, design: .rounded))
+                                .foregroundColor(DS.Palette.gold.opacity(0.85))
+                        }
+                        .directStagger(v, delay: 0.48)
+                    }
+                    .padding(.horizontal, 28)
+
                     Text(applied)
                         .font(.system(size: 17, weight: .semibold, design: .rounded))
                         .foregroundColor(.white)
@@ -564,122 +784,20 @@ private struct DirectMechanismScreen: View {
                         .lineSpacing(4)
                         .fixedSize(horizontal: false, vertical: true)
                         .padding(.horizontal, 30)
-                        .directStagger(v, delay: 0.46)
+                        .directStagger(v, delay: 0.56)
 
                     Spacer().frame(height: 8)
                 }
             }
 
-            DirectCTA(label: "Give Me Mine →") { onContinue() }
+            DirectCTA(label: spokeDeclaration ? "Make This My Daily Habit →" : "Show Me How →") { onContinue() }
                 .padding(.bottom, 36)
-                .directStagger(v, delay: 0.54)
+                .directStagger(v, delay: 0.64)
         }
         .onAppear {
             AnalyticsService.shared.track("direct_mechanism_shown", parameters: [
-                "burden": burden.rawValue
-            ])
-            withAnimation { v = true }
-        }
-    }
-}
-
-// MARK: - Screen 2: Their declaration
-
-/// The payoff, three screens in: the declaration built for the pain they named,
-/// with the verse it stands on, and one instruction — say it out loud. The CTA
-/// is the confirmation, so the act of speaking is the thing that advances the
-/// flow rather than a generic Continue.
-private struct DirectDeclarationScreen: View {
-    let size: CGSize
-    let burden: HeaviestBurden
-    /// Fired the moment they confirm they said it, so the parent can carry the
-    /// micro-commitment onto the completion event.
-    let onSpoken: () -> Void
-    let onContinue: () -> Void
-
-    @State private var v = false
-    @State private var spoken = false
-
-    private var preview: (text: String, verse: String, reference: String) {
-        burden.previewDeclaration
-    }
-
-    var body: some View {
-        VStack(spacing: 0) {
-            Spacer()
-
-            VStack(spacing: 22) {
-                VStack(spacing: 6) {
-                    Text("YOUR DECLARATION")
-                        .font(.system(size: 12, weight: .bold, design: .rounded))
-                        .foregroundColor(DS.Palette.gold.opacity(0.9))
-                        .kerning(1.4)
-                    Text("Say this out loud. Right now.")
-                        .font(.system(size: 22, weight: .bold, design: .rounded))
-                        .foregroundColor(.white)
-                        .multilineTextAlignment(.center)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                .directStagger(v)
-
-                VStack(spacing: 20) {
-                    Text(preview.text)
-                        .font(.system(size: 22, weight: .semibold, design: .rounded))
-                        .foregroundColor(.white)
-                        .multilineTextAlignment(.center)
-                        .lineSpacing(5)
-                        .fixedSize(horizontal: false, vertical: true)
-
-                    VStack(spacing: 4) {
-                        Text("\"\(preview.verse)\"")
-                            .font(.system(size: 14, weight: .regular, design: .serif))
-                            .italic()
-                            .foregroundColor(.white.opacity(0.6))
-                            .multilineTextAlignment(.center)
-                            .fixedSize(horizontal: false, vertical: true)
-                        Text(preview.reference)
-                            .font(.system(size: 12, weight: .medium, design: .rounded))
-                            .foregroundColor(.white.opacity(0.4))
-                    }
-                }
-                .padding(28)
-                .dsGlass(cornerRadius: DS.Radius.lg)
-                .padding(.horizontal, 24)
-                .directStagger(v, delay: 0.12)
-
-                Text(spoken
-                     ? "That's how you'll pray from here. Every day, over this exact thing."
-                     : "Out loud is the whole point. Faith comes by hearing your own voice say it.")
-                    .font(.system(size: 15, weight: .regular, design: .rounded))
-                    .foregroundColor(.white.opacity(0.6))
-                    .multilineTextAlignment(.center)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .padding(.horizontal, 34)
-                    .directStagger(v, delay: 0.28)
-                    .animation(.easeInOut(duration: 0.3), value: spoken)
-            }
-
-            Spacer()
-
-            DirectCTA(label: spoken ? "Build My Daily Plan →" : "I Said It Out Loud") {
-                if spoken {
-                    onContinue()
-                } else {
-                    // No explicit haptic: DirectCTA's .dsPressable already
-                    // fires one on press.
-                    AnalyticsService.shared.track("direct_declaration_spoken", parameters: [
-                        "burden": burden.rawValue
-                    ])
-                    onSpoken()
-                    withAnimation(.easeInOut(duration: 0.3)) { spoken = true }
-                }
-            }
-            .padding(.bottom, 36)
-            .directStagger(v, delay: 0.38)
-        }
-        .onAppear {
-            AnalyticsService.shared.track("direct_declaration_shown", parameters: [
-                "burden": burden.rawValue
+                "pain": pain.rawValue,
+                "spoke_declaration": spokeDeclaration as NSNumber
             ])
             withAnimation { v = true }
         }
