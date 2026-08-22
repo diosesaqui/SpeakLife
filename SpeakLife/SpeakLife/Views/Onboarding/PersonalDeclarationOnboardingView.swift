@@ -64,12 +64,6 @@ struct PersonalDeclarationOnboardingView: View {
     /// shared screen by surface. Defaults to "quiz" for the quiz flow's
     /// existing call site.
     var flow: String = "quiz"
-    /// An optional receipt of something the user already told this flow, shown
-    /// above the question so this screen reads as the same conversation
-    /// continuing rather than a second, unrelated ask. Passed only by arms that
-    /// asked something first (`direct` asks what brought them here on frame
-    /// one); nil everywhere else leaves the screen exactly as it was.
-    var contextLine: String? = nil
     /// An optional replacement for the opening question. The default asks what
     /// they are trusting God for, which is aspirational and invites an answer
     /// too broad to match well ("peace", "my family"). An arm that already
@@ -199,24 +193,6 @@ struct PersonalDeclarationOnboardingView: View {
 
             // Title block
             VStack(spacing: 14) {
-                // Dropped the moment the keyboard is up: it exists to connect
-                // this screen to the last one, and by the time they are typing
-                // it has done that job — while the 4.7" screen has no height to
-                // spare for it. Never rendered at all when no arm passed one.
-                if let contextLine, !keyboardUp {
-                    Text(contextLine)
-                        .font(.system(size: 13, weight: .semibold, design: .rounded))
-                        .foregroundColor(.white.opacity(0.55))
-                        .multilineTextAlignment(.center)
-                        .lineLimit(2)
-                        .minimumScaleFactor(0.85)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .padding(.horizontal, 32)
-                        .opacity(titleAppeared ? 1 : 0)
-                        .offset(y: titleAppeared ? 0 : 18)
-                        .animation(.easeOut(duration: 0.6), value: titleAppeared)
-                }
-
                 // Two lines, always. At 30pt the default's first line overflows
                 // a 4.7" screen and wraps to three, which is exactly the device
                 // with no height to spare once the keyboard is up; the line
