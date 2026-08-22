@@ -11,7 +11,7 @@
 //  _clean_dark_v1 / _storm_v1 / _storm_clean_v1 / _storm_clean_dark_v1).
 //
 //  The screen now runs the same three beats in order, aimed at the problem the
-//  user actually named in onboarding (see `PaywallPain`):
+//  user actually named in onboarding (see `UserPain`):
 //
 //    1. Name the problem      — the headline says the thing that is wrong
 //    2. Turn it               — why what they've been doing hasn't moved it,
@@ -40,181 +40,248 @@ import StoreKit
 
 // MARK: - Pain Resolution
 //
-/// The problem the user actually named in onboarding, recovered from the
-/// segment every arm stamps on `AppState.onboardingSegment` *before* the
-/// paywall renders. This is the paywall's whole personalization spine: the
-/// headline names the problem, the subhead turns it, and the solution rows say
-/// concretely how SpeakLife fixes that specific thing.
+/// The problem the user is actually carrying, resolved from whatever the flow
+/// managed to learn about them. This is the paywall's personalization spine —
+/// the headline names it, the subhead turns it, and the solution rows say
+/// concretely how SpeakLife answers *that* — and the onboarding mechanism
+/// screen reads it too (see the extension in DirectOnboardingView).
 ///
-/// Deliberately parsed from the segment rather than `surveyGoalWord`: the goal
-/// word is written in `applyResponsesAndComplete`, which runs *after* the
-/// paywall in every arm except quiz, so it is empty exactly when this screen
-/// needs it. The segment is set the moment the user answers.
-enum PaywallPain: String, CaseIterable {
-    case peace, health, abundance, identity, purpose, joy, more
+/// **Sized to the matcher, not to the picker.** An earlier version had seven
+/// cases, mirroring the seven options on the old category screen. But a user
+/// describing their own situation can land in any of forty-odd declaration
+/// categories, and seven buckets sent fear, loneliness, grief, addiction,
+/// bitterness and every family situation to the same generic catch-all — which
+/// is the one outcome a pain-led paywall cannot afford. These fifteen cover the
+/// territory the matcher actually produces. `more` is still the catch-all, but
+/// it should now be rare rather than routine.
+enum UserPain: String, CaseIterable {
+    case peace       // a mind that will not stop
+    case fear        // afraid, under attack, dreading what is coming
+    case health      // the body
+    case abundance   // provision, work, debt, housing
+    case identity    // who they are, what they are worth
+    case shame       // condemnation, what they did or what was done
+    case bondage     // the thing they cannot stop going back to
+    case purpose     // calling, direction, a new chapter
+    case joy         // flat, heavy, joyless
+    case grief       // loss
+    case loneliness  // no one close
+    case marriage    // the marriage itself
+    case family      // a child, a prodigal, a womb
+    case nearness    // God feels far
+    case more        // catch-all
 
-    /// Resolve from an onboarding segment.
+    // MARK: Resolution
+
+    /// From an onboarding segment.
     ///
-    /// Six arms stamp `"<arm>_<HeaviestBurden.shortLabel>"`; the quiz arm
-    /// stamps a `QuizSegment` raw value, which maps onto the nearest pain.
+    /// `direct` stamps `direct_<UserPain.rawValue>`, which round-trips exactly.
+    /// The other six arms stamp `<arm>_<HeaviestBurden.shortLabel>`, whose seven
+    /// values are all still case names here, so they round-trip too. The quiz
+    /// arm stamps a `QuizSegment` name, which maps onto the nearest pain.
     /// Returns nil for anything unrecognized (including the quiz's
     /// `unsegmented`) so the caller falls back to unpersonalized copy rather
     /// than guessing at someone's problem.
-    static func from(segment: String) -> PaywallPain? {
+    static func from(segment: String) -> UserPain? {
         guard !segment.isEmpty else { return nil }
-
-        // Quiz arm: whole-string segment names.
         switch segment {
         case "battlefield_mind":    return .peace
         case "believer_authority":  return .more
         case "already_yours":       return .abundance
-        case "his_heart":           return .joy
+        case "his_heart":           return .nearness
         case "unsegmented":         return nil
         default: break
         }
-
-        // Every other arm: "<arm>_<shortLabel>".
         let label = segment.split(separator: "_").last.map(String.init) ?? segment
-        return PaywallPain(rawValue: label)
+        return UserPain(rawValue: label)
     }
 
-    /// Headline. Names the problem in the user's own terms, present tense, no
-    /// hedging. This is the pain-led half.
-    var problem: String {
-        switch self {
-        case .peace:     return "Your mind won't stop."
-        case .health:    return "Your body is still waiting on an answer."
-        case .abundance: return "The money keeps running out before the month does."
-        case .identity:  return "You don't feel good enough."
-        case .purpose:   return "You're off the track you were built for."
-        case .joy:       return "Everything feels flat."
-        case .more:      return "You've prayed for years. It hasn't moved."
+    /// From the category the declaration matcher assigned to what the user
+    /// wrote. This is the path that has to be exhaustive: it is the only thing
+    /// standing between a user's own words and generic paywall copy.
+    ///
+    /// Bible-book categories and anything else unlisted fall to `more`, which
+    /// is the one bucket whose copy assumes nothing about the domain.
+    static func from(categoryRaw: String) -> UserPain {
+        switch DeclarationCategory(rawValue: categoryRaw) {
+        case .anxiety, .rest, .hardtimes, .mentalHealth:            return .peace
+        case .fear, .godsprotection, .warfare, .blood, .nameOfJesus: return .fear
+        case .health, .wellness:                                     return .health
+        case .wealth, .favor, .work, .business, .housing, .debt, .education:
+            return .abundance
+        case .identity, .confidence:                                 return .identity
+        case .grace, .purity, .innerHealing, .obedience, .forgiveness:
+            return .shame
+        case .addiction, .anger:                                     return .bondage
+        case .destiny, .wisdom, .newSeason, .miracles:               return .purpose
+        case .joy, .praise, .gratitude:                              return .joy
+        case .grief, .divorce:                                       return .grief
+        case .love, .relationship, .friendship:                      return .loneliness
+        case .marriage:                                              return .marriage
+        case .parenting, .singleParent, .salvation, .fertility:      return .family
+        case .godsheart, .faith, .hope, .heaven, .spiritualGrowth, .speaklife:
+            return .nearness
+        default:                                                     return .more
         }
     }
 
-    /// Subhead. The turn: why what they have been doing hasn't worked, the
-    /// mechanism that does, and the specific outcome it produces for this pain.
+    /// The coarse burden this pain belongs to, for the shared onboarding
+    /// screens (notification copy, goal word, feed seeding) that only speak the
+    /// seven-value vocabulary.
+    var burden: HeaviestBurden {
+        switch self {
+        case .peace, .fear:                       return .peace
+        case .health:                             return .health
+        case .abundance:                          return .abundance
+        case .identity, .shame, .bondage:         return .identity
+        case .purpose:                            return .purpose
+        case .joy, .grief, .loneliness:           return .joy
+        case .marriage, .family, .nearness, .more: return .allOfIt
+        }
+    }
+
+    // MARK: Copy
+
+    /// Headline. Names the problem in the user's own terms, present tense.
+    var problem: String {
+        switch self {
+        case .peace:      return "Your mind won't stop."
+        case .fear:       return "You're bracing for something."
+        case .health:     return "Your body is still waiting on an answer."
+        case .abundance:  return "The money keeps running out before the month does."
+        case .identity:   return "You don't feel good enough."
+        case .shame:      return "You can't seem to put it down."
+        case .bondage:    return "You keep going back to it."
+        case .purpose:    return "You're off the track you were built for."
+        case .joy:        return "Everything feels flat."
+        case .grief:      return "You lost something you can't replace."
+        case .loneliness: return "You're carrying this on your own."
+        case .marriage:   return "Home doesn't feel like home right now."
+        case .family:     return "Someone you love is on your heart."
+        case .nearness:   return "God feels further away than He used to."
+        case .more:       return "You've prayed about it. It hasn't moved."
+        }
+    }
+
+    /// Subhead. Why what they have been doing hasn't worked, the mechanism that
+    /// does, and the outcome it produces for this exact pain.
     var turn: String {
         switch self {
         case .peace:
             return "Reading one more verse about peace hasn't quieted it. Jesus didn't ask the storm to settle. He spoke to it, and SpeakLife puts that same Word in your mouth every morning until your mind is what obeys."
+        case .fear:
+            return "Talking yourself down works until the next thing. Jesus spoke to what terrified His disciples and it went quiet, and SpeakLife puts that Word in your mouth every morning until fear is the thing that has to leave."
         case .health:
             return "Hoping is not the same as standing on it. Jesus spoke to sickness and it left, and SpeakLife puts the healing God already paid for in your mouth every day until your body lines up with it."
         case .abundance:
             return "Praying harder hasn't changed the number. Jesus spoke to what He had and it multiplied, and SpeakLife puts God's promise of provision in your mouth every morning until your finances follow."
         case .identity:
             return "Feeling better about yourself was never the fix, and it never holds. God already said what you are, and SpeakLife puts His words about you in your own mouth every day until they're the loudest thing you hear."
+        case .shame:
+            return "You cannot apologize your way out of something Jesus already paid for. He spoke over people the room had written off, and SpeakLife puts what He says about you in your mouth every day until you believe you're clean."
+        case .bondage:
+            return "Willpower has had its turn. Jesus spoke to things that had held people for years and they let go, and SpeakLife puts that same authority in your mouth every morning until it stops having a say."
         case .purpose:
             return "Waiting for clarity keeps you where you are. God ordered your steps before you took one, and SpeakLife puts that over your day until you're moving in it again."
         case .joy:
             return "You can't talk yourself into joy, but you can speak what God says over your life. SpeakLife puts His Word in your mouth every morning until the heaviness has nowhere to sit."
+        case .grief:
+            return "Nobody is asking you to be over it. Jesus wept, and then He spoke, and SpeakLife puts God's own comfort in your mouth every morning so you have something to hold on the days that come at you sideways."
+        case .loneliness:
+            return "You shouldn't have to carry this by yourself, and you don't. God says He is close to you right now, and SpeakLife puts that in your mouth every morning until being alone stops meaning being on your own."
+        case .marriage:
+            return "You can't speak for them, and God never asked you to. You can speak over your home, and SpeakLife puts God's promise over it in your mouth every morning while He works on what only He can."
+        case .family:
+            return "Worrying about them has never once helped them. God's promises cover the people you love, and SpeakLife puts those promises in your mouth every morning so you're standing for them instead of lying awake over them."
+        case .nearness:
+            return "Distance from God is not measured by how you feel. He says He is near, and SpeakLife puts His own words in your mouth every morning until He is nearer to you than the feeling that says otherwise."
         case .more:
             return "Years of asking, and the ground hasn't moved. Jesus never begged. He spoke with authority, and SpeakLife trains you to pray the same way, out loud, over the exact thing you've been asking about."
         }
     }
 
-    /// Section header over the solution rows.
-    var solutionHeader: String {
+    /// The place this pain lives, used to aim the shared solution rows. Reads
+    /// naturally after "over" and after "about".
+    var domain: String {
         switch self {
-        case .peace:     return "How SpeakLife quiets it"
-        case .health:    return "How SpeakLife stands with you"
-        case .abundance: return "How SpeakLife shifts it"
-        case .identity:  return "How SpeakLife settles it"
-        case .purpose:   return "How SpeakLife moves you"
-        case .joy:       return "How SpeakLife lifts it"
-        case .more:      return "How SpeakLife breaks it open"
+        case .peace:      return "your mind"
+        case .fear:       return "what you're facing"
+        case .health:     return "your body"
+        case .abundance:  return "your finances"
+        case .identity:   return "who you are"
+        case .shame:      return "what you're carrying"
+        case .bondage:    return "the thing that keeps winning"
+        case .purpose:    return "your steps"
+        case .joy:        return "your day"
+        case .grief:      return "your heart"
+        case .loneliness: return "your life"
+        case .marriage:   return "your home"
+        case .family:     return "the people you love"
+        case .nearness:   return "your walk with God"
+        case .more:       return "what you're facing"
         }
     }
 
-    /// The concrete mechanics, aimed at this exact problem. Four rows: the
-    /// declarations, the audio, the daily rhythm, and the answer on demand —
-    /// the same four capabilities every time, described in terms of what they
-    /// do about *this* pain rather than as a generic feature list.
+    /// The bespoke first row — the declarations themselves, which is the row
+    /// that has to prove the product understood the problem.
+    private var leadSolution: (icon: String, title: String, detail: String) {
+        switch self {
+        case .peace:      return ("megaphone.fill", "Speak peace, don't just read it", "Declarations written for a racing mind, short enough to say out loud and mean.")
+        case .fear:       return ("megaphone.fill", "Speak to it instead of bracing for it", "Declarations on God's protection, written to say the moment the dread starts.")
+        case .health:     return ("megaphone.fill", "Speak what the cross paid for", "Healing declarations straight from Scripture, built to say over your body daily.")
+        case .abundance:  return ("megaphone.fill", "Speak provision over your finances", "Declarations on God's supply, favor, and overflow, in your mouth every morning.")
+        case .identity:   return ("megaphone.fill", "Say what God says about you", "Identity declarations spoken in first person, until they're what you believe.")
+        case .shame:      return ("megaphone.fill", "Speak what the cross already settled", "Declarations on grace and a clean record, written for the days it comes back.")
+        case .bondage:    return ("megaphone.fill", "Speak to it with authority", "Declarations that tell it where it stands instead of asking it to ease off.")
+        case .purpose:    return ("megaphone.fill", "Speak your calling into motion", "Declarations over your steps, your work, and the door God is opening.")
+        case .joy:        return ("megaphone.fill", "Speak joy over your day", "Declarations on God's joy and strength, made to say first thing in the morning.")
+        case .grief:      return ("megaphone.fill", "Speak comfort you didn't have to manufacture", "Declarations on God's nearness to the brokenhearted, for the hard mornings.")
+        case .loneliness: return ("megaphone.fill", "Speak the truth that you're not alone", "Declarations on God's presence and His people, for the quiet hours.")
+        case .marriage:   return ("megaphone.fill", "Speak peace over your home", "Declarations over your marriage and your household, not over your spouse's choices.")
+        case .family:     return ("megaphone.fill", "Stand for them out loud", "Declarations over your children and the people you're believing God for.")
+        case .nearness:   return ("megaphone.fill", "Speak His own words back to Him", "Declarations drawn straight from what God says about being near you.")
+        case .more:       return ("megaphone.fill", "Speak it, don't just read it", "The exact Word for your exact situation, written to say out loud.")
+        }
+    }
+
+    /// The four mechanics. Row one is written for this pain; the other three
+    /// are the same three capabilities every time, aimed at this pain's domain
+    /// — which is what keeps fifteen sets of copy honest instead of fifteen
+    /// sets of invented differences.
     var solutions: [(icon: String, title: String, detail: String)] {
-        switch self {
-        case .peace:
-            return [
-                ("megaphone.fill", "Speak peace, don't just read it", "Declarations written for a racing mind, short enough to say out loud and mean."),
-                ("headphones", "Audio for the loud hours", "Guided declarations for the commute, the waiting, and the hour before bed."),
-                ("bell.badge.fill", "Caught before it spirals", "Your declaration lands at the time of day your mind gets loudest."),
-                ("bubble.left.and.bubble.right.fill", "An answer at 3am", "Ask the Bible anything and get the verse for what you're facing right now.")
-            ]
-        case .health:
-            return [
-                ("megaphone.fill", "Speak what the cross paid for", "Healing declarations straight from Scripture, built to say over your body daily."),
-                ("headphones", "His Word in your ears", "Guided healing audio for the appointment, the recovery, and the long night."),
-                ("calendar", "Thirty days of standing", "A daily track so you're speaking healing on the ordinary days, not only the frightening ones."),
-                ("bubble.left.and.bubble.right.fill", "Every healing promise, found fast", "Ask the Bible anything and get chapter and verse in seconds.")
-            ]
-        case .abundance:
-            return [
-                ("megaphone.fill", "Speak provision over your finances", "Declarations on God's supply, favor, and overflow, in your mouth every morning."),
-                ("headphones", "Audio while you work", "Guided declarations for the commute, the shift, and the hours you're earning."),
-                ("calendar", "A daily rhythm, not a panic prayer", "Thirty days of speaking provision so it's your posture before the bill arrives."),
-                ("bubble.left.and.bubble.right.fill", "What God says about money", "Ask the Bible anything and get the promise, not an opinion.")
-            ]
-        case .identity:
-            return [
-                ("megaphone.fill", "Say what God says about you", "Identity declarations spoken in first person, until they're what you believe."),
-                ("headphones", "His voice over the other ones", "Guided audio for the moments the not-enough voice gets loud again."),
-                ("calendar", "Thirty days of the same truth", "Repetition is how identity settles. The plan makes it daily, not occasional."),
-                ("bubble.left.and.bubble.right.fill", "Who God says you are, in His words", "Ask the Bible anything and get the verse behind the promise.")
-            ]
-        case .purpose:
-            return [
-                ("megaphone.fill", "Speak your calling into motion", "Declarations over your steps, your work, and the door God is opening."),
-                ("headphones", "Audio for the drive and the grind", "Guided declarations that keep your calling in front of you all day."),
-                ("calendar", "Thirty days of forward", "A daily plan so momentum comes from rhythm, not from motivation."),
-                ("bubble.left.and.bubble.right.fill", "Direction from Scripture", "Ask the Bible anything and get what God's Word says about your next step.")
-            ]
-        case .joy:
-            return [
-                ("megaphone.fill", "Speak joy over your day", "Declarations on God's joy and strength, made to say first thing in the morning."),
-                ("headphones", "Audio that lifts the room", "Guided declarations for the commute, the chores, and the flat afternoons."),
-                ("calendar", "Thirty days of showing up", "The heaviness lifts on rhythm, not on one good day."),
-                ("bubble.left.and.bubble.right.fill", "What God says about your heart", "Ask the Bible anything and get the answer with the verse attached.")
-            ]
-        case .more:
-            return [
-                ("megaphone.fill", "Pray with authority, out loud", "Declarations that speak to the thing instead of asking about it."),
-                ("headphones", "God's Word morning and night", "Guided audio so the Word is in your ears on the days you don't feel like it."),
-                ("calendar", "Thirty days of taking ground", "A daily plan built on the exact thing you've been praying about for years."),
-                ("bubble.left.and.bubble.right.fill", "Ask the Bible anything", "Get the promise you're standing on, chapter and verse.")
-            ]
-        }
+        [
+            leadSolution,
+            ("headphones", "His Word in your ears", "Guided declarations over \(domain) for the morning, the commute, and before bed."),
+            ("calendar", "Thirty days, not one good day", "A daily plan so you're speaking over \(domain) on the ordinary days too."),
+            ("bubble.left.and.bubble.right.fill", "Ask the Bible anything", "Every promise about \(domain), chapter and verse, in seconds.")
+        ]
     }
 
-    /// The last line before the tap. Its job is to answer the final doubt —
-    /// "is this actually the right thing for what I've got?" — and the honest
-    /// answer is that the guarantee was never the app. It is Scripture. So the
-    /// line names what this is not, then what it is, aimed at their problem.
-    ///
-    /// Kept to one short sentence: it renders at 12pt under the CTA, and
-    /// anything longer stops being read at exactly the moment it matters.
+    var solutionHeader: String { "How SpeakLife works on this" }
+
+    /// The last line before the tap. Names what this is not, then what it is.
     var assurance: String {
+        let notThis: String
         switch self {
-        case .peace:     return "Not tips or affirmations. God's own Word over your mind, spoken the way Jesus did."
-        case .health:    return "Not wishful thinking. God's own Word over your body, spoken the way Jesus did."
-        case .abundance: return "Not money advice. God's own promise over your finances, spoken the way Jesus did."
-        case .identity:  return "Not self-help. God's own words about you, spoken until they're what you believe."
-        case .purpose:   return "Not a motivation app. God's own Word over your steps, spoken the way Jesus did."
-        case .joy:       return "Not positive thinking. God's own Word over your life, spoken the way Jesus did."
-        case .more:      return "Not another prayer method. God's own Word, spoken with the authority Jesus used."
+        case .peace, .joy:            notThis = "tips or affirmations"
+        case .fear:                   notThis = "talking yourself down"
+        case .health:                 notThis = "wishful thinking"
+        case .abundance:              notThis = "money advice"
+        case .identity, .shame:       notThis = "self-help"
+        case .bondage:                notThis = "willpower"
+        case .purpose:                notThis = "motivation"
+        case .grief, .loneliness:     notThis = "platitudes"
+        case .marriage, .family:      notThis = "advice about them"
+        case .nearness:               notThis = "trying harder"
+        case .more:                   notThis = "tips or affirmations"
         }
+        return "Not \(notThis). God's own Word over \(domain), spoken the way Jesus did."
     }
 
-    /// Same line for users we have no segment for.
+    /// Rows and closing line for users we have no pain for at all (settings,
+    /// feature gates, the quiz's `unsegmented` bucket).
+    static let generalSolutions: [(icon: String, title: String, detail: String)] = UserPain.more.solutions
     static let generalAssurance = "Not tips or affirmations. God's own Word, in your mouth, the way Jesus prayed."
-
-    /// Generic rows for users we have no segment for (settings, feature gates,
-    /// the quiz arm's `unsegmented` bucket). Same four capabilities, no
-    /// assumption about what's wrong.
-    static let generalSolutions: [(icon: String, title: String, detail: String)] = [
-        ("megaphone.fill", "Speak it, don't just read it", "The exact Word for your exact situation, written to say out loud."),
-        ("headphones", "God's Word in your ears", "Guided declarations for the morning, the commute, and before bed."),
-        ("calendar", "A daily rhythm that holds", "Thirty-day plans so it happens on the ordinary days too."),
-        ("bubble.left.and.bubble.right.fill", "Ask the Bible anything", "Get the verse for what you're facing, in seconds.")
-    ]
 }
 
 struct HighConversionPaywallView: View {
@@ -316,12 +383,12 @@ struct HighConversionPaywallView: View {
     /// The problem this user named in onboarding, or nil when we don't know
     /// (settings, feature gates, the quiz's `unsegmented` bucket). Everything
     /// personalized on this screen hangs off this one value.
-    private var pain: PaywallPain? { PaywallPain.from(segment: segmentParam) }
+    private var pain: UserPain? { UserPain.from(segment: segmentParam) }
 
     /// The four mechanics, described against the user's actual problem when we
     /// know it and generically when we don't.
     private var solutionRows: [(icon: String, title: String, detail: String)] {
-        pain?.solutions ?? PaywallPain.generalSolutions
+        pain?.solutions ?? UserPain.generalSolutions
     }
 
     /// Header over those rows. Answers "how does this fix MY thing?" — the
@@ -954,7 +1021,7 @@ struct HighConversionPaywallView: View {
                 .font(.system(size: 11))
                 .foregroundColor(.white.opacity(0.6))
                 .padding(.top, 2)
-            Text(pain?.assurance ?? PaywallPain.generalAssurance)
+            Text(pain?.assurance ?? UserPain.generalAssurance)
                 .font(.system(size: 12))
                 .foregroundColor(.white.opacity(0.6))
                 .multilineTextAlignment(.center)

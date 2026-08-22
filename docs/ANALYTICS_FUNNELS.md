@@ -230,9 +230,9 @@ The recovery ladder runs beside it, for the users the first ask lost:
 | `personal_declaration_saved` / `_skipped` | `flow` | **The arm's whole bet: will a cold user describe their situation on frame one?** Shared with every other arm running this screen, so it is directly comparable — but note this arm asks it first and they ask it deep in the back half |
 | `direct_pain_shown` / `direct_pain_answered` | `flow_schema`, `burden` | The fallback picker. **Only fires for users the declaration produced nothing for** — its volume is the size of the refusal |
 | `personal_declaration_*` (`flow: direct_retry`) | `flow` | The narrow re-ask after the picker. Its take-rate is how much of the refusal the recovery ladder wins back |
-| `direct_mechanism_shown` | `burden`, `spoke_declaration` | Which of the two mechanism framings they saw |
+| `direct_mechanism_shown` | `pain`, `spoke_declaration` | Which of the two mechanism framings they saw |
 | `direct_step_completed` | `step`, `step_name`, `flow_schema` | Per-step drop-off (`personal_declaration` / `pain_fallback` / `personal_declaration_retry` / `mechanism` / `testimonials` / `paywall` / `notification_time`) |
-| `direct_onboarding_completed` | `goal_word`, `burden`, `pain_source`, `seeded_category`, `notification_time`, `set_personal_declaration`, `total_duration_seconds`, `flow_schema` | Completion, plus every cut worth making |
+| `direct_onboarding_completed` | `goal_word`, `pain`, `burden`, `pain_source`, `seeded_category`, `notification_time`, `set_personal_declaration`, `total_duration_seconds`, `flow_schema` | Completion, plus every cut worth making |
 
 Shared screens stamp `flow: "direct"` (`personal_declaration_*`,
 `testimonial_wall_shown`, `survey_q8_shown`), and the paywall reads
@@ -272,8 +272,10 @@ shorter on paper.
 > `spoke_declaration` completion property (schema 1), and the guarantee that
 > every user passes through `direct_pain_shown` (schemas 1–2).
 
-**Person property:** this arm sets `onboarding_burden` (`peace` / `health` /
-`joy` / `identity` / `purpose` / `abundance` / `more`) when the opening question
+**Person property:** this arm sets `onboarding_burden` to the resolved
+`UserPain` (`peace` / `fear` / `health` / `abundance` / `identity` / `shame` /
+`bondage` / `purpose` / `joy` / `grief` / `loneliness` / `marriage` / `family` /
+`nearness` / `more`) when the opening question
 is answered, so **every** later event — `trial_started`, `subscription_started`,
 retention — can be split by the pain the user walked in with. Only `direct` sets
 it today, so it reads null for other arms.

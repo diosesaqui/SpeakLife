@@ -72,6 +72,12 @@ struct DirectOnboardingView: View {
     /// that says whether the recovery ladder is worth its screens.
     @State private var declarationSource = "none"
 
+    /// The resolved pain, at the matcher's granularity rather than the picker's
+    /// seven. Set from the declaration's own category when there is one, from
+    /// the picked burden when there isn't. Drives the mechanism screen's copy
+    /// and the segment the paywall reads.
+    @State private var pain: UserPain? = nil
+
     /// Funnel entry time, for `total_duration_seconds`. Set in onAppear rather
     /// than at init so it measures time on screen, not time since the struct
     /// was built.
@@ -144,7 +150,7 @@ struct DirectOnboardingView: View {
         case .mechanism:
             DirectMechanismScreen(
                 size: size,
-                burden: responses.heaviestBurden ?? .peace,
+                pain: pain ?? .more,
                 spokeDeclaration: savedDeclaration != nil
             ) { advance() }
         case .testimonials:
@@ -166,21 +172,31 @@ struct DirectOnboardingView: View {
             "flow_schema": DirectStep.flowSchema
         ])
 
-        // Leaving the declaration: read the pain back out of the match. The
-        // matcher already classified what they wrote, so a user who answered
-        // never has to be asked a second time in a different format.
-        if currentStep == .declaration, let declaration = savedDeclaration {
-            responses.heaviestBurden = DirectPain.burden(forCategoryRaw: declaration.categoryRaw)
+        // Leaving either declaration ask: read the pain back out of the match.
+        // The matcher already classified what they wrote — at its own
+        // granularity, not the picker's seven — so a user who answered never
+        // has to be asked a second time in a different format, and never gets
+        // rounded off to a bucket that doesn't fit them.
+        if currentStep == .declaration || currentStep == .declarationRetry,
+           let declaration = savedDeclaration {
+            let resolved = UserPain.from(categoryRaw: declaration.categoryRaw)
+            pain = resolved
+            responses.heaviestBurden = resolved.burden
+        }
+
+        // The picker only speaks the coarse vocabulary, so widen it back out.
+        if currentStep == .painFallback, let burden = responses.heaviestBurden, pain == nil {
+            pain = UserPain.from(segment: burden.shortLabel)
         }
 
         // Whichever way the pain arrived, stamp the segment so every downstream
         // paywall event carries a meaningful one, and pin it as a person
         // property so EVERY later event — trial_started, subscription_started,
         // retention — can be split by what the user actually came in carrying.
-        if currentStep == .declaration || currentStep == .painFallback,
-           let burden = responses.heaviestBurden {
-            appState.onboardingSegment = "direct_\(burden.shortLabel)"
-            AnalyticsService.shared.setUserProperty("onboarding_burden", value: burden.shortLabel)
+        if let pain,
+           currentStep == .declaration || currentStep == .painFallback || currentStep == .declarationRetry {
+            appState.onboardingSegment = "direct_\(pain.rawValue)"
+            AnalyticsService.shared.setUserProperty("onboarding_burden", value: pain.rawValue)
         }
 
         // Leaving the review wall is the last pre-paywall milestone, which is
@@ -260,6 +276,11 @@ struct DirectOnboardingView: View {
         }
         AnalyticsService.shared.track("direct_onboarding_completed", parameters: [
             "goal_word": goalWord.rawValue,
+            // Both granularities: `pain` is what the matcher actually resolved
+            // (fifteen values), `burden` is that rounded to the seven the other
+            // arms speak, so this arm can be compared against them without
+            // losing the detail that makes it different.
+            "pain": pain?.rawValue ?? "unknown",
             "burden": responses.heaviestBurden?.rawValue ?? "unknown",
             // How far down the recovery ladder this user had to go. "open" is
             // the frame-one ask landing; "retry" is the narrow re-ask rescuing
@@ -453,35 +474,6 @@ private struct DirectPain: Identifiable {
         return all.first(where: { $0.burden == burden })?.prompt
     }
 
-    /// The pain a matched declaration belongs to, read back out of the
-    /// category the matcher assigned. This is what lets the picker be a
-    /// fallback instead of a required step: a user who described their
-    /// situation has already told us more than the seven options could, so
-    /// asking them to also pick one would be asking twice in two formats.
-    ///
-    /// The matcher's category set is far wider than these seven, so this is a
-    /// deliberate narrowing to the buckets the paywall copy and the mechanism
-    /// screen are written for. Anything unmapped lands on `.allOfIt`, whose
-    /// copy makes no assumption about the domain.
-    static func burden(forCategoryRaw raw: String) -> HeaviestBurden {
-        switch DeclarationCategory(rawValue: raw) {
-        case .anxiety, .fear, .rest, .hardtimes, .grief, .warfare, .godsprotection:
-            return .peace
-        case .health, .fertility:
-            return .health
-        case .wealth, .favor, .work, .business, .debt, .housing:
-            return .abundance
-        case .identity, .confidence, .grace, .purity, .addiction, .divorce:
-            return .identity
-        case .joy, .praise, .gratitude, .love, .godsheart:
-            return .joy
-        case .destiny, .wisdom, .education, .hope:
-            return .purpose
-        default:
-            return .allOfIt
-        }
-    }
-
     static let all: [DirectPain] = [
         .init(burden: .peace,     icon: "🕊", line: "My mind won't stop racing",
               echo: "You said your mind won't stop racing.",
@@ -618,18 +610,67 @@ private struct DirectPainScreen: View {
 
 // MARK: - Screen 1: How Jesus handled it
 
-/// The mechanism, aimed at the pain they just named. Every burden gets the
-/// same three-beat proof — He spoke to the storm, He spoke to sickness, He
-/// spoke to the grave — and then one line that lands it on their specific
-/// answer, so the teaching never reads as generic.
+/// The mechanism screen's closing line, per pain, in both tenses. Kept here
+/// rather than on `UserPain` itself because this is onboarding copy — the
+/// paywall never says any of it.
+///
+/// Both halves say the same thing about the method, which is the point: Jesus
+/// spoke to it, and so do you. Only the tense and the domain move.
+private extension UserPain {
+    /// Before they've done it — the promise of what speaking will be.
+    var mechanismBefore: String {
+        switch self {
+        case .peace:      return "So you won't beg your mind to settle. You'll speak peace to it."
+        case .fear:       return "So you won't brace for it. You'll speak to it the way He did."
+        case .health:     return "So you won't beg your body to hold on. You'll speak healing to it."
+        case .abundance:  return "So you won't beg for provision. You'll speak God's supply over it."
+        case .identity:   return "So you won't try to feel better about yourself. You'll speak what God already says you are."
+        case .shame:      return "So you won't keep apologizing for it. You'll speak what the cross already settled."
+        case .bondage:    return "So you won't white-knuckle it. You'll speak to it with His authority."
+        case .purpose:    return "So you won't wonder about your calling. You'll speak it into motion."
+        case .joy:        return "So you won't wait to feel better. You'll speak His joy over your day."
+        case .grief:      return "So you won't carry it silently. You'll speak God's comfort over your heart."
+        case .loneliness: return "So you won't sit in it alone. You'll speak God's nearness over your life."
+        case .marriage:   return "So you won't argue it into shape. You'll speak God's peace over your home."
+        case .family:     return "So you won't lie awake over them. You'll speak God's promises over them."
+        case .nearness:   return "So you won't chase a feeling. You'll speak what God says about being near you."
+        case .more:       return "So you won't keep asking. You'll speak what God already said."
+        }
+    }
+
+    /// After they've done it — naming what just happened, and what repeating it
+    /// does. Never a guarantee of an outcome scripture doesn't promise.
+    var mechanismAfter: String {
+        switch self {
+        case .peace:      return "Keep speaking that over your mind every morning, and it is your mind that gives way."
+        case .fear:       return "Keep speaking that every morning, and fear stops being the loudest thing in the room."
+        case .health:     return "Keep speaking that over your body every morning, and it is your body that lines up."
+        case .abundance:  return "Keep speaking that over your finances every morning, and it is your finances that move."
+        case .identity:   return "Keep speaking that over yourself every morning, until it is the loudest voice you have."
+        case .shame:      return "Keep speaking that every morning, until you believe what the cross already settled."
+        case .bondage:    return "Keep speaking that every morning, and it stops getting a say in your day."
+        case .purpose:    return "Keep speaking that over your steps every morning, and the door starts to open."
+        case .joy:        return "Keep speaking that over your day every morning, and the heaviness has nowhere to sit."
+        case .grief:      return "Keep speaking that over your heart every morning, and God stays close in it with you."
+        case .loneliness: return "Keep speaking that every morning, and you stop facing this on your own."
+        case .marriage:   return "Keep speaking that over your home every morning, and let God work on what only He can."
+        case .family:     return "Keep speaking that over them every morning, and stand instead of worry."
+        case .nearness:   return "Keep speaking that every morning, and He gets nearer than the feeling that said otherwise."
+        case .more:       return "Keep speaking that every morning, and the ground you've been asking for starts moving."
+        }
+    }
+}
+
+/// How Jesus answered — the arm's one teaching screen, and the framing never
+/// changes: He did not beg the problem to leave, He spoke to it. Only the last
+/// line moves, to land that on this user's actual situation.
 private struct DirectMechanismScreen: View {
     let size: CGSize
-    let burden: HeaviestBurden
-    /// True when the user actually got a declaration on frame one. It changes
-    /// the screen's whole job: for them this explains something that just
-    /// happened to them, which is a far stronger position than promising
-    /// something that hasn't. For a user who skipped, the same three beats have
-    /// to carry it as a claim instead.
+    let pain: UserPain
+    /// True when the user actually got a declaration. It changes the screen's
+    /// whole job: for them this explains something that just happened, which is
+    /// a far stronger position than promising something that hasn't. For a user
+    /// who skipped, the same three beats have to carry it as a claim instead.
     let spokeDeclaration: Bool
     let onContinue: () -> Void
 
@@ -649,26 +690,7 @@ private struct DirectMechanismScreen: View {
     /// tense once they have actually done it — the screen is naming what
     /// happened, not forecasting it.
     private var applied: String {
-        if spokeDeclaration {
-            switch burden {
-            case .peace:     return "Keep speaking that over your mind every morning, and it is your mind that gives way."
-            case .health:    return "Keep speaking that over your body every morning, and it is your body that lines up."
-            case .abundance: return "Keep speaking that over your finances every morning, and it is your finances that move."
-            case .identity:  return "Keep speaking that over yourself every morning, until it is the loudest voice you have."
-            case .joy:       return "Keep speaking that over your day every morning, and the heaviness has nowhere to sit."
-            case .purpose:   return "Keep speaking that over your steps every morning, and the door starts to open."
-            case .allOfIt:   return "Keep speaking that every morning, and the ground you've been asking for starts moving."
-            }
-        }
-        switch burden {
-        case .peace:     return "So you won't beg your mind to settle. You'll speak peace to it."
-        case .health:    return "So you won't beg your body to hold on. You'll speak healing to it."
-        case .abundance: return "So you won't beg for provision. You'll speak God's supply over it."
-        case .identity:  return "So you won't try to feel better about yourself. You'll speak what God already says you are."
-        case .joy:       return "So you won't wait to feel better. You'll speak His joy over your day."
-        case .purpose:   return "So you won't wonder about your calling. You'll speak it into motion."
-        case .allOfIt:   return "So you won't ask for more. You'll speak the more God already gave you."
-        }
+        spokeDeclaration ? pain.mechanismAfter : pain.mechanismBefore
     }
 
     private let beats: [(String, String)] = [
@@ -739,7 +761,7 @@ private struct DirectMechanismScreen: View {
         }
         .onAppear {
             AnalyticsService.shared.track("direct_mechanism_shown", parameters: [
-                "burden": burden.rawValue,
+                "pain": pain.rawValue,
                 "spoke_declaration": spokeDeclaration as NSNumber
             ])
             withAnimation { v = true }
