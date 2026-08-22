@@ -13,7 +13,10 @@
 //    2. Payoff    — the personal-declaration feature itself. They describe
 //                   their actual situation in their own words and get a
 //                   declaration matched to it, with the verse it stands on and
-//                   "read it out loud right now."
+//                   "read it out loud right now." Opens by handing back what
+//                   they tapped on frame one ("You said your mind won't stop
+//                   racing.") so the two asks read as one thread — acknowledge,
+//                   then go deeper — rather than the same question twice.
 //    3. Proof     — the review wall, immediately before the ask.
 //    4. Paywall
 //    5. Time      — when their declaration arrives daily (terminal).
@@ -121,7 +124,11 @@ struct DirectOnboardingView: View {
             PersonalDeclarationOnboardingView(
                 viewModel: DIContainer.shared.makePersonalDeclarationViewModel(),
                 size: size,
-                flow: "direct"
+                flow: "direct",
+                // Hands back what they tapped on frame one, so the two asks read
+                // as one thread — acknowledge, then go deeper — instead of the
+                // flow appearing to ask the same question twice.
+                contextLine: DirectPain.echoLine(for: responses.heaviestBurden)
             ) { declaration in
                 savedDeclaration = declaration
                 advance()
@@ -406,14 +413,36 @@ private struct DirectPain: Identifiable {
     let icon: String
     let line: String
 
+    /// The same line handed back in second person on the next screen. Written
+    /// out rather than derived from `line`: turning "I've lost sight of who I
+    /// am" into "you've lost sight of who you are" is not something string
+    /// surgery does without producing something a person would never say.
+    let echo: String
+
+    /// The receipt shown at the top of the personal-declaration screen. nil when
+    /// the pain screen was somehow never answered, which leaves that screen with
+    /// its own unmodified prompt rather than a dangling "You said" attached to
+    /// nothing.
+    static func echoLine(for burden: HeaviestBurden?) -> String? {
+        guard let burden else { return nil }
+        return all.first(where: { $0.burden == burden })?.echo
+    }
+
     static let all: [DirectPain] = [
-        .init(burden: .peace,     icon: "🕊", line: "My mind won't stop racing"),
-        .init(burden: .health,    icon: "🌿", line: "My body needs healing"),
-        .init(burden: .abundance, icon: "💰", line: "The money isn't there"),
-        .init(burden: .identity,  icon: "👑", line: "I've lost sight of who I am"),
-        .init(burden: .joy,       icon: "☀️", line: "I feel flat and empty"),
-        .init(burden: .purpose,   icon: "🧭", line: "I'm off track from my calling"),
-        .init(burden: .allOfIt,   icon: "⚡", line: "I just want more of God"),
+        .init(burden: .peace,     icon: "🕊", line: "My mind won't stop racing",
+              echo: "You said your mind won't stop racing."),
+        .init(burden: .health,    icon: "🌿", line: "My body needs healing",
+              echo: "You said your body needs healing."),
+        .init(burden: .abundance, icon: "💰", line: "The money isn't there",
+              echo: "You said the money isn't there."),
+        .init(burden: .identity,  icon: "👑", line: "I've lost sight of who I am",
+              echo: "You said you've lost sight of who you are."),
+        .init(burden: .joy,       icon: "☀️", line: "I feel flat and empty",
+              echo: "You said you're feeling flat and empty."),
+        .init(burden: .purpose,   icon: "🧭", line: "I'm off track from my calling",
+              echo: "You said you're off track from your calling."),
+        .init(burden: .allOfIt,   icon: "⚡", line: "I just want more of God",
+              echo: "You said you want more of God."),
     ]
 }
 
