@@ -638,35 +638,34 @@ private extension UserPain {
         }
     }
 
-    /// After they've done it — say it again tomorrow, and then *do* something
-    /// about it today.
+    /// After they've done it. **Declare it daily, because it is already yours
+    /// and declaring is how you take hold of it.**
     ///
-    /// The second half is the whole point and it used to be missing. The line
-    /// for provision read "provision becomes what you expect instead of what
-    /// you hope for", which swaps one internal state for another and calls it
-    /// progress — the user does nothing differently either way. James says
-    /// faith that is not accompanied by action is dead, so every line names the
-    /// declaration and then the move that proves they believed it.
+    /// "Say it again tomorrow" framed this as a habit worth building, which
+    /// undersells what is actually happening. The victory is finished — Jesus
+    /// already won it and already handed over the authority — so speaking is
+    /// not how you persuade God to act. It is how you enforce, against an enemy
+    /// with no legal claim, ground that has your name on it. Every line names
+    /// the daily declaration and then what it is doing.
     ///
-    /// Never a guarantee of an outcome scripture doesn't promise: the action is
-    /// always the speaker's own, never another person's change.
+    /// The action stays the speaker's own. Never another person changing.
     var mechanismAfter: String {
         switch self {
-        case .peace:      return "Say it again tomorrow, then walk through the day like it's already settled."
-        case .fear:       return "Say it again tomorrow, then do the thing you've been putting off."
-        case .health:     return "Say it again tomorrow, then treat your body like the healing is yours."
-        case .abundance:  return "Say it again tomorrow, then make today's decision like the supply is there."
-        case .identity:   return "Say it again tomorrow, then carry yourself like it's already true."
-        case .shame:      return "Say it again tomorrow, then stop picking back up what He already took."
-        case .bondage:    return "Say it again tomorrow, then walk away the next time it calls."
-        case .purpose:    return "Say it again tomorrow, then take the next step without waiting to feel ready."
-        case .joy:        return "Say it again tomorrow, then go live today out loud."
-        case .grief:      return "Say it again tomorrow, then let God carry the part you can't."
-        case .loneliness: return "Say it again tomorrow, then reach out to one person today."
-        case .marriage:   return "Say it again tomorrow, then love your house like peace already lives there."
-        case .family:     return "Say it again tomorrow, then pray for them instead of worrying about them."
-        case .nearness:   return "Say it again tomorrow, then go spend time with Him today."
-        case .more:       return "Say it again tomorrow, then move on it. Faith that sits still isn't faith."
+        case .peace:      return "Declare it every morning. That is you enforcing peace the enemy has no claim on."
+        case .fear:       return "Declare it every morning. Fear has no authority here, and saying so is how you use yours."
+        case .health:     return "Declare it every morning. You are enforcing healing the cross already bought and paid for."
+        case .abundance:  return "Declare it every morning. You are enforcing supply God already put in your name."
+        case .identity:   return "Declare it every morning. You are enforcing a verdict God already handed down about you."
+        case .shame:      return "Declare it every morning. You are enforcing a debt Jesus already cleared in full."
+        case .bondage:    return "Declare it every morning. You are enforcing freedom that was bought, and it has to let go."
+        case .purpose:    return "Declare it every morning, then take the step. You are enforcing an order God already gave."
+        case .joy:        return "Declare it every morning. You are enforcing joy the enemy has no right to touch."
+        case .grief:      return "Declare it every morning. You are holding God to a comfort He already promised you."
+        case .loneliness: return "Declare it every morning. You are enforcing a presence God already swore He would be."
+        case .marriage:   return "Declare it every morning. You are enforcing peace over ground that belongs to your house."
+        case .family:     return "Declare it every morning. You are standing on promises God already made over them."
+        case .nearness:   return "Declare it every morning, then go be with Him. He already came near; take Him at it."
+        case .more:       return "Declare it every morning. Jesus already won it and handed you the authority to enforce it."
         }
     }
 }

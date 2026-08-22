@@ -50,6 +50,27 @@ private struct PulseRing: View {
     }
 }
 
+// MARK: - Safe-area inset
+
+/// Window safe-area insets, read from UIKit.
+///
+/// Every call site wraps this screen in `.ignoresSafeArea()` and the screen pins
+/// itself to `size`, so a SwiftUI GeometryReader in here reports zero insets.
+/// The typing states used a fixed 20pt top spacer, which is fine on a phone with
+/// a 20pt status bar and puts the first line of content underneath the clock and
+/// the carrier on every device shipped since the notch.
+private enum PDInsets {
+    private static var keyWindow: UIWindow? {
+        UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .flatMap { $0.windows }
+            .first { $0.isKeyWindow }
+    }
+
+    /// Falls back to the common notch height if no window is available yet.
+    static var top: CGFloat { keyWindow?.safeAreaInsets.top ?? 47 }
+}
+
 // MARK: - Main View
 
 struct PersonalDeclarationOnboardingView: View {
@@ -153,9 +174,15 @@ struct PersonalDeclarationOnboardingView: View {
                 case .result:                       resultView
                 }
             }
-            // Squeeze the step into the space the keyboard leaves. The steps
-            // that type also tighten their own top padding (see `keyboardUp`)
-            // so nothing runs off the top of the shortened box.
+            // Squeeze the step into the space the keyboard leaves, anchored to
+            // the top of it. Anchoring is the load-bearing part: this is a
+            // ZStack, so a step taller than the shortened box would otherwise
+            // be centred in it and spill equally out of BOTH ends — and the end
+            // that leaves the screen is the top one, taking the question with
+            // it and leaving what the user typed sitting over the status bar.
+            // Overflow now goes downward, behind the keyboard, where it is
+            // recoverable by dismissing it.
+            .frame(maxHeight: .infinity, alignment: .top)
             .padding(.bottom, keyboardHeight)
         }
         .frame(width: size.width, height: size.height)
@@ -194,7 +221,7 @@ struct PersonalDeclarationOnboardingView: View {
             // Fixed while typing rather than a share of screen height: the tall
             // phones don't need the extra top margin, and the short one — the
             // only device where this gets tight — can't spare it.
-            Spacer().frame(height: keyboardUp ? 20 : size.height * 0.11)
+            Spacer().frame(height: keyboardUp ? PDInsets.top + 12 : size.height * 0.11)
 
             // Title block
             VStack(spacing: 14) {
@@ -482,7 +509,7 @@ struct PersonalDeclarationOnboardingView: View {
             // The low bound is the safety valve: on the shortest screen the box
             // gives height back rather than pushing the CTA off the bottom, and
             // 76pt still shows three lines of what they are typing.
-            .frame(minHeight: keyboardUp ? 76 : 110, maxHeight: keyboardUp ? 220 : 110)
+            .frame(minHeight: keyboardUp ? 76 : 110, maxHeight: keyboardUp ? 180 : 110)
             .padding(.horizontal, 24)
 
             if let error = viewModel.errorMessage {
@@ -587,7 +614,7 @@ struct PersonalDeclarationOnboardingView: View {
 
     private var clarifyView: some View {
         VStack(spacing: 0) {
-            Spacer().frame(height: size.height * (keyboardUp ? 0.05 : 0.12))
+            Spacer().frame(height: keyboardUp ? PDInsets.top + 12 : size.height * 0.12)
 
             VStack(spacing: 12) {
                 Text("🤔")
