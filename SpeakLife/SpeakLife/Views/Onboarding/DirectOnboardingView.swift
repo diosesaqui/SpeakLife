@@ -621,7 +621,7 @@ private extension UserPain {
     var mechanismBefore: String {
         switch self {
         case .peace:      return "So you won't beg your mind to settle. You'll speak peace to it."
-        case .fear:       return "So you won't brace for it. You'll speak to it the way He did."
+        case .fear:       return "So you won't talk yourself down from it. You'll speak God's protection over it."
         case .health:     return "So you won't beg your body to hold on. You'll speak healing to it."
         case .abundance:  return "So you won't beg for provision. You'll speak God's supply over it."
         case .identity:   return "So you won't try to feel better about yourself. You'll speak what God already says you are."
@@ -643,9 +643,9 @@ private extension UserPain {
     var mechanismAfter: String {
         switch self {
         case .peace:      return "Keep speaking that over your mind every morning, and it is your mind that gives way."
-        case .fear:       return "Keep speaking that every morning, and fear stops being the loudest thing in the room."
+        case .fear:       return "Keep speaking that every morning, and fear stops deciding how your day goes."
         case .health:     return "Keep speaking that over your body every morning, and it is your body that lines up."
-        case .abundance:  return "Keep speaking that over your finances every morning, and it is your finances that move."
+        case .abundance:  return "Keep speaking that every morning, and provision becomes what you expect instead of what you hope for."
         case .identity:   return "Keep speaking that over yourself every morning, until it is the loudest voice you have."
         case .shame:      return "Keep speaking that every morning, until you believe what the cross already settled."
         case .bondage:    return "Keep speaking that every morning, and it stops getting a say in your day."

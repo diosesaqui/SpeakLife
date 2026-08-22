@@ -97,9 +97,9 @@ it is empty exactly when this screen needs it.
 | Pain | Headline |
 |------|----------|
 | peace | Your mind won't stop. |
-| fear | You're bracing for something. |
+| fear | You keep waiting for bad news. |
 | health | Your body is still waiting on an answer. |
-| abundance | The money keeps running out before the month does. |
+| abundance | The numbers don't work right now. |
 | identity | You don't feel good enough. |
 | shame | You can't seem to put it down. |
 | bondage | You keep going back to it. |

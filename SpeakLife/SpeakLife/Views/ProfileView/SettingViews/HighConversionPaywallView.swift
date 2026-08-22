@@ -146,9 +146,9 @@ enum UserPain: String, CaseIterable {
     var problem: String {
         switch self {
         case .peace:      return "Your mind won't stop."
-        case .fear:       return "You're bracing for something."
+        case .fear:       return "You keep waiting for bad news."
         case .health:     return "Your body is still waiting on an answer."
-        case .abundance:  return "The money keeps running out before the month does."
+        case .abundance:  return "The numbers don't work right now."
         case .identity:   return "You don't feel good enough."
         case .shame:      return "You can't seem to put it down."
         case .bondage:    return "You keep going back to it."
@@ -170,11 +170,11 @@ enum UserPain: String, CaseIterable {
         case .peace:
             return "Reading one more verse about peace hasn't quieted it. Jesus didn't ask the storm to settle. He spoke to it, and SpeakLife puts that same Word in your mouth every morning until your mind is what obeys."
         case .fear:
-            return "Talking yourself down works until the next thing. Jesus spoke to what terrified His disciples and it went quiet, and SpeakLife puts that Word in your mouth every morning until fear is the thing that has to leave."
+            return "Talking yourself down buys you an hour, maybe a night. Jesus spoke to the thing His friends were terrified of and it went still, and SpeakLife puts God's promise of protection in your mouth every morning until fear stops deciding how your day goes."
         case .health:
             return "Hoping is not the same as standing on it. Jesus spoke to sickness and it left, and SpeakLife puts the healing God already paid for in your mouth every day until your body lines up with it."
         case .abundance:
-            return "Praying harder hasn't changed the number. Jesus spoke to what He had and it multiplied, and SpeakLife puts God's promise of provision in your mouth every morning until your finances follow."
+            return "You've run the math a hundred times and it comes out the same. God is not working off your math. SpeakLife puts His promise to supply every need in your mouth every morning, until provision is what you expect instead of what you hope for."
         case .identity:
             return "Feeling better about yourself was never the fix, and it never holds. God already said what you are, and SpeakLife puts His words about you in your own mouth every day until they're the loudest thing you hear."
         case .shame:
@@ -205,9 +205,9 @@ enum UserPain: String, CaseIterable {
     var domain: String {
         switch self {
         case .peace:      return "your mind"
-        case .fear:       return "what you're facing"
+        case .fear:       return "your future"
         case .health:     return "your body"
-        case .abundance:  return "your finances"
+        case .abundance:  return "your provision"
         case .identity:   return "who you are"
         case .shame:      return "what you're carrying"
         case .bondage:    return "the thing that keeps winning"
@@ -227,9 +227,9 @@ enum UserPain: String, CaseIterable {
     private var leadSolution: (icon: String, title: String, detail: String) {
         switch self {
         case .peace:      return ("megaphone.fill", "Speak peace, don't just read it", "Declarations written for a racing mind, short enough to say out loud and mean.")
-        case .fear:       return ("megaphone.fill", "Speak to it instead of bracing for it", "Declarations on God's protection, written to say the moment the dread starts.")
+        case .fear:       return ("megaphone.fill", "Speak to it before it grows", "Declarations on God's protection and His hold on tomorrow, for the moment the dread starts.")
         case .health:     return ("megaphone.fill", "Speak what the cross paid for", "Healing declarations straight from Scripture, built to say over your body daily.")
-        case .abundance:  return ("megaphone.fill", "Speak provision over your finances", "Declarations on God's supply, favor, and overflow, in your mouth every morning.")
+        case .abundance:  return ("megaphone.fill", "Speak God's supply over it", "Declarations on provision, favor, and open doors, built to say over the bills and the decisions.")
         case .identity:   return ("megaphone.fill", "Say what God says about you", "Identity declarations spoken in first person, until they're what you believe.")
         case .shame:      return ("megaphone.fill", "Speak what the cross already settled", "Declarations on grace and a clean record, written for the days it comes back.")
         case .bondage:    return ("megaphone.fill", "Speak to it with authority", "Declarations that tell it where it stands instead of asking it to ease off.")
@@ -264,9 +264,9 @@ enum UserPain: String, CaseIterable {
         let notThis: String
         switch self {
         case .peace, .joy:            notThis = "tips or affirmations"
-        case .fear:                   notThis = "talking yourself down"
+        case .fear:                   notThis = "positive self-talk"
         case .health:                 notThis = "wishful thinking"
-        case .abundance:              notThis = "money advice"
+        case .abundance:              notThis = "budgeting tips"
         case .identity, .shame:       notThis = "self-help"
         case .bondage:                notThis = "willpower"
         case .purpose:                notThis = "motivation"
