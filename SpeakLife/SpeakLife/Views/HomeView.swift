@@ -491,12 +491,16 @@ struct HomeView: View {
         AnalyticsService.shared.track("onboarding_finished", parameters: [
             "variant": subscriptionStore.onboardingVariantName,
             "converted": converted,
-            "conversion_type": conversionType
+            "conversion_type": conversionType,
+            "flow": "home_view"
         ])
         withAnimation {
             appState.isOnboarded = true
             LifecycleNotificationService.shared.scheduleLifecycleNotifications()
-            AnalyticsService.shared.track("onBoardingFinished")
+            // `onBoardingFinished` used to fire here too — the same completion
+            // counted twice under two spellings, the camelCase copy carrying no
+            // properties. Events.swift has documented it as renamed since the
+            // constant was added; the call sites just never followed.
         }
     }
 
